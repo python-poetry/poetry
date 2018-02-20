@@ -1,0 +1,72 @@
+[package]
+name = "poetry"
+version = "0.1.0"
+description = ""
+
+# Compatibe Python versions
+python = ["~2.7", "^3.5"]
+
+license = "MIT"
+
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+
+# The readme file of the package.
+#
+# The file can be either README.rst or README.md.
+#
+# If it's a markdown file you have to install the pandoc utility
+# so that it can be automatically converted to a RestructuredText file.
+#
+# You also need to have the pypandoc package installed.
+# If you install poet via pip you can use the markdown-readme extra to do so.
+readme = "README.md"
+
+# An URL to the homepage of the project.
+# homepage = "https://github.com/sdispater/poet"
+# An URL to the repository of the project.
+# repository = "https://github.com/sdispater/poet"
+# An URL to the documentation of the project.
+# documentation = "https://github.com/sdispater/poet"
+
+# A list of keywords (max: 5) that the package is related to.
+# keywords = ["packaging", "poet"]
+
+# A list of patterns that will be included in the final package.
+#
+# Python packages, modules and package data will be automatically detected
+# include = ['poet/**/*', 'LICENSE']
+#
+# If you packages lies elsewhere (like in a src directory),
+# you can tell poet to find them from there:
+# include = { from = 'src', include = '**/*' }
+#
+# Similarly, you can tell that the src directory represent the foo package:
+# include = { from = 'src', include = '**/*', as = 'foo' }
+
+
+# Features are sets of optional dependencies, which enhance a package,
+# but are not required
+# [features]
+# markdown-readme = ["pypandoc"] # Adds support for markdown readmes
+
+[dependencies]
+# Main dependencies of the project
+# See https://github.com/sdispater/poet#dependencies-and-dev-dependencies
+cleo = "^0.6"
+pendulum = "^1.3"
+
+[dev-dependencies]
+# Development dependencies of the package
+# See https://github.com/sdispater/poet#dependencies-and-dev-dependencies
+pytest = "^3.3"
+
+
+# CLI scripts
+#
+# They must follow the following convention:
+# {script_name} = "{my.package:executable}"
+#
+# [scripts]
+# poet = 'poet:app.run'
