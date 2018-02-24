@@ -9,8 +9,8 @@ _modifier_regex = (
 
 def normalize_version(version):
     """
-            Normalizes a version string to be able to perform comparisons on it.
-            """
+    Normalizes a version string to be able to perform comparisons on it.
+    """
     version = version.strip()
 
     # strip off build metadata
@@ -66,6 +66,33 @@ def normalize_stability(stability: str) -> str:
         return 'RC'
 
     return stability
+
+
+def parse_stability(version: str) -> str:
+    """
+    Returns the stability of a version.
+    """
+    version = re.sub('(?i)#.+$', '', version)
+
+    if 'dev-' == version[:4] or '-dev' == version[-4:]:
+        return 'dev'
+
+    m = re.search('(?i){}(?:\+.*)?$'.format(_modifier_regex), version.lower())
+    if m:
+        if m.group(3):
+            return 'dev'
+
+        if m.group(1):
+            if m.group(1) in ['beta', 'b']:
+                return 'beta'
+
+            if m.group(1) in ['alpha', 'a']:
+                return 'alpha'
+
+            if m.group(1) == 'rc':
+                return 'RC'
+
+    return 'stable'
 
 
 def _expand_stability(stability: str) -> str:

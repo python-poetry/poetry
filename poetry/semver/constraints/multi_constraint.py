@@ -1,4 +1,7 @@
-class MultiConstraint:
+from .base_constraint import BaseConstraint
+
+
+class MultiConstraint(BaseConstraint):
 
     def __init__(self, constraints, conjunctive=True):
         self._constraints = tuple(constraints)

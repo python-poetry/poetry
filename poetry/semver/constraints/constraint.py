@@ -3,9 +3,10 @@ import operator
 from pkg_resources import parse_version
 
 from ..helpers import normalize_version
+from .base_constraint import BaseConstraint
 
 
-class Constraint:
+class Constraint(BaseConstraint):
 
     OP_EQ = operator.eq
     OP_LT = operator.lt
@@ -21,7 +22,6 @@ class Constraint:
         '<=': OP_LE,
         '>': OP_GT,
         '>=': OP_GE,
-        '<>': OP_NE,
         '!=': OP_NE
     }
 

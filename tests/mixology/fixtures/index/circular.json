@@ -1,0 +1,38 @@
+{
+  "rack": [
+    {
+      "name": "rack",
+      "version": "1.0.1",
+      "dependencies": {
+      }
+    }
+  ],
+  "foo": [
+    {
+      "name": "foo",
+      "version": "0.2.6",
+      "dependencies": {
+        "bar": ">= 0"
+      }
+    }
+  ],
+  "bar": [
+    {
+      "name": "bar",
+      "version": "1.0.0",
+      "dependencies": {
+        "foo": ">= 0"
+      }
+    }
+  ],
+  "circular_app": [
+    {
+      "name": "circular_app",
+      "version": "1.0.0",
+      "dependencies": {
+        "foo": ">= 0",
+        "bar": ">= 0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "resolves a single dependency with dependencies",
+  "requested": {
+    "actionpack": "*"
+  },
+  "base": [],
+  "resolved": [
+    {
+      "name": "actionpack",
+      "version": "2.3.5",
+      "dependencies": [
+        {
+          "name": "activesupport",
+          "version": "2.3.5",
+          "dependencies": []
+        },
+        {
+          "name": "rack",
+          "version": "1.0",
+          "dependencies": []
+        }
+      ]
+    }
+  ],
+  "conflicts": []
+}

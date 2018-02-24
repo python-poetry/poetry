@@ -18,32 +18,6 @@ class VersionParser:
         'stable', 'RC', 'beta', 'alpha', 'dev'
     ]
 
-    @classmethod
-    def parse_stability(cls, version: str) -> str:
-        """
-        Returns the stability of a version.
-        """
-        version = re.sub('#.+$i', '', version)
-
-        if 'dev-' == version[:4] or '-dev' == version[-4:]:
-            return 'dev'
-
-        m = re.match(f'(?i){cls._modifier_regex}(?:\+.*)?$', version)
-        if m.group(3):
-            return 'dev'
-
-        if m.group(1):
-            if m.group(1) in ['beta', 'b']:
-                return 'beta'
-
-            if m.group(1) in ['alpha', 'a']:
-                return 'alpha'
-
-            if m.group(1) == 'rc':
-                return 'RC'
-
-        return 'stable'
-
     def parse_constraints(self, constraints: str):
         """
         Parses a constraint string into
