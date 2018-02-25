@@ -4,7 +4,9 @@ import pytest
 
 from poetry.mixology import DependencyGraph
 from poetry.mixology import Resolver
+from poetry.mixology.exceptions import CircularDependencyError
 from poetry.mixology.exceptions import ResolverError
+from poetry.mixology.exceptions import VersionConflict
 from poetry.packages import Dependency
 
 from .index import Index
@@ -120,6 +122,7 @@ def assert_graph(dg, result):
 @pytest.mark.parametrize(
     'fixture',
     [
+        'empty',
         'simple',
         'simple_with_base',
         'simple_with_dependencies',
@@ -132,3 +135,27 @@ def test_resolver(fixture):
     dg = resolver.resolve(c.requested, base=c.base)
 
     assert_graph(dg, c.result)
+
+
+@pytest.mark.parametrize(
+    'fixture',
+    [
+        'circular',
+        'unresolvable_child'
+    ]
+)
+def test_resolver_fail(fixture):
+    c = case(fixture)
+    resolver = Resolver(c.index, UI())
+
+    with pytest.raises(ResolverError) as e:
+        resolver.resolve(c.requested, base=c.base)
+
+    names = []
+    e = e.value
+    if isinstance(e, CircularDependencyError):
+        names = [d.name for d in e.dependencies]
+    elif isinstance(e, VersionConflict):
+        names = [n for n in e.conflicts.keys()]
+
+    assert sorted(names) == sorted(c.conflicts)

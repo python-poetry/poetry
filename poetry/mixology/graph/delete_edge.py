@@ -50,7 +50,10 @@ class DeleteEdge(Action):
         """
         :type elements: list
         """
-        index = elements.index(element)
+        try:
+            index = elements.index(element)
+        except ValueError:
+            return
 
         if index != -1:
             elements.pop(index)

@@ -41,6 +41,9 @@ class ResolutionState:
     def empty(cls):
         return cls(None, [], DependencyGraph(), None, None, 0, {}, [])
 
+    def __repr__(self):
+        return f'<{self.__class__.__name__} {self._name}>'
+
 
 class PossibilityState(ResolutionState):
 
@@ -49,16 +52,16 @@ class PossibilityState(ResolutionState):
 
 class DependencyState(ResolutionState):
 
-    def pop_possiblity_state(self):
+    def pop_possibility_state(self):
         state = PossibilityState(
             self._name,
             copy(self._requirements),
             self._activated,
             self._requirement,
-            [self._possibilities.pop()],
+            [self.possibilities.pop() if self.possibilities else None],
             self._depth + 1,
-            copy(self._conflicts),
-            copy(self._unused_unwind_options)
+            copy(self.conflicts),
+            copy(self.unused_unwind_options)
         )
         state.activated.tag(state)
 

@@ -11,3 +11,6 @@ class PossibilitySet:
 
     def __str__(self):
         return '[{}]'.format(', '.join([repr(p) for p in self.possibilities]))
+
+    def __repr__(self):
+        return f'<PossibilitySet {str(self)}>'

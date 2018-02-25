@@ -1,0 +1,9 @@
+{
+  "name": "resolves an empty list of dependencies",
+  "requested": {
+  },
+  "base": [],
+  "resolved": [
+  ],
+  "conflicts": []
+}

@@ -36,7 +36,7 @@ class SpecificationProvider:
 
     def dependencies_for(self, specification: Any) -> List[Any]:
         """
-        Returns the dependencies of `specification`.
+        Returns the dependencies of specification.
         """
         return []
 

@@ -1,6 +1,8 @@
 from .action import Action
 from .vertex import Vertex
 
+_NULL = object()
+
 
 class AddVertex(Action):
 
@@ -20,7 +22,7 @@ class AddVertex(Action):
         self._name = name
         self._payload = payload
         self._root = root
-        self._existing_payload = None
+        self._existing_payload = _NULL
         self._existing_root = None
 
     @property
@@ -56,7 +58,7 @@ class AddVertex(Action):
         return vertex
 
     def down(self, graph):
-        if self._existing_payload is not None:
+        if self._existing_payload is not _NULL:
             vertex = graph.vertices[self._name]
             vertex.payload = self._existing_payload
             vertex.root = self._existing_root

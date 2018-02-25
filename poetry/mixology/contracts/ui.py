@@ -26,7 +26,7 @@ class UI:
     def after_resolution(self) -> None:
         self.output.write('')
 
-    def debug(self, depth, message) -> None:
+    def debug(self, message, depth) -> None:
         if self.is_debugging():
             debug_info = str(message)
             debug_info = '\n'.join([

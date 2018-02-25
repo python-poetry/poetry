@@ -1,7 +1,7 @@
 import logging
 
 from copy import copy
-from time import time
+from datetime import datetime
 
 from typing import Any
 from typing import List
@@ -36,8 +36,10 @@ class Resolution:
         self._requested = requested
         self._original_requested = copy(requested)
         self._base = base
-        self._states = [ResolutionState.empty()]
+        self._states = []
         self._iteration_counter = 0
+        self._progress_rate = 0.33
+        self._iteration_rate = None
         self._parents_of = {}
         self._started_at = None
 
@@ -73,9 +75,14 @@ class Resolution:
                 if not self.state.requirement and not self.state.requirements:
                     break
 
-                # TODO: indicate progress
+                self._indicate_progress()
                 if hasattr(self.state, 'pop_possibility_state'):
-                    s = self.state.pop_possiblity_state()
+                    self._debug(
+                        f'Creating possibility state for '
+                        f'{str(self.state.requirement)} '
+                        f'({len(self.state.possibilities)} remaining)'
+                    )
+                    s = self.state.pop_possibility_state()
                     if s:
                         self._states.append(s)
                         self.activated.tag(s)
@@ -90,11 +97,14 @@ class Resolution:
         """
         Set up the resolution process.
         """
-        self._started_at = time()
+        self._started_at = datetime.now()
 
         self._handle_missing_or_push_dependency_state(self._initial_state())
 
-        logger.debug('Starting resolution')
+        self._debug(
+            f'Starting resolution ({self._started_at})\n'
+            f'Requested dependencies: {self._original_requested}'
+        )
 
         self._ui.before_resolution()
 
@@ -124,12 +134,13 @@ class Resolution:
         """
         Ends the resolution process
         """
+        elapsed = (datetime.now() - self._started_at).total_seconds()
+
         self._ui.after_resolution()
 
-        logger.debug(
-            'Finished resolution ({} steps) in {:.3f} seconds'.format(
-                self._iteration_counter, time() - self._started_at
-            )
+        self._debug(
+            f'Finished resolution ({self._iteration_counter} steps) '
+            f'in {elapsed:.3f} seconds'
         )
 
     def _process_topmost_state(self) -> None:
@@ -151,7 +162,8 @@ class Resolution:
         """
         The current possibility that the resolution is trying.
         """
-        return self.state.possibilities[-1]
+        if self.state.possibilities:
+            return self.state.possibilities[-1]
 
     @property
     def state(self) -> DependencyState:
@@ -213,17 +225,21 @@ class Resolution:
         unwind_options = self.state.unused_unwind_options
 
         self._debug(
-            self.state.depth,
             'Unwinding for conflict: '
             '{} to {}'.format(
-                self.state.requirement,
+                str(self.state.requirement),
                 details_for_unwind.state_index // 2
-            )
+            ),
+            self.state.depth
         )
 
         conflicts = self.state.conflicts
         sliced_states = self._states[details_for_unwind.state_index + 1:]
-        self._states = self._states[:details_for_unwind.state_index]
+        if details_for_unwind.state_index == -1:
+            self._states = []
+        else:
+            self._states = self._states[:details_for_unwind.state_index]
+
         self._raise_error_unless_state(conflicts)
         if sliced_states:
             self.activated.rewind_to(
@@ -251,7 +267,7 @@ class Resolution:
             return
 
         errors = [c.underlying_error
-                  for c in conflicts
+                  for c in conflicts.values()
                   if c.underlying_error is not None]
         if errors:
             error = errors[0]
@@ -484,12 +500,11 @@ class Resolution:
 
         return satisfied
 
-    def _filter_possibilities_for_parent_unwind(self, unwind_details):
+    def _filter_possibilities_for_parent_unwind(self,
+                                                unwind_details: UnwindDetails):
         """
         Filter a state's possibilities to remove any that would (eventually)
         the requirements in the conflict we've just rewound from.
-
-        :type unwind_details: UnwindDetails
         """
         unwinds_to_state = [
             uw
@@ -569,7 +584,10 @@ class Resolution:
         # If all the requirements together don't filter out all possibilities,
         # then the only two requirements we need to consider are the initial one
         # (where the dependency's version was first chosen) and the last
-        if self._binding_requirement_in_set(None, possible_binding_requirements, possibilities):
+        if self._binding_requirement_in_set(
+            None, possible_binding_requirements,
+            possibilities
+        ):
             return list(filter(None, [
                 conflict.requirement,
                 self._requirement_for_existing_name(
@@ -699,19 +717,29 @@ class Resolution:
 
         return tree
 
-    def _debug(self, depth, message):
-        self._ui.debug(depth, message)
+    def _indicate_progress(self):
+        self._iteration_counter += 1
+        progress_rate = self._ui.progress_rate or self._progress_rate
+        if self._iteration_rate is None:
+            if (datetime.now() - self._started_at).total_seconds() >= progress_rate:
+                self._iteration_rate = self._iteration_counter
+
+        if self._iteration_rate and (self._iteration_counter % self._iteration_rate) == 0:
+            self._ui.indicate_progress()
+
+    def _debug(self, message, depth=0):
+        self._ui.debug(message, depth)
 
     def _attempt_to_activate(self):
         self._debug(
+            f'Attempting to activate {str(self.possibility)}',
             self.state.depth,
-            'Attempting to activate {}'.format(self.possibility)
         )
         existing_vertex = self.activated.vertex_named(self.state.name)
         if existing_vertex.payload:
             self._debug(
-                self.state.depth,
-                'Found existing spec ({})'.format(existing_vertex.payload)
+                'Found existing spec ({})'.format(existing_vertex.payload),
+                self.state.depth
             )
             self._attempt_to_filter_existing_spec(existing_vertex)
         else:
@@ -747,6 +775,10 @@ class Resolution:
             self._push_state_for_requirements(new_requirements, False)
         else:
             self._create_conflict()
+            self._debug(
+                f'Unsatisfied by existing spec ({str(vertex.payload)})',
+                self.state.depth
+            )
             self._unwind_for_conflict()
 
     def _filtered_possibility_set(self, vertex):
@@ -770,12 +802,21 @@ class Resolution:
         if self.state.name in self.state.conflicts:
             del self.state.conflicts[self.name]
 
-        self.activated.set_payload(self.name, self.possibility)
+        self._debug(
+            f'Activated {self.state.name} at {str(self.possibility)}',
+            self.state.depth
+        )
+        self.activated.set_payload(self.state.name, self.possibility)
         self._require_nested_dependencies_for(self.possibility)
 
     def _require_nested_dependencies_for(self, possibility_set):
         nested_dependencies = self._provider.dependencies_for(
             possibility_set.latest_version
+        )
+        self._debug(
+            f'Requiring nested dependencies '
+            f'({", ".join([str(d) for d in nested_dependencies])})',
+            self.state.depth
         )
 
         for d in nested_dependencies:

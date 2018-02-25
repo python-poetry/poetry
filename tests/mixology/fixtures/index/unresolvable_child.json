@@ -1,0 +1,38 @@
+{
+  "json": [
+    {
+      "name": "json",
+      "version": "1.8.0",
+      "dependencies": {
+      }
+    }
+  ],
+  "chef": [
+    {
+      "name": "chef",
+      "version": "10.26",
+      "dependencies": {
+        "json": "<= 1.7.7, >= 1.4.4"
+      }
+    }
+  ],
+  "berkshelf": [
+    {
+      "name": "berkshelf",
+      "version": "2.0.7",
+      "dependencies": {
+        "json": ">= 1.7.7"
+      }
+    }
+  ],
+  "chef_app_error": [
+    {
+      "name": "chef_app_error",
+      "version": "1.0.0",
+      "dependencies": {
+        "berkshelf": "~2.0",
+        "chef": "~10.26"
+      }
+    }
+  ]
+}

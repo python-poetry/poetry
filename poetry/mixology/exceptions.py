@@ -44,7 +44,7 @@ class VersionConflict(ResolverError):
         for conflicting in flat_map(
             list(conflicts.values()), lambda x: x.requirements
         ):
-            for source, conflict_requirements in conflicting:
+            for source, conflict_requirements in conflicting.items():
                 for c in conflict_requirements:
                     pairs.append((c, source))
 

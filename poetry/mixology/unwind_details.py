@@ -1,3 +1,6 @@
+from collections import namedtuple
+
+
 class UnwindDetails:
 
     def __init__(self,
@@ -37,10 +40,14 @@ class UnwindDetails:
         if self._sub_dependencies_to_avoid is None:
             self._sub_dependencies_to_avoid = []
             for tree in self.requirement_trees:
-                index = tree.index(self.state_requirement)
-                if index and tree[index + 1] is not None:
+                try:
+                    index = tree.index(self.state_requirement)
+                except ValueError:
+                    continue
+
+                if tree[index + 1] is not None:
                     self._sub_dependencies_to_avoid.append(tree[index + 1])
-                    
+
         return self._sub_dependencies_to_avoid
     
     @property
@@ -89,3 +96,6 @@ class UnwindDetails:
             return NotImplemented
 
         return self.state_index >= other.state_index
+
+    def __hash__(self):
+        return hash((id(self), self.state_index, self.state_requirement))

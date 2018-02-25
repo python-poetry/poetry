@@ -62,7 +62,7 @@ class Vertex:
                 continue
 
             vertices.add(vertex)
-            vertex._recursive_predecessors(vertices)
+            vertex._recursive_successors(vertices)
 
         return vertices
 
