@@ -70,9 +70,21 @@ class Constraint(BaseConstraint):
                 f'expected one of: {", ".join(self.supported_operators)}'
             )
 
+        # If we can't normalize the version
+        # we delegate to parse_version()
+        try:
+            a = normalize_version(a)
+        except ValueError:
+            pass
+
+        try:
+            b = normalize_version(b)
+        except ValueError:
+            pass
+
         return self._trans_op_str[operator](
-            parse_version(normalize_version(a)),
-            parse_version(normalize_version(b))
+            parse_version(a),
+            parse_version(b)
         )
 
     def match_specific(self, provider: 'Constraint') -> bool:

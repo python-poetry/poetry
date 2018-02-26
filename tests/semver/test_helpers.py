@@ -27,6 +27,9 @@ from poetry.semver.helpers import normalize_version
         ('20100102203040-10', '20100102203040.10'),
         ('20100102-203040-p1', '20100102.203040-patch.1'),
         ('1.0.0-beta.5+foo', '1.0.0.0-beta.5'),
+        ('0.6c', '0.6.0.0-rc'),
+        ('3.0.17-20140602', '3.0.17.0'),
+        ('3.0pre', '3.0.0.0-rc')
     ]
 )
 def test_normalize(version, expected):

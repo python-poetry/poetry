@@ -105,7 +105,7 @@ class Package:
         return self._stability != 'stable'
 
     def __hash__(self):
-        return hash(self._name)
+        return hash((self._name, self._version))
 
     def __eq__(self, other):
         if not isinstance(other, Package):

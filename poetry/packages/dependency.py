@@ -3,10 +3,15 @@ from poetry.semver.version_parser import VersionParser
 
 class Dependency:
 
-    def __init__(self, name, constraint):
+    def __init__(self, name, constraint, optional=False):
         self._name = name.lower()
-        self._constraint = VersionParser().parse_constraints(constraint)
+        try:
+            self._constraint = VersionParser().parse_constraints(constraint)
+        except ValueError:
+            self._constraint = VersionParser().parse_constraints('*')
+
         self._pretty_constraint = constraint
+        self._optional = optional
 
     @property
     def name(self):
@@ -27,6 +32,9 @@ class Dependency:
     def accepts_prereleases(self):
         return False
 
+    def is_optional(self):
+        return self._optional
+
     def __eq__(self, other):
         if not isinstance(other, Dependency):
             return NotImplemented
@@ -34,7 +42,10 @@ class Dependency:
         return self._name == other.name and self._constraint == other.constraint
 
     def __hash__(self):
-        return hash(self._name)
+        return hash((self._name, self._pretty_constraint))
+
+    def __str__(self):
+        return self.pretty_name
 
     def __repr__(self):
         return '<Dependency {}>'.format(self.pretty_name)

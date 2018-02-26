@@ -2,7 +2,8 @@ import re
 
 _modifier_regex = (
     '[._-]?'
-    '(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?'
+    '(?:(stable|beta|b|RC|c|pre|alpha|a|patch|pl|p|post|[a-z])'
+    '((?:[.-]?\d+)*)?)?'
     '([.-]?dev)?'
 )
 
@@ -33,17 +34,32 @@ def normalize_version(version):
                   f'{m.group(4) if m.group(4) else ".0"}'
         index = 5
     else:
-        # Match date(time) based versioning
+        # Some versions have the form M.m.p-\d+
+        # which means M.m.p-post\d+
         m = re.match(
-            '(?i)^v?(\d{{4}}(?:[.:-]?\d{{2}}){{1,6}}(?:[.:-]?\d{{1,3}})?){}$'.format(
+            '(?i)^v?(\d{{1,5}})(\.\d+)?(\.\d+)?(\.\d+)?-(?:\d+){}$'.format(
                 _modifier_regex
             ),
             version
         )
         if m:
-            version = re.sub('\D', '.', m.group(1))
+            version = f'{m.group(1)}' \
+                      f'{m.group(2) if m.group(2) else ".0"}' \
+                      f'{m.group(3) if m.group(3) else ".0"}' \
+                      f'{m.group(4) if m.group(4) else ".0"}'
+            index = 5
+        else:
+            # Match date(time) based versioning
+            m = re.match(
+                '(?i)^v?(\d{{4}}(?:[.:-]?\d{{2}}){{1,6}}(?:[.:-]?\d{{1,3}})?){}$'.format(
+                    _modifier_regex
+                ),
+                version
+            )
+            if m:
+                version = re.sub('\D', '.', m.group(1))
 
-            index = 2
+                index = 2
 
     # add version modifiers if a version was matched
     if index is not None:
@@ -85,12 +101,12 @@ def parse_stability(version: str) -> str:
         if m.group(1):
             if m.group(1) in ['beta', 'b']:
                 return 'beta'
-
-            if m.group(1) in ['alpha', 'a']:
+            elif m.group(1) in ['alpha', 'a']:
                 return 'alpha'
-
-            if m.group(1) == 'rc':
+            elif m.group(1) in ['rc', 'c']:
                 return 'RC'
+            else:
+                return 'dev'
 
     return 'stable'
 
@@ -102,7 +118,11 @@ def _expand_stability(stability: str) -> str:
         return 'alpha'
     elif stability == 'b':
         return 'beta'
+    elif stability in ['c', 'pre']:
+        return 'rc'
     elif stability in ['p', 'pl']:
         return 'patch'
+    elif stability in ['post']:
+        return ''
 
     return stability
