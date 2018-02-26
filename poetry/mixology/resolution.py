@@ -99,14 +99,14 @@ class Resolution:
         """
         self._started_at = datetime.now()
 
-        self._handle_missing_or_push_dependency_state(self._initial_state())
-
         self._debug(
             f'Starting resolution ({self._started_at})\n'
-            f'Requested dependencies: {self._original_requested}'
+            f'Requested dependencies: '
+            f'{[str(d) for d in self._original_requested]}'
         )
-
         self._ui.before_resolution()
+
+        self._handle_missing_or_push_dependency_state(self._initial_state())
 
     def _resolve_activated_specs(self) -> DependencyGraph:
         for vertex in self.activated.vertices.values():
@@ -235,16 +235,14 @@ class Resolution:
 
         conflicts = self.state.conflicts
         sliced_states = self._states[details_for_unwind.state_index + 1:]
-        if details_for_unwind.state_index == -1:
-            self._states = []
-        else:
-            self._states = self._states[:details_for_unwind.state_index]
+        self._states = self._states[:details_for_unwind.state_index + 1]
 
         self._raise_error_unless_state(conflicts)
         if sliced_states:
             self.activated.rewind_to(
                 sliced_states[0] or 'initial_state'
             )
+
         self.state.conflicts = conflicts
         self.state.unused_unwind_options = unwind_options
         self._filter_possibilities_after_unwind(details_for_unwind)
@@ -367,10 +365,11 @@ class Resolution:
             parent_r = self._parent_of(r)
             if parent_r is None:
                 continue
+
             partial_tree.insert(0, parent_r)
             requirement_state = self._find_state_for(parent_r)
             possibilities = [
-                r in set_.dependencies
+                r.name in map(lambda x: x.name, set_.dependencies)
                 for set_ in requirement_state.possibilities
             ]
             if any(possibilities):
@@ -393,7 +392,7 @@ class Resolution:
                 partial_tree.insert(0, grandparent_r)
                 requirement_state = self._find_state_for(grandparent_r)
                 possibilities = [
-                    parent_r in set_.dependencies
+                    parent_r.name in map(lambda x: x.name, set_.dependencies)
                     for set_ in requirement_state.possibilities
                 ]
                 if any(possibilities):
@@ -514,7 +513,9 @@ class Resolution:
         unwinds_to_state.append(unwind_details)
 
         primary_unwinds = unique([
-            uw for uw in unwinds_to_state if uw.unwinding_to_primary_requirement
+            uw
+            for uw in unwinds_to_state
+            if uw.unwinding_to_primary_requirement()
         ])
         parent_unwinds = unique(unwinds_to_state)
         parent_unwinds = [uw for uw in parent_unwinds if uw not in primary_unwinds]
@@ -530,10 +531,10 @@ class Resolution:
                 ]):
                     allowed_possibility_sets.append(possibility_set)
 
-        requirements_to_avoid = flat_map(
+        requirements_to_avoid = list(flat_map(
             parent_unwinds,
             lambda x: x.sub_dependencies_to_avoid
-        )
+        ))
 
         possibilities = []
         for possibility_set in self.state.possibilities:
@@ -637,12 +638,14 @@ class Resolution:
         if not self._parents_of[requirement]:
             return
 
-        index = self._parents_of[requirement][-1]
-        if not index:
+        try:
+            index = self._parents_of[requirement][-1]
+        except ValueError:
             return
 
-        parent_state = self._states[index]
-        if not parent_state:
+        try:
+            parent_state = self._states[index]
+        except ValueError:
             return
 
         return parent_state.requirement
@@ -706,7 +709,7 @@ class Resolution:
         
     @property
     def requirement_trees(self):
-        vertex = self.activated.vertex_named(self.name)
+        vertex = self.activated.vertex_named(self.state.name)
         return [self._requirement_tree_for(r) for r in vertex.requirements]
 
     def _requirement_tree_for(self, requirement):

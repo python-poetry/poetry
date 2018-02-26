@@ -116,6 +116,8 @@ def assert_graph(dg, result):
     packages = sorted(dg.vertices.values(), key=lambda x: x.name)
     expected_packages = sorted(result.vertices.values(), key=lambda x: x.name)
 
+    print(packages)
+    print(expected_packages)
     assert packages == expected_packages
 
 
@@ -127,11 +129,12 @@ def assert_graph(dg, result):
         'simple_with_base',
         'simple_with_dependencies',
         'simple_with_shared_dependencies',
+        'django',
     ]
 )
 def test_resolver(fixture):
     c = case(fixture)
-    resolver = Resolver(c.index, UI())
+    resolver = Resolver(c.index, UI(True))
     dg = resolver.resolve(c.requested, base=c.base)
 
     assert_graph(dg, c.result)

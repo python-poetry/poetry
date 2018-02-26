@@ -1,3 +1,5 @@
+from ..utils import unique
+
 class Vertex:
 
     def __init__(self, name, payload):
@@ -14,9 +16,9 @@ class Vertex:
         
     @property
     def requirements(self):
-        return [
+        return unique([
             edge.requirement for edge in self.incoming_edges
-        ] + self._explicit_requirements
+        ] + self._explicit_requirements)
     
     @property
     def predecessors(self):
@@ -92,4 +94,4 @@ class Vertex:
         return other.path_to(self)
 
     def __repr__(self):
-        return '<Vertex {}>'.format(self.name)
+        return '<Vertex {} ({})>'.format(self.name, self.payload)

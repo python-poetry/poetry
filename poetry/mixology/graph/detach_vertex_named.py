@@ -21,6 +21,8 @@ class DetachVertexNamed(Action):
         if self._name not in graph.vertices:
             return []
 
+        print('Detaching', graph.vertices[self._name])
+
         self._vertex = graph.vertices[self._name]
         del graph.vertices[self._name]
         removed_vertices = [self._vertex]

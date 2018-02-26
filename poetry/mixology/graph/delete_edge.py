@@ -55,5 +55,4 @@ class DeleteEdge(Action):
         except ValueError:
             return
 
-        if index != -1:
-            elements.pop(index)
+        del elements[index]

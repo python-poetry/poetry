@@ -84,7 +84,9 @@ class DependencyGraph:
         dot_edges = []
 
         for n, v in self.vertices.items():
-            dot_vertices.append('  {} [label="{}|{}"]'.format(n, n, v.payload))
+            dot_vertices.append(
+                '  {} [label="{}|{}"]'.format(n, n, v.payload or '')
+            )
             for e in v.outgoing_edges:
                 label = e.requirement
                 dot_edges.append(

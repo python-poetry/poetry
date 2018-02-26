@@ -37,7 +37,7 @@ class AddEdgeNoCircular(Action):
     def down(self, graph):
         edge = self.make_edge(graph)
         self._delete_first(edge.origin.outgoing_edges, edge)
-        self._delete_first(edge.origin.incoming_edges, edge)
+        self._delete_first(edge.destination.incoming_edges, edge)
 
     def make_edge(self, graph):
         return Edge(
@@ -55,5 +55,4 @@ class AddEdgeNoCircular(Action):
         except ValueError:
             return
 
-        if index != -1:
-            elements.pop(index)
+        del elements[index]

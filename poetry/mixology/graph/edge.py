@@ -20,6 +20,9 @@ class Edge:
     def requirement(self):
         return self._requirement
 
+    def __eq__(self, other):
+        return self._origin == other.origin and self._destination == other.destination
+
     def __repr__(self):
         return '<Edge {} -> {}>'.format(
             self._origin.name, self._destination.name
