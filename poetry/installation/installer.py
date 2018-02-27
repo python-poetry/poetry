@@ -10,6 +10,8 @@ from poetry.puzzle.operations.operation import Operation
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 
+from .pip_installer import PipInstaller
+
 
 class Installer:
 
@@ -29,6 +31,8 @@ class Installer:
         self._write_lock = True
         self._dev_mode = True
         self._execute_operations = True
+
+        self._installer = PipInstaller(self._io.venv, self._io)
 
     def run(self):
         # Force update if there is no lock file present
@@ -78,6 +82,19 @@ class Installer:
     def is_dev_mode(self) -> bool:
         return self._dev_mode
 
+    def update(self, update=True) -> 'Installer':
+        self._update = update
+
+        return self
+
+    def is_updating(self) -> bool:
+        return self._update
+
+    def execute_operations(self, execute=True) -> 'Installer':
+        self._execute_operations = execute
+
+        return self
+
     def _do_install(self, local_repo):
         locked_repository = Repository()
         # initialize locked repo if we are installing from lock
@@ -113,7 +130,7 @@ class Installer:
         # if they are present in the local repo
         # TODO
 
-        if ops:
+        if ops and self._execute_operations:
             installs = []
             updates = []
             uninstalls = []
@@ -149,7 +166,8 @@ class Installer:
             elif op.job_type == 'update':
                 local_repo.add_package(op.target_package)
 
-            self._execute(op)
+            if self._execute_operations:
+                self._execute(op)
 
     def _execute(self, operation: Operation) -> None:
         """
@@ -160,27 +178,16 @@ class Installer:
         getattr(self, f'_execute_{method}')(operation)
 
     def _execute_install(self, operation: Install) -> None:
-        self._io.writeln(
-            f'  - Installing <info>{operation.package.name}</> '
-            f'(<comment>{operation.package.full_pretty_version}</>)'
-        )
+        self._installer.install(operation.package)
 
     def _execute_update(self, operation: Update) -> None:
-        name = operation.target_package.name
-        original = operation.initial_package.pretty_version
-        target = operation.target_package.pretty_version
-
-        self._io.writeln(
-            f'  - Updating <info>{name}</> '
-            f'(<comment>{original}</>'
-            f' -> <comment>{target}</>)'
+        self._installer.update(
+            operation.initial_package,
+            operation.target_package
         )
 
     def _execute_uninstall(self, operation: Uninstall) -> None:
-        self._io.writeln(
-            f'  - Removing <info>{operation.package.name}</> '
-            f'(<comment>{operation.package.full_pretty_version}</>)'
-        )
+        self._installer.remove(operation.package)
 
     def _get_operations_from_lock(self,
                                   locked_repository: Repository
