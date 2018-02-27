@@ -1,5 +1,7 @@
 from poetry.semver.helpers import parse_stability
 
+from .dependency import Dependency
+
 
 class Package:
 
@@ -43,7 +45,6 @@ class Package:
         """
         self._pretty_name = name
         self._name = name.lower()
-        self._id = -1
 
         self._version = version
         self._pretty_version = pretty_version
@@ -57,6 +58,12 @@ class Package:
 
         self.requires = []
         self.dev_requires = []
+
+        self.category = 'main'
+        self.hashes = []
+        self.optional = False
+        self.python_versions = '*'
+        self.platform = None
 
     @property
     def name(self):
@@ -103,6 +110,28 @@ class Package:
 
     def is_prerelease(self):
         return self._stability != 'stable'
+
+    def add_dependency(self, name, constraint=None, dev=False):
+        if constraint is None:
+            constraint = '*'
+
+        if isinstance(constraint, dict):
+            if 'git' in constraint:
+                # VCS dependency
+                pass
+            else:
+                version = constraint['version']
+                optional = constraint.get('optional', False)
+                dependency = Dependency(name, version, optional=optional)
+        else:
+            dependency = Dependency(name, constraint)
+
+        if dev:
+            self.dev_requires.append(dependency)
+        else:
+            self.requires.append(dependency)
+
+        return dependency
 
     def __hash__(self):
         return hash((self._name, self._version))

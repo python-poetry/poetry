@@ -62,7 +62,7 @@ class PyPiRepository(Repository):
                 versions.append(version)
 
         for version in versions:
-            packages.append(Package(name, version, version))
+            packages.append(self.package(name, version))
 
         return packages
 
@@ -90,6 +90,10 @@ class PyPiRepository(Repository):
                         optional=m.group('extra') is not None
                     )
                 )
+
+            # Adding hashes information
+            package.hashes = release_info['digests']
+
             self._packages.append(package)
 
             return package

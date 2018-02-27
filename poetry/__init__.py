@@ -1,6 +1,7 @@
 from poetry.console import Application
+from .poetry import Poetry
 
-__version__ = '0.1.0'
+__version__ = Poetry.VERSION
 
 
-console = Application('Poetry', __version__)
+console = Application()

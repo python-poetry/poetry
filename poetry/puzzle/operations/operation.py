@@ -7,6 +7,10 @@ class Operation:
         self._reason = reason
 
     @property
+    def job_type(self):
+        raise NotImplementedError
+
+    @property
     def reason(self) -> str:
         return self._reason
 

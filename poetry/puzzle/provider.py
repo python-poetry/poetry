@@ -17,6 +17,8 @@ from poetry.semver.constraints import Constraint
 
 class Provider(SpecificationProvider):
 
+    UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
+
     def __init__(self, repository: Repository):
         self._repository = repository
 
@@ -63,7 +65,11 @@ class Provider(SpecificationProvider):
     def dependencies_for(self, package: Package):
         package = self._repository.package(package.name, package.version)
 
-        return [r for r in package.requires if not r.is_optional()]
+        return [
+            r for r in package.requires
+            if not r.is_optional()
+            and r.name not in self.UNSAFE_PACKAGES
+        ]
 
     def is_requirement_satisfied_by(self,
                                     requirement: Dependency,
