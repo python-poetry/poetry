@@ -4,23 +4,17 @@ from poetry.repositories.pypi_repository import PyPiRepository
 from .command import Command
 
 
-class InstallCommand(Command):
+class UpdateCommand(Command):
     """
-    Installs the project dependencies.
+    Update dependencies as according to the <comment>poetry.toml</> file.
 
-    install
+    update
+        { packages?* : The packages to update. }
+        { --f|features=* : Features to install. }
         { --no-dev : Do not install dev dependencies. }
         { --dry-run : Outputs the operations but will not execute anything
                       (implicitly enables --verbose). }
     """
-
-    help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
-the current directory, processes it, and downloads and installs all the
-libraries and dependencies outlined in that file. If the file does not
-exist it will look for <comment>poetry.toml</> and do the same.
-
-<info>poetry install</info>    
-"""
 
     def handle(self):
         installer = Installer(
@@ -32,5 +26,8 @@ exist it will look for <comment>poetry.toml</> and do the same.
 
         installer.dev_mode(not self.option('no-dev'))
         installer.dry_run(self.option('dry-run'))
+
+        # Force update
+        installer.update(True)
 
         return installer.run()

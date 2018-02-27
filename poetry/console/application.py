@@ -8,6 +8,7 @@ from poetry.utils.venv import Venv
 from .commands import AboutCommand
 from .commands import InstallCommand
 from .commands import LockCommand
+from .commands import UpdateCommand
 
 
 class Application(BaseApplication):
@@ -38,6 +39,7 @@ class Application(BaseApplication):
             AboutCommand(),
             InstallCommand(),
             LockCommand(),
+            UpdateCommand(),
         ]
 
     def do_run(self, i, o) -> int:

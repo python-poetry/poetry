@@ -98,17 +98,17 @@ class Installer:
     def _do_install(self, local_repo):
         locked_repository = Repository()
         # initialize locked repo if we are installing from lock
-        if not self._update:
+        if not self._update or self._locker.is_locked():
             locked_repository = self._locker.locked_repository(self._dev_mode)
-
-        solver = Solver(locked_repository, self._io)
-
-        request = self._package.requires
-        if self.is_dev_mode():
-            request += self._package.dev_requires
 
         if self._update:
             self._io.writeln('<info>Updating dependencies</>')
+
+            solver = Solver(locked_repository, self._io)
+
+            request = self._package.requires
+            if self.is_dev_mode():
+                request += self._package.dev_requires
 
             ops = solver.solve(request, self._repository)
         else:
@@ -130,7 +130,7 @@ class Installer:
         # if they are present in the local repo
         # TODO
 
-        if ops and self._execute_operations:
+        if ops and (self._execute_operations or self._dry_run):
             installs = []
             updates = []
             uninstalls = []
@@ -166,8 +166,7 @@ class Installer:
             elif op.job_type == 'update':
                 local_repo.add_package(op.target_package)
 
-            if self._execute_operations:
-                self._execute(op)
+            self._execute(op)
 
     def _execute(self, operation: Operation) -> None:
         """
@@ -178,15 +177,40 @@ class Installer:
         getattr(self, f'_execute_{method}')(operation)
 
     def _execute_install(self, operation: Install) -> None:
+        self._io.writeln(
+            f'  - Installing <info>{operation.package.name}</> '
+            f'(<comment>{operation.package.full_pretty_version}</>)'
+        )
+
+        if not self._execute_operations:
+            return
+
         self._installer.install(operation.package)
 
     def _execute_update(self, operation: Update) -> None:
-        self._installer.update(
-            operation.initial_package,
-            operation.target_package
+        source = operation.target_package
+        target = operation.target_package
+
+        self._io.writeln(
+            f'  - Updating <info>{target.name}</> '
+            f'(<comment>{source.pretty_version}</>'
+            f' -> <comment>{target.pretty_version}</>)'
         )
 
+        if not self._execute_operations:
+            return
+
+        self._installer.update(source, target)
+
     def _execute_uninstall(self, operation: Uninstall) -> None:
+        self._io.writeln(
+            f'  - Removing <info>{operation.package.name}</> '
+            f'(<comment>{operation.package.full_pretty_version}</>)'
+        )
+
+        if not self._execute_operations:
+            return
+
         self._installer.remove(operation.package)
 
     def _get_operations_from_lock(self,
