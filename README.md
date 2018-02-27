@@ -19,16 +19,16 @@ See `poet help completions` for full details, but the gist is as simple as using
 
 ```bash
 # Bash
-$ poet completions bash > /etc/bash_completion.d/poet.bash-completion
+$ poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
 # Bash (macOS/Homebrew)
-$ poet completions bash > $(brew --prefix)/etc/bash_completion.d/poet.bash-completion
+$ poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
 # Fish
-$ poet completions fish > ~/.config/fish/completions/poet.fish
+$ poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
-$ poet completions zsh > ~/.zfunc/_poet
+$ poetry completions zsh > ~/.zfunc/_poetry
 ```
 
 *Note:* you may need to restart your shell in order for the changes to take 
@@ -102,21 +102,31 @@ There are some things we can notice here:
 
 
 `poetry` will also detect if you are inside a virtualenv and install the packages accordingly.
-If not it will create one for you. So, `poetry` can be installed globally and used everywhere.
+So, `poetry` can be installed globally and used everywhere.
 
 ## Why?
 
 Packaging system and dependency management in Python is rather convoluted and hard to understand for newcomers.
 Even for seasoned developers it might be cumbersome at times to create all files needed in a Python project: `setup.py`,
-`requirements.txt`, `setup.cfg`, `MANIFEST.in`.
+`requirements.txt`, `setup.cfg`, `MANIFEST.in` and the newly added `Pipfile`.
 
-So I wanted a tool that would limit everything to a single configuration file to do everything: dependency management, packaging
-and publishing.
+So I wanted a tool that would limit everything to a single configuration file to do everything:
+dependency management, packaging and publishing.
 
 It takes inspiration in tools that exist in other languages, like `composer` (PHP) or `cargo` (Rust).
 
-Note that there is no magic here, `poet` uses existing tools (`pip`, `twine`, `setuptools`, `distutils`, `pip-tools`) under the hood
-to achieve that in a more intuitive way.
+And, finally, there is no reliable tool to properly resolves dependencies in Python, so I started `poetry`
+to bring an exhaustive depency resolver to the Python community.
+
+### What about Pipenv?
+
+In short: I do not like the CLI it provides and I think we can do a better and more intuitive one.
+
+Also it only solves partially one problem: dependency management while I wanted something more global
+and accurate to manage Python projects with just one tool.
+
+The `Pipfile` is just a replacement from `requirements.txt` but in the end you will still need to 
+populate your `setup.py` file (or `setup.cfg`) with the exact same dependencies you declared in your `Pipfile`.
 
 
 ## Commands
@@ -162,7 +172,7 @@ If there is a `poetry.lock` file in the current directory,
 it will use the exact versions from there instead of resolving them.
 This ensures that everyone using the library will get the same versions of the dependencies.
 
-If there is no `poetry.lock` file, Poet will create one after dependency resolution.
+If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
 You can specify to the command that yo do not want the development dependencies installed by passing
 the `--no-dev` option.
@@ -182,8 +192,6 @@ poet install -f mysql -f pgsql
 
 * `--no-dev`: Do not install dev dependencies.
 * `-f|--features`: Features to install (multiple values allowed).
-* `--no-progress`: Removes the progress display that can mess with some terminals or scripts which don't handle backspace characters.
-* `--index`: The index to use when installing packages.
 
 
 ### update
@@ -206,7 +214,6 @@ poet update requests toml
 #### Options
 
 * `--no-progress`: Removes the progress display that can mess with some terminals or scripts which don't handle backspace characters.
-* `--index`: The index to use when installing packages.
 
 
 ### package
@@ -239,7 +246,6 @@ poet search requests pendulum
 
 #### Options
 
-* `-i|--index`: The index to use.
 * `-N|--only-name`: Search only in name.
 
 ### lock
@@ -252,8 +258,6 @@ poet lock
 
 #### Options
 
-* `--no-progress`: Removes the progress display that can mess with some terminals or scripts which don't handle backspace characters.
-* `-i|--index`: The index to use.
 * `-f|--force`: Force locking.
 
 
@@ -284,6 +288,10 @@ The version of the package. **Required**
 
 This should follow [semantic versioning](http://semver.org/). However it will not be enforced and you remain
 free to follow another specification.
+
+#### python-version
+
+A list of Python versions for which the package is compatible. **Required**
 
 #### description
 
@@ -349,10 +357,6 @@ An URL to the documentation of the project. **Optional**
 
 A list of keywords (max: 5) that the package is related to. **Optional**
 
-#### python
-
-A list of Python versions for which the package is compatible. **Required**
-
 #### include and exclude
 
 A list of patterns that will be included in the final package.
@@ -386,7 +390,7 @@ include = { from = 'src', include = '**/*', as = 'foo' }
 
 ### `dependencies` and `dev-dependencies`
 
-Poet is configured to look for dependencies on [PyPi](https://pypi.python.org/pypi) by default.
+Poet is configured to look for dependencies on [PyPi](https://pypi.org) by default.
 Only the name and a version string are required in this case.
 
 ```toml
@@ -465,11 +469,11 @@ the minimum information you need to specify is the location of the repository wi
 
 ```toml
 [dependencies]
-requests = { git = "https://github.com/kennethreitz/requests.git" }
+requests = { git = "https://github.com/requests/requests.git" }
 ```
 
-Since we haven’t specified any other information, Poet assumes that we intend to use the latest commit on the `master` branch
-to build our project.
+Since we haven’t specified any other information,
+Poetry assumes that we intend to use the latest commit on the `master` branch to build our project.
 You can combine the `git` key with the `rev`, `tag`, or `branch` keys to specify something else.
 Here's an example of specifying that you want to use the latest commit on a branch named `next`:
 
@@ -484,12 +488,12 @@ You can also specify that a dependency should be installed only for specific Pyt
 
 ```toml
 [dependencies]
-pathlib2 = { version = "^2.2", python = "~2.7" }
+pathlib2 = { version = "^2.2", python-versions = "~2.7" }
 ```
 
 ```toml
 [dependencies]
-pathlib2 = { version = "^2.2", python = ["~2.7", "^3.2"] }
+pathlib2 = { version = "^2.2", python-versions = ["~2.7", "^3.2"] }
 ```
 
 ### `scripts`
@@ -498,14 +502,14 @@ This section describe the scripts or executable that will be installed when inst
 
 ```toml
 [scripts]
-poet = 'poet:app.run'
+poetry = 'poetry:console.run'
 ```
 
-Here, we will have the `poet` script installed which will execute `app.run` in the `poet` package.
+Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
 
 ### `features`
 
-Poet supports features to allow expression of:
+Poetry supports features to allow expression of:
 
 * optional dependencies, which enhance a package, but are not required; and
 * clusters of optional dependencies.
@@ -535,18 +539,20 @@ poet install --features "mysql pgsql"
 poet install -f mysql -f pgsql
 ```
 
-### `entry_points`
+### `plugins`
 
-Poet supports arbitrary [setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html). To match the example in the setuptools documentation, you would use the following:
+Poetry supports arbitrary plugins wich work similarly to
+[setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
+To match the example in the setuptools documentation, you would use the following:
 
 ```toml
-[entry-points] # Optional super table
+[plugins] # Optional super table
 
-[entry-points."blogtool.parsers"]
+[plugins."blogtool.parsers"]
 ".rst" = "some_module::SomeClass"
 ```
 
 ## Resources
 
-* [Official Website](https://github.com/sdispater/poet)
-* [Issue Tracker](https://github.com/sdispater/poet/issues)
+* [Official Website](https://poetry.eustace.io)
+* [Issue Tracker](https://github.com/sdispater/poetry/issues)
