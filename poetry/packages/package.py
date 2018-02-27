@@ -63,7 +63,7 @@ class Package:
         self.hashes = []
         self.optional = False
         self.python_versions = '*'
-        self.platform = None
+        self.platform = '*'
 
     @property
     def name(self):
@@ -111,7 +111,7 @@ class Package:
     def is_prerelease(self):
         return self._stability != 'stable'
 
-    def add_dependency(self, name, constraint=None, dev=False):
+    def add_dependency(self, name, constraint=None, category='main'):
         if constraint is None:
             constraint = '*'
 
@@ -122,11 +122,11 @@ class Package:
             else:
                 version = constraint['version']
                 optional = constraint.get('optional', False)
-                dependency = Dependency(name, version, optional=optional)
+                dependency = Dependency(name, version, optional=optional, category=category)
         else:
-            dependency = Dependency(name, constraint)
+            dependency = Dependency(name, constraint, category=category)
 
-        if dev:
+        if category == 'dev':
             self.dev_requires.append(dependency)
         else:
             self.requires.append(dependency)

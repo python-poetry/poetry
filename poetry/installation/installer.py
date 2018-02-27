@@ -47,15 +47,6 @@ class Installer:
         local_repo = Repository()
         self._do_install(local_repo)
 
-        if self._update and self._write_lock:
-            updated_lock = self._locker.set_lock_data(
-                self._package,
-                local_repo.packages
-            )
-
-            if updated_lock:
-                self._io.writeln('<info>Writing lock file</>')
-
         return 0
 
     def dry_run(self, dry_run=True) -> 'Installer':
@@ -99,7 +90,7 @@ class Installer:
         locked_repository = Repository()
         # initialize locked repo if we are installing from lock
         if not self._update or self._locker.is_locked():
-            locked_repository = self._locker.locked_repository(self._dev_mode)
+            locked_repository = self._locker.locked_repository(True)
 
         if self._update:
             self._io.writeln('<info>Updating dependencies</>')
@@ -121,14 +112,8 @@ class Installer:
         self._io.new_line()
 
         # Execute operations
-        if not ops:
+        if not ops and self._execute_operations:
             self._io.writeln('Nothing to install or update')
-
-        # extract dev packages and mark them to be skipped
-        # if it's a --no-dev install or update
-        # we also force them to be uninstalled
-        # if they are present in the local repo
-        # TODO
 
         if ops and (self._execute_operations or self._dry_run):
             installs = []
@@ -166,6 +151,30 @@ class Installer:
             elif op.job_type == 'update':
                 local_repo.add_package(op.target_package)
 
+        # Adding untouched locked package
+        # to local_repo
+        if self._update:
+            for locked in locked_repository.packages:
+                untouched = True
+                for local_pkg in local_repo.packages:
+                    if locked.name == local_pkg.name:
+                        untouched = False
+
+                if untouched:
+                    local_repo.add_package(locked)
+
+        # Writing lock before installing
+        if self._update and self._write_lock:
+            updated_lock = self._locker.set_lock_data(
+                self._package,
+                local_repo.packages
+            )
+
+            if updated_lock:
+                self._io.writeln('<info>Writing lock file</>')
+                self._io.writeln('')
+
+        for op in ops:
             self._execute(op)
 
     def _execute(self, operation: Operation) -> None:
@@ -177,10 +186,11 @@ class Installer:
         getattr(self, f'_execute_{method}')(operation)
 
     def _execute_install(self, operation: Install) -> None:
-        self._io.writeln(
-            f'  - Installing <info>{operation.package.name}</> '
-            f'(<comment>{operation.package.full_pretty_version}</>)'
-        )
+        if self._execute_operations or self.is_dry_run():
+            self._io.writeln(
+                f'  - Installing <info>{operation.package.name}</> '
+                f'(<comment>{operation.package.full_pretty_version}</>)'
+            )
 
         if not self._execute_operations:
             return
@@ -191,11 +201,12 @@ class Installer:
         source = operation.target_package
         target = operation.target_package
 
-        self._io.writeln(
-            f'  - Updating <info>{target.name}</> '
-            f'(<comment>{source.pretty_version}</>'
-            f' -> <comment>{target.pretty_version}</>)'
-        )
+        if self._execute_operations or self.is_dry_run():
+            self._io.writeln(
+                f'  - Updating <info>{target.name}</> '
+                f'(<comment>{source.pretty_version}</>'
+                f' -> <comment>{target.pretty_version}</>)'
+            )
 
         if not self._execute_operations:
             return
@@ -203,10 +214,11 @@ class Installer:
         self._installer.update(source, target)
 
     def _execute_uninstall(self, operation: Uninstall) -> None:
-        self._io.writeln(
-            f'  - Removing <info>{operation.package.name}</> '
-            f'(<comment>{operation.package.full_pretty_version}</>)'
-        )
+        if self._execute_operations or self.is_dry_run():
+            self._io.writeln(
+                f'  - Removing <info>{operation.package.name}</> '
+                f'(<comment>{operation.package.full_pretty_version}</>)'
+            )
 
         if not self._execute_operations:
             return
@@ -224,7 +236,9 @@ class Installer:
             for installed in installed_repo.packages:
                 if locked.name == installed.name:
                     is_installed = True
-                    if locked.version != installed.version:
+                    if locked.category == 'dev' and not self.is_dev_mode():
+                        ops.append(Uninstall(locked))
+                    elif locked.version != installed.version:
                         ops.append(Update(
                             installed, locked
                         ))

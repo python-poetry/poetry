@@ -29,6 +29,14 @@ class Solver:
 
         packages = [v.payload for v in graph.vertices.values()]
 
+        # Setting categories
+        for vertex in graph.vertices.values():
+            tags = self._get_categories_for_vertex(vertex, requested)
+            if 'main' in tags:
+                vertex.payload.category = 'main'
+            else:
+                vertex.payload.category = 'dev'
+
         operations = []
         for package in packages:
             installed = False
@@ -56,3 +64,16 @@ class Solver:
                 operations.append(Uninstall(pkg))
 
         return list(reversed(operations))
+
+    def _get_categories_for_vertex(self, vertex, requested):
+        tags = []
+        if not vertex.incoming_edges:
+            # Original dependency
+            for req in requested:
+                if req.name == vertex.name:
+                    tags.append(req.category)
+        else:
+            for edge in vertex.incoming_edges:
+                tags += self._get_categories_for_vertex(edge.origin, requested)
+
+        return tags

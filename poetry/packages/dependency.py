@@ -3,7 +3,7 @@ from poetry.semver.version_parser import VersionParser
 
 class Dependency:
 
-    def __init__(self, name, constraint, optional=False):
+    def __init__(self, name, constraint, optional=False, category='main'):
         self._name = name.lower()
         try:
             self._constraint = VersionParser().parse_constraints(constraint)
@@ -12,6 +12,7 @@ class Dependency:
 
         self._pretty_constraint = constraint
         self._optional = optional
+        self._category = category
 
     @property
     def name(self):
@@ -28,6 +29,10 @@ class Dependency:
     @property
     def pretty_name(self):
         return '{} ({})'.format(self._name, self._pretty_constraint)
+
+    @property
+    def category(self):
+        return self._category
 
     def accepts_prereleases(self):
         return False

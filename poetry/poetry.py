@@ -61,7 +61,7 @@ class Poetry:
 
         if 'dev-dependencies' in local_config:
             for name, constraint in local_config['dev-dependencies'].items():
-                package.add_dependency(name, constraint, dev=True)
+                package.add_dependency(name, constraint, category='dev')
 
         locker = Locker(poetry_file.with_suffix('.lock'), poetry_file)
 

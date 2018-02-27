@@ -14,7 +14,7 @@ class PipInstaller:
         self.run('install', self.requirement(target), '--no-deps', '-U')
 
     def remove(self, package):
-        self.run('uninstall', package.name)
+        self.run('uninstall', package.name, '-y')
 
     def run(self, *args) -> str:
         return self._venv.run('pip', *args)

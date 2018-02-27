@@ -74,33 +74,34 @@ class Locker:
             return packages
 
         for info in locked_packages:
-            packages.add_package(
-                poetry.packages.Package(
-                    info['name'], info['version'], info['version']
-                )
+            package = poetry.packages.Package(
+                info['name'],
+                info['version'],
+                info['version']
             )
+            package.category = info['category']
+            package.optional = info['optional']
+            package.hashes = info['checksum']
+            package.python_versions = info['python-versions']
+
+            packages.add_package(package)
 
         return packages
 
     def set_lock_data(self,
-                      root, packages,
-                      python_versions=None, platform=None) -> bool:
+                      root, packages) -> bool:
         lock = {
             'root': {
                 'name': root.name,
                 'version': root.version,
-                'python_versions': python_versions or '*'
+                'python_versions': root.python_versions,
+                'platform': root.platform
             },
-            'packages': None,
+            'packages': self._lock_packages(packages),
             'metadata': {
                 'content-hash': self._content_hash
             }
         }
-
-        if platform is not None:
-            lock['root']['platform'] = platform
-
-        lock['packages'] = self._lock_packages(packages)
 
         if not self.is_locked() or lock != self.lock_data:
             self._lock.write(lock)
@@ -156,6 +157,7 @@ class Locker:
             'category': package.category,
             'optional': package.optional,
             'python-versions': package.python_versions,
+            'platform': package.platform,
             'checksum': package.hashes
         }
 
