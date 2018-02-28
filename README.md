@@ -3,8 +3,14 @@
 Poetry helps you declare, manage and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
+![Poet Install](https://raw.githubusercontent.com/sdispater/poetry/master/assets/poet-install.gif)
+
 The package is **highly experimental** at the moment so expect things to change and break.
 However, if you feel adventurous feedback and pull requests are greatly appreciated.
+
+Also, be aware that the features described here are the goal that this library is aiming
+for and, as of now, not all of them are implemented. The dependency management is pretty much
+done while the packaging and publishin are not done yet.
 
 ## Installation
 
@@ -19,16 +25,16 @@ See `poet help completions` for full details, but the gist is as simple as using
 
 ```bash
 # Bash
-$ poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
+poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
 # Bash (macOS/Homebrew)
-$ poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
+poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
 # Fish
-$ poetry completions fish > ~/.config/fish/completions/poetry.fish
+poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
-$ poetry completions zsh > ~/.zfunc/_poetry
+poetry completions zsh > ~/.zfunc/_poetry
 ```
 
 *Note:* you may need to restart your shell in order for the changes to take 
@@ -68,7 +74,7 @@ keywords = ['packaging', 'poet']
 
 include = ['poet/**/*', 'LICENSE']
 
-python = ["~2.7", "^3.2"]
+python-versions = "~2.7 || ^3.2"
 
 
 [dependencies]
@@ -100,9 +106,10 @@ There are some things we can notice here:
 * The dependencies sections support caret, tilde, wildcard, inequality and multiple requirements.
 * You must specify the python versions for which your package is compatible.
 
-
 `poetry` will also detect if you are inside a virtualenv and install the packages accordingly.
 So, `poetry` can be installed globally and used everywhere.
+
+`poetry` also comes with a full fledged dependency resolution library, inspired by [Molinillo](https://github.com/CocoaPods/Molinillo).
 
 ## Why?
 
@@ -110,7 +117,7 @@ Packaging system and dependency management in Python is rather convoluted and ha
 Even for seasoned developers it might be cumbersome at times to create all files needed in a Python project: `setup.py`,
 `requirements.txt`, `setup.cfg`, `MANIFEST.in` and the newly added `Pipfile`.
 
-So I wanted a tool that would limit everything to a single configuration file to do everything:
+So I wanted a tool that would limit everything to a single configuration file to do:
 dependency management, packaging and publishing.
 
 It takes inspiration in tools that exist in other languages, like `composer` (PHP) or `cargo` (Rust).
@@ -127,36 +134,40 @@ and accurate to manage Python projects with just one tool.
 
 The `Pipfile` is just a replacement from `requirements.txt` but in the end you will still need to 
 populate your `setup.py` file (or `setup.cfg`) with the exact same dependencies you declared in your `Pipfile`.
+So, in the end, you will still need to manage a few configuration files to properly setup your project.
 
 
 ## Commands
 
 
-### init
+### new
 
-This command will help you create a `poetry.toml` file interactively
-by prompting you to provide basic information about your package.
-
-It will interactively ask you to fill in the fields, while using some smart defaults.
+This command will help you kickstart your new Python project by creating
+a directory structure suitable for most projects.
 
 ```bash
-poet init
+poetry new my-package
 ```
 
-However, if you just want a basic template and fill the information directly, you can just do:
+will create a folder as follows:
+
+```text
+my-project
+├── poetry.toml
+├── README.rst
+├── my_project
+    └── __init__.py
+├── tests
+    ├── __init__.py
+    └── test_my_package
+```
+
+If you want to name your project differently than the folder, you can pass
+the `--name` option:
 
 ```bash
-poet init default
+poetry new my-folder --my-package
 ```
-
-#### Options
-
-   * `--name`: Name of the package. 
-   * `--description`: Description of the package.
-   * `--author`: Author of the package.
-   * `--require`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
-   * `--require-dev`: Development requirements, see `--require`.
-   * `--index`: Index to use when searching for packages.
 
 
 ### install
@@ -392,6 +403,8 @@ Only the name and a version string are required in this case.
 [dependencies]
 requests = "^2.13.0"
 ```
+
+Private repositories are not supported yet but are planned.
 
 #### Caret requirement
 
