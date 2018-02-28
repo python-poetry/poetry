@@ -116,8 +116,6 @@ def assert_graph(dg, result):
     packages = sorted(dg.vertices.values(), key=lambda x: x.name)
     expected_packages = sorted(result.vertices.values(), key=lambda x: x.name)
 
-    print(packages)
-    print(expected_packages)
     assert packages == expected_packages
 
 
