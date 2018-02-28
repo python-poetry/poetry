@@ -15,11 +15,16 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
-nosetests.xml
 .pytest_cache
 
 .DS_Store
 .idea/*
 .python-version
 
+/test.py
+/test_*.*
+
+setup.cfg
+setup.py
+MANIFEST.in
 poetry.lock
