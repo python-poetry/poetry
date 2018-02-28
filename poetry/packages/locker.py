@@ -27,6 +27,14 @@ class Locker:
         self._content_hash = self._get_content_hash()
 
     @property
+    def original(self) -> TomlFile:
+        return self._original
+
+    @property
+    def lock(self) -> TomlFile:
+        return self._lock
+
+    @property
     def lock_data(self):
         if self._lock_data is None:
             self._lock_data = self._get_lock_data()

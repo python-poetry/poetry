@@ -6,6 +6,7 @@ from poetry.poetry import Poetry
 from poetry.utils.venv import Venv
 
 from .commands import AboutCommand
+from .commands import AddCommand
 from .commands import InstallCommand
 from .commands import LockCommand
 from .commands import UpdateCommand
@@ -28,6 +29,9 @@ class Application(BaseApplication):
 
         return self._poetry
 
+    def reset_poetry(self) -> None:
+        self._poetry = None
+
     @property
     def venv(self) -> Venv:
         return self._venv
@@ -37,6 +41,7 @@ class Application(BaseApplication):
 
         return commands + [
             AboutCommand(),
+            AddCommand(),
             InstallCommand(),
             LockCommand(),
             UpdateCommand(),

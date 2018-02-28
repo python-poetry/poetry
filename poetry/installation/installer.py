@@ -1,5 +1,6 @@
 from typing import List
 
+from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
 from poetry.puzzle import Solver
@@ -31,6 +32,8 @@ class Installer:
         self._write_lock = True
         self._dev_mode = True
         self._execute_operations = True
+
+        self._whitelist = {}
 
         self._installer = PipInstaller(self._io.venv, self._io)
 
@@ -86,6 +89,11 @@ class Installer:
 
         return self
 
+    def whitelist(self, packages: dict) -> 'Installer':
+        self._whitelist = packages
+
+        return self
+
     def _do_install(self, local_repo):
         locked_repository = Repository()
         # initialize locked repo if we are installing from lock
@@ -94,6 +102,27 @@ class Installer:
 
         if self._update:
             self._io.writeln('<info>Updating dependencies</>')
+            fixed = []
+
+            # If the whitelist is enabled, packages not in it are fixed
+            # to the version specified in the lock
+            if self._whitelist:
+                # collect packages to fixate from root requirements
+                candidates = []
+                for package in locked_repository.packages:
+                    candidates.append(package)
+
+                # fix them to the version in lock if they are not updateable
+                for candidate in candidates:
+                    to_fix = True
+                    for require in self._whitelist.keys():
+                        if require == candidate.name:
+                            to_fix = False
+
+                    if to_fix:
+                        fixed.append(
+                            Dependency(candidate.name, candidate.version)
+                        )
 
             solver = Solver(locked_repository, self._io)
 
@@ -101,7 +130,7 @@ class Installer:
             if self.is_dev_mode():
                 request += self._package.dev_requires
 
-            ops = solver.solve(request, self._repository)
+            ops = solver.solve(request, self._repository, fixed=fixed)
         else:
             self._io.writeln('<info>Installing dependencies from lock file</>')
             # If we are installing from lock
@@ -112,7 +141,7 @@ class Installer:
         self._io.new_line()
 
         # Execute operations
-        if not ops and self._execute_operations:
+        if not ops and (self._execute_operations or self._dry_run):
             self._io.writeln('Nothing to install or update')
 
         if ops and (self._execute_operations or self._dry_run):

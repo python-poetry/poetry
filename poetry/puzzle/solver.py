@@ -1,6 +1,7 @@
 from typing import List
 
 from poetry.mixology import Resolver
+from poetry.mixology.dependency_graph import DependencyGraph
 from poetry.mixology.exceptions import ResolverError
 
 from .exceptions import SolverProblemError
@@ -19,11 +20,17 @@ class Solver:
         self._installed = installed
         self._io = io
 
-    def solve(self, requested, repository) -> List[Operation]:
+    def solve(self, requested, repository, fixed=None) -> List[Operation]:
         resolver = Resolver(Provider(repository), UI(self._io))
 
+        base = None
+        if fixed is not None:
+            base = DependencyGraph()
+            for fixed_req in fixed:
+                base.add_vertex(fixed_req.name, fixed_req, True)
+
         try:
-            graph = resolver.resolve(requested)
+            graph = resolver.resolve(requested, base=base)
         except ResolverError as e:
             raise SolverProblemError(e)
 
