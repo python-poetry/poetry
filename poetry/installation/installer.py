@@ -135,19 +135,9 @@ class Installer:
             # If we are installing from lock
             # Filter the operations by comparing it with what is
             # currently installed
-            ops = []
-            for package in locked_repository.packages:
-                ops.append(Install(package))
+            ops = self._get_operations_from_lock(locked_repository)
 
-        for op in ops:
-            if op.job_type == 'install':
-                local_repo.add_package(op.package)
-            elif op.job_type == 'update':
-                local_repo.add_package(op.target_package)
-            elif op.job_type == 'uninstall':
-                local_repo.remove_package(op.package)
-
-        ops = self._filter_operations(ops)
+        self._populate_local_repo(local_repo, ops, locked_repository)
 
         self._io.new_line()
 
@@ -247,44 +237,55 @@ class Installer:
 
         self._installer.remove(operation.package)
 
-    def _filter_operations(self,
-                           ops: List[Operation]
-                           ) -> List[Operation]:
-        installed_repo = InstalledRepository.load(self._io.venv)
-        new_ops = []
+    def _populate_local_repo(self, local_repo, ops, locked_repository):
+        # Add all locked packages from the lock and go from there
+        for package in locked_repository.packages:
+            local_repo.add_package(package)
 
+        # Now, walk through all operations and add/remove/update accordingly
         for op in ops:
             if isinstance(op, Update):
                 package = op.target_package
             else:
                 package = op.package
 
+            acted_on = False
+            for pkg in local_repo.packages:
+                if pkg.name == package.name:
+                    # The package we operate on is in the local repo
+                    if op.job_type == 'update':
+                        if pkg.version == package.version:
+                            break
+
+                        local_repo.remove_package(pkg)
+                        local_repo.add_package(op.target_package)
+                    elif op.job_type == 'uninstall':
+                        local_repo.remove_package(op.package)
+
+                    acted_on = True
+
+            if not acted_on:
+                local_repo.add_package(package)
+
+    def _get_operations_from_lock(self,
+                                  locked_repository: Repository
+                                  ) -> List[Operation]:
+        installed_repo = InstalledRepository.load(self._io.venv)
+        ops = []
+
+        for locked in locked_repository.packages:
             is_installed = False
             for installed in installed_repo.packages:
-                if package.name == installed.name:
+                if locked.name == installed.name:
                     is_installed = True
-                    if op.job_type == 'uninstall':
-                        new_ops.append(op)
-                        break
-
-                    if package.version != installed.version:
-                        new_ops.append(Update(installed, package))
-                    elif package.category == 'dev' and not self.is_dev_mode():
-                        if op.job_type == 'uninstall':
-                            new_ops.append(op)
-                        else:
-                            new_ops.append(Uninstall(installed))
-                    else:
-                        # Nothing to do
-                        break
+                    if locked.category == 'dev' and not self.is_dev_mode():
+                        ops.append(Uninstall(locked))
+                    elif locked.version != installed.version:
+                        ops.append(Update(
+                            installed, locked
+                        ))
 
             if not is_installed:
-                if op.job_type in ['update', 'uninstall']:
-                    continue
+                ops.append(Install(locked))
 
-                new_ops.append(op)
-
-        return new_ops
-
-
-
+        return ops

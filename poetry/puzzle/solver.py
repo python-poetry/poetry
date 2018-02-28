@@ -16,8 +16,8 @@ from .ui import UI
 
 class Solver:
 
-    def __init__(self, installed, io):
-        self._installed = installed
+    def __init__(self, locked, io):
+        self._locked = locked
         self._io = io
 
     def solve(self, requested, repository, fixed=None) -> List[Operation]:
@@ -46,21 +46,21 @@ class Solver:
 
         operations = []
         for package in packages:
-            processed = False
-            for pkg in self._installed.packages:
+            installed = False
+            for pkg in self._locked.packages:
                 if package.name == pkg.name:
+                    installed = True
                     # Checking version
                     if package.version != pkg.version:
-                        processed = True
                         operations.append(Update(pkg, package))
 
                     break
 
-            if not processed:
+            if not installed:
                 operations.append(Install(package))
 
         # Checking for removals
-        for pkg in self._installed.packages:
+        for pkg in self._locked.packages:
             remove = True
             for package in packages:
                 if pkg.name == package.name:
