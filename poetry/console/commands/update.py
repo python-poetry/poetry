@@ -10,19 +10,23 @@ class UpdateCommand(Command):
 
     update
         { packages?* : The packages to update. }
-        { --f|features=* : Features to install. }
         { --no-dev : Do not install dev dependencies. }
         { --dry-run : Outputs the operations but will not execute anything
                       (implicitly enables --verbose). }
     """
 
     def handle(self):
+        packages = self.argument('packages')
+
         installer = Installer(
             self.output,
             self.poetry.package,
             self.poetry.locker,
-            PyPiRepository()
+            self.poetry.repository
         )
+
+        if packages:
+            installer.whitelist({name: '*' for name in packages})
 
         installer.dev_mode(not self.option('no-dev'))
         installer.dry_run(self.option('dry-run'))

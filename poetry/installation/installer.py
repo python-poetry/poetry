@@ -227,7 +227,7 @@ class Installer:
         self._installer.install(operation.package)
 
     def _execute_update(self, operation: Update) -> None:
-        source = operation.target_package
+        source = operation.initial_package
         target = operation.target_package
 
         if self._execute_operations or self.is_dry_run():
