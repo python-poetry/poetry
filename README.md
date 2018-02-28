@@ -3,7 +3,7 @@
 Poetry helps you declare, manage and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
-![Poet Install](https://raw.githubusercontent.com/sdispater/poetry/master/assets/poet-install.gif)
+![Poet Install](https://raw.githubusercontent.com/sdispater/poetry/master/assets/install.gif)
 
 The package is **highly experimental** at the moment so expect things to change and break.
 However, if you feel adventurous feedback and pull requests are greatly appreciated.
