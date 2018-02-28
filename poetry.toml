@@ -29,7 +29,7 @@ toml = "^0.9"
 cachy = "^0.1.0"
 
 [dev-dependencies]
-pytest = "^3.3"
+pytest = "~3.4"
 
 
 [scripts]
