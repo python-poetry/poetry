@@ -48,7 +48,7 @@ class Locker:
         if not self._lock.exists():
             return False
 
-        return 'packages' in self.lock_data
+        return 'package' in self.lock_data
 
     def is_fresh(self) -> bool:
         """
@@ -72,10 +72,10 @@ class Locker:
         packages = Repository()
 
         if with_dev_reqs:
-            locked_packages = lock_data['packages']
+            locked_packages = lock_data['package']
         else:
             locked_packages = [
-                p for p in lock_data['packages'] if p['category'] == 'main'
+                p for p in lock_data['package'] if p['category'] == 'main'
             ]
 
         if not locked_packages:
@@ -89,7 +89,7 @@ class Locker:
             )
             package.category = info['category']
             package.optional = info['optional']
-            package.hashes = info['checksum']
+            package.hashes = lock_data['metadata']['hashes'][info['name']]
             package.python_versions = info['python-versions']
 
             if 'source' in info:
@@ -103,26 +103,33 @@ class Locker:
 
     def set_lock_data(self,
                       root, packages) -> bool:
+        hashes = {}
+        packages = self._lock_packages(packages)
+        # Retrieving hashes
+        for package in packages:
+            hashes[package['name']] = package['hashes']
+            del package['hashes']
+
         lock = {
-            'root': {
-                'name': root.name,
-                'version': root.version,
-                'python_versions': root.python_versions,
-                'platform': root.platform
-            },
-            'packages': self._lock_packages(packages),
+            'package': packages,
             'metadata': {
-                'content-hash': self._content_hash
+                'python-versions': root.python_versions,
+                'platform': root.platform,
+                'content-hash': self._content_hash,
+                'hashes': hashes,
             }
         }
 
         if not self.is_locked() or lock != self.lock_data:
-            self._lock.write(lock)
-            self._lock_data = None
+            self._write_lock_data(lock)
 
             return True
 
         return False
+
+    def _write_lock_data(self, data):
+        self._lock.write(data)
+        self._lock_data = None
 
     def _get_content_hash(self) -> str:
         """
@@ -153,7 +160,8 @@ class Locker:
 
         return self._lock.read()
 
-    def _lock_packages(self, packages: List['poetry.packages.Package']) -> list:
+    def _lock_packages(self,
+                       packages: List['poetry.packages.Package']) -> list:
         locked = []
 
         for package in sorted(packages, key=lambda x: x.name):
@@ -171,7 +179,7 @@ class Locker:
             'optional': package.optional,
             'python-versions': package.python_versions,
             'platform': package.platform,
-            'checksum': package.hashes,
+            'hashes': package.hashes,
         }
 
         if package.source_type:

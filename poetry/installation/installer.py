@@ -11,6 +11,7 @@ from poetry.puzzle.operations.operation import Operation
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 
+from .base_installer import BaseInstaller
 from .pip_installer import PipInstaller
 
 
@@ -35,7 +36,7 @@ class Installer:
 
         self._whitelist = {}
 
-        self._installer = PipInstaller(self._io.venv, self._io)
+        self._installer = self._get_installer()
 
     def run(self):
         # Force update if there is no lock file present
@@ -289,3 +290,6 @@ class Installer:
                 ops.append(Install(locked))
 
         return ops
+
+    def _get_installer(self) -> BaseInstaller:
+        return PipInstaller(self._io.venv, self._io)

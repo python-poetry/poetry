@@ -1,7 +1,9 @@
 from poetry.utils.venv import Venv
 
+from .base_installer import BaseInstaller
 
-class PipInstaller:
+
+class PipInstaller(BaseInstaller):
 
     def __init__(self, venv: Venv, io):
         self._venv = venv

@@ -7,6 +7,14 @@
 - Added `remove` command.
 - Added basic support for VCS (git) dependencies.
 
+### Changed
+
+- Changed `poetry.lock` format.
+
+### Fixed
+
+- Fixed dependencies solving that would lead to dependencies not being written to lock.
+
 
 ## [0.1.0] - 2018-02-28
 

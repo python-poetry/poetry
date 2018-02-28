@@ -36,6 +36,10 @@ class Poetry:
     def repository(self) -> PyPiRepository:
         return self._repository
 
+    @property
+    def installer(self):
+        return self._instal
+
     @classmethod
     def create(cls, cwd) -> 'Poetry':
         poetry_file = Path(cwd) / 'poetry.toml'
