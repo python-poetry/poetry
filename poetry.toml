@@ -1,7 +1,7 @@
 [package]
 name = "poetry"
 version = "0.1.0"
-description = "Python dependency management and packaging make easy."
+description = "Python dependency management and packaging made easy."
 
 python-versions = ["^3.6"]
 
