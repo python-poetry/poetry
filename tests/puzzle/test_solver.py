@@ -184,3 +184,48 @@ def test_update_installed(solver, repo, installed):
     check_solver_result(ops, [
         {'job': 'update', 'from': package_a, 'to': new_package_a}
     ])
+
+
+def test_update_with_fixed(solver, repo, installed):
+    installed.add_package(get_package('A', '1.0'))
+
+    package_a = get_package('A', '1.0')
+    new_package_a = get_package('A', '1.1')
+    repo.add_package(package_a)
+    repo.add_package(new_package_a)
+
+    request = [
+        get_dependency('A'),
+    ]
+
+    ops = solver.solve(request, repo, fixed=[get_dependency('A', '1.0')])
+
+    check_solver_result(ops, [])
+
+
+def test_solver_sets_categories(solver, repo):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+    package_b.requires.append(get_dependency('C', '~1.0'))
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    request = [
+        get_dependency('A'),
+        get_dependency('B', category='dev')
+    ]
+
+    ops = solver.solve(request, repo)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_a},
+    ])
+
+    assert package_c.category == 'dev'
+    assert package_b.category == 'dev'
+    assert package_a.category == 'main'

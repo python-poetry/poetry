@@ -8,5 +8,5 @@ def get_package(name, version):
     return Package(name, normalize_version(version), version)
 
 
-def get_dependency(name, constraint=None):
-    return Dependency(name, constraint or '*')
+def get_dependency(name, constraint=None, category='main'):
+    return Dependency(name, constraint or '*', category=category)
