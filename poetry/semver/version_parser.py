@@ -111,7 +111,7 @@ class VersionParser:
             elif m.group(3):
                 position = 2
             elif m.group(2):
-                position = 1
+                position = 2
             else:
                 position = 0
 

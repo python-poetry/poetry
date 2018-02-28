@@ -64,13 +64,14 @@ def test_parse_constraints_wildcard(parser, input, min, max):
     'input,min,max',
     [
         ('~v1', Constraint('>=', '1.0.0.0'), Constraint('<', '2.0.0.0')),
-        ('~1.0', Constraint('>=', '1.0.0.0'), Constraint('<', '2.0.0.0')),
+        ('~1.0', Constraint('>=', '1.0.0.0'), Constraint('<', '1.1.0.0')),
         ('~1.0.0', Constraint('>=', '1.0.0.0'), Constraint('<', '1.1.0.0')),
-        ('~1.2', Constraint('>=', '1.2.0.0'), Constraint('<', '2.0.0.0')),
+        ('~1.2', Constraint('>=', '1.2.0.0'), Constraint('<', '1.3.0.0')),
         ('~1.2.3', Constraint('>=', '1.2.3.0'), Constraint('<', '1.3.0.0')),
         ('~1.2.3.4', Constraint('>=', '1.2.3.4'), Constraint('<', '1.2.4.0')),
-        ('~1.2-beta', Constraint('>=', '1.2.0.0-beta'), Constraint('<', '2.0.0.0')),
-        ('~1.2-b2', Constraint('>=', '1.2.0.0-beta.2'), Constraint('<', '2.0.0.0')),
+        ('~1.2-beta', Constraint('>=', '1.2.0.0-beta'), Constraint('<', '1.3.0.0')),
+        ('~1.2-b2', Constraint('>=', '1.2.0.0-beta.2'), Constraint('<', '1.3.0.0')),
+        ('~0.3', Constraint('>=', '0.3.0.0'), Constraint('<', '0.4.0.0')),
     ]
 )
 def test_parse_constraints_tilde(parser, input, min, max):
