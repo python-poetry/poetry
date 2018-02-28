@@ -12,6 +12,9 @@ Also, be aware that the features described here are the goal that this library i
 for and, as of now, not all of them are implemented. The dependency management is pretty much
 done while the packaging and publishin are not done yet.
 
+And finally, Poetry's code is only compatible with Python 3.6+ but it can manage
+Python project's with previous versions without any problem.
+
 ## Installation
 
 ```bash
@@ -127,7 +130,8 @@ to bring an exhaustive depency resolver to the Python community.
 
 ### What about Pipenv?
 
-In short: I do not like the CLI it provides and I think we can do a better and more intuitive one.
+In short: I do not like the CLI it provides, or some of the decisions made,
+and I think we can do a better and more intuitive one.
 
 Also it only solves partially one problem: dependency management while I wanted something more global
 and accurate to manage Python projects with just one tool.
@@ -185,14 +189,15 @@ This ensures that everyone using the library will get the same versions of the d
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
-You can specify to the command that yo do not want the development dependencies installed by passing
+You can specify to the command that you do not want the development dependencies installed by passing
 the `--no-dev` option.
 
 ```bash
 poetry install --no-dev
 ```
 
-You can also specify the features you want installed by passing the `--f|--features` option (See [Features](#features) for more info)
+You can also specify the features you want installed
+by passing the `--f|--features` option (See [Features](#features) for more info)
 
 ```bash
 poetry install --features "mysql pgsql"
