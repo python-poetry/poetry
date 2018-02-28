@@ -82,6 +82,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
             return 1
 
+        # Cosmetic new line
+        self.line('')
+
         # Update packages
         self.reset_poetry()
 
