@@ -233,11 +233,34 @@ poetry update requests toml
 
 ### add
 
-The `add` command adds new packages to the `poetry.toml` file from the current directory.
+The `add` command adds required packages to your `poetry.toml` and installs them.
+
+If you do not specify a version constraint,
+poetry will choose a suitable one based on the available package versions.
 
 ```bash
 poetry add requests pendulum
 ```
+
+#### Options
+
+* `--D|dev`: Add package as development dependency.
+* `--optional` : Add as an optional dependency.
+
+
+### remove
+
+The `remove` command removes a package from the current
+list of installed packages
+
+```bash
+poetry remove pendulum
+```
+
+#### Options
+
+* `--D|dev`: Removes a package from the development dependencies.
+* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
 ### package
