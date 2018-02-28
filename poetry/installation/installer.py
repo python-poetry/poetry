@@ -127,8 +127,7 @@ class Installer:
             solver = Solver(locked_repository, self._io)
 
             request = self._package.requires
-            if self.is_dev_mode():
-                request += self._package.dev_requires
+            request += self._package.dev_requires
 
             ops = solver.solve(request, self._repository, fixed=fixed)
         else:
@@ -136,7 +135,19 @@ class Installer:
             # If we are installing from lock
             # Filter the operations by comparing it with what is
             # currently installed
-            ops = self._get_operations_from_lock(locked_repository)
+            ops = []
+            for package in locked_repository.packages:
+                ops.append(Install(package))
+
+        for op in ops:
+            if op.job_type == 'install':
+                local_repo.add_package(op.package)
+            elif op.job_type == 'update':
+                local_repo.add_package(op.target_package)
+            elif op.job_type == 'uninstall':
+                local_repo.remove_package(op.package)
+
+        ops = self._filter_operations(ops)
 
         self._io.new_line()
 
@@ -173,24 +184,6 @@ class Installer:
                 f''
             )
             self._io.new_line()
-
-        for op in ops:
-            if op.job_type == 'install':
-                local_repo.add_package(op.package)
-            elif op.job_type == 'update':
-                local_repo.add_package(op.target_package)
-
-        # Adding untouched locked package
-        # to local_repo
-        if self._update:
-            for locked in locked_repository.packages:
-                untouched = True
-                for local_pkg in local_repo.packages:
-                    if locked.name == local_pkg.name:
-                        untouched = False
-
-                if untouched:
-                    local_repo.add_package(locked)
 
         # Writing lock before installing
         if self._update and self._write_lock:
@@ -254,28 +247,44 @@ class Installer:
 
         self._installer.remove(operation.package)
 
-    def _get_operations_from_lock(self,
-                                  locked_repository: Repository
-                                  ) -> List[Operation]:
+    def _filter_operations(self,
+                           ops: List[Operation]
+                           ) -> List[Operation]:
         installed_repo = InstalledRepository.load(self._io.venv)
-        ops = []
+        new_ops = []
 
-        for locked in locked_repository.packages:
+        for op in ops:
+            if isinstance(op, Update):
+                package = op.target_package
+            else:
+                package = op.package
+
             is_installed = False
             for installed in installed_repo.packages:
-                if locked.name == installed.name:
+                if package.name == installed.name:
                     is_installed = True
-                    if locked.category == 'dev' and not self.is_dev_mode():
-                        ops.append(Uninstall(locked))
-                    elif locked.version != installed.version:
-                        ops.append(Update(
-                            installed, locked
-                        ))
+                    if op.job_type == 'uninstall':
+                        new_ops.append(op)
+                        break
+
+                    if package.version != installed.version:
+                        new_ops.append(Update(installed, package))
+                    elif package.category == 'dev' and not self.is_dev_mode():
+                        if op.job_type == 'uninstall':
+                            new_ops.append(op)
+                        else:
+                            new_ops.append(Uninstall(installed))
+                    else:
+                        # Nothing to do
+                        break
 
             if not is_installed:
-                ops.append(Install(locked))
+                if op.job_type in ['update', 'uninstall']:
+                    continue
 
-        return ops
+                new_ops.append(op)
+
+        return new_ops
 
 
 

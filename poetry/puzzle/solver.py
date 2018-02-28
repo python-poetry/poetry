@@ -46,17 +46,17 @@ class Solver:
 
         operations = []
         for package in packages:
-            installed = False
+            processed = False
             for pkg in self._installed.packages:
                 if package.name == pkg.name:
-                    installed = True
                     # Checking version
                     if package.version != pkg.version:
+                        processed = True
                         operations.append(Update(pkg, package))
 
                     break
 
-            if not installed:
+            if not processed:
                 operations.append(Install(package))
 
         # Checking for removals
