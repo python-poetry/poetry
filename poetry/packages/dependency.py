@@ -28,7 +28,7 @@ class Dependency:
 
     @property
     def pretty_name(self):
-        return '{} ({})'.format(self._name, self._pretty_constraint)
+        return '{} ({})'.format(self._name, self.pretty_constraint)
 
     @property
     def category(self):
@@ -39,6 +39,9 @@ class Dependency:
 
     def is_optional(self):
         return self._optional
+
+    def is_vcs(self):
+        return False
 
     def __eq__(self, other):
         if not isinstance(other, Dependency):

@@ -5,6 +5,7 @@
 ### Added
 
 - Added `remove` command.
+- Added basic support for VCS (git) dependencies.
 
 
 ## [0.1.0] - 2018-02-28

@@ -1,4 +1,11 @@
+import os
+import shutil
+
+import toml
+
 from functools import cmp_to_key
+from pathlib import Path
+from tempfile import mkdtemp
 from typing import Dict
 from typing import List
 
@@ -8,11 +15,16 @@ from poetry.mixology.contracts import SpecificationProvider
 
 from poetry.packages import Dependency
 from poetry.packages import Package
+from poetry.packages import VCSDependency
 
 from poetry.repositories.repository import Repository
 
 from poetry.semver import less_than
 from poetry.semver.constraints import Constraint
+
+from poetry.utils.venv import Venv
+
+from poetry.vcs.git import Git
 
 
 class Provider(SpecificationProvider):
@@ -47,6 +59,9 @@ class Provider(SpecificationProvider):
         The specifications in the returned list will be considered in reverse
         order, so the latest version ought to be last.
         """
+        if dependency.is_vcs():
+            return self.search_for_vcs(dependency)
+
         packages = self._repository.find_packages(
             dependency.name,
             dependency.constraint
@@ -62,8 +77,80 @@ class Provider(SpecificationProvider):
 
         return packages
 
+    def search_for_vcs(self, dependency: VCSDependency) -> List[Package]:
+        """
+        Search for the specifications that match the given VCS dependency.
+
+        Basically, we clone the repository in a temporary directory
+        and get the information we need by checking out the specified reference.
+        """
+        if dependency.vcs != 'git':
+            raise ValueError(f'Unsupported VCS dependency {dependency.vcs}')
+
+        tmp_dir = Path(mkdtemp(prefix=f'pypoetry-git-{dependency.name}'))
+
+        try:
+            git = Git()
+            git.clone(dependency.source, tmp_dir)
+            git.checkout(dependency.reference, tmp_dir)
+            revision = git.rev_parse(
+                dependency.reference, tmp_dir
+            ).strip()
+
+            if dependency.tag or dependency.rev:
+                revision = dependency.reference
+
+            if (tmp_dir / 'poetry.toml').exists():
+                # If a poetry.toml file exists
+                # We use it to get the information we need
+                with (tmp_dir / 'poetry.toml').open() as fd:
+                    info = toml.loads(fd.read())
+
+                name = info['package']['name']
+                version = info['package']['version']
+                package = Package(name, version, version)
+                for req_name, req_constraint in info['dependencies'].items():
+                    package.add_dependency(req_name, req_constraint)
+            else:
+                # We need to use setup.py here
+                # to figure the information we need
+                # We need to place ourselves in the proper
+                # folder for it to work
+                current_dir = os.getcwd()
+                os.chdir(tmp_dir.as_posix())
+
+                try:
+                    venv = Venv.create()
+                    output = venv.run(
+                        'python', 'setup.py',
+                        '--name', '--version'
+                    )
+                    output = output.split('\n')
+                    name = output[-3]
+                    version = output[-2]
+                    package = Package(name, version, version)
+                    # Figure out a way to get requirements
+                except Exception:
+                    raise
+                finally:
+                    os.chdir(current_dir)
+
+            package.source_type = 'git'
+            package.source_url = dependency.source
+            package.source_reference = revision
+        except Exception:
+            raise
+        finally:
+            shutil.rmtree(tmp_dir.as_posix())
+
+        return [package]
+
     def dependencies_for(self, package: Package):
-        package = self._repository.package(package.name, package.version)
+        if package.source_type == 'git':
+            # Information should already be set
+            pass
+        else:
+            package = self._repository.package(package.name, package.version)
 
         return [
             r for r in package.requires

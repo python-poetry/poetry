@@ -4,7 +4,7 @@ import re
 
 import toml
 
-from poetry.vcs.git_config import GitConfig
+from poetry.vcs.git import Git
 
 _canonicalize_regex = re.compile(r"[-_.]+")
 
@@ -28,15 +28,16 @@ class Layout(object):
         self._dev_dependencies = {}
         self._include = []
 
-        self._git_config = GitConfig()
+        self._git = Git()
+        git_config = self._git.config
         if not author:
             if (
-                self._git_config.get('user.name')
-                and self._git_config.get('user.email')
+                git_config.get('user.name')
+                and git_config.get('user.email')
             ):
                 author = '{} <{}>'.format(
-                    self._git_config['user.name'],
-                    self._git_config['user.email']
+                    git_config['user.name'],
+                    git_config['user.email']
                 )
             else:
                 author = 'Your Name <you@example.com>'

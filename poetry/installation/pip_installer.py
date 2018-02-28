@@ -20,4 +20,8 @@ class PipInstaller:
         return self._venv.run('pip', *args)
 
     def requirement(self, package) -> str:
+        if package.source_type == 'git':
+            return f'git+{package.source_url}@{package.source_reference}' \
+                   f'#egg={package.name}'
+
         return f'{package.name}=={package.version}'

@@ -1,6 +1,7 @@
 from poetry.semver.helpers import parse_stability
 
 from .dependency import Dependency
+from .vcs_dependency import VCSDependency
 
 
 class Package:
@@ -118,7 +119,14 @@ class Package:
         if isinstance(constraint, dict):
             if 'git' in constraint:
                 # VCS dependency
-                pass
+                dependency = VCSDependency(
+                    name,
+                    'git', constraint['git'],
+                    branch=constraint.get('branch', None),
+                    tag=constraint.get('tag', None),
+                    rev=constraint.get('rev', None),
+                    optional=constraint.get('optional', None),
+                )
             else:
                 version = constraint['version']
                 optional = constraint.get('optional', False)

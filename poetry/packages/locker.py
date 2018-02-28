@@ -92,6 +92,11 @@ class Locker:
             package.hashes = info['checksum']
             package.python_versions = info['python-versions']
 
+            if 'source' in info:
+                package.source_type = info['source']['type']
+                package.source_url = info['source']['url']
+                package.source_reference = info['source']['reference']
+
             packages.add_package(package)
 
         return packages
@@ -166,8 +171,15 @@ class Locker:
             'optional': package.optional,
             'python-versions': package.python_versions,
             'platform': package.platform,
-            'checksum': package.hashes
+            'checksum': package.hashes,
         }
+
+        if package.source_type:
+            data['source'] = {
+                'type': package.source_type,
+                'url': package.source_url,
+                'reference': package.source_reference
+            }
 
         return data
 
