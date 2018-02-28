@@ -165,7 +165,7 @@ The `install` command reads the `poetry.toml` file from the current directory, r
 and installs them.
 
 ```bash
-poet install
+poetry install
 ```
 
 If there is a `poetry.lock` file in the current directory,
@@ -178,14 +178,14 @@ You can specify to the command that yo do not want the development dependencies 
 the `--no-dev` option.
 
 ```bash
-poet install --no-dev
+poetry install --no-dev
 ```
 
 You can also specify the features you want installed by passing the `--f|--features` option (See [Features](#features) for more info)
 
 ```bash
-poet install --features "mysql pgsql"
-poet install -f mysql -f pgsql
+poetry install --features "mysql pgsql"
+poetry install -f mysql -f pgsql
 ```
 
 #### Options
@@ -193,14 +193,13 @@ poet install -f mysql -f pgsql
 * `--no-dev`: Do not install dev dependencies.
 * `-f|--features`: Features to install (multiple values allowed).
 
-
 ### update
 
 In order to get the latest versions of the dependencies and to update the `poetry.lock` file,
 you should use the `update` command.
 
 ```bash
-poet update
+poetry update
 ```
 
 This will resolve all dependencies of the project and write the exact versions into `poetry.lock`.
@@ -208,12 +207,21 @@ This will resolve all dependencies of the project and write the exact versions i
 If you just want to update a few packages and not all, you can list them as such:
 
 ```bash
-poet update requests toml
+poetry update requests toml
 ```
 
 #### Options
 
 * `--no-progress`: Removes the progress display that can mess with some terminals or scripts which don't handle backspace characters.
+
+
+### add
+
+The `add` command adds new packages to the `poetry.toml` file from the current directory.
+
+```bash
+poetry add requests pendulum
+```
 
 
 ### package
@@ -241,7 +249,7 @@ It will automatically register the package before uploading if this is the first
 This command searches for packages on a remote index.
 
 ```bash
-poet search requests pendulum
+poetry search requests pendulum
 ```
 
 #### Options
@@ -253,20 +261,7 @@ poet search requests pendulum
 This command locks (without installing) the dependencies specified in `poetry.toml`.
 
 ```bash
-poet lock
-```
-
-#### Options
-
-* `-f|--force`: Force locking.
-
-
-### check
-
-The `check` command will check if the `poetry.toml` file is valid.
-
-```bash
-poet check
+poetry lock
 ```
 
 

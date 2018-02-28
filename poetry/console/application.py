@@ -9,6 +9,7 @@ from .commands import AboutCommand
 from .commands import AddCommand
 from .commands import InstallCommand
 from .commands import LockCommand
+from .commands import NewCommand
 from .commands import UpdateCommand
 
 
@@ -44,6 +45,7 @@ class Application(BaseApplication):
             AddCommand(),
             InstallCommand(),
             LockCommand(),
+            NewCommand(),
             UpdateCommand(),
         ]
 
