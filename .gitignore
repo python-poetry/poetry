@@ -28,3 +28,4 @@ setup.cfg
 setup.py
 MANIFEST.in
 poetry.lock
+README.rst
