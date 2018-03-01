@@ -1,5 +1,7 @@
 import re
 
+import toml
+
 from typing import List
 from typing import Tuple
 
@@ -64,6 +66,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         if index is not None:
             for i, require in enumerate(requirements.items()):
                 name, version = require
+                if '.' in name:
+                    name = f'"{name}"'
+
                 content.insert(
                     index + i,
                     f'{name} = "{version}"'
