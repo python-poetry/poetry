@@ -432,7 +432,14 @@ Only the name and a version string are required in this case.
 requests = "^2.13.0"
 ```
 
-Private repositories are not supported yet but are planned.
+If you want to use a private repository, you can add it to your `poetry.toml` file, like so:
+
+```toml
+[[source]]
+name = 'private'
+url = 'http://example.com/simple'
+```
+
 
 #### Caret requirement
 
