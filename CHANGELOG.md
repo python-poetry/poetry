@@ -6,6 +6,7 @@
 
 - Added `remove` command.
 - Added basic support for VCS (git) dependencies.
+- Added support for private repositories.
 
 ### Changed
 
