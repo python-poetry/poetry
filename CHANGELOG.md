@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed the `add` command for packages with dots in their names.
+
+
 ## [0.2.0] - 2018-03-01
 
 ### Added
