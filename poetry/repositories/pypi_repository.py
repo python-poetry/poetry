@@ -27,7 +27,7 @@ class PyPiRepository(Repository):
             'stores': {
                 'releases': {
                     'driver': 'file',
-                    'path': Path(CACHE_DIR) / 'cache'
+                    'path': Path(CACHE_DIR) / 'cache' / 'repositories' / 'pypi'
                 },
                 'packages': {
                     'driver': 'dict'
@@ -35,7 +35,7 @@ class PyPiRepository(Repository):
             }
         })
         
-        super(PyPiRepository, self).__init__()
+        super().__init__()
 
     def find_packages(self,
                       name: str,

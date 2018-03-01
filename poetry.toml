@@ -27,6 +27,7 @@ cleo = "^0.6"
 requests = "^2.18"
 toml = "^0.9"
 cachy = "^0.1.0"
+pip-tools = "^1.11"
 
 [dev-dependencies]
 pytest = "~3.4"

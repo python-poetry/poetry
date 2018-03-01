@@ -10,9 +10,17 @@ class PipInstaller(BaseInstaller):
         self._io = io
 
     def install(self, package):
-        self.run('install', self.requirement(package), '--no-deps')
+        args = ['install', self.requirement(package), '--no-deps']
+        if package.source_type == 'legacy' and package.source_url:
+            args += ['--index-url', package.source_url]
+
+        self.run(*args)
 
     def update(self, source, target):
+        args = ['install', self.requirement(target), '--no-deps', '-U']
+        if target.source_type == 'legacy' and target.source_url:
+            args += ['--index-url', target.source_url]
+
         self.run('install', self.requirement(target), '--no-deps', '-U')
 
     def remove(self, package):

@@ -2,6 +2,7 @@ import re
 from typing import Union
 
 from poetry.packages import Package
+from poetry.semver.comparison import less_than
 from poetry.semver.helpers import normalize_version
 from poetry.semver.version_parser import VersionParser
 
@@ -34,7 +35,7 @@ class VersionSelector(object):
         package = candidates[0]
         for candidate in candidates:
             # Select highest version of the two
-            if package.version < candidate.version:
+            if less_than(package.version, candidate.version):
                 package = candidate
 
         return package

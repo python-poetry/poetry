@@ -20,8 +20,8 @@ class Solver:
         self._locked = locked
         self._io = io
 
-    def solve(self, requested, repository, fixed=None) -> List[Operation]:
-        resolver = Resolver(Provider(repository), UI(self._io))
+    def solve(self, requested, pool, fixed=None) -> List[Operation]:
+        resolver = Resolver(Provider(pool), UI(self._io))
 
         base = None
         if fixed is not None:

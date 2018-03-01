@@ -27,7 +27,7 @@ exist it will look for <comment>poetry.toml</> and do the same.
             self.output,
             self.poetry.package,
             self.poetry.locker,
-            PyPiRepository()
+            self.poetry.pool
         )
 
         installer.dev_mode(not self.option('no-dev'))

@@ -8,6 +8,7 @@ from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
 from poetry.puzzle.operations import Update
 from poetry.puzzle.operations.operation import Operation
+from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 
@@ -21,11 +22,11 @@ class Installer:
                  io,
                  package: Package,
                  locker: Locker,
-                 repository: Repository):
+                 pool: Pool):
         self._io = io
         self._package = package
         self._locker = locker
-        self._repository = repository
+        self._pool = pool
 
         self._dry_run = False
         self._update = False
@@ -130,7 +131,7 @@ class Installer:
             request = self._package.requires
             request += self._package.dev_requires
 
-            ops = solver.solve(request, self._repository, fixed=fixed)
+            ops = solver.solve(request, self._pool, fixed=fixed)
         else:
             self._io.writeln('<info>Installing dependencies from lock file</>')
             # If we are installing from lock

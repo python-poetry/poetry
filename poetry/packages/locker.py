@@ -18,6 +18,7 @@ class Locker:
         'python_versions',
         'dependencies',
         'dev-dependencies',
+        'source',
     ]
 
     def __init__(self, lock: Path, original: Path):

@@ -92,7 +92,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             self.output,
             self.poetry.package,
             self.poetry.locker,
-            self.poetry.repository
+            self.poetry.pool
         )
 
         installer.update(True)
@@ -135,7 +135,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                                        name,
                                        required_version=None
                                        ) -> Tuple[str, str]:
-        selector = VersionSelector(self.poetry.repository)
+        selector = VersionSelector(self.poetry.pool)
         package = selector.find_best_candidate(name, required_version)
 
         if not package:

@@ -7,6 +7,7 @@ from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.io import NullIO
 from poetry.packages import Locker as BaseLocker
+from poetry.repositories import Pool
 from poetry.repositories import Repository
 
 from tests.helpers import get_package
@@ -58,6 +59,14 @@ def repo():
 
 
 @pytest.fixture()
+def pool(repo):
+    pool = Pool()
+    pool.add_repository(repo)
+
+    return pool
+
+
+@pytest.fixture()
 def locker():
     return Locker()
 
@@ -69,8 +78,8 @@ def fixture(name):
 
 
 @pytest.fixture()
-def installer(package, repo, locker):
-    return Installer(NullIO(), package, locker, repo)
+def installer(package, pool, locker):
+    return Installer(NullIO(), package, locker, pool)
 
 
 def test_run_no_dependencies(installer, locker):

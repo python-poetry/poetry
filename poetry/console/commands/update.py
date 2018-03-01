@@ -22,7 +22,7 @@ class UpdateCommand(Command):
             self.output,
             self.poetry.package,
             self.poetry.locker,
-            self.poetry.repository
+            self.poetry.pool
         )
 
         if packages:

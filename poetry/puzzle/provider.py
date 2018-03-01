@@ -17,7 +17,7 @@ from poetry.packages import Dependency
 from poetry.packages import Package
 from poetry.packages import VCSDependency
 
-from poetry.repositories.repository import Repository
+from poetry.repositories import Pool
 
 from poetry.semver import less_than
 from poetry.semver.constraints import Constraint
@@ -31,12 +31,12 @@ class Provider(SpecificationProvider):
 
     UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
 
-    def __init__(self, repository: Repository):
-        self._repository = repository
+    def __init__(self, pool: Pool):
+        self._pool = pool
 
     @property
-    def repository(self) -> Repository:
-        return self._repository
+    def pool(self) -> Pool:
+        return self._pool
 
     @property
     def name_for_explicit_dependency_source(self) -> str:
@@ -62,7 +62,7 @@ class Provider(SpecificationProvider):
         if dependency.is_vcs():
             return self.search_for_vcs(dependency)
 
-        packages = self._repository.find_packages(
+        packages = self._pool.find_packages(
             dependency.name,
             dependency.constraint
         )
@@ -150,7 +150,7 @@ class Provider(SpecificationProvider):
             # Information should already be set
             pass
         else:
-            package = self._repository.package(package.name, package.version)
+            package = self._pool.package(package.name, package.version)
 
         return [
             r for r in package.requires

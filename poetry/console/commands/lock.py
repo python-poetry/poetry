@@ -23,7 +23,7 @@ the current directory, processes it, and locks the depdencies in the <comment>po
             self.output,
             self.poetry.package,
             self.poetry.locker,
-            PyPiRepository()
+            self.poetry.pool
         )
 
         installer.update(True)

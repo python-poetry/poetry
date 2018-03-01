@@ -2,6 +2,7 @@ from pathlib import Path
 
 from .packages import Locker
 from .packages import Package
+from .repositories import Pool
 from .repositories.pypi_repository import PyPiRepository
 from .semver.helpers import normalize_version
 from .utils.toml_file import TomlFile
@@ -18,7 +19,14 @@ class Poetry:
         self._package = package
         self._config = config
         self._locker = locker
-        self._repository = PyPiRepository()
+
+        # Configure sources
+        self._pool = Pool()
+        for source in self._config.get('source', []):
+            self._pool.configure(source)
+
+        # Always put PyPI last to prefere private repositories
+        self._pool.add_repository(PyPiRepository())
 
     @property
     def package(self) -> Package:
@@ -33,12 +41,8 @@ class Poetry:
         return self._locker
 
     @property
-    def repository(self) -> PyPiRepository:
-        return self._repository
-
-    @property
-    def installer(self):
-        return self._instal
+    def pool(self) -> Pool:
+        return self._pool
 
     @classmethod
     def create(cls, cwd) -> 'Poetry':
