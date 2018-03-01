@@ -131,12 +131,68 @@ to bring an exhaustive depency resolver to the Python community.
 ### What about Pipenv?
 
 In short: I do not like the CLI it provides, or some of the decisions made,
-and I think we can do a better and more intuitive one.
+and I think we can do a better and more intuitive one. Here are a few things
+that I don't like.
 
-Also it only solves partially one problem: dependency management while I wanted something more global
-and accurate to manage Python projects with just one tool.
+#### Dependency resolution
 
-The `Pipfile` is just a replacement from `requirements.txt` but in the end you will still need to 
+The dependency resolution is erratic and will fail even is there is a solution. Let's take an example:
+
+```bash
+pipenv install oslo.utils==1.4.0
+```
+
+will fail with this error:
+
+```text
+Could not find a version that matches pbr!=0.7,!=2.1.0,<1.0,>=0.6,>=2.0.0
+```
+
+while Poetry will get you the right set of packages:
+
+```bash
+poetry add oslo.utils=1.4.0
+```
+
+results in :
+
+```text
+  - Installing pytz (2018.3)
+  - Installing netifaces (0.10.6)
+  - Installing netaddr (0.7.19)
+  - Installing oslo.i18n (2.1.0)
+  - Installing iso8601 (0.1.12)
+  - Installing six (1.11.0)
+  - Installing babel (2.5.3)
+  - Installing pbr (0.11.1)
+  - Installing oslo.utils (1.4.0)
+```
+
+#### Pipfile.lock and environment markers
+
+The Pipfile.lock file holds information about the environment in which
+it has been generated. This is a bad design decision since in teams where
+each member has a different environment, the diff will always include
+this changes.
+
+#### Install command
+
+When you specify a package to the `install` command it will add it as a wildcard
+dependency. This means that **any** version of this package can be installed which
+can lead to compatibility issues.
+
+Also, you have to explicitely tell it to not update the locked packages when you
+installed new ones. This should be the default.
+
+#### Remove command
+
+The `remove` command will only remove the package specified but not its dependencies
+if they are no longer needed.
+
+You either have to use `sync` or `clean` to fix that.
+
+
+Finally, the `Pipfile` is just a replacement from `requirements.txt` but in the end you will still need to 
 populate your `setup.py` file (or `setup.cfg`) with the exact same dependencies you declared in your `Pipfile`.
 So, in the end, you will still need to manage a few configuration files to properly setup your project.
 
