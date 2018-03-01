@@ -10,7 +10,7 @@ from .utils.toml_file import TomlFile
 
 class Poetry:
 
-    VERSION = '0.2.0-beta'
+    VERSION = '0.2.0'
 
     def __init__(self,
                  config: dict,
