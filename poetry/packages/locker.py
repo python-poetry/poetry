@@ -93,6 +93,9 @@ class Locker:
             package.hashes = lock_data['metadata']['hashes'][info['name']]
             package.python_versions = info['python-versions']
 
+            for dep_name, constraint in info.get('dependencies', {}).items():
+                package.add_dependency(dep_name, constraint)
+
             if 'source' in info:
                 package.source_type = info['source']['type']
                 package.source_url = info['source']['url']
@@ -173,6 +176,13 @@ class Locker:
         return locked
 
     def _dump_package(self, package: 'poetry.packages.Package') -> dict:
+        dependencies = {}
+        for dependency in package.requires:
+            if dependency.is_optional():
+                continue
+
+            dependencies[dependency.pretty_name] = dependency.pretty_constraint
+
         data = {
             'name': package.pretty_name,
             'version': package.pretty_version,
@@ -181,6 +191,7 @@ class Locker:
             'python-versions': package.python_versions,
             'platform': package.platform,
             'hashes': package.hashes,
+            'dependencies': dependencies
         }
 
         if package.source_type:

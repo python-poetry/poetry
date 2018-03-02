@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## Changed
+
+- Dependencies of each package is now stored in `poetry.lock`.
+
 ### Fixed
 
 - Fixed the `add` command for packages with dots in their names.

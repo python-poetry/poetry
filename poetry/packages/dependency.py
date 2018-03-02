@@ -5,6 +5,7 @@ class Dependency:
 
     def __init__(self, name, constraint, optional=False, category='main'):
         self._name = name.lower()
+        self._pretty_name = name
         try:
             self._constraint = VersionParser().parse_constraints(constraint)
         except ValueError:
@@ -28,7 +29,7 @@ class Dependency:
 
     @property
     def pretty_name(self):
-        return '{} ({})'.format(self._name, self.pretty_constraint)
+        return self._pretty_name
 
     @property
     def category(self):
@@ -53,7 +54,7 @@ class Dependency:
         return hash((self._name, self._pretty_constraint))
 
     def __str__(self):
-        return self.pretty_name
+        return f'{self._pretty_name} ({self._pretty_constraint})'
 
     def __repr__(self):
-        return '<Dependency {}>'.format(self.pretty_name)
+        return f'<Dependency {str(self)}>'

@@ -45,6 +45,10 @@ class Locker(BaseLocker):
         return '123456789'
     
     def _write_lock_data(self, data) -> None:
+        for package in data['package']:
+            if not package['dependencies']:
+                del package['dependencies']
+
         self._written_data = data
 
 
@@ -186,5 +190,27 @@ def test_run_whitelist_remove(installer, locker, repo, package):
 
     installer.run()
     expected = fixture('remove')
+
+    assert locker.written_data == expected
+
+
+def test_add_with_sub_dependencies(installer, locker, repo, package):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.1')
+    package_c = get_package('C', '1.2')
+    package_d = get_package('D', '1.3')
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    package.add_dependency('A', '~1.0')
+    package.add_dependency('B', '^1.0')
+
+    package_a.add_dependency('D', '^1.0')
+    package_b.add_dependency('C', '~1.2')
+
+    installer.run()
+    expected = fixture('with-sub-dependencies')
 
     assert locker.written_data == expected
