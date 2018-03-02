@@ -134,6 +134,16 @@ class Installer:
             ops = solver.solve(request, self._pool, fixed=fixed)
         else:
             self._io.writeln('<info>Installing dependencies from lock file</>')
+            if not self._locker.is_fresh():
+                self._io.writeln(
+                    '<warning>'
+                    'Warning: The lock file is not up to date with '
+                    'the latest changes in composer.json. '
+                    'You may be getting outdated dependencies. '
+                    'Run update to update them.'
+                    '</warning>'
+                )
+
             # If we are installing from lock
             # Filter the operations by comparing it with what is
             # currently installed

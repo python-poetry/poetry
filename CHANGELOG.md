@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-## Changed
+### Added
+
+- Add `show` command. 
+
+### Changed
 
 - Dependencies of each package is now stored in `poetry.lock`.
 

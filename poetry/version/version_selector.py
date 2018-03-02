@@ -9,8 +9,8 @@ from poetry.semver.version_parser import VersionParser
 
 class VersionSelector(object):
 
-    def __init__(self, repository, parser=VersionParser()):
-        self._repository = repository
+    def __init__(self, pool, parser=VersionParser()):
+        self._pool = pool
         self._parser = parser
 
     def find_best_candidate(self,
@@ -26,7 +26,7 @@ class VersionSelector(object):
         else:
             constraint = None
 
-        candidates = self._repository.find_packages(package_name, constraint)
+        candidates = self._pool.find_packages(package_name, constraint)
 
         if not candidates:
             return False

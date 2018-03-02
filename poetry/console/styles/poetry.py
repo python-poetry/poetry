@@ -8,6 +8,8 @@ class PoetryStyle(CleoStyle):
 
         super().__init__(i, o)
 
+        self.output.get_formatter().add_style('warning', 'black', 'yellow')
+
     @property
     def venv(self):
         return self._venv

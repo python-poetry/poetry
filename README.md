@@ -319,6 +319,36 @@ poetry remove pendulum
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
+### show
+
+To list all of the available packages, you can use the `show` command.
+
+```bash
+poetry show
+```
+
+If you want to see the details of a certain package, you can pass the package name.
+
+```bash
+poetry show pendulum
+
+name        : pendulum
+version     : 1.4.2
+description : Python datetimes made easy
+
+dependencies:
+ - python-dateutil >=2.6.1
+ - tzlocal >=1.4
+ - pytzdata >=2017.2.2
+```
+
+#### Options
+
+* `--tree`: List the dependencies as a tree.
+* `-l|--latest`: Show the latest version.
+*  `-o|--outdated`: Show the latest version but only for packages that are outdated.
+
+
 ### package
 
 The `package` command builds the source and wheels archives.
