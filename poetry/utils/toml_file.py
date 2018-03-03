@@ -1,7 +1,10 @@
+import toml
+
 from pathlib import Path
 
-from toml import dumps
-from toml import loads
+from poetry.toml import dumps
+from poetry.toml import loads
+from poetry.toml import TOMLFile
 
 
 class TomlFile:
@@ -17,7 +20,12 @@ class TomlFile:
         return loads(self._path.read_text())
 
     def write(self, data) -> None:
-        self._path.write_text(dumps(data))
+        if not isinstance(data, TOMLFile):
+            data = toml.dumps(data)
+        else:
+            data = dumps(data)
+
+        self._path.write_text(data)
 
     def exists(self) -> bool:
         return self._path.exists()

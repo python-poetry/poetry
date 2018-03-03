@@ -1,5 +1,3 @@
-import toml
-
 from poetry.installation import Installer
 
 from .command import Command
@@ -22,59 +20,33 @@ list of installed packages
 <info>poetry remove</info>"""
 
     def handle(self):
-        packages = [p.lower() for p in self.argument('packages')]
+        packages = self.argument('packages')
         is_dev = self.option('dev')
 
-        with self.poetry.locker.original.path.open() as fd:
-            content = fd.read().split('\n')
-
-        # Trying to figure out where are our dependencies
-        # If we find a toml library that keeps comments
-        # We could remove this whole section
-        section = '[dependencies]'
+        original_content = self.poetry.locker.original.read()
+        content = self.poetry.locker.original.read()
+        section = 'dependencies'
         if is_dev:
-            section = '[dev-dependencies]'
+            section = 'dev-dependencies'
 
-        # Searching for package in
-        in_section = False
-        indices = []
+        # Deleting entries
         requirements = {}
-        for i, line in enumerate(content):
-            line = line.strip()
-
-            if line == section:
-                in_section = True
-                continue
-
-            if in_section:
-                if not line:
-                    # End of section
+        for name in packages:
+            found = False
+            for key in content[section]:
+                if key.lower() == name.lower():
+                    found = True
+                    requirements[name] = content[section][name]
                     break
 
-                requirement = toml.loads(line)
-                name = list(requirement.keys())[0].lower()
-                version = requirement[name]
+            if not found:
+                raise ValueError(f'Package {name} not found')
 
-                if name in packages:
-                    requirements[name] = version
-                    indices.append(i)
-                    break
+        for key in requirements:
+            del content[section][key]
 
-        if not indices or len(indices) != len(packages):
-            raise RuntimeError(
-                'Packages are not present in your poetry.toml file'
-            )
-
-        new_content = []
-        for i, line in enumerate(content):
-            if i in indices:
-                continue
-
-            new_content.append(line)
-
-        new_content = '\n'.join(new_content)
-        with self.poetry.locker.original.path.open('w') as fd:
-            fd.write(new_content)
+        # Write the new content back
+        self.poetry.locker.original.write(content)
 
         # Update packages
         self.reset_poetry()
@@ -93,8 +65,7 @@ list of installed packages
         try:
             status = installer.run()
         except Exception:
-            with self.poetry.locker.original.path.open('w') as fd:
-                fd.write('\n'.join(content))
+            self.poetry.locker.original.write(original_content)
 
             raise
 
@@ -107,7 +78,6 @@ list of installed packages
                     'to its original content.'
                 )
 
-            with self.poetry.locker.original.path.open('w') as fd:
-                fd.write('\n'.join(content))
+            self.poetry.locker.original.write(original_content)
 
         return status

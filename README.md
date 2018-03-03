@@ -302,6 +302,7 @@ poetry add requests pendulum
 
 * `--D|dev`: Add package as development dependency.
 * `--optional` : Add as an optional dependency.
+* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
 ### remove

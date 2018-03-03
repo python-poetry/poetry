@@ -1,8 +1,6 @@
 import os
 import shutil
 
-import toml
-
 from functools import cmp_to_key
 from pathlib import Path
 from tempfile import mkdtemp
@@ -22,6 +20,7 @@ from poetry.repositories import Pool
 from poetry.semver import less_than
 from poetry.semver.constraints import Constraint
 
+from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import Venv
 
 from poetry.vcs.git import Git
@@ -100,11 +99,11 @@ class Provider(SpecificationProvider):
             if dependency.tag or dependency.rev:
                 revision = dependency.reference
 
-            if (tmp_dir / 'poetry.toml').exists():
+            poetry = TomlFile(tmp_dir / 'poetry.toml')
+            if poetry.exists():
                 # If a poetry.toml file exists
                 # We use it to get the information we need
-                with (tmp_dir / 'poetry.toml').open() as fd:
-                    info = toml.loads(fd.read())
+                info = poetry.read()
 
                 name = info['package']['name']
                 version = info['package']['version']

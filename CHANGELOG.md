@@ -5,10 +5,12 @@
 ### Added
 
 - Add `show` command. 
+- Added the `--dry-run` option to the `add` command.
 
 ### Changed
 
 - Dependencies of each package is now stored in `poetry.lock`.
+- Improved TOML file management.
 
 ### Fixed
 

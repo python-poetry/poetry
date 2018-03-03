@@ -1,7 +1,5 @@
 import re
 
-import toml
-
 from typing import List
 from typing import Tuple
 
@@ -20,6 +18,8 @@ class AddCommand(Command):
         { name* : Packages to add. }
         {--D|dev : Add package as development dependency. }
         {--optional : Add as an optional dependency. }
+        {--dry-run : Outputs the operations but will not execute anything
+                     (implicitly enables --verbose). }
     """
 
     help = """The add command adds required packages to your <comment>poetry.toml</> and installs them.
@@ -28,10 +28,22 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 """
 
     def handle(self):
-        names = self.argument('name')
+        packages = self.argument('name')
         is_dev = self.option('dev')
 
-        requirements = self._determine_requirements(names)
+        section = 'dependencies'
+        if is_dev:
+            section = 'dev-dependencies'
+
+        original_content = self.poetry.locker.original.read()
+        content = self.poetry.locker.original.read()
+
+        for name in packages:
+            for key in content[section]:
+                if key.lower() == name.lower():
+                    raise ValueError(f'Package {name} is already present')
+
+        requirements = self._determine_requirements(packages)
         requirements = self._format_requirements(requirements)
 
         # validate requirements format
@@ -39,53 +51,11 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         for constraint in requirements.values():
             parser.parse_constraints(constraint)
 
-        # Trying to figure out where to add our dependencies
-        # If we find a toml library that keeps comments
-        # We could remove this whole section
-        section = '[dependencies]'
-        if is_dev:
-            section = '[dev-dependencies]'
+        for name, constraint in requirements.items():
+            content[section][name] = constraint
 
-        new_content = None
-        with self.poetry.locker.original.path.open() as fd:
-            content = fd.read().split('\n')
-
-        in_section = False
-        index = None
-        for i, line in enumerate(content):
-            line = line.strip()
-
-            if line == section:
-                in_section = True
-                continue
-
-            if in_section and not line:
-                index = i
-                break
-
-        if index is not None:
-            for i, require in enumerate(requirements.items()):
-                name, version = require
-                if '.' in name:
-                    name = f'"{name}"'
-
-                content.insert(
-                    index + i,
-                    f'{name} = "{version}"'
-                )
-
-            new_content = '\n'.join(content)
-
-        if new_content is not None:
-            with self.poetry.locker.original.path.open('w') as fd:
-                fd.write(new_content)
-        else:
-            # We could not find where to put the dependencies
-            # We raise an warning
-            self.warning('Unable to automatically add dependencies')
-            self.warning('Add them manually to your poetry.toml')
-
-            return 1
+        # Write new content
+        self.poetry.locker.original.write(content)
 
         # Cosmetic new line
         self.line('')
@@ -100,10 +70,29 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             self.poetry.pool
         )
 
+        installer.dry_run(self.option('dry-run'))
         installer.update(True)
         installer.whitelist(requirements)
 
-        installer.run()
+        try:
+            status = installer.run()
+        except Exception:
+            self.poetry.locker.original.write(original_content)
+
+            raise
+
+        if status != 0 or self.option('dry-run'):
+            # Revert changes
+            if not self.option('dry-run'):
+                self.error(
+                    '\n'
+                    'Addition failed, reverting poetry.toml '
+                    'to its original content.'
+                )
+
+            self.poetry.locker.original.write(original_content)
+
+        return status
 
     def _determine_requirements(self, requires: List[str]) -> List[str]:
         if not requires:
