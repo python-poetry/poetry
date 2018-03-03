@@ -2,8 +2,8 @@
 
 import re
 
-from poetry.toml.toml_file import TOMLFile
-from poetry.utils.toml_file import TomlFile
+import toml
+
 from poetry.vcs.git import Git
 
 _canonicalize_regex = re.compile(r"[-_.]+")
@@ -89,20 +89,29 @@ class Layout(object):
             )
 
     def _write_poetry(self, path):
-        toml = TOMLFile([])
-        toml['package'] = {
-            'name': self._project,
-            'version': self._version,
-            'authors': [self._author],
-        }
-        toml['dependencies'] = {}
-        toml['dev-dependencies'] = {
-            'pytest': '^3.4',
+        output = {
+            'package': {
+                'name': self._project,
+                'version': self._version,
+                'authors': [self._author],
+            }
         }
 
-        poetry = TomlFile(path / 'poetry.toml')
+        content = toml.dumps(output, preserve=True)
 
-        poetry.write(toml)
+        output = {
+            'dependencies': {},
+            'dev-dependencies': {
+                'pytest': '^3.4'
+            }
+        }
+
+        content += '\n' + toml.dumps(output, preserve=True)
+
+        poetry = path / 'poetry.toml'
+
+        with poetry.open('w') as f:
+            f.write(content)
 
     def _canonicalize_name(self, name: str) -> str:
         return _canonicalize_regex.sub("-", name).lower()
