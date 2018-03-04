@@ -1,4 +1,6 @@
+from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.helpers import parse_stability
+from poetry.semver.version_parser import VersionParser
 
 from .dependency import Dependency
 from .vcs_dependency import VCSDependency
@@ -31,7 +33,7 @@ class Package:
         'dev': STABILITY_DEV,
     }
 
-    def __init__(self, name, version, pretty_version):
+    def __init__(self, name, version, pretty_version=None):
         """
         Creates a new in memory package.
 
@@ -48,7 +50,7 @@ class Package:
         self._name = name.lower()
 
         self._version = version
-        self._pretty_version = pretty_version
+        self._pretty_version = pretty_version or version
 
         self._description = ''
 
@@ -62,11 +64,16 @@ class Package:
         self.requires = []
         self.dev_requires = []
 
+        self._parser = VersionParser()
+
         self.category = 'main'
         self.hashes = []
         self.optional = False
-        self.python_versions = '*'
-        self.platform = '*'
+
+        self._python_versions = '*'
+        self._python_constraint = self._parser.parse_constraints('*')
+        self._platform = '*'
+        self._platform_constraint = self._parser.parse_constraints('*')
 
     @property
     def name(self):
@@ -75,10 +82,6 @@ class Package:
     @property
     def pretty_name(self):
         return self._pretty_name
-
-    @property
-    def id(self):
-        return self._id
 
     @property
     def version(self):
@@ -111,6 +114,32 @@ class Package:
                                   self.source_reference[0:7])
 
         return '{} {}'.format(self._pretty_version, self.source_reference)
+
+    @property
+    def python_versions(self):
+        return self._python_versions
+
+    @python_versions.setter
+    def python_versions(self, value: str):
+        self._python_versions = value
+        self._python_constraint = self._parser.parse_constraints(value)
+
+    @property
+    def python_constraint(self):
+        return self._python_constraint
+
+    @property
+    def platform(self) -> str:
+        return self._platform
+
+    @platform.setter
+    def platform(self, value: str):
+        self._platform = value
+        self._platform_constraint = self._parser.parse_constraints(value)
+
+    @property
+    def platform_constraint(self):
+        return self._platform_constraint
 
     def is_dev(self):
         return self._dev

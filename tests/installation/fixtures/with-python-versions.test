@@ -1,0 +1,33 @@
+[[package]]
+name = "A"
+version = "1.0"
+category = "main"
+optional = false
+python-versions = "*"
+platform = "*"
+
+[[package]]
+name = "B"
+version = "1.1"
+category = "main"
+optional = false
+python-versions = "*"
+platform = "*"
+
+[[package]]
+name = "C"
+version = "1.2"
+category = "main"
+optional = false
+python-versions = "^3.6"
+platform = "*"
+
+[metadata]
+python-versions = "^3.4"
+platform = "*"
+content-hash = "123456789"
+
+[metadata.hashes]
+A = []
+B = []
+C = []

@@ -46,6 +46,8 @@ class Locker(BaseLocker):
     
     def _write_lock_data(self, data) -> None:
         for package in data['package']:
+            package['python-versions'] = str(package['python-versions'])
+            package['platform'] = str(package['platform'])
             if not package['dependencies']:
                 del package['dependencies']
 
@@ -212,5 +214,30 @@ def test_add_with_sub_dependencies(installer, locker, repo, package):
 
     installer.run()
     expected = fixture('with-sub-dependencies')
+
+    assert locker.written_data == expected
+
+
+def test_run_with_python_versions(installer, locker, repo, package):
+    package.python_versions = '^3.4'
+
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.1')
+    package_c12 = get_package('C', '1.2')
+    package_c12.python_versions = '^3.6'
+    package_c13 = get_package('C', '1.3')
+    package_c13.python_versions = '~3.3'
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c12)
+    repo.add_package(package_c13)
+
+    package.add_dependency('A', '~1.0')
+    package.add_dependency('B', '^1.0')
+    package.add_dependency('C', '^1.0')
+
+    installer.run()
+    expected = fixture('with-python-versions')
 
     assert locker.written_data == expected

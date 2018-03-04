@@ -9,4 +9,4 @@ class EmptyConstraint(BaseConstraint):
         return True
 
     def __str__(self):
-        return '[]'
+        return '*'

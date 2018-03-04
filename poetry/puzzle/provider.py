@@ -18,7 +18,6 @@ from poetry.packages import VCSDependency
 from poetry.repositories import Pool
 
 from poetry.semver import less_than
-from poetry.semver.constraints import Constraint
 
 from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import Venv
@@ -30,8 +29,10 @@ class Provider(SpecificationProvider):
 
     UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
 
-    def __init__(self, pool: Pool):
+    def __init__(self, package: Package, pool: Pool):
+        self._package = package
         self._pool = pool
+        self._python_constraint = package.python_constraint
 
     @property
     def pool(self) -> Pool:
@@ -168,13 +169,16 @@ class Provider(SpecificationProvider):
         if isinstance(requirement, Package):
             return requirement == package
 
-        if package.is_prerelease() and not requirement.accepts_prereleases():
+        if not requirement.accepts(package):
+            return False
+
+        if package.is_prerelease() and not requirement.allows_prereleases():
             vertex = activated.vertex_named(package.name)
 
-            if not any([r.accepts_prereleases() for r in vertex.requirements]):
+            if not any([r.allows_prereleases() for r in vertex.requirements]):
                 return False
 
-        return requirement.constraint.matches(Constraint('==', package.version))
+        return self._package.python_constraint.matches(package.python_constraint)
 
     def sort_dependencies(self,
                           dependencies: List[Dependency],
@@ -182,7 +186,7 @@ class Provider(SpecificationProvider):
                           conflicts: Dict[str, List[Conflict]]):
         return sorted(dependencies, key=lambda d: [
             0 if activated.vertex_named(d.name).payload else 1,
-            0 if d.accepts_prereleases() else 1,
+            0 if d.allows_prereleases() else 1,
             0 if d.name in conflicts else 1,
             0 if activated.vertex_named(d.name).payload else len(self.search_for(d))
         ])

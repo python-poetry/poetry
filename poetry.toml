@@ -3,7 +3,7 @@ name = "poetry"
 version = "0.2.0"
 description = "Python dependency management and packaging made easy."
 
-python-versions = ["^3.6"]
+python-versions = "^3.6"
 
 license = "MIT"
 

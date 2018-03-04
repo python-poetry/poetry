@@ -72,7 +72,7 @@ class Index(SpecificationProvider):
         if package.is_prerelease() and not requirement.accepts_prereleases():
             vertex = activated.vertex_named(package.name)
 
-            if not any([r.accepts_prereleases() for r in vertex.requirements]):
+            if not any([r.allows_prereleases() for r in vertex.requirements]):
                 return False
 
         return requirement.constraint.matches(Constraint('==', package.version))
@@ -83,7 +83,7 @@ class Index(SpecificationProvider):
 
         results = []
         for spec in self._packages[dependency.name]:
-            if not dependency.accepts_prereleases() and spec.is_prerelease():
+            if not dependency.allows_prereleases() and spec.is_prerelease():
                 continue
 
             if dependency.constraint.matches(Constraint('==', spec.version)):
@@ -103,7 +103,7 @@ class Index(SpecificationProvider):
                           conflicts):
         return sorted(dependencies, key=lambda d: [
             0 if activated.vertex_named(d.name).payload else 1,
-            0 if d.accepts_prereleases() else 1,
+            0 if d.allows_prereleases() else 1,
             0 if d.name in conflicts else 1,
             0 if activated.vertex_named(d.name).payload else len(self.search_for(d))
         ])

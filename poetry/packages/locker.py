@@ -15,7 +15,7 @@ class Locker:
     _relevant_keys = [
         'name',
         'version',
-        'python_versions',
+        'python-versions',
         'dependencies',
         'dev-dependencies',
         'source',

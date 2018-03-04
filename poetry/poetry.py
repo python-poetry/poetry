@@ -63,8 +63,8 @@ class Poetry:
         version = normalize_version(pretty_version)
         package = Package(name, version, pretty_version)
 
-        if 'python_versions' in package_config:
-            package.python_versions = package_config['python_versions']
+        if 'python-versions' in package_config:
+            package.python_versions = package_config['python-versions']
 
         if 'platform' in package_config:
             package.platform = package_config['platform']

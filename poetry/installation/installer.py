@@ -126,12 +126,17 @@ class Installer:
                             Dependency(candidate.name, candidate.version)
                         )
 
-            solver = Solver(locked_repository, self._io)
+            solver = Solver(
+                self._package,
+                self._pool,
+                locked_repository,
+                self._io
+            )
 
             request = self._package.requires
             request += self._package.dev_requires
 
-            ops = solver.solve(request, self._pool, fixed=fixed)
+            ops = solver.solve(request, fixed=fixed)
         else:
             self._io.writeln('<info>Installing dependencies from lock file</>')
             if not self._locker.is_fresh():

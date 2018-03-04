@@ -16,12 +16,14 @@ from .ui import UI
 
 class Solver:
 
-    def __init__(self, locked, io):
+    def __init__(self, package, pool, locked, io):
+        self._package = package
+        self._pool = pool
         self._locked = locked
         self._io = io
 
-    def solve(self, requested, pool, fixed=None) -> List[Operation]:
-        resolver = Resolver(Provider(pool), UI(self._io))
+    def solve(self, requested, fixed=None) -> List[Operation]:
+        resolver = Resolver(Provider(self._package, self._pool), UI(self._io))
 
         base = None
         if fixed is not None:
