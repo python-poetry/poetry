@@ -1,6 +1,7 @@
 [[package]]
 name = "A"
 version = "1.0"
+description = ""
 category = "main"
 optional = false
 python-versions = "*"
