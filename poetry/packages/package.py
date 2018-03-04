@@ -52,7 +52,7 @@ class Package:
         self._version = version
         self._pretty_version = pretty_version or version
 
-        self._description = ''
+        self.description = ''
 
         self._stability = parse_stability(version)
         self._dev = self._stability == 'dev'
@@ -90,10 +90,6 @@ class Package:
     @property
     def pretty_version(self):
         return self._pretty_version
-
-    @property
-    def description(self):
-        return self._description
 
     @property
     def unique_name(self):

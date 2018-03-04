@@ -72,6 +72,7 @@ lists all packages available."""
             rows = [
                 ['<info>name</>', f' : <fg=cyan>{pkg.pretty_name}</>'],
                 ['<info>version</>', f' : <comment>{pkg.pretty_version}</>'],
+                ['<info>description</>', f' : {pkg.description}'],
             ]
 
             table.add_rows(rows)
@@ -87,13 +88,32 @@ lists all packages available."""
             return 0
 
         show_latest = self.option('latest')
-
+        terminal = self.get_application().terminal
+        width = terminal.width
+        name_length = version_length = latest_length = 0
+        latest_packages = {}
+        # Computing widths
         for locked in locked_packages:
-            row = [f'<fg=cyan>{locked.pretty_name}</>', ' ' + locked.version]
+            name_length = max(name_length, len(locked.pretty_name))
+            version_length = max(version_length, len(locked.full_pretty_version))
             if show_latest:
                 latest = self.find_latest_package(locked)
                 if not latest:
                     latest = locked
+
+                latest_packages[locked.pretty_name] = latest
+                latest_length = max(latest_length, len(latest.full_pretty_version))
+
+        write_version = name_length + version_length + 3 <= width
+        write_latest = name_length + version_length + latest_length + 3 <= width
+        write_description = name_length + version_length + latest_length + 24 <= width
+
+        for locked in locked_packages:
+            line = f'<fg=cyan>{locked.pretty_name:{name_length}}</>'
+            if write_version:
+                line += f' {locked.full_pretty_version:{version_length}}'
+            if show_latest and write_latest:
+                latest = latest_packages[locked.pretty_name]
 
                 update_status = self.get_update_status(latest, locked)
                 color = 'green'
@@ -102,19 +122,26 @@ lists all packages available."""
                 elif update_status == 'update-possible':
                     color = 'yellow'
 
-                row.append(f' <fg={color}>{latest.version}</>')
+                line += f' <fg={color}>{latest.version:{latest_length}}</>'
                 if self.option('outdated') and update_status == 'up-to-date':
                     continue
 
-            row.append(locked.description)
+            if write_description:
+                description = locked.description
+                remaining = width - name_length - version_length - 4
+                if show_latest:
+                    remaining -= latest_length
 
-            table.add_row(row)
+                if len(locked.description) > remaining:
+                    description = description[:remaining-3] + '...'
 
-        table.render()
+                line += ' ' + description
+
+            self.line(line)
 
     def display_package_tree(self, package, installed_repo):
         self.write(f'<info>{package.pretty_name}</info>')
-        self.line(f' {package.pretty_version}')
+        self.line(f' {package.pretty_version} {package.description}')
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)

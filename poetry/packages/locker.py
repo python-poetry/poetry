@@ -88,6 +88,7 @@ class Locker:
                 info['version'],
                 info['version']
             )
+            package.description = info.get('description', '')
             package.category = info['category']
             package.optional = info['optional']
             package.hashes = lock_data['metadata']['hashes'][info['name']]
@@ -186,6 +187,7 @@ class Locker:
         data = {
             'name': package.pretty_name,
             'version': package.pretty_version,
+            'description': package.description,
             'category': package.category,
             'optional': package.optional,
             'python-versions': package.python_versions,

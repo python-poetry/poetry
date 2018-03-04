@@ -91,6 +91,9 @@ class PyPiRepository(Repository):
                     )
                 )
 
+            # Adding description
+            package.description = release_info.get('summary', '')
+
             # Adding hashes information
             package.hashes = release_info['digests']
 
@@ -163,6 +166,7 @@ class PyPiRepository(Repository):
         data = {
             'name': info['name'],
             'version': info['version'],
+            'summary': info['summary'],
             'platform': info['platform'],
             'requires_dist': info['requires_dist'],
             'requires_python': info['requires_python'],

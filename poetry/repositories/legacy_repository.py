@@ -174,6 +174,7 @@ class LegacyRepository(Repository):
         data = {
             'name': name,
             'version': version,
+            'summary': '',
             'requires_dist': requires,
             'digests': hashes
         }
