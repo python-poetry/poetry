@@ -87,7 +87,7 @@ the new, `standardized <https://www.python.org/dev/peps/pep-0518/>`__
 
     keywords = ['packaging', 'poetry']
 
-    [tool.pyproject.dependencies]
+    [tool.poetry.dependencies]
     python = "~2.7 || ^3.2"  # Compatible python versions must be declared here
     toml = "^0.9"
     requests = "^2.13"
@@ -98,13 +98,13 @@ the new, `standardized <https://www.python.org/dev/peps/pep-0518/>`__
     pip-tools = "^1.8.2"
     cleo = { git = "https://github.com/sdispater/cleo.git", branch = "master" }
 
-    [tool.pyproject.dev-dependencies]
+    [tool.poetry.dev-dependencies]
     pytest = "^3.0"
     pytest-cov = "^2.4"
     coverage = "<4.0"
     httpretty = "^0.8.14"
 
-    [tool.pyproject.scripts]
+    [tool.poetry.scripts]
     poet = 'poet:app.run'
 
 There are some things we can notice here:
