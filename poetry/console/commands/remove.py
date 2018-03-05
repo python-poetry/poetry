@@ -23,8 +23,9 @@ list of installed packages
         packages = self.argument('packages')
         is_dev = self.option('dev')
 
-        original_content = self.poetry.locker.original.read()
-        content = self.poetry.locker.original.read()
+        original_content = self.poetry.file.read()
+        content = self.poetry.file.read()
+        poetry_content = content['tool']['poetry']
         section = 'dependencies'
         if is_dev:
             section = 'dev-dependencies'
@@ -33,20 +34,20 @@ list of installed packages
         requirements = {}
         for name in packages:
             found = False
-            for key in content[section]:
+            for key in poetry_content[section]:
                 if key.lower() == name.lower():
                     found = True
-                    requirements[name] = content[section][name]
+                    requirements[name] = poetry_content[section][name]
                     break
 
             if not found:
                 raise ValueError(f'Package {name} not found')
 
         for key in requirements:
-            del content[section][key]
+            del poetry_content[section][key]
 
         # Write the new content back
-        self.poetry.locker.original.write(content)
+        self.poetry.file.write(content)
 
         # Update packages
         self.reset_poetry()
@@ -65,7 +66,7 @@ list of installed packages
         try:
             status = installer.run()
         except Exception:
-            self.poetry.locker.original.write(original_content)
+            self.poetry.file.write(original_content)
 
             raise
 
@@ -78,6 +79,6 @@ list of installed packages
                     'to its original content.'
                 )
 
-            self.poetry.locker.original.write(original_content)
+            self.poetry.file.write(original_content)
 
         return status

@@ -48,3 +48,12 @@ def test_toml_file(fixture):
     assert len(apple) == 3
     banana = fruits[1]
     assert len(banana['variety'][0]['points']) == 3
+
+
+def test_pyproject_parsing(fixture):
+    f = TomlFile(fixture.with_name('pyproject.toml'))
+
+    content = f.read()
+
+    assert 'dependencies' in content['tool']['poetry']
+    assert content['tool']['poetry']['dependencies']['python'] == '^3.6'

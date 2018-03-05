@@ -27,5 +27,5 @@ pip-log.txt
 setup.cfg
 setup.py
 MANIFEST.in
-poetry.lock
+pyproject.lock
 README.rst

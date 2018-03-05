@@ -90,25 +90,31 @@ class Layout(object):
 
     def _write_poetry(self, path):
         output = {
-            'package': {
-                'name': self._project,
-                'version': self._version,
-                'authors': [self._author],
+            'tool': {
+                'poetry': {
+                    'name': self._project,
+                    'version': self._version,
+                    'authors': [self._author],
+                }
             }
         }
 
         content = toml.dumps(output, preserve=True)
 
         output = {
-            'dependencies': {},
-            'dev-dependencies': {
-                'pytest': '^3.4'
+            'tool': {
+                'poetry': {
+                    'dependencies': {},
+                    'dev-dependencies': {
+                        'pytest': '^3.4'
+                    }
+                }
             }
         }
 
         content += '\n' + toml.dumps(output, preserve=True)
 
-        poetry = path / 'poetry.toml'
+        poetry = path / 'pyproject.toml'
 
         with poetry.open('w') as f:
             f.write(content)

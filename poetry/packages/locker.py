@@ -16,20 +16,17 @@ class Locker:
         'name',
         'version',
         'python-versions',
+        'platform',
         'dependencies',
         'dev-dependencies',
         'source',
     ]
 
-    def __init__(self, lock: Path, original: Path):
+    def __init__(self, lock: Path, local_config: dict):
         self._lock = TomlFile(lock)
-        self._original = TomlFile(original)
+        self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
-
-    @property
-    def original(self) -> TomlFile:
-        return self._original
 
     @property
     def lock(self) -> TomlFile:
@@ -55,10 +52,11 @@ class Locker:
         """
         Checks whether the lock file is still up to date with the current hash.
         """
-        lock = self._lock.read()
+        lock = self._lock.read(True)
+        metadata = lock.get('metadata', {})
 
-        if 'content-hash' in lock:
-            return self._content_hash == lock['content-hash']
+        if 'content-hash' in metadata:
+            return self._content_hash == lock['metadata']['content-hash']
 
         return False
 
@@ -140,16 +138,11 @@ class Locker:
         """
         Returns the sha256 hash of the sorted content of the composer file.
         """
-        content = self._original.read()
+        content = self._local_config
 
         relevant_content = {}
-
-        package = content['package']
-        for key in ['name', 'version', 'python-versions', 'platform']:
-            relevant_content[key] = package.get(key, '')
-
-        for key in ['dependencies', 'dev-dependencies']:
-            relevant_content[key] = content[key]
+        for key in self._relevant_keys:
+            relevant_content[key] = content.get(key)
 
         content_hash = sha256(
             json.dumps(relevant_content, sort_keys=True).encode()
@@ -163,7 +156,7 @@ class Locker:
                 'No lockfile found. Unable to read locked packages'
             )
 
-        return self._lock.read()
+        return self._lock.read(True)
 
     def _lock_packages(self,
                        packages: List['poetry.packages.Package']) -> list:

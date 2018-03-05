@@ -1,10 +1,6 @@
-from poetry.toml import dumps
 from poetry.toml import loads
 
 from poetry.toml.prettify.errors import TOMLError
-from poetry.toml.prettify.errors import DuplicateKeysError
-from poetry.toml.prettify.errors import DuplicateTablesError
-from poetry.toml.prettify.errors import InvalidTOMLFileError
 
 
 def test_loading_toml_without_trailing_newline():
@@ -91,7 +87,7 @@ cwd = "./handlers"
     REDIS_PASSWORD = "MYPASSWORD"
     #REDIS_PASSWORD = ""
 """
-
+    print(f.dumps())
     assert expected == f.dumps()
 
 

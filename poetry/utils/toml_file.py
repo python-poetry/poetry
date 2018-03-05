@@ -16,7 +16,10 @@ class TomlFile:
     def path(self):
         return self._path
 
-    def read(self) -> dict:
+    def read(self, raw=False) -> dict:
+        if raw:
+            return toml.loads(self._path.read_text())
+
         return loads(self._path.read_text())
 
     def write(self, data) -> None:

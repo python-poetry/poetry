@@ -13,9 +13,11 @@ class Poetry:
     VERSION = '0.2.0'
 
     def __init__(self,
+                 file: Path,
                  config: dict,
                  package: Package,
                  locker: Locker):
+        self._file = TomlFile(file)
         self._package = package
         self._config = config
         self._locker = locker
@@ -27,6 +29,10 @@ class Poetry:
 
         # Always put PyPI last to prefere private repositories
         self._pool.add_repository(PyPiRepository())
+        
+    @property
+    def file(self):
+        return self._file
 
     @property
     def package(self) -> Package:
@@ -46,37 +52,42 @@ class Poetry:
 
     @classmethod
     def create(cls, cwd) -> 'Poetry':
-        poetry_file = Path(cwd) / 'poetry.toml'
+        poetry_file = Path(cwd) / 'pyproject.toml'
 
         if not poetry_file.exists():
             raise RuntimeError(
-                f'Poetry could not find a poetry.json file in {cwd}'
+                f'Poetry could not find a pyproject.toml file in {cwd}'
             )
 
         # TODO: validate file content
-        local_config = TomlFile(poetry_file.as_posix()).read()
+        local_config = TomlFile(poetry_file.as_posix()).read(True)
+        if 'tool' not in local_config or 'poetry' not in local_config['tool']:
+            raise RuntimeError(
+                f'[tool.poetry] section not found in {poetry_file.name}'
+            )
+        local_config = local_config['tool']['poetry']
 
         # Load package
-        package_config = local_config['package']
-        name = package_config['name']
-        pretty_version = package_config['version']
+        name = local_config['name']
+        pretty_version = local_config['version']
         version = normalize_version(pretty_version)
         package = Package(name, version, pretty_version)
 
-        if 'python-versions' in package_config:
-            package.python_versions = package_config['python-versions']
-
-        if 'platform' in package_config:
-            package.platform = package_config['platform']
+        if 'platform' in local_config:
+            package.platform = local_config['platform']
 
         if 'dependencies' in local_config:
             for name, constraint in local_config['dependencies'].items():
+                if name.lower() == 'python':
+                    package.python_versions = constraint
+                    continue
+
                 package.add_dependency(name, constraint)
 
         if 'dev-dependencies' in local_config:
             for name, constraint in local_config['dev-dependencies'].items():
                 package.add_dependency(name, constraint, category='dev')
 
-        locker = Locker(poetry_file.with_suffix('.lock'), poetry_file)
+        locker = Locker(poetry_file.with_suffix('.lock'), local_config)
 
-        return cls(local_config, package, locker)
+        return cls(poetry_file, local_config, package, locker)

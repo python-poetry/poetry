@@ -35,11 +35,12 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         if is_dev:
             section = 'dev-dependencies'
 
-        original_content = self.poetry.locker.original.read()
-        content = self.poetry.locker.original.read()
+        original_content = self.poetry.file.read()
+        content = self.poetry.file.read()
+        poetry_content = content['tool']['poetry']
 
         for name in packages:
-            for key in content[section]:
+            for key in poetry_content[section]:
                 if key.lower() == name.lower():
                     raise ValueError(f'Package {name} is already present')
 
@@ -52,10 +53,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             parser.parse_constraints(constraint)
 
         for name, constraint in requirements.items():
-            content[section][name] = constraint
+            poetry_content[section][name] = constraint
 
         # Write new content
-        self.poetry.locker.original.write(content)
+        self.poetry.file.write(content)
 
         # Cosmetic new line
         self.line('')
@@ -77,7 +78,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         try:
             status = installer.run()
         except Exception:
-            self.poetry.locker.original.write(original_content)
+            self.poetry.file.write(original_content)
 
             raise
 
@@ -90,7 +91,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                     'to its original content.'
                 )
 
-            self.poetry.locker.original.write(original_content)
+            self.poetry.file.write(original_content)
 
         return status
 

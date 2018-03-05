@@ -5,8 +5,10 @@ from . import raw
 
 class CascadeDict:
     """
-    A dict-like object made up of one or more other dict-like objects where querying for an item cascade-gets
-    it from all the internal dicts in order of their listing, and setting an item sets it on the first dict listed.
+    A dict-like object made up of one or more other dict-like objects
+    where querying for an item cascade-gets it from all the internal dicts
+    in order of their listing, and setting an item
+    sets it on the first dict listed.
     """
 
     def __init__(self, *internal_dicts):
@@ -17,7 +19,7 @@ class CascadeDict:
         """
         Returns another instance with one more dict cascaded at the end.
         """
-        return CascadeDict(self._internal_dicts, one_more_dict,)
+        return CascadeDict(*self._internal_dicts, one_more_dict)
 
     def __getitem__(self, item):
         for d in self._internal_dicts:

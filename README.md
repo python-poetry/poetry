@@ -28,13 +28,13 @@ See `poet help completions` for full details, but the gist is as simple as using
 
 ```bash
 # Bash
-poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
+poetry completions bash > /etc/bash_completion.d/pyproject.bash-completion
 
 # Bash (macOS/Homebrew)
-poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
+poetry completions bash > $(brew --prefix)/etc/bash_completion.d/pyproject.bash-completion
 
 # Fish
-poetry completions fish > ~/.config/fish/completions/poetry.fish
+poetry completions fish > ~/.config/fish/completions/pyproject.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
@@ -54,13 +54,13 @@ fpath+=~/.zfunc
 ## Introduction
 
 `poetry` is a tool to handle dependencies installation, building and packaging of Python packages.
-It only needs one file to do all of that: `poetry.toml`.
+It only needs one file to do all of that: the new, [standardized](https://www.python.org/dev/peps/pep-0518/) `pyproject.toml`.
 
 ```toml
-[package]
-name = "pypoet"
+[tool.poetry]
+name = "my-package"
 version = "0.1.0"
-description = "Poet helps you declare, manage and install dependencies of Python projects, ensuring you have the right stack everywhere."
+description = "The description of the package"
 
 license = "MIT"
 
@@ -70,17 +70,13 @@ authors = [
 
 readme = 'README.md'
 
-repository = "https://github.com/sdispater/poet"
-homepage = "https://github.com/sdispater/poet"
+repository = "https://github.com/sdispater/poetry"
+homepage = "https://github.com/sdispater/poetry"
 
-keywords = ['packaging', 'poet']
+keywords = ['packaging', 'poetry']
 
-include = ['poet/**/*', 'LICENSE']
-
-python-versions = "~2.7 || ^3.2"
-
-
-[dependencies]
+[tool.pyproject.dependencies]
+python = "~2.7 || ^3.2"  # Compatible python versions must be declared here
 toml = "^0.9"
 requests = "^2.13"
 semantic_version = "^2.6"
@@ -90,13 +86,13 @@ wheel = "^0.29"
 pip-tools = "^1.8.2"
 cleo = { git = "https://github.com/sdispater/cleo.git", branch = "master" }
 
-[dev-dependencies]
+[tool.pyproject.dev-dependencies]
 pytest = "^3.0"
 pytest-cov = "^2.4"
 coverage = "<4.0"
 httpretty = "^0.8.14"
 
-[scripts]
+[tool.pyproject.scripts]
 poet = 'poet:app.run'
 ```
 
@@ -212,12 +208,12 @@ poetry new my-package
 will create a folder as follows:
 
 ```text
-my-project
-├── poetry.toml
+my-package
+├── pyproject.toml
 ├── README.rst
-├── my_project
+├── my_package
     └── __init__.py
-├── tests
+└── tests
     ├── __init__.py
     └── test_my_package
 ```
@@ -226,24 +222,24 @@ If you want to name your project differently than the folder, you can pass
 the `--name` option:
 
 ```bash
-poetry new my-folder --my-package
+poetry new my-folder --name my-package
 ```
 
 
 ### install
 
-The `install` command reads the `poetry.toml` file from the current directory, resolves the dependencies,
+The `install` command reads the `pyproject.toml` file from the current directory, resolves the dependencies,
 and installs them.
 
 ```bash
 poetry install
 ```
 
-If there is a `poetry.lock` file in the current directory,
+If there is a `pyproject.lock` file in the current directory,
 it will use the exact versions from there instead of resolving them.
 This ensures that everyone using the library will get the same versions of the dependencies.
 
-If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
+If there is no `pyproject.lock` file, Poetry will create one after dependency resolution.
 
 You can specify to the command that you do not want the development dependencies installed by passing
 the `--no-dev` option.
@@ -267,14 +263,14 @@ poetry install -f mysql -f pgsql
 
 ### update
 
-In order to get the latest versions of the dependencies and to update the `poetry.lock` file,
+In order to get the latest versions of the dependencies and to update the `pyproject.lock` file,
 you should use the `update` command.
 
 ```bash
 poetry update
 ```
 
-This will resolve all dependencies of the project and write the exact versions into `poetry.lock`.
+This will resolve all dependencies of the project and write the exact versions into `pyproject.lock`.
 
 If you just want to update a few packages and not all, you can list them as such:
 
@@ -284,12 +280,11 @@ poetry update requests toml
 
 #### Options
 
-* `--no-progress`: Removes the progress display that can mess with some terminals or scripts which don't handle backspace characters.
-
+* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 ### add
 
-The `add` command adds required packages to your `poetry.toml` and installs them.
+The `add` command adds required packages to your `pyproject.toml` and installs them.
 
 If you do not specify a version constraint,
 poetry will choose a suitable one based on the available package versions.
@@ -384,16 +379,16 @@ poetry search requests pendulum
 
 ### lock
 
-This command locks (without installing) the dependencies specified in `poetry.toml`.
+This command locks (without installing) the dependencies specified in `pyproject.toml`.
 
 ```bash
 poetry lock
 ```
 
 
-## The `poetry.toml` file
+## The `pyproject.toml` file
 
-A `poetry.toml` file is composed of multiple sections.
+A `pyproject.toml` file is composed of multiple sections.
 
 ### package
 
@@ -519,7 +514,7 @@ Only the name and a version string are required in this case.
 requests = "^2.13.0"
 ```
 
-If you want to use a private repository, you can add it to your `poetry.toml` file, like so:
+If you want to use a private repository, you can add it to your `pyproject.toml` file, like so:
 
 ```toml
 [[source]]
@@ -684,5 +679,5 @@ To match the example in the setuptools documentation, you would use the followin
 
 ## Resources
 
-* [Official Website](https://poetry.eustace.io)
+* [Official Website](https://pyproject.eustace.io)
 * [Issue Tracker](https://github.com/sdispater/poetry/issues)

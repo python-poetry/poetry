@@ -109,8 +109,12 @@ class TableElement(abstracttable.AbstractTable):
             end = len(tuple(self._sub_elements))
         self._sub_elements = self.sub_elements[:begin] + self.sub_elements[end:]
 
+    @property
     def value(self):
         return self
+
+    def __eq__(self, other):
+        return self.primitive_value == other
 
     def __iter__(self):
         return iter(self.keys())

@@ -9,6 +9,7 @@
 
 ### Changed
 
+- Changed the `poetry.toml` file for the new, standardized `pyproject.toml`.
 - Dependencies of each package is now stored in `poetry.lock`.
 - Improved TOML file management.
 - Dependency resolver now respects the root package python version requirements.

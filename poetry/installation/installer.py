@@ -143,7 +143,7 @@ class Installer:
                 self._io.writeln(
                     '<warning>'
                     'Warning: The lock file is not up to date with '
-                    'the latest changes in composer.json. '
+                    'the latest changes in pyproject.toml. '
                     'You may be getting outdated dependencies. '
                     'Run update to update them.'
                     '</warning>'

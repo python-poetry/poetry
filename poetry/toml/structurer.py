@@ -17,30 +17,29 @@ class NamedDict(dict):
         """
         key can be an Name instance.
 
-        When key is a path in the form of an Name instance, all the parents and grandparents of the value are
-        created along the way as instances of NamedDict. If the parent of the value exists, it is replaced with a
-        CascadeDict() that cascades the old parent value with a new NamedDict that contains the given child name
-        and value.
+        When key is a path in the form of an Name instance,
+        all the parents and grandparents of the value are
+        created along the way as instances of NamedDict.
+
+        If the parent of the value exists, it is replaced with a
+        CascadeDict() that cascades the old parent value
+        with a new NamedDict that contains the given child name and value.
         """
         if isinstance(key, toplevels.Name):
-
-            if len(key.sub_names) == 1:
-                name = key.sub_names[0]
-                if name in self:
-                    self[name] = CascadeDict(self[name], value)
+            obj = self
+            for i, name in enumerate(key.sub_names):
+                if name in obj:
+                    if i == len(key.sub_names) - 1:
+                        obj[name] = CascadeDict(obj[name], value)
+                    else:
+                        obj[name] = CascadeDict(NamedDict(), obj[name])
                 else:
-                    self[name] = value
+                    if i == len(key.sub_names) - 1:
+                        obj[name] = value
+                    else:
+                        obj[name] = NamedDict()
 
-            elif len(key.sub_names) > 1:
-                name = key.sub_names[0]
-                rest_of_key = key.drop(1)
-                if name in self:
-                    named_dict = NamedDict()
-                    named_dict[rest_of_key] = value
-                    self[name] = CascadeDict(self[name], named_dict)
-                else:
-                    self[name] = NamedDict()
-                    self[name][rest_of_key] = value
+                obj = obj[name]
         else:
             return dict.__setitem__(self, key, value)
 
@@ -62,7 +61,6 @@ class NamedDict(dict):
             self[key] = [value]
 
     def __getitem__(self, item):
-
         if isinstance(item, toplevels.Name):
             d = self
             for name in item.sub_names:
@@ -71,17 +69,19 @@ class NamedDict(dict):
         else:
             return dict.__getitem__(self, item)
 
+    def __eq__(self, other):
+        return dict.__eq__(self, other)
+
 
 def structure(table_toplevels):
     """
-    Accepts an ordered sequence of TopLevel instances and returns a navigable object structure representation of the
-    TOML file.
+    Accepts an ordered sequence of TopLevel instances and returns a navigable
+    object structure representation of the TOML file.
     """
-
     table_toplevels = tuple(table_toplevels)
     obj = NamedDict()
 
-    last_array_of_tables = None         # The Name of the last array-of-tables header
+    last_array_of_tables = None  # The Name of the last array-of-tables header
 
     for toplevel in table_toplevels:
 
