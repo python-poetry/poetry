@@ -54,7 +54,7 @@ class Application(BaseApplication):
         ]
 
     def do_run(self, i, o) -> int:
-        if self._venv.is_venv() and o.is_debug():
+        if self._venv.is_venv() and o.is_verbose():
             o.writeln(f'Using virtualenv: <comment>{self._venv.venv}</>')
 
         return super().do_run(i, o)
