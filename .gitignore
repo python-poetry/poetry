@@ -25,7 +25,6 @@ pip-log.txt
 /test_*.*
 
 setup.cfg
-setup.py
 MANIFEST.in
 pyproject.lock
 README.rst
