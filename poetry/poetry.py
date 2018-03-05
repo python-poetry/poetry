@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from .__version__ import __version__
 from .packages import Locker
 from .packages import Package
 from .repositories import Pool
@@ -10,7 +11,7 @@ from .utils.toml_file import TomlFile
 
 class Poetry:
 
-    VERSION = '0.2.0'
+    VERSION = __version__
 
     def __init__(self,
                  file: Path,

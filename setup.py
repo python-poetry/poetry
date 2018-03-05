@@ -4,8 +4,8 @@ from setuptools import setup, find_packages
 
 def get_version():
     basedir = os.path.dirname(__file__)
-    with open(os.path.join(basedir, 'poetry/__init__.py')) as f:
-        variables = {'__name__': 'poetry'}
+    with open(os.path.join(basedir, 'poetry/__version__.py')) as f:
+        variables = {}
         exec(f.read(), variables)
 
         version = variables.get('__version__')
