@@ -1,0 +1,84 @@
+import ast
+
+from pathlib import Path
+
+from poetry import Poetry
+from poetry.masonry.builders.sdist import SdistBuilder
+
+from tests.helpers import get_dependency
+
+
+def project(name):
+    return Path(__file__).parent / 'fixtures' / name
+
+
+def test_convert_dependencies():
+    result = SdistBuilder.convert_dependencies([
+        get_dependency('A', '^1.0'),
+        get_dependency('B', '~1.0'),
+        get_dependency('C', '1.2.3'),
+    ])
+    main = [
+        'A>=1.0.0.0,<2.0.0.0',
+        'B>=1.0.0.0,<1.1.0.0',
+        'C==1.2.3.0',
+    ]
+    extras = []
+
+    assert result == (main, extras)
+
+    dependency_with_python = get_dependency('A', '^1.0')
+    dependency_with_python.python_versions = '^3.4'
+
+    result = SdistBuilder.convert_dependencies([
+        dependency_with_python,
+        get_dependency('B', '~1.0'),
+        get_dependency('C', '1.2.3'),
+    ])
+    main = [
+        'B>=1.0.0.0,<1.1.0.0',
+        'C==1.2.3.0',
+    ]
+    extras = [
+        'A>=1.0.0.0,<2.0.0.0; python_version>=3.4.0.0,<4.0.0.0',
+    ]
+
+    assert result == (main, extras)
+
+
+def test_make_setup():
+    poetry = Poetry.create(project('complete'))
+
+    builder = SdistBuilder(poetry)
+    setup = builder.build_setup()
+    setup_ast = ast.parse(setup)
+
+    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    ns = {}
+    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+    assert ns['packages'] == [
+        'my_package',
+        'my_package.sub_pkg1',
+        'my_package.sub_pkg2'
+    ]
+    assert ns['install_requires'] == [
+        'cleo>=0.6.0.0,<0.7.0.0'
+    ]
+    assert ns['entry_points'] == {
+        'console_scripts': ['my-script = my_package:main']
+    }
+
+
+def test_find_files_to_add():
+    poetry = Poetry.create(project('complete'))
+
+    builder = SdistBuilder(poetry)
+    result = builder.find_files_to_add()
+
+    assert result == [
+        Path('my_package/__init__.py'),
+        Path('my_package/sub_pkg1/__init__.py'),
+        Path('my_package/data1/test.json'),
+        Path('my_package/sub_pkg2/__init__.py'),
+        Path('my_package/sub_pkg2/data2/data.json'),
+    ]

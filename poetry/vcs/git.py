@@ -50,6 +50,13 @@ class Git:
             'rev-parse', rev
         )
 
+    def get_ignored_files(self) -> list:
+        output = self.run(
+            'ls-files', '--others', '-i', '--exclude-standard'
+        )
+
+        return output.split('\n')
+
     def run(self, *args) -> str:
         return subprocess.check_output(
             ['git'] + list(args),

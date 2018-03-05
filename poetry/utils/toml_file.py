@@ -30,5 +30,5 @@ class TomlFile:
 
         self._path.write_text(data)
 
-    def exists(self) -> bool:
-        return self._path.exists()
+    def __getattr__(self, item):
+        return getattr(self._path, item)

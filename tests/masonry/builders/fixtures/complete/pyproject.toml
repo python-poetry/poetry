@@ -1,28 +1,29 @@
 [tool.poetry]
-name = "poetry"
-version = "0.4.0-beta"
-description = "Python dependency management and packaging made easy."
+name = "my-package"
+version = "1.2.3"
+description = "Some description."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
 license = "MIT"
 
-readme = "README.md"
+readme = "README.rst"
 
 homepage = "https://poetry.eustace.io/"
-repository = "https://github.com/sdispater/poet"
+repository = "https://github.com/sdispater/poetry"
 documentation = "https://poetry.eustace.io/docs"
 
 keywords = ["packaging", "dependency", "poetry"]
+
 
 # Requirements
 [tool.poetry.dependencies]
 python = "^3.6"
 cleo = "^0.6"
-requests = "^2.18"
-toml = "^0.9"
-cachy = "^0.1.0"
-pip-tools = "^1.11"
 
 [tool.poetry.dev-dependencies]
 pytest = "~3.4"
+
+
+[tool.poetry.scripts]
+my-script = "my_package:main"

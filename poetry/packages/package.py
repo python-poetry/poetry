@@ -36,15 +36,6 @@ class Package:
     def __init__(self, name, version, pretty_version=None):
         """
         Creates a new in memory package.
-
-        :param name: The package's name
-        :type name: str
-
-        :param version: The package's version
-        :type version: str
-
-        :param pretty_version: The package's non-normalized version
-        :type pretty_version: str
         """
         self._pretty_name = name
         self._name = name.lower()
@@ -56,6 +47,12 @@ class Package:
 
         self._stability = parse_stability(version)
         self._dev = self._stability == 'dev'
+
+        self._authors = []
+
+        self.homepage = None
+        self.repository_url = None
+        self.keywords = []
 
         self.source_type = ''
         self.source_reference = ''
@@ -110,6 +107,10 @@ class Package:
                                   self.source_reference[0:7])
 
         return '{} {}'.format(self._pretty_version, self.source_reference)
+
+    @property
+    def authors(self) -> list:
+        return self._authors
 
     @property
     def python_versions(self):

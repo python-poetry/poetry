@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-
-import re
-
 import toml
 
+from poetry.utils.helpers import module_name
 from poetry.vcs.git import Git
-
-_canonicalize_regex = re.compile(r"[-_.]+")
 
 
 TESTS_DEFAULT = """from {package_name} import __version__
@@ -21,7 +16,7 @@ class Layout(object):
 
     def __init__(self, project, version='0.1.0', readme_format='md', author=None):
         self._project = project
-        self._package_name = self._canonicalize_name(project).replace('-', '_')
+        self._package_name = module_name(project)
         self._version = version
         self._readme_format = readme_format
         self._dependencies = {}
@@ -118,6 +113,3 @@ class Layout(object):
 
         with poetry.open('w') as f:
             f.write(content)
-
-    def _canonicalize_name(self, name: str) -> str:
-        return _canonicalize_regex.sub("-", name).lower()

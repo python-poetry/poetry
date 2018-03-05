@@ -74,6 +74,13 @@ class Poetry:
         version = normalize_version(pretty_version)
         package = Package(name, version, pretty_version)
 
+        for author in local_config['authors']:
+            package.authors.append(author)
+
+        package.description = local_config.get('description', '')
+        package.homepage = local_config.get('homepage')
+        package.repository_url = local_config.get('repository')
+
         if 'platform' in local_config:
             package.platform = local_config['platform']
 
