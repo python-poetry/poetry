@@ -27,4 +27,3 @@ pip-log.txt
 setup.cfg
 MANIFEST.in
 pyproject.lock
-README.rst
