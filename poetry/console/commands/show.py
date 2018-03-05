@@ -180,14 +180,14 @@ lists all packages available."""
                 break
 
         dependencies = sorted(dependencies, key=lambda x: x.name)
-        tree_bar = previous_tree_bar + '  ├'
+        tree_bar = previous_tree_bar + '   ├'
         i = 0
         total = len(dependencies)
         for dependency in dependencies:
             i += 1
             current_tree = packages_in_tree
             if i == total:
-                tree_bar = previous_tree_bar + '└'
+                tree_bar = previous_tree_bar + '   └'
 
             color_ident = level % len(self.colors)
             color = self.colors[color_ident]
@@ -196,7 +196,7 @@ lists all packages available."""
             if dependency.name in current_tree:
                 circular_warn = '(circular dependency aborted here)'
 
-            info = f'{tree_bar}── <{color}>{dependency.name}</{color} ' \
+            info = f'{tree_bar}── <{color}>{dependency.name}</{color}> ' \
                    f'{dependency.pretty_constraint} {circular_warn}'
             self._write_tree_line(info)
 
