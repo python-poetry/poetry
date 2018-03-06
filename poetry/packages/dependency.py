@@ -107,11 +107,11 @@ class Dependency:
         requirement = f'{self.pretty_name}'
 
         if isinstance(self.constraint, MultiConstraint):
-            requirement += ','.join(
+            requirement += ' ({})'.format(','.join(
                 [str(c).replace(' ', '') for c in self.constraint.constraints]
-            )
+            ))
         else:
-            requirement += str(self.constraint).replace(' ', '')
+            requirement += ' ({})'.format(str(self.constraint).replace(' ', ''))
 
         # Markers
         markers = []
@@ -119,20 +119,30 @@ class Dependency:
         # Python marker
         if self.python_versions != '*':
             python_constraint = self.python_constraint
-            marker = 'python_version'
-            if isinstance(python_constraint, MultiConstraint):
-                marker += ','.join(
-                    [str(c).replace(' ', '') for c in python_constraint.constraints]
-                )
-            else:
-                marker += str(python_constraint).replace(' ', '')
 
-            markers.append(marker)
+            markers.append(self._create_nested_marker('python_version', python_constraint))
 
         if markers:
             requirement += f'; {" and ".join(markers)}'
 
         return requirement
+
+    def _create_nested_marker(self, name, constraint):
+        if isinstance(constraint, MultiConstraint):
+            parts = []
+            for c in constraint.constraints:
+                parts.append(self._create_nested_marker(name, c))
+
+            glue = ' and '
+            if constraint.is_disjunctive():
+                parts = [f'({part})' for part in parts]
+                glue = ' or '
+
+            marker = glue.join(parts)
+        else:
+            marker = f'{name}{constraint.string_operator}"{constraint.version}"'
+
+        return marker
 
     def activate(self):
         """

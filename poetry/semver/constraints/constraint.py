@@ -42,6 +42,7 @@ class Constraint(BaseConstraint):
             )
 
         self._operator = self._trans_op_str[operator]
+        self._string_operator = operator
         self._version = version
         
     @property
@@ -51,6 +52,10 @@ class Constraint(BaseConstraint):
     @property
     def operator(self):
         return self._operator
+
+    @property
+    def string_operator(self):
+        return self._string_operator
 
     @property
     def version(self) -> str:

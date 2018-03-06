@@ -39,9 +39,9 @@ def test_convert_dependencies():
         get_dependency('C', '1.2.3'),
     ])
     main = [
-        'A>=1.0.0.0,<2.0.0.0',
-        'B>=1.0.0.0,<1.1.0.0',
-        'C==1.2.3.0',
+        'A (>=1.0.0.0,<2.0.0.0)',
+        'B (>=1.0.0.0,<1.1.0.0)',
+        'C (==1.2.3.0)',
     ]
     extras = []
 
@@ -56,11 +56,11 @@ def test_convert_dependencies():
         get_dependency('C', '1.2.3'),
     ])
     main = [
-        'B>=1.0.0.0,<1.1.0.0',
-        'C==1.2.3.0',
+        'B (>=1.0.0.0,<1.1.0.0)',
+        'C (==1.2.3.0)',
     ]
     extras = [
-        'A>=1.0.0.0,<2.0.0.0; python_version>=3.4.0.0,<4.0.0.0',
+        'A (>=1.0.0.0,<2.0.0.0); python_version>="3.4.0.0" and python_version<"4.0.0.0"',
     ]
 
     assert result == (main, extras)
@@ -82,7 +82,7 @@ def test_make_setup():
         'my_package.sub_pkg2'
     ]
     assert ns['install_requires'] == [
-        'cleo>=0.6.0.0,<0.7.0.0'
+        'cleo (>=0.6.0.0,<0.7.0.0)'
     ]
     assert ns['entry_points'] == {
         'console_scripts': ['my-script = my_package:main']

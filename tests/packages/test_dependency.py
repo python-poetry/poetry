@@ -53,3 +53,18 @@ def test_accepts_fails_with_python_versions_mismatch():
     package.python_versions = '~3.5'
 
     assert not dependency.accepts(package)
+
+
+def test_to_pep_508():
+    dependency = Dependency('Django', '^1.23')
+
+    result = dependency.to_pep_508()
+    assert result == 'Django (>=1.23.0.0,<2.0.0.0)'
+
+    dependency = Dependency('Django', '^1.23')
+    dependency.python_versions = '~2.7 || ^3.6'
+
+    result = dependency.to_pep_508()
+    assert result == 'Django (>=1.23.0.0,<2.0.0.0); ' \
+                     '(python_version>="2.7.0.0" and python_version<"2.8.0.0") ' \
+                     'or (python_version>="3.6.0.0" and python_version<"4.0.0.0")'
