@@ -165,8 +165,6 @@ class Package:
                 python_versions = constraint.get('python')
                 platform = constraint.get('platform')
 
-                optional = optional or python_versions is not None or platform is not None
-
                 dependency = VCSDependency(
                     name,
                     'git', constraint['git'],
@@ -187,8 +185,6 @@ class Package:
                 allows_prereleases = constraint.get('allows_prereleases', False)
                 python_versions = constraint.get('python')
                 platform = constraint.get('platform')
-
-                optional = optional or python_versions is not None or platform is not None
 
                 dependency = Dependency(
                     name, version,

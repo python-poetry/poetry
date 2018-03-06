@@ -12,6 +12,8 @@ class InstallCommand(Command):
         { --no-dev : Do not install dev dependencies. }
         { --dry-run : Outputs the operations but will not execute anything
                       (implicitly enables --verbose). }
+        { --E|extras=* : Extra sets of dependencies to install
+                         (multiple values allowed). }
     """
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -30,6 +32,7 @@ exist it will look for <comment>poetry.toml</> and do the same.
             self.poetry.pool
         )
 
+        installer.extras(self.option('extras'))
         installer.dev_mode(not self.option('no-dev'))
         installer.dry_run(self.option('dry-run'))
 

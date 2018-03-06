@@ -49,4 +49,4 @@ def test_poetry():
     pathlib2 = dependencies[3]
     assert pathlib2.pretty_constraint == '^2.2'
     assert pathlib2.python_versions == '~2.7'
-    assert pathlib2.is_optional()
+    assert not pathlib2.is_optional()

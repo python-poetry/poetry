@@ -6,6 +6,8 @@
 
 - Added packaging support (sdist and pure-python wheel).
 - Added the `build` command.
+- Added support for extras definition.
+- Added support for dependencies extras specification.
 
 ### Changes
 

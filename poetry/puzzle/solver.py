@@ -4,6 +4,8 @@ from poetry.mixology import Resolver
 from poetry.mixology.dependency_graph import DependencyGraph
 from poetry.mixology.exceptions import ResolverError
 
+from poetry.semver.version_parser import VersionParser
+
 from .exceptions import SolverProblemError
 from .operations import Install
 from .operations import Uninstall
@@ -50,7 +52,29 @@ class Solver:
                 vertex.payload.optional = False
             else:
                 vertex.payload.optional = True
-                vertex.payload.requirements = tags['requirements']
+
+            # Finding the less restrictive requirements
+            requirements = {}
+            parser = VersionParser()
+            for req_name, reqs in tags['requirements'].items():
+                for req in reqs:
+                    if req_name == 'python':
+                        if 'python' not in requirements:
+                            requirements['python'] = req
+                            continue
+
+                        previous = parser.parse_constraints(requirements['python'])
+                        current = parser.parse_constraints(req)
+
+                        if current.matches(previous):
+                            requirements['python'] = req
+
+                    if 'platform' in req:
+                        if 'platform' not in requirements:
+                            requirements['platform'] = req
+                            continue
+
+            vertex.payload.requirements = requirements
 
         operations = []
         for package in packages:
@@ -84,7 +108,10 @@ class Solver:
         tags = {
             'category': [],
             'optional': True,
-            'requirements': {}
+            'requirements': {
+                'python': [],
+                'platform': []
+            }
         }
 
         if not vertex.incoming_edges:
@@ -95,19 +122,21 @@ class Solver:
                     if not req.is_optional():
                         tags['optional'] = False
 
-                    if req.is_optional():
-                        # Checking installation requirements
-                        if req.python_versions != '*':
-                            tags['requirements']['python'] = str(req.python_constraint)
+                    if req.python_versions != '*':
+                        tags['requirements']['python'].append(str(req.python_constraint))
 
-                        if req.platform != '*':
-                            tags['requirements']['platform'] = str(req.platform_constraint)
+                    if req.platform != '*':
+                        tags['requirements']['platform'].append(str(req.platform_constraint))
+
+                    break
         else:
             for edge in vertex.incoming_edges:
                 sub_tags = self._get_tags_for_vertex(edge.origin, requested)
 
                 tags['category'] += sub_tags['category']
                 tags['optional'] = tags['optional'] and sub_tags['optional']
-                tags['requirements'].update(sub_tags['requirements'])
+                requirements = sub_tags['requirements']
+                tags['requirements']['python'] += requirements.get('python', [])
+                tags['requirements']['platform'] += requirements.get('platform', [])
 
         return tags

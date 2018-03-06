@@ -283,10 +283,12 @@ def test_run_with_optional_and_python_restricted_dependencies(installer, locker,
     assert locker.written_data == expected
 
     installer = installer.installer
-    # We should only have 3 installs
-    # A, C, D since the mocked python version is not compatible
-    # with B's python constraint
-    assert len(installer.installs) == 3
+    # We should only have 2 installs:
+    # C,D since the mocked python version is not compatible
+    # with B's python constraint and A is optional
+    assert len(installer.installs) == 2
+    assert installer.installs[0].name == 'd'
+    assert installer.installs[1].name == 'c'
 
 
 def test_run_with_dependencies_extras(installer, locker, repo, package):
@@ -309,4 +311,65 @@ def test_run_with_dependencies_extras(installer, locker, repo, package):
     expected = fixture('with-dependencies-extras')
 
     assert locker.written_data == expected
+
+
+def test_run_does_not_install_extras_if_not_requested(installer, locker, repo, package):
+    package.extras['foo'] = [
+        get_dependency('D')
+    ]
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+    package_d = get_package('D', '1.1')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    package.add_dependency('A', '^1.0')
+    package.add_dependency('B', '^1.0')
+    package.add_dependency('C', '^1.0')
+    package.add_dependency('D', {'version': '^1.0', 'optional': True})
+
+    installer.run()
+    expected = fixture('extras')
+
+    # Extras are pinned in lock
+    assert locker.written_data == expected
+
+    # But should not be installed
+    installer = installer.installer
+    assert len(installer.installs) == 3  # A, B, C
+
+
+def test_run_installs_extras_if_requested(installer, locker, repo, package):
+    package.extras['foo'] = [
+        get_dependency('D')
+    ]
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+    package_d = get_package('D', '1.1')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    package.add_dependency('A', '^1.0')
+    package.add_dependency('B', '^1.0')
+    package.add_dependency('C', '^1.0')
+    package.add_dependency('D', {'version': '^1.0', 'optional': True})
+
+    installer.extras(['foo'])
+    installer.run()
+    expected = fixture('extras')
+
+    # Extras are pinned in lock
+    assert locker.written_data == expected
+
+    # But should not be installed
+    installer = installer.installer
+    assert len(installer.installs) == 4  # A, B, C, D
 

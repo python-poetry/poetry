@@ -123,6 +123,12 @@ class Locker:
             }
         }
 
+        if root.extras:
+            lock['extras'] = {
+                extra: [dep.pretty_name for dep in deps]
+                for extra, deps in root.extras.items()
+            }
+
         if not self.is_locked() or lock != self.lock_data:
             self._write_lock_data(lock)
 

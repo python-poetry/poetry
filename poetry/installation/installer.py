@@ -41,6 +41,8 @@ class Installer:
 
         self._whitelist = {}
 
+        self._extras = []
+
         self._installer = self._get_installer()
 
     @property
@@ -104,6 +106,11 @@ class Installer:
 
         return self
 
+    def extras(self, extras: list) -> 'Installer':
+        self._extras = extras
+
+        return self
+
     def _do_install(self, local_repo):
         locked_repository = Repository()
         # initialize locked repo if we are installing from lock
@@ -111,6 +118,11 @@ class Installer:
             locked_repository = self._locker.locked_repository(True)
 
         if self._update:
+            # Checking extras
+            for extra in self._extras:
+                if extra not in self._package.extras:
+                    raise ValueError(f'Extra [{extra}] is not specified.')
+
             self._io.writeln('<info>Updating dependencies</>')
             fixed = []
 
@@ -157,6 +169,10 @@ class Installer:
                     '</warning>'
                 )
 
+            for extra in self._extras:
+                if extra not in self._locker.lock_data.get('extras', {}):
+                    raise ValueError(f'Extra [{extra}] is not specified.')
+
             # If we are installing from lock
             # Filter the operations by comparing it with what is
             # currently installed
@@ -165,7 +181,8 @@ class Installer:
         self._populate_local_repo(local_repo, ops, locked_repository)
 
         # We need to filter operations so that packages
-        # not compatible with the current system are dropped
+        # not compatible with the current system,
+        # or optional and not requested, are dropped
         self._filter_operations(ops)
 
         self._io.new_line()
@@ -319,6 +336,11 @@ class Installer:
                                   ) -> List[Operation]:
         installed_repo = InstalledRepository.load(self._io.venv)
         ops = []
+        extras = []
+        for extra_name, packages in self._locker.lock_data.get('extras').items():
+            if extra_name in self._extras:
+                for package in packages:
+                    extras.append(package.lower())
 
         for locked in locked_repository.packages:
             is_installed = False
@@ -327,12 +349,20 @@ class Installer:
                     is_installed = True
                     if locked.category == 'dev' and not self.is_dev_mode():
                         ops.append(Uninstall(locked))
+                    elif locked.is_optional() and locked.name not in extras:
+                        # Installed but optional and not requested in extras
+                        ops.append(Uninstall(locked))
                     elif locked.version != installed.version:
                         ops.append(Update(
                             installed, locked
                         ))
 
             if not is_installed:
+                # If it's optional and not in required extras
+                # we do not install
+                if locked.is_optional() and locked.name not in extras:
+                    continue
+
                 ops.append(Install(locked))
 
         return ops
@@ -344,7 +374,7 @@ class Installer:
             else:
                 package = op.package
 
-            if not package.requirements or op.job_type == 'uninstall':
+            if op.job_type == 'uninstall':
                 continue
 
             parser = VersionParser()
@@ -356,6 +386,28 @@ class Installer:
                 if not python_constraint.matches(Constraint('=', python)):
                     # Incompatible python versions
                     op.skip('Not needed for the current python version')
+                    continue
+
+            if self._update:
+                extras = {}
+                for extra, deps in self._package.extras.items():
+                    extras[extra] = [dep.name for dep in deps]
+            else:
+                extras = {}
+                for extra, deps in self._locker.lock_data.get('extras', {}):
+                    extras[extra] = [dep.lower() for dep in deps]
+
+            # If a package is optional and not requested
+            # in any extra we skip it
+            if package.optional:
+                drop = True
+                for extra in self._extras:
+                    if extra in extras and package.name in extras[extra]:
+                        drop = False
+                        continue
+
+                if drop:
+                    op.skip('Not required')
 
     def _get_installer(self) -> BaseInstaller:
         return PipInstaller(self._io.venv, self._io)
