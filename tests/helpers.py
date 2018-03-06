@@ -8,10 +8,15 @@ def get_package(name, version):
     return Package(name, normalize_version(version), version)
 
 
-def get_dependency(name, constraint=None, category='main', optional=False):
+def get_dependency(name,
+                   constraint=None,
+                   category='main',
+                   optional=False,
+                   allows_prereleases=False):
     return Dependency(
         name,
         constraint or '*',
         category=category,
-        optional=optional
+        optional=optional,
+        allows_prereleases=allows_prereleases
     )

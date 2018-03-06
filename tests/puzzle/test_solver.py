@@ -326,7 +326,7 @@ def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
     ])
 
 
-def test_solver_does_not_return_extras_if_not_requested(solver, repo, package):
+def test_solver_does_not_return_extras_if_not_requested(solver, repo):
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -354,7 +354,7 @@ def test_solver_does_not_return_extras_if_not_requested(solver, repo, package):
     ])
 
 
-def test_solver_returns_extras_if_requested(solver, repo, package):
+def test_solver_returns_extras_if_requested(solver, repo):
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -373,6 +373,64 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
     request = [
         dependency_a,
         dependency_b
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_a},
+    ])
+
+
+def test_solver_returns_prereleases_if_requested(solver, repo):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+    package_c_dev = get_package('C', '1.1-beta.1')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_c_dev)
+
+    dependency_a = get_dependency('A')
+    dependency_b = get_dependency('B')
+    dependency_c = get_dependency('C', allows_prereleases=True)
+    request = [
+        dependency_a,
+        dependency_b,
+        dependency_c
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_c_dev},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_a},
+    ])
+
+
+def test_solver_does_not_return_prereleases_if_not_requested(solver, repo):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+    package_c_dev = get_package('C', '1.1-beta.1')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_c_dev)
+
+    dependency_a = get_dependency('A')
+    dependency_b = get_dependency('B')
+    dependency_c = get_dependency('C')
+    request = [
+        dependency_a,
+        dependency_b,
+        dependency_c
     ]
 
     ops = solver.solve(request)
