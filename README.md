@@ -388,11 +388,7 @@ poetry lock
 
 ## The `pyproject.toml` file
 
-A `pyproject.toml` file is composed of multiple sections.
-
-### package
-
-This section describes the specifics of the package
+The `tool.poetry` section of the `pyproject.toml` file is composed of multiple sections.
 
 #### name
 
@@ -404,10 +400,6 @@ The version of the package. **Required**
 
 This should follow [semantic versioning](http://semver.org/). However it will not be enforced and you remain
 free to follow another specification.
-
-#### python-version
-
-A list of Python versions for which the package is compatible. **Required**
 
 #### description
 
@@ -492,44 +484,39 @@ include = ["package/**/*.py", "package/**/.c"]
 exclude = ["package/excluded.py"]
 ```
 
-If you packages lies elsewhere (say in a `src` directory), you can tell `poet` to find them from there:
-
-```toml
-include = { from = 'src', include = '**/*' }
-```
-
-Similarly, you can tell that the `src` directory represent the `foo` package:
-
-```toml
-include = { from = 'src', include = '**/*', as = 'foo' }
-```
-
 ### `dependencies` and `dev-dependencies`
 
-Poet is configured to look for dependencies on [PyPi](https://pypi.org) by default.
+Poetry is configured to look for dependencies on [PyPi](https://pypi.org) by default.
 Only the name and a version string are required in this case.
 
 ```toml
-[dependencies]
+[tool.poetry.dependencies]
 requests = "^2.13.0"
 ```
 
 If you want to use a private repository, you can add it to your `pyproject.toml` file, like so:
 
 ```toml
-[[source]]
+[[tool.poetry.source]]
 name = 'private'
 url = 'http://example.com/simple'
 ```
 
+Be aware that declaring the python version for which your package
+is compatible is mandatory:
+
+```toml
+[tool.poetry.dependencies]
+python = "^3.6"
+```
 
 #### Caret requirement
 
 **Caret requirements** allow SemVer compatible updates to a specified version.
 An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping.
-In this case, if we ran `poet update requests`, poet would update us to version `2.14.0` if it was available,
+In this case, if we ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available,
 but would not update us to `3.0.0`.
-If instead we had specified the version string as `^0.1.13`, poet would update to `0.1.14` but not `0.2.0`.
+If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`.
 `0.0.x` is not considered compatible with any other version.
 
 Here are some more examples of caret requirements and the versions that would be allowed with them:
@@ -613,12 +600,12 @@ You can also specify that a dependency should be installed only for specific Pyt
 
 ```toml
 [dependencies]
-pathlib2 = { version = "^2.2", python-versions = "~2.7" }
+pathlib2 = { version = "^2.2", python = "~2.7" }
 ```
 
 ```toml
 [dependencies]
-pathlib2 = { version = "^2.2", python-versions = ["~2.7", "^3.2"] }
+pathlib2 = { version = "^2.2", python = ["~2.7", "^3.2"] }
 ```
 
 ### `scripts`
@@ -679,5 +666,5 @@ To match the example in the setuptools documentation, you would use the followin
 
 ## Resources
 
-* [Official Website](https://pyproject.eustace.io)
+* [Official Website](https://poetry.eustace.io)
 * [Issue Tracker](https://github.com/sdispater/poetry/issues)
