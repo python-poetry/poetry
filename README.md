@@ -248,12 +248,12 @@ the `--no-dev` option.
 poetry install --no-dev
 ```
 
-You can also specify the features you want installed
-by passing the `--f|--features` option (See [Features](#features) for more info)
+You can also specify the extra features you want installed
+by passing the `--E|--extras` option (See [Extras](#extras) for more info)
 
 ```bash
-poetry install --features "mysql pgsql"
-poetry install -f mysql -f pgsql
+poetry install --extras "mysql pgsql"
+poetry install -E mysql -E pgsql
 ```
 
 #### Options
@@ -630,7 +630,7 @@ Poetry supports extras to allow expression of:
 [tool.poetry]
 name = "awesome"
 
-[dependencies]
+[tool.poetry.dependencies]
 # These packages are mandatory and form the core of this package’s distribution.
 mandatory = "^1.0"
 
