@@ -1,3 +1,5 @@
+import sys
+
 from typing import List
 
 from poetry.packages import Dependency
@@ -11,6 +13,8 @@ from poetry.puzzle.operations.operation import Operation
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.semver.constraints import Constraint
+from poetry.semver.version_parser import VersionParser
 
 from .base_installer import BaseInstaller
 from .pip_installer import PipInstaller
@@ -38,6 +42,10 @@ class Installer:
         self._whitelist = {}
 
         self._installer = self._get_installer()
+
+    @property
+    def installer(self):
+        return self._installer
 
     def run(self):
         # Force update if there is no lock file present
@@ -156,6 +164,10 @@ class Installer:
 
         self._populate_local_repo(local_repo, ops, locked_repository)
 
+        # We need to filter operations so that packages
+        # not compatible with the current system are dropped
+        self._filter_operations(ops)
+
         self._io.new_line()
 
         # Execute operations
@@ -215,6 +227,15 @@ class Installer:
         getattr(self, f'_execute_{method}')(operation)
 
     def _execute_install(self, operation: Install) -> None:
+        if operation.skipped:
+            if self._io.is_verbose() and (self._execute_operations or self.is_dry_run()):
+                self._io.writeln(
+                    f'  - Skipping <info>{operation.package.name}</> '
+                    f'(<comment>{operation.package.full_pretty_version}</>) '
+                    f'{operation.skip_reason}')
+
+            return
+
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
                 f'  - Installing <info>{operation.package.name}</> '
@@ -229,6 +250,15 @@ class Installer:
     def _execute_update(self, operation: Update) -> None:
         source = operation.initial_package
         target = operation.target_package
+
+        if operation.skipped:
+            if self._io.is_verbose() and (self._execute_operations or self.is_dry_run()):
+                self._io.writeln(
+                    f'  - Skipping <info>{target.name}</> '
+                    f'(<comment>{target.full_pretty_version}</>) '
+                    f'{operation.skip_reason}')
+
+            return
 
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
@@ -306,6 +336,26 @@ class Installer:
                 ops.append(Install(locked))
 
         return ops
+
+    def _filter_operations(self, ops: List[Operation]):
+        for op in ops:
+            if isinstance(op, Update):
+                package = op.target_package
+            else:
+                package = op.package
+
+            if not package.requirements or op.job_type == 'uninstall':
+                continue
+
+            parser = VersionParser()
+            python = '.'.join([str(i) for i in sys.version_info[:3]])
+            if 'python' in package.requirements:
+                python_constraint = parser.parse_constraints(
+                    package.requirements['python']
+                )
+                if not python_constraint.matches(Constraint('=', python)):
+                    # Incompatible python versions
+                    op.skip('Not needed for the current python version')
 
     def _get_installer(self) -> BaseInstaller:
         return PipInstaller(self._io.venv, self._io)

@@ -1,5 +1,6 @@
 import pytest
 import toml
+import sys
 
 from pathlib import Path
 
@@ -52,6 +53,18 @@ class Locker(BaseLocker):
                 del package['dependencies']
 
         self._written_data = data
+
+
+@pytest.fixture(autouse=True)
+def setup():
+    # Mock python version to get reliable tests
+    original = sys.version_info
+
+    sys.version_info = (3, 6, 3, 'final', 0)
+
+    yield
+
+    sys.version_info = original
 
 
 @pytest.fixture()
@@ -241,3 +254,36 @@ def test_run_with_python_versions(installer, locker, repo, package):
     expected = fixture('with-python-versions')
 
     assert locker.written_data == expected
+
+
+def test_run_with_optional_and_python_restricted_dependencies(installer, locker, repo, package):
+    package.python_versions = '~2.7 || ^3.4'
+
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.1')
+    package_c12 = get_package('C', '1.2')
+    package_c13 = get_package('C', '1.3')
+    package_d = get_package('D', '1.4')
+    package_c13.add_dependency('D', '^1.2')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c12)
+    repo.add_package(package_c13)
+    repo.add_package(package_d)
+
+    package.add_dependency('A', {'version': '~1.0', 'optional': True})
+    package.add_dependency('B', {'version': '^1.0', 'python': '~2.7'})
+    package.add_dependency('C', {'version': '^1.0', 'python': '^3.6'})
+
+    installer.run()
+    expected = fixture('with-optional-dependencies')
+
+    assert locker.written_data == expected
+
+    installer = installer.installer
+    # We should only have 3 installs
+    # A, C, D since the mocked python version is not compatible
+    # with B's python constraint
+    assert len(installer.installs) == 3
+

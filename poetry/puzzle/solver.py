@@ -40,11 +40,17 @@ class Solver:
 
         # Setting categories
         for vertex in graph.vertices.values():
-            tags = self._get_categories_for_vertex(vertex, requested)
-            if 'main' in tags:
+            tags = self._get_tags_for_vertex(vertex, requested)
+            if 'main' in tags['category']:
                 vertex.payload.category = 'main'
             else:
                 vertex.payload.category = 'dev'
+
+            if not tags['optional']:
+                vertex.payload.optional = False
+            else:
+                vertex.payload.optional = True
+                vertex.payload.requirements = tags['requirements']
 
         operations = []
         for package in packages:
@@ -74,15 +80,34 @@ class Solver:
 
         return list(reversed(operations))
 
-    def _get_categories_for_vertex(self, vertex, requested):
-        tags = []
+    def _get_tags_for_vertex(self, vertex, requested):
+        tags = {
+            'category': [],
+            'optional': True,
+            'requirements': {}
+        }
+
         if not vertex.incoming_edges:
             # Original dependency
             for req in requested:
                 if req.name == vertex.name:
-                    tags.append(req.category)
+                    tags['category'].append(req.category)
+                    if not req.is_optional():
+                        tags['optional'] = False
+
+                    if req.is_optional():
+                        # Checking installation requirements
+                        if req.python_versions != '*':
+                            tags['requirements']['python'] = str(req.python_constraint)
+
+                        if req.platform != '*':
+                            tags['requirements']['platform'] = str(req.platform_constraint)
         else:
             for edge in vertex.incoming_edges:
-                tags += self._get_categories_for_vertex(edge.origin, requested)
+                sub_tags = self._get_tags_for_vertex(edge.origin, requested)
+
+                tags['category'] += sub_tags['category']
+                tags['optional'] = tags['optional'] and sub_tags['optional']
+                tags['requirements'].update(sub_tags['requirements'])
 
         return tags

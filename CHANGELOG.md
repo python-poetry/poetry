@@ -4,15 +4,19 @@
 
 ### Added
 
-- Add packaging support (sdist and pure-python wheel).
-- Add the `build` command.
+- Added packaging support (sdist and pure-python wheel).
+- Added the `build` command.
+
+### Changes
+
+- Dependencies system constraints are now respected when installing packages.
 
 
 ## [0.3.0] - 2018-03-05
 
 ### Added
 
-- Add `show` command. 
+- Added `show` command. 
 - Added the `--dry-run` option to the `add` command.
 
 ### Changed

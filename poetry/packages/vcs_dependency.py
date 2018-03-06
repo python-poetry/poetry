@@ -20,7 +20,9 @@ class VCSDependency(Dependency):
         self._tag = tag
         self._rev = rev
         
-        super(VCSDependency, self).__init__(name, '*', optional=optional)
+        super().__init__(
+            name, '*', optional=optional, allows_prereleases=True
+        )
 
     @property
     def vcs(self) -> str:

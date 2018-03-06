@@ -196,5 +196,8 @@ class Locker:
                 'reference': package.source_reference
             }
 
+        if package.requirements:
+            data['requirements'] = package.requirements
+
         return data
 

@@ -1,4 +1,5 @@
-from poetry.semver.constraints.base_constraint import BaseConstraint
+from typing import Union
+
 from poetry.semver.helpers import parse_stability
 from poetry.semver.version_parser import VersionParser
 
@@ -68,6 +69,9 @@ class Package:
         self.category = 'main'
         self.hashes = []
         self.optional = False
+
+        # Requirements for making it mandatory
+        self.requirements = {}
 
         self._python_versions = '*'
         self._python_constraint = self._parser.parse_constraints('*')
@@ -146,25 +150,57 @@ class Package:
     def is_prerelease(self):
         return self._stability != 'stable'
 
-    def add_dependency(self, name, constraint=None, category='main'):
+    def add_dependency(self,
+                       name: str,
+                       constraint: Union[str, dict, None] = None,
+                       category: str = 'main') -> Dependency:
         if constraint is None:
             constraint = '*'
 
         if isinstance(constraint, dict):
             if 'git' in constraint:
                 # VCS dependency
+                optional = constraint.get('optional', False)
+                python_versions = constraint.get('python')
+                platform = constraint.get('platform')
+
+                optional = optional or python_versions is not None or platform is not None
+
                 dependency = VCSDependency(
                     name,
                     'git', constraint['git'],
                     branch=constraint.get('branch', None),
                     tag=constraint.get('tag', None),
                     rev=constraint.get('rev', None),
-                    optional=constraint.get('optional', None),
+                    optional=optional,
                 )
+
+                if python_versions:
+                    dependency.python_versions = python_versions
+
+                if platform:
+                    dependency.platform = platform
             else:
                 version = constraint['version']
                 optional = constraint.get('optional', False)
-                dependency = Dependency(name, version, optional=optional, category=category)
+                allows_prereleases = constraint.get('allows_prereleases', False)
+                python_versions = constraint.get('python')
+                platform = constraint.get('platform')
+
+                optional = optional or python_versions is not None or not platform is not None
+
+                dependency = Dependency(
+                    name, version,
+                    optional=optional,
+                    category=category,
+                    allows_prereleases=allows_prereleases
+                )
+
+                if python_versions:
+                    dependency.python_versions = python_versions
+
+                if platform:
+                    dependency.platform = platform
         else:
             dependency = Dependency(name, constraint, category=category)
 

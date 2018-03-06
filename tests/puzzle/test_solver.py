@@ -293,3 +293,34 @@ def test_solver_fails_if_mismatch_root_python_versions(solver, repo, package):
 
     with pytest.raises(SolverProblemError):
         solver.solve(request)
+
+
+def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
+    package.python_versions = '^3.4'
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_b.python_versions = '^3.6'
+    package_c = get_package('C', '1.0')
+    package_c.python_versions = '^3.6'
+    package_b.add_dependency('C', '^1.0')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    dependency_a = get_dependency('A')
+    dependency_a.python_versions = '~3.5'
+
+    dependency_b = get_dependency('B', optional=True)
+    request = [
+        dependency_a,
+        dependency_b
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_a},
+    ])
