@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+
+- Add packaging support (sdist and pure-python wheel).
+- Add the `build` command.
+
+
 ## [0.3.0] - 2018-03-05
 
 ### Added
