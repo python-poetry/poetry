@@ -1,4 +1,6 @@
 import ast
+import pytest
+import shutil
 
 from pathlib import Path
 
@@ -6,6 +8,24 @@ from poetry import Poetry
 from poetry.masonry.builders.sdist import SdistBuilder
 
 from tests.helpers import get_dependency
+
+
+fixtures_dir = Path(__file__).parent / 'fixtures'
+
+
+@pytest.fixture(autouse=True)
+def setup():
+    clear_samples_dist()
+
+    yield
+
+    clear_samples_dist()
+
+
+def clear_samples_dist():
+    for dist in fixtures_dir.glob('**/dist'):
+        if dist.is_dir():
+            shutil.rmtree(str(dist))
 
 
 def project(name):
@@ -84,3 +104,14 @@ def test_find_files_to_add():
         Path('my_package/sub_pkg2/data2/data.json'),
         Path('pyproject.toml'),
     ]
+
+
+def test_package():
+    poetry = Poetry.create(project('complete'))
+
+    builder = SdistBuilder(poetry)
+    builder.build()
+
+    sdist = fixtures_dir / 'complete' / 'dist' / 'my-package-1.2.3.tar.gz'
+
+    assert sdist.exists()
