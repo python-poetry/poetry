@@ -44,6 +44,7 @@ def test_poetry():
     assert not requests.is_vcs()
     assert not requests.allows_prereleases()
     assert requests.is_optional()
+    assert requests.extras == ['security']
 
     pathlib2 = dependencies[3]
     assert pathlib2.pretty_constraint == '^2.2'

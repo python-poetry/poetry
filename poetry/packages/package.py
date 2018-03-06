@@ -63,6 +63,7 @@ class Package:
 
         self.requires = []
         self.dev_requires = []
+        self.extras = {}
 
         self._parser = VersionParser()
 
@@ -187,7 +188,7 @@ class Package:
                 python_versions = constraint.get('python')
                 platform = constraint.get('platform')
 
-                optional = optional or python_versions is not None or not platform is not None
+                optional = optional or python_versions is not None or platform is not None
 
                 dependency = Dependency(
                     name, version,
@@ -201,6 +202,10 @@ class Package:
 
                 if platform:
                     dependency.platform = platform
+
+            if 'extras' in constraint:
+                for extra in constraint['extras']:
+                    dependency.extras.append(extra)
         else:
             dependency = Dependency(name, constraint, category=category)
 

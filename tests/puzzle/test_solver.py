@@ -324,3 +324,61 @@ def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
         {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
     ])
+
+
+def test_solver_does_not_return_extras_if_not_requested(solver, repo, package):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+
+    package_b.extras = {
+        'foo': [get_dependency('C', '^1.0')]
+    }
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    dependency_a = get_dependency('A')
+    dependency_b = get_dependency('B')
+    request = [
+        dependency_a,
+        dependency_b
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_a},
+    ])
+
+
+def test_solver_returns_extras_if_requested(solver, repo, package):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+
+    package_b.extras = {
+        'foo': [get_dependency('C', '^1.0')]
+    }
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    dependency_a = get_dependency('A')
+    dependency_b = get_dependency('B')
+    dependency_b.extras.append('foo')
+    request = [
+        dependency_a,
+        dependency_b
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_a},
+    ])

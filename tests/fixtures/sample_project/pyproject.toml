@@ -21,7 +21,7 @@ keywords = ["packaging", "dependency", "poetry"]
 python = "~2.7 || ^3.6"
 cleo = "^0.6"
 pendulum = { git = "https://github.com/sdispater/pendulum.git", branch = "2.0" }
-requests = { version = "^2.18", optional = true }
+requests = { version = "^2.18", optional = true, extras=[ "security" ] }
 pathlib2 = { version = "^2.2", python = "~2.7" }
 
 [tool.poetry.dev-dependencies]

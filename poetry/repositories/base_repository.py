@@ -16,7 +16,7 @@ class BaseRepository:
     def package(self, name, version):
         raise NotImplementedError()
 
-    def find_packages(self, name, constraint=None):
+    def find_packages(self, name, constraint=None, extras=None):
         raise NotImplementedError()
 
     def search(self, query, mode=SEARCH_FULLTEXT):

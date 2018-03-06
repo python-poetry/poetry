@@ -4,7 +4,6 @@ from typing import Union
 import poetry.packages
 
 from .base_repository import BaseRepository
-from .legacy_repository import LegacyRepository
 from .repository import Repository
 
 
@@ -38,6 +37,8 @@ class Pool(BaseRepository):
         Configures a repository based on a source
         specification and add it to the pool.
         """
+        from .legacy_repository import LegacyRepository
+
         if 'url' in source:
             # PyPI-like repository
             if 'name' not in source:
@@ -68,9 +69,10 @@ class Pool(BaseRepository):
 
     def find_packages(self,
                       name,
-                      constraint=None) -> List['poetry.packages.Package']:
+                      constraint=None,
+                      extras=None) -> List['poetry.packages.Package']:
         for repository in self._repositories:
-            packages = repository.find_packages(name, constraint)
+            packages = repository.find_packages(name, constraint, extras=extras)
             if packages:
                 return packages
 

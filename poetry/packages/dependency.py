@@ -33,6 +33,8 @@ class Dependency:
         self._platform = '*'
         self._platform_constraint = self._parser.parse_constraints('*')
 
+        self._extras = []
+
     @property
     def name(self):
         return self._name
@@ -73,11 +75,14 @@ class Dependency:
     @platform.setter
     def platform(self, value: str):
         self._platform = value
-        self._platform_constraint = self._parser.parse_constraints(value)
 
     @property
     def platform_constraint(self):
         return self._platform_constraint
+
+    @property
+    def extras(self) -> list:
+        return self._extras
 
     def allows_prereleases(self):
         return self._allows_prereleases
@@ -128,6 +133,12 @@ class Dependency:
             requirement += f'; {" and ".join(markers)}'
 
         return requirement
+
+    def activate(self):
+        """
+        Set the dependency as mandatory.
+        """
+        self._optional = False
 
     def __eq__(self, other):
         if not isinstance(other, Dependency):

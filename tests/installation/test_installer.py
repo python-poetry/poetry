@@ -11,6 +11,7 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 
+from tests.helpers import get_dependency
 from tests.helpers import get_package
 
 
@@ -286,4 +287,26 @@ def test_run_with_optional_and_python_restricted_dependencies(installer, locker,
     # A, C, D since the mocked python version is not compatible
     # with B's python constraint
     assert len(installer.installs) == 3
+
+
+def test_run_with_dependencies_extras(installer, locker, repo, package):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+
+    package_b.extras = {
+        'foo': [get_dependency('C', '^1.0')]
+    }
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    package.add_dependency('A', '^1.0')
+    package.add_dependency('B', {'version': '^1.0', 'extras': ['foo']})
+
+    installer.run()
+    expected = fixture('with-dependencies-extras')
+
+    assert locker.written_data == expected
 

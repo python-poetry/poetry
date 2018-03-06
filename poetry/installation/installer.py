@@ -230,7 +230,7 @@ class Installer:
         if operation.skipped:
             if self._io.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
-                    f'  - Skipping <info>{operation.package.name}</> '
+                    f'  - Skipping <info>{operation.package.pretty_name}</> '
                     f'(<comment>{operation.package.full_pretty_version}</>) '
                     f'{operation.skip_reason}')
 
@@ -238,7 +238,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                f'  - Installing <info>{operation.package.name}</> '
+                f'  - Installing <info>{operation.package.pretty_name}</> '
                 f'(<comment>{operation.package.full_pretty_version}</>)'
             )
 
@@ -254,7 +254,7 @@ class Installer:
         if operation.skipped:
             if self._io.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
-                    f'  - Skipping <info>{target.name}</> '
+                    f'  - Skipping <info>{target.pretty_name}</> '
                     f'(<comment>{target.full_pretty_version}</>) '
                     f'{operation.skip_reason}')
 
@@ -262,7 +262,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                f'  - Updating <info>{target.name}</> '
+                f'  - Updating <info>{target.pretty_name}</> '
                 f'(<comment>{source.pretty_version}</>'
                 f' -> <comment>{target.pretty_version}</>)'
             )
@@ -275,7 +275,7 @@ class Installer:
     def _execute_uninstall(self, operation: Uninstall) -> None:
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                f'  - Removing <info>{operation.package.name}</> '
+                f'  - Removing <info>{operation.package.pretty_name}</> '
                 f'(<comment>{operation.package.full_pretty_version}</>)'
             )
 

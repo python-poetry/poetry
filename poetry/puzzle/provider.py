@@ -64,7 +64,8 @@ class Provider(SpecificationProvider):
 
         packages = self._pool.find_packages(
             dependency.name,
-            dependency.constraint
+            dependency.constraint,
+            extras=dependency.extras,
         )
 
         packages.sort(

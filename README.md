@@ -78,22 +78,22 @@ keywords = ['packaging', 'poetry']
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.2"  # Compatible python versions must be declared here
 toml = "^0.9"
-requests = "^2.13"
-semantic_version = "^2.6"
-pygments = "^2.2"
-twine = "^1.8"
-wheel = "^0.29"
-pip-tools = "^1.8.2"
+# Dependencies with extras
+requests = { version = "^2.13", extras = [ "security" ] }
+# Python specific dependencies with prereleases allowed
+pathlib2 = { version = "^2.2", python = "~2.7", allows_prereleases = true }
+# Git dependencies
 cleo = { git = "https://github.com/sdispater/cleo.git", branch = "master" }
+
+# Optional dependencies (extras)
+pendulum = { version = "^1.4", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
 pytest-cov = "^2.4"
-coverage = "<4.0"
-httpretty = "^0.8.14"
 
 [tool.poetry.scripts]
-poet = 'poet:app.run'
+my-script = 'my_package:main'
 ```
 
 There are some things we can notice here:
@@ -632,20 +632,16 @@ poetry = 'poetry:console.run'
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
 
-### `features`
+### `extras`
 
-Poetry supports features to allow expression of:
+Poetry supports extras to allow expression of:
 
 * optional dependencies, which enhance a package, but are not required; and
 * clusters of optional dependencies.
 
 ```toml
-[package]
+[tool.poetry]
 name = "awesome"
-
-[features]
-mysql = ["mysqlclient"]
-pgsql = ["psycopg2"]
 
 [dependencies]
 # These packages are mandatory and form the core of this package’s distribution.
@@ -655,13 +651,17 @@ mandatory = "^1.0"
 # above `features`. They can be opted into by apps.
 psycopg2 = { version = "^2.7", optional = true }
 mysqlclient = { version = "^1.3", optional = true }
+
+[tool.poetry.extras]
+mysql = ["mysqlclient"]
+pgsql = ["psycopg2"]
 ```
 
-When installing packages, you can specify features by using the `-f|--features` option:
+When installing packages, you can specify features by using the `-E|--extras` option:
 
 ```bash
-poet install --features "mysql pgsql"
-poet install -f mysql -f pgsql
+poet install --extras "mysql pgsql"
+poet install -E mysql -E pgsql
 ```
 
 ### `plugins`

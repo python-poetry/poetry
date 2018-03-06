@@ -17,10 +17,10 @@ from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 
-from .repository import Repository
+from .pypi_repository import PyPiRepository
 
 
-class LegacyRepository(Repository):
+class LegacyRepository(PyPiRepository):
 
     def __init__(self, name, url):
         if name == 'pypi':
@@ -51,9 +51,7 @@ class LegacyRepository(Repository):
             }
         })
 
-        super().__init__()
-
-    def find_packages(self, name, constraint=None):
+    def find_packages(self, name, constraint=None, extras=None):
         packages = []
 
         if constraint is not None and not isinstance(constraint,
@@ -84,11 +82,11 @@ class LegacyRepository(Repository):
             self._cache.store('matches').put(key, versions, 5)
 
         for version in versions:
-            packages.append(self.package(name, version))
+            packages.append(self.package(name, version, extras=extras))
 
         return packages
 
-    def package(self, name, version) -> 'poetry.packages.Package':
+    def package(self, name, version, extras=None) -> 'poetry.packages.Package':
         """
         Retrieve the release information.
 
@@ -107,28 +105,77 @@ class LegacyRepository(Repository):
 
             return self._packages[index]
         except ValueError:
+            if extras is None:
+                extras = []
+
             release_info = self.get_release_info(name, version)
             package = poetry.packages.Package(name, version, version)
-            for dependency in release_info['requires_dist']:
-                m = re.match(
-                    '^(?P<name>[^ ;]+)'
-                    '(?: \((?P<version>.+)\))?'
-                    '(?:;(?P<extra>(.+)))?$',
-                    dependency
-                )
-                package.requires.append(
-                    poetry.packages.Dependency(
-                        m.group('name'),
-                        m.group('version') or '*',
-                        optional=m.group('extra') is not None
-                    )
+            for req in release_info['requires_dist']:
+                req = InstallRequirement.from_line(req)
+
+                name = req.name
+                version = str(req.req.specifier)
+
+                dependency = Dependency(
+                    name,
+                    version,
+                    optional=req.markers
                 )
 
-            package.source_type = 'legacy'
-            package.source_url = self._url
+                is_extra = False
+                if req.markers:
+                    # Setting extra dependencies and requirements
+                    requirements = self._convert_markers(
+                        req.markers._markers
+                    )
+
+                    if 'python_version' in requirements:
+                        ors = []
+                        for or_ in requirements['python_version']:
+                            ands = []
+                            for op, version in or_:
+                                ands.append(f'{op}{version}')
+
+                            ors.append(' '.join(ands))
+
+                        dependency.python_versions = ' || '.join(ors)
+
+                    if 'sys_platform' in requirements:
+                        ors = []
+                        for or_ in requirements['sys_platform']:
+                            ands = []
+                            for op, platform in or_:
+                                ands.append(f'{op}{platform}')
+
+                            ors.append(' '.join(ands))
+
+                        dependency.platform = ' || '.join(ors)
+
+                    if 'extra' in requirements:
+                        is_extra = True
+                        for _extras in requirements['extra']:
+                            for _, extra in _extras:
+                                if extra not in package.extras:
+                                    package.extras[extra] = []
+
+                                package.extras[extra].append(dependency)
+
+                if not is_extra:
+                    package.requires.append(dependency)
+
+            # Adding description
+            package.description = release_info.get('summary', '')
 
             # Adding hashes information
             package.hashes = release_info['digests']
+
+            # Activate extra dependencies
+            for extra in extras:
+                if extra in package.extras:
+                    for dep in package.extras[extra]:
+                        dep.activate()
+
+                    package.requires += package.extras[extra]
 
             self._packages.append(package)
 

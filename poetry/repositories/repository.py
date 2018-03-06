@@ -27,9 +27,11 @@ class Repository(BaseRepository):
             if name == package.name and package.version == version:
                 return package
 
-    def find_packages(self, name, constraint=None):
+    def find_packages(self, name, constraint=None, extras=None):
         name = name.lower()
         packages = []
+        if extras is None:
+            extras = []
 
         if not isinstance(constraint, BaseConstraint):
             parser = VersionParser()
@@ -40,6 +42,13 @@ class Repository(BaseRepository):
                 pkg_constraint = Constraint('==', package.version)
 
                 if constraint is None or constraint.matches(pkg_constraint):
+                    for extra in extras:
+                        if extra in package.extras:
+                            for dep in package.extras[extra]:
+                                dep.activate()
+
+                            package.requires += package.extras[extra]
+
                     packages.append(package)
 
         return packages
