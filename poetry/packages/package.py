@@ -53,6 +53,8 @@ class Package:
         self.homepage = None
         self.repository_url = None
         self.keywords = []
+        self.license = None
+        self.readme = ''
 
         self.source_type = ''
         self.source_reference = ''

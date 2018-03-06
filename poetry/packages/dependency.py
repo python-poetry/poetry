@@ -1,6 +1,7 @@
 import poetry.packages
 
 from poetry.semver.constraints import Constraint
+from poetry.semver.constraints import MultiConstraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 
@@ -96,6 +97,37 @@ class Dependency:
             and self._constraint.matches(Constraint('=', package.version))
             and (not package.is_prerelease() or self.allows_prereleases())
         )
+
+    def to_pep_508(self) -> str:
+        requirement = f'{self.pretty_name}'
+
+        if isinstance(self.constraint, MultiConstraint):
+            requirement += ','.join(
+                [str(c).replace(' ', '') for c in self.constraint.constraints]
+            )
+        else:
+            requirement += str(self.constraint).replace(' ', '')
+
+        # Markers
+        markers = []
+
+        # Python marker
+        if self.python_versions != '*':
+            python_constraint = self.python_constraint
+            marker = 'python_version'
+            if isinstance(python_constraint, MultiConstraint):
+                marker += ','.join(
+                    [str(c).replace(' ', '') for c in python_constraint.constraints]
+                )
+            else:
+                marker += str(python_constraint).replace(' ', '')
+
+            markers.append(marker)
+
+        if markers:
+            requirement += f'; {" and ".join(markers)}'
+
+        return requirement
 
     def __eq__(self, other):
         if not isinstance(other, Dependency):

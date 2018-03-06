@@ -1,5 +1,4 @@
 import os
-import re
 import tarfile
 
 from collections import defaultdict
@@ -13,10 +12,10 @@ from typing import List
 
 from poetry.packages import Dependency
 from poetry.semver.constraints import MultiConstraint
-from poetry.vcs import get_vcs
 
 from ..utils.helpers import normalize_file_permissions
-from ..utils.module import Module
+
+from .builder import Builder
 
 
 SETUP = """\
@@ -45,16 +44,10 @@ Author-email: {author_email}
 """
 
 
-AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$')
-
-
-class SdistBuilder:
+class SdistBuilder(Builder):
 
     def __init__(self, poetry):
-        self._poetry = poetry
-        self._package = self._poetry.package
-        self._path = poetry.file.parent
-        self._module = Module(self._package.name, self._path.as_posix())
+        super().__init__(poetry)
 
     def build(self, target_dir: Path = None) -> Path:
         if target_dir is None:
@@ -111,54 +104,6 @@ class SdistBuilder:
             gz.close()
 
         return target
-
-    def find_excluded_files(self) -> list:
-        # Checking VCS
-        vcs = get_vcs(self._path)
-        if not vcs:
-            return []
-
-        ignored = vcs.get_ignored_files()
-        result = []
-        for file in ignored:
-            try:
-                file = Path(file).absolute().relative_to(self._path)
-            except ValueError:
-                # Should only happen in tests
-                continue
-
-            result.append(file)
-
-        return result
-
-    def find_files_to_add(self) -> list:
-        """
-        Finds all files to add to the tarball
-
-        TODO: Support explicit include/exclude
-        """
-        excluded = self.find_excluded_files()
-        src = self._module.path
-        to_add = []
-
-        for root, dirs, files in os.walk(src.as_posix()):
-            root = Path(root)
-            if root.name == '__pycache__':
-                continue
-
-            for file in files:
-                file = root / file
-                file = file.relative_to(self._path)
-
-                if file in excluded:
-                    continue
-
-                if file.suffix == '.pyc':
-                    continue
-
-                to_add.append(file)
-
-        return to_add
 
     def build_setup(self) -> bytes:
         before, extra = [], []
@@ -268,58 +213,14 @@ class SdistBuilder:
         extras = []
 
         for dependency in dependencies:
-            is_extra = False
-            requirement = dependency.pretty_name
-            constraint = dependency.constraint
-            if isinstance(constraint, MultiConstraint):
-                requirement += ','.join(
-                    [str(c).replace(' ', '') for c in constraint.constraints]
-                )
-            else:
-                requirement += str(constraint).replace(' ', '')
-            if str(dependency.python_constraint) != '*':
-                is_extra = True
-                python_constraint = dependency.python_constraint
-                requirement += '; python_version'
-                if isinstance(python_constraint, MultiConstraint):
-                    requirement += ','.join(
-                        [str(c).replace(' ', '') for c in python_constraint.constraints]
-                    )
-                else:
-                    requirement += str(python_constraint).replace(' ', '')
+            requirement = dependency.to_pep_508()
 
-            if is_extra:
+            if ';' in requirement:
                 extras.append(requirement)
             else:
                 main.append(requirement)
 
         return main, extras
-
-    def convert_entry_points(self) -> dict:
-        result = defaultdict(list)
-
-        # Scripts -> Entry points
-        for name, ep in self._poetry.config.get('scripts', {}).items():
-            result['console_scripts'].append(f'{name} = {ep}')
-
-        # Plugins -> entry points
-        for groupname, group in self._poetry.config.get('plugins', {}).items():
-            for name, ep in sorted(group.items()):
-                result[groupname].append(f'{name} = {ep}')
-
-        return dict(result)
-
-    @classmethod
-    def convert_author(cls, author) -> dict:
-        m = AUTHOR_REGEX.match(author)
-
-        name = m.group('name')
-        email = m.group('email')
-
-        return {
-            'name': name,
-            'email': email
-        }
 
     @classmethod
     def clean_tarinfo(cls, tar_info):

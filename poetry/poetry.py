@@ -80,6 +80,12 @@ class Poetry:
         package.description = local_config.get('description', '')
         package.homepage = local_config.get('homepage')
         package.repository_url = local_config.get('repository')
+        package.license = local_config.get('license')
+        package.keywords = local_config.get('keywords', [])
+
+        if 'readme' in local_config:
+            with open(poetry_file.parent / local_config['readme']) as f:
+                package.readme = f.read()
 
         if 'platform' in local_config:
             package.platform = local_config['platform']

@@ -26,3 +26,4 @@ pip-tools = "^1.11"
 
 [tool.poetry.dev-dependencies]
 pytest = "~3.4"
+pytest-cov = "^2.5"

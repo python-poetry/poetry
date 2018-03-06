@@ -76,9 +76,11 @@ def test_find_files_to_add():
     result = builder.find_files_to_add()
 
     assert result == [
+        Path('README.rst'),
         Path('my_package/__init__.py'),
-        Path('my_package/sub_pkg1/__init__.py'),
         Path('my_package/data1/test.json'),
+        Path('my_package/sub_pkg1/__init__.py'),
         Path('my_package/sub_pkg2/__init__.py'),
         Path('my_package/sub_pkg2/data2/data.json'),
+        Path('pyproject.toml'),
     ]
