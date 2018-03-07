@@ -58,13 +58,13 @@ class SdistBuilder(Builder):
             target_dir.mkdir(parents=True)
 
         target = target_dir / f'{self._package.pretty_name}' \
-                              f'-{self._package.pretty_version}.tar.gz'
+                              f'-{self._package.version}.tar.gz'
         gz = GzipFile(target.as_posix(), mode='wb')
         tar = tarfile.TarFile(target.as_posix(), mode='w', fileobj=gz,
                               format=tarfile.PAX_FORMAT)
 
         try:
-            tar_dir = f'{self._package.pretty_name}-{self._package.pretty_version}'
+            tar_dir = f'{self._package.pretty_name}-{self._package.version}'
 
             files_to_add = self.find_files_to_add()
 

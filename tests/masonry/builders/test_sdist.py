@@ -116,3 +116,14 @@ def test_package():
     sdist = fixtures_dir / 'complete' / 'dist' / 'my-package-1.2.3.tar.gz'
 
     assert sdist.exists()
+
+
+def test_prelease():
+    poetry = Poetry.create(project('prerelease'))
+
+    builder = SdistBuilder(poetry, NullIO())
+    builder.build()
+
+    sdist = fixtures_dir / 'prerelease' / 'dist' / 'prerelease-0.1b1.tar.gz'
+
+    assert sdist.exists()

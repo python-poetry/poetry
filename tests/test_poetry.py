@@ -12,7 +12,7 @@ def test_poetry():
     package = poetry.package
 
     assert package.name == 'my-package'
-    assert package.version == '1.2.3.0'
+    assert package.version == '1.2.3'
     assert package.description == 'Some description.'
     assert package.authors == ['Sébastien Eustace <sebastien@eustace.io>']
     assert package.license == 'MIT'

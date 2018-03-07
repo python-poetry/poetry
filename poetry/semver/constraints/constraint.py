@@ -1,6 +1,7 @@
 import operator
 
-from pkg_resources import parse_version
+from poetry.version import parse as parse_version
+from poetry.version import version_compare
 
 from ..helpers import normalize_version
 from .base_constraint import BaseConstraint
@@ -43,7 +44,7 @@ class Constraint(BaseConstraint):
 
         self._operator = self._trans_op_str[operator]
         self._string_operator = operator
-        self._version = version
+        self._version = str(parse_version(version))
         
     @property
     def supported_operators(self) -> list:
@@ -87,10 +88,7 @@ class Constraint(BaseConstraint):
         except ValueError:
             pass
 
-        return self._trans_op_str[operator](
-            parse_version(a),
-            parse_version(b)
-        )
+        return version_compare(a, b, operator)
 
     def match_specific(self, provider: 'Constraint') -> bool:
         no_equal_op = self._trans_op_int[self._operator].replace('=', '')

@@ -42,3 +42,12 @@ def test_wheel_package():
     whl = module_path / 'dist' / 'my_package-1.2.3-py3-none-any.whl'
 
     assert whl.exists()
+
+
+def test_wheel_prerelease():
+    module_path = fixtures_dir / 'prerelease'
+    WheelBuilder.make(Poetry.create(str(module_path)), NullIO())
+
+    whl = module_path / 'dist' / 'prerelease-0.1b1-py2.py3-none-any.whl'
+
+    assert whl.exists()

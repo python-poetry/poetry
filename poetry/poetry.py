@@ -6,7 +6,6 @@ from .packages import Locker
 from .packages import Package
 from .repositories import Pool
 from .repositories.pypi_repository import PyPiRepository
-from .semver.helpers import normalize_version
 from .utils.toml_file import TomlFile
 
 
@@ -71,9 +70,8 @@ class Poetry:
 
         # Load package
         name = local_config['name']
-        pretty_version = local_config['version']
-        version = normalize_version(pretty_version)
-        package = Package(name, version, pretty_version)
+        version = local_config['version']
+        package = Package(name, version, version)
 
         for author in local_config['authors']:
             package.authors.append(author)

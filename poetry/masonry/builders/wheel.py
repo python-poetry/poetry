@@ -128,7 +128,7 @@ class WheelBuilder(Builder):
         tag = ('py2.' if self.supports_python2() else '') + 'py3-none-any'
         return '{}-{}-{}.whl'.format(
             re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
-            re.sub("[^\w\d.]+", "_", self._package.pretty_version, flags=re.UNICODE),
+            re.sub("[^\w\d.]+", "_", self._package.version, flags=re.UNICODE),
             tag)
 
     def supports_python2(self):

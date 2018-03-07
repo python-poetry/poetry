@@ -70,8 +70,8 @@ class VersionParser:
                 and isinstance(or_groups[1], MultiConstraint)
                 and len(or_groups[0].constraints)
                 and len(or_groups[1].constraints)
-                and a[:3] == '[>=' and pos_a != -1
-                and b[:3] == '[>=' and pos_b != -1
+                and a[:3] == '>=' and pos_a != -1
+                and b[:3] == '>=' and pos_b != -1
                 and a[pos_a + 2:-1] == b[4:pos_b - 5]
             ):
                 constraint = MultiConstraint(
@@ -144,7 +144,7 @@ class VersionParser:
         # Allows changes that do not modify
         # the left-most non-zero digit in the [major, minor, patch] tuple.
         # In other words, this allows:
-        #     - patch and minor updatesfor versions 1.0.0 and above,
+        #     - patch and minor updates for versions 1.0.0 and above,
         #     - patch updates for versions 0.X >=0.1.0,
         #     - and no updates for versions 0.0.X
         m = re.match('^\^{}($)'.format(version_regex), constraint)

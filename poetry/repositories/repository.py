@@ -2,8 +2,9 @@ import re
 
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
-from poetry.semver.helpers import normalize_version
 from poetry.semver.version_parser import VersionParser
+
+from poetry.version import parse as parse_version
 
 from .base_repository import BaseRepository
 
@@ -21,7 +22,7 @@ class Repository(BaseRepository):
 
     def package(self, name, version):
         name = name.lower()
-        version = normalize_version(version)
+        version = str(parse_version(version))
 
         for package in self.packages:
             if name == package.name and package.version == version:

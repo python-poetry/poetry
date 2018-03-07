@@ -2,6 +2,7 @@ from typing import Union
 
 from poetry.semver.helpers import parse_stability
 from poetry.semver.version_parser import VersionParser
+from poetry.version import parse as parse_version
 
 from .dependency import Dependency
 from .vcs_dependency import VCSDependency
@@ -41,7 +42,7 @@ class Package:
         self._pretty_name = name
         self._name = name.lower()
 
-        self._version = version
+        self._version = str(parse_version(version))
         self._pretty_version = pretty_version or version
 
         self.description = ''
