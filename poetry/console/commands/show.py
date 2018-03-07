@@ -225,6 +225,9 @@ lists all packages available."""
 
     def find_latest_package(self, package):
         # find the latest version allowed in this pool
+        if package.source_type == 'git':
+            return
+
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
