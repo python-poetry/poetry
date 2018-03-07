@@ -1,3 +1,4 @@
+from poetry.console.styles.poetry import PoetryStyle
 from poetry.utils.venv import Venv
 
 
@@ -15,7 +16,7 @@ class NullVenv(Venv):
         return bin
 
 
-class NullIO:
+class NullIO(PoetryStyle):
 
     def __init__(self):
         self._venv = NullVenv()

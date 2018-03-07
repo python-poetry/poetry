@@ -16,5 +16,5 @@ class BuildCommand(Command):
         if self.option('format'):
             fmt = self.option('format')
 
-        builder = Builder(self.poetry)
+        builder = Builder(self.poetry, self.output)
         builder.build(fmt)

@@ -28,8 +28,8 @@ Root-Is-Purelib: true
 
 class WheelBuilder(Builder):
 
-    def __init__(self, poetry, target_fp):
-        super().__init__(poetry)
+    def __init__(self, poetry, io, target_fp):
+        super().__init__(poetry, io)
 
         self._records = []
 
@@ -38,14 +38,14 @@ class WheelBuilder(Builder):
                                           compression=zipfile.ZIP_DEFLATED)
 
     @classmethod
-    def make_in(cls, poetry, directory) -> SimpleNamespace:
+    def make_in(cls, poetry, io, directory) -> SimpleNamespace:
         # We don't know the final filename until metadata is loaded, so write to
         # a temporary_file, and rename it afterwards.
         (fd, temp_path) = tempfile.mkstemp(suffix='.whl',
                                            dir=str(directory))
         try:
             with open(fd, 'w+b') as fp:
-                wb = WheelBuilder(poetry, fp)
+                wb = WheelBuilder(poetry, io, fp)
                 wb.build()
 
             wheel_path = directory / wb.wheel_filename
@@ -57,7 +57,7 @@ class WheelBuilder(Builder):
         return SimpleNamespace(builder=wb, file=wheel_path)
 
     @classmethod
-    def make(cls, poetry) -> SimpleNamespace:
+    def make(cls, poetry, io) -> SimpleNamespace:
         """Build a wheel in the dist/ directory, and optionally upload it.
             """
         dist_dir = poetry.file.parent / 'dist'
@@ -66,15 +66,18 @@ class WheelBuilder(Builder):
         except FileExistsError:
             pass
 
-        return cls.make_in(poetry, dist_dir)
+        return cls.make_in(poetry, io, dist_dir)
 
     def build(self) -> None:
+        self._io.writeln('Building <info>wheel</info>')
         try:
             self.copy_module()
             self.write_metadata()
             self.write_record()
         finally:
             self._wheel_zip.close()
+
+        self._io.writeln(f'Built <comment>{self.wheel_filename}</>')
 
     def copy_module(self) -> None:
         if self._module.is_package():

@@ -46,10 +46,11 @@ Author-email: {author_email}
 
 class SdistBuilder(Builder):
 
-    def __init__(self, poetry):
-        super().__init__(poetry)
+    def __init__(self, poetry, io):
+        super().__init__(poetry, io)
 
     def build(self, target_dir: Path = None) -> Path:
+        self._io.writeln('Building <info>sdist</info>')
         if target_dir is None:
             target_dir = self._path / 'dist'
 
@@ -102,6 +103,8 @@ class SdistBuilder(Builder):
         finally:
             tar.close()
             gz.close()
+
+        self._io.writeln(f'Built <comment>{target.name}</>')
 
         return target
 

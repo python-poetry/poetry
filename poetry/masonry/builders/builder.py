@@ -23,8 +23,9 @@ class Builder:
         '3.4', '3.5', '3.6', '3.7'
     }
 
-    def __init__(self, poetry):
+    def __init__(self, poetry, io):
         self._poetry = poetry
+        self._io = io
         self._package = poetry.package
         self._path = poetry.file.parent
         self._module = Module(self._package.name, self._path.as_posix())
@@ -76,9 +77,17 @@ class Builder:
                 if file.suffix == '.pyc':
                     continue
 
+                self._io.writeln(
+                    f' - Adding: <comment>{str(file)}</comment>',
+                    verbosity=self._io.VERBOSITY_VERY_VERBOSE
+                )
                 to_add.append(file)
 
         # Include project files
+        self._io.writeln(
+            f' - Adding: <comment>pyproject.toml</comment>',
+            verbosity=self._io.VERBOSITY_VERY_VERBOSE
+        )
         to_add.append(Path('pyproject.toml'))
 
         # If a README is specificed we need to include it
@@ -86,6 +95,10 @@ class Builder:
         if 'readme' in self._poetry.config:
             readme = self._path / self._poetry.config['readme']
             if readme.exists():
+                self._io.writeln(
+                    f' - Adding: <comment>{readme.relative_to(self._path)}</comment>',
+                    verbosity=self._io.VERBOSITY_VERY_VERBOSE
+                )
                 to_add.append(readme.relative_to(self._path))
 
         return sorted(to_add)

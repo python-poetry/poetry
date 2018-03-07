@@ -1,4 +1,5 @@
 from cleo.styles import CleoStyle
+from cleo.styles import OutputStyle
 
 
 class PoetryStyle(CleoStyle):
@@ -13,3 +14,16 @@ class PoetryStyle(CleoStyle):
     @property
     def venv(self):
         return self._venv
+
+    def writeln(self, messages,
+                type=OutputStyle.OUTPUT_NORMAL,
+                verbosity=OutputStyle.VERBOSITY_NORMAL):
+        if self.output.verbosity >= verbosity:
+            super().writeln(messages, type=type)
+
+    def write(self, messages,
+              newline=False,
+              type=OutputStyle.OUTPUT_NORMAL,
+              verbosity=OutputStyle.VERBOSITY_NORMAL):
+        if self.output.verbosity >= verbosity:
+            super().write(messages, newline=newline, type=type)

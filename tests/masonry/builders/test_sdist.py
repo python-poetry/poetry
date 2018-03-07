@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 
 from poetry import Poetry
+from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
 
 from tests.helpers import get_dependency
@@ -69,7 +70,7 @@ def test_convert_dependencies():
 def test_make_setup():
     poetry = Poetry.create(project('complete'))
 
-    builder = SdistBuilder(poetry)
+    builder = SdistBuilder(poetry, NullIO())
     setup = builder.build_setup()
     setup_ast = ast.parse(setup)
 
@@ -92,7 +93,7 @@ def test_make_setup():
 def test_find_files_to_add():
     poetry = Poetry.create(project('complete'))
 
-    builder = SdistBuilder(poetry)
+    builder = SdistBuilder(poetry, NullIO())
     result = builder.find_files_to_add()
 
     assert result == [
@@ -109,7 +110,7 @@ def test_find_files_to_add():
 def test_package():
     poetry = Poetry.create(project('complete'))
 
-    builder = SdistBuilder(poetry)
+    builder = SdistBuilder(poetry, NullIO())
     builder.build()
 
     sdist = fixtures_dir / 'complete' / 'dist' / 'my-package-1.2.3.tar.gz'
