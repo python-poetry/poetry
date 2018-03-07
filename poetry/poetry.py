@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from .__version__ import __version__
+from .packages import Dependency
 from .packages import Locker
 from .packages import Package
 from .repositories import Pool
@@ -101,6 +102,12 @@ class Poetry:
         if 'dev-dependencies' in local_config:
             for name, constraint in local_config['dev-dependencies'].items():
                 package.add_dependency(name, constraint, category='dev')
+
+        if 'extras' in local_config:
+            for extra_name, requirements in local_config['extras'].items():
+                package.extras[extra_name] = [
+                    Dependency(req, '*') for req in requirements
+                ]
 
         locker = Locker(poetry_file.with_suffix('.lock'), local_config)
 

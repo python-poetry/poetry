@@ -24,7 +24,7 @@ class Solver:
         self._locked = locked
         self._io = io
 
-    def solve(self, requested, fixed=None) -> List[Operation]:
+    def solve(self, requested, fixed=None, extras=None) -> List[Operation]:
         resolver = Resolver(Provider(self._package, self._pool), UI(self._io))
 
         base = None
@@ -40,7 +40,7 @@ class Solver:
 
         packages = [v.payload for v in graph.vertices.values()]
 
-        # Setting categories
+        # Setting info
         for vertex in graph.vertices.values():
             tags = self._get_tags_for_vertex(vertex, requested)
             if 'main' in tags['category']:

@@ -24,6 +24,12 @@ pendulum = { git = "https://github.com/sdispater/pendulum.git", branch = "2.0" }
 requests = { version = "^2.18", optional = true, extras=[ "security" ] }
 pathlib2 = { version = "^2.2", python = "~2.7" }
 
+orator = { version = "^0.9", optional = true}
+
+
+[tool.poetry.extras]
+db = [ "orator" ]
+
 [tool.poetry.dev-dependencies]
 pytest = "~3.4"
 

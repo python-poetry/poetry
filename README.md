@@ -248,7 +248,7 @@ the `--no-dev` option.
 poetry install --no-dev
 ```
 
-You can also specify the extra features you want installed
+You can also specify the extras you want installed
 by passing the `--E|--extras` option (See [Extras](#extras) for more info)
 
 ```bash
@@ -259,7 +259,7 @@ poetry install -E mysql -E pgsql
 #### Options
 
 * `--no-dev`: Do not install dev dependencies.
-* `-f|--features`: Features to install (multiple values allowed).
+* `-E|--extras`: Features to install (multiple values allowed).
 
 ### update
 
@@ -635,7 +635,7 @@ name = "awesome"
 mandatory = "^1.0"
 
 # A list of all of the optional dependencies, some of which are included in the
-# above `features`. They can be opted into by apps.
+# below `extras`. They can be opted into by apps.
 psycopg2 = { version = "^2.7", optional = true }
 mysqlclient = { version = "^1.3", optional = true }
 
@@ -644,7 +644,7 @@ mysql = ["mysqlclient"]
 pgsql = ["psycopg2"]
 ```
 
-When installing packages, you can specify features by using the `-E|--extras` option:
+When installing packages, you can specify extras by using the `-E|--extras` option:
 
 ```bash
 poet install --extras "mysql pgsql"

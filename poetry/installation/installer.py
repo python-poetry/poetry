@@ -183,7 +183,7 @@ class Installer:
         # We need to filter operations so that packages
         # not compatible with the current system,
         # or optional and not requested, are dropped
-        self._filter_operations(ops)
+        self._filter_operations(ops, local_repo)
 
         self._io.new_line()
 
@@ -336,12 +336,11 @@ class Installer:
                                   ) -> List[Operation]:
         installed_repo = InstalledRepository.load(self._io.venv)
         ops = []
-        extras = []
-        for extra_name, packages in self._locker.lock_data.get('extras').items():
-            if extra_name in self._extras:
-                for package in packages:
-                    extras.append(package.lower())
 
+        extra_packages = [
+            p.name
+            for p in self._get_extra_packages(locked_repository)
+        ]
         for locked in locked_repository.packages:
             is_installed = False
             for installed in installed_repo.packages:
@@ -349,7 +348,7 @@ class Installer:
                     is_installed = True
                     if locked.category == 'dev' and not self.is_dev_mode():
                         ops.append(Uninstall(locked))
-                    elif locked.is_optional() and locked.name not in extras:
+                    elif locked.optional and locked.name not in extra_packages:
                         # Installed but optional and not requested in extras
                         ops.append(Uninstall(locked))
                     elif locked.version != installed.version:
@@ -360,14 +359,16 @@ class Installer:
             if not is_installed:
                 # If it's optional and not in required extras
                 # we do not install
-                if locked.is_optional() and locked.name not in extras:
+                if locked.optional and locked.name not in extra_packages:
                     continue
 
                 ops.append(Install(locked))
 
         return ops
 
-    def _filter_operations(self, ops: List[Operation]):
+    def _filter_operations(self, ops: List[Operation], repo: Repository) -> None:
+        extra_packages = [p.name for p in
+                          self._get_extra_packages(repo)]
         for op in ops:
             if isinstance(op, Update):
                 package = op.target_package
@@ -394,20 +395,49 @@ class Installer:
                     extras[extra] = [dep.name for dep in deps]
             else:
                 extras = {}
-                for extra, deps in self._locker.lock_data.get('extras', {}):
+                for extra, deps in self._locker.lock_data.get('extras', {}).items():
                     extras[extra] = [dep.lower() for dep in deps]
 
             # If a package is optional and not requested
             # in any extra we skip it
             if package.optional:
-                drop = True
-                for extra in self._extras:
-                    if extra in extras and package.name in extras[extra]:
-                        drop = False
-                        continue
-
-                if drop:
+                if package.name not in extra_packages:
                     op.skip('Not required')
+
+    def _get_extra_packages(self, repo):
+        """
+        Returns all packages required by extras.
+
+        Maybe we just let the solver handle it?
+        """
+        if self._update:
+            extras = {
+                k: [d.name for d in v]
+                for k, v in self._package.extras.items()
+            }
+        else:
+            extras = self._locker.lock_data.get('extras', {})
+
+        extra_packages = []
+        for extra_name, packages in extras.items():
+            if extra_name not in self._extras:
+                continue
+
+            extra_packages += [Dependency(p, '*') for p in packages]
+
+        def _extra_packages(packages):
+            pkgs = []
+            for package in packages:
+                for pkg in repo.packages:
+                    if pkg.name == package.name:
+                        pkgs.append(package)
+                        pkgs += _extra_packages(pkg.requires)
+
+                        break
+
+            return pkgs
+
+        return _extra_packages(extra_packages)
 
     def _get_installer(self) -> BaseInstaller:
         return PipInstaller(self._io.venv, self._io)

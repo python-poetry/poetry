@@ -1,0 +1,52 @@
+[[package]]
+name = "A"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+platform = "*"
+
+[[package]]
+name = "B"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+platform = "*"
+
+[[package]]
+name = "C"
+version = "1.0"
+description = ""
+category = "main"
+optional = true
+python-versions = "*"
+platform = "*"
+
+[package.dependencies]
+D = "^1.0"
+
+[[package]]
+name = "D"
+version = "1.1"
+description = ""
+category = "main"
+optional = true
+python-versions = "*"
+platform = "*"
+
+[extras]
+foo = ["C"]
+
+[metadata]
+python-versions = "*"
+platform = "*"
+content-hash = "123456789"
+
+[metadata.hashes]
+A = []
+B = []
+C = []
+D = []

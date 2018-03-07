@@ -10,6 +10,7 @@ from poetry.io import NullIO
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
+from poetry.repositories.installed_repository import InstalledRepository
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -42,6 +43,9 @@ class Locker(BaseLocker):
 
     def is_locked(self) -> bool:
         return self._locked
+
+    def is_fresh(self) -> bool:
+        return True
 
     def _get_content_hash(self) -> str:
         return '123456789'
@@ -84,6 +88,16 @@ def pool(repo):
     pool.add_repository(repo)
 
     return pool
+
+
+@pytest.fixture()
+def installed():
+    original = InstalledRepository.load
+    InstalledRepository.load = lambda _: InstalledRepository()
+
+    yield
+
+    InstalledRepository.load = original
 
 
 @pytest.fixture()
@@ -368,6 +382,68 @@ def test_run_installs_extras_if_requested(installer, locker, repo, package):
 
     # Extras are pinned in lock
     assert locker.written_data == expected
+
+    # But should not be installed
+    installer = installer.installer
+    assert len(installer.installs) == 4  # A, B, C, D
+
+
+def test_run_installs_extras_with_deps_if_requested(installer, locker, repo, package):
+    package.extras['foo'] = [
+        get_dependency('C')
+    ]
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+    package_d = get_package('D', '1.1')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    package.add_dependency('A', '^1.0')
+    package.add_dependency('B', '^1.0')
+    package.add_dependency('C', {'version': '^1.0', 'optional': True})
+
+    package_c.add_dependency('D', '^1.0')
+
+    installer.extras(['foo'])
+    installer.run()
+    expected = fixture('extras-with-dependencies')
+
+    # Extras are pinned in lock
+    assert locker.written_data == expected
+
+    # But should not be installed
+    installer = installer.installer
+    assert len(installer.installs) == 4  # A, B, C, D
+
+
+def test_run_installs_extras_with_deps_if_requested_locked(installer, locker, repo, package, installed):
+    locker.locked(True)
+    locker.mock_lock_data(fixture('extras-with-dependencies'))
+    package.extras['foo'] = [
+        get_dependency('C')
+    ]
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+    package_d = get_package('D', '1.1')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    package.add_dependency('A', '^1.0')
+    package.add_dependency('B', '^1.0')
+    package.add_dependency('C', {'version': '^1.0', 'optional': True})
+
+    package_c.add_dependency('D', '^1.0')
+
+    installer.extras(['foo'])
+    installer.run()
 
     # But should not be installed
     installer = installer.installer

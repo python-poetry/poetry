@@ -50,3 +50,5 @@ def test_poetry():
     assert pathlib2.pretty_constraint == '^2.2'
     assert pathlib2.python_versions == '~2.7'
     assert not pathlib2.is_optional()
+
+    assert 'db' in package.extras
