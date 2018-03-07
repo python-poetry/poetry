@@ -9,9 +9,14 @@
 - Added support for extras definition.
 - Added support for dependencies extras specification.
 
-### Changes
+### Changed
 
 - Dependencies system constraints are now respected when installing packages.
+- Complied with PEP 440
+
+### Fixed
+
+- Fixed `show` command for VCS dependencies.
 
 
 ## [0.3.0] - 2018-03-05
