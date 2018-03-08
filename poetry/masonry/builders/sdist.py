@@ -19,7 +19,7 @@ from .builder import Builder
 
 
 SETUP = """\
-from setuptools import setup
+from distutils.core import setup
 
 {before}
 setup(
