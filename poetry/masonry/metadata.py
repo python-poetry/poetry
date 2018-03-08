@@ -48,9 +48,6 @@ class Metadata:
         meta.license = package.license
         meta.classifiers = package.classifiers
 
-        # Version 1.1
-        meta.requires = [d.to_pep_508() for d in package.requires]
-
         # Version 1.2
         meta.maintainer = meta.author
         meta.maintainer_email = meta.author_email
