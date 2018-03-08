@@ -232,10 +232,16 @@ class Publisher:
     def _upload(self, session, url):
         dist = self._poetry.file.parent / 'dist'
         packages = dist.glob(f'{self._package.name}-{self._package.version}*')
-        files = (i for i in packages if i.suffix != '.asc')
+        files = (
+            i for i in packages if (
+                i.match(f'{self._package.name}-{self._package.version}-*.whl')
+                or
+                i.match(f'{self._package.name}-{self._package.version}.tar.gz')
+            )
+        )
 
         for file in files:
-            # TODO; Check existence
+            # TODO: Check existence
 
             resp = self._upload_file(session, url, file)
 
