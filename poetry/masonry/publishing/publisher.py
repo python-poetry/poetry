@@ -57,6 +57,7 @@ class Publisher:
 
         if not repository_name:
             url = 'https://upload.pypi.org/legacy/'
+            repository_name = 'pypi'
         else:
             # Retrieving config information
             config_file = Path(CONFIG_DIR) / 'config.toml'
