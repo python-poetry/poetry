@@ -1,6 +1,11 @@
 Poetry: Dependency Management for Python
 ========================================
 
+.. figure:: https://travis-ci.org/sdispater/poetry.svg
+   :alt: Poetry build status
+
+   Poetry build status
+
 Poetry helps you declare, manage and install dependencies of Python
 projects, ensuring you have the right stack everywhere.
 
@@ -90,22 +95,22 @@ the new, `standardized <https://www.python.org/dev/peps/pep-0518/>`__
     [tool.poetry.dependencies]
     python = "~2.7 || ^3.2"  # Compatible python versions must be declared here
     toml = "^0.9"
-    requests = "^2.13"
-    semantic_version = "^2.6"
-    pygments = "^2.2"
-    twine = "^1.8"
-    wheel = "^0.29"
-    pip-tools = "^1.8.2"
+    # Dependencies with extras
+    requests = { version = "^2.13", extras = [ "security" ] }
+    # Python specific dependencies with prereleases allowed
+    pathlib2 = { version = "^2.2", python = "~2.7", allows_prereleases = true }
+    # Git dependencies
     cleo = { git = "https://github.com/sdispater/cleo.git", branch = "master" }
+
+    # Optional dependencies (extras)
+    pendulum = { version = "^1.4", optional = true}
 
     [tool.poetry.dev-dependencies]
     pytest = "^3.0"
     pytest-cov = "^2.4"
-    coverage = "<4.0"
-    httpretty = "^0.8.14"
 
     [tool.poetry.scripts]
-    poet = 'poet:app.run'
+    my-script = 'my_package:main'
 
 There are some things we can notice here:
 
@@ -280,19 +285,19 @@ dependencies installed by passing the ``--no-dev`` option.
 
     poetry install --no-dev
 
-You can also specify the features you want installed by passing the
-``--f|--features`` option (See `Features <#features>`__ for more info)
+You can also specify the extras you want installed by passing the
+``--E|--extras`` option (See `Extras <#extras>`__ for more info)
 
 .. code:: bash
 
-    poetry install --features "mysql pgsql"
-    poetry install -f mysql -f pgsql
+    poetry install --extras "mysql pgsql"
+    poetry install -E mysql -E pgsql
 
 Options
 ^^^^^^^
 
 -  ``--no-dev``: Do not install dev dependencies.
--  ``-f|--features``: Features to install (multiple values allowed).
+-  ``-E|--extras``: Features to install (multiple values allowed).
 
 update
 ~~~~~~
@@ -446,20 +451,16 @@ This command locks (without installing) the dependencies specified in
 The ``pyproject.toml`` file
 ---------------------------
 
-A ``pyproject.toml`` file is composed of multiple sections.
-
-package
-~~~~~~~
-
-This section describes the specifics of the package
+The ``tool.poetry`` section of the ``pyproject.toml`` file is composed
+of multiple sections.
 
 name
-^^^^
+~~~~
 
 The name of the package. **Required**
 
 version
-^^^^^^^
+~~~~~~~
 
 The version of the package. **Required**
 
@@ -467,19 +468,13 @@ This should follow `semantic versioning <http://semver.org/>`__. However
 it will not be enforced and you remain free to follow another
 specification.
 
-python-version
-^^^^^^^^^^^^^^
-
-A list of Python versions for which the package is compatible.
-**Required**
-
 description
-^^^^^^^^^^^
+~~~~~~~~~~~
 
 A short description of the package. **Required**
 
 license
-^^^^^^^
+~~~~~~~
 
 The license of the package.
 
@@ -504,7 +499,7 @@ are listed at the `SPDX Open Source License
 Registry <https://www.spdx.org/licenses/>`__.
 
 authors
-^^^^^^^
+~~~~~~~
 
 The authors of the package. This is a list of authors and should contain
 at least one author.
@@ -512,7 +507,7 @@ at least one author.
 Authors must be in the form ``name <email>``.
 
 readme
-^^^^^^
+~~~~~~
 
 The readme file of the package. **Required**
 
@@ -531,27 +526,27 @@ extra to do so.
     pip install pypoet[markdown-readme]
 
 homepage
-^^^^^^^^
+~~~~~~~~
 
 An URL to the website of the project. **Optional**
 
 repository
-^^^^^^^^^^
+~~~~~~~~~~
 
 An URL to the repository of the project. **Optional**
 
 documentation
-^^^^^^^^^^^^^
+~~~~~~~~~~~~~
 
 An URL to the documentation of the project. **Optional**
 
 keywords
-^^^^^^^^
+~~~~~~~~
 
 A list of keywords (max: 5) that the package is related to. **Optional**
 
 include and exclude
-^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~
 
 A list of patterns that will be included in the final package.
 
@@ -573,30 +568,16 @@ with the VCS’ ignore settings (``.gitignore`` for git for example).
 
     exclude = ["package/excluded.py"]
 
-If you packages lies elsewhere (say in a ``src`` directory), you can
-tell ``poet`` to find them from there:
-
-.. code:: toml
-
-    include = { from = 'src', include = '**/*' }
-
-Similarly, you can tell that the ``src`` directory represent the ``foo``
-package:
-
-.. code:: toml
-
-    include = { from = 'src', include = '**/*', as = 'foo' }
-
 ``dependencies`` and ``dev-dependencies``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Poet is configured to look for dependencies on
+Poetry is configured to look for dependencies on
 `PyPi <https://pypi.org>`__ by default. Only the name and a version
 string are required in this case.
 
 .. code:: toml
 
-    [dependencies]
+    [tool.poetry.dependencies]
     requests = "^2.13.0"
 
 If you want to use a private repository, you can add it to your
@@ -604,9 +585,17 @@ If you want to use a private repository, you can add it to your
 
 .. code:: toml
 
-    [[source]]
+    [[tool.poetry.source]]
     name = 'private'
     url = 'http://example.com/simple'
+
+Be aware that declaring the python version for which your package is
+compatible is mandatory:
+
+.. code:: toml
+
+    [tool.poetry.dependencies]
+    python = "^3.6"
 
 Caret requirement
 ^^^^^^^^^^^^^^^^^
@@ -614,10 +603,10 @@ Caret requirement
 **Caret requirements** allow SemVer compatible updates to a specified
 version. An update is allowed if the new version number does not modify
 the left-most non-zero digit in the major, minor, patch grouping. In
-this case, if we ran ``poet update requests``, poet would update us to
-version ``2.14.0`` if it was available, but would not update us to
+this case, if we ran ``poetry update requests``, poetry would update us
+to version ``2.14.0`` if it was available, but would not update us to
 ``3.0.0``. If instead we had specified the version string as
-``^0.1.13``, poet would update to ``0.1.14`` but not ``0.2.0``.
+``^0.1.13``, poetry would update to ``0.1.14`` but not ``0.2.0``.
 ``0.0.x`` is not considered compatible with any other version.
 
 Here are some more examples of caret requirements and the versions that
@@ -718,12 +707,12 @@ specific Python versions:
 .. code:: toml
 
     [dependencies]
-    pathlib2 = { version = "^2.2", python-versions = "~2.7" }
+    pathlib2 = { version = "^2.2", python = "~2.7" }
 
 .. code:: toml
 
     [dependencies]
-    pathlib2 = { version = "^2.2", python-versions = ["~2.7", "^3.2"] }
+    pathlib2 = { version = "^2.2", python = ["~2.7", "^3.2"] }
 
 ``scripts``
 ~~~~~~~~~~~
@@ -739,10 +728,10 @@ when installing the package
 Here, we will have the ``poetry`` script installed which will execute
 ``console.run`` in the ``poetry`` package.
 
-``features``
-~~~~~~~~~~~~
+``extras``
+~~~~~~~~~~
 
-Poetry supports features to allow expression of:
+Poetry supports extras to allow expression of:
 
 -  optional dependencies, which enhance a package, but are not required;
    and
@@ -750,29 +739,29 @@ Poetry supports features to allow expression of:
 
 .. code:: toml
 
-    [package]
+    [tool.poetry]
     name = "awesome"
 
-    [features]
-    mysql = ["mysqlclient"]
-    pgsql = ["psycopg2"]
-
-    [dependencies]
+    [tool.poetry.dependencies]
     # These packages are mandatory and form the core of this package’s distribution.
     mandatory = "^1.0"
 
     # A list of all of the optional dependencies, some of which are included in the
-    # above `features`. They can be opted into by apps.
+    # below `extras`. They can be opted into by apps.
     psycopg2 = { version = "^2.7", optional = true }
     mysqlclient = { version = "^1.3", optional = true }
 
-When installing packages, you can specify features by using the
-``-f|--features`` option:
+    [tool.poetry.extras]
+    mysql = ["mysqlclient"]
+    pgsql = ["psycopg2"]
+
+When installing packages, you can specify extras by using the
+``-E|--extras`` option:
 
 .. code:: bash
 
-    poet install --features "mysql pgsql"
-    poet install -f mysql -f pgsql
+    poet install --extras "mysql pgsql"
+    poet install -E mysql -E pgsql
 
 ``plugins``
 ~~~~~~~~~~~
@@ -793,5 +782,5 @@ following:
 Resources
 ---------
 
--  `Official Website <https://pyproject.eustace.io>`__
+-  `Official Website <https://poetry.eustace.io>`__
 -  `Issue Tracker <https://github.com/sdispater/poetry/issues>`__
