@@ -11,8 +11,8 @@ The package is **highly experimental** at the moment so expect things to change 
 However, if you feel adventurous feedback and pull requests are greatly appreciated.
 
 Also, be aware that the features described here are the goal that this library is aiming
-for and, as of now, not all of them are implemented. The dependency management is pretty much
-done while the packaging and publishin are not done yet.
+for and, as of now, not all of them are implemented (but most of them are).
+The dependency management is done while the packaging and publishing are still at the beginning.
 
 And finally, Poetry's code is only compatible with Python 3.6+ but it can manage
 Python project's with previous versions without any problem.
@@ -166,13 +166,6 @@ results in :
   - Installing oslo.utils (1.4.0)
 ```
 
-#### Pipfile.lock and environment markers
-
-The Pipfile.lock file holds information about the environment in which
-it has been generated. This is a bad design decision since in teams where
-each member has a different environment, the diff will always include
-this changes.
-
 #### Install command
 
 When you specify a package to the `install` command it will add it as a wildcard
@@ -189,8 +182,9 @@ if they are no longer needed.
 
 You either have to use `sync` or `clean` to fix that.
 
+#### Too limited in scope
 
-Finally, the `Pipfile` is just a replacement from `requirements.txt` but in the end you will still need to 
+Finally, the `Pipfile` is just a replacement from `requirements.txt` and, in the end, you will still need to 
 populate your `setup.py` file (or `setup.cfg`) with the exact same dependencies you declared in your `Pipfile`.
 So, in the end, you will still need to manage a few configuration files to properly setup your project.
 
