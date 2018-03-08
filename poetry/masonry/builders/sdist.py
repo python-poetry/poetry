@@ -24,7 +24,7 @@ from setuptools import setup
 {before}
 setup(
     name={name!r},
-    version={version!r}
+    version={version!r},
     description={description!r},
     author={author!r},
     author_email={author_email!r},
