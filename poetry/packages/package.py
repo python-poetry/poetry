@@ -1,6 +1,7 @@
 import re
 from typing import Union
 
+from poetry.semver.constraints import Constraint
 from poetry.semver.helpers import parse_stability
 from poetry.semver.version_parser import VersionParser
 from poetry.version import parse as parse_version
@@ -12,6 +13,13 @@ AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$'
 
 
 class Package:
+
+    AVAILABLE_PYTHONS = {
+        '2',
+        '2.7',
+        '3',
+        '3.4', '3.5', '3.6', '3.7'
+    }
 
     supported_link_types = {
         'require': {
@@ -173,6 +181,30 @@ class Package:
     @property
     def platform_constraint(self):
         return self._platform_constraint
+    
+    @property
+    def classifiers(self):
+        classifiers = []
+
+        # Automatically set python classifiers
+        parser = VersionParser()
+        if self.python_versions == '*':
+            python_constraint = parser.parse_constraints('~2.7 || ^3.4')
+        else:
+            python_constraint = self.python_constraint
+
+        for version in sorted(self.AVAILABLE_PYTHONS):
+            if len(version) == 1:
+                constraint = parser.parse_constraints(version + '.*')
+            else:
+                constraint = Constraint('=', version)
+
+            if python_constraint.matches(constraint):
+                classifiers.append(
+                    f'Programming Language :: Python :: {version}'
+                )
+
+        return classifiers
 
     def is_dev(self):
         return self._dev

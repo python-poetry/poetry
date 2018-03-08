@@ -38,7 +38,6 @@ kwargs = dict(
         'toml>=0.9.4,<0.10.0',
         'cachy>=0.1.0,<0.2.0',
         'pip-tools>=1.11.0,<2.0.0',
-        'twine>=^1.10.0,<2.0.0',
         'requests-toolbelt>=^0.8.0,<0.9.0',
     ],
     include_package_data=True,

@@ -1,4 +1,4 @@
-from poetry.masonry.publisher import Publisher
+from poetry.masonry.publishing.publisher import Publisher
 
 from .command import Command
 
