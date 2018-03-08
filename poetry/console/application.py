@@ -12,6 +12,7 @@ from .commands import ConfigCommand
 from .commands import InstallCommand
 from .commands import LockCommand
 from .commands import NewCommand
+from .commands import PublishCommand
 from .commands import RemoveCommand
 from .commands import ShowCommand
 from .commands import UpdateCommand
@@ -52,6 +53,7 @@ class Application(BaseApplication):
             InstallCommand(),
             LockCommand(),
             NewCommand(),
+            PublishCommand(),
             RemoveCommand(),
             ShowCommand(),
             UpdateCommand(),

@@ -23,6 +23,8 @@ requests = "^2.18"
 toml = "^0.9"
 cachy = "^0.1.0"
 pip-tools = "^1.11"
+twine = "^1.10"
+requests-toolbelt = "^0.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "~3.4"

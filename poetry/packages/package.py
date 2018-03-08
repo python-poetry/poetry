@@ -1,3 +1,4 @@
+import re
 from typing import Union
 
 from poetry.semver.helpers import parse_stability
@@ -6,6 +7,8 @@ from poetry.version import parse as parse_version
 
 from .dependency import Dependency
 from .vcs_dependency import VCSDependency
+
+AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$')
 
 
 class Package:
@@ -119,6 +122,31 @@ class Package:
     @property
     def authors(self) -> list:
         return self._authors
+
+    @property
+    def author_name(self) -> str:
+        return self._get_author()['name']
+
+    @property
+    def author_email(self) -> str:
+        return self._get_author()['email']
+
+    def _get_author(self) -> dict:
+        if not self._authors:
+            return {
+                'name': None,
+                'email': None
+            }
+
+        m = AUTHOR_REGEX.match(self._authors[0])
+
+        name = m.group('name')
+        email = m.group('email')
+
+        return {
+            'name': name,
+            'email': email
+        }
 
     @property
     def python_versions(self):

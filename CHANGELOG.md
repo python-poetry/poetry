@@ -9,6 +9,7 @@
 - Added support for extras definition.
 - Added support for dependencies extras specification.
 - Added the `config` command.
+- Added the `publish` command.
 
 ### Changed
 

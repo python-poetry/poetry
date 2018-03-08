@@ -5,6 +5,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from poetry.semver.constraints import Constraint
+from poetry.semver.constraints import MultiConstraint
 from poetry.semver.version_parser import VersionParser
 from poetry.vcs import get_vcs
 
@@ -144,3 +145,14 @@ class Builder:
                 classifiers.append(f'Programming Language :: Python :: {version}')
 
         return classifiers
+
+    def convert_python_version(self):
+        constraint = self._package.python_constraint
+        if isinstance(constraint, MultiConstraint):
+            python_requires = ','.join(
+                [str(c).replace(' ', '') for c in constraint.constraints]
+            )
+        else:
+            python_requires = str(constraint).replace(' ', '')
+
+        return python_requires

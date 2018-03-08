@@ -69,7 +69,7 @@ class WheelBuilder(Builder):
         return cls.make_in(poetry, io, dist_dir)
 
     def build(self) -> None:
-        self._io.writeln('Building <info>wheel</info>')
+        self._io.writeln(' - Building <info>wheel</info>')
         try:
             self.copy_module()
             self.write_metadata()
@@ -77,7 +77,7 @@ class WheelBuilder(Builder):
         finally:
             self._wheel_zip.close()
 
-        self._io.writeln(f'Built <comment>{self.wheel_filename}</>')
+        self._io.writeln(f' - Built <comment>{self.wheel_filename}</>')
 
     def copy_module(self) -> None:
         if self._module.is_package():

@@ -24,6 +24,7 @@ from setuptools import setup
 {before}
 setup(
     name={name!r},
+    version={version!r}
     description={description!r},
     author={author!r},
     author_email={author_email!r},
@@ -50,7 +51,7 @@ class SdistBuilder(Builder):
         super().__init__(poetry, io)
 
     def build(self, target_dir: Path = None) -> Path:
-        self._io.writeln('Building <info>sdist</info>')
+        self._io.writeln(' - Building <info>sdist</info>')
         if target_dir is None:
             target_dir = self._path / 'dist'
 
@@ -104,7 +105,7 @@ class SdistBuilder(Builder):
             tar.close()
             gz.close()
 
-        self._io.writeln(f'Built <comment>{target.name}</>')
+        self._io.writeln(f' - Built <comment>{target.name}</>')
 
         return target
 

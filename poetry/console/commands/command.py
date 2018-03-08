@@ -1,4 +1,5 @@
 from cleo import Command as BaseCommand
+from cleo.inputs import ListInput
 
 from poetry.poetry import Poetry
 
@@ -13,6 +14,21 @@ class Command(BaseCommand):
 
     def reset_poetry(self) -> None:
         self.get_application().reset_poetry()
+
+    def call(self, name, options=None):
+        """
+        Call another command.
+
+        Fixing style being passed rather than an output
+        """
+        if options is None:
+            options = []
+
+        command = self.get_application().find(name)
+
+        options = [('command', command.get_name())] + options
+
+        return command.run(ListInput(options), self.output.output)
 
     def run(self, i, o) -> int:
         """

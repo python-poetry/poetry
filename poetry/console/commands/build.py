@@ -19,7 +19,6 @@ class BuildCommand(Command):
         package = self.poetry.package
         self.line(f'Building <info>{package.pretty_name}</> '
                   f'(<comment>{package.version}</>)')
-        self.line('')
 
         builder = Builder(self.poetry, self.output)
         builder.build(fmt)
