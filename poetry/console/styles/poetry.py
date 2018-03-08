@@ -10,6 +10,7 @@ class PoetryStyle(CleoStyle):
         super().__init__(i, o)
 
         self.output.get_formatter().add_style('warning', 'black', 'yellow')
+        self.output.get_formatter().add_style('question', 'blue')
 
     @property
     def venv(self):

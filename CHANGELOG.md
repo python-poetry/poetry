@@ -8,6 +8,7 @@
 - Added the `build` command.
 - Added support for extras definition.
 - Added support for dependencies extras specification.
+- Added the `config` command.
 
 ### Changed
 

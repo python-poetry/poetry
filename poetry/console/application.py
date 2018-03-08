@@ -8,6 +8,7 @@ from poetry.utils.venv import Venv
 from .commands import AboutCommand
 from .commands import AddCommand
 from .commands import BuildCommand
+from .commands import ConfigCommand
 from .commands import InstallCommand
 from .commands import LockCommand
 from .commands import NewCommand
@@ -47,6 +48,7 @@ class Application(BaseApplication):
             AboutCommand(),
             AddCommand(),
             BuildCommand(),
+            ConfigCommand(),
             InstallCommand(),
             LockCommand(),
             NewCommand(),
