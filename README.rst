@@ -103,7 +103,7 @@ the new, `standardized <https://www.python.org/dev/peps/pep-0518/>`__
     cleo = { git = "https://github.com/sdispater/cleo.git", branch = "master" }
 
     # Optional dependencies (extras)
-    pendulum = { version = "^1.4", optional = true}
+    pendulum = { version = "^1.4", optional = true }
 
     [tool.poetry.dev-dependencies]
     pytest = "^3.0"
@@ -396,17 +396,21 @@ Options
 -  ``-o|--outdated``: Show the latest version but only for packages that
    are outdated.
 
-package
-~~~~~~~
+build
+~~~~~
 
-The ``package`` command builds the source and wheels archives.
+The ``build`` command builds the source and wheels archives.
+
+.. code:: bash
+
+    poetry build
+
+Note that, at the moment, only pure python wheels are supported.
 
 Options
 ^^^^^^^
 
--  ``--no-universal``: Do not build a universal wheel.
--  ``--no-wheels``: Build only the source package.
--  ``-c|--clean``: Make a clean package.
+-  ``-F|--format``: Limit the format to either wheel or sdist.
 
 publish
 ~~~~~~~
@@ -417,12 +421,66 @@ the remote repository.
 It will automatically register the package before uploading if this is
 the first time it is submitted.
 
+.. code:: bash
+
+    poetry publish
+
 Options
 ^^^^^^^
 
 -  ``-r|--repository``: The repository to register the package to
-   (default: ``pypi``). Should match a section of your ``~/.pypirc``
-   file.
+   (default: ``pypi``). Should match a repository name set by the
+   ```config`` <#config>`__ command.
+
+``config``
+~~~~~~~~~~
+
+The ``config`` command allows you to edit poetry config settings and
+repositories.
+
+.. code:: bash
+
+    poetry config --list
+
+Usage
+^^^^^
+
+.. code:: bash
+
+    poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
+
+``setting-key`` is a configuration option name and ``setting-value1`` is
+a configuration value.
+
+Modifying repositories
+^^^^^^^^^^^^^^^^^^^^^^
+
+In addition to modifying the config section, the config command also
+supports making changes to the repositories section by using it the
+following way:
+
+.. code:: bash
+
+    poetry config repositories.foo https://foo.bar/simple/
+
+This will set the url for repository ``foo`` to
+``https://foo.bar/simple/``.
+
+If you want to store your credentials for a specific repository, you can
+do so easily:
+
+.. code:: bash
+
+    poetry config http-basic.foo username password
+
+If you do not specify the password you will be prompted to write it.
+
+Options
+^^^^^^^
+
+-  ``--unset``: Remove the configuration element named by
+   ``setting-key``.
+-  ``--list``: Show the list of current config variables.
 
 search
 ~~~~~~
