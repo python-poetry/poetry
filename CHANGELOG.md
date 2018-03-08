@@ -2,7 +2,7 @@
 
 ## [0.4.1] - 2018-03-08
 
-## Fixed
+### Fixed
 
 - Fixed missing entry point
 
