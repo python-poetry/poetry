@@ -84,7 +84,14 @@ class PyPiRepository(Repository):
             release_info = self.get_release_info(name, version)
             package = Package(name, version, version)
             for req in release_info['requires_dist']:
-                req = InstallRequirement.from_line(req)
+                try:
+                    req = InstallRequirement.from_line(req)
+                except Exception:
+                    # Probably an invalid marker
+                    # We strip the markers hoping for the best
+                    req = req.split(';')[0]
+
+                    req = InstallRequirement.from_line(req)
 
                 name = req.name
                 version = str(req.req.specifier)

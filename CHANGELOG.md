@@ -19,6 +19,7 @@
 ### Fixed
 
 - Fixed `show` command for VCS dependencies.
+- Fixed handling of releases with bad markers in PyPiRepository.
 
 
 ## [0.3.0] - 2018-03-05
