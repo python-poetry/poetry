@@ -83,7 +83,8 @@ class PyPiRepository(Repository):
 
             release_info = self.get_release_info(name, version)
             package = Package(name, version, version)
-            for req in release_info['requires_dist']:
+            requires_dist = release_info['requires_dist'] or []
+            for req in requires_dist:
                 try:
                     req = InstallRequirement.from_line(req)
                 except Exception:

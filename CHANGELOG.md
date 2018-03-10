@@ -1,5 +1,13 @@
 # Change Log
 
+
+## [Unreleased]
+
+### Fixed
+
+- Fixed TypeError when `requires_dist` is null on PyPI.
+
+
 ## [0.4.1] - 2018-03-08
 
 ### Fixed
