@@ -73,12 +73,16 @@ class Venv:
         """
         return self._bin('pip')
 
-    def run(self, bin: str, *args) -> str:
+    def run(self, bin: str, *args, **kwargs) -> str:
         """
         Run a command inside the virtual env.
         """
         cmd = [self._bin(bin)] + list(args)
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+
+        output = subprocess.check_output(
+            cmd, stderr=subprocess.STDOUT,
+            **kwargs
+        )
 
         return output.decode()
 

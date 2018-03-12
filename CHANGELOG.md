@@ -1,6 +1,13 @@
 # Change Log
 
 
+## [Unreleased]
+
+### Changed
+
+- Added hashes check when installing packages.
+
+
 ## [0.4.2] - 2018-03-10
 
 ### Fixed
