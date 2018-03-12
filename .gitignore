@@ -27,4 +27,5 @@ pip-log.txt
 setup.cfg
 MANIFEST.in
 setup.py
+/docs/site/*
 pyproject.lock

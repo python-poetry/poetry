@@ -1,0 +1,19 @@
+site_name: Poetry documentation
+
+theme:
+  name: null
+  custom_dir: theme
+
+extra:
+  version: 2.0
+
+pages:
+  - Home: index.md
+  - Basic Usage: basic-usage.md
+
+markdown_extensions:
+  - codehilite
+  - admonition
+  - pymdownx.superfences
+  - toc:
+      permalink: 

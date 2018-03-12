@@ -28,6 +28,9 @@ requests-toolbelt = "^0.8.0"
 [tool.poetry.dev-dependencies]
 pytest = "~3.4"
 pytest-cov = "^2.5"
+mkdocs = "^0.17.3"
+pymdown-extensions = "^4.9"
+pygments = "^2.2"
 
 
 [tool.poetry.scripts]
