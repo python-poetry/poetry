@@ -64,6 +64,11 @@ def normalize_version(version):
     # add version modifiers if a version was matched
     if index is not None:
         if len(m.groups()) - 1 >= index and m.group(index):
+            if m.group(index) == 'post':
+                # Post releases should be considered
+                # stable releases
+                return version
+
             version = f'{version}' \
                       f'-{_expand_stability(m.group(index))}'
 
@@ -105,6 +110,8 @@ def parse_stability(version: str) -> str:
                 return 'alpha'
             elif m.group(1) in ['rc', 'c']:
                 return 'RC'
+            elif m.group(1) == 'post':
+                return 'stable'
             else:
                 return 'dev'
 

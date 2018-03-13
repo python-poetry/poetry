@@ -11,6 +11,10 @@
 
 - Added hashes check when installing packages.
 
+### Fixed
+
+- Fixed handking of post releases.
+
 
 ## [0.4.2] - 2018-03-10
 
