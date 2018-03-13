@@ -107,6 +107,15 @@ class Poetry:
                     Dependency(req, '*') for req in requirements
                 ]
 
+        if 'build' in local_config:
+            package.build = local_config['build']
+
+        if 'include' in local_config:
+            package.include = local_config['include']
+
+        if 'exclude' in local_config:
+            package.exclude = local_config['exclude']
+
         locker = Locker(poetry_file.with_suffix('.lock'), local_config)
 
         return cls(poetry_file, local_config, package, locker)

@@ -1,6 +1,7 @@
 import ast
 import pytest
 import shutil
+import tarfile
 
 from pathlib import Path
 
@@ -127,3 +128,20 @@ def test_prelease():
     sdist = fixtures_dir / 'prerelease' / 'dist' / 'prerelease-0.1b1.tar.gz'
 
     assert sdist.exists()
+
+
+def test_with_c_extensions():
+    poetry = Poetry.create(project('extended'))
+
+    builder = SdistBuilder(poetry, NullIO())
+    builder.build()
+
+    sdist = fixtures_dir / 'extended' / 'dist' / 'extended-0.1.tar.gz'
+
+    assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), 'r')
+
+    assert 'extended-0.1/build.py' in tar.getnames()
+    assert 'extended-0.1/extended/extended.c' in tar.getnames()
+

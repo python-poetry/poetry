@@ -3,6 +3,7 @@ import hashlib
 import os
 import re
 import tempfile
+import shutil
 import stat
 import zipfile
 
@@ -14,8 +15,13 @@ from types import SimpleNamespace
 from poetry.__version__ import __version__
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import MultiConstraint
+from poetry.vcs import get_vcs
 
 from ..utils.helpers import normalize_file_permissions
+from ..utils.tags import get_abbr_impl
+from ..utils.tags import get_abi_tag
+from ..utils.tags import get_impl_ver
+from ..utils.tags import get_platform
 from .builder import Builder
 
 
@@ -28,24 +34,27 @@ Root-Is-Purelib: true
 
 class WheelBuilder(Builder):
 
-    def __init__(self, poetry, io, target_fp):
+    def __init__(self, poetry, io, target_fp, original=None):
         super().__init__(poetry, io)
 
         self._records = []
+        self._original_path = self._path
+        if original:
+            self._original_path = original.file.parent
 
         # Open the zip file ready to write
         self._wheel_zip = zipfile.ZipFile(target_fp, 'w',
                                           compression=zipfile.ZIP_DEFLATED)
 
     @classmethod
-    def make_in(cls, poetry, io, directory) -> SimpleNamespace:
+    def make_in(cls, poetry, io, directory, original=None) -> SimpleNamespace:
         # We don't know the final filename until metadata is loaded, so write to
         # a temporary_file, and rename it afterwards.
         (fd, temp_path) = tempfile.mkstemp(suffix='.whl',
                                            dir=str(directory))
         try:
             with open(fd, 'w+b') as fp:
-                wb = WheelBuilder(poetry, io, fp)
+                wb = WheelBuilder(poetry, io, fp, original=original)
                 wb.build()
 
             wheel_path = directory / wb.wheel_filename
@@ -71,13 +80,38 @@ class WheelBuilder(Builder):
     def build(self) -> None:
         self._io.writeln(' - Building <info>wheel</info>')
         try:
+            self._build()
             self.copy_module()
             self.write_metadata()
             self.write_record()
         finally:
             self._wheel_zip.close()
 
-        self._io.writeln(f' - Built <comment>{self.wheel_filename}</>')
+        self._io.writeln(f' - Built <fg=cyan>{self.wheel_filename}</>')
+
+    def _build(self) -> None:
+        if self._package.build:
+            setup = self._path / 'setup.py'
+
+            # We need to place ourselves in the temporary
+            # directory in order to build the package
+            current_path = os.getcwd()
+            try:
+                os.chdir(str(self._path))
+                self._io.venv.run(
+                    'python',
+                    str(setup),
+                    'build',
+                    '-b', str(self._path / 'build')
+                )
+            finally:
+                os.chdir(current_path)
+
+            build_dir = self._path / 'build'
+            lib = list(build_dir.glob('lib.*'))[0]
+            for pkg in lib.glob('*'):
+                shutil.rmtree(str(self._path / pkg.name))
+                shutil.copytree(str(pkg), str(self._path / pkg.name))
 
     def copy_module(self) -> None:
         if self._module.is_package():
@@ -119,17 +153,54 @@ class WheelBuilder(Builder):
             # RECORD itself is recorded with no hash or size
             f.write(self.dist_info + '/RECORD,,\n')
 
+    def find_excluded_files(self) -> list:
+        # Checking VCS
+        vcs = get_vcs(self._original_path)
+        if not vcs:
+            return []
+
+        ignored = vcs.get_ignored_files()
+        result = []
+        for file in ignored:
+            try:
+                file = Path(file).absolute().relative_to(self._original_path)
+            except ValueError:
+                # Should only happen in tests
+                continue
+
+            result.append(file)
+
+        return result
+
     @property
     def dist_info(self) -> str:
         return self.dist_info_name(self._package.name, self._package.version)
 
     @property
     def wheel_filename(self) -> str:
-        tag = ('py2.' if self.supports_python2() else '') + 'py3-none-any'
+        if self._package.build:
+            platform = get_platform().replace('.', '_').replace('-', '_')
+            impl_name = get_abbr_impl()
+            impl_ver = get_impl_ver()
+            impl = impl_name + impl_ver
+            abi_tag = str(get_abi_tag()).lower()
+            tag = (impl, abi_tag, platform)
+        else:
+            platform = 'any'
+            if self.supports_python2():
+                impl = 'py2.py3'
+            else:
+                impl = 'py3'
+
+            tag = (impl, 'none', platform)
+
+        tag = '-'.join(tag)
+
         return '{}-{}-{}.whl'.format(
             re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
             re.sub("[^\w\d.]+", "_", self._package.version, flags=re.UNICODE),
-            tag)
+            tag
+        )
 
     def supports_python2(self):
         return self._package.python_constraint.matches(

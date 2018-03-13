@@ -22,15 +22,19 @@ SETUP = """\
 from distutils.core import setup
 
 {before}
-setup(
-    name={name!r},
-    version={version!r},
-    description={description!r},
-    author={author!r},
-    author_email={author_email!r},
-    url={url!r},
+setup_kwargs = {{
+    'name': {name!r},
+    'version': {version!r},
+    'description': {description!r},
+    'long_description': {long_description!r},
+    'author': {author!r},
+    'author_email': {author_email!r},
+    'url': {url!r},
     {extra}
-)
+}}
+{after}
+
+setup(**setup_kwargs)
 """
 
 
@@ -67,7 +71,7 @@ class SdistBuilder(Builder):
         try:
             tar_dir = f'{self._package.pretty_name}-{self._package.version}'
 
-            files_to_add = self.find_files_to_add()
+            files_to_add = self.find_files_to_add(exclude_build=False)
 
             for relpath in files_to_add:
                 path = self._path / relpath
@@ -105,12 +109,19 @@ class SdistBuilder(Builder):
             tar.close()
             gz.close()
 
-        self._io.writeln(f' - Built <comment>{target.name}</>')
+        self._io.writeln(f' - Built <fg=cyan>{target.name}</>')
 
         return target
 
     def build_setup(self) -> bytes:
-        before, extra = [], []
+        before, extra, after = [], [], []
+
+        # If we have a build script, use it
+        if self._package.build:
+            after += [
+                f'from {self._package.build.split(".")[0]} import *',
+                'build(setup_kwargs)'
+            ]
 
         if self._module.is_package():
             packages, package_data = self.find_packages(
@@ -118,24 +129,24 @@ class SdistBuilder(Builder):
             )
             before.append("packages = \\\n{}\n".format(pformat(sorted(packages))))
             before.append("package_data = \\\n{}\n".format(pformat(package_data)))
-            extra.append("packages=packages,")
-            extra.append("package_data=package_data,")
+            extra.append("'packages': packages,")
+            extra.append("'package_data': package_data,")
         else:
-            extra.append('py_modules={!r},'.format(self._module.name))
+            extra.append("'py_modules': {!r},".format(self._module.name))
 
         dependencies, extras = self.convert_dependencies(self._package.requires)
         if dependencies:
             before.append("install_requires = \\\n{}\n".format(pformat(dependencies)))
-            extra.append("install_requires=install_requires,")
+            extra.append("'install_requires': install_requires,")
 
         if extras:
             before.append("extras_require = \\\n{}\n".format(pformat(extras)))
-            extra.append("extras_require=extras_require,")
+            extra.append("'extras_require': extras_require,")
 
         entry_points = self.convert_entry_points()
         if entry_points:
             before.append("entry_points = \\\n{}\n".format(pformat(entry_points)))
-            extra.append("entry_points=entry_points,")
+            extra.append("'entry_points': entry_points,")
 
         if self._package.python_versions != '*':
             constraint = self._package.python_constraint
@@ -146,7 +157,7 @@ class SdistBuilder(Builder):
             else:
                 python_requires = str(constraint).replace(' ', '')
 
-            extra.append('python_requires={!r},'.format(python_requires))
+            extra.append("'python_requires': {!r},".format(python_requires))
 
         author = self.convert_author(self._package.authors[0])
 
@@ -155,10 +166,12 @@ class SdistBuilder(Builder):
             name=self._package.name,
             version=self._package.version,
             description=self._package.description,
+            long_description=self._package.readme,
             author=author['name'],
             author_email=author['email'],
             url=self._package.homepage or self._package.repository_url,
             extra='\n    '.join(extra),
+            after='\n'.join(after)
         ).encode('utf-8')
 
     @classmethod

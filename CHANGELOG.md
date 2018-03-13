@@ -3,6 +3,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added experimental support for package with C extensions.
+
 ### Changed
 
 - Added hashes check when installing packages.

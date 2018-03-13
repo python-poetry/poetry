@@ -29,7 +29,9 @@ class Builder:
         self._io = io
         self._package = poetry.package
         self._path = poetry.file.parent
-        self._module = Module(self._package.name, self._path.as_posix())
+        self._module = Module(
+            self._package.name, self._path.as_posix()
+        )
 
     def build(self):
         raise NotImplementedError()
@@ -53,7 +55,7 @@ class Builder:
 
         return result
 
-    def find_files_to_add(self) -> list:
+    def find_files_to_add(self, exclude_build=True) -> list:
         """
         Finds all files to add to the tarball
 
@@ -101,6 +103,11 @@ class Builder:
                     verbosity=self._io.VERBOSITY_VERY_VERBOSE
                 )
                 to_add.append(readme.relative_to(self._path))
+
+        # If a build script is specified and explicitely required
+        # we add it to the list of files
+        if self._package.build and not exclude_build:
+            to_add.append(Path(self._package.build))
 
         return sorted(to_add)
 

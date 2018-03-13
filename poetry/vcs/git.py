@@ -26,8 +26,9 @@ class GitConfig:
 
 class Git:
 
-    def __init__(self):
+    def __init__(self, work_dir=None):
         self._config = GitConfig()
+        self._work_dir = work_dir
 
     @property
     def config(self) -> GitConfig:
@@ -36,24 +37,55 @@ class Git:
     def clone(self, repository, dest) -> str:
         return self.run('clone', repository, dest)
 
-    def checkout(self, rev, folder) -> str:
-        return self.run(
-            '--git-dir', (folder / '.git').as_posix(),
-            '--work-tree', folder.as_posix(),
+    def checkout(self, rev, folder=None) -> str:
+        args = []
+        if folder is None and self._work_dir:
+            folder = self._work_dir
+
+        if folder:
+            args += [
+                '--git-dir', (folder / '.git').as_posix(),
+                '--work-tree', folder.as_posix()
+            ]
+
+        args += [
             'checkout', rev
-        )
+        ]
 
-    def rev_parse(self, rev, folder) -> str:
-        return self.run(
-            '--git-dir', (folder / '.git').as_posix(),
-            '--work-tree', folder.as_posix(),
+        return self.run(*args)
+
+    def rev_parse(self, rev, folder=None) -> str:
+        args = []
+        if folder is None and self._work_dir:
+            folder = self._work_dir
+
+        if folder:
+            args += [
+                '--git-dir', (folder / '.git').as_posix(),
+                '--work-tree', folder.as_posix()
+            ]
+
+        args += [
             'rev-parse', rev
-        )
+        ]
 
-    def get_ignored_files(self) -> list:
-        output = self.run(
+        return self.run(*args)
+
+    def get_ignored_files(self, folder=None) -> list:
+        args = []
+        if folder is None and self._work_dir:
+            folder = self._work_dir
+
+        if folder:
+            args += [
+                '--git-dir', (folder / '.git').as_posix(),
+                '--work-tree', folder.as_posix()
+            ]
+
+        args += [
             'ls-files', '--others', '-i', '--exclude-standard'
-        )
+        ]
+        output = self.run(*args)
 
         return output.split('\n')
 

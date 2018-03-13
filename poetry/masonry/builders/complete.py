@@ -26,7 +26,8 @@ class CompleteBuilder(Builder):
         dist_dir = self._path / 'dist'
         with self.unpacked_tarball(sdist_file) as tmpdir:
             wheel_info = WheelBuilder.make_in(
-                poetry.Poetry.create(tmpdir), self._io, dist_dir
+                poetry.Poetry.create(tmpdir), self._io, dist_dir,
+                original=self._poetry
             )
 
         return SimpleNamespace(wheel=wheel_info, sdist=sdist_info)

@@ -8,4 +8,4 @@ def get_vcs(directory: Path):
 
     for p in [directory] + list(directory.parents):
         if (p / '.git').is_dir():
-            return Git()
+            return Git(p)

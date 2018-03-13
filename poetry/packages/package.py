@@ -86,6 +86,10 @@ class Package:
         # Requirements for making it mandatory
         self.requirements = {}
 
+        self.build = None
+        self.include = []
+        self.exclude = []
+
         self._python_versions = '*'
         self._python_constraint = self._parser.parse_constraints('*')
         self._platform = '*'

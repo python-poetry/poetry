@@ -3,6 +3,22 @@ import os
 import subprocess
 import sys
 
+from subprocess import CalledProcessError
+
+
+class VenvError(Exception):
+
+    pass
+
+
+class VenvCommandError(VenvError):
+
+    def __init__(self, e: CalledProcessError):
+        message = f'Command {e.cmd} errored with the following output: \n' \
+                  f'{e.output.decode()}'
+
+        super().__init__(message)
+
 
 class Venv:
 
@@ -79,10 +95,13 @@ class Venv:
         """
         cmd = [self._bin(bin)] + list(args)
 
-        output = subprocess.check_output(
-            cmd, stderr=subprocess.STDOUT,
-            **kwargs
-        )
+        try:
+            output = subprocess.check_output(
+                cmd, stderr=subprocess.STDOUT,
+                **kwargs
+            )
+        except CalledProcessError as e:
+            raise VenvCommandError(e)
 
         return output.decode()
 

@@ -87,7 +87,6 @@ cwd = "./handlers"
     REDIS_PASSWORD = "MYPASSWORD"
     #REDIS_PASSWORD = ""
 """
-    print(f.dumps())
     assert expected == f.dumps()
 
 
