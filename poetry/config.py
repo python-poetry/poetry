@@ -10,7 +10,7 @@ class Config:
 
     def __init__(self, file: TomlFile):
         self._file = file
-        if not self._file.exists:
+        if not self._file.exists():
             self._raw_content = {}
             self._content = TOMLFile([])
         else:
