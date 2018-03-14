@@ -13,7 +13,8 @@
 
 ### Fixed
 
-- Fixed handking of post releases.
+- Fixed handling of post releases.
+- Fixed python restricted dependencies not being checked agaisnt virtualenv version.
 
 
 ## [0.4.2] - 2018-03-10

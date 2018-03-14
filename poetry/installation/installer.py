@@ -379,7 +379,7 @@ class Installer:
                 continue
 
             parser = VersionParser()
-            python = '.'.join([str(i) for i in sys.version_info[:3]])
+            python = '.'.join([str(i) for i in self._io.venv.version_info[:3]])
             if 'python' in package.requirements:
                 python_constraint = parser.parse_constraints(
                     package.requirements['python']

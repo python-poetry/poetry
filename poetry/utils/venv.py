@@ -24,6 +24,7 @@ class Venv:
 
     def __init__(self, venv=None):
         self._venv = venv
+        self._version_info = None
 
     @classmethod
     def create(cls) -> 'Venv':
@@ -88,6 +89,21 @@ class Venv:
         Path to current pip executable
         """
         return self._bin('pip')
+
+    @property
+    def version_info(self):
+        if self._version_info is not None:
+            return self._version_info
+
+        if not self.is_venv():
+            self._version_info = sys.version_info
+        else:
+            output = self.run('python', '--version')
+
+            version = output.split(' ')
+            self._version_info = version[1].strip().split('.')
+
+        return self._version_info
 
     def run(self, bin: str, *args, **kwargs) -> str:
         """
