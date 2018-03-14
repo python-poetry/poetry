@@ -24,8 +24,9 @@ class Builder:
         '3.4', '3.5', '3.6', '3.7'
     }
 
-    def __init__(self, poetry, io):
+    def __init__(self, poetry, venv, io):
         self._poetry = poetry
+        self._venv = venv
         self._io = io
         self._package = poetry.package
         self._path = poetry.file.parent

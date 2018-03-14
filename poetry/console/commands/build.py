@@ -1,9 +1,9 @@
-from .command import Command
+from .venv_command import VenvCommand
 
 from poetry.masonry import Builder
 
 
-class BuildCommand(Command):
+class BuildCommand(VenvCommand):
     """
     Builds a package, as a tarball and a wheel by default.
 

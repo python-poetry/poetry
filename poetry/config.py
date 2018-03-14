@@ -1,0 +1,88 @@
+from pathlib import Path
+from typing import Any
+
+from .locations import CONFIG_DIR
+from .utils.toml_file import TomlFile
+
+
+class Config:
+
+    def __init__(self, file: TomlFile):
+        self._file = file
+        self._raw_content = file.read(raw=True)
+        self._content = file.read()
+        
+    @property
+    def name(self):
+        return str(self._file.path)
+
+    @property
+    def file(self):
+        return self._file
+
+    @property
+    def raw_content(self):
+        return self._raw_content
+
+    @property
+    def content(self):
+        return self._content
+
+    def setting(self, setting_name: str) -> Any:
+        """
+        Retrieve a setting value.
+        """
+        keys = setting_name.split('.')
+
+        config = self._raw_content
+        for key in keys:
+            if key not in config:
+                return None
+
+            config = config[key]
+
+        return config
+
+    def add_property(self, key, value):
+        keys = key.split('.')
+
+        config = self._content
+        for i, key in enumerate(keys):
+            if key not in config and i < len(keys) - 1:
+                config[key] = {}
+
+            if i == len(keys) - 1:
+                config[key] = value
+                break
+
+            config = config[key]
+
+        self.dump()
+
+    def remove_property(self, key):
+        keys = key.split('.')
+
+        config = self._content
+        for i, key in enumerate(keys):
+            if key not in config:
+                return
+
+            if i == len(keys) - 1:
+                del config[key]
+                break
+
+            config = config[key]
+
+        self.dump()
+
+    def dump(self):
+        self._file.write(self._content)
+
+    @classmethod
+    def create(cls, file, base_dir=None) -> 'Config':
+        if base_dir is None:
+            base_dir = CONFIG_DIR
+
+        file = TomlFile(Path(base_dir) / file)
+
+        return cls(file)

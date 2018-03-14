@@ -3,7 +3,13 @@ import os
 import subprocess
 import sys
 
+from pathlib import Path
 from subprocess import CalledProcessError
+
+from venv import EnvBuilder
+
+from poetry.config import Config
+from poetry.locations import CACHE_DIR
 
 
 class VenvError(Exception):
@@ -27,10 +33,46 @@ class Venv:
         self._version_info = None
 
     @classmethod
-    def create(cls) -> 'Venv':
+    def create(cls, io, name=None) -> 'Venv':
         if 'VIRTUAL_ENV' not in os.environ:
             # Not in a virtualenv
-            return cls()
+            # Checking if we need to create one
+            config = Config.create('config.toml')
+
+            create_venv = config.setting('settings.virtualenvs.create')
+            if create_venv is False:
+                io.writeln(
+                    '<fg=black;bg=yellow>'
+                    'Skipping virtualenv creation, '
+                    'as specified in config file.'
+                    '</>'
+                )
+
+                return cls()
+
+            venv_path = config.setting('settings.virtualenvs.path')
+            if venv_path is None:
+                venv_path = Path(CACHE_DIR) / 'virtualenvs'
+            else:
+                venv_path = Path(venv_path)
+
+            if not name:
+                name = Path.cwd().name
+
+            name = f'{name}-py{".".join([str(v) for v in sys.version_info[:2]])}'
+
+            venv = venv_path / name
+            if not venv.exists():
+                io.writeln(
+                    f'Creating virtualenv <info>{name}</> in {str(venv_path)}'
+                )
+                builder = EnvBuilder(with_pip=True)
+                builder.create(str(venv))
+            else:
+                if io.is_very_verbose():
+                    io.writeln(f'Virtualenv <info>{name}</> already exists.')
+
+            os.environ['VIRTUAL_ENV'] = str(venv)
 
         # venv detection:
         # stdlib venv may symlink sys.executable, so we can't use realpath.
@@ -134,3 +176,21 @@ class Venv:
 
     def is_venv(self) -> bool:
         return self._venv is not None
+
+
+class NullVenv(Venv):
+
+    def __init__(self, execute=False):
+        super().__init__()
+
+        self.executed = []
+        self._execute = execute
+
+    def run(self, bin: str, *args):
+        self.executed.append([bin] + list(args))
+
+        if self._execute:
+            return super().run(bin, *args)
+
+    def _bin(self, bin):
+        return bin

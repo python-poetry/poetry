@@ -51,9 +51,6 @@ Author-email: {author_email}
 
 class SdistBuilder(Builder):
 
-    def __init__(self, poetry, io):
-        super().__init__(poetry, io)
-
     def build(self, target_dir: Path = None) -> Path:
         self._io.writeln(' - Building <info>sdist</info>')
         if target_dir is None:

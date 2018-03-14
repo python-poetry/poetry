@@ -1,15 +1,14 @@
 import json
 import re
 
-from pathlib import Path
-
-from poetry.locations import CONFIG_DIR
-from poetry.toml import loads
+from poetry.config import Config
 
 from .command import Command
 
 
-TEMPLATE = """[repositories]
+TEMPLATE = """[settings]
+
+[repositories]
 """
 
 AUTH_TEMPLATE = """[http-basic]
@@ -41,36 +40,24 @@ To remove a repository (repo is a short alias for repositories):
     def __init__(self):
         super().__init__()
 
-        self._config_file = None
-        self._config = {}
-
-        self._auth_config_file = None
-        self._auth_config = {}
+        self._config = Config.create('config.toml')
+        self._auth_config = Config.create('auth.toml')
 
     def initialize(self, i, o):
         super().initialize(i, o)
 
         # Create config file if it does not exist
-        self._config_file = Path(CONFIG_DIR) / 'config.toml'
-        self._auth_config_file = Path(CONFIG_DIR) / 'auth.toml'
+        if not self._config.file.exists():
+            self._config.file.parent.mkdir(parents=True, exist_ok=True)
+            self._config.file.write_text(TEMPLATE)
 
-        if not self._config_file.exists():
-            self._config_file.parent.mkdir(parents=True, exist_ok=True)
-            self._config_file.write_text(TEMPLATE)
-        if not self._auth_config_file.exists():
-
-            self._auth_config_file.parent.mkdir(parents=True, exist_ok=True)
-            self._auth_config_file.write_text(AUTH_TEMPLATE)
-
-        with self._config_file.open() as f:
-            self._config = loads(f.read())
-
-        with self._auth_config_file.open() as f:
-            self._auth_config = loads(f.read())
+        if not self._auth_config.file.exists():
+            self._auth_config.file.parent.mkdir(parents=True, exist_ok=True)
+            self._auth_config.file.write_text(AUTH_TEMPLATE)
 
     def handle(self):
         if self.option('list'):
-            self._list_configuration(self._config)
+            self._list_configuration(self._config.raw_content)
 
             return 0
 
@@ -87,21 +74,39 @@ To remove a repository (repo is a short alias for repositories):
             if m:
                 if not m.group(1):
                     value = {}
-                    if 'repositories' in self._config:
-                        value = self._config['repositories']
+                    if self._config.setting('repositories') is not None:
+                        value = self._config.setting('repositories')
                 else:
-                    if m.group(1) not in self._config['repositories']:
+                    repo = self._config.setting(f'repositories.{m.group(1)}')
+                    if repo is None:
                         raise ValueError(
-                            f'There is not {m.group(1)} repository defined'
+                            f'There is no {m.group(1)} repository defined'
                         )
 
-                    value = self._config['repositories'][m.group(1)]
+                    value = repo
 
                 self.line(str(value))
 
             return 0
 
         values = self.argument('value')
+
+        boolean_validator = lambda val: val in {'true', 'false', '1', '0'}
+        boolean_normalizer = lambda val: True if val in ['true', '1'] else False
+
+        unique_config_values = {
+            'settings.virtualenvs.create': (boolean_validator, boolean_normalizer)
+        }
+
+        if setting_key in unique_config_values:
+            if self.option('unset'):
+                return self._remove_single_value(setting_key)
+
+            return self._handle_single_value(
+                setting_key,
+                unique_config_values[setting_key],
+                values
+            )
 
         # handle repositories
         m = re.match('^repos?(?:itories)?(?:\.(.+))?', self.argument('key'))
@@ -110,26 +115,18 @@ To remove a repository (repo is a short alias for repositories):
                 raise ValueError('You cannot remove the [repositories] section')
 
             if self.option('unset'):
-                if m.group(1) not in self._config['repositories']:
-                    raise ValueError(f'There is not {m.group(1)} repository defined')
+                repo = self._config.setting(f'repositories.{m.group(1)}')
+                if repo is None:
+                    raise ValueError(f'There is no {m.group(1)} repository defined')
 
-                del self._config[m.group(1)]
-
-                self._config_file.write_text(self._config.dumps())
+                self._config.remove_property(f'repositories.{m.group(1)}')
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                if m.group(1) in self._config['repositories']:
-                    self._config['repositories'][m.group(1)]['url'] = url
-                else:
-                    self._config['repositories'][m.group(1)] = {
-                        'url': url
-                    }
-
-                self._config_file.write_text(self._config.dumps())
+                self._config.add_property(f'repositories.{m.group(1)}.url', url)
 
                 return 0
 
@@ -142,14 +139,12 @@ To remove a repository (repo is a short alias for repositories):
         m = re.match('^(http-basic)\.(.+)', self.argument('key'))
         if m:
             if self.option('unset'):
-                if m.group(2) not in self._auth_config[m.group(1)]:
+                if not self._auth_config.setting(f'{m.group(1)}.{m.group(2)}'):
                     raise ValueError(
                         f'There is no {m.group(2)} {m.group(1)} defined'
                     )
 
-                del self._auth_config[m.group(1)][m.group(2)]
-
-                self._auth_config_file.write_text(self._auth_config.dumps())
+                self._auth_config.remove_property(f'{m.group(1)}.{m.group(2)}')
 
                 return 0
 
@@ -165,16 +160,37 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     password = values[1]
 
-                self._auth_config[m.group(1)][m.group(2)] = {
-                    'username': username,
-                    'password': password
-                }
-
-            self._auth_config_file.write_text(self._auth_config.dumps())
+                self._auth_config.add_property(
+                    f'{m.group(1)}.{m.group(2)}', {
+                        'username': username,
+                        'password': password
+                    }
+                )
 
             return 0
 
         raise ValueError(f'Setting {self.argument("key")} does not exist')
+
+    def _handle_single_value(self, key, callbacks, values):
+        validator, normalizer = callbacks
+
+        if len(values) > 1:
+            raise RuntimeError('You can only pass one value.')
+
+        value = values[0]
+        if not validator(value):
+            raise RuntimeError(
+                f'"{value}" is an invalid value for {key}'
+            )
+
+        self._config.add_property(key, normalizer(value))
+
+        return 0
+
+    def _remove_single_value(self, key):
+        self._config.remove_property(key)
+
+        return 0
 
     def _list_configuration(self, contents, k=None):
         orig_k = k

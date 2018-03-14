@@ -1,5 +1,11 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+
+- Added support for virtualenv autogeneration (Python 3.6+ only).
+
 
 ## [0.5.0] - 2018-03-14
 

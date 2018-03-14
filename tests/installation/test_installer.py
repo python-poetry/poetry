@@ -11,6 +11,7 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -108,15 +109,20 @@ def locker():
     return Locker()
 
 
+@pytest.fixture()
+def venv():
+    return NullVenv()
+
+
+@pytest.fixture()
+def installer(package, pool, locker, venv):
+    return Installer(NullIO(), venv, package, locker, pool)
+
+
 def fixture(name):
     file = Path(__file__).parent / 'fixtures' / f'{name}.test'
 
     return toml.loads(file.read_text())
-
-
-@pytest.fixture()
-def installer(package, pool, locker):
-    return Installer(NullIO(), package, locker, pool)
 
 
 def test_run_no_dependencies(installer, locker):

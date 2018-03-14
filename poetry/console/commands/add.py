@@ -7,10 +7,10 @@ from poetry.installation import Installer
 from poetry.semver.version_parser import VersionParser
 from poetry.version.version_selector import VersionSelector
 
-from .command import Command
+from .venv_command import VenvCommand
 
 
-class AddCommand(Command):
+class AddCommand(VenvCommand):
     """
     Add a new depdency to <comment>poetry.toml</>.
 
@@ -66,6 +66,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
         installer = Installer(
             self.output,
+            self.venv,
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool

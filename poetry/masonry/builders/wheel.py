@@ -35,8 +35,8 @@ Root-Is-Purelib: true
 
 class WheelBuilder(Builder):
 
-    def __init__(self, poetry, io, target_fp, original=None):
-        super().__init__(poetry, io)
+    def __init__(self, poetry, venv, io, target_fp, original=None):
+        super().__init__(poetry, venv, io)
 
         self._records = []
         self._original_path = self._path
@@ -48,14 +48,14 @@ class WheelBuilder(Builder):
                                           compression=zipfile.ZIP_DEFLATED)
 
     @classmethod
-    def make_in(cls, poetry, io, directory, original=None) -> SimpleNamespace:
+    def make_in(cls, poetry, venv, io, directory, original=None) -> SimpleNamespace:
         # We don't know the final filename until metadata is loaded, so write to
         # a temporary_file, and rename it afterwards.
         (fd, temp_path) = tempfile.mkstemp(suffix='.whl',
                                            dir=str(directory))
         try:
             with open(fd, 'w+b') as fp:
-                wb = WheelBuilder(poetry, io, fp, original=original)
+                wb = WheelBuilder(poetry, venv, io, fp, original=original)
                 wb.build()
 
             wheel_path = directory / wb.wheel_filename
@@ -67,7 +67,7 @@ class WheelBuilder(Builder):
         return SimpleNamespace(builder=wb, file=wheel_path)
 
     @classmethod
-    def make(cls, poetry, io) -> SimpleNamespace:
+    def make(cls, poetry, venv, io) -> SimpleNamespace:
         """Build a wheel in the dist/ directory, and optionally upload it.
             """
         dist_dir = poetry.file.parent / 'dist'
@@ -76,7 +76,7 @@ class WheelBuilder(Builder):
         except FileExistsError:
             pass
 
-        return cls.make_in(poetry, io, dist_dir)
+        return cls.make_in(poetry, venv, io, dist_dir)
 
     def build(self) -> None:
         self._io.writeln(' - Building <info>wheel</info>')
@@ -99,7 +99,7 @@ class WheelBuilder(Builder):
             current_path = os.getcwd()
             try:
                 os.chdir(str(self._path))
-                self._io.venv.run(
+                self._venv.run(
                     'python',
                     str(setup),
                     'build',

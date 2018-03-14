@@ -1,10 +1,9 @@
 from poetry.installation import Installer
-from poetry.repositories.pypi_repository import PyPiRepository
 
-from .command import Command
+from .venv_command import VenvCommand
 
 
-class InstallCommand(Command):
+class InstallCommand(VenvCommand):
     """
     Installs the project dependencies.
 
@@ -27,6 +26,7 @@ exist it will look for <comment>poetry.toml</> and do the same.
     def handle(self):
         installer = Installer(
             self.output,
+            self.venv,
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool

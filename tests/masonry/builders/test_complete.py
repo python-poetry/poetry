@@ -8,6 +8,7 @@ from pathlib import Path
 from poetry import Poetry
 from poetry.io import NullIO
 from poetry.masonry.builders import CompleteBuilder
+from poetry.utils.venv import NullVenv
 
 fixtures_dir = Path(__file__).parent / 'fixtures'
 
@@ -29,7 +30,7 @@ def clear_samples_dist():
 
 def test_wheel_c_extension():
     module_path = fixtures_dir / 'extended'
-    builder = CompleteBuilder(Poetry.create(module_path), NullIO(True))
+    builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True), NullIO())
     builder.build()
 
     sdist = fixtures_dir / 'extended' / 'dist' / 'extended-0.1.tar.gz'

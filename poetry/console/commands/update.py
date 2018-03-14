@@ -1,10 +1,9 @@
 from poetry.installation import Installer
-from poetry.repositories.pypi_repository import PyPiRepository
 
-from .command import Command
+from .venv_command import VenvCommand
 
 
-class UpdateCommand(Command):
+class UpdateCommand(VenvCommand):
     """
     Update dependencies as according to the <comment>poetry.toml</> file.
 
@@ -20,6 +19,7 @@ class UpdateCommand(Command):
 
         installer = Installer(
             self.output,
+            self.venv,
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool

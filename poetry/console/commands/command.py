@@ -35,6 +35,6 @@ class Command(BaseCommand):
         Initialize command.
         """
         self.input = i
-        self.output = PoetryStyle(i, o, self.get_application().venv)
+        self.output = PoetryStyle(i, o)
 
         return super(BaseCommand, self).run(i, o)

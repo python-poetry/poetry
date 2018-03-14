@@ -25,10 +25,12 @@ class Installer:
 
     def __init__(self,
                  io,
+                 venv,
                  package: Package,
                  locker: Locker,
                  pool: Pool):
         self._io = io
+        self._venv = venv
         self._package = package
         self._locker = locker
         self._pool = pool
@@ -345,7 +347,7 @@ class Installer:
     def _get_operations_from_lock(self,
                                   locked_repository: Repository
                                   ) -> List[Operation]:
-        installed_repo = InstalledRepository.load(self._io.venv)
+        installed_repo = InstalledRepository.load(self._venv)
         ops = []
 
         extra_packages = [
@@ -390,7 +392,7 @@ class Installer:
                 continue
 
             parser = VersionParser()
-            python = '.'.join([str(i) for i in self._io.venv.version_info[:3]])
+            python = '.'.join([str(i) for i in self._venv.version_info[:3]])
             if 'python' in package.requirements:
                 python_constraint = parser.parse_constraints(
                     package.requirements['python']
@@ -462,4 +464,4 @@ class Installer:
         return _extra_packages(extra_packages)
 
     def _get_installer(self) -> BaseInstaller:
-        return PipInstaller(self._io.venv, self._io)
+        return PipInstaller(self._venv, self._io)

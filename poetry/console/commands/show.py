@@ -1,10 +1,10 @@
 from poetry.semver import statisfies
 from poetry.version.version_selector import VersionSelector
 
-from .command import Command
+from .venv_command import VenvCommand
 
 
-class ShowCommand(Command):
+class ShowCommand(VenvCommand):
     """
     Shows information about packages.
 

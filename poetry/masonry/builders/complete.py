@@ -17,7 +17,7 @@ class CompleteBuilder(Builder):
     def build(self):
         # We start by building the tarball
         # We will use it to build the wheel
-        sdist_builder = SdistBuilder(self._poetry, self._io)
+        sdist_builder = SdistBuilder(self._poetry, self._venv, self._io)
         sdist_file = sdist_builder.build()
         sdist_info = SimpleNamespace(builder=sdist_builder, file=sdist_file)
 
@@ -26,7 +26,7 @@ class CompleteBuilder(Builder):
         dist_dir = self._path / 'dist'
         with self.unpacked_tarball(sdist_file) as tmpdir:
             wheel_info = WheelBuilder.make_in(
-                poetry.Poetry.create(tmpdir), self._io, dist_dir,
+                poetry.Poetry.create(tmpdir), self._venv, self._io, dist_dir,
                 original=self._poetry
             )
 

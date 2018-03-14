@@ -1,9 +1,9 @@
 from poetry.installation import Installer
 
-from .command import Command
+from .venv_command import VenvCommand
 
 
-class RemoveCommand(Command):
+class RemoveCommand(VenvCommand):
     """
     Removes a package from the project dependencies.
 
@@ -54,6 +54,7 @@ list of installed packages
 
         installer = Installer(
             self.output,
+            self.venv,
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool

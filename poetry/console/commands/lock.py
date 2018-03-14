@@ -1,9 +1,9 @@
 from poetry.installation import Installer
 
-from .command import Command
+from .venv_command import VenvCommand
 
 
-class LockCommand(Command):
+class LockCommand(VenvCommand):
     """
     Locks the project dependencies.
 
@@ -19,6 +19,7 @@ the current directory, processes it, and locks the depdencies in the <comment>po
     def handle(self):
         installer = Installer(
             self.output,
+            self.venv,
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool

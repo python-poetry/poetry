@@ -24,7 +24,6 @@ class Application(BaseApplication):
         super().__init__('Poetry', Poetry.VERSION)
 
         self._poetry = None
-        self._venv = Venv.create()
 
     @property
     def poetry(self) -> Poetry:
@@ -37,10 +36,6 @@ class Application(BaseApplication):
 
     def reset_poetry(self) -> None:
         self._poetry = None
-
-    @property
-    def venv(self) -> Venv:
-        return self._venv
 
     def get_default_commands(self) -> list:
         commands = super(Application, self).get_default_commands()
@@ -58,9 +53,3 @@ class Application(BaseApplication):
             ShowCommand(),
             UpdateCommand(),
         ]
-
-    def do_run(self, i, o) -> int:
-        if self._venv.is_venv() and o.is_verbose():
-            o.writeln(f'Using virtualenv: <comment>{self._venv.venv}</>')
-
-        return super().do_run(i, o)

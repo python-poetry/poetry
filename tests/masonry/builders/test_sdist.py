@@ -8,6 +8,7 @@ from pathlib import Path
 from poetry import Poetry
 from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
+from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency
 
@@ -71,7 +72,7 @@ def test_convert_dependencies():
 def test_make_setup():
     poetry = Poetry.create(project('complete'))
 
-    builder = SdistBuilder(poetry, NullIO())
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
     setup = builder.build_setup()
     setup_ast = ast.parse(setup)
 
@@ -94,7 +95,7 @@ def test_make_setup():
 def test_find_files_to_add():
     poetry = Poetry.create(project('complete'))
 
-    builder = SdistBuilder(poetry, NullIO())
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
     result = builder.find_files_to_add()
 
     assert result == [
@@ -111,7 +112,7 @@ def test_find_files_to_add():
 def test_package():
     poetry = Poetry.create(project('complete'))
 
-    builder = SdistBuilder(poetry, NullIO())
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
     builder.build()
 
     sdist = fixtures_dir / 'complete' / 'dist' / 'my-package-1.2.3.tar.gz'
@@ -122,7 +123,7 @@ def test_package():
 def test_prelease():
     poetry = Poetry.create(project('prerelease'))
 
-    builder = SdistBuilder(poetry, NullIO())
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
     builder.build()
 
     sdist = fixtures_dir / 'prerelease' / 'dist' / 'prerelease-0.1b1.tar.gz'
@@ -133,7 +134,7 @@ def test_prelease():
 def test_with_c_extensions():
     poetry = Poetry.create(project('extended'))
 
-    builder = SdistBuilder(poetry, NullIO())
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
     builder.build()
 
     sdist = fixtures_dir / 'extended' / 'dist' / 'extended-0.1.tar.gz'
