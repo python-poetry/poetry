@@ -326,6 +326,36 @@ def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
     ])
 
 
+def test_solver_solves_while_respecting_root_platforms(solver, repo, package):
+    package.platform = 'darwin'
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_b.python_versions = '^3.6'
+    package_c12 = get_package('C', '1.2')
+    package_c12.platform = 'win32'
+    package_c10 = get_package('C', '1.0')
+    package_c10.platform = 'darwin'
+    package_b.add_dependency('C', '^1.0')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c10)
+    repo.add_package(package_c12)
+
+    request = [
+        get_dependency('A'),
+        get_dependency('B')
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_c10},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_a},
+    ])
+
+
 def test_solver_does_not_return_extras_if_not_requested(solver, repo):
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')

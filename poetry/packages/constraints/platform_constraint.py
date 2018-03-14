@@ -50,10 +50,13 @@ class PlatformConstraint(BaseConstraint):
         return self._platform
 
     def matches(self, provider):
-        if not isinstance(provider, PlatformConstraint):
+        if not isinstance(provider, (PlatformConstraint, EmptyConstraint)):
             raise ValueError(
                 'Platform constraints can only be compared with each other'
             )
+
+        if isinstance(provider, EmptyConstraint):
+            return True
 
         is_equal_op = self.OP_EQ is self._operator
         is_non_equal_op = self.OP_NE is self._operator

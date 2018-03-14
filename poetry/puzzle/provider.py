@@ -179,7 +179,10 @@ class Provider(SpecificationProvider):
             if not any([r.allows_prereleases() for r in vertex.requirements]):
                 return False
 
-        return self._package.python_constraint.matches(package.python_constraint)
+        return (
+            self._package.python_constraint.matches(package.python_constraint)
+            and self._package.platform_constraint.matches(package.platform_constraint)
+        )
 
     def sort_dependencies(self,
                           dependencies: List[Dependency],

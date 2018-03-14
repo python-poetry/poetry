@@ -17,6 +17,7 @@
 - Fixed python restricted dependencies not being checked agaisnt virtualenv version.
 - Fixed python/platform constraint not being picked up for subdependencies.
 - Fixed skipped packages appearing as installing.
+- Fixed platform specification not being used when resolving dependencies.
 
 
 ## [0.4.2] - 2018-03-10
