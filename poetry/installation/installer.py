@@ -201,7 +201,12 @@ class Installer:
             installs = []
             updates = []
             uninstalls = []
+            skipped = []
             for op in ops:
+                if op.skipped:
+                    skipped.append(op)
+                    continue
+
                 if op.job_type == 'install':
                     installs.append(
                         f'{op.package.pretty_name}'
@@ -223,7 +228,7 @@ class Installer:
                 f'<info>{len(installs)}</> install{"" if len(installs) == 1 else "s"}, '
                 f'<info>{len(updates)}</> update{"" if len(updates) == 1 else "s"}, '
                 f'<info>{len(uninstalls)}</> removal{"" if len(uninstalls) == 1 else "s"}'
-                f''
+                f'{", <info>{}</> skipped".format(len(skipped)) if skipped and self.is_verbose() else ""}'
             )
             self._io.new_line()
 
@@ -251,7 +256,7 @@ class Installer:
 
     def _execute_install(self, operation: Install) -> None:
         if operation.skipped:
-            if self._io.is_verbose() and (self._execute_operations or self.is_dry_run()):
+            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
                     f'  - Skipping <info>{operation.package.pretty_name}</> '
                     f'(<comment>{operation.package.full_pretty_version}</>) '
@@ -275,7 +280,7 @@ class Installer:
         target = operation.target_package
 
         if operation.skipped:
-            if self._io.is_verbose() and (self._execute_operations or self.is_dry_run()):
+            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
                     f'  - Skipping <info>{target.pretty_name}</> '
                     f'(<comment>{target.full_pretty_version}</>) '

@@ -35,5 +35,6 @@ exist it will look for <comment>poetry.toml</> and do the same.
         installer.extras(self.option('extras'))
         installer.dev_mode(not self.option('no-dev'))
         installer.dry_run(self.option('dry-run'))
+        installer.verbose(self.option('verbose'))
 
         return installer.run()
