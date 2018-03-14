@@ -408,7 +408,7 @@ class Installer:
                         PlatformConstraint('=', sys.platform)
                 ):
                     # Incompatible systems
-                    op.skip('Not need for the current platform')
+                    op.skip('Not needed for the current platform')
                     continue
 
             if self._update:
