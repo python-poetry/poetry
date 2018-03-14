@@ -11,7 +11,7 @@ from pprint import pformat
 from typing import List
 
 from poetry.packages import Dependency
-from poetry.semver.constraints import MultiConstraint
+from poetry.version.helpers import format_python_constraint
 
 from ..utils.helpers import normalize_file_permissions
 
@@ -149,13 +149,7 @@ class SdistBuilder(Builder):
             extra.append("'entry_points': entry_points,")
 
         if self._package.python_versions != '*':
-            constraint = self._package.python_constraint
-            if isinstance(constraint, MultiConstraint):
-                python_requires = ','.join(
-                    [str(c).replace(' ', '') for c in constraint.constraints]
-                )
-            else:
-                python_requires = str(constraint).replace(' ', '')
+            python_requires = format_python_constraint(self._package.python_constraint)
 
             extra.append("'python_requires': {!r},".format(python_requires))
 

@@ -37,5 +37,5 @@ class MultiConstraint(BaseConstraint):
             constraints.append(str(constraint))
 
         return '{}'.format(
-            (' ' if self._conjunctive else ' || ').join(constraints)
+            (', ' if self._conjunctive else ' || ').join(constraints)
         )

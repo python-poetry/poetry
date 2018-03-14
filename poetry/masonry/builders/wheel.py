@@ -16,6 +16,7 @@ from poetry.__version__ import __version__
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import MultiConstraint
 from poetry.vcs import get_vcs
+from poetry.version.helpers import format_python_constraint
 
 from ..utils.helpers import normalize_file_permissions
 from ..utils.tags import get_abbr_impl
@@ -311,13 +312,7 @@ class WheelBuilder(Builder):
             fp.write(f'Author-email: {author["email"]}\n')
 
         if self._package.python_versions != '*':
-            constraint = self._package.python_constraint
-            if isinstance(constraint, MultiConstraint):
-                python_requires = ','.join(
-                    [str(c).replace(' ', '') for c in constraint.constraints]
-                )
-            else:
-                python_requires = str(constraint).replace(' ', '')
+            python_requires = format_python_constraint(self._package.python_constraint)
 
             fp.write(f'Requires-Python: {python_requires}\n')
 

@@ -176,23 +176,30 @@ class VersionParser:
         # A partial version range is treated as an X-Range,
         # so the special character is in fact optional.
         m = re.match(
-            '^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$',
+            '^(!=)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$',
             constraint
         )
         if m:
-            if m.group(3):
+            if m.group(4):
                 position = 2
-            elif m.group(2):
+            elif m.group(3):
                 position = 1
             else:
                 position = 0
 
+            groups = m.groups()[1:]
             low_version = self._manipulate_version_string(
-                m.groups(), position
+                groups, position
             )
             high_version = self._manipulate_version_string(
-                m.groups(), position, 1
+                groups, position, 1
             )
+
+            if m.group(1):
+                if low_version == '0.0.0.0':
+                    return Constraint('>=', high_version),
+
+                return self.parse_constraints(f'<{low_version} || >={high_version}'),
 
             if low_version == '0.0.0.0':
                 return Constraint('<', high_version),
