@@ -63,6 +63,25 @@ def test_parse_constraints_wildcard(parser, input, min, max):
 @pytest.mark.parametrize(
     'input,min,max',
     [
+        ('!=v2.*', Constraint('<', '2.0.0.0'), Constraint('>=', '3.0.0.0')),
+        ('!=2.*.*', Constraint('<', '2.0.0.0'), Constraint('>=', '3.0.0.0')),
+        ('!=2.0.*', Constraint('<', '2.0.0.0'), Constraint('>=', '2.1.0.0')),
+        ('!=0.*', None, Constraint('>=', '1.0.0.0')),
+        ('!=0.*.*', None, Constraint('>=', '1.0.0.0')),
+    ]
+)
+def test_parse_constraints_negative_wildcard(parser, input, min, max):
+    if min:
+        expected = MultiConstraint((min, max), conjunctive=False)
+    else:
+        expected = max
+
+    assert str(parser.parse_constraints(input)) == str(expected)
+
+
+@pytest.mark.parametrize(
+    'input,min,max',
+    [
         ('~v1', Constraint('>=', '1.0.0.0'), Constraint('<', '2.0.0.0')),
         ('~1.0', Constraint('>=', '1.0.0.0'), Constraint('<', '1.1.0.0')),
         ('~1.0.0', Constraint('>=', '1.0.0.0'), Constraint('<', '1.1.0.0')),
