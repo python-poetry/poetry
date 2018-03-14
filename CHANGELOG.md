@@ -1,7 +1,7 @@
 # Change Log
 
 
-## [Unreleased]
+## [0.5.0] - 2018-03-14
 
 ### Added
 
@@ -14,7 +14,7 @@
 ### Fixed
 
 - Fixed handling of post releases.
-- Fixed python restricted dependencies not being checked agaisnt virtualenv version.
+- Fixed python restricted dependencies not being checked against virtualenv version.
 - Fixed python/platform constraint not being picked up for subdependencies.
 - Fixed skipped packages appearing as installing.
 - Fixed platform specification not being used when resolving dependencies.
@@ -98,7 +98,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.4.2...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.5.0...master
+[0.5.0]: https://github.com/sdispater/poetry/releases/tag/0.5.0
 [0.4.2]: https://github.com/sdispater/poetry/releases/tag/0.4.2
 [0.4.1]: https://github.com/sdispater/poetry/releases/tag/0.4.1
 [0.4.0]: https://github.com/sdispater/poetry/releases/tag/0.4.0
