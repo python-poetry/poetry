@@ -3,14 +3,19 @@ from typing import Any
 
 from .locations import CONFIG_DIR
 from .utils.toml_file import TomlFile
+from .utils.toml_file import TOMLFile
 
 
 class Config:
 
     def __init__(self, file: TomlFile):
         self._file = file
-        self._raw_content = file.read(raw=True)
-        self._content = file.read()
+        if not self._file.exists:
+            self._raw_content = {}
+            self._content = TOMLFile([])
+        else:
+            self._raw_content = file.read(raw=True)
+            self._content = file.read()
         
     @property
     def name(self):
