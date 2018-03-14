@@ -8,8 +8,12 @@ extra:
   version: 2.0
 
 pages:
-  - Home: index.md
+  - Introduction: index.md
   - Basic Usage: basic-usage.md
+  - Libraries: libraries.md
+  - Commands: cli.md
+  - Repositories: repositories.md
+  - Versions: versions.md
 
 markdown_extensions:
   - codehilite
