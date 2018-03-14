@@ -95,6 +95,9 @@ class Locker:
             for dep_name, constraint in info.get('dependencies', {}).items():
                 package.add_dependency(dep_name, constraint)
 
+            if 'requirements' in info:
+                package.requirements = info['requirements']
+
             if 'source' in info:
                 package.source_type = info['source']['type']
                 package.source_url = info['source']['url']

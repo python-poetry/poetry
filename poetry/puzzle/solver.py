@@ -24,7 +24,7 @@ class Solver:
         self._locked = locked
         self._io = io
 
-    def solve(self, requested, fixed=None, extras=None) -> List[Operation]:
+    def solve(self, requested, fixed=None) -> List[Operation]:
         resolver = Resolver(Provider(self._package, self._pool), UI(self._io))
 
         base = None
@@ -69,7 +69,7 @@ class Solver:
                         if current.matches(previous):
                             requirements['python'] = req
 
-                    if 'platform' in req:
+                    if req_name == 'platform':
                         if 'platform' not in requirements:
                             requirements['platform'] = req
                             continue
@@ -131,6 +131,14 @@ class Solver:
                     break
         else:
             for edge in vertex.incoming_edges:
+                for req in edge.origin.payload.requires:
+                    if req.name == vertex.payload.name:
+                        if req.python_versions != '*':
+                            tags['requirements']['python'].append(req.python_versions)
+
+                        if req.platform != '*':
+                            tags['requirements']['platform'].append(req.platform)
+
                 sub_tags = self._get_tags_for_vertex(edge.origin, requested)
 
                 tags['category'] += sub_tags['category']

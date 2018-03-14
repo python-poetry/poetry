@@ -2,10 +2,12 @@ import re
 from typing import Union
 
 from poetry.semver.constraints import Constraint
+from poetry.semver.constraints import EmptyConstraint
 from poetry.semver.helpers import parse_stability
 from poetry.semver.version_parser import VersionParser
 from poetry.version import parse as parse_version
 
+from.constraints.platform_constraint import PlatformConstraint
 from .dependency import Dependency
 from .vcs_dependency import VCSDependency
 
@@ -93,7 +95,7 @@ class Package:
         self._python_versions = '*'
         self._python_constraint = self._parser.parse_constraints('*')
         self._platform = '*'
-        self._platform_constraint = self._parser.parse_constraints('*')
+        self._platform_constraint = EmptyConstraint()
 
     @property
     def name(self):
@@ -180,7 +182,7 @@ class Package:
     @platform.setter
     def platform(self, value: str):
         self._platform = value
-        self._platform_constraint = self._parser.parse_constraints(value)
+        self._platform_constraint = PlatformConstraint.parse(value)
 
     @property
     def platform_constraint(self):

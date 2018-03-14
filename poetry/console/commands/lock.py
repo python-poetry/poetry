@@ -1,5 +1,4 @@
 from poetry.installation import Installer
-from poetry.repositories.pypi_repository import PyPiRepository
 
 from .command import Command
 
@@ -9,7 +8,6 @@ class LockCommand(Command):
     Locks the project dependencies.
 
     lock
-        { --no-dev : Do not install dev dependencies. }
     """
 
     help = """The <info>lock</info> command reads the <comment>poetry.toml</> file from

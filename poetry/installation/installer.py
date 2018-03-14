@@ -5,6 +5,7 @@ from typing import List
 from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
+from poetry.packages.constraints.platform_constraint import PlatformConstraint
 from poetry.puzzle import Solver
 from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
@@ -114,7 +115,7 @@ class Installer:
     def _do_install(self, local_repo):
         locked_repository = Repository()
         # initialize locked repo if we are installing from lock
-        if not self._update or self._locker.is_locked():
+        if not self._update:
             locked_repository = self._locker.locked_repository(True)
 
         if self._update:
@@ -131,6 +132,9 @@ class Installer:
             if self._whitelist:
                 # collect packages to fixate from root requirements
                 candidates = []
+                if self._locker.is_locked():
+                    locked_repository = self._locker.locked_repository(True)
+
                 for package in locked_repository.packages:
                     candidates.append(package)
 
@@ -145,6 +149,8 @@ class Installer:
                         fixed.append(
                             Dependency(candidate.name, candidate.version)
                         )
+
+            locked_repository = Repository()
 
             solver = Solver(
                 self._package,
@@ -387,6 +393,17 @@ class Installer:
                 if not python_constraint.matches(Constraint('=', python)):
                     # Incompatible python versions
                     op.skip('Not needed for the current python version')
+                    continue
+
+            if 'platform' in package.requirements:
+                platform_constraint = PlatformConstraint.parse(
+                    package.requirements['platform']
+                )
+                if not platform_constraint.matches(
+                        PlatformConstraint('=', sys.platform)
+                ):
+                    # Incompatible systems
+                    op.skip('Not need for the current platform')
                     continue
 
             if self._update:

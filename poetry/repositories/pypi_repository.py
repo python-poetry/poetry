@@ -99,11 +99,9 @@ class PyPiRepository(Repository):
 
                 dependency = Dependency(
                     name,
-                    version,
-                    optional=req.markers
+                    version
                 )
 
-                is_extra = False
                 if req.markers:
                     # Setting extra dependencies and requirements
                     requirements = self._convert_markers(
@@ -126,6 +124,9 @@ class PyPiRepository(Repository):
                         for or_ in requirements['sys_platform']:
                             ands = []
                             for op, platform in or_:
+                                if op == '==':
+                                    op = ''
+
                                 ands.append(f'{op}{platform}')
 
                             ors.append(' '.join(ands))
@@ -133,7 +134,7 @@ class PyPiRepository(Repository):
                         dependency.platform = ' || '.join(ors)
 
                     if 'extra' in requirements:
-                        is_extra = True
+                        dependency.deactivate()
                         for _extras in requirements['extra']:
                             for _, extra in _extras:
                                 if extra not in package.extras:
@@ -141,7 +142,7 @@ class PyPiRepository(Repository):
 
                                 package.extras[extra].append(dependency)
 
-                if not is_extra:
+                if not dependency.is_optional():
                     package.requires.append(dependency)
 
             # Adding description

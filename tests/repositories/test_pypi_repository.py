@@ -39,4 +39,4 @@ def test_package():
     win_inet = package.extras['socks'][0]
     assert win_inet.name == 'win-inet-pton'
     assert win_inet.python_versions == '==2.7 || ==2.6'
-    assert win_inet.platform == '==win32'
+    assert win_inet.platform == 'win32'

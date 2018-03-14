@@ -1,9 +1,11 @@
 import poetry.packages
 
 from poetry.semver.constraints import Constraint
+from poetry.semver.constraints import EmptyConstraint
 from poetry.semver.constraints import MultiConstraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
+
+from .constraints.platform_constraint import PlatformConstraint
 
 
 class Dependency:
@@ -31,7 +33,7 @@ class Dependency:
         self._python_versions = '*'
         self._python_constraint = self._parser.parse_constraints('*')
         self._platform = '*'
-        self._platform_constraint = self._parser.parse_constraints('*')
+        self._platform_constraint = EmptyConstraint()
 
         self._extras = []
 
@@ -75,6 +77,7 @@ class Dependency:
     @platform.setter
     def platform(self, value: str):
         self._platform = value
+        self._platform_constraint = PlatformConstraint.parse(value)
 
     @property
     def platform_constraint(self):
@@ -149,6 +152,12 @@ class Dependency:
         Set the dependency as mandatory.
         """
         self._optional = False
+
+    def deactivate(self):
+        """
+        Set the dependency as optional.
+        """
+        self._optional = True
 
     def __eq__(self, other):
         if not isinstance(other, Dependency):

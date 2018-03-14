@@ -62,14 +62,17 @@ class Locker(BaseLocker):
 
 @pytest.fixture(autouse=True)
 def setup():
-    # Mock python version to get reliable tests
+    # Mock python version and platform to get reliable tests
     original = sys.version_info
+    original_platform = sys.platform
 
     sys.version_info = (3, 6, 3, 'final', 0)
+    sys.platform = 'darwin'
 
     yield
 
     sys.version_info = original
+    sys.platform = original_platform
 
 
 @pytest.fixture()
@@ -293,6 +296,38 @@ def test_run_with_optional_and_python_restricted_dependencies(installer, locker,
 
     installer.run()
     expected = fixture('with-optional-dependencies')
+
+    assert locker.written_data == expected
+
+    installer = installer.installer
+    # We should only have 2 installs:
+    # C,D since the mocked python version is not compatible
+    # with B's python constraint and A is optional
+    assert len(installer.installs) == 2
+    assert installer.installs[0].name == 'd'
+    assert installer.installs[1].name == 'c'
+
+
+def test_run_with_optional_and_platform_restricted_dependencies(installer, locker, repo, package):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.1')
+    package_c12 = get_package('C', '1.2')
+    package_c13 = get_package('C', '1.3')
+    package_d = get_package('D', '1.4')
+    package_c13.add_dependency('D', '^1.2')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c12)
+    repo.add_package(package_c13)
+    repo.add_package(package_d)
+
+    package.add_dependency('A', {'version': '~1.0', 'optional': True})
+    package.add_dependency('B', {'version': '^1.0', 'platform': 'win32'})
+    package.add_dependency('C', {'version': '^1.0', 'platform': 'darwin'})
+
+    installer.run()
+    expected = fixture('with-platform-dependencies')
 
     assert locker.written_data == expected
 
