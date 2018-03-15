@@ -10,7 +10,7 @@
 ### Fixed
 
 - Fixed color displayed in `show` command for semver-compatible updates.
-- Fixed Python requirements in publishing metatadata.
+- Fixed Python requirements in publishing metadata.
 - Fixed `update` command reinstalling every dependency.
 
 
