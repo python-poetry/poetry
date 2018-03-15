@@ -1,5 +1,6 @@
 from poetry.semver.constraints import MultiConstraint
 from poetry.utils.helpers import canonicalize_name
+from poetry.version.helpers import format_python_constraint
 
 
 class Metadata:
@@ -55,14 +56,6 @@ class Metadata:
         meta.requires_dist = [d.to_pep_508() for d in package.requires]
 
         # Requires python
-        constraint = package.python_constraint
-        if isinstance(constraint, MultiConstraint):
-            python_requires = ','.join(
-                [str(c).replace(' ', '') for c in constraint.constraints]
-            )
-        else:
-            python_requires = str(constraint).replace(' ', '')
-
-        meta.requires_python = python_requires
+        meta.requires_python = format_python_constraint(package.python_constraint)
 
         return meta

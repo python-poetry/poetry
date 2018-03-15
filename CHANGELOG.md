@@ -9,6 +9,7 @@
 ### Fixed
 
 - Fixed color displayed in `show` command for semver-compatible updates.
+- Fixed Python requirements in publishing metatadata.
 
 
 ## [0.5.0] - 2018-03-14
