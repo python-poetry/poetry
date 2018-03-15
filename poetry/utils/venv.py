@@ -2,6 +2,8 @@ import os
 import subprocess
 import sys
 
+import pexpect
+
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -153,14 +155,18 @@ class Venv:
 
         return output.decode()
 
-    def exec(self, bin, *args):
+    def exec(self, bin, *args, **kwargs):
         if not self.is_venv():
             return subprocess.run([bin] + list(args)).returncode
         else:
             with self.temp_environ():
                 os.environ['PATH'] = self._path()
+                os.environ['VIRTUAL_ENV'] = str(self._venv)
 
-                completed = subprocess.run([bin] + list(args))
+                self.unset_env('PYTHONHOME')
+                self.unset_env('__PYVENV_LAUNCHER__')
+
+                completed = subprocess.run([bin] + list(args), **kwargs)
 
                 return completed.returncode
 
@@ -178,6 +184,10 @@ class Venv:
             str(self._bin_dir),
             os.environ['PATH'],
         ])
+
+    def unset_env(self, key):
+        if key in os.environ:
+            del os.environ[key]
 
     def get_shell(self):
         shell = Path(os.environ.get('SHELL', '')).stem
