@@ -1,8 +1,8 @@
-import glob
 import os
 import subprocess
 import sys
 
+from contextlib import contextmanager
 from pathlib import Path
 from subprocess import CalledProcessError
 
@@ -30,6 +30,14 @@ class Venv:
 
     def __init__(self, venv=None):
         self._venv = venv
+        if self._venv:
+            self._venv = Path(self._venv)
+
+        self._bin_dir = None
+        if venv:
+            bin_dir = 'bin' if sys.platform != 'win32' else 'Scripts'
+            self._bin_dir = self._venv / bin_dir
+
         self._version_info = None
 
     @classmethod
@@ -40,15 +48,6 @@ class Venv:
             config = Config.create('config.toml')
 
             create_venv = config.setting('settings.virtualenvs.create')
-            if create_venv is False:
-                io.writeln(
-                    '<fg=black;bg=yellow>'
-                    'Skipping virtualenv creation, '
-                    'as specified in config file.'
-                    '</>'
-                )
-
-                return cls()
 
             venv_path = config.setting('settings.virtualenvs.path')
             if venv_path is None:
@@ -63,6 +62,16 @@ class Venv:
 
             venv = venv_path / name
             if not venv.exists():
+                if create_venv is False:
+                    io.writeln(
+                        '<fg=black;bg=yellow>'
+                        'Skipping virtualenv creation, '
+                        'as specified in config file.'
+                        '</>'
+                    )
+
+                    return cls()
+
                 io.writeln(
                     f'Creating virtualenv <info>{name}</> in {str(venv_path)}'
                 )
@@ -91,26 +100,7 @@ class Venv:
             # Running properly in the virtualenv, don't need to do anything
             return cls()
 
-        if sys.platform == "win32":
-            venv = os.path.join(
-                os.environ['VIRTUAL_ENV'], 'Lib', 'site-packages'
-            )
-        else:
-            lib = os.path.join(
-                os.environ['VIRTUAL_ENV'], 'lib'
-            )
-
-            python = glob.glob(
-                os.path.join(lib, 'python*')
-            )[0].replace(
-                lib + '/', ''
-            )
-
-            venv = os.path.join(
-                lib,
-                python,
-                'site-packages'
-            )
+        venv = os.environ['VIRTUAL_ENV']
 
         return cls(venv)
 
@@ -163,6 +153,37 @@ class Venv:
 
         return output.decode()
 
+    def exec(self, bin, *args):
+        if not self.is_venv():
+            return subprocess.run([bin] + list(args)).returncode
+        else:
+            with self.temp_environ():
+                os.environ['PATH'] = self._path()
+
+                completed = subprocess.run([bin] + list(args))
+
+                return completed.returncode
+
+    @contextmanager
+    def temp_environ(self):
+        environ = dict(os.environ)
+        try:
+            yield
+        finally:
+            os.environ.clear()
+            os.environ.update(environ)
+
+    def _path(self):
+        return os.pathsep.join([
+            str(self._bin_dir),
+            os.environ['PATH'],
+        ])
+
+    def get_shell(self):
+        shell = Path(os.environ.get('SHELL', '')).stem
+        if shell in ('bash', 'zsh', 'fish'):
+            return shell
+
     def _bin(self, bin) -> str:
         """
         Return path to the given executable.
@@ -170,9 +191,7 @@ class Venv:
         if not self.is_venv():
             return bin
 
-        return os.path.realpath(
-            os.path.join(self._venv, '..', '..', '..', 'bin', bin)
-        )
+        return str(self._bin_dir / bin)
 
     def is_venv(self) -> bool:
         return self._venv is not None

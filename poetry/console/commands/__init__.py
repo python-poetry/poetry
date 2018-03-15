@@ -7,5 +7,6 @@ from .lock import LockCommand
 from .new import NewCommand
 from .publish import PublishCommand
 from .remove import RemoveCommand
+from .run import RunCommand
 from .show import ShowCommand
 from .update import UpdateCommand
