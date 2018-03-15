@@ -20,5 +20,5 @@ class BuildCommand(VenvCommand):
         self.line(f'Building <info>{package.pretty_name}</> '
                   f'(<comment>{package.version}</>)')
 
-        builder = Builder(self.poetry, self.output)
+        builder = Builder(self.poetry, self.venv, self.output)
         builder.build(fmt)
