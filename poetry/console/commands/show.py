@@ -237,7 +237,7 @@ lists all packages available."""
         if latest.full_pretty_version == package.full_pretty_version:
             return 'up-to-date'
 
-        constraint = package.version
+        constraint = '^' + package.version
 
         if latest.version and statisfies(latest.version, constraint):
             # It needs an immediate semver-compliant upgrade

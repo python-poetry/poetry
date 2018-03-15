@@ -6,6 +6,10 @@
 
 - Added support for virtualenv autogeneration (Python 3.6+ only).
 
+### Fixed
+
+- Fixed color displayed in `show` command for semver-compatible updates.
+
 
 ## [0.5.0] - 2018-03-14
 
