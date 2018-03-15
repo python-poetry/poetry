@@ -2,8 +2,6 @@ import os
 import subprocess
 import sys
 
-import pexpect
-
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import CalledProcessError
