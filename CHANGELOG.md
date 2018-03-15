@@ -10,6 +10,7 @@
 
 - Fixed color displayed in `show` command for semver-compatible updates.
 - Fixed Python requirements in publishing metatadata.
+- Fixed `update` command reinstalling every dependency.
 
 
 ## [0.5.0] - 2018-03-14

@@ -117,7 +117,7 @@ class Installer:
     def _do_install(self, local_repo):
         locked_repository = Repository()
         # initialize locked repo if we are installing from lock
-        if not self._update:
+        if not self._update or (self._update and self._locker.is_locked()):
             locked_repository = self._locker.locked_repository(True)
 
         if self._update:
@@ -134,9 +134,6 @@ class Installer:
             if self._whitelist:
                 # collect packages to fixate from root requirements
                 candidates = []
-                if self._locker.is_locked():
-                    locked_repository = self._locker.locked_repository(True)
-
                 for package in locked_repository.packages:
                     candidates.append(package)
 
@@ -151,8 +148,6 @@ class Installer:
                         fixed.append(
                             Dependency(candidate.name, candidate.version)
                         )
-
-            locked_repository = Repository()
 
             solver = Solver(
                 self._package,
