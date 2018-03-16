@@ -70,7 +70,7 @@ authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
 
-readme = 'README.md'
+readme = 'README.md'  # Markdown files are supported
 
 repository = "https://github.com/sdispater/poetry"
 homepage = "https://github.com/sdispater/poetry"
