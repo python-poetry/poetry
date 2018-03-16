@@ -20,6 +20,8 @@ from .commands import RunCommand
 from .commands import ShowCommand
 from .commands import UpdateCommand
 
+from .commands.debug import DebugResolveCommand
+
 
 class Application(BaseApplication):
 
@@ -78,7 +80,7 @@ class Application(BaseApplication):
     def get_default_commands(self) -> list:
         commands = super(Application, self).get_default_commands()
 
-        return commands + [
+        commands += [
             AboutCommand(),
             AddCommand(),
             BuildCommand(),
@@ -92,3 +94,10 @@ class Application(BaseApplication):
             ShowCommand(),
             UpdateCommand(),
         ]
+
+        # Debug commands
+        commands += [
+            DebugResolveCommand(),
+        ]
+
+        return commands

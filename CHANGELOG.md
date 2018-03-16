@@ -6,6 +6,7 @@
 
 - Added support for virtualenv autogeneration (Python 3.6+ only).
 - Added the `run` command to execute commands inside the created virtualenvs.
+- Added the `debug:resolve` command to debug dependency resolution.
 
 ### Fixed
 
