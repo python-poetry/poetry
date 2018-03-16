@@ -18,9 +18,7 @@ def test_poetry():
     assert package.description == 'Some description.'
     assert package.authors == ['Sébastien Eustace <sebastien@eustace.io>']
     assert package.license == 'MIT'
-    assert package.readme == """My Package
-==========
-"""
+    assert str(package.readme.relative_to(fixtures_dir)) == "sample_project/README.rst"
     assert package.homepage == 'https://poetry.eustace.io'
     assert package.repository_url == 'https://github.com/sdispater/poetry'
     assert package.keywords == ["packaging", "dependency", "poetry"]

@@ -89,14 +89,13 @@ class SdistBuilder(Builder):
             tar_info.size = len(setup)
             tar.addfile(tar_info, BytesIO(setup))
 
-            author = self.convert_author(self._package.authors[0])
             pkg_info = PKG_INFO.format(
-                name=self._package.name,
-                version=self._package.version,
-                summary=self._package.description,
-                home_page=self._package.homepage or self._package.repository_url,
-                author=author['name'],
-                author_email=author['email'],
+                name=self._meta.name,
+                version=self._meta.version,
+                summary=self._meta.summary,
+                home_page=self._meta.home_page,
+                author=self._meta.author,
+                author_email=self._meta.author_email,
             ).encode('utf-8')
 
             tar_info = tarfile.TarInfo(pjoin(tar_dir, 'PKG-INFO'))
@@ -146,21 +145,19 @@ class SdistBuilder(Builder):
             extra.append("'entry_points': entry_points,")
 
         if self._package.python_versions != '*':
-            python_requires = format_python_constraint(self._package.python_constraint)
+            python_requires = self._meta.requires_python
 
             extra.append("'python_requires': {!r},".format(python_requires))
 
-        author = self.convert_author(self._package.authors[0])
-
         return SETUP.format(
             before='\n'.join(before),
-            name=self._package.name,
-            version=self._package.version,
-            description=self._package.description,
-            long_description=self._package.readme,
-            author=author['name'],
-            author_email=author['email'],
-            url=self._package.homepage or self._package.repository_url,
+            name=self._meta.name,
+            version=self._meta.version,
+            description=self._meta.summary,
+            long_description=self._meta.description,
+            author=self._meta.author,
+            author_email=self._meta.author_email,
+            url=self._meta.home_page,
             extra='\n    '.join(extra),
             after='\n'.join(after)
         ).encode('utf-8')

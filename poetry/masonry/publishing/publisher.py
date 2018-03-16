@@ -187,7 +187,7 @@ class Publisher:
         else:
             py_version = None
 
-        return {
+        data = {
             # identify release
             "name": meta.name,
             "version": meta.version,
@@ -229,6 +229,14 @@ class Publisher:
             "requires_external": meta.requires_external,
             "requires_python": meta.requires_python,
         }
+
+        # Metadata 2.1
+        if meta.description_content_type:
+            data['description_content_type'] = meta.description_content_type
+
+        # TODO: Provides extra
+
+        return data
 
     def _upload(self, session, url):
         dist = self._poetry.file.parent / 'dist'

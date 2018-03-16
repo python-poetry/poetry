@@ -1,11 +1,10 @@
-from poetry.semver.constraints import MultiConstraint
 from poetry.utils.helpers import canonicalize_name
 from poetry.version.helpers import format_python_constraint
 
 
 class Metadata:
 
-    metadata_version = '1.2'
+    metadata_version = '2.1'
     # version 1.0
     name = None
     version = None
@@ -34,6 +33,10 @@ class Metadata:
     obsoletes_dist = ()
     project_urls = ()
 
+    # Version 2.1
+    description_content_type = None
+    provides_extra = []
+
     @classmethod
     def from_package(cls, package) -> 'Metadata':
         meta = cls()
@@ -41,7 +44,10 @@ class Metadata:
         meta.name = canonicalize_name(package.name)
         meta.version = package.version
         meta.summary = package.description
-        meta.description = package.readme
+        if package.readme:
+            with package.readme.open() as f:
+                meta.description = f.read()
+
         meta.keywords = ','.join(package.keywords)
         meta.home_page = package.homepage or package.repository_url
         meta.author = package.author_name
@@ -58,4 +64,14 @@ class Metadata:
         # Requires python
         meta.requires_python = format_python_constraint(package.python_constraint)
 
+        # Version 2.1
+        if package.readme:
+            if package.readme.suffix == '.rst':
+                meta.description_content_type = 'text/x-rst'
+            elif package.readme.suffix in ['.md', '.markdown']:
+                meta.description_content_type = 'text/markdown'
+            else:
+                meta.description_content_type = 'text/plain'
+
+        # TODO: Provides extra
         return meta

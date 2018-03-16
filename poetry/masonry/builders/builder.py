@@ -9,6 +9,7 @@ from poetry.semver.constraints import MultiConstraint
 from poetry.semver.version_parser import VersionParser
 from poetry.vcs import get_vcs
 
+from ..metadata import Metadata
 from ..utils.module import Module
 
 
@@ -33,6 +34,7 @@ class Builder:
         self._module = Module(
             self._package.name, self._path.as_posix()
         )
+        self._meta = Metadata.from_package(self._package)
 
     def build(self):
         raise NotImplementedError()

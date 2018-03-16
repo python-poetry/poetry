@@ -18,6 +18,7 @@ from poetry.semver.constraints import MultiConstraint
 from poetry.vcs import get_vcs
 from poetry.version.helpers import format_python_constraint
 
+from ..metadata import Metadata
 from ..utils.helpers import normalize_file_permissions
 from ..utils.tags import get_abbr_impl
 from ..utils.tags import get_abi_tag
@@ -292,36 +293,39 @@ class WheelBuilder(Builder):
 
     def _write_metadata_file(self, fp):
         """
-        Write out metadata in the 1.x format (email like)
+        Write out metadata in the 2.x format (email like)
         """
-        fp.write('Metadata-Version: 1.2\n')
-        fp.write(f'Name: {self._package.name}\n')
-        fp.write(f'Version: {self._package.version}\n')
-        fp.write(f'Summary: {self._package.description}\n')
-        fp.write(f'Home-page: {self._package.homepage or self._package.repository_url or "UNKNOWN"}\n')
-        fp.write(f'License: {self._package.license or "UNKOWN"}\n')
+        fp.write('Metadata-Version: 2.1\n')
+        fp.write(f'Name: {self._meta.name}\n')
+        fp.write(f'Version: {self._meta.version}\n')
+        fp.write(f'Summary: {self._meta.summary}\n')
+        fp.write(f'Home-page: {self._meta.home_page or "UNKNOWN"}\n')
+        fp.write(f'License: {self._meta.license or "UNKOWN"}\n')
 
         # Optional fields
-        if self._package.keywords:
-            fp.write(f"Keywords: {','.join(self._package.keywords)}\n")
+        if self._meta.keywords:
+            fp.write(f"Keywords: {self._meta.keywords}\n")
 
-        if self._package.authors:
-            author = self.convert_author(self._package.authors[0])
+        if self._meta.author:
+            fp.write(f'Author: {self._meta.author}\n')
 
-            fp.write(f'Author: {author["name"]}\n')
-            fp.write(f'Author-email: {author["email"]}\n')
+        if self._meta.author_email:
+            fp.write(f'Author-email: {self._meta.author_email}\n')
 
-        if self._package.python_versions != '*':
-            python_requires = format_python_constraint(self._package.python_constraint)
+        if self._meta.requires_python:
+            fp.write(f'Requires-Python: {self._meta.requires_python}\n')
 
-            fp.write(f'Requires-Python: {python_requires}\n')
-
-        classifiers = self.get_classifers()
-        for classifier in classifiers:
+        for classifier in self._meta.classifiers:
             fp.write(f'Classifier: {classifier}\n')
 
-        for dep in self._package.requires:
-            fp.write('Requires-Dist: {}\n'.format(dep.to_pep_508()))
+        for dep in self._meta.requires_dist:
+            fp.write(f'Requires-Dist: {dep}\n')
 
-        if self._package.readme is not None:
-            fp.write('\n' + self._package.readme + '\n')
+        if self._meta.description_content_type:
+            fp.write(f'Description-Content-Type: '
+                     f'{self._meta.description_content_type}\n')
+
+        # TODO: Provides extra
+
+        if self._meta.description is not None:
+            fp.write('\n' + self._meta.description + '\n')

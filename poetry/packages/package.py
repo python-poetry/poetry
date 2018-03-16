@@ -69,7 +69,7 @@ class Package:
         self.repository_url = None
         self.keywords = []
         self.license = None
-        self.readme = ''
+        self.readme = None
 
         self.source_type = ''
         self.source_reference = ''

@@ -8,6 +8,7 @@
 - Added the `run` command to execute commands inside the created virtualenvs.
 - Added the `debug:resolve` command to debug dependency resolution.
 - Added `pyproject.toml` file validation.
+- Added support for Markdown readme files.
 
 ### Fixed
 

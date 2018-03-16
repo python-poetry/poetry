@@ -90,8 +90,7 @@ class Poetry:
         package.keywords = local_config.get('keywords', [])
 
         if 'readme' in local_config:
-            with open(poetry_file.parent / local_config['readme']) as f:
-                package.readme = f.read()
+            package.readme = Path(cwd) / local_config['readme']
 
         if 'platform' in local_config:
             package.platform = local_config['platform']
