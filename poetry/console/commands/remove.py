@@ -76,7 +76,7 @@ list of installed packages
             if not self.option('dry-run'):
                 self.error(
                     '\n'
-                    'Removal failed, reverting poetry.toml '
+                    'Removal failed, reverting pyproject.toml '
                     'to its original content.'
                 )
 

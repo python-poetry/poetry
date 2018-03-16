@@ -10,8 +10,8 @@ class LockCommand(VenvCommand):
     lock
     """
 
-    help = """The <info>lock</info> command reads the <comment>poetry.toml</> file from
-the current directory, processes it, and locks the depdencies in the <comment>poetry.lock</> file.
+    help = """The <info>lock</info> command reads the <comment>pyproject.toml</> file from
+the current directory, processes it, and locks the depdencies in the <comment>pyproject.lock</> file.
 
 <info>poetry lock</info>    
 """

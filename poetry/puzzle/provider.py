@@ -40,11 +40,11 @@ class Provider(SpecificationProvider):
 
     @property
     def name_for_explicit_dependency_source(self) -> str:
-        return 'poetry.toml'
+        return 'pyproject.toml'
 
     @property
     def name_for_locking_dependency_source(self) -> str:
-        return 'poetry.lock'
+        return 'pyproject.lock'
 
     def name_for(self, dependency: Dependency) -> str:
         """
@@ -101,9 +101,9 @@ class Provider(SpecificationProvider):
             if dependency.tag or dependency.rev:
                 revision = dependency.reference
 
-            poetry = TomlFile(tmp_dir / 'poetry.toml')
+            poetry = TomlFile(tmp_dir / 'pyproject.toml')
             if poetry.exists():
-                # If a poetry.toml file exists
+                # If a pyproject.toml file exists
                 # We use it to get the information we need
                 info = poetry.read()
 

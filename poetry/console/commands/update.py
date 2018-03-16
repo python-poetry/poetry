@@ -5,7 +5,7 @@ from .venv_command import VenvCommand
 
 class UpdateCommand(VenvCommand):
     """
-    Update dependencies as according to the <comment>poetry.toml</> file.
+    Update dependencies as according to the <comment>pyproject.toml</> file.
 
     update
         { packages?* : The packages to update. }

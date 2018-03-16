@@ -12,7 +12,7 @@ from .venv_command import VenvCommand
 
 class AddCommand(VenvCommand):
     """
-    Add a new depdency to <comment>poetry.toml</>.
+    Add a new dependency to <comment>pyproject.toml</>.
 
     add
         { name* : Packages to add. }
@@ -22,7 +22,7 @@ class AddCommand(VenvCommand):
                      (implicitly enables --verbose). }
     """
 
-    help = """The add command adds required packages to your <comment>poetry.toml</> and installs them.
+    help = """The add command adds required packages to your <comment>pyproject.toml</> and installs them.
 
 If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.
 """
@@ -88,7 +88,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             if not self.option('dry-run'):
                 self.error(
                     '\n'
-                    'Addition failed, reverting poetry.toml '
+                    'Addition failed, reverting pyproject.toml '
                     'to its original content.'
                 )
 
