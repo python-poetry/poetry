@@ -1,6 +1,7 @@
 from .about import AboutCommand
 from .add import AddCommand
 from .build import BuildCommand
+from .check import CheckCommand
 from .config import ConfigCommand
 from .install import InstallCommand
 from .lock import LockCommand

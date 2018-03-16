@@ -1,3 +1,5 @@
+import toml
+
 from pathlib import Path
 
 from poetry import Poetry
@@ -52,3 +54,10 @@ def test_poetry():
     assert not pathlib2.is_optional()
 
     assert 'db' in package.extras
+
+
+def test_check():
+    complete = fixtures_dir / 'complete.toml'
+    content = toml.loads(complete.read_text())['tool']['poetry']
+
+    assert Poetry.check(content)

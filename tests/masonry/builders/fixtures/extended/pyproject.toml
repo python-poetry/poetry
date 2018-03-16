@@ -12,5 +12,3 @@ readme = "README.rst"
 homepage = "https://poetry.eustace.io/"
 
 build = "build.py"
-
-include = ["extended.c", "README.rst", "build.py"]

@@ -10,6 +10,7 @@ from poetry.poetry import Poetry
 from .commands import AboutCommand
 from .commands import AddCommand
 from .commands import BuildCommand
+from .commands import CheckCommand
 from .commands import ConfigCommand
 from .commands import InstallCommand
 from .commands import LockCommand
@@ -84,6 +85,7 @@ class Application(BaseApplication):
             AboutCommand(),
             AddCommand(),
             BuildCommand(),
+            CheckCommand(),
             ConfigCommand(),
             InstallCommand(),
             LockCommand(),

@@ -1,6 +1,11 @@
+import json
+
 from pathlib import Path
 
+import jsonschema
+
 from .__version__ import __version__
+from .exceptions import InvalidProjectFile
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
@@ -60,13 +65,15 @@ class Poetry:
                 f'Poetry could not find a pyproject.toml file in {cwd}'
             )
 
-        # TODO: validate file content
         local_config = TomlFile(poetry_file.as_posix()).read(True)
         if 'tool' not in local_config or 'poetry' not in local_config['tool']:
             raise RuntimeError(
                 f'[tool.poetry] section not found in {poetry_file.name}'
             )
         local_config = local_config['tool']['poetry']
+
+        # Checking validity
+        cls.check(local_config)
 
         # Load package
         name = local_config['name']
@@ -119,3 +126,29 @@ class Poetry:
         locker = Locker(poetry_file.with_suffix('.lock'), local_config)
 
         return cls(poetry_file, local_config, package, locker)
+
+    @classmethod
+    def check(cls, config: dict, strict: bool = False):
+        """
+        Checks the validity of a configuration
+        """
+        schema = (
+            Path(__file__).parent
+            / 'json' / 'schemas' / 'poetry-schema.json'
+        )
+
+        schema = json.loads(schema.read_text())
+
+        try:
+            jsonschema.validate(
+                config,
+                schema
+            )
+        except jsonschema.ValidationError as e:
+            message = e.message
+            if e.path:
+                message = f"[{'.'.join(e.path)}] {message}"
+
+            raise InvalidProjectFile(message)
+
+        return True

@@ -1,0 +1,233 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "name": "Package",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [ "name", "version", "description" ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Package name."
+        },
+        "version": {
+            "type": "string",
+            "description": "Package version."
+        },
+        "description": {
+            "type": "string",
+            "description": "Short package description."
+        },
+        "keywords": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "description": "A tag/keyword that this package relates to."
+            }
+        },
+        "homepage": {
+            "type": "string",
+            "description": "Homepage URL for the project.",
+            "format": "uri"
+        },
+        "repository": {
+            "type": "string",
+            "description": "Repository URL for the project.",
+            "format": "uri"
+        },
+        "documentation": {
+            "type": "string",
+            "description": "Documentation URL for the project.",
+            "format": "uri"
+        },
+        "license": {
+            "type": "string",
+            "description": "License name."
+        },
+        "authors": {
+            "$ref": "#/definitions/authors"
+        },
+        "readme": {
+            "type": "string",
+            "description": "The path to the README file"
+        },
+        "dependencies": {
+            "type": "object",
+            "description": "This is a hash of package name (keys) and version constraints (values) that are required to run this package.",
+            "required": ["python"],
+            "properties": {
+                "python": {
+                    "type": "string",
+                    "description": "The Python versions the package is compatible with."
+                }
+            },
+            "patternProperties": {
+                "^[a-zA-Z-_0-9]+$": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/long-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/git-dependency"
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "dev-dependencies": {
+            "type": "object",
+            "description": "This is a hash of package name (keys) and version constraints (values) that this package requires for developing it (testing tools and such).",
+            "patternProperties": {
+                "^[a-zA-Z-_0-9]+$": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/long-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/git-dependency"
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "extras": {
+            "type": "object",
+            "patternProperties": {
+                "^[a-zA-Z-_0-9]+$": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "build": {
+            "type": "string",
+            "description": "The file used to build extensions."
+        },
+        "source": {
+            "type": "array",
+            "description": "A set of additional repositories where packages can be found.",
+            "additionalProperties": {
+                "$ref": "#/definitions/repository"
+            },
+            "items": {
+                "$ref": "#/definitions/repository"
+            }
+        },
+        "scripts": {
+            "type": "object",
+            "description": "A hash of scripts to be installed.",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "definitions": {
+        "authors": {
+            "type": "array",
+            "description": "List of authors that contributed to the package. This is typically the main maintainers, not the full list.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "dependency": {
+            "type": "string",
+            "description": "The constraint of the dependency."
+        },
+        "long-dependency": {
+            "type": "object",
+            "required": ["version"],
+            "additionalProperties": false,
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "description": "The constraint of the dependency."
+                },
+                "python": {
+                    "type": "string",
+                    "description": "The python versions for c=which the dependency should be installed."
+                },
+                "allows_prereleases": {
+                    "type": "boolean",
+                    "description": "Whether the dependency allows prereleases or not."
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Whether the dependency is optional or not."
+                },
+                "extras": {
+                    "type": "array",
+                    "description": "The required extras for this dependency.",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "git-dependency": {
+            "type": "object",
+            "required": ["git"],
+            "additionalProperties": false,
+            "properties": {
+                "git": {
+                    "type": "string",
+                    "description": "The url of the git repository.",
+                    "format": "uri"
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "The branch to checkout."
+                },
+                "tag": {
+                    "type": "string",
+                    "description": "The tag to checkout."
+                },
+                "rev": {
+                    "type": "string",
+                    "description": "The revision to checkout."
+                },
+                "python": {
+                    "type": "string",
+                    "description": "The python versions for c=which the dependency should be installed."
+                },
+                "allows_prereleases": {
+                    "type": "boolean",
+                    "description": "Whether the dependency allows prereleases or not."
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Whether the dependency is optional or not."
+                },
+                "extras": {
+                    "type": "array",
+                    "description": "The required extras for this dependency.",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "repository": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the repository"
+                },
+                "url": {
+                    "type": "string",
+                    "description": "The url of the repository",
+                    "format": "uri"
+                }
+            }
+        }
+    }
+}
