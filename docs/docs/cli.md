@@ -243,6 +243,25 @@ If you do not specify the password you will be prompted to write it.
 * `--unset`: Remove the configuration element named by `setting-key`.
 * `--list`: Show the list of current config variables.
 
+## run
+
+The `run` command executes the given command inside the project's virtualenv.
+
+```bash
+poetry run python -V
+```
+
+Note that this command has no option.
+
+## check
+
+The `check` command validate the structure of the `pyproject.toml` file
+and returns a detailed report is there are any errors.
+
+```bash
+poetry check
+```
+
 ## search
 
 This command searches for packages on a remote index.
