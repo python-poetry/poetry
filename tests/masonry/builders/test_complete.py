@@ -53,4 +53,31 @@ def test_wheel_c_extension():
         if name.startswith('extended/extended') and name.endswith('.so'):
             has_compiled_extension = True
 
+    zip.close()
+
     assert has_compiled_extension
+
+
+def test_complete():
+    module_path = fixtures_dir / 'complete'
+    builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True),
+                              NullIO())
+    builder.build()
+
+    whl = module_path / 'dist' / 'my_package-1.2.3-py3-none-any.whl'
+
+    assert whl.exists
+
+    zip = zipfile.ZipFile(whl)
+
+    try:
+        entry_points = zip.read('my_package-1.2.3.dist-info/entry_points.txt')
+        print(entry_points.decode())
+
+        assert entry_points.decode() == """[console_scripts]
+my-2nd-script=my_package:main2
+my-script=my_package:main
+
+"""
+    finally:
+        zip.close()

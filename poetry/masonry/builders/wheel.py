@@ -16,9 +16,7 @@ from poetry.__version__ import __version__
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import MultiConstraint
 from poetry.vcs import get_vcs
-from poetry.version.helpers import format_python_constraint
 
-from ..metadata import Metadata
 from ..utils.helpers import normalize_file_permissions
 from ..utils.tags import get_abbr_impl
 from ..utils.tags import get_abi_tag
@@ -279,7 +277,7 @@ class WheelBuilder(Builder):
         for group_name in sorted(entry_points):
             fp.write('[{}]\n'.format(group_name))
             for ep in sorted(entry_points[group_name]):
-                fp.write(ep.replace(' ', ''))
+                fp.write(ep.replace(' ', '') + '\n')
 
             fp.write('\n')
 

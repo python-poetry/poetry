@@ -88,7 +88,10 @@ def test_make_setup():
         'cleo (>=0.6.0.0,<0.7.0.0)'
     ]
     assert ns['entry_points'] == {
-        'console_scripts': ['my-script = my_package:main']
+        'console_scripts': [
+            'my-script = my_package:main',
+            'my-2nd-script = my_package:main2',
+        ]
     }
 
 

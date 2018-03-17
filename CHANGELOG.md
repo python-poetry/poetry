@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed wheel entry points being written on a single line.
+
+
 ## [0.6.0] - 2018-03-16
 
 ### Added
