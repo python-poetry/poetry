@@ -5,7 +5,7 @@
 ### Fixed
 
 - Fixed wheel entry points being written on a single line.
-
+- Fixed wheel metadata (Tag and Root-Is-Purelib).
 
 ## [0.6.0] - 2018-03-16
 

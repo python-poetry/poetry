@@ -1,10 +1,12 @@
 import pytest
+import re
 import shutil
 import tarfile
 import zipfile
 
 from pathlib import Path
 
+from poetry import __version__
 from poetry import Poetry
 from poetry.io import NullIO
 from poetry.masonry.builders import CompleteBuilder
@@ -53,9 +55,19 @@ def test_wheel_c_extension():
         if name.startswith('extended/extended') and name.endswith('.so'):
             has_compiled_extension = True
 
-    zip.close()
-
     assert has_compiled_extension
+
+    try:
+        wheel_data = zip.read('extended-0.1.dist-info/WHEEL').decode()
+
+        assert re.match("""(?m)^\
+Wheel-Version: 1.0
+Generator: poetry {}
+Root-Is-Purelib: false
+Tag: cp3\d-cp3\dm-.+
+$""".format(__version__), wheel_data) is not None
+    finally:
+        zip.close()
 
 
 def test_complete():
@@ -72,12 +84,20 @@ def test_complete():
 
     try:
         entry_points = zip.read('my_package-1.2.3.dist-info/entry_points.txt')
-        print(entry_points.decode())
 
-        assert entry_points.decode() == """[console_scripts]
+        assert entry_points.decode() == """\
+[console_scripts]
 my-2nd-script=my_package:main2
 my-script=my_package:main
 
+"""
+        wheel_data = zip.read('my_package-1.2.3.dist-info/WHEEL').decode()
+
+        assert wheel_data == f"""\
+Wheel-Version: 1.0
+Generator: poetry {__version__}
+Root-Is-Purelib: true
+Tag: py3-none-any
 """
     finally:
         zip.close()

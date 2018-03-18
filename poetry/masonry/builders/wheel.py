@@ -28,8 +28,9 @@ from .builder import Builder
 wheel_file_template = """\
 Wheel-Version: 1.0
 Generator: poetry {version}
-Root-Is-Purelib: true
-""".format(version=__version__)
+Root-Is-Purelib: {pure_lib}
+Tag: {tag}
+"""
 
 
 class WheelBuilder(Builder):
@@ -178,6 +179,28 @@ class WheelBuilder(Builder):
 
     @property
     def wheel_filename(self) -> str:
+        return '{}-{}-{}.whl'.format(
+            re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
+            re.sub("[^\w\d.]+", "_", self._package.version, flags=re.UNICODE),
+            self.tag
+        )
+
+    def supports_python2(self):
+        return self._package.python_constraint.matches(
+            MultiConstraint([
+                Constraint('>=', '2.0.0'),
+                Constraint('<', '3.0.0')
+            ])
+        )
+
+    def dist_info_name(self, distribution, version) -> str:
+        escaped_name = re.sub("[^\w\d.]+", "_", distribution, flags=re.UNICODE)
+        escaped_version = re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE)
+
+        return '{}-{}.dist-info'.format(escaped_name, escaped_version)
+
+    @property
+    def tag(self):
         if self._package.build:
             platform = get_platform().replace('.', '_').replace('-', '_')
             impl_name = get_abbr_impl()
@@ -194,27 +217,7 @@ class WheelBuilder(Builder):
 
             tag = (impl, 'none', platform)
 
-        tag = '-'.join(tag)
-
-        return '{}-{}-{}.whl'.format(
-            re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
-            re.sub("[^\w\d.]+", "_", self._package.version, flags=re.UNICODE),
-            tag
-        )
-
-    def supports_python2(self):
-        return self._package.python_constraint.matches(
-            MultiConstraint([
-                Constraint('>=', '2.0.0'),
-                Constraint('<', '3.0.0')
-            ])
-        )
-
-    def dist_info_name(self, distribution, version) -> str:
-        escaped_name = re.sub("[^\w\d.]+", "_", distribution, flags=re.UNICODE)
-        escaped_version = re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE)
-
-        return '{}-{}.dist-info'.format(escaped_name, escaped_version)
+        return '-'.join(tag)
 
     def _add_file(self, full_path, rel_path):
         full_path, rel_path = str(full_path), str(rel_path)
@@ -282,12 +285,13 @@ class WheelBuilder(Builder):
             fp.write('\n')
 
     def _write_wheel_file(self, fp):
-        fp.write(wheel_file_template)
-
-        if self.supports_python2():
-            fp.write("Tag: py2-none-any\n")
-
-        fp.write("Tag: py3-none-any\n")
+        fp.write(
+            wheel_file_template.format(
+                version=__version__,
+                pure_lib='true' if self._package.build is None else 'false',
+                tag=self.tag
+            )
+        )
 
     def _write_metadata_file(self, fp):
         """
