@@ -26,7 +26,7 @@ class NewCommand(Command):
             if list(path.glob('*')):
                 # Directory is not empty. Aborting.
                 raise RuntimeError(
-                    'Destination <fg=yellow;bg=red>{}</>'
+                    'Destination <fg=yellow;bg=red>{}</> '
                     'exists and is not empty'.format(
                         path
                     )
