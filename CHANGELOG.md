@@ -1,11 +1,12 @@
 # Change Log
 
-## [Unreleased]
+## [0.6.1] - 2018-02-18
 
 ### Fixed
 
 - Fixed wheel entry points being written on a single line.
 - Fixed wheel metadata (Tag and Root-Is-Purelib).
+
 
 ## [0.6.0] - 2018-03-16
 
@@ -121,7 +122,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.6.0...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.6.1...master
+[0.6.1]: https://github.com/sdispater/poetry/releases/tag/0.6.1
 [0.6.0]: https://github.com/sdispater/poetry/releases/tag/0.6.0
 [0.5.0]: https://github.com/sdispater/poetry/releases/tag/0.5.0
 [0.4.2]: https://github.com/sdispater/poetry/releases/tag/0.4.2
