@@ -15,7 +15,6 @@ from types import SimpleNamespace
 from poetry.__version__ import __version__
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import MultiConstraint
-from poetry.vcs import get_vcs
 
 from ..utils.helpers import normalize_file_permissions
 from ..utils.tags import get_abbr_impl
@@ -163,22 +162,7 @@ class WheelBuilder(Builder):
 
     def find_excluded_files(self) -> list:
         # Checking VCS
-        vcs = get_vcs(self._original_path)
-        if not vcs:
-            return []
-
-        ignored = vcs.get_ignored_files()
-        result = []
-        for file in ignored:
-            try:
-                file = Path(file).absolute().relative_to(self._original_path)
-            except ValueError:
-                # Should only happen in tests
-                continue
-
-            result.append(file)
-
-        return result
+        return []
 
     @property
     def dist_info(self) -> str:
