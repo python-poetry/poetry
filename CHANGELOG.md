@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed built wheels not getting information from the virtualenv.
+- Fixed building wheel with conditional extensions.
 
 
 [0.6.2] - 2018-03-19

@@ -109,7 +109,14 @@ class WheelBuilder(Builder):
                 os.chdir(current_path)
 
             build_dir = self._path / 'build'
-            lib = list(build_dir.glob('lib.*'))[0]
+            lib = list(build_dir.glob('lib.*'))
+            if not lib:
+                # The result of building the extensions
+                # does not exist, this may due to conditional
+                # builds, so we assume that it's okay
+                return
+
+            lib = lib[0]
             for pkg in lib.glob('*'):
                 shutil.rmtree(str(self._path / pkg.name))
                 shutil.copytree(str(pkg), str(self._path / pkg.name))
