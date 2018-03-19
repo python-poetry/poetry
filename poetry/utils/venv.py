@@ -1,6 +1,9 @@
 import os
+import platform
 import subprocess
 import sys
+import sysconfig
+import warnings
 
 from contextlib import contextmanager
 from pathlib import Path
@@ -39,6 +42,7 @@ class Venv:
             self._bin_dir = self._venv / bin_dir
 
         self._version_info = None
+        self._python_implementation = None
 
     @classmethod
     def create(cls, io, name=None) -> 'Venv':
@@ -123,27 +127,78 @@ class Venv:
         return self._bin('pip')
 
     @property
-    def version_info(self):
+    def version_info(self) -> tuple:
         if self._version_info is not None:
             return self._version_info
 
         if not self.is_venv():
             self._version_info = sys.version_info
         else:
-            output = self.run('python', '--version')
+            output = self.run('python', '--version', shell=True)
 
             version = output.split(' ')
-            self._version_info = version[1].strip().split('.')
+            self._version_info = tuple([
+                int(s) for s in version[1].strip().split('.')
+            ])
 
         return self._version_info
+
+    @property
+    def python_implementation(self):
+        if self._python_implementation is not None:
+            return self._python_implementation
+
+        if not self.is_venv():
+            impl = platform.python_implementation()
+        else:
+            impl = self.run(
+                'python', '-c',
+                '"import platform; print(platform.python_implementation())"',
+                shell=True
+            ).strip()
+
+        self._python_implementation = impl
+
+        return self._python_implementation
+
+    def config_var(self, var):
+        if not self.is_venv():
+            try:
+                return sysconfig.get_config_var(var)
+            except IOError as e:
+                warnings.warn("{0}".format(e), RuntimeWarning)
+                return None
+
+        try:
+            value = self.run(
+                'python', '-c',
+                f'"import sysconfig; print(sysconfig.get_config_var(\'{var}\'))"',
+                shell=True
+            ).strip()
+        except VenvCommandError as e:
+            warnings.warn("{0}".format(e), RuntimeWarning)
+            return None
+
+        if value == 'None':
+            value = None
+        elif value == '1':
+            value = 1
+        elif value == '0':
+            value = 0
+
+        return value
 
     def run(self, bin: str, *args, **kwargs) -> str:
         """
         Run a command inside the virtual env.
         """
         cmd = [self._bin(bin)] + list(args)
+        shell = kwargs.get('shell', False)
 
         try:
+            if shell:
+                cmd = ' '.join(cmd)
+
             output = subprocess.check_output(
                 cmd, stderr=subprocess.STDOUT,
                 **kwargs

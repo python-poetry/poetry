@@ -1,23 +1,14 @@
 """Generate and work with PEP 425 Compatibility Tags."""
 
 import distutils.util
-import platform
 import sys
-import sysconfig
 import warnings
 
 
-def get_config_var(var):
-    try:
-        return sysconfig.get_config_var(var)
-    except IOError as e:
-        warnings.warn("{0}".format(e), RuntimeWarning)
-        return None
-
-
-def get_abbr_impl():
+def get_abbr_impl(venv):
     """Return abbreviated implementation name."""
-    impl = platform.python_implementation()
+    impl = venv.python_implementation
+
     if impl == 'PyPy':
         return 'pp'
     elif impl == 'Jython':
@@ -30,29 +21,29 @@ def get_abbr_impl():
     raise LookupError('Unknown Python implementation: ' + impl)
 
 
-def get_impl_ver():
+def get_impl_ver(venv):
     """Return implementation version."""
-    impl_ver = get_config_var("py_version_nodot")
-    if not impl_ver or get_abbr_impl() == 'pp':
-        impl_ver = ''.join(map(str, get_impl_version_info()))
+    impl_ver = venv.config_var("py_version_nodot")
+    if not impl_ver or get_abbr_impl(venv) == 'pp':
+        impl_ver = ''.join(map(str, get_impl_version_info(venv)))
+
     return impl_ver
 
 
-def get_impl_version_info():
+def get_impl_version_info(venv):
     """Return sys.version_info-like tuple for use in decrementing the minor
     version."""
-    if get_abbr_impl() == 'pp':
+    if get_abbr_impl(venv) == 'pp':
         # as per https://github.com/pypa/pip/issues/2882
-        return (sys.version_info[0], sys.pypy_version_info.major,
-                sys.pypy_version_info.minor)
+        return venv.version_info[:3]
     else:
-        return sys.version_info[0], sys.version_info[1]
+        return venv.version_info[:2]
 
 
-def get_flag(var, fallback, expected=True, warn=True):
+def get_flag(venv, var, fallback, expected=True, warn=True):
     """Use a fallback method for determining SOABI flags if the needed config
     var is unset or unavailable."""
-    val = get_config_var(var)
+    val = venv.config_var(var)
     if val is None:
         if warn:
             warnings.warn("Config variable '{0}' is unset, Python ABI tag may "
@@ -61,31 +52,34 @@ def get_flag(var, fallback, expected=True, warn=True):
     return val == expected
 
 
-def get_abi_tag():
+def get_abi_tag(venv):
     """Return the ABI tag based on SOABI (if available) or emulate SOABI
     (CPython 2, PyPy)."""
-    soabi = get_config_var('SOABI')
-    impl = get_abbr_impl()
+    soabi = venv.config_var('SOABI')
+    impl = get_abbr_impl(venv)
     if not soabi and impl in ('cp', 'pp') and hasattr(sys, 'maxunicode'):
         d = ''
         m = ''
         u = ''
-        if get_flag('Py_DEBUG',
+        if get_flag(venv,
+                    'Py_DEBUG',
                     lambda: hasattr(sys, 'gettotalrefcount'),
                     warn=(impl == 'cp')):
             d = 'd'
-        if get_flag('WITH_PYMALLOC',
+        if get_flag(venv,
+                    'WITH_PYMALLOC',
                     lambda: impl == 'cp',
                     warn=(impl == 'cp')):
             m = 'm'
-        if get_flag('Py_UNICODE_SIZE',
+        if get_flag(venv,
+                    'Py_UNICODE_SIZE',
                     lambda: sys.maxunicode == 0x10ffff,
                     expected=4,
                     warn=(impl == 'cp' and
-                          sys.version_info < (3, 3))) \
-                and sys.version_info < (3, 3):
+                          venv.version_info < (3, 3))) \
+                and venv.version_info < (3, 3):
             u = 'u'
-        abi = '%s%s%s%s%s' % (impl, get_impl_ver(), d, m, u)
+        abi = '%s%s%s%s%s' % (impl, get_impl_ver(venv), d, m, u)
     elif soabi and soabi.startswith('cpython-'):
         abi = 'cp' + soabi.split('-')[1]
     elif soabi:
@@ -105,7 +99,7 @@ def get_platform():
     return result
 
 
-def get_supported(versions=None, supplied_platform=None):
+def get_supported(venv, versions=None, supplied_platform=None):
     """Return a list of supported tags for each version specified in
     `versions`.
     :param versions: a list of string versions, of the form ["33", "32"],
@@ -116,17 +110,17 @@ def get_supported(versions=None, supplied_platform=None):
     # Versions must be given with respect to the preference
     if versions is None:
         versions = []
-        version_info = get_impl_version_info()
+        version_info = get_impl_version_info(venv)
         major = version_info[:-1]
         # Support all previous minor Python versions.
         for minor in range(version_info[-1], -1, -1):
             versions.append(''.join(map(str, major + (minor,))))
 
-    impl = get_abbr_impl()
+    impl = get_abbr_impl(venv)
 
     abis = []
 
-    abi = get_abi_tag()
+    abi = get_abi_tag(venv)
     if abi:
         abis[0:0] = [abi]
 

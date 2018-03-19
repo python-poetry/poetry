@@ -203,10 +203,10 @@ class WheelBuilder(Builder):
     def tag(self):
         if self._package.build:
             platform = get_platform().replace('.', '_').replace('-', '_')
-            impl_name = get_abbr_impl()
-            impl_ver = get_impl_ver()
+            impl_name = get_abbr_impl(self._venv)
+            impl_ver = get_impl_ver(self._venv)
             impl = impl_name + impl_ver
-            abi_tag = str(get_abi_tag()).lower()
+            abi_tag = str(get_abi_tag(self._venv)).lower()
             tag = (impl, abi_tag, platform)
         else:
             platform = 'any'

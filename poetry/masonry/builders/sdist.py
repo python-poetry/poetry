@@ -11,7 +11,6 @@ from pprint import pformat
 from typing import List
 
 from poetry.packages import Dependency
-from poetry.version.helpers import format_python_constraint
 
 from ..utils.helpers import normalize_file_permissions
 
@@ -19,6 +18,7 @@ from .builder import Builder
 
 
 SETUP = """\
+# -*- coding: utf-8 -*-
 from distutils.core import setup
 
 {before}

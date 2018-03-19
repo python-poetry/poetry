@@ -1,5 +1,12 @@
 # Change Log
 
+[Unreleased]
+
+### Fixed
+
+- Fixed built wheels not getting information from the virtualenv.
+
+
 [0.6.2] - 2018-03-19
 
 ### Changed
