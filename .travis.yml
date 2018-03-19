@@ -4,6 +4,7 @@ python:
   - "3.6"
 
 cache:
+  pip: true
   directories:
     - $HOME/.cache/pypoetry
 
