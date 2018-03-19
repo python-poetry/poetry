@@ -55,6 +55,19 @@ def test_dependency_from_pep_508_with_python_version():
     assert dep.python_versions == '~2.7 || ~2.6'
 
 
+def test_dependency_from_pep_508_with_single_python_version():
+    name = (
+        'requests (==2.18.0); '
+        'python_version == "2.7"'
+    )
+    dep = dependency_from_pep_508(name)
+
+    assert dep.name == 'requests'
+    assert str(dep.constraint) == '== 2.18.0.0'
+    assert dep.extras == []
+    assert dep.python_versions == '~2.7'
+
+
 def test_dependency_from_pep_508_with_platform():
     name = (
         'requests (==2.18.0); '
