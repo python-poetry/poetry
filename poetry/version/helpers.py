@@ -30,7 +30,8 @@ def format_python_constraint(constraint):
         return str(constraint)
 
     for version in PYTHON_VERSION:
-        matches = constraint.matches(parser.parse_constraints(version))
+        version_constraint = parser.parse_constraints(version)
+        matches = constraint.matches(version_constraint)
         if not matches:
             formatted.append('!=' + version)
         else:

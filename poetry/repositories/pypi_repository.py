@@ -1,5 +1,4 @@
 from pathlib import Path
-from pip.req import InstallRequirement
 from typing import List
 from typing import Union
 
@@ -7,11 +6,12 @@ from cachy import CacheManager
 from requests import get
 
 from poetry.locations import CACHE_DIR
-from poetry.packages import Dependency
+from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
+from poetry.version.markers import InvalidMarker
 
 from .repository import Repository
 
@@ -86,61 +86,20 @@ class PyPiRepository(Repository):
             requires_dist = release_info['requires_dist'] or []
             for req in requires_dist:
                 try:
-                    req = InstallRequirement.from_line(req)
-                except Exception:
-                    # Probably an invalid marker
+                    dependency = dependency_from_pep_508(req)
+                except InvalidMarker:
+                    # Invalid marker
                     # We strip the markers hoping for the best
                     req = req.split(';')[0]
 
-                    req = InstallRequirement.from_line(req)
+                    dependency = dependency_from_pep_508(req)
 
-                name = req.name
-                version = str(req.req.specifier)
+                if dependency.extras:
+                    for extra in dependency.extras:
+                        if extra not in package.extras:
+                            package.extras[extra] = []
 
-                dependency = Dependency(
-                    name,
-                    version
-                )
-
-                if req.markers:
-                    # Setting extra dependencies and requirements
-                    requirements = self._convert_markers(
-                        req.markers._markers
-                    )
-
-                    if 'python_version' in requirements:
-                        ors = []
-                        for or_ in requirements['python_version']:
-                            ands = []
-                            for op, version in or_:
-                                ands.append(f'{op}{version}')
-
-                            ors.append(' '.join(ands))
-
-                        dependency.python_versions = ' || '.join(ors)
-
-                    if 'sys_platform' in requirements:
-                        ors = []
-                        for or_ in requirements['sys_platform']:
-                            ands = []
-                            for op, platform in or_:
-                                if op == '==':
-                                    op = ''
-
-                                ands.append(f'{op}{platform}')
-
-                            ors.append(' '.join(ands))
-
-                        dependency.platform = ' || '.join(ors)
-
-                    if 'extra' in requirements:
-                        dependency.deactivate()
-                        for _extras in requirements['extra']:
-                            for _, extra in _extras:
-                                if extra not in package.extras:
-                                    package.extras[extra] = []
-
-                                package.extras[extra].append(dependency)
+                        package.extras[extra].append(dependency)
 
                 if not dependency.is_optional():
                     package.requires.append(dependency)
@@ -250,47 +209,3 @@ class PyPiRepository(Repository):
         json_data = json_response.json()
 
         return json_data
-
-    def _group_markers(self, markers):
-        groups = [[]]
-
-        for marker in markers:
-            assert isinstance(marker, (list, tuple, str))
-
-            if isinstance(marker, list):
-                groups[-1].append(self._group_markers(marker))
-            elif isinstance(marker, tuple):
-                lhs, op, rhs = marker
-
-                groups[-1].append((lhs.value, op, rhs.value))
-            else:
-                assert marker in ["and", "or"]
-                if marker == "or":
-                    groups.append([])
-
-        return groups
-
-    def _convert_markers(self, markers):
-        groups = self._group_markers(markers)[0]
-
-        requirements = {}
-
-        def _group(_groups, or_=False):
-            nonlocal requirements
-
-            for group in _groups:
-                if isinstance(group, tuple):
-                    variable, op, value = group
-                    group_name = str(variable)
-                    if group_name not in requirements:
-                        requirements[group_name] = [[]]
-                    elif or_:
-                        requirements[group_name].append([])
-
-                    requirements[group_name][-1].append((str(op), str(value)))
-                else:
-                    _group(group, or_=True)
-
-        _group(groups)
-
-        return requirements

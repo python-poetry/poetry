@@ -3,6 +3,7 @@ import re
 from .constraints.constraint import Constraint
 from .constraints.empty_constraint import EmptyConstraint
 from .constraints.multi_constraint import MultiConstraint
+from .constraints.wildcard_constraint import WilcardConstraint
 from .helpers import normalize_version, _expand_stability
 
 
@@ -103,7 +104,7 @@ class VersionParser:
         # to ensure that unstable instances of the current version are allowed.
         # However, if a stability suffix is added to the constraint,
         # then a >= match on the current version is used instead.
-        m = re.match('(?i)^~{}$'.format(version_regex), constraint)
+        m = re.match('(?i)^~=?{}$'.format(version_regex), constraint)
         if m:
             # Work out which position in the version we are operating at
             if m.group(4):
@@ -176,35 +177,12 @@ class VersionParser:
         # A partial version range is treated as an X-Range,
         # so the special character is in fact optional.
         m = re.match(
-            '^(!=)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$',
+            '^(!=|==)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$',
             constraint
         )
         if m:
-            if m.group(4):
-                position = 2
-            elif m.group(3):
-                position = 1
-            else:
-                position = 0
-
-            groups = m.groups()[1:]
-            low_version = self._manipulate_version_string(
-                groups, position
-            )
-            high_version = self._manipulate_version_string(
-                groups, position, 1
-            )
-
-            if m.group(1):
-                if low_version == '0.0.0.0':
-                    return Constraint('>=', high_version),
-
-                return self.parse_constraints(f'<{low_version} || >={high_version}'),
-
-            if low_version == '0.0.0.0':
-                return Constraint('<', high_version),
-
-            return Constraint('>=', low_version), Constraint('<', high_version)
+            # We just leave it as is
+            return WilcardConstraint(constraint),
 
         # Basic Comparators
         m = re.match('^(<>|!=|>=?|<=?|==?)?\s*(.*)', constraint)

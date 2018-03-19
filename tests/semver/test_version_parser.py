@@ -57,7 +57,8 @@ def test_parse_constraints_wildcard(parser, input, min, max):
     else:
         expected = max
 
-    assert str(parser.parse_constraints(input)) == str(expected)
+    constraint = parser.parse_constraints(input)
+    assert str(constraint.constraint) == str(expected)
 
 
 @pytest.mark.parametrize(
@@ -76,7 +77,8 @@ def test_parse_constraints_negative_wildcard(parser, input, min, max):
     else:
         expected = max
 
-    assert str(parser.parse_constraints(input)) == str(expected)
+    constraint = parser.parse_constraints(input)
+    assert str(constraint.constraint) == str(expected)
 
 
 @pytest.mark.parametrize(

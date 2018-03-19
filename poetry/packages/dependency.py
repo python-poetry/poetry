@@ -3,6 +3,7 @@ import poetry.packages
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import EmptyConstraint
 from poetry.semver.constraints import MultiConstraint
+from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 
 from .constraints.platform_constraint import PlatformConstraint
@@ -21,7 +22,10 @@ class Dependency:
         self._parser = VersionParser()
 
         try:
-            self._constraint = self._parser.parse_constraints(constraint)
+            if not isinstance(constraint, BaseConstraint):
+                self._constraint = self._parser.parse_constraints(constraint)
+            else:
+                self._constraint = constraint
         except ValueError:
             self._constraint = self._parser.parse_constraints('*')
 
@@ -129,6 +133,10 @@ class Dependency:
             requirement += f'; {" and ".join(markers)}'
 
         return requirement
+
+    @classmethod
+    def from_pep_508(cls):
+        return
 
     def _create_nested_marker(self, name, constraint):
         if isinstance(constraint, MultiConstraint):

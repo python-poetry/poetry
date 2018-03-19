@@ -1,5 +1,16 @@
 # Change Log
 
+[Unreleased]
+
+### Changed
+
+- Changed how wilcard constraints are handled.
+
+### Fixed
+
+- Fixed errors with pip 9.0.2.
+
+
 ## [0.6.1] - 2018-02-18
 
 ### Fixed

@@ -1,21 +1,19 @@
-import re
-
 from pathlib import Path
 from piptools.cache import DependencyCache
 from piptools.repositories import PyPIRepository
 from piptools.resolver import Resolver
 from piptools.scripts.compile import get_pip_command
-from pip.req import InstallRequirement
-from pip.exceptions import InstallationError
 
 from cachy import CacheManager
 
 import poetry.packages
 
 from poetry.locations import CACHE_DIR
+from poetry.packages import dependency_from_pep_508
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
+from poetry.version.markers import InvalidMarker
 
 from .pypi_repository import PyPiRepository
 
@@ -111,56 +109,23 @@ class LegacyRepository(PyPiRepository):
             release_info = self.get_release_info(name, version)
             package = poetry.packages.Package(name, version, version)
             for req in release_info['requires_dist']:
-                req = InstallRequirement.from_line(req)
+                try:
+                    dependency = dependency_from_pep_508(req)
+                except InvalidMarker:
+                    # Invalid marker
+                    # We strip the markers hoping for the best
+                    req = req.split(';')[0]
 
-                name = req.name
-                version = str(req.req.specifier)
+                    dependency = dependency_from_pep_508(req)
 
-                dependency = Dependency(
-                    name,
-                    version,
-                    optional=req.markers
-                )
+                if dependency.extras:
+                    for extra in dependency.extras:
+                        if extra not in package.extras:
+                            package.extras[extra] = []
 
-                is_extra = False
-                if req.markers:
-                    # Setting extra dependencies and requirements
-                    requirements = self._convert_markers(
-                        req.markers._markers
-                    )
+                        package.extras[extra].append(dependency)
 
-                    if 'python_version' in requirements:
-                        ors = []
-                        for or_ in requirements['python_version']:
-                            ands = []
-                            for op, version in or_:
-                                ands.append(f'{op}{version}')
-
-                            ors.append(' '.join(ands))
-
-                        dependency.python_versions = ' || '.join(ors)
-
-                    if 'sys_platform' in requirements:
-                        ors = []
-                        for or_ in requirements['sys_platform']:
-                            ands = []
-                            for op, platform in or_:
-                                ands.append(f'{op}{platform}')
-
-                            ors.append(' '.join(ands))
-
-                        dependency.platform = ' || '.join(ors)
-
-                    if 'extra' in requirements:
-                        is_extra = True
-                        for _extras in requirements['extra']:
-                            for _, extra in _extras:
-                                if extra not in package.extras:
-                                    package.extras[extra] = []
-
-                                package.extras[extra].append(dependency)
-
-                if not is_extra:
+                if not dependency.is_optional():
                     package.requires.append(dependency)
 
             # Adding description
@@ -194,6 +159,9 @@ class LegacyRepository(PyPiRepository):
         )
 
     def _get_release_info(self, name: str, version: str) -> dict:
+        from pip.req import InstallRequirement
+        from pip.exceptions import InstallationError
+
         ireq = InstallRequirement.from_line(f'{name}=={version}')
         resolver = Resolver(
             [ireq], self._repository,

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-from pip.utils.appdirs import user_cache_dir, user_config_dir
+from .utils.appdirs import user_cache_dir
+from .utils.appdirs import user_config_dir
 
 
 CACHE_DIR = user_cache_dir('pypoetry')

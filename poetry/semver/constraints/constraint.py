@@ -36,7 +36,7 @@ class Constraint(BaseConstraint):
     }
 
     def __init__(self, operator: str, version: str):
-        if operator not in self._trans_op_str:
+        if operator not in self.supported_operators:
             raise ValueError(
                 f'Invalid operator "{operator}" given, '
                 f'expected one of: {", ".join(self.supported_operators)}'
@@ -63,7 +63,10 @@ class Constraint(BaseConstraint):
         return self._version
 
     def matches(self, provider):
-        if isinstance(provider, self.__class__):
+        if (
+            isinstance(provider, self.__class__)
+            and provider.__class__ is self.__class__
+        ):
             return self.match_specific(provider)
 
         # turn matching around to find a match
