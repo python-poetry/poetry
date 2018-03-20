@@ -18,4 +18,4 @@ install:
   - poetry install -v
 
 test_script:
-  - %PYTHON%\\Scripts\\pytest.exe --cov=poetry tests/
+  - "%PYTHON%\\Scripts\\pytest.exe --cov=poetry tests/"
