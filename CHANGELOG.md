@@ -1,6 +1,6 @@
 # Change Log
 
-[0.6.3] - 2018-03-20
+## [0.6.3] - 2018-03-20
 
 ### Fixed
 
@@ -11,7 +11,7 @@
 - Fixed subdependencies representation in lock file.
 
 
-[0.6.2] - 2018-03-19
+## [0.6.2] - 2018-03-19
 
 ### Changed
 
