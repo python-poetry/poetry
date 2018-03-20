@@ -13,9 +13,11 @@ install:
 
   # Create poetry virtualenv
   - pip install poetry --pre
+  - python -m venv venv
+  - venv\\Scripts\\activate.bat
 
   # Install dependencies
   - poetry install -v
 
 test_script:
-  - "%PYTHON%\\Scripts\\pytest.exe --cov=poetry tests/"
+  - "pytest --cov=poetry tests/"
