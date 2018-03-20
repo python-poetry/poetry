@@ -195,20 +195,27 @@ class Venv:
         """
         Run a command inside the virtual env.
         """
-        cmd = [self._bin(bin)] + list(args)
+        cmd = [bin] + list(args)
         shell = kwargs.get('shell', False)
 
+        if shell:
+            cmd = ' '.join(cmd)
+
         try:
-            if shell:
-                cmd = ' '.join(cmd)
+            if not self.is_venv():
+                output = subprocess.check_output(cmd, **kwargs)
+            else:
+                if self._windows:
+                    kwargs['shell'] = True
 
-            if self._windows:
-                kwargs['shell'] = True
+                with self.temp_environ():
+                    os.environ['PATH'] = self._path()
+                    os.environ['VIRTUAL_ENV'] = str(self._venv)
 
-            output = subprocess.check_output(
-                cmd, stderr=subprocess.STDOUT,
-                **kwargs
-            )
+                    self.unset_env('PYTHONHOME')
+                    self.unset_env('__PYVENV_LAUNCHER__')
+
+                    output = subprocess.check_output(cmd, **kwargs)
         except CalledProcessError as e:
             raise VenvCommandError(e)
 
