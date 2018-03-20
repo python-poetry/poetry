@@ -184,7 +184,7 @@ class Locker:
             if dependency.is_optional():
                 continue
 
-            dependencies[dependency.pretty_name] = dependency.pretty_constraint
+            dependencies[dependency.pretty_name] = str(dependency.pretty_constraint)
 
         data = {
             'name': package.pretty_name,
