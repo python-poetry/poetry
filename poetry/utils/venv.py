@@ -36,9 +36,12 @@ class Venv:
         if self._venv:
             self._venv = Path(self._venv)
 
+
+        self._windows = sys.platform == 'win32'
+
         self._bin_dir = None
         if venv:
-            bin_dir = 'bin' if sys.platform != 'win32' else 'Scripts'
+            bin_dir = 'bin' if not self._windows else 'Scripts'
             self._bin_dir = self._venv / bin_dir
 
         self._version_info = None
@@ -254,7 +257,7 @@ class Venv:
         if not self.is_venv():
             return bin
 
-        return str(self._bin_dir / bin)
+        return str(self._bin_dir / bin + ('.exe' if self._windows else ''))
 
     def is_venv(self) -> bool:
         return self._venv is not None

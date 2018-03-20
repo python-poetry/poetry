@@ -7,6 +7,7 @@
 - Fixed built wheels not getting information from the virtualenv.
 - Fixed building wheel with conditional extensions.
 - Fixed missing files in built wheel with extensions.
+- Fixed call to venv binaries on windows
 
 
 [0.6.2] - 2018-03-19
