@@ -257,7 +257,7 @@ class Venv:
         if not self.is_venv():
             return bin
 
-        return str(self._bin_dir / bin + ('.exe' if self._windows else ''))
+        return str(self._bin_dir / bin) + ('.exe' if self._windows else '')
 
     def is_venv(self) -> bool:
         return self._venv is not None
