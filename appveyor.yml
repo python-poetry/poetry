@@ -9,7 +9,7 @@ install:
 
   # Upgrade to the latest version of pip to avoid it displaying warnings
   # about it being out of date.
-  - "pip install --disable-pip-version-check --user --upgrade pip"
+  - pip install --disable-pip-version-check --user --upgrade pip
 
   # Create poetry virtualenv
   - pip install poetry --pre
@@ -18,4 +18,4 @@ install:
   - poetry install -v
 
 test_script:
-  - "pytest --cov=poetry --cov-config=.coveragerc tests/"
+  - %PYTHON%\\Scripts\\pytest.exe --cov=poetry tests/
