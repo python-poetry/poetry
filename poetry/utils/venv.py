@@ -203,7 +203,10 @@ class Venv:
 
         try:
             if not self.is_venv():
-                output = subprocess.check_output(cmd, **kwargs)
+                output = subprocess.check_output(
+                    cmd, stderr=subprocess.STDOUT,
+                    **kwargs
+                )
             else:
                 if self._windows:
                     kwargs['shell'] = True
@@ -215,7 +218,10 @@ class Venv:
                     self.unset_env('PYTHONHOME')
                     self.unset_env('__PYVENV_LAUNCHER__')
 
-                    output = subprocess.check_output(cmd, **kwargs)
+                    output = subprocess.check_output(
+                        cmd, stderr=subprocess.STDOUT,
+                        **kwargs
+                    )
         except CalledProcessError as e:
             raise VenvCommandError(e)
 
