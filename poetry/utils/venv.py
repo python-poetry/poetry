@@ -202,6 +202,9 @@ class Venv:
             if shell:
                 cmd = ' '.join(cmd)
 
+            if self._windows:
+                kwargs['shell'] = True
+
             output = subprocess.check_output(
                 cmd, stderr=subprocess.STDOUT,
                 **kwargs
