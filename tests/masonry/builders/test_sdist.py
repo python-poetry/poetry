@@ -8,6 +8,7 @@ from pathlib import Path
 from poetry import Poetry
 from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
+from poetry.packages import Package
 from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency
@@ -36,35 +37,44 @@ def project(name):
 
 
 def test_convert_dependencies():
-    result = SdistBuilder.convert_dependencies([
-        get_dependency('A', '^1.0'),
-        get_dependency('B', '~1.0'),
-        get_dependency('C', '1.2.3'),
-    ])
+    package = Package('foo', '1.2.3')
+    result = SdistBuilder.convert_dependencies(
+        package,
+        [
+            get_dependency('A', '^1.0'),
+            get_dependency('B', '~1.0'),
+            get_dependency('C', '1.2.3'),
+        ]
+    )
     main = [
         'A (>=1.0.0.0,<2.0.0.0)',
         'B (>=1.0.0.0,<1.1.0.0)',
         'C (==1.2.3.0)',
     ]
-    extras = []
+    extras = {}
 
     assert result == (main, extras)
 
-    dependency_with_python = get_dependency('A', '^1.0')
-    dependency_with_python.python_versions = '^3.4'
+    package = Package('foo', '1.2.3')
+    package.extras = {
+        'bar': [get_dependency('A')]
+    }
 
-    result = SdistBuilder.convert_dependencies([
-        dependency_with_python,
-        get_dependency('B', '~1.0'),
-        get_dependency('C', '1.2.3'),
-    ])
+    result = SdistBuilder.convert_dependencies(
+        package,
+        [
+            get_dependency('A', '>=1.2', optional=True),
+            get_dependency('B', '~1.0'),
+            get_dependency('C', '1.2.3'),
+        ]
+    )
     main = [
         'B (>=1.0.0.0,<1.1.0.0)',
         'C (==1.2.3.0)',
     ]
-    extras = [
-        'A (>=1.0.0.0,<2.0.0.0); python_version>="3.4.0.0" and python_version<"4.0.0.0"',
-    ]
+    extras = {
+        'bar': ['A (>=1.2.0.0)']
+    }
 
     assert result == (main, extras)
 
@@ -91,6 +101,11 @@ def test_make_setup():
         'console_scripts': [
             'my-script = my_package:main',
             'my-2nd-script = my_package:main2',
+        ]
+    }
+    assert ns['extras_require'] == {
+        'time': [
+            'pendulum (>=1.4.0.0,<2.0.0.0)'
         ]
     }
 

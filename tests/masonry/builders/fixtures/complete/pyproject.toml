@@ -21,9 +21,13 @@ keywords = ["packaging", "dependency", "poetry"]
 python = "^3.6"
 cleo = "^0.6"
 
+pendulum = { version = "^1.4", optional = true }
+
 [tool.poetry.dev-dependencies]
 pytest = "~3.4"
 
+[tool.poetry.extras]
+time = ["pendulum"]
 
 [tool.poetry.scripts]
 my-script = "my_package:main"

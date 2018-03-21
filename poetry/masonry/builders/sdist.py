@@ -130,7 +130,10 @@ class SdistBuilder(Builder):
         else:
             extra.append("'py_modules': {!r},".format(self._module.name))
 
-        dependencies, extras = self.convert_dependencies(self._package.requires)
+        dependencies, extras = self.convert_dependencies(
+            self._package,
+            self._package.requires
+        )
         if dependencies:
             before.append("install_requires = \\\n{}\n".format(pformat(dependencies)))
             extra.append("'install_requires': install_requires,")
@@ -213,19 +216,23 @@ class SdistBuilder(Builder):
 
     @classmethod
     def convert_dependencies(cls,
+                             package,
                              dependencies: List[Dependency]):
         main = []
-        extras = []
+        extras = defaultdict(list)
 
         for dependency in dependencies:
+            if dependency.is_optional():
+                for extra_name, reqs in package.extras.items():
+                    for req in reqs:
+                        if req.name == dependency.name:
+                            extras[extra_name].append(dependency.to_pep_508())
+                continue
+
             requirement = dependency.to_pep_508()
+            main.append(requirement)
 
-            if ';' in requirement:
-                extras.append(requirement)
-            else:
-                main.append(requirement)
-
-        return main, extras
+        return main, dict(extras)
 
     @classmethod
     def clean_tarinfo(cls, tar_info):

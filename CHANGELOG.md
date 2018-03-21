@@ -9,6 +9,7 @@
 ### Fixed
 
 - Fixed Python version retrieval inside virtualenvs.
+- Fixed optional dependencies being set as required in sdist.
 
 
 ## [0.6.3] - 2018-03-20
