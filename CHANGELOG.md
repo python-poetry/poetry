@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed Python version retrieval inside virtualenvs.
+
+
 ## [0.6.3] - 2018-03-20
 
 ### Fixed

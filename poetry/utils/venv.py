@@ -137,11 +137,14 @@ class Venv:
         if not self.is_venv():
             self._version_info = sys.version_info
         else:
-            output = self.run('python', '--version', shell=True)
+            output = self.run(
+                'python', '-c',
+                '"import sys; print(\'.\'.join([str(s) for s in sys.version_info[:3]]))"',
+                shell=True
+            )
 
-            version = output.split(' ')
             self._version_info = tuple([
-                int(s) for s in version[1].strip().split('.')
+                int(s) for s in output.strip().split('.')
             ])
 
         return self._version_info
@@ -175,7 +178,8 @@ class Venv:
         try:
             value = self.run(
                 'python', '-c',
-                f'"import sysconfig; print(sysconfig.get_config_var(\'{var}\'))"',
+                f'"import sysconfig; '
+                f'print(sysconfig.get_config_var(\'{var}\'))"',
                 shell=True
             ).strip()
         except VenvCommandError as e:
