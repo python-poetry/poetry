@@ -10,6 +10,7 @@
 
 - Fixed Python version retrieval inside virtualenvs.
 - Fixed optional dependencies being set as required in sdist.
+- Fixed `--optional` option in the `add` command not being used.
 
 
 ## [0.6.3] - 2018-03-20

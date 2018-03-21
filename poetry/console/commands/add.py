@@ -53,6 +53,12 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             parser.parse_constraints(constraint)
 
         for name, constraint in requirements.items():
+            if self.option('optional'):
+                constraint = {
+                    'version': constraint,
+                    'optional': True
+                }
+
             poetry_content[section][name] = constraint
 
         # Write new content
