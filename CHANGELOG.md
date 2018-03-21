@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added a `debug:info` command to get information about current environment.
+
 ### Fixed
 
 - Fixed Python version retrieval inside virtualenvs.

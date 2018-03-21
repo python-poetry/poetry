@@ -21,6 +21,7 @@ from .commands import RunCommand
 from .commands import ShowCommand
 from .commands import UpdateCommand
 
+from .commands.debug import DebugInfoCommand
 from .commands.debug import DebugResolveCommand
 
 
@@ -99,6 +100,7 @@ class Application(BaseApplication):
 
         # Debug commands
         commands += [
+            DebugInfoCommand(),
             DebugResolveCommand(),
         ]
 
