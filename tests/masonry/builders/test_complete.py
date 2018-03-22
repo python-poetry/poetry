@@ -99,5 +99,30 @@ Generator: poetry {__version__}
 Root-Is-Purelib: true
 Tag: py3-none-any
 """
+        wheel_data = zip.read('my_package-1.2.3.dist-info/METADATA').decode()
+
+        assert wheel_data == """\
+Metadata-Version: 2.1
+Name: my-package
+Version: 1.2.3
+Summary: Some description.
+Home-page: https://poetry.eustace.io/
+License: MIT
+Keywords: packaging,dependency,poetry
+Author: Sébastien Eustace
+Author-email: sebastien@eustace.io
+Requires-Python: >= 3.6.0.0, < 4.0.0.0
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Provides-Extra: time
+Requires-Dist: cleo (>=0.6.0.0,<0.7.0.0)
+Requires-Dist: pendulum (>=1.4.0.0,<2.0.0.0); extra == "time"
+Description-Content-Type: text/x-rst
+
+My Package
+==========
+
+"""
     finally:
         zip.close()

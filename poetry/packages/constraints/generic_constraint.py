@@ -6,7 +6,12 @@ from poetry.semver.constraints import MultiConstraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 
 
-class PlatformConstraint(BaseConstraint):
+class GenericConstraint(BaseConstraint):
+    """
+    Represents a generic constraint.
+
+    This is particularly useful for platform/system/os/extra constraints.
+    """
 
     OP_EQ = operator.eq
     OP_NE = operator.ne
@@ -22,7 +27,7 @@ class PlatformConstraint(BaseConstraint):
         OP_NE: '!='
     }
 
-    def __init__(self, operator, platform):
+    def __init__(self, operator, version):
         if operator not in self._trans_op_str:
             raise ValueError(
                 f'Invalid operator "{operator}" given, '
@@ -30,8 +35,8 @@ class PlatformConstraint(BaseConstraint):
             )
 
         self._operator = self._trans_op_str[operator]
-        self._string_operator = operator
-        self._platform = platform
+        self._string_operator = self._trans_op_int[self._operator]
+        self._version = version
 
     @property
     def supported_operators(self) -> list:
@@ -46,13 +51,13 @@ class PlatformConstraint(BaseConstraint):
         return self._string_operator
 
     @property
-    def platform(self) -> str:
-        return self._platform
+    def version(self) -> str:
+        return self._version
 
     def matches(self, provider):
-        if not isinstance(provider, (PlatformConstraint, EmptyConstraint)):
+        if not isinstance(provider, (GenericConstraint, EmptyConstraint)):
             raise ValueError(
-                'Platform constraints can only be compared with each other'
+                'Generic constraints can only be compared with each other'
             )
 
         if isinstance(provider, EmptyConstraint):
@@ -67,13 +72,13 @@ class PlatformConstraint(BaseConstraint):
             is_equal_op and is_provider_equal_op
             or is_non_equal_op and is_provider_non_equal_op
         ):
-            return self._platform == provider.platform
+            return self._version == provider.version
 
         if (
             is_equal_op and is_provider_non_equal_op
             or is_non_equal_op and is_provider_equal_op
         ):
-            return self._platform != provider.platform
+            return self._version != provider.version
 
         return False
 
@@ -125,10 +130,10 @@ class PlatformConstraint(BaseConstraint):
         # Basic Comparators
         m = re.match('^(!=|==?)?\s*(.*)', constraint)
         if m:
-            return PlatformConstraint(m.group(1) or '=', m.group(2)),
+            return GenericConstraint(m.group(1) or '=', m.group(2)),
 
         raise ValueError(
-            'Could not parse platform constraint: {}'.format(constraint)
+            'Could not parse generic constraint: {}'.format(constraint)
         )
 
     def __str__(self):
@@ -140,8 +145,8 @@ class PlatformConstraint(BaseConstraint):
 
         return '{}{}'.format(
             op,
-            self._platform
+            self._version
         )
 
     def __repr__(self):
-        return '<PlatformConstraint \'{}\'>'.format(str(self))
+        return '<GenericConstraint \'{}\'>'.format(str(self))

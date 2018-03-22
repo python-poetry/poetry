@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed handling of extras in wheels metadata.
+
+
 ## [0.6.4] - 2018-03-21
 
 ### Added

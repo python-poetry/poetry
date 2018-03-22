@@ -7,7 +7,7 @@ from poetry.semver.helpers import parse_stability
 from poetry.semver.version_parser import VersionParser
 from poetry.version import parse as parse_version
 
-from.constraints.platform_constraint import PlatformConstraint
+from .constraints.generic_constraint import GenericConstraint
 from .dependency import Dependency
 from .vcs_dependency import VCSDependency
 
@@ -182,7 +182,7 @@ class Package:
     @platform.setter
     def platform(self, value: str):
         self._platform = value
-        self._platform_constraint = PlatformConstraint.parse(value)
+        self._platform_constraint = GenericConstraint.parse(value)
 
     @property
     def platform_constraint(self):

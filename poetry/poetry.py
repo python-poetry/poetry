@@ -107,11 +107,20 @@ class Poetry:
             for name, constraint in local_config['dev-dependencies'].items():
                 package.add_dependency(name, constraint, category='dev')
 
-        if 'extras' in local_config:
-            for extra_name, requirements in local_config['extras'].items():
-                package.extras[extra_name] = [
-                    Dependency(req, '*') for req in requirements
-                ]
+        extras = local_config.get('extras', {})
+        for extra_name, requirements in extras.items():
+            package.extras[extra_name] = []
+
+            # Checking for dependency
+            for req in requirements:
+                req = Dependency(req, '*')
+
+                for dep in package.requires:
+                    if dep.name == req.name:
+                        dep.in_extras.append(extra_name)
+                        package.extras[extra_name].append(dep)
+
+                        break
 
         if 'build' in local_config:
             package.build = local_config['build']

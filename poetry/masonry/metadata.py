@@ -28,7 +28,7 @@ class Metadata:
     maintainer_email = None
     requires_python = None
     requires_external = ()
-    requires_dist = ()
+    requires_dist = []
     provides_dist = ()
     obsoletes_dist = ()
     project_urls = ()
@@ -59,6 +59,7 @@ class Metadata:
         meta.maintainer = meta.author
         meta.maintainer_email = meta.author_email
         meta.requires_python = package.python_constraint
+
         meta.requires_dist = [d.to_pep_508() for d in package.requires]
 
         # Requires python
@@ -73,5 +74,6 @@ class Metadata:
             else:
                 meta.description_content_type = 'text/plain'
 
-        # TODO: Provides extra
+        meta.provides_extra = [e for e in package.extras]
+
         return meta

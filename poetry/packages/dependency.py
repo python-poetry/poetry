@@ -6,7 +6,7 @@ from poetry.semver.constraints import MultiConstraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 
-from .constraints.platform_constraint import PlatformConstraint
+from .constraints.generic_constraint import GenericConstraint
 
 
 class Dependency:
@@ -40,6 +40,7 @@ class Dependency:
         self._platform_constraint = EmptyConstraint()
 
         self._extras = []
+        self._in_extras = []
 
     @property
     def name(self):
@@ -81,7 +82,7 @@ class Dependency:
     @platform.setter
     def platform(self, value: str):
         self._platform = value
-        self._platform_constraint = PlatformConstraint.parse(value)
+        self._platform_constraint = GenericConstraint.parse(value)
 
     @property
     def platform_constraint(self):
@@ -90,6 +91,10 @@ class Dependency:
     @property
     def extras(self) -> list:
         return self._extras
+
+    @property
+    def in_extras(self) -> list:
+        return self._in_extras
 
     def allows_prereleases(self):
         return self._allows_prereleases
@@ -110,7 +115,7 @@ class Dependency:
             and (not package.is_prerelease() or self.allows_prereleases())
         )
 
-    def to_pep_508(self) -> str:
+    def to_pep_508(self, with_extras=True) -> str:
         requirement = f'{self.pretty_name}'
 
         if isinstance(self.constraint, MultiConstraint):
@@ -127,31 +132,50 @@ class Dependency:
         if self.python_versions != '*':
             python_constraint = self.python_constraint
 
-            markers.append(self._create_nested_marker('python_version', python_constraint))
+            markers.append(
+                self._create_nested_marker('python_version', python_constraint)
+            )
+
+        in_extras = ' || '.join(self._in_extras)
+        if in_extras and with_extras:
+            markers.append(
+                self._create_nested_marker(
+                    'extra', GenericConstraint.parse(in_extras)
+                )
+            )
 
         if markers:
-            requirement += f'; {" and ".join(markers)}'
+            if len(markers) > 1:
+                markers = ['({})'.format(m) for m in markers]
+                requirement += f'; {" and ".join(markers)}'
+            else:
+                requirement += f'; {markers[0]}'
 
         return requirement
-
-    @classmethod
-    def from_pep_508(cls):
-        return
 
     def _create_nested_marker(self, name, constraint):
         if isinstance(constraint, MultiConstraint):
             parts = []
             for c in constraint.constraints:
-                parts.append(self._create_nested_marker(name, c))
+                multi = False
+                if isinstance(c, MultiConstraint):
+                    multi = True
+
+                parts.append((multi, self._create_nested_marker(name, c)))
 
             glue = ' and '
             if constraint.is_disjunctive():
-                parts = [f'({part})' for part in parts]
+                parts = [
+                    f'({part[1]})' if part[0] else f'{part[1]}'
+                    for part in parts
+                ]
                 glue = ' or '
+            else:
+                parts = [part[1] for part in parts]
 
             marker = glue.join(parts)
         else:
-            marker = f'{name}{constraint.string_operator}"{constraint.version}"'
+            marker = f'{name} {constraint.string_operator} "{constraint.version}"'
 
         return marker
 

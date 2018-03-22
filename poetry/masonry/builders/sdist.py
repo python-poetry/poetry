@@ -226,7 +226,9 @@ class SdistBuilder(Builder):
                 for extra_name, reqs in package.extras.items():
                     for req in reqs:
                         if req.name == dependency.name:
-                            extras[extra_name].append(dependency.to_pep_508())
+                            extras[extra_name].append(
+                                dependency.to_pep_508(with_extras=False)
+                            )
                 continue
 
             requirement = dependency.to_pep_508()

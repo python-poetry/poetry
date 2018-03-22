@@ -311,14 +311,15 @@ class WheelBuilder(Builder):
         for classifier in self._meta.classifiers:
             fp.write(f'Classifier: {classifier}\n')
 
+        for extra in self._meta.provides_extra:
+            fp.write(f'Provides-Extra: {extra}\n')
+
         for dep in self._meta.requires_dist:
             fp.write(f'Requires-Dist: {dep}\n')
 
         if self._meta.description_content_type:
             fp.write(f'Description-Content-Type: '
                      f'{self._meta.description_content_type}\n')
-
-        # TODO: Provides extra
 
         if self._meta.description is not None:
             fp.write('\n' + self._meta.description + '\n')
