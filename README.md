@@ -124,7 +124,7 @@ dependency management, packaging and publishing.
 It takes inspiration in tools that exist in other languages, like `composer` (PHP) or `cargo` (Rust).
 
 And, finally, there is no reliable tool to properly resolves dependencies in Python, so I started `poetry`
-to bring an exhaustive depency resolver to the Python community.
+to bring an exhaustive dependency resolver to the Python community.
 
 ### What about Pipenv?
 
@@ -172,7 +172,7 @@ When you specify a package to the `install` command it will add it as a wildcard
 dependency. This means that **any** version of this package can be installed which
 can lead to compatibility issues.
 
-Also, you have to explicitely tell it to not update the locked packages when you
+Also, you have to explicitly tell it to not update the locked packages when you
 installed new ones. This should be the default.
 
 #### Remove command
