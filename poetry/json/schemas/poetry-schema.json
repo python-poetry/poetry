@@ -61,7 +61,7 @@
                 }
             },
             "patternProperties": {
-                "^[a-zA-Z-_0-9]+$": {
+                "^[a-zA-Z-_.0-9]+$": {
                     "oneOf": [
                         {
                             "$ref": "#/definitions/dependency"
@@ -81,7 +81,7 @@
             "type": "object",
             "description": "This is a hash of package name (keys) and version constraints (values) that this package requires for developing it (testing tools and such).",
             "patternProperties": {
-                "^[a-zA-Z-_0-9]+$": {
+                "^[a-zA-Z-_.0-9]+$": {
                     "oneOf": [
                         {
                             "$ref": "#/definitions/dependency"
@@ -100,7 +100,7 @@
         "extras": {
             "type": "object",
             "patternProperties": {
-                "^[a-zA-Z-_0-9]+$": {
+                "^[a-zA-Z-_.0-9]+$": {
                     "type": "array",
                     "items": {
                         "type": "string"
