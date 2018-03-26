@@ -29,7 +29,7 @@ pyrsistent = "^0.14.2"
 pyparsing = "^2.2"
 
 [tool.poetry.dev-dependencies]
-pytest = "~3.4"
+pytest = "^3.4"
 pytest-cov = "^2.5"
 mkdocs = "^0.17.3"
 pymdown-extensions = "^4.9"
