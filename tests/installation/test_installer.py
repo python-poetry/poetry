@@ -115,8 +115,8 @@ def venv():
 
 
 @pytest.fixture()
-def installer(package, pool, locker, venv):
-    return Installer(NullIO(), venv, package, locker, pool)
+def installer(package, pool, locker, venv, installed):
+    return Installer(NullIO(), venv, package, locker, pool, installed=installed)
 
 
 def fixture(name):
@@ -461,7 +461,7 @@ def test_run_installs_extras_with_deps_if_requested(installer, locker, repo, pac
     assert len(installer.installs) == 4  # A, B, C, D
 
 
-def test_run_installs_extras_with_deps_if_requested_locked(installer, locker, repo, package, installed):
+def test_run_installs_extras_with_deps_if_requested_locked(installer, locker, repo, package):
     locker.locked(True)
     locker.mock_lock_data(fixture('extras-with-dependencies'))
     package.extras['foo'] = [

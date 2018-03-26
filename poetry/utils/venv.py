@@ -36,7 +36,6 @@ class Venv:
         if self._venv:
             self._venv = Path(self._venv)
 
-
         self._windows = sys.platform == 'win32'
 
         self._bin_dir = None

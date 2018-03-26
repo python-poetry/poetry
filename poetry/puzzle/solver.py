@@ -18,9 +18,10 @@ from .ui import UI
 
 class Solver:
 
-    def __init__(self, package, pool, locked, io):
+    def __init__(self, package, pool, installed, locked, io):
         self._package = package
         self._pool = pool
+        self._installed = installed
         self._locked = locked
         self._io = io
 
@@ -79,7 +80,7 @@ class Solver:
         operations = []
         for package in packages:
             installed = False
-            for pkg in self._locked.packages:
+            for pkg in self._installed.packages:
                 if package.name == pkg.name:
                     installed = True
                     # Checking version
@@ -100,7 +101,11 @@ class Solver:
                     break
 
             if remove:
-                operations.append(Uninstall(pkg))
+                for locked in self._locked.packages:
+                    if locked.name == pkg.name:
+                        operations.append(Uninstall(pkg))
+
+                        break
 
         return list(reversed(operations))
 

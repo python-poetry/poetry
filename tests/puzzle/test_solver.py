@@ -30,6 +30,11 @@ def installed():
 
 
 @pytest.fixture()
+def locked():
+    return Repository()
+
+
+@pytest.fixture()
 def repo():
     return Repository()
 
@@ -40,8 +45,8 @@ def pool(repo):
 
 
 @pytest.fixture()
-def solver(package, pool, installed, io):
-    return Solver(package, pool, installed, io)
+def solver(package, pool, installed, locked, io):
+    return Solver(package, pool, installed, locked, io)
 
 
 def check_solver_result(ops, expected):
@@ -77,9 +82,9 @@ def test_solver_install_single(solver, repo):
     ])
 
 
-def test_solver_remove_if_not_installed(solver, installed):
+def test_solver_remove_if_no_longer_locked(solver, locked):
     package_a = get_package('A', '1.0')
-    installed.add_package(package_a)
+    locked.add_package(package_a)
 
     ops = solver.solve([])
 

@@ -28,7 +28,8 @@ class Installer:
                  venv,
                  package: Package,
                  locker: Locker,
-                 pool: Pool):
+                 pool: Pool,
+                 installed: InstalledRepository = None):
         self._io = io
         self._venv = venv
         self._package = package
@@ -47,6 +48,7 @@ class Installer:
         self._extras = []
 
         self._installer = self._get_installer()
+        self._installed_repository = installed or self._get_installed()
 
     @property
     def installer(self):
@@ -116,11 +118,10 @@ class Installer:
 
     def _do_install(self, local_repo):
         locked_repository = Repository()
-        # initialize locked repo if we are installing from lock
-        if not self._update or (self._update and self._locker.is_locked()):
-            locked_repository = self._locker.locked_repository(True)
-
         if self._update:
+            if self._locker.is_locked():
+                locked_repository = self._locker.locked_repository(True)
+
             # Checking extras
             for extra in self._extras:
                 if extra not in self._package.extras:
@@ -152,6 +153,7 @@ class Installer:
             solver = Solver(
                 self._package,
                 self._pool,
+                self._installed_repository,
                 locked_repository,
                 self._io
             )
@@ -162,6 +164,11 @@ class Installer:
             ops = solver.solve(request, fixed=fixed)
         else:
             self._io.writeln('<info>Installing dependencies from lock file</>')
+
+            locked_repository = self._locker.locked_repository(
+                self.is_dev_mode()
+            )
+
             if not self._locker.is_fresh():
                 self._io.writeln(
                     '<warning>'
@@ -342,7 +349,7 @@ class Installer:
     def _get_operations_from_lock(self,
                                   locked_repository: Repository
                                   ) -> List[Operation]:
-        installed_repo = InstalledRepository.load(self._venv)
+        installed_repo = self._installed_repository
         ops = []
 
         extra_packages = [
@@ -460,3 +467,6 @@ class Installer:
 
     def _get_installer(self) -> BaseInstaller:
         return PipInstaller(self._venv, self._io)
+
+    def _get_installed(self) -> InstalledRepository:
+        return InstalledRepository.load(self._venv)
