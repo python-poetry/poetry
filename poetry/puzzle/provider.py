@@ -33,6 +33,8 @@ class Provider(SpecificationProvider):
         self._package = package
         self._pool = pool
         self._python_constraint = package.python_constraint
+        self._base_dg = DependencyGraph()
+        self._search_for = {}
 
     @property
     def pool(self) -> Pool:
@@ -59,6 +61,9 @@ class Provider(SpecificationProvider):
         The specifications in the returned list will be considered in reverse
         order, so the latest version ought to be last.
         """
+        if dependency in self._search_for:
+            return self._search_for[dependency]
+
         if dependency.is_vcs():
             return self.search_for_vcs(dependency)
 
@@ -76,7 +81,9 @@ class Provider(SpecificationProvider):
             )
         )
 
-        return packages
+        self._search_for[dependency] = packages
+
+        return self._search_for[dependency]
 
     def search_for_vcs(self, dependency: VCSDependency) -> List[Package]:
         """
@@ -190,6 +197,7 @@ class Provider(SpecificationProvider):
                           conflicts: Dict[str, List[Conflict]]):
         return sorted(dependencies, key=lambda d: [
             0 if activated.vertex_named(d.name).payload else 1,
+            0 if activated.vertex_named(d.name).root else 1,
             0 if d.allows_prereleases() else 1,
             0 if d.name in conflicts else 1,
             0 if activated.vertex_named(d.name).payload else len(self.search_for(d))

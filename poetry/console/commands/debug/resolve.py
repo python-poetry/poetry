@@ -43,6 +43,7 @@ class DebugResolveCommand(Command):
             self.poetry.package,
             self.poetry.pool,
             Repository(),
+            Repository(),
             self.output
         )
 

@@ -1,5 +1,4 @@
 from cleo.styles import CleoStyle
-from cleo.helpers import ProgressIndicator
 from poetry.mixology.contracts import UI as BaseUI
 
 

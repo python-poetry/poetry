@@ -16,7 +16,6 @@ from .dependency_graph import DependencyGraph
 from .helpers import flat_map
 from .possibility_set import PossibilitySet
 from .state import DependencyState
-from .state import ResolutionState
 from .unwind_details import UnwindDetails
 from .utils import unique
 

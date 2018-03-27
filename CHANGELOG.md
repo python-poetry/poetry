@@ -5,6 +5,7 @@
 ### Changed
 
 - Improved dependency resolution to avoid unnecessary operations.
+- Improved dependency resolution speed.
 
 
 ## [0.6.5] - 2018-03-22
