@@ -6,11 +6,14 @@
 
 - Added compatibility with Python 3.4 and 3.5.
 
-
 ### Changed
 
 - Improved dependency resolution to avoid unnecessary operations.
 - Improved dependency resolution speed.
+
+### Fixed
+
+- Fixed handling of markers with the `in` operator.
 
 
 ## [0.6.5] - 2018-03-22

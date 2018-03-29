@@ -98,6 +98,22 @@ def dependency_from_pep_508(name):
                     op = ''
                 elif op == '!=':
                     version += '.*'
+                elif op == 'in':
+                    versions = []
+                    for v in version.split(' '):
+                        split = v.split('.')
+                        if len(split) in [1, 2]:
+                            split.append('*')
+                            op = ''
+                        else:
+                            op = '=='
+
+                        versions.append(op + '.'.join(split))
+
+                    if versions:
+                        ands.append(' || '.join(versions))
+
+                    continue
 
                 ands.append('{}{}'.format(op, version))
 
@@ -112,6 +128,15 @@ def dependency_from_pep_508(name):
             for op, platform in or_:
                 if op == '==':
                     op = ''
+                elif op == 'in':
+                    platforms = []
+                    for v in platform.split(' '):
+                        platforms.append(v)
+
+                    if platforms:
+                        ands.append(' || '.join(platforms))
+
+                    continue
 
                 ands.append('{}{}'.format(op, platform))
 

@@ -96,3 +96,27 @@ def test_dependency_from_pep_508_complex():
     assert dep.extras == ['foo']
     assert dep.python_versions == '>=2.7 !=3.2.*'
     assert dep.platform == 'win32 || darwin'
+
+
+def test_dependency_python_version_in():
+    name = (
+        'requests (==2.18.0); '
+        'python_version in \'3.3 3.4 3.5\''
+    )
+    dep = dependency_from_pep_508(name)
+
+    assert dep.name == 'requests'
+    assert str(dep.constraint) == '== 2.18.0.0'
+    assert dep.python_versions == '3.3.* || 3.4.* || 3.5.*'
+
+
+def test_dependency_platform_in():
+    name = (
+        'requests (==2.18.0); '
+        'sys_platform in \'win32 darwin\''
+    )
+    dep = dependency_from_pep_508(name)
+
+    assert dep.name == 'requests'
+    assert str(dep.constraint) == '== 2.18.0.0'
+    assert dep.platform == 'win32 || darwin'
