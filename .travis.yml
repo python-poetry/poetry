@@ -1,6 +1,8 @@
 language: python
 
 python:
+  - "3.4"
+  - "3.5"
   - "3.6"
 
 cache:
@@ -9,7 +11,7 @@ cache:
     - $HOME/.cache/pypoetry
 
 install:
-  - pip install poetry
+  - pip install poetry --pre
   - poetry install
 
 script: pytest -q tests/
