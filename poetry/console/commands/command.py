@@ -1,5 +1,4 @@
 from cleo import Command as BaseCommand
-from cleo.inputs import ListInput
 
 from poetry.poetry import Poetry
 

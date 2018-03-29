@@ -84,14 +84,14 @@ class Builder:
                     continue
 
                 self._io.writeln(
-                    f' - Adding: <comment>{str(file)}</comment>',
+                    ' - Adding: <comment>{}</comment>'.format(str(file)),
                     verbosity=self._io.VERBOSITY_VERY_VERBOSE
                 )
                 to_add.append(file)
 
         # Include project files
         self._io.writeln(
-            f' - Adding: <comment>pyproject.toml</comment>',
+            ' - Adding: <comment>pyproject.toml</comment>',
             verbosity=self._io.VERBOSITY_VERY_VERBOSE
         )
         to_add.append(Path('pyproject.toml'))
@@ -102,7 +102,9 @@ class Builder:
             readme = self._path / self._poetry.config['readme']
             if readme.exists():
                 self._io.writeln(
-                    f' - Adding: <comment>{readme.relative_to(self._path)}</comment>',
+                    ' - Adding: <comment>{}</comment>'.format(
+                        readme.relative_to(self._path)
+                    ),
                     verbosity=self._io.VERBOSITY_VERY_VERBOSE
                 )
                 to_add.append(readme.relative_to(self._path))
@@ -119,12 +121,15 @@ class Builder:
 
         # Scripts -> Entry points
         for name, ep in self._poetry.config.get('scripts', {}).items():
-            result['console_scripts'].append(f'{name} = {ep}')
+            result['console_scripts'].append('{} = {}'.format(name, ep))
 
         # Plugins -> entry points
         for groupname, group in self._poetry.config.get('plugins', {}).items():
             for name, ep in sorted(group.items()):
-                result[groupname].append(f'{name} = {ep}')
+                result[groupname].append('{} = {}'.format(name, ep))
+
+        for groupname in result:
+            result[groupname] = sorted(result[groupname])
 
         return dict(result)
 
@@ -152,7 +157,9 @@ class Builder:
 
         for version in sorted(self.AVAILABLE_PYTHONS):
             if python_constraint.matches(Constraint('=', version)):
-                classifiers.append(f'Programming Language :: Python :: {version}')
+                classifiers.append(
+                    'Programming Language :: Python :: {}'.format(version)
+                )
 
         return classifiers
 

@@ -66,4 +66,4 @@ class VersionSelector(object):
         else:
             return pretty_version
 
-        return f'^{version}'
+        return '^{}'.format(version)

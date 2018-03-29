@@ -120,9 +120,10 @@ def installer(package, pool, locker, venv, installed):
 
 
 def fixture(name):
-    file = Path(__file__).parent / 'fixtures' / f'{name}.test'
+    file = Path(__file__).parent / 'fixtures' / '{}.test'.format(name)
 
-    return toml.loads(file.read_text())
+    with file.open() as f:
+        return toml.loads(f.read())
 
 
 def test_run_no_dependencies(installer, locker):

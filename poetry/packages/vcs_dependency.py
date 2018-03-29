@@ -60,7 +60,7 @@ class VCSDependency(Dependency):
             what = 'rev'
             version = self._rev
 
-        return f'{what} {version}'
+        return '{} {}'.format(what, version)
 
     def is_vcs(self) -> bool:
         return True

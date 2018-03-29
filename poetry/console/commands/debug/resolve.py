@@ -55,8 +55,12 @@ class DebugResolveCommand(Command):
 
         for op in ops:
             package = op.package
-            self.line(f'  - <info>{package.name}</info> '
-                      f'(<comment>{package.version}</comment>)')
+            self.line(
+                '  - <info>{}</info> (<comment>{}</comment>)'
+                .format(
+                    package.name, package.version
+                )
+            )
 
     def _determine_requirements(self, requires: List[str]) -> List[str]:
         if not requires:
@@ -68,7 +72,9 @@ class DebugResolveCommand(Command):
             if 'version' not in requirement:
                 requirement['version'] = '*'
 
-            result.append(f'{requirement["name"]} {requirement["version"]}')
+            result.append(
+                '{} {}'.format(requirement['name'], requirement['version'])
+            )
 
         return result
 

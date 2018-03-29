@@ -93,9 +93,13 @@ class Provider(SpecificationProvider):
         and get the information we need by checking out the specified reference.
         """
         if dependency.vcs != 'git':
-            raise ValueError(f'Unsupported VCS dependency {dependency.vcs}')
+            raise ValueError(
+                'Unsupported VCS dependency {}'.format(dependency.vcs)
+            )
 
-        tmp_dir = Path(mkdtemp(prefix=f'pypoetry-git-{dependency.name}'))
+        tmp_dir = Path(
+            mkdtemp(prefix='pypoetry-git-{}'.format(dependency.name))
+        )
 
         try:
             git = Git()

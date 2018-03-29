@@ -99,8 +99,8 @@ def test_make_setup():
     ]
     assert ns['entry_points'] == {
         'console_scripts': [
-            'my-script = my_package:main',
             'my-2nd-script = my_package:main2',
+            'my-script = my_package:main',
         ]
     }
     assert ns['extras_require'] == {

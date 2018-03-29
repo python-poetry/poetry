@@ -42,7 +42,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         for name in packages:
             for key in poetry_content[section]:
                 if key.lower() == name.lower():
-                    raise ValueError(f'Package {name} is already present')
+                    raise ValueError(
+                        'Package {} is already present'.format(name)
+                    )
 
         requirements = self._determine_requirements(packages)
         requirements = self._format_requirements(requirements)
@@ -118,7 +120,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 requirement['name'] = name
 
                 self.line(
-                    f'Using version <info>{version}</> for <info>{name}</>'
+                    'Using version <info>{}</> for <info>{}</>'
+                    .format(version, name)
                 )
             else:
                 # check that the specified version/constraint exists
@@ -129,7 +132,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
                 requirement['name'] = name
 
-            result.append(f'{requirement["name"]} {requirement["version"]}')
+            result.append(
+                '{} {}'.format(requirement['name'], requirement['version'])
+            )
 
         return result
 
@@ -143,7 +148,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         if not package:
             # TODO: find similar
             raise ValueError(
-                f'Could not find a matching version of package {name}'
+                'Could not find a matching version of package {}'.format(name)
             )
 
         return (

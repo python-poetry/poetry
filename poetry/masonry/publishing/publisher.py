@@ -44,15 +44,20 @@ class Publisher:
     def publish(self, repository_name):
         if repository_name:
             self._io.writeln(
-                f'Publishing <info>{self._package.pretty_name}</info> '
-                f'(<comment>{self._package.pretty_version}</comment>) '
-                f'to <fg=cyan>{repository_name}</>'
+                'Publishing <info>{}</info> (<comment>{}</comment>) '
+                'to <fg=cyan>{}</>'.format(
+                    self._package.pretty_name,
+                    self._package.pretty_version,
+                    repository_name
+                )
             )
         else:
             self._io.writeln(
-                f'Publishing <info>{self._package.pretty_name}</info> '
-                f'(<comment>{self._package.pretty_version}</comment>) '
-                f'to <fg=cyan>PyPI</>'
+                'Publishing <info>{}</info> (<comment>{}</comment>) '
+                'to <fg=cyan>PyPI</>'.format(
+                    self._package.pretty_name,
+                    self._package.pretty_version
+                )
             )
 
         if not repository_name:
@@ -76,7 +81,7 @@ class Publisher:
                 or repository_name not in config['repositories']
             ):
                 raise RuntimeError(
-                    f'Repository {repository_name} is not defined'
+                    'Repository {} is not defined'.format(repository_name)
                 )
 
             url = config['repositories'][repository_name]['url']
@@ -119,7 +124,9 @@ class Publisher:
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / 'dist'
-        file = dist / f'{self._package.name}-{self._package.version}.tar.gz'
+        file = dist / '{}-{}.tar.gz'.format(
+            self._package.name, self._package.version
+        )
 
         if not file.exists():
             raise RuntimeError(
@@ -240,12 +247,22 @@ class Publisher:
 
     def _upload(self, session, url):
         dist = self._poetry.file.parent / 'dist'
-        packages = dist.glob(f'{self._package.name}-{self._package.version}*')
+        packages = dist.glob(
+            '{}-{}*'.format(self._package.name, self._package.version)
+        )
         files = (
             i for i in packages if (
-                i.match(f'{self._package.name}-{self._package.version}-*.whl')
+                i.match(
+                    '{}-{}-*.whl'.format(
+                        self._package.name, self._package.version
+                    )
+                )
                 or
-                i.match(f'{self._package.name}-{self._package.version}.tar.gz')
+                i.match(
+                    '{}-{}.tar.gz'.format(
+                        self._package.name, self._package.version
+                    )
+                )
             )
         )
 
@@ -253,15 +270,6 @@ class Publisher:
             # TODO: Check existence
 
             resp = self._upload_file(session, url, file)
-
-            # Bug 92. If we get a redirect we should abort because something seems
-            # funky. The behaviour is not well defined and redirects being issued
-            # by PyPI should never happen in reality. This should catch malicious
-            # redirects as well.
-            if resp.is_redirect:
-                raise RuntimeError(
-                    ('"{0}" attempted to redirect to "{1}" during upload.'
-                     ' Aborting...').format(url, resp.headers["location"]))
 
             resp.raise_for_status()
 
@@ -328,7 +336,7 @@ class Publisher:
             return 'sdist'
 
         raise ValueError(
-            f'Unknown distribution format {"".join(exts)}'
+            'Unknown distribution format {}'.format(''.join(exts))
         )
 
     @staticmethod
@@ -344,5 +352,5 @@ class Publisher:
     @staticmethod
     def _make_user_agent_string():
         return user_agent(
-            'twine', __version__,
+            'poetry', __version__,
         )

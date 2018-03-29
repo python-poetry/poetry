@@ -30,8 +30,11 @@ class GenericConstraint(BaseConstraint):
     def __init__(self, operator, version):
         if operator not in self._trans_op_str:
             raise ValueError(
-                f'Invalid operator "{operator}" given, '
-                f'expected one of: {", ".join(self.supported_operators)}'
+                'Invalid operator "{}" given, '
+                'expected one of: {}'
+                .format(
+                    operator, ', '.join(self.supported_operators)
+                )
             )
 
         self._operator = self._trans_op_str[operator]

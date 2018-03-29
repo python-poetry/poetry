@@ -28,10 +28,12 @@ def normalize_version(version):
         version
     )
     if m:
-        version = f'{m.group(1)}' \
-                  f'{m.group(2) if m.group(2) else ".0"}' \
-                  f'{m.group(3) if m.group(3) else ".0"}' \
-                  f'{m.group(4) if m.group(4) else ".0"}'
+        version = '{}{}{}{}'.format(
+            m.group(1),
+            m.group(2) if m.group(2) else '.0',
+            m.group(3) if m.group(3) else '.0',
+            m.group(4) if m.group(4) else '.0',
+        )
         index = 5
     else:
         # Some versions have the form M.m.p-\d+
@@ -43,10 +45,12 @@ def normalize_version(version):
             version
         )
         if m:
-            version = f'{m.group(1)}' \
-                      f'{m.group(2) if m.group(2) else ".0"}' \
-                      f'{m.group(3) if m.group(3) else ".0"}' \
-                      f'{m.group(4) if m.group(4) else ".0"}'
+            version = '{}{}{}{}'.format(
+                m.group(1),
+                m.group(2) if m.group(2) else '.0',
+                m.group(3) if m.group(3) else '.0',
+                m.group(4) if m.group(4) else '.0',
+            )
             index = 5
         else:
             # Match date(time) based versioning
@@ -69,15 +73,16 @@ def normalize_version(version):
                 # stable releases
                 return version
 
-            version = f'{version}' \
-                      f'-{_expand_stability(m.group(index))}'
+            version = '{}-{}'.format(version, _expand_stability(m.group(index)))
 
             if m.group(index + 1):
-                version = f'{version}.{m.group(index + 1).lstrip(".-")}'
+                version = '{}.{}'.format(
+                    version, m.group(index + 1).lstrip('.-')
+                )
 
         return version
 
-    raise ValueError(f'Invalid version string "{version}"')
+    raise ValueError('Invalid version string "{}"'.format(version))
 
 
 def normalize_stability(stability: str) -> str:

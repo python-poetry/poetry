@@ -62,13 +62,13 @@ class Poetry:
 
         if not poetry_file.exists():
             raise RuntimeError(
-                f'Poetry could not find a pyproject.toml file in {cwd}'
+                'Poetry could not find a pyproject.toml file in {}'.format(cwd)
             )
 
         local_config = TomlFile(poetry_file.as_posix()).read(True)
         if 'tool' not in local_config or 'poetry' not in local_config['tool']:
             raise RuntimeError(
-                f'[tool.poetry] section not found in {poetry_file.name}'
+                '[tool.poetry] section not found in {}'.format(poetry_file.name)
             )
         local_config = local_config['tool']['poetry']
 
@@ -145,7 +145,8 @@ class Poetry:
             / 'json' / 'schemas' / 'poetry-schema.json'
         )
 
-        schema = json.loads(schema.read_text())
+        with schema.open() as f:
+            schema = json.loads(f.read())
 
         try:
             jsonschema.validate(
@@ -155,7 +156,10 @@ class Poetry:
         except jsonschema.ValidationError as e:
             message = e.message
             if e.path:
-                message = f"[{'.'.join(e.path)}] {message}"
+                message = "[{}] {}".format(
+                    '.'.join(e.path),
+                    message
+                )
 
             raise InvalidProjectFile(message)
 

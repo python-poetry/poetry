@@ -46,14 +46,14 @@ class WilcardConstraint(Constraint):
                 self._constraint = Constraint('>=', high_version)
             else:
                 self._constraint = parser.parse_constraints(
-                    f'<{low_version} || >={high_version}'
+                    '<{} || >={}'.format(low_version, high_version)
                 )
         else:
             if low_version == '0.0.0.0':
                 self._constraint = Constraint('<', high_version)
             else:
                 self._constraint = parser.parse_constraints(
-                    f'>={low_version},<{high_version}'
+                    '>={},<{}'.format(low_version, high_version)
                 )
 
     @property

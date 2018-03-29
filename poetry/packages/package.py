@@ -207,7 +207,7 @@ class Package:
 
             if python_constraint.matches(constraint):
                 classifiers.append(
-                    f'Programming Language :: Python :: {version}'
+                    'Programming Language :: Python :: {}'.format(version)
                 )
 
         return classifiers

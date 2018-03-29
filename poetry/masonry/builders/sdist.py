@@ -59,14 +59,17 @@ class SdistBuilder(Builder):
         if not target_dir.exists():
             target_dir.mkdir(parents=True)
 
-        target = target_dir / f'{self._package.pretty_name}' \
-                              f'-{self._package.version}.tar.gz'
+        target = target_dir / '{}-{}.tar.gz'.format(
+            self._package.pretty_name, self._package.version
+        )
         gz = GzipFile(target.as_posix(), mode='wb')
         tar = tarfile.TarFile(target.as_posix(), mode='w', fileobj=gz,
                               format=tarfile.PAX_FORMAT)
 
         try:
-            tar_dir = f'{self._package.pretty_name}-{self._package.version}'
+            tar_dir = '{}-{}'.format(
+                self._package.pretty_name, self._package.version
+            )
 
             files_to_add = self.find_files_to_add(exclude_build=False)
 
@@ -74,7 +77,7 @@ class SdistBuilder(Builder):
                 path = self._path / relpath
                 tar_info = tar.gettarinfo(
                     str(path),
-                    arcname=pjoin(tar_dir, relpath)
+                    arcname=pjoin(tar_dir, str(relpath))
                 )
                 tar_info = self.clean_tarinfo(tar_info)
 
@@ -105,7 +108,7 @@ class SdistBuilder(Builder):
             tar.close()
             gz.close()
 
-        self._io.writeln(f' - Built <fg=cyan>{target.name}</>')
+        self._io.writeln(' - Built <fg=cyan>{}</>'.format(target.name))
 
         return target
 
@@ -115,7 +118,7 @@ class SdistBuilder(Builder):
         # If we have a build script, use it
         if self._package.build:
             after += [
-                f'from {self._package.build.split(".")[0]} import *',
+                'from {} import *'.format(self._package.build.split('.')[0]),
                 'build(setup_kwargs)'
             ]
 

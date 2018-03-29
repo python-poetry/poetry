@@ -42,8 +42,11 @@ class ResolutionState:
         return cls(None, [], DependencyGraph(), None, None, 0, {}, [])
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} {self._name} ' \
-               f'({str(self.requirement)})>'
+        return '<{} {} ({})>'.format(
+            self.__class__.__name__,
+            self._name,
+            str(self.requirement)
+        )
 
 
 class PossibilityState(ResolutionState):

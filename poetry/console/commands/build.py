@@ -17,8 +17,10 @@ class BuildCommand(VenvCommand):
             fmt = self.option('format')
 
         package = self.poetry.package
-        self.line(f'Building <info>{package.pretty_name}</> '
-                  f'(<comment>{package.version}</>)')
+        self.line(
+            'Building <info>{}</> (<comment>{}</>)'
+            .format(package.pretty_name, package.version)
+        )
 
         builder = Builder(self.poetry, self.venv, self.output)
         builder.build(fmt)

@@ -165,9 +165,9 @@ def test_install_with_deps_in_order(solver, repo):
     ops = solver.solve(request)
 
     check_solver_result(ops, [
-        {'job': 'install', 'package': package_c},
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_c},
     ])
 
 
@@ -239,8 +239,8 @@ def test_solver_sets_categories(solver, repo):
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
     ])
 
     assert package_c.category == 'dev'
@@ -273,8 +273,8 @@ def test_solver_respects_root_package_python_versions(solver, repo, package):
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
     ])
 
 
@@ -326,8 +326,8 @@ def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
     ])
 
 
@@ -356,8 +356,8 @@ def test_solver_solves_while_respecting_root_platforms(solver, repo, package):
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c10},
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
     ])
 
 
@@ -384,8 +384,8 @@ def test_solver_does_not_return_extras_if_not_requested(solver, repo):
     ops = solver.solve(request)
 
     check_solver_result(ops, [
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
     ])
 
 
@@ -414,8 +414,8 @@ def test_solver_returns_extras_if_requested(solver, repo):
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
     ])
 
 
@@ -442,9 +442,9 @@ def test_solver_returns_prereleases_if_requested(solver, repo):
     ops = solver.solve(request)
 
     check_solver_result(ops, [
-        {'job': 'install', 'package': package_c_dev},
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_c_dev},
     ])
 
 
@@ -471,7 +471,7 @@ def test_solver_does_not_return_prereleases_if_not_requested(solver, repo):
     ops = solver.solve(request)
 
     check_solver_result(ops, [
-        {'job': 'install', 'package': package_c},
-        {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_c},
     ])

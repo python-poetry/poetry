@@ -53,7 +53,7 @@ class Pool(BaseRepository):
     def has_package(self, package):
         raise NotImplementedError()
 
-    def package(self, name, version) -> Union['poetry.packages.Package', None]:
+    def package(self, name, version):
         package = poetry.packages.Package(name, version, version)
         if package in self._packages:
             return self._packages[self._packages.index(package)]
@@ -70,7 +70,7 @@ class Pool(BaseRepository):
     def find_packages(self,
                       name,
                       constraint=None,
-                      extras=None) -> List['poetry.packages.Package']:
+                      extras=None):
         for repository in self._repositories:
             packages = repository.find_packages(name, constraint, extras=extras)
             if packages:

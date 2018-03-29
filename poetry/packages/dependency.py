@@ -116,7 +116,7 @@ class Dependency:
         )
 
     def to_pep_508(self, with_extras=True) -> str:
-        requirement = f'{self.pretty_name}'
+        requirement = self.pretty_name
 
         if isinstance(self.constraint, MultiConstraint):
             requirement += ' ({})'.format(','.join(
@@ -147,9 +147,9 @@ class Dependency:
         if markers:
             if len(markers) > 1:
                 markers = ['({})'.format(m) for m in markers]
-                requirement += f'; {" and ".join(markers)}'
+                requirement += '; {}'.format(' and '.join(markers))
             else:
-                requirement += f'; {markers[0]}'
+                requirement += '; {}'.format(markers[0])
 
         return requirement
 
@@ -166,7 +166,7 @@ class Dependency:
             glue = ' and '
             if constraint.is_disjunctive():
                 parts = [
-                    f'({part[1]})' if part[0] else f'{part[1]}'
+                    '({})'.format(part[1]) if part[0] else part[1]
                     for part in parts
                 ]
                 glue = ' or '
@@ -175,7 +175,9 @@ class Dependency:
 
             marker = glue.join(parts)
         else:
-            marker = f'{name} {constraint.string_operator} "{constraint.version}"'
+            marker = '{} {} "{}"'.format(
+                name, constraint.string_operator, constraint.version
+            )
 
         return marker
 
@@ -201,7 +203,9 @@ class Dependency:
         return hash((self._name, self._pretty_constraint))
 
     def __str__(self):
-        return f'{self._pretty_name} ({self._pretty_constraint})'
+        return '{} ({})'.format(
+            self._pretty_name, self._pretty_constraint
+        )
 
     def __repr__(self):
-        return f'<Dependency {str(self)}>'
+        return '<Dependency {}>'.format(str(self))

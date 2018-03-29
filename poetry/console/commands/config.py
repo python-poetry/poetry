@@ -77,10 +77,13 @@ To remove a repository (repo is a short alias for repositories):
                     if self._config.setting('repositories') is not None:
                         value = self._config.setting('repositories')
                 else:
-                    repo = self._config.setting(f'repositories.{m.group(1)}')
+                    repo = self._config.setting(
+                        'repositories.{}'.format(m.group(1))
+                    )
                     if repo is None:
                         raise ValueError(
-                            f'There is no {m.group(1)} repository defined'
+                            'There is no {} repository defined'
+                            .format(m.group(1))
                         )
 
                     value = repo
@@ -115,18 +118,26 @@ To remove a repository (repo is a short alias for repositories):
                 raise ValueError('You cannot remove the [repositories] section')
 
             if self.option('unset'):
-                repo = self._config.setting(f'repositories.{m.group(1)}')
+                repo = self._config.setting(
+                    'repositories.{}'.format(m.group(1))
+                )
                 if repo is None:
-                    raise ValueError(f'There is no {m.group(1)} repository defined')
+                    raise ValueError(
+                        'There is no {} repository defined'.format(m.group(1))
+                    )
 
-                self._config.remove_property(f'repositories.{m.group(1)}')
+                self._config.remove_property(
+                    'repositories.{}'.format(m.group(1))
+                )
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                self._config.add_property(f'repositories.{m.group(1)}.url', url)
+                self._config.add_property(
+                    'repositories.{}.url'.format(m.group(1)), url
+                )
 
                 return 0
 
@@ -139,12 +150,16 @@ To remove a repository (repo is a short alias for repositories):
         m = re.match('^(http-basic)\.(.+)', self.argument('key'))
         if m:
             if self.option('unset'):
-                if not self._auth_config.setting(f'{m.group(1)}.{m.group(2)}'):
+                if not self._auth_config.setting('{}.{}'.format(m.group(1), m.group(2))):
                     raise ValueError(
-                        f'There is no {m.group(2)} {m.group(1)} defined'
+                        'There is no {} {} defined'.format(
+                            m.group(2), m.group(1)
+                        )
                     )
 
-                self._auth_config.remove_property(f'{m.group(1)}.{m.group(2)}')
+                self._auth_config.remove_property(
+                    '{}.{}'.format(m.group(1), m.group(2))
+                )
 
                 return 0
 
@@ -154,14 +169,17 @@ To remove a repository (repo is a short alias for repositories):
                     # Only username, so we prompt for password
                     password = self.secret('Password:')
                 elif len(values) != 2:
-                    raise ValueError(f'Expected one or two arguments '
-                                     f'(username, password), got {len(values)}')
+                    raise ValueError(
+                        'Expected one or two arguments '
+                        '(username, password), got {}'.format(len(values))
+                    )
                 else:
                     username = values[0]
                     password = values[1]
 
                 self._auth_config.add_property(
-                    f'{m.group(1)}.{m.group(2)}', {
+                    '{}.{}'.format(m.group(1), m.group(2)),
+                    {
                         'username': username,
                         'password': password
                     }
@@ -169,7 +187,9 @@ To remove a repository (repo is a short alias for repositories):
 
             return 0
 
-        raise ValueError(f'Setting {self.argument("key")} does not exist')
+        raise ValueError(
+            'Setting {} does not exist'.format(self.argument("key"))
+        )
 
     def _handle_single_value(self, key, callbacks, values):
         validator, normalizer = callbacks
@@ -180,7 +200,7 @@ To remove a repository (repo is a short alias for repositories):
         value = values[0]
         if not validator(value):
             raise RuntimeError(
-                f'"{value}" is an invalid value for {key}'
+                '"{}" is an invalid value for {}'.format(value, key)
             )
 
         self._config.add_property(key, normalizer(value))
@@ -215,8 +235,12 @@ To remove a repository (repo is a short alias for repositories):
                     for val in value
                 ]
 
-                value = f'[{", ".join(value)}]'
+                value = '[{}]'.format(", ".join(value))
 
             value = json.dumps(value)
 
-            self.line(f'[<comment>{(k or "") + key}</comment>] <info>{value}</info>')
+            self.line(
+                '[<comment>{}</comment>] <info>{}</info>'.format(
+                    (k or "") + key, value
+                )
+            )

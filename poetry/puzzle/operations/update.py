@@ -18,6 +18,10 @@ class Update(Operation):
         return self._target_package
 
     @property
+    def package(self):
+        return self._target_package
+
+    @property
     def job_type(self):
         return 'update'
 

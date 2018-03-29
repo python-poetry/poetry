@@ -19,7 +19,9 @@ class CascadeDict:
         """
         Returns another instance with one more dict cascaded at the end.
         """
-        return CascadeDict(*self._internal_dicts, one_more_dict)
+        dicts = self._internal_dicts + one_more_dict
+
+        return CascadeDict(*dicts)
 
     def __getitem__(self, item):
         for d in self._internal_dicts:

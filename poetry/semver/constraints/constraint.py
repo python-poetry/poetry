@@ -38,8 +38,11 @@ class Constraint(BaseConstraint):
     def __init__(self, operator: str, version: str):
         if operator not in self.supported_operators:
             raise ValueError(
-                f'Invalid operator "{operator}" given, '
-                f'expected one of: {", ".join(self.supported_operators)}'
+                'Invalid operator "{}" given, '
+                'expected one of: {}'
+                .format(
+                    operator, ', '.join(self.supported_operators)
+                )
             )
 
         self._operator = self._trans_op_str[operator]
@@ -75,8 +78,11 @@ class Constraint(BaseConstraint):
     def version_compare(self, a: str, b: str, operator: str) -> bool:
         if operator not in self._trans_op_str:
             raise ValueError(
-                f'Invalid operator "{operator}" given, '
-                f'expected one of: {", ".join(self.supported_operators)}'
+                'Invalid operator "{}" given, '
+                'expected one of: {}'
+                .format(
+                    operator, ', '.join(self.supported_operators)
+                )
             )
 
         # If we can't normalize the version

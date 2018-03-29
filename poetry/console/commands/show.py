@@ -62,7 +62,7 @@ lists all packages available."""
                     break
 
             if not pkg:
-                raise ValueError(f'Package {package} not found')
+                raise ValueError('Package {} not found'.format(package))
 
             if self.option('tree'):
                 self.display_package_tree(pkg, installed_repo)
@@ -70,9 +70,9 @@ lists all packages available."""
                 return 0
 
             rows = [
-                ['<info>name</>', f' : <fg=cyan>{pkg.pretty_name}</>'],
-                ['<info>version</>', f' : <comment>{pkg.pretty_version}</>'],
-                ['<info>description</>', f' : {pkg.description}'],
+                ['<info>name</>', ' : <fg=cyan>{}</>'.format(pkg.pretty_name)],
+                ['<info>version</>', ' : <comment>{}</>'.format(pkg.pretty_version)],
+                ['<info>description</>', ' : {}'.format(pkg.description)],
             ]
 
             table.add_rows(rows)
@@ -82,8 +82,12 @@ lists all packages available."""
                 self.line('')
                 self.line('<info>dependencies</info>')
                 for dependency in pkg.requires:
-                    self.line(f' - {dependency.pretty_name} '
-                              f'<comment>{dependency.pretty_constraint}</>')
+                    self.line(
+                        ' - {} <comment>{}</>'.format(
+                            dependency.pretty_name,
+                            dependency.pretty_constraint
+                        )
+                    )
 
             return 0
 
@@ -109,9 +113,11 @@ lists all packages available."""
         write_description = name_length + version_length + latest_length + 24 <= width
 
         for locked in locked_packages:
-            line = f'<fg=cyan>{locked.pretty_name:{name_length}}</>'
+            line = '<fg=cyan>{:{}}</>'.format(locked.pretty_name, name_length)
             if write_version:
-                line += f' {locked.full_pretty_version:{version_length}}'
+                line += ' {:{}}'.format(
+                    locked.full_pretty_version, version_length
+                )
             if show_latest and write_latest:
                 latest = latest_packages[locked.pretty_name]
 
@@ -122,7 +128,9 @@ lists all packages available."""
                 elif update_status == 'update-possible':
                     color = 'yellow'
 
-                line += f' <fg={color}>{latest.version:{latest_length}}</>'
+                line += ' <fg={}>{:{}}</>'.format(
+                    color, latest.version, latest_length
+                )
                 if self.option('outdated') and update_status == 'up-to-date':
                     continue
 
@@ -140,8 +148,8 @@ lists all packages available."""
             self.line(line)
 
     def display_package_tree(self, package, installed_repo):
-        self.write(f'<info>{package.pretty_name}</info>')
-        self.line(f' {package.pretty_version} {package.description}')
+        self.write('<info>{}</info>'.format(package.prett_name))
+        self.line(' {} {}'.format(package.pretty_version, package.description))
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
@@ -155,8 +163,12 @@ lists all packages available."""
 
             level = 1
             color = self.colors[level]
-            info = f'{tree_bar}── <{color}>{dependency.name}</{color}> ' \
-                   f'{dependency.pretty_constraint}'
+            info = '{tree_bar}── <{color}>{name}</{color}> {constraint}'.format(
+                tree_bar=tree_bar,
+                color=color,
+                name=dependency.name,
+                constraint=dependency.pretty_constraint
+            )
             self._write_tree_line(info)
 
             tree_bar = tree_bar.replace('└', ' ')
@@ -196,8 +208,13 @@ lists all packages available."""
             if dependency.name in current_tree:
                 circular_warn = '(circular dependency aborted here)'
 
-            info = f'{tree_bar}── <{color}>{dependency.name}</{color}> ' \
-                   f'{dependency.pretty_constraint} {circular_warn}'
+            info = '{tree_bar}── <{color}>{name}</{color}> {constraint} {warn}'.format(
+                tree_bar=tree_bar,
+                color=color,
+                name=dependency.name,
+                constraint=dependency.pretty_constraint,
+                warn=circular_warn
+            )
             self._write_tree_line(info)
 
             tree_bar = tree_bar.replace('└', ' ')
@@ -231,7 +248,9 @@ lists all packages available."""
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
-        return selector.find_best_candidate(name, f'>={package.version}')
+        return selector.find_best_candidate(
+            name, '>={}'.format(package.version)
+        )
 
     def get_update_status(self, latest, package):
         if latest.full_pretty_version == package.full_pretty_version:

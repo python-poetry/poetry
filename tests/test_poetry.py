@@ -26,12 +26,15 @@ def test_poetry():
     assert package.python_versions == '~2.7 || ^3.6'
     assert str(package.python_constraint) == '>= 2.7.0.0, < 2.8.0.0 || >= 3.6.0.0, < 4.0.0.0'
 
-    dependencies = package.requires
-    cleo = dependencies[0]
+    dependencies = {}
+    for dep in package.requires:
+        dependencies[dep.name] = dep
+
+    cleo = dependencies['cleo']
     assert cleo.pretty_constraint == '^0.6'
     assert not cleo.is_optional()
 
-    pendulum = dependencies[1]
+    pendulum = dependencies['pendulum']
     assert pendulum.pretty_constraint == 'branch 2.0'
     assert pendulum.is_vcs()
     assert pendulum.vcs == 'git'
@@ -39,14 +42,14 @@ def test_poetry():
     assert pendulum.source == 'https://github.com/sdispater/pendulum.git'
     assert pendulum.allows_prereleases()
 
-    requests = dependencies[2]
+    requests = dependencies['requests']
     assert requests.pretty_constraint == '^2.18'
     assert not requests.is_vcs()
     assert not requests.allows_prereleases()
     assert requests.is_optional()
     assert requests.extras == ['security']
 
-    pathlib2 = dependencies[3]
+    pathlib2 = dependencies['pathlib2']
     assert pathlib2.pretty_constraint == '^2.2'
     assert pathlib2.python_versions == '~2.7'
     assert not pathlib2.is_optional()
@@ -56,6 +59,7 @@ def test_poetry():
 
 def test_check():
     complete = fixtures_dir / 'complete.toml'
-    content = toml.loads(complete.read_text())['tool']['poetry']
+    with complete.open() as f:
+        content = toml.loads(f.read())['tool']['poetry']
 
     assert Poetry.check(content)

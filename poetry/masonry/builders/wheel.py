@@ -5,7 +5,11 @@ import re
 import tempfile
 import shutil
 import stat
-import zipfile
+
+try:
+    import zipfile36 as zipfile
+except ImportError:
+    import zipfile
 
 from base64 import urlsafe_b64encode
 from io import StringIO
@@ -87,7 +91,7 @@ class WheelBuilder(Builder):
         finally:
             self._wheel_zip.close()
 
-        self._io.writeln(f' - Built <fg=cyan>{self.wheel_filename}</>')
+        self._io.writeln(' - Built <fg=cyan>{}</>'.format(self.wheel_filename))
 
     def _build(self) -> None:
         if self._package.build:
@@ -289,37 +293,37 @@ class WheelBuilder(Builder):
         Write out metadata in the 2.x format (email like)
         """
         fp.write('Metadata-Version: 2.1\n')
-        fp.write(f'Name: {self._meta.name}\n')
-        fp.write(f'Version: {self._meta.version}\n')
-        fp.write(f'Summary: {self._meta.summary}\n')
-        fp.write(f'Home-page: {self._meta.home_page or "UNKNOWN"}\n')
-        fp.write(f'License: {self._meta.license or "UNKOWN"}\n')
+        fp.write('Name: {}\n'.format(self._meta.name))
+        fp.write('Version: {}\n'.format(self._meta.version))
+        fp.write('Summary: {}\n'.format(self._meta.summary))
+        fp.write('Home-page: {}\n'.format(self._meta.home_page or 'UNKNOWN'))
+        fp.write('License: {}\n'.format(self._meta.license or 'UNKOWN'))
 
         # Optional fields
         if self._meta.keywords:
-            fp.write(f"Keywords: {self._meta.keywords}\n")
+            fp.write("Keywords: {}\n".format(self._meta.keywords))
 
         if self._meta.author:
-            fp.write(f'Author: {self._meta.author}\n')
+            fp.write('Author: {}\n'.format(self._meta.author))
 
         if self._meta.author_email:
-            fp.write(f'Author-email: {self._meta.author_email}\n')
+            fp.write('Author-email: {}\n'.format(self._meta.author_email))
 
         if self._meta.requires_python:
-            fp.write(f'Requires-Python: {self._meta.requires_python}\n')
+            fp.write('Requires-Python: {}\n'.format(self._meta.requires_python))
 
         for classifier in self._meta.classifiers:
-            fp.write(f'Classifier: {classifier}\n')
+            fp.write('Classifier: {}\n'.format(classifier))
 
-        for extra in self._meta.provides_extra:
-            fp.write(f'Provides-Extra: {extra}\n')
+        for extra in sorted(self._meta.provides_extra):
+            fp.write('Provides-Extra: {}\n'.format(extra))
 
-        for dep in self._meta.requires_dist:
-            fp.write(f'Requires-Dist: {dep}\n')
+        for dep in sorted(self._meta.requires_dist):
+            fp.write('Requires-Dist: {}\n'.format(dep))
 
         if self._meta.description_content_type:
-            fp.write(f'Description-Content-Type: '
-                     f'{self._meta.description_content_type}\n')
+            fp.write('Description-Content-Type: '
+                     '{}\n'.format(self._meta.description_content_type))
 
         if self._meta.description is not None:
             fp.write('\n' + self._meta.description + '\n')

@@ -23,8 +23,9 @@ class VenvError(Exception):
 class VenvCommandError(VenvError):
 
     def __init__(self, e: CalledProcessError):
-        message = f'Command {e.cmd} errored with the following output: \n' \
-                  f'{e.output.decode()}'
+        message = 'Command {} errored with the following output: \n{}'.format(
+            e.cmd, e.output.decode()
+        )
 
         super().__init__(message)
 
@@ -64,7 +65,9 @@ class Venv:
             if not name:
                 name = Path.cwd().name
 
-            name = f'{name}-py{".".join([str(v) for v in sys.version_info[:2]])}'
+            name = '{}-py{}'.format(
+                name, '.'.join([str(v) for v in sys.version_info[:2]])
+            )
 
             venv = venv_path / name
             if not venv.exists():
@@ -79,13 +82,17 @@ class Venv:
                     return cls()
 
                 io.writeln(
-                    f'Creating virtualenv <info>{name}</> in {str(venv_path)}'
+                    'Creating virtualenv <info>{}</> in {}'.format(
+                        name, str(venv_path)
+                    )
                 )
                 builder = EnvBuilder(with_pip=True)
                 builder.create(str(venv))
             else:
                 if io.is_very_verbose():
-                    io.writeln(f'Virtualenv <info>{name}</> already exists.')
+                    io.writeln(
+                        'Virtualenv <info>{}</> already exists.'.format(name)
+                    )
 
             os.environ['VIRTUAL_ENV'] = str(venv)
 
@@ -177,8 +184,8 @@ class Venv:
         try:
             value = self.run(
                 'python', '-c',
-                f'"import sysconfig; '
-                f'print(sysconfig.get_config_var(\'{var}\'))"',
+                '"import sysconfig; '
+                'print(sysconfig.get_config_var(\'{}\'))"'.format(var),
                 shell=True
             ).strip()
         except VenvCommandError as e:

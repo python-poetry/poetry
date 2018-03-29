@@ -21,13 +21,14 @@ class PyPiRepository(Repository):
     def __init__(self, url='https://pypi.org/', disable_cache=False):
         self._url = url
         self._disable_cache = disable_cache
+        release_cache_dir = Path(CACHE_DIR) / 'cache' / 'repositories' / 'pypi'
         self._cache = CacheManager({
             'default': 'releases',
             'serializer': 'json',
             'stores': {
                 'releases': {
                     'driver': 'file',
-                    'path': Path(CACHE_DIR) / 'cache' / 'repositories' / 'pypi'
+                    'path': str(release_cache_dir)
                 },
                 'packages': {
                     'driver': 'dict'
@@ -155,14 +156,14 @@ class PyPiRepository(Repository):
             return self._get_package_info(name)
 
         return self._cache.store('packages').remember_forever(
-            f'{name}',
+            name,
             lambda: self._get_package_info(name)
         )
 
     def _get_package_info(self, name: str) -> dict:
-        data = self._get(self._url + f'pypi/{name}/json')
+        data = self._get('pypi/{}/json'.format(name))
         if data is None:
-            raise ValueError(f'Package [{name}] not found.')
+            raise ValueError('Package [{}] not found.'.format(name))
 
         return data
 
@@ -177,14 +178,14 @@ class PyPiRepository(Repository):
             return self._get_release_info(name, version)
 
         return self._cache.remember_forever(
-            f'{name}:{version}',
+            '{}:{}'.format(name, version),
             lambda: self._get_release_info(name, version)
         )
 
     def _get_release_info(self, name: str, version: str) -> dict:
-        json_data = self._get(self._url + f'pypi/{name}/{version}/json')
+        json_data = self._get('pypi/{}/{}/json'.format(name, version))
         if json_data is None:
-            raise ValueError(f'Package [{name}] not found.')
+            raise ValueError('Package [{}] not found.'.format(name))
 
         info = json_data['info']
         data = {
@@ -201,8 +202,8 @@ class PyPiRepository(Repository):
 
         return data
 
-    def _get(self, url: str) -> Union[dict, None]:
-        json_response = get(url)
+    def _get(self, endpoint: str) -> Union[dict, None]:
+        json_response = get(self._url + endpoint)
         if json_response.status_code == 404:
             return None
 

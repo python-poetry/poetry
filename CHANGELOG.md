@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added compatibility with Python 3.4 and 3.5.
+
+
 ### Changed
 
 - Improved dependency resolution to avoid unnecessary operations.

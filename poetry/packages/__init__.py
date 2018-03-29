@@ -1,8 +1,6 @@
 import os
 import re
 
-from poetry.semver.version_parser import VersionParser
-from poetry.version.markers import Marker
 from poetry.version.requirements import Requirement
 
 from .dependency import Dependency
@@ -40,8 +38,8 @@ def dependency_from_pep_508(name):
 
             if not is_installable_dir(p):
                 raise ValueError(
-                    "Directory %r is not installable. File 'setup.py' "
-                    "not found." % name
+                    "Directory {!r} is not installable. File 'setup.py' "
+                    "not found.".format(name)
                 )
             link = Link(path_to_url(p))
         elif is_archive_file(p):
@@ -61,7 +59,7 @@ def dependency_from_pep_508(name):
                 link.filename
             )
             if not m:
-                raise ValueError(f'Invalid wheel name: {link.filename}')
+                raise ValueError('Invalid wheel name: {}'.format(link.filename))
 
             name = m.group('name')
             version = m.group('ver')
@@ -101,7 +99,7 @@ def dependency_from_pep_508(name):
                 elif op == '!=':
                     version += '.*'
 
-                ands.append(f'{op}{version}')
+                ands.append('{}{}'.format(op, version))
 
             ors.append(' '.join(ands))
 
@@ -115,7 +113,7 @@ def dependency_from_pep_508(name):
                 if op == '==':
                     op = ''
 
-                ands.append(f'{op}{platform}')
+                ands.append('{}{}'.format(op, platform))
 
             ors.append(' '.join(ands))
 

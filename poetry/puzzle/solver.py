@@ -107,7 +107,15 @@ class Solver:
 
                         break
 
-        return list(reversed(operations))
+        requested_names = [r.name for r in requested]
+
+        return sorted(
+            operations,
+            key=lambda o: (
+                1 if not o.package.name not in requested_names else 0,
+                o.package.name
+            )
+        )
 
     def _get_tags_for_vertex(self, vertex, requested):
         tags = {

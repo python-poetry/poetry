@@ -38,7 +38,7 @@ class LegacyRepository(PyPiRepository):
             'stores': {
                 'releases': {
                     'driver': 'file',
-                    'path': Path(CACHE_DIR) / 'cache' / 'repositories' / name
+                    'path': str(self._cache_dir)
                 },
                 'packages': {
                     'driver': 'dict'

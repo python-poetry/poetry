@@ -125,7 +125,9 @@ class Installer:
             # Checking extras
             for extra in self._extras:
                 if extra not in self._package.extras:
-                    raise ValueError(f'Extra [{extra}] is not specified.')
+                    raise ValueError(
+                        'Extra [{}] is not specified.'.format(extra)
+                    )
 
             self._io.writeln('<info>Updating dependencies</>')
             fixed = []
@@ -181,7 +183,9 @@ class Installer:
 
             for extra in self._extras:
                 if extra not in self._locker.lock_data.get('extras', {}):
-                    raise ValueError(f'Extra [{extra}] is not specified.')
+                    raise ValueError(
+                        'Extra [{}] is not specified.'.format(extra)
+                    )
 
             # If we are installing from lock
             # Filter the operations by comparing it with what is
@@ -213,26 +217,35 @@ class Installer:
 
                 if op.job_type == 'install':
                     installs.append(
-                        f'{op.package.pretty_name}'
-                        f':{op.package.full_pretty_version}'
+                        '{}:{}'.format(
+                            op.package.pretty_name,
+                            op.package.full_pretty_version
+                        )
                     )
                 elif op.job_type == 'update':
                     updates.append(
-                        f'{op.target_package.pretty_name}'
-                        f':{op.target_package.full_pretty_version}'
+                        '{}:{}'.format(
+                            op.target_package.pretty_name,
+                            op.target_package.full_pretty_version
+                        )
                     )
                 elif op.job_type == 'uninstall':
-                    uninstalls.append(
-                        f'{op.package.pretty_name}'
-                    )
+                    uninstalls.append(op.package.pretty_name)
 
             self._io.new_line()
             self._io.writeln(
                 'Package operations: '
-                f'<info>{len(installs)}</> install{"" if len(installs) == 1 else "s"}, '
-                f'<info>{len(updates)}</> update{"" if len(updates) == 1 else "s"}, '
-                f'<info>{len(uninstalls)}</> removal{"" if len(uninstalls) == 1 else "s"}'
-                f'{", <info>{}</> skipped".format(len(skipped)) if skipped and self.is_verbose() else ""}'
+                '<info>{}</> install{}, '
+                '<info>{}</> update{}, '
+                '<info>{}</> removal{}'
+                '{}'.format(
+                    len(installs), '' if len(installs) == 1 else 's',
+                    len(updates), '' if len(updates) == 1 else 's',
+                    len(uninstalls), '' if len(uninstalls) == 1 else 's',
+                    ', <info>{}</> skipped'.format(
+                        len(skipped)
+                    ) if skipped and self.is_verbose() else ''
+                )
             )
             self._io.new_line()
 
@@ -256,22 +269,27 @@ class Installer:
         """
         method = operation.job_type
 
-        getattr(self, f'_execute_{method}')(operation)
+        getattr(self, '_execute_{}'.format(method))(operation)
 
     def _execute_install(self, operation: Install) -> None:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
-                    f'  - Skipping <info>{operation.package.pretty_name}</> '
-                    f'(<comment>{operation.package.full_pretty_version}</>) '
-                    f'{operation.skip_reason}')
+                    '  - Skipping <info>{}</> (<comment>{}</>) {}'.format(
+                        operation.package.pretty_name,
+                        operation.package.full_pretty_version,
+                        operation.skip_reason
+                    )
+                )
 
             return
 
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                f'  - Installing <info>{operation.package.pretty_name}</> '
-                f'(<comment>{operation.package.full_pretty_version}</>)'
+                '  - Installing <info>{}</> (<comment>{}</>)'.format(
+                    operation.package.pretty_name,
+                    operation.package.full_pretty_version
+                )
             )
 
         if not self._execute_operations:
@@ -286,17 +304,23 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
-                    f'  - Skipping <info>{target.pretty_name}</> '
-                    f'(<comment>{target.full_pretty_version}</>) '
-                    f'{operation.skip_reason}')
+                    '  - Skipping <info>{}</> (<comment>{}</>) {}'.format(
+                        target.pretty_name,
+                        target.full_pretty_version,
+                        operation.skip_reason
+                    )
+                )
 
             return
 
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                f'  - Updating <info>{target.pretty_name}</> '
-                f'(<comment>{source.pretty_version}</>'
-                f' -> <comment>{target.pretty_version}</>)'
+                '  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)'
+                .format(
+                    target.pretty_name,
+                    source.pretty_version,
+                    target.pretty_version
+                )
             )
 
         if not self._execute_operations:
@@ -307,8 +331,10 @@ class Installer:
     def _execute_uninstall(self, operation: Uninstall) -> None:
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                f'  - Removing <info>{operation.package.pretty_name}</> '
-                f'(<comment>{operation.package.full_pretty_version}</>)'
+                '  - Removing <info>{}</> (<comment>{}</>)'.format(
+                    operation.package.pretty_name,
+                    operation.package.full_pretty_version
+                )
             )
 
         if not self._execute_operations:

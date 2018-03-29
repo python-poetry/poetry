@@ -16,7 +16,9 @@ class VenvCommand(Command):
         self._venv = Venv.create(o, self.poetry.package.name)
 
         if self._venv.is_venv() and o.is_verbose():
-            o.writeln(f'Using virtualenv: <comment>{self._venv.venv}</>')
+            o.writeln(
+                'Using virtualenv: <comment>{}</>'.format(self._venv.venv)
+            )
 
     @property
     def venv(self):

@@ -17,16 +17,18 @@ keywords = ["packaging", "dependency", "poetry"]
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.4"
 cleo = "^0.6"
 requests = "^2.18"
 toml = "^0.9"
-cachy = "^0.1.0"
+cachy = "^0.1.1"
 pip-tools = "^1.11"
 requests-toolbelt = "^0.8.0"
 jsonschema = "^2.6"
 pyrsistent = "^0.14.2"
 pyparsing = "^2.2"
+zipfile36 = { version = "^0.1", python = ">=3.4 <3.6" }
+typing = { version = "^3.6", python = "~3.4" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.4"

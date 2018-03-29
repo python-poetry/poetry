@@ -59,22 +59,27 @@ class PipInstaller(BaseInstaller):
 
     def requirement(self, package, formatted=False) -> str:
         if formatted and not package.source_type == 'git':
-            req = f'{package.name}=={package.version}'
+            req = '{}=={}'.format(package.name, package.version)
             for h in package.hashes:
-                req += f' --hash sha256:{h}'
+                req += ' --hash sha256:{}'.format(h)
 
             req += '\n'
 
             return req
 
         if package.source_type == 'git':
-            return f'git+{package.source_url}@{package.source_reference}' \
-                   f'#egg={package.name}'
+            return 'git+{}@{}#egg={}'.format(
+                package.source_url,
+                package.source_reference,
+                package.name
+            )
 
-        return f'{package.name}=={package.version}'
+        return '{}=={}'.format(package.name, package.version)
 
     def create_temporary_requirement(self, package):
-        fd, name = tempfile.mkstemp('reqs.txt', f'{package.name}-{package.version}')
+        fd, name = tempfile.mkstemp(
+            'reqs.txt', '{}-{}'.format(package.name, package.version)
+        )
 
         with open(fd, 'w') as f:
             f.write(self.requirement(package, formatted=True))

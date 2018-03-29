@@ -18,7 +18,7 @@ class Builder:
 
     def build(self, fmt: str):
         if fmt not in self._FORMATS:
-            raise ValueError(f'Invalid format: {fmt}')
+            raise ValueError('Invalid format: {}'.format(fmt))
 
         builder = self._FORMATS[fmt](self._poetry, self._venv, self._io)
 

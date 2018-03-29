@@ -77,9 +77,11 @@ class Resolution:
                 self._indicate_progress()
                 if hasattr(self.state, 'pop_possibility_state'):
                     self._debug(
-                        f'Creating possibility state for '
-                        f'{str(self.state.requirement)} '
-                        f'({len(self.state.possibilities)} remaining)'
+                        'Creating possibility state for {} ({} remaining)'
+                        .format(
+                            str(self.state.requirement),
+                            len(self.state.possibilities)
+                        )
                     )
                     s = self.state.pop_possibility_state()
                     if s:
@@ -99,9 +101,10 @@ class Resolution:
         self._started_at = datetime.now()
 
         self._debug(
-            f'Starting resolution ({self._started_at})\n'
-            f'Requested dependencies: '
-            f'{[str(d) for d in self._original_requested]}'
+            'Starting resolution ({})\nRequested dependencies: {}'.format(
+                self._started_at,
+                [str(d) for d in self._original_requested]
+            )
         )
         self._ui.before_resolution()
 
@@ -138,8 +141,10 @@ class Resolution:
         self._ui.after_resolution()
 
         self._debug(
-            f'Finished resolution ({self._iteration_counter} steps) '
-            f'in {elapsed:.3f} seconds'
+            'Finished resolution ({} steps) '
+            'in {:.3f} seconds'.format(
+                self._iteration_counter, elapsed
+            )
         )
 
     def _process_topmost_state(self) -> None:
@@ -734,7 +739,7 @@ class Resolution:
 
     def _attempt_to_activate(self):
         self._debug(
-            f'Attempting to activate {str(self.possibility)}',
+            'Attempting to activate {}'.format(str(self.possibility)),
             self.state.depth,
         )
         existing_vertex = self.activated.vertex_named(self.state.name)
@@ -778,7 +783,7 @@ class Resolution:
         else:
             self._create_conflict()
             self._debug(
-                f'Unsatisfied by existing spec ({str(vertex.payload)})',
+                'Unsatisfied by existing spec ({})'.format(str(vertex.payload)),
                 self.state.depth
             )
             self._unwind_for_conflict()
@@ -805,7 +810,7 @@ class Resolution:
             del self.state.conflicts[self.name]
 
         self._debug(
-            f'Activated {self.state.name} at {str(self.possibility)}',
+            'Activated {} at {}'.format(self.state.name, str(self.possibility)),
             self.state.depth
         )
         self.activated.set_payload(self.state.name, self.possibility)
@@ -816,8 +821,8 @@ class Resolution:
             possibility_set.latest_version
         )
         self._debug(
-            f'Requiring nested dependencies '
-            f'({", ".join([str(d) for d in nested_dependencies])})',
+            'Requiring nested dependencies '
+            '({})'.format(', '.join([str(d) for d in nested_dependencies])),
             self.state.depth
         )
 

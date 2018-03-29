@@ -48,7 +48,7 @@ def test_wheel_c_extension():
 
     assert whl.exists()
 
-    zip = zipfile.ZipFile(whl)
+    zip = zipfile.ZipFile(str(whl))
 
     has_compiled_extension = False
     for name in zip.namelist():
@@ -80,7 +80,7 @@ def test_complete():
 
     assert whl.exists
 
-    zip = zipfile.ZipFile(whl)
+    zip = zipfile.ZipFile(str(whl))
 
     try:
         entry_points = zip.read('my_package-1.2.3.dist-info/entry_points.txt')
@@ -93,12 +93,12 @@ my-script=my_package:main
 """
         wheel_data = zip.read('my_package-1.2.3.dist-info/WHEEL').decode()
 
-        assert wheel_data == f"""\
+        assert wheel_data == """\
 Wheel-Version: 1.0
-Generator: poetry {__version__}
+Generator: poetry {}
 Root-Is-Purelib: true
 Tag: py3-none-any
-"""
+""".format(__version__)
         wheel_data = zip.read('my_package-1.2.3.dist-info/METADATA').decode()
 
         assert wheel_data == """\
