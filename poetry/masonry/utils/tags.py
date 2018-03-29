@@ -1,4 +1,10 @@
-"""Generate and work with PEP 425 Compatibility Tags."""
+"""
+Generate and work with PEP 425 Compatibility Tags.
+
+Base implementation taken from
+https://github.com/pypa/wheel/blob/master/wheel/pep425tags.py
+and adapted to work with poetry's venv util.
+"""
 
 import distutils.util
 import sys

@@ -24,8 +24,6 @@ wheel_file_re = re.compile(
     re.VERBOSE
 )
 
-KEYWORDS_TO_NOT_FLATTEN = {'gpg_signature', 'content'}
-
 _has_blake2 = hasattr(hashlib, 'blake2b')
 
 
@@ -284,8 +282,7 @@ class Uploader:
     def _prepare_data(self, data):
         data_to_send = []
         for key, value in data.items():
-            if (key in KEYWORDS_TO_NOT_FLATTEN or
-                    not isinstance(value, (list, tuple))):
+            if not isinstance(value, (list, tuple)):
                 data_to_send.append((key, value))
             else:
                 for item in value:
