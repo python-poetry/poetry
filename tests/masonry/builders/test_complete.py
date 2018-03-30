@@ -7,9 +7,9 @@ import zipfile
 from pathlib import Path
 
 from poetry import __version__
-from poetry import Poetry
 from poetry.io import NullIO
 from poetry.masonry.builders import CompleteBuilder
+from poetry.poetry import Poetry
 from poetry.utils.venv import NullVenv
 
 fixtures_dir = Path(__file__).parent / 'fixtures'

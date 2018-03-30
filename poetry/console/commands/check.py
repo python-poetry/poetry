@@ -1,5 +1,3 @@
-import jsonschema
-
 from .command import Command
 
 

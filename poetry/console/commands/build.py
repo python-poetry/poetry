@@ -1,7 +1,5 @@
 from .venv_command import VenvCommand
 
-from poetry.masonry import Builder
-
 
 class BuildCommand(VenvCommand):
     """
@@ -12,6 +10,8 @@ class BuildCommand(VenvCommand):
     """
 
     def handle(self):
+        from poetry.masonry import Builder
+
         fmt = 'all'
         if self.option('format'):
             fmt = self.option('format')

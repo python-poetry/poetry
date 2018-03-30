@@ -1,5 +1,3 @@
-from poetry.installation import Installer
-
 from .venv_command import VenvCommand
 
 
@@ -15,6 +13,8 @@ class UpdateCommand(VenvCommand):
     """
 
     def handle(self):
+        from poetry.installation import Installer
+
         packages = self.argument('packages')
 
         installer = Installer(

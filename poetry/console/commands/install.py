@@ -1,5 +1,3 @@
-from poetry.installation import Installer
-
 from .venv_command import VenvCommand
 
 
@@ -24,6 +22,8 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 """
 
     def handle(self):
+        from poetry.installation import Installer
+
         installer = Installer(
             self.output,
             self.venv,

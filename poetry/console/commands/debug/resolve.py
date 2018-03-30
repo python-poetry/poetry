@@ -2,11 +2,6 @@ import re
 
 from typing import List
 
-from poetry.packages import Dependency
-from poetry.puzzle import Solver
-from poetry.repositories.repository import Repository
-from poetry.semver.version_parser import VersionParser
-
 from ..command import Command
 
 
@@ -19,6 +14,11 @@ class DebugResolveCommand(Command):
     """
 
     def handle(self):
+        from poetry.packages import Dependency
+        from poetry.puzzle import Solver
+        from poetry.repositories.repository import Repository
+        from poetry.semver.version_parser import VersionParser
+
         packages = self.argument('package')
 
         if not packages:

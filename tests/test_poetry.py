@@ -2,7 +2,7 @@ import toml
 
 from pathlib import Path
 
-from poetry import Poetry
+from poetry.poetry import Poetry
 
 
 fixtures_dir = Path(__file__).parent / 'fixtures'

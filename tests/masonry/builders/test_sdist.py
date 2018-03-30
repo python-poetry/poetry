@@ -5,10 +5,10 @@ import tarfile
 
 from pathlib import Path
 
-from poetry import Poetry
 from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.packages import Package
+from poetry.poetry import Poetry
 from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency

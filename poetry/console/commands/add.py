@@ -3,10 +3,6 @@ import re
 from typing import List
 from typing import Tuple
 
-from poetry.installation import Installer
-from poetry.semver.version_parser import VersionParser
-from poetry.version.version_selector import VersionSelector
-
 from .venv_command import VenvCommand
 
 
@@ -28,6 +24,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 """
 
     def handle(self):
+        from poetry.installation import Installer
+        from poetry.semver.version_parser import VersionParser
+
         packages = self.argument('name')
         is_dev = self.option('dev')
 
@@ -142,6 +141,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                                        name,
                                        required_version=None
                                        ) -> Tuple[str, str]:
+        from poetry.version.version_selector import VersionSelector
+
         selector = VersionSelector(self.poetry.pool)
         package = selector.find_best_candidate(name, required_version)
 

@@ -3,9 +3,9 @@ import shutil
 
 from pathlib import Path
 
-from poetry import Poetry
 from poetry.io import NullIO
 from poetry.masonry.builders import WheelBuilder
+from poetry.poetry import Poetry
 from poetry.utils.venv import NullVenv
 
 

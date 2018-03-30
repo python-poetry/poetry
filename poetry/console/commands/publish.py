@@ -1,5 +1,3 @@
-from poetry.masonry.publishing.publisher import Publisher
-
 from .command import Command
 
 
@@ -22,6 +20,8 @@ the config command.
 """
 
     def handle(self):
+        from poetry.masonry.publishing.publisher import Publisher
+
         # Building package first, unless told otherwise
         if not self.option('no-build'):
             self.call('build')

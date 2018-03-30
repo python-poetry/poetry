@@ -1,6 +1,3 @@
-from poetry.semver import statisfies
-from poetry.version.version_selector import VersionSelector
-
 from .venv_command import VenvCommand
 
 
@@ -241,6 +238,8 @@ lists all packages available."""
             self.set_style(color, color)
 
     def find_latest_package(self, package):
+        from poetry.version.version_selector import VersionSelector
+
         # find the latest version allowed in this pool
         if package.source_type == 'git':
             return
@@ -253,6 +252,8 @@ lists all packages available."""
         )
 
     def get_update_status(self, latest, package):
+        from poetry.semver import statisfies
+
         if latest.full_pretty_version == package.full_pretty_version:
             return 'up-to-date'
 

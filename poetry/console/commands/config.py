@@ -1,8 +1,6 @@
 import json
 import re
 
-from poetry.config import Config
-
 from .command import Command
 
 
@@ -38,6 +36,8 @@ To remove a repository (repo is a short alias for repositories):
 """
 
     def __init__(self):
+        from poetry.config import Config
+
         super().__init__()
 
         self._config = Config.create('config.toml')

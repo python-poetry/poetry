@@ -10,6 +10,7 @@
 
 - Improved dependency resolution to avoid unnecessary operations.
 - Improved dependency resolution speed.
+- Improved CLI reactivity by deferring imports.
 
 ### Fixed
 

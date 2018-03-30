@@ -1,14 +1,12 @@
 from cleo import Command as BaseCommand
 
-from poetry.poetry import Poetry
-
 from ..styles.poetry import PoetryStyle
 
 
 class Command(BaseCommand):
 
     @property
-    def poetry(self) -> Poetry:
+    def poetry(self):
         return self.get_application().poetry
 
     def reset_poetry(self) -> None:

@@ -1,5 +1,3 @@
-from poetry.utils.venv import Venv
-
 from .command import Command
 
 
@@ -11,6 +9,8 @@ class VenvCommand(Command):
         super().__init__(name)
 
     def initialize(self, i, o):
+        from poetry.utils.venv import Venv
+
         super().initialize(i, o)
 
         self._venv = Venv.create(o, self.poetry.package.name)

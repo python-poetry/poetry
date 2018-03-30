@@ -4,8 +4,9 @@ from cleo import Application as BaseApplication
 from cleo.inputs import ArgvInput
 from cleo.outputs import ConsoleOutput
 
+from poetry import __version__
+
 from poetry.io.raw_argv_input import RawArgvInput
-from poetry.poetry import Poetry
 
 from .commands import AboutCommand
 from .commands import AddCommand
@@ -28,13 +29,15 @@ from .commands.debug import DebugResolveCommand
 class Application(BaseApplication):
 
     def __init__(self):
-        super().__init__('Poetry', Poetry.VERSION)
+        super().__init__('Poetry', __version__)
 
         self._poetry = None
         self._skip_io_configuration = False
 
     @property
-    def poetry(self) -> Poetry:
+    def poetry(self):
+        from poetry.poetry import Poetry
+
         if self._poetry is not None:
             return self._poetry
 

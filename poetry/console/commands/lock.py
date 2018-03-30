@@ -1,5 +1,3 @@
-from poetry.installation import Installer
-
 from .venv_command import VenvCommand
 
 
@@ -17,6 +15,8 @@ the current directory, processes it, and locks the depdencies in the <comment>py
 """
 
     def handle(self):
+        from poetry.installation import Installer
+
         installer = Installer(
             self.output,
             self.venv,

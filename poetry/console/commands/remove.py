@@ -1,5 +1,3 @@
-from poetry.installation import Installer
-
 from .venv_command import VenvCommand
 
 
@@ -20,6 +18,8 @@ list of installed packages
 <info>poetry remove</info>"""
 
     def handle(self):
+        from poetry.installation import Installer
+
         packages = self.argument('packages')
         is_dev = self.option('dev')
 
