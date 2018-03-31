@@ -206,8 +206,6 @@ class Locker:
             }
 
         if package.requirements:
-            print(package)
-            print(package.requirements)
             data['requirements'] = package.requirements
 
         return data
