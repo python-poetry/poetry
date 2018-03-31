@@ -152,11 +152,7 @@ When you execute the `install` command (or any other "install" commands like `ad
 Poetry will check if it's currently inside a virtualenv and, if not, will use an existing one
 or create a brand new one for you to always work isolated from your global Python installation.
 
-!!!warning
+!!!note
 
-    Since Poetry is 3.6+ only, it will create virtualenvs
-    using the standard library `venv` module.
-    
-    So if you want to work with a previous Python version in your
-    project, you will need to create your own virtualenvs using, for instance,
-    [pew](https://github.com/berdario/pew).
+    The created virtualenv will use the Python executable for which
+    `poetry` has been installed.
