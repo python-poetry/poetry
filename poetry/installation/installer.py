@@ -202,10 +202,11 @@ class Installer:
         self._io.new_line()
 
         # Execute operations
-        if not ops and (self._execute_operations or self._dry_run):
+        actual_ops = [op for op in ops if not op.skipped]
+        if not actual_ops and (self._execute_operations or self._dry_run):
             self._io.writeln('Nothing to install or update')
 
-        if ops and (self._execute_operations or self._dry_run):
+        if actual_ops and (self._execute_operations or self._dry_run):
             installs = []
             updates = []
             uninstalls = []
@@ -247,7 +248,6 @@ class Installer:
                     ) if skipped and self.is_verbose() else ''
                 )
             )
-            self._io.new_line()
 
         # Writing lock before installing
         if self._update and self._write_lock:
@@ -257,9 +257,10 @@ class Installer:
             )
 
             if updated_lock:
-                self._io.writeln('<info>Writing lock file</>')
                 self._io.writeln('')
+                self._io.writeln('<info>Writing lock file</>')
 
+        self._io.writeln('')
         for op in ops:
             self._execute(op)
 
@@ -366,6 +367,12 @@ class Installer:
                         local_repo.add_package(op.target_package)
                     elif op.job_type == 'uninstall':
                         local_repo.remove_package(op.package)
+                    else:
+                        # Even though the package already exists
+                        # in the lock file we will prefer the new one
+                        # to force updates
+                        local_repo.remove_package(pkg)
+                        local_repo.add_package(package)
 
                     acted_on = True
 

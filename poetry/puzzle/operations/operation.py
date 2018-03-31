@@ -28,6 +28,8 @@ class Operation:
     def format_version(self, package) -> str:
         return package.full_pretty_version
 
-    def skip(self, reason: str) -> None:
+    def skip(self, reason: str) -> 'Operation':
         self._skipped = True
         self._skip_reason = reason
+
+        return self

@@ -15,6 +15,7 @@
 ### Fixed
 
 - Fixed handling of markers with the `in` operator.
+- Fixed `update` not properly adding new packages to the lock file.
 
 
 ## [0.6.5] - 2018-03-22

@@ -86,6 +86,10 @@ class Solver:
                     # Checking version
                     if package.version != pkg.version:
                         operations.append(Update(pkg, package))
+                    else:
+                        operations.append(
+                            Install(package).skip('Already installed')
+                        )
 
                     break
 

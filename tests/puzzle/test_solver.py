@@ -50,13 +50,18 @@ def solver(package, pool, installed, locked, io):
 
 
 def check_solver_result(ops, expected):
+    for e in expected:
+        if 'skipped' not in e:
+            e['skipped'] = False
+
     result = []
     for op in ops:
         if 'update' == op.job_type:
             result.append({
                 'job': 'update',
                 'from': op.initial_package,
-                'to': op.target_package
+                'to': op.target_package,
+                'skipped': op.skipped
             })
         else:
             job = 'install'
@@ -65,7 +70,8 @@ def check_solver_result(ops, expected):
 
             result.append({
                 'job': job,
-                'package': op.package
+                'package': op.package,
+                'skipped': op.skipped
             })
 
     assert result == expected
@@ -172,8 +178,9 @@ def test_install_with_deps_in_order(solver, repo):
 
 
 def test_install_installed(solver, repo, installed):
-    installed.add_package(get_package('A', '1.0'))
-    repo.add_package(get_package('A', '1.0'))
+    package_a = get_package('A', '1.0')
+    installed.add_package(package_a)
+    repo.add_package(package_a)
 
     request = [
         get_dependency('A'),
@@ -181,7 +188,9 @@ def test_install_installed(solver, repo, installed):
 
     ops = solver.solve(request)
 
-    check_solver_result(ops, [])
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_a, 'skipped': True},
+    ])
 
 
 def test_update_installed(solver, repo, installed):
@@ -217,7 +226,9 @@ def test_update_with_fixed(solver, repo, installed):
 
     ops = solver.solve(request, fixed=[get_dependency('A', '1.0')])
 
-    check_solver_result(ops, [])
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_a, 'skipped': True},
+    ])
 
 
 def test_solver_sets_categories(solver, repo):
