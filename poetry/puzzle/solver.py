@@ -105,11 +105,17 @@ class Solver:
                     break
 
             if remove:
-                for locked in self._locked.packages:
-                    if locked.name == pkg.name:
-                        operations.append(Uninstall(pkg))
-
+                skip = True
+                for installed in self._installed.packages:
+                    if installed.name == pkg.name:
+                        skip = False
                         break
+
+                op = Uninstall(pkg)
+                if skip:
+                    op.skip('Not currently installed')
+
+                operations.append(op)
 
         requested_names = [r.name for r in requested]
 

@@ -330,6 +330,18 @@ class Installer:
         self._installer.update(source, target)
 
     def _execute_uninstall(self, operation: Uninstall) -> None:
+        if operation.skipped:
+            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
+                self._io.writeln(
+                    '  - Not removing <info>{}</> (<comment>{}</>) {}'.format(
+                        operation.package.pretty_name,
+                        operation.package.full_pretty_version,
+                        operation.skip_reason
+                    )
+                )
+
+            return
+
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
                 '  - Removing <info>{}</> (<comment>{}</>)'.format(

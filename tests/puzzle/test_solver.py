@@ -88,14 +88,30 @@ def test_solver_install_single(solver, repo):
     ])
 
 
-def test_solver_remove_if_no_longer_locked(solver, locked):
+def test_solver_remove_if_no_longer_locked(solver, locked, installed):
     package_a = get_package('A', '1.0')
+    installed.add_package(package_a)
     locked.add_package(package_a)
 
     ops = solver.solve([])
 
     check_solver_result(ops, [
         {'job': 'remove', 'package': package_a}
+    ])
+
+
+def test_remove_non_installed(solver, repo, locked):
+    package_a = get_package('A', '1.0')
+    locked.add_package(package_a)
+
+    repo.add_package(package_a)
+
+    request = []
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'remove', 'package': package_a, 'skipped': True},
     ])
 
 

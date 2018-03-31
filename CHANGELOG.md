@@ -16,6 +16,7 @@
 
 - Fixed handling of markers with the `in` operator.
 - Fixed `update` not properly adding new packages to the lock file.
+- Fixed solver adding uninstall operations for non-installed packages.
 
 
 ## [0.6.5] - 2018-03-22
