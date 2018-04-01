@@ -239,7 +239,7 @@ class Venv:
 
     def exec(self, bin, *args, **kwargs):
         if not self.is_venv():
-            return subprocess.run([bin] + list(args)).returncode
+            return subprocess.call([bin] + list(args))
         else:
             with self.temp_environ():
                 os.environ['PATH'] = self._path()
@@ -248,9 +248,7 @@ class Venv:
                 self.unset_env('PYTHONHOME')
                 self.unset_env('__PYVENV_LAUNCHER__')
 
-                completed = subprocess.run([bin] + list(args), **kwargs)
-
-                return completed.returncode
+                return subprocess.call([bin] + list(args), **kwargs)
 
     @contextmanager
     def temp_environ(self):
