@@ -128,7 +128,7 @@ class Installer:
             metadata['releases'].keys(),
             key=lambda r: (
                 '.'.join(self.VERSION_REGEX.match(r).groups()[:3]),
-                0 if self.VERSION_REGEX.match(r).group(5) else 1
+                self.VERSION_REGEX.match(r).group(5)
             )
         )
 
@@ -162,7 +162,7 @@ class Installer:
 
         print('Installing version: ' + colorize('info', version))
 
-        return self.install(version)
+        #return self.install(version)
 
     def install(self, version):
         # Most of the work will be delegated to pip
@@ -172,7 +172,7 @@ class Installer:
             print('  - Getting dependencies')
             self.call(
                 'pip', 'install', 'poetry=={}'.format(version),
-                '--target', dist
+                '--target', str(dist)
             )
 
             print('  - Vendorizing dependencies')
@@ -256,4 +256,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
