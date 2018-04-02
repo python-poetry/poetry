@@ -15,15 +15,15 @@ If instead we had specified the version string as `^0.1.13`, poetry would update
 
 Here are some more examples of caret requirements and the versions that would be allowed with them:
 
-```text
-^1.2.3 := >=1.2.3 <2.0.0
-^1.2 := >=1.2.0 <2.0.0
-^1 := >=1.0.0 <2.0.0
-^0.2.3 := >=0.2.3 <0.3.0
-^0.0.3 := >=0.0.3 <0.0.4
-^0.0 := >=0.0.0 <0.1.0
-^0 := >=0.0.0 <1.0.0
-```
+| Requirement | Versions allowed |
+| ----------- | ---------------- |
+| ^1.2.3      | >=1.2.3 <2.0.0   |
+| ^1.2        | >=1.2.0 <2.0.0   |
+| ^1          | >=1.0.0 <2.0.0   |
+| ^0.2.3      | >=0.2.3 <0.3.0   |
+| ^0.0.3      | >=0.0.3 <0.0.4   |
+| ^0.0        | >=0.0.0 <0.1.0   |
+| ^0          | >=0.0.0 <1.0.0   |
 
 ### Tilde requirements
 
@@ -33,11 +33,11 @@ If you only specify a major version, then minor- and patch-level changes are all
 
 `~1.2.3` is an example of a tilde requirement.
 
-```text
-~1.2.3 := >=1.2.3 <1.3.0
-~1.2 := >=1.2.0 <1.3.0
-~1 := >=1.0.0 <2.0.0
-```
+| Requirement | Versions allowed |
+| ----------- | ---------------- |
+| ~1.2.3      | >=1.2.3 <1.3.0   |
+| ~1.2        | >=1.2.0 <1.3.0   |
+| ~1          | >=1.0.0 <2.0.0   |
 
 ### Wildcard requirements
 
@@ -45,11 +45,11 @@ If you only specify a major version, then minor- and patch-level changes are all
 
 `*`, `1.*` and `1.2.*` are examples of wildcard requirements.
 
-```text
-* := >=0.0.0
-1.* := >=1.0.0 <2.0.0
-1.2.* := >=1.2.0 <1.3.0
-```
+| Requirement | Versions allowed |
+| ----------- | ---------------- |
+| *           | >=0.0.0          |
+| 1.*         | >=1.0.0 <2.0.0   |
+| 1.2.*       | >=1.2.0 <1.3.0   |
 
 ### Inequality requirements
 

@@ -1,7 +1,7 @@
 # Basic usage
 
 For the basic usage introduction we will be installing `pendulum`, a datetime library.
-If you have not yet installed Poetry, refer to the [Introduction](/docs/#introduction) chapter.
+If you have not yet installed Poetry, refer to the [Introduction](/) chapter.
 
 ## Project setup
 
