@@ -43,7 +43,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         poetry_content = content['tool']['poetry']
         poetry_content['version'] = version
 
-        #self.poetry.file.write(content)
+        self.poetry.file.write(content)
 
     def increment_version(self, version, rule):
         from poetry.semver.version_parser import VersionParser
