@@ -32,6 +32,10 @@ class CascadeDict:
         raise KeyError
 
     def __setitem__(self, key, value):
+        for d in self._internal_dicts[1:]:
+            if key in d:
+                d[key] = value
+
         self._internal_dicts[0][key] = value
 
     def get(self, item, default=None):

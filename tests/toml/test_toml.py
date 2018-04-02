@@ -1,3 +1,4 @@
+from poetry.toml import dumps
 from poetry.toml import loads
 
 from poetry.toml.prettify.errors import TOMLError
@@ -262,3 +263,27 @@ last_name = "Springsteen"
 def non_empty(iterable):
     return tuple(filter(bool, iterable))
 
+
+def test_set_elements():
+    t = """\
+[tool.poetry]
+name = "poetry"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.6"   
+"""
+    parsed = loads(t)
+
+    content = parsed['tool']['poetry']
+    assert content['name'] == 'poetry'
+    assert content['version'] == '0.1.0'
+
+    content['version'] = '0.2.0'
+    t = dumps(parsed)
+
+    parsed = loads(t)
+
+    content = parsed['tool']['poetry']
+    assert content['name'] == 'poetry'
+    assert content['version'] == '0.2.0'
