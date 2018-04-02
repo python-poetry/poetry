@@ -162,7 +162,7 @@ class Installer:
 
         print('Installing version: ' + colorize('info', version))
 
-        #return self.install(version)
+        return self.install(version)
 
     def install(self, version):
         # Most of the work will be delegated to pip
