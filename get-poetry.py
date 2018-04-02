@@ -121,7 +121,7 @@ class Installer:
     def run(self):
         print(colorize('info', 'Retrieving metadata'))
         with urlopen(self.METADATA_URL) as r:
-            metadata = json.loads(r.read())
+            metadata = json.loads(r.read().decode())
 
         print('')
         releases = sorted(
