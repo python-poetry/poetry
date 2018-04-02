@@ -11,3 +11,4 @@ from .remove import RemoveCommand
 from .run import RunCommand
 from .show import ShowCommand
 from .update import UpdateCommand
+from .version import VersionCommand

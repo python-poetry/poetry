@@ -281,3 +281,11 @@ This command locks (without installing) the dependencies specified in `pyproject
 ```bash
 poetry lock
 ```
+
+## version
+
+This command bumps the version of the project
+and writes the new version back to `pyproject.toml`
+
+The new version should ideally be a valid semver string or a valid bump rule:
+`patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.

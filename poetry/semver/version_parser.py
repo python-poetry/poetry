@@ -204,14 +204,14 @@ class VersionParser:
         Increment, decrement, or simply pad a version number.
         """
         matches = [matches[i]
-                   if i < len(matches) - 1 and matches[i] is not None else '0'
+                   if i <= len(matches) - 1 and matches[i] is not None else pad
                    for i in range(4)]
         for i in range(3, -1, -1):
             if i > position:
                 matches[i] = pad
             elif i == position and increment:
                 matches[i] = int(matches[i]) + increment
-                # If $matches[i] was 0, carry the decrement
+                # If matches[i] was 0, carry the decrement
                 if matches[i] < 0:
                     matches[i] = pad
                     position -= 1
