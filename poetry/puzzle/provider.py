@@ -29,9 +29,10 @@ class Provider(SpecificationProvider):
 
     UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
 
-    def __init__(self, package: Package, pool: Pool):
+    def __init__(self, package: Package, pool: Pool, io):
         self._package = package
         self._pool = pool
+        self._io = io
         self._python_constraint = package.python_constraint
         self._base_dg = DependencyGraph()
         self._search_for = {}
@@ -65,21 +66,21 @@ class Provider(SpecificationProvider):
             return self._search_for[dependency]
 
         if dependency.is_vcs():
-            return self.search_for_vcs(dependency)
-
-        packages = self._pool.find_packages(
-            dependency.name,
-            dependency.constraint,
-            extras=dependency.extras,
-        )
-
-        packages.sort(
-            key=cmp_to_key(
-                lambda x, y:
-                0 if x.version == y.version
-                else -1 * int(less_than(x.version, y.version) or -1)
+            packages = self.search_for_vcs(dependency)
+        else:
+            packages = self._pool.find_packages(
+                dependency.name,
+                dependency.constraint,
+                extras=dependency.extras,
             )
-        )
+
+            packages.sort(
+                key=cmp_to_key(
+                    lambda x, y:
+                    0 if x.version == y.version
+                    else -1 * int(less_than(x.version, y.version) or -1)
+                )
+            )
 
         self._search_for[dependency] = packages
 
@@ -112,16 +113,29 @@ class Provider(SpecificationProvider):
             if dependency.tag or dependency.rev:
                 revision = dependency.reference
 
-            poetry = TomlFile(tmp_dir / 'pyproject.toml')
-            if poetry.exists():
+            pyproject = TomlFile(tmp_dir / 'pyproject.toml')
+            pyproject_content = None
+            has_poetry = False
+            if pyproject.exists():
+                pyproject_content = pyproject.read(True)
+                has_poetry = (
+                    'tool' in pyproject_content
+                    and 'poetry' in pyproject_content['tool']
+                )
+
+            if pyproject_content and has_poetry:
                 # If a pyproject.toml file exists
                 # We use it to get the information we need
-                info = poetry.read()
+                info = pyproject_content['tool']['poetry']
 
-                name = info['package']['name']
-                version = info['package']['version']
+                name = info['name']
+                version = info['version']
                 package = Package(name, version, version)
                 for req_name, req_constraint in info['dependencies'].items():
+                    if req_name == 'python':
+                        package.python_versions = req_constraint
+                        continue
+
                     package.add_dependency(req_name, req_constraint)
             else:
                 # We need to use setup.py here
@@ -132,7 +146,7 @@ class Provider(SpecificationProvider):
                 os.chdir(tmp_dir.as_posix())
 
                 try:
-                    venv = Venv.create()
+                    venv = Venv.create(self._io)
                     output = venv.run(
                         'python', 'setup.py',
                         '--name', '--version'
