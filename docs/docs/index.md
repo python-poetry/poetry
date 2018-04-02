@@ -12,12 +12,35 @@ on Windows, Linux and OSX.
 
 ## Installation
 
-Installing Poetry is as simple as:
+Poetry provides a custom installer that will install `poetry` isolated
+from the rest of your system by vendorizing its dependencies. This is the
+recommended way of installing `poetry`.
 
 ```bash
-pip install --user poetry
+curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+```
+
+Alternatively, you can download the `get-poetry.py` file and execute it separately.
+
+If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`:
+
+```bash
+python get-poetry.py --preview
+```
+
+Similarly, if you want to install a specific version, you can use `--version`:
+
+```bash
+python get-poetry.py --version 0.7.0
 ```
 
 !!!note
 
-    In the future, Poetry will come with its standalone installer.
+    Using `pip` to install `poetry` is also possible.
+    
+    ```bash
+    pip install --user poetry
+    ``` 
+    
+    Be aware, however, that it will also install poetry's dependencies
+    which might cause conflicts.

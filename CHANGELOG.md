@@ -5,7 +5,8 @@
 ### Added
 
 - Added compatibility with Python 3.4 and 3.5.
-- Added the `version` command to automatically bump the packages' version.
+- Added the `version` command to automatically bump the package's version.
+- Added a standalone installer to install `poetry` isolated.
 
 ### Changed
 
