@@ -28,7 +28,7 @@ jsonschema = "^2.6"
 pyrsistent = "^0.14.2"
 pyparsing = "^2.2"
 
-# zipfile36 and virtualenv are needed for Python 3.4 and 3.5
+# zipfile36 is needed for Python 3.4 and 3.5
 zipfile36 = { version = "^0.1", python = ">=3.4 <3.6" }
 
 # The typing module is not in the stdlib in Python 3.4
@@ -43,4 +43,4 @@ pygments = "^2.2"
 
 
 [tool.poetry.scripts]
-poetry = "poetry:console.run"
+poetry = "poetry.console:main"
