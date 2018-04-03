@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from poetry.layouts import layout
-
 from .command import Command
 
 
@@ -15,6 +13,8 @@ class NewCommand(Command):
     """
 
     def handle(self):
+        from poetry.layouts import layout
+
         layout_ = layout('standard')
 
         path = Path.cwd() / Path(self.argument('path'))

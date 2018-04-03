@@ -1,5 +1,5 @@
-import toml
-
+from poetry.toml import dumps
+from poetry.toml import loads
 from poetry.utils.helpers import module_name
 from poetry.vcs.git import Git
 
@@ -9,6 +9,21 @@ TESTS_DEFAULT = """from {package_name} import __version__
 
 def test_version():
     assert '{version}' == __version__
+"""
+
+
+POETRY_DEFAULT = """\
+[tool.poetry]
+name = ""
+version = ""
+description = ""
+authors = []
+
+[tool.poetry.dependencies]
+python = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.5"
 """
 
 
@@ -84,32 +99,13 @@ class Layout(object):
             )
 
     def _write_poetry(self, path):
-        output = {
-            'tool': {
-                'poetry': {
-                    'name': self._project,
-                    'version': self._version,
-                    'authors': [self._author],
-                }
-            }
-        }
-
-        content = toml.dumps(output, preserve=True)
-
-        output = {
-            'tool': {
-                'poetry': {
-                    'dependencies': {},
-                    'dev-dependencies': {
-                        'pytest': '^3.4'
-                    }
-                }
-            }
-        }
-
-        content += '\n' + toml.dumps(output, preserve=True)
+        content = loads(POETRY_DEFAULT)
+        poetry_content = content['tool']['poetry']
+        poetry_content['name'] = self._project
+        poetry_content['version'] = self._version
+        poetry_content['authors'].append(self._author)
 
         poetry = path / 'pyproject.toml'
 
         with poetry.open('w') as f:
-            f.write(content)
+            f.write(dumps(content))
