@@ -145,7 +145,7 @@ lists all packages available."""
             self.line(line)
 
     def display_package_tree(self, package, installed_repo):
-        self.write('<info>{}</info>'.format(package.prett_name))
+        self.write('<info>{}</info>'.format(package.pretty_name))
         self.line(' {} {}'.format(package.pretty_version, package.description))
 
         dependencies = package.requires
