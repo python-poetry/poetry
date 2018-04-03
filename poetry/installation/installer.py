@@ -167,9 +167,7 @@ class Installer:
         else:
             self._io.writeln('<info>Installing dependencies from lock file</>')
 
-            locked_repository = self._locker.locked_repository(
-                self.is_dev_mode()
-            )
+            locked_repository = self._locker.locked_repository(True)
 
             if not self._locker.is_fresh():
                 self._io.writeln(
@@ -474,6 +472,11 @@ class Installer:
             if package.optional:
                 if package.name not in extra_packages:
                     op.skip('Not required')
+
+            # If the package is a dev package and dev packages
+            # are not requests, we skip it
+            if package.category == 'dev' and not self.is_dev_mode():
+                op.skip('Dev dependencies not requested')
 
     def _get_extra_packages(self, repo):
         """
