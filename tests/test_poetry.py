@@ -17,7 +17,7 @@ def test_poetry():
     assert package.version == '1.2.3'
     assert package.description == 'Some description.'
     assert package.authors == ['Sébastien Eustace <sebastien@eustace.io>']
-    assert package.license == 'MIT'
+    assert package.license.id == 'MIT'
     assert str(package.readme.relative_to(fixtures_dir)) == "sample_project/README.rst"
     assert package.homepage == 'https://poetry.eustace.io'
     assert package.repository_url == 'https://github.com/sdispater/poetry'
@@ -55,6 +55,24 @@ def test_poetry():
     assert not pathlib2.is_optional()
 
     assert 'db' in package.extras
+
+    classifiers = package.classifiers
+
+    assert classifiers == [
+        "Topic :: Software Development :: Build Tools",
+        "Topic :: Software Development :: Libraries :: Python Modules"
+    ]
+
+    assert package.all_classifiers == [
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Software Development :: Build Tools",
+        "Topic :: Software Development :: Libraries :: Python Modules"
+    ]
 
 
 def test_check():

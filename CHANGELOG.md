@@ -7,12 +7,14 @@
 - Added compatibility with Python 3.4 and 3.5.
 - Added the `version` command to automatically bump the package's version.
 - Added a standalone installer to install `poetry` isolated.
+- Added support for classifiers in `pyproject.toml`.
 
 ### Changed
 
 - Improved dependency resolution to avoid unnecessary operations.
 - Improved dependency resolution speed.
 - Improved CLI reactivity by deferring imports.
+- License classifer is not automatically added to classifers.
 
 ### Fixed
 

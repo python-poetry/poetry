@@ -10,6 +10,6 @@ class CheckCommand(Command):
 
     def handle(self):
         # Load poetry and display errors, if any
-        _ = self.poetry
+        self.poetry.check(self.poetry.config, strict=True)
 
         self.info('All set!')

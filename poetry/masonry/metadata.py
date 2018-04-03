@@ -52,8 +52,8 @@ class Metadata:
         meta.home_page = package.homepage or package.repository_url
         meta.author = package.author_name
         meta.author_email = package.author_email
-        meta.license = package.license
-        meta.classifiers = package.classifiers
+        meta.license = package.license.id
+        meta.classifiers = package.all_classifiers
 
         # Version 1.2
         meta.maintainer = meta.author

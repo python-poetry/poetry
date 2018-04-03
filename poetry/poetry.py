@@ -11,6 +11,7 @@ from .packages import Locker
 from .packages import Package
 from .repositories import Pool
 from .repositories.pypi_repository import PyPiRepository
+from .spdx import license_by_id
 from .utils.toml_file import TomlFile
 
 
@@ -88,6 +89,7 @@ class Poetry:
         package.repository_url = local_config.get('repository')
         package.license = local_config.get('license')
         package.keywords = local_config.get('keywords', [])
+        package.classifiers = local_config.get('classifiers', [])
 
         if 'readme' in local_config:
             package.readme = Path(cwd) / local_config['readme']
@@ -162,5 +164,16 @@ class Poetry:
                 )
 
             raise InvalidProjectFile(message)
+
+        if strict:
+            # If strict, check the file more thoroughly
+
+            # Checking license
+            license = config.get('license')
+            if license:
+                try:
+                    license_by_id(license)
+                except ValueError:
+                    raise InvalidProjectFile('Invalid license')
 
         return True

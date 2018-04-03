@@ -50,6 +50,10 @@
             "type": "string",
             "description": "The path to the README file"
         },
+        "classifiers":  {
+            "type": "array",
+            "description": "A list of trove classifers."
+        },
         "dependencies": {
             "type": "object",
             "description": "This is a hash of package name (keys) and version constraints (values) that are required to run this package.",

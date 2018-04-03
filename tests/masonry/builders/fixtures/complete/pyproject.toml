@@ -15,6 +15,10 @@ documentation = "https://poetry.eustace.io/docs"
 
 keywords = ["packaging", "dependency", "poetry"]
 
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
 
 # Requirements
 [tool.poetry.dependencies]

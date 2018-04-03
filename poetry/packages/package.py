@@ -5,6 +5,8 @@ from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import EmptyConstraint
 from poetry.semver.helpers import parse_stability
 from poetry.semver.version_parser import VersionParser
+from poetry.spdx import license_by_id
+from poetry.spdx import License
 from poetry.version import parse as parse_version
 
 from .constraints.generic_constraint import GenericConstraint
@@ -68,7 +70,7 @@ class Package:
         self.homepage = None
         self.repository_url = None
         self.keywords = []
-        self.license = None
+        self._license = None
         self.readme = None
 
         self.source_type = ''
@@ -91,6 +93,8 @@ class Package:
         self.build = None
         self.include = []
         self.exclude = []
+
+        self.classifiers = []
 
         self._python_versions = '*'
         self._python_constraint = self._parser.parse_constraints('*')
@@ -187,10 +191,23 @@ class Package:
     @property
     def platform_constraint(self):
         return self._platform_constraint
+
+    @property
+    def license(self):
+        return self._license
+
+    @license.setter
+    def license(self, value):
+        if value is None:
+            self._license = license
+        elif isinstance(value, License):
+            self._license = license
+        else:
+            self._license = license_by_id(value)
     
     @property
-    def classifiers(self):
-        classifiers = []
+    def all_classifiers(self):
+        classifiers = self.classifiers.copy()
 
         # Automatically set python classifiers
         parser = VersionParser()
@@ -210,7 +227,12 @@ class Package:
                     'Programming Language :: Python :: {}'.format(version)
                 )
 
-        return classifiers
+        # Automatically set license classifers
+        classifiers.append(self.license.classifier)
+
+        classifiers = set(classifiers)
+
+        return sorted(classifiers)
 
     def is_dev(self):
         return self._dev

@@ -112,9 +112,12 @@ Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
 Requires-Python: >= 3.6.0.0, < 4.0.0.0
+Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cleo (>=0.6.0.0,<0.7.0.0)
 Requires-Dist: pendulum (>=1.4.0.0,<2.0.0.0); extra == "time"
