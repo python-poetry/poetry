@@ -9,6 +9,7 @@ from .new import NewCommand
 from .publish import PublishCommand
 from .remove import RemoveCommand
 from .run import RunCommand
+from .script import ScriptCommand
 from .show import ShowCommand
 from .update import UpdateCommand
 from .version import VersionCommand

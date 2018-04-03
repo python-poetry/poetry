@@ -201,18 +201,25 @@ class Venv:
 
         return value
 
-    def run(self, bin: str, *args, **kwargs) -> str:
+    def run(self, bin: str, *args, **kwargs):
         """
         Run a command inside the virtual env.
         """
         cmd = [bin] + list(args)
         shell = kwargs.get('shell', False)
+        call = kwargs.pop('call', False)
 
         if shell:
             cmd = ' '.join(cmd)
 
         try:
             if not self.is_venv():
+                if call:
+                    return subprocess.call(
+                        cmd, stderr=subprocess.STDOUT,
+                        **kwargs
+                    )
+
                 output = subprocess.check_output(
                     cmd, stderr=subprocess.STDOUT,
                     **kwargs
@@ -227,6 +234,12 @@ class Venv:
 
                     self.unset_env('PYTHONHOME')
                     self.unset_env('__PYVENV_LAUNCHER__')
+
+                    if call:
+                        return subprocess.call(
+                            cmd, stderr=subprocess.STDOUT,
+                            **kwargs
+                        )
 
                     output = subprocess.check_output(
                         cmd, stderr=subprocess.STDOUT,

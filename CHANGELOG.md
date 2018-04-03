@@ -8,6 +8,7 @@
 - Added the `version` command to automatically bump the package's version.
 - Added a standalone installer to install `poetry` isolated.
 - Added support for classifiers in `pyproject.toml`.
+- Added the `script` command.
 
 ### Changed
 

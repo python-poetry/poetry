@@ -19,6 +19,7 @@ from .commands import NewCommand
 from .commands import PublishCommand
 from .commands import RemoveCommand
 from .commands import RunCommand
+from .commands import ScriptCommand
 from .commands import ShowCommand
 from .commands import UpdateCommand
 from .commands import VersionCommand
@@ -57,7 +58,7 @@ class Application(BaseApplication):
             o = ConsoleOutput()
 
         name = i.get_first_argument()
-        if name == 'run':
+        if name in ['run', 'script']:
             self._skip_io_configuration = True
             i = RawArgvInput()
 
@@ -66,7 +67,7 @@ class Application(BaseApplication):
     def do_run(self, i, o):
         name = self.get_command_name(i)
 
-        if name != 'run':
+        if name not in ['run', 'script']:
             return super().do_run(i, o)
 
         command = self.find(name)
@@ -98,6 +99,7 @@ class Application(BaseApplication):
             PublishCommand(),
             RemoveCommand(),
             RunCommand(),
+            ScriptCommand(),
             ShowCommand(),
             UpdateCommand(),
             VersionCommand(),

@@ -253,6 +253,25 @@ poetry run python -V
 
 Note that this command has no option.
 
+## script
+
+The `script` executes one of the scripts defined in `pyproject.toml`.
+
+So, if you have a script defined like this:
+
+```toml
+[tool.poetry.scripts]
+my-script = "my_module:main"
+```
+
+You can execute it like so:
+
+```bash
+poetry script my-script
+```
+
+Note that this command has no option.
+
 ## check
 
 The `check` command validate the structure of the `pyproject.toml` file
