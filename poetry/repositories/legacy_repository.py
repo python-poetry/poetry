@@ -1,4 +1,5 @@
 from pathlib import Path
+from pip._vendor.pkg_resources import RequirementParseError
 from piptools.cache import DependencyCache
 from piptools.repositories import PyPIRepository
 from piptools.resolver import Resolver
@@ -24,6 +25,7 @@ class LegacyRepository(PyPiRepository):
         if name == 'pypi':
             raise ValueError('The name [pypi] is reserved for repositories')
 
+        self._packages = []
         self._name = name
         self._url = url
         command = get_pip_command()
@@ -169,7 +171,7 @@ class LegacyRepository(PyPiRepository):
         )
         try:
             requirements = list(resolver._iter_dependencies(ireq))
-        except InstallationError as e:
+        except (InstallationError, RequirementParseError):
             # setup.py egg-info error most likely
             # So we assume no dependencies
             requirements = []

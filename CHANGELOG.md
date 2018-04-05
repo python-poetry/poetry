@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed dependency resolution for custom repositories.
+
+
 ## [0.7.0] - 2018-04-04
 
 ### Added
