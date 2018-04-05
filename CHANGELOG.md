@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Changes
+
+- Improved dependency resolution time by using cache control.
+
+
 ## [0.7.1] - 2018-04-05
 
 ### Fixed

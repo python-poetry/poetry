@@ -2,8 +2,10 @@ from pathlib import Path
 from typing import List
 from typing import Union
 
+from cachecontrol import CacheControl
+from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
-from requests import get
+from requests import session
 
 from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
@@ -21,6 +23,7 @@ class PyPiRepository(Repository):
     def __init__(self, url='https://pypi.org/', disable_cache=False):
         self._url = url
         self._disable_cache = disable_cache
+
         release_cache_dir = Path(CACHE_DIR) / 'cache' / 'repositories' / 'pypi'
         self._cache = CacheManager({
             'default': 'releases',
@@ -35,6 +38,11 @@ class PyPiRepository(Repository):
                 }
             }
         })
+
+        self._session = CacheControl(
+            session(),
+            cache=FileCache(str(release_cache_dir / '_packages'))
+        )
         
         super().__init__()
 
@@ -203,7 +211,7 @@ class PyPiRepository(Repository):
         return data
 
     def _get(self, endpoint: str) -> Union[dict, None]:
-        json_response = get(self._url + endpoint)
+        json_response = self._session.get(self._url + endpoint)
         if json_response.status_code == 404:
             return None
 
