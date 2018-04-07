@@ -162,7 +162,13 @@ class Installer:
 
         print('Installing version: ' + colorize('info', version))
 
-        return self.install(version)
+        try:
+            return self.install(version)
+        except subprocess.CalledProcessError as e:
+            print(colorize('error', 'An error has occured: {}'.format(str(e))))
+            print(e.output)
+
+            return e.returncode
 
     def install(self, version):
         # Most of the work will be delegated to pip
