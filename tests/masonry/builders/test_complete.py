@@ -67,7 +67,7 @@ def test_wheel_c_extension():
 Wheel-Version: 1.0
 Generator: poetry {}
 Root-Is-Purelib: false
-Tag: cp[23]\d-cp[23]\dm-.+
+Tag: cp[23]\d-cp[23]\dmu?-.+
 $""".format(__version__), wheel_data) is not None
     finally:
         zip.close()
