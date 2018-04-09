@@ -103,6 +103,9 @@ class PyPiRepository(Repository):
                     req = req.split(';')[0]
 
                     dependency = dependency_from_pep_508(req)
+                except ValueError:
+                    # Likely unable to parse constraint so we skip it
+                    continue
 
                 if dependency.extras:
                     for extra in dependency.extras:
