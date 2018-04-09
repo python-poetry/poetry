@@ -1,8 +1,7 @@
 import toml
 
-from pathlib import Path
-
 from poetry.locations import CONFIG_DIR
+from poetry.utils._compat import Path
 
 from .uploader import Uploader
 
