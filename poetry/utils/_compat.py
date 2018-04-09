@@ -54,3 +54,23 @@ def encode(string, encodings=None):
             pass
 
     return string.encode(encodings[0], errors='ignore')
+
+
+def to_str(string):
+    if isinstance(string, str) or not isinstance(string, (unicode, bytes)):
+        return string
+
+    if PY2:
+        method = 'encode'
+    else:
+        method = 'decode'
+
+    encodings = ['utf-8', 'latin1', 'ascii']
+
+    for encoding in encodings:
+        try:
+            return getattr(string, method)(encoding)
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+
+    return getattr(string, method)(encodings[0], errors='ignore')

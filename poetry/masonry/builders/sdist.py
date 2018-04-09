@@ -1,5 +1,4 @@
-from __future__ import unicode_literals
-
+# -*- coding: utf-8 -*-
 import os
 import re
 import tarfile
@@ -15,6 +14,7 @@ from typing import List
 from poetry.packages import Dependency
 from poetry.utils._compat import Path
 from poetry.utils._compat import encode
+from poetry.utils._compat import to_str
 
 from ..utils.helpers import normalize_file_permissions
 
@@ -92,6 +92,7 @@ class SdistBuilder(Builder):
                     tar.addfile(tar_info)  # Symlinks & ?
 
             setup = self.build_setup()
+            print(setup)
             tar_info = tarfile.TarInfo(pjoin(tar_dir, 'setup.py'))
             tar_info.size = len(setup)
             tar.addfile(tar_info, BytesIO(setup))
@@ -101,8 +102,8 @@ class SdistBuilder(Builder):
                 version=self._meta.version,
                 summary=self._meta.summary,
                 home_page=self._meta.home_page,
-                author=self._meta.author,
-                author_email=self._meta.author_email,
+                author=to_str(self._meta.author),
+                author_email=to_str(self._meta.author_email),
             ))
 
             tar_info = tarfile.TarInfo(pjoin(tar_dir, 'PKG-INFO'))
@@ -161,13 +162,13 @@ class SdistBuilder(Builder):
 
         return encode(SETUP.format(
             before='\n'.join(before),
-            name=self._meta.name,
-            version=self._meta.version,
-            description=self._meta.summary,
-            long_description=self._meta.description,
-            author=self._meta.author,
-            author_email=self._meta.author_email,
-            url=self._meta.home_page,
+            name=to_str(self._meta.name),
+            version=to_str(self._meta.version),
+            description=to_str(self._meta.summary),
+            long_description=to_str(self._meta.description),
+            author=to_str(self._meta.author),
+            author_email=to_str(self._meta.author_email),
+            url=to_str(self._meta.home_page),
             extra='\n    '.join(extra),
             after='\n'.join(after)
         ))
@@ -235,7 +236,9 @@ class SdistBuilder(Builder):
                 for extra_name, reqs in package.extras.items():
                     for req in reqs:
                         if req.name == dependency.name:
-                            requirement = dependency.to_pep_508(with_extras=False)
+                            requirement = to_str(
+                                dependency.to_pep_508(with_extras=False)
+                            )
                             if ';' in requirement:
                                 requirement, conditions = requirement.split(';')
 
@@ -255,7 +258,7 @@ class SdistBuilder(Builder):
                             extras[extra_name].append(requirement)
                 continue
 
-            requirement = dependency.to_pep_508()
+            requirement = to_str(dependency.to_pep_508())
             if ';' in requirement:
                 requirement, conditions = requirement.split(';')
 
