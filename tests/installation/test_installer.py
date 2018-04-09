@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import sys
+
 import pytest
 import toml
 
@@ -79,6 +81,18 @@ class Locker(BaseLocker):
                 del package['dependencies']
 
         self._written_data = data
+
+
+@pytest.fixture(autouse=True)
+def setup():
+    # Mock python version and platform to get reliable tests
+    original_platform = sys.platform
+
+    sys.platform = 'darwin'
+
+    yield
+
+    sys.platform = original_platform
 
 
 @pytest.fixture()
