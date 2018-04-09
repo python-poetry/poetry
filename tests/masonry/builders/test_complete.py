@@ -47,7 +47,7 @@ def test_wheel_c_extension():
     assert 'extended-0.1/build.py' in tar.getnames()
     assert 'extended-0.1/extended/extended.c' in tar.getnames()
 
-    whl = list((module_path / 'dist').glob('extended-0.1-cp*-cp*m-*.whl'))[0]
+    whl = list((module_path / 'dist').glob('extended-0.1-cp*-cp*-*.whl'))[0]
 
     assert whl.exists()
 
