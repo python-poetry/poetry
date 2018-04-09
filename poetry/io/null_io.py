@@ -7,18 +7,18 @@ from poetry.console.styles.poetry import PoetryStyle
 class NullIO(PoetryStyle):
 
     def __init__(self):
-        super().__init__(ListInput([]), NullOutput())
+        super(NullIO, self).__init__(ListInput([]), NullOutput())
 
-    def is_quiet(self) -> bool:
+    def is_quiet(self):  # type: () -> bool
         return False
 
-    def is_verbose(self) -> bool:
+    def is_verbose(self):  # type: () -> bool
         return False
 
-    def is_very_verbose(self) -> bool:
+    def is_very_verbose(self):  # type: () -> bool
         return False
 
-    def is_debug(self) -> bool:
+    def is_debug(self):  # type: () -> bool
         return False
 
     def writeln(self, *args, **kwargs):

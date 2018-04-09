@@ -3,12 +3,11 @@ import pytest
 import shutil
 import tarfile
 
-from pathlib import Path
-
 from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.packages import Package
 from poetry.poetry import Poetry
+from poetry.utils._compat import Path
 from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency

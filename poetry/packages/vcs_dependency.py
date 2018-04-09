@@ -20,12 +20,12 @@ class VCSDependency(Dependency):
         self._tag = tag
         self._rev = rev
         
-        super().__init__(
+        super(VCSDependency, self).__init__(
             name, '*', optional=optional, allows_prereleases=True
         )
 
     @property
-    def vcs(self) -> str:
+    def vcs(self):
         return self._vcs
 
     @property
@@ -45,11 +45,11 @@ class VCSDependency(Dependency):
         return self._rev
 
     @property
-    def reference(self) -> str:
+    def reference(self):  # type: () -> str
         return self._branch or self._tag or self._rev
 
     @property
-    def pretty_constraint(self) -> str:
+    def pretty_constraint(self):  # type: () -> str
         if self._branch:
             what = 'branch'
             version = self._branch
@@ -62,7 +62,7 @@ class VCSDependency(Dependency):
 
         return '{} {}'.format(what, version)
 
-    def is_vcs(self) -> bool:
+    def is_vcs(self):  # type: () -> bool
         return True
 
     def accepts_prereleases(self):

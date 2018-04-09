@@ -1,6 +1,10 @@
 import re
 
+from typing import Tuple
+from typing import Union
+
 from .constraints.constraint import Constraint
+from .constraints.base_constraint import BaseConstraint
 from .constraints.empty_constraint import EmptyConstraint
 from .constraints.multi_constraint import MultiConstraint
 from .constraints.wildcard_constraint import WilcardConstraint
@@ -19,7 +23,9 @@ class VersionParser:
         'stable', 'RC', 'beta', 'alpha', 'dev'
     ]
 
-    def parse_constraints(self, constraints: str):
+    def parse_constraints(
+            self, constraints
+        ):  # type: (str) -> Union[Constraint, MultiConstraint]
         """
         Parses a constraint string into
         MultiConstraint and/or Constraint objects.
@@ -88,7 +94,9 @@ class VersionParser:
 
         return constraint
 
-    def _parse_constraint(self, constraint):
+    def _parse_constraint(
+            self, constraint
+        ):  # type: (str) -> Union[Tuple[BaseConstraint], Tuple[BaseConstraint, BaseConstraint]]
         m = re.match('(?i)^v?[xX*](\.[xX*])*$', constraint)
         if m:
             return EmptyConstraint(),

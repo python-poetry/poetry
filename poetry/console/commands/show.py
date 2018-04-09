@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from .venv_command import VenvCommand
 
 

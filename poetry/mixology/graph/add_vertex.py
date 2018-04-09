@@ -7,16 +7,6 @@ _NULL = object()
 class AddVertex(Action):
 
     def __init__(self, name, payload, root):
-        """
-        :param name: The name of the vertex.
-        :type name: str
-
-        :param payload: The payload of he vertex
-        :type payload: Any
-
-        :param root: whether the vertex is root or not
-        :type root: bool
-        """
         super(AddVertex, self).__init__()
 
         self._name = name

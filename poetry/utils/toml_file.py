@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 import toml
-
-from pathlib import Path
 
 from poetry.toml import dumps
 from poetry.toml import loads
 from poetry.toml import TOMLFile
+
+from ._compat import Path
 
 
 class TomlFile:
@@ -16,14 +17,14 @@ class TomlFile:
     def path(self):
         return self._path
 
-    def read(self, raw=False) -> dict:
+    def read(self, raw=False):  # type: (bool) -> dict
         with self._path.open() as f:
             if raw:
                 return toml.loads(f.read())
 
             return loads(f.read())
 
-    def write(self, data) -> None:
+    def write(self, data):  # type: (...) -> None
         if not isinstance(data, TOMLFile):
             data = toml.dumps(data)
         else:

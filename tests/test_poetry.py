@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import toml
 
-from pathlib import Path
-
 from poetry.poetry import Poetry
+from poetry.utils._compat import Path
 
 
 fixtures_dir = Path(__file__).parent / 'fixtures'

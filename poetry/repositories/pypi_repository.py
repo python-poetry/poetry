@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List
 from typing import Union
 
@@ -13,6 +12,7 @@ from poetry.packages import Package
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
+from poetry.utils._compat import Path
 from poetry.version.markers import InvalidMarker
 
 from .repository import Repository
@@ -44,13 +44,13 @@ class PyPiRepository(Repository):
             cache=FileCache(str(release_cache_dir / '_packages'))
         )
         
-        super().__init__()
+        super(PyPiRepository, self).__init__()
 
     def find_packages(self,
-                      name: str,
-                      constraint: Union[Constraint, str, None] = None,
-                      extras: Union[list, None] = None
-                      ) -> List[Package]:
+                      name,             # type: str
+                      constraint=None,  # type: Union[Constraint, str, None]
+                      extras=None       # type: Union[list, None]
+                      ):  # type: (...) -> List[Package]
         """
         Find packages on the remote server.
         """
@@ -79,9 +79,10 @@ class PyPiRepository(Repository):
         return packages
 
     def package(self,
-                name: str,
-                version: str,
-                extras: Union[list, None] = None) -> Package:
+                name,        # type: str
+                version,     # type: str
+                extras=None  # type: (Union[list, None])
+                ):  # type: (...) -> Package
         try:
             index = self._packages.index(Package(name, version, version))
 
@@ -153,7 +154,7 @@ class PyPiRepository(Repository):
 
         return results
 
-    def get_package_info(self, name: str) -> dict:
+    def get_package_info(self, name):  # type: (str) -> dict
         """
         Return the package information given its name.
 
@@ -168,14 +169,14 @@ class PyPiRepository(Repository):
             lambda: self._get_package_info(name)
         )
 
-    def _get_package_info(self, name: str) -> dict:
+    def _get_package_info(self, name):  # type: (str) -> dict
         data = self._get('pypi/{}/json'.format(name))
         if data is None:
             raise ValueError('Package [{}] not found.'.format(name))
 
         return data
 
-    def get_release_info(self, name: str, version: str) -> dict:
+    def get_release_info(self, name, version):  # type: (str, str) -> dict
         """
         Return the release information given a package name and a version.
 
@@ -190,7 +191,7 @@ class PyPiRepository(Repository):
             lambda: self._get_release_info(name, version)
         )
 
-    def _get_release_info(self, name: str, version: str) -> dict:
+    def _get_release_info(self, name, version):  # type: (str, str) -> dict
         json_data = self._get('pypi/{}/{}/json'.format(name, version))
         if json_data is None:
             raise ValueError('Package [{}] not found.'.format(name))
@@ -210,7 +211,7 @@ class PyPiRepository(Repository):
 
         return data
 
-    def _get(self, endpoint: str) -> Union[dict, None]:
+    def _get(self, endpoint):  # type: (str) -> Union[dict, None]
         json_response = self._session.get(self._url + endpoint)
         if json_response.status_code == 404:
             return None

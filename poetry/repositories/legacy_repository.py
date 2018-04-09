@@ -86,7 +86,8 @@ class LegacyRepository(PyPiRepository):
 
         return packages
 
-    def package(self, name, version, extras=None) -> 'poetry.packages.Package':
+    def package(self, name, version, extras=None
+                ):  # type: (...) -> poetry.packages.Package
         """
         Retrieve the release information.
 
@@ -148,7 +149,7 @@ class LegacyRepository(PyPiRepository):
 
             return package
 
-    def get_release_info(self, name: str, version: str) -> dict:
+    def get_release_info(self, name, version):  # type: (str, str) -> dict
         """
         Return the release information given a package name and a version.
 
@@ -160,7 +161,7 @@ class LegacyRepository(PyPiRepository):
             lambda: self._get_release_info(name, version)
         )
 
-    def _get_release_info(self, name: str, version: str) -> dict:
+    def _get_release_info(self, name, version):  # type: (str, str) -> dict
         from pip.req import InstallRequirement
         from pip.exceptions import InstallationError
 

@@ -11,22 +11,24 @@ from .resolution import Resolution
 class Resolver:
 
     def __init__(self,
-                 specification_provider: SpecificationProvider,
-                 resolver_ui: UI):
+                 specification_provider,  # type: SpecificationProvider
+                 resolver_ui              # type: UI
+                 ):
         self._specification_provider = specification_provider
         self._resolver_ui = resolver_ui
 
     @property
-    def specification_provider(self) -> SpecificationProvider:
+    def specification_provider(self):  # type: () -> SpecificationProvider
         return self._specification_provider
 
     @property
-    def ui(self) -> UI:
+    def ui(self):  # type: () -> UI
         return self._resolver_ui
 
     def resolve(self,
-                requested: List[Any],
-                base: Union[DependencyGraph, None] = None) -> DependencyGraph:
+                requested,  # type: List[Any]
+                base=None   # type: Union[DependencyGraph, None]
+                ):  # type: (...) -> DependencyGraph
         if base is None:
             base = DependencyGraph()
 

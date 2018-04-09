@@ -1,5 +1,3 @@
-import re
-
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
@@ -53,33 +51,6 @@ class Repository(BaseRepository):
                     packages.append(package)
 
         return packages
-
-    def search(self, query, mode=0):
-        regex = '(?i)(?:{})'.format('|'.join(re.split('\s+', query)))
-
-        matches = {}
-        for package in self.packages:
-            name = package.name
-
-            if name in matches:
-                continue
-
-            if (
-                re.match(regex, name) is not None
-                or (
-                    mode == self.SEARCH_FULLTEXT
-                    and isinstance(package, CompletePackage)
-                    and re.match(regex, '')
-                )
-            ):
-                matches[name] = {
-                    'name': package.pretty_name,
-                    'description': (package.description
-                                    if isinstance(package, CompletePackage)
-                                    else '')
-                }
-
-        return list(matches.values())
 
     def has_package(self, package):
         package_id = package.unique_name

@@ -1,14 +1,14 @@
-from pathlib import Path
 from typing import Any
 
 from .locations import CONFIG_DIR
+from .utils._compat import Path
 from .utils.toml_file import TomlFile
 from .utils.toml_file import TOMLFile
 
 
 class Config:
 
-    def __init__(self, file: TomlFile):
+    def __init__(self, file):  # type: (TomlFile) -> None
         self._file = file
         if not self._file.exists():
             self._raw_content = {}
@@ -33,7 +33,7 @@ class Config:
     def content(self):
         return self._content
 
-    def setting(self, setting_name: str) -> Any:
+    def setting(self, setting_name):  # type: (str) -> Any
         """
         Retrieve a setting value.
         """
@@ -84,7 +84,7 @@ class Config:
         self._file.write(self._content)
 
     @classmethod
-    def create(cls, file, base_dir=None) -> 'Config':
+    def create(cls, file, base_dir=None):  # type: (...) -> Config
         if base_dir is None:
             base_dir = CONFIG_DIR
 

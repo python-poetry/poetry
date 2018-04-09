@@ -14,9 +14,9 @@ class VersionSelector(object):
         self._parser = parser
 
     def find_best_candidate(self,
-                            package_name: str,
-                            target_package_version: Union[str, None] = None
-                            ) -> Union[Package, bool]:
+                            package_name,                # type: str
+                            target_package_version=None  # type:  Union[str, None]
+                            ):  # type: (...) -> Union[Package, bool]
         """
         Given a package name and optional version,
         returns the latest Package that matches

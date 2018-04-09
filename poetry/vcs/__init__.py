@@ -1,9 +1,9 @@
-from pathlib import Path
+from poetry.utils._compat import Path
 
 from .git import Git
 
 
-def get_vcs(directory: Path):
+def get_vcs(directory):  # type: (Path) -> Git
     directory = directory.resolve()
 
     for p in [directory] + list(directory.parents):

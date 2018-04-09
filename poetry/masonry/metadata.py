@@ -38,7 +38,7 @@ class Metadata:
     provides_extra = []
 
     @classmethod
-    def from_package(cls, package) -> 'Metadata':
+    def from_package(cls, package):  # type: (...) -> Metadata
         meta = cls()
 
         meta.name = canonicalize_name(package.name)

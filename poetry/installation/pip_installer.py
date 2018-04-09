@@ -10,7 +10,7 @@ from .base_installer import BaseInstaller
 
 class PipInstaller(BaseInstaller):
 
-    def __init__(self, venv: Venv, io):
+    def __init__(self, venv, io):  # type: (Venv, ...) -> None
         self._venv = venv
         self._io = io
 
@@ -54,10 +54,10 @@ class PipInstaller(BaseInstaller):
 
             raise
 
-    def run(self, *args, **kwargs) -> str:
+    def run(self, *args, **kwargs):  # type: (...) -> str
         return self._venv.run('pip', *args, **kwargs)
 
-    def requirement(self, package, formatted=False) -> str:
+    def requirement(self, package, formatted=False):
         if formatted and not package.source_type == 'git':
             req = '{}=={}'.format(package.name, package.version)
             for h in package.hashes:
@@ -81,7 +81,9 @@ class PipInstaller(BaseInstaller):
             'reqs.txt', '{}-{}'.format(package.name, package.version)
         )
 
-        with open(fd, 'w') as f:
-            f.write(self.requirement(package, formatted=True))
+        try:
+            os.write(fd, self.requirement(package, formatted=True))
+        finally:
+            os.close(fd)
 
         return name

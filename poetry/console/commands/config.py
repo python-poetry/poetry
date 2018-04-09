@@ -38,13 +38,13 @@ To remove a repository (repo is a short alias for repositories):
     def __init__(self):
         from poetry.config import Config
 
-        super().__init__()
+        super(ConfigCommand, self).__init__()
 
         self._config = Config.create('config.toml')
         self._auth_config = Config.create('auth.toml')
 
     def initialize(self, i, o):
-        super().initialize(i, o)
+        super(ConfigCommand, self).initialize(i, o)
 
         # Create config file if it does not exist
         if not self._config.file.exists():

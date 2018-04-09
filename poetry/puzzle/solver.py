@@ -25,7 +25,7 @@ class Solver:
         self._locked = locked
         self._io = io
 
-    def solve(self, requested, fixed=None) -> List[Operation]:
+    def solve(self, requested, fixed=None):  # type: (...) -> List[Operation]
         resolver = Resolver(
             Provider(self._package, self._pool, self._io),
             UI(self._io)

@@ -2,9 +2,10 @@
 """
 A converter of python values to TOML Token instances.
 """
-import codecs
 import datetime
 import re
+
+from poetry.utils._compat import basestring
 
 from .. import tokens
 from ..errors import TOMLError
@@ -47,7 +48,7 @@ def create_primitive_token(value, multiline_strings_allowed=True):
         return tokens.Token(tokens.TYPE_FLOAT, u'{}'.format(value))
     elif isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
         return tokens.Token(tokens.TYPE_DATE, value.isoformat())
-    elif isinstance(value, str):
+    elif isinstance(value, basestring):
         return create_string_token(value, multiline_strings_allowed=multiline_strings_allowed)
 
     raise NotPrimitiveError("{} of type {}".format(value, type(value)))
@@ -62,7 +63,7 @@ def create_string_token(text, bare_string_allowed=False, multiline_strings_allow
 
     Raises ValueError on non-string input.
     """
-    if not isinstance(text, str):
+    if not isinstance(text, basestring):
         raise ValueError('Given value must be a string')
 
     if text == '':
@@ -73,7 +74,7 @@ def create_string_token(text, bare_string_allowed=False, multiline_strings_allow
         # If containing two or more newlines or is longer than 80 characters we'll use the multiline string format
         return _create_multiline_string_token(text)
     else:
-        return tokens.Token(tokens.TYPE_STRING, '"{}"'.format(_escape_single_line_quoted_string(text)))
+        return tokens.Token(tokens.TYPE_STRING, u'"{}"'.format(_escape_single_line_quoted_string(text)))
 
 
 def _escape_single_line_quoted_string(text):
@@ -121,6 +122,6 @@ def create_whitespace(source_substring):
 
 def create_multiline_string(text, maximum_line_length=120):
     def escape(t):
-        return t.replace('"""', '\"\"\"')
-    source_substring = '"""\n{}"""'.format('\\\n'.join(chunkate_string(escape(text), maximum_line_length)))
+        return t.replace(u'"""', u'\"\"\"')
+    source_substring = u'"""\n{}"""'.format(u'\\\n'.join(chunkate_string(escape(text), maximum_line_length)))
     return Token(tokens.TYPE_MULTILINE_STRING, source_substring)

@@ -1,4 +1,4 @@
-from pathlib import Path
+from poetry.utils._compat import Path
 
 from .command import Command
 

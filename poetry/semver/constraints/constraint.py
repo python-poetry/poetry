@@ -35,7 +35,7 @@ class Constraint(BaseConstraint):
         OP_NE: '!='
     }
 
-    def __init__(self, operator: str, version: str):
+    def __init__(self, operator, version):  # type: (str, str) -> None
         if operator not in self.supported_operators:
             raise ValueError(
                 'Invalid operator "{}" given, '
@@ -50,7 +50,7 @@ class Constraint(BaseConstraint):
         self._version = str(parse_version(version))
         
     @property
-    def supported_operators(self) -> list:
+    def supported_operators(self):  # type: () -> list
         return list(self._trans_op_str.keys())
 
     @property
@@ -62,7 +62,7 @@ class Constraint(BaseConstraint):
         return self._string_operator
 
     @property
-    def version(self) -> str:
+    def version(self):  # type: () -> str
         return self._version
 
     def matches(self, provider):
@@ -75,7 +75,8 @@ class Constraint(BaseConstraint):
         # turn matching around to find a match
         return provider.matches(self)
 
-    def version_compare(self, a: str, b: str, operator: str) -> bool:
+    def version_compare(self, a, b, operator
+                        ):  # type: (str, str, str) -> bool
         if operator not in self._trans_op_str:
             raise ValueError(
                 'Invalid operator "{}" given, '
@@ -99,7 +100,7 @@ class Constraint(BaseConstraint):
 
         return version_compare(a, b, operator)
 
-    def match_specific(self, provider: 'Constraint') -> bool:
+    def match_specific(self, provider):  # type: (Constraint) -> bool
         no_equal_op = self._trans_op_int[self._operator].replace('=', '')
         provider_no_equal_op = self._trans_op_int[provider.operator].replace('=', '')
 

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added support for Python 2.7.
+
+
 ### Changes
 
 - Improved dependency resolution time by using cache control.

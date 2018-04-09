@@ -1,23 +1,23 @@
 from typing import Any
 
 
-class Action:
+class Action(object):
 
     def __init__(self):
         self.previous = None
         self.next = None
 
     @property
-    def action_name(self) -> str:
+    def action_name(self):  # type: () -> str
         raise NotImplementedError()
 
-    def up(self, graph: 'DependencyGraph') -> Any:
+    def up(self, graph):  # type: (DependencyGraph) -> Any
         """
         Performs the action on the given graph.
         """
         raise NotImplementedError()
 
-    def down(self, graph: 'DependencyGraph') -> None:
+    def down(self, graph):  # type: (DependencyGraph) -> None
         """
         Reverses the action on the given graph.
         """

@@ -1,8 +1,7 @@
 import json
 
-from pathlib import Path
-
 from poetry.repositories.pypi_repository import PyPiRepository
+from poetry.utils._compat import Path
 
 
 class MockRepository(PyPiRepository):
@@ -10,9 +9,12 @@ class MockRepository(PyPiRepository):
     FIXTURES = Path(__file__).parent / 'fixtures' / 'pypi.org' / 'json'
 
     def __init__(self):
-        super().__init__(url='http://foo.bar', disable_cache=True)
+        super(MockRepository, self).__init__(
+            url='http://foo.bar',
+            disable_cache=True
+        )
 
-    def _get(self, url: str) -> dict:
+    def _get(self, url):
         fixture = self.FIXTURES / 'requests.json'
 
         with fixture.open() as f:

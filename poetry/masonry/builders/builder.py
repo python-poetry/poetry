@@ -1,12 +1,16 @@
+# -*- coding: utf-8 -*-
 import os
 import re
+import shutil
+import tempfile
 
 from collections import defaultdict
-from pathlib import Path
+from contextlib import contextmanager
 
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import MultiConstraint
 from poetry.semver.version_parser import VersionParser
+from poetry.utils._compat import Path
 from poetry.vcs import get_vcs
 
 from ..metadata import Metadata
@@ -16,7 +20,7 @@ from ..utils.module import Module
 AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$')
 
 
-class Builder:
+class Builder(object):
 
     AVAILABLE_PYTHONS = {
         '2',
@@ -39,7 +43,7 @@ class Builder:
     def build(self):
         raise NotImplementedError()
 
-    def find_excluded_files(self) -> list:
+    def find_excluded_files(self):  # type: () -> list
         # Checking VCS
         vcs = get_vcs(self._path)
         if not vcs:
@@ -58,7 +62,7 @@ class Builder:
 
         return result
 
-    def find_files_to_add(self, exclude_build=True) -> list:
+    def find_files_to_add(self, exclude_build=True):  # type: () -> list
         """
         Finds all files to add to the tarball
 
@@ -116,7 +120,7 @@ class Builder:
 
         return sorted(to_add)
 
-    def convert_entry_points(self) -> dict:
+    def convert_entry_points(self):  # type: () -> dict
         result = defaultdict(list)
 
         # Scripts -> Entry points
@@ -134,7 +138,7 @@ class Builder:
         return dict(result)
 
     @classmethod
-    def convert_author(cls, author) -> dict:
+    def convert_author(cls, author):  # type: () -> dict
         m = AUTHOR_REGEX.match(author)
 
         name = m.group('name')
@@ -173,3 +177,18 @@ class Builder:
             python_requires = str(constraint).replace(' ', '')
 
         return python_requires
+
+    @classmethod
+    @contextmanager
+    def temporary_directory(cls, *args, **kwargs):
+        try:
+            from tempfile import TemporaryDirectory
+
+            with TemporaryDirectory(*args, **kwargs) as name:
+                yield name
+        except ImportError:
+            name = tempfile.mkdtemp(*args, **kwargs)
+
+            yield name
+
+            shutil.rmtree(name)

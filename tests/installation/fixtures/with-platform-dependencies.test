@@ -17,7 +17,7 @@ python-versions = "*"
 platform = "*"
 
 [package.requirements]
-platform = "win32"
+platform = "custom"
 
 [[package]]
 name = "C"

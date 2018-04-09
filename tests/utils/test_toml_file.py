@@ -1,7 +1,6 @@
 import pytest
 
-from pathlib import Path
-
+from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
 

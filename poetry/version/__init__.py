@@ -25,7 +25,9 @@ _trans_op = {
 }
 
 
-def parse(version: str, strict: bool = False) -> Union[Version, LegacyVersion]:
+def parse(version,      # type: str
+          strict=False  # type: bool
+          ):  # type:(...) -> Union[Version, LegacyVersion]
     """
     Parse the given version string and return either a :class:`Version` object
     or a LegacyVersion object depending on if the given version is
@@ -42,7 +44,8 @@ def parse(version: str, strict: bool = False) -> Union[Version, LegacyVersion]:
         return LegacyVersion(version)
 
 
-def version_compare(version1: str, version2: str, operator) -> bool:
+def version_compare(version1, version2, operator
+                    ):  # type: (str, str, str) -> bool
     if operator in _trans_op:
         operator = _trans_op[operator]
     elif operator in _trans_op.values():

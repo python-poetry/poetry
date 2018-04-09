@@ -1,5 +1,4 @@
-from pathlib import Path
-
+from poetry.utils._compat import Path
 from poetry.utils.helpers import module_name
 
 
@@ -23,19 +22,19 @@ class Module:
             raise ValueError("No file/folder found for package {}".format(name))
 
     @property
-    def name(self) -> str:
+    def name(self):  # type: () -> str
         return self._name
 
     @property
-    def path(self) -> Path:
+    def path(self):  # type: () -> Path
         return self._path
 
     @property
-    def file(self) -> Path:
+    def file(self):  # type: () -> Path
         if self._is_package:
             return self._path / '__init__.py'
         else:
             return self._path
 
-    def is_package(self) -> bool:
+    def is_package(self):  # type: () -> bool
         return self._is_package

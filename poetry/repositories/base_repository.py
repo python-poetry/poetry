@@ -1,4 +1,4 @@
-class BaseRepository:
+class BaseRepository(object):
 
     SEARCH_FULLTEXT = 0
     SEARCH_NAME = 1

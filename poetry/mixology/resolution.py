@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 
 from copy import copy
@@ -26,10 +27,11 @@ logger = logging.getLogger(__name__)
 class Resolution:
 
     def __init__(self,
-                 provider: SpecificationProvider,
-                 ui: UI,
-                 requested: List[Any],
-                 base: DependencyGraph):
+                 provider,   # type: SpecificationProvider
+                 ui,         # type: UI
+                 requested,  # type: List[Any]
+                 base        # type: DependencyGraph
+                 ):
         self._provider = provider
         self._ui = ui
         self._requested = requested
@@ -43,26 +45,26 @@ class Resolution:
         self._started_at = None
 
     @property
-    def provider(self) -> SpecificationProvider:
+    def provider(self):  # type: () -> SpecificationProvider
         return self._provider
     
     @property
-    def ui(self) -> UI:
+    def ui(self):  # type: () -> UI
         return self._ui
 
     @property
-    def requested(self) -> List[Any]:
+    def requested(self):  # type: () -> List[Any]
         return self._requested
 
     @property
-    def base(self) -> DependencyGraph:
+    def base(self):  # type: () -> DependencyGraph
         return self._base
 
     @property
-    def activated(self) -> DependencyGraph:
+    def activated(self):  # type: () -> DependencyGraph
         return self.state.activated
 
-    def resolve(self) -> DependencyGraph:
+    def resolve(self):  # type: () -> DependencyGraph
         """
         Resolve the original requested dependencies into a full
         dependency graph.
@@ -94,7 +96,7 @@ class Resolution:
         finally:
             self._end()
 
-    def _start(self) -> None:
+    def _start(self):  # type: () -> None
         """
         Set up the resolution process.
         """
@@ -110,7 +112,7 @@ class Resolution:
 
         self._handle_missing_or_push_dependency_state(self._initial_state())
 
-    def _resolve_activated_specs(self) -> DependencyGraph:
+    def _resolve_activated_specs(self):  # type: () -> DependencyGraph
         for vertex in self.activated.vertices.values():
             if not vertex.payload:
                 continue
@@ -132,7 +134,7 @@ class Resolution:
 
         return self.activated
 
-    def _end(self) -> None:
+    def _end(self):  # type: () -> None
         """
         Ends the resolution process
         """
@@ -147,7 +149,7 @@ class Resolution:
             )
         )
 
-    def _process_topmost_state(self) -> None:
+    def _process_topmost_state(self):  # type: () -> None
         """
         Processes the topmost available RequirementState on the stack.
         """
@@ -162,7 +164,7 @@ class Resolution:
             self._unwind_for_conflict()
 
     @property
-    def possibility(self) -> PossibilitySet:
+    def possibility(self):  # type: () -> PossibilitySet
         """
         The current possibility that the resolution is trying.
         """
@@ -170,7 +172,7 @@ class Resolution:
             return self.state.possibilities[-1]
 
     @property
-    def state(self) -> DependencyState:
+    def state(self):  # type: () -> DependencyState
         """
         The current state the resolution is operating upon.
         """
@@ -178,14 +180,14 @@ class Resolution:
             return self._states[-1]
 
     @property
-    def name(self) -> str:
+    def name(self):  # type: () -> str
         return self.state.name
 
     @property
-    def requirement(self) -> Any:
+    def requirement(self):  # type: () -> Any
         return self.state.requirement
 
-    def _initial_state(self) -> DependencyState:
+    def _initial_state(self):  # type: () -> DependencyState
         """
         Create the initial state for the resolution, based upon the
         requested dependencies.
@@ -221,7 +223,7 @@ class Resolution:
             []
         )
 
-    def _unwind_for_conflict(self) -> None:
+    def _unwind_for_conflict(self):  # type: () -> None
         """
         Unwinds the states stack because a conflict has been encountered
         """
@@ -260,7 +262,7 @@ class Resolution:
             if uw.state_index < index
         ]
 
-    def _raise_error_unless_state(self, conflicts) -> None:
+    def _raise_error_unless_state(self, conflicts):  # type: (dict) -> None
         """
         Raise a VersionConflict error, or any underlying error,
         if there is no current state
@@ -278,7 +280,7 @@ class Resolution:
 
         raise error
 
-    def _build_details_for_unwind(self) -> UnwindDetails:
+    def _build_details_for_unwind(self):  # type: () -> UnwindDetails
         """
         Return the details of the nearest index to which we could unwind.
         """
@@ -333,7 +335,8 @@ class Resolution:
 
         return current_detail
 
-    def _unwind_options_for_requirements(self, binding_requirements):
+    def _unwind_options_for_requirements(self, binding_requirements
+                                         ):  # type: (list) -> List[UnwindDetails]
         unwind_details = []
         trees = []
 
@@ -504,7 +507,8 @@ class Resolution:
         return satisfied
 
     def _filter_possibilities_for_parent_unwind(self,
-                                                unwind_details: UnwindDetails):
+                                                unwind_details  # type: UnwindDetails
+                                                ):
         """
         Filter a state's possibilities to remove any that would (eventually)
         the requirements in the conflict we've just rewound from.
@@ -619,7 +623,7 @@ class Resolution:
     def _binding_requirement_in_set(self,
                                     requirement,
                                     possible_binding_requirements,
-                                    possibilities) -> bool:
+                                    possibilities):  # type: () -> bool
         """
         Return whether or not the given requirement is required
         to filter out all elements of the list of possibilities.

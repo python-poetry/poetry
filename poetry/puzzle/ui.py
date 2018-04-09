@@ -4,17 +4,17 @@ from poetry.mixology.contracts import UI as BaseUI
 
 class UI(BaseUI):
 
-    def __init__(self, io: CleoStyle):
+    def __init__(self, io):  # type: (CleoStyle) -> None
         self._io = io
         self._progress = None
 
-        super().__init__(self._io.is_debug())
+        super(UI, self).__init__(self._io.is_debug())
 
     @property
     def output(self):
         return self._io
 
-    def before_resolution(self) -> None:
+    def before_resolution(self):
         self._io.write('<info>Resolving dependencies</>')
 
         if self.is_debugging():
@@ -24,10 +24,10 @@ class UI(BaseUI):
         if not self.is_debugging():
             self._io.write('.')
 
-    def after_resolution(self) -> None:
+    def after_resolution(self):
         self._io.new_line()
 
-    def debug(self, message, depth) -> None:
+    def debug(self, message, depth):
         if self.is_debugging():
             debug_info = str(message)
             debug_info = '\n'.join([

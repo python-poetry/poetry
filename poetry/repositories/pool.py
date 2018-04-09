@@ -9,7 +9,7 @@ from .repository import Repository
 
 class Pool(BaseRepository):
 
-    def __init__(self, repositories: Union[list, None] = None):
+    def __init__(self, repositories=None):  # type: (Union[list, None]) -> None
         if repositories is None:
             repositories = []
 
@@ -18,13 +18,13 @@ class Pool(BaseRepository):
         for repository in repositories:
             self.add_repository(repository)
 
-        super().__init__()
+        super(Pool, self).__init__()
             
     @property
-    def repositories(self) -> List[Repository]:
+    def repositories(self):  # type: () -> List[Repository]
         return self._repositories
 
-    def add_repository(self, repository: Repository) -> 'Pool':
+    def add_repository(self, repository):  # type: (Repository) -> Pool
         """
         Adds a repository to the pool.
         """
@@ -32,7 +32,7 @@ class Pool(BaseRepository):
 
         return self
     
-    def configure(self, source: dict) -> 'Pool':
+    def configure(self, source):  # type: (dict) -> Pool
         """
         Configures a repository based on a source
         specification and add it to the pool.

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os
 import tarfile
 
@@ -5,12 +7,13 @@ from collections import defaultdict
 from copy import copy
 from gzip import GzipFile
 from io import BytesIO
-from pathlib import Path
 from posixpath import join as pjoin
 from pprint import pformat
 from typing import List
 
 from poetry.packages import Dependency
+from poetry.utils._compat import Path
+from poetry.utils._compat import encode
 
 from ..utils.helpers import normalize_file_permissions
 
@@ -51,7 +54,7 @@ Author-email: {author_email}
 
 class SdistBuilder(Builder):
 
-    def build(self, target_dir: Path = None) -> Path:
+    def build(self, target_dir=None):  # type: (Path) -> Path
         self._io.writeln(' - Building <info>sdist</info>')
         if target_dir is None:
             target_dir = self._path / 'dist'
@@ -92,14 +95,14 @@ class SdistBuilder(Builder):
             tar_info.size = len(setup)
             tar.addfile(tar_info, BytesIO(setup))
 
-            pkg_info = PKG_INFO.format(
+            pkg_info = encode(PKG_INFO.format(
                 name=self._meta.name,
                 version=self._meta.version,
                 summary=self._meta.summary,
                 home_page=self._meta.home_page,
                 author=self._meta.author,
                 author_email=self._meta.author_email,
-            ).encode('utf-8')
+            ))
 
             tar_info = tarfile.TarInfo(pjoin(tar_dir, 'PKG-INFO'))
             tar_info.size = len(pkg_info)
@@ -112,7 +115,7 @@ class SdistBuilder(Builder):
 
         return target
 
-    def build_setup(self) -> bytes:
+    def build_setup(self):  # type: () -> bytes
         before, extra, after = [], [], []
 
         # If we have a build script, use it
@@ -155,7 +158,7 @@ class SdistBuilder(Builder):
 
             extra.append("'python_requires': {!r},".format(python_requires))
 
-        return SETUP.format(
+        return encode(SETUP.format(
             before='\n'.join(before),
             name=self._meta.name,
             version=self._meta.version,
@@ -166,10 +169,10 @@ class SdistBuilder(Builder):
             url=self._meta.home_page,
             extra='\n    '.join(extra),
             after='\n'.join(after)
-        ).encode('utf-8')
+        ))
 
     @classmethod
-    def find_packages(cls, path: str):
+    def find_packages(cls, path):
         """
         Discover subpackages and data.
 
@@ -219,8 +222,9 @@ class SdistBuilder(Builder):
 
     @classmethod
     def convert_dependencies(cls,
-                             package,
-                             dependencies: List[Dependency]):
+                             package,      # type: Package
+                             dependencies  # type: List[Dependency]
+                             ):
         main = []
         extras = defaultdict(list)
 

@@ -1,8 +1,7 @@
+from __future__ import unicode_literals
+
 import pytest
 import toml
-import sys
-
-from pathlib import Path
 
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
@@ -11,6 +10,8 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils._compat import Path
+from poetry.utils._compat import PY2
 from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency
@@ -21,6 +22,13 @@ class Installer(BaseInstaller):
 
     def _get_installer(self):
         return NoopInstaller()
+
+
+class CustomInstalledRepository(InstalledRepository):
+
+    @classmethod
+    def load(cls, venv):
+        return cls()
 
 
 class Locker(BaseLocker):
@@ -34,46 +42,43 @@ class Locker(BaseLocker):
     def written_data(self):
         return self._written_data
 
-    def locked(self, is_locked=True) -> 'Locker':
+    def locked(self, is_locked=True):
         self._locked = is_locked
 
         return self
 
-    def mock_lock_data(self, data) -> None:
+    def mock_lock_data(self, data):
         self._lock_data = data
 
-    def is_locked(self) -> bool:
+    def is_locked(self):
         return self._locked
 
-    def is_fresh(self) -> bool:
+    def is_fresh(self):
         return True
 
-    def _get_content_hash(self) -> str:
+    def _get_content_hash(self):
         return '123456789'
     
-    def _write_lock_data(self, data) -> None:
+    def _write_lock_data(self, data):
         for package in data['package']:
-            package['python-versions'] = str(package['python-versions'])
-            package['platform'] = str(package['platform'])
+            python_versions = str(package['python-versions'])
+            platform = str(package['platform'])
+            if PY2:
+                python_versions = python_versions.decode()
+                platform = platform.decode()
+                if 'requirements' in package:
+                    requirements = {}
+                    for key, value in package['requirements'].items():
+                        requirements[key.decode()] = value.decode()
+
+                    package['requirements'] = requirements
+
+            package['python-versions'] = python_versions
+            package['platform'] = platform
             if not package['dependencies']:
                 del package['dependencies']
 
         self._written_data = data
-
-
-@pytest.fixture(autouse=True)
-def setup():
-    # Mock python version and platform to get reliable tests
-    original = sys.version_info
-    original_platform = sys.platform
-
-    sys.version_info = (3, 6, 3, 'final', 0)
-    sys.platform = 'darwin'
-
-    yield
-
-    sys.version_info = original
-    sys.platform = original_platform
 
 
 @pytest.fixture()
@@ -96,12 +101,7 @@ def pool(repo):
 
 @pytest.fixture()
 def installed():
-    original = InstalledRepository.load
-    InstalledRepository.load = lambda _: InstalledRepository()
-
-    yield
-
-    InstalledRepository.load = original
+    return CustomInstalledRepository()
 
 
 @pytest.fixture()
@@ -257,12 +257,12 @@ def test_add_with_sub_dependencies(installer, locker, repo, package):
 
 
 def test_run_with_python_versions(installer, locker, repo, package):
-    package.python_versions = '^3.4'
+    package.python_versions = '~2.7 || ^3.4'
 
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.1')
     package_c12 = get_package('C', '1.2')
-    package_c12.python_versions = '^3.6'
+    package_c12.python_versions = '~2.7 || ^3.6'
     package_c13 = get_package('C', '1.3')
     package_c13.python_versions = '~3.3'
 
@@ -298,17 +298,20 @@ def test_run_with_optional_and_python_restricted_dependencies(installer, locker,
     repo.add_package(package_d)
 
     package.add_dependency('A', {'version': '~1.0', 'optional': True})
-    package.add_dependency('B', {'version': '^1.0', 'python': '~2.7'})
-    package.add_dependency('C', {'version': '^1.0', 'python': '^3.6'})
+    package.add_dependency('B', {'version': '^1.0', 'python': '~2.4'})
+    package.add_dependency('C', {'version': '^1.0', 'python': '~2.7 || ^3.6'})
 
     installer.run()
     expected = fixture('with-optional-dependencies')
 
+    import json
+    print(json.dumps(locker.written_data, indent=2, sort_keys=True))
+    print(json.dumps(expected, indent=2, sort_keys=True))
     assert locker.written_data == expected
 
     installer = installer.installer
     # We should only have 2 installs:
-    # C,D since the mocked python version is not compatible
+    # C,D since python version is not compatible
     # with B's python constraint and A is optional
     assert len(installer.installs) == 2
     assert installer.installs[0].name == 'd'
@@ -330,7 +333,7 @@ def test_run_with_optional_and_platform_restricted_dependencies(installer, locke
     repo.add_package(package_d)
 
     package.add_dependency('A', {'version': '~1.0', 'optional': True})
-    package.add_dependency('B', {'version': '^1.0', 'platform': 'win32'})
+    package.add_dependency('B', {'version': '^1.0', 'platform': 'custom'})
     package.add_dependency('C', {'version': '^1.0', 'platform': 'darwin'})
 
     installer.run()

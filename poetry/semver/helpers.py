@@ -85,7 +85,7 @@ def normalize_version(version):
     raise ValueError('Invalid version string "{}"'.format(version))
 
 
-def normalize_stability(stability: str) -> str:
+def normalize_stability(stability):  # type: (str) -> str
     stability = stability.lower()
 
     if stability == 'rc':
@@ -94,7 +94,7 @@ def normalize_stability(stability: str) -> str:
     return stability
 
 
-def parse_stability(version: str) -> str:
+def parse_stability(version):  # type: (str) -> str
     """
     Returns the stability of a version.
     """
@@ -123,7 +123,7 @@ def parse_stability(version: str) -> str:
     return 'stable'
 
 
-def _expand_stability(stability: str) -> str:
+def _expand_stability(stability):  # type: (str) -> str
     stability = stability.lower()
 
     if stability == 'a':

@@ -16,7 +16,7 @@ class Builder:
         self._venv = venv
         self._io = io
 
-    def build(self, fmt: str):
+    def build(self, fmt):
         if fmt not in self._FORMATS:
             raise ValueError('Invalid format: {}'.format(fmt))
 

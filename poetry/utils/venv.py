@@ -6,13 +6,12 @@ import sysconfig
 import warnings
 
 from contextlib import contextmanager
-from pathlib import Path
 from subprocess import CalledProcessError
-
-from venv import EnvBuilder
 
 from poetry.config import Config
 from poetry.locations import CACHE_DIR
+from poetry.utils._compat import Path
+from poetry.utils._compat import decode
 
 
 class VenvError(Exception):
@@ -22,15 +21,15 @@ class VenvError(Exception):
 
 class VenvCommandError(VenvError):
 
-    def __init__(self, e: CalledProcessError):
+    def __init__(self, e):  # type: (CalledProcessError) -> None
         message = 'Command {} errored with the following output: \n{}'.format(
             e.cmd, e.output.decode()
         )
 
-        super().__init__(message)
+        super(VenvCommandError, self).__init__(message)
 
 
-class Venv:
+class Venv(object):
 
     def __init__(self, venv=None):
         self._venv = venv
@@ -48,7 +47,7 @@ class Venv:
         self._python_implementation = None
 
     @classmethod
-    def create(cls, io, name=None) -> 'Venv':
+    def create(cls, io, name=None):  # type: (...) -> Venv
         if 'VIRTUAL_ENV' not in os.environ:
             # Not in a virtualenv
             # Checking if we need to create one
@@ -86,8 +85,8 @@ class Venv:
                         name, str(venv_path)
                     )
                 )
-                builder = EnvBuilder(with_pip=True)
-                builder.create(str(venv))
+
+                cls.build(str(venv))
             else:
                 if io.is_very_verbose():
                     io.writeln(
@@ -117,26 +116,41 @@ class Venv:
 
         return cls(venv)
 
+    @classmethod
+    def build(cls, path):
+        try:
+            from venv import EnvBuilder
+
+            builder = EnvBuilder(with_pip=True)
+            build = builder.create
+        except ImportError:
+            # We fallback on virtualenv for Python 2.7
+            from virtualenv import create_environment
+
+            build = create_environment
+
+        build(path)
+
     @property
     def venv(self):
         return self._venv
 
     @property
-    def python(self) -> str:
+    def python(self):  # type: () -> str
         """
         Path to current python executable
         """
         return self._bin('python')
 
     @property
-    def pip(self) -> str:
+    def pip(self):  # type: () -> str
         """
         Path to current pip executable
         """
         return self._bin('pip')
 
     @property
-    def version_info(self) -> tuple:
+    def version_info(self):  # type: () -> tuple
         if self._version_info is not None:
             return self._version_info
 
@@ -201,7 +215,7 @@ class Venv:
 
         return value
 
-    def run(self, bin: str, *args, **kwargs):
+    def run(self, bin, *args, **kwargs):
         """
         Run a command inside the virtual env.
         """
@@ -248,9 +262,9 @@ class Venv:
         except CalledProcessError as e:
             raise VenvCommandError(e)
 
-        return output.decode()
+        return decode(output)
 
-    def exec(self, bin, *args, **kwargs):
+    def execute(self, bin, *args, **kwargs):
         if not self.is_venv():
             return subprocess.call([bin] + list(args))
         else:
@@ -287,7 +301,7 @@ class Venv:
         if shell in ('bash', 'zsh', 'fish'):
             return shell
 
-    def _bin(self, bin) -> str:
+    def _bin(self, bin):  # type: (str) -> str
         """
         Return path to the given executable.
         """
@@ -296,23 +310,23 @@ class Venv:
 
         return str(self._bin_dir / bin) + ('.exe' if self._windows else '')
 
-    def is_venv(self) -> bool:
+    def is_venv(self):  # type: () -> bool
         return self._venv is not None
 
 
 class NullVenv(Venv):
 
     def __init__(self, execute=False):
-        super().__init__()
+        super(NullVenv, self).__init__()
 
         self.executed = []
         self._execute = execute
 
-    def run(self, bin: str, *args):
+    def run(self, bin, *args):
         self.executed.append([bin] + list(args))
 
         if self._execute:
-            return super().run(bin, *args)
+            return super(NullVenv, self).run(bin, *args)
 
     def _bin(self, bin):
         return bin

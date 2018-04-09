@@ -62,7 +62,7 @@ class DebugResolveCommand(Command):
                 )
             )
 
-    def _determine_requirements(self, requires: List[str]) -> List[str]:
+    def _determine_requirements(self, requires):  # type: (List[str]) -> List[str]
         if not requires:
             return []
 
@@ -78,7 +78,7 @@ class DebugResolveCommand(Command):
 
         return result
 
-    def _parse_name_version_pairs(self, pairs: list) -> list:
+    def _parse_name_version_pairs(self, pairs):  # type: (list) -> list
         result = []
 
         for i in range(len(pairs)):
@@ -98,7 +98,7 @@ class DebugResolveCommand(Command):
 
         return result
 
-    def _format_requirements(self, requirements: List[str]) -> dict:
+    def _format_requirements(self, requirements):  # type: (List[str]) -> dict
         requires = {}
         requirements = self._parse_name_version_pairs(requirements)
         for requirement in requirements:

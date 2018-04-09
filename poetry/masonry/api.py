@@ -4,8 +4,9 @@ PEP-517 compliant buildsystem API
 import logging
 from pathlib import Path
 
-from poetry import Poetry
+from poetry.poetry import Poetry
 from poetry.io import NullIO
+from poetry.utils.venv import Venv
 
 from .builders import SdistBuilder
 from .builders import WheelBuilder
@@ -38,6 +39,6 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
 
 def build_sdist(sdist_directory, config_settings=None):
     """Builds an sdist, places it in sdist_directory"""
-    path = SdistBuilder(poetry, NullIO()).build(Path(sdist_directory))
+    path = SdistBuilder(poetry, Venv(), NullIO()).build(Path(sdist_directory))
 
     return path.name

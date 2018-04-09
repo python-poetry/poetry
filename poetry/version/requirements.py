@@ -5,7 +5,11 @@ from __future__ import absolute_import, division, print_function
 
 import string
 import re
-import urllib.parse as urlparse
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    from urlparse import urlparse
 
 from pyparsing import (
     stringStart, stringEnd, originalTextFor, ParseException

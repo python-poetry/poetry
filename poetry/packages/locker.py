@@ -1,12 +1,12 @@
 import json
 
 import poetry.packages
+import poetry.repositories
 
 from hashlib import sha256
-from pathlib import Path
 from typing import List
 
-from poetry.repositories import Repository
+from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
 
@@ -20,14 +20,14 @@ class Locker:
         'source',
     ]
 
-    def __init__(self, lock: Path, local_config: dict):
+    def __init__(self, lock, local_config):  # type: (Path, dict) -> None
         self._lock = TomlFile(lock)
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
 
     @property
-    def lock(self) -> TomlFile:
+    def lock(self):  # type: () -> TomlFile
         return self._lock
 
     @property
@@ -37,7 +37,7 @@ class Locker:
 
         return self._lock_data
 
-    def is_locked(self) -> bool:
+    def is_locked(self):  # type: () -> bool
         """
         Checks whether the locker has been locked (lockfile found).
         """
@@ -46,7 +46,7 @@ class Locker:
 
         return 'package' in self.lock_data
 
-    def is_fresh(self) -> bool:
+    def is_fresh(self):  # type: () -> bool
         """
         Checks whether the lock file is still up to date with the current hash.
         """
@@ -58,15 +58,16 @@ class Locker:
 
         return False
 
-    def locked_repository(self, with_dev_reqs: bool = False) -> Repository:
+    def locked_repository(self, with_dev_reqs=False
+                          ):  # type: (bool) -> poetry.repositories.Repository
         """
         Searches and returns a repository of locked packages.
         """
         if not self.is_locked():
-            return Repository()
+            return poetry.repositories.Repository()
 
         lock_data = self.lock_data
-        packages = Repository()
+        packages = poetry.repositories.Repository()
 
         if with_dev_reqs:
             locked_packages = lock_data['package']
@@ -106,7 +107,7 @@ class Locker:
         return packages
 
     def set_lock_data(self,
-                      root, packages) -> bool:
+                      root, packages):  # type: () -> bool
         hashes = {}
         packages = self._lock_packages(packages)
         # Retrieving hashes
@@ -141,7 +142,7 @@ class Locker:
         self._lock.write(data)
         self._lock_data = None
 
-    def _get_content_hash(self) -> str:
+    def _get_content_hash(self):  # type: () -> str
         """
         Returns the sha256 hash of the sorted content of the composer file.
         """
@@ -157,7 +158,7 @@ class Locker:
 
         return content_hash
 
-    def _get_lock_data(self) -> dict:
+    def _get_lock_data(self):  # type: () -> dict
         if not self._lock.exists():
             raise RuntimeError(
                 'No lockfile found. Unable to read locked packages'
@@ -166,7 +167,8 @@ class Locker:
         return self._lock.read(True)
 
     def _lock_packages(self,
-                       packages: List['poetry.packages.Package']) -> list:
+                       packages
+                       ):  # type: (List['poetry.packages.Package']) -> list
         locked = []
 
         for package in sorted(packages, key=lambda x: x.name):
@@ -176,7 +178,8 @@ class Locker:
 
         return locked
 
-    def _dump_package(self, package: 'poetry.packages.Package') -> dict:
+    def _dump_package(self, package
+                      ):  # type: (poetry.packages.Package) -> dict
         dependencies = {}
         for dependency in package.requires:
             if dependency.is_optional():

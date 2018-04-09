@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import contextlib
 import hashlib
 import os
@@ -13,12 +15,11 @@ except ImportError:
 
 from base64 import urlsafe_b64encode
 from io import StringIO
-from pathlib import Path
-from types import SimpleNamespace
 
 from poetry.__version__ import __version__
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import MultiConstraint
+from poetry.utils._compat import Path
 
 from ..utils.helpers import normalize_file_permissions
 from ..utils.tags import get_abbr_impl
@@ -39,7 +40,7 @@ Tag: {tag}
 class WheelBuilder(Builder):
 
     def __init__(self, poetry, venv, io, target_fp, original=None):
-        super().__init__(poetry, venv, io)
+        super(WheelBuilder, self).__init__(poetry, venv, io)
 
         self._records = []
         self._original_path = self._path
@@ -51,26 +52,29 @@ class WheelBuilder(Builder):
                                           compression=zipfile.ZIP_DEFLATED)
 
     @classmethod
-    def make_in(cls, poetry, venv, io, directory, original=None) -> SimpleNamespace:
+    def make_in(cls, poetry, venv, io, directory, original=None):
         # We don't know the final filename until metadata is loaded, so write to
         # a temporary_file, and rename it afterwards.
         (fd, temp_path) = tempfile.mkstemp(suffix='.whl',
                                            dir=str(directory))
+        os.close(fd)
+
         try:
-            with open(fd, 'w+b') as fp:
+            with open(temp_path, 'w+b') as fp:
                 wb = WheelBuilder(poetry, venv, io, fp, original=original)
                 wb.build()
 
             wheel_path = directory / wb.wheel_filename
-            os.replace(temp_path, str(wheel_path))
+            if wheel_path.exists():
+                os.unlink(str(wheel_path))
+
+            os.rename(temp_path, str(wheel_path))
         except:
             os.unlink(temp_path)
             raise
 
-        return SimpleNamespace(builder=wb, file=wheel_path)
-
     @classmethod
-    def make(cls, poetry, venv, io) -> SimpleNamespace:
+    def make(cls, poetry, venv, io):
         """Build a wheel in the dist/ directory, and optionally upload it.
             """
         dist_dir = poetry.file.parent / 'dist'
@@ -79,9 +83,9 @@ class WheelBuilder(Builder):
         except FileExistsError:
             pass
 
-        return cls.make_in(poetry, venv, io, dist_dir)
+        cls.make_in(poetry, venv, io, dist_dir)
 
-    def build(self) -> None:
+    def build(self):
         self._io.writeln(' - Building <info>wheel</info>')
         try:
             self._build()
@@ -93,7 +97,7 @@ class WheelBuilder(Builder):
 
         self._io.writeln(' - Built <fg=cyan>{}</>'.format(self.wheel_filename))
 
-    def _build(self) -> None:
+    def _build(self):
         if self._package.build:
             setup = self._path / 'setup.py'
 
@@ -124,7 +128,7 @@ class WheelBuilder(Builder):
                 shutil.rmtree(str(self._path / pkg.name))
                 shutil.copytree(str(pkg), str(self._path / pkg.name))
 
-    def copy_module(self) -> None:
+    def copy_module(self):
         if self._module.is_package():
             files = self.find_files_to_add()
 
@@ -164,16 +168,16 @@ class WheelBuilder(Builder):
             # RECORD itself is recorded with no hash or size
             f.write(self.dist_info + '/RECORD,,\n')
 
-    def find_excluded_files(self) -> list:
+    def find_excluded_files(self):  # type: () -> list
         # Checking VCS
         return []
 
     @property
-    def dist_info(self) -> str:
+    def dist_info(self):  # type: () -> str
         return self.dist_info_name(self._package.name, self._package.version)
 
     @property
-    def wheel_filename(self) -> str:
+    def wheel_filename(self):  # type: () -> str
         return '{}-{}-{}.whl'.format(
             re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
             re.sub("[^\w\d.]+", "_", self._package.version, flags=re.UNICODE),
@@ -188,7 +192,7 @@ class WheelBuilder(Builder):
             ])
         )
 
-    def dist_info_name(self, distribution, version) -> str:
+    def dist_info_name(self, distribution, version):  # type: (...) -> str
         escaped_name = re.sub("[^\w\d.]+", "_", distribution, flags=re.UNICODE)
         escaped_version = re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE)
 
@@ -221,7 +225,7 @@ class WheelBuilder(Builder):
             # RECORD
             rel_path = rel_path.replace(os.sep, '/')
 
-        zinfo = zipfile.ZipInfo.from_file(full_path, rel_path)
+        zinfo = zipfile.ZipInfo(rel_path)
 
         # Normalize permission bits to either 755 (executable) or 644
         st_mode = os.stat(full_path).st_mode
@@ -232,18 +236,20 @@ class WheelBuilder(Builder):
             zinfo.external_attr |= 0x10  # MS-DOS directory flag
 
         hashsum = hashlib.sha256()
-        with open(full_path, 'rb') as src, self._wheel_zip.open(zinfo,
-                                                                'w') as dst:
+        with open(full_path, 'rb') as src:
             while True:
                 buf = src.read(1024 * 8)
                 if not buf:
                     break
                 hashsum.update(buf)
-                dst.write(buf)
+
+            src.seek(0)
+            self._wheel_zip.writestr(zinfo, src.read())
 
         size = os.stat(full_path).st_size
-        hash_digest = urlsafe_b64encode(hashsum.digest()).decode(
-            'ascii').rstrip('=')
+        hash_digest = urlsafe_b64encode(
+            hashsum.digest()
+        ).decode('ascii').rstrip('=')
 
         self._records.append((rel_path, hash_digest, size))
 

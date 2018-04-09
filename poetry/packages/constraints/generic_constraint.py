@@ -42,7 +42,7 @@ class GenericConstraint(BaseConstraint):
         self._version = version
 
     @property
-    def supported_operators(self) -> list:
+    def supported_operators(self):
         return list(self._trans_op_str.keys())
 
     @property
@@ -54,7 +54,7 @@ class GenericConstraint(BaseConstraint):
         return self._string_operator
 
     @property
-    def version(self) -> str:
+    def version(self):
         return self._version
 
     def matches(self, provider):

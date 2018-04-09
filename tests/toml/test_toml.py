@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from poetry.toml import dumps
 from poetry.toml import loads
 

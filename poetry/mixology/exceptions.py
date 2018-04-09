@@ -17,7 +17,7 @@ class NoSuchDependencyError(ResolverError):
         if sources:
             message += ' depended upon by {}'.format(sources)
 
-        super().__init__(message)
+        super(NoSuchDependencyError, self).__init__(message)
 
 
 class CircularDependencyError(ResolverError):
@@ -48,7 +48,7 @@ class VersionConflict(ResolverError):
                 for c in conflict_requirements:
                     pairs.append((c, source))
 
-        super().__init__(
+        super(VersionConflict, self).__init__(
             'Unable to satisfy the following requirements:\n\n'
             '{}'.format(
                 '\n'.join('- "{}" required by "{}"'.format(r, d)

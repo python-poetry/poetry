@@ -2,7 +2,6 @@ import os
 import shutil
 
 from functools import cmp_to_key
-from pathlib import Path
 from tempfile import mkdtemp
 from typing import Dict
 from typing import List
@@ -19,6 +18,7 @@ from poetry.repositories import Pool
 
 from poetry.semver import less_than
 
+from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import Venv
 
@@ -29,7 +29,11 @@ class Provider(SpecificationProvider):
 
     UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
 
-    def __init__(self, package: Package, pool: Pool, io):
+    def __init__(self,
+                 package,  # type: Package
+                 pool,     # type: Pool
+                 io
+                 ):
         self._package = package
         self._pool = pool
         self._io = io
@@ -38,24 +42,24 @@ class Provider(SpecificationProvider):
         self._search_for = {}
 
     @property
-    def pool(self) -> Pool:
+    def pool(self):  # type: () -> Pool
         return self._pool
 
     @property
-    def name_for_explicit_dependency_source(self) -> str:
+    def name_for_explicit_dependency_source(self):  # type: () -> str
         return 'pyproject.toml'
 
     @property
-    def name_for_locking_dependency_source(self) -> str:
+    def name_for_locking_dependency_source(self):  # type: () -> str
         return 'pyproject.lock'
 
-    def name_for(self, dependency: Dependency) -> str:
+    def name_for(self, dependency):  # type: (Dependency) -> str
         """
         Returns the name for the given dependency.
         """
         return dependency.name
 
-    def search_for(self, dependency: Dependency) -> List[Package]:
+    def search_for(self, dependency):  # type: (Dependency) -> List[Package]
         """
         Search for the specifications that match the given dependency.
 
@@ -86,7 +90,7 @@ class Provider(SpecificationProvider):
 
         return self._search_for[dependency]
 
-    def search_for_vcs(self, dependency: VCSDependency) -> List[Package]:
+    def search_for_vcs(self, dependency):  # type: (VCSDependency) -> List[Package]
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -171,7 +175,7 @@ class Provider(SpecificationProvider):
 
         return [package]
 
-    def dependencies_for(self, package: Package):
+    def dependencies_for(self, package):  # type: (Package) -> List[Dependency]
         if package.source_type == 'git':
             # Information should already be set
             pass
@@ -185,9 +189,10 @@ class Provider(SpecificationProvider):
         ]
 
     def is_requirement_satisfied_by(self,
-                                    requirement: Dependency,
-                                    activated: DependencyGraph,
-                                    package: Package) -> bool:
+                                    requirement,  # type: Dependency
+                                    activated,    # type: DependencyGraph
+                                    package       # type: Package
+                                    ):  # type: (...) -> bool
         """
         Determines whether the given requirement is satisfied by the given
         spec, in the context of the current activated dependency graph.
@@ -210,9 +215,10 @@ class Provider(SpecificationProvider):
         )
 
     def sort_dependencies(self,
-                          dependencies: List[Dependency],
-                          activated: DependencyGraph,
-                          conflicts: Dict[str, List[Conflict]]):
+                          dependencies,  # type: List[Dependency]
+                          activated,     # type: DependencyGraph
+                          conflicts      # type: Dict[str, List[Conflict]]
+                          ):  # type: (...) -> List[Dependency]
         return sorted(dependencies, key=lambda d: [
             0 if activated.vertex_named(d.name).payload else 1,
             0 if activated.vertex_named(d.name).root else 1,

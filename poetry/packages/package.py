@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+import copy
 import re
+
 from typing import Union
 
 from poetry.semver.constraints import Constraint
@@ -16,7 +19,7 @@ from .vcs_dependency import VCSDependency
 AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$')
 
 
-class Package:
+class Package(object):
 
     AVAILABLE_PYTHONS = {
         '2',
@@ -138,18 +141,18 @@ class Package:
         return '{} {}'.format(self._pretty_version, self.source_reference)
 
     @property
-    def authors(self) -> list:
+    def authors(self):  # type: () -> list
         return self._authors
 
     @property
-    def author_name(self) -> str:
+    def author_name(self):  # type: () -> str
         return self._get_author()['name']
 
     @property
-    def author_email(self) -> str:
+    def author_email(self):  # type: () -> str
         return self._get_author()['email']
 
-    def _get_author(self) -> dict:
+    def _get_author(self):  # type: () -> dict
         if not self._authors:
             return {
                 'name': None,
@@ -171,7 +174,7 @@ class Package:
         return self._python_versions
 
     @python_versions.setter
-    def python_versions(self, value: str):
+    def python_versions(self, value):
         self._python_versions = value
         self._python_constraint = self._parser.parse_constraints(value)
 
@@ -180,11 +183,11 @@ class Package:
         return self._python_constraint
 
     @property
-    def platform(self) -> str:
+    def platform(self):  # type: () -> str
         return self._platform
 
     @platform.setter
-    def platform(self, value: str):
+    def platform(self, value):  # type: (str) -> None
         self._platform = value
         self._platform_constraint = GenericConstraint.parse(value)
 
@@ -207,7 +210,7 @@ class Package:
     
     @property
     def all_classifiers(self):
-        classifiers = self.classifiers.copy()
+        classifiers = copy.copy(self.classifiers)
 
         # Automatically set python classifiers
         parser = VersionParser()
@@ -241,9 +244,10 @@ class Package:
         return self._stability != 'stable'
 
     def add_dependency(self,
-                       name: str,
-                       constraint: Union[str, dict, None] = None,
-                       category: str = 'main') -> Dependency:
+                       name,             # type: str
+                       constraint=None,  # type: Union[str, dict, None]
+                       category='main'   # type: str
+                       ):  # type: (...) -> Dependency
         if constraint is None:
             constraint = '*'
 

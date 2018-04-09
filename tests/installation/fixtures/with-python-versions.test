@@ -22,11 +22,11 @@ version = "1.2"
 description = ""
 category = "main"
 optional = false
-python-versions = "^3.6"
+python-versions = "~2.7 || ^3.6"
 platform = "*"
 
 [metadata]
-python-versions = "^3.4"
+python-versions = "~2.7 || ^3.4"
 platform = "*"
 content-hash = "123456789"
 

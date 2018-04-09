@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "0.7.1"
+version = "0.8.0a0"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -22,7 +22,7 @@ classifiers = [
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.4"
+python = "~2.7 || ^3.4"
 cleo = "^0.6"
 requests = "^2.18"
 toml = "^0.9"
@@ -37,8 +37,12 @@ cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 # zipfile36 is needed for Python 3.4 and 3.5
 zipfile36 = { version = "^0.1", python = ">=3.4 <3.6" }
 
-# The typing module is not in the stdlib in Python 3.4
-typing = { version = "^3.6", python = "~3.4" }
+# The typing module is not in the stdlib in Python 2.7 and 3.4
+typing = { version = "^3.6", python = "~2.7 || ~3.4" }
+
+# Use pathlib2 and virtualenv for Python 2.7
+pathlib2 = { version = "^2.3", python = "~2.7" }
+virtualenv = { version = "^15.2", python = "~2.7" }
 
 # cachecontrol dependencies are badly set
 # and do not appear in PyPI JSON API

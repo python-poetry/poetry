@@ -1,7 +1,10 @@
 import json
 import os
 
-from urllib.request import urlopen
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
 
 
 class Updater:

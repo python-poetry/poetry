@@ -1,7 +1,7 @@
 import sys
 
 
-class UI:
+class UI(object):
 
     def __init__(self, debug=False):
         self._debug = debug
@@ -11,22 +11,22 @@ class UI:
         return sys.stdout
 
     @property
-    def progress_rate(self) -> float:
+    def progress_rate(self):  # type: () -> float
         return 0.33
 
-    def is_debugging(self) -> bool:
+    def is_debugging(self):  # type: () -> bool
         return self._debug
 
-    def indicate_progress(self) -> None:
+    def indicate_progress(self):  # type: () -> None
         self.output.write('.')
 
-    def before_resolution(self) -> None:
+    def before_resolution(self):  # type: () -> None
         self.output.write('Resolving dependencies...\n')
 
-    def after_resolution(self) -> None:
+    def after_resolution(self):  # type: () -> None
         self.output.write('')
 
-    def debug(self, message, depth) -> None:
+    def debug(self, message, depth):  # type: (...) -> None
         if self.is_debugging():
             debug_info = str(message)
             debug_info = '\n'.join([

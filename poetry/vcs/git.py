@@ -1,14 +1,18 @@
+# -*- coding: utf-8 -*-
 import re
 import subprocess
+
+
+from poetry.utils._compat import decode
 
 
 class GitConfig:
 
     def __init__(self):
-        config_list = subprocess.check_output(
+        config_list = decode(subprocess.check_output(
             ['git', 'config', '-l'],
             stderr=subprocess.STDOUT
-        ).decode()
+        ))
 
         self._config = {}
 
@@ -31,13 +35,13 @@ class Git:
         self._work_dir = work_dir
 
     @property
-    def config(self) -> GitConfig:
+    def config(self):  # type: () -> GitConfig
         return self._config
 
-    def clone(self, repository, dest) -> str:
+    def clone(self, repository, dest):  # type: (...) -> str
         return self.run('clone', repository, dest)
 
-    def checkout(self, rev, folder=None) -> str:
+    def checkout(self, rev, folder=None):  # type: (...) -> str
         args = []
         if folder is None and self._work_dir:
             folder = self._work_dir
@@ -54,7 +58,7 @@ class Git:
 
         return self.run(*args)
 
-    def rev_parse(self, rev, folder=None) -> str:
+    def rev_parse(self, rev, folder=None):  # type: (...) -> str
         args = []
         if folder is None and self._work_dir:
             folder = self._work_dir
@@ -71,7 +75,7 @@ class Git:
 
         return self.run(*args)
 
-    def get_ignored_files(self, folder=None) -> list:
+    def get_ignored_files(self, folder=None):  # type: (...) -> list
         args = []
         if folder is None and self._work_dir:
             folder = self._work_dir
@@ -89,8 +93,8 @@ class Git:
 
         return output.split('\n')
 
-    def run(self, *args) -> str:
-        return subprocess.check_output(
+    def run(self, *args):  # type: (...) -> str
+        return decode(subprocess.check_output(
             ['git'] + list(args),
             stderr=subprocess.STDOUT
-        ).decode()
+        ))

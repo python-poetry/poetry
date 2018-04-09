@@ -1,15 +1,18 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import pytest
 import re
 import shutil
 import tarfile
 import zipfile
 
-from pathlib import Path
-
 from poetry import __version__
 from poetry.io import NullIO
 from poetry.masonry.builders import CompleteBuilder
 from poetry.poetry import Poetry
+from poetry.utils._compat import Path
+from poetry.utils._compat import decode
 from poetry.utils.venv import NullVenv
 
 fixtures_dir = Path(__file__).parent / 'fixtures'
@@ -44,7 +47,7 @@ def test_wheel_c_extension():
     assert 'extended-0.1/build.py' in tar.getnames()
     assert 'extended-0.1/extended/extended.c' in tar.getnames()
 
-    whl = list((module_path / 'dist').glob('extended-0.1-cp3*-cp3*m-*.whl'))[0]
+    whl = list((module_path / 'dist').glob('extended-0.1-cp*-cp*m-*.whl'))[0]
 
     assert whl.exists()
 
@@ -58,13 +61,13 @@ def test_wheel_c_extension():
     assert has_compiled_extension
 
     try:
-        wheel_data = zip.read('extended-0.1.dist-info/WHEEL').decode()
+        wheel_data = decode(zip.read('extended-0.1.dist-info/WHEEL'))
 
         assert re.match("""(?m)^\
 Wheel-Version: 1.0
 Generator: poetry {}
 Root-Is-Purelib: false
-Tag: cp3\d-cp3\dm-.+
+Tag: cp[23]\d-cp[23]\dm-.+
 $""".format(__version__), wheel_data) is not None
     finally:
         zip.close()
@@ -85,13 +88,13 @@ def test_complete():
     try:
         entry_points = zip.read('my_package-1.2.3.dist-info/entry_points.txt')
 
-        assert entry_points.decode() == """\
+        assert decode(entry_points.decode()) == """\
 [console_scripts]
 my-2nd-script=my_package:main2
 my-script=my_package:main
 
 """
-        wheel_data = zip.read('my_package-1.2.3.dist-info/WHEEL').decode()
+        wheel_data = decode(zip.read('my_package-1.2.3.dist-info/WHEEL'))
 
         assert wheel_data == """\
 Wheel-Version: 1.0
@@ -99,7 +102,7 @@ Generator: poetry {}
 Root-Is-Purelib: true
 Tag: py3-none-any
 """.format(__version__)
-        wheel_data = zip.read('my_package-1.2.3.dist-info/METADATA').decode()
+        wheel_data = decode(zip.read('my_package-1.2.3.dist-info/METADATA'))
 
         assert wheel_data == """\
 Metadata-Version: 2.1

@@ -14,7 +14,7 @@ class RunCommand(VenvCommand):
 
         venv = self.venv
 
-        return venv.exec(*args)
+        return venv.execute(*args)
 
     def merge_application_definition(self, merge_args=True):
         if self._application is None \

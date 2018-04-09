@@ -1,11 +1,10 @@
 import pytest
 import shutil
 
-from pathlib import Path
-
 from poetry.io import NullIO
 from poetry.masonry.builders import WheelBuilder
 from poetry.poetry import Poetry
+from poetry.utils._compat import Path
 from poetry.utils.venv import NullVenv
 
 

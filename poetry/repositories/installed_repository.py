@@ -7,7 +7,7 @@ from .repository import Repository
 class InstalledRepository(Repository):
 
     @classmethod
-    def load(cls, venv: Venv) -> 'InstalledRepository':
+    def load(cls, venv):  # type: (Venv) -> InstalledRepository
         """
         Load installed packages.
 

@@ -4,7 +4,7 @@ from poetry.utils.helpers import module_name
 from poetry.vcs.git import Git
 
 
-TESTS_DEFAULT = """from {package_name} import __version__
+TESTS_DEFAULT = u"""from {package_name} import __version__
 
 
 def test_version():
@@ -45,7 +45,7 @@ class Layout(object):
                 git_config.get('user.name')
                 and git_config.get('user.email')
             ):
-                author = '{} <{}>'.format(
+                author = u'{} <{}>'.format(
                     git_config['user.name'],
                     git_config['user.email']
                 )

@@ -1,6 +1,3 @@
-from collections import namedtuple
-
-
 class UnwindDetails:
 
     def __init__(self,

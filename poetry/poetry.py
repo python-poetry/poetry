@@ -1,6 +1,7 @@
-import json
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
-from pathlib import Path
+import json
 
 import jsonschema
 
@@ -12,6 +13,7 @@ from .packages import Package
 from .repositories import Pool
 from .repositories.pypi_repository import PyPiRepository
 from .spdx import license_by_id
+from .utils._compat import Path
 from .utils.toml_file import TomlFile
 
 
@@ -20,10 +22,11 @@ class Poetry:
     VERSION = __version__
 
     def __init__(self,
-                 file: Path,
-                 config: dict,
-                 package: Package,
-                 locker: Locker):
+                 file,     # type: Path
+                 config,   # type: dict
+                 package,  # type: Package
+                 locker  # type: Locker
+                 ):
         self._file = TomlFile(file)
         self._package = package
         self._config = config
@@ -42,23 +45,23 @@ class Poetry:
         return self._file
 
     @property
-    def package(self) -> Package:
+    def package(self):  # type: () -> Package
         return self._package
 
     @property
-    def config(self) -> dict:
+    def config(self):  # type: () -> dict
         return self._config
 
     @property
-    def locker(self) -> Locker:
+    def locker(self):  # type: () -> Locker
         return self._locker
 
     @property
-    def pool(self) -> Pool:
+    def pool(self):  # type: () -> Pool
         return self._pool
 
     @classmethod
-    def create(cls, cwd) -> 'Poetry':
+    def create(cls, cwd):  # type: () -> Poetry
         poetry_file = Path(cwd) / 'pyproject.toml'
 
         if not poetry_file.exists():
@@ -138,7 +141,7 @@ class Poetry:
         return cls(poetry_file, local_config, package, locker)
 
     @classmethod
-    def check(cls, config: dict, strict: bool = False):
+    def check(cls, config, strict=False):  # type: (dict, bool) -> bool
         """
         Checks the validity of a configuration
         """

@@ -1,6 +1,10 @@
 import posixpath
-import urllib.parse
-import urllib.request
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
 import re
 
 from .utils import path_to_url
@@ -79,23 +83,23 @@ class Link:
 
     @property
     def filename(self):
-        _, netloc, path, _, _ = urllib.parse.urlsplit(self.url)
+        _, netloc, path, _, _ = urlparse.urlsplit(self.url)
         name = posixpath.basename(path.rstrip('/')) or netloc
-        name = urllib.parse.unquote(name)
+        name = urlparse.unquote(name)
         assert name, ('URL %r produced no filename' % self.url)
         return name
 
     @property
     def scheme(self):
-        return urllib.parse.urlsplit(self.url)[0]
+        return urlparse.urlsplit(self.url)[0]
 
     @property
     def netloc(self):
-        return urllib.parse.urlsplit(self.url)[1]
+        return urlparse.urlsplit(self.url)[1]
 
     @property
     def path(self):
-        return urllib.parse.unquote(urllib.parse.urlsplit(self.url)[2])
+        return urlparse.unquote(urlparse.urlsplit(self.url)[2])
 
     def splitext(self):
         return splitext(posixpath.basename(self.path.rstrip('/')))
@@ -106,8 +110,8 @@ class Link:
 
     @property
     def url_without_fragment(self):
-        scheme, netloc, path, query, fragment = urllib.parse.urlsplit(self.url)
-        return urllib.parse.urlunsplit((scheme, netloc, path, query, None))
+        scheme, netloc, path, query, fragment = urlparse.urlsplit(self.url)
+        return urlparse.urlunsplit((scheme, netloc, path, query, None))
 
     _egg_fragment_re = re.compile(r'[#&]egg=([^&]*)')
 

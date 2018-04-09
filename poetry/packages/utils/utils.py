@@ -1,8 +1,17 @@
 import os
 import posixpath
 import re
-import urllib.parse
-import urllib.request
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
+
+try:
+    import urllib.request as urllib2
+except ImportError:
+    import urllib2
 
 
 BZ2_EXTENSIONS = ('.tar.bz2', '.tbz')
@@ -33,7 +42,7 @@ def path_to_url(path):
     quoted path parts.
     """
     path = os.path.normpath(os.path.abspath(path))
-    url = urllib.parse.urljoin('file:', urllib.request.pathname2url(path))
+    url = urlparse.urljoin('file:', urllib2.pathname2url(path))
     return url
 
 
@@ -116,8 +125,6 @@ def convert_markers(markers):
     requirements = {}
 
     def _group(_groups, or_=False):
-        nonlocal requirements
-
         for group in _groups:
             if isinstance(group, tuple):
                 variable, op, value = group

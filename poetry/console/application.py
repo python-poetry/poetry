@@ -31,7 +31,7 @@ from .commands.debug import DebugResolveCommand
 class Application(BaseApplication):
 
     def __init__(self):
-        super().__init__('Poetry', __version__)
+        super(Application, self).__init__('Poetry', __version__)
 
         self._poetry = None
         self._skip_io_configuration = False
@@ -47,10 +47,10 @@ class Application(BaseApplication):
 
         return self._poetry
 
-    def reset_poetry(self) -> None:
+    def reset_poetry(self):  # type: () -> None
         self._poetry = None
 
-    def run(self, i=None, o=None) -> int:
+    def run(self, i=None, o=None):  # type: (...) -> int
         if i is None:
             i = ArgvInput()
 
@@ -62,13 +62,13 @@ class Application(BaseApplication):
             self._skip_io_configuration = True
             i = RawArgvInput()
 
-        return super().run(i, o)
+        return super(Application, self).run(i, o)
 
     def do_run(self, i, o):
         name = self.get_command_name(i)
 
         if name not in ['run', 'script']:
-            return super().do_run(i, o)
+            return super(Application, self).do_run(i, o)
 
         command = self.find(name)
 
@@ -82,9 +82,9 @@ class Application(BaseApplication):
         if self._skip_io_configuration:
             return
 
-        super().configure_io(i, o)
+        super(Application, self).configure_io(i, o)
 
-    def get_default_commands(self) -> list:
+    def get_default_commands(self):  # type: () -> list
         commands = super(Application, self).get_default_commands()
 
         commands += [

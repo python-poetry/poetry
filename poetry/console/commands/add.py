@@ -103,7 +103,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
         return status
 
-    def _determine_requirements(self, requires: List[str]) -> List[str]:
+    def _determine_requirements(self,
+                                requires  # type: List[str]
+                                ):  # type: (...) -> List[str]
         if not requires:
             return []
 
@@ -140,7 +142,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
     def _find_best_version_for_package(self,
                                        name,
                                        required_version=None
-                                       ) -> Tuple[str, str]:
+                                       ):  # type: (...) -> Tuple[str, str]
         from poetry.version.version_selector import VersionSelector
 
         selector = VersionSelector(self.poetry.pool)
@@ -157,7 +159,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             selector.find_recommended_require_version(package)
         )
 
-    def _parse_name_version_pairs(self, pairs: list) -> list:
+    def _parse_name_version_pairs(self, pairs):  # type: (list) -> list
         result = []
 
         for i in range(len(pairs)):
@@ -177,7 +179,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
         return result
 
-    def _format_requirements(self, requirements: List[str]) -> dict:
+    def _format_requirements(self, requirements):  # type: (List[str]) -> dict
         requires = {}
         requirements = self._parse_name_version_pairs(requirements)
         for requirement in requirements:

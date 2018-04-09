@@ -9,7 +9,7 @@ _LAYOUTS = {
 }
 
 
-def layout(name: str) -> Type[Layout]:
+def layout(name):  # type: (str) -> Type[Layout]
     if name not in _LAYOUTS:
         raise ValueError('Invalid layout')
 

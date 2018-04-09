@@ -16,7 +16,7 @@ static PyMethodDef module_methods[] = {
     {NULL}
 };
 
-
+#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "extended",
@@ -28,17 +28,31 @@ static struct PyModuleDef moduledef = {
     NULL,
     NULL,
 };
-
+#endif
 
 PyMODINIT_FUNC
+#if PY_MAJOR_VERSION >= 3
 PyInit_extended(void)
+#else
+init_extended(void)
+#endif
 {
     PyObject *module;
 
+#if PY_MAJOR_VERSION >= 3
     module = PyModule_Create(&moduledef);
+#else
+    module = Py_InitModule3("extended", module_methods, NULL);
+#endif
 
     if (module == NULL)
+#if PY_MAJOR_VERSION >= 3
         return NULL;
+#else
+        return;
+#endif
 
+#if PY_MAJOR_VERSION >= 3
     return module;
+#endif
 }

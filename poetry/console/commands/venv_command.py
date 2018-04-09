@@ -6,12 +6,12 @@ class VenvCommand(Command):
     def __init__(self, name=None):
         self._venv = None
 
-        super().__init__(name)
+        super(VenvCommand, self).__init__(name)
 
     def initialize(self, i, o):
         from poetry.utils.venv import Venv
 
-        super().initialize(i, o)
+        super(VenvCommand, self).initialize(i, o)
 
         self._venv = Venv.create(o, self.poetry.package.name)
 

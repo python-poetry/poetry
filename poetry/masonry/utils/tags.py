@@ -5,6 +5,7 @@ Base implementation taken from
 https://github.com/pypa/wheel/blob/master/wheel/pep425tags.py
 and adapted to work with poetry's venv util.
 """
+from __future__ import unicode_literals
 
 import distutils.util
 import sys

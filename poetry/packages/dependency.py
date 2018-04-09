@@ -9,14 +9,15 @@ from poetry.semver.version_parser import VersionParser
 from .constraints.generic_constraint import GenericConstraint
 
 
-class Dependency:
+class Dependency(object):
 
     def __init__(self,
-                 name: str,
-                 constraint: str,
-                 optional: bool = False,
-                 category: str = 'main',
-                 allows_prereleases: bool = False):
+                 name,                     # type: str
+                 constraint,               # type: str
+                 optional=False,           # type: bool
+                 category='main',          # type: str
+                 allows_prereleases=False  # type: bool
+                 ):
         self._name = name.lower()
         self._pretty_name = name
         self._parser = VersionParser()
@@ -67,7 +68,7 @@ class Dependency:
         return self._python_versions
 
     @python_versions.setter
-    def python_versions(self, value: str):
+    def python_versions(self, value):
         self._python_versions = value
         self._python_constraint = self._parser.parse_constraints(value)
 
@@ -76,11 +77,11 @@ class Dependency:
         return self._python_constraint
 
     @property
-    def platform(self) -> str:
+    def platform(self):
         return self._platform
 
     @platform.setter
-    def platform(self, value: str):
+    def platform(self, value):
         self._platform = value
         self._platform_constraint = GenericConstraint.parse(value)
 
@@ -89,11 +90,11 @@ class Dependency:
         return self._platform_constraint
 
     @property
-    def extras(self) -> list:
+    def extras(self):  # type: () -> list
         return self._extras
 
     @property
-    def in_extras(self) -> list:
+    def in_extras(self):  # type: () -> list
         return self._in_extras
 
     def allows_prereleases(self):
@@ -105,7 +106,7 @@ class Dependency:
     def is_vcs(self):
         return False
 
-    def accepts(self, package: 'poetry.packages.Package') -> bool:
+    def accepts(self, package):  # type: (poetry.packages.Package) -> bool
         """
         Determines if the given package matches this dependency.
         """
@@ -115,7 +116,7 @@ class Dependency:
             and (not package.is_prerelease() or self.allows_prereleases())
         )
 
-    def to_pep_508(self, with_extras=True) -> str:
+    def to_pep_508(self, with_extras=True):  # type: (bool) -> str
         requirement = self.pretty_name
 
         if isinstance(self.constraint, MultiConstraint):
