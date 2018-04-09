@@ -3,7 +3,7 @@ import tempfile
 
 from subprocess import CalledProcessError
 
-from poetry.utils._compat import decode
+from poetry.utils._compat import encode
 from poetry.utils.venv import Venv
 
 from .base_installer import BaseInstaller
@@ -83,7 +83,7 @@ class PipInstaller(BaseInstaller):
         )
 
         try:
-            os.write(fd, decode(self.requirement(package, formatted=True)))
+            os.write(fd, encode(self.requirement(package, formatted=True)))
         finally:
             os.close(fd)
 
