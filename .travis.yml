@@ -12,6 +12,6 @@ cache:
 
 install:
   - pip install poetry --pre
-  - poetry install
+  - poetry install -v
 
 script: pytest -q tests/
