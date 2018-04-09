@@ -313,7 +313,7 @@ def test_run_with_optional_and_python_restricted_dependencies(installer, locker,
 
     package.add_dependency('A', {'version': '~1.0', 'optional': True})
     package.add_dependency('B', {'version': '^1.0', 'python': '~2.4'})
-    package.add_dependency('C', {'version': '^1.0', 'python': '~2.7 || ^3.6'})
+    package.add_dependency('C', {'version': '^1.0', 'python': '~2.7 || ^3.4'})
 
     installer.run()
     expected = fixture('with-optional-dependencies')
