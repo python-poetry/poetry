@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import os
+import re
 import tarfile
 
 from collections import defaultdict
@@ -227,18 +228,49 @@ class SdistBuilder(Builder):
                              ):
         main = []
         extras = defaultdict(list)
+        req_regex = re.compile('^(.+) \((.+)\)$')
 
         for dependency in dependencies:
             if dependency.is_optional():
                 for extra_name, reqs in package.extras.items():
                     for req in reqs:
                         if req.name == dependency.name:
-                            extras[extra_name].append(
-                                dependency.to_pep_508(with_extras=False)
-                            )
+                            requirement = dependency.to_pep_508(with_extras=False)
+                            if ';' in requirement:
+                                requirement, conditions = requirement.split(';')
+
+                                requirement = requirement.strip()
+                                if req_regex.match(requirement):
+                                    requirement = req_regex.sub('\\1\\2',
+                                                                requirement.strip())
+
+                                extras[extra_name + ':' + conditions.strip()].append(requirement)
+
+                                continue
+
+                            requirement = requirement.strip()
+                            if req_regex.match(requirement):
+                                requirement = req_regex.sub('\\1\\2',
+                                                            requirement.strip())
+                            extras[extra_name].append(requirement)
                 continue
 
             requirement = dependency.to_pep_508()
+            if ';' in requirement:
+                requirement, conditions = requirement.split(';')
+
+                requirement = requirement.strip()
+                if req_regex.match(requirement):
+                    requirement = req_regex.sub('\\1\\2', requirement.strip())
+
+                extras[':' + conditions.strip()].append(requirement)
+
+                continue
+
+            requirement = requirement.strip()
+            if req_regex.match(requirement):
+                requirement = req_regex.sub('\\1\\2', requirement.strip())
+
             main.append(requirement)
 
         return main, dict(extras)

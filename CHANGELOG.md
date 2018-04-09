@@ -12,6 +12,11 @@
 - Improved dependency resolution time by using cache control.
 
 
+### Fixed
+
+- Fixed `install_requires` and `extras` in generated sdist.
+
+
 ## [0.7.1] - 2018-04-05
 
 ### Fixed

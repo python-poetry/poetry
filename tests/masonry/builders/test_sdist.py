@@ -46,9 +46,9 @@ def test_convert_dependencies():
         ]
     )
     main = [
-        'A (>=1.0.0.0,<2.0.0.0)',
-        'B (>=1.0.0.0,<1.1.0.0)',
-        'C (==1.2.3.0)',
+        'A>=1.0.0.0,<2.0.0.0',
+        'B>=1.0.0.0,<1.1.0.0',
+        'C==1.2.3.0',
     ]
     extras = {}
 
@@ -68,11 +68,48 @@ def test_convert_dependencies():
         ]
     )
     main = [
-        'B (>=1.0.0.0,<1.1.0.0)',
-        'C (==1.2.3.0)',
+        'B>=1.0.0.0,<1.1.0.0',
+        'C==1.2.3.0',
     ]
     extras = {
-        'bar': ['A (>=1.2.0.0)']
+        'bar': ['A>=1.2.0.0']
+    }
+
+    assert result == (main, extras)
+
+    c = get_dependency('C', '1.2.3')
+    c.python_versions = '~2.7 || ^3.6'
+    d = get_dependency('D', '3.4.5', optional=True)
+    d.python_versions = '~2.7 || ^3.4'
+
+    package.extras = {
+        'baz': [get_dependency('D')]
+    }
+
+    result = SdistBuilder.convert_dependencies(
+        package,
+        [
+            get_dependency('A', '>=1.2', optional=True),
+            get_dependency('B', '~1.0'),
+            c,
+            d
+        ]
+    )
+    main = [
+        'B>=1.0.0.0,<1.1.0.0',
+    ]
+
+    extra_python = (
+        ':(python_version >= "2.7.0.0" and python_version < "2.8.0.0") '
+        'or (python_version >= "3.6.0.0" and python_version < "4.0.0.0")'
+    )
+    extra_d_dependency = (
+        'baz:(python_version >= "2.7.0.0" and python_version < "2.8.0.0") '
+        'or (python_version >= "3.4.0.0" and python_version < "4.0.0.0")'
+    )
+    extras = {
+        extra_python: ['C==1.2.3.0'],
+        extra_d_dependency: ['D==3.4.5.0'],
     }
 
     assert result == (main, extras)
@@ -94,7 +131,7 @@ def test_make_setup():
         'my_package.sub_pkg2'
     ]
     assert ns['install_requires'] == [
-        'cleo (>=0.6.0.0,<0.7.0.0)'
+        'cleo>=0.6.0.0,<0.7.0.0'
     ]
     assert ns['entry_points'] == {
         'console_scripts': [
@@ -104,7 +141,7 @@ def test_make_setup():
     }
     assert ns['extras_require'] == {
         'time': [
-            'pendulum (>=1.4.0.0,<2.0.0.0)'
+            'pendulum>=1.4.0.0,<2.0.0.0'
         ]
     }
 
