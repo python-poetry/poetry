@@ -5,7 +5,7 @@
 Poetry helps you declare, manage and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
-![Poet Install](https://raw.githubusercontent.com/sdispater/poetry/master/assets/install.gif)
+![Poetry Install](https://raw.githubusercontent.com/sdispater/poetry/master/assets/install.gif)
 
 Also, be aware that the features described here are the goal that this library is aiming
 for and, as of now, not all of them are implemented (but most of them are).
@@ -51,7 +51,7 @@ which might cause conflicts.
 ### Enable tab completion for Bash, Fish, or Zsh
 
 `poetry` supports generating completion scripts for Bash, Fish, and Zsh.
-See `poet help completions` for full details, but the gist is as simple as using one of the following:
+See `poetry help completions` for full details, but the gist is as simple as using one of the following:
 
 ```bash
 # Bash
@@ -540,7 +540,7 @@ A list of keywords (max: 5) that the package is related to. **Optional**
 
 A list of patterns that will be included in the final package.
 
-You can explicitly specify to Poet that a set of globs should be ignored or included for the purposes of packaging.
+You can explicitly specify to Poetry that a set of globs should be ignored or included for the purposes of packaging.
 The globs specified in the exclude field identify a set of files that are not included when a package is built.
 
 If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
@@ -718,8 +718,8 @@ pgsql = ["psycopg2"]
 When installing packages, you can specify extras by using the `-E|--extras` option:
 
 ```bash
-poet install --extras "mysql pgsql"
-poet install -E mysql -E pgsql
+poetry install --extras "mysql pgsql"
+poetry install -E mysql -E pgsql
 ```
 
 ### `plugins`
