@@ -8,7 +8,7 @@ TESTS_DEFAULT = u"""from {package_name} import __version__
 
 
 def test_version():
-    assert '{version}' == __version__
+    assert __version__ == '{version}'
 """
 
 
