@@ -6,6 +6,8 @@ import json
 import jsonschema
 
 from .__version__ import __version__
+from .config import Config
+from .console.commands.config import TEMPLATE
 from .exceptions import InvalidProjectFile
 from .packages import Dependency
 from .packages import Locker
@@ -22,23 +24,38 @@ class Poetry:
     VERSION = __version__
 
     def __init__(self,
-                 file,     # type: Path
-                 config,   # type: dict
-                 package,  # type: Package
-                 locker  # type: Locker
+                 file,          # type: Path
+                 local_config,  # type: dict
+                 package,       # type: Package
+                 locker         # type: Locker
                  ):
         self._file = TomlFile(file)
         self._package = package
-        self._config = config
+        self._local_config = local_config
         self._locker = locker
+        self._config = Config.create('config.toml')
 
         # Configure sources
         self._pool = Pool()
-        for source in self._config.get('source', []):
+        for source in self._local_config.get('source', []):
             self._pool.configure(source)
 
         # Always put PyPI last to prefere private repositories
-        self._pool.add_repository(PyPiRepository())
+        self._pool.add_repository(
+            PyPiRepository(
+                fallback=self._config.setting(
+                    'settings.pypi.fallback',
+                    False
+                )
+            )
+        )
+
+        # Adding a fallback for PyPI for when dependencies
+        # are not retrievable via the JSON API
+        self._pool.configure({
+            'name': 'pypi-fallback',
+            'url': 'https://pypi.org/simple'
+        })
         
     @property
     def file(self):
@@ -49,8 +66,8 @@ class Poetry:
         return self._package
 
     @property
-    def config(self):  # type: () -> dict
-        return self._config
+    def local_config(self):  # type: () -> dict
+        return self._local_config
 
     @property
     def locker(self):  # type: () -> Locker

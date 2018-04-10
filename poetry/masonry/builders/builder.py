@@ -102,8 +102,8 @@ class Builder(object):
 
         # If a README is specificed we need to include it
         # to avoid errors
-        if 'readme' in self._poetry.config:
-            readme = self._path / self._poetry.config['readme']
+        if 'readme' in self._poetry.local_config:
+            readme = self._path / self._poetry.local_config['readme']
             if readme.exists():
                 self._io.writeln(
                     ' - Adding: <comment>{}</comment>'.format(
@@ -124,11 +124,12 @@ class Builder(object):
         result = defaultdict(list)
 
         # Scripts -> Entry points
-        for name, ep in self._poetry.config.get('scripts', {}).items():
+        for name, ep in self._poetry.local_config.get('scripts', {}).items():
             result['console_scripts'].append('{} = {}'.format(name, ep))
 
         # Plugins -> entry points
-        for groupname, group in self._poetry.config.get('plugins', {}).items():
+        plugins = self._poetry.local_config.get('plugins', {})
+        for groupname, group in plugins.items():
             for name, ep in sorted(group.items()):
                 result[groupname].append('{} = {}'.format(name, ep))
 

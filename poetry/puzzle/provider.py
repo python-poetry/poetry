@@ -223,6 +223,5 @@ class Provider(SpecificationProvider):
             0 if activated.vertex_named(d.name).payload else 1,
             0 if activated.vertex_named(d.name).root else 1,
             0 if d.allows_prereleases() else 1,
-            0 if d.name in conflicts else 1,
-            0 if activated.vertex_named(d.name).payload else len(self.search_for(d))
+            0 if d.name in conflicts else 1
         ])

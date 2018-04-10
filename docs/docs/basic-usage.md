@@ -61,6 +61,27 @@ $ poetry add pendulum
 
 It will automatically find a suitable version constraint.
 
+!!!warning
+
+    `poetry` uses the PyPI JSON API to retrieve package information.
+    
+    However, some packages (like `boto3` for example) have missing dependency
+    information due to bad packaging/publishing which means that `poetry` won't
+    be able to properly resolve dependencies.
+    
+    To workaround it you can set the missing dependencies yourself in your `pyproject.toml`
+    or you can tell `poetry` to use a fallback mechanism by setting the
+    `settings.pypi.fallback` setting to `true`.
+    
+    ```bash
+    poetry config settings.pypi.fallback true
+    ```
+    
+    Note that this is temporary and should be avoided as much as possible since
+    it increases the dependency resolution time drastically (up to 30 minutes in some cases).
+    
+    Any case of missing dependencies should be reported to https://github.com/sdispater/poetry/issues
+
 ### Version constraints
 
 In our example, we are requesting the `pendulum` package with the version constraint `^1.4`.

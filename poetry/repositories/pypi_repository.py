@@ -20,9 +20,13 @@ from .repository import Repository
 
 class PyPiRepository(Repository):
 
-    def __init__(self, url='https://pypi.org/', disable_cache=False):
+    def __init__(self,
+                 url='https://pypi.org/',
+                 disable_cache=False,
+                 fallback=False):
         self._url = url
         self._disable_cache = disable_cache
+        self._fallback = fallback
 
         release_cache_dir = Path(CACHE_DIR) / 'cache' / 'repositories' / 'pypi'
         self._cache = CacheManager({
@@ -41,7 +45,7 @@ class PyPiRepository(Repository):
 
         self._session = CacheControl(
             session(),
-            cache=FileCache(str(release_cache_dir / '_packages'))
+            cache=FileCache(str(release_cache_dir / '_http'))
         )
         
         super(PyPiRepository, self).__init__()
@@ -72,9 +76,7 @@ class PyPiRepository(Repository):
                 versions.append(version)
 
         for version in versions:
-            packages.append(
-                self.package(name, version, extras=extras)
-            )
+            packages.append(Package(name, version, version))
 
         return packages
 
@@ -82,7 +84,7 @@ class PyPiRepository(Repository):
                 name,        # type: str
                 version,     # type: str
                 extras=None  # type: (Union[list, None])
-                ):  # type: (...) -> Package
+                ):  # type: (...) -> Union[Package, None]
         try:
             index = self._packages.index(Package(name, version, version))
 
@@ -92,6 +94,19 @@ class PyPiRepository(Repository):
                 extras = []
 
             release_info = self.get_release_info(name, version)
+            if (
+                self._fallback
+                and release_info['requires_dist'] is None
+                and not release_info['requires_python']
+                and not release_info['platform']
+            ):
+                # No dependencies set (along with other information)
+                # This might be due to actually no dependencies
+                # or badly set metadata when uploading
+                # So, we return None so that the fallback repository
+                # can pick up more accurate info
+                return
+
             package = Package(name, version, version)
             requires_dist = release_info['requires_dist'] or []
             for req in requires_dist:
@@ -209,7 +224,13 @@ class PyPiRepository(Repository):
             'requires_python': info['requires_python'],
             'digests': []
         }
-        for file_info in json_data['releases'][version]:
+
+        try:
+            version_info = json_data['releases'][version]
+        except KeyError:
+            version_info = []
+
+        for file_info in version_info:
             data['digests'].append(file_info['digests']['sha256'])
 
         return data

@@ -1,4 +1,3 @@
-from pathlib import Path
 from pip._vendor.pkg_resources import RequirementParseError
 from piptools.cache import DependencyCache
 from piptools.repositories import PyPIRepository
@@ -10,10 +9,12 @@ from cachy import CacheManager
 import poetry.packages
 
 from poetry.locations import CACHE_DIR
+from poetry.packages import Package
 from poetry.packages import dependency_from_pep_508
 from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
+from poetry.utils._compat import Path
 from poetry.version.markers import InvalidMarker
 
 from .pypi_repository import PyPiRepository
@@ -61,7 +62,7 @@ class LegacyRepository(PyPiRepository):
 
         key = name
         if constraint:
-            key = f'{key}:{str(constraint)}'
+            key = '{}:{}'.format(key, str(constraint))
 
         if self._cache.store('matches').has(key):
             versions = self._cache.store('matches').get(key)
@@ -82,7 +83,7 @@ class LegacyRepository(PyPiRepository):
             self._cache.store('matches').put(key, versions, 5)
 
         for version in versions:
-            packages.append(self.package(name, version, extras=extras))
+            packages.append(Package(name, version, extras=extras))
 
         return packages
 
@@ -157,7 +158,7 @@ class LegacyRepository(PyPiRepository):
         or retrieved from the remote server.
         """
         return self._cache.store('releases').remember_forever(
-            f'{name}:{version}',
+            '{}:{}'.format(name, version),
             lambda: self._get_release_info(name, version)
         )
 
@@ -165,7 +166,7 @@ class LegacyRepository(PyPiRepository):
         from pip.req import InstallRequirement
         from pip.exceptions import InstallationError
 
-        ireq = InstallRequirement.from_line(f'{name}=={version}')
+        ireq = InstallRequirement.from_line('{}=={}'.format(name, version))
         resolver = Resolver(
             [ireq], self._repository,
             cache=DependencyCache(self._cache_dir.as_posix())
@@ -180,13 +181,18 @@ class LegacyRepository(PyPiRepository):
         requires = []
         for dep in requirements:
             constraint = str(dep.req.specifier)
-            require = f'{dep.name}'
+            require = dep.name
             if constraint:
-                require += f' ({constraint})'
+                require += ' ({})'.format(constraint)
 
             requires.append(require)
 
-        hashes = resolver.resolve_hashes([ireq])[ireq]
+        try:
+            hashes = resolver.resolve_hashes([ireq])[ireq]
+        except IndexError:
+            # Sometimes pip-tools fails when getting indices
+            hashes = []
+
         hashes = [h.split(':')[1] for h in hashes]
 
         data = {

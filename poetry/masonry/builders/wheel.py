@@ -146,7 +146,10 @@ class WheelBuilder(Builder):
             self._add_file(str(self._module.path), self._module.path.name)
 
     def write_metadata(self):
-        if 'scripts' in self._poetry.config or 'plugins' in self._poetry.config:
+        if (
+            'scripts' in self._poetry.local_config
+            or 'plugins' in self._poetry.local_config
+        ):
             with self._write_to_zip(self.dist_info + '/entry_points.txt') as f:
                 self._write_entry_points(f)
 

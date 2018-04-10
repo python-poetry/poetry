@@ -16,7 +16,7 @@ class ScriptCommand(VenvCommand):
         script = self.argument('script-name')
         argv = [script] + self.argument('args')
 
-        scripts = self.poetry.config.get('scripts')
+        scripts = self.poetry.local_config.get('scripts')
         if not scripts:
             raise RuntimeError('No scripts defined in pyproject.toml')
 

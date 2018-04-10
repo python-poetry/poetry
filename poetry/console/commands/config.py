@@ -49,11 +49,13 @@ To remove a repository (repo is a short alias for repositories):
         # Create config file if it does not exist
         if not self._config.file.exists():
             self._config.file.parent.mkdir(parents=True, exist_ok=True)
-            self._config.file.write_text(TEMPLATE)
+            with self._config.file.open() as f:
+                f.write(TEMPLATE)
 
         if not self._auth_config.file.exists():
             self._auth_config.file.parent.mkdir(parents=True, exist_ok=True)
-            self._auth_config.file.write_text(AUTH_TEMPLATE)
+            with self._auth_config.file.open() as f:
+                f.write(AUTH_TEMPLATE)
 
     def handle(self):
         if self.option('list'):
@@ -98,7 +100,8 @@ To remove a repository (repo is a short alias for repositories):
         boolean_normalizer = lambda val: True if val in ['true', '1'] else False
 
         unique_config_values = {
-            'settings.virtualenvs.create': (boolean_validator, boolean_normalizer)
+            'settings.virtualenvs.create': (boolean_validator, boolean_normalizer),
+            'settings.pypi.fallback': (boolean_validator, boolean_normalizer),
         }
 
         if setting_key in unique_config_values:
@@ -216,7 +219,7 @@ To remove a repository (repo is a short alias for repositories):
         orig_k = k
 
         for key, value in contents.items():
-            if k is None and key not in ['config', 'repositories']:
+            if k is None and key not in ['config', 'repositories', 'settings']:
                 continue
 
             if isinstance(value, dict) or key == 'repositories' and k is None:
