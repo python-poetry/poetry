@@ -6,6 +6,7 @@
 
 - Added support for Python 2.7.
 - Added a fallback mechanism (opt-in) for missing dependencies.
+- Added `search` command.
 
 ### Changes
 

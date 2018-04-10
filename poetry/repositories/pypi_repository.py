@@ -1,6 +1,11 @@
 from typing import List
 from typing import Union
 
+try:
+    from xmlrpc.client import ServerProxy
+except ImportError:
+    from xmlrpclib import ServerProxy
+
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
@@ -160,15 +165,13 @@ class PyPiRepository(Repository):
         if mode == self.SEARCH_FULLTEXT:
             search['summary'] = query
 
-        client = ServerProxy(self._url)
+        client = ServerProxy('https://pypi.python.org/pypi')
         hits = client.search(search, 'or')
 
         for hit in hits:
-            results.append({
-                'name': hit['name'],
-                'description': hit['summary'],
-                'version': hit['version']
-            })
+            result = Package(hit['name'], hit['version'], hit['version'])
+            result.description = hit['summary']
+            results.append(result)
 
         return results
 

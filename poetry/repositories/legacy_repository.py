@@ -52,6 +52,10 @@ class LegacyRepository(PyPiRepository):
             }
         })
 
+    @property
+    def name(self):
+        return self._name
+
     def find_packages(self, name, constraint=None, extras=None):
         packages = []
 
