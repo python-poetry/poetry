@@ -4,7 +4,6 @@ from typing import Union
 import poetry.packages
 
 from .base_repository import BaseRepository
-from .legacy_repository import LegacyRepository
 from .repository import Repository
 
 
@@ -80,6 +79,8 @@ class Pool(BaseRepository):
         return []
 
     def search(self, query, mode=BaseRepository.SEARCH_FULLTEXT):
+        from .legacy_repository import LegacyRepository
+
         results = []
         for repository in self._repositories:
             if isinstance(repository, LegacyRepository):
