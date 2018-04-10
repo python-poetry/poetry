@@ -202,9 +202,9 @@ class Package(object):
     @license.setter
     def license(self, value):
         if value is None:
-            self._license = license
+            self._license = value
         elif isinstance(value, License):
-            self._license = license
+            self._license = value
         else:
             self._license = license_by_id(value)
     
@@ -230,8 +230,9 @@ class Package(object):
                     'Programming Language :: Python :: {}'.format(version)
                 )
 
-        # Automatically set license classifers
-        classifiers.append(self.license.classifier)
+        # Automatically set license classifiers
+        if self.license:
+            classifiers.append(self.license.classifier)
 
         classifiers = set(classifiers)
 

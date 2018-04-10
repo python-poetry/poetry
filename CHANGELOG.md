@@ -16,6 +16,7 @@
 
 - Fixed `install_requires` and `extras` in generated sdist.
 - Fixed dependency resolution crash with malformed dependencies.
+- Fixed errors when `license` metadata is not set.
 
 
 ## [0.7.1] - 2018-04-05

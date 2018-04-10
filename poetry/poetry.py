@@ -7,7 +7,6 @@ import jsonschema
 
 from .__version__ import __version__
 from .config import Config
-from .console.commands.config import TEMPLATE
 from .exceptions import InvalidProjectFile
 from .packages import Dependency
 from .packages import Locker
