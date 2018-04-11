@@ -16,6 +16,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import PY2
 from poetry.utils.venv import NullVenv
 
+from tests.helpers import fixture as root_fixture
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_pypi_repository import MockRepository
@@ -529,3 +530,25 @@ def test_installer_with_pypi_repository(package, locker, installed):
     expected = fixture('with-pypi-repository')
 
     assert locker.written_data == expected
+
+
+def test_run_installs_with_local_file(installer, locker, repo, package):
+    file_path = Path(
+        'tests/fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl'
+    )
+    package.add_dependency(
+        'demo',
+        {
+            'file': str(file_path)
+        }
+    )
+
+    repo.add_package(get_package('pendulum', '1.4.4'))
+
+    installer.run()
+
+    expected = fixture('with-file-dependency')
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 2

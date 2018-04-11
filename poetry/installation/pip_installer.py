@@ -59,7 +59,7 @@ class PipInstaller(BaseInstaller):
         return self._venv.run('pip', *args, **kwargs)
 
     def requirement(self, package, formatted=False):
-        if formatted and not package.source_type == 'git':
+        if formatted and not package.source_type:
             req = '{}=={}'.format(package.name, package.version)
             for h in package.hashes:
                 req += ' --hash sha256:{}'.format(h)
@@ -67,6 +67,9 @@ class PipInstaller(BaseInstaller):
             req += '\n'
 
             return req
+
+        if package.source_type == 'file':
+            return os.path.realpath(package.source_reference)
 
         if package.source_type == 'git':
             return 'git+{}@{}#egg={}'.format(

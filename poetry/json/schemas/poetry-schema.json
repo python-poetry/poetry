@@ -75,6 +75,9 @@
                         },
                         {
                             "$ref": "#/definitions/git-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/file-dependency"
                         }
                     ]
                 }
@@ -95,6 +98,9 @@
                         },
                         {
                             "$ref": "#/definitions/git-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/file-dependency"
                         }
                     ]
                 }
@@ -157,7 +163,7 @@
                 },
                 "python": {
                     "type": "string",
-                    "description": "The python versions for c=which the dependency should be installed."
+                    "description": "The python versions for which the dependency should be installed."
                 },
                 "allows_prereleases": {
                     "type": "boolean",
@@ -200,7 +206,37 @@
                 },
                 "python": {
                     "type": "string",
-                    "description": "The python versions for c=which the dependency should be installed."
+                    "description": "The python versions for which the dependency should be installed."
+                },
+                "allows_prereleases": {
+                    "type": "boolean",
+                    "description": "Whether the dependency allows prereleases or not."
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Whether the dependency is optional or not."
+                },
+                "extras": {
+                    "type": "array",
+                    "description": "The required extras for this dependency.",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "file-dependency": {
+            "type": "object",
+            "required": ["file"],
+            "additionalProperties": false,
+            "properties": {
+                "file": {
+                    "type": "string",
+                    "description": "The path to the file."
+                },
+                "python": {
+                    "type": "string",
+                    "description": "The python versions for which the dependency should be installed."
                 },
                 "allows_prereleases": {
                     "type": "boolean",

@@ -99,6 +99,7 @@ class Poetry:
         name = local_config['name']
         version = local_config['version']
         package = Package(name, version, version)
+        package.cwd = Path(cwd)
 
         for author in local_config['authors']:
             package.authors.append(author)

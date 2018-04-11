@@ -57,6 +57,12 @@ def test_poetry():
     assert pathlib2.python_versions == '~2.7'
     assert not pathlib2.is_optional()
 
+    demo = dependencies['demo']
+    assert demo.is_file()
+    assert not demo.is_vcs()
+    assert demo.name == 'demo'
+    assert demo.pretty_constraint == '0.1.0'
+
     assert 'db' in package.extras
 
     classifiers = package.classifiers

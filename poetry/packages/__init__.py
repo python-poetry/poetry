@@ -4,6 +4,7 @@ import re
 from poetry.version.requirements import Requirement
 
 from .dependency import Dependency
+from .file_dependency import FileDependency
 from .locker import Locker
 from .package import Package
 from .utils.link import Link

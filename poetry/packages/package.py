@@ -10,10 +10,12 @@ from poetry.semver.helpers import parse_stability
 from poetry.semver.version_parser import VersionParser
 from poetry.spdx import license_by_id
 from poetry.spdx import License
+from poetry.utils._compat import Path
 from poetry.version import parse as parse_version
 
 from .constraints.generic_constraint import GenericConstraint
 from .dependency import Dependency
+from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
 
 AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$')
@@ -103,6 +105,8 @@ class Package(object):
         self._python_constraint = self._parser.parse_constraints('*')
         self._platform = '*'
         self._platform_constraint = EmptyConstraint()
+
+        self.cwd = None
 
     @property
     def name(self):
@@ -253,12 +257,13 @@ class Package(object):
             constraint = '*'
 
         if isinstance(constraint, dict):
+            optional = constraint.get('optional', False)
+            python_versions = constraint.get('python')
+            platform = constraint.get('platform')
+            allows_prereleases = constraint.get('allows_prereleases', False)
+
             if 'git' in constraint:
                 # VCS dependency
-                optional = constraint.get('optional', False)
-                python_versions = constraint.get('python')
-                platform = constraint.get('platform')
-
                 dependency = VCSDependency(
                     name,
                     'git', constraint['git'],
@@ -273,12 +278,12 @@ class Package(object):
 
                 if platform:
                     dependency.platform = platform
+            elif 'file' in constraint:
+                file_path = Path(constraint['file'])
+
+                dependency = FileDependency(file_path, base=self.cwd)
             else:
                 version = constraint['version']
-                optional = constraint.get('optional', False)
-                allows_prereleases = constraint.get('allows_prereleases', False)
-                python_versions = constraint.get('python')
-                platform = constraint.get('platform')
 
                 dependency = Dependency(
                     name, version,

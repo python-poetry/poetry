@@ -7,7 +7,7 @@ class WilcardConstraint(Constraint):
 
     def __init__(self, constraint):  # type: (str) -> None
         m = re.match(
-            '^(!=|==)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$',
+            '^(!= ?|==)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$',
             constraint
         )
         if not m:
@@ -16,7 +16,7 @@ class WilcardConstraint(Constraint):
         if not m.group(1):
             operator = '=='
         else:
-            operator = m.group(1)
+            operator = m.group(1).strip()
 
         super(WilcardConstraint, self).__init__(
             operator,

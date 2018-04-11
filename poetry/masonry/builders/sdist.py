@@ -43,7 +43,7 @@ setup(**setup_kwargs)
 
 
 PKG_INFO = """\
-Metadata-Version: 1.1
+Metadata-Version: 2.1
 Name: {name}
 Version: {version}
 Summary: {summary}
@@ -96,14 +96,7 @@ class SdistBuilder(Builder):
             tar_info.size = len(setup)
             tar.addfile(tar_info, BytesIO(setup))
 
-            pkg_info = encode(PKG_INFO.format(
-                name=self._meta.name,
-                version=self._meta.version,
-                summary=self._meta.summary,
-                home_page=self._meta.home_page,
-                author=to_str(self._meta.author),
-                author_email=to_str(self._meta.author_email),
-            ))
+            pkg_info = self.build_pkg_info()
 
             tar_info = tarfile.TarInfo(pjoin(tar_dir, 'PKG-INFO'))
             tar_info.size = len(pkg_info)
@@ -171,6 +164,35 @@ class SdistBuilder(Builder):
             extra='\n    '.join(extra),
             after='\n'.join(after)
         ))
+
+    def build_pkg_info(self):
+        pkg_info = PKG_INFO.format(
+            name=self._meta.name,
+            version=self._meta.version,
+            summary=self._meta.summary,
+            home_page=self._meta.home_page,
+            author=to_str(self._meta.author),
+            author_email=to_str(self._meta.author_email),
+        )
+
+        if self._meta.keywords:
+            pkg_info += "Keywords: {}\n".format(self._meta.keywords)
+
+        if self._meta.requires_python:
+            pkg_info += 'Requires-Python: {}\n'.format(
+                self._meta.requires_python
+            )
+
+        for classifier in self._meta.classifiers:
+            pkg_info += 'Classifier: {}\n'.format(classifier)
+
+        for extra in sorted(self._meta.provides_extra):
+            pkg_info += 'Provides-Extra: {}\n'.format(extra)
+
+        for dep in sorted(self._meta.requires_dist):
+            pkg_info += 'Requires-Dist: {}\n'.format(dep)
+
+        return encode(pkg_info)
 
     @classmethod
     def find_packages(cls, path):

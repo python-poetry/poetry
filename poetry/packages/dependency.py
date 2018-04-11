@@ -106,6 +106,9 @@ class Dependency(object):
     def is_vcs(self):
         return False
 
+    def is_file(self):
+        return False
+
     def accepts(self, package):  # type: (poetry.packages.Package) -> bool
         """
         Determines if the given package matches this dependency.
@@ -209,4 +212,4 @@ class Dependency(object):
         )
 
     def __repr__(self):
-        return '<Dependency {}>'.format(str(self))
+        return '<{} {}>'.format(self.__class__.__name__, str(self))

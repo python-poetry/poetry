@@ -185,7 +185,7 @@ class VersionParser:
         # A partial version range is treated as an X-Range,
         # so the special character is in fact optional.
         m = re.match(
-            '^(!=|==)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$',
+            '^(!= ?|==)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$',
             constraint
         )
         if m:

@@ -11,8 +11,10 @@ from poetry.mixology.conflict import Conflict
 from poetry.mixology.contracts import SpecificationProvider
 
 from poetry.packages import Dependency
+from poetry.packages import FileDependency
 from poetry.packages import Package
 from poetry.packages import VCSDependency
+from poetry.packages import dependency_from_pep_508
 
 from poetry.repositories import Pool
 
@@ -71,6 +73,8 @@ class Provider(SpecificationProvider):
 
         if dependency.is_vcs():
             packages = self.search_for_vcs(dependency)
+        elif dependency.is_file():
+            packages = self.search_for_file(dependency)
         else:
             packages = self._pool.find_packages(
                 dependency.name,
@@ -175,8 +179,28 @@ class Provider(SpecificationProvider):
 
         return [package]
 
+    def search_for_file(self, dependency
+                        ):  # type: (FileDependency) -> List[Package]
+        package = Package(dependency.name, dependency.pretty_constraint)
+        package.source_type = 'file'
+        package.source_reference = str(dependency.path)
+
+        package.description = dependency.metadata.summary
+        for req in dependency.metadata.requires_dist:
+            package.requires.append(dependency_from_pep_508(req))
+
+        if dependency.metadata.requires_python:
+            package.python_versions = dependency.metadata.requires_python
+
+        if dependency.metadata.platforms:
+            package.platform = ' || '.join(dependency.metadata.platforms)
+
+        package.hashes = [dependency.hash()]
+
+        return [package]
+
     def dependencies_for(self, package):  # type: (Package) -> List[Dependency]
-        if package.source_type == 'git':
+        if package.source_type in ['git', 'file']:
             # Information should already be set
             pass
         else:
