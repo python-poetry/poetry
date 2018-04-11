@@ -49,6 +49,7 @@ virtualenv = { version = "^15.2", python = "~2.7" }
 # So we set them here
 msgpack-python = "^0.5"
 lockfile = "^0.12"
+pkginfo = "^1.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.4"
