@@ -81,7 +81,7 @@ class PyPiRepository(Repository):
                 versions.append(version)
 
         for version in versions:
-            packages.append(Package(name, version, version))
+            packages.append(self.package(name, version))
 
         return packages
 
@@ -103,7 +103,6 @@ class PyPiRepository(Repository):
                 self._fallback
                 and release_info['requires_dist'] is None
                 and not release_info['requires_python']
-                and not release_info['platform']
             ):
                 # No dependencies set (along with other information)
                 # This might be due to actually no dependencies
@@ -139,6 +138,12 @@ class PyPiRepository(Repository):
 
             # Adding description
             package.description = release_info.get('summary', '')
+
+            if release_info['requires_python']:
+                package.python_versions = release_info['requires_python']
+
+            if release_info['platform']:
+                package.platform = release_info['platform']
 
             # Adding hashes information
             package.hashes = release_info['digests']

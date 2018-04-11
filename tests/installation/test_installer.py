@@ -18,6 +18,7 @@ from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+from tests.repositories.test_pypi_repository import MockRepository
 
 
 class Installer(BaseInstaller):
@@ -508,3 +509,23 @@ def test_run_installs_extras_with_deps_if_requested_locked(installer, locker, re
     installer = installer.installer
     assert len(installer.installs) == 4  # A, B, C, D
 
+
+def test_installer_with_pypi_repository(package, locker, installed):
+    pool = Pool()
+    pool.add_repository(MockRepository())
+
+    installer = Installer(
+        NullIO(),
+        NullVenv(),
+        package,
+        locker,
+        pool,
+        installed=installed
+    )
+
+    package.add_dependency('pytest', '^3.5', category='dev')
+    installer.run()
+
+    expected = fixture('with-pypi-repository')
+
+    assert locker.written_data == expected
