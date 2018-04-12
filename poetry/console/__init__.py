@@ -2,4 +2,4 @@ from .application import Application
 
 
 def main():
-    Application().run()
+    return Application().run()
