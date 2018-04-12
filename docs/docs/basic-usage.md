@@ -69,18 +69,24 @@ It will automatically find a suitable version constraint.
     information due to bad packaging/publishing which means that `poetry` won't
     be able to properly resolve dependencies.
     
-    To workaround it you can set the missing dependencies yourself in your `pyproject.toml`
-    or you can tell `poetry` to use a fallback mechanism by setting the
-    `settings.pypi.fallback` setting to `true`.
+    To workaround it, `poetry` has a fallback mechanism that will download packages
+    distributions to check the dependencies.
+    
+    While, in most cases, it will lead to a more exhaustive dependency resolution
+    it will also considerably slow down the process (up to 30 minutes in some extreme cases
+    like `boto3`).
+    
+    If you do not want the fallback mechanism, you can deactivate it like so.
     
     ```bash
-    poetry config settings.pypi.fallback true
+    poetry config settings.pypi.fallback false
     ```
     
-    Note that this is temporary and should be avoided as much as possible since
-    it increases the dependency resolution time drastically (up to 30 minutes in some cases).
+    In this case you will need to specify the missing dependencies in you `pyproject.toml`
+    file.
     
     Any case of missing dependencies should be reported to https://github.com/sdispater/poetry/issues
+    and on the repository of the main package.
 
 ### Version constraints
 

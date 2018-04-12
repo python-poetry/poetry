@@ -1,5 +1,18 @@
+import os
+import tarfile
+import zipfile
+
+import pkginfo
+
+from bz2 import BZ2File
+from gzip import GzipFile
 from typing import List
 from typing import Union
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 try:
     from xmlrpc.client import ServerProxy
@@ -9,6 +22,7 @@ except ImportError:
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
+from requests import get
 from requests import session
 
 from poetry.locations import CACHE_DIR
@@ -18,6 +32,7 @@ from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 from poetry.utils._compat import Path
+from poetry.utils.helpers import temporary_directory
 from poetry.version.markers import InvalidMarker
 
 from .repository import Repository
@@ -28,7 +43,7 @@ class PyPiRepository(Repository):
     def __init__(self,
                  url='https://pypi.org/',
                  disable_cache=False,
-                 fallback=False):
+                 fallback=True):
         self._url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
@@ -103,13 +118,11 @@ class PyPiRepository(Repository):
                 self._fallback
                 and release_info['requires_dist'] is None
                 and not release_info['requires_python']
+                and '_fallback' not in release_info
             ):
-                # No dependencies set (along with other information)
-                # This might be due to actually no dependencies
-                # or badly set metadata when uploading
-                # So, we return None so that the fallback repository
-                # can pick up more accurate info
-                return
+                # Force cache update
+                self._cache.forget('{}:{}'.format(name, version))
+                release_info = self.get_release_info(name, version)
 
             package = Package(name, version, version)
             requires_dist = release_info['requires_dist'] or []
@@ -230,7 +243,8 @@ class PyPiRepository(Repository):
             'platform': info['platform'],
             'requires_dist': info['requires_dist'],
             'requires_python': info['requires_python'],
-            'digests': []
+            'digests': [],
+            '_fallback': False
         }
 
         try:
@@ -240,6 +254,50 @@ class PyPiRepository(Repository):
 
         for file_info in version_info:
             data['digests'].append(file_info['digests']['sha256'])
+
+        if (
+                self._fallback
+                and data['requires_dist'] is None
+                and not data['requires_python']
+        ):
+            # No dependencies set (along with other information)
+            # This might be due to actually no dependencies
+            # or badly set metadata when uploading
+            # So, we need to make sure there is actually no
+            # dependencies by introspecting packages
+            data['_fallback'] = True
+
+            urls = {}
+            for url in json_data['urls']:
+                # Only get sdist and universal wheels
+                dist_type = url['packagetype']
+                if dist_type not in ['sdist', 'bdist_wheel']:
+                    continue
+
+                if dist_type == 'sdist' and 'dist' not in urls:
+                    urls[url['packagetype']] = url['url']
+                    continue
+
+                if 'bdist_wheel' in urls:
+                    continue
+
+                # If bdist_wheel, check if it's universal
+                python_version = url['python_version']
+                if python_version not in ['py2.py3', 'py3', 'py2']:
+                    continue
+
+                parts = urlparse.urlparse(url['url'])
+                filename = os.path.basename(parts.path)
+
+                if '-none-any' not in filename:
+                    continue
+
+            if not urls:
+                return data
+
+            requires_dist = self._get_requires_dist_from_urls(urls)
+
+            data['requires_dist'] = requires_dist
 
         return data
 
@@ -251,3 +309,121 @@ class PyPiRepository(Repository):
         json_data = json_response.json()
 
         return json_data
+
+    def _get_requires_dist_from_urls(self, urls
+                                     ):  # type: (dict) -> Union[list, None]
+        if 'bdist_wheel' in urls:
+            return self._get_requires_dist_from_wheel(urls['bdist_wheek'])
+
+        return self._get_requires_dist_from_sdist(urls['sdist'])
+
+    def _get_requires_dist_from_wheel(self, url
+                                      ):  # type: (str) -> Union[list, None]
+        filename = os.path.basename(urlparse.urlparse(url).path)
+
+        with temporary_directory() as temp_dir:
+            filepath = os.path.join(temp_dir, filename)
+            self._download(url, filepath)
+
+            meta = pkginfo.Wheel(filepath)
+
+        if meta.requires_dist:
+            return meta.requires_dist
+
+    def _get_requires_dist_from_sdist(self, url
+                                      ):  # type: (str) -> Union[list, None]
+        filename = os.path.basename(urlparse.urlparse(url).path)
+
+        with temporary_directory() as temp_dir:
+            filepath = Path(temp_dir) / filename
+            self._download(url, str(filepath))
+
+            meta = pkginfo.SDist(str(filepath))
+
+            if meta.requires_dist:
+                return meta.requires_dist
+
+            # Still not dependencies found
+            # So, we unpack and introspect
+            suffix = filepath.suffix
+            if suffix == '.zip':
+                tar = zipfile.ZipFile(str(filepath))
+            else:
+                if suffix == '.bz2':
+                    gz = BZ2File(str(filepath))
+                else:
+                    gz = GzipFile(str(filepath))
+
+                tar = tarfile.TarFile(str(filepath), fileobj=gz)
+
+            tar.extractall(os.path.join(temp_dir, 'unpacked'))
+
+            unpacked = Path(temp_dir) / 'unpacked'
+            sdist_dir = unpacked / Path(filename).name.rstrip('.tar.gz')
+
+            # Checking for .egg-info
+            eggs = list(sdist_dir.glob('*.egg-info'))
+            if eggs:
+                egg_info = eggs[0]
+
+                requires = egg_info / 'requires.txt'
+                if requires.exists():
+                    with requires.open() as f:
+                        return self._parse_requires(f.read())
+
+                return
+
+            # Still nothing, assume no dependencies
+            # We could probably get them by executing
+            # python setup.py egg-info but I don't feel
+            # confortable executing a file just for the sake
+            # of getting dependencies.
+            return
+
+    def _download(self, url, dest):  # type: (str, str) -> None
+        r = get(url, stream=True)
+        with open(dest, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+
+    def _parse_requires(self, requires):  # type: (str) -> Union[list, None]
+        lines = requires.split('\n')
+
+        requires_dist = []
+        in_section = False
+        current_marker = None
+        for line in lines:
+            line = line.strip()
+            if not line:
+                if in_section:
+                    in_section = False
+
+                continue
+
+            if line.startswith('['):
+                # extras or conditional dependencies
+                marker = line.lstrip('[').rstrip(']')
+                if ':' not in marker:
+                    extra, marker = marker, None
+                else:
+                    extra, marker = marker.split(':')
+
+                if extra:
+                    if marker:
+                        marker = '{} and extra == "{}"'.format(marker, extra)
+                    else:
+                        marker = 'extra == "{}"'.format(extra)
+
+                if marker:
+                    current_marker = marker
+
+                continue
+
+            if current_marker:
+                line = '{}; {}'.format(line, current_marker)
+
+            requires_dist.append(line)
+
+        if requires_dist:
+            return requires_dist

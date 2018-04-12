@@ -42,19 +42,9 @@ class Poetry:
         # Always put PyPI last to prefere private repositories
         self._pool.add_repository(
             PyPiRepository(
-                fallback=self._config.setting(
-                    'settings.pypi.fallback',
-                    False
-                )
+                fallback=self._config.setting('settings.pypi.fallback', True)
             )
         )
-
-        # Adding a fallback for PyPI for when dependencies
-        # are not retrievable via the JSON API
-        self._pool.configure({
-            'name': 'pypi-fallback',
-            'url': 'https://pypi.org/simple'
-        })
         
     @property
     def file(self):
