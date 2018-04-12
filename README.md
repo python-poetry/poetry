@@ -510,15 +510,6 @@ Authors must be in the form `name <email>`.
 The readme file of the package. **Required**
 
 The file can be either `README.rst` or `README.md`.
-If it's a markdown file you have to install the [pandoc](https://github.com/jgm/pandoc) utility so that it can be automatically
-converted to a RestructuredText file.
-
-You also need to have the [pypandoc](https://pypi.python.org/pypi/pypandoc/) package installed. If you install `poet` via
-`pip` you can use the `markdown-readme` extra to do so.
-
-```bash
-pip install pypoet[markdown-readme]
-```
 
 #### homepage
 
