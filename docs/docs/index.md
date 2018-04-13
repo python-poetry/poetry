@@ -6,7 +6,7 @@ It allows you to declare the libraries your project depends on and it will manag
 
 ## System requirements
 
-Poetry requires Python 3.6+. It is multi-platform and the goal is to make it work equally well
+Poetry requires Python 2.7 or 3.4+. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
 
 
@@ -44,3 +44,25 @@ python get-poetry.py --version 0.7.0
     
     Be aware, however, that it will also install poetry's dependencies
     which might cause conflicts.
+
+
+## Updating `poetry`
+
+Updating poetry to the latest stable version is as simple as calling the `self:update` command.
+
+```bash
+poetry self:update
+```
+
+If you want to install prerelease versions, you can use the `--preview` option.
+
+```bash
+poetry self:update --preview
+```
+
+And finally, if you want to install a spcific version you can pass it as an argument
+to `self:update`.
+
+```bash
+poetry self:update 0.8.0
+```

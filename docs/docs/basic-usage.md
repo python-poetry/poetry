@@ -85,8 +85,9 @@ It will automatically find a suitable version constraint.
     In this case you will need to specify the missing dependencies in you `pyproject.toml`
     file.
     
-    Any case of missing dependencies should be reported to https://github.com/sdispater/poetry/issues
-    and on the repository of the main package.
+    Any case of missing dependencies should be reported to
+    the offical [repository](https://github.com/sdispater/poetry/issues)
+    and on the repository of the package with missing dependencies.
 
 ### Version constraints
 
