@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed resolution with bad (empty) releases.
+
+
 ## [0.8.0] - 2018-04-13
 
 ### Added

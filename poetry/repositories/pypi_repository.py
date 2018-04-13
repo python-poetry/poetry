@@ -89,6 +89,10 @@ class PyPiRepository(Repository):
         versions = []
 
         for version, release in info['releases'].items():
+            if not release:
+                # Bad release
+                continue
+
             if (
                 not constraint
                 or (constraint and constraint.matches(Constraint('=', version)))
