@@ -5,8 +5,8 @@
 ### Added
 
 - Added support for Python 2.7.
-- Added a fallback mechanism (opt-in) for missing dependencies.
-- Added `search` command.
+- Added a fallback mechanism for missing dependencies.
+- Added the `search` command.
 - Added support for local files as dependencies.
 
 ### Changes
