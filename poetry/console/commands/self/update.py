@@ -20,12 +20,13 @@ class SelfUpdateCommand(Command):
     """
 
     def handle(self):
+        from poetry.__version__ import __version__
         from poetry.repositories.pypi_repository import PyPiRepository
         from poetry.semver.comparison import less_than
 
         version = self.argument('version')
         if not version:
-            version = '>=' + self.poetry.VERSION
+            version = '>=' + __version__
 
         repo = PyPiRepository(fallback=False)
         packages = repo.find_packages('poetry', version)
@@ -59,7 +60,7 @@ class SelfUpdateCommand(Command):
             self.line('No new release found')
             return
 
-        if release.version == self.poetry.VERSION:
+        if release.version == __version__:
             self.line('You are using the latest version')
             return
 

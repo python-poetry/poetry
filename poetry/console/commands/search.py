@@ -11,13 +11,13 @@ class SearchCommand(Command):
     """
 
     def handle(self):
-        from poetry.repositories.base_repository import BaseRepository
+        from poetry.repositories.pypi_repository import PyPiRepository
 
-        flags = BaseRepository.SEARCH_FULLTEXT
+        flags = PyPiRepository.SEARCH_FULLTEXT
         if self.option('only-name'):
-            flags = BaseRepository.SEARCH_FULLTEXT
+            flags = PyPiRepository.SEARCH_FULLTEXT
 
-        results = self.poetry.pool.search(self.argument('tokens'), flags)
+        results = PyPiRepository().search(self.argument('tokens'), flags)
 
         for result in results:
             self.line('')

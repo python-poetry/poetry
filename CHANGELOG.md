@@ -6,6 +6,8 @@
 
 - Fixed resolution with bad (empty) releases.
 - Fixed `version` for prereleases.
+- Fixed `search` not working outside of a project.
+- Fixed `self:update` not working outside of a project.
 
 
 ## [0.8.0] - 2018-04-13
