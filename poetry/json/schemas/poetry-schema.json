@@ -138,6 +138,20 @@
             "items": {
                 "type": "string"
             }
+        },
+        "plugins": {
+            "type": "object",
+            "description": "A hash of hashes representing plugins",
+            "patternProperties": {
+                "^[a-zA-Z-_.0-9]+$": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[a-zA-Z-_.0-9]+$": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

@@ -43,3 +43,7 @@ pytest = "~3.4"
 
 [tool.poetry.scripts]
 my-script = "my_package:main"
+
+
+[tool.poetry.plugins."blogtool.parsers"]
+".rst" = "some_module::SomeClass"
