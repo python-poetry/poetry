@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed resolution with bad (empty) releases.
+- Fixed `version` for prereleases.
 
 
 ## [0.8.0] - 2018-04-13

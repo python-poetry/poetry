@@ -102,9 +102,9 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             # We bump the prerelease part of the version
             sep = ''
             if not extra_matches[0]:
-                extra_matches[0] = 'alpha'
-                extra_matches[1] = '.0'
-                sep = '-'
+                extra_matches[0] = 'a'
+                extra_matches[1] = '0'
+                sep = ''
             else:
                 if extras.startswith(('.', '_', '-')):
                     sep = extras[0]
