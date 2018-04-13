@@ -8,6 +8,7 @@
 - Added a fallback mechanism for missing dependencies.
 - Added the `search` command.
 - Added support for local files as dependencies.
+- Added the `self:update` command.
 
 ### Changes
 

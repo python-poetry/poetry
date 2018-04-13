@@ -1,0 +1,1 @@
+from .update import SelfUpdateCommand
