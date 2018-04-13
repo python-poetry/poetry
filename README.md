@@ -7,12 +7,7 @@ ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/sdispater/poetry/master/assets/install.gif)
 
-Also, be aware that the features described here are the goal that this library is aiming
-for and, as of now, not all of them are implemented (but most of them are).
-The dependency management is done while the packaging and publishing are still at the beginning.
-
-And finally, Poetry's code is only compatible with Python 3.6+ but it can manage
-Python project's with previous versions without any problem.
+It supports Python 2.7 and 3.4+.
 
 ## Installation
 
@@ -46,6 +41,27 @@ pip install --user poetry
     
 Be aware, however, that it will also install poetry's dependencies
 which might cause conflicts.
+
+## Updating `poetry`
+
+Updating poetry to the latest stable version is as simple as calling the `self:update` command.
+
+```bash
+poetry self:update
+```
+
+If you want to install prerelease versions, you can use the `--preview` option.
+
+```bash
+poetry self:update --preview
+```
+
+And finally, if you want to install a spcific version you can pass it as an argument
+to `self:update`.
+
+```bash
+poetry self:update 0.8.0
+```
 
 
 ### Enable tab completion for Bash, Fish, or Zsh
@@ -233,7 +249,7 @@ my-package
 ├── pyproject.toml
 ├── README.rst
 ├── my_package
-    └── __init__.py
+│   └── __init__.py
 └── tests
     ├── __init__.py
     └── test_my_package
@@ -537,7 +553,7 @@ The globs specified in the exclude field identify a set of files that are not in
 If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
 
 ```toml
-[package]
+[tool.poetry]
 # ...
 include = ["package/**/*.py", "package/**/.c"]
 ```
@@ -642,7 +658,7 @@ To depend on a library located in a `git` repository,
 the minimum information you need to specify is the location of the repository with the git key:
 
 ```toml
-[dependencies]
+[tool.poetry.dependencies]
 requests = { git = "https://github.com/requests/requests.git" }
 ```
 
@@ -652,7 +668,7 @@ You can combine the `git` key with the `rev`, `tag`, or `branch` keys to specify
 Here's an example of specifying that you want to use the latest commit on a branch named `next`:
 
 ```toml
-[dependencies]
+[tool.poetry.dependencies]
 requests = { git = "https://github.com/kennethreitz/requests.git", branch = "next" }
 ```
 
@@ -661,12 +677,12 @@ requests = { git = "https://github.com/kennethreitz/requests.git", branch = "nex
 You can also specify that a dependency should be installed only for specific Python versions:
 
 ```toml
-[dependencies]
+[tool.poetry.dependencies]
 pathlib2 = { version = "^2.2", python = "~2.7" }
 ```
 
 ```toml
-[dependencies]
+[tool.poetry.dependencies]
 pathlib2 = { version = "^2.2", python = ["~2.7", "^3.2"] }
 ```
 
@@ -675,7 +691,7 @@ pathlib2 = { version = "^2.2", python = ["~2.7", "^3.2"] }
 This section describe the scripts or executable that will be installed when installing the package
 
 ```toml
-[scripts]
+[tool.poetry.scripts]
 poetry = 'poetry:console.run'
 ```
 
@@ -720,9 +736,9 @@ Poetry supports arbitrary plugins wich work similarly to
 To match the example in the setuptools documentation, you would use the following:
 
 ```toml
-[plugins] # Optional super table
+[tool.poetry.plugins] # Optional super table
 
-[plugins."blogtool.parsers"]
+[tool.poetry.plugins."blogtool.parsers"]
 ".rst" = "some_module::SomeClass"
 ```
 
