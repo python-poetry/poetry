@@ -87,7 +87,7 @@ include = ["package/**/*.py", "package/**/.c"]
 exclude = ["package/excluded.py"]
 ```
 
-### `dependencies` and `dev-dependencies`
+## `dependencies` and `dev-dependencies`
 
 Poetry is configured to look for dependencies on [PyPi](https://pypi.org) by default.
 Only the name and a version string are required in this case.
@@ -114,3 +114,59 @@ url = 'http://example.com/simple'
     [tool.poetry.dependencies]
     python = "^3.6"
     ```
+
+## `scripts`
+
+This section describe the scripts or executable that will be installed when installing the package
+
+```toml
+[tool.poetry.scripts]
+poetry = 'poetry:console.run'
+```
+
+Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+
+## `extras`
+
+Poetry supports extras to allow expression of:
+
+* optional dependencies, which enhance a package, but are not required; and
+* clusters of optional dependencies.
+
+```toml
+[tool.poetry]
+name = "awesome"
+
+[tool.poetry.dependencies]
+# These packages are mandatory and form the core of this package’s distribution.
+mandatory = "^1.0"
+
+# A list of all of the optional dependencies, some of which are included in the
+# below `extras`. They can be opted into by apps.
+psycopg2 = { version = "^2.7", optional = true }
+mysqlclient = { version = "^1.3", optional = true }
+
+[tool.poetry.extras]
+mysql = ["mysqlclient"]
+pgsql = ["psycopg2"]
+```
+
+When installing packages, you can specify extras by using the `-E|--extras` option:
+
+```bash
+poetry install --extras "mysql pgsql"
+poetry install -E mysql -E pgsql
+```
+
+## `plugins`
+
+Poetry supports arbitrary plugins wich work similarly to
+[setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
+To match the example in the setuptools documentation, you would use the following:
+
+```toml
+[tool.poetry.plugins] # Optional super table
+
+[tool.poetry.plugins."blogtool.parsers"]
+".rst" = "some_module::SomeClass"
+```
