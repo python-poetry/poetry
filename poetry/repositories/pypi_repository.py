@@ -96,7 +96,7 @@ class PyPiRepository(Repository):
                 versions.append(version)
 
         for version in versions:
-            packages.append(self.package(name, version))
+            packages.append(Package(name, version))
 
         return packages
 

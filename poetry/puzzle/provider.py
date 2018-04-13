@@ -204,7 +204,14 @@ class Provider(SpecificationProvider):
             # Information should already be set
             pass
         else:
-            package = self._pool.package(package.name, package.version)
+            complete_package = self._pool.package(package.name, package.version)
+
+            # Update package with new information
+            package.requires = complete_package.requires
+            package.description = complete_package.description
+            package.python_versions = complete_package.python_versions
+            package.platform = complete_package.platform
+            package.hashes = complete_package.hashes
 
         return [
             r for r in package.requires
