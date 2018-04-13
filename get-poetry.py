@@ -25,9 +25,14 @@ import subprocess
 import sys
 import tempfile
 
+from contextlib import contextmanager
 from email.parser import Parser
-from pathlib import Path
-from urllib.request import urlopen
+from glob import glob
+
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
 
 
 FOREGROUND_COLORS = {
@@ -97,6 +102,20 @@ def colorize(style, text):
 
     return '{}{}\033[0m'.format(STYLES[style], text)
 
+@contextmanager
+def temporary_directory(*args, **kwargs):
+    try:
+        from tempfile import TemporaryDirectory
+
+        with TemporaryDirectory(*args, **kwargs) as name:
+            yield name
+    except ImportError:
+        name = tempfile.mkdtemp(*args, **kwargs)
+
+        yield name
+
+        shutil.rmtree(name)
+
 
 class Installer:
 
@@ -120,8 +139,10 @@ class Installer:
 
     def run(self):
         print(colorize('info', 'Retrieving metadata'))
-        with urlopen(self.METADATA_URL) as r:
-            metadata = json.loads(r.read().decode())
+
+        r = urlopen(self.METADATA_URL)
+        metadata = json.loads(r.read().decode())
+        r.close()
 
         print('')
         releases = sorted(
@@ -172,36 +193,37 @@ class Installer:
 
     def install(self, version):
         # Most of the work will be delegated to pip
-        with tempfile.TemporaryDirectory(prefix='poetry-installer-') as dir:
-            dir = Path(dir)
-            dist = dir / 'dist'
+        with temporary_directory(prefix='poetry-installer-') as dir:
+            dist = os.path.join(dir, 'dist')
             print('  - Getting dependencies')
             self.call(
                 'pip', 'install', 'poetry=={}'.format(version),
-                '--target', str(dist)
+                '--target', dist
             )
 
             print('  - Vendorizing dependencies')
 
-            poetry_dir = dist / 'poetry'
-            vendor_dir = poetry_dir / '_vendor'
+            poetry_dir = os.path.join(dist, 'poetry')
+            vendor_dir = os.path.join(poetry_dir, '_vendor')
 
             # Everything, except poetry itself, should
             # be put in the _vendor directory
-            for file in dist.glob('*'):
-                if file.name.startswith('poetry'):
+            for file in glob(os.path.join(dist, '*')):
+                if os.path.basename(file).startswith('poetry'):
                     continue
 
-                dest = vendor_dir / file.name
-                if file.is_dir():
-                    shutil.copytree(str(file), str(dest))
-                    shutil.rmtree(str(file))
+                dest = os.path.join(vendor_dir, os.path.basename(file))
+                if os.path.isdir(file):
+                    shutil.copytree(file, dest)
+                    shutil.rmtree(file)
                 else:
-                    shutil.copy(str(file), str(dest))
-                    os.unlink(str(file))
+                    shutil.copy(file, dest)
+                    os.unlink(file)
 
-            wheel_data = dist / 'poetry-{}.dist-info'.format(version) / 'WHEEL'
-            with wheel_data.open() as f:
+            wheel_data = os.path.join(
+                dist, 'poetry-{}.dist-info'.format(version), 'WHEEL'
+            )
+            with open(wheel_data) as f:
                 wheel_data = Parser().parsestr(f.read())
 
             tag = wheel_data['Tag']
@@ -210,21 +232,21 @@ class Installer:
             print('  - Installing {}'.format(colorize('info', 'poetry')))
 
             shutil.make_archive(
-                str(dir / 'poetry-{}-{}'.format(version, tag)),
+                os.path.join(dir, 'poetry-{}-{}'.format(version, tag)),
                 format='zip',
                 root_dir=str(dist)
             )
 
             os.rename(
-                str(dir / 'poetry-{}-{}.zip'.format(version, tag)),
-                str(dir / 'poetry-{}-{}.whl'.format(version, tag)),
+                os.path.join(dir, 'poetry-{}-{}.zip'.format(version, tag)),
+                os.path.join(dir, 'poetry-{}-{}.whl'.format(version, tag))
             )
 
             self.call(
                 'pip', 'install',
                 '--upgrade',
                 '--no-deps',
-                str(dir / 'poetry-{}-{}.whl'.format(version, tag))
+                os.path.join(dir, 'poetry-{}-{}.whl'.format(version, tag))
             )
 
         print('')
