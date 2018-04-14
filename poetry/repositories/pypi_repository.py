@@ -350,6 +350,7 @@ class PyPiRepository(Repository):
             # Still not dependencies found
             # So, we unpack and introspect
             suffix = filepath.suffix
+            gz = None
             if suffix == '.zip':
                 tar = zipfile.ZipFile(str(filepath))
             else:
@@ -360,7 +361,13 @@ class PyPiRepository(Repository):
 
                 tar = tarfile.TarFile(str(filepath), fileobj=gz)
 
-            tar.extractall(os.path.join(temp_dir, 'unpacked'))
+            try:
+                tar.extractall(os.path.join(temp_dir, 'unpacked'))
+            finally:
+                if gz:
+                    gz.close()
+
+                tar.close()
 
             unpacked = Path(temp_dir) / 'unpacked'
             sdist_dir = unpacked / Path(filename).name.rstrip('.tar.gz')
