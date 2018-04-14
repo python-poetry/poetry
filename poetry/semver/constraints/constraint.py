@@ -86,18 +86,6 @@ class Constraint(BaseConstraint):
                 )
             )
 
-        # If we can't normalize the version
-        # we delegate to parse_version()
-        try:
-            a = normalize_version(a)
-        except ValueError:
-            pass
-
-        try:
-            b = normalize_version(b)
-        except ValueError:
-            pass
-
         return version_compare(a, b, operator)
 
     def match_specific(self, provider):  # type: (Constraint) -> bool

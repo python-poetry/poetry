@@ -39,9 +39,7 @@ def normalize_version(version):
         # Some versions have the form M.m.p-\d+
         # which means M.m.p-post\d+
         m = re.match(
-            '(?i)^v?(\d{{1,5}})(\.\d+)?(\.\d+)?(\.\d+)?-(?:\d+){}$'.format(
-                _modifier_regex
-            ),
+            '(?i)^v?(\d{1,5})(\.\d+)?(\.\d+)?(\.\d+)?-(\d+)$',
             version
         )
         if m:
@@ -51,6 +49,16 @@ def normalize_version(version):
                 m.group(3) if m.group(3) else '.0',
                 m.group(4) if m.group(4) else '.0',
             )
+            if m.group(5):
+                version += '-post.' + m.group(5)
+
+            m = re.match(
+                '(?i)^v?(\d{{1,5}})(\.\d+)?(\.\d+)?(\.\d+)?{}$'.format(
+                    _modifier_regex
+                ),
+                version
+            )
+
             index = 5
         else:
             # Match date(time) based versioning
@@ -71,9 +79,14 @@ def normalize_version(version):
             if m.group(index) == 'post':
                 # Post releases should be considered
                 # stable releases
-                return version
+                if '-post' in version:
+                    return version
 
-            version = '{}-{}'.format(version, _expand_stability(m.group(index)))
+                version = '{}-post'.format(version)
+            else:
+                version = '{}-{}'.format(
+                    version, _expand_stability(m.group(index))
+                )
 
             if m.group(index + 1):
                 version = '{}.{}'.format(
@@ -135,6 +148,6 @@ def _expand_stability(stability):  # type: (str) -> str
     elif stability in ['p', 'pl']:
         return 'patch'
     elif stability in ['post']:
-        return ''
+        return 'post'
 
     return stability

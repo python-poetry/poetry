@@ -8,14 +8,14 @@ from .constraints.base_constraint import BaseConstraint
 from .constraints.empty_constraint import EmptyConstraint
 from .constraints.multi_constraint import MultiConstraint
 from .constraints.wildcard_constraint import WilcardConstraint
-from .helpers import normalize_version, _expand_stability
+from .helpers import normalize_version, _expand_stability, parse_stability
 
 
 class VersionParser:
 
     _modifier_regex = (
         '[._-]?'
-        '(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?'
+        '(?:(stable|beta|b|RC|alpha|a|patch|post|pl|p)((?:[.-]?\d+)*)?)?'
         '([.-]?dev)?'
     )
 
@@ -96,10 +96,29 @@ class VersionParser:
 
     def _parse_constraint(
             self, constraint
-        ):  # type: (str) -> Union[Tuple[BaseConstraint], Tuple[BaseConstraint, BaseConstraint]]
+    ):  # type: (str) -> Union[Tuple[BaseConstraint], Tuple[BaseConstraint, BaseConstraint]]
         m = re.match('(?i)^v?[xX*](\.[xX*])*$', constraint)
         if m:
             return EmptyConstraint(),
+
+        # Some versions have the form M.m.p-\d+
+        # which means M.m.p-post\d+
+        m = re.match(
+            '(?i)^(~=?|\^|<> ?|!= ?|>=? ?|<=? ?|==? ?)v?(\d{{1,5}})(\.\d+)?(\.\d+)?(\.\d+)?-(\d+){}$'.format(
+                self._modifier_regex
+            ),
+            constraint
+        )
+        if m:
+            constraint = '{}{}{}{}{}'.format(
+                m.group(1),
+                m.group(2),
+                m.group(3) if m.group(3) else '.0',
+                m.group(4) if m.group(4) else '.0',
+                m.group(5) if m.group(5) else '.0',
+            )
+            if m.group(6):
+                constraint += '-post.' + m.group(6)
 
         version_regex = (
             'v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?{}(?:\+[^\s]+)?'
@@ -165,6 +184,14 @@ class VersionParser:
             else:
                 position = 2
 
+            # Calculate the stability suffix
+            stability_suffix = ''
+            if m.group(5):
+                stability_suffix += '-{}{}'.format(
+                    _expand_stability(m.group(5)),
+                    '.' + m.group(6) if m.group(6) else ''
+                )
+
             low_version = normalize_version(constraint[1:])
             lower_bound = Constraint('>=', low_version)
 
@@ -197,6 +224,13 @@ class VersionParser:
         if m:
             try:
                 version = normalize_version(m.group(2))
+                stability = parse_stability(version)
+                stability_re = re.match(
+                    '(?:[^-]*)(-{})$'.format(self._modifier_regex),
+                    m.group(2).lower()
+                )
+                if stability == 'stable' and stability_re:
+                    version = version.split('-')[0] + stability_re.group(1)
 
                 return Constraint(m.group(1) or '=', version),
             except ValueError:

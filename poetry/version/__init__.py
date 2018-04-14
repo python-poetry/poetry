@@ -46,6 +46,8 @@ def parse(version,      # type: str
 
 def version_compare(version1, version2, operator
                     ):  # type: (str, str, str) -> bool
+    from poetry.semver.helpers import normalize_version
+
     if operator in _trans_op:
         operator = _trans_op[operator]
     elif operator in _trans_op.values():
@@ -55,5 +57,15 @@ def version_compare(version1, version2, operator
 
     version1 = parse(version1)
     version2 = parse(version2)
+
+    try:
+        version1 = parse(normalize_version(str(version1)))
+    except ValueError:
+        pass
+
+    try:
+        version2 = parse(normalize_version(str(version2)))
+    except ValueError:
+        pass
 
     return operator(version1, version2)

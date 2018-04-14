@@ -127,7 +127,7 @@ lists all packages available."""
                     color = 'yellow'
 
                 line += ' <fg={}>{:{}}</>'.format(
-                    color, latest.version, latest_length
+                    color, latest.pretty_version, latest_length
                 )
                 if self.option('outdated') and update_status == 'up-to-date':
                     continue
@@ -249,7 +249,7 @@ lists all packages available."""
         selector = VersionSelector(self.poetry.pool)
 
         return selector.find_best_candidate(
-            name, '>={}'.format(package.version)
+            name, '>={}'.format(package.pretty_version)
         )
 
     def get_update_status(self, latest, package):
@@ -258,7 +258,7 @@ lists all packages available."""
         if latest.full_pretty_version == package.full_pretty_version:
             return 'up-to-date'
 
-        constraint = '^' + package.version
+        constraint = '^' + package.pretty_version
 
         if latest.version and statisfies(latest.version, constraint):
             # It needs an immediate semver-compliant upgrade
