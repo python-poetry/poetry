@@ -7,6 +7,7 @@
 - Fixed `add` command picking up prereleases by default.
 - Fixed dependendency resolution on Windows when unpacking distributions.
 - Fixed dependency resolution with post releases.
+- Fixed dependencies being installed even if not necessary for current system.
 
 
 ## [0.8.1] - 2018-04-13

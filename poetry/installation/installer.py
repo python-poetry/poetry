@@ -455,6 +455,10 @@ class Installer:
                     op.skip('Not needed for the current python version')
                     continue
 
+            if not package.python_constraint.matches(Constraint('=', python)):
+                op.skip('Not needed for the current python version')
+                continue
+
             if 'platform' in package.requirements:
                 platform_constraint = GenericConstraint.parse(
                     package.requirements['platform']
@@ -465,6 +469,12 @@ class Installer:
                     # Incompatible systems
                     op.skip('Not needed for the current platform')
                     continue
+
+            if not package.platform_constraint.matches(
+                    GenericConstraint('=', sys.platform)
+            ):
+                op.skip('Not needed for the current platform')
+                continue
 
             if self._update:
                 extras = {}
