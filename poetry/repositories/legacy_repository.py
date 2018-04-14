@@ -1,4 +1,12 @@
 from pip._vendor.pkg_resources import RequirementParseError
+
+try:
+    from pip._internal.exceptions import InstallationError
+    from pip._internal.req import InstallRequirement
+except ImportError:
+    from pip.exceptions import InstallationError
+    from pip.req import InstallRequirement
+
 from piptools.cache import DependencyCache
 from piptools.repositories import PyPIRepository
 from piptools.resolver import Resolver
@@ -167,9 +175,6 @@ class LegacyRepository(PyPiRepository):
         )
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
-        from pip.req import InstallRequirement
-        from pip.exceptions import InstallationError
-
         ireq = InstallRequirement.from_line('{}=={}'.format(name, version))
         resolver = Resolver(
             [ireq], self._repository,
