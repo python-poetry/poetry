@@ -14,6 +14,7 @@ class AddCommand(VenvCommand):
         { name* : Packages to add. }
         {--D|dev : Add package as development dependency. }
         {--optional : Add as an optional dependency. }
+        { --allow-prereleases : Accept prereleases. }
         {--dry-run : Outputs the operations but will not execute anything
                      (implicitly enables --verbose). }
     """
@@ -45,7 +46,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                         'Package {} is already present'.format(name)
                     )
 
-        requirements = self._determine_requirements(packages)
+        requirements = self._determine_requirements(
+            packages,
+            allow_prereleases=self.option('allow-prereleases')
+        )
         requirements = self._format_requirements(requirements)
 
         # validate requirements format
@@ -54,11 +58,18 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             parser.parse_constraints(constraint)
 
         for name, constraint in requirements.items():
-            if self.option('optional'):
+            if self.option('optional') or self.option('allow-prereleases'):
                 constraint = {
-                    'version': constraint,
-                    'optional': True
+                    'version': constraint
                 }
+
+                if self.option('optional'):
+                    constraint = {
+                        'optional': True
+                    }
+
+                if self.option('allow-prereleases'):
+                    constraint['allows-prereleases'] = True
 
             poetry_content[section][name] = constraint
 
@@ -104,7 +115,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         return status
 
     def _determine_requirements(self,
-                                requires  # type: List[str]
+                                requires,  # type: List[str]
+                                allow_prereleases=False,  # type: bool
                                 ):  # type: (...) -> List[str]
         if not requires:
             return []
@@ -115,7 +127,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             if 'version' not in requirement:
                 # determine the best version automatically
                 name, version = self._find_best_version_for_package(
-                    requirement['name']
+                    requirement['name'],
+                    allow_prereleases=allow_prereleases
                 )
                 requirement['version'] = version
                 requirement['name'] = name
@@ -128,7 +141,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 # check that the specified version/constraint exists
                 # before we proceed
                 name, _ = self._find_best_version_for_package(
-                    requirement['name'], requirement['version']
+                    requirement['name'], requirement['version'],
+                    allow_prereleases=allow_prereleases
                 )
 
                 requirement['name'] = name
@@ -141,12 +155,16 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
     def _find_best_version_for_package(self,
                                        name,
-                                       required_version=None
+                                       required_version=None,
+                                       allow_prereleases=False
                                        ):  # type: (...) -> Tuple[str, str]
         from poetry.version.version_selector import VersionSelector
 
         selector = VersionSelector(self.poetry.pool)
-        package = selector.find_best_candidate(name, required_version)
+        package = selector.find_best_candidate(
+            name, required_version,
+            allow_prereleases=allow_prereleases
+        )
 
         if not package:
             # TODO: find similar

@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed `add` command picking up prereleases by default.
+
+
 ## [0.8.1] - 2018-04-13
 
 ### Fixed

@@ -14,8 +14,9 @@ class VersionSelector(object):
         self._parser = parser
 
     def find_best_candidate(self,
-                            package_name,                # type: str
-                            target_package_version=None  # type:  Union[str, None]
+                            package_name,                 # type: str
+                            target_package_version=None,  # type:  Union[str, None]
+                            allow_prereleases=False       # type: bool
                             ):  # type: (...) -> Union[Package, bool]
         """
         Given a package name and optional version,
@@ -34,6 +35,9 @@ class VersionSelector(object):
         # Select highest version if we have many
         package = candidates[0]
         for candidate in candidates:
+            if candidate.is_prerelease() and not allow_prereleases:
+                continue
+
             # Select highest version of the two
             if less_than(package.version, candidate.version):
                 package = candidate

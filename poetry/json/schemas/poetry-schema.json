@@ -179,7 +179,7 @@
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
                 },
-                "allows_prereleases": {
+                "allows-prereleases": {
                     "type": "boolean",
                     "description": "Whether the dependency allows prereleases or not."
                 },
@@ -222,7 +222,7 @@
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
                 },
-                "allows_prereleases": {
+                "allows-prereleases": {
                     "type": "boolean",
                     "description": "Whether the dependency allows prereleases or not."
                 },
@@ -252,7 +252,7 @@
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
                 },
-                "allows_prereleases": {
+                "allows-prereleases": {
                     "type": "boolean",
                     "description": "Whether the dependency allows prereleases or not."
                 },

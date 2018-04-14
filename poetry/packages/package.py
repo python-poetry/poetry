@@ -260,7 +260,7 @@ class Package(object):
             optional = constraint.get('optional', False)
             python_versions = constraint.get('python')
             platform = constraint.get('platform')
-            allows_prereleases = constraint.get('allows_prereleases', False)
+            allows_prereleases = constraint.get('allows-prereleases', False)
 
             if 'git' in constraint:
                 # VCS dependency
