@@ -124,7 +124,7 @@ toml = "^0.9"
 # Dependencies with extras
 requests = { version = "^2.13", extras = [ "security" ] }
 # Python specific dependencies with prereleases allowed
-pathlib2 = { version = "^2.2", python = "~2.7", allows_prereleases = true }
+pathlib2 = { version = "^2.2", python = "~2.7", allows-prereleases = true }
 # Git dependencies
 cleo = { git = "https://github.com/sdispater/cleo.git", branch = "master" }
 
