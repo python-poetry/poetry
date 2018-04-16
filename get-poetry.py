@@ -197,7 +197,7 @@ class Installer:
             dist = os.path.join(dir, 'dist')
             print('  - Getting dependencies')
             self.call(
-                'pip', 'install', 'poetry=={}'.format(version),
+                'python', '-m', 'pip', 'install', 'poetry=={}'.format(version),
                 '--target', dist
             )
 
@@ -243,7 +243,7 @@ class Installer:
             )
 
             self.call(
-                'pip', 'install',
+                'python', '-m', 'pip', 'install',
                 '--upgrade',
                 '--no-deps',
                 os.path.join(dir, 'poetry-{}-{}.whl'.format(version, tag))
