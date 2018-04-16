@@ -361,7 +361,8 @@ class Installer:
     def _populate_local_repo(self, local_repo, ops, locked_repository):
         # Add all locked packages from the lock and go from there
         for package in locked_repository.packages:
-            local_repo.add_package(package)
+            if not local_repo.has_package(package):
+                local_repo.add_package(package)
 
         # Now, walk through all operations and add/remove/update accordingly
         for op in ops:
@@ -392,7 +393,8 @@ class Installer:
                     acted_on = True
 
             if not acted_on:
-                local_repo.add_package(package)
+                if not local_repo.has_package(package):
+                    local_repo.add_package(package)
 
     def _get_operations_from_lock(self,
                                   locked_repository  # type: Repository
@@ -469,12 +471,6 @@ class Installer:
                     # Incompatible systems
                     op.skip('Not needed for the current platform')
                     continue
-
-            if not package.platform_constraint.matches(
-                    GenericConstraint('=', sys.platform)
-            ):
-                op.skip('Not needed for the current platform')
-                continue
 
             if self._update:
                 extras = {}

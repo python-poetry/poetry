@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed platform verification which led to missing packages.
+- Fixed duplicates in `pyproject.lock`.
+
+
 ## [0.8.2] - 2018-04-14
 
 ### Fixed
