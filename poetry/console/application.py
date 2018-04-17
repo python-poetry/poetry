@@ -25,6 +25,8 @@ from .commands import ShowCommand
 from .commands import UpdateCommand
 from .commands import VersionCommand
 
+from .commands.cache import CacheClearCommand
+
 from .commands.debug import DebugInfoCommand
 from .commands.debug import DebugResolveCommand
 
@@ -107,6 +109,11 @@ class Application(BaseApplication):
             ShowCommand(),
             UpdateCommand(),
             VersionCommand(),
+        ]
+
+        # Cache commands
+        commands += [
+            CacheClearCommand(),
         ]
 
         # Debug commands

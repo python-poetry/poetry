@@ -1,5 +1,12 @@
 # Change Log
 
+[Unreleased]
+
+### Added
+
+- Added the `cache:clear` command.
+
+
 ## [0.8.3] - 2018-04-16
 
 ### Fixed
