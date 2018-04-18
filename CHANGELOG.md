@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed a bug where dependencies constraints in lock were too strict.
+
+
 ## [0.8.3] - 2018-04-16
 
 ### Fixed

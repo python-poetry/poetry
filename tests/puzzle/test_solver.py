@@ -502,3 +502,34 @@ def test_solver_does_not_return_prereleases_if_not_requested(solver, repo):
         {'job': 'install', 'package': package_b},
         {'job': 'install', 'package': package_c},
     ])
+
+
+def test_solver_sub_dependencies_with_requirements(solver, repo):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+
+    package_a.add_dependency('C', {'version': '^1.0', 'python': '<4.0'})
+    package_b.add_dependency('C', '^1.0')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    dependency_a = get_dependency('A')
+    dependency_b = get_dependency('B')
+    request = [
+        dependency_a,
+        dependency_b,
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
+    ])
+
+    op = ops[0]
+    assert op.package.requirements == {}

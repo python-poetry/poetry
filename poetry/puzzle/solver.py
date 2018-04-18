@@ -3,6 +3,7 @@ from typing import List
 from poetry.mixology import Resolver
 from poetry.mixology.dependency_graph import DependencyGraph
 from poetry.mixology.exceptions import ResolverError
+from poetry.packages.constraints.generic_constraint import GenericConstraint
 
 from poetry.semver.version_parser import VersionParser
 
@@ -67,16 +68,32 @@ class Solver:
                             requirements['python'] = req
                             continue
 
-                        previous = parser.parse_constraints(requirements['python'])
+                        previous = parser.parse_constraints(
+                            requirements['python']
+                        )
                         current = parser.parse_constraints(req)
 
                         if current.matches(previous):
                             requirements['python'] = req
-
-                    if req_name == 'platform':
+                    elif req_name == 'platform':
                         if 'platform' not in requirements:
                             requirements['platform'] = req
                             continue
+
+                        previous = GenericConstraint.parse(
+                            requirements['platform']
+                        )
+                        current = GenericConstraint.parse(req)
+
+                        if current.matches(previous):
+                            requirements['platform'] = req
+
+            # If requirements are empty, drop them
+            if 'python' in requirements and requirements['python'] == '*':
+                del requirements['python']
+
+            if 'platform' in requirements and requirements['platform'] == '*':
+                del requirements['platform']
 
             vertex.payload.requirements = requirements
 
@@ -130,7 +147,7 @@ class Solver:
             )
         )
 
-    def _get_tags_for_vertex(self, vertex, requested):
+    def _get_tags_for_vertex(self, vertex, requested, original=None):
         tags = {
             'category': [],
             'optional': True,
@@ -159,11 +176,9 @@ class Solver:
             for edge in vertex.incoming_edges:
                 for req in edge.origin.payload.requires:
                     if req.name == vertex.payload.name:
-                        if req.python_versions != '*':
-                            tags['requirements']['python'].append(req.python_versions)
+                        tags['requirements']['python'].append(req.python_versions)
 
-                        if req.platform != '*':
-                            tags['requirements']['platform'].append(req.platform)
+                        tags['requirements']['platform'].append(req.platform)
 
                 sub_tags = self._get_tags_for_vertex(edge.origin, requested)
 
