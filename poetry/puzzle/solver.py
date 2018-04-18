@@ -47,53 +47,20 @@ class Solver:
 
         # Setting info
         for vertex in graph.vertices.values():
-            tags = self._get_tags_for_vertex(vertex, requested)
-            if 'main' in tags['category']:
-                vertex.payload.category = 'main'
-            else:
-                vertex.payload.category = 'dev'
+            category, optional, python, platform = self._get_tags_for_vertex(
+                vertex, requested
+            )
 
-            if not tags['optional']:
-                vertex.payload.optional = False
-            else:
-                vertex.payload.optional = True
-
-            # Finding the less restrictive requirements
-            requirements = {}
-            parser = VersionParser()
-            for req_name, reqs in tags['requirements'].items():
-                for req in reqs:
-                    if req_name == 'python':
-                        if 'python' not in requirements:
-                            requirements['python'] = req
-                            continue
-
-                        previous = parser.parse_constraints(
-                            requirements['python']
-                        )
-                        current = parser.parse_constraints(req)
-
-                        if current.matches(previous):
-                            requirements['python'] = req
-                    elif req_name == 'platform':
-                        if 'platform' not in requirements:
-                            requirements['platform'] = req
-                            continue
-
-                        previous = GenericConstraint.parse(
-                            requirements['platform']
-                        )
-                        current = GenericConstraint.parse(req)
-
-                        if current.matches(previous):
-                            requirements['platform'] = req
+            vertex.payload.category = category
+            vertex.payload.optional = optional
 
             # If requirements are empty, drop them
-            if 'python' in requirements and requirements['python'] == '*':
-                del requirements['python']
+            requirements = {}
+            if python is not None and python != '*':
+                requirements['python'] = python
 
-            if 'platform' in requirements and requirements['platform'] == '*':
-                del requirements['platform']
+            if platform is not None and platform != '*':
+                requirements['platform'] = platform
 
             vertex.payload.requirements = requirements
 
@@ -147,45 +114,110 @@ class Solver:
             )
         )
 
-    def _get_tags_for_vertex(self, vertex, requested, original=None):
-        tags = {
-            'category': [],
-            'optional': True,
-            'requirements': {
-                'python': [],
-                'platform': []
-            }
-        }
+    def _get_tags_for_vertex(self, vertex, requested):
+        category = 'dev'
+        optional = True
+        python_version = None
+        platform = None
 
         if not vertex.incoming_edges:
             # Original dependency
             for req in requested:
-                if req.name == vertex.name:
-                    tags['category'].append(req.category)
-                    if not req.is_optional():
-                        tags['optional'] = False
+                if vertex.payload.name == req.name:
+                    category = req.category
+                    optional = req.is_optional()
 
-                    if req.python_versions != '*':
-                        tags['requirements']['python'].append(str(req.python_constraint))
+                    python_version = str(req.python_constraint)
 
-                    if req.platform != '*':
-                        tags['requirements']['platform'].append(str(req.platform_constraint))
+                    platform = str(req.platform_constraint)
 
                     break
+
+            return category, optional, python_version, platform
+
+        parser = VersionParser()
+        python_versions = []
+        platforms = []
+        for edge in vertex.incoming_edges:
+            python_version = None
+            platform = None
+            for req in edge.origin.payload.requires:
+                if req.name == vertex.payload.name:
+                    python_version = req.python_versions
+                    platform = req.platform
+
+                    break
+
+            (top_category,
+             top_optional,
+             top_python_version,
+             top_platform) = self._get_tags_for_vertex(
+                edge.origin, requested
+            )
+
+            if top_category == 'main':
+                category = top_category
+
+            optional = optional and top_optional
+
+            # Take the most restrictive constraints
+            if top_python_version is not None:
+                if python_version is not None:
+                    previous = parser.parse_constraints(python_version)
+                    current = parser.parse_constraints(top_python_version)
+
+                    if top_python_version != '*' and previous.matches(current):
+                        python_versions.append(top_python_version)
+                    else:
+                        python_versions.append(python_version)
+                else:
+                    python_versions.append(top_python_version)
+            elif python_version is not None:
+                python_versions.append(python_version)
+
+            if top_platform is not None:
+                if platform is not None:
+                    previous = GenericConstraint.parse(platform)
+                    current = GenericConstraint.parse(top_platform)
+
+                    if top_platform != '*' and previous.matches(current):
+                        platforms.append(top_platform)
+                    else:
+                        platforms.append(platform)
+                else:
+                    platforms.append(top_platform)
+            elif platform is not None:
+                platforms.append(platform)
+
+        if not python_versions:
+            python_version = None
         else:
-            for edge in vertex.incoming_edges:
-                for req in edge.origin.payload.requires:
-                    if req.name == vertex.payload.name:
-                        tags['requirements']['python'].append(req.python_versions)
+            # Find the least restrictive constraint
+            python_version = python_versions[0]
+            previous = parser.parse_constraints(python_version)
+            for constraint in python_versions[1:]:
+                current = parser.parse_constraints(constraint)
 
-                        tags['requirements']['platform'].append(req.platform)
+                if python_version == '*':
+                    continue
+                elif constraint == '*':
+                    python_version = current
+                elif current.matches(previous):
+                    python_version = constraint
 
-                sub_tags = self._get_tags_for_vertex(edge.origin, requested)
+        if not platforms:
+            platform = None
+        else:
+            platform = platforms[0]
+            previous = GenericConstraint.parse(platform)
+            for constraint in platforms[1:]:
+                current = GenericConstraint.parse(constraint)
 
-                tags['category'] += sub_tags['category']
-                tags['optional'] = tags['optional'] and sub_tags['optional']
-                requirements = sub_tags['requirements']
-                tags['requirements']['python'] += requirements.get('python', [])
-                tags['requirements']['platform'] += requirements.get('platform', [])
+                if platform == '*':
+                    continue
+                elif constraint == '*':
+                    platform = constraint
+                elif current.matches(previous):
+                    platform = constraint
 
-        return tags
+        return category, optional, python_version, platform

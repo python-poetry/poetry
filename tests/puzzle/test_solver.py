@@ -508,13 +508,16 @@ def test_solver_sub_dependencies_with_requirements(solver, repo):
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
+    package_d = get_package('D', '1.0')
 
-    package_a.add_dependency('C', {'version': '^1.0', 'python': '<4.0'})
-    package_b.add_dependency('C', '^1.0')
+    package_c.add_dependency('D', {'version': '^1.0', 'python': '<4.0'})
+    package_a.add_dependency('C')
+    package_b.add_dependency('D', '^1.0')
 
     repo.add_package(package_a)
     repo.add_package(package_b)
     repo.add_package(package_c)
+    repo.add_package(package_d)
 
     dependency_a = get_dependency('A')
     dependency_b = get_dependency('B')
@@ -527,9 +530,59 @@ def test_solver_sub_dependencies_with_requirements(solver, repo):
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_d},
         {'job': 'install', 'package': package_a},
         {'job': 'install', 'package': package_b},
     ])
 
-    op = ops[0]
+    op = ops[1]
+    assert op.package.requirements == {}
+
+
+def test_solver_sub_dependencies_with_requirements_complex(solver, repo):
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_c = get_package('C', '1.0')
+    package_d = get_package('D', '1.0')
+    package_e = get_package('E', '1.0')
+    package_f = get_package('F', '1.0')
+
+    package_a.add_dependency('B', '^1.0')
+    package_a.add_dependency('D', {'version': '^1.0', 'python': '<4.0'})
+    package_b.add_dependency('E', {'version': '^1.0', 'platform': 'win32'})
+    package_b.add_dependency('F')
+    package_c.add_dependency('F', '^1.0')
+    package_d.add_dependency('F')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+    repo.add_package(package_e)
+    repo.add_package(package_f)
+
+    dependency_a = get_dependency('A')
+    dependency_b = get_dependency('B')
+    dependency_c = get_dependency('C')
+    request = [
+        dependency_a,
+        dependency_b,
+        dependency_c,
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_d},
+        {'job': 'install', 'package': package_e},
+        {'job': 'install', 'package': package_f},
+        {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_c},
+    ])
+
+    op = ops[1]
+    assert op.package.requirements == {'platform': 'win32'}
+
+    op = ops[2]
     assert op.package.requirements == {}
