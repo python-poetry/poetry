@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed a bug where dependencies constraints in lock were too strict.
+- Fixed unicode error in `search` command for Python 2.7.
 
 
 ## [0.8.3] - 2018-04-16

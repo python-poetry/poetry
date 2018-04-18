@@ -32,6 +32,7 @@ from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 from poetry.utils._compat import Path
+from poetry.utils._compat import to_str
 from poetry.utils.helpers import temporary_directory
 from poetry.version.markers import InvalidMarker
 
@@ -192,7 +193,7 @@ class PyPiRepository(Repository):
 
         for hit in hits:
             result = Package(hit['name'], hit['version'], hit['version'])
-            result.description = hit['summary']
+            result.description = to_str(hit['summary'])
             results.append(result)
 
         return results
