@@ -201,7 +201,7 @@ class Solver:
                 if python_version == '*':
                     continue
                 elif constraint == '*':
-                    python_version = current
+                    python_version = constraint
                 elif current.matches(previous):
                     python_version = constraint
 

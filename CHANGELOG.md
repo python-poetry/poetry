@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed a bug in dependency resolution which led to installation errors.
+
+
 ## [0.8.4] - 2018-04-18
 
 ### Fixed
