@@ -6,6 +6,10 @@
 
 - Added the `cache:clear` command.
 
+### Changed
+
+- Dependency resolution caches now use sha256 hashes.
+
 
 ## [0.8.3] - 2018-04-16
 
