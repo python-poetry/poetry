@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed a bug in dependency resolution which led to installation errors.
+- Fixed a bug where malformed sdists would lead to dependency resolution failing.
 
 
 ## [0.8.4] - 2018-04-18

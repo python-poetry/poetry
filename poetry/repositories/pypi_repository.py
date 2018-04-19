@@ -330,7 +330,12 @@ class PyPiRepository(Repository):
             filepath = os.path.join(temp_dir, filename)
             self._download(url, filepath)
 
-            meta = pkginfo.Wheel(filepath)
+            try:
+                meta = pkginfo.Wheel(filepath)
+            except ValueError:
+                # Unable to determine dependencies
+                # Assume none
+                return
 
         if meta.requires_dist:
             return meta.requires_dist
@@ -343,10 +348,15 @@ class PyPiRepository(Repository):
             filepath = Path(temp_dir) / filename
             self._download(url, str(filepath))
 
-            meta = pkginfo.SDist(str(filepath))
+            try:
+                meta = pkginfo.SDist(str(filepath))
 
-            if meta.requires_dist:
-                return meta.requires_dist
+                if meta.requires_dist:
+                    return meta.requires_dist
+            except ValueError:
+                # Unable to determine dependencies
+                # We pass and go deeper
+                pass
 
             # Still not dependencies found
             # So, we unpack and introspect
