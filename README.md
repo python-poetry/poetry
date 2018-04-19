@@ -56,7 +56,7 @@ If you want to install prerelease versions, you can use the `--preview` option.
 poetry self:update --preview
 ```
 
-And finally, if you want to install a spcific version you can pass it as an argument
+And finally, if you want to install a specific version you can pass it as an argument
 to `self:update`.
 
 ```bash
