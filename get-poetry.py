@@ -198,8 +198,8 @@ class Installer:
             dist = os.path.join(dir, 'dist')
             print('  - Getting dependencies')
             self.call(
-                self.CURRENT_PYTHON, '-m', 'pip', 'install', 'poetry=={}'.format(version),
-                '--target', dist
+                self.CURRENT_PYTHON, '-m', 'pip', 'install', '--install-option="--prefix="',
+                'poetry=={}'.format(version), '--target', dist
             )
 
             print('  - Vendorizing dependencies')
@@ -245,6 +245,7 @@ class Installer:
 
             self.call(
                 self.CURRENT_PYTHON, '-m', 'pip', 'install',
+                '--install-option="--prefix="',
                 '--upgrade',
                 '--no-deps',
                 os.path.join(dir, 'poetry-{}-{}.whl'.format(version, tag))
