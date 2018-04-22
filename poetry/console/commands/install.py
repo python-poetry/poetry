@@ -9,8 +9,7 @@ class InstallCommand(VenvCommand):
         { --no-dev : Do not install dev dependencies. }
         { --dry-run : Outputs the operations but will not execute anything
                       (implicitly enables --verbose). }
-        { --E|extras=* : Extra sets of dependencies to install
-                         (multiple values allowed). }
+        { --E|extras=* : Extra sets of dependencies to install. }
     """
 
     help = """The <info>install</info> command reads the <comment>pyproject.toml</> file from
