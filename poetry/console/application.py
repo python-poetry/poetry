@@ -1,8 +1,13 @@
 import os
+import re
+import sys
+import traceback
 
 from cleo import Application as BaseApplication
+from cleo.formatters import Formatter
 from cleo.inputs import ArgvInput
 from cleo.outputs import ConsoleOutput
+from cleo.outputs import Output
 
 from poetry import __version__
 
@@ -40,6 +45,8 @@ class Application(BaseApplication):
 
         self._poetry = None
         self._skip_io_configuration = False
+        self._formatter = Formatter(True)
+        self._formatter.add_style('error', 'red', options=['bold'])
 
     @property
     def poetry(self):
@@ -61,6 +68,7 @@ class Application(BaseApplication):
 
         if o is None:
             o = ConsoleOutput()
+            o.set_formatter(self._formatter)
 
         name = i.get_first_argument()
         if name in ['run', 'script']:
@@ -128,3 +136,65 @@ class Application(BaseApplication):
         ]
 
         return commands
+
+    def render_exception(self, e, o):
+        tb = traceback.extract_tb(sys.exc_info()[2])
+
+        title = '[<error>%s</error>]  ' % e.__class__.__name__
+        l = len(title)
+        width = self._terminal.width
+        if not width:
+            width = sys.maxsize
+
+        formatter = o.get_formatter()
+        lines = []
+        for line in re.split('\r?\n', str(e)):
+            for splitline in [line[x:x + (width - 4)]
+                              for x in range(0, len(line), width - 4)]:
+                line_length = len(
+                    re.sub('\[[^m]*m',
+                           '',
+                           formatter.format(splitline))) + 4
+                lines.append((splitline, line_length))
+
+                l = max(line_length, l)
+
+        messages = ['']
+        empty_line = formatter.format('%s' % (' ' * l))
+        messages.append(empty_line)
+        messages.append(formatter.format('%s%s'
+                                         % (title,
+                                            ' ' * max(0, l - len(title)))))
+
+        for line in lines:
+            messages.append(
+                formatter.format('<error>%s  %s</error>'
+                                 % (line[0], ' ' * (l - line[1])))
+            )
+
+        messages.append(empty_line)
+        messages.append('')
+
+        o.writeln(messages, Output.OUTPUT_RAW)
+
+        if Output.VERBOSITY_VERBOSE <= o.get_verbosity():
+            o.writeln('<comment>Exception trace:</comment>')
+
+            for exc_info in tb:
+                file_ = exc_info[0]
+                line_number = exc_info[1]
+                function = exc_info[2]
+                line = exc_info[3]
+
+                o.writeln(' <info>%s</info> in <fg=cyan>%s()</> '
+                          'at line <info>%s</info>'
+                          % (file_, function, line_number))
+                o.writeln('   %s' % line)
+
+            o.writeln('')
+
+        if self._running_command is not None:
+            o.writeln('<info>%s</info>'
+                      % self._running_command.get_synopsis())
+
+            o.writeln('')
