@@ -14,6 +14,10 @@ the current directory, processes it, and locks the depdencies in the <comment>py
 <info>poetry lock</info>    
 """
 
+    _loggers = [
+        'poetry.repositories.pypi_repository'
+    ]
+
     def handle(self):
         from poetry.installation import Installer
 

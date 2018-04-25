@@ -24,6 +24,10 @@ class AddCommand(VenvCommand):
 If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.
 """
 
+    _loggers = [
+        'poetry.repositories.pypi_repository'
+    ]
+
     def handle(self):
         from poetry.installation import Installer
         from poetry.semver.version_parser import VersionParser

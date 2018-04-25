@@ -10,6 +10,7 @@
 
 - Dependency resolution caches now use sha256 hashes.
 - Changed CLI error style.
+- Improved debugging of dependency resolution.
 
 
 ## [0.8.3] - 2018-04-16

@@ -17,6 +17,10 @@ list of installed packages
 
 <info>poetry remove</info>"""
 
+    _loggers = [
+        'poetry.repositories.pypi_repository'
+    ]
+
     def handle(self):
         from poetry.installation import Installer
 

@@ -21,6 +21,10 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 <info>poetry install</info>    
 """
 
+    _loggers = [
+        'poetry.repositories.pypi_repository'
+    ]
+
     def handle(self):
         from poetry.installation import Installer
 

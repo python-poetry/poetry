@@ -3,10 +3,10 @@ from .command import Command
 
 class VenvCommand(Command):
 
-    def __init__(self, name=None):
+    def __init__(self):
         self._venv = None
 
-        super(VenvCommand, self).__init__(name)
+        super(VenvCommand, self).__init__()
 
     def initialize(self, i, o):
         from poetry.utils.venv import Venv

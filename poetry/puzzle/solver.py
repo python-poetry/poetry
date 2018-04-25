@@ -13,7 +13,6 @@ from .operations import Update
 from .operations.operation import Operation
 
 from .provider import Provider
-from .ui import UI
 
 
 class Solver:

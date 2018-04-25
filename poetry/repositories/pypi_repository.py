@@ -1,3 +1,4 @@
+import logging
 import os
 import tarfile
 import zipfile
@@ -38,12 +39,16 @@ from poetry.version.markers import InvalidMarker
 from .repository import Repository
 
 
+logger = logging.getLogger(__name__)
+
+
 class PyPiRepository(Repository):
 
     def __init__(self,
                  url='https://pypi.org/',
                  disable_cache=False,
                  fallback=True):
+        self._name = 'PyPI'
         self._url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
@@ -91,6 +96,12 @@ class PyPiRepository(Repository):
         for version, release in info['releases'].items():
             if not release:
                 # Bad release
+                self._log(
+                    'No release information found for {}-{}, skipping'.format(
+                        name, version
+                    ),
+                    level='debug'
+                )
                 continue
 
             if (
@@ -101,6 +112,13 @@ class PyPiRepository(Repository):
 
         for version in versions:
             packages.append(Package(name, version))
+
+        self._log(
+            '{} packages found for {} {}'.format(
+                len(packages), name, str(constraint)
+            ),
+            level='debug'
+        )
 
         return packages
 
@@ -125,6 +143,10 @@ class PyPiRepository(Repository):
                 and '_fallback' not in release_info
             ):
                 # Force cache update
+                self._log(
+                    'No dependencies found, downloading archives',
+                    level='debug'
+                )
                 self._cache.forget('{}:{}'.format(name, version))
                 release_info = self.get_release_info(name, version)
 
@@ -141,6 +163,13 @@ class PyPiRepository(Repository):
                     dependency = dependency_from_pep_508(req)
                 except ValueError:
                     # Likely unable to parse constraint so we skip it
+                    self._log(
+                        'Invalid constraint ({}) found in {}-{} dependencies, '
+                        'skipping'.format(
+                            req, package.name, package.version
+                        ),
+                        level='debug'
+                    )
                     continue
 
                 if dependency.extras:
@@ -438,3 +467,6 @@ class PyPiRepository(Repository):
 
         if requires_dist:
             return requires_dist
+
+    def _log(self, msg, level='info'):
+        getattr(logger, level)('{}: {}'.format(self._name, msg))
