@@ -9,6 +9,7 @@ from typing import List
 from poetry.mixology import DependencyGraph
 from poetry.mixology.conflict import Conflict
 from poetry.mixology.contracts import SpecificationProvider
+from poetry.mixology.contracts import UI
 
 from poetry.packages import Dependency
 from poetry.packages import FileDependency
@@ -27,7 +28,7 @@ from poetry.utils.venv import Venv
 from poetry.vcs.git import Git
 
 
-class Provider(SpecificationProvider):
+class Provider(SpecificationProvider, UI):
 
     UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
 
@@ -42,6 +43,9 @@ class Provider(SpecificationProvider):
         self._python_constraint = package.python_constraint
         self._base_dg = DependencyGraph()
         self._search_for = {}
+        self._constraints = {}
+
+        super(Provider, self).__init__(debug=self._io.is_debug())
 
     @property
     def pool(self):  # type: () -> Pool
@@ -76,9 +80,22 @@ class Provider(SpecificationProvider):
         elif dependency.is_file():
             packages = self.search_for_file(dependency)
         else:
+            constraint = dependency.constraint
+
+            # If we have already seen this dependency
+            # we take the most restrictive constraint
+            if dependency.name in self._constraints:
+                current_constraint = self._constraints[dependency.name]
+                if str(dependency.constraint) == '*':
+                    # The new constraint accepts anything
+                    # so we take the previous one
+                    constraint = current_constraint
+
+            self._constraints[dependency.name] = constraint
+
             packages = self._pool.find_packages(
                 dependency.name,
-                dependency.constraint,
+                constraint,
                 extras=dependency.extras,
             )
 
@@ -256,3 +273,32 @@ class Provider(SpecificationProvider):
             0 if d.allows_prereleases() else 1,
             0 if d.name in conflicts else 1
         ])
+
+    # UI
+
+    @property
+    def output(self):
+        return self._io
+
+    def before_resolution(self):
+        self._io.write('<info>Resolving dependencies</>')
+
+        if self.is_debugging():
+            self._io.new_line()
+
+    def indicate_progress(self):
+        if not self.is_debugging():
+            self._io.write('.')
+
+    def after_resolution(self):
+        self._io.new_line()
+
+    def debug(self, message, depth):
+        if self.is_debugging():
+            debug_info = str(message)
+            debug_info = '\n'.join([
+                '<comment>:{}:</> {}'.format(str(depth).rjust(4), s)
+                for s in debug_info.split('\n')
+            ]) + '\n'
+
+            self.output.write(debug_info)

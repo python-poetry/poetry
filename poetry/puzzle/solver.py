@@ -26,10 +26,8 @@ class Solver:
         self._io = io
 
     def solve(self, requested, fixed=None):  # type: (...) -> List[Operation]
-        resolver = Resolver(
-            Provider(self._package, self._pool, self._io),
-            UI(self._io)
-        )
+        provider = Provider(self._package, self._pool, self._io)
+        resolver = Resolver(provider, provider)
 
         base = None
         if fixed is not None:
