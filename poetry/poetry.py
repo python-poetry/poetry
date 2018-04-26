@@ -76,7 +76,7 @@ class Poetry:
 
         else:
             raise RuntimeError(
-                'Poetry could not find a pyproject.toml file in {}'.format(cwd)
+                'Poetry could not find a pyproject.toml file in {} or its parents'.format(cwd)
             )
 
         local_config = TomlFile(poetry_file.as_posix()).read(True)
