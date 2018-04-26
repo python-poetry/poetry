@@ -68,7 +68,10 @@ class Poetry:
 
     @classmethod
     def create(cls, cwd):  # type: () -> Poetry
-        for path in (Path(cwd), *Path(cwd).parents):
+        candidates = [Path(cwd)]
+        candidates.extend(Path(cwd).parents)
+
+        for path in candidates:
             poetry_file = path / 'pyproject.toml'
 
             if poetry_file.exists():
