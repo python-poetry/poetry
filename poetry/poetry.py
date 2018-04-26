@@ -45,7 +45,7 @@ class Poetry:
                 fallback=self._config.setting('settings.pypi.fallback', True)
             )
         )
-        
+
     @property
     def file(self):
         return self._file
@@ -68,9 +68,13 @@ class Poetry:
 
     @classmethod
     def create(cls, cwd):  # type: () -> Poetry
-        poetry_file = Path(cwd) / 'pyproject.toml'
+        for path in (Path(cwd), *Path(cwd).parents):
+            poetry_file = path / 'pyproject.toml'
 
-        if not poetry_file.exists():
+            if poetry_file.exists():
+                break
+
+        else:
             raise RuntimeError(
                 'Poetry could not find a pyproject.toml file in {}'.format(cwd)
             )
