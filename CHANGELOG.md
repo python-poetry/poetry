@@ -9,6 +9,7 @@
 - Added support for `file` dependencies in the `add` command.
 - Added support for `src/` layout for packages.
 - Added automatic detection of `.venv` virtualenvs.
+- Added the `--username` and `--password` options to the `publish` command.
 
 ### Changed
 
@@ -256,7 +257,7 @@
 
 ### Added
 
-- Added `show` command. 
+- Added `show` command.
 - Added the `--dry-run` option to the `add` command.
 
 ### Changed
