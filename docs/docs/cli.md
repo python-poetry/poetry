@@ -201,7 +201,8 @@ poetry publish
 
 * `--repository (-r)`: The repository to register the package to (default: `pypi`).
 Should match a repository name set by the [`config`](#config) command.
-
+* `--username (-u)`: The username to access the repository.
+* `--password (-p)`: The password to access the repository.
 
 ## config
 
