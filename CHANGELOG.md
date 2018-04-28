@@ -5,6 +5,7 @@
 ### Added
 
 - Added the `cache:clear` command.
+- Added the `--username` and `--password` options to the `publish` command.
 
 ### Changed
 
@@ -221,7 +222,7 @@
 
 ### Added
 
-- Added `show` command. 
+- Added `show` command.
 - Added the `--dry-run` option to the `add` command.
 
 ### Changed
