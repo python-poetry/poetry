@@ -159,7 +159,7 @@ class Application(BaseApplication):
 
                 l = max(line_length, l)
 
-        messages = ['']
+        messages = []
         empty_line = formatter.format('%s' % (' ' * l))
         messages.append(empty_line)
         messages.append(formatter.format('%s%s'
@@ -173,7 +173,6 @@ class Application(BaseApplication):
             )
 
         messages.append(empty_line)
-        messages.append('')
 
         o.writeln(messages, Output.OUTPUT_RAW)
 
