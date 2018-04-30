@@ -145,4 +145,8 @@ def dependency_from_pep_508(name):
 
         dep.platform = ' || '.join(ors)
 
+    # Extras
+    for extra in req.extras:
+        dep.extras.append(extra)
+
     return dep
