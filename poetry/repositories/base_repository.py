@@ -13,7 +13,7 @@ class BaseRepository(object):
     def has_package(self, package):
         raise NotImplementedError()
 
-    def package(self, name, version):
+    def package(self, name, version, extras=None):
         raise NotImplementedError()
 
     def find_packages(self, name, constraint=None, extras=None):

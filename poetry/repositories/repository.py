@@ -18,7 +18,7 @@ class Repository(BaseRepository):
         for package in packages:
             self.add_package(package)
 
-    def package(self, name, version):
+    def package(self, name, version, extras=None):
         name = name.lower()
         version = str(parse_version(version))
 
