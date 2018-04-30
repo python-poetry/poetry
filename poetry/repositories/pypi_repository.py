@@ -112,7 +112,11 @@ class PyPiRepository(Repository):
                 versions.append(version)
 
         for version in versions:
-            packages.append(Package(name, version))
+            package = Package(name, version)
+            if extras is not None:
+                package.requires_extras = extras
+
+            packages.append(package)
 
         self._log(
             '{} packages found for {} {}'.format(

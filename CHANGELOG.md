@@ -12,6 +12,10 @@
 - Changed CLI error style.
 - Improved debugging of dependency resolution.
 
+### Fixed
+
+- Fixed handling of extras when resolving dependencies.
+
 
 ## [0.8.6] - 2018-04-30
 

@@ -85,6 +85,7 @@ class Package(object):
         self.requires = []
         self.dev_requires = []
         self.extras = {}
+        self.requires_extras = []
 
         self._parser = VersionParser()
 

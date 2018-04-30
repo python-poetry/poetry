@@ -224,7 +224,10 @@ class Provider(SpecificationProvider, UI):
             # Information should already be set
             pass
         else:
-            complete_package = self._pool.package(package.name, package.version)
+            complete_package = self._pool.package(
+                package.name, package.version,
+                extras=package.requires_extras
+            )
 
             # Update package with new information
             package.requires = complete_package.requires
