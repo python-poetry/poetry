@@ -283,6 +283,10 @@ class Package(object):
                 file_path = Path(constraint['file'])
 
                 dependency = FileDependency(file_path, base=self.cwd)
+            elif 'path' in constraint:
+                path = Path(constraint['path'])
+
+                dependency = FileDependency(path, base=self.cwd)
             else:
                 version = constraint['version']
 

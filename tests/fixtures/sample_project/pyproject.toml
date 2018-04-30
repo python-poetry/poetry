@@ -31,7 +31,7 @@ pathlib2 = { version = "^2.2", python = "~2.7" }
 orator = { version = "^0.9", optional = true }
 
 # File dependency
-demo = { file = "../distributions/demo-0.1.0-py2.py3-none-any.whl" }
+demo = { path = "../distributions/demo-0.1.0-py2.py3-none-any.whl" }
 
 
 [tool.poetry.extras]
