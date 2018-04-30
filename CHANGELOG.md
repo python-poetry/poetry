@@ -13,6 +13,31 @@
 - Improved debugging of dependency resolution.
 
 
+## [0.8.6] - 2018-04-30
+
+### Fixed
+
+- Fixed config files not being created.
+
+
+## [0.8.5] - 2018-04-19
+
+### Fixed
+
+- Fixed a bug in dependency resolution which led to installation errors.
+- Fixed a bug where malformed sdists would lead to dependency resolution failing.
+
+
+## [0.8.4] - 2018-04-18
+
+### Fixed
+
+- Fixed a bug where dependencies constraints in lock were too strict.
+- Fixed unicode error in `search` command for Python 2.7.
+- Fixed error with git dependencies.
+>>>>>>> master
+
+
 ## [0.8.3] - 2018-04-16
 
 ### Fixed
@@ -259,7 +284,10 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.8.3...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.8.6...master
+[0.8.6]: https://github.com/sdispater/poetry/releases/tag/0.8.6
+[0.8.5]: https://github.com/sdispater/poetry/releases/tag/0.8.5
+[0.8.4]: https://github.com/sdispater/poetry/releases/tag/0.8.4
 [0.8.3]: https://github.com/sdispater/poetry/releases/tag/0.8.3
 [0.8.2]: https://github.com/sdispater/poetry/releases/tag/0.8.2
 [0.8.1]: https://github.com/sdispater/poetry/releases/tag/0.8.1

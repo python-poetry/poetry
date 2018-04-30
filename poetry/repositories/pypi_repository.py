@@ -33,6 +33,7 @@ from poetry.semver.constraints import Constraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 from poetry.utils._compat import Path
+from poetry.utils._compat import to_str
 from poetry.utils.helpers import temporary_directory
 from poetry.version.markers import InvalidMarker
 
@@ -221,7 +222,7 @@ class PyPiRepository(Repository):
 
         for hit in hits:
             result = Package(hit['name'], hit['version'], hit['version'])
-            result.description = hit['summary']
+            result.description = to_str(hit['summary'])
             results.append(result)
 
         return results
@@ -358,7 +359,12 @@ class PyPiRepository(Repository):
             filepath = os.path.join(temp_dir, filename)
             self._download(url, filepath)
 
-            meta = pkginfo.Wheel(filepath)
+            try:
+                meta = pkginfo.Wheel(filepath)
+            except ValueError:
+                # Unable to determine dependencies
+                # Assume none
+                return
 
         if meta.requires_dist:
             return meta.requires_dist
@@ -371,10 +377,15 @@ class PyPiRepository(Repository):
             filepath = Path(temp_dir) / filename
             self._download(url, str(filepath))
 
-            meta = pkginfo.SDist(str(filepath))
+            try:
+                meta = pkginfo.SDist(str(filepath))
 
-            if meta.requires_dist:
-                return meta.requires_dist
+                if meta.requires_dist:
+                    return meta.requires_dist
+            except ValueError:
+                # Unable to determine dependencies
+                # We pass and go deeper
+                pass
 
             # Still not dependencies found
             # So, we unpack and introspect

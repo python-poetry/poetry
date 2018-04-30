@@ -319,9 +319,6 @@ def test_run_with_optional_and_python_restricted_dependencies(installer, locker,
     installer.run()
     expected = fixture('with-optional-dependencies')
 
-    import json
-    print(json.dumps(locker.written_data, indent=2, sort_keys=True))
-    print(json.dumps(expected, indent=2, sort_keys=True))
     assert locker.written_data == expected
 
     installer = installer.installer

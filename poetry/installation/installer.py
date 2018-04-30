@@ -322,8 +322,8 @@ class Installer:
                 '  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)'
                 .format(
                     target.pretty_name,
-                    source.pretty_version,
-                    target.pretty_version
+                    source.full_pretty_version,
+                    target.full_pretty_version
                 )
             )
 

@@ -156,6 +156,9 @@ class Provider(SpecificationProvider, UI):
                 name = info['name']
                 version = info['version']
                 package = Package(name, version, version)
+                package.source_type = dependency.vcs
+                package.source_url = dependency.source
+                package.source_reference = dependency.reference
                 for req_name, req_constraint in info['dependencies'].items():
                     if req_name == 'python':
                         package.python_versions = req_constraint

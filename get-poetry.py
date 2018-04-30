@@ -119,6 +119,7 @@ def temporary_directory(*args, **kwargs):
 
 class Installer:
 
+    CURRENT_PYTHON = sys.executable
     METADATA_URL = 'https://pypi.org/pypi/poetry/json'
     VERSION_REGEX = re.compile(
         'v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?'
@@ -197,7 +198,7 @@ class Installer:
             dist = os.path.join(dir, 'dist')
             print('  - Getting dependencies')
             self.call(
-                'python', '-m', 'pip', 'install', 'poetry=={}'.format(version),
+                self.CURRENT_PYTHON, '-m', 'pip', 'install', 'poetry=={}'.format(version),
                 '--target', dist
             )
 
@@ -243,7 +244,7 @@ class Installer:
             )
 
             self.call(
-                'python', '-m', 'pip', 'install',
+                self.CURRENT_PYTHON, '-m', 'pip', 'install',
                 '--upgrade',
                 '--no-deps',
                 os.path.join(dir, 'poetry-{}-{}.whl'.format(version, tag))
