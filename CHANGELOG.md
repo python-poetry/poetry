@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed config files not being created.
+
+
 ## [0.8.5] - 2018-04-19
 
 ### Fixed

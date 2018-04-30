@@ -49,12 +49,12 @@ To remove a repository (repo is a short alias for repositories):
         # Create config file if it does not exist
         if not self._config.file.exists():
             self._config.file.parent.mkdir(parents=True, exist_ok=True)
-            with self._config.file.open() as f:
+            with self._config.file.open('w') as f:
                 f.write(TEMPLATE)
 
         if not self._auth_config.file.exists():
             self._auth_config.file.parent.mkdir(parents=True, exist_ok=True)
-            with self._auth_config.file.open() as f:
+            with self._auth_config.file.open('w') as f:
                 f.write(AUTH_TEMPLATE)
 
     def handle(self):
