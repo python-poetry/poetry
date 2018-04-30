@@ -1,5 +1,4 @@
 import os
-import shutil
 
 from ..command import Command
 
