@@ -1,3 +1,5 @@
+from os import getenv
+
 import toml
 
 from poetry.locations import CONFIG_DIR
@@ -62,18 +64,20 @@ class Publisher:
 
             url = config['repositories'][repository_name]['url']
 
-        username = None
-        password = None
-        auth_file = Path(CONFIG_DIR) / 'auth.toml'
-        if auth_file.exists():
-            with auth_file.open() as f:
-                auth_config = toml.loads(f.read())
+        username = getenv('POETRY_USERNAME')
+        password = getenv('POETRY_PASSWORD')
 
-            if 'http-basic' in auth_config and repository_name in auth_config['http-basic']:
-                config = auth_config['http-basic'][repository_name]
+        if not (username and password):
+            auth_file = Path(CONFIG_DIR) / 'auth.toml'
+            if auth_file.exists():
+                with auth_file.open() as f:
+                    auth_config = toml.loads(f.read())
 
-                username = config.get('username')
-                password = config.get('password')
+                if 'http-basic' in auth_config and repository_name in auth_config['http-basic']:
+                    config = auth_config['http-basic'][repository_name]
+
+                    username = config.get('username')
+                    password = config.get('password')
 
         # Requesting missing credentials
         if not username:
