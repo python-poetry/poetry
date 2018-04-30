@@ -5,6 +5,7 @@
 ### Added
 
 - Added the `cache:clear` command.
+- The `publish` command now attempts to retrieve repository username and password from `POETRY_USERNAME` and `POETRY_PASSWORD` environment variables.
 
 ### Changed
 
@@ -250,7 +251,7 @@
 
 ### Added
 
-- Added `show` command. 
+- Added `show` command.
 - Added the `--dry-run` option to the `add` command.
 
 ### Changed
