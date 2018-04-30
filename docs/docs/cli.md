@@ -197,6 +197,8 @@ It will automatically register the package before uploading if this is the first
 poetry publish
 ```
 
+You can provide the username and password to access the repository (PyPI be default) by setting ``POETRY_USERNAME`` and ``POETRY_PASSWORD`` environment variables.
+
 ### Options
 
 * `--repository (-r)`: The repository to register the package to (default: `pypi`).
