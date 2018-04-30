@@ -44,11 +44,6 @@ typing = { version = "^3.6", python = "~2.7 || ~3.4" }
 pathlib2 = { version = "^2.3", python = "~2.7" }
 virtualenv = { version = "^15.2", python = "~2.7" }
 
-# cachecontrol dependencies are badly set
-# and do not appear in PyPI JSON API
-# So we set them here
-msgpack-python = "^0.5"
-lockfile = "^0.12"
 pkginfo = "^1.4"
 
 [tool.poetry.dev-dependencies]
