@@ -16,7 +16,6 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import PY2
 from poetry.utils.venv import NullVenv
 
-from tests.helpers import fixture as root_fixture
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_pypi_repository import MockRepository

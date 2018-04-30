@@ -31,6 +31,15 @@ class Pool(BaseRepository):
         self._repositories.append(repository)
 
         return self
+
+    def remove_repository(self, repository_name):  # type: (str) -> Pool
+        for i, repository in enumerate(self._repositories):
+            if repository.name == repository_name:
+                del self._repositories[i]
+
+                break
+
+        return self
     
     def configure(self, source):  # type: (dict) -> Pool
         """

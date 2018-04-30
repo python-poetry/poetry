@@ -32,6 +32,9 @@ class Repository(BaseRepository):
         if extras is None:
             extras = []
 
+        if constraint is None:
+            constraint = '*'
+
         if not isinstance(constraint, BaseConstraint):
             parser = VersionParser()
             constraint = parser.parse_constraints(constraint)
