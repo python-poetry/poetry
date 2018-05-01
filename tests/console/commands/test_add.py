@@ -177,3 +177,79 @@ Writing lock file
     assert tester.get_display() == expected
 
     assert len(installer.installs) == 2
+
+
+def test_add_file_constraint_wheel(app, repo, installer):
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    repo.add_package(get_package('pendulum', '1.4.4'))
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['demo']),
+        ('--path', '../distributions/demo-0.1.0-py2.py3-none-any.whl')
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.0)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 2
+
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'demo' in content['dependencies']
+    assert content['dependencies']['demo'] == {
+        'path': '../distributions/demo-0.1.0-py2.py3-none-any.whl'
+    }
+
+
+def test_add_file_constraint_sdist(app, repo, installer):
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    repo.add_package(get_package('pendulum', '1.4.4'))
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['demo']),
+        ('--path', '../distributions/demo-0.1.0.tar.gz')
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.0)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 2
+
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'demo' in content['dependencies']
+    assert content['dependencies']['demo'] == {
+        'path': '../distributions/demo-0.1.0.tar.gz'
+    }

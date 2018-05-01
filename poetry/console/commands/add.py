@@ -14,6 +14,7 @@ class AddCommand(VenvCommand):
         { name* : Packages to add. }
         { --D|dev : Add package as development dependency. }
         { --git= : The url of the Git repository. }
+        { --path= : The path to a dependency. }
         { --optional : Add as an optional dependency. }
         { --allow-prereleases : Accept prereleases. }
         { --dry-run : Outputs the operations but will not execute anything
@@ -36,9 +37,15 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         packages = self.argument('name')
         is_dev = self.option('dev')
 
-        if self.option('git') and len(packages) > 1:
+        if (self.option('git') or self.option('path')) and len(packages) > 1:
             raise ValueError(
-                'You can only specify one package when using the --git option'
+                'You can only specify one package '
+                'when using the --git or --path options'
+            )
+
+        if self.option('git') and self.option('path'):
+            raise RuntimeError(
+                '--git and --path cannot be used at the same time'
             )
 
         section = 'dependencies'
@@ -56,7 +63,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                         'Package {} is already present'.format(name)
                     )
 
-        if self.option('git'):
+        if self.option('git') or self.option('path'):
             requirements = {
                 packages[0]: ''
             }
@@ -81,6 +88,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 del constraint['version']
 
                 constraint['git'] = self.option('git')
+            elif self.option('path'):
+                del constraint['version']
+
+                constraint['path'] = self.option('path')
 
             if self.option('optional'):
                 constraint['optional'] = True
