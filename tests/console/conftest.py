@@ -32,6 +32,8 @@ def mock_clone(self, source, dest):
         / 'fixtures' / 'git'
         / parts.netloc / parts.path.lstrip('/').rstrip('.git')
     )
+    print(folder)
+    print(list(folder.glob('*')))
 
     shutil.rmtree(str(dest))
     shutil.copytree(str(folder), str(dest))
