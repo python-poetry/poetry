@@ -33,8 +33,8 @@ def mock_clone(self, source, dest):
         / parts.netloc / parts.path.lstrip('/').rstrip('.git')
     )
 
-    shutil.rmtree(dest)
-    shutil.copytree(folder, dest)
+    shutil.rmtree(str(dest))
+    shutil.copytree(str(folder), str(dest))
 
 
 @pytest.fixture(autouse=True)
