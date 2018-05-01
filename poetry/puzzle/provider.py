@@ -173,7 +173,9 @@ class Provider(SpecificationProvider, UI):
                 # We need to place ourselves in the proper
                 # folder for it to work
                 current_dir = os.getcwd()
+                print(current_dir)
                 os.chdir(tmp_dir.as_posix())
+                print(os.getcwd())
 
                 try:
                     venv = Venv.create(self._io)
@@ -202,6 +204,8 @@ class Provider(SpecificationProvider, UI):
                     raise
                 finally:
                     os.chdir(current_dir)
+
+                print(os.getcwd())
 
             package.source_type = 'git'
             package.source_url = dependency.source
