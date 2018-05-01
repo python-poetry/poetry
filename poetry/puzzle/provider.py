@@ -203,8 +203,6 @@ class Provider(SpecificationProvider, UI):
                 finally:
                     os.chdir(current_dir)
 
-                    print(os.getcwd())
-
             package.source_type = 'git'
             package.source_url = dependency.source
             package.source_reference = revision
