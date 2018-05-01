@@ -26,7 +26,9 @@ class Repository(BaseRepository):
             if name == package.name and package.version == version:
                 return package
 
-    def find_packages(self, name, constraint=None, extras=None):
+    def find_packages(self, name, constraint=None,
+                      extras=None,
+                      allow_prereleases=False):
         name = name.lower()
         packages = []
         if extras is None:

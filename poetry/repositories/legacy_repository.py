@@ -64,7 +64,9 @@ class LegacyRepository(PyPiRepository):
     def name(self):
         return self._name
 
-    def find_packages(self, name, constraint=None, extras=None):
+    def find_packages(self, name, constraint=None,
+                      extras=None,
+                      allow_prereleases=False):
         packages = []
 
         if constraint is not None and not isinstance(constraint,

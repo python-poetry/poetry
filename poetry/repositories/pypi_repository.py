@@ -78,22 +78,21 @@ class PyPiRepository(Repository):
         super(PyPiRepository, self).__init__()
 
     def find_packages(self,
-                      name,             # type: str
-                      constraint=None,  # type: Union[Constraint, str, None]
-                      extras=None       # type: Union[list, None]
+                      name,                    # type: str
+                      constraint=None,         # type: Union[Constraint, str, None]
+                      extras=None,             # type: Union[list, None]
+                      allow_prereleases=False  # type: bool
                       ):  # type: (...) -> List[Package]
         """
         Find packages on the remote server.
         """
-        packages = []
-
         if constraint is not None and not isinstance(constraint, BaseConstraint):
             version_parser = VersionParser()
             constraint = version_parser.parse_constraints(constraint)
 
         info = self.get_package_info(name)
 
-        versions = []
+        packages = []
 
         for version, release in info['releases'].items():
             if not release:
@@ -106,18 +105,19 @@ class PyPiRepository(Repository):
                 )
                 continue
 
+            package = Package(name, version)
+
+            if package.is_prerelease() and not allow_prereleases:
+                continue
+
             if (
                 not constraint
                 or (constraint and constraint.matches(Constraint('=', version)))
             ):
-                versions.append(version)
+                if extras is not None:
+                    package.requires_extras = extras
 
-        for version in versions:
-            package = Package(name, version)
-            if extras is not None:
-                package.requires_extras = extras
-
-            packages.append(package)
+                packages.append(package)
 
         self._log(
             '{} packages found for {} {}'.format(

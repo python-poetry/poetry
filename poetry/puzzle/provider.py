@@ -6,6 +6,7 @@ from functools import cmp_to_key
 from tempfile import mkdtemp
 from typing import Dict
 from typing import List
+from typing import Union
 
 from poetry.mixology import DependencyGraph
 from poetry.mixology.conflict import Conflict
@@ -28,6 +29,8 @@ from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import Venv
 
 from poetry.vcs.git import Git
+
+from .dependencies import Dependencies
 
 
 class Provider(SpecificationProvider, UI):
@@ -99,6 +102,7 @@ class Provider(SpecificationProvider, UI):
                 dependency.name,
                 constraint,
                 extras=dependency.extras,
+                allow_prereleases=dependency.allows_prereleases()
             )
 
             packages.sort(
@@ -233,27 +237,35 @@ class Provider(SpecificationProvider, UI):
 
         return [package]
 
-    def dependencies_for(self, package):  # type: (Package) -> List[Dependency]
+    def dependencies_for(self, package
+                         ):  # type: (Package) -> Union[List[Dependency], Dependencies]
         if package.source_type in ['git', 'file']:
             # Information should already be set
-            pass
+            return [
+                r for r in package.requires
+                if not r.is_optional()
+                   and r.name not in self.UNSAFE_PACKAGES
+            ]
         else:
-            complete_package = self._pool.package(
-                package.name, package.version,
-                extras=package.requires_extras
-            )
+            return Dependencies(package, self)
 
-            # Update package with new information
-            package.requires = complete_package.requires
-            package.description = complete_package.description
-            package.python_versions = complete_package.python_versions
-            package.platform = complete_package.platform
-            package.hashes = complete_package.hashes
+    def _dependencies_for(self, package):  # type: (Package) -> List[Dependency]
+        complete_package = self._pool.package(
+            package.name, package.version,
+            extras=package.requires_extras
+        )
+
+        # Update package with new information
+        package.requires = complete_package.requires
+        package.description = complete_package.description
+        package.python_versions = complete_package.python_versions
+        package.platform = complete_package.platform
+        package.hashes = complete_package.hashes
 
         return [
             r for r in package.requires
             if not r.is_optional()
-            and r.name not in self.UNSAFE_PACKAGES
+               and r.name not in self.UNSAFE_PACKAGES
         ]
 
     def is_requirement_satisfied_by(self,
