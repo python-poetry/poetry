@@ -7,11 +7,7 @@ import re
 import tempfile
 import shutil
 import stat
-
-try:
-    import zipfile36 as zipfile
-except ImportError:
-    import zipfile
+import zipfile
 
 from base64 import urlsafe_b64encode
 from io import StringIO
