@@ -1,4 +1,5 @@
 import os
+import pkginfo
 import shutil
 
 from functools import cmp_to_key
@@ -22,6 +23,7 @@ from poetry.repositories import Pool
 from poetry.semver import less_than
 
 from poetry.utils._compat import Path
+from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import Venv
 
@@ -175,15 +177,27 @@ class Provider(SpecificationProvider, UI):
 
                 try:
                     venv = Venv.create(self._io)
-                    output = venv.run(
-                        'python', 'setup.py',
-                        '--name', '--version'
+                    venv.run(
+                        'python', 'setup.py', 'egg_info'
                     )
-                    output = output.split('\n')
-                    name = output[-3]
-                    version = output[-2]
-                    package = Package(name, version, version)
-                    # Figure out a way to get requirements
+
+                    egg_info = list(tmp_dir.glob('*.egg-info'))[0]
+
+                    meta = pkginfo.UnpackedSDist(str(egg_info))
+
+                    if meta.requires_dist:
+                        reqs = list(meta.requires_dist)
+                    else:
+                        reqs = []
+                        requires = egg_info / 'requires.txt'
+                        if requires.exists():
+                            with requires.open() as f:
+                                reqs = parse_requires(f.read())
+
+                    package = Package(meta.name, meta.version)
+
+                    for req in reqs:
+                        package.requires.append(dependency_from_pep_508(req))
                 except Exception:
                     raise
                 finally:

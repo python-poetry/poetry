@@ -12,10 +12,11 @@ class AddCommand(VenvCommand):
 
     add
         { name* : Packages to add. }
-        {--D|dev : Add package as development dependency. }
-        {--optional : Add as an optional dependency. }
+        { --D|dev : Add package as development dependency. }
+        { --git= : The url of the Git repository. }
+        { --optional : Add as an optional dependency. }
         { --allow-prereleases : Accept prereleases. }
-        {--dry-run : Outputs the operations but will not execute anything
+        { --dry-run : Outputs the operations but will not execute anything
                      (implicitly enables --verbose). }
     """
 
@@ -35,6 +36,11 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         packages = self.argument('name')
         is_dev = self.option('dev')
 
+        if self.option('git') and len(packages) > 1:
+            raise ValueError(
+                'You can only specify one package when using the --git option'
+            )
+
         section = 'dependencies'
         if is_dev:
             section = 'dev-dependencies'
@@ -50,30 +56,40 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                         'Package {} is already present'.format(name)
                     )
 
-        requirements = self._determine_requirements(
-            packages,
-            allow_prereleases=self.option('allow-prereleases')
-        )
-        requirements = self._format_requirements(requirements)
+        if self.option('git'):
+            requirements = {
+                packages[0]: ''
+            }
+        else:
+            requirements = self._determine_requirements(
+                packages,
+                allow_prereleases=self.option('allow-prereleases')
+            )
+            requirements = self._format_requirements(requirements)
 
-        # validate requirements format
-        parser = VersionParser()
-        for constraint in requirements.values():
-            parser.parse_constraints(constraint)
+            # validate requirements format
+            parser = VersionParser()
+            for constraint in requirements.values():
+                parser.parse_constraints(constraint)
 
         for name, constraint in requirements.items():
-            if self.option('optional') or self.option('allow-prereleases'):
-                constraint = {
-                    'version': constraint
-                }
+            constraint = {
+                'version': constraint
+            }
 
-                if self.option('optional'):
-                    constraint = {
-                        'optional': True
-                    }
+            if self.option('git'):
+                del constraint['version']
 
-                if self.option('allow-prereleases'):
-                    constraint['allows-prereleases'] = True
+                constraint['git'] = self.option('git')
+
+            if self.option('optional'):
+                constraint['optional'] = True
+
+            if self.option('allow-prereleases'):
+                constraint['allows-prereleases'] = True
+
+            if len(constraint) == 1 and 'version' in constraint:
+                constraint = constraint['version']
 
             poetry_content[section][name] = constraint
 

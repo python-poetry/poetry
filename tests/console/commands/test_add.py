@@ -35,6 +35,11 @@ Writing lock file
 
     assert len(installer.installs) == 1
 
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'cachy' in content['dependencies']
+    assert content['dependencies']['cachy'] == '^0.2.0'
+
 
 def test_add_constraint(app, repo, installer):
     command = app.find('add')
@@ -104,3 +109,71 @@ Writing lock file
 
     assert len(installer.installs) == 2
 
+
+def test_add_git_constraint(app, repo, installer):
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    repo.add_package(get_package('pendulum', '1.4.4'))
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['demo']),
+        ('--git', 'https://github.com/demo/demo.git')
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies..
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 9cf87a2)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 2
+
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'demo' in content['dependencies']
+    assert content['dependencies']['demo'] == {
+        'git': 'https://github.com/demo/demo.git'
+    }
+
+
+def test_add_git_constraint_with_poetry(app, repo, installer):
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    repo.add_package(get_package('pendulum', '1.4.4'))
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['demo']),
+        ('--git', 'https://github.com/demo/pyproject-demo.git')
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 9cf87a2)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 2

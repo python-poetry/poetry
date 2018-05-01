@@ -5,6 +5,7 @@
 ### Added
 
 - Added the `cache:clear` command.
+- Added support for `git` dependencies in the `add` command.
 
 ### Changed
 

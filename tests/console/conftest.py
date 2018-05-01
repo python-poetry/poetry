@@ -1,4 +1,10 @@
 import pytest
+import shutil
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 from poetry.config import Config as BaseConfig
 from poetry.console import Application as BaseApplication
@@ -17,6 +23,20 @@ def installer():
     return NoopInstaller()
 
 
+def mock_clone(self, source, dest):
+    # Checking source to determine which folder we need to copy
+    parts = urlparse.urlparse(source)
+
+    folder = (
+        Path(__file__).parent.parent
+        / 'fixtures' / 'git'
+        / parts.netloc / parts.path.lstrip('/').rstrip('.git')
+    )
+
+    shutil.rmtree(dest)
+    shutil.copytree(folder, dest)
+
+
 @pytest.fixture(autouse=True)
 def setup(mocker, installer):
     # Set Installer's installer
@@ -25,6 +45,12 @@ def setup(mocker, installer):
 
     p = mocker.patch('poetry.installation.installer.Installer._get_installed')
     p.return_value = Repository()
+
+    # Patch git module to not actually clone projects
+    mocker.patch('poetry.vcs.git.Git.clone', new=mock_clone)
+    mocker.patch('poetry.vcs.git.Git.checkout', new=lambda *_: None)
+    p = mocker.patch('poetry.vcs.git.Git.rev_parse')
+    p.return_value = '9cf87a285a2d3fbb0b9fa621997b3acc3631ed24'
 
 
 class Application(BaseApplication):
@@ -54,6 +80,9 @@ class Locker(BaseLocker):
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
+
+    def _write_lock_data(self, data):
+        self._lock_data = None
 
 
 class Poetry(BasePoetry):

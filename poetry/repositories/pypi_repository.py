@@ -34,6 +34,7 @@ from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
+from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
 from poetry.version.markers import InvalidMarker
 
@@ -424,7 +425,7 @@ class PyPiRepository(Repository):
                 requires = egg_info / 'requires.txt'
                 if requires.exists():
                     with requires.open() as f:
-                        return self._parse_requires(f.read())
+                        return parse_requires(f.read())
 
                 return
 
@@ -441,47 +442,6 @@ class PyPiRepository(Repository):
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-
-    def _parse_requires(self, requires):  # type: (str) -> Union[list, None]
-        lines = requires.split('\n')
-
-        requires_dist = []
-        in_section = False
-        current_marker = None
-        for line in lines:
-            line = line.strip()
-            if not line:
-                if in_section:
-                    in_section = False
-
-                continue
-
-            if line.startswith('['):
-                # extras or conditional dependencies
-                marker = line.lstrip('[').rstrip(']')
-                if ':' not in marker:
-                    extra, marker = marker, None
-                else:
-                    extra, marker = marker.split(':')
-
-                if extra:
-                    if marker:
-                        marker = '{} and extra == "{}"'.format(marker, extra)
-                    else:
-                        marker = 'extra == "{}"'.format(extra)
-
-                if marker:
-                    current_marker = marker
-
-                continue
-
-            if current_marker:
-                line = '{}; {}'.format(line, current_marker)
-
-            requires_dist.append(line)
-
-        if requires_dist:
-            return requires_dist
 
     def _log(self, msg, level='info'):
         getattr(logger, level)('{}: {}'.format(self._name, msg))
