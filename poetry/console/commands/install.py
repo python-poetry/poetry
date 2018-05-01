@@ -10,6 +10,7 @@ class InstallCommand(VenvCommand):
         { --dry-run : Outputs the operations but will not execute anything
                       (implicitly enables --verbose). }
         { --E|extras=* : Extra sets of dependencies to install. }
+        { --python=* : Python version used to create virtualenv. ex :  2.7, 3.5 }
     """
 
     help = """The <info>install</info> command reads the <comment>pyproject.toml</> file from
