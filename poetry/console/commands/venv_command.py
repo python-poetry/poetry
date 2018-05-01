@@ -13,7 +13,10 @@ class VenvCommand(Command):
 
         super(VenvCommand, self).initialize(i, o)
 
-        self._venv = Venv.create(o, self.poetry.package.name)
+        py_version = self.input.options.get('python', None)
+        py_version = py_version[0] if py_version else None
+
+        self._venv = Venv.create(io=o, name=self.poetry.package.name, py_version=py_version)
 
         if self._venv.is_venv() and o.is_verbose():
             o.writeln(
