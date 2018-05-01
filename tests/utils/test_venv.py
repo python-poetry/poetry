@@ -17,14 +17,14 @@ global pp_arg
 
 def test_create_set_venv_name_with_name(monkeypatch, tmpdir):
     monkeypatch.delenv('VIRTUAL_ENV')
-    monkeypatch.setattr(Venv, 'build', lambda x: "rien")
+    monkeypatch.setattr(Venv, 'build', lambda x,y: "rien")
     monkeypatch.setattr('poetry.utils.venv.Path', lambda x: tmpdir)
     a = Venv.create(io = MagicMock(), name="rien", py_version="2.7")
     assert os.environ['VIRTUAL_ENV'] == str(tmpdir.join("virtualenvs","rien-py2.7"))
 
 def test_create_set_venv_name_without_name(monkeypatch, tmpdir):
     monkeypatch.delenv('VIRTUAL_ENV')
-    monkeypatch.setattr(Venv, 'build', lambda x: "rien")
+    monkeypatch.setattr(Venv, 'build', lambda x,y: "rien")
 
     path = MagicMock(return_value=Path(str(tmpdir)))
     mm = MagicMock()
@@ -37,7 +37,7 @@ def test_create_set_venv_name_without_name(monkeypatch, tmpdir):
 
 def test_create_set_venv_name_without_pyversion(monkeypatch, tmpdir):
     monkeypatch.delenv('VIRTUAL_ENV')
-    monkeypatch.setattr(Venv, 'build', lambda x: "rien")
+    monkeypatch.setattr(Venv, 'build', lambda x,y: "rien")
     monkeypatch.setattr('poetry.utils.venv.Path', lambda x: tmpdir)
     a = Venv.create(io = MagicMock(), name="rien")
     vv = sys.version[:3]

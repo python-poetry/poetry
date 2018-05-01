@@ -65,10 +65,17 @@ class Venv(object):
             # set py_version to poetry's python version by default
             py_version = py_version if py_version else sys.version[:3]
 
-            name = '{}-py{}'.format(
-                name, py_version)
+            # name = '{}-py{}'.format(
+            #     name, py_version)
 
             venv = venv_path / name
+
+            import hashlib
+
+            name =  name + '-'+ hashlib.md5(str(venv).encode()).hexdigest()
+
+            venv = venv_path / name
+
             if not venv.exists():
                 if create_venv is False:
                     io.writeln(
@@ -84,7 +91,7 @@ class Venv(object):
                         name, str(venv_path)
                     )
                 )
-                cls.build(str(venv))
+                cls.build(str(venv), py_version)
             else:
                 if io.is_very_verbose():
                     io.writeln(
