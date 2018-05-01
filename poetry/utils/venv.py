@@ -65,14 +65,12 @@ class Venv(object):
             # set py_version to poetry's python version by default
             py_version = py_version if py_version else sys.version[:3]
 
-            # name = '{}-py{}'.format(
-            #     name, py_version)
 
             venv = venv_path / name
 
             import hashlib
-
-            name =  name + '-'+ hashlib.md5(str(venv).encode()).hexdigest()
+            
+            name =  name + '-'+ hashlib.md5(str(Path.cwd()).encode()).hexdigest()
 
             venv = venv_path / name
 
