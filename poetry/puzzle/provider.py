@@ -176,6 +176,7 @@ class Provider(SpecificationProvider, UI):
                 print(current_dir)
                 os.chdir(tmp_dir.as_posix())
                 print(os.getcwd())
+                print(list(Path(os.getcwd()).glob('*')))
 
                 try:
                     venv = Venv.create(self._io)
@@ -205,7 +206,7 @@ class Provider(SpecificationProvider, UI):
                 finally:
                     os.chdir(current_dir)
 
-                print(os.getcwd())
+                    print(os.getcwd())
 
             package.source_type = 'git'
             package.source_url = dependency.source
