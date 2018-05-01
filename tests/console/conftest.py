@@ -52,6 +52,14 @@ def setup(mocker, installer):
     p = mocker.patch('poetry.vcs.git.Git.rev_parse')
     p.return_value = '9cf87a285a2d3fbb0b9fa621997b3acc3631ed24'
 
+    # Patch provider progress rate to have a consistent
+    # dependency resolution output
+    p = mocker.patch(
+        'poetry.puzzle.provider.Provider.progress_rate',
+        new_callable=mocker.PropertyMock
+    )
+    p.return_value = 3600
+
 
 class Application(BaseApplication):
 

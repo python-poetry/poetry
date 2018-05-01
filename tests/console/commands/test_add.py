@@ -125,7 +125,7 @@ def test_add_git_constraint(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies..
+Resolving dependencies
 
 
 Package operations: 2 installs, 0 updates, 0 removals
