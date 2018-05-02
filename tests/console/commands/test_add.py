@@ -261,7 +261,7 @@ def test_add_constraint_with_extras(app, repo, installer):
 
     cachy2 = get_package('cachy', '0.2.0')
     cachy2.extras = {
-        'msgpack': ['msgpack-python']
+        'msgpack': [get_dependency('msgpack-python')]
     }
     msgpack_dep = get_dependency('msgpack-python', '>=0.5 <0.6', optional=True)
     cachy2.requires = [

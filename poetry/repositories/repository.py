@@ -52,9 +52,8 @@ class Repository(BaseRepository):
                                 continue
 
                             reqs = package.extras[extra]
-
                             for req in reqs:
-                                if req == dep.name:
+                                if req.name == dep.name:
                                     dep.activate()
 
                     packages.append(package)

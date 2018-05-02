@@ -424,6 +424,7 @@ def test_solver_returns_extras_if_requested(solver, repo):
     package_b.extras = {
         'foo': [get_dependency('C', '^1.0')]
     }
+    package_b.add_dependency('C', {'version': '^1.0', 'optional': True})
 
     repo.add_package(package_a)
     repo.add_package(package_b)
