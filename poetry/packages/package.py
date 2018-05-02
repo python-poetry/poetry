@@ -18,7 +18,7 @@ from .dependency import Dependency
 from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
 
-AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$')
+AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+)(?: <(?P<email>.+?)>)?$')
 
 
 class Package(object):
