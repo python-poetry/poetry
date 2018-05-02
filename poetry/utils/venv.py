@@ -6,7 +6,7 @@ import sysconfig
 import warnings
 
 from contextlib import contextmanager
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, Popen, PIPE
 
 from poetry.config import Config
 from poetry.locations import CACHE_DIR
@@ -47,28 +47,33 @@ class Venv(object):
         self._python_implementation = None
 
     @classmethod
-    def create(cls, io, name=None):  # type: (...) -> Venv
+    def create(cls, io, name=None, py_version=None):  # type: (...) -> Venv
         if 'VIRTUAL_ENV' not in os.environ:
             # Not in a virtualenv
             # Checking if we need to create one
             config = Config.create('config.toml')
 
             create_venv = config.setting('settings.virtualenvs.create')
-
             venv_path = config.setting('settings.virtualenvs.path')
             if venv_path is None:
                 venv_path = Path(CACHE_DIR) / 'virtualenvs'
             else:
                 venv_path = Path(venv_path)
-
             if not name:
                 name = Path.cwd().name
 
-            name = '{}-py{}'.format(
-                name, '.'.join([str(v) for v in sys.version_info[:2]])
-            )
+            # set py_version to poetry's python version by default
+            py_version = py_version if py_version else sys.version[:3]
+
 
             venv = venv_path / name
+
+            import hashlib
+            
+            name =  name + '-'+ hashlib.md5(str(Path.cwd()).encode()).hexdigest()
+
+            venv = venv_path / name
+
             if not venv.exists():
                 if create_venv is False:
                     io.writeln(
@@ -79,14 +84,12 @@ class Venv(object):
                     )
 
                     return cls()
-
                 io.writeln(
                     'Creating virtualenv <info>{}</> in {}'.format(
                         name, str(venv_path)
                     )
                 )
-
-                cls.build(str(venv))
+                cls.build(str(venv), py_version)
             else:
                 if io.is_very_verbose():
                     io.writeln(
@@ -116,20 +119,45 @@ class Venv(object):
 
         return cls(venv)
 
+    # @classmethod
+    # def build(cls, path):
+    #     try:
+    #         from venv import EnvBuilder
+
+    #         builder = EnvBuilder(with_pip=True)
+    #         build = builder.create
+    #     except ImportError:
+    #         # We fallback on virtualenv for Python 2.7
+    #         from virtualenv import create_environment
+
+    #         build = create_environment
+
+    #     build(path)
     @classmethod
-    def build(cls, path):
-        try:
-            from venv import EnvBuilder
+    def build(cls, path, py_version=None):
+        if not py_version:
+            py_version = sys.version[:3]
 
-            builder = EnvBuilder(with_pip=True)
-            build = builder.create
-        except ImportError:
-            # We fallback on virtualenv for Python 2.7
-            from virtualenv import create_environment
 
-            build = create_environment
+        venv_module = 'venv' if py_version[0] == '3' else 'virtualenv'
+        popen_args = ['python'+py_version, '-m', venv_module, path]
+        
+        if sys.version[0] == '2':
+            try:
+                p = Popen(popen_args, stderr=PIPE, stdout=PIPE)
+                out, err = p.communicate()
+            except EnvironmentError:
+                raise VenvError('Python version : {} seems no to be installed on the system'.format(py_version))
+            
+        elif sys.version[0] == '3':
+            try:
+                p = subprocess.Popen(['python'+py_version, '-m', venv_module, path], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                out, err = p.communicate()
+            except FileNotFoundError:
+                raise VenvError('Python version : {} seems no to be installed on the system'.format(py_version))
 
-        build(path)
+        
+
 
     @property
     def venv(self):
