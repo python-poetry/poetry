@@ -132,14 +132,14 @@ class SdistBuilder(Builder):
             extra.append("'packages': packages,")
             extra.append("'package_data': package_data,")
         else:
-            extra.append("'py_modules': {!r},".format(self._module.name))
+            extra.append("'py_modules': {!r},".format(to_str(self._module.name)))
 
         dependencies, extras = self.convert_dependencies(
             self._package,
             self._package.requires
         )
         if dependencies:
-            before.append("install_requires = \\\n{}\n".format(pformat(dependencies)))
+            before.append("install_requires = \\\n{}\n".format(pformat(sorted(dependencies))))
             extra.append("'install_requires': install_requires,")
 
         if extras:
