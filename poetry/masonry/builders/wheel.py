@@ -133,6 +133,14 @@ class WheelBuilder(Builder):
             for file in sorted(files):
                 full_path = self._path / file
 
+                if self._module.is_in_src():
+                    try:
+                        file = file.relative_to(
+                            self._module.path.parent.relative_to(self._path)
+                        )
+                    except ValueError:
+                        pass
+
                 # Do not include topmost files
                 if full_path.relative_to(self._path) == Path(file.name):
                     continue

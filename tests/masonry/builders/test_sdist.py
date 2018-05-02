@@ -1,5 +1,6 @@
 import ast
 import pytest
+import re
 import shutil
 import tarfile
 
@@ -8,6 +9,7 @@ from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.packages import Package
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
+from poetry.utils._compat import to_str
 from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency
@@ -175,6 +177,21 @@ def test_package():
     assert sdist.exists()
 
 
+def test_module():
+    poetry = Poetry.create(project('module1'))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder.build()
+
+    sdist = fixtures_dir / 'module1' / 'dist' / 'module1-0.1.tar.gz'
+
+    assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), 'r')
+
+    assert 'module1-0.1/module1.py' in tar.getnames()
+
+
 def test_prelease():
     poetry = Poetry.create(project('prerelease'))
 
@@ -200,4 +217,59 @@ def test_with_c_extensions():
 
     assert 'extended-0.1/build.py' in tar.getnames()
     assert 'extended-0.1/extended/extended.c' in tar.getnames()
+
+
+def test_with_src_module_file():
+    poetry = Poetry.create(project('source_file'))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+
+    # Check setup.py
+    setup = builder.build_setup()
+    setup_ast = ast.parse(setup)
+
+    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    ns = {}
+    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+    assert ns['package_dir'] == {'': 'src'}
+    assert re.search('\'py_modules\': \'module_src\'', to_str(setup)) is not None
+
+    builder.build()
+
+    sdist = fixtures_dir / 'source_file' / 'dist' / 'module-src-0.1.tar.gz'
+
+    assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), 'r')
+
+    assert 'module-src-0.1/src/module_src.py' in tar.getnames()
+
+
+def test_with_src_module_dir():
+    poetry = Poetry.create(project('source_package'))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+
+    # Check setup.py
+    setup = builder.build_setup()
+    setup_ast = ast.parse(setup)
+
+    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    ns = {}
+    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+    assert ns['package_dir'] == {'': 'src'}
+    assert ns['packages'] == [
+        'package_src',
+    ]
+
+    builder.build()
+
+    sdist = fixtures_dir / 'source_package' / 'dist' / 'package-src-0.1.tar.gz'
+
+    assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), 'r')
+
+    assert 'package-src-0.1/src/package_src/__init__.py' in tar.getnames()
+    assert 'package-src-0.1/src/package_src/module.py' in tar.getnames()
 

@@ -81,7 +81,7 @@ def test_complete():
 
     whl = module_path / 'dist' / 'my_package-1.2.3-py3-none-any.whl'
 
-    assert whl.exists
+    assert whl.exists()
 
     zip = zipfile.ZipFile(str(whl))
 
@@ -133,3 +133,50 @@ My Package
 """
     finally:
         zip.close()
+
+
+def test_module_src():
+    module_path = fixtures_dir / 'source_file'
+    builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True),
+                              NullIO())
+    builder.build()
+
+    sdist = module_path / 'dist' / 'module-src-0.1.tar.gz'
+
+    assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), 'r')
+
+    assert 'module-src-0.1/src/module_src.py' in tar.getnames()
+
+    whl = module_path / 'dist' / 'module_src-0.1-py2.py3-none-any.whl'
+
+    assert whl.exists()
+
+    zip = zipfile.ZipFile(str(whl))
+
+    assert 'module_src.py' in zip.namelist()
+
+
+def test_package_src():
+    module_path = fixtures_dir / 'source_package'
+    builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True),
+                              NullIO())
+    builder.build()
+
+    sdist = module_path / 'dist' / 'package-src-0.1.tar.gz'
+
+    assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), 'r')
+
+    assert 'package-src-0.1/src/package_src/module.py' in tar.getnames()
+
+    whl = module_path / 'dist' / 'package_src-0.1-py2.py3-none-any.whl'
+
+    assert whl.exists()
+
+    zip = zipfile.ZipFile(str(whl))
+
+    assert 'package_src/__init__.py' in zip.namelist()
+    assert 'package_src/module.py' in zip.namelist()
