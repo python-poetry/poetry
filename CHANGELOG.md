@@ -19,6 +19,7 @@
 - Poetry now attemps to find `pyproject.toml` not only in the directory it was
 invoked in, but in all its parents up to the root. This allows to run Poetry
 commands in project subdirectories.
+- Made the email address for authors optional.
 
 ### Fixed
 
