@@ -131,7 +131,8 @@ def test_make_setup():
         'my_package.sub_pkg2'
     ]
     assert ns['install_requires'] == [
-        'cleo>=0.6.0.0,<0.7.0.0'
+        'cleo>=0.6.0.0,<0.7.0.0',
+        'cachy[msgpack]>=0.2.0.0,<0.3.0.0',
     ]
     assert ns['entry_points'] == {
         'console_scripts': [

@@ -122,6 +122,9 @@ class Dependency(object):
     def to_pep_508(self, with_extras=True):  # type: (bool) -> str
         requirement = self.pretty_name
 
+        if self.extras:
+            requirement += '[{}]'.format(','.join(self.extras))
+
         if isinstance(self.constraint, MultiConstraint):
             requirement += ' ({})'.format(','.join(
                 [str(c).replace(' ', '') for c in self.constraint.constraints]

@@ -19,6 +19,7 @@
 
 - Fixed handling of extras when resolving dependencies.
 - Fixed `self:update` command for some installation.
+- Fixed handling of extras when building projects.
 
 
 ## [0.8.6] - 2018-04-30
