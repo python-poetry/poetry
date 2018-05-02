@@ -13,7 +13,10 @@ class VenvCommand(Command):
 
         super(VenvCommand, self).initialize(i, o)
 
-        self._venv = Venv.create(o, self.poetry.package.name)
+        self._venv = Venv.create(
+            o, self.poetry.package.name,
+            cwd=self.poetry.file.parent
+        )
 
         if self._venv.is_venv() and o.is_verbose():
             o.writeln(

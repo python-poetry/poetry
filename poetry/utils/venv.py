@@ -47,51 +47,57 @@ class Venv(object):
         self._python_implementation = None
 
     @classmethod
-    def create(cls, io, name=None):  # type: (...) -> Venv
+    def create(cls, io, name=None, cwd=None):  # type: (...) -> Venv
         if 'VIRTUAL_ENV' not in os.environ:
             # Not in a virtualenv
             # Checking if we need to create one
-            config = Config.create('config.toml')
 
-            create_venv = config.setting('settings.virtualenvs.create')
-
-            venv_path = config.setting('settings.virtualenvs.path')
-            if venv_path is None:
-                venv_path = Path(CACHE_DIR) / 'virtualenvs'
+            # First we check if there is a .venv
+            # at the root of the project.
+            if cwd and (cwd / '.venv').exists():
+                venv = cwd / '.venv'
             else:
-                venv_path = Path(venv_path)
+                config = Config.create('config.toml')
 
-            if not name:
-                name = Path.cwd().name
+                create_venv = config.setting('settings.virtualenvs.create')
 
-            name = '{}-py{}'.format(
-                name, '.'.join([str(v) for v in sys.version_info[:2]])
-            )
+                venv_path = config.setting('settings.virtualenvs.path')
+                if venv_path is None:
+                    venv_path = Path(CACHE_DIR) / 'virtualenvs'
+                else:
+                    venv_path = Path(venv_path)
 
-            venv = venv_path / name
-            if not venv.exists():
-                if create_venv is False:
-                    io.writeln(
-                        '<fg=black;bg=yellow>'
-                        'Skipping virtualenv creation, '
-                        'as specified in config file.'
-                        '</>'
-                    )
+                if not name:
+                    name = Path.cwd().name
 
-                    return cls()
-
-                io.writeln(
-                    'Creating virtualenv <info>{}</> in {}'.format(
-                        name, str(venv_path)
-                    )
+                name = '{}-py{}'.format(
+                    name, '.'.join([str(v) for v in sys.version_info[:2]])
                 )
 
-                cls.build(str(venv))
-            else:
-                if io.is_very_verbose():
+                venv = venv_path / name
+                if not venv.exists():
+                    if create_venv is False:
+                        io.writeln(
+                            '<fg=black;bg=yellow>'
+                            'Skipping virtualenv creation, '
+                            'as specified in config file.'
+                            '</>'
+                        )
+
+                        return cls()
+
                     io.writeln(
-                        'Virtualenv <info>{}</> already exists.'.format(name)
+                        'Creating virtualenv <info>{}</> in {}'.format(
+                            name, str(venv_path)
+                        )
                     )
+
+                    cls.build(str(venv))
+                else:
+                    if io.is_very_verbose():
+                        io.writeln(
+                            'Virtualenv <info>{}</> already exists.'.format(name)
+                        )
 
             os.environ['VIRTUAL_ENV'] = str(venv)
 
