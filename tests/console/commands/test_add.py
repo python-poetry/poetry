@@ -253,3 +253,53 @@ Writing lock file
     assert content['dependencies']['demo'] == {
         'path': '../distributions/demo-0.1.0.tar.gz'
     }
+
+
+def test_add_constraint_with_extras(app, repo, installer):
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    cachy2 = get_package('cachy', '0.2.0')
+    cachy2.extras = {
+        'msgpack': ['msgpack-python']
+    }
+    msgpack_dep = get_dependency('msgpack-python', '>=0.5 <0.6', optional=True)
+    cachy2.requires = [
+        msgpack_dep,
+    ]
+
+    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(cachy2)
+    repo.add_package(get_package('msgpack-python', '0.5.3'))
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['cachy=0.2.0']),
+        ('--extras', ['msgpack'])
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing msgpack-python (0.5.3)
+  - Installing cachy (0.2.0)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 2
+
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'cachy' in content['dependencies']
+    assert content['dependencies']['cachy'] == {
+        'version': '0.2.0',
+        'extras': ['msgpack']
+    }

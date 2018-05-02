@@ -46,12 +46,16 @@ class Repository(BaseRepository):
                 pkg_constraint = Constraint('==', package.version)
 
                 if constraint is None or constraint.matches(pkg_constraint):
-                    for extra in extras:
-                        if extra in package.extras:
-                            for dep in package.extras[extra]:
-                                dep.activate()
+                    for dep in package.requires:
+                        for extra in extras:
+                            if extra not in package.extras:
+                                continue
 
-                            package.requires += package.extras[extra]
+                            reqs = package.extras[extra]
+
+                            for req in reqs:
+                                if req == dep.name:
+                                    dep.activate()
 
                     packages.append(package)
 
