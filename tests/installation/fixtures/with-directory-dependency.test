@@ -22,7 +22,7 @@ reference = "tests/fixtures/project_with_setup"
 url = ""
 
 [package.dependencies]
-cachy = "< 0.3.0.0, >= 0.2.0.0"
+cachy = ">= 0.2.0.0"
 pendulum = ">= 1.4.4.0"
 
 [[package]]

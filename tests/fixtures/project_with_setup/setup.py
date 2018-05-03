@@ -16,7 +16,7 @@ kwargs = dict(
     ],
     install_requires=[
         'pendulum>=1.4.4',
-        'cachy[msgpack]>=0.2.0,<0.3.0',
+        'cachy[msgpack]>=0.2.0',
     ],
 )
 

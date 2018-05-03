@@ -6,7 +6,7 @@ from pkginfo.distribution import HEADER_ATTRS_2_0
 
 from poetry.io import NullIO
 from poetry.utils._compat import Path
-from poetry.utils._compat import to_str
+from poetry.utils._compat import decode
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import NullVenv
@@ -77,7 +77,7 @@ class DirectoryDependency(Dependency):
             builder = SdistBuilder(poetry, NullVenv(), NullIO())
 
             with setup.open('w') as f:
-                f.write(to_str(builder.build_setup()))
+                f.write(decode(builder.build_setup()))
 
             self._package = poetry.package
         else:
