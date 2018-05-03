@@ -6,8 +6,9 @@
 
 - Added the `cache:clear` command.
 - Added support for `git` dependencies in the `add` command.
-- Added support for `file` dependencies in the `add` command.
+- Added support for `path` dependencies in the `add` command.
 - Added support for extras in the `add` command.
+- Added support for directory dependencies.
 - Added support for `src/` layout for packages.
 - Added automatic detection of `.venv` virtualenvs.
 

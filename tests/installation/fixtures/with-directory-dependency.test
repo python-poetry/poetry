@@ -1,0 +1,45 @@
+[[package]]
+name = "cachy"
+version = "0.2.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+platform = "*"
+
+[[package]]
+name = "my-package"
+version = "0.1.2"
+description = "Demo project."
+category = "main"
+optional = false
+python-versions = "*"
+platform = "*"
+
+[package.source]
+type = "directory"
+reference = "tests/fixtures/project_with_setup"
+url = ""
+
+[package.dependencies]
+cachy = "< 0.3.0.0, >= 0.2.0.0"
+pendulum = ">= 1.4.4.0"
+
+[[package]]
+name = "pendulum"
+version = "1.4.4"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+platform = "*"
+
+[metadata]
+python-versions = "*"
+platform = "*"
+content-hash = "123456789"
+
+[metadata.hashes]
+cachy = []
+my-package = []
+pendulum = []

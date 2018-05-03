@@ -549,3 +549,26 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
     assert locker.written_data == expected
 
     assert len(installer.installer.installs) == 2
+
+
+def test_run_installs_with_local_directory(installer, locker, repo, package):
+    file_path = Path(
+        'tests/fixtures/project_with_setup/'
+    )
+    package.add_dependency(
+        'demo',
+        {
+            'path': str(file_path)
+        }
+    )
+
+    repo.add_package(get_package('pendulum', '1.4.4'))
+    repo.add_package(get_package('cachy', '0.2.0'))
+
+    installer.run()
+
+    expected = fixture('with-directory-dependency')
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 3

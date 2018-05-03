@@ -14,6 +14,7 @@ from poetry.mixology.contracts import SpecificationProvider
 from poetry.mixology.contracts import UI
 
 from poetry.packages import Dependency
+from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
 from poetry.packages import Package
 from poetry.packages import VCSDependency
@@ -84,6 +85,8 @@ class Provider(SpecificationProvider, UI):
             packages = self.search_for_vcs(dependency)
         elif dependency.is_file():
             packages = self.search_for_file(dependency)
+        elif dependency.is_directory():
+            packages = self.search_for_directory(dependency)
         else:
             constraint = dependency.constraint
 
@@ -237,9 +240,20 @@ class Provider(SpecificationProvider, UI):
 
         return [package]
 
+    def search_for_directory(self, dependency
+                             ):  # type: (DirectoryDependency) -> List[Package]
+        package = dependency.package
+        if dependency.extras:
+            for extra in dependency.extras:
+                if extra in package.extras:
+                    for dep in package.extras[extra]:
+                        dep.activate()
+
+        return [package]
+
     def dependencies_for(self, package
                          ):  # type: (Package) -> Union[List[Dependency], Dependencies]
-        if package.source_type in ['git', 'file']:
+        if package.source_type in ['git', 'file', 'directory']:
             # Information should already be set
             return [
                 r for r in package.requires

@@ -68,7 +68,7 @@ class PipInstaller(BaseInstaller):
 
             return req
 
-        if package.source_type == 'file':
+        if package.source_type in ['file', 'directory']:
             return os.path.realpath(package.source_reference)
 
         if package.source_type == 'git':

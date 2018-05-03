@@ -33,6 +33,12 @@ orator = { version = "^0.9", optional = true }
 # File dependency
 demo = { path = "../distributions/demo-0.1.0-py2.py3-none-any.whl" }
 
+# Dir dependency with setup.py
+my-package = { path = "../project_with_setup/" }
+
+# Dir dependency with pyproject.toml
+simple-project = { path = "../simple_project/" }
+
 
 [tool.poetry.extras]
 db = [ "orator" ]
