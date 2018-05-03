@@ -34,11 +34,11 @@ python get-poetry.py --version 0.7.0
 ```
 
 Using `pip` to install `poetry` is also possible.
-    
+
 ```bash
 pip install --user poetry
-``` 
-    
+```
+
 Be aware, however, that it will also install poetry's dependencies
 which might cause conflicts.
 
@@ -83,7 +83,7 @@ poetry completions fish > ~/.config/fish/completions/pyproject.fish
 poetry completions zsh > ~/.zfunc/_poetry
 ```
 
-*Note:* you may need to restart your shell in order for the changes to take 
+*Note:* you may need to restart your shell in order for the changes to take
 effect.
 
 For `zsh`, you must then add the following line in your `~/.zshrc` before
@@ -225,7 +225,7 @@ You either have to use `sync` or `clean` to fix that.
 
 #### Too limited in scope
 
-Finally, the `Pipfile` is just a replacement from `requirements.txt` and, in the end, you will still need to 
+Finally, the `Pipfile` is just a replacement from `requirements.txt` and, in the end, you will still need to
 populate your `setup.py` file (or `setup.cfg`) with the exact same dependencies you declared in your `Pipfile`.
 So, in the end, you will still need to manage a few configuration files to properly setup your project.
 
@@ -410,6 +410,8 @@ poetry publish
 
 * `-r|--repository`: The repository to register the package to (default: `pypi`).
 Should match a repository name set by the [`config`](#config) command.
+* `--username (-u)`: The username to access the repository.
+* `--password (-p)`: The password to access the repository.
 
 
 ### `config`

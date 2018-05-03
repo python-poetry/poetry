@@ -7,11 +7,13 @@ class PublishCommand(Command):
 
     publish
         { --r|repository= : The repository to publish the package to. }
+        { --u|username= : The username to access the repository. }
+        { --p|password= : The password to access the repository. }
         { --no-build : Do not build the package before publishing. }
     """
 
     help = """The publish command builds and uploads the package to a remote repository.
-    
+
 By default, it will upload to PyPI but if you pass the --repository option it will
 upload to it instead.
 
@@ -29,4 +31,8 @@ the config command.
         self.line('')
 
         publisher = Publisher(self.poetry, self.output)
-        publisher.publish(self.option('repository'))
+        publisher.publish(
+            self.option('repository'),
+            self.option('username'),
+            self.option('password')
+        )
