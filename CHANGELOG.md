@@ -6,16 +6,29 @@
 
 - Added the `cache:clear` command.
 - The `publish` command now attempts to retrieve repository username and password from `POETRY_USERNAME` and `POETRY_PASSWORD` environment variables.
+- Added support for `git` dependencies in the `add` command.
+- Added support for `path` dependencies in the `add` command.
+- Added support for extras in the `add` command.
+- Added support for directory dependencies.
+- Added support for `src/` layout for packages.
+- Added automatic detection of `.venv` virtualenvs.
 
 ### Changed
 
+- Drastically improved dependency resolution speed.
 - Dependency resolution caches now use sha256 hashes.
 - Changed CLI error style.
 - Improved debugging of dependency resolution.
+- Poetry now attemps to find `pyproject.toml` not only in the directory it was
+invoked in, but in all its parents up to the root. This allows to run Poetry
+commands in project subdirectories.
+- Made the email address for authors optional.
 
 ### Fixed
 
 - Fixed handling of extras when resolving dependencies.
+- Fixed `self:update` command for some installation.
+- Fixed handling of extras when building projects.
 
 
 ## [0.8.6] - 2018-04-30
@@ -40,8 +53,6 @@
 - Fixed a bug where dependencies constraints in lock were too strict.
 - Fixed unicode error in `search` command for Python 2.7.
 - Fixed error with git dependencies.
->>>>>>> master
-
 
 ## [0.8.3] - 2018-04-16
 

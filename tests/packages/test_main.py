@@ -120,3 +120,14 @@ def test_dependency_platform_in():
     assert dep.name == 'requests'
     assert str(dep.constraint) == '== 2.18.0.0'
     assert dep.platform == 'win32 || darwin'
+
+
+def test_dependency_with_extra():
+    name = 'requests[security] (==2.18.0)'
+    dep = dependency_from_pep_508(name)
+
+    assert dep.name == 'requests'
+    assert str(dep.constraint) == '== 2.18.0.0'
+
+    assert len(dep.extras) == 1
+    assert dep.extras[0] == 'security'

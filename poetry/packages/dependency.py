@@ -109,6 +109,9 @@ class Dependency(object):
     def is_file(self):
         return False
 
+    def is_directory(self):
+        return False
+
     def accepts(self, package):  # type: (poetry.packages.Package) -> bool
         """
         Determines if the given package matches this dependency.
@@ -121,6 +124,9 @@ class Dependency(object):
 
     def to_pep_508(self, with_extras=True):  # type: (bool) -> str
         requirement = self.pretty_name
+
+        if self.extras:
+            requirement += '[{}]'.format(','.join(self.extras))
 
         if isinstance(self.constraint, MultiConstraint):
             requirement += ' ({})'.format(','.join(

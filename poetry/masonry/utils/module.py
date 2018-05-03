@@ -6,6 +6,7 @@ class Module:
 
     def __init__(self, name, directory='.'):
         self._name = module_name(name)
+        self._in_src = False
 
         # It must exist either as a .py file or a directory, but not both
         pkg_dir = Path(directory, self._name)
@@ -19,7 +20,23 @@ class Module:
             self._path = py_file
             self._is_package = False
         else:
-            raise ValueError("No file/folder found for package {}".format(name))
+            # Searching for a src module
+            src_pkg_dir = Path(directory, 'src', self._name)
+            src_py_file = Path(directory, 'src', self._name + '.py')
+
+            if src_pkg_dir.is_dir() and src_py_file.is_file():
+                raise ValueError(
+                    "Both {} and {} exist".format(pkg_dir, py_file))
+            elif src_pkg_dir.is_dir():
+                self._in_src = True
+                self._path = src_pkg_dir
+                self._is_package = True
+            elif src_py_file.is_file():
+                self._in_src = True
+                self._path = src_py_file
+                self._is_package = False
+            else:
+                raise ValueError("No file/folder found for package {}".format(name))
 
     @property
     def name(self):  # type: () -> str
@@ -38,3 +55,6 @@ class Module:
 
     def is_package(self):  # type: () -> bool
         return self._is_package
+
+    def is_in_src(self):  # type: () -> bool
+        return self._in_src

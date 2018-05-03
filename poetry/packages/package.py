@@ -15,10 +15,11 @@ from poetry.version import parse as parse_version
 
 from .constraints.generic_constraint import GenericConstraint
 from .dependency import Dependency
+from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
 
-AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$')
+AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+)(?: <(?P<email>.+?)>)?$')
 
 
 class Package(object):
@@ -273,16 +274,37 @@ class Package(object):
                     rev=constraint.get('rev', None),
                     optional=optional,
                 )
-
-                if python_versions:
-                    dependency.python_versions = python_versions
-
-                if platform:
-                    dependency.platform = platform
             elif 'file' in constraint:
                 file_path = Path(constraint['file'])
 
-                dependency = FileDependency(file_path, base=self.cwd)
+                dependency = FileDependency(
+                    file_path,
+                    category=category,
+                    base=self.cwd
+                )
+            elif 'path' in constraint:
+                path = Path(constraint['path'])
+
+                if self.cwd:
+                    is_file = (self.cwd / path).is_file()
+                else:
+                    is_file = path.is_file()
+
+                if is_file:
+                    dependency = FileDependency(
+                        path,
+                        category=category,
+                        optional=optional,
+                        base=self.cwd
+                    )
+                else:
+                    dependency = DirectoryDependency(
+                        path,
+                        category=category,
+                        optional=optional,
+                        base=self.cwd,
+                        develop=constraint.get('develop', False)
+                    )
             else:
                 version = constraint['version']
 
@@ -293,11 +315,11 @@ class Package(object):
                     allows_prereleases=allows_prereleases
                 )
 
-                if python_versions:
-                    dependency.python_versions = python_versions
+            if python_versions:
+                dependency.python_versions = python_versions
 
-                if platform:
-                    dependency.platform = platform
+            if platform:
+                dependency.platform = platform
 
             if 'extras' in constraint:
                 for extra in constraint['extras']:

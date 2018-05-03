@@ -1,10 +1,12 @@
 import os
+import pkginfo
 import shutil
 
 from functools import cmp_to_key
 from tempfile import mkdtemp
 from typing import Dict
 from typing import List
+from typing import Union
 
 from poetry.mixology import DependencyGraph
 from poetry.mixology.conflict import Conflict
@@ -12,6 +14,7 @@ from poetry.mixology.contracts import SpecificationProvider
 from poetry.mixology.contracts import UI
 
 from poetry.packages import Dependency
+from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
 from poetry.packages import Package
 from poetry.packages import VCSDependency
@@ -22,10 +25,13 @@ from poetry.repositories import Pool
 from poetry.semver import less_than
 
 from poetry.utils._compat import Path
+from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import Venv
 
 from poetry.vcs.git import Git
+
+from .dependencies import Dependencies
 
 
 class Provider(SpecificationProvider, UI):
@@ -79,6 +85,8 @@ class Provider(SpecificationProvider, UI):
             packages = self.search_for_vcs(dependency)
         elif dependency.is_file():
             packages = self.search_for_file(dependency)
+        elif dependency.is_directory():
+            packages = self.search_for_directory(dependency)
         else:
             constraint = dependency.constraint
 
@@ -97,6 +105,7 @@ class Provider(SpecificationProvider, UI):
                 dependency.name,
                 constraint,
                 extras=dependency.extras,
+                allow_prereleases=dependency.allows_prereleases()
             )
 
             packages.sort(
@@ -175,15 +184,27 @@ class Provider(SpecificationProvider, UI):
 
                 try:
                     venv = Venv.create(self._io)
-                    output = venv.run(
-                        'python', 'setup.py',
-                        '--name', '--version'
+                    venv.run(
+                        'python', 'setup.py', 'egg_info'
                     )
-                    output = output.split('\n')
-                    name = output[-3]
-                    version = output[-2]
-                    package = Package(name, version, version)
-                    # Figure out a way to get requirements
+
+                    egg_info = list(tmp_dir.glob('*.egg-info'))[0]
+
+                    meta = pkginfo.UnpackedSDist(str(egg_info))
+
+                    if meta.requires_dist:
+                        reqs = list(meta.requires_dist)
+                    else:
+                        reqs = []
+                        requires = egg_info / 'requires.txt'
+                        if requires.exists():
+                            with requires.open() as f:
+                                reqs = parse_requires(f.read())
+
+                    package = Package(meta.name, meta.version)
+
+                    for req in reqs:
+                        package.requires.append(dependency_from_pep_508(req))
                 except Exception:
                     raise
                 finally:
@@ -219,27 +240,46 @@ class Provider(SpecificationProvider, UI):
 
         return [package]
 
-    def dependencies_for(self, package):  # type: (Package) -> List[Dependency]
-        if package.source_type in ['git', 'file']:
-            # Information should already be set
-            pass
-        else:
-            complete_package = self._pool.package(
-                package.name, package.version,
-                extras=package.requires_extras
-            )
+    def search_for_directory(self, dependency
+                             ):  # type: (DirectoryDependency) -> List[Package]
+        package = dependency.package
+        if dependency.extras:
+            for extra in dependency.extras:
+                if extra in package.extras:
+                    for dep in package.extras[extra]:
+                        dep.activate()
 
-            # Update package with new information
-            package.requires = complete_package.requires
-            package.description = complete_package.description
-            package.python_versions = complete_package.python_versions
-            package.platform = complete_package.platform
-            package.hashes = complete_package.hashes
+        return [package]
+
+    def dependencies_for(self, package
+                         ):  # type: (Package) -> Union[List[Dependency], Dependencies]
+        if package.source_type in ['git', 'file', 'directory']:
+            # Information should already be set
+            return [
+                r for r in package.requires
+                if not r.is_optional()
+                   and r.name not in self.UNSAFE_PACKAGES
+            ]
+        else:
+            return Dependencies(package, self)
+
+    def _dependencies_for(self, package):  # type: (Package) -> List[Dependency]
+        complete_package = self._pool.package(
+            package.name, package.version,
+            extras=package.requires_extras
+        )
+
+        # Update package with new information
+        package.requires = complete_package.requires
+        package.description = complete_package.description
+        package.python_versions = complete_package.python_versions
+        package.platform = complete_package.platform
+        package.hashes = complete_package.hashes
 
         return [
             r for r in package.requires
             if not r.is_optional()
-            and r.name not in self.UNSAFE_PACKAGES
+               and r.name not in self.UNSAFE_PACKAGES
         ]
 
     def is_requirement_satisfied_by(self,

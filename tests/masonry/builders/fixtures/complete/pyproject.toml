@@ -24,6 +24,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.6"
 cleo = "^0.6"
+cachy = { version = "^0.2.0", extras = ["msgpack"] }
 
 pendulum = { version = "^1.4", optional = true }
 

@@ -56,8 +56,8 @@ poetry new my-folder --name my-package
 
 ## install
 
-The `install` command reads the `pyproject.toml` file from the current directory, resolves the dependencies,
-and installs them.
+The `install` command reads the `pyproject.toml` file from the current project,
+resolves the dependencies, and installs them.
 
 ```bash
 poetry install

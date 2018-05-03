@@ -34,6 +34,7 @@ from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
+from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
 from poetry.version.markers import InvalidMarker
 
@@ -77,22 +78,21 @@ class PyPiRepository(Repository):
         super(PyPiRepository, self).__init__()
 
     def find_packages(self,
-                      name,             # type: str
-                      constraint=None,  # type: Union[Constraint, str, None]
-                      extras=None       # type: Union[list, None]
+                      name,                    # type: str
+                      constraint=None,         # type: Union[Constraint, str, None]
+                      extras=None,             # type: Union[list, None]
+                      allow_prereleases=False  # type: bool
                       ):  # type: (...) -> List[Package]
         """
         Find packages on the remote server.
         """
-        packages = []
-
         if constraint is not None and not isinstance(constraint, BaseConstraint):
             version_parser = VersionParser()
             constraint = version_parser.parse_constraints(constraint)
 
         info = self.get_package_info(name)
 
-        versions = []
+        packages = []
 
         for version, release in info['releases'].items():
             if not release:
@@ -105,18 +105,19 @@ class PyPiRepository(Repository):
                 )
                 continue
 
+            package = Package(name, version)
+
+            if package.is_prerelease() and not allow_prereleases:
+                continue
+
             if (
                 not constraint
                 or (constraint and constraint.matches(Constraint('=', version)))
             ):
-                versions.append(version)
+                if extras is not None:
+                    package.requires_extras = extras
 
-        for version in versions:
-            package = Package(name, version)
-            if extras is not None:
-                package.requires_extras = extras
-
-            packages.append(package)
+                packages.append(package)
 
         self._log(
             '{} packages found for {} {}'.format(
@@ -424,7 +425,7 @@ class PyPiRepository(Repository):
                 requires = egg_info / 'requires.txt'
                 if requires.exists():
                     with requires.open() as f:
-                        return self._parse_requires(f.read())
+                        return parse_requires(f.read())
 
                 return
 
@@ -441,47 +442,6 @@ class PyPiRepository(Repository):
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-
-    def _parse_requires(self, requires):  # type: (str) -> Union[list, None]
-        lines = requires.split('\n')
-
-        requires_dist = []
-        in_section = False
-        current_marker = None
-        for line in lines:
-            line = line.strip()
-            if not line:
-                if in_section:
-                    in_section = False
-
-                continue
-
-            if line.startswith('['):
-                # extras or conditional dependencies
-                marker = line.lstrip('[').rstrip(']')
-                if ':' not in marker:
-                    extra, marker = marker, None
-                else:
-                    extra, marker = marker.split(':')
-
-                if extra:
-                    if marker:
-                        marker = '{} and extra == "{}"'.format(marker, extra)
-                    else:
-                        marker = 'extra == "{}"'.format(extra)
-
-                if marker:
-                    current_marker = marker
-
-                continue
-
-            if current_marker:
-                line = '{}; {}'.format(line, current_marker)
-
-            requires_dist.append(line)
-
-        if requires_dist:
-            return requires_dist
 
     def _log(self, msg, level='info'):
         getattr(logger, level)('{}: {}'.format(self._name, msg))

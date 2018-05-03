@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "demo"
+version = "0.1.2"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+# Requirements
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.4"
+pendulum = '^1.4'
+
+[tool.poetry.dev-dependencies]
