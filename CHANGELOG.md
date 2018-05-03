@@ -11,6 +11,7 @@
 - Added support for directory dependencies.
 - Added support for `src/` layout for packages.
 - Added automatic detection of `.venv` virtualenvs.
+- Added the `--username` and `--password` options to the `publish` command.
 
 ### Changed
 
