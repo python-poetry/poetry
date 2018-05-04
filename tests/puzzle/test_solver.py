@@ -587,3 +587,27 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo):
 
     op = ops[2]
     assert op.package.requirements == {}
+
+
+def test_solver_sub_dependencies_with_not_supported_python_version(solver, repo, package):
+    package.python_versions = '^3.5'
+
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.0')
+    package_b.python_versions = '<2.0'
+
+    package_a.add_dependency('B', {'version': '^1.0', 'python': '<2.0'})
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    dependency_a = get_dependency('A')
+    request = [
+        dependency_a,
+    ]
+
+    ops = solver.solve(request)
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_a},
+    ])

@@ -279,7 +279,9 @@ class Provider(SpecificationProvider, UI):
         return [
             r for r in package.requires
             if not r.is_optional()
-               and r.name not in self.UNSAFE_PACKAGES
+            and self._package.python_constraint.matches(r.python_constraint)
+            and self._package.platform_constraint.matches(package.platform_constraint)
+            and r.name not in self.UNSAFE_PACKAGES
         ]
 
     def is_requirement_satisfied_by(self,
