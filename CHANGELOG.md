@@ -1,6 +1,6 @@
 # Change Log
 
-[Unreleased]
+## [Unreleased]
 
 ### Added
 
@@ -28,6 +28,7 @@ commands in project subdirectories.
 - Fixed handling of extras when resolving dependencies.
 - Fixed `self:update` command for some installation.
 - Fixed handling of extras when building projects.
+- Fixed handling of wildcard dependencies wen packaging/publishing.
 
 
 ## [0.8.6] - 2018-04-30

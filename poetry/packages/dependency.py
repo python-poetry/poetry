@@ -132,7 +132,7 @@ class Dependency(object):
             requirement += ' ({})'.format(','.join(
                 [str(c).replace(' ', '') for c in self.constraint.constraints]
             ))
-        else:
+        elif str(self.constraint) != '*':
             requirement += ' ({})'.format(str(self.constraint).replace(' ', ''))
 
         # Markers
