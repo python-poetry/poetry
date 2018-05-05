@@ -17,7 +17,7 @@ class AddCommand(VenvCommand):
         { --path= : The path to a dependency. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --optional : Add as an optional dependency. }
-        { --allow-prereleases : Accept prereleases. }
+        { --allows-prereleases : Accept prereleases. }
         { --dry-run : Outputs the operations but will not execute anything
                      (implicitly enables --verbose). }
     """
