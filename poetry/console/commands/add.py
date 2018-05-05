@@ -71,7 +71,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         else:
             requirements = self._determine_requirements(
                 packages,
-                allow_prereleases=self.option('allow-prereleases')
+                allow_prereleases=self.option('allows-prereleases')
             )
             requirements = self._format_requirements(requirements)
 
@@ -97,7 +97,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             if self.option('optional'):
                 constraint['optional'] = True
 
-            if self.option('allow-prereleases'):
+            if self.option('allows-prereleases'):
                 constraint['allows-prereleases'] = True
 
             if self.option('extras'):
