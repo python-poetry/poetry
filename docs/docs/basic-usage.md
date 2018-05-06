@@ -82,7 +82,7 @@ It will automatically find a suitable version constraint.
     poetry config settings.pypi.fallback false
     ```
     
-    In this case you will need to specify the missing dependencies in you `pyproject.toml`
+    In this case you will need to specify the missing dependencies in your `pyproject.toml`
     file.
     
     Any case of missing dependencies should be reported to
