@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.9.0] - 2018-05-07
 
 ### Added
 
@@ -303,7 +303,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.8.6...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.9.0...master
+[0.9.0]: https://github.com/sdispater/poetry/releases/tag/0.9.0
 [0.8.6]: https://github.com/sdispater/poetry/releases/tag/0.8.6
 [0.8.5]: https://github.com/sdispater/poetry/releases/tag/0.8.5
 [0.8.4]: https://github.com/sdispater/poetry/releases/tag/0.8.4
