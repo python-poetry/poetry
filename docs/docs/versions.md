@@ -94,6 +94,20 @@ Here's an example of specifying that you want to use the latest commit on a bran
 requests = { git = "https://github.com/kennethreitz/requests.git", branch = "next" }
 ```
 
+### `path` dependencies
+
+To depend on a library located in a local directory or file,
+you can use the `path` property:
+
+```toml
+[tool.poetry.dependencies]
+# directory
+my-package = { path = "../my-package/" }
+
+# file
+my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
+```
+
 ### Python restricted dependencies
 
 You can also specify that a dependency should be installed only for specific Python versions:

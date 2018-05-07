@@ -157,3 +157,7 @@ or create a brand new one for you to always work isolated from your global Pytho
 
     The created virtualenv will use the Python executable for which
     `poetry` has been installed.
+    
+    What this means is if you project is Python 2.7 only you should
+    install `poetry` for you global Python 2.7 executable and use
+    it to manage your project.

@@ -45,6 +45,9 @@ If you do not specify the password you will be prompted to write it.
     ```bash
     poetry config http-basic.pypi username password
     ```
+    
+You can also specify the username and password when using the `publish` command
+with the `--username` and `--password` options.
 
 ### Install dependencies from a private repository
 
