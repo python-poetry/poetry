@@ -18,7 +18,7 @@
 - Dependency resolution caches now use sha256 hashes.
 - Changed CLI error style.
 - Improved debugging of dependency resolution.
-- Poetry now attemps to find `pyproject.toml` not only in the directory it was
+- Poetry now attempts to find `pyproject.toml` not only in the directory it was
 invoked in, but in all its parents up to the root. This allows to run Poetry
 commands in project subdirectories.
 - Made the email address for authors optional.
@@ -55,6 +55,7 @@ commands in project subdirectories.
 - Fixed a bug where dependencies constraints in lock were too strict.
 - Fixed unicode error in `search` command for Python 2.7.
 - Fixed error with git dependencies.
+
 
 ## [0.8.3] - 2018-04-16
 
