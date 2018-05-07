@@ -25,9 +25,9 @@
       }
     }
   ],
-  "chef_app_error": [
+  "chef-app-error": [
     {
-      "name": "chef_app_error",
+      "name": "chef-app-error",
       "version": "1.0.0",
       "dependencies": {
         "berkshelf": "~2.0",

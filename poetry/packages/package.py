@@ -11,6 +11,7 @@ from poetry.semver.version_parser import VersionParser
 from poetry.spdx import license_by_id
 from poetry.spdx import License
 from poetry.utils._compat import Path
+from poetry.utils.helpers import canonicalize_name
 from poetry.version import parse as parse_version
 
 from .constraints.generic_constraint import GenericConstraint
@@ -61,7 +62,7 @@ class Package(object):
         Creates a new in memory package.
         """
         self._pretty_name = name
-        self._name = name.lower()
+        self._name = canonicalize_name(name)
 
         self._version = str(parse_version(version))
         self._pretty_version = pretty_version or version

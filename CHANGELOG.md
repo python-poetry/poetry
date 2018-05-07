@@ -30,6 +30,7 @@ commands in project subdirectories.
 - Fixed handling of extras when building projects.
 - Fixed handling of wildcard dependencies wen packaging/publishing.
 - Fixed an error when adding a new packages with prereleases in lock file.
+- Fixed packages name normalization.
 
 
 ## [0.8.6] - 2018-04-30

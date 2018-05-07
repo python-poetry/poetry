@@ -5,6 +5,7 @@ from poetry.semver.constraints import EmptyConstraint
 from poetry.semver.constraints import MultiConstraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
+from poetry.utils.helpers import canonicalize_name
 
 from .constraints.generic_constraint import GenericConstraint
 
@@ -18,7 +19,7 @@ class Dependency(object):
                  category='main',          # type: str
                  allows_prereleases=False  # type: bool
                  ):
-        self._name = name.lower()
+        self._name = canonicalize_name(name)
         self._pretty_name = name
         self._parser = VersionParser()
 
