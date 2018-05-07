@@ -153,9 +153,14 @@ class Installer:
                             to_fix = False
 
                     if to_fix:
-                        fixed.append(
-                            Dependency(candidate.name, candidate.version)
+                        dependency = Dependency(
+                            candidate.name,
+                            candidate.version,
+                            optional=candidate.optional,
+                            category=candidate.category,
+                            allows_prereleases=candidate.is_prerelease()
                         )
+                        fixed.append(dependency)
 
             solver = Solver(
                 self._package,

@@ -572,3 +572,80 @@ def test_run_installs_with_local_directory(installer, locker, repo, package):
     assert locker.written_data == expected
 
     assert len(installer.installer.installs) == 3
+
+
+def test_run_with_prereleases(installer, locker, repo, package):
+    locker.locked(True)
+    locker.mock_lock_data({
+        'package': [{
+            'name': 'A',
+            'version': '1.0a2',
+            'category': 'main',
+            'optional': False,
+            'platform': '*',
+            'python-versions': '*',
+            'checksum': []
+        }],
+        'metadata': {
+            'python-versions': '*',
+            'platform': '*',
+            'content-hash': '123456789',
+            'hashes': {
+                'A': [],
+            }
+        }
+    })
+    package_a = get_package('A', '1.0a2')
+    package_b = get_package('B', '1.1')
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    package.add_dependency('A', {'version': '*', 'allows-prereleases': True})
+    package.add_dependency('B', '^1.1')
+
+    installer.update(True)
+    installer.whitelist({'B': '^1.1'})
+
+    installer.run()
+    expected = fixture('with-prereleases')
+
+    assert locker.written_data == expected
+
+
+def test_run_changes_category_if_needed(installer, locker, repo, package):
+    locker.locked(True)
+    locker.mock_lock_data({
+        'package': [{
+            'name': 'A',
+            'version': '1.0',
+            'category': 'dev',
+            'optional': True,
+            'platform': '*',
+            'python-versions': '*',
+            'checksum': []
+        }],
+        'metadata': {
+            'python-versions': '*',
+            'platform': '*',
+            'content-hash': '123456789',
+            'hashes': {
+                'A': [],
+            }
+        }
+    })
+    package_a = get_package('A', '1.0')
+    package_b = get_package('B', '1.1')
+    package_b.add_dependency('A', '^1.0')
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    package.add_dependency('A', {'version': '^1.0', 'optional': True}, category='dev')
+    package.add_dependency('B', '^1.1')
+
+    installer.update(True)
+    installer.whitelist({'B': '^1.1'})
+
+    installer.run()
+    expected = fixture('with-category-change')
+
+    assert locker.written_data == expected

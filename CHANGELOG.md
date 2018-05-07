@@ -29,6 +29,7 @@ commands in project subdirectories.
 - Fixed `self:update` command for some installation.
 - Fixed handling of extras when building projects.
 - Fixed handling of wildcard dependencies wen packaging/publishing.
+- Fixed an error when adding a new packages with prereleases in lock file.
 
 
 ## [0.8.6] - 2018-04-30
