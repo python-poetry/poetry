@@ -110,6 +110,7 @@ class Package(object):
         self._platform_constraint = EmptyConstraint()
 
         self.cwd = None
+        self.root_dir = None
 
     @property
     def name(self):
@@ -303,7 +304,7 @@ class Package(object):
                         path,
                         category=category,
                         optional=optional,
-                        base=self.cwd,
+                        base=self.root_dir,
                         develop=constraint.get('develop', False)
                     )
             else:

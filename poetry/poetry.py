@@ -97,6 +97,7 @@ class Poetry:
         version = local_config['version']
         package = Package(name, version, version)
         package.cwd = Path(cwd)
+        package.root_dir = poetry_file.parent
 
         for author in local_config['authors']:
             package.authors.append(author)
