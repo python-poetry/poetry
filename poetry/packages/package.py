@@ -109,7 +109,6 @@ class Package(object):
         self._platform = '*'
         self._platform_constraint = EmptyConstraint()
 
-        self.cwd = None
         self.root_dir = None
 
     @property
@@ -282,13 +281,13 @@ class Package(object):
                 dependency = FileDependency(
                     file_path,
                     category=category,
-                    base=self.cwd
+                    base=self.root_dir
                 )
             elif 'path' in constraint:
                 path = Path(constraint['path'])
 
-                if self.cwd:
-                    is_file = (self.cwd / path).is_file()
+                if self.root_dir:
+                    is_file = (self.root_dir / path).is_file()
                 else:
                     is_file = path.is_file()
 
@@ -297,7 +296,7 @@ class Package(object):
                         path,
                         category=category,
                         optional=optional,
-                        base=self.cwd
+                        base=self.root_dir
                     )
                 else:
                     dependency = DirectoryDependency(
