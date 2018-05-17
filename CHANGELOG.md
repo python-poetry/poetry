@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+
+- Added a new, more efficient dependency resolver.
+
+
 ## [0.9.0] - 2018-05-07
 
 ### Added
