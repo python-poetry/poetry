@@ -2,16 +2,14 @@ import re
 from typing import Union
 
 from poetry.packages import Package
-from poetry.semver.comparison import less_than
-from poetry.semver.helpers import normalize_version
-from poetry.semver.version_parser import VersionParser
+from poetry.semver.semver import parse_constraint
+from poetry.semver.semver import Version
 
 
 class VersionSelector(object):
 
-    def __init__(self, pool, parser=VersionParser()):
+    def __init__(self, pool):
         self._pool = pool
-        self._parser = parser
 
     def find_best_candidate(self,
                             package_name,                 # type: str
@@ -23,7 +21,7 @@ class VersionSelector(object):
         returns the latest Package that matches
         """
         if target_package_version:
-            constraint = self._parser.parse_constraints(target_package_version)
+            constraint = parse_constraint(target_package_version)
         else:
             constraint = None
 
@@ -39,7 +37,7 @@ class VersionSelector(object):
                 continue
 
             # Select highest version of the two
-            if less_than(package.version, candidate.version):
+            if package.version < candidate.version:
                 package = candidate
 
         return package
@@ -47,26 +45,24 @@ class VersionSelector(object):
     def find_recommended_require_version(self, package):
         version = package.version
 
-        return self._transform_version(version, package.pretty_version)
+        return self._transform_version(version.text, package.pretty_version)
 
     def _transform_version(self, version, pretty_version):
         # attempt to transform 2.1.1 to 2.1
         # this allows you to upgrade through minor versions
         try:
-            parts = normalize_version(version).split('.')
+            parsed = Version.parse(version)
+            parts = [parsed.major, parsed.minor, parsed.patch]
         except ValueError:
             return pretty_version
 
         # check to see if we have a semver-looking version
-        if len(parts) == 4 and re.match('^0\D?', parts[3]):
+        if len(parts) == 3:
             # remove the last parts (the patch version number and any extra)
-            if parts[0] == '0':
-                del parts[3]
-            else:
-                del parts[3]
+            if parts[0] != 0:
                 del parts[2]
 
-            version = '.'.join(parts)
+            version = '.'.join([str(p) for p in parts])
         else:
             return pretty_version
 

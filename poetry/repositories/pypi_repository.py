@@ -30,8 +30,8 @@ from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
 from poetry.semver.constraints import Constraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
-from poetry.semver.version_parser import VersionParser
+from poetry.semver.semver import parse_constraint
+from poetry.semver.semver import VersionConstraint
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
@@ -86,9 +86,8 @@ class PyPiRepository(Repository):
         """
         Find packages on the remote server.
         """
-        if constraint is not None and not isinstance(constraint, BaseConstraint):
-            version_parser = VersionParser()
-            constraint = version_parser.parse_constraints(constraint)
+        if constraint is not None and not isinstance(constraint, VersionConstraint):
+            constraint = parse_constraint(constraint)
 
         info = self.get_package_info(name)
 
@@ -112,7 +111,7 @@ class PyPiRepository(Repository):
 
             if (
                 not constraint
-                or (constraint and constraint.matches(Constraint('=', version)))
+                or (constraint and constraint.allows(package.version))
             ):
                 if extras is not None:
                     package.requires_extras = extras

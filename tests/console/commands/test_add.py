@@ -21,7 +21,7 @@ def test_add_no_constraint(app, repo, installer):
 Using version ^0.2.0 for cachy
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 1 install, 0 updates, 0 removals
@@ -57,7 +57,7 @@ def test_add_constraint(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 1 install, 0 updates, 0 removals
@@ -94,7 +94,7 @@ def test_add_constraint_dependencies(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -125,7 +125,7 @@ def test_add_git_constraint(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -163,7 +163,7 @@ def test_add_git_constraint_with_poetry(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -194,7 +194,7 @@ def test_add_file_constraint_wheel(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -232,7 +232,7 @@ def test_add_file_constraint_sdist(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -281,7 +281,7 @@ def test_add_constraint_with_extras(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals

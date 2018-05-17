@@ -9,6 +9,7 @@ from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.io import NullIO
 from poetry.packages import Locker as BaseLocker
+from poetry.packages import ProjectPackage
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
@@ -98,7 +99,7 @@ def setup():
 
 @pytest.fixture()
 def package():
-    return get_package('root', '1.0')
+    return ProjectPackage('root', '1.0')
 
 
 @pytest.fixture()
@@ -195,7 +196,7 @@ def test_run_whitelist_add(installer, locker, repo, package):
     package.add_dependency('B', '^1.0')
 
     installer.update(True)
-    installer.whitelist({'B': '^1.1'})
+    installer.whitelist(['B'])
 
     installer.run()
     expected = fixture('with-dependencies')
@@ -241,7 +242,7 @@ def test_run_whitelist_remove(installer, locker, repo, package):
     package.add_dependency('A', '~1.0')
 
     installer.update(True)
-    installer.whitelist({'B': '^1.1'})
+    installer.whitelist(['B'])
 
     installer.run()
     expected = fixture('remove')
@@ -643,7 +644,7 @@ def test_run_changes_category_if_needed(installer, locker, repo, package):
     package.add_dependency('B', '^1.1')
 
     installer.update(True)
-    installer.whitelist({'B': '^1.1'})
+    installer.whitelist(['B'])
 
     installer.run()
     expected = fixture('with-category-change')

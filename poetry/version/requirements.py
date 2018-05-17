@@ -17,7 +17,7 @@ from pyparsing import (
 from pyparsing import ZeroOrMore, Word, Optional, Regex, Combine
 from pyparsing import Literal as L  # noqa
 
-from poetry.semver.version_parser import VersionParser
+from poetry.semver.semver import parse_constraint
 
 from .markers import MARKER_EXPR, Marker
 
@@ -221,7 +221,7 @@ class Requirement(object):
         if not constraint:
             constraint = '*'
 
-        self.constraint = VersionParser().parse_constraints(constraint)
+        self.constraint = parse_constraint(constraint)
         self.pretty_constraint = constraint
 
         self.marker = req.marker if req.marker else None

@@ -8,6 +8,8 @@ from poetry.semver.constraints import Constraint
 from poetry.semver.constraints import EmptyConstraint
 from poetry.semver.helpers import parse_stability
 from poetry.semver.version_parser import VersionParser
+from poetry.semver.semver import Version
+from poetry.semver.semver import parse_constraint
 from poetry.spdx import license_by_id
 from poetry.spdx import License
 from poetry.utils._compat import Path
@@ -43,20 +45,6 @@ class Package(object):
         }
     }
 
-    STABILITY_STABLE = 0
-    STABILITY_RC = 5
-    STABILITY_BETA = 10
-    STABILITY_ALPHA = 15
-    STABILITY_DEV = 20
-
-    stabilities = {
-        'stable': STABILITY_STABLE,
-        'rc': STABILITY_RC,
-        'beta': STABILITY_BETA,
-        'alpha': STABILITY_ALPHA,
-        'dev': STABILITY_DEV,
-    }
-
     def __init__(self, name, version, pretty_version=None):
         """
         Creates a new in memory package.
@@ -64,13 +52,14 @@ class Package(object):
         self._pretty_name = name
         self._name = canonicalize_name(name)
 
-        self._version = str(parse_version(version))
-        self._pretty_version = pretty_version or version
+        if not isinstance(version, Version):
+            self._version = Version.parse(version)
+            self._pretty_version = pretty_version or version
+        else:
+            self._version = version
+            self._pretty_version = pretty_version or self._version.text
 
         self.description = ''
-
-        self._stability = parse_stability(version)
-        self._dev = self._stability == 'dev'
 
         self._authors = []
 
@@ -89,8 +78,6 @@ class Package(object):
         self.extras = {}
         self.requires_extras = []
 
-        self._parser = VersionParser()
-
         self.category = 'main'
         self.hashes = []
         self.optional = False
@@ -105,7 +92,7 @@ class Package(object):
         self.classifiers = []
 
         self._python_versions = '*'
-        self._python_constraint = self._parser.parse_constraints('*')
+        self._python_constraint = parse_constraint('*')
         self._platform = '*'
         self._platform_constraint = EmptyConstraint()
 
@@ -129,7 +116,10 @@ class Package(object):
 
     @property
     def unique_name(self):
-        return self.name + '-' + self._version
+        if self.is_root():
+            return self._name
+
+        return self.name + '-' + self._version.text
 
     @property
     def pretty_string(self):
@@ -137,7 +127,7 @@ class Package(object):
     
     @property
     def full_pretty_version(self):
-        if not self._dev and self.source_type not in ['hg', 'git']:
+        if not self.is_prerelease() and self.source_type not in ['hg', 'git']:
             return self._pretty_version
 
         # if source reference is a sha1 hash -- truncate
@@ -158,6 +148,10 @@ class Package(object):
     @property
     def author_email(self):  # type: () -> str
         return self._get_author()['email']
+
+    @property
+    def all_requires(self):
+        return self.requires + self.dev_requires
 
     def _get_author(self):  # type: () -> dict
         if not self._authors:
@@ -183,7 +177,7 @@ class Package(object):
     @python_versions.setter
     def python_versions(self, value):
         self._python_versions = value
-        self._python_constraint = self._parser.parse_constraints(value)
+        self._python_constraint = parse_constraint(value)
 
     @property
     def python_constraint(self):
@@ -220,19 +214,18 @@ class Package(object):
         classifiers = copy.copy(self.classifiers)
 
         # Automatically set python classifiers
-        parser = VersionParser()
         if self.python_versions == '*':
-            python_constraint = parser.parse_constraints('~2.7 || ^3.4')
+            python_constraint = parse_constraint('~2.7 || ^3.4')
         else:
             python_constraint = self.python_constraint
 
         for version in sorted(self.AVAILABLE_PYTHONS):
             if len(version) == 1:
-                constraint = parser.parse_constraints(version + '.*')
+                constraint = parse_constraint(version + '.*')
             else:
-                constraint = Constraint('=', version)
+                constraint = Version.parse(version)
 
-            if python_constraint.matches(constraint):
+            if python_constraint.allows_any(constraint):
                 classifiers.append(
                     'Programming Language :: Python :: {}'.format(version)
                 )
@@ -245,11 +238,11 @@ class Package(object):
 
         return sorted(classifiers)
 
-    def is_dev(self):
-        return self._dev
-
     def is_prerelease(self):
-        return self._stability != 'stable'
+        return self._version.is_prerelease()
+
+    def is_root(self):
+        return False
 
     def add_dependency(self,
                        name,             # type: str
@@ -334,6 +327,9 @@ class Package(object):
             self.requires.append(dependency)
 
         return dependency
+
+    def to_dependency(self):
+        return Dependency(self.name, self._version)
 
     def __hash__(self):
         return hash((self._name, self._version))

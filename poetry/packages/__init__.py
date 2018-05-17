@@ -8,6 +8,7 @@ from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .locker import Locker
 from .package import Package
+from .project_package import ProjectPackage
 from .utils.link import Link
 from .utils.utils import convert_markers
 from .utils.utils import group_markers

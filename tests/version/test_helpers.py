@@ -1,10 +1,9 @@
 from poetry.version.helpers import format_python_constraint
-from poetry.semver.version_parser import VersionParser
+from poetry.semver.semver import parse_constraint
 
 
 def test_format_python_constraint():
-    parser = VersionParser()
-    constraint = parser.parse_constraints('~2.7 || ^3.6')
+    constraint = parse_constraint('~2.7 || ^3.6')
 
     result = format_python_constraint(constraint)
 

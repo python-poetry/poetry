@@ -1,13 +1,13 @@
 from typing import List
 
-from poetry.mixology import Resolver
-from poetry.mixology.dependency_graph import DependencyGraph
-from poetry.mixology.exceptions import ResolverError
+from poetry.pub import resolve_version
+from poetry.pub.failure import SolveFailure
 from poetry.packages.constraints.generic_constraint import GenericConstraint
 
-from poetry.semver.version_parser import VersionParser
+from poetry.semver.semver import parse_constraint
 
 from .exceptions import SolverProblemError
+
 from .operations import Install
 from .operations import Uninstall
 from .operations import Update
@@ -25,31 +25,27 @@ class Solver:
         self._locked = locked
         self._io = io
 
-    def solve(self, requested, fixed=None):  # type: (...) -> List[Operation]
+    def solve(self, use_latest=None):  # type: (...) -> List[Operation]
         provider = Provider(self._package, self._pool, self._io)
-        resolver = Resolver(provider, provider)
-
-        base = None
-        if fixed is not None:
-            base = DependencyGraph()
-            for fixed_req in fixed:
-                base.add_vertex(fixed_req.name, fixed_req, True)
+        locked = {}
+        for package in self._locked.packages:
+            locked[package.name] = package
 
         try:
-            graph = resolver.resolve(requested, base=base)
-        except ResolverError as e:
+            result = resolve_version(self._package, provider, locked=locked, use_latest=use_latest)
+        except SolveFailure as e:
             raise SolverProblemError(e)
 
-        packages = [v.payload for v in graph.vertices.values()]
+        packages = result.packages
+        requested = self._package.all_requires
 
-        # Setting info
-        for vertex in graph.vertices.values():
-            category, optional, python, platform = self._get_tags_for_vertex(
-                vertex, requested
+        for package in packages:
+            category, optional, python, platform = self._get_tags_for_package(
+                package, packages, requested
             )
 
-            vertex.payload.category = category
-            vertex.payload.optional = optional
+            package.category = category
+            package.optional = optional
 
             # If requirements are empty, drop them
             requirements = {}
@@ -59,7 +55,7 @@ class Solver:
             if platform is not None and platform != '*':
                 requirements['platform'] = platform
 
-            vertex.payload.requirements = requirements
+            package.requirements = requirements
 
         operations = []
         for package in packages:
@@ -101,7 +97,7 @@ class Solver:
 
                 operations.append(op)
 
-        requested_names = [r.name for r in requested]
+        requested_names = [r.name for r in self._package.all_requires]
 
         return sorted(
             operations,
@@ -111,45 +107,43 @@ class Solver:
             )
         )
 
-    def _get_tags_for_vertex(self, vertex, requested):
+    def _get_tags_for_package(self, package, packages, requested):
         category = 'dev'
         optional = True
-        python_version = None
-        platform = None
 
-        if not vertex.incoming_edges:
+        root = None
+        for dep in requested:
+            if dep.name == package.name:
+                root = dep
+
+        origins = []
+        for pkg in packages:
+            for dep in pkg.all_requires:
+                if dep.name == package.name:
+                    origins.append((pkg, dep))
+
+        if root is not None and not origins:
             # Original dependency
-            for req in requested:
-                if vertex.payload.name == req.name:
-                    category = req.category
-                    optional = req.is_optional()
+            category = root.category
+            optional = root.is_optional()
 
-                    python_version = str(req.python_constraint)
-
-                    platform = str(req.platform_constraint)
-
-                    break
+            python_version = str(root.python_constraint)
+            platform = str(root.platform_constraint)
 
             return category, optional, python_version, platform
 
-        parser = VersionParser()
         python_versions = []
         platforms = []
-        for edge in vertex.incoming_edges:
-            python_version = None
-            platform = None
-            for req in edge.origin.payload.requires:
-                if req.name == vertex.payload.name:
-                    python_version = req.python_versions
-                    platform = req.platform
 
-                    break
+        for pkg, dep in origins:
+            python_version = dep.python_versions
+            platform = dep.platform
 
             (top_category,
              top_optional,
              top_python_version,
-             top_platform) = self._get_tags_for_vertex(
-                edge.origin, requested
+             top_platform) = self._get_tags_for_package(
+                pkg, packages, requested
             )
 
             if top_category == 'main':
@@ -160,10 +154,10 @@ class Solver:
             # Take the most restrictive constraints
             if top_python_version is not None:
                 if python_version is not None:
-                    previous = parser.parse_constraints(python_version)
-                    current = parser.parse_constraints(top_python_version)
+                    previous = parse_constraint(python_version)
+                    current = parse_constraint(top_python_version)
 
-                    if top_python_version != '*' and previous.matches(current):
+                    if previous.allows_all(current):
                         python_versions.append(top_python_version)
                     else:
                         python_versions.append(python_version)
@@ -191,15 +185,15 @@ class Solver:
         else:
             # Find the least restrictive constraint
             python_version = python_versions[0]
-            previous = parser.parse_constraints(python_version)
+            previous = parse_constraint(python_version)
             for constraint in python_versions[1:]:
-                current = parser.parse_constraints(constraint)
+                current = parse_constraint(constraint)
 
                 if python_version == '*':
                     continue
                 elif constraint == '*':
                     python_version = constraint
-                elif current.matches(previous):
+                elif current.allows_all(previous):
                     python_version = constraint
 
         if not platforms:

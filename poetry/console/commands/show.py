@@ -253,14 +253,14 @@ lists all packages available."""
         )
 
     def get_update_status(self, latest, package):
-        from poetry.semver import statisfies
+        from poetry.semver.semver import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
             return 'up-to-date'
 
-        constraint = '^' + package.pretty_version
+        constraint = parse_constraint('^' + package.pretty_version)
 
-        if latest.version and statisfies(latest.version, constraint):
+        if latest.version and constraint.allows(latest.version):
             # It needs an immediate semver-compliant upgrade
             return 'semver-safe-update'
 

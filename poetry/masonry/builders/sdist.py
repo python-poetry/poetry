@@ -64,7 +64,7 @@ class SdistBuilder(Builder):
             target_dir.mkdir(parents=True)
 
         target = target_dir / '{}-{}.tar.gz'.format(
-            self._package.pretty_name, self._package.version
+            self._package.pretty_name, self._meta.version
         )
         gz = GzipFile(target.as_posix(), mode='wb')
         tar = tarfile.TarFile(target.as_posix(), mode='w', fileobj=gz,
@@ -72,7 +72,7 @@ class SdistBuilder(Builder):
 
         try:
             tar_dir = '{}-{}'.format(
-                self._package.pretty_name, self._package.version
+                self._package.pretty_name, self._meta.version
             )
 
             files_to_add = self.find_files_to_add(exclude_build=False)

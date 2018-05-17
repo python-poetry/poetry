@@ -1,7 +1,6 @@
 from poetry.packages import Dependency
 from poetry.packages import Package
 
-from poetry.semver.helpers import normalize_version
 from poetry.utils._compat import Path
 
 
@@ -9,7 +8,7 @@ FIXTURE_PATH = Path(__file__).parent / 'fixtures'
 
 
 def get_package(name, version):
-    return Package(name, normalize_version(version), version)
+    return Package(name, version)
 
 
 def get_dependency(name,

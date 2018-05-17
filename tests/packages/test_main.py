@@ -14,7 +14,7 @@ def test_dependency_from_pep_508_with_version():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
 
 
 def test_dependency_from_pep_508_with_parens():
@@ -22,7 +22,7 @@ def test_dependency_from_pep_508_with_parens():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
 
 
 def test_dependency_from_pep_508_with_constraint():
@@ -30,7 +30,7 @@ def test_dependency_from_pep_508_with_constraint():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '>= 2.12.0.0, != 2.17.*, < 3.0.0.0'
+    assert str(dep.constraint) == '>=2.12.0,<2.17.0 || >=2.18.0,<3.0'
 
 
 def test_dependency_from_pep_508_with_extras():
@@ -38,7 +38,7 @@ def test_dependency_from_pep_508_with_extras():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
     assert dep.extras == ['foo', 'bar']
 
 
@@ -50,7 +50,7 @@ def test_dependency_from_pep_508_with_python_version():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
     assert dep.extras == []
     assert dep.python_versions == '~2.7 || ~2.6'
 
@@ -63,7 +63,7 @@ def test_dependency_from_pep_508_with_single_python_version():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
     assert dep.extras == []
     assert dep.python_versions == '~2.7'
 
@@ -76,7 +76,7 @@ def test_dependency_from_pep_508_with_platform():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
     assert dep.extras == []
     assert dep.python_versions == '*'
     assert dep.platform == 'win32 || darwin'
@@ -92,7 +92,7 @@ def test_dependency_from_pep_508_complex():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
     assert dep.extras == ['foo']
     assert dep.python_versions == '>=2.7 !=3.2.*'
     assert dep.platform == 'win32 || darwin'
@@ -106,7 +106,7 @@ def test_dependency_python_version_in():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
     assert dep.python_versions == '3.3.* || 3.4.* || 3.5.*'
 
 
@@ -118,7 +118,7 @@ def test_dependency_platform_in():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
     assert dep.platform == 'win32 || darwin'
 
 
@@ -127,7 +127,7 @@ def test_dependency_with_extra():
     dep = dependency_from_pep_508(name)
 
     assert dep.name == 'requests'
-    assert str(dep.constraint) == '== 2.18.0.0'
+    assert str(dep.constraint) == '2.18.0'
 
     assert len(dep.extras) == 1
     assert dep.extras[0] == 'security'

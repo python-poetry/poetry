@@ -3,27 +3,9 @@ from functools import cmp_to_key
 from .comparison import less_than
 from .constraints import Constraint
 from .helpers import normalize_version
-from .version_parser import VersionParser
 
 SORT_ASC = 1
 SORT_DESC = -1
-
-_parser = VersionParser()
-
-
-def statisfies(version, constraints):
-    """
-    Determine if given version satisfies given constraints.
-
-    :type version: str
-    :type constraints: str
-
-    :rtype: bool
-    """
-    provider = Constraint('==', normalize_version(version))
-    constraints = _parser.parse_constraints(constraints)
-
-    return constraints.matches(provider)
 
 
 def satisfied_by(versions, constraints):

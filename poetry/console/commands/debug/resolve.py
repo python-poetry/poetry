@@ -19,23 +19,22 @@ class DebugResolveCommand(Command):
 
     def handle(self):
         from poetry.packages import Dependency
+        from poetry.packages import ProjectPackage
         from poetry.puzzle import Solver
         from poetry.repositories.repository import Repository
-        from poetry.semver.version_parser import VersionParser
+        from poetry.semver.semver import parse_constraint
 
         packages = self.argument('package')
 
         if not packages:
             package = self.poetry.package
-            dependencies = package.requires + package.dev_requires
         else:
             requirements = self._determine_requirements(packages)
             requirements = self._format_requirements(requirements)
 
             # validate requirements format
-            parser = VersionParser()
             for constraint in requirements.values():
-                parser.parse_constraints(constraint)
+                parse_constraint(constraint)
 
             dependencies = []
             for name, constraint in requirements.items():
@@ -43,15 +42,23 @@ class DebugResolveCommand(Command):
                     Dependency(name, constraint)
                 )
 
+            package = ProjectPackage(
+                self.poetry.package.name,
+                self.poetry.package.version
+            )
+            package.python_versions = self.poetry.package.python_versions
+            for dep in dependencies:
+                package.requires.append(dep)
+
         solver = Solver(
-            self.poetry.package,
+            package,
             self.poetry.pool,
             Repository(),
             Repository(),
             self.output
         )
 
-        ops = solver.solve(dependencies)
+        ops = solver.solve()
 
         self.line('')
         self.line('Resolution results:')

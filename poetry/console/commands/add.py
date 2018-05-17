@@ -33,7 +33,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
     def handle(self):
         from poetry.installation import Installer
-        from poetry.semver.version_parser import VersionParser
+        from poetry.semver.semver import parse_constraint
 
         packages = self.argument('name')
         is_dev = self.option('dev')
@@ -76,9 +76,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             requirements = self._format_requirements(requirements)
 
             # validate requirements format
-            parser = VersionParser()
             for constraint in requirements.values():
-                parser.parse_constraints(constraint)
+                parse_constraint(constraint)
 
         for name, constraint in requirements.items():
             constraint = {

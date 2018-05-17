@@ -1,6 +1,5 @@
-from poetry.semver.constraints import Constraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
-from poetry.semver.version_parser import VersionParser
+from poetry.semver.semver import parse_constraint
+from poetry.semver.semver import VersionConstraint
 
 from poetry.version import parse as parse_version
 
@@ -20,10 +19,9 @@ class Repository(BaseRepository):
 
     def package(self, name, version, extras=None):
         name = name.lower()
-        version = str(parse_version(version))
 
         for package in self.packages:
-            if name == package.name and package.version == version:
+            if name == package.name and package.version.text == version:
                 return package
 
     def find_packages(self, name, constraint=None,
@@ -37,15 +35,15 @@ class Repository(BaseRepository):
         if constraint is None:
             constraint = '*'
 
-        if not isinstance(constraint, BaseConstraint):
-            parser = VersionParser()
-            constraint = parser.parse_constraints(constraint)
+        if not isinstance(constraint, VersionConstraint):
+            constraint = parse_constraint(constraint)
 
         for package in self.packages:
             if name == package.name:
-                pkg_constraint = Constraint('==', package.version)
+                if package.is_prerelease() and not allow_prereleases:
+                    continue
 
-                if constraint is None or constraint.matches(pkg_constraint):
+                if constraint is None or constraint.allows(package.version):
                     for dep in package.requires:
                         for extra in extras:
                             if extra not in package.extras:
