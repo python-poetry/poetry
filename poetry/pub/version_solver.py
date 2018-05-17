@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import time
 
 from typing import Dict
@@ -11,7 +12,6 @@ from poetry.semver.semver import VersionRange
 from .failure import SolveFailure
 from .incompatibility import Incompatibility
 from .incompatibility_cause import ConflictCause
-from .incompatibility_cause import DependencyCause
 from .incompatibility_cause import NoVersionsCause
 from .incompatibility_cause import PackageNotFoundCause
 from .incompatibility_cause import RootCause

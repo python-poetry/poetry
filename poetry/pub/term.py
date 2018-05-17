@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 from poetry.packages import Dependency
 
 from .set_relation import SetRelation
 
 
-class Term:
+class Term(object):
     """
     A statement about a package which is true or false for a given selection of
     package versions.

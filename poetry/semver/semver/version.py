@@ -365,6 +365,9 @@ class Version(VersionRange):
             and self._build == other.build
         )
 
+    def __ne__(self, other):
+        return not self == other
+
     def __str__(self):
         return self._text
 

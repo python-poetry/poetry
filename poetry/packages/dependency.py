@@ -282,6 +282,9 @@ class Dependency(object):
 
         return self._name == other.name and self._constraint == other.constraint
 
+    def __ne__(self, other):
+        return not self == other
+
     def __hash__(self):
         return hash((self._name, self._pretty_constraint))
 
