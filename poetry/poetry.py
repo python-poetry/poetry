@@ -96,7 +96,7 @@ class Poetry:
         name = local_config['name']
         version = local_config['version']
         package = Package(name, version, version)
-        package.cwd = Path(cwd)
+        package.root_dir = poetry_file.parent
 
         for author in local_config['authors']:
             package.authors.append(author)
@@ -109,7 +109,7 @@ class Poetry:
         package.classifiers = local_config.get('classifiers', [])
 
         if 'readme' in local_config:
-            package.readme = Path(cwd) / local_config['readme']
+            package.readme = Path(poetry_file.parent) / local_config['readme']
 
         if 'platform' in local_config:
             package.platform = local_config['platform']
