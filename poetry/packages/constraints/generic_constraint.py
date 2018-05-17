@@ -1,9 +1,9 @@
 import operator
 import re
 
-from poetry.semver.constraints import EmptyConstraint
-from poetry.semver.constraints import MultiConstraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
+from .base_constraint import BaseConstraint
+from .empty_constraint import EmptyConstraint
+from .multi_constraint import MultiConstraint
 
 
 class GenericConstraint(BaseConstraint):

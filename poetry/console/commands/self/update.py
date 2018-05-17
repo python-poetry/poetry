@@ -22,7 +22,6 @@ class SelfUpdateCommand(Command):
     def handle(self):
         from poetry.__version__ import __version__
         from poetry.repositories.pypi_repository import PyPiRepository
-        from poetry.semver.comparison import less_than
 
         version = self.argument('version')
         if not version:
@@ -38,7 +37,7 @@ class SelfUpdateCommand(Command):
             key=cmp_to_key(
                 lambda x, y:
                 0 if x.version == y.version
-                else -1 * int(less_than(x.version, y.version) or -1)
+                else int(x.version < y.version or -1)
             )
         )
 

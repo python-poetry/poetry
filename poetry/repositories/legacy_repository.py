@@ -19,9 +19,9 @@ import poetry.packages
 from poetry.locations import CACHE_DIR
 from poetry.packages import Package
 from poetry.packages import dependency_from_pep_508
-from poetry.semver.constraints import Constraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
-from poetry.semver.version_parser import VersionParser
+from poetry.semver import parse_constraint
+from poetry.semver import Version
+from poetry.semver import VersionConstraint
 from poetry.utils._compat import Path
 from poetry.version.markers import InvalidMarker
 
@@ -70,9 +70,8 @@ class LegacyRepository(PyPiRepository):
         packages = []
 
         if constraint is not None and not isinstance(constraint,
-                                                     BaseConstraint):
-            version_parser = VersionParser()
-            constraint = version_parser.parse_constraints(constraint)
+                                                     VersionConstraint):
+            constraint = parse_constraint(constraint)
 
         key = name
         if constraint:
@@ -88,9 +87,14 @@ class LegacyRepository(PyPiRepository):
                 if version in versions:
                     continue
 
+                try:
+                    version = Version.parse(version)
+                except ValueError:
+                    continue
+
                 if (
                     not constraint
-                    or (constraint and constraint.matches(Constraint('=', version)))
+                    or (constraint and constraint.allows(version))
                 ):
                     versions.append(version)
 

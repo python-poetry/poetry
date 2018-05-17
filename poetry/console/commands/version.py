@@ -28,10 +28,9 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
     def handle(self):
         version = self.argument('version')
 
-        if version in self.RESERVED:
-            version = self.increment_version(
-                self.poetry.package.pretty_version, version
-            )
+        version = self.increment_version(
+            self.poetry.package.pretty_version, version
+        )
 
         self.line(
             'Bumping version from <comment>{}</> to <info>{}</>'.format(
@@ -46,88 +45,42 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         self.poetry.file.write(content)
 
     def increment_version(self, version, rule):
-        from poetry.semver.version_parser import VersionParser
+        from poetry.semver import Version
 
-        parser = VersionParser()
-        version_regex = (
-            'v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?{}(?:\+[^\s]+)?'
-        ).format(parser._modifier_regex)
-
-        m = re.match(version_regex, version)
-        if not m:
+        try:
+            version = Version.parse(version)
+        except ValueError:
             raise ValueError(
                 'The project\'s version doesn\'t seem to follow semver'
             )
 
-        if m.group(3):
-            index = 2
-        elif m.group(2):
-            index = 1
-        else:
-            index = 0
-
-        matches = m.groups()[:index+1]
-        base = '.'.join(matches)
-        extra_matches = list(g or '' for g in m.groups()[4:])
-        extras = version[len('.'.join(matches)):]
-        increment = 1
-        is_prerelease = (extra_matches[0] or extra_matches[1]) != ''
-        bump_prerelease = rule in {
-            'premajor', 'preminor', 'prepatch', 'prerelease'
-        }
-        position = -1
-
         if rule in {'major', 'premajor'}:
-            if m.group(1) != '0' or m.group(2) != '0' or not is_prerelease:
-                position = 0
+            new = version.next_major
+            if rule == 'premajor':
+                new = new.first_prerelease
         elif rule in {'minor', 'preminor'}:
-            if m.group(2) != '0' or not is_prerelease:
-                position = 1
+            new = version.next_minor
+            if rule == 'preminor':
+                new = new.first_prerelease
         elif rule in {'patch', 'prepatch'}:
-            if not is_prerelease:
-                position = 2
-        elif rule == 'prerelease' and not is_prerelease:
-            position = 2
-
-        if position != -1:
-            extra_matches[0] = None
-
-            base = parser._manipulate_version_string(
-                matches,
-                position,
-                increment=increment
-            )
-
-        if bump_prerelease:
-            # We bump the prerelease part of the version
-            sep = ''
-            if not extra_matches[0]:
-                extra_matches[0] = 'a'
-                extra_matches[1] = '0'
-                sep = ''
+            new = version.next_patch
+            if rule == 'prepatch':
+                new = new.first_prerelease
+        elif rule == 'prerelease':
+            if version.is_prerelease():
+                pre = version.prerelease
+                new_prerelease = int(pre[1]) + 1
+                new = Version.parse(
+                    '{}.{}.{}-{}'.format(
+                        version.major,
+                        version.minor,
+                        version.patch,
+                        '.'.join([pre[0], str(new_prerelease)])
+                    )
+                )
             else:
-                if extras.startswith(('.', '_', '-')):
-                    sep = extras[0]
-
-                prerelease = extra_matches[1]
-                if not prerelease:
-                    prerelease = '.1'
-
-                psep = ''
-                if prerelease.startswith(('.', '-')):
-                    psep = prerelease[0]
-                    prerelease = prerelease[1:]
-
-                new_prerelease = str(int(prerelease) + 1)
-                extra_matches[1] = '{}{}'.format(psep, new_prerelease)
-
-            extras = '{}{}{}{}'.format(
-                sep,
-                extra_matches[0],
-                extra_matches[1],
-                extra_matches[2]
-            )
+                new = version.next_patch.first_prerelease
         else:
-            extras = ''
+            new = rule
 
-        return '.'.join(base.split('.')[:max(index, position)+1]) + extras
+        return new

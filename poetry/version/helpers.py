@@ -1,5 +1,5 @@
-from poetry.semver.semver import parse_constraint
-from poetry.semver.semver import VersionUnion
+from poetry.semver import parse_constraint
+from poetry.semver import VersionUnion
 
 PYTHON_VERSION = [
     '2.7.*',

@@ -253,7 +253,7 @@ lists all packages available."""
         )
 
     def get_update_status(self, latest, package):
-        from poetry.semver.semver import parse_constraint
+        from poetry.semver import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
             return 'up-to-date'

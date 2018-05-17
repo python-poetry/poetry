@@ -1,10 +1,10 @@
 from typing import List
 
-from poetry.pub import resolve_version
-from poetry.pub.failure import SolveFailure
+from poetry.mixology import resolve_version
+from poetry.mixology.failure import SolveFailure
 from poetry.packages.constraints.generic_constraint import GenericConstraint
 
-from poetry.semver.semver import parse_constraint
+from poetry.semver import parse_constraint
 
 from .exceptions import SolverProblemError
 

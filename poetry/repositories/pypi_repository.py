@@ -29,9 +29,8 @@ from requests import session
 from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
-from poetry.semver.constraints import Constraint
-from poetry.semver.semver import parse_constraint
-from poetry.semver.semver import VersionConstraint
+from poetry.semver import parse_constraint
+from poetry.semver import VersionConstraint
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
@@ -79,7 +78,7 @@ class PyPiRepository(Repository):
 
     def find_packages(self,
                       name,                    # type: str
-                      constraint=None,         # type: Union[Constraint, str, None]
+                      constraint=None,         # type: Union[VersionConstraint, str, None]
                       extras=None,             # type: Union[list, None]
                       allow_prereleases=False  # type: bool
                       ):  # type: (...) -> List[Package]

@@ -1,14 +1,14 @@
 import poetry.packages
 
-from poetry.semver.constraints import EmptyConstraint
-from poetry.semver.constraints import MultiConstraint
-from poetry.semver.semver import parse_constraint
-from poetry.semver.semver import Version
-from poetry.semver.semver import VersionConstraint
-from poetry.semver.semver import VersionUnion
+from poetry.semver import parse_constraint
+from poetry.semver import Version
+from poetry.semver import VersionConstraint
+from poetry.semver import VersionUnion
 from poetry.utils.helpers import canonicalize_name
 
+from .constraints.empty_constraint import EmptyConstraint
 from .constraints.generic_constraint import GenericConstraint
+from .constraints.multi_constraint import MultiConstraint
 
 
 class Dependency(object):

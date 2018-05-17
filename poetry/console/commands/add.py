@@ -33,7 +33,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
     def handle(self):
         from poetry.installation import Installer
-        from poetry.semver.semver import parse_constraint
+        from poetry.semver import parse_constraint
 
         packages = self.argument('name')
         is_dev = self.option('dev')

@@ -17,7 +17,7 @@ from pyparsing import (
 from pyparsing import ZeroOrMore, Word, Optional, Regex, Combine
 from pyparsing import Literal as L  # noqa
 
-from poetry.semver.semver import parse_constraint
+from poetry.semver import parse_constraint
 
 from .markers import MARKER_EXPR, Marker
 

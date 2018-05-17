@@ -13,7 +13,7 @@ from base64 import urlsafe_b64encode
 from io import StringIO
 
 from poetry.__version__ import __version__
-from poetry.semver.semver import parse_constraint
+from poetry.semver import parse_constraint
 from poetry.utils._compat import Path
 
 from ..utils.helpers import normalize_file_permissions

@@ -4,18 +4,14 @@ import re
 
 from typing import Union
 
-from poetry.semver.constraints import Constraint
-from poetry.semver.constraints import EmptyConstraint
-from poetry.semver.helpers import parse_stability
-from poetry.semver.version_parser import VersionParser
-from poetry.semver.semver import Version
-from poetry.semver.semver import parse_constraint
+from poetry.semver import Version
+from poetry.semver import parse_constraint
 from poetry.spdx import license_by_id
 from poetry.spdx import License
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
-from poetry.version import parse as parse_version
 
+from .constraints.empty_constraint import EmptyConstraint
 from .constraints.generic_constraint import GenericConstraint
 from .dependency import Dependency
 from .directory_dependency import DirectoryDependency

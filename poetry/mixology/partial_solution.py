@@ -16,7 +16,7 @@ class PartialSolution:
     # what's true for the eventual set of package versions that will comprise the
     # total solution.
     #
-    # See https://github.com/dart-lang/pub/tree/master/doc/solver.md#partial-solution.
+    # See https://github.com/dart-lang/mixology/tree/master/doc/solver.md#partial-solution.
     """
 
     def __init__(self):

@@ -1,9 +1,8 @@
-import re
 from typing import Union
 
 from poetry.packages import Package
-from poetry.semver.semver import parse_constraint
-from poetry.semver.semver import Version
+from poetry.semver import parse_constraint
+from poetry.semver import Version
 
 
 class VersionSelector(object):

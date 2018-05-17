@@ -22,7 +22,7 @@ class DebugResolveCommand(Command):
         from poetry.packages import ProjectPackage
         from poetry.puzzle import Solver
         from poetry.repositories.repository import Repository
-        from poetry.semver.semver import parse_constraint
+        from poetry.semver import parse_constraint
 
         packages = self.argument('package')
 

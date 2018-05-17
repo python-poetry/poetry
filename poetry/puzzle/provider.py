@@ -11,11 +11,6 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-from poetry.mixology import DependencyGraph
-from poetry.mixology.conflict import Conflict
-from poetry.mixology.contracts import SpecificationProvider
-from poetry.mixology.contracts import UI
-
 from poetry.packages import Dependency
 from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
@@ -23,11 +18,11 @@ from poetry.packages import Package
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
 
-from poetry.pub.incompatibility import Incompatibility
-from poetry.pub.incompatibility_cause import DependencyCause
-from poetry.pub.incompatibility_cause import PlatformCause
-from poetry.pub.incompatibility_cause import PythonCause
-from poetry.pub.term import Term
+from poetry.mixology.incompatibility import Incompatibility
+from poetry.mixology.incompatibility_cause import DependencyCause
+from poetry.mixology.incompatibility_cause import PlatformCause
+from poetry.mixology.incompatibility_cause import PythonCause
+from poetry.mixology.term import Term
 
 from poetry.repositories import Pool
 
@@ -61,7 +56,7 @@ class Indicator(ProgressIndicator):
         return '{:.1f}s'.format(elapsed)
 
 
-class Provider(SpecificationProvider, UI):
+class Provider:
 
     UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
 
@@ -74,10 +69,8 @@ class Provider(SpecificationProvider, UI):
         self._pool = pool
         self._io = io
         self._python_constraint = package.python_constraint
-        self._base_dg = DependencyGraph()
         self._search_for = {}
-
-        super(Provider, self).__init__(debug=self._io.is_debug())
+        self._is_debugging = self._io.is_debug()
 
     @property
     def pool(self):  # type: () -> Pool
@@ -90,6 +83,9 @@ class Provider(SpecificationProvider, UI):
     @property
     def name_for_locking_dependency_source(self):  # type: () -> str
         return 'pyproject.lock'
+
+    def is_debugging(self):
+        return self._is_debugging
 
     def name_for(self, dependency):  # type: (Dependency) -> str
         """
@@ -344,44 +340,6 @@ class Provider(SpecificationProvider, UI):
             and self._package.platform_constraint.matches(package.platform_constraint)
             and r.name not in self.UNSAFE_PACKAGES
         ]
-
-    def is_requirement_satisfied_by(self,
-                                    requirement,  # type: Dependency
-                                    activated,    # type: DependencyGraph
-                                    package       # type: Package
-                                    ):  # type: (...) -> bool
-        """
-        Determines whether the given requirement is satisfied by the given
-        spec, in the context of the current activated dependency graph.
-        """
-        if isinstance(requirement, Package):
-            return requirement == package
-
-        if not requirement.accepts(package):
-            return False
-
-        if package.is_prerelease() and not requirement.allows_prereleases():
-            vertex = activated.vertex_named(package.name)
-
-            if not any([r.allows_prereleases() for r in vertex.requirements]):
-                return False
-
-        return (
-            self._package.python_constraint.matches(package.python_constraint)
-            and self._package.platform_constraint.matches(package.platform_constraint)
-        )
-
-    def sort_dependencies(self,
-                          dependencies,  # type: List[Dependency]
-                          activated,     # type: DependencyGraph
-                          conflicts      # type: Dict[str, List[Conflict]]
-                          ):  # type: (...) -> List[Dependency]
-        return sorted(dependencies, key=lambda d: [
-            0 if activated.vertex_named(d.name).payload else 1,
-            0 if activated.vertex_named(d.name).root else 1,
-            0 if d.allows_prereleases() else 1,
-            0 if d.name in conflicts else 1
-        ])
 
     # UI
 

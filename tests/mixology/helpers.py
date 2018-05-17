@@ -1,6 +1,6 @@
 from poetry.packages import Package
-from poetry.pub.failure import SolveFailure
-from poetry.pub.version_solver import VersionSolver
+from poetry.mixology.failure import SolveFailure
+from poetry.mixology.version_solver import VersionSolver
 
 
 def add_to_repo(repository, name, version, deps=None):

@@ -6,8 +6,8 @@ from typing import List
 from typing import Union
 
 from poetry.packages import Dependency
-from poetry.semver.semver import Version
-from poetry.semver.semver import VersionRange
+from poetry.semver import Version
+from poetry.semver import VersionRange
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility

@@ -126,7 +126,7 @@ class Version(VersionRange):
 
     @property
     def first_prerelease(self):  # type: () -> Version
-        return Version(self.major, self.minor, self.patch, '0')
+        return Version.parse('{}.{}.{}-alpha.0'.format(self.major, self.minor, self.patch))
 
     @property
     def min(self):

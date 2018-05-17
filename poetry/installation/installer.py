@@ -15,8 +15,8 @@ from poetry.puzzle.operations.operation import Operation
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.semver.semver import parse_constraint
-from poetry.semver.semver import Version
+from poetry.semver import parse_constraint
+from poetry.semver import Version
 from poetry.utils.helpers import canonicalize_name
 
 from .base_installer import BaseInstaller
