@@ -13,6 +13,7 @@ from requests_toolbelt.multipart import (
 )
 
 from poetry.__version__ import __version__
+from poetry.utils.helpers import normalize_version
 
 from ..metadata import Metadata
 
@@ -178,20 +179,21 @@ class Uploader:
 
     def _do_upload(self, session, url):
         dist = self._poetry.file.parent / 'dist'
+        version = normalize_version(self._package.version.text)
         packages = dist.glob(
-            '{}-{}*'.format(self._package.name, self._package.version)
+            '{}-{}*'.format(self._package.name, version)
         )
         files = (
             i for i in packages if (
                 i.match(
                     '{}-{}-*.whl'.format(
-                        self._package.name, self._package.version
+                        self._package.name, version
                     )
                 )
                 or
                 i.match(
                     '{}-{}.tar.gz'.format(
-                        self._package.name, self._package.version
+                        self._package.name, version
                     )
                 )
         )
