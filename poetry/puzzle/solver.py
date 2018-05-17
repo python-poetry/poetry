@@ -107,7 +107,7 @@ class Solver:
             )
         )
 
-    def _get_tags_for_package(self, package, packages, requested):
+    def _get_tags_for_package(self, package, packages, requested, original=None):
         category = 'dev'
         optional = True
 
@@ -119,6 +119,10 @@ class Solver:
         origins = []
         for pkg in packages:
             for dep in pkg.all_requires:
+                if original and original.name == pkg.name:
+                    # Circular dependency
+                    continue
+
                 if dep.name == package.name:
                     origins.append((pkg, dep))
 
@@ -143,7 +147,7 @@ class Solver:
              top_optional,
              top_python_version,
              top_platform) = self._get_tags_for_package(
-                pkg, packages, requested
+                pkg, packages, requested, original=package
             )
 
             if top_category == 'main':
