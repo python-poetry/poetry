@@ -318,7 +318,7 @@ class VersionRange(VersionConstraint):
             if not ranges:
                 return current
 
-            return VersionUnion.of(*ranges, current)
+            return VersionUnion.of(*(ranges + [current]))
 
         raise ValueError('Unknown VersionConstraint type {}.'.format(other))
 

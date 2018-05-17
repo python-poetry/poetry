@@ -152,12 +152,12 @@ class Version(VersionRange):
 
         text = text.rstrip('.')
 
-        major = int(match[1])
-        minor = int(match[2]) if match[2] else None
-        patch = int(match[3]) if match[3] else None
+        major = int(match.group(1))
+        minor = int(match.group(2)) if match.group(2) else None
+        patch = int(match.group(3)) if match.group(3) else None
 
-        pre = match[4]
-        build = match[5]
+        pre = match.group(4)
+        build = match.group(5)
 
         if build:
             build = build.lstrip('+')
