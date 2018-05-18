@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed handling of package names with dots. (Thanks to [bertjwregeer](https://github.com/bertjwregeer))
+- Fixed path dependencies being resolved from the current path instead of the `pyproject.toml` file. (Thanks to [radix](https://github.com/radix))
+
+
 ## [0.9.0] - 2018-05-07
 
 ### Added
