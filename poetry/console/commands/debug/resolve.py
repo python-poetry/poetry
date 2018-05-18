@@ -11,6 +11,7 @@ class DebugResolveCommand(Command):
 
     debug:resolve
         { package?* : packages to resolve. }
+        { --E|extras=* : Extras to activate for the dependency. }
     """
 
     _loggers = [
@@ -38,9 +39,11 @@ class DebugResolveCommand(Command):
 
             dependencies = []
             for name, constraint in requirements.items():
-                dependencies.append(
-                    Dependency(name, constraint)
-                )
+                dep = Dependency(name, constraint)
+                for ex in self.option('extras'):
+                    dep.extras.append(ex)
+
+                dependencies.append(dep)
 
             package = ProjectPackage(
                 self.poetry.package.name,

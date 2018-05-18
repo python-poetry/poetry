@@ -24,7 +24,10 @@ class VersionSelector(object):
         else:
             constraint = None
 
-        candidates = self._pool.find_packages(package_name, constraint)
+        candidates = self._pool.find_packages(
+            package_name, constraint,
+            allow_prereleases=allow_prereleases
+        )
 
         if not candidates:
             return False
@@ -61,7 +64,9 @@ class VersionSelector(object):
             if parts[0] != 0:
                 del parts[2]
 
-            version = '.'.join([str(p) for p in parts])
+            version = '.'.join(str(p) for p in parts)
+            if parsed.is_prerelease():
+                version += '-{}'.format('.'.join(str(p) for p in parsed.prerelease))
         else:
             return pretty_version
 

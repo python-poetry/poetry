@@ -123,7 +123,7 @@ class Package(object):
     
     @property
     def full_pretty_version(self):
-        if not self.is_prerelease() and self.source_type not in ['hg', 'git']:
+        if self.source_type not in ['hg', 'git']:
             return self._pretty_version
 
         # if source reference is a sha1 hash -- truncate
