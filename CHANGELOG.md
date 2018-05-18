@@ -7,6 +7,14 @@
 - Added a new, more efficient dependency resolver.
 
 
+## [0.9.1] - 2018-05-18
+
+### Fixed
+
+- Fixed handling of package names with dots. (Thanks to [bertjwregeer](https://github.com/bertjwregeer))
+- Fixed path dependencies being resolved from the current path instead of the `pyproject.toml` file. (Thanks to [radix](https://github.com/radix))
+
+
 ## [0.9.0] - 2018-05-07
 
 ### Added
@@ -310,7 +318,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.9.0...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.9.1...master
+[0.9.1]: https://github.com/sdispater/poetry/releases/tag/0.9.1
 [0.9.0]: https://github.com/sdispater/poetry/releases/tag/0.9.0
 [0.8.6]: https://github.com/sdispater/poetry/releases/tag/0.8.6
 [0.8.5]: https://github.com/sdispater/poetry/releases/tag/0.8.5

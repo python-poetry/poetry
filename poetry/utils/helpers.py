@@ -7,7 +7,7 @@ from typing import Union
 
 from poetry.version import Version
 
-_canonicalize_regex = re.compile('[-_.]+')
+_canonicalize_regex = re.compile('[-_]+')
 
 
 def canonicalize_name(name):  # type: (str) -> str
@@ -15,7 +15,7 @@ def canonicalize_name(name):  # type: (str) -> str
 
 
 def module_name(name):  # type: (str) -> str
-    return canonicalize_name(name).replace('-', '_')
+    return canonicalize_name(name).replace('.', '_').replace('-', '_')
 
 
 def normalize_version(version):  # type: (str) -> str
