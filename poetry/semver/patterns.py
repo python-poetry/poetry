@@ -2,8 +2,8 @@ import re
 
 MODIFIERS = (
     '[._-]?'
-    '((?:beta|b|c|pre|RC|alpha|a|patch|pl|p|dev)(?:(?:[.-]?\d+)*)?)?'
-    '((?:[+-]|post)?([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?'
+    '((?!post)(?:beta|b|c|pre|RC|alpha|a|patch|pl|p|dev)(?:(?:[.-]?\d+)*)?)?'
+    '([+-]?([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?'
 )
 
 _COMPLETE_VERSION = 'v?(\d+)(?:\.(\d+))?(?:\.(\d+))?{}(?:\+[^\s]+)?'.format(MODIFIERS)

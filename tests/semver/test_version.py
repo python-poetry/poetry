@@ -18,12 +18,16 @@ from poetry.semver import VersionRange
         ('1.0.0-beta.1', Version(1, 0, 0, 'beta1')),
         ('1.0.0+1', Version(1, 0, 0, None, '1')),
         ('1.0.0-1', Version(1, 0, 0, None, '1')),
+        ('1.0.0.0', Version(1, 0, 0)),
+        ('1.0.0-post', Version(1, 0, 0)),
+        ('1.0.0-post1', Version(1, 0, 0, None, '1')),
         ('0.6c', Version(0, 6, 0, 'rc0')),
         ('0.6pre', Version(0, 6, 0, 'rc0')),
     ]
 )
 def test_parse_valid(input, version):
     parsed = Version.parse(input)
+    print(parsed.build)
 
     assert parsed == version
     assert parsed.text == input

@@ -50,6 +50,8 @@ class Version(VersionRange):
         if pre is not None:
             self._prerelease = self._split_parts(pre)
 
+        build = self._normalize_build(build)
+
         self._build = []
         if build is not None:
             if build.startswith(('-', '+')):
@@ -252,6 +254,21 @@ class Version(VersionRange):
             modifier = 'alpha'
 
         return '{}.{}'.format(modifier, number)
+
+    def _normalize_build(self, build):  # type: (str) -> str
+        if not build:
+            return
+
+        if build == '0':
+            return
+
+        if build.startswith('post'):
+            build = build.lstrip('post')
+
+        if not build:
+            return
+
+        return build
 
     def _split_parts(self, text):  # type: (str) -> List[Union[str, int]]
         parts = text.split('.')
