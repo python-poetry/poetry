@@ -5,7 +5,7 @@ import tempfile
 from contextlib import contextmanager
 from typing import Union
 
-_canonicalize_regex = re.compile('[-_.]+')
+_canonicalize_regex = re.compile('[-_]+')
 
 
 def canonicalize_name(name):  # type: (str) -> str
@@ -13,7 +13,7 @@ def canonicalize_name(name):  # type: (str) -> str
 
 
 def module_name(name):  # type: (str) -> str
-    return canonicalize_name(name).replace('-', '_')
+    return canonicalize_name(name).replace('.', '_').replace('-', '_')
 
 
 @contextmanager
