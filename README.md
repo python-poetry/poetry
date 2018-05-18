@@ -96,8 +96,10 @@ fpath+=~/.zfunc
 
 ## Introduction
 
-`poetry` is a tool to handle dependencies installation, building and packaging of Python packages.
+`poetry` is a tool to handle dependency installation as well as building and packaging of Python packages.
 It only needs one file to do all of that: the new, [standardized](https://www.python.org/dev/peps/pep-0518/) `pyproject.toml`.
+
+In other words, poetry uses `pyproject.toml` to replace `setup.py`, `requirements.txt`, `setup.cfg`, `MANIFEST.in` and the newly added `Pipfile`.
 
 ```toml
 [tool.poetry]
@@ -155,7 +157,7 @@ So, `poetry` can be installed globally and used everywhere.
 
 ## Why?
 
-Packaging system and dependency management in Python is rather convoluted and hard to understand for newcomers.
+Packaging systems and dependency management in Python are rather convoluted and hard to understand for newcomers.
 Even for seasoned developers it might be cumbersome at times to create all files needed in a Python project: `setup.py`,
 `requirements.txt`, `setup.cfg`, `MANIFEST.in` and the newly added `Pipfile`.
 
@@ -164,13 +166,13 @@ dependency management, packaging and publishing.
 
 It takes inspiration in tools that exist in other languages, like `composer` (PHP) or `cargo` (Rust).
 
-And, finally, there is no reliable tool to properly resolves dependencies in Python, so I started `poetry`
+And, finally, there is no reliable tool to properly resolve dependencies in Python, so I started `poetry`
 to bring an exhaustive dependency resolver to the Python community.
 
 ### What about Pipenv?
 
 In short: I do not like the CLI it provides, or some of the decisions made,
-and I think we can do a better and more intuitive one. Here are a few things
+and I think we can make a better and more intuitive one. Here are a few things
 that I don't like.
 
 #### Dependency resolution
@@ -697,7 +699,7 @@ This section describe the scripts or executable that will be installed when inst
 poetry = 'poetry:console.run'
 ```
 
-Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+After installing a package with the above toml, `poetry` will be a global command available from the command line that will execute `console.run` in the `poetry` package.
 
 ### `extras`
 
@@ -733,7 +735,7 @@ poetry install -E mysql -E pgsql
 
 ### `plugins`
 
-Poetry supports arbitrary plugins wich work similarly to
+Poetry supports arbitrary plugins which work similarly to
 [setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
 To match the example in the setuptools documentation, you would use the following:
 
