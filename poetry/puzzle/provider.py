@@ -7,7 +7,6 @@ from cleo import ProgressIndicator
 from contextlib import contextmanager
 from functools import cmp_to_key
 from tempfile import mkdtemp
-from typing import Dict
 from typing import List
 from typing import Union
 
