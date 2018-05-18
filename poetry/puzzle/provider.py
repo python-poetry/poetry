@@ -70,7 +70,7 @@ class Provider:
         self._io = io
         self._python_constraint = package.python_constraint
         self._search_for = {}
-        self._is_debugging = self._io.is_debug()
+        self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
 
     @property
     def pool(self):  # type: () -> Pool

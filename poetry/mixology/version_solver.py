@@ -277,7 +277,7 @@ class VersionSolver:
             new_incompatibility = True
 
             partially = '' if difference is None else ' partially'
-            bang = '!'
+            bang = '<fg=red>!</>'
             self._log('{} {} is{} satisfied by {}'.format(
                 bang, most_recent_term, partially, most_recent_satisfier)
             )
