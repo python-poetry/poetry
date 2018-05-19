@@ -5,6 +5,7 @@
 ### Added
 
 - Added a new, more efficient dependency resolver.
+- Added the `--extras` and `--python` options to `debug:resolve` to help debug dependency resolution.
 
 
 ## [0.9.1] - 2018-05-18

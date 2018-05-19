@@ -12,6 +12,7 @@ class DebugResolveCommand(Command):
     debug:resolve
         { package?* : packages to resolve. }
         { --E|extras=* : Extras to activate for the dependency. }
+        { --python= : Python version(s) to use for resolution. }
     """
 
     _loggers = [
@@ -49,7 +50,8 @@ class DebugResolveCommand(Command):
                 self.poetry.package.name,
                 self.poetry.package.version
             )
-            package.python_versions = self.poetry.package.python_versions
+
+            package.python_versions = self.option('python') or self.poetry.package.python_versions
             for dep in dependencies:
                 package.requires.append(dep)
 
