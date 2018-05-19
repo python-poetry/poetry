@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import Union
+
 from poetry.packages import Dependency
 
 from .set_relation import SetRelation
@@ -8,9 +10,14 @@ class Term(object):
     """
     A statement about a package which is true or false for a given selection of
     package versions.
+
+    See https://github.com/dart-lang/pub/tree/master/doc/solver.md#term.
     """
 
-    def __init__(self, dependency, is_positive):
+    def __init__(self,
+                 dependency,  # type: Dependency
+                 is_positive  # type: bool
+                 ):
         self._dependency = dependency
         self._positive = is_positive
 
@@ -100,7 +107,7 @@ class Term(object):
                 # not foo ^1.5.0 is a superset of not foo ^1.0.0
                 return SetRelation.OVERLAPPING
 
-    def intersect(self, other):  # type: (Term) -> Term
+    def intersect(self, other):  # type: (Term) -> Union[Term, None]
         """
         Returns a Term that represents the packages
         allowed by both this term and another

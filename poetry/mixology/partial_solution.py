@@ -4,6 +4,9 @@ from typing import Any
 from typing import Dict
 from typing import List
 
+from poetry.packages import Dependency
+from poetry.packages import Package
+
 from .assignment import Assignment
 from .incompatibility import Incompatibility
 from .set_relation import SetRelation
@@ -25,7 +28,7 @@ class PartialSolution:
         self._assignments = []  # type: List[Assignment]
 
         # The decisions made for each package.
-        self._decisions = OrderedDict()  # type: Dict[str, Any]
+        self._decisions = OrderedDict()  # type: Dict[str, Package]
 
         # The intersection of all positive Assignments for each package, minus any
         # negative Assignments that refer to that package.
@@ -33,38 +36,41 @@ class PartialSolution:
         # This is derived from self._assignments.
         self._positive = OrderedDict()  # type: Dict[str, Term]
 
-        # The union of all negative [Assignment]s for each package.
+        # The union of all negative Assignments for each package.
         #
-        # If a package has any positive [Assignment]s, it doesn't appear in this
+        # If a package has any positive Assignments, it doesn't appear in this
         # map.
         #
         # This is derived from self._assignments.
         self._negative = OrderedDict()  # type: Dict[str, Dict[str, Term]]
 
+        # The number of distinct solutions that have been attempted so far.
         self._attempted_solutions = 1
+
+        # Whether the solver is currently backtracking.
         self._backtracking = False
 
     @property
-    def decisions(self):  # type: () -> Any
+    def decisions(self):  # type: () -> List[Package]
         return list(self._decisions.values())
 
     @property
-    def decision_level(self):
+    def decision_level(self):  # type: () -> int
         return len(self._decisions)
 
     @property
-    def attempted_solutions(self):
+    def attempted_solutions(self):  # type: () -> int
         return self._attempted_solutions
 
     @property
-    def unsatisfied(self):
+    def unsatisfied(self):  # type: () -> List[Dependency]
         return [
             term.dependency
             for term in self._positive.values()
             if term.dependency.name not in self._decisions
         ]
 
-    def decide(self, package):  # type: (Any) -> None
+    def decide(self, package):  # type: (Package) -> None
         """
         Adds an assignment of package as a decision
         and increments the decision level.
@@ -82,7 +88,7 @@ class PartialSolution:
         self._assign(Assignment.decision(package, self.decision_level, len(self._assignments)))
 
     def derive(self, dependency, is_positive, cause
-               ):  # type: (Any, bool, Incompatibility) -> None
+               ):  # type: (Dependency, bool, Incompatibility) -> None
         """
         Adds an assignment of package as a derivation.
         """
@@ -101,6 +107,10 @@ class PartialSolution:
         self._register(assignment)
 
     def backtrack(self, decision_level):  # type: (int) -> None
+        """
+        Resets the current decision level to decision_level, and removes all
+        assignments made after that level.
+        """
         self._backtracking = True
 
         packages = set()

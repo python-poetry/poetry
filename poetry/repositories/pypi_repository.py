@@ -257,6 +257,8 @@ class PyPiRepository(Repository):
         )
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
+        self._log('Getting info for {} ({}) from PyPI'.format(name, version), 'debug')
+
         json_data = self._get('pypi/{}/{}/json'.format(name, version))
         if json_data is None:
             raise ValueError('Package [{}] not found.'.format(name))
