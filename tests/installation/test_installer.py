@@ -650,3 +650,38 @@ def test_run_changes_category_if_needed(installer, locker, repo, package):
     expected = fixture('with-category-change')
 
     assert locker.written_data == expected
+
+
+def test_run_update_all_with_lock(installer, locker, repo, package):
+    locker.locked(True)
+    locker.mock_lock_data({
+        'package': [{
+            'name': 'A',
+            'version': '1.0',
+            'category': 'dev',
+            'optional': True,
+            'platform': '*',
+            'python-versions': '*',
+            'checksum': []
+        }],
+        'metadata': {
+            'python-versions': '*',
+            'platform': '*',
+            'content-hash': '123456789',
+            'hashes': {
+                'A': [],
+            }
+        }
+    })
+    package_a = get_package('A', '1.1')
+    repo.add_package(get_package('A', '1.0'))
+    repo.add_package(package_a)
+
+    package.add_dependency('A')
+
+    installer.update(True)
+
+    installer.run()
+    expected = fixture('update-with-lock')
+
+    assert locker.written_data == expected

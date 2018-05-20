@@ -125,7 +125,14 @@ class Installer:
     def _do_install(self, local_repo):
         locked_repository = Repository()
         if self._update:
-            if self._locker.is_locked():
+            if self._locker.is_locked() and self._whitelist:
+                # If we update with a lock file present and
+                # we have whitelisted packages (the ones we want to update)
+                # we get the lock file packages to only update
+                # what is strictly needed.
+                #
+                # Otherwise, the lock file information is irrelevant
+                # since we want to update everything.
                 locked_repository = self._locker.locked_repository(True)
 
             # Checking extras
