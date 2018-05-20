@@ -7,6 +7,10 @@
 - Added a new, more efficient dependency resolver.
 - Added the `--extras` and `--python` options to `debug:resolve` to help debug dependency resolution.
 
+### Changed
+
+- Improved the `show` command to make it easier to check if packages are properly installed.
+
 
 ## [0.9.1] - 2018-05-18
 

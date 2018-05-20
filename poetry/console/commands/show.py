@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+
 from .venv_command import VenvCommand
 
 
@@ -12,6 +14,7 @@ class ShowCommand(VenvCommand):
         { --l|latest : Show the latest version. }
         { --o|outdated : Show the latest version
                          but only for packages that are outdated. }
+        { --a|all : Show all packages (even those not compatible with current system). }
     """
 
     help = """The show command displays detailed information about a package, or
@@ -26,6 +29,11 @@ lists all packages available."""
     ]
 
     def handle(self):
+        from poetry.packages.constraints.generic_constraint import GenericConstraint
+        from poetry.repositories.installed_repository import InstalledRepository
+        from poetry.semver import Version
+        from poetry.semver import parse_constraint
+
         package = self.argument('package')
 
         if self.option('tree'):
@@ -34,23 +42,23 @@ lists all packages available."""
         if self.option('outdated'):
             self.input.set_option('latest', True)
 
-        installed_repo = self.poetry.locker.locked_repository(True)
+        locked_repo = self.poetry.locker.locked_repository(True)
 
         # Show tree view if requested
         if self.option('tree') and not package:
             requires = self.poetry.package.requires + self.poetry.package.dev_requires
-            packages = installed_repo.packages
+            packages = locked_repo.packages
             for package in packages:
                 for require in requires:
                     if package.name == require.name:
-                        self.display_package_tree(package, installed_repo)
+                        self.display_package_tree(package, locked_repo)
                         break
 
             return 0
 
         table = self.table(style='compact')
         table.get_style().set_vertical_border_char('')
-        locked_packages = installed_repo.packages
+        locked_packages = locked_repo.packages
 
         if package:
             pkg = None
@@ -63,7 +71,7 @@ lists all packages available."""
                 raise ValueError('Package {} not found'.format(package))
 
             if self.option('tree'):
-                self.display_package_tree(pkg, installed_repo)
+                self.display_package_tree(pkg, locked_repo)
 
                 return 0
 
@@ -90,13 +98,38 @@ lists all packages available."""
             return 0
 
         show_latest = self.option('latest')
+        show_all = self.option('all')
         terminal = self.get_application().terminal
         width = terminal.width
         name_length = version_length = latest_length = 0
         latest_packages = {}
+        installed_repo = InstalledRepository.load(self.venv)
+        skipped = []
+
+        platform = sys.platform
+        python = Version.parse('.'.join([str(i) for i in self._venv.version_info[:3]]))
+
         # Computing widths
         for locked in locked_packages:
-            name_length = max(name_length, len(locked.pretty_name))
+            python_constraint = parse_constraint(locked.requirements.get('python', '*'))
+            platform_constraint = GenericConstraint.parse(locked.requirements.get('platform', '*'))
+            if (
+                not python_constraint.allows(python)
+                or not platform_constraint.matches(GenericConstraint('=', platform))
+            ):
+                skipped.append(locked)
+
+                if not show_all:
+                    continue
+
+            current_length = len(locked.pretty_name)
+            if not self.output.is_decorated():
+                installed_status = self.get_installed_status(locked, installed_repo)
+
+                if installed_status == 'not-installed':
+                    current_length += 4
+
+            name_length = max(name_length, current_length)
             version_length = max(version_length, len(locked.full_pretty_version))
             if show_latest:
                 latest = self.find_latest_package(locked)
@@ -111,7 +144,24 @@ lists all packages available."""
         write_description = name_length + version_length + latest_length + 24 <= width
 
         for locked in locked_packages:
-            line = '<fg=cyan>{:{}}</>'.format(locked.pretty_name, name_length)
+            color = 'green'
+            name = locked.pretty_name
+            install_marker = ''
+            if locked in skipped:
+                if not show_all:
+                    continue
+
+                color = 'black;options=bold'
+            else:
+                installed_status = self.get_installed_status(locked, installed_repo)
+                if installed_status == 'not-installed':
+                    color = 'red'
+
+                    if not self.output.is_decorated():
+                        # Non installed in non decorated mode
+                        install_marker = ' (!)'
+
+            line = '<fg={}>{:{}}{}</>'.format(color, name, name_length - len(install_marker), install_marker)
             if write_version:
                 line += ' {:{}}'.format(
                     locked.full_pretty_version, version_length
@@ -266,3 +316,10 @@ lists all packages available."""
 
         # it needs an upgrade but has potential BC breaks so is not urgent
         return 'update-possible'
+
+    def get_installed_status(self, locked, installed_repo):
+        for package in installed_repo.packages:
+            if locked.name == package.name:
+                return 'installed'
+
+        return 'not-installed'
