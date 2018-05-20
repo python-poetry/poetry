@@ -62,7 +62,13 @@ def setup(mocker, installer, installed):
     p.return_value = '9cf87a285a2d3fbb0b9fa621997b3acc3631ed24'
 
     # Setting terminal width
-    os.environ['COLUMNS'] = 80
+    environ = dict(os.environ)
+    os.environ['COLUMNS'] = '80'
+
+    yield
+
+    os.environ.clear()
+    os.environ.update(environ)
 
 
 class Application(BaseApplication):
