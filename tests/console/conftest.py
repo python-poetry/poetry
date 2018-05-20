@@ -1,3 +1,4 @@
+import os
 import pytest
 import shutil
 
@@ -59,6 +60,9 @@ def setup(mocker, installer, installed):
     mocker.patch('poetry.vcs.git.Git.checkout', new=lambda *_: None)
     p = mocker.patch('poetry.vcs.git.Git.rev_parse')
     p.return_value = '9cf87a285a2d3fbb0b9fa621997b3acc3631ed24'
+
+    # Setting terminal width
+    os.environ['COLUMNS'] = 80
 
 
 class Application(BaseApplication):

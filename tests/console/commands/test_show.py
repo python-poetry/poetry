@@ -1,6 +1,5 @@
 from cleo.testers import CommandTester
 
-from tests.helpers import get_dependency
 from tests.helpers import get_package
 
 
