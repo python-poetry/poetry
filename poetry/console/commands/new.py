@@ -8,6 +8,7 @@ class NewCommand(Command):
     new
         { path : The path to create the project at. }
         { --name : Set the resulting package name. }
+        { --src : Use the src layout for the project. }
     """
 
     def handle(self):
@@ -15,7 +16,10 @@ class NewCommand(Command):
         from poetry.utils._compat import Path
         from poetry.vcs.git import GitConfig
 
-        layout_ = layout('standard')
+        if self.option('src'):
+            layout_ = layout('src')
+        else:
+            layout_ = layout('standard')
 
         path = Path.cwd() / Path(self.argument('path'))
         name = self.option('name')

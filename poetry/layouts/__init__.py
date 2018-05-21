@@ -1,11 +1,13 @@
 from typing import Type
 
 from .layout import Layout
+from .src import SrcLayout
 from .standard import StandardLayout
 
 
 _LAYOUTS = {
-    'standard': StandardLayout
+    'src': SrcLayout,
+    'standard': StandardLayout,
 }
 
 
