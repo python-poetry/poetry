@@ -48,8 +48,8 @@ def test_convert_dependencies():
         ]
     )
     main = [
-        'A>=1.0,<2.0.0',
-        'B>=1.0,<1.1.0',
+        'A>=1.0,<2.0',
+        'B>=1.0,<1.1',
         'C==1.2.3',
     ]
     extras = {}
@@ -70,7 +70,7 @@ def test_convert_dependencies():
         ]
     )
     main = [
-        'B>=1.0,<1.1.0',
+        'B>=1.0,<1.1',
         'C==1.2.3',
     ]
     extras = {
@@ -98,16 +98,16 @@ def test_convert_dependencies():
         ]
     )
     main = [
-        'B>=1.0,<1.1.0',
+        'B>=1.0,<1.1',
     ]
 
     extra_python = (
-        ':(python_version >= "2.7" and python_version < "2.8.0") '
-        'or (python_version >= "3.6" and python_version < "4.0.0")'
+        ':(python_version >= "2.7" and python_version < "2.8") '
+        'or (python_version >= "3.6" and python_version < "4.0")'
     )
     extra_d_dependency = (
-        'baz:(python_version >= "2.7" and python_version < "2.8.0") '
-        'or (python_version >= "3.4" and python_version < "4.0.0")'
+        'baz:(python_version >= "2.7" and python_version < "2.8") '
+        'or (python_version >= "3.4" and python_version < "4.0")'
     )
     extras = {
         extra_python: ['C==1.2.3'],
@@ -134,7 +134,7 @@ def test_make_setup():
     ]
     assert ns['install_requires'] == [
         'cachy[msgpack]>=0.2.0,<0.3.0',
-        'cleo>=0.6,<0.7.0',
+        'cleo>=0.6,<0.7',
     ]
     assert ns['entry_points'] == {
         'console_scripts': [
@@ -144,7 +144,7 @@ def test_make_setup():
     }
     assert ns['extras_require'] == {
         'time': [
-            'pendulum>=1.4,<2.0.0'
+            'pendulum>=1.4,<2.0'
         ]
     }
 

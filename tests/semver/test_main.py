@@ -120,3 +120,25 @@ def test_parse_constraint_multi(input):
 )
 def test_parse_constraints_negative_wildcard(input, constraint):
     assert parse_constraint(input) == constraint
+
+
+
+@pytest.mark.parametrize(
+    'input, expected',
+    [
+        ('1', '1'),
+        ('1.2', '1.2'),
+        ('1.2.3', '1.2.3'),
+        ('!=1', '<1 || >1'),
+        ('!=1.2', '<1.2 || >1.2'),
+        ('!=1.2.3', '<1.2.3 || >1.2.3'),
+        ('^1', '>=1,<2'),
+        ('^1.0', '>=1.0,<2.0'),
+        ('^1.0.0', '>=1.0.0,<2.0.0'),
+        ('~1', '>=1,<2'),
+        ('~1.0', '>=1.0,<1.1'),
+        ('~1.0.0', '>=1.0.0,<1.1.0'),
+    ]
+)
+def test_constraints_keep_version_precision(input, expected):
+    assert str(parse_constraint(input)) == expected

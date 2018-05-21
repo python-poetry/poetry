@@ -114,7 +114,7 @@ License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
-Requires-Python: >=3.6,<4.0.0
+Requires-Python: >=3.6,<4.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.6
@@ -123,8 +123,8 @@ Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
-Requires-Dist: cleo (>=0.6,<0.7.0)
-Requires-Dist: pendulum (>=1.4,<2.0.0); extra == "time"
+Requires-Dist: cleo (>=0.6,<0.7)
+Requires-Dist: pendulum (>=1.4,<2.0); extra == "time"
 Description-Content-Type: text/x-rst
 
 My Package

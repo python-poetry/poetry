@@ -15,27 +15,48 @@ class Version(VersionRange):
     A parsed semantic version number.
     """
 
-    def __init__(self, major, minor=None, patch=None, pre=None, build=None, text=None
-                 ):  # type: (int, int, int, Union[str, None], Union[str, None], Union[str, None])
+    def __init__(self,
+                 major,          # type: int
+                 minor=None,     # type: Union[int, None]
+                 patch=None,     # type: Union[int, None]
+                 pre=None,       # type: Union[str, None]
+                 build=None,     # type: Union[str, None]
+                 text=None,      # type: Union[str, None]
+                 precision=None  # type: Union[str, None]
+                 ):  # type: () -> None
         self._major = int(major)
-        self._precision = 1
+        self._precision = None
+        if precision is None:
+            self._precision = 1
 
         if minor is None:
             minor = 0
         else:
-            self._precision += 1
+            if self._precision is not None:
+                self._precision += 1
 
         self._minor = int(minor)
 
         if patch is None:
             patch = 0
         else:
-            self._precision += 1
+            if self._precision is not None:
+                self._precision += 1
+
+        if precision is not None:
+            self._precision = precision
 
         self._patch = int(patch)
 
         if text is None:
-            text = '{}.{}.{}'.format(major, minor, patch)
+            parts = [str(major)]
+            if self._precision >= 2 or minor != 0:
+                parts.append(str(minor))
+
+                if self._precision >= 3 or patch != 0:
+                    parts.append(str(patch))
+
+            text = '.'.join(parts)
             if pre:
                 text += '-{}'.format(pre)
 
@@ -222,13 +243,13 @@ class Version(VersionRange):
         return self
 
     def _increment_major(self):  # type: () -> Version
-        return Version(self.major + 1, 0, 0)
+        return Version(self.major + 1, 0, 0, precision=self._precision)
 
     def _increment_minor(self):  # type: () -> Version
-        return Version(self.major, self.minor + 1, 0)
+        return Version(self.major, self.minor + 1, 0, precision=self._precision)
 
     def _increment_patch(self):  # type: () -> Version
-        return Version(self.major, self.minor, self.patch + 1)
+        return Version(self.major, self.minor, self.patch + 1, precision=self._precision)
 
     def _normalize_prerelease(self, pre):  # type: (str) -> str
         if not pre:

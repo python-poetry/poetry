@@ -27,7 +27,7 @@ def test_poetry():
     assert package.keywords == ["packaging", "dependency", "poetry"]
 
     assert package.python_versions == '~2.7 || ^3.6'
-    assert str(package.python_constraint) == '>=2.7,<2.8.0 || >=3.6,<4.0.0'
+    assert str(package.python_constraint) == '>=2.7,<2.8 || >=3.6,<4.0'
 
     dependencies = {}
     for dep in package.requires:
