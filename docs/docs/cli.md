@@ -289,11 +289,7 @@ The `run` command executes the given command inside the project's virtualenv.
 poetry run python -V
 ```
 
-Note that this command has no option.
-
-## script
-
-The `script` executes one of the scripts defined in `pyproject.toml`.
+It can also executes one of the scripts defined in `pyproject.toml`.
 
 So, if you have a script defined like this:
 
@@ -305,7 +301,7 @@ my-script = "my_module:main"
 You can execute it like so:
 
 ```bash
-poetry script my-script
+poetry run my-script
 ```
 
 Note that this command has no option.

@@ -13,6 +13,7 @@
 ### Changed
 
 - Improved the `show` command to make it easier to check if packages are properly installed.
+- The `script` command has been deprecated, use `run` instead.
 - Expanded version constraints now keep the original version's precision.
 
 ### Fixed
