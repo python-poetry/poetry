@@ -6,6 +6,7 @@
 
 - Added a new, more efficient dependency resolver.
 - Added a new `init` command to generate a `pyproject.toml` file in existing projects.
+- Added a new setting `settings.virtualenvs.in-project` to make `poetry` create the project's virtualenv inside the project's directory.
 - Added the `--extras` and `--python` options to `debug:resolve` to help debug dependency resolution.
 
 ### Changed

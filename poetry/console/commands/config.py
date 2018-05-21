@@ -101,6 +101,7 @@ To remove a repository (repo is a short alias for repositories):
 
         unique_config_values = {
             'settings.virtualenvs.create': (boolean_validator, boolean_normalizer),
+            'settings.virtualenvs.in-project': (boolean_validator, boolean_normalizer),
             'settings.pypi.fallback': (boolean_validator, boolean_normalizer),
         }
 
