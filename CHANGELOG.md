@@ -14,6 +14,10 @@
 - Improved the `show` command to make it easier to check if packages are properly installed.
 - Expanded version constraints now keep the original version's precision.
 
+### Fixed
+
+- Fixed the dependency resolver selecting incompatible packages.
+
 
 ## [0.9.1] - 2018-05-18
 
