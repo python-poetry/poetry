@@ -1,5 +1,6 @@
 import sys
 
+from ...masonry.utils.module import Module
 from .venv_command import VenvCommand
 
 
@@ -25,18 +26,31 @@ class ScriptCommand(VenvCommand):
 
         module, callable_ = scripts[script].split(':')
 
+        src_in_sys_path = 'sys.path.append(\'src\'); '\
+            if self._module.is_in_src() else ''
+
         cmd = ['python', '-c']
 
         cmd += [
             '"import sys; '
             'from importlib import import_module; '
-            'sys.argv = {!r}; '
+            'sys.argv = {!r}; {}'
             'import_module(\'{}\').{}()"'.format(
-               argv, module, callable_
+               argv, src_in_sys_path, module, callable_
             )
         ]
 
         self.venv.run(*cmd, shell=True, call=True)
+
+    @property
+    def _module(self):
+        poetry = self.poetry
+        package = poetry.package
+        path = poetry.file.parent
+        module = Module(
+            package.name, path.as_posix()
+        )
+        return module
 
     def merge_application_definition(self, merge_args=True):
         if self._application is None \
