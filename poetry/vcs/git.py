@@ -9,17 +9,20 @@ from poetry.utils._compat import decode
 class GitConfig:
 
     def __init__(self):
-        config_list = decode(subprocess.check_output(
-            ['git', 'config', '-l'],
-            stderr=subprocess.STDOUT
-        ))
-
         self._config = {}
 
-        m = re.findall('(?ms)^([^=]+)=(.*?)$', config_list)
-        if m:
-            for group in m:
-                self._config[group[0]] = group[1]
+        try:
+            config_list = decode(subprocess.check_output(
+                ['git', 'config', '-l'],
+                stderr=subprocess.STDOUT
+            ))
+
+            m = re.findall('(?ms)^([^=]+)=(.*?)$', config_list)
+            if m:
+                for group in m:
+                    self._config[group[0]] = group[1]
+        except subprocess.CalledProcessError:
+            pass
 
     def get(self, key, default=None):
         return self._config.get(key, default)

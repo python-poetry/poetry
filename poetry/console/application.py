@@ -18,6 +18,7 @@ from .commands import AddCommand
 from .commands import BuildCommand
 from .commands import CheckCommand
 from .commands import ConfigCommand
+from .commands import InitCommand
 from .commands import InstallCommand
 from .commands import LockCommand
 from .commands import NewCommand
@@ -106,6 +107,7 @@ class Application(BaseApplication):
             BuildCommand(),
             CheckCommand(),
             ConfigCommand(),
+            InitCommand(),
             InstallCommand(),
             LockCommand(),
             NewCommand(),

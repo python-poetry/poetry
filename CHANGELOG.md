@@ -5,6 +5,7 @@
 ### Added
 
 - Added a new, more efficient dependency resolver.
+- Added a new `init` command to generate a `pyproject.toml` file in existing projects.
 - Added the `--extras` and `--python` options to `debug:resolve` to help debug dependency resolution.
 
 ### Changed

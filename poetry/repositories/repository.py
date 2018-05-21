@@ -80,5 +80,14 @@ class Repository(BaseRepository):
         if index is not None:
             del self._packages[index]
 
+    def search(self, query, mode=0):
+        results = []
+
+        for package in self.packages:
+            if query in package.name:
+                results.append(package)
+
+        return results
+
     def __len__(self):
         return len(self._packages)

@@ -1,5 +1,3 @@
-from poetry.utils._compat import Path
-
 from .command import Command
 
 
@@ -14,6 +12,8 @@ class NewCommand(Command):
 
     def handle(self):
         from poetry.layouts import layout
+        from poetry.utils._compat import Path
+        from poetry.vcs.git import GitConfig
 
         layout_ = layout('standard')
 
@@ -34,7 +34,15 @@ class NewCommand(Command):
 
         readme_format = 'rst'
 
-        layout_ = layout_(name, '0.1.0', readme_format=readme_format)
+        config = GitConfig()
+        author = None
+        if config.get('user.name'):
+            author = config['user.name']
+            author_email = config.get('user.email')
+            if author_email:
+                author += ' <{}>'.format(author_email)
+
+        layout_ = layout_(name, '0.1.0', author=author, readme_format=readme_format)
         layout_.create(path)
 
         self.line(
