@@ -275,7 +275,6 @@ class Provider:
         won't return incompatibilities that have already been returned by a
         previous call to _incompatibilities_for().
         """
-        # TODO: Check python versions
         if package.source_type in ['git', 'file', 'directory']:
             dependencies = package.requires
         elif package.is_root():

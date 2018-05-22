@@ -18,8 +18,19 @@ class Repository(BaseRepository):
     def package(self, name, version, extras=None):
         name = name.lower()
 
+        if extras is None:
+            extras = []
+
         for package in self.packages:
             if name == package.name and package.version.text == version:
+                # Activate extra dependencies
+                for extra in extras:
+                    if extra in package.extras:
+                        for extra_dep in package.extras[extra]:
+                            for dep in package.requires:
+                                if dep.name == extra_dep.lower():
+                                    dep.activate()
+
                 return package
 
     def find_packages(self, name, constraint=None,

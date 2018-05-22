@@ -423,11 +423,19 @@ class VersionSolver:
 
             self._incompatibilities[term.dependency.name].append(incompatibility)
 
-    def _get_locked(self, package_name):  # type: (str) -> Union[Any, None]
+    def _get_locked(self, package_name):  # type: (str) -> Union[Package, None]
         if package_name in self._use_latest:
             return
 
-        return self._locked.get(package_name)
+        locked = self._locked.get(package_name)
+        if not locked:
+            return
+
+        for dep in self._root.all_requires:
+            if dep.name == locked.name:
+                locked.requires_extras = dep.extras
+
+        return locked
 
     def _log(self, text):
         self._provider.debug(text, self._solution.attempted_solutions)

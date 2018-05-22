@@ -685,3 +685,75 @@ def test_run_update_all_with_lock(installer, locker, repo, package):
     expected = fixture('update-with-lock')
 
     assert locker.written_data == expected
+
+
+def test_run_update_with_locked_extras(installer, locker, repo, package):
+    locker.locked(True)
+    locker.mock_lock_data({
+        'package': [{
+            'name': 'A',
+            'version': '1.0',
+            'category': 'main',
+            'optional': False,
+            'platform': '*',
+            'python-versions': '*',
+            'checksum': [],
+            'dependencies': {
+                'B': '^1.0',
+                'C': '^1.0',
+            }
+        }, {
+            'name': 'B',
+            'version': '1.0',
+            'category': 'dev',
+            'optional': False,
+            'platform': '*',
+            'python-versions': '*',
+            'checksum': []
+        }, {
+            'name': 'C',
+            'version': '1.1',
+            'category': 'dev',
+            'optional': False,
+            'platform': '*',
+            'python-versions': '*',
+            'checksum': [],
+            'requirements': {
+                'python': '~2.7'
+            }
+        }],
+        'metadata': {
+            'python-versions': '*',
+            'platform': '*',
+            'content-hash': '123456789',
+            'hashes': {
+                'A': [],
+                'B': [],
+                'C': [],
+            }
+        }
+    })
+    package_a = get_package('A', '1.0')
+    package_a.extras['foo'] = ['B']
+    b_dependency = get_dependency('B', '^1.0', optional=True)
+    b_dependency.in_extras.append('foo')
+    c_dependency = get_dependency('C', '^1.0')
+    c_dependency.python_versions = '~2.7'
+    package_a.requires.append(b_dependency)
+    package_a.requires.append(c_dependency)
+
+    repo.add_package(package_a)
+    repo.add_package(get_package('B', '1.0'))
+    repo.add_package(get_package('C', '1.1'))
+    repo.add_package(get_package('D', '1.1'))
+
+    package.add_dependency('A', {'version': '^1.0', 'extras': ['foo']})
+    package.add_dependency('D', '^1.0')
+
+    installer.update(True)
+    installer.whitelist('D')
+
+    installer.run()
+    expected = fixture('update-with-locked-extras')
+
+    assert locker.written_data == expected
