@@ -417,5 +417,5 @@ class Version(VersionRange):
             (self.major,
              self.minor,
              self.patch,
-             '.'.join(self.prerelease),
-             '.'.join(self.build)))
+             '.'.join(str(p) for p in self.prerelease),
+             '.'.join(str(p) for p in self.build)))

@@ -1,31 +1,125 @@
-from pip._vendor.pkg_resources import RequirementParseError
+import cgi
+import re
 
 try:
-    from pip._internal.exceptions import InstallationError
-    from pip._internal.req import InstallRequirement
+    import urllib.parse as urlparse
 except ImportError:
-    from pip.exceptions import InstallationError
-    from pip.req import InstallRequirement
+    import urlparse
 
-from piptools.cache import DependencyCache
-from piptools.repositories import PyPIRepository
-from piptools.resolver import Resolver
-from piptools.scripts.compile import get_pip_command
+try:
+    from html import unescape
+except ImportError:
+    from html.parser import HTMLParser
+    unescape = HTMLParser().unescape
 
+from typing import Generator
+from typing import Union
+
+import html5lib
+import requests
+
+from cachecontrol import CacheControl
+from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
 
 import poetry.packages
 
 from poetry.locations import CACHE_DIR
+from poetry.masonry.publishing.uploader import wheel_file_re
 from poetry.packages import Package
 from poetry.packages import dependency_from_pep_508
+from poetry.packages.utils.link import Link
 from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionConstraint
 from poetry.utils._compat import Path
+from poetry.utils.helpers import canonicalize_name
 from poetry.version.markers import InvalidMarker
 
 from .pypi_repository import PyPiRepository
+
+
+class Page:
+
+    VERSION_REGEX = re.compile('(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)')
+
+    def __init__(self, url, content, headers):
+        self._url = url
+        encoding = None
+        if headers and "Content-Type" in headers:
+            content_type, params = cgi.parse_header(headers["Content-Type"])
+
+            if "charset" in params:
+                encoding = params['charset']
+
+        self._content = content
+        self._parsed = html5lib.parse(
+            content,
+            transport_encoding=encoding,
+            namespaceHTMLElements=False,
+        )
+
+    @property
+    def versions(self):  # type: () -> Generator[Version]
+        seen = set()
+        for link in self.links:
+            version = self.link_version(link)
+
+            if not version:
+                continue
+
+            if version in seen:
+                continue
+
+            seen.add(version)
+
+            yield version
+
+    @property
+    def links(self):  # type: () -> Generator[Link]
+        for anchor in self._parsed.findall(".//a"):
+            if anchor.get("href"):
+                href = anchor.get("href")
+                url = self.clean_link(
+                    urlparse.urljoin(self._url, href)
+                )
+                pyrequire = anchor.get('data-requires-python')
+                pyrequire = unescape(pyrequire) if pyrequire else None
+
+                yield Link(url, self, requires_python=pyrequire)
+
+    def links_for_version(self, version):  # type: (Version) -> Generator[Link]
+        for link in self.links:
+            if self.link_version(link) == version:
+                yield link
+
+    def link_version(self, link):  # type: (Link) -> Union[Version, None]
+        m = wheel_file_re.match(link.filename)
+        if m:
+            version = m.group('ver')
+        else:
+            info, ext = link.splitext()
+            match = self.VERSION_REGEX.match(info)
+            if not match:
+                return
+
+            version = match.group(2)
+
+        try:
+            version = Version.parse(version)
+        except ValueError:
+            return
+
+        return version
+
+    _clean_re = re.compile(r'[^a-z0-9$&+,/:;=?@.#%_\\|-]', re.I)
+
+    def clean_link(self, url):
+        """Makes sure a link is fully encoded.  That is, if a ' ' shows up in
+        the link, it will be rewritten to %20 (while not over-quoting
+        % or other characters)."""
+        return self._clean_re.sub(
+            lambda match: '%%%2x' % ord(match.group(0)), url)
 
 
 class LegacyRepository(PyPiRepository):
@@ -36,11 +130,7 @@ class LegacyRepository(PyPiRepository):
 
         self._packages = []
         self._name = name
-        self._url = url
-        command = get_pip_command()
-        opts, _ = command.parse_args([])
-        self._session = command._build_session(opts)
-        self._repository = PyPIRepository(opts, self._session)
+        self._url = url.rstrip('/')
         self._cache_dir = Path(CACHE_DIR) / 'cache' / 'repositories' / name
 
         self._cache = CacheManager({
@@ -59,6 +149,11 @@ class LegacyRepository(PyPiRepository):
                 }
             }
         })
+
+        self._session = CacheControl(
+            requests.session(),
+            cache=FileCache(str(self._cache_dir / '_http'))
+        )
 
     @property
     def name(self):
@@ -80,18 +175,12 @@ class LegacyRepository(PyPiRepository):
         if self._cache.store('matches').has(key):
             versions = self._cache.store('matches').get(key)
         else:
-            candidates = [str(c.version) for c in self._repository.find_all_candidates(name)]
+            page = self._get('/{}'.format(canonicalize_name(name).replace('.', '-')))
+            if page is None:
+                raise ValueError('No package named "{}"'.format(name))
 
             versions = []
-            for version in candidates:
-                if version in versions:
-                    continue
-
-                try:
-                    version = Version.parse(version)
-                except ValueError:
-                    continue
-
+            for version in page.versions:
                 if (
                     not constraint
                     or (constraint and constraint.allows(version))
@@ -101,7 +190,11 @@ class LegacyRepository(PyPiRepository):
             self._cache.store('matches').put(key, versions, 5)
 
         for version in versions:
-            packages.append(Package(name, version, extras=extras))
+            package = Package(name, version)
+            if extras is not None:
+                package.requires_extras = extras
+
+            packages.append(package)
 
         return packages
 
@@ -129,8 +222,10 @@ class LegacyRepository(PyPiRepository):
                 extras = []
 
             release_info = self.get_release_info(name, version)
+
             package = poetry.packages.Package(name, version, version)
-            for req in release_info['requires_dist']:
+            requires_dist = release_info['requires_dist'] or []
+            for req in requires_dist:
                 try:
                     dependency = dependency_from_pep_508(req)
                 except InvalidMarker:
@@ -181,43 +276,63 @@ class LegacyRepository(PyPiRepository):
         )
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
-        ireq = InstallRequirement.from_line('{}=={}'.format(name, version))
-        resolver = Resolver(
-            [ireq], self._repository,
-            cache=DependencyCache(self._cache_dir.as_posix())
-        )
-        try:
-            requirements = list(resolver._iter_dependencies(ireq))
-        except (InstallationError, RequirementParseError):
-            # setup.py egg-info error most likely
-            # So we assume no dependencies
-            requirements = []
-
-        requires = []
-        for dep in requirements:
-            constraint = str(dep.req.specifier)
-            require = dep.name
-            if constraint:
-                require += ' ({})'.format(constraint)
-
-            requires.append(require)
-
-        try:
-            hashes = resolver.resolve_hashes([ireq])[ireq]
-        except IndexError:
-            # Sometimes pip-tools fails when getting indices
-            hashes = []
-
-        hashes = [h.split(':')[1] for h in hashes]
+        page = self._get('/{}'.format(canonicalize_name(name).replace('.', '-')))
+        if page is None:
+            raise ValueError('No package named "{}"'.format(name))
 
         data = {
             'name': name,
             'version': version,
             'summary': '',
-            'requires_dist': requires,
-            'digests': hashes
+            'requires_dist': [],
+            'requires_python': [],
+            'digests': []
         }
 
-        resolver.repository.freshen_build_caches()
+        links = list(page.links_for_version(Version.parse(version)))
+        urls = {}
+        hashes = []
+        default_link = links[0]
+        for link in links:
+            if link.is_wheel:
+                urls['bdist_wheel'] = link.url
+            elif link.filename.endswith('.tar.gz'):
+                urls['sdist'] = link.url
+            elif link.filename.endswith(('.zip', '.bz2')) and 'sdist' not in urls:
+                urls['sdist'] = link.url
+
+            hash = link.hash
+            if link.hash_name == 'sha256':
+                hashes.append(hash)
+
+        data['digests'] = hashes
+
+        if not urls:
+            if default_link.is_wheel:
+                m = wheel_file_re.match(default_link.filename)
+                python = m.group('pyver')
+                platform = m.group('plat')
+                if python == 'py2.py3' and platform == 'any':
+                    urls['bdist_wheel'] = default_link.url
+            elif default_link.filename.endswith('.tar.gz'):
+                urls['sdist'] = default_link.url
+            elif default_link.filename.endswith(('.zip', '.bz2')) and 'sdist' not in urls:
+                urls['sdist'] = default_link.url
+            else:
+                return data
+
+        info = self._get_info_from_urls(urls)
+
+        data['summary'] = info['summary']
+        data['requires_dist'] = info['requires_dist']
+        data['requires_python'] = info['requires_python']
 
         return data
+
+    def _get(self, endpoint):  # type: (str) -> Union[Page, None]
+        url = self._url + endpoint
+        response = self._session.get(url)
+        if response.status_code == 404:
+            return
+
+        return Page(url, response.content, response.headers)

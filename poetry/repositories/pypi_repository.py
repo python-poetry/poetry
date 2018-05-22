@@ -286,7 +286,6 @@ class PyPiRepository(Repository):
         if (
                 self._fallback
                 and data['requires_dist'] is None
-                and not data['requires_python']
         ):
             self._log(
                 'No dependencies found, downloading archives',
@@ -328,7 +327,9 @@ class PyPiRepository(Repository):
             info = self._get_info_from_urls(urls)
 
             data['requires_dist'] = info['requires_dist']
-            data['requires_python'] = info['requires_python']
+
+            if not data['requires_python']:
+                data['requires_python'] = info['requires_python']
 
         return data
 
@@ -351,6 +352,7 @@ class PyPiRepository(Repository):
     def _get_info_from_wheel(self, url
                              ):  # type: (str) -> Dict[str, Union[str, List, None]]
         info = {
+            'summary': '',
             'requires_python': None,
             'requires_dist': None,
         }
@@ -368,6 +370,9 @@ class PyPiRepository(Repository):
                 # Assume none
                 return info
 
+        if meta.summary:
+            info['summary'] = meta.summary or ''
+
         info['requires_python'] = meta.requires_python
 
         if meta.requires_dist:
@@ -378,6 +383,7 @@ class PyPiRepository(Repository):
     def _get_info_from_sdist(self, url
                              ):  # type: (str) -> Dict[str, Union[str, List, None]]
         info = {
+            'summary': '',
             'requires_python': None,
             'requires_dist': None,
         }
@@ -390,6 +396,9 @@ class PyPiRepository(Repository):
 
             try:
                 meta = pkginfo.SDist(str(filepath))
+                if meta.summary:
+                    info['summary'] = meta.summary
+
                 if meta.requires_python:
                     info['requires_python'] = meta.requires_python
 
@@ -427,8 +436,20 @@ class PyPiRepository(Repository):
             unpacked = Path(temp_dir) / 'unpacked'
             sdist_dir = unpacked / Path(filename).name.rstrip('.tar.gz')
 
-            # Checking for .egg-info
+            # Checking for .egg-info at root
             eggs = list(sdist_dir.glob('*.egg-info'))
+            if eggs:
+                egg_info = eggs[0]
+
+                requires = egg_info / 'requires.txt'
+                if requires.exists():
+                    with requires.open() as f:
+                        info['requires_dist'] = parse_requires(f.read())
+
+                        return info
+
+            # Searching for .egg-info in sub directories
+            eggs = list(sdist_dir.glob('**/*.egg-info'))
             if eggs:
                 egg_info = eggs[0]
 

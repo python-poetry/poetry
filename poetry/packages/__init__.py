@@ -21,6 +21,14 @@ from .vcs_dependency import VCSDependency
 
 
 def dependency_from_pep_508(name):
+    # Removing comments
+    parts = name.split('#', 1)
+    name = parts[0].strip()
+    if len(parts) > 1:
+        rest = parts[1]
+        if ';' in rest:
+            name += ';' + rest.split(';', 1)[1]
+
     req = Requirement(name)
 
     if req.marker:

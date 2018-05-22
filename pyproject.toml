@@ -27,13 +27,13 @@ cleo = "^0.6.6"
 requests = "^2.18"
 toml = "^0.9"
 cachy = "^0.2"
-pip-tools = "^2.0"
 requests-toolbelt = "^0.8.0"
 jsonschema = "^2.6"
 pyrsistent = "^0.14.2"
 pyparsing = "^2.2"
 cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
+html5lib = "^1.0"
 
 # The typing module is not in the stdlib in Python 2.7 and 3.4
 typing = { version = "^3.6", python = "~2.7 || ~3.4" }
