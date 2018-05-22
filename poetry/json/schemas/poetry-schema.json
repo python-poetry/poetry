@@ -182,6 +182,10 @@
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
                 },
+                "platform": {
+                    "type": "string",
+                    "description": "The platform(s) for which the dependency should be installed."
+                },
                 "allows-prereleases": {
                     "type": "boolean",
                     "description": "Whether the dependency allows prereleases or not."
@@ -225,6 +229,10 @@
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
                 },
+                "platform": {
+                    "type": "string",
+                    "description": "The platform(s) for which the dependency should be installed."
+                },
                 "allows-prereleases": {
                     "type": "boolean",
                     "description": "Whether the dependency allows prereleases or not."
@@ -255,6 +263,10 @@
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
                 },
+                "platform": {
+                    "type": "string",
+                    "description": "The platform(s) for which the dependency should be installed."
+                },
                 "optional": {
                     "type": "boolean",
                     "description": "Whether the dependency is optional or not."
@@ -280,6 +292,10 @@
                 "python": {
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "The platform(s) for which the dependency should be installed."
                 },
                 "optional": {
                     "type": "boolean",

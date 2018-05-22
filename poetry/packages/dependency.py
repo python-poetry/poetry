@@ -151,6 +151,13 @@ class Dependency(object):
                 self._create_nested_marker('python_version', python_constraint)
             )
 
+        if self.platform != '*':
+            platform_constraint = self.platform_constraint
+
+            markers.append(
+                self._create_nested_marker('sys_platform', platform_constraint)
+            )
+
         in_extras = ' || '.join(self._in_extras)
         if in_extras and with_extras:
             markers.append(

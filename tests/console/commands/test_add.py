@@ -1,3 +1,5 @@
+import sys
+
 from cleo.testers import CommandTester
 
 from tests.helpers import get_dependency
@@ -302,4 +304,87 @@ Writing lock file
     assert content['dependencies']['cachy'] == {
         'version': '0.2.0',
         'extras': ['msgpack']
+    }
+
+
+def test_add_constraint_with_python(app, repo, installer):
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    cachy2 = get_package('cachy', '0.2.0')
+
+    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(cachy2)
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['cachy=0.2.0']),
+        ('--python', '>=2.7')
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing cachy (0.2.0)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 1
+
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'cachy' in content['dependencies']
+    assert content['dependencies']['cachy'] == {
+        'version': '0.2.0',
+        'python': '>=2.7'
+    }
+
+
+def test_add_constraint_with_platform(app, repo, installer):
+    platform = sys.platform
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    cachy2 = get_package('cachy', '0.2.0')
+
+    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(cachy2)
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['cachy=0.2.0']),
+        ('--platform', platform)
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing cachy (0.2.0)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 1
+
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'cachy' in content['dependencies']
+    assert content['dependencies']['cachy'] == {
+        'version': '0.2.0',
+        'platform': platform
     }

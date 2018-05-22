@@ -13,6 +13,8 @@ class AddCommand(VenvCommand, InitCommand):
         { --path= : The path to a dependency. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --optional : Add as an optional dependency. }
+        { --python= : Python version( for which the dependencies must be installed. }
+        { --platform= : Platforms for which the dependencies must be installed. }
         { --allow-prereleases : Accept prereleases. }
         { --dry-run : Outputs the operations but will not execute anything
                      (implicitly enables --verbose). }
@@ -97,6 +99,12 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
             if self.option('extras'):
                 constraint['extras'] = self.option('extras')
+
+            if self.option('python'):
+                constraint['python'] = self.option('python')
+
+            if self.option('platform'):
+                constraint['platform'] = self.option('platform')
 
             if len(constraint) == 1 and 'version' in constraint:
                 constraint = constraint['version']

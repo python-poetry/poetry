@@ -9,6 +9,9 @@
 - Added a new setting `settings.virtualenvs.in-project` to make `poetry` create the project's virtualenv inside the project's directory.
 - Added the `--extras` and `--python` options to `debug:resolve` to help debug dependency resolution.
 - Added a `--src` option to new to create an `src` layout.
+- Added support for specifying the `platform` for dependencies.
+- Added the `--python` option to the `add` command.
+- Added the `--platform` option to the `add` command.
 
 ### Changed
 
