@@ -9,7 +9,11 @@ except ImportError:
 try:
     from html import unescape
 except ImportError:
-    from html.parser import HTMLParser
+    try:
+        from html.parser import HTMLParser
+    except ImportError:
+        from HTMLParser import HTMLParser
+
     unescape = HTMLParser().unescape
 
 from typing import Generator
