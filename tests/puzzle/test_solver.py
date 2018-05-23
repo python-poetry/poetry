@@ -574,3 +574,94 @@ def test_solver_sub_dependencies_with_not_supported_python_version(solver, repo,
     check_solver_result(ops, [
         {'job': 'install', 'package': package_a},
     ])
+
+
+def test_solver_with_dependency_in_both_main_and_dev_dependencies(solver, repo, package):
+    package.python_versions = '^3.5'
+    package.add_dependency('A')
+    package.add_dependency('A', {'version': '*', 'extras': ['foo']}, category='dev')
+
+    package_a = get_package('A', '1.0')
+    package_a.extras['foo'] = [get_dependency('C')]
+    package_a.add_dependency('C', {'version': '^1.0', 'optional': True})
+    package_a.add_dependency('B', {'version': '^1.0'})
+
+    package_b = get_package('B', '1.0')
+
+    package_c = get_package('C', '1.0')
+    package_c.add_dependency('D', '^1.0')
+
+    package_d = get_package('D', '1.0')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_d},
+        {'job': 'install', 'package': package_a},
+    ])
+
+    b = ops[0].package
+    c = ops[1].package
+    d = ops[2].package
+    a = ops[3].package
+
+    assert d.category == 'dev'
+    assert c.category == 'dev'
+    assert b.category == 'main'
+    assert a.category == 'main'
+
+
+def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_dependent(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('E')
+    package.add_dependency('A', {'version': '*', 'extras': ['foo']}, category='dev')
+
+    package_a = get_package('A', '1.0')
+    package_a.extras['foo'] = [get_dependency('C')]
+    package_a.add_dependency('C', {'version': '^1.0', 'optional': True})
+    package_a.add_dependency('B', {'version': '^1.0'})
+
+    package_b = get_package('B', '1.0')
+
+    package_c = get_package('C', '1.0')
+    package_c.add_dependency('D', '^1.0')
+
+    package_d = get_package('D', '1.0')
+
+    package_e = get_package('E', '1.0')
+    package_e.add_dependency('A', '^1.0')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+    repo.add_package(package_e)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_d},
+        {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_e},
+    ])
+
+    b = ops[0].package
+    c = ops[1].package
+    d = ops[2].package
+    a = ops[3].package
+    e = ops[4].package
+
+    assert d.category == 'dev'
+    assert c.category == 'dev'
+    assert b.category == 'main'
+    assert a.category == 'main'
+    assert e.category == 'main'

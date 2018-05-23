@@ -23,6 +23,7 @@
 ### Fixed
 
 - Fixed the dependency resolver selecting incompatible packages.
+- Fixed override of dependency with dependency with extras in `dev-dependencies`.
 
 
 ## [0.9.1] - 2018-05-18

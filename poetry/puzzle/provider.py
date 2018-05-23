@@ -330,6 +330,7 @@ class Provider:
         package.python_versions = complete_package.python_versions
         package.platform = complete_package.platform
         package.hashes = complete_package.hashes
+        package.extras = complete_package.extras
 
         return [
             r for r in package.requires
