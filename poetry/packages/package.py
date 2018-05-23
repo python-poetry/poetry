@@ -11,14 +11,16 @@ from poetry.semver.version_parser import VersionParser
 from poetry.spdx import license_by_id
 from poetry.spdx import License
 from poetry.utils._compat import Path
+from poetry.utils.helpers import canonicalize_name
 from poetry.version import parse as parse_version
 
 from .constraints.generic_constraint import GenericConstraint
 from .dependency import Dependency
+from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
 
-AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+) <(?P<email>.+?)>$')
+AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+)(?: <(?P<email>.+?)>)?$')
 
 
 class Package(object):
@@ -60,7 +62,7 @@ class Package(object):
         Creates a new in memory package.
         """
         self._pretty_name = name
-        self._name = name.lower()
+        self._name = canonicalize_name(name)
 
         self._version = str(parse_version(version))
         self._pretty_version = pretty_version or version
@@ -85,6 +87,7 @@ class Package(object):
         self.requires = []
         self.dev_requires = []
         self.extras = {}
+        self.requires_extras = []
 
         self._parser = VersionParser()
 
@@ -106,7 +109,7 @@ class Package(object):
         self._platform = '*'
         self._platform_constraint = EmptyConstraint()
 
-        self.cwd = None
+        self.root_dir = None
 
     @property
     def name(self):
@@ -272,16 +275,37 @@ class Package(object):
                     rev=constraint.get('rev', None),
                     optional=optional,
                 )
-
-                if python_versions:
-                    dependency.python_versions = python_versions
-
-                if platform:
-                    dependency.platform = platform
             elif 'file' in constraint:
                 file_path = Path(constraint['file'])
 
-                dependency = FileDependency(file_path, base=self.cwd)
+                dependency = FileDependency(
+                    file_path,
+                    category=category,
+                    base=self.root_dir
+                )
+            elif 'path' in constraint:
+                path = Path(constraint['path'])
+
+                if self.root_dir:
+                    is_file = (self.root_dir / path).is_file()
+                else:
+                    is_file = path.is_file()
+
+                if is_file:
+                    dependency = FileDependency(
+                        path,
+                        category=category,
+                        optional=optional,
+                        base=self.root_dir
+                    )
+                else:
+                    dependency = DirectoryDependency(
+                        path,
+                        category=category,
+                        optional=optional,
+                        base=self.root_dir,
+                        develop=constraint.get('develop', False)
+                    )
             else:
                 version = constraint['version']
 
@@ -292,11 +316,11 @@ class Package(object):
                     allows_prereleases=allows_prereleases
                 )
 
-                if python_versions:
-                    dependency.python_versions = python_versions
+            if python_versions:
+                dependency.python_versions = python_versions
 
-                if platform:
-                    dependency.platform = platform
+            if platform:
+                dependency.platform = platform
 
             if 'extras' in constraint:
                 for extra in constraint['extras']:

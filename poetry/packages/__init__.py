@@ -4,6 +4,7 @@ import re
 from poetry.version.requirements import Requirement
 
 from .dependency import Dependency
+from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .locker import Locker
 from .package import Package
@@ -144,5 +145,9 @@ def dependency_from_pep_508(name):
             ors.append(' '.join(ands))
 
         dep.platform = ' || '.join(ors)
+
+    # Extras
+    for extra in req.extras:
+        dep.extras.append(extra)
 
     return dep

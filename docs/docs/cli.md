@@ -56,8 +56,8 @@ poetry new my-folder --name my-package
 
 ## install
 
-The `install` command reads the `pyproject.toml` file from the current directory, resolves the dependencies,
-and installs them.
+The `install` command reads the `pyproject.toml` file from the current project,
+resolves the dependencies, and installs them.
 
 ```bash
 poetry install
@@ -121,9 +121,26 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
+You can also add `git` dependencies:
+
+```bash
+poetry add pendulum --git https://github.com/sdispater/pendulum.git
+```
+
+or make them point to a local directory or file:
+
+```bash
+poetry add my-package --path ../my-package/
+poetry add my-package --path ../my-package/dist/my-package-0.1.0.tar.gz
+poetry add my-package --path ../my-package/dist/my_package-0.1.0.whl
+```
+
 ### Options
 
 * `--dev (-D)`: Add package as development dependency.
+* `--git`: The url of the Git repository.
+* `--path`: The path to a dependency.
+* `--extras (-E)`: Extras to activate for the dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
@@ -201,7 +218,8 @@ poetry publish
 
 * `--repository (-r)`: The repository to register the package to (default: `pypi`).
 Should match a repository name set by the [`config`](#config) command.
-
+* `--username (-u)`: The username to access the repository.
+* `--password (-p)`: The password to access the repository.
 
 ## config
 

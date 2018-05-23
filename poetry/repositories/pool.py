@@ -31,6 +31,15 @@ class Pool(BaseRepository):
         self._repositories.append(repository)
 
         return self
+
+    def remove_repository(self, repository_name):  # type: (str) -> Pool
+        for i, repository in enumerate(self._repositories):
+            if repository.name == repository_name:
+                del self._repositories[i]
+
+                break
+
+        return self
     
     def configure(self, source):  # type: (dict) -> Pool
         """
@@ -53,13 +62,13 @@ class Pool(BaseRepository):
     def has_package(self, package):
         raise NotImplementedError()
 
-    def package(self, name, version):
+    def package(self, name, version, extras=None):
         package = poetry.packages.Package(name, version, version)
         if package in self._packages:
             return self._packages[self._packages.index(package)]
 
         for repository in self._repositories:
-            package = repository.package(name, version)
+            package = repository.package(name, version, extras=extras)
             if package:
                 self._packages.append(package)
 
@@ -70,9 +79,14 @@ class Pool(BaseRepository):
     def find_packages(self,
                       name,
                       constraint=None,
-                      extras=None):
+                      extras=None,
+                      allow_prereleases=False):
         for repository in self._repositories:
-            packages = repository.find_packages(name, constraint, extras=extras)
+            packages = repository.find_packages(
+                name, constraint,
+                extras=extras,
+                allow_prereleases=allow_prereleases
+            )
             if packages:
                 return packages
 

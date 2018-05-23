@@ -1,3 +1,4 @@
+import logging
 import os
 import tarfile
 import zipfile
@@ -33,10 +34,14 @@ from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
+from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
 from poetry.version.markers import InvalidMarker
 
 from .repository import Repository
+
+
+logger = logging.getLogger(__name__)
 
 
 class PyPiRepository(Repository):
@@ -45,6 +50,7 @@ class PyPiRepository(Repository):
                  url='https://pypi.org/',
                  disable_cache=False,
                  fallback=True):
+        self._name = 'PyPI'
         self._url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
@@ -72,36 +78,53 @@ class PyPiRepository(Repository):
         super(PyPiRepository, self).__init__()
 
     def find_packages(self,
-                      name,             # type: str
-                      constraint=None,  # type: Union[Constraint, str, None]
-                      extras=None       # type: Union[list, None]
+                      name,                    # type: str
+                      constraint=None,         # type: Union[Constraint, str, None]
+                      extras=None,             # type: Union[list, None]
+                      allow_prereleases=False  # type: bool
                       ):  # type: (...) -> List[Package]
         """
         Find packages on the remote server.
         """
-        packages = []
-
         if constraint is not None and not isinstance(constraint, BaseConstraint):
             version_parser = VersionParser()
             constraint = version_parser.parse_constraints(constraint)
 
         info = self.get_package_info(name)
 
-        versions = []
+        packages = []
 
         for version, release in info['releases'].items():
             if not release:
                 # Bad release
+                self._log(
+                    'No release information found for {}-{}, skipping'.format(
+                        name, version
+                    ),
+                    level='debug'
+                )
+                continue
+
+            package = Package(name, version)
+
+            if package.is_prerelease() and not allow_prereleases:
                 continue
 
             if (
                 not constraint
                 or (constraint and constraint.matches(Constraint('=', version)))
             ):
-                versions.append(version)
+                if extras is not None:
+                    package.requires_extras = extras
 
-        for version in versions:
-            packages.append(Package(name, version))
+                packages.append(package)
+
+        self._log(
+            '{} packages found for {} {}'.format(
+                len(packages), name, str(constraint)
+            ),
+            level='debug'
+        )
 
         return packages
 
@@ -126,6 +149,10 @@ class PyPiRepository(Repository):
                 and '_fallback' not in release_info
             ):
                 # Force cache update
+                self._log(
+                    'No dependencies found, downloading archives',
+                    level='debug'
+                )
                 self._cache.forget('{}:{}'.format(name, version))
                 release_info = self.get_release_info(name, version)
 
@@ -142,6 +169,13 @@ class PyPiRepository(Repository):
                     dependency = dependency_from_pep_508(req)
                 except ValueError:
                     # Likely unable to parse constraint so we skip it
+                    self._log(
+                        'Invalid constraint ({}) found in {}-{} dependencies, '
+                        'skipping'.format(
+                            req, package.name, package.version
+                        ),
+                        level='debug'
+                    )
                     continue
 
                 if dependency.extras:
@@ -391,7 +425,7 @@ class PyPiRepository(Repository):
                 requires = egg_info / 'requires.txt'
                 if requires.exists():
                     with requires.open() as f:
-                        return self._parse_requires(f.read())
+                        return parse_requires(f.read())
 
                 return
 
@@ -409,43 +443,5 @@ class PyPiRepository(Repository):
                 if chunk:
                     f.write(chunk)
 
-    def _parse_requires(self, requires):  # type: (str) -> Union[list, None]
-        lines = requires.split('\n')
-
-        requires_dist = []
-        in_section = False
-        current_marker = None
-        for line in lines:
-            line = line.strip()
-            if not line:
-                if in_section:
-                    in_section = False
-
-                continue
-
-            if line.startswith('['):
-                # extras or conditional dependencies
-                marker = line.lstrip('[').rstrip(']')
-                if ':' not in marker:
-                    extra, marker = marker, None
-                else:
-                    extra, marker = marker.split(':')
-
-                if extra:
-                    if marker:
-                        marker = '{} and extra == "{}"'.format(marker, extra)
-                    else:
-                        marker = 'extra == "{}"'.format(extra)
-
-                if marker:
-                    current_marker = marker
-
-                continue
-
-            if current_marker:
-                line = '{}; {}'.format(line, current_marker)
-
-            requires_dist.append(line)
-
-        if requires_dist:
-            return requires_dist
+    def _log(self, msg, level='info'):
+        getattr(logger, level)('{}: {}'.format(self._name, msg))

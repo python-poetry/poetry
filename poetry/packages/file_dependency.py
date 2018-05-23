@@ -74,7 +74,7 @@ class FileDependency(Dependency):
 
     def hash(self):
         h = hashlib.sha256()
-        with self._path.open('rb') as fp:
+        with self._full_path.open('rb') as fp:
             for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b''):
                 h.update(content)
 

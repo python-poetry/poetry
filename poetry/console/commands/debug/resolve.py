@@ -13,6 +13,10 @@ class DebugResolveCommand(Command):
         { package?* : packages to resolve. }
     """
 
+    _loggers = [
+        'poetry.repositories.pypi_repository'
+    ]
+
     def handle(self):
         from poetry.packages import Dependency
         from poetry.puzzle import Solver

@@ -935,10 +935,6 @@ class Resolution:
         current_possibility_set = None
 
         for possibility in reversed(possibilities):
-            self._debug(
-                'Getting dependencies for {}'.format(possibility),
-                depth=self.state.depth if self.state else 0
-            )
             dependencies = self._provider.dependencies_for(possibility)
             if current_possibility_set and current_possibility_set.dependencies == dependencies:
                 current_possibility_set.possibilities.insert(0, possibility)

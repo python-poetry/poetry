@@ -1,5 +1,46 @@
 # Change Log
 
+## [0.9.1] - 2018-05-18
+
+### Fixed
+
+- Fixed handling of package names with dots. (Thanks to [bertjwregeer](https://github.com/bertjwregeer))
+- Fixed path dependencies being resolved from the current path instead of the `pyproject.toml` file. (Thanks to [radix](https://github.com/radix))
+
+
+## [0.9.0] - 2018-05-07
+
+### Added
+
+- Added the `cache:clear` command.
+- Added support for `git` dependencies in the `add` command.
+- Added support for `path` dependencies in the `add` command.
+- Added support for extras in the `add` command.
+- Added support for directory dependencies.
+- Added support for `src/` layout for packages.
+- Added automatic detection of `.venv` virtualenvs.
+
+### Changed
+
+- Drastically improved dependency resolution speed.
+- Dependency resolution caches now use sha256 hashes.
+- Changed CLI error style.
+- Improved debugging of dependency resolution.
+- Poetry now attempts to find `pyproject.toml` not only in the directory it was
+invoked in, but in all its parents up to the root. This allows to run Poetry
+commands in project subdirectories.
+- Made the email address for authors optional.
+
+### Fixed
+
+- Fixed handling of extras when resolving dependencies.
+- Fixed `self:update` command for some installation.
+- Fixed handling of extras when building projects.
+- Fixed handling of wildcard dependencies wen packaging/publishing.
+- Fixed an error when adding a new packages with prereleases in lock file.
+- Fixed packages name normalization.
+
+
 ## [0.8.6] - 2018-04-30
 
 ### Fixed
@@ -232,7 +273,7 @@
 
 ### Added
 
-- Added `show` command. 
+- Added `show` command.
 - Added the `--dry-run` option to the `add` command.
 
 ### Changed
@@ -270,7 +311,9 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.8.6...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.9.1...master
+[0.9.1]: https://github.com/sdispater/poetry/releases/tag/0.9.1
+[0.9.0]: https://github.com/sdispater/poetry/releases/tag/0.9.0
 [0.8.6]: https://github.com/sdispater/poetry/releases/tag/0.8.6
 [0.8.5]: https://github.com/sdispater/poetry/releases/tag/0.8.5
 [0.8.4]: https://github.com/sdispater/poetry/releases/tag/0.8.4

@@ -7,6 +7,7 @@ class PoetryStyle(CleoStyle):
     def __init__(self, i, o):
         super(PoetryStyle, self).__init__(i, o)
 
+        self.output.get_formatter().add_style('error', 'red')
         self.output.get_formatter().add_style('warning', 'black', 'yellow')
         self.output.get_formatter().add_style('question', 'blue')
 

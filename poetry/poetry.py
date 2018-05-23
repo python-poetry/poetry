@@ -45,7 +45,7 @@ class Poetry:
                 fallback=self._config.setting('settings.pypi.fallback', True)
             )
         )
-        
+
     @property
     def file(self):
         return self._file
@@ -68,11 +68,18 @@ class Poetry:
 
     @classmethod
     def create(cls, cwd):  # type: () -> Poetry
-        poetry_file = Path(cwd) / 'pyproject.toml'
+        candidates = [Path(cwd)]
+        candidates.extend(Path(cwd).parents)
 
-        if not poetry_file.exists():
+        for path in candidates:
+            poetry_file = path / 'pyproject.toml'
+
+            if poetry_file.exists():
+                break
+
+        else:
             raise RuntimeError(
-                'Poetry could not find a pyproject.toml file in {}'.format(cwd)
+                'Poetry could not find a pyproject.toml file in {} or its parents'.format(cwd)
             )
 
         local_config = TomlFile(poetry_file.as_posix()).read(True)
@@ -89,7 +96,7 @@ class Poetry:
         name = local_config['name']
         version = local_config['version']
         package = Package(name, version, version)
-        package.cwd = Path(cwd)
+        package.root_dir = poetry_file.parent
 
         for author in local_config['authors']:
             package.authors.append(author)
@@ -102,7 +109,7 @@ class Poetry:
         package.classifiers = local_config.get('classifiers', [])
 
         if 'readme' in local_config:
-            package.readme = Path(cwd) / local_config['readme']
+            package.readme = Path(poetry_file.parent) / local_config['readme']
 
         if 'platform' in local_config:
             package.platform = local_config['platform']

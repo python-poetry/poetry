@@ -3,7 +3,6 @@ import operator
 from poetry.version import parse as parse_version
 from poetry.version import version_compare
 
-from ..helpers import normalize_version
 from .base_constraint import BaseConstraint
 
 

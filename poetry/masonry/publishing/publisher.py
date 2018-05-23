@@ -17,7 +17,7 @@ class Publisher:
         self._io = io
         self._uploader = Uploader(poetry, io)
 
-    def publish(self, repository_name):
+    def publish(self, repository_name, username, password):
         if repository_name:
             self._io.writeln(
                 'Publishing <info>{}</info> (<comment>{}</comment>) '
@@ -62,18 +62,17 @@ class Publisher:
 
             url = config['repositories'][repository_name]['url']
 
-        username = None
-        password = None
-        auth_file = Path(CONFIG_DIR) / 'auth.toml'
-        if auth_file.exists():
-            with auth_file.open() as f:
-                auth_config = toml.loads(f.read())
+        if not (username and password):
+            auth_file = Path(CONFIG_DIR) / 'auth.toml'
+            if auth_file.exists():
+                with auth_file.open() as f:
+                    auth_config = toml.loads(f.read())
 
-            if 'http-basic' in auth_config and repository_name in auth_config['http-basic']:
-                config = auth_config['http-basic'][repository_name]
+                if 'http-basic' in auth_config and repository_name in auth_config['http-basic']:
+                    config = auth_config['http-basic'][repository_name]
 
-                username = config.get('username')
-                password = config.get('password')
+                    username = config.get('username')
+                    password = config.get('password')
 
         # Requesting missing credentials
         if not username:

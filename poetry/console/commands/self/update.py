@@ -29,7 +29,7 @@ class SelfUpdateCommand(Command):
             version = '>=' + __version__
 
         repo = PyPiRepository(fallback=False)
-        packages = repo.find_packages('poetry', version)
+        packages = repo.find_packages('poetry', version, allow_prereleases=self.option('preview'))
         if not packages:
             self.line('No release found for the specified version')
             return
@@ -99,7 +99,10 @@ class SelfUpdateCommand(Command):
         elif real_prefix:
             pip = Path(real_prefix) / 'bin' / 'pip'
         else:
-            raise RuntimeError('Unable to determine poetry\'s path')
+            pip = Path(prefix) / 'bin' / 'pip'
+
+            if not pip.exists():
+                raise RuntimeError('Unable to determine poetry\'s path')
 
         with temporary_directory(prefix='poetry-update-') as temp_dir:
             temp_dir = Path(temp_dir)

@@ -78,6 +78,9 @@
                         },
                         {
                             "$ref": "#/definitions/file-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/path-dependency"
                         }
                     ]
                 }
@@ -252,9 +255,31 @@
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
                 },
-                "allows-prereleases": {
+                "optional": {
                     "type": "boolean",
-                    "description": "Whether the dependency allows prereleases or not."
+                    "description": "Whether the dependency is optional or not."
+                },
+                "extras": {
+                    "type": "array",
+                    "description": "The required extras for this dependency.",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "path-dependency": {
+            "type": "object",
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "The path to the dependency."
+                },
+                "python": {
+                    "type": "string",
+                    "description": "The python versions for which the dependency should be installed."
                 },
                 "optional": {
                     "type": "boolean",

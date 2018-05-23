@@ -5,6 +5,7 @@ from poetry.semver.constraints import EmptyConstraint
 from poetry.semver.constraints import MultiConstraint
 from poetry.semver.constraints.base_constraint import BaseConstraint
 from poetry.semver.version_parser import VersionParser
+from poetry.utils.helpers import canonicalize_name
 
 from .constraints.generic_constraint import GenericConstraint
 
@@ -18,7 +19,7 @@ class Dependency(object):
                  category='main',          # type: str
                  allows_prereleases=False  # type: bool
                  ):
-        self._name = name.lower()
+        self._name = canonicalize_name(name)
         self._pretty_name = name
         self._parser = VersionParser()
 
@@ -109,6 +110,9 @@ class Dependency(object):
     def is_file(self):
         return False
 
+    def is_directory(self):
+        return False
+
     def accepts(self, package):  # type: (poetry.packages.Package) -> bool
         """
         Determines if the given package matches this dependency.
@@ -122,11 +126,14 @@ class Dependency(object):
     def to_pep_508(self, with_extras=True):  # type: (bool) -> str
         requirement = self.pretty_name
 
+        if self.extras:
+            requirement += '[{}]'.format(','.join(self.extras))
+
         if isinstance(self.constraint, MultiConstraint):
             requirement += ' ({})'.format(','.join(
                 [str(c).replace(' ', '') for c in self.constraint.constraints]
             ))
-        else:
+        elif str(self.constraint) != '*':
             requirement += ' ({})'.format(str(self.constraint).replace(' ', ''))
 
         # Markers

@@ -25,9 +25,9 @@
       }
     }
   ],
-  "circular_app": [
+  "circular-app": [
     {
-      "name": "circular_app",
+      "name": "circular-app",
       "version": "1.0.0",
       "dependencies": {
         "foo": ">= 0",

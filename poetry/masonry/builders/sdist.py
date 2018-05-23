@@ -119,6 +119,10 @@ class SdistBuilder(Builder):
                 'build(setup_kwargs)'
             ]
 
+        if self._module.is_in_src():
+            before.append("package_dir = \\\n{}\n".format(pformat({'': 'src'})))
+            extra.append("'package_dir': package_dir,")
+
         if self._module.is_package():
             packages, package_data = self.find_packages(
                 self._module.path.as_posix()
@@ -128,14 +132,14 @@ class SdistBuilder(Builder):
             extra.append("'packages': packages,")
             extra.append("'package_data': package_data,")
         else:
-            extra.append("'py_modules': {!r},".format(self._module.name))
+            extra.append("'py_modules': {!r},".format(to_str(self._module.name)))
 
         dependencies, extras = self.convert_dependencies(
             self._package,
             self._package.requires
         )
         if dependencies:
-            before.append("install_requires = \\\n{}\n".format(pformat(dependencies)))
+            before.append("install_requires = \\\n{}\n".format(pformat(sorted(dependencies))))
             extra.append("'install_requires': install_requires,")
 
         if extras:

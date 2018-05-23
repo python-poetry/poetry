@@ -72,26 +72,32 @@ class Builder(object):
         src = self._module.path
         to_add = []
 
-        for root, dirs, files in os.walk(src.as_posix()):
-            root = Path(root)
-            if root.name == '__pycache__':
-                continue
-
-            for file in files:
-                file = root / file
-                file = file.relative_to(self._path)
-
-                if file in excluded:
+        if not self._module.is_package():
+            if self._module.is_in_src():
+                to_add.append(src.relative_to(src.parent.parent))
+            else:
+                to_add.append(src.relative_to(src.parent))
+        else:
+            for root, dirs, files in os.walk(src.as_posix()):
+                root = Path(root)
+                if root.name == '__pycache__':
                     continue
 
-                if file.suffix == '.pyc':
-                    continue
+                for file in files:
+                    file = root / file
+                    file = file.relative_to(self._path)
 
-                self._io.writeln(
-                    ' - Adding: <comment>{}</comment>'.format(str(file)),
-                    verbosity=self._io.VERBOSITY_VERY_VERBOSE
-                )
-                to_add.append(file)
+                    if file in excluded:
+                        continue
+
+                    if file.suffix == '.pyc':
+                        continue
+
+                    self._io.writeln(
+                        ' - Adding: <comment>{}</comment>'.format(str(file)),
+                        verbosity=self._io.VERBOSITY_VERY_VERBOSE
+                    )
+                    to_add.append(file)
 
         # Include project files
         self._io.writeln(

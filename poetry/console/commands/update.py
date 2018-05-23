@@ -12,6 +12,10 @@ class UpdateCommand(VenvCommand):
                       (implicitly enables --verbose). }
     """
 
+    _loggers = [
+        'poetry.repositories.pypi_repository'
+    ]
+
     def handle(self):
         from poetry.installation import Installer
 

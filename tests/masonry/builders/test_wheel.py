@@ -1,5 +1,6 @@
 import pytest
 import shutil
+import zipfile
 
 from poetry.io import NullIO
 from poetry.masonry.builders import WheelBuilder
@@ -34,6 +35,10 @@ def test_wheel_module():
 
     assert whl.exists()
 
+    z = zipfile.ZipFile(str(whl))
+
+    assert 'module1.py' in z.namelist()
+
 
 def test_wheel_package():
     module_path = fixtures_dir / 'complete'
@@ -43,6 +48,10 @@ def test_wheel_package():
 
     assert whl.exists()
 
+    z = zipfile.ZipFile(str(whl))
+
+    assert 'my_package/sub_pkg1/__init__.py' in z.namelist()
+
 
 def test_wheel_prerelease():
     module_path = fixtures_dir / 'prerelease'
@@ -51,3 +60,30 @@ def test_wheel_prerelease():
     whl = module_path / 'dist' / 'prerelease-0.1b1-py2.py3-none-any.whl'
 
     assert whl.exists()
+
+
+def test_wheel_package_src():
+    module_path = fixtures_dir / 'source_package'
+    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+
+    whl = module_path / 'dist' / 'package_src-0.1-py2.py3-none-any.whl'
+
+    assert whl.exists()
+
+    z = zipfile.ZipFile(str(whl))
+
+    assert 'package_src/__init__.py' in z.namelist()
+    assert 'package_src/module.py' in z.namelist()
+
+
+def test_wheel_module_src():
+    module_path = fixtures_dir / 'source_file'
+    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+
+    whl = module_path / 'dist' / 'module_src-0.1-py2.py3-none-any.whl'
+
+    assert whl.exists()
+
+    z = zipfile.ZipFile(str(whl))
+
+    assert 'module_src.py' in z.namelist()

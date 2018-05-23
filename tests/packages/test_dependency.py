@@ -70,6 +70,13 @@ def test_to_pep_508():
                      'or (python_version >= "3.6.0.0" and python_version < "4.0.0.0")'
 
 
+def test_to_pep_508_wilcard():
+    dependency = Dependency('Django', '*')
+
+    result = dependency.to_pep_508()
+    assert result == 'Django'
+
+
 def test_to_pep_508_in_extras():
     dependency = Dependency('Django', '^1.23')
     dependency.in_extras.append('foo')
