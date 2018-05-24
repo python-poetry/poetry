@@ -9,8 +9,8 @@ platform = "*"
 
 [package.source]
 type = "file"
-reference = "tests/fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
-url = ""
+reference = ""
+url = "tests/fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
 
 [package.dependencies]
 pendulum = ">=1.4.0.0,<2.0.0.0"

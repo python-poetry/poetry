@@ -238,7 +238,7 @@ class Provider:
                         ):  # type: (FileDependency) -> List[Package]
         package = Package(dependency.name, dependency.pretty_constraint)
         package.source_type = 'file'
-        package.source_reference = str(dependency.path)
+        package.source_url = str(dependency.path)
 
         package.description = dependency.metadata.summary
         for req in dependency.metadata.requires_dist:

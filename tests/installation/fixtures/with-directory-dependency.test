@@ -18,8 +18,8 @@ platform = "*"
 
 [package.source]
 type = "directory"
-reference = "tests/fixtures/project_with_setup"
-url = ""
+reference = ""
+url = "tests/fixtures/project_with_setup"
 
 [package.dependencies]
 cachy = ">=0.2.0"

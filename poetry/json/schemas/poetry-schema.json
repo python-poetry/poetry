@@ -307,6 +307,10 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "develop": {
+                    "type": "boolean",
+                    "description": "Whether to install the dependency in development mode."
                 }
             }
         },

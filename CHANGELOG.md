@@ -12,6 +12,7 @@
 - Added support for specifying the `platform` for dependencies.
 - Added the `--python` option to the `add` command.
 - Added the `--platform` option to the `add` command.
+- Added a `--develop` option to the install command to install path dependencies in development/editable mode.
 
 ### Changed
 

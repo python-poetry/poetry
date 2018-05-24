@@ -39,7 +39,11 @@ class PipInstaller(BaseInstaller):
             finally:
                 os.unlink(req)
         else:
-            args.append(self.requirement(package))
+            req = self.requirement(package)
+            if not isinstance(req, list):
+                args.append(req)
+            else:
+                args += req
 
             self.run(*args)
 
@@ -69,7 +73,15 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type in ['file', 'directory']:
-            return os.path.realpath(package.source_reference)
+            if package.root_dir:
+                req = os.path.join(package.root_dir, package.source_url)
+            else:
+                req = os.path.realpath(package.source_url)
+
+            if package.develop:
+                req = ['-e', req]
+
+            return req
 
         if package.source_type == 'git':
             return 'git+{}@{}#egg={}'.format(

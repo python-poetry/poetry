@@ -44,6 +44,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
+        self._develop = []
         self._execute_operations = True
 
         self._whitelist = {}
@@ -98,6 +99,11 @@ class Installer:
 
     def is_dev_mode(self):  # type: () -> bool
         return self._dev_mode
+
+    def develop(self, packages):  # type: (dict) -> Installer
+        self._develop = [canonicalize_name(p) for p in packages]
+
+        return self
 
     def update(self, update=True):  # type: (bool) -> Installer
         self._update = update
@@ -404,13 +410,16 @@ class Installer:
                             installed, locked
                         ))
 
-            if not is_installed:
-                # If it's optional and not in required extras
-                # we do not install
-                if locked.optional and locked.name not in extra_packages:
-                    continue
+            # If it's optional and not in required extras
+            # we do not install
+            if locked.optional and locked.name not in extra_packages:
+                continue
 
-                ops.append(Install(locked))
+            op = Install(locked)
+            if is_installed:
+                op.skip('Already installed')
+
+            ops.append(op)
 
         return ops
 
@@ -428,6 +437,11 @@ class Installer:
 
             if op.job_type == 'uninstall':
                 continue
+
+            if package.name in self._develop and package.source_type == 'directory':
+                package.develop = True
+                if op.skipped:
+                    op.unskip()
 
             python = Version.parse('.'.join([str(i) for i in self._venv.version_info[:3]]))
             if 'python' in package.requirements:

@@ -94,6 +94,8 @@ class Package(object):
 
         self.root_dir = None
 
+        self.develop = False
+
     @property
     def name(self):
         return self._name

@@ -34,6 +34,7 @@ class DirectoryDependency(Dependency):
                  develop=False     # type: bool
                  ):
         from . import dependency_from_pep_508
+        from .package import Package
 
         self._path = path
         self._base = base
@@ -79,9 +80,13 @@ class DirectoryDependency(Dependency):
             with setup.open('w') as f:
                 f.write(decode(builder.build_setup()))
 
-            self._package = poetry.package
+            package = poetry.package
+            self._package = Package(package.pretty_name, package.version)
+            self._package.requires += package.requires
+            self._package.dev_requires += package.dev_requires
+            self._package.python_versions = package.python_versions
+            self._package.platform = package.platform
         else:
-            from poetry.packages import Package
             # Execute egg_info
             current_dir = os.getcwd()
             os.chdir(str(self._full_path))
@@ -129,7 +134,7 @@ class DirectoryDependency(Dependency):
             self._package = package
 
         self._package.source_type = 'directory'
-        self._package.source_reference = str(self._path)
+        self._package.source_url = str(self._path)
 
         super(DirectoryDependency, self).__init__(
             self._package.name,
