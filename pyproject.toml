@@ -49,6 +49,7 @@ mkdocs = "^0.17.3"
 pymdown-extensions = "^4.9"
 pygments = "^2.2"
 pytest-mock = "^1.9"
+pygments-github-lexers = "^0.0.5"
 
 
 [tool.poetry.scripts]
