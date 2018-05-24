@@ -21,6 +21,7 @@
 - The `script` command has been deprecated, use `run` instead.
 - Improved support for private repositories.
 - Expanded version constraints now keep the original version's precision.
+- The lock file hash no longer use the project's name and version.
 
 ### Fixed
 
