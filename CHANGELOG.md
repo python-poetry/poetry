@@ -13,6 +13,7 @@
 - Added the `--python` option to the `add` command.
 - Added the `--platform` option to the `add` command.
 - Added a `--develop` option to the install command to install path dependencies in development/editable mode.
+- Added a `develop` command to install the current project in development mode.
 
 ### Changed
 
