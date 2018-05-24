@@ -70,7 +70,7 @@ class SelfUpdateCommand(Command):
             self.output.block([
                 '[CalledProcessError]',
                 'An error has occured: {}'.format(str(e)),
-                e.output
+                str(e.output)
             ], style='error')
 
             return e.returncode
