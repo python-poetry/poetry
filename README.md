@@ -209,6 +209,32 @@ results in :
   - Installing oslo.utils (1.4.0)
 ```
 
+This is possible thanks to the efficient dependency resolver at the heart of Poetry.
+
+Here is a breakdown of what exactly happens here:
+
+`oslo.utils (1.4.0)` depends on:
+
+- `pbr (>=0.6,!=0.7,<1.0)`
+- `Babel (>=1.3)`
+- `six (>=1.9.0)`
+- `iso8601 (>=0.1.9)`
+- `oslo.i18n (>=1.3.0)`
+- `netaddr (>=0.7.12)`
+- `netifaces (>=0.10.4)`
+
+What interests us is `pbr (>=0.6,!=0.7,<1.0)`.
+
+At his point, poetry will choose `pbr==0.11.1` which is the latest version that matches the constraint.
+
+Next it will try to select `oslo.i18n==3.20.0` which is the latest version that matches `oslo.i18n (>=1.3.0)`.
+
+However this version requires `pbr (!=2.1.0,>=2.0.0)` which is incompatible with `pbr==0.11.1`,
+so `poetry` will try to find a version of `oslo.i18n` that satisfies `pbr (>=0.6,!=0.7,<1.0)`.
+
+By analyzing the releases of `oslo.i18n`, it will find `oslo.i18n==2.1.0` which requires `pbr (>=0.11,<2.0)`.
+At this point the rest of the resolution is straightforward since there is no more conflict.
+
 #### Install command
 
 When you specify a package to the `install` command it will add it as a wildcard
