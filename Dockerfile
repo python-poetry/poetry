@@ -7,6 +7,8 @@ RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poet
 RUN mkdir /app
 WORKDIR /app
 
+RUN poetry config settings.virtualenvs.create false
+
 # copy pyproject file(s)
 ONBUILD COPY pyproject.* .
 
