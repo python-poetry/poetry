@@ -44,7 +44,7 @@ Alright, so now you can publish packages.
 
 Poetry will publish to [PyPI](https://pypi.org) by default. Anything that is published to PyPI
 is available automatically through Poetry. Since [pendulum](https://pypi.org/project/pendulum/)
-if on PyPI we can depend on it without having to specify any additional repositories.
+is on PyPI we can depend on it without having to specify any additional repositories.
 
 If we wanted to share `poetry-demo` with the Python community, we would publish on PyPI as weel.
 Doing so is really easy.
