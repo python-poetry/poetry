@@ -9,7 +9,7 @@ class PublishCommand(Command):
         { --r|repository= : The repository to publish the package to. }
         { --u|username= : The username to access the repository. }
         { --p|password= : The password to access the repository. }
-        { --no-build : Do not build the package before publishing. }
+        { --build : Build the package before publishing. }
     """
 
     help = """The publish command builds and uploads the package to a remote repository.
@@ -24,13 +24,32 @@ the config command.
     def handle(self):
         from poetry.masonry.publishing.publisher import Publisher
 
-        # Building package first, unless told otherwise
-        if not self.option('no-build'):
+        publisher = Publisher(self.poetry, self.output)
+
+        # Building package first, if told
+        if self.option('build'):
+            if publisher.files:
+                if not self.confirm(
+                    'There are <info>{}</info> files ready for publishing. '
+                    'Build anyway?'.format(len(publisher.files))
+                ):
+                    self.line_error('<error>Aborted!</error>')
+
+                    return 1
+
             self.call('build')
+
+        files = publisher.files
+        if not files:
+            self.line_error(
+                '<error>No files to publish. '
+                'Run poetry build first or use the --build option.</error>'
+            )
+
+            return 1
 
         self.line('')
 
-        publisher = Publisher(self.poetry, self.output)
         publisher.publish(
             self.option('repository'),
             self.option('username'),
