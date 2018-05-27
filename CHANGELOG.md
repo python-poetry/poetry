@@ -23,6 +23,7 @@
 - Improved support for private repositories.
 - Expanded version constraints now keep the original version's precision.
 - The lock file hash no longer use the project's name and version.
+- The `LICENSE` file, or similar, is now automatically added to the built packages.
 
 ### Fixed
 

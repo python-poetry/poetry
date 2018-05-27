@@ -103,6 +103,16 @@ class Builder(object):
         )
         to_add.append(Path('pyproject.toml'))
 
+        # If a license file exists, add it
+        for license_file in self._path.glob('LICENSE*'):
+            self._io.writeln(
+                ' - Adding: <comment>{}</comment>'.format(
+                    license_file.relative_to(self._path)
+                ),
+                verbosity=self._io.VERBOSITY_VERY_VERBOSE
+            )
+            to_add.append(license_file.relative_to(self._path))
+
         # If a README is specificed we need to include it
         # to avoid errors
         if 'readme' in self._poetry.local_config:

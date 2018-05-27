@@ -156,6 +156,7 @@ def test_find_files_to_add():
     result = builder.find_files_to_add()
 
     assert result == [
+        Path('LICENSE'),
         Path('README.rst'),
         Path('my_package/__init__.py'),
         Path('my_package/data1/test.json'),
@@ -175,6 +176,10 @@ def test_package():
     sdist = fixtures_dir / 'complete' / 'dist' / 'my-package-1.2.3.tar.gz'
 
     assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), 'r')
+
+    assert 'my-package-1.2.3/LICENSE' in tar.getnames()
 
 
 def test_module():
