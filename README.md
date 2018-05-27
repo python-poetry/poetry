@@ -64,20 +64,20 @@ poetry self:update 0.8.0
 ```
 
 
-### Enable tab completion for Bash, Fish, or Zsh
+## Enable tab completion for Bash, Fish, or Zsh
 
 `poetry` supports generating completion scripts for Bash, Fish, and Zsh.
 See `poetry help completions` for full details, but the gist is as simple as using one of the following:
 
 ```bash
 # Bash
-poetry completions bash > /etc/bash_completion.d/pyproject.bash-completion
+poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
 # Bash (macOS/Homebrew)
-poetry completions bash > $(brew --prefix)/etc/bash_completion.d/pyproject.bash-completion
+poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
 # Fish
-poetry completions fish > ~/.config/fish/completions/pyproject.fish
+poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
