@@ -65,7 +65,7 @@ It will automatically find a suitable version constraint.
 ### Version constraints
 
 In our example, we are requesting the `pendulum` package with the version constraint `^1.4`.
-This means any version geater or equal to 1.4.0 and less than 2.0.0 (`>=1.4.0 <2.0.0`).
+This means any version greater or equal to 1.4.0 and less than 2.0.0 (`>=1.4.0 <2.0.0`).
 
 Please read [versions](/versions/) for more in-depth information on versions, how versions relate to each other, and on version constraints.
 
@@ -77,7 +77,7 @@ Please read [versions](/versions/) for more in-depth information on versions, ho
     When you specify a dependency in `pyproject.toml`, Poetry first take the name of the package
     that you have requested and searches for it in any repository you have registered using the `repositories` key.
     If you have not registered any extra repositories, or it does not find a package with that name in the
-    repositories you have specified, it falls bask on PyPI.
+    repositories you have specified, it falls back on PyPI.
     
     When Poetry finds the right package, it then attempts to find the best match
     for the version constraint you have specified.
@@ -143,7 +143,7 @@ and update the lock file with the new versions.
 
 !!!note
 
-    Poetry will display a Warning when executing an install command if `pyproject.lock` and `pyproject.toml`
+    Poetry will display a **Warning** when executing an install command if `pyproject.lock` and `pyproject.toml`
     are not synchronized.
 
 
@@ -159,5 +159,5 @@ or create a brand new one for you to always work isolated from your global Pytho
     `poetry` has been installed.
     
     What this means is if you project is Python 2.7 only you should
-    install `poetry` for you global Python 2.7 executable and use
+    install `poetry` for your global Python 2.7 executable and use
     it to manage your project.

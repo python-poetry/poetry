@@ -226,13 +226,15 @@ Note that, at the moment, only pure python wheels are supported.
 
 ## publish
 
-This command builds (if not already built) and publishes the package to the remote repository.
+This command publishes the package, previously built with the [`build`](#build) command, to the remote repository.
 
 It will automatically register the package before uploading if this is the first time it is submitted.
 
 ```bash
 poetry publish
 ```
+
+It can also build the package if you pass it the `--build` option.
 
 ### Options
 
