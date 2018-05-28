@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.0] - 2018-05-28
 
 ### Added
 
@@ -8,7 +8,7 @@
 - Added a new `init` command to generate a `pyproject.toml` file in existing projects.
 - Added a new setting `settings.virtualenvs.in-project` to make `poetry` create the project's virtualenv inside the project's directory.
 - Added the `--extras` and `--python` options to `debug:resolve` to help debug dependency resolution.
-- Added a `--src` option to new to create an `src` layout.
+- Added a `--src` option to `new` command to create an `src` layout.
 - Added support for specifying the `platform` for dependencies.
 - Added the `--python` option to the `add` command.
 - Added the `--platform` option to the `add` command.
@@ -22,7 +22,7 @@
 - The `publish` command no longer build packages by default. Use `--build` to retrieve the previous behavior.
 - Improved support for private repositories.
 - Expanded version constraints now keep the original version's precision.
-- The lock file hash no longer use the project's name and version.
+- The lock file hash no longer uses the project's name and version.
 - The `LICENSE` file, or similar, is now automatically added to the built packages.
 
 ### Fixed
@@ -342,8 +342,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.9.1...master
-[0.9.1]: https://github.com/sdispater/poetry/releases/tag/0.9.1
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.10.0...master
+[0.10.0]: https://github.com/sdispater/poetry/releases/tag/0.10.0
 [0.9.0]: https://github.com/sdispater/poetry/releases/tag/0.9.0
 [0.8.6]: https://github.com/sdispater/poetry/releases/tag/0.8.6
 [0.8.5]: https://github.com/sdispater/poetry/releases/tag/0.8.5
