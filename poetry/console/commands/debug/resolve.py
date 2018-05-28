@@ -41,7 +41,14 @@ class DebugResolveCommand(Command):
             dependencies = []
             for name, constraint in requirements.items():
                 dep = Dependency(name, constraint)
-                for ex in self.option('extras'):
+                extras = []
+                for extra in self.option('extras'):
+                    if ' ' in extra:
+                        extras += [e.strip() for e in extra.split(' ')]
+                    else:
+                        extras.append(extra)
+
+                for ex in extras:
                     dep.extras.append(ex)
 
                 dependencies.append(dep)

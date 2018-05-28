@@ -36,7 +36,14 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             self.poetry.pool
         )
 
-        installer.extras(self.option('extras'))
+        extras = []
+        for extra in self.option('extras'):
+            if ' ' in extra:
+                extras += [e.strip() for e in extra.split(' ')]
+            else:
+                extras.append(extra)
+
+        installer.extras(extras)
         installer.dev_mode(not self.option('no-dev'))
         installer.develop(self.option('develop'))
         installer.dry_run(self.option('dry-run'))

@@ -98,6 +98,13 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 constraint['allows-prereleases'] = True
 
             if self.option('extras'):
+                extras = []
+                for extra in self.option('extras'):
+                    if ' ' in extra:
+                        extras += [e.strip() for e in extra.split(' ')]
+                    else:
+                        extras.append(extra)
+
                 constraint['extras'] = self.option('extras')
 
             if self.option('python'):
