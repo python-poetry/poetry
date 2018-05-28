@@ -49,7 +49,11 @@ class Repository(BaseRepository):
 
         for package in self.packages:
             if name == package.name:
-                if package.is_prerelease() and not allow_prereleases:
+                if (
+                    package.is_prerelease()
+                    and not allow_prereleases
+                    and not constraint.allows(package.version)
+                ):
                     continue
 
                 if constraint is None or constraint.allows(package.version):

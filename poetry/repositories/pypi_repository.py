@@ -108,7 +108,7 @@ class PyPiRepository(Repository):
 
             package = Package(name, version)
 
-            if package.is_prerelease() and not allow_prereleases:
+            if package.is_prerelease() and not allow_prereleases and not constraint.allows(package.version):
                 continue
 
             if (

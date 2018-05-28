@@ -122,11 +122,11 @@ class Provider:
             )
 
             packages.sort(
-                key=cmp_to_key(
-                    lambda x, y:
-                    0 if x.version == y.version
-                    else int(x.version < y.version or -1)
-                )
+                key=lambda p: (
+                    not p.is_prerelease() and not dependency.allows_prereleases(),
+                    p.version
+                ),
+                reverse=True
             )
 
         self._search_for[dependency] = packages

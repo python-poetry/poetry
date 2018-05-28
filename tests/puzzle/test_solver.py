@@ -665,3 +665,25 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     assert b.category == 'main'
     assert a.category == 'main'
     assert e.category == 'main'
+
+
+def test_solver_with_dependency_and_prerelease_sub_dependencies(solver, repo, package):
+    package.add_dependency('A')
+
+    package_a = get_package('A', '1.0')
+    package_a.add_dependency('B', '>=1.0.0.dev2')
+
+    repo.add_package(package_a)
+    repo.add_package(get_package('B', '0.9.0'))
+    repo.add_package(get_package('B', '1.0.0.dev1'))
+    repo.add_package(get_package('B', '1.0.0.dev2'))
+    repo.add_package(get_package('B', '1.0.0.dev3'))
+    package_b = get_package('B', '1.0.0.dev4')
+    repo.add_package(package_b)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_a},
+    ])

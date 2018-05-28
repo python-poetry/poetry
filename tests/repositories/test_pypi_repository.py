@@ -41,6 +41,13 @@ def test_find_packages():
     assert len(packages) == 5
 
 
+def test_find_packages_with_prereleases():
+    repo = MockRepository()
+    packages = repo.find_packages('toga', '>=0.3.0.dev2')
+
+    assert len(packages) == 7
+
+
 def test_package():
     repo = MockRepository()
 

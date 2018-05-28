@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed packages not found for prerelease version constraints when resolving dependencies.
+
+
 ## [0.10.0] - 2018-05-28
 
 ### Added
