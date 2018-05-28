@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "0.10.0-alpha.3"
+version = "0.10.0-alpha.4"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -40,7 +40,7 @@ typing = { version = "^3.6", python = "~2.7 || ~3.4" }
 
 # Use pathlib2 and virtualenv for Python 2.7
 pathlib2 = { version = "^2.3", python = "~2.7" }
-virtualenv = { version = "^15.2", python = "~2.7" }
+virtualenv = { version = "^16.0", python = "~2.7" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.4"
