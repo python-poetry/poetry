@@ -8,6 +8,7 @@ from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .locker import Locker
 from .package import Package
+from .project_package import ProjectPackage
 from .utils.link import Link
 from .utils.utils import convert_markers
 from .utils.utils import group_markers
@@ -20,6 +21,14 @@ from .vcs_dependency import VCSDependency
 
 
 def dependency_from_pep_508(name):
+    # Removing comments
+    parts = name.split('#', 1)
+    name = parts[0].strip()
+    if len(parts) > 1:
+        rest = parts[1]
+        if ';' in rest:
+            name += ';' + rest.split(';', 1)[1]
+
     req = Requirement(name)
 
     if req.marker:

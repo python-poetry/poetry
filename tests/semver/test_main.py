@@ -1,169 +1,144 @@
 import pytest
 
-from poetry.semver import sort, rsort, statisfies, satisfied_by
+from poetry.semver import parse_constraint
+from poetry.semver import Version
+from poetry.semver import VersionRange
 
 
 @pytest.mark.parametrize(
-    'version, constraint',
+    'input,constraint',
     [
-        ('1.2.3', '^1.2.3+build'),
-        ('1.3.0', '^1.2.3+build'),
-        ('1.3.0-beta', '>1.2'),
-        ('1.2.3-beta', '<=1.2.3'),
-        ('1.0.0', '1.0.0'),
-        ('1.2.3', '*'),
-        ('v1.2.3', '*'),
-        ('1.0.0', '>=1.0.0'),
-        ('1.0.1', '>=1.0.0'),
-        ('1.1.0', '>=1.0.0'),
-        ('1.0.1', '>1.0.0'),
-        ('1.1.0', '>1.0.0'),
-        ('2.0.0', '<=2.0.0'),
-        ('1.9999.9999', '<=2.0.0'),
-        ('0.2.9', '<=2.0.0'),
-        ('1.9999.9999', '<2.0.0'),
-        ('0.2.9', '<2.0.0'),
-        ('1.0.0', '>= 1.0.0'),
-        ('1.0.1', '>=  1.0.0'),
-        ('1.1.0', '>=   1.0.0'),
-        ('1.0.1', '> 1.0.0'),
-        ('1.1.0', '>  1.0.0'),
-        ('2.0.0', '<=   2.0.0'),
-        ('1.9999.9999', '<= 2.0.0'),
-        ('0.2.9', '<=  2.0.0'),
-        ('1.9999.9999', '<    2.0.0'),
-        ('0.2.9', "<\t2.0.0"),
-        ('v0.1.97', '>=0.1.97'),
-        ('0.1.97', '>=0.1.97'),
-        ('1.2.4', '0.1.20 || 1.2.4'),
-        ('0.0.0', '>=0.2.3 || <0.0.1'),
-        ('0.2.3', '>=0.2.3 || <0.0.1'),
-        ('0.2.4', '>=0.2.3 || <0.0.1'),
-        ('2.1.3', '2.x.x'),
-        ('1.2.3', '1.2.x'),
-        ('2.1.3', '1.2.x || 2.x'),
-        ('1.2.3', '1.2.x || 2.x'),
-        ('1.2.3', 'x'),
-        ('2.1.3', '2.*.*'),
-        ('1.2.3', '1.2.*'),
-        ('2.1.3', '1.2.* || 2.*'),
-        ('1.2.3', '1.2.* || 2.*'),
-        ('1.2.3', '*'),
-        ('2.9.0', '^2.4'),  # >= 2.4.0 < 3.0.0
-        ('2.4.5', '~2.4'),
-        ('1.2.3', '~1'),  # >= 1.0.0 < 2.0.0
-        ('1.0.7', '~1.0'),  # >= 1.0.0 < 1.1.0
-        ('1.0.0', '>=1'),
-        ('1.0.0', '>= 1'),
-        ('1.2.8', '>1.2'),  # > 1.2.0
-        ('1.1.1', '<1.2'),  # < 1.2.0
-        ('1.1.1', '< 1.2'),
-        ('1.2.3', '~1.2.1 >=1.2.3'),
-        ('1.2.3', '~1.2.1 =1.2.3'),
-        ('1.2.3', '~1.2.1 1.2.3'),
-        ('1.2.3', '~1.2.1 >=1.2.3 1.2.3'),
-        ('1.2.3', '~1.2.1 1.2.3 >=1.2.3'),
-        ('1.2.3', '~1.2.1 1.2.3'),
-        ('1.2.3', '>=1.2.1 1.2.3'),
-        ('1.2.3', '1.2.3 >=1.2.1'),
-        ('1.2.3', '>=1.2.3 >=1.2.1'),
-        ('1.2.3', '>=1.2.1 >=1.2.3'),
-        ('1.2.8', '>=1.2'),
-        ('1.8.1', '^1.2.3'),
-        ('0.1.2', '^0.1.2'),
-        ('0.1.2', '^0.1'),
-        ('1.4.2', '^1.2'),
-        ('1.4.2', '^1.2 ^1'),
-        ('0.0.1-beta', '^0.0.1-alpha'),
+        ('*', VersionRange()),
+        ('*.*', VersionRange()),
+        ('v*.*', VersionRange()),
+        ('*.x.*', VersionRange()),
+        ('x.X.x.*', VersionRange()),
+        # ('!=1.0.0', Constraint('!=', '1.0.0.0')),
+        ('>1.0.0', VersionRange(min=Version(1, 0, 0))),
+        ('<1.2.3', VersionRange(max=Version(1, 2, 3))),
+        ('<=1.2.3', VersionRange(max=Version(1, 2, 3), include_max=True)),
+        ('>=1.2.3', VersionRange(min=Version(1, 2, 3), include_min=True)),
+        ('=1.2.3', Version(1, 2, 3)),
+        ('1.2.3', Version(1, 2, 3)),
+        ('=1.0', Version(1, 0, 0)),
+        ('1.2.3b5', Version(1, 2, 3, 'b5')),
+        ('>= 1.2.3', VersionRange(min=Version(1, 2, 3), include_min=True))
     ]
 )
-def test_statisfies_positive(version, constraint):
-    assert statisfies(version, constraint)
+def test_parse_constraint(input, constraint):
+    assert parse_constraint(input) == constraint
 
 
 @pytest.mark.parametrize(
-    'version, constraint',
+    'input,constraint',
     [
-        ('2.0.0', '^1.2.3+build'),
-        ('1.2.0', '^1.2.3+build'),
-        ('1.0.0beta', '1'),
-        ('1.0.1', '1.0.0'),
-        ('0.0.0', '>=1.0.0'),
-        ('0.0.1', '>=1.0.0'),
-        ('0.1.0', '>=1.0.0'),
-        ('0.0.1', '>1.0.0'),
-        ('0.1.0', '>1.0.0'),
-        ('3.0.0', '<=2.0.0'),
-        ('2.9999.9999', '<=2.0.0'),
-        ('2.2.9', '<=2.0.0'),
-        ('2.9999.9999', '<2.0.0'),
-        ('2.2.9', '<2.0.0'),
-        ('v0.1.93', '>=0.1.97'),
-        ('0.1.93', '>=0.1.97'),
-        ('1.2.3', '0.1.20 || 1.2.4'),
-        ('0.0.3', '>=0.2.3 || <0.0.1'),
-        ('0.2.2', '>=0.2.3 || <0.0.1'),
-        ('1.1.3', '2.x.x'),
-        ('3.1.3', '2.x.x'),
-        ('1.3.3', '1.2.x'),
-        ('3.1.3', '1.2.x || 2.x'),
-        ('1.1.3', '1.2.x || 2.x'),
-        ('1.1.3', '2.*.*'),
-        ('3.1.3', '2.*.*'),
-        ('1.3.3', '1.2.*'),
-        ('3.1.3', '1.2.* || 2.*'),
-        ('1.1.3', '1.2.* || 2.*'),
-        ('1.1.2', '2'),
-        ('2.4.1', '2.3'),
-        ('3.0.0', '~2.4'),  # >= 2.4.0 < 3.0.0
-        ('2.3.9', '~2.4'),
-        ('0.2.3', '~1'),  # >= 1.0.0 < 2.0.0
-        ('1.0.0', '<1'),
-        ('1.1.1', '>=1.2'),
-        ('2.0.0beta', '1'),
-        ('0.5.4-alpha', '~v0.5.4-beta'),
-        ('1.2.2', '^1.2.3'),
-        ('1.1.9', '^1.2'),
+        ('v2.*', VersionRange(Version(2, 0, 0), Version(3, 0, 0), True)),
+        ('2.*.*', VersionRange(Version(2, 0, 0), Version(3, 0, 0), True)),
+        ('20.*', VersionRange(Version(20, 0, 0), Version(21, 0, 0), True)),
+        ('20.*.*', VersionRange(Version(20, 0, 0), Version(21, 0, 0), True)),
+        ('2.0.*', VersionRange(Version(2, 0, 0), Version(2, 1, 0), True)),
+        ('2.x', VersionRange(Version(2, 0, 0), Version(3, 0, 0), True)),
+        ('2.x.x', VersionRange(Version(2, 0, 0), Version(3, 0, 0), True)),
+        ('2.2.X', VersionRange(Version(2, 2, 0), Version(2, 3, 0), True)),
+        ('0.*', VersionRange(max=Version(1, 0, 0))),
+        ('0.*.*', VersionRange(max=Version(1, 0, 0))),
+        ('0.x', VersionRange(max=Version(1, 0, 0))),
     ]
 )
-def test_statisfies_negative(version, constraint):
-    assert not statisfies(version, constraint)
+def test_parse_constraint_wildcard(input, constraint):
+    assert parse_constraint(input) == constraint
 
 
 @pytest.mark.parametrize(
-    'constraint, versions, expected',
+    'input,constraint',
     [
-        (
-            '~1.0',
-            ['1.0', '1.0.9', '1.2', '2.0', '2.1', '0.9999.9999'],
-            ['1.0', '1.0.9'],
-        ),
-        (
-            '>1.0 <3.0 || >=4.0',
-            ['1.0', '1.1', '2.9999.9999', '3.0', '3.1', '3.9999.9999', '4.0', '4.1'],
-            ['1.1', '2.9999.9999', '4.0', '4.1'],
-        ),
-        (
-            '^0.2.0',
-            ['0.1.1', '0.1.9999', '0.2.0', '0.2.1', '0.3.0'],
-            ['0.2.0', '0.2.1'],
-        ),
+        ('~v1', VersionRange(Version(1, 0, 0), Version(2, 0, 0), True)),
+        ('~1.0', VersionRange(Version(1, 0, 0), Version(1, 1, 0), True)),
+        ('~1.0.0', VersionRange(Version(1, 0, 0), Version(1, 1, 0), True)),
+        ('~1.2', VersionRange(Version(1, 2, 0), Version(1, 3, 0), True)),
+        ('~1.2.3', VersionRange(Version(1, 2, 3), Version(1, 3, 0), True)),
+        ('~1.2-beta', VersionRange(Version(1, 2, 0, 'beta'), Version(1, 3, 0), True)),
+        ('~1.2-b2', VersionRange(Version(1, 2, 0, 'b2'), Version(1, 3, 0), True)),
+        ('~0.3', VersionRange(Version(0, 3, 0), Version(0, 4, 0), True)),
     ]
 )
-def test_satisfied_by(constraint, versions, expected):
-    assert satisfied_by(versions, constraint) == expected
+def test_parse_constraint_tilde(input, constraint):
+    assert parse_constraint(input) == constraint
 
 
 @pytest.mark.parametrize(
-    'versions, sorted, rsorted',
+    'input,constraint',
     [
-        (
-            ['1.0', '0.1', '0.1', '3.2.1', '2.4.0-alpha', '2.4.0'],
-            ['0.1', '0.1', '1.0', '2.4.0-alpha', '2.4.0', '3.2.1'],
-            ['3.2.1', '2.4.0', '2.4.0-alpha', '1.0', '0.1', '0.1'],
-        )
+        ('^v1', VersionRange(Version(1, 0, 0), Version(2, 0, 0), True)),
+        ('^0', VersionRange(Version(0, 0, 0), Version(1, 0, 0), True)),
+        ('^0.0', VersionRange(Version(0, 0, 0), Version(0, 1, 0), True)),
+        ('^1.2', VersionRange(Version(1, 2, 0), Version(2, 0, 0), True)),
+        ('^1.2.3-beta.2', VersionRange(Version(1, 2, 3, 'beta.2'), Version(2, 0, 0), True)),
+        ('^1.2.3', VersionRange(Version(1, 2, 3), Version(2, 0, 0), True)),
+        ('^0.2.3', VersionRange(Version(0, 2, 3), Version(0, 3, 0), True)),
+        ('^0.2', VersionRange(Version(0, 2, 0), Version(0, 3, 0), True)),
+        ('^0.2.0', VersionRange(Version(0, 2, 0), Version(0, 3, 0), True)),
+        ('^0.0.3', VersionRange(Version(0, 0, 3), Version(0, 0, 4), True)),
     ]
 )
-def test_sort(versions, sorted, rsorted):
-    assert sort(versions) == sorted
-    assert rsort(versions) == rsorted
+def test_parse_constraint_caret(input, constraint):
+    assert parse_constraint(input) == constraint
+
+
+@pytest.mark.parametrize(
+    'input',
+    [
+        '>2.0,<=3.0',
+        '>2.0 <=3.0',
+        '>2.0  <=3.0',
+        '>2.0, <=3.0',
+        '>2.0 ,<=3.0',
+        '>2.0 , <=3.0',
+        '>2.0   , <=3.0',
+        '> 2.0   <=  3.0',
+        '> 2.0  ,  <=  3.0',
+        '  > 2.0  ,  <=  3.0 ',
+    ]
+)
+def test_parse_constraint_multi(input):
+    assert parse_constraint(input) == VersionRange(
+        Version(2, 0, 0), Version(3, 0, 0),
+        include_min=False,
+        include_max=True
+    )
+
+
+@pytest.mark.parametrize(
+    'input,constraint',
+    [
+        ('!=v2.*', VersionRange(max=Version.parse('2.0')).union(VersionRange(Version.parse('3.0'), include_min=True))),
+        ('!=2.*.*', VersionRange(max=Version.parse('2.0')).union(VersionRange(Version.parse('3.0'), include_min=True))),
+        ('!=2.0.*', VersionRange(max=Version.parse('2.0')).union(VersionRange(Version.parse('2.1'), include_min=True))),
+        ('!=0.*', VersionRange(Version.parse('1.0'), include_min=True)),
+        ('!=0.*.*', VersionRange(Version.parse('1.0'), include_min=True)),
+    ]
+)
+def test_parse_constraints_negative_wildcard(input, constraint):
+    assert parse_constraint(input) == constraint
+
+
+
+@pytest.mark.parametrize(
+    'input, expected',
+    [
+        ('1', '1'),
+        ('1.2', '1.2'),
+        ('1.2.3', '1.2.3'),
+        ('!=1', '<1 || >1'),
+        ('!=1.2', '<1.2 || >1.2'),
+        ('!=1.2.3', '<1.2.3 || >1.2.3'),
+        ('^1', '>=1,<2'),
+        ('^1.0', '>=1.0,<2.0'),
+        ('^1.0.0', '>=1.0.0,<2.0.0'),
+        ('~1', '>=1,<2'),
+        ('~1.0', '>=1.0,<1.1'),
+        ('~1.0.0', '>=1.0.0,<1.1.0'),
+    ]
+)
+def test_constraints_keep_version_precision(input, expected):
+    assert str(parse_constraint(input)) == expected

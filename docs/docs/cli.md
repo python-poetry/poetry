@@ -54,6 +54,26 @@ the `--name` option:
 poetry new my-folder --name my-package
 ```
 
+## init
+
+This command will help you create a `pyproject.toml` file interactively
+by prompting you to provide basic information about your package.
+
+It will interactively ask you to fill in the fields, while using some smart defaults.
+
+```bash
+poetry init
+```
+
+### Options
+
+* `--name`: Name of the package.
+* `--description`: Description of the package.
+* `--author`: Author of the package.
+* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
+* `--dev-dependency`: Development requirements, see `--require`.
+
+
 ## install
 
 The `install` command reads the `pyproject.toml` file from the current project,
@@ -206,13 +226,15 @@ Note that, at the moment, only pure python wheels are supported.
 
 ## publish
 
-This command builds (if not already built) and publishes the package to the remote repository.
+This command publishes the package, previously built with the [`build`](#build) command, to the remote repository.
 
 It will automatically register the package before uploading if this is the first time it is submitted.
 
 ```bash
 poetry publish
 ```
+
+It can also build the package if you pass it the `--build` option.
 
 ### Options
 
@@ -269,11 +291,7 @@ The `run` command executes the given command inside the project's virtualenv.
 poetry run python -V
 ```
 
-Note that this command has no option.
-
-## script
-
-The `script` executes one of the scripts defined in `pyproject.toml`.
+It can also executes one of the scripts defined in `pyproject.toml`.
 
 So, if you have a script defined like this:
 
@@ -285,7 +303,7 @@ my-script = "my_module:main"
 You can execute it like so:
 
 ```bash
-poetry script my-script
+poetry run my-script
 ```
 
 Note that this command has no option.

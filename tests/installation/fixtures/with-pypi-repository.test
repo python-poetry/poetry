@@ -41,7 +41,7 @@ python-versions = "*"
 platform = "*"
 
 [package.dependencies]
-six = "< 2.0.0.0, >= 1.0.0.0"
+six = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "pluggy"
@@ -71,12 +71,12 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 platform = "unix"
 
 [package.dependencies]
-py = ">= 1.5.0.0"
-six = ">= 1.10.0.0"
+py = ">=1.5.0"
+six = ">=1.10.0"
 setuptools = "*"
-attrs = ">= 17.4.0.0"
-more-itertools = ">= 4.0.0.0"
-pluggy = "< 0.7.0.0, >= 0.5.0.0"
+attrs = ">=17.4.0"
+more-itertools = ">=4.0.0"
+pluggy = ">=0.5,<0.7"
 funcsigs = "*"
 colorama = "*"
 

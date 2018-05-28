@@ -20,19 +20,19 @@ def command():
         ('1.2.3', 'patch', '1.2.4'),
         ('1.2.3', 'minor', '1.3.0'),
         ('1.2.3', 'major', '2.0.0'),
-        ('1.2.3', 'prepatch', '1.2.4a0'),
-        ('1.2.3', 'preminor', '1.3.0a0'),
-        ('1.2.3', 'premajor', '2.0.0a0'),
+        ('1.2.3', 'prepatch', '1.2.4-alpha.0'),
+        ('1.2.3', 'preminor', '1.3.0-alpha.0'),
+        ('1.2.3', 'premajor', '2.0.0-alpha.0'),
         ('1.2.3-beta.1', 'patch', '1.2.3'),
         ('1.2.3-beta.1', 'minor', '1.3.0'),
         ('1.2.3-beta.1', 'major', '2.0.0'),
         ('1.2.3-beta.1', 'prerelease', '1.2.3-beta.2'),
-        ('1.2.3-beta1', 'prerelease', '1.2.3-beta2'),
-        ('1.2.3beta1', 'prerelease', '1.2.3beta2'),
-        ('1.2.3b1', 'prerelease', '1.2.3b2'),
-        ('1.2.3', 'prerelease', '1.2.4a0')
+        ('1.2.3-beta1', 'prerelease', '1.2.3-beta.2'),
+        ('1.2.3beta1', 'prerelease', '1.2.3-beta.2'),
+        ('1.2.3b1', 'prerelease', '1.2.3-beta.2'),
+        ('1.2.3', 'prerelease', '1.2.4-alpha.0')
     ]
 )
 def test_increment_version(version, rule, expected, command):
-    assert expected == command.increment_version(version, rule)
+    assert expected == command.increment_version(version, rule).text
 

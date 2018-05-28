@@ -64,20 +64,20 @@ poetry self:update 0.8.0
 ```
 
 
-### Enable tab completion for Bash, Fish, or Zsh
+## Enable tab completion for Bash, Fish, or Zsh
 
 `poetry` supports generating completion scripts for Bash, Fish, and Zsh.
 See `poetry help completions` for full details, but the gist is as simple as using one of the following:
 
 ```bash
 # Bash
-poetry completions bash > /etc/bash_completion.d/pyproject.bash-completion
+poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
 # Bash (macOS/Homebrew)
-poetry completions bash > $(brew --prefix)/etc/bash_completion.d/pyproject.bash-completion
+poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
 # Fish
-poetry completions fish > ~/.config/fish/completions/pyproject.fish
+poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
@@ -209,6 +209,32 @@ results in :
   - Installing oslo.utils (1.4.0)
 ```
 
+This is possible thanks to the efficient dependency resolver at the heart of Poetry.
+
+Here is a breakdown of what exactly happens here:
+
+`oslo.utils (1.4.0)` depends on:
+
+- `pbr (>=0.6,!=0.7,<1.0)`
+- `Babel (>=1.3)`
+- `six (>=1.9.0)`
+- `iso8601 (>=0.1.9)`
+- `oslo.i18n (>=1.3.0)`
+- `netaddr (>=0.7.12)`
+- `netifaces (>=0.10.4)`
+
+What interests us is `pbr (>=0.6,!=0.7,<1.0)`.
+
+At his point, poetry will choose `pbr==0.11.1` which is the latest version that matches the constraint.
+
+Next it will try to select `oslo.i18n==3.20.0` which is the latest version that matches `oslo.i18n (>=1.3.0)`.
+
+However this version requires `pbr (!=2.1.0,>=2.0.0)` which is incompatible with `pbr==0.11.1`,
+so `poetry` will try to find a version of `oslo.i18n` that satisfies `pbr (>=0.6,!=0.7,<1.0)`.
+
+By analyzing the releases of `oslo.i18n`, it will find `oslo.i18n==2.1.0` which requires `pbr (>=0.11,<2.0)`.
+At this point the rest of the resolution is straightforward since there is no more conflict.
+
 #### Install command
 
 When you specify a package to the `install` command it will add it as a wildcard
@@ -264,6 +290,24 @@ the `--name` option:
 poetry new my-folder --name my-package
 ```
 
+### init
+
+This command will help you create a `pyproject.toml` file interactively
+by prompting you to provide basic information about your package.
+
+It will interactively ask you to fill in the fields, while using some smart defaults.
+
+```bash
+poetry init
+```
+
+#### Options
+
+* `--name`: Name of the package.
+* `--description`: Description of the package.
+* `--author`: Author of the package.
+* `--dependency`: Package to require with a version constraint. Should be in format `foo:1.0.0`.
+* `--dev-dependency`: Development requirements, see `--require`.
 
 ### install
 

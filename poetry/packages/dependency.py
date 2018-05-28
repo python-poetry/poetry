@@ -1,13 +1,14 @@
 import poetry.packages
 
-from poetry.semver.constraints import Constraint
-from poetry.semver.constraints import EmptyConstraint
-from poetry.semver.constraints import MultiConstraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
-from poetry.semver.version_parser import VersionParser
+from poetry.semver import parse_constraint
+from poetry.semver import Version
+from poetry.semver import VersionConstraint
+from poetry.semver import VersionUnion
 from poetry.utils.helpers import canonicalize_name
 
+from .constraints.empty_constraint import EmptyConstraint
 from .constraints.generic_constraint import GenericConstraint
+from .constraints.multi_constraint import MultiConstraint
 
 
 class Dependency(object):
@@ -21,28 +22,29 @@ class Dependency(object):
                  ):
         self._name = canonicalize_name(name)
         self._pretty_name = name
-        self._parser = VersionParser()
 
         try:
-            if not isinstance(constraint, BaseConstraint):
-                self._constraint = self._parser.parse_constraints(constraint)
+            if not isinstance(constraint, VersionConstraint):
+                self._constraint = parse_constraint(constraint)
             else:
                 self._constraint = constraint
         except ValueError:
-            self._constraint = self._parser.parse_constraints('*')
+            self._constraint = parse_constraint('*')
 
-        self._pretty_constraint = constraint
+        self._pretty_constraint = str(constraint)
         self._optional = optional
         self._category = category
         self._allows_prereleases = allows_prereleases
 
         self._python_versions = '*'
-        self._python_constraint = self._parser.parse_constraints('*')
+        self._python_constraint = parse_constraint('*')
         self._platform = '*'
         self._platform_constraint = EmptyConstraint()
 
         self._extras = []
         self._in_extras = []
+
+        self.is_root = False
 
     @property
     def name(self):
@@ -71,7 +73,7 @@ class Dependency(object):
     @python_versions.setter
     def python_versions(self, value):
         self._python_versions = value
-        self._python_constraint = self._parser.parse_constraints(value)
+        self._python_constraint = parse_constraint(value)
 
     @property
     def python_constraint(self):
@@ -119,7 +121,7 @@ class Dependency(object):
         """
         return (
             self._name == package.name
-            and self._constraint.matches(Constraint('=', package.version))
+            and self._constraint.allows(package.version)
             and (not package.is_prerelease() or self.allows_prereleases())
         )
 
@@ -129,11 +131,13 @@ class Dependency(object):
         if self.extras:
             requirement += '[{}]'.format(','.join(self.extras))
 
-        if isinstance(self.constraint, MultiConstraint):
+        if isinstance(self.constraint, VersionUnion):
             requirement += ' ({})'.format(','.join(
-                [str(c).replace(' ', '') for c in self.constraint.constraints]
+                [str(c).replace(' ', '') for c in self.constraint.ranges]
             ))
-        elif str(self.constraint) != '*':
+        elif isinstance(self.constraint, Version):
+            requirement += ' (=={})'.format(self.constraint.text)
+        elif not self.constraint.is_any():
             requirement += ' ({})'.format(str(self.constraint).replace(' ', ''))
 
         # Markers
@@ -145,6 +149,13 @@ class Dependency(object):
 
             markers.append(
                 self._create_nested_marker('python_version', python_constraint)
+            )
+
+        if self.platform != '*':
+            platform_constraint = self.platform_constraint
+
+            markers.append(
+                self._create_nested_marker('sys_platform', platform_constraint)
             )
 
         in_extras = ' || '.join(self._in_extras)
@@ -185,9 +196,56 @@ class Dependency(object):
                 parts = [part[1] for part in parts]
 
             marker = glue.join(parts)
-        else:
+        elif isinstance(constraint, GenericConstraint):
             marker = '{} {} "{}"'.format(
                 name, constraint.string_operator, constraint.version
+            )
+        elif isinstance(constraint, VersionUnion):
+            parts = []
+            for c in constraint.ranges:
+                parts.append(self._create_nested_marker(name, c))
+
+            glue = ' or '
+            parts = [
+                '({})'.format(part)
+                for part in parts
+            ]
+
+            marker = glue.join(parts)
+        elif isinstance(constraint, Version):
+            marker = '{} == "{}"'.format(
+                name, constraint.text
+            )
+        else:
+            if constraint.min is not None:
+                op = '>='
+                if not constraint.include_min:
+                    op = '>'
+
+                version = constraint.min.text
+                if constraint.max is not None:
+                    text = '{} {} "{}"'.format(name, op, version)
+
+                    op = '<='
+                    if not constraint.include_max:
+                        op = '<'
+
+                    version = constraint.max
+
+                    text += ' and {} {} "{}"'.format(name, op, version)
+
+                    return text
+            elif constraint.max is not None:
+                op = '<='
+                if not constraint.include_max:
+                    op = '<'
+
+                version = constraint.max
+            else:
+                return ''
+
+            marker = '{} {} "{}"'.format(
+                name, op, version
             )
 
         return marker
@@ -204,16 +262,43 @@ class Dependency(object):
         """
         self._optional = True
 
+    def with_constraint(self, constraint):
+        new = Dependency(
+            self.pretty_name,
+            constraint,
+            optional=self.is_optional(),
+            category=self.category,
+            allows_prereleases=self.allows_prereleases()
+        )
+
+        new.is_root = self.is_root
+        new.python_versions = self.python_versions
+        new.platform = self.platform
+
+        for extra in self.extras:
+            new.extras.append(extra)
+
+        for in_extra in self.in_extras:
+            new.in_extras.append(in_extra)
+
+        return new
+
     def __eq__(self, other):
         if not isinstance(other, Dependency):
             return NotImplemented
 
         return self._name == other.name and self._constraint == other.constraint
 
+    def __ne__(self, other):
+        return not self == other
+
     def __hash__(self):
         return hash((self._name, self._pretty_constraint))
 
     def __str__(self):
+        if self.is_root:
+            return self._pretty_name
+
         return '{} ({})'.format(
             self._pretty_name, self._pretty_constraint
         )

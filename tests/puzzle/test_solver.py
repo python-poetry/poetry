@@ -3,7 +3,7 @@ import pytest
 from cleo.outputs.null_output import NullOutput
 from cleo.styles import OutputStyle
 
-from poetry.packages import Package
+from poetry.packages import ProjectPackage
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
@@ -21,7 +21,7 @@ def io():
 
 @pytest.fixture()
 def package():
-    return Package('root', '1.0')
+    return ProjectPackage('root', '1.0')
 
 
 @pytest.fixture()
@@ -77,7 +77,9 @@ def check_solver_result(ops, expected):
     assert result == expected
 
 
-def test_solver_install_single(solver, repo):
+def test_solver_install_single(solver, repo, package):
+    package.add_dependency('A')
+
     package_a = get_package('A', '1.0')
     repo.add_package(package_a)
 
@@ -93,7 +95,7 @@ def test_solver_remove_if_no_longer_locked(solver, locked, installed):
     installed.add_package(package_a)
     locked.add_package(package_a)
 
-    ops = solver.solve([])
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'remove', 'package': package_a}
@@ -115,15 +117,19 @@ def test_remove_non_installed(solver, repo, locked):
     ])
 
 
-def test_install_non_existing_package_fail(solver, repo):
+def test_install_non_existing_package_fail(solver, repo, package):
+    package.add_dependency('B', '1')
+
     package_a = get_package('A', '1.0')
     repo.add_package(package_a)
 
     with pytest.raises(SolverProblemError):
-        solver.solve([get_dependency('B', '1')])
+        solver.solve()
 
 
-def test_solver_with_deps(solver, repo):
+def test_solver_with_deps(solver, repo, package):
+    package.add_dependency('A')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     new_package_b = get_package('B', '1.1')
@@ -134,7 +140,7 @@ def test_solver_with_deps(solver, repo):
 
     package_a.requires.append(get_dependency('B', '<1.1'))
 
-    ops = solver.solve([get_dependency('a')])
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_b},
@@ -142,7 +148,9 @@ def test_solver_with_deps(solver, repo):
     ])
 
 
-def test_install_honours_not_equal(solver, repo):
+def test_install_honours_not_equal(solver, repo, package):
+    package.add_dependency('A')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     new_package_b11 = get_package('B', '1.1')
@@ -157,7 +165,7 @@ def test_install_honours_not_equal(solver, repo):
 
     package_a.requires.append(get_dependency('B', '<=1.3,!=1.3,!=1.2'))
 
-    ops = solver.solve([get_dependency('a')])
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': new_package_b11},
@@ -165,7 +173,11 @@ def test_install_honours_not_equal(solver, repo):
     ])
 
 
-def test_install_with_deps_in_order(solver, repo):
+def test_install_with_deps_in_order(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('B')
+    package.add_dependency('C')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -178,13 +190,7 @@ def test_install_with_deps_in_order(solver, repo):
 
     package_c.requires.append(get_dependency('A', '>=1.0'))
 
-    request = [
-        get_dependency('A'),
-        get_dependency('B'),
-        get_dependency('C'),
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_a},
@@ -193,23 +199,23 @@ def test_install_with_deps_in_order(solver, repo):
     ])
 
 
-def test_install_installed(solver, repo, installed):
+def test_install_installed(solver, repo, installed, package):
+    package.add_dependency('A')
+
     package_a = get_package('A', '1.0')
     installed.add_package(package_a)
     repo.add_package(package_a)
 
-    request = [
-        get_dependency('A'),
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_a, 'skipped': True},
     ])
 
 
-def test_update_installed(solver, repo, installed):
+def test_update_installed(solver, repo, installed, package):
+    package.add_dependency('A')
+
     installed.add_package(get_package('A', '1.0'))
 
     package_a = get_package('A', '1.0')
@@ -217,52 +223,53 @@ def test_update_installed(solver, repo, installed):
     repo.add_package(package_a)
     repo.add_package(new_package_a)
 
-    request = [
-        get_dependency('A'),
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'update', 'from': package_a, 'to': new_package_a}
     ])
 
 
-def test_update_with_fixed(solver, repo, installed):
+def test_update_with_use_latest(solver, repo, installed, package, locked):
+    package.add_dependency('A')
+    package.add_dependency('B')
+
     installed.add_package(get_package('A', '1.0'))
 
     package_a = get_package('A', '1.0')
     new_package_a = get_package('A', '1.1')
+    package_b = get_package('B', '1.0')
+    new_package_b = get_package('B', '1.1')
     repo.add_package(package_a)
     repo.add_package(new_package_a)
+    repo.add_package(package_b)
+    repo.add_package(new_package_b)
 
-    request = [
-        get_dependency('A'),
-    ]
+    locked.add_package(package_a)
+    locked.add_package(package_b)
 
-    ops = solver.solve(request, fixed=[get_dependency('A', '1.0')])
+    ops = solver.solve(use_latest=[package_b.name])
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_a, 'skipped': True},
+        {'job': 'install', 'package': new_package_b},
     ])
 
 
-def test_solver_sets_categories(solver, repo):
+def test_solver_sets_categories(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('B', category='dev')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
-    package_b.requires.append(get_dependency('C', '~1.0'))
+    package_b.add_dependency('C', '~1.0')
 
     repo.add_package(package_a)
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    request = [
-        get_dependency('A'),
-        get_dependency('B', category='dev')
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
@@ -277,6 +284,9 @@ def test_solver_sets_categories(solver, repo):
 
 def test_solver_respects_root_package_python_versions(solver, repo, package):
     package.python_versions = '^3.4'
+    package.add_dependency('A')
+    package.add_dependency('B')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_b.python_versions = '^3.6'
@@ -291,12 +301,7 @@ def test_solver_respects_root_package_python_versions(solver, repo, package):
     repo.add_package(package_c)
     repo.add_package(package_c11)
 
-    request = [
-        get_dependency('A'),
-        get_dependency('B')
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
@@ -307,6 +312,9 @@ def test_solver_respects_root_package_python_versions(solver, repo, package):
 
 def test_solver_fails_if_mismatch_root_python_versions(solver, repo, package):
     package.python_versions = '^3.4'
+    package.add_dependency('A')
+    package.add_dependency('B')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_b.python_versions = '^3.6'
@@ -318,17 +326,15 @@ def test_solver_fails_if_mismatch_root_python_versions(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    request = [
-        get_dependency('A'),
-        get_dependency('B')
-    ]
-
     with pytest.raises(SolverProblemError):
-        solver.solve(request)
+        solver.solve()
 
 
 def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
     package.python_versions = '^3.4'
+    package.add_dependency('A', {'version': '*', 'python': '~3.5'})
+    package.add_dependency('B', {'version': '*', 'optional': True})
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_b.python_versions = '^3.6'
@@ -340,16 +346,7 @@ def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    dependency_a = get_dependency('A')
-    dependency_a.python_versions = '~3.5'
-
-    dependency_b = get_dependency('B', optional=True)
-    request = [
-        dependency_a,
-        dependency_b
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
@@ -360,6 +357,9 @@ def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
 
 def test_solver_solves_while_respecting_root_platforms(solver, repo, package):
     package.platform = 'darwin'
+    package.add_dependency('A')
+    package.add_dependency('B')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_b.python_versions = '^3.6'
@@ -374,12 +374,7 @@ def test_solver_solves_while_respecting_root_platforms(solver, repo, package):
     repo.add_package(package_c10)
     repo.add_package(package_c12)
 
-    request = [
-        get_dependency('A'),
-        get_dependency('B')
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c10},
@@ -388,7 +383,10 @@ def test_solver_solves_while_respecting_root_platforms(solver, repo, package):
     ])
 
 
-def test_solver_does_not_return_extras_if_not_requested(solver, repo):
+def test_solver_does_not_return_extras_if_not_requested(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('B')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -401,14 +399,7 @@ def test_solver_does_not_return_extras_if_not_requested(solver, repo):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    dependency_a = get_dependency('A')
-    dependency_b = get_dependency('B')
-    request = [
-        dependency_a,
-        dependency_b
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_a},
@@ -416,7 +407,10 @@ def test_solver_does_not_return_extras_if_not_requested(solver, repo):
     ])
 
 
-def test_solver_returns_extras_if_requested(solver, repo):
+def test_solver_returns_extras_if_requested(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('B', {'version': '*', 'extras': ['foo']})
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -430,15 +424,7 @@ def test_solver_returns_extras_if_requested(solver, repo):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    dependency_a = get_dependency('A')
-    dependency_b = get_dependency('B')
-    dependency_b.extras.append('foo')
-    request = [
-        dependency_a,
-        dependency_b
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
@@ -447,7 +433,11 @@ def test_solver_returns_extras_if_requested(solver, repo):
     ])
 
 
-def test_solver_returns_prereleases_if_requested(solver, repo):
+def test_solver_returns_prereleases_if_requested(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('B')
+    package.add_dependency('C', {'version': '*', 'allows-prereleases': True})
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -458,16 +448,7 @@ def test_solver_returns_prereleases_if_requested(solver, repo):
     repo.add_package(package_c)
     repo.add_package(package_c_dev)
 
-    dependency_a = get_dependency('A')
-    dependency_b = get_dependency('B')
-    dependency_c = get_dependency('C', allows_prereleases=True)
-    request = [
-        dependency_a,
-        dependency_b,
-        dependency_c
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_a},
@@ -476,7 +457,11 @@ def test_solver_returns_prereleases_if_requested(solver, repo):
     ])
 
 
-def test_solver_does_not_return_prereleases_if_not_requested(solver, repo):
+def test_solver_does_not_return_prereleases_if_not_requested(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('B')
+    package.add_dependency('C')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -487,16 +472,7 @@ def test_solver_does_not_return_prereleases_if_not_requested(solver, repo):
     repo.add_package(package_c)
     repo.add_package(package_c_dev)
 
-    dependency_a = get_dependency('A')
-    dependency_b = get_dependency('B')
-    dependency_c = get_dependency('C')
-    request = [
-        dependency_a,
-        dependency_b,
-        dependency_c
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_a},
@@ -505,7 +481,10 @@ def test_solver_does_not_return_prereleases_if_not_requested(solver, repo):
     ])
 
 
-def test_solver_sub_dependencies_with_requirements(solver, repo):
+def test_solver_sub_dependencies_with_requirements(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('B')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -520,14 +499,7 @@ def test_solver_sub_dependencies_with_requirements(solver, repo):
     repo.add_package(package_c)
     repo.add_package(package_d)
 
-    dependency_a = get_dependency('A')
-    dependency_b = get_dependency('B')
-    request = [
-        dependency_a,
-        dependency_b,
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_c},
@@ -540,7 +512,11 @@ def test_solver_sub_dependencies_with_requirements(solver, repo):
     assert op.package.requirements == {}
 
 
-def test_solver_sub_dependencies_with_requirements_complex(solver, repo):
+def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('B')
+    package.add_dependency('C')
+
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
     package_c = get_package('C', '1.0')
@@ -562,16 +538,7 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo):
     repo.add_package(package_e)
     repo.add_package(package_f)
 
-    dependency_a = get_dependency('A')
-    dependency_b = get_dependency('B')
-    dependency_c = get_dependency('C')
-    request = [
-        dependency_a,
-        dependency_b,
-        dependency_c,
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_d},
@@ -591,6 +558,7 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo):
 
 def test_solver_sub_dependencies_with_not_supported_python_version(solver, repo, package):
     package.python_versions = '^3.5'
+    package.add_dependency('A')
 
     package_a = get_package('A', '1.0')
     package_b = get_package('B', '1.0')
@@ -601,13 +569,99 @@ def test_solver_sub_dependencies_with_not_supported_python_version(solver, repo,
     repo.add_package(package_a)
     repo.add_package(package_b)
 
-    dependency_a = get_dependency('A')
-    request = [
-        dependency_a,
-    ]
-
-    ops = solver.solve(request)
+    ops = solver.solve()
 
     check_solver_result(ops, [
         {'job': 'install', 'package': package_a},
     ])
+
+
+def test_solver_with_dependency_in_both_main_and_dev_dependencies(solver, repo, package):
+    package.python_versions = '^3.5'
+    package.add_dependency('A')
+    package.add_dependency('A', {'version': '*', 'extras': ['foo']}, category='dev')
+
+    package_a = get_package('A', '1.0')
+    package_a.extras['foo'] = [get_dependency('C')]
+    package_a.add_dependency('C', {'version': '^1.0', 'optional': True})
+    package_a.add_dependency('B', {'version': '^1.0'})
+
+    package_b = get_package('B', '1.0')
+
+    package_c = get_package('C', '1.0')
+    package_c.add_dependency('D', '^1.0')
+
+    package_d = get_package('D', '1.0')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_d},
+        {'job': 'install', 'package': package_a},
+    ])
+
+    b = ops[0].package
+    c = ops[1].package
+    d = ops[2].package
+    a = ops[3].package
+
+    assert d.category == 'dev'
+    assert c.category == 'dev'
+    assert b.category == 'main'
+    assert a.category == 'main'
+
+
+def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_dependent(solver, repo, package):
+    package.add_dependency('A')
+    package.add_dependency('E')
+    package.add_dependency('A', {'version': '*', 'extras': ['foo']}, category='dev')
+
+    package_a = get_package('A', '1.0')
+    package_a.extras['foo'] = [get_dependency('C')]
+    package_a.add_dependency('C', {'version': '^1.0', 'optional': True})
+    package_a.add_dependency('B', {'version': '^1.0'})
+
+    package_b = get_package('B', '1.0')
+
+    package_c = get_package('C', '1.0')
+    package_c.add_dependency('D', '^1.0')
+
+    package_d = get_package('D', '1.0')
+
+    package_e = get_package('E', '1.0')
+    package_e.add_dependency('A', '^1.0')
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+    repo.add_package(package_e)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [
+        {'job': 'install', 'package': package_b},
+        {'job': 'install', 'package': package_c},
+        {'job': 'install', 'package': package_d},
+        {'job': 'install', 'package': package_a},
+        {'job': 'install', 'package': package_e},
+    ])
+
+    b = ops[0].package
+    c = ops[1].package
+    d = ops[2].package
+    a = ops[3].package
+    e = ops[4].package
+
+    assert d.category == 'dev'
+    assert c.category == 'dev'
+    assert b.category == 'main'
+    assert a.category == 'main'
+    assert e.category == 'main'

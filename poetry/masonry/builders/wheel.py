@@ -13,8 +13,7 @@ from base64 import urlsafe_b64encode
 from io import StringIO
 
 from poetry.__version__ import __version__
-from poetry.semver.constraints import Constraint
-from poetry.semver.constraints import MultiConstraint
+from poetry.semver import parse_constraint
 from poetry.utils._compat import Path
 
 from ..utils.helpers import normalize_file_permissions
@@ -181,23 +180,18 @@ class WheelBuilder(Builder):
 
     @property
     def dist_info(self):  # type: () -> str
-        return self.dist_info_name(self._package.name, self._package.version)
+        return self.dist_info_name(self._package.name, self._meta.version)
 
     @property
     def wheel_filename(self):  # type: () -> str
         return '{}-{}-{}.whl'.format(
             re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
-            re.sub("[^\w\d.]+", "_", self._package.version, flags=re.UNICODE),
+            re.sub("[^\w\d.]+", "_", self._meta.version, flags=re.UNICODE),
             self.tag
         )
 
     def supports_python2(self):
-        return self._package.python_constraint.matches(
-            MultiConstraint([
-                Constraint('>=', '2.0.0'),
-                Constraint('<', '3.0.0')
-            ])
-        )
+        return self._package.python_constraint.allows_any(parse_constraint('>=2.0.0 <3.0.0'))
 
     def dist_info_name(self, distribution, version):  # type: (...) -> str
         escaped_name = re.sub("[^\w\d.]+", "_", distribution, flags=re.UNICODE)

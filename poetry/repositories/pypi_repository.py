@@ -7,6 +7,7 @@ import pkginfo
 
 from bz2 import BZ2File
 from gzip import GzipFile
+from typing import Dict
 from typing import List
 from typing import Union
 
@@ -26,16 +27,17 @@ from cachy import CacheManager
 from requests import get
 from requests import session
 
+from poetry.io import NullIO
 from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
-from poetry.semver.constraints import Constraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
-from poetry.semver.version_parser import VersionParser
+from poetry.semver import parse_constraint
+from poetry.semver import VersionConstraint
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
+from poetry.utils.venv import Venv
 from poetry.version.markers import InvalidMarker
 
 from .repository import Repository
@@ -79,16 +81,15 @@ class PyPiRepository(Repository):
 
     def find_packages(self,
                       name,                    # type: str
-                      constraint=None,         # type: Union[Constraint, str, None]
+                      constraint=None,         # type: Union[VersionConstraint, str, None]
                       extras=None,             # type: Union[list, None]
                       allow_prereleases=False  # type: bool
                       ):  # type: (...) -> List[Package]
         """
         Find packages on the remote server.
         """
-        if constraint is not None and not isinstance(constraint, BaseConstraint):
-            version_parser = VersionParser()
-            constraint = version_parser.parse_constraints(constraint)
+        if constraint is not None and not isinstance(constraint, VersionConstraint):
+            constraint = parse_constraint(constraint)
 
         info = self.get_package_info(name)
 
@@ -112,7 +113,7 @@ class PyPiRepository(Repository):
 
             if (
                 not constraint
-                or (constraint and constraint.matches(Constraint('=', version)))
+                or (constraint and constraint.allows(package.version))
             ):
                 if extras is not None:
                     package.requires_extras = extras
@@ -142,20 +143,6 @@ class PyPiRepository(Repository):
                 extras = []
 
             release_info = self.get_release_info(name, version)
-            if (
-                self._fallback
-                and release_info['requires_dist'] is None
-                and not release_info['requires_python']
-                and '_fallback' not in release_info
-            ):
-                # Force cache update
-                self._log(
-                    'No dependencies found, downloading archives',
-                    level='debug'
-                )
-                self._cache.forget('{}:{}'.format(name, version))
-                release_info = self.get_release_info(name, version)
-
             package = Package(name, version, version)
             requires_dist = release_info['requires_dist'] or []
             for req in requires_dist:
@@ -270,6 +257,8 @@ class PyPiRepository(Repository):
         )
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
+        self._log('Getting info for {} ({}) from PyPI'.format(name, version), 'debug')
+
         json_data = self._get('pypi/{}/{}/json'.format(name, version))
         if json_data is None:
             raise ValueError('Package [{}] not found.'.format(name))
@@ -297,15 +286,16 @@ class PyPiRepository(Repository):
         if (
                 self._fallback
                 and data['requires_dist'] is None
-                and not data['requires_python']
         ):
+            self._log(
+                'No dependencies found, downloading archives',
+                level='debug'
+            )
             # No dependencies set (along with other information)
             # This might be due to actually no dependencies
             # or badly set metadata when uploading
             # So, we need to make sure there is actually no
             # dependencies by introspecting packages
-            data['_fallback'] = True
-
             urls = {}
             for url in json_data['urls']:
                 # Only get sdist and universal wheels
@@ -334,9 +324,12 @@ class PyPiRepository(Repository):
             if not urls:
                 return data
 
-            requires_dist = self._get_requires_dist_from_urls(urls)
+            info = self._get_info_from_urls(urls)
 
-            data['requires_dist'] = requires_dist
+            data['requires_dist'] = info['requires_dist']
+
+            if not data['requires_python']:
+                data['requires_python'] = info['requires_python']
 
         return data
 
@@ -349,15 +342,21 @@ class PyPiRepository(Repository):
 
         return json_data
 
-    def _get_requires_dist_from_urls(self, urls
-                                     ):  # type: (dict) -> Union[list, None]
+    def _get_info_from_urls(self, urls
+                            ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
         if 'bdist_wheel' in urls:
-            return self._get_requires_dist_from_wheel(urls['bdist_wheek'])
+            return self._get_info_from_wheel(urls['bdist_wheel'])
 
-        return self._get_requires_dist_from_sdist(urls['sdist'])
+        return self._get_info_from_sdist(urls['sdist'])
 
-    def _get_requires_dist_from_wheel(self, url
-                                      ):  # type: (str) -> Union[list, None]
+    def _get_info_from_wheel(self, url
+                             ):  # type: (str) -> Dict[str, Union[str, List, None]]
+        info = {
+            'summary': '',
+            'requires_python': None,
+            'requires_dist': None,
+        }
+
         filename = os.path.basename(urlparse.urlparse(url).path)
 
         with temporary_directory() as temp_dir:
@@ -369,13 +368,26 @@ class PyPiRepository(Repository):
             except ValueError:
                 # Unable to determine dependencies
                 # Assume none
-                return
+                return info
+
+        if meta.summary:
+            info['summary'] = meta.summary or ''
+
+        info['requires_python'] = meta.requires_python
 
         if meta.requires_dist:
-            return meta.requires_dist
+            info['requires_dist'] = meta.requires_dist
 
-    def _get_requires_dist_from_sdist(self, url
-                                      ):  # type: (str) -> Union[list, None]
+        return info
+
+    def _get_info_from_sdist(self, url
+                             ):  # type: (str) -> Dict[str, Union[str, List, None]]
+        info = {
+            'summary': '',
+            'requires_python': None,
+            'requires_dist': None,
+        }
+
         filename = os.path.basename(urlparse.urlparse(url).path)
 
         with temporary_directory() as temp_dir:
@@ -384,9 +396,16 @@ class PyPiRepository(Repository):
 
             try:
                 meta = pkginfo.SDist(str(filepath))
+                if meta.summary:
+                    info['summary'] = meta.summary
+
+                if meta.requires_python:
+                    info['requires_python'] = meta.requires_python
 
                 if meta.requires_dist:
-                    return meta.requires_dist
+                    info['requires_dist'] = list(meta.requires_dist)
+
+                    return info
             except ValueError:
                 # Unable to determine dependencies
                 # We pass and go deeper
@@ -417,7 +436,7 @@ class PyPiRepository(Repository):
             unpacked = Path(temp_dir) / 'unpacked'
             sdist_dir = unpacked / Path(filename).name.rstrip('.tar.gz')
 
-            # Checking for .egg-info
+            # Checking for .egg-info at root
             eggs = list(sdist_dir.glob('*.egg-info'))
             if eggs:
                 egg_info = eggs[0]
@@ -425,16 +444,68 @@ class PyPiRepository(Repository):
                 requires = egg_info / 'requires.txt'
                 if requires.exists():
                     with requires.open() as f:
-                        return parse_requires(f.read())
+                        info['requires_dist'] = parse_requires(f.read())
 
-                return
+                        return info
+
+            # Searching for .egg-info in sub directories
+            eggs = list(sdist_dir.glob('**/*.egg-info'))
+            if eggs:
+                egg_info = eggs[0]
+
+                requires = egg_info / 'requires.txt'
+                if requires.exists():
+                    with requires.open() as f:
+                        info['requires_dist'] = parse_requires(f.read())
+
+                        return info
 
             # Still nothing, assume no dependencies
             # We could probably get them by executing
             # python setup.py egg-info but I don't feel
             # confortable executing a file just for the sake
             # of getting dependencies.
-            return
+            return info
+
+    def _inspect_sdist_with_setup(self, sdist_dir):
+        info = {
+            'requires_python': None,
+            'requires_dist': None,
+        }
+
+        setup = sdist_dir / 'setup.py'
+        if not setup.exists():
+            return info
+
+        venv = Venv.create(NullIO())
+
+        current_dir = os.getcwd()
+        os.chdir(sdist_dir.as_posix())
+
+        try:
+            venv.run(
+                'python', 'setup.py', 'egg_info'
+            )
+
+            egg_info = list(sdist_dir.glob('**/*.egg-info'))[0]
+
+            meta = pkginfo.UnpackedSDist(str(egg_info))
+            if meta.requires_python:
+                info['requires_python'] = meta.requires_python
+
+            if meta.requires_dist:
+                info['requires_dist'] = list(meta.requires_dist)
+            else:
+                requires = egg_info / 'requires.txt'
+                if requires.exists():
+                    with requires.open() as f:
+                        info['requires_dist'] = parse_requires(f.read())
+        except Exception:
+            pass
+
+        os.chdir(current_dir)
+
+        return info
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = get(url, stream=True)

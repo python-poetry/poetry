@@ -1,12 +1,8 @@
-import re
-
-from typing import List
-from typing import Tuple
-
+from .init import InitCommand
 from .venv_command import VenvCommand
 
 
-class AddCommand(VenvCommand):
+class AddCommand(VenvCommand, InitCommand):
     """
     Add a new dependency to <comment>pyproject.toml</>.
 
@@ -17,6 +13,8 @@ class AddCommand(VenvCommand):
         { --path= : The path to a dependency. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --optional : Add as an optional dependency. }
+        { --python= : Python version( for which the dependencies must be installed. }
+        { --platform= : Platforms for which the dependencies must be installed. }
         { --allow-prereleases : Accept prereleases. }
         { --dry-run : Outputs the operations but will not execute anything
                      (implicitly enables --verbose). }
@@ -33,7 +31,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
     def handle(self):
         from poetry.installation import Installer
-        from poetry.semver.version_parser import VersionParser
+        from poetry.semver import parse_constraint
 
         packages = self.argument('name')
         is_dev = self.option('dev')
@@ -76,9 +74,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             requirements = self._format_requirements(requirements)
 
             # validate requirements format
-            parser = VersionParser()
             for constraint in requirements.values():
-                parser.parse_constraints(constraint)
+                parse_constraint(constraint)
 
         for name, constraint in requirements.items():
             constraint = {
@@ -101,7 +98,20 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 constraint['allows-prereleases'] = True
 
             if self.option('extras'):
+                extras = []
+                for extra in self.option('extras'):
+                    if ' ' in extra:
+                        extras += [e.strip() for e in extra.split(' ')]
+                    else:
+                        extras.append(extra)
+
                 constraint['extras'] = self.option('extras')
+
+            if self.option('python'):
+                constraint['python'] = self.option('python')
+
+            if self.option('platform'):
+                constraint['platform'] = self.option('platform')
 
             if len(constraint) == 1 and 'version' in constraint:
                 constraint = constraint['version']
@@ -148,94 +158,3 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             self.poetry.file.write(original_content)
 
         return status
-
-    def _determine_requirements(self,
-                                requires,  # type: List[str]
-                                allow_prereleases=False,  # type: bool
-                                ):  # type: (...) -> List[str]
-        if not requires:
-            return []
-
-        requires = self._parse_name_version_pairs(requires)
-        result = []
-        for requirement in requires:
-            if 'version' not in requirement:
-                # determine the best version automatically
-                name, version = self._find_best_version_for_package(
-                    requirement['name'],
-                    allow_prereleases=allow_prereleases
-                )
-                requirement['version'] = version
-                requirement['name'] = name
-
-                self.line(
-                    'Using version <info>{}</> for <info>{}</>'
-                    .format(version, name)
-                )
-            else:
-                # check that the specified version/constraint exists
-                # before we proceed
-                name, _ = self._find_best_version_for_package(
-                    requirement['name'], requirement['version'],
-                    allow_prereleases=allow_prereleases
-                )
-
-                requirement['name'] = name
-
-            result.append(
-                '{} {}'.format(requirement['name'], requirement['version'])
-            )
-
-        return result
-
-    def _find_best_version_for_package(self,
-                                       name,
-                                       required_version=None,
-                                       allow_prereleases=False
-                                       ):  # type: (...) -> Tuple[str, str]
-        from poetry.version.version_selector import VersionSelector
-
-        selector = VersionSelector(self.poetry.pool)
-        package = selector.find_best_candidate(
-            name, required_version,
-            allow_prereleases=allow_prereleases
-        )
-
-        if not package:
-            # TODO: find similar
-            raise ValueError(
-                'Could not find a matching version of package {}'.format(name)
-            )
-
-        return (
-            package.pretty_name,
-            selector.find_recommended_require_version(package)
-        )
-
-    def _parse_name_version_pairs(self, pairs):  # type: (list) -> list
-        result = []
-
-        for i in range(len(pairs)):
-            pair = re.sub('^([^=: ]+)[=: ](.*)$', '\\1 \\2', pairs[i].strip())
-            pair = pair.strip()
-
-            if ' ' in pair:
-                name, version = pair.split(' ', 2)
-                result.append({
-                    'name': name,
-                    'version': version
-                })
-            else:
-                result.append({
-                    'name': pair
-                })
-
-        return result
-
-    def _format_requirements(self, requirements):  # type: (List[str]) -> dict
-        requires = {}
-        requirements = self._parse_name_version_pairs(requirements)
-        for requirement in requirements:
-            requires[requirement['name']] = requirement['version']
-
-        return requires

@@ -1,3 +1,4 @@
+import os
 import pytest
 import shutil
 
@@ -37,14 +38,22 @@ def mock_clone(self, source, dest):
     shutil.copytree(str(folder), str(dest))
 
 
+@pytest.fixture
+def installed():
+    return Repository()
+
+
 @pytest.fixture(autouse=True)
-def setup(mocker, installer):
+def setup(mocker, installer, installed):
     # Set Installer's installer
     p = mocker.patch('poetry.installation.installer.Installer._get_installer')
     p.return_value = installer
 
     p = mocker.patch('poetry.installation.installer.Installer._get_installed')
-    p.return_value = Repository()
+    p.return_value = installed
+
+    p = mocker.patch('poetry.repositories.installed_repository.InstalledRepository.load')
+    p.return_value = installed
 
     # Patch git module to not actually clone projects
     mocker.patch('poetry.vcs.git.Git.clone', new=mock_clone)
@@ -52,13 +61,14 @@ def setup(mocker, installer):
     p = mocker.patch('poetry.vcs.git.Git.rev_parse')
     p.return_value = '9cf87a285a2d3fbb0b9fa621997b3acc3631ed24'
 
-    # Patch provider progress rate to have a consistent
-    # dependency resolution output
-    p = mocker.patch(
-        'poetry.puzzle.provider.Provider.progress_rate',
-        new_callable=mocker.PropertyMock
-    )
-    p.return_value = 3600
+    # Setting terminal width
+    environ = dict(os.environ)
+    os.environ['COLUMNS'] = '80'
+
+    yield
+
+    os.environ.clear()
+    os.environ.update(environ)
 
 
 class Application(BaseApplication):
@@ -88,6 +98,24 @@ class Locker(BaseLocker):
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
+        self._locked = False
+        self._lock_data = None
+
+    def is_locked(self):
+        return self._locked
+
+    def locked(self, is_locked=True):
+        self._locked = is_locked
+
+        return self
+
+    def mock_lock_data(self, data):
+        self.locked()
+
+        self._lock_data = data
+
+    def is_fresh(self):
+        return True
 
     def _write_lock_data(self, data):
         self._lock_data = None

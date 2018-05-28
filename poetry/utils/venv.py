@@ -60,9 +60,15 @@ class Venv(object):
                 config = Config.create('config.toml')
 
                 create_venv = config.setting('settings.virtualenvs.create')
+                root_venv = config.setting('settings.virtualenvs.in-project')
 
                 venv_path = config.setting('settings.virtualenvs.path')
-                if venv_path is None:
+                if root_venv:
+                    if not cwd:
+                        raise RuntimeError('Unbale to determine the project\'s directory')
+
+                    venv_path = (cwd / '.venv')
+                elif venv_path is None:
                     venv_path = Path(CACHE_DIR) / 'virtualenvs'
                 else:
                     venv_path = Path(venv_path)
@@ -74,7 +80,11 @@ class Venv(object):
                     name, '.'.join([str(v) for v in sys.version_info[:2]])
                 )
 
-                venv = venv_path / name
+                if root_venv:
+                    venv = venv_path
+                else:
+                    venv = venv_path / name
+
                 if not venv.exists():
                     if create_venv is False:
                         io.writeln(

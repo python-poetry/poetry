@@ -13,8 +13,6 @@ from poetry.utils.toml_file import TomlFile
 class Locker:
 
     _relevant_keys = [
-        'name',
-        'version',
         'dependencies',
         'dev-dependencies',
         'source',

@@ -1,12 +1,9 @@
-import sys
-
-from ...masonry.utils.module import Module
 from .venv_command import VenvCommand
 
 
 class ScriptCommand(VenvCommand):
     """
-    Executes a script defined in <comment>pyproject.toml</comment>
+    Executes a script defined in <comment>pyproject.toml</comment>. (<error>Deprecated</error>)
 
     script
         { script-name : The name of the script to execute }
@@ -14,6 +11,9 @@ class ScriptCommand(VenvCommand):
     """
 
     def handle(self):
+        self.line('<warning>script is deprecated use run instead.</warning>')
+        self.line('')
+
         script = self.argument('script-name')
         argv = [script] + self.argument('args')
 
@@ -44,6 +44,8 @@ class ScriptCommand(VenvCommand):
 
     @property
     def _module(self):
+        from ...masonry.utils.module import Module
+
         poetry = self.poetry
         package = poetry.package
         path = poetry.file.parent

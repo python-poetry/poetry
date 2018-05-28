@@ -35,3 +35,9 @@ class Operation(object):
         self._skip_reason = reason
 
         return self
+
+    def unskip(self):  # type: () -> Operation
+        self._skipped = False
+        self._skip_reason = None
+
+        return self

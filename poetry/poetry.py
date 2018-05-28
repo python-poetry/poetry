@@ -11,6 +11,7 @@ from .exceptions import InvalidProjectFile
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
+from .packages import ProjectPackage
 from .repositories import Pool
 from .repositories.pypi_repository import PyPiRepository
 from .spdx import license_by_id
@@ -95,7 +96,7 @@ class Poetry:
         # Load package
         name = local_config['name']
         version = local_config['version']
-        package = Package(name, version, version)
+        package = ProjectPackage(name, version, version)
         package.root_dir = poetry_file.parent
 
         for author in local_config['authors']:

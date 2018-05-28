@@ -7,9 +7,6 @@ import tempfile
 from collections import defaultdict
 from contextlib import contextmanager
 
-from poetry.semver.constraints import Constraint
-from poetry.semver.constraints import MultiConstraint
-from poetry.semver.version_parser import VersionParser
 from poetry.utils._compat import Path
 from poetry.vcs import get_vcs
 
@@ -106,6 +103,16 @@ class Builder(object):
         )
         to_add.append(Path('pyproject.toml'))
 
+        # If a license file exists, add it
+        for license_file in self._path.glob('LICENSE*'):
+            self._io.writeln(
+                ' - Adding: <comment>{}</comment>'.format(
+                    license_file.relative_to(self._path)
+                ),
+                verbosity=self._io.VERBOSITY_VERY_VERBOSE
+            )
+            to_add.append(license_file.relative_to(self._path))
+
         # If a README is specificed we need to include it
         # to avoid errors
         if 'readme' in self._poetry.local_config:
@@ -155,35 +162,6 @@ class Builder(object):
             'name': name,
             'email': email
         }
-
-    def get_classifers(self):
-        classifiers = []
-
-        # Automatically set python classifiers
-        parser = VersionParser()
-        if self._package.python_versions == '*':
-            python_constraint = parser.parse_constraints('~2.7 || ^3.4')
-        else:
-            python_constraint = self._package.python_constraint
-
-        for version in sorted(self.AVAILABLE_PYTHONS):
-            if python_constraint.matches(Constraint('=', version)):
-                classifiers.append(
-                    'Programming Language :: Python :: {}'.format(version)
-                )
-
-        return classifiers
-
-    def convert_python_version(self):
-        constraint = self._package.python_constraint
-        if isinstance(constraint, MultiConstraint):
-            python_requires = ','.join(
-                [str(c).replace(' ', '') for c in constraint.constraints]
-            )
-        else:
-            python_requires = str(constraint).replace(' ', '')
-
-        return python_requires
 
     @classmethod
     @contextmanager

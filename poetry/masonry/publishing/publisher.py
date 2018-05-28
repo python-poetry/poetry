@@ -17,6 +17,10 @@ class Publisher:
         self._io = io
         self._uploader = Uploader(poetry, io)
 
+    @property
+    def files(self):
+        return self._uploader.files
+
     def publish(self, repository_name, username, password):
         if repository_name:
             self._io.writeln(

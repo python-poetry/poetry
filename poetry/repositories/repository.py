@@ -1,8 +1,5 @@
-from poetry.semver.constraints import Constraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
-from poetry.semver.version_parser import VersionParser
-
-from poetry.version import parse as parse_version
+from poetry.semver import parse_constraint
+from poetry.semver import VersionConstraint
 
 from .base_repository import BaseRepository
 
@@ -20,10 +17,20 @@ class Repository(BaseRepository):
 
     def package(self, name, version, extras=None):
         name = name.lower()
-        version = str(parse_version(version))
+
+        if extras is None:
+            extras = []
 
         for package in self.packages:
-            if name == package.name and package.version == version:
+            if name == package.name and package.version.text == version:
+                # Activate extra dependencies
+                for extra in extras:
+                    if extra in package.extras:
+                        for extra_dep in package.extras[extra]:
+                            for dep in package.requires:
+                                if dep.name == extra_dep.lower():
+                                    dep.activate()
+
                 return package
 
     def find_packages(self, name, constraint=None,
@@ -37,15 +44,15 @@ class Repository(BaseRepository):
         if constraint is None:
             constraint = '*'
 
-        if not isinstance(constraint, BaseConstraint):
-            parser = VersionParser()
-            constraint = parser.parse_constraints(constraint)
+        if not isinstance(constraint, VersionConstraint):
+            constraint = parse_constraint(constraint)
 
         for package in self.packages:
             if name == package.name:
-                pkg_constraint = Constraint('==', package.version)
+                if package.is_prerelease() and not allow_prereleases:
+                    continue
 
-                if constraint is None or constraint.matches(pkg_constraint):
+                if constraint is None or constraint.allows(package.version):
                     for dep in package.requires:
                         for extra in extras:
                             if extra not in package.extras:
@@ -83,6 +90,15 @@ class Repository(BaseRepository):
 
         if index is not None:
             del self._packages[index]
+
+    def search(self, query, mode=0):
+        results = []
+
+        for package in self.packages:
+            if query in package.name:
+                results.append(package)
+
+        return results
 
     def __len__(self):
         return len(self._packages)

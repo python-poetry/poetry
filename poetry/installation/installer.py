@@ -15,8 +15,9 @@ from poetry.puzzle.operations.operation import Operation
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.semver.constraints import Constraint
-from poetry.semver.version_parser import VersionParser
+from poetry.semver import parse_constraint
+from poetry.semver import Version
+from poetry.utils.helpers import canonicalize_name
 
 from .base_installer import BaseInstaller
 from .pip_installer import PipInstaller
@@ -43,6 +44,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
+        self._develop = []
         self._execute_operations = True
 
         self._whitelist = {}
@@ -98,6 +100,11 @@ class Installer:
     def is_dev_mode(self):  # type: () -> bool
         return self._dev_mode
 
+    def develop(self, packages):  # type: (dict) -> Installer
+        self._develop = [canonicalize_name(p) for p in packages]
+
+        return self
+
     def update(self, update=True):  # type: (bool) -> Installer
         self._update = update
 
@@ -112,7 +119,7 @@ class Installer:
         return self
 
     def whitelist(self, packages):  # type: (dict) -> Installer
-        self._whitelist = packages
+        self._whitelist = [canonicalize_name(p) for p in packages]
 
         return self
 
@@ -124,7 +131,14 @@ class Installer:
     def _do_install(self, local_repo):
         locked_repository = Repository()
         if self._update:
-            if self._locker.is_locked():
+            if self._locker.is_locked() and self._whitelist:
+                # If we update with a lock file present and
+                # we have whitelisted packages (the ones we want to update)
+                # we get the lock file packages to only update
+                # what is strictly needed.
+                #
+                # Otherwise, the lock file information is irrelevant
+                # since we want to update everything.
                 locked_repository = self._locker.locked_repository(True)
 
             # Checking extras
@@ -135,33 +149,6 @@ class Installer:
                     )
 
             self._io.writeln('<info>Updating dependencies</>')
-            fixed = []
-
-            # If the whitelist is enabled, packages not in it are fixed
-            # to the version specified in the lock
-            if self._whitelist:
-                # collect packages to fixate from root requirements
-                candidates = []
-                for package in locked_repository.packages:
-                    candidates.append(package)
-
-                # fix them to the version in lock if they are not updateable
-                for candidate in candidates:
-                    to_fix = True
-                    for require in self._whitelist.keys():
-                        if require == candidate.name:
-                            to_fix = False
-
-                    if to_fix:
-                        dependency = Dependency(
-                            candidate.name,
-                            candidate.version,
-                            optional=candidate.optional,
-                            category=candidate.category,
-                            allows_prereleases=candidate.is_prerelease()
-                        )
-                        fixed.append(dependency)
-
             solver = Solver(
                 self._package,
                 self._pool,
@@ -170,10 +157,7 @@ class Installer:
                 self._io
             )
 
-            request = self._package.requires
-            request += self._package.dev_requires
-
-            ops = solver.solve(request, fixed=fixed)
+            ops = solver.solve(use_latest=self._whitelist)
         else:
             self._io.writeln('<info>Installing dependencies from lock file</>')
 
@@ -426,13 +410,16 @@ class Installer:
                             installed, locked
                         ))
 
-            if not is_installed:
-                # If it's optional and not in required extras
-                # we do not install
-                if locked.optional and locked.name not in extra_packages:
-                    continue
+            # If it's optional and not in required extras
+            # we do not install
+            if locked.optional and locked.name not in extra_packages:
+                continue
 
-                ops.append(Install(locked))
+            op = Install(locked)
+            if is_installed:
+                op.skip('Already installed')
+
+            ops.append(op)
 
         return ops
 
@@ -451,18 +438,22 @@ class Installer:
             if op.job_type == 'uninstall':
                 continue
 
-            parser = VersionParser()
-            python = '.'.join([str(i) for i in self._venv.version_info[:3]])
+            if package.name in self._develop and package.source_type == 'directory':
+                package.develop = True
+                if op.skipped:
+                    op.unskip()
+
+            python = Version.parse('.'.join([str(i) for i in self._venv.version_info[:3]]))
             if 'python' in package.requirements:
-                python_constraint = parser.parse_constraints(
+                python_constraint = parse_constraint(
                     package.requirements['python']
                 )
-                if not python_constraint.matches(Constraint('=', python)):
+                if not python_constraint.allows(python):
                     # Incompatible python versions
                     op.skip('Not needed for the current python version')
                     continue
 
-            if not package.python_constraint.matches(Constraint('=', python)):
+            if not package.python_constraint.allows(python):
                 op.skip('Not needed for the current python version')
                 continue
 

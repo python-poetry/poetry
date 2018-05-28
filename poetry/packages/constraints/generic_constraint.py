@@ -1,9 +1,9 @@
 import operator
 import re
 
-from poetry.semver.constraints import EmptyConstraint
-from poetry.semver.constraints import MultiConstraint
-from poetry.semver.constraints.base_constraint import BaseConstraint
+from .base_constraint import BaseConstraint
+from .empty_constraint import EmptyConstraint
+from .multi_constraint import MultiConstraint
 
 
 class GenericConstraint(BaseConstraint):
@@ -58,13 +58,8 @@ class GenericConstraint(BaseConstraint):
         return self._version
 
     def matches(self, provider):
-        if not isinstance(provider, (GenericConstraint, EmptyConstraint)):
-            raise ValueError(
-                'Generic constraints can only be compared with each other'
-            )
-
-        if isinstance(provider, EmptyConstraint):
-            return True
+        if not isinstance(provider, GenericConstraint):
+            return provider.matches(self)
 
         is_equal_op = self.OP_EQ is self._operator
         is_non_equal_op = self.OP_NE is self._operator

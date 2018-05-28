@@ -10,6 +10,7 @@ class InstallCommand(VenvCommand):
         { --dry-run : Outputs the operations but will not execute anything
                       (implicitly enables --verbose). }
         { --E|extras=* : Extra sets of dependencies to install. }
+        { --develop=* : Install given packages in development mode. }
     """
 
     help = """The <info>install</info> command reads the <comment>pyproject.toml</> file from
@@ -35,8 +36,16 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             self.poetry.pool
         )
 
-        installer.extras(self.option('extras'))
+        extras = []
+        for extra in self.option('extras'):
+            if ' ' in extra:
+                extras += [e.strip() for e in extra.split(' ')]
+            else:
+                extras.append(extra)
+
+        installer.extras(extras)
         installer.dev_mode(not self.option('no-dev'))
+        installer.develop(self.option('develop'))
         installer.dry_run(self.option('dry-run'))
         installer.verbose(self.option('verbose'))
 

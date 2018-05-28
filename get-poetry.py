@@ -27,6 +27,7 @@ import tempfile
 
 from contextlib import contextmanager
 from email.parser import Parser
+from functools import cmp_to_key
 from glob import glob
 
 try:
@@ -88,7 +89,7 @@ def style(fg, bg, options):
 STYLES = {
     'info': style('green', None, None),
     'comment': style('yellow', None, None),
-    'error': style('white', 'red', None)
+    'error': style('red', None, None)
 }
 
 
@@ -101,6 +102,7 @@ def colorize(style, text):
         return text
 
     return '{}{}\033[0m'.format(STYLES[style], text)
+
 
 @contextmanager
 def temporary_directory(*args, **kwargs):
@@ -145,13 +147,24 @@ class Installer:
         metadata = json.loads(r.read().decode())
         r.close()
 
+        def _compare_versions(x, y):
+            mx = self.VERSION_REGEX.match(x)
+            my = self.VERSION_REGEX.match(y)
+
+            vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
+            vy = tuple(int(p) for p in my.groups()[:3]) + (my.group(5),)
+
+            if vx < vy:
+                return -1
+            elif vx > vy:
+                return 1
+
+            return 0
+
         print('')
         releases = sorted(
             metadata['releases'].keys(),
-            key=lambda r: (
-                '.'.join(self.VERSION_REGEX.match(r).groups()[:3]),
-                self.VERSION_REGEX.match(r).group(5)
-            )
+            key=cmp_to_key(_compare_versions)
         )
 
         if self._version and self._version not in releases:
@@ -188,7 +201,7 @@ class Installer:
             return self.install(version)
         except subprocess.CalledProcessError as e:
             print(colorize('error', 'An error has occured: {}'.format(str(e))))
-            print(e.output)
+            print(e.output.decode())
 
             return e.returncode
 
@@ -197,10 +210,30 @@ class Installer:
         with temporary_directory(prefix='poetry-installer-') as dir:
             dist = os.path.join(dir, 'dist')
             print('  - Getting dependencies')
-            self.call(
-                self.CURRENT_PYTHON, '-m', 'pip', 'install', 'poetry=={}'.format(version),
-                '--target', dist
-            )
+            try:
+                self.call(
+                    self.CURRENT_PYTHON, '-m', 'pip', 'install', 'poetry=={}'.format(version),
+                    '--target', dist
+                )
+            except subprocess.CalledProcessError as e:
+                if 'must supply either home or prefix/exec-prefix' in e.output.decode():
+                    # Homebrew Python and possible other installations
+                    # We workaround this issue by temporarily changing
+                    # the --user directory
+                    os.environ['PYTHONUSERBASE'] = dir
+                    self.call(
+                        self.CURRENT_PYTHON, '-m', 'pip', 'install', 'poetry=={}'.format(version),
+                        '--user',
+                        '--ignore-installed'
+                    )
+
+                    # Finding site-package directory
+                    lib = os.path.join(dir, 'lib')
+                    lib_python = list(glob(os.path.join(lib, 'python*')))[0]
+                    site_packages = os.path.join(lib_python, 'site-packages')
+                    shutil.copytree(site_packages, dist)
+                else:
+                    raise
 
             print('  - Vendorizing dependencies')
 
@@ -210,7 +243,10 @@ class Installer:
             # Everything, except poetry itself, should
             # be put in the _vendor directory
             for file in glob(os.path.join(dist, '*')):
-                if os.path.basename(file).startswith('poetry'):
+                if (
+                    os.path.basename(file).startswith('poetry')
+                    or os.path.basename(file) == '__pycache__'
+                ):
                     continue
 
                 dest = os.path.join(vendor_dir, os.path.basename(file))

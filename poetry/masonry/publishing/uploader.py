@@ -2,6 +2,8 @@ import hashlib
 import io
 import re
 
+from typing import List
+
 import requests
 
 from requests import adapters
@@ -13,6 +15,7 @@ from requests_toolbelt.multipart import (
 )
 
 from poetry.__version__ import __version__
+from poetry.utils.helpers import normalize_version
 
 from ..metadata import Metadata
 
@@ -50,6 +53,23 @@ class Uploader:
         )
 
         return adapters.HTTPAdapter(max_retries=retry)
+
+    @property
+    def files(self):  # type: () -> List[str]
+        dist = self._poetry.file.parent / 'dist'
+        version = normalize_version(self._package.version.text)
+
+        wheels = list(dist.glob(
+            '{}-{}-*.whl'.format(
+                re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
+                re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE),
+            )
+        ))
+        tars = list(dist.glob(
+            '{}-{}.tar.gz'.format(self._package.pretty_name, version)
+        ))
+
+        return sorted(wheels + tars)
 
     def auth(self, username, password):
         self._username = username
@@ -177,27 +197,7 @@ class Uploader:
                 raise
 
     def _do_upload(self, session, url):
-        dist = self._poetry.file.parent / 'dist'
-        packages = dist.glob(
-            '{}-{}*'.format(self._package.name, self._package.version)
-        )
-        files = (
-            i for i in packages if (
-                i.match(
-                    '{}-{}-*.whl'.format(
-                        self._package.name, self._package.version
-                    )
-                )
-                or
-                i.match(
-                    '{}-{}.tar.gz'.format(
-                        self._package.name, self._package.version
-                    )
-                )
-        )
-        )
-
-        for file in files:
+        for file in self.files:
             # TODO: Check existence
 
             resp = self._upload_file(session, url, file)

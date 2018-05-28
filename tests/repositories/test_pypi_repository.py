@@ -55,12 +55,3 @@ def test_package():
     assert win_inet.name == 'win-inet-pton'
     assert win_inet.python_versions == '~2.7 || ~2.6'
     assert win_inet.platform == 'win32'
-
-
-def test_package_drops_malformed_dependencies():
-    repo = MockRepository()
-
-    package = repo.package('ipython', '4.1.0rc1')
-    dependency_names = [d.name for d in package.requires]
-
-    assert 'setuptools' not in dependency_names

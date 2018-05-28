@@ -1,5 +1,36 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+
+- Added a new, more efficient dependency resolver.
+- Added a new `init` command to generate a `pyproject.toml` file in existing projects.
+- Added a new setting `settings.virtualenvs.in-project` to make `poetry` create the project's virtualenv inside the project's directory.
+- Added the `--extras` and `--python` options to `debug:resolve` to help debug dependency resolution.
+- Added a `--src` option to new to create an `src` layout.
+- Added support for specifying the `platform` for dependencies.
+- Added the `--python` option to the `add` command.
+- Added the `--platform` option to the `add` command.
+- Added a `--develop` option to the install command to install path dependencies in development/editable mode.
+- Added a `develop` command to install the current project in development mode.
+
+### Changed
+
+- Improved the `show` command to make it easier to check if packages are properly installed.
+- The `script` command has been deprecated, use `run` instead.
+- The `publish` command no longer build packages by default. Use `--build` to retrieve the previous behavior.
+- Improved support for private repositories.
+- Expanded version constraints now keep the original version's precision.
+- The lock file hash no longer use the project's name and version.
+- The `LICENSE` file, or similar, is now automatically added to the built packages.
+
+### Fixed
+
+- Fixed the dependency resolver selecting incompatible packages.
+- Fixed override of dependency with dependency with extras in `dev-dependencies`.
+
+
 ## [0.9.1] - 2018-05-18
 
 ### Fixed

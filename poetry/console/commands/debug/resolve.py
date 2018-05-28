@@ -11,6 +11,8 @@ class DebugResolveCommand(Command):
 
     debug:resolve
         { package?* : packages to resolve. }
+        { --E|extras=* : Extras to activate for the dependency. }
+        { --python= : Python version(s) to use for resolution. }
     """
 
     _loggers = [
@@ -19,39 +21,56 @@ class DebugResolveCommand(Command):
 
     def handle(self):
         from poetry.packages import Dependency
+        from poetry.packages import ProjectPackage
         from poetry.puzzle import Solver
         from poetry.repositories.repository import Repository
-        from poetry.semver.version_parser import VersionParser
+        from poetry.semver import parse_constraint
 
         packages = self.argument('package')
 
         if not packages:
             package = self.poetry.package
-            dependencies = package.requires + package.dev_requires
         else:
             requirements = self._determine_requirements(packages)
             requirements = self._format_requirements(requirements)
 
             # validate requirements format
-            parser = VersionParser()
             for constraint in requirements.values():
-                parser.parse_constraints(constraint)
+                parse_constraint(constraint)
 
             dependencies = []
             for name, constraint in requirements.items():
-                dependencies.append(
-                    Dependency(name, constraint)
-                )
+                dep = Dependency(name, constraint)
+                extras = []
+                for extra in self.option('extras'):
+                    if ' ' in extra:
+                        extras += [e.strip() for e in extra.split(' ')]
+                    else:
+                        extras.append(extra)
+
+                for ex in extras:
+                    dep.extras.append(ex)
+
+                dependencies.append(dep)
+
+            package = ProjectPackage(
+                self.poetry.package.name,
+                self.poetry.package.version
+            )
+
+            package.python_versions = self.option('python') or self.poetry.package.python_versions
+            for dep in dependencies:
+                package.requires.append(dep)
 
         solver = Solver(
-            self.poetry.package,
+            package,
             self.poetry.pool,
             Repository(),
             Repository(),
             self.output
         )
 
-        ops = solver.solve(dependencies)
+        ops = solver.solve()
 
         self.line('')
         self.line('Resolution results:')

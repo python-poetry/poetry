@@ -15,6 +15,7 @@ pages:
   - Repositories: repositories.md
   - Versions: versions.md
   - The pyproject.toml file: pyproject.md
+  - FAQ: faq.md
 
 markdown_extensions:
   - codehilite

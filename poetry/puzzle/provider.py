@@ -1,17 +1,14 @@
 import os
 import pkginfo
 import shutil
+import time
 
+from cleo import ProgressIndicator
+from contextlib import contextmanager
 from functools import cmp_to_key
 from tempfile import mkdtemp
-from typing import Dict
 from typing import List
 from typing import Union
-
-from poetry.mixology import DependencyGraph
-from poetry.mixology.conflict import Conflict
-from poetry.mixology.contracts import SpecificationProvider
-from poetry.mixology.contracts import UI
 
 from poetry.packages import Dependency
 from poetry.packages import DirectoryDependency
@@ -20,9 +17,13 @@ from poetry.packages import Package
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
 
-from poetry.repositories import Pool
+from poetry.mixology.incompatibility import Incompatibility
+from poetry.mixology.incompatibility_cause import DependencyCause
+from poetry.mixology.incompatibility_cause import PlatformCause
+from poetry.mixology.incompatibility_cause import PythonCause
+from poetry.mixology.term import Term
 
-from poetry.semver import less_than
+from poetry.repositories import Pool
 
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
@@ -34,7 +35,27 @@ from poetry.vcs.git import Git
 from .dependencies import Dependencies
 
 
-class Provider(SpecificationProvider, UI):
+class Indicator(ProgressIndicator):
+
+    def __init__(self, output):
+        super(Indicator, self).__init__(output)
+
+        self.format = '%message% <fg=black;options=bold>(%elapsed:2s%)</>'
+
+    @contextmanager
+    def auto(self):
+        message = '<info>Resolving dependencies</info>...'
+
+        with super(Indicator, self).auto(message, message):
+            yield
+
+    def _formatter_elapsed(self):
+        elapsed = time.time() - self.start_time
+
+        return '{:.1f}s'.format(elapsed)
+
+
+class Provider:
 
     UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
 
@@ -47,11 +68,8 @@ class Provider(SpecificationProvider, UI):
         self._pool = pool
         self._io = io
         self._python_constraint = package.python_constraint
-        self._base_dg = DependencyGraph()
         self._search_for = {}
-        self._constraints = {}
-
-        super(Provider, self).__init__(debug=self._io.is_debug())
+        self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
 
     @property
     def pool(self):  # type: () -> Pool
@@ -64,6 +82,9 @@ class Provider(SpecificationProvider, UI):
     @property
     def name_for_locking_dependency_source(self):  # type: () -> str
         return 'pyproject.lock'
+
+    def is_debugging(self):
+        return self._is_debugging
 
     def name_for(self, dependency):  # type: (Dependency) -> str
         """
@@ -78,6 +99,9 @@ class Provider(SpecificationProvider, UI):
         The specifications in the returned list will be considered in reverse
         order, so the latest version ought to be last.
         """
+        if dependency.is_root:
+            return [self._package]
+
         if dependency in self._search_for:
             return self._search_for[dependency]
 
@@ -90,17 +114,6 @@ class Provider(SpecificationProvider, UI):
         else:
             constraint = dependency.constraint
 
-            # If we have already seen this dependency
-            # we take the most restrictive constraint
-            if dependency.name in self._constraints:
-                current_constraint = self._constraints[dependency.name]
-                if str(dependency.constraint) == '*':
-                    # The new constraint accepts anything
-                    # so we take the previous one
-                    constraint = current_constraint
-
-            self._constraints[dependency.name] = constraint
-
             packages = self._pool.find_packages(
                 dependency.name,
                 constraint,
@@ -112,7 +125,7 @@ class Provider(SpecificationProvider, UI):
                 key=cmp_to_key(
                     lambda x, y:
                     0 if x.version == y.version
-                    else -1 * int(less_than(x.version, y.version) or -1)
+                    else int(x.version < y.version or -1)
                 )
             )
 
@@ -179,11 +192,12 @@ class Provider(SpecificationProvider, UI):
                 # to figure the information we need
                 # We need to place ourselves in the proper
                 # folder for it to work
+                venv = Venv.create(self._io)
+
                 current_dir = os.getcwd()
                 os.chdir(tmp_dir.as_posix())
 
                 try:
-                    venv = Venv.create(self._io)
                     venv.run(
                         'python', 'setup.py', 'egg_info'
                     )
@@ -224,7 +238,7 @@ class Provider(SpecificationProvider, UI):
                         ):  # type: (FileDependency) -> List[Package]
         package = Package(dependency.name, dependency.pretty_constraint)
         package.source_type = 'file'
-        package.source_reference = str(dependency.path)
+        package.source_url = str(dependency.path)
 
         package.description = dependency.metadata.summary
         for req in dependency.metadata.requires_dist:
@@ -251,6 +265,47 @@ class Provider(SpecificationProvider, UI):
 
         return [package]
 
+    def incompatibilities_for(self, package):  # type: (Package) -> List[Incompatibility]
+        """
+        Returns incompatibilities that encapsulate a given package's dependencies,
+        or that it can't be safely selected.
+
+        If multiple subsequent versions of this package have the same
+        dependencies, this will return incompatibilities that reflect that. It
+        won't return incompatibilities that have already been returned by a
+        previous call to _incompatibilities_for().
+        """
+        if package.source_type in ['git', 'file', 'directory']:
+            dependencies = package.requires
+        elif package.is_root():
+            dependencies = package.all_requires
+        else:
+            dependencies = self._dependencies_for(package)
+
+        if not self._package.python_constraint.allows_any(package.python_constraint):
+            return [
+                Incompatibility(
+                    [Term(package.to_dependency(), True)],
+                    PythonCause(package.python_versions)
+                )
+            ]
+
+        if not self._package.platform_constraint.matches(package.platform_constraint):
+            return [
+                Incompatibility(
+                    [Term(package.to_dependency(), True)],
+                    PlatformCause(package.platform)
+                )
+            ]
+
+        return [
+            Incompatibility([
+                Term(package.to_dependency(), True),
+                Term(dep, False)
+            ], DependencyCause())
+            for dep in dependencies
+        ]
+
     def dependencies_for(self, package
                          ):  # type: (Package) -> Union[List[Dependency], Dependencies]
         if package.source_type in ['git', 'file', 'directory']:
@@ -265,7 +320,7 @@ class Provider(SpecificationProvider, UI):
 
     def _dependencies_for(self, package):  # type: (Package) -> List[Dependency]
         complete_package = self._pool.package(
-            package.name, package.version,
+            package.name, package.version.text,
             extras=package.requires_extras
         )
 
@@ -275,52 +330,15 @@ class Provider(SpecificationProvider, UI):
         package.python_versions = complete_package.python_versions
         package.platform = complete_package.platform
         package.hashes = complete_package.hashes
+        package.extras = complete_package.extras
 
         return [
             r for r in package.requires
             if not r.is_optional()
-            and self._package.python_constraint.matches(r.python_constraint)
+            and self._package.python_constraint.allows_any(r.python_constraint)
             and self._package.platform_constraint.matches(package.platform_constraint)
             and r.name not in self.UNSAFE_PACKAGES
         ]
-
-    def is_requirement_satisfied_by(self,
-                                    requirement,  # type: Dependency
-                                    activated,    # type: DependencyGraph
-                                    package       # type: Package
-                                    ):  # type: (...) -> bool
-        """
-        Determines whether the given requirement is satisfied by the given
-        spec, in the context of the current activated dependency graph.
-        """
-        if isinstance(requirement, Package):
-            return requirement == package
-
-        if not requirement.accepts(package):
-            return False
-
-        if package.is_prerelease() and not requirement.allows_prereleases():
-            vertex = activated.vertex_named(package.name)
-
-            if not any([r.allows_prereleases() for r in vertex.requirements]):
-                return False
-
-        return (
-            self._package.python_constraint.matches(package.python_constraint)
-            and self._package.platform_constraint.matches(package.platform_constraint)
-        )
-
-    def sort_dependencies(self,
-                          dependencies,  # type: List[Dependency]
-                          activated,     # type: DependencyGraph
-                          conflicts      # type: Dict[str, List[Conflict]]
-                          ):  # type: (...) -> List[Dependency]
-        return sorted(dependencies, key=lambda d: [
-            0 if activated.vertex_named(d.name).payload else 1,
-            0 if activated.vertex_named(d.name).root else 1,
-            0 if d.allows_prereleases() else 1,
-            0 if d.name in conflicts else 1
-        ])
 
     # UI
 
@@ -341,12 +359,23 @@ class Provider(SpecificationProvider, UI):
     def after_resolution(self):
         self._io.new_line()
 
-    def debug(self, message, depth):
+    def debug(self, message, depth=0):
         if self.is_debugging():
             debug_info = str(message)
             debug_info = '\n'.join([
-                '<comment>:{}:</> {}'.format(str(depth).rjust(4), s)
+                '<comment>{}:</> {}'.format(str(depth).rjust(4), s)
                 for s in debug_info.split('\n')
             ]) + '\n'
 
             self.output.write(debug_info)
+
+    @contextmanager
+    def progress(self):
+        if not self._io.is_decorated() or self.is_debugging():
+            self.output.writeln('Resolving dependencies...')
+            yield
+        else:
+            indicator = Indicator(self._io)
+
+            with indicator.auto():
+                yield

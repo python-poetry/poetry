@@ -1,3 +1,5 @@
+import sys
+
 from cleo.testers import CommandTester
 
 from tests.helpers import get_dependency
@@ -21,7 +23,7 @@ def test_add_no_constraint(app, repo, installer):
 Using version ^0.2.0 for cachy
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 1 install, 0 updates, 0 removals
@@ -57,7 +59,7 @@ def test_add_constraint(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 1 install, 0 updates, 0 removals
@@ -94,7 +96,7 @@ def test_add_constraint_dependencies(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -125,7 +127,7 @@ def test_add_git_constraint(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -163,7 +165,7 @@ def test_add_git_constraint_with_poetry(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -194,7 +196,7 @@ def test_add_file_constraint_wheel(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -232,7 +234,7 @@ def test_add_file_constraint_sdist(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -281,7 +283,7 @@ def test_add_constraint_with_extras(app, repo, installer):
     expected = """\
 
 Updating dependencies
-Resolving dependencies
+Resolving dependencies...
 
 
 Package operations: 2 installs, 0 updates, 0 removals
@@ -302,4 +304,87 @@ Writing lock file
     assert content['dependencies']['cachy'] == {
         'version': '0.2.0',
         'extras': ['msgpack']
+    }
+
+
+def test_add_constraint_with_python(app, repo, installer):
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    cachy2 = get_package('cachy', '0.2.0')
+
+    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(cachy2)
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['cachy=0.2.0']),
+        ('--python', '>=2.7')
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing cachy (0.2.0)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 1
+
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'cachy' in content['dependencies']
+    assert content['dependencies']['cachy'] == {
+        'version': '0.2.0',
+        'python': '>=2.7'
+    }
+
+
+def test_add_constraint_with_platform(app, repo, installer):
+    platform = sys.platform
+    command = app.find('add')
+    tester = CommandTester(command)
+
+    cachy2 = get_package('cachy', '0.2.0')
+
+    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(cachy2)
+
+    tester.execute([
+        ('command', command.get_name()),
+        ('name', ['cachy=0.2.0']),
+        ('--platform', platform)
+    ])
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing cachy (0.2.0)
+"""
+
+    assert tester.get_display() == expected
+
+    assert len(installer.installs) == 1
+
+    content = app.poetry.file.read(raw=True)['tool']['poetry']
+
+    assert 'cachy' in content['dependencies']
+    assert content['dependencies']['cachy'] == {
+        'version': '0.2.0',
+        'platform': platform
     }

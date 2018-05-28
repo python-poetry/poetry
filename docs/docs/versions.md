@@ -108,6 +108,13 @@ my-package = { path = "../my-package/" }
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
+!!!note
+
+    You can install path dependencies in editable/development mode.
+    Just pass `--develop my-package` (repeatable as much as you want) to
+    the `install` command.
+    
+
 ### Python restricted dependencies
 
 You can also specify that a dependency should be installed only for specific Python versions:

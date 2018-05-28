@@ -1,4 +1,5 @@
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.helpers import normalize_version
 from poetry.version.helpers import format_python_constraint
 
 
@@ -42,7 +43,7 @@ class Metadata:
         meta = cls()
 
         meta.name = canonicalize_name(package.name)
-        meta.version = package.version
+        meta.version = normalize_version(package.version.text)
         meta.summary = package.description
         if package.readme:
             with package.readme.open() as f:
