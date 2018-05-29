@@ -81,6 +81,6 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             else:
                 new = version.next_patch.first_prerelease
         else:
-            new = rule
+            new = Version.parse(rule)
 
         return new
