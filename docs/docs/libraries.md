@@ -10,7 +10,7 @@ However, to make it accessible to others you will need to package and publish it
 
 ## Versioning
 
-While Poetry does not enforce any convention regardind package versioning,
+While Poetry does not enforce any convention regarding package versioning,
 it **strongly** recommends to follow [semantic versioning](https://semver.org).
 
 This has many advantages for the end users and allows them to set appropriate
