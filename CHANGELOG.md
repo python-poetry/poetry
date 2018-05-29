@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed packages not found for prerelease version constraints when resolving dependencies.
+- Fixed `init` and `add` commands.
 
 
 ## [0.10.0] - 2018-05-28

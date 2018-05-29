@@ -33,6 +33,16 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         self.pool = None
 
+    def initialize(self, i, o):
+        from poetry.repositories import Pool
+        from poetry.repositories.pypi_repository import PyPiRepository
+
+        super(InitCommand, self).initialize(i, o)
+
+        if self.pool is None:
+            self.pool = Pool()
+            self.pool.add_repository(PyPiRepository())
+
     def handle(self):
         from poetry.layouts import layout
         from poetry.utils._compat import Path

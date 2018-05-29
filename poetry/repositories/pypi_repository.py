@@ -88,7 +88,10 @@ class PyPiRepository(Repository):
         """
         Find packages on the remote server.
         """
-        if constraint is not None and not isinstance(constraint, VersionConstraint):
+        if constraint is None:
+            constraint = '*'
+
+        if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
         info = self.get_package_info(name)
