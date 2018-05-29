@@ -20,6 +20,7 @@ pip-log.txt
 .DS_Store
 .idea/*
 .python-version
+.vscode/*
 
 /test.py
 /test_*.*
@@ -30,3 +31,4 @@ MANIFEST.in
 /docs/site/*
 pyproject.lock
 /tests/fixtures/simple_project/setup.py
+.mypy_cache
