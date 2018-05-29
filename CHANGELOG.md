@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed handling of `in` environment markers with commas.
+- Fixed a `UnicodeDecodeError` when an error occurs in venv.
 
 
 ## [0.10.1] - 2018-05-28

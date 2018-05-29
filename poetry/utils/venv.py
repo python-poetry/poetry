@@ -23,7 +23,7 @@ class VenvCommandError(VenvError):
 
     def __init__(self, e):  # type: (CalledProcessError) -> None
         message = 'Command {} errored with the following output: \n{}'.format(
-            e.cmd, e.output.decode()
+            e.cmd, decode(e.output)
         )
 
         super(VenvCommandError, self).__init__(message)
