@@ -24,66 +24,68 @@ class Publisher:
     def publish(self, repository_name, username, password):
         if repository_name:
             self._io.writeln(
-                'Publishing <info>{}</info> (<comment>{}</comment>) '
-                'to <fg=cyan>{}</>'.format(
+                "Publishing <info>{}</info> (<comment>{}</comment>) "
+                "to <fg=cyan>{}</>".format(
                     self._package.pretty_name,
                     self._package.pretty_version,
-                    repository_name
+                    repository_name,
                 )
             )
         else:
             self._io.writeln(
-                'Publishing <info>{}</info> (<comment>{}</comment>) '
-                'to <fg=cyan>PyPI</>'.format(
-                    self._package.pretty_name,
-                    self._package.pretty_version
+                "Publishing <info>{}</info> (<comment>{}</comment>) "
+                "to <fg=cyan>PyPI</>".format(
+                    self._package.pretty_name, self._package.pretty_version
                 )
             )
 
         if not repository_name:
-            url = 'https://upload.pypi.org/legacy/'
-            repository_name = 'pypi'
+            url = "https://upload.pypi.org/legacy/"
+            repository_name = "pypi"
         else:
             # Retrieving config information
-            config_file = Path(CONFIG_DIR) / 'config.toml'
+            config_file = Path(CONFIG_DIR) / "config.toml"
 
             if not config_file.exists():
                 raise RuntimeError(
-                    'Config file does not exist. '
-                    'Unable to get repository information'
+                    "Config file does not exist. "
+                    "Unable to get repository information"
                 )
 
             with config_file.open() as f:
                 config = toml.loads(f.read())
 
             if (
-                'repositories' not in config
-                or repository_name not in config['repositories']
+                "repositories" not in config
+                or repository_name not in config["repositories"]
             ):
                 raise RuntimeError(
-                    'Repository {} is not defined'.format(repository_name)
+                    "Repository {} is not defined".format(repository_name)
                 )
 
-            url = config['repositories'][repository_name]['url']
+            url = config["repositories"][repository_name]["url"]
 
         if not (username and password):
-            auth_file = Path(CONFIG_DIR) / 'auth.toml'
+            auth_file = Path(CONFIG_DIR) / "auth.toml"
             if auth_file.exists():
                 with auth_file.open() as f:
                     auth_config = toml.loads(f.read())
 
-                if 'http-basic' in auth_config and repository_name in auth_config['http-basic']:
-                    config = auth_config['http-basic'][repository_name]
+                if (
+                    "http-basic" in auth_config
+                    and repository_name in auth_config["http-basic"]
+                ):
+                    config = auth_config["http-basic"][repository_name]
 
-                    username = config.get('username')
-                    password = config.get('password')
+                    username = config.get("username")
+                    password = config.get("password")
 
         # Requesting missing credentials
         if not username:
-            username = self._io.ask('Username:')
+            username = self._io.ask("Username:")
 
         if not password:
-            password = self._io.ask_hidden('Password:')
+            password = self._io.ask_hidden("Password:")
 
         # TODO: handle certificates
 

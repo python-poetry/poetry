@@ -15,9 +15,7 @@ class DebugResolveCommand(Command):
         { --python= : Python version(s) to use for resolution. }
     """
 
-    _loggers = [
-        'poetry.repositories.pypi_repository'
-    ]
+    _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.packages import Dependency
@@ -26,7 +24,7 @@ class DebugResolveCommand(Command):
         from poetry.repositories.repository import Repository
         from poetry.semver import parse_constraint
 
-        packages = self.argument('package')
+        packages = self.argument("package")
 
         if not packages:
             package = self.poetry.package
@@ -42,9 +40,9 @@ class DebugResolveCommand(Command):
             for name, constraint in requirements.items():
                 dep = Dependency(name, constraint)
                 extras = []
-                for extra in self.option('extras'):
-                    if ' ' in extra:
-                        extras += [e.strip() for e in extra.split(' ')]
+                for extra in self.option("extras"):
+                    if " " in extra:
+                        extras += [e.strip() for e in extra.split(" ")]
                     else:
                         extras.append(extra)
 
@@ -54,33 +52,29 @@ class DebugResolveCommand(Command):
                 dependencies.append(dep)
 
             package = ProjectPackage(
-                self.poetry.package.name,
-                self.poetry.package.version
+                self.poetry.package.name, self.poetry.package.version
             )
 
-            package.python_versions = self.option('python') or self.poetry.package.python_versions
+            package.python_versions = (
+                self.option("python") or self.poetry.package.python_versions
+            )
             for dep in dependencies:
                 package.requires.append(dep)
 
         solver = Solver(
-            package,
-            self.poetry.pool,
-            Repository(),
-            Repository(),
-            self.output
+            package, self.poetry.pool, Repository(), Repository(), self.output
         )
 
         ops = solver.solve()
 
-        self.line('')
-        self.line('Resolution results:')
-        self.line('')
+        self.line("")
+        self.line("Resolution results:")
+        self.line("")
 
         for op in ops:
             package = op.package
             self.line(
-                '  - <info>{}</info> (<comment>{}</comment>)'
-                .format(
+                "  - <info>{}</info> (<comment>{}</comment>)".format(
                     package.name, package.version
                 )
             )
@@ -92,12 +86,10 @@ class DebugResolveCommand(Command):
         requires = self._parse_name_version_pairs(requires)
         result = []
         for requirement in requires:
-            if 'version' not in requirement:
-                requirement['version'] = '*'
+            if "version" not in requirement:
+                requirement["version"] = "*"
 
-            result.append(
-                '{} {}'.format(requirement['name'], requirement['version'])
-            )
+            result.append("{} {}".format(requirement["name"], requirement["version"]))
 
         return result
 
@@ -105,19 +97,14 @@ class DebugResolveCommand(Command):
         result = []
 
         for i in range(len(pairs)):
-            pair = re.sub('^([^=: ]+)[=: ](.*)$', '\\1 \\2', pairs[i].strip())
+            pair = re.sub("^([^=: ]+)[=: ](.*)$", "\\1 \\2", pairs[i].strip())
             pair = pair.strip()
 
-            if ' ' in pair:
-                name, version = pair.split(' ', 2)
-                result.append({
-                    'name': name,
-                    'version': version
-                })
+            if " " in pair:
+                name, version = pair.split(" ", 2)
+                result.append({"name": name, "version": version})
             else:
-                result.append({
-                    'name': pair
-                })
+                result.append({"name": pair})
 
         return result
 
@@ -125,6 +112,6 @@ class DebugResolveCommand(Command):
         requires = {}
         requirements = self._parse_name_version_pairs(requirements)
         for requirement in requirements:
-            requires[requirement['name']] = requirement['version']
+            requires[requirement["name"]] = requirement["version"]
 
         return requires

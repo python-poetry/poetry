@@ -3,27 +3,29 @@ from ..helpers import check_solver_result
 
 
 def test_no_version_matching_constraint(root, provider, repo):
-    root.add_dependency('foo', '^1.0')
+    root.add_dependency("foo", "^1.0")
 
-    add_to_repo(repo, 'foo', '2.0.0')
-    add_to_repo(repo, 'foo', '2.1.3')
+    add_to_repo(repo, "foo", "2.0.0")
+    add_to_repo(repo, "foo", "2.1.3")
 
     check_solver_result(
-        root, provider, error=(
+        root,
+        provider,
+        error=(
             "Because myapp depends on foo (^1.0) "
             "which doesn't match any versions, version solving failed."
-        )
+        ),
     )
 
 
 def test_no_version_that_matches_combined_constraints(root, provider, repo):
-    root.add_dependency('foo', '1.0.0')
-    root.add_dependency('bar', '1.0.0')
+    root.add_dependency("foo", "1.0.0")
+    root.add_dependency("bar", "1.0.0")
 
-    add_to_repo(repo, 'foo', '1.0.0', deps={'shared': '>=2.0.0 <3.0.0'})
-    add_to_repo(repo, 'bar', '1.0.0', deps={'shared': '>=2.9.0 <4.0.0'})
-    add_to_repo(repo, 'shared', '2.5.0')
-    add_to_repo(repo, 'shared', '3.5.0')
+    add_to_repo(repo, "foo", "1.0.0", deps={"shared": ">=2.0.0 <3.0.0"})
+    add_to_repo(repo, "bar", "1.0.0", deps={"shared": ">=2.9.0 <4.0.0"})
+    add_to_repo(repo, "shared", "2.5.0")
+    add_to_repo(repo, "shared", "3.5.0")
 
     error = """\
 Because foo (1.0.0) depends on shared (>=2.0.0 <3.0.0)
@@ -35,13 +37,13 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
 
 
 def test_disjoint_constraints(root, provider, repo):
-    root.add_dependency('foo', '1.0.0')
-    root.add_dependency('bar', '1.0.0')
+    root.add_dependency("foo", "1.0.0")
+    root.add_dependency("bar", "1.0.0")
 
-    add_to_repo(repo, 'foo', '1.0.0', deps={'shared': '<=2.0.0'})
-    add_to_repo(repo, 'bar', '1.0.0', deps={'shared': '>3.0.0'})
-    add_to_repo(repo, 'shared', '2.0.0')
-    add_to_repo(repo, 'shared', '4.0.0')
+    add_to_repo(repo, "foo", "1.0.0", deps={"shared": "<=2.0.0"})
+    add_to_repo(repo, "bar", "1.0.0", deps={"shared": ">3.0.0"})
+    add_to_repo(repo, "shared", "2.0.0")
+    add_to_repo(repo, "shared", "4.0.0")
 
     error = """\
 Because bar (1.0.0) depends on shared (>3.0.0)
@@ -52,14 +54,14 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
 
 
 def test_no_valid_solution(root, provider, repo):
-    root.add_dependency('a')
-    root.add_dependency('b')
+    root.add_dependency("a")
+    root.add_dependency("b")
 
-    add_to_repo(repo, 'a', '1.0.0', deps={'b': '1.0.0'})
-    add_to_repo(repo, 'a', '2.0.0', deps={'b': '2.0.0'})
+    add_to_repo(repo, "a", "1.0.0", deps={"b": "1.0.0"})
+    add_to_repo(repo, "a", "2.0.0", deps={"b": "2.0.0"})
 
-    add_to_repo(repo, 'b', '1.0.0', deps={'a': '2.0.0'})
-    add_to_repo(repo, 'b', '2.0.0', deps={'a': '1.0.0'})
+    add_to_repo(repo, "b", "1.0.0", deps={"a": "2.0.0"})
+    add_to_repo(repo, "b", "2.0.0", deps={"a": "1.0.0"})
 
     error = """\
 Because no versions of b match <1.0.0 || >1.0.0,<2.0.0 || >2.0.0

@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-TYPE_METADATA = 'element-metadata'
-TYPE_ATOMIC = 'element-atomic'
-TYPE_CONTAINER = 'element-container'
-TYPE_MARKUP = 'element-markup'
+TYPE_METADATA = "element-metadata"
+TYPE_ATOMIC = "element-atomic"
+TYPE_CONTAINER = "element-container"
+TYPE_MARKUP = "element-markup"
 
 
 class Element:
@@ -56,7 +56,7 @@ class TokenElement(Element):
         raise NotImplementedError
 
     def serialized(self):
-        return ''.join(token.source_substring for token in self._tokens)
+        return "".join(token.source_substring for token in self._tokens)
 
     def __repr__(self):
         return repr(self.tokens)
@@ -87,7 +87,7 @@ class ContainerElement(Element):
         return self.sub_elements
 
     def serialized(self):
-        return ''.join(element.serialized() for element in self.sub_elements)
+        return "".join(element.serialized() for element in self.sub_elements)
 
     def __eq__(self, other):
         return self.primitive_value == other
@@ -101,5 +101,3 @@ class ContainerElement(Element):
         Returns a primitive Python value without any formatting or markup metadata.
         """
         raise NotImplementedError
-
-

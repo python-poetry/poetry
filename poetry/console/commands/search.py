@@ -14,22 +14,18 @@ class SearchCommand(Command):
         from poetry.repositories.pypi_repository import PyPiRepository
 
         flags = PyPiRepository.SEARCH_FULLTEXT
-        if self.option('only-name'):
+        if self.option("only-name"):
             flags = PyPiRepository.SEARCH_FULLTEXT
 
-        results = PyPiRepository().search(self.argument('tokens'), flags)
+        results = PyPiRepository().search(self.argument("tokens"), flags)
 
         for result in results:
-            self.line('')
-            name = '<info>{}</>'.format(
-                result.name
-            )
+            self.line("")
+            name = "<info>{}</>".format(result.name)
 
-            name += ' (<comment>{}</>)'.format(result.version)
+            name += " (<comment>{}</>)".format(result.version)
 
             self.line(name)
 
             if result.description:
-                self.line(
-                    ' {}'.format(result.description)
-                )
+                self.line(" {}".format(result.description))

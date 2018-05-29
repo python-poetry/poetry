@@ -2,7 +2,6 @@ from .version_constraint import VersionConstraint
 
 
 class EmptyConstraint(VersionConstraint):
-
     def is_empty(self):
         return True
 
@@ -28,4 +27,4 @@ class EmptyConstraint(VersionConstraint):
         return self
 
     def __str__(self):
-        return '<empty>'
+        return "<empty>"

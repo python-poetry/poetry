@@ -14,16 +14,16 @@ except ImportError:
     import urllib2
 
 
-BZ2_EXTENSIONS = ('.tar.bz2', '.tbz')
-XZ_EXTENSIONS = ('.tar.xz', '.txz', '.tlz', '.tar.lz', '.tar.lzma')
-ZIP_EXTENSIONS = ('.zip', '.whl')
-TAR_EXTENSIONS = ('.tar.gz', '.tgz', '.tar')
-ARCHIVE_EXTENSIONS = (
-    ZIP_EXTENSIONS + BZ2_EXTENSIONS + TAR_EXTENSIONS + XZ_EXTENSIONS)
+BZ2_EXTENSIONS = (".tar.bz2", ".tbz")
+XZ_EXTENSIONS = (".tar.xz", ".txz", ".tlz", ".tar.lz", ".tar.lzma")
+ZIP_EXTENSIONS = (".zip", ".whl")
+TAR_EXTENSIONS = (".tar.gz", ".tgz", ".tar")
+ARCHIVE_EXTENSIONS = ZIP_EXTENSIONS + BZ2_EXTENSIONS + TAR_EXTENSIONS + XZ_EXTENSIONS
 SUPPORTED_EXTENSIONS = ZIP_EXTENSIONS + TAR_EXTENSIONS
 
 try:
     import bz2  # noqa
+
     SUPPORTED_EXTENSIONS += BZ2_EXTENSIONS
 except ImportError:
     pass
@@ -31,6 +31,7 @@ except ImportError:
 try:
     # Only for Python 3.3+
     import lzma  # noqa
+
     SUPPORTED_EXTENSIONS += XZ_EXTENSIONS
 except ImportError:
     pass
@@ -42,26 +43,31 @@ def path_to_url(path):
     quoted path parts.
     """
     path = os.path.normpath(os.path.abspath(path))
-    url = urlparse.urljoin('file:', urllib2.pathname2url(path))
+    url = urlparse.urljoin("file:", urllib2.pathname2url(path))
     return url
 
 
 def is_url(name):
-    if ':' not in name:
+    if ":" not in name:
         return False
-    scheme = name.split(':', 1)[0].lower()
+    scheme = name.split(":", 1)[0].lower()
 
     return scheme in [
-        'http', 'https',
-        'file',
-        'ftp',
-        'ssh', 'git', 'hg', 'bzr', 'sftp', 'svn'
-        'ssh'
+        "http",
+        "https",
+        "file",
+        "ftp",
+        "ssh",
+        "git",
+        "hg",
+        "bzr",
+        "sftp",
+        "svn" "ssh",
     ]
 
 
 def strip_extras(path):
-    m = re.match(r'^(.+)(\[[^\]]+\])$', path)
+    m = re.match(r"^(.+)(\[[^\]]+\])$", path)
     extras = None
     if m:
         path_no_extras = m.group(1)
@@ -76,7 +82,7 @@ def is_installable_dir(path):
     """Return True if `path` is a directory containing a setup.py file."""
     if not os.path.isdir(path):
         return False
-    setup_py = os.path.join(path, 'setup.py')
+    setup_py = os.path.join(path, "setup.py")
     if os.path.isfile(setup_py):
         return True
     return False
@@ -93,7 +99,7 @@ def is_archive_file(name):
 def splitext(path):
     """Like os.path.splitext, but take off .tar too"""
     base, ext = posixpath.splitext(path)
-    if base.lower().endswith('.tar'):
+    if base.lower().endswith(".tar"):
         ext = base[-4:] + ext
         base = base[:-4]
     return base, ext
@@ -143,4 +149,3 @@ def convert_markers(markers):
     _group(groups)
 
     return requirements
-

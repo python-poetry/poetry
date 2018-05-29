@@ -16,9 +16,7 @@ class Dependencies:
         return self._dependencies
 
     def _get_dependencies(self):
-        self._provider.debug(
-            'Getting dependencies for {}'.format(self._package), 0
-        )
+        self._provider.debug("Getting dependencies for {}".format(self._package), 0)
         dependencies = self._provider._dependencies_for(self._package)
 
         if dependencies is None:

@@ -7,17 +7,17 @@ from poetry.utils._compat import decode
 
 
 class GitConfig:
-
     def __init__(self):
         self._config = {}
 
         try:
-            config_list = decode(subprocess.check_output(
-                ['git', 'config', '-l'],
-                stderr=subprocess.STDOUT
-            ))
+            config_list = decode(
+                subprocess.check_output(
+                    ["git", "config", "-l"], stderr=subprocess.STDOUT
+                )
+            )
 
-            m = re.findall('(?ms)^([^=]+)=(.*?)$', config_list)
+            m = re.findall("(?ms)^([^=]+)=(.*?)$", config_list)
             if m:
                 for group in m:
                     self._config[group[0]] = group[1]
@@ -32,7 +32,6 @@ class GitConfig:
 
 
 class Git:
-
     def __init__(self, work_dir=None):
         self._config = GitConfig()
         self._work_dir = work_dir
@@ -42,7 +41,7 @@ class Git:
         return self._config
 
     def clone(self, repository, dest):  # type: (...) -> str
-        return self.run('clone', repository, str(dest))
+        return self.run("clone", repository, str(dest))
 
     def checkout(self, rev, folder=None):  # type: (...) -> str
         args = []
@@ -51,13 +50,13 @@ class Git:
 
         if folder:
             args += [
-                '--git-dir', (folder / '.git').as_posix(),
-                '--work-tree', folder.as_posix()
+                "--git-dir",
+                (folder / ".git").as_posix(),
+                "--work-tree",
+                folder.as_posix(),
             ]
 
-        args += [
-            'checkout', rev
-        ]
+        args += ["checkout", rev]
 
         return self.run(*args)
 
@@ -68,13 +67,13 @@ class Git:
 
         if folder:
             args += [
-                '--git-dir', (folder / '.git').as_posix(),
-                '--work-tree', folder.as_posix()
+                "--git-dir",
+                (folder / ".git").as_posix(),
+                "--work-tree",
+                folder.as_posix(),
             ]
 
-        args += [
-            'rev-parse', rev
-        ]
+        args += ["rev-parse", rev]
 
         return self.run(*args)
 
@@ -85,19 +84,18 @@ class Git:
 
         if folder:
             args += [
-                '--git-dir', (folder / '.git').as_posix(),
-                '--work-tree', folder.as_posix()
+                "--git-dir",
+                (folder / ".git").as_posix(),
+                "--work-tree",
+                folder.as_posix(),
             ]
 
-        args += [
-            'ls-files', '--others', '-i', '--exclude-standard'
-        ]
+        args += ["ls-files", "--others", "-i", "--exclude-standard"]
         output = self.run(*args)
 
-        return output.split('\n')
+        return output.split("\n")
 
     def run(self, *args):  # type: (...) -> str
-        return decode(subprocess.check_output(
-            ['git'] + list(args),
-            stderr=subprocess.STDOUT
-        ))
+        return decode(
+            subprocess.check_output(["git"] + list(args), stderr=subprocess.STDOUT)
+        )

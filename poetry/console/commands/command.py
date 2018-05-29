@@ -7,11 +7,7 @@ from ..styles.poetry import PoetryStyle
 
 class CommandFormatter(logging.Formatter):
 
-    _colors = {
-        'error': 'fg=red',
-        'warning': 'fg=yellow',
-        'debug': 'fg=blue',
-    }
+    _colors = {"error": "fg=red", "warning": "fg=yellow", "debug": "fg=blue"}
 
     def format(self, record):
         if not record.exc_info:
@@ -19,7 +15,7 @@ class CommandFormatter(logging.Formatter):
             msg = record.msg
 
             if level in self._colors:
-                msg = '<{}>{}</>'.format(self._colors[level], msg)
+                msg = "<{}>{}</>".format(self._colors[level], msg)
 
             return msg
 
@@ -27,7 +23,6 @@ class CommandFormatter(logging.Formatter):
 
 
 class CommandHandler(logging.Handler):
-
     def __init__(self, command):
         self._command = command
 
@@ -44,7 +39,7 @@ class CommandHandler(logging.Handler):
         try:
             msg = self.format(record)
             level = record.levelname.lower()
-            err = level in ('warning', 'error', 'exception', 'critical')
+            err = level in ("warning", "error", "exception", "critical")
             if err:
                 self._command.output.write_error(msg, newline=True)
             else:

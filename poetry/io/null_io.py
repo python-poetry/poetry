@@ -5,7 +5,6 @@ from poetry.console.styles.poetry import PoetryStyle
 
 
 class NullIO(PoetryStyle):
-
     def __init__(self):
         super(NullIO, self).__init__(ListInput([]), NullOutput())
 

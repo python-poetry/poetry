@@ -1,5 +1,4 @@
 class BaseInstaller:
-
     def install(self, package):
         raise NotImplementedError
 

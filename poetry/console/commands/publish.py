@@ -27,31 +27,29 @@ the config command.
         publisher = Publisher(self.poetry, self.output)
 
         # Building package first, if told
-        if self.option('build'):
+        if self.option("build"):
             if publisher.files:
                 if not self.confirm(
-                    'There are <info>{}</info> files ready for publishing. '
-                    'Build anyway?'.format(len(publisher.files))
+                    "There are <info>{}</info> files ready for publishing. "
+                    "Build anyway?".format(len(publisher.files))
                 ):
-                    self.line_error('<error>Aborted!</error>')
+                    self.line_error("<error>Aborted!</error>")
 
                     return 1
 
-            self.call('build')
+            self.call("build")
 
         files = publisher.files
         if not files:
             self.line_error(
-                '<error>No files to publish. '
-                'Run poetry build first or use the --build option.</error>'
+                "<error>No files to publish. "
+                "Run poetry build first or use the --build option.</error>"
             )
 
             return 1
 
-        self.line('')
+        self.line("")
 
         publisher.publish(
-            self.option('repository'),
-            self.option('username'),
-            self.option('password')
+            self.option("repository"), self.option("username"), self.option("password")
         )

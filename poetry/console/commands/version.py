@@ -20,27 +20,29 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 """
 
     RESERVED = {
-        'major', 'minor', 'patch',
-        'premajor', 'preminor', 'prepatch',
-        'prerelease'
+        "major",
+        "minor",
+        "patch",
+        "premajor",
+        "preminor",
+        "prepatch",
+        "prerelease",
     }
 
     def handle(self):
-        version = self.argument('version')
+        version = self.argument("version")
 
-        version = self.increment_version(
-            self.poetry.package.pretty_version, version
-        )
+        version = self.increment_version(self.poetry.package.pretty_version, version)
 
         self.line(
-            'Bumping version from <comment>{}</> to <info>{}</>'.format(
+            "Bumping version from <comment>{}</> to <info>{}</>".format(
                 self.poetry.package.pretty_version, version
             )
         )
 
         content = self.poetry.file.read()
-        poetry_content = content['tool']['poetry']
-        poetry_content['version'] = version.text
+        poetry_content = content["tool"]["poetry"]
+        poetry_content["version"] = version.text
 
         self.poetry.file.write(content)
 
@@ -50,32 +52,30 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         try:
             version = Version.parse(version)
         except ValueError:
-            raise ValueError(
-                'The project\'s version doesn\'t seem to follow semver'
-            )
+            raise ValueError("The project's version doesn't seem to follow semver")
 
-        if rule in {'major', 'premajor'}:
+        if rule in {"major", "premajor"}:
             new = version.next_major
-            if rule == 'premajor':
+            if rule == "premajor":
                 new = new.first_prerelease
-        elif rule in {'minor', 'preminor'}:
+        elif rule in {"minor", "preminor"}:
             new = version.next_minor
-            if rule == 'preminor':
+            if rule == "preminor":
                 new = new.first_prerelease
-        elif rule in {'patch', 'prepatch'}:
+        elif rule in {"patch", "prepatch"}:
             new = version.next_patch
-            if rule == 'prepatch':
+            if rule == "prepatch":
                 new = new.first_prerelease
-        elif rule == 'prerelease':
+        elif rule == "prerelease":
             if version.is_prerelease():
                 pre = version.prerelease
                 new_prerelease = int(pre[1]) + 1
                 new = Version.parse(
-                    '{}.{}.{}-{}'.format(
+                    "{}.{}.{}-{}".format(
                         version.major,
                         version.minor,
                         version.patch,
-                        '.'.join([pre[0], str(new_prerelease)])
+                        ".".join([pre[0], str(new_prerelease)]),
                     )
                 )
             else:

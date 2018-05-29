@@ -2,10 +2,10 @@ from cleo.testers import CommandTester
 
 
 def test_about(app):
-    command = app.find('about')
+    command = app.find("about")
     tester = CommandTester(command)
 
-    tester.execute([('command', command.get_name())])
+    tester.execute([("command", command.get_name())])
 
     expected = """\
 Poetry - Package Management for Python

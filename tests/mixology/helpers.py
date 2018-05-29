@@ -13,12 +13,9 @@ def add_to_repo(repository, name, version, deps=None):
     repository.add_package(package)
 
 
-def check_solver_result(root, provider,
-                        result=None,
-                        error=None,
-                        tries=None,
-                        locked=None,
-                        use_latest=None):
+def check_solver_result(
+    root, provider, result=None, error=None, tries=None, locked=None, use_latest=None
+):
     solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
 
     try:

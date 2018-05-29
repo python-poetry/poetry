@@ -24,15 +24,15 @@ from .pip_installer import PipInstaller
 
 
 class Installer:
-
-    def __init__(self,
-                 io,
-                 venv,
-                 package,  # type: Package
-                 locker,   # type: Locker
-                 pool,     # type: Pool
-                 installed=None  # type: (Union[InstalledRepository, None])
-                 ):
+    def __init__(
+        self,
+        io,
+        venv,
+        package,  # type: Package
+        locker,  # type: Locker
+        pool,  # type: Pool
+        installed=None,  # type: (Union[InstalledRepository, None])
+    ):
         self._io = io
         self._venv = venv
         self._package = package
@@ -144,40 +144,36 @@ class Installer:
             # Checking extras
             for extra in self._extras:
                 if extra not in self._package.extras:
-                    raise ValueError(
-                        'Extra [{}] is not specified.'.format(extra)
-                    )
+                    raise ValueError("Extra [{}] is not specified.".format(extra))
 
-            self._io.writeln('<info>Updating dependencies</>')
+            self._io.writeln("<info>Updating dependencies</>")
             solver = Solver(
                 self._package,
                 self._pool,
                 self._installed_repository,
                 locked_repository,
-                self._io
+                self._io,
             )
 
             ops = solver.solve(use_latest=self._whitelist)
         else:
-            self._io.writeln('<info>Installing dependencies from lock file</>')
+            self._io.writeln("<info>Installing dependencies from lock file</>")
 
             locked_repository = self._locker.locked_repository(True)
 
             if not self._locker.is_fresh():
                 self._io.writeln(
-                    '<warning>'
-                    'Warning: The lock file is not up to date with '
-                    'the latest changes in pyproject.toml. '
-                    'You may be getting outdated dependencies. '
-                    'Run update to update them.'
-                    '</warning>'
+                    "<warning>"
+                    "Warning: The lock file is not up to date with "
+                    "the latest changes in pyproject.toml. "
+                    "You may be getting outdated dependencies. "
+                    "Run update to update them."
+                    "</warning>"
                 )
 
             for extra in self._extras:
-                if extra not in self._locker.lock_data.get('extras', {}):
-                    raise ValueError(
-                        'Extra [{}] is not specified.'.format(extra)
-                    )
+                if extra not in self._locker.lock_data.get("extras", {}):
+                    raise ValueError("Extra [{}] is not specified.".format(extra))
 
             # If we are installing from lock
             # Filter the operations by comparing it with what is
@@ -196,7 +192,7 @@ class Installer:
         # Execute operations
         actual_ops = [op for op in ops if not op.skipped]
         if not actual_ops and (self._execute_operations or self._dry_run):
-            self._io.writeln('Nothing to install or update')
+            self._io.writeln("Nothing to install or update")
 
         if actual_ops and (self._execute_operations or self._dry_run):
             installs = []
@@ -208,51 +204,52 @@ class Installer:
                     skipped.append(op)
                     continue
 
-                if op.job_type == 'install':
+                if op.job_type == "install":
                     installs.append(
-                        '{}:{}'.format(
-                            op.package.pretty_name,
-                            op.package.full_pretty_version
+                        "{}:{}".format(
+                            op.package.pretty_name, op.package.full_pretty_version
                         )
                     )
-                elif op.job_type == 'update':
+                elif op.job_type == "update":
                     updates.append(
-                        '{}:{}'.format(
+                        "{}:{}".format(
                             op.target_package.pretty_name,
-                            op.target_package.full_pretty_version
+                            op.target_package.full_pretty_version,
                         )
                     )
-                elif op.job_type == 'uninstall':
+                elif op.job_type == "uninstall":
                     uninstalls.append(op.package.pretty_name)
 
             self._io.new_line()
             self._io.writeln(
-                'Package operations: '
-                '<info>{}</> install{}, '
-                '<info>{}</> update{}, '
-                '<info>{}</> removal{}'
-                '{}'.format(
-                    len(installs), '' if len(installs) == 1 else 's',
-                    len(updates), '' if len(updates) == 1 else 's',
-                    len(uninstalls), '' if len(uninstalls) == 1 else 's',
-                    ', <info>{}</> skipped'.format(
-                        len(skipped)
-                    ) if skipped and self.is_verbose() else ''
+                "Package operations: "
+                "<info>{}</> install{}, "
+                "<info>{}</> update{}, "
+                "<info>{}</> removal{}"
+                "{}".format(
+                    len(installs),
+                    "" if len(installs) == 1 else "s",
+                    len(updates),
+                    "" if len(updates) == 1 else "s",
+                    len(uninstalls),
+                    "" if len(uninstalls) == 1 else "s",
+                    ", <info>{}</> skipped".format(len(skipped))
+                    if skipped and self.is_verbose()
+                    else "",
                 )
             )
 
         # Writing lock before installing
         if self._update and self._write_lock:
             updated_lock = self._locker.set_lock_data(
-                self._package,
-                local_repo.packages
+                self._package, local_repo.packages
             )
 
             if updated_lock:
-                self._io.writeln('')
-                self._io.writeln('<info>Writing lock file</>')
+                self._io.writeln("")
+                self._io.writeln("<info>Writing lock file</>")
 
-        self._io.writeln('')
+        self._io.writeln("")
         for op in ops:
             self._execute(op)
 
@@ -262,16 +259,16 @@ class Installer:
         """
         method = operation.job_type
 
-        getattr(self, '_execute_{}'.format(method))(operation)
+        getattr(self, "_execute_{}".format(method))(operation)
 
     def _execute_install(self, operation):  # type: (Install) -> None
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
-                    '  - Skipping <info>{}</> (<comment>{}</>) {}'.format(
+                    "  - Skipping <info>{}</> (<comment>{}</>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
-                        operation.skip_reason
+                        operation.skip_reason,
                     )
                 )
 
@@ -279,9 +276,8 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                '  - Installing <info>{}</> (<comment>{}</>)'.format(
-                    operation.package.pretty_name,
-                    operation.package.full_pretty_version
+                "  - Installing <info>{}</> (<comment>{}</>)".format(
+                    operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
 
@@ -297,10 +293,10 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
-                    '  - Skipping <info>{}</> (<comment>{}</>) {}'.format(
+                    "  - Skipping <info>{}</> (<comment>{}</>) {}".format(
                         target.pretty_name,
                         target.full_pretty_version,
-                        operation.skip_reason
+                        operation.skip_reason,
                     )
                 )
 
@@ -308,11 +304,10 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                '  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)'
-                .format(
+                "  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)".format(
                     target.pretty_name,
                     source.full_pretty_version,
-                    target.full_pretty_version
+                    target.full_pretty_version,
                 )
             )
 
@@ -325,10 +320,10 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.writeln(
-                    '  - Not removing <info>{}</> (<comment>{}</>) {}'.format(
+                    "  - Not removing <info>{}</> (<comment>{}</>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
-                        operation.skip_reason
+                        operation.skip_reason,
                     )
                 )
 
@@ -336,9 +331,8 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.writeln(
-                '  - Removing <info>{}</> (<comment>{}</>)'.format(
-                    operation.package.pretty_name,
-                    operation.package.full_pretty_version
+                "  - Removing <info>{}</> (<comment>{}</>)".format(
+                    operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
 
@@ -364,13 +358,13 @@ class Installer:
             for pkg in local_repo.packages:
                 if pkg.name == package.name:
                     # The package we operate on is in the local repo
-                    if op.job_type == 'update':
+                    if op.job_type == "update":
                         if pkg.version == package.version:
                             break
 
                         local_repo.remove_package(pkg)
                         local_repo.add_package(op.target_package)
-                    elif op.job_type == 'uninstall':
+                    elif op.job_type == "uninstall":
                         local_repo.remove_package(op.package)
                     else:
                         # Even though the package already exists
@@ -385,30 +379,25 @@ class Installer:
                 if not local_repo.has_package(package):
                     local_repo.add_package(package)
 
-    def _get_operations_from_lock(self,
-                                  locked_repository  # type: Repository
-                                  ):  # type: (...) -> List[Operation]
+    def _get_operations_from_lock(
+        self, locked_repository  # type: Repository
+    ):  # type: (...) -> List[Operation]
         installed_repo = self._installed_repository
         ops = []
 
-        extra_packages = [
-            p.name
-            for p in self._get_extra_packages(locked_repository)
-        ]
+        extra_packages = [p.name for p in self._get_extra_packages(locked_repository)]
         for locked in locked_repository.packages:
             is_installed = False
             for installed in installed_repo.packages:
                 if locked.name == installed.name:
                     is_installed = True
-                    if locked.category == 'dev' and not self.is_dev_mode():
+                    if locked.category == "dev" and not self.is_dev_mode():
                         ops.append(Uninstall(locked))
                     elif locked.optional and locked.name not in extra_packages:
                         # Installed but optional and not requested in extras
                         ops.append(Uninstall(locked))
                     elif locked.version != installed.version:
-                        ops.append(Update(
-                            installed, locked
-                        ))
+                        ops.append(Update(installed, locked))
 
             # If it's optional and not in required extras
             # we do not install
@@ -417,55 +406,53 @@ class Installer:
 
             op = Install(locked)
             if is_installed:
-                op.skip('Already installed')
+                op.skip("Already installed")
 
             ops.append(op)
 
         return ops
 
-    def _filter_operations(self,
-                           ops,
-                           repo
-                           ):  # type: (List[Operation], Repository) -> None
-        extra_packages = [p.name for p in
-                          self._get_extra_packages(repo)]
+    def _filter_operations(
+        self, ops, repo
+    ):  # type: (List[Operation], Repository) -> None
+        extra_packages = [p.name for p in self._get_extra_packages(repo)]
         for op in ops:
             if isinstance(op, Update):
                 package = op.target_package
             else:
                 package = op.package
 
-            if op.job_type == 'uninstall':
+            if op.job_type == "uninstall":
                 continue
 
-            if package.name in self._develop and package.source_type == 'directory':
+            if package.name in self._develop and package.source_type == "directory":
                 package.develop = True
                 if op.skipped:
                     op.unskip()
 
-            python = Version.parse('.'.join([str(i) for i in self._venv.version_info[:3]]))
-            if 'python' in package.requirements:
-                python_constraint = parse_constraint(
-                    package.requirements['python']
-                )
+            python = Version.parse(
+                ".".join([str(i) for i in self._venv.version_info[:3]])
+            )
+            if "python" in package.requirements:
+                python_constraint = parse_constraint(package.requirements["python"])
                 if not python_constraint.allows(python):
                     # Incompatible python versions
-                    op.skip('Not needed for the current python version')
+                    op.skip("Not needed for the current python version")
                     continue
 
             if not package.python_constraint.allows(python):
-                op.skip('Not needed for the current python version')
+                op.skip("Not needed for the current python version")
                 continue
 
-            if 'platform' in package.requirements:
+            if "platform" in package.requirements:
                 platform_constraint = GenericConstraint.parse(
-                    package.requirements['platform']
+                    package.requirements["platform"]
                 )
                 if not platform_constraint.matches(
-                        GenericConstraint('=', sys.platform)
+                    GenericConstraint("=", sys.platform)
                 ):
                     # Incompatible systems
-                    op.skip('Not needed for the current platform')
+                    op.skip("Not needed for the current platform")
                     continue
 
             if self._update:
@@ -474,19 +461,19 @@ class Installer:
                     extras[extra] = [dep.name for dep in deps]
             else:
                 extras = {}
-                for extra, deps in self._locker.lock_data.get('extras', {}).items():
+                for extra, deps in self._locker.lock_data.get("extras", {}).items():
                     extras[extra] = [dep.lower() for dep in deps]
 
             # If a package is optional and not requested
             # in any extra we skip it
             if package.optional:
                 if package.name not in extra_packages:
-                    op.skip('Not required')
+                    op.skip("Not required")
 
             # If the package is a dev package and dev packages
             # are not requests, we skip it
-            if package.category == 'dev' and not self.is_dev_mode():
-                op.skip('Dev dependencies not requested')
+            if package.category == "dev" and not self.is_dev_mode():
+                op.skip("Dev dependencies not requested")
 
     def _get_extra_packages(self, repo):
         """
@@ -495,19 +482,16 @@ class Installer:
         Maybe we just let the solver handle it?
         """
         if self._update:
-            extras = {
-                k: [d.name for d in v]
-                for k, v in self._package.extras.items()
-            }
+            extras = {k: [d.name for d in v] for k, v in self._package.extras.items()}
         else:
-            extras = self._locker.lock_data.get('extras', {})
+            extras = self._locker.lock_data.get("extras", {})
 
         extra_packages = []
         for extra_name, packages in extras.items():
             if extra_name not in self._extras:
                 continue
 
-            extra_packages += [Dependency(p, '*') for p in packages]
+            extra_packages += [Dependency(p, "*") for p in packages]
 
         def _extra_packages(packages):
             pkgs = []

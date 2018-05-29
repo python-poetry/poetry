@@ -2,7 +2,6 @@ from .base_installer import BaseInstaller
 
 
 class NoopInstaller(BaseInstaller):
-
     def __init__(self):
         self._installs = []
         self._updates = []

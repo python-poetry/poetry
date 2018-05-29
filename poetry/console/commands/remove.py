@@ -17,22 +17,20 @@ list of installed packages
 
 <info>poetry remove</info>"""
 
-    _loggers = [
-        'poetry.repositories.pypi_repository'
-    ]
+    _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.installation import Installer
 
-        packages = self.argument('packages')
-        is_dev = self.option('dev')
+        packages = self.argument("packages")
+        is_dev = self.option("dev")
 
         original_content = self.poetry.file.read()
         content = self.poetry.file.read()
-        poetry_content = content['tool']['poetry']
-        section = 'dependencies'
+        poetry_content = content["tool"]["poetry"]
+        section = "dependencies"
         if is_dev:
-            section = 'dev-dependencies'
+            section = "dev-dependencies"
 
         # Deleting entries
         requirements = {}
@@ -45,7 +43,7 @@ list of installed packages
                     break
 
             if not found:
-                raise ValueError('Package {} not found'.format(name))
+                raise ValueError("Package {} not found".format(name))
 
         for key in requirements:
             del poetry_content[section][key]
@@ -61,10 +59,10 @@ list of installed packages
             self.venv,
             self.poetry.package,
             self.poetry.locker,
-            self.poetry.pool
+            self.poetry.pool,
         )
 
-        installer.dry_run(self.option('dry-run'))
+        installer.dry_run(self.option("dry-run"))
         installer.update(True)
         installer.whitelist(requirements)
 
@@ -75,13 +73,13 @@ list of installed packages
 
             raise
 
-        if status != 0 or self.option('dry-run'):
+        if status != 0 or self.option("dry-run"):
             # Revert changes
-            if not self.option('dry-run'):
+            if not self.option("dry-run"):
                 self.error(
-                    '\n'
-                    'Removal failed, reverting pyproject.toml '
-                    'to its original content.'
+                    "\n"
+                    "Removal failed, reverting pyproject.toml "
+                    "to its original content."
                 )
 
             self.poetry.file.write(original_content)

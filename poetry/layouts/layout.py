@@ -38,17 +38,18 @@ license = ""
 
 
 class Layout(object):
-
-    def __init__(self,
-                 project,
-                 version='0.1.0',
-                 description='',
-                 readme_format='md',
-                 author=None,
-                 license=None,
-                 python='*',
-                 dependencies=None,
-                 dev_dependencies=None):
+    def __init__(
+        self,
+        project,
+        version="0.1.0",
+        description="",
+        readme_format="md",
+        author=None,
+        license=None,
+        python="*",
+        dependencies=None,
+        dev_dependencies=None,
+    ):
         self._project = project
         self._package_name = module_name(project)
         self._version = version
@@ -57,10 +58,10 @@ class Layout(object):
         self._license = license
         self._python = python
         self._dependencies = dependencies or {}
-        self._dev_dependencies = dev_dependencies or {'pytest': '^3.5'}
+        self._dev_dependencies = dev_dependencies or {"pytest": "^3.5"}
 
         if not author:
-            author = 'Your Name <you@example.com>'
+            author = "Your Name <you@example.com>"
 
         self._author = author
 
@@ -81,21 +82,21 @@ class Layout(object):
             template = POETRY_WITH_LICENSE
 
         content = loads(template)
-        poetry_content = content['tool']['poetry']
-        poetry_content['name'] = self._project
-        poetry_content['version'] = self._version
-        poetry_content['description'] = self._description
-        poetry_content['authors'].append(self._author)
+        poetry_content = content["tool"]["poetry"]
+        poetry_content["name"] = self._project
+        poetry_content["version"] = self._version
+        poetry_content["description"] = self._description
+        poetry_content["authors"].append(self._author)
         if self._license:
-            poetry_content['license'] = self._license
+            poetry_content["license"] = self._license
 
-        poetry_content['dependencies']['python'] = self._python
+        poetry_content["dependencies"]["python"] = self._python
 
         for dep_name, dep_constraint in self._dependencies.items():
-            poetry_content['dependencies'][dep_name] = dep_constraint
+            poetry_content["dependencies"][dep_name] = dep_constraint
 
         for dep_name, dep_constraint in self._dev_dependencies.items():
-            poetry_content['dev-dependencies'][dep_name] = dep_constraint
+            poetry_content["dev-dependencies"][dep_name] = dep_constraint
 
         return dumps(content)
 
@@ -103,35 +104,34 @@ class Layout(object):
         raise NotImplementedError()
 
     def _create_readme(self, path):
-        if self._readme_format == 'rst':
-            readme_file = path / 'README.rst'
+        if self._readme_format == "rst":
+            readme_file = path / "README.rst"
         else:
-            readme_file = path / 'README.md'
+            readme_file = path / "README.md"
 
         readme_file.touch()
 
     def _create_tests(self, path):
-        self._dev_dependencies['pytest'] = '^3.0'
+        self._dev_dependencies["pytest"] = "^3.0"
 
-        tests = path / 'tests'
-        tests_init = tests / '__init__.py'
-        tests_default = tests / 'test_{}.py'.format(self._package_name)
+        tests = path / "tests"
+        tests_init = tests / "__init__.py"
+        tests_default = tests / "test_{}.py".format(self._package_name)
 
         tests.mkdir()
         tests_init.touch(exist_ok=False)
 
-        with tests_default.open('w') as f:
+        with tests_default.open("w") as f:
             f.write(
                 TESTS_DEFAULT.format(
-                    package_name=self._package_name,
-                    version=self._version
+                    package_name=self._package_name, version=self._version
                 )
             )
 
     def _write_poetry(self, path):
         content = self.generate_poetry_content()
 
-        poetry = path / 'pyproject.toml'
+        poetry = path / "pyproject.toml"
 
-        with poetry.open('w') as f:
+        with poetry.open("w") as f:
             f.write(content)

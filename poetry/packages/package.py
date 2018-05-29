@@ -18,27 +18,16 @@ from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
 
-AUTHOR_REGEX = re.compile('(?u)^(?P<name>[- .,\w\d\'’"()]+)(?: <(?P<email>.+?)>)?$')
+AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 
 
 class Package(object):
 
-    AVAILABLE_PYTHONS = {
-        '2',
-        '2.7',
-        '3',
-        '3.4', '3.5', '3.6', '3.7'
-    }
+    AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
 
     supported_link_types = {
-        'require': {
-            'description': 'requires',
-            'method': 'requires'
-        },
-        'provide': {
-            'description': 'provides',
-            'method': 'provides'
-        }
+        "require": {"description": "requires", "method": "requires"},
+        "provide": {"description": "provides", "method": "provides"},
     }
 
     def __init__(self, name, version, pretty_version=None):
@@ -55,7 +44,7 @@ class Package(object):
             self._version = version
             self._pretty_version = pretty_version or self._version.text
 
-        self.description = ''
+        self.description = ""
 
         self._authors = []
 
@@ -65,16 +54,16 @@ class Package(object):
         self._license = None
         self.readme = None
 
-        self.source_type = ''
-        self.source_reference = ''
-        self.source_url = ''
+        self.source_type = ""
+        self.source_reference = ""
+        self.source_url = ""
 
         self.requires = []
         self.dev_requires = []
         self.extras = {}
         self.requires_extras = []
 
-        self.category = 'main'
+        self.category = "main"
         self.hashes = []
         self.optional = False
 
@@ -87,9 +76,9 @@ class Package(object):
 
         self.classifiers = []
 
-        self._python_versions = '*'
-        self._python_constraint = parse_constraint('*')
-        self._platform = '*'
+        self._python_versions = "*"
+        self._python_constraint = parse_constraint("*")
+        self._platform = "*"
         self._platform_constraint = EmptyConstraint()
 
         self.root_dir = None
@@ -117,23 +106,22 @@ class Package(object):
         if self.is_root():
             return self._name
 
-        return self.name + '-' + self._version.text
+        return self.name + "-" + self._version.text
 
     @property
     def pretty_string(self):
-        return self.pretty_name + ' ' + self.pretty_version
-    
+        return self.pretty_name + " " + self.pretty_version
+
     @property
     def full_pretty_version(self):
-        if self.source_type not in ['hg', 'git']:
+        if self.source_type not in ["hg", "git"]:
             return self._pretty_version
 
         # if source reference is a sha1 hash -- truncate
         if len(self.source_reference) == 40:
-            return '{} {}'.format(self._pretty_version,
-                                  self.source_reference[0:7])
+            return "{} {}".format(self._pretty_version, self.source_reference[0:7])
 
-        return '{} {}'.format(self._pretty_version, self.source_reference)
+        return "{} {}".format(self._pretty_version, self.source_reference)
 
     @property
     def authors(self):  # type: () -> list
@@ -141,11 +129,11 @@ class Package(object):
 
     @property
     def author_name(self):  # type: () -> str
-        return self._get_author()['name']
+        return self._get_author()["name"]
 
     @property
     def author_email(self):  # type: () -> str
-        return self._get_author()['email']
+        return self._get_author()["email"]
 
     @property
     def all_requires(self):
@@ -153,20 +141,14 @@ class Package(object):
 
     def _get_author(self):  # type: () -> dict
         if not self._authors:
-            return {
-                'name': None,
-                'email': None
-            }
+            return {"name": None, "email": None}
 
         m = AUTHOR_REGEX.match(self._authors[0])
 
-        name = m.group('name')
-        email = m.group('email')
+        name = m.group("name")
+        email = m.group("email")
 
-        return {
-            'name': name,
-            'email': email
-        }
+        return {"name": name, "email": email}
 
     @property
     def python_versions(self):
@@ -206,26 +188,26 @@ class Package(object):
             self._license = value
         else:
             self._license = license_by_id(value)
-    
+
     @property
     def all_classifiers(self):
         classifiers = copy.copy(self.classifiers)
 
         # Automatically set python classifiers
-        if self.python_versions == '*':
-            python_constraint = parse_constraint('~2.7 || ^3.4')
+        if self.python_versions == "*":
+            python_constraint = parse_constraint("~2.7 || ^3.4")
         else:
             python_constraint = self.python_constraint
 
         for version in sorted(self.AVAILABLE_PYTHONS):
             if len(version) == 1:
-                constraint = parse_constraint(version + '.*')
+                constraint = parse_constraint(version + ".*")
             else:
                 constraint = Version.parse(version)
 
             if python_constraint.allows_any(constraint):
                 classifiers.append(
-                    'Programming Language :: Python :: {}'.format(version)
+                    "Programming Language :: Python :: {}".format(version)
                 )
 
         # Automatically set license classifiers
@@ -242,40 +224,40 @@ class Package(object):
     def is_root(self):
         return False
 
-    def add_dependency(self,
-                       name,             # type: str
-                       constraint=None,  # type: Union[str, dict, None]
-                       category='main'   # type: str
-                       ):  # type: (...) -> Dependency
+    def add_dependency(
+        self,
+        name,  # type: str
+        constraint=None,  # type: Union[str, dict, None]
+        category="main",  # type: str
+    ):  # type: (...) -> Dependency
         if constraint is None:
-            constraint = '*'
+            constraint = "*"
 
         if isinstance(constraint, dict):
-            optional = constraint.get('optional', False)
-            python_versions = constraint.get('python')
-            platform = constraint.get('platform')
-            allows_prereleases = constraint.get('allows-prereleases', False)
+            optional = constraint.get("optional", False)
+            python_versions = constraint.get("python")
+            platform = constraint.get("platform")
+            allows_prereleases = constraint.get("allows-prereleases", False)
 
-            if 'git' in constraint:
+            if "git" in constraint:
                 # VCS dependency
                 dependency = VCSDependency(
                     name,
-                    'git', constraint['git'],
-                    branch=constraint.get('branch', None),
-                    tag=constraint.get('tag', None),
-                    rev=constraint.get('rev', None),
+                    "git",
+                    constraint["git"],
+                    branch=constraint.get("branch", None),
+                    tag=constraint.get("tag", None),
+                    rev=constraint.get("rev", None),
                     optional=optional,
                 )
-            elif 'file' in constraint:
-                file_path = Path(constraint['file'])
+            elif "file" in constraint:
+                file_path = Path(constraint["file"])
 
                 dependency = FileDependency(
-                    file_path,
-                    category=category,
-                    base=self.root_dir
+                    file_path, category=category, base=self.root_dir
                 )
-            elif 'path' in constraint:
-                path = Path(constraint['path'])
+            elif "path" in constraint:
+                path = Path(constraint["path"])
 
                 if self.root_dir:
                     is_file = (self.root_dir / path).is_file()
@@ -284,10 +266,7 @@ class Package(object):
 
                 if is_file:
                     dependency = FileDependency(
-                        path,
-                        category=category,
-                        optional=optional,
-                        base=self.root_dir
+                        path, category=category, optional=optional, base=self.root_dir
                     )
                 else:
                     dependency = DirectoryDependency(
@@ -295,16 +274,17 @@ class Package(object):
                         category=category,
                         optional=optional,
                         base=self.root_dir,
-                        develop=constraint.get('develop', False)
+                        develop=constraint.get("develop", False),
                     )
             else:
-                version = constraint['version']
+                version = constraint["version"]
 
                 dependency = Dependency(
-                    name, version,
+                    name,
+                    version,
                     optional=optional,
                     category=category,
-                    allows_prereleases=allows_prereleases
+                    allows_prereleases=allows_prereleases,
                 )
 
             if python_versions:
@@ -313,13 +293,13 @@ class Package(object):
             if platform:
                 dependency.platform = platform
 
-            if 'extras' in constraint:
-                for extra in constraint['extras']:
+            if "extras" in constraint:
+                for extra in constraint["extras"]:
                     dependency.extras.append(extra)
         else:
             dependency = Dependency(name, constraint, category=category)
 
-        if category == 'dev':
+        if category == "dev":
             self.dev_requires.append(dependency)
         else:
             self.requires.append(dependency)
@@ -342,4 +322,4 @@ class Package(object):
         return self.unique_name
 
     def __repr__(self):
-        return '<Package {}>'.format(self.unique_name)
+        return "<Package {}>".format(self.unique_name)

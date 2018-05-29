@@ -50,6 +50,8 @@ pymdown-extensions = "^4.9"
 pygments = "^2.2"
 pytest-mock = "^1.9"
 pygments-github-lexers = "^0.0.5"
+black = "^18.3-alpha.0"
+pre-commit = "^1.10"
 
 
 [tool.poetry.scripts]

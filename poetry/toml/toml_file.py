@@ -64,7 +64,9 @@ class TOMLFile(dict):
         key_so_far = tuple()
         for key in key_seq[:-1]:
             key_so_far += (key,)
-            new_table = self._array_make_sure_table_exists(array_name, index, key_so_far)
+            new_table = self._array_make_sure_table_exists(
+                array_name, index, key_so_far
+            )
             if new_table is not None:
                 table = new_table
             else:
@@ -80,8 +82,12 @@ class TOMLFile(dict):
             t = t[key]
         name = name_seq[-1]
         if name not in t:
-            self.append_elements([element_factory.create_table_header_element(name_seq),
-                                  element_factory.create_table({})])
+            self.append_elements(
+                [
+                    element_factory.create_table_header_element(name_seq),
+                    element_factory.create_table({}),
+                ]
+            )
 
     def _array_make_sure_table_exists(self, array_name, index, name_seq):
         """
@@ -93,7 +99,14 @@ class TOMLFile(dict):
         name = name_seq[-1]
         if name not in t:
             new_table = element_factory.create_table({})
-            self.append_elements([element_factory.create_table_header_element((array_name,) + name_seq), new_table])
+            self.append_elements(
+                [
+                    element_factory.create_table_header_element(
+                        (array_name,) + name_seq
+                    ),
+                    new_table,
+                ]
+            )
             return new_table
 
     def __delitem__(self, key):
@@ -104,7 +117,12 @@ class TOMLFile(dict):
     def __setitem__(self, key, value):
 
         # Setting an array-of-tables
-        if key and isinstance(value, (tuple, list)) and value and all(isinstance(v, dict) for v in value):
+        if (
+            key
+            and isinstance(value, (tuple, list))
+            and value
+            and all(isinstance(v, dict) for v in value)
+        ):
             for table in value:
                 self.array(key).append(table)
 
@@ -126,11 +144,10 @@ class TOMLFile(dict):
             #         self._elements.append(element_factory.create_table_header_element(key))
             #     self._elements.append(element_factory.create_table(value))
 
-
         # Or updating the anonymous section table
         else:
             # It's mea
-            self[''][key] = value
+            self[""][key] = value
 
         self._on_element_change()
 
@@ -138,7 +155,11 @@ class TOMLFile(dict):
         """
         Returns a sequence of TopLevel instances for the current state of this table.
         """
-        return tuple(e for e in toplevels.identify(self.elements) if isinstance(e, toplevels.Table))
+        return tuple(
+            e
+            for e in toplevels.identify(self.elements)
+            if isinstance(e, toplevels.Table)
+        )
 
     def _update_table_fallbacks(self, table_toplevels):
         """
@@ -161,7 +182,9 @@ class TOMLFile(dict):
                 parent = parent_of(entry)
                 if parent:
                     child_name = entry.name.without_prefix(parent.name)
-                    parent.table_element.set_fallback({child_name.sub_names[0]: entry.table_element})
+                    parent.table_element.set_fallback(
+                        {child_name.sub_names[0]: entry.table_element}
+                    )
 
     def _recreate_navigable(self):
         if self._elements:
@@ -203,14 +226,14 @@ class TOMLFile(dict):
         """
         Returns the TOML file serialized back to str.
         """
-        return ''.join(element.serialized() for element in self._elements)
+        return "".join(element.serialized() for element in self._elements)
 
     def dump(self, file_path):
-        with open(file_path, mode='w') as fp:
+        with open(file_path, mode="w") as fp:
             fp.write(self.dumps())
 
     def keys(self):
-        return set(self._navigable.keys()) | {''}
+        return set(self._navigable.keys()) | {""}
 
     def values(self):
         return self._navigable.values()
@@ -219,12 +242,12 @@ class TOMLFile(dict):
         items = list(self._navigable.items())
 
         def has_anonymous_entry():
-            return any(key == '' for (key, _) in items)
+            return any(key == "" for (key, _) in items)
 
         if has_anonymous_entry():
             return items
         else:
-            return items + [('', self[''])]
+            return items + [("", self[""])]
 
     def get(self, item, default=None):
         return self._navigable.get(item, default)
@@ -239,9 +262,9 @@ class TOMLFile(dict):
         raw_container = raw.to_raw(self._navigable)
 
         # Collapsing the anonymous table onto the top-level container is present
-        if '' in raw_container:
-            raw_container.update(raw_container[''])
-            del raw_container['']
+        if "" in raw_container:
+            raw_container.update(raw_container[""])
+            del raw_container[""]
 
         return raw_container
 
@@ -252,16 +275,24 @@ class TOMLFile(dict):
         if fresh_table.name:
             elements = []
             if fresh_table.is_array:
-                elements += [element_factory.create_array_of_tables_header_element(fresh_table.name)]
+                elements += [
+                    element_factory.create_array_of_tables_header_element(
+                        fresh_table.name
+                    )
+                ]
             else:
-                elements += [element_factory.create_table_header_element(fresh_table.name)]
+                elements += [
+                    element_factory.create_table_header_element(fresh_table.name)
+                ]
 
             elements += [fresh_table, element_factory.create_newline_element()]
             self.append_elements(elements)
 
         else:
             # It's an anonymous table
-            self.prepend_elements([fresh_table, element_factory.create_newline_element()])
+            self.prepend_elements(
+                [fresh_table, element_factory.create_newline_element()]
+            )
 
     @property
     def elements(self):
@@ -269,21 +300,23 @@ class TOMLFile(dict):
 
     def __str__(self):
 
-        is_empty = (not self['']) and (not tuple(k for k in self.keys() if k))
+        is_empty = (not self[""]) and (not tuple(k for k in self.keys() if k))
 
         def key_name(key):
-            return '[ANONYMOUS]' if not key else key
+            return "[ANONYMOUS]" if not key else key
 
         def pair(key, value):
-            return '%s = %s' % (key_name(key), str(value))
+            return "%s = %s" % (key_name(key), str(value))
 
-        content_text = '' if is_empty else \
-            '\n\t' + ',\n\t'.join(pair(k, v) for (k, v) in self.items() if v) + '\n'
+        content_text = (
+            ""
+            if is_empty
+            else "\n\t"
+            + ",\n\t".join(pair(k, v) for (k, v) in self.items() if v)
+            + "\n"
+        )
 
         return "TOMLFile{%s}" % content_text
 
     def __repr__(self):
         return str(self)
-
-
-

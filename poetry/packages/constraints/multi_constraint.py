@@ -2,7 +2,6 @@ from .base_constraint import BaseConstraint
 
 
 class MultiConstraint(BaseConstraint):
-
     def __init__(self, constraints, conjunctive=True):
         self._constraints = tuple(constraints)
         self._conjunctive = conjunctive
@@ -36,6 +35,4 @@ class MultiConstraint(BaseConstraint):
         for constraint in self._constraints:
             constraints.append(str(constraint))
 
-        return '{}'.format(
-            (', ' if self._conjunctive else ' || ').join(constraints)
-        )
+        return "{}".format((", " if self._conjunctive else " || ").join(constraints))

@@ -12,14 +12,14 @@ from .constraints.multi_constraint import MultiConstraint
 
 
 class Dependency(object):
-
-    def __init__(self,
-                 name,                     # type: str
-                 constraint,               # type: str
-                 optional=False,           # type: bool
-                 category='main',          # type: str
-                 allows_prereleases=False  # type: bool
-                 ):
+    def __init__(
+        self,
+        name,  # type: str
+        constraint,  # type: str
+        optional=False,  # type: bool
+        category="main",  # type: str
+        allows_prereleases=False,  # type: bool
+    ):
         self._name = canonicalize_name(name)
         self._pretty_name = name
 
@@ -29,16 +29,16 @@ class Dependency(object):
             else:
                 self._constraint = constraint
         except ValueError:
-            self._constraint = parse_constraint('*')
+            self._constraint = parse_constraint("*")
 
         self._pretty_constraint = str(constraint)
         self._optional = optional
         self._category = category
         self._allows_prereleases = allows_prereleases
 
-        self._python_versions = '*'
-        self._python_constraint = parse_constraint('*')
-        self._platform = '*'
+        self._python_versions = "*"
+        self._python_constraint = parse_constraint("*")
+        self._platform = "*"
         self._platform_constraint = EmptyConstraint()
 
         self._extras = []
@@ -53,7 +53,7 @@ class Dependency(object):
     @property
     def constraint(self):
         return self._constraint
-    
+
     @property
     def pretty_constraint(self):
         return self._pretty_constraint
@@ -129,49 +129,47 @@ class Dependency(object):
         requirement = self.pretty_name
 
         if self.extras:
-            requirement += '[{}]'.format(','.join(self.extras))
+            requirement += "[{}]".format(",".join(self.extras))
 
         if isinstance(self.constraint, VersionUnion):
-            requirement += ' ({})'.format(','.join(
-                [str(c).replace(' ', '') for c in self.constraint.ranges]
-            ))
+            requirement += " ({})".format(
+                ",".join([str(c).replace(" ", "") for c in self.constraint.ranges])
+            )
         elif isinstance(self.constraint, Version):
-            requirement += ' (=={})'.format(self.constraint.text)
+            requirement += " (=={})".format(self.constraint.text)
         elif not self.constraint.is_any():
-            requirement += ' ({})'.format(str(self.constraint).replace(' ', ''))
+            requirement += " ({})".format(str(self.constraint).replace(" ", ""))
 
         # Markers
         markers = []
 
         # Python marker
-        if self.python_versions != '*':
+        if self.python_versions != "*":
             python_constraint = self.python_constraint
 
             markers.append(
-                self._create_nested_marker('python_version', python_constraint)
+                self._create_nested_marker("python_version", python_constraint)
             )
 
-        if self.platform != '*':
+        if self.platform != "*":
             platform_constraint = self.platform_constraint
 
             markers.append(
-                self._create_nested_marker('sys_platform', platform_constraint)
+                self._create_nested_marker("sys_platform", platform_constraint)
             )
 
-        in_extras = ' || '.join(self._in_extras)
+        in_extras = " || ".join(self._in_extras)
         if in_extras and with_extras:
             markers.append(
-                self._create_nested_marker(
-                    'extra', GenericConstraint.parse(in_extras)
-                )
+                self._create_nested_marker("extra", GenericConstraint.parse(in_extras))
             )
 
         if markers:
             if len(markers) > 1:
-                markers = ['({})'.format(m) for m in markers]
-                requirement += '; {}'.format(' and '.join(markers))
+                markers = ["({})".format(m) for m in markers]
+                requirement += "; {}".format(" and ".join(markers))
             else:
-                requirement += '; {}'.format(markers[0])
+                requirement += "; {}".format(markers[0])
 
         return requirement
 
@@ -185,13 +183,12 @@ class Dependency(object):
 
                 parts.append((multi, self._create_nested_marker(name, c)))
 
-            glue = ' and '
+            glue = " and "
             if constraint.is_disjunctive():
                 parts = [
-                    '({})'.format(part[1]) if part[0] else part[1]
-                    for part in parts
+                    "({})".format(part[1]) if part[0] else part[1] for part in parts
                 ]
-                glue = ' or '
+                glue = " or "
             else:
                 parts = [part[1] for part in parts]
 
@@ -205,30 +202,25 @@ class Dependency(object):
             for c in constraint.ranges:
                 parts.append(self._create_nested_marker(name, c))
 
-            glue = ' or '
-            parts = [
-                '({})'.format(part)
-                for part in parts
-            ]
+            glue = " or "
+            parts = ["({})".format(part) for part in parts]
 
             marker = glue.join(parts)
         elif isinstance(constraint, Version):
-            marker = '{} == "{}"'.format(
-                name, constraint.text
-            )
+            marker = '{} == "{}"'.format(name, constraint.text)
         else:
             if constraint.min is not None:
-                op = '>='
+                op = ">="
                 if not constraint.include_min:
-                    op = '>'
+                    op = ">"
 
                 version = constraint.min.text
                 if constraint.max is not None:
                     text = '{} {} "{}"'.format(name, op, version)
 
-                    op = '<='
+                    op = "<="
                     if not constraint.include_max:
-                        op = '<'
+                        op = "<"
 
                     version = constraint.max
 
@@ -236,17 +228,15 @@ class Dependency(object):
 
                     return text
             elif constraint.max is not None:
-                op = '<='
+                op = "<="
                 if not constraint.include_max:
-                    op = '<'
+                    op = "<"
 
                 version = constraint.max
             else:
-                return ''
+                return ""
 
-            marker = '{} {} "{}"'.format(
-                name, op, version
-            )
+            marker = '{} {} "{}"'.format(name, op, version)
 
         return marker
 
@@ -268,7 +258,7 @@ class Dependency(object):
             constraint,
             optional=self.is_optional(),
             category=self.category,
-            allows_prereleases=self.allows_prereleases()
+            allows_prereleases=self.allows_prereleases(),
         )
 
         new.is_root = self.is_root
@@ -299,9 +289,7 @@ class Dependency(object):
         if self.is_root:
             return self._pretty_name
 
-        return '{} ({})'.format(
-            self._pretty_name, self._pretty_constraint
-        )
+        return "{} ({})".format(self._pretty_name, self._pretty_constraint)
 
     def __repr__(self):
-        return '<{} {}>'.format(self.__class__.__name__, str(self))
+        return "<{} {}>".format(self.__class__.__name__, str(self))

@@ -24,8 +24,8 @@ class TraversalMixin:
         and whose index is lower than the given index.
         """
         i = find_previous(self.elements, predicate, index)
-        if i == float('inf'):
-            return float('-inf')
+        if i == float("inf"):
+            return float("-inf")
         return i
 
     def __must_find_following_element(self, predicate):
@@ -35,14 +35,18 @@ class TraversalMixin:
         """
         i = self.__find_following_element(-1, predicate)
         if i < 0:
-            raise RuntimeError('Could not find non-optional element')
+            raise RuntimeError("Could not find non-optional element")
         return i
 
     def _enumerate_non_metadata_sub_elements(self):
         """
         Returns a sequence of of (index, sub_element) of the non-metadata sub-elements.
         """
-        return ((i, element) for i, element in enumerate(self.elements) if element.type != TYPE_METADATA)
+        return (
+            (i, element)
+            for i, element in enumerate(self.elements)
+            if element.type != TYPE_METADATA
+        )
 
     def _find_preceding_comma(self, index):
         """
@@ -54,15 +58,22 @@ class TraversalMixin:
         """
         Returns the index of the following comma element after the given index, or -Infinity.
         """
+
         def predicate(element):
-            return isinstance(element, PunctuationElement) and element.token.type == TYPE_OP_COMMA
+            return (
+                isinstance(element, PunctuationElement)
+                and element.token.type == TYPE_OP_COMMA
+            )
+
         return self.__find_following_element(index, predicate)
 
     def _find_following_newline(self, index):
         """
         Returns the index of the following newline element after the given index, or -Infinity.
         """
-        return self.__find_following_element(index, lambda e: isinstance(e, NewlineElement))
+        return self.__find_following_element(
+            index, lambda e: isinstance(e, NewlineElement)
+        )
 
     def _find_following_comment(self, index):
         """
@@ -77,9 +88,9 @@ class TraversalMixin:
         following_comment = self._find_following_comment(index)
         following_newline = self._find_following_newline(index)
 
-        if following_comment == float('-inf'):
+        if following_comment == float("-inf"):
             return following_newline
-        if following_newline == float('inf'):
+        if following_newline == float("inf"):
             return following_comment
 
         if following_newline < following_comment:
@@ -128,14 +139,19 @@ class TraversalMixin:
         """
         Returns the index to the preceding TableElement to the specified index, or -Infinity.
         """
-        return self.__find_preceding_element(index,predicates.table)
+        return self.__find_preceding_element(index, predicates.table)
 
     def _find_closing_curly_bracket(self):
         """
         Returns the index to the closing curly bracket, or raises an Error.
         """
+
         def predicate(element):
-            return isinstance(element, PunctuationElement) and element.token.type == TYPE_OP_CURLY_RIGHT_BRACKET
+            return (
+                isinstance(element, PunctuationElement)
+                and element.token.type == TYPE_OP_CURLY_RIGHT_BRACKET
+            )
+
         return self.__must_find_following_element(predicate)
 
     def _find_following_table_header(self, index):
@@ -156,10 +172,12 @@ def find_following(element_seq, predicate, index=None):
     if isinstance(index, (int, float)) and index < 0:
         index = None
 
-    for i, element in tuple(enumerate(element_seq))[index+1 if index is not None else index:]:
+    for i, element in tuple(enumerate(element_seq))[
+        index + 1 if index is not None else index :
+    ]:
         if predicate(element):
             return i
-    return float('-inf')
+    return float("-inf")
 
 
 def find_previous(element_seq, predicate, index=None):
@@ -173,4 +191,4 @@ def find_previous(element_seq, predicate, index=None):
     for i, element in reversed(tuple(enumerate(element_seq))[:index]):
         if predicate(element):
             return i
-    return float('inf')
+    return float("inf")

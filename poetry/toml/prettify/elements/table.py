@@ -22,7 +22,7 @@ class TableElement(abstracttable.AbstractTable):
 
     def _check_for_duplicate_keys(self):
         if len(set(self.keys())) < len(self.keys()):
-            raise InvalidElementError('Duplicate keys found')
+            raise InvalidElementError("Duplicate keys found")
 
     def __setitem__(self, key, value):
         if key in self:
@@ -32,7 +32,9 @@ class TableElement(abstracttable.AbstractTable):
 
     def _update(self, key, value):
         _, value_i = self._find_key_and_value(key)
-        self._sub_elements[value_i] = value if isinstance(value, Element) else factory.create_element(value)
+        self._sub_elements[value_i] = (
+            value if isinstance(value, Element) else factory.create_element(value)
+        )
 
     def _find_insertion_index(self):
         """
@@ -59,13 +61,17 @@ class TableElement(abstracttable.AbstractTable):
             start = 0
             for i, element in enumerate(self.elements):
                 if isinstance(element, (CommentElement, NewlineElement)):
-                    yield self.elements[start:i+1]
-                    start = i+1
+                    yield self.elements[start : i + 1]
+                    start = i + 1
 
         def indentation(line):
             # Counts the number of whitespace tokens at the beginning of this line
             try:
-                first_non_whitespace_i = next(i for (i, e) in enumerate(line) if not isinstance(e, WhitespaceElement))
+                first_non_whitespace_i = next(
+                    i
+                    for (i, e) in enumerate(line)
+                    if not isinstance(e, WhitespaceElement)
+                )
                 return sum(space.length for space in line[:first_non_whitespace_i])
             except StopIteration:
                 return 0
@@ -74,30 +80,43 @@ class TableElement(abstracttable.AbstractTable):
             return all(e.type == common.TYPE_METADATA for e in line)
 
         try:
-            return min(indentation(line) for line in lines() if len(line) > 1 and not is_empty_line(line))
+            return min(
+                indentation(line)
+                for line in lines()
+                if len(line) > 1 and not is_empty_line(line)
+            )
         except ValueError:  # Raised by ValueError when no matching lines found
             return 0
 
     def _insert(self, key, value):
 
-        value_element = value if isinstance(value, Element) else factory.create_element(value)
+        value_element = (
+            value if isinstance(value, Element) else factory.create_element(value)
+        )
 
         indentation_size = self._detect_indentation_size()
-        indentation = [factory.create_whitespace_element(self._detect_indentation_size())] if indentation_size else []
+        indentation = (
+            [factory.create_whitespace_element(self._detect_indentation_size())]
+            if indentation_size
+            else []
+        )
 
         inserted_elements = indentation + [
             factory.create_string_element(key, bare_allowed=True),
             factory.create_whitespace_element(),
-            factory.create_operator_element('='),
+            factory.create_operator_element("="),
             factory.create_whitespace_element(),
             value_element,
             factory.create_newline_element(),
         ]
-        
+
         insertion_index = self._find_insertion_index()
-        
-        self._sub_elements = \
-            self.sub_elements[:insertion_index] + inserted_elements + self.sub_elements[insertion_index:]
+
+        self._sub_elements = (
+            self.sub_elements[:insertion_index]
+            + inserted_elements
+            + self.sub_elements[insertion_index:]
+        )
 
     def __delitem__(self, key):
         begin, _ = self._find_key_and_value(key)

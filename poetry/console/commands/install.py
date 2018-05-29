@@ -21,9 +21,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 <info>poetry install</info>    
 """
 
-    _loggers = [
-        'poetry.repositories.pypi_repository'
-    ]
+    _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.installation import Installer
@@ -33,20 +31,20 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             self.venv,
             self.poetry.package,
             self.poetry.locker,
-            self.poetry.pool
+            self.poetry.pool,
         )
 
         extras = []
-        for extra in self.option('extras'):
-            if ' ' in extra:
-                extras += [e.strip() for e in extra.split(' ')]
+        for extra in self.option("extras"):
+            if " " in extra:
+                extras += [e.strip() for e in extra.split(" ")]
             else:
                 extras.append(extra)
 
         installer.extras(extras)
-        installer.dev_mode(not self.option('no-dev'))
-        installer.develop(self.option('develop'))
-        installer.dry_run(self.option('dry-run'))
-        installer.verbose(self.option('verbose'))
+        installer.dev_mode(not self.option("no-dev"))
+        installer.develop(self.option("develop"))
+        installer.dry_run(self.option("dry-run"))
+        installer.verbose(self.option("verbose"))
 
         return installer.run()

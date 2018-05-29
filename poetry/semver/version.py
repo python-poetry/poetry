@@ -15,15 +15,16 @@ class Version(VersionRange):
     A parsed semantic version number.
     """
 
-    def __init__(self,
-                 major,          # type: int
-                 minor=None,     # type: Union[int, None]
-                 patch=None,     # type: Union[int, None]
-                 pre=None,       # type: Union[str, None]
-                 build=None,     # type: Union[str, None]
-                 text=None,      # type: Union[str, None]
-                 precision=None  # type: Union[str, None]
-                 ):  # type: () -> None
+    def __init__(
+        self,
+        major,  # type: int
+        minor=None,  # type: Union[int, None]
+        patch=None,  # type: Union[int, None]
+        pre=None,  # type: Union[str, None]
+        build=None,  # type: Union[str, None]
+        text=None,  # type: Union[str, None]
+        precision=None,  # type: Union[str, None]
+    ):  # type: () -> None
         self._major = int(major)
         self._precision = None
         if precision is None:
@@ -56,12 +57,12 @@ class Version(VersionRange):
                 if self._precision >= 3 or patch != 0:
                     parts.append(str(patch))
 
-            text = '.'.join(parts)
+            text = ".".join(parts)
             if pre:
-                text += '-{}'.format(pre)
+                text += "-{}".format(pre)
 
             if build:
-                text += '+{}'.format(build)
+                text += "+{}".format(build)
 
         self._text = text
 
@@ -75,7 +76,7 @@ class Version(VersionRange):
 
         self._build = []
         if build is not None:
-            if build.startswith(('-', '+')):
+            if build.startswith(("-", "+")):
                 build = build[1:]
 
             self._build = self._split_parts(build)
@@ -131,7 +132,7 @@ class Version(VersionRange):
             return Version(self.major, self.minor, self.patch)
 
         return self._increment_patch()
-    
+
     @property
     def next_breaking(self):  # type: () -> Version
         if self.major == 0:
@@ -149,7 +150,9 @@ class Version(VersionRange):
 
     @property
     def first_prerelease(self):  # type: () -> Version
-        return Version.parse('{}.{}.{}-alpha.0'.format(self.major, self.minor, self.patch))
+        return Version.parse(
+            "{}.{}.{}-alpha.0".format(self.major, self.minor, self.patch)
+        )
 
     @property
     def min(self):
@@ -173,7 +176,7 @@ class Version(VersionRange):
         if match is None:
             raise ValueError('Unable to parse "{}".'.format(text))
 
-        text = text.rstrip('.')
+        text = text.rstrip(".")
 
         major = int(match.group(1))
         minor = int(match.group(2)) if match.group(2) else None
@@ -183,7 +186,7 @@ class Version(VersionRange):
         build = match.group(5)
 
         if build:
-            build = build.lstrip('+')
+            build = build.lstrip("+")
 
         return Version(major, minor, patch, pre, build, text)
 
@@ -223,7 +226,7 @@ class Version(VersionRange):
                     other.min,
                     other.max,
                     include_min=True,
-                    include_max=other.include_max
+                    include_max=other.include_max,
                 )
 
             if other.max == self:
@@ -231,7 +234,7 @@ class Version(VersionRange):
                     other.min,
                     other.max,
                     include_min=other.include_min,
-                    include_max=True
+                    include_max=True,
                 )
 
         return VersionUnion.of(self, other)
@@ -249,13 +252,15 @@ class Version(VersionRange):
         return Version(self.major, self.minor + 1, 0, precision=self._precision)
 
     def _increment_patch(self):  # type: () -> Version
-        return Version(self.major, self.minor, self.patch + 1, precision=self._precision)
+        return Version(
+            self.major, self.minor, self.patch + 1, precision=self._precision
+        )
 
     def _normalize_prerelease(self, pre):  # type: (str) -> str
         if not pre:
             return
 
-        m = re.match('(?i)^(a|alpha|b|beta|c|pre|rc|dev)[-.]?(\d+)?$', pre)
+        m = re.match("(?i)^(a|alpha|b|beta|c|pre|rc|dev)[-.]?(\d+)?$", pre)
         if not m:
             return
 
@@ -265,26 +270,26 @@ class Version(VersionRange):
         if number is None:
             number = 0
 
-        if modifier == 'a':
-            modifier = 'alpha'
-        elif modifier == 'b':
-            modifier = 'beta'
-        elif modifier in {'c', 'pre'}:
-            modifier = 'rc'
-        elif modifier == 'dev':
-            modifier = 'alpha'
+        if modifier == "a":
+            modifier = "alpha"
+        elif modifier == "b":
+            modifier = "beta"
+        elif modifier in {"c", "pre"}:
+            modifier = "rc"
+        elif modifier == "dev":
+            modifier = "alpha"
 
-        return '{}.{}'.format(modifier, number)
+        return "{}.{}".format(modifier, number)
 
     def _normalize_build(self, build):  # type: (str) -> str
         if not build:
             return
 
-        if build == '0':
+        if build == "0":
             return
 
-        if build.startswith('post'):
-            build = build.lstrip('post')
+        if build.startswith("post"):
+            build = build.lstrip("post")
 
         if not build:
             return
@@ -292,7 +297,7 @@ class Version(VersionRange):
         return build
 
     def _split_parts(self, text):  # type: (str) -> List[Union[str, int]]
-        parts = text.split('.')
+        parts = text.split(".")
 
         for i, part in enumerate(parts):
             try:
@@ -410,12 +415,15 @@ class Version(VersionRange):
         return self._text
 
     def __repr__(self):
-        return '<Version {}>'.format(str(self))
+        return "<Version {}>".format(str(self))
 
     def __hash__(self):
         return hash(
-            (self.major,
-             self.minor,
-             self.patch,
-             '.'.join(str(p) for p in self.prerelease),
-             '.'.join(str(p) for p in self.build)))
+            (
+                self.major,
+                self.minor,
+                self.patch,
+                ".".join(str(p) for p in self.prerelease),
+                ".".join(str(p) for p in self.build),
+            )
+        )

@@ -12,4 +12,4 @@ class CheckCommand(Command):
         # Load poetry and display errors, if any
         self.poetry.check(self.poetry.local_config, strict=True)
 
-        self.info('All set!')
+        self.info("All set!")

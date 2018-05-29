@@ -16,38 +16,48 @@ class InlineTableElement(abstracttable.AbstractTable):
 
     def __setitem__(self, key, value):
 
-        new_element = value if isinstance(value, Element) else factory.create_element(value)
+        new_element = (
+            value if isinstance(value, Element) else factory.create_element(value)
+        )
 
         try:
 
             key_i, value_i = self._find_key_and_value(key)
             # Found, then replace the value element with a new one
-            self._sub_elements = self.sub_elements[:value_i] + [new_element] + self.sub_elements[value_i+1:]
+            self._sub_elements = (
+                self.sub_elements[:value_i]
+                + [new_element]
+                + self.sub_elements[value_i + 1 :]
+            )
 
-        except KeyError:    # Key does not exist, adding anew!
+        except KeyError:  # Key does not exist, adding anew!
 
             new_entry = [
                 factory.create_string_element(key, bare_allowed=True),
                 factory.create_whitespace_element(),
-                factory.create_operator_element('='),
+                factory.create_operator_element("="),
                 factory.create_whitespace_element(),
                 new_element,
             ]
 
-            if self:    # If not empty
+            if self:  # If not empty
                 new_entry = [
-                    factory.create_operator_element(','),
+                    factory.create_operator_element(","),
                     factory.create_whitespace_element(),
                 ] + new_entry
 
             insertion_index = self._find_closing_curly_bracket()
-            self._sub_elements = self.sub_elements[:insertion_index] + new_entry + self.sub_elements[insertion_index:]
+            self._sub_elements = (
+                self.sub_elements[:insertion_index]
+                + new_entry
+                + self.sub_elements[insertion_index:]
+            )
 
     def __delitem__(self, key):
 
         key_i, value_i = self._find_key_and_value(key)
 
-        begin, end = key_i, value_i+1
+        begin, end = key_i, value_i + 1
 
         # Rules:
         #   1. begin should be index to the preceding comma to the key
@@ -71,8 +81,10 @@ class InlineTableElement(abstracttable.AbstractTable):
         self._sub_elements = self.sub_elements[:begin] + self.sub_elements[end:]
 
     def multiline_equivalent(self):
-        return factory.create_inline_table(self.primitive_value, multiline_table=True, multiline_strings_allowed=True)
+        return factory.create_inline_table(
+            self.primitive_value, multiline_table=True, multiline_strings_allowed=True
+        )
 
     @property
     def value(self):
-        return self     # self is a dict-like value that is perfectly usable
+        return self  # self is a dict-like value that is perfectly usable

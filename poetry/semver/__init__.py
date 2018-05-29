@@ -12,15 +12,14 @@ from .version_union import VersionUnion
 
 
 def parse_constraint(constraints):  # type: (str) -> VersionConstraint
-    if constraints == '*':
+    if constraints == "*":
         return VersionRange()
 
-    or_constraints = re.split('\s*\|\|?\s*', constraints.strip())
+    or_constraints = re.split("\s*\|\|?\s*", constraints.strip())
     or_groups = []
     for constraints in or_constraints:
         and_constraints = re.split(
-            '(?<!^)(?<![=>< ,]) *(?<!-)[, ](?!-) *(?!,|$)',
-            constraints
+            "(?<!^)(?<![=>< ,]) *(?<!-)[, ](?!-) *(?!,|$)", constraints
         )
         constraint_objects = []
 
@@ -46,7 +45,7 @@ def parse_constraint(constraints):  # type: (str) -> VersionConstraint
 
 
 def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
-    m = re.match('(?i)^v?[xX*](\.[xX*])*$', constraint)
+    m = re.match("(?i)^v?[xX*](\.[xX*])*$", constraint)
     if m:
         return VersionRange()
 
@@ -56,7 +55,7 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
         version = Version.parse(m.group(1))
 
         high = version.stable.next_minor
-        if len(m.group(1).split('.')) == 1:
+        if len(m.group(1).split(".")) == 1:
             high = version.stable.next_major
 
         return VersionRange(version, high, include_min=True)
@@ -87,7 +86,7 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
 
                 result = VersionRange(version, version.next_major, include_min=True)
 
-        if op == '!=':
+        if op == "!=":
             result = VersionRange().difference(result)
 
         return result
@@ -101,22 +100,21 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
         try:
             version = Version.parse(version)
         except ValueError:
-            raise ValueError('Could not parse version constraint: {}'.format(constraint))
-
-        if op == '<':
-            return VersionRange(max=version)
-        elif op == '<=':
-            return VersionRange(max=version, include_max=True)
-        elif op == '>':
-            return VersionRange(min=version)
-        elif op == '>=':
-            return VersionRange(min=version, include_min=True)
-        elif op == '!=':
-            return VersionUnion(
-                VersionRange(max=version),
-                VersionRange(min=version)
+            raise ValueError(
+                "Could not parse version constraint: {}".format(constraint)
             )
+
+        if op == "<":
+            return VersionRange(max=version)
+        elif op == "<=":
+            return VersionRange(max=version, include_max=True)
+        elif op == ">":
+            return VersionRange(min=version)
+        elif op == ">=":
+            return VersionRange(min=version, include_min=True)
+        elif op == "!=":
+            return VersionUnion(VersionRange(max=version), VersionRange(min=version))
         else:
             return version
 
-    raise ValueError('Could not parse version constraint: {}'.format(constraint))
+    raise ValueError("Could not parse version constraint: {}".format(constraint))

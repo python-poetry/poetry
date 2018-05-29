@@ -5,10 +5,7 @@ def is_sequence_like(x):
     """
     Returns True if x exposes a sequence-like interface.
     """
-    required_attrs = (
-        '__len__',
-        '__getitem__'
-    )
+    required_attrs = ("__len__", "__getitem__")
     return all(hasattr(x, attr) for attr in required_attrs)
 
 
@@ -16,12 +13,7 @@ def is_dict_like(x):
     """
     Returns True if x exposes a dict-like interface.
     """
-    required_attrs = (
-        '__len__',
-        '__getitem__',
-        'keys',
-        'values',
-    )
+    required_attrs = ("__len__", "__getitem__", "keys", "values")
     return all(hasattr(x, attr) for attr in required_attrs)
 
 
@@ -38,7 +30,7 @@ def join_with(iterable, separator):
             b += tuple(element)
         else:
             b += [element]
-        if i < len(inputs)-1:
+        if i < len(inputs) - 1:
             b += separator
     return b
 
@@ -51,21 +43,26 @@ def chunkate_string(text, length):
 
     def next_newline():
         try:
-            return next(i for (i, c) in enumerate(text) if i > iterator_index and c == '\n')
+            return next(
+                i for (i, c) in enumerate(text) if i > iterator_index and c == "\n"
+            )
         except StopIteration:
             return len(text)
 
     def next_breaker():
         try:
-            return next(i for (i, c) in reversed(tuple(enumerate(text)))
-                        if i >= iterator_index and
-                        (i < iterator_index+length) and
-                        c in (' ', '\t'))
+            return next(
+                i
+                for (i, c) in reversed(tuple(enumerate(text)))
+                if i >= iterator_index
+                and (i < iterator_index + length)
+                and c in (" ", "\t")
+            )
         except StopIteration:
             return len(text)
 
     while iterator_index < len(text):
-        next_chunk = text[iterator_index:min(next_newline(), next_breaker()+1)]
+        next_chunk = text[iterator_index : min(next_newline(), next_breaker() + 1)]
         iterator_index += len(next_chunk)
         yield next_chunk
 
@@ -88,7 +85,9 @@ def flatten_nested(nested_dicts):
         }
     True
     """
-    assert isinstance(nested_dicts, (dict, list, tuple)), 'Only works with a collection parameter'
+    assert isinstance(
+        nested_dicts, (dict, list, tuple)
+    ), "Only works with a collection parameter"
 
     def items(c):
         if isinstance(c, dict):
@@ -96,7 +95,7 @@ def flatten_nested(nested_dicts):
         elif isinstance(c, (list, tuple)):
             return enumerate(c)
         else:
-            raise RuntimeError('c must be a collection')
+            raise RuntimeError("c must be a collection")
 
     def flatten(dd):
         output = {}

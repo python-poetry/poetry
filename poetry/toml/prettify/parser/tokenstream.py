@@ -27,7 +27,7 @@ class TokenStream:
 
     @property
     def tail(self):
-        return TokenStream(self._tokens, offset=self._head_index+1)
+        return TokenStream(self._tokens, offset=self._head_index + 1)
 
     @property
     def offset(self):

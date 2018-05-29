@@ -36,12 +36,13 @@ class VersionSolver:
     on how this solver works.
     """
 
-    def __init__(self,
-                 root,            # type: ProjectPackage
-                 provider,        # type: Provider
-                 locked=None,     # type: Dict[str, Package]
-                 use_latest=None  # type: List[str]
-                 ):
+    def __init__(
+        self,
+        root,  # type: ProjectPackage
+        provider,  # type: Provider
+        locked=None,  # type: Dict[str, Package]
+        use_latest=None,  # type: List[str]
+    ):
         self._root = root
         self._provider = provider
         self._locked = locked or {}
@@ -68,10 +69,7 @@ class VersionSolver:
         root_dependency.is_root = True
 
         self._add_incompatibility(
-            Incompatibility(
-                [Term(root_dependency, False)],
-                RootCause()
-            )
+            Incompatibility([Term(root_dependency, False)], RootCause())
         )
 
         try:
@@ -85,11 +83,9 @@ class VersionSolver:
             raise
         finally:
             self._log(
-                'Version solving took {:.3f} seconds.\n'
-                'Tried {} solutions.'
-                .format(
-                    time.time() - start,
-                    self._solution.attempted_solutions
+                "Version solving took {:.3f} seconds.\n"
+                "Tried {} solutions.".format(
+                    time.time() - start, self._solution.attempted_solutions
                 )
             )
 
@@ -130,8 +126,9 @@ class VersionSolver:
                 elif result is not None:
                     changed.add(result)
 
-    def _propagate_incompatibility(self, incompatibility
-                                   ):  # type: (Incompatibility) -> Union[str, _conflict, None]
+    def _propagate_incompatibility(
+        self, incompatibility
+    ):  # type: (Incompatibility) -> Union[str, _conflict, None]
         """
         If incompatibility is almost satisfied by _solution, adds the
         negation of the unsatisfied term to _solution.
@@ -172,22 +169,20 @@ class VersionSolver:
             return _conflict
 
         self._log(
-            '<fg=blue>derived</>: {}{}'.format(
-                'not ' if unsatisfied.is_positive() else '',
-                unsatisfied.dependency
+            "<fg=blue>derived</>: {}{}".format(
+                "not " if unsatisfied.is_positive() else "", unsatisfied.dependency
             )
         )
 
         self._solution.derive(
-            unsatisfied.dependency,
-            not unsatisfied.is_positive(),
-            incompatibility
+            unsatisfied.dependency, not unsatisfied.is_positive(), incompatibility
         )
 
         return unsatisfied.dependency.name
 
-    def _resolve_conflict(self, incompatibility
-                          ):  # type: (Incompatibility) -> Incompatibility
+    def _resolve_conflict(
+        self, incompatibility
+    ):  # type: (Incompatibility) -> Incompatibility
         """
         Given an incompatibility that's satisfied by _solution,
         The `conflict resolution`_ constructs a new incompatibility that encapsulates the root
@@ -198,7 +193,7 @@ class VersionSolver:
 
         .. _conflict resolution: https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
         """
-        self._log('<fg=red;options=bold>conflict</>: {}'.format(incompatibility))
+        self._log("<fg=red;options=bold>conflict</>: {}".format(incompatibility))
 
         new_incompatibility = False
         while not incompatibility.is_failure():
@@ -232,11 +227,10 @@ class VersionSolver:
 
                 if most_recent_satisfier is None:
                     most_recent_term = term
-                    most_recent_satisfier= satisfier
+                    most_recent_satisfier = satisfier
                 elif most_recent_satisfier.index < satisfier.index:
                     previous_satisfier_level = max(
-                        previous_satisfier_level,
-                        most_recent_satisfier.decision_level
+                        previous_satisfier_level, most_recent_satisfier.decision_level
                     )
                     most_recent_term = term
                     most_recent_satisfier = satisfier
@@ -254,7 +248,7 @@ class VersionSolver:
                     if difference is not None:
                         previous_satisfier_level = max(
                             previous_satisfier_level,
-                            self._solution.satisfier(difference.inverse).decision_level
+                            self._solution.satisfier(difference.inverse).decision_level,
                         )
 
             # If most_recent_identifier is the only satisfier left at its decision
@@ -307,13 +301,17 @@ class VersionSolver:
             )
             new_incompatibility = True
 
-            partially = '' if difference is None else ' partially'
-            bang = '<fg=red>!</>'
-            self._log('{} {} is{} satisfied by {}'.format(
-                bang, most_recent_term, partially, most_recent_satisfier)
+            partially = "" if difference is None else " partially"
+            bang = "<fg=red>!</>"
+            self._log(
+                "{} {} is{} satisfied by {}".format(
+                    bang, most_recent_term, partially, most_recent_satisfier
+                )
             )
-            self._log('{} which is caused by "{}"'.format(bang, most_recent_satisfier.cause))
-            self._log('{} thus: {}'.format(bang, incompatibility))
+            self._log(
+                '{} which is caused by "{}"'.format(bang, most_recent_satisfier.cause)
+            )
+            self._log("{} thus: {}".format(bang, incompatibility))
 
         raise SolveFailure(incompatibility)
 
@@ -385,14 +383,21 @@ class VersionSolver:
             #
             # We'll continue adding its dependencies, then go back to
             # unit propagation which will guide us to choose a better version.
-            conflict = conflict or all([
-                term.dependency.name == dependency.name or self._solution.satisfies(term)
-                for term in incompatibility.terms
-            ])
+            conflict = conflict or all(
+                [
+                    term.dependency.name == dependency.name
+                    or self._solution.satisfies(term)
+                    for term in incompatibility.terms
+                ]
+            )
 
         if not conflict:
             self._solution.decide(version)
-            self._log('<fg=blue>selecting</> {} ({})'.format(version.name, version.full_pretty_version))
+            self._log(
+                "<fg=blue>selecting</> {} ({})".format(
+                    version.name, version.full_pretty_version
+                )
+            )
 
         return dependency.name
 
@@ -408,7 +413,7 @@ class VersionSolver:
         return SolverResult(
             self._root,
             [p for p in decisions if not p.is_root()],
-            self._solution.attempted_solutions
+            self._solution.attempted_solutions,
         )
 
     def _add_incompatibility(self, incompatibility):  # type: (Incompatibility) -> None

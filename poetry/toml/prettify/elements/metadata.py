@@ -10,11 +10,13 @@ class WhitespaceElement(common.TokenElement):
 
     def __init__(self, _tokens):
         common.TokenElement.__init__(self, _tokens, common.TYPE_METADATA)
-    
+
     def _validate_tokens(self, _tokens):
         for token in _tokens:
             if token.type != tokens.TYPE_WHITESPACE:
-                raise InvalidElementError('Tokens making up a WhitespaceElement must all be whitespace')
+                raise InvalidElementError(
+                    "Tokens making up a WhitespaceElement must all be whitespace"
+                )
 
     @property
     def length(self):
@@ -38,7 +40,9 @@ class NewlineElement(common.TokenElement):
     def _validate_tokens(self, _tokens):
         for token in _tokens:
             if token.type != tokens.TYPE_NEWLINE:
-                raise InvalidElementError('Tokens making a NewlineElement must all be newlines')
+                raise InvalidElementError(
+                    "Tokens making a NewlineElement must all be newlines"
+                )
 
 
 class CommentElement(common.TokenElement):
@@ -53,8 +57,14 @@ class CommentElement(common.TokenElement):
         common.TokenElement.__init__(self, _tokens, common.TYPE_METADATA)
 
     def _validate_tokens(self, _tokens):
-        if len(_tokens) != 2 or _tokens[0].type != tokens.TYPE_COMMENT or _tokens[1].type != tokens.TYPE_NEWLINE:
-            raise InvalidElementError('CommentElement needs one comment token followed by one newline token')
+        if (
+            len(_tokens) != 2
+            or _tokens[0].type != tokens.TYPE_COMMENT
+            or _tokens[1].type != tokens.TYPE_NEWLINE
+        ):
+            raise InvalidElementError(
+                "CommentElement needs one comment token followed by one newline token"
+            )
 
 
 class PunctuationElement(common.TokenElement):
@@ -77,4 +87,6 @@ class PunctuationElement(common.TokenElement):
 
     def _validate_tokens(self, _tokens):
         if not _tokens or not tokens.is_operator(_tokens[0]):
-            raise InvalidElementError('PunctuationElement must be made of only a single operator token')
+            raise InvalidElementError(
+                "PunctuationElement must be made of only a single operator token"
+            )

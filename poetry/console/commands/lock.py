@@ -14,9 +14,7 @@ the current directory, processes it, and locks the depdencies in the <comment>py
 <info>poetry lock</info>    
 """
 
-    _loggers = [
-        'poetry.repositories.pypi_repository'
-    ]
+    _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.installation import Installer
@@ -26,7 +24,7 @@ the current directory, processes it, and locks the depdencies in the <comment>py
             self.venv,
             self.poetry.package,
             self.poetry.locker,
-            self.poetry.pool
+            self.poetry.pool,
         )
 
         installer.update(True)

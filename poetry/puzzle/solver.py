@@ -17,7 +17,6 @@ from .provider import Provider
 
 
 class Solver:
-
     def __init__(self, package, pool, installed, locked, io):
         self._package = package
         self._pool = pool
@@ -32,7 +31,9 @@ class Solver:
             locked[package.name] = package
 
         try:
-            result = resolve_version(self._package, provider, locked=locked, use_latest=use_latest)
+            result = resolve_version(
+                self._package, provider, locked=locked, use_latest=use_latest
+            )
         except SolveFailure as e:
             raise SolverProblemError(e)
 
@@ -49,11 +50,11 @@ class Solver:
 
             # If requirements are empty, drop them
             requirements = {}
-            if python is not None and python != '*':
-                requirements['python'] = python
+            if python is not None and python != "*":
+                requirements["python"] = python
 
-            if platform is not None and platform != '*':
-                requirements['platform'] = platform
+            if platform is not None and platform != "*":
+                requirements["platform"] = platform
 
             package.requirements = requirements
 
@@ -67,9 +68,7 @@ class Solver:
                     if package.version != pkg.version:
                         operations.append(Update(pkg, package))
                     else:
-                        operations.append(
-                            Install(package).skip('Already installed')
-                        )
+                        operations.append(Install(package).skip("Already installed"))
 
                     break
 
@@ -93,7 +92,7 @@ class Solver:
 
                 op = Uninstall(pkg)
                 if skip:
-                    op.skip('Not currently installed')
+                    op.skip("Not currently installed")
 
                 operations.append(op)
 
@@ -103,20 +102,20 @@ class Solver:
             operations,
             key=lambda o: (
                 1 if o.package.name in requested_names else 0,
-                o.package.name
-            )
+                o.package.name,
+            ),
         )
 
     def _get_graph_for_package(self, package, packages, requested, original=None):
         graph = {
             package.name: {
-                'category': 'dev',
-                'optional': True,
-                'python_version': None,
-                'platform': None,
-                'dependencies': {},
-                'parents': {},
-            },
+                "category": "dev",
+                "optional": True,
+                "python_version": None,
+                "platform": None,
+                "dependencies": {},
+                "parents": {},
+            }
         }
 
         roots = []
@@ -139,8 +138,8 @@ class Solver:
             if len(roots) == 1:
                 root = roots[0]
             else:
-                root1 = [r for r in roots if r.category == 'main'][0]
-                root2 = [r for r in roots if r.category == 'dev'][0]
+                root1 = [r for r in roots if r.category == "main"][0]
+                root2 = [r for r in roots if r.category == "dev"][0]
                 if root1.extras == root2.extras or original is None:
                     root = root1
                 else:
@@ -157,8 +156,8 @@ class Solver:
                                 root2_extra_dependencies.append(dep.name)
 
                     if (
-                            original.name in root1_extra_dependencies
-                            and original.name in root2_extra_dependencies
+                        original.name in root1_extra_dependencies
+                        and original.name in root2_extra_dependencies
                     ):
                         root = root1
                     elif original.name in root2_extra_dependencies:
@@ -172,23 +171,21 @@ class Solver:
             python_version = str(root.python_constraint)
             platform = str(root.platform_constraint)
 
-            graph[package.name]['category'] = category
-            graph[package.name]['optional'] = optional
-            graph[package.name]['python_version'] = python_version
-            graph[package.name]['platform'] = platform
+            graph[package.name]["category"] = category
+            graph[package.name]["optional"] = optional
+            graph[package.name]["python_version"] = python_version
+            graph[package.name]["platform"] = platform
 
             return graph
 
         for pkg, dep in origins:
-            graph[package.name]['dependencies'][pkg.name] = {
-                'constraint': dep.pretty_constraint,
-                'python_version': dep.python_versions,
-                'platform': dep.platform,
+            graph[package.name]["dependencies"][pkg.name] = {
+                "constraint": dep.pretty_constraint,
+                "python_version": dep.python_versions,
+                "platform": dep.platform,
             }
-            graph[package.name]['parents'].update(
-                self._get_graph_for_package(
-                    pkg, packages, requested, original=package
-                )
+            graph[package.name]["parents"].update(
+                self._get_graph_for_package(pkg, packages, requested, original=package)
             )
 
         return graph
@@ -199,30 +196,32 @@ class Solver:
         return self._get_tags_from_graph(graph, packages)
 
     def _get_tags_from_graph(self, graph, packages):
-        category = graph['category']
-        optional = graph['optional']
-        python_version = graph['python_version']
-        platform = graph['platform']
+        category = graph["category"]
+        optional = graph["optional"]
+        python_version = graph["python_version"]
+        platform = graph["platform"]
 
-        if not graph['parents']:
+        if not graph["parents"]:
             # Root dependency
             return category, optional, python_version, platform
 
         python_versions = []
         platforms = []
 
-        for parent_name, parent_graph in graph['parents'].items():
-            dep_python_version = graph['dependencies'][parent_name]['python_version']
-            dep_platform = graph['dependencies'][parent_name]['platform']
+        for parent_name, parent_graph in graph["parents"].items():
+            dep_python_version = graph["dependencies"][parent_name]["python_version"]
+            dep_platform = graph["dependencies"][parent_name]["platform"]
 
             for pkg in packages:
                 if pkg.name == parent_name:
-                    (top_category,
-                     top_optional,
-                     top_python_version,
-                     top_platform) = self._get_tags_from_graph(parent_graph, packages)
+                    (
+                        top_category,
+                        top_optional,
+                        top_python_version,
+                        top_platform,
+                    ) = self._get_tags_from_graph(parent_graph, packages)
 
-                    if category is None or category != 'main':
+                    if category is None or category != "main":
                         category = top_category
 
                     optional = optional and top_optional
@@ -247,7 +246,7 @@ class Solver:
                             previous = GenericConstraint.parse(dep_platform)
                             current = GenericConstraint.parse(top_platform)
 
-                            if top_platform != '*' and previous.matches(current):
+                            if top_platform != "*" and previous.matches(current):
                                 platforms.append(top_platform)
                             else:
                                 platforms.append(dep_platform)
@@ -267,9 +266,9 @@ class Solver:
             for constraint in python_versions[1:]:
                 current = parse_constraint(constraint)
 
-                if python_version == '*':
+                if python_version == "*":
                     continue
-                elif constraint == '*':
+                elif constraint == "*":
                     python_version = constraint
                 elif current.allows_all(previous):
                     python_version = constraint
@@ -282,9 +281,9 @@ class Solver:
             for constraint in platforms[1:]:
                 current = GenericConstraint.parse(constraint)
 
-                if platform == '*':
+                if platform == "*":
                     continue
-                elif constraint == '*':
+                elif constraint == "*":
                     platform = constraint
                 elif current.matches(previous):
                     platform = constraint

@@ -29,7 +29,6 @@ class TopLevel:
 
 
 class Name:
-
     def __init__(self, names):
         self._names = names
 
@@ -59,14 +58,14 @@ class Name:
         for i, name in enumerate(names):
             if name != self._names[i]:
                 return Name(self._names[i:])
-        return Name(names=self.sub_names[len(names):])
+        return Name(names=self.sub_names[len(names) :])
 
     @property
     def is_qualified(self):
         return len(self._names) > 1
 
     def __str__(self):
-        return '.'.join(self.sub_names)
+        return ".".join(self.sub_names)
 
     def __hash__(self):
         return hash(str(self))
@@ -79,19 +78,16 @@ class Name:
 
 
 class AnonymousTable(TopLevel):
-
     def __init__(self, table_element):
-        TopLevel.__init__(self, ('',), table_element)
+        TopLevel.__init__(self, ("",), table_element)
 
 
 class Table(TopLevel):
-
     def __init__(self, names, table_element):
         TopLevel.__init__(self, names=names, table_element=table_element)
 
 
 class ArrayOfTables(TopLevel):
-
     def __init__(self, names, table_element):
         TopLevel.__init__(self, names=names, table_element=table_element)
 
@@ -113,8 +109,11 @@ def identify(file_elements):
     _validate_file_elements(file_elements)
 
     # An iterator over enumerate(the non-metadata) elements
-    iterator = PeekableIterator((element_i, element) for (element_i, element) in enumerate(file_elements)
-                                if element.type != elements.TYPE_METADATA)
+    iterator = PeekableIterator(
+        (element_i, element)
+        for (element_i, element) in enumerate(file_elements)
+        if element.type != elements.TYPE_METADATA
+    )
 
     try:
         _, first_element = iterator.peek()

@@ -3,6 +3,7 @@
 TOML lexical tokens.
 """
 
+
 class TokenType:
     """
     A TokenType is a concrete type of a source token along with a defined priority and a higher-order kind.
@@ -32,28 +33,35 @@ class TokenType:
     def __lt__(self, other):
         return isinstance(other, TokenType) and self._priority < other.priority
 
+
 # Possible types of tokens
-TYPE_BOOLEAN = TokenType('boolean', 0, is_metadata=False)
-TYPE_INTEGER = TokenType('integer', 0, is_metadata=False)
-TYPE_OP_COMMA = TokenType('comma', 0, is_metadata=True)
-TYPE_OP_SQUARE_LEFT_BRACKET = TokenType('square_left_bracket', 0, is_metadata=True)
-TYPE_OP_SQUARE_RIGHT_BRACKET = TokenType('square_right_bracket', 0, is_metadata=True)
-TYPE_OP_CURLY_LEFT_BRACKET = TokenType('curly_left_bracket', 0, is_metadata=True)
-TYPE_OP_CURLY_RIGHT_BRACKET = TokenType('curly_right_bracket', 0, is_metadata=True)
-TYPE_OP_ASSIGNMENT = TokenType('assignment', 0, is_metadata=True)
-TYPE_OP_DOUBLE_SQUARE_LEFT_BRACKET = TokenType('double_square_left_bracket', 0, is_metadata=True)
-TYPE_OP_DOUBLE_SQUARE_RIGHT_BRACKET = TokenType('double_square_right_bracket', 0, is_metadata=True)
-TYPE_FLOAT = TokenType('float', 1, is_metadata=False)
-TYPE_DATE = TokenType('date', 40, is_metadata=False)
-TYPE_OPT_DOT = TokenType('dot', 40, is_metadata=True)
-TYPE_BARE_STRING = TokenType('bare_string', 50, is_metadata=False)
-TYPE_STRING = TokenType('string', 90, is_metadata=False)
-TYPE_MULTILINE_STRING = TokenType('multiline_string', 90, is_metadata=False)
-TYPE_LITERAL_STRING = TokenType('literal_string', 90, is_metadata=False)
-TYPE_MULTILINE_LITERAL_STRING = TokenType('multiline_literal_string', 90, is_metadata=False)
-TYPE_NEWLINE = TokenType('newline', 91, is_metadata=True)
-TYPE_WHITESPACE = TokenType('whitespace', 93, is_metadata=True)
-TYPE_COMMENT = TokenType('comment', 95, is_metadata=True)
+TYPE_BOOLEAN = TokenType("boolean", 0, is_metadata=False)
+TYPE_INTEGER = TokenType("integer", 0, is_metadata=False)
+TYPE_OP_COMMA = TokenType("comma", 0, is_metadata=True)
+TYPE_OP_SQUARE_LEFT_BRACKET = TokenType("square_left_bracket", 0, is_metadata=True)
+TYPE_OP_SQUARE_RIGHT_BRACKET = TokenType("square_right_bracket", 0, is_metadata=True)
+TYPE_OP_CURLY_LEFT_BRACKET = TokenType("curly_left_bracket", 0, is_metadata=True)
+TYPE_OP_CURLY_RIGHT_BRACKET = TokenType("curly_right_bracket", 0, is_metadata=True)
+TYPE_OP_ASSIGNMENT = TokenType("assignment", 0, is_metadata=True)
+TYPE_OP_DOUBLE_SQUARE_LEFT_BRACKET = TokenType(
+    "double_square_left_bracket", 0, is_metadata=True
+)
+TYPE_OP_DOUBLE_SQUARE_RIGHT_BRACKET = TokenType(
+    "double_square_right_bracket", 0, is_metadata=True
+)
+TYPE_FLOAT = TokenType("float", 1, is_metadata=False)
+TYPE_DATE = TokenType("date", 40, is_metadata=False)
+TYPE_OPT_DOT = TokenType("dot", 40, is_metadata=True)
+TYPE_BARE_STRING = TokenType("bare_string", 50, is_metadata=False)
+TYPE_STRING = TokenType("string", 90, is_metadata=False)
+TYPE_MULTILINE_STRING = TokenType("multiline_string", 90, is_metadata=False)
+TYPE_LITERAL_STRING = TokenType("literal_string", 90, is_metadata=False)
+TYPE_MULTILINE_LITERAL_STRING = TokenType(
+    "multiline_literal_string", 90, is_metadata=False
+)
+TYPE_NEWLINE = TokenType("newline", 91, is_metadata=True)
+TYPE_WHITESPACE = TokenType("whitespace", 93, is_metadata=True)
+TYPE_COMMENT = TokenType("comment", 95, is_metadata=True)
 
 
 def is_operator(token):
@@ -79,7 +87,7 @@ def is_string(token):
         TYPE_MULTILINE_STRING,
         TYPE_LITERAL_STRING,
         TYPE_BARE_STRING,
-        TYPE_MULTILINE_LITERAL_STRING
+        TYPE_MULTILINE_LITERAL_STRING,
     )
 
 
@@ -99,7 +107,9 @@ class Token:
     def __eq__(self, other):
         if not isinstance(other, Token):
             return False
-        return self.source_substring == other.source_substring and self.type == other.type
+        return (
+            self.source_substring == other.source_substring and self.type == other.type
+        )
 
     @property
     def col(self):

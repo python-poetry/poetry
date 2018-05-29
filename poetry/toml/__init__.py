@@ -36,7 +36,7 @@ def dumps(value):
     """
     if not isinstance(value, TOMLFile):
         raise RuntimeError(
-            'Can only dump a TOMLFile instance loaded by load() or loads()'
+            "Can only dump a TOMLFile instance loaded by load() or loads()"
         )
 
     return value.dumps()
@@ -49,5 +49,5 @@ def dump(obj, file_path, prettify=False):
     The given value must be either a dict of dict values, a dict,
     or a TOML file constructed by this module.
     """
-    with open(file_path, 'w') as fp:
+    with open(file_path, "w") as fp:
         fp.write(dumps(obj))

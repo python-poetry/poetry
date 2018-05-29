@@ -85,17 +85,23 @@ class PartialSolution:
         self._backtracking = False
         self._decisions[package.name] = package
 
-        self._assign(Assignment.decision(package, self.decision_level, len(self._assignments)))
+        self._assign(
+            Assignment.decision(package, self.decision_level, len(self._assignments))
+        )
 
-    def derive(self, dependency, is_positive, cause
-               ):  # type: (Dependency, bool, Incompatibility) -> None
+    def derive(
+        self, dependency, is_positive, cause
+    ):  # type: (Dependency, bool, Incompatibility) -> None
         """
         Adds an assignment of package as a derivation.
         """
         self._assign(
             Assignment.derivation(
-                dependency, is_positive, cause,
-                self.decision_level, len(self._assignments)
+                dependency,
+                is_positive,
+                cause,
+                self.decision_level,
+                len(self._assignments),
             )
         )
 
@@ -193,7 +199,7 @@ class PartialSolution:
             if assigned_term.satisfies(term):
                 return assignment
 
-        raise RuntimeError('[BUG] {} is not satisfied.'.format(term))
+        raise RuntimeError("[BUG] {} is not satisfied.".format(term))
 
     def satisfies(self, term):  # type: (Term) -> bool
         return self.relation(term) == SetRelation.SUBSET

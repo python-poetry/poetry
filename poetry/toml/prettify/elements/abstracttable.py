@@ -78,6 +78,6 @@ class AbstractTable(ContainerElement, traversal.TraversalMixin, dict):
         Returns a primitive Python value without any formatting or markup metadata.
         """
         return {
-            key:
-                value.primitive_value if hasattr(value, 'primitive_value') else value for key, value in self.items()
-            }
+            key: value.primitive_value if hasattr(value, "primitive_value") else value
+            for key, value in self.items()
+        }

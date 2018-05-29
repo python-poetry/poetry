@@ -25,51 +25,44 @@ class AddCommand(VenvCommand, InitCommand):
 If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.
 """
 
-    _loggers = [
-        'poetry.repositories.pypi_repository'
-    ]
+    _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.installation import Installer
         from poetry.semver import parse_constraint
 
-        packages = self.argument('name')
-        is_dev = self.option('dev')
+        packages = self.argument("name")
+        is_dev = self.option("dev")
 
-        if (self.option('git') or self.option('path') or self.option('extras')) and len(packages) > 1:
+        if (self.option("git") or self.option("path") or self.option("extras")) and len(
+            packages
+        ) > 1:
             raise ValueError(
-                'You can only specify one package '
-                'when using the --git or --path options'
+                "You can only specify one package "
+                "when using the --git or --path options"
             )
 
-        if self.option('git') and self.option('path'):
-            raise RuntimeError(
-                '--git and --path cannot be used at the same time'
-            )
+        if self.option("git") and self.option("path"):
+            raise RuntimeError("--git and --path cannot be used at the same time")
 
-        section = 'dependencies'
+        section = "dependencies"
         if is_dev:
-            section = 'dev-dependencies'
+            section = "dev-dependencies"
 
         original_content = self.poetry.file.read()
         content = self.poetry.file.read()
-        poetry_content = content['tool']['poetry']
+        poetry_content = content["tool"]["poetry"]
 
         for name in packages:
             for key in poetry_content[section]:
                 if key.lower() == name.lower():
-                    raise ValueError(
-                        'Package {} is already present'.format(name)
-                    )
+                    raise ValueError("Package {} is already present".format(name))
 
-        if self.option('git') or self.option('path'):
-            requirements = {
-                packages[0]: ''
-            }
+        if self.option("git") or self.option("path"):
+            requirements = {packages[0]: ""}
         else:
             requirements = self._determine_requirements(
-                packages,
-                allow_prereleases=self.option('allow-prereleases')
+                packages, allow_prereleases=self.option("allow-prereleases")
             )
             requirements = self._format_requirements(requirements)
 
@@ -78,43 +71,41 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 parse_constraint(constraint)
 
         for name, constraint in requirements.items():
-            constraint = {
-                'version': constraint
-            }
+            constraint = {"version": constraint}
 
-            if self.option('git'):
-                del constraint['version']
+            if self.option("git"):
+                del constraint["version"]
 
-                constraint['git'] = self.option('git')
-            elif self.option('path'):
-                del constraint['version']
+                constraint["git"] = self.option("git")
+            elif self.option("path"):
+                del constraint["version"]
 
-                constraint['path'] = self.option('path')
+                constraint["path"] = self.option("path")
 
-            if self.option('optional'):
-                constraint['optional'] = True
+            if self.option("optional"):
+                constraint["optional"] = True
 
-            if self.option('allow-prereleases'):
-                constraint['allows-prereleases'] = True
+            if self.option("allow-prereleases"):
+                constraint["allows-prereleases"] = True
 
-            if self.option('extras'):
+            if self.option("extras"):
                 extras = []
-                for extra in self.option('extras'):
-                    if ' ' in extra:
-                        extras += [e.strip() for e in extra.split(' ')]
+                for extra in self.option("extras"):
+                    if " " in extra:
+                        extras += [e.strip() for e in extra.split(" ")]
                     else:
                         extras.append(extra)
 
-                constraint['extras'] = self.option('extras')
+                constraint["extras"] = self.option("extras")
 
-            if self.option('python'):
-                constraint['python'] = self.option('python')
+            if self.option("python"):
+                constraint["python"] = self.option("python")
 
-            if self.option('platform'):
-                constraint['platform'] = self.option('platform')
+            if self.option("platform"):
+                constraint["platform"] = self.option("platform")
 
-            if len(constraint) == 1 and 'version' in constraint:
-                constraint = constraint['version']
+            if len(constraint) == 1 and "version" in constraint:
+                constraint = constraint["version"]
 
             poetry_content[section][name] = constraint
 
@@ -122,7 +113,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         self.poetry.file.write(content)
 
         # Cosmetic new line
-        self.line('')
+        self.line("")
 
         # Update packages
         self.reset_poetry()
@@ -132,10 +123,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             self.venv,
             self.poetry.package,
             self.poetry.locker,
-            self.poetry.pool
+            self.poetry.pool,
         )
 
-        installer.dry_run(self.option('dry-run'))
+        installer.dry_run(self.option("dry-run"))
         installer.update(True)
         installer.whitelist(requirements)
 
@@ -146,13 +137,13 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
             raise
 
-        if status != 0 or self.option('dry-run'):
+        if status != 0 or self.option("dry-run"):
             # Revert changes
-            if not self.option('dry-run'):
+            if not self.option("dry-run"):
                 self.error(
-                    '\n'
-                    'Addition failed, reverting pyproject.toml '
-                    'to its original content.'
+                    "\n"
+                    "Addition failed, reverting pyproject.toml "
+                    "to its original content."
                 )
 
             self.poetry.file.write(original_content)

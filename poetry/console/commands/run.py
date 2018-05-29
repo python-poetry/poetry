@@ -10,9 +10,9 @@ class RunCommand(VenvCommand):
     """
 
     def handle(self):
-        args = self.argument('args')
+        args = self.argument("args")
         script = args[0]
-        scripts = self.poetry.local_config.get('scripts')
+        scripts = self.poetry.local_config.get("scripts")
 
         if scripts and script in scripts:
             return self.run_script(scripts[script], args)
@@ -22,18 +22,17 @@ class RunCommand(VenvCommand):
         return venv.execute(*args)
 
     def run_script(self, script, args):
-        module, callable_ = script.split(':')
+        module, callable_ = script.split(":")
 
-        src_in_sys_path = 'sys.path.append(\'src\'); ' \
-            if self._module.is_in_src() else ''
+        src_in_sys_path = "sys.path.append('src'); " if self._module.is_in_src() else ""
 
-        cmd = ['python', '-c']
+        cmd = ["python", "-c"]
 
         cmd += [
             '"import sys; '
-            'from importlib import import_module; '
-            'sys.argv = {!r}; {}'
-            'import_module(\'{}\').{}()"'.format(
+            "from importlib import import_module; "
+            "sys.argv = {!r}; {}"
+            "import_module('{}').{}()\"".format(
                 args, src_in_sys_path, module, callable_
             )
         ]
@@ -47,20 +46,21 @@ class RunCommand(VenvCommand):
         poetry = self.poetry
         package = poetry.package
         path = poetry.file.parent
-        module = Module(
-            package.name, path.as_posix()
-        )
+        module = Module(package.name, path.as_posix())
         return module
 
     def merge_application_definition(self, merge_args=True):
-        if self._application is None \
-                or (self._application_definition_merged
-                    and (self._application_definition_merged_with_args or not merge_args)):
+        if self._application is None or (
+            self._application_definition_merged
+            and (self._application_definition_merged_with_args or not merge_args)
+        ):
             return
 
         if merge_args:
             current_arguments = self._definition.get_arguments()
-            self._definition.set_arguments(self._application.get_definition().get_arguments())
+            self._definition.set_arguments(
+                self._application.get_definition().get_arguments()
+            )
             self._definition.add_arguments(current_arguments)
 
         self._application_definition_merged = True

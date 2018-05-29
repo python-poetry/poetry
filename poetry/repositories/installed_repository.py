@@ -5,7 +5,6 @@ from .repository import Repository
 
 
 class InstalledRepository(Repository):
-
     @classmethod
     def load(cls, venv):  # type: (Venv) -> InstalledRepository
         """
@@ -15,10 +14,10 @@ class InstalledRepository(Repository):
         """
         repo = cls()
 
-        freeze_output = venv.run('pip', 'freeze')
-        for line in freeze_output.split('\n'):
-            if '==' in line:
-                name, version = line.split('==')
+        freeze_output = venv.run("pip", "freeze")
+        for line in freeze_output.split("\n"):
+            if "==" in line:
+                name, version = line.split("==")
                 repo.add_package(Package(name, version, version))
 
         return repo

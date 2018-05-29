@@ -7,15 +7,15 @@ from typing import Union
 
 from poetry.version import Version
 
-_canonicalize_regex = re.compile('[-_]+')
+_canonicalize_regex = re.compile("[-_]+")
 
 
 def canonicalize_name(name):  # type: (str) -> str
-    return _canonicalize_regex.sub('-', name).lower()
+    return _canonicalize_regex.sub("-", name).lower()
 
 
 def module_name(name):  # type: (str) -> str
-    return canonicalize_name(name).replace('.', '_').replace('-', '_')
+    return canonicalize_name(name).replace(".", "_").replace("-", "_")
 
 
 def normalize_version(version):  # type: (str) -> str
@@ -38,7 +38,7 @@ def temporary_directory(*args, **kwargs):
 
 
 def parse_requires(requires):  # type: (str) -> Union[list, None]
-    lines = requires.split('\n')
+    lines = requires.split("\n")
 
     requires_dist = []
     in_section = False
@@ -51,13 +51,13 @@ def parse_requires(requires):  # type: (str) -> Union[list, None]
 
             continue
 
-        if line.startswith('['):
+        if line.startswith("["):
             # extras or conditional dependencies
-            marker = line.lstrip('[').rstrip(']')
-            if ':' not in marker:
+            marker = line.lstrip("[").rstrip("]")
+            if ":" not in marker:
                 extra, marker = marker, None
             else:
-                extra, marker = marker.split(':')
+                extra, marker = marker.split(":")
 
             if extra:
                 if marker:
@@ -71,7 +71,7 @@ def parse_requires(requires):  # type: (str) -> Union[list, None]
             continue
 
         if current_marker:
-            line = '{}; {}'.format(line, current_marker)
+            line = "{}; {}".format(line, current_marker)
 
         requires_dist.append(line)
 

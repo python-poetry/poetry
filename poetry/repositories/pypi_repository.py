@@ -47,49 +47,42 @@ logger = logging.getLogger(__name__)
 
 
 class PyPiRepository(Repository):
-
-    def __init__(self,
-                 url='https://pypi.org/',
-                 disable_cache=False,
-                 fallback=True):
-        self._name = 'PyPI'
+    def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
+        self._name = "PyPI"
         self._url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
 
-        release_cache_dir = Path(CACHE_DIR) / 'cache' / 'repositories' / 'pypi'
-        self._cache = CacheManager({
-            'default': 'releases',
-            'serializer': 'json',
-            'stores': {
-                'releases': {
-                    'driver': 'file',
-                    'path': str(release_cache_dir)
+        release_cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / "pypi"
+        self._cache = CacheManager(
+            {
+                "default": "releases",
+                "serializer": "json",
+                "stores": {
+                    "releases": {"driver": "file", "path": str(release_cache_dir)},
+                    "packages": {"driver": "dict"},
                 },
-                'packages': {
-                    'driver': 'dict'
-                }
             }
-        })
+        )
 
         self._session = CacheControl(
-            session(),
-            cache=FileCache(str(release_cache_dir / '_http'))
+            session(), cache=FileCache(str(release_cache_dir / "_http"))
         )
-        
+
         super(PyPiRepository, self).__init__()
 
-    def find_packages(self,
-                      name,                    # type: str
-                      constraint=None,         # type: Union[VersionConstraint, str, None]
-                      extras=None,             # type: Union[list, None]
-                      allow_prereleases=False  # type: bool
-                      ):  # type: (...) -> List[Package]
+    def find_packages(
+        self,
+        name,  # type: str
+        constraint=None,  # type: Union[VersionConstraint, str, None]
+        extras=None,  # type: Union[list, None]
+        allow_prereleases=False,  # type: bool
+    ):  # type: (...) -> List[Package]
         """
         Find packages on the remote server.
         """
         if constraint is None:
-            constraint = '*'
+            constraint = "*"
 
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
@@ -98,45 +91,45 @@ class PyPiRepository(Repository):
 
         packages = []
 
-        for version, release in info['releases'].items():
+        for version, release in info["releases"].items():
             if not release:
                 # Bad release
                 self._log(
-                    'No release information found for {}-{}, skipping'.format(
+                    "No release information found for {}-{}, skipping".format(
                         name, version
                     ),
-                    level='debug'
+                    level="debug",
                 )
                 continue
 
             package = Package(name, version)
 
-            if package.is_prerelease() and not allow_prereleases and not constraint.allows(package.version):
+            if (
+                package.is_prerelease()
+                and not allow_prereleases
+                and not constraint.allows(package.version)
+            ):
                 continue
 
-            if (
-                not constraint
-                or (constraint and constraint.allows(package.version))
-            ):
+            if not constraint or (constraint and constraint.allows(package.version)):
                 if extras is not None:
                     package.requires_extras = extras
 
                 packages.append(package)
 
         self._log(
-            '{} packages found for {} {}'.format(
-                len(packages), name, str(constraint)
-            ),
-            level='debug'
+            "{} packages found for {} {}".format(len(packages), name, str(constraint)),
+            level="debug",
         )
 
         return packages
 
-    def package(self,
-                name,        # type: str
-                version,     # type: str
-                extras=None  # type: (Union[list, None])
-                ):  # type: (...) -> Union[Package, None]
+    def package(
+        self,
+        name,  # type: str
+        version,  # type: str
+        extras=None,  # type: (Union[list, None])
+    ):  # type: (...) -> Union[Package, None]
         try:
             index = self._packages.index(Package(name, version, version))
 
@@ -147,24 +140,22 @@ class PyPiRepository(Repository):
 
             release_info = self.get_release_info(name, version)
             package = Package(name, version, version)
-            requires_dist = release_info['requires_dist'] or []
+            requires_dist = release_info["requires_dist"] or []
             for req in requires_dist:
                 try:
                     dependency = dependency_from_pep_508(req)
                 except InvalidMarker:
                     # Invalid marker
                     # We strip the markers hoping for the best
-                    req = req.split(';')[0]
+                    req = req.split(";")[0]
 
                     dependency = dependency_from_pep_508(req)
                 except ValueError:
                     # Likely unable to parse constraint so we skip it
                     self._log(
-                        'Invalid constraint ({}) found in {}-{} dependencies, '
-                        'skipping'.format(
-                            req, package.name, package.version
-                        ),
-                        level='debug'
+                        "Invalid constraint ({}) found in {}-{} dependencies, "
+                        "skipping".format(req, package.name, package.version),
+                        level="debug",
                     )
                     continue
 
@@ -179,16 +170,16 @@ class PyPiRepository(Repository):
                     package.requires.append(dependency)
 
             # Adding description
-            package.description = release_info.get('summary', '')
+            package.description = release_info.get("summary", "")
 
-            if release_info['requires_python']:
-                package.python_versions = release_info['requires_python']
+            if release_info["requires_python"]:
+                package.python_versions = release_info["requires_python"]
 
-            if release_info['platform']:
-                package.platform = release_info['platform']
+            if release_info["platform"]:
+                package.platform = release_info["platform"]
 
             # Adding hashes information
-            package.hashes = release_info['digests']
+            package.hashes = release_info["digests"]
 
             # Activate extra dependencies
             for extra in extras:
@@ -205,19 +196,17 @@ class PyPiRepository(Repository):
     def search(self, query, mode=0):
         results = []
 
-        search = {
-            'name': query
-        }
+        search = {"name": query}
 
         if mode == self.SEARCH_FULLTEXT:
-            search['summary'] = query
+            search["summary"] = query
 
-        client = ServerProxy('https://pypi.python.org/pypi')
-        hits = client.search(search, 'or')
+        client = ServerProxy("https://pypi.python.org/pypi")
+        hits = client.search(search, "or")
 
         for hit in hits:
-            result = Package(hit['name'], hit['version'], hit['version'])
-            result.description = to_str(hit['summary'])
+            result = Package(hit["name"], hit["version"], hit["version"])
+            result.description = to_str(hit["summary"])
             results.append(result)
 
         return results
@@ -232,15 +221,14 @@ class PyPiRepository(Repository):
         if self._disable_cache:
             return self._get_package_info(name)
 
-        return self._cache.store('packages').remember_forever(
-            name,
-            lambda: self._get_package_info(name)
+        return self._cache.store("packages").remember_forever(
+            name, lambda: self._get_package_info(name)
         )
 
     def _get_package_info(self, name):  # type: (str) -> dict
-        data = self._get('pypi/{}/json'.format(name))
+        data = self._get("pypi/{}/json".format(name))
         if data is None:
-            raise ValueError('Package [{}] not found.'.format(name))
+            raise ValueError("Package [{}] not found.".format(name))
 
         return data
 
@@ -255,73 +243,66 @@ class PyPiRepository(Repository):
             return self._get_release_info(name, version)
 
         return self._cache.remember_forever(
-            '{}:{}'.format(name, version),
-            lambda: self._get_release_info(name, version)
+            "{}:{}".format(name, version), lambda: self._get_release_info(name, version)
         )
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
-        self._log('Getting info for {} ({}) from PyPI'.format(name, version), 'debug')
+        self._log("Getting info for {} ({}) from PyPI".format(name, version), "debug")
 
-        json_data = self._get('pypi/{}/{}/json'.format(name, version))
+        json_data = self._get("pypi/{}/{}/json".format(name, version))
         if json_data is None:
-            raise ValueError('Package [{}] not found.'.format(name))
+            raise ValueError("Package [{}] not found.".format(name))
 
-        info = json_data['info']
+        info = json_data["info"]
         data = {
-            'name': info['name'],
-            'version': info['version'],
-            'summary': info['summary'],
-            'platform': info['platform'],
-            'requires_dist': info['requires_dist'],
-            'requires_python': info['requires_python'],
-            'digests': [],
-            '_fallback': False
+            "name": info["name"],
+            "version": info["version"],
+            "summary": info["summary"],
+            "platform": info["platform"],
+            "requires_dist": info["requires_dist"],
+            "requires_python": info["requires_python"],
+            "digests": [],
+            "_fallback": False,
         }
 
         try:
-            version_info = json_data['releases'][version]
+            version_info = json_data["releases"][version]
         except KeyError:
             version_info = []
 
         for file_info in version_info:
-            data['digests'].append(file_info['digests']['sha256'])
+            data["digests"].append(file_info["digests"]["sha256"])
 
-        if (
-                self._fallback
-                and data['requires_dist'] is None
-        ):
-            self._log(
-                'No dependencies found, downloading archives',
-                level='debug'
-            )
+        if self._fallback and data["requires_dist"] is None:
+            self._log("No dependencies found, downloading archives", level="debug")
             # No dependencies set (along with other information)
             # This might be due to actually no dependencies
             # or badly set metadata when uploading
             # So, we need to make sure there is actually no
             # dependencies by introspecting packages
             urls = {}
-            for url in json_data['urls']:
+            for url in json_data["urls"]:
                 # Only get sdist and universal wheels
-                dist_type = url['packagetype']
-                if dist_type not in ['sdist', 'bdist_wheel']:
+                dist_type = url["packagetype"]
+                if dist_type not in ["sdist", "bdist_wheel"]:
                     continue
 
-                if dist_type == 'sdist' and 'dist' not in urls:
-                    urls[url['packagetype']] = url['url']
+                if dist_type == "sdist" and "dist" not in urls:
+                    urls[url["packagetype"]] = url["url"]
                     continue
 
-                if 'bdist_wheel' in urls:
+                if "bdist_wheel" in urls:
                     continue
 
                 # If bdist_wheel, check if it's universal
-                python_version = url['python_version']
-                if python_version not in ['py2.py3', 'py3', 'py2']:
+                python_version = url["python_version"]
+                if python_version not in ["py2.py3", "py3", "py2"]:
                     continue
 
-                parts = urlparse.urlparse(url['url'])
+                parts = urlparse.urlparse(url["url"])
                 filename = os.path.basename(parts.path)
 
-                if '-none-any' not in filename:
+                if "-none-any" not in filename:
                     continue
 
             if not urls:
@@ -329,10 +310,10 @@ class PyPiRepository(Repository):
 
             info = self._get_info_from_urls(urls)
 
-            data['requires_dist'] = info['requires_dist']
+            data["requires_dist"] = info["requires_dist"]
 
-            if not data['requires_python']:
-                data['requires_python'] = info['requires_python']
+            if not data["requires_python"]:
+                data["requires_python"] = info["requires_python"]
 
         return data
 
@@ -345,20 +326,18 @@ class PyPiRepository(Repository):
 
         return json_data
 
-    def _get_info_from_urls(self, urls
-                            ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
-        if 'bdist_wheel' in urls:
-            return self._get_info_from_wheel(urls['bdist_wheel'])
+    def _get_info_from_urls(
+        self, urls
+    ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
+        if "bdist_wheel" in urls:
+            return self._get_info_from_wheel(urls["bdist_wheel"])
 
-        return self._get_info_from_sdist(urls['sdist'])
+        return self._get_info_from_sdist(urls["sdist"])
 
-    def _get_info_from_wheel(self, url
-                             ):  # type: (str) -> Dict[str, Union[str, List, None]]
-        info = {
-            'summary': '',
-            'requires_python': None,
-            'requires_dist': None,
-        }
+    def _get_info_from_wheel(
+        self, url
+    ):  # type: (str) -> Dict[str, Union[str, List, None]]
+        info = {"summary": "", "requires_python": None, "requires_dist": None}
 
         filename = os.path.basename(urlparse.urlparse(url).path)
 
@@ -374,22 +353,19 @@ class PyPiRepository(Repository):
                 return info
 
         if meta.summary:
-            info['summary'] = meta.summary or ''
+            info["summary"] = meta.summary or ""
 
-        info['requires_python'] = meta.requires_python
+        info["requires_python"] = meta.requires_python
 
         if meta.requires_dist:
-            info['requires_dist'] = meta.requires_dist
+            info["requires_dist"] = meta.requires_dist
 
         return info
 
-    def _get_info_from_sdist(self, url
-                             ):  # type: (str) -> Dict[str, Union[str, List, None]]
-        info = {
-            'summary': '',
-            'requires_python': None,
-            'requires_dist': None,
-        }
+    def _get_info_from_sdist(
+        self, url
+    ):  # type: (str) -> Dict[str, Union[str, List, None]]
+        info = {"summary": "", "requires_python": None, "requires_dist": None}
 
         filename = os.path.basename(urlparse.urlparse(url).path)
 
@@ -400,13 +376,13 @@ class PyPiRepository(Repository):
             try:
                 meta = pkginfo.SDist(str(filepath))
                 if meta.summary:
-                    info['summary'] = meta.summary
+                    info["summary"] = meta.summary
 
                 if meta.requires_python:
-                    info['requires_python'] = meta.requires_python
+                    info["requires_python"] = meta.requires_python
 
                 if meta.requires_dist:
-                    info['requires_dist'] = list(meta.requires_dist)
+                    info["requires_dist"] = list(meta.requires_dist)
 
                     return info
             except ValueError:
@@ -418,10 +394,10 @@ class PyPiRepository(Repository):
             # So, we unpack and introspect
             suffix = filepath.suffix
             gz = None
-            if suffix == '.zip':
+            if suffix == ".zip":
                 tar = zipfile.ZipFile(str(filepath))
             else:
-                if suffix == '.bz2':
+                if suffix == ".bz2":
                     gz = BZ2File(str(filepath))
                 else:
                     gz = GzipFile(str(filepath))
@@ -429,37 +405,37 @@ class PyPiRepository(Repository):
                 tar = tarfile.TarFile(str(filepath), fileobj=gz)
 
             try:
-                tar.extractall(os.path.join(temp_dir, 'unpacked'))
+                tar.extractall(os.path.join(temp_dir, "unpacked"))
             finally:
                 if gz:
                     gz.close()
 
                 tar.close()
 
-            unpacked = Path(temp_dir) / 'unpacked'
-            sdist_dir = unpacked / Path(filename).name.rstrip('.tar.gz')
+            unpacked = Path(temp_dir) / "unpacked"
+            sdist_dir = unpacked / Path(filename).name.rstrip(".tar.gz")
 
             # Checking for .egg-info at root
-            eggs = list(sdist_dir.glob('*.egg-info'))
+            eggs = list(sdist_dir.glob("*.egg-info"))
             if eggs:
                 egg_info = eggs[0]
 
-                requires = egg_info / 'requires.txt'
+                requires = egg_info / "requires.txt"
                 if requires.exists():
                     with requires.open() as f:
-                        info['requires_dist'] = parse_requires(f.read())
+                        info["requires_dist"] = parse_requires(f.read())
 
                         return info
 
             # Searching for .egg-info in sub directories
-            eggs = list(sdist_dir.glob('**/*.egg-info'))
+            eggs = list(sdist_dir.glob("**/*.egg-info"))
             if eggs:
                 egg_info = eggs[0]
 
-                requires = egg_info / 'requires.txt'
+                requires = egg_info / "requires.txt"
                 if requires.exists():
                     with requires.open() as f:
-                        info['requires_dist'] = parse_requires(f.read())
+                        info["requires_dist"] = parse_requires(f.read())
 
                         return info
 
@@ -471,12 +447,9 @@ class PyPiRepository(Repository):
             return info
 
     def _inspect_sdist_with_setup(self, sdist_dir):
-        info = {
-            'requires_python': None,
-            'requires_dist': None,
-        }
+        info = {"requires_python": None, "requires_dist": None}
 
-        setup = sdist_dir / 'setup.py'
+        setup = sdist_dir / "setup.py"
         if not setup.exists():
             return info
 
@@ -486,23 +459,21 @@ class PyPiRepository(Repository):
         os.chdir(sdist_dir.as_posix())
 
         try:
-            venv.run(
-                'python', 'setup.py', 'egg_info'
-            )
+            venv.run("python", "setup.py", "egg_info")
 
-            egg_info = list(sdist_dir.glob('**/*.egg-info'))[0]
+            egg_info = list(sdist_dir.glob("**/*.egg-info"))[0]
 
             meta = pkginfo.UnpackedSDist(str(egg_info))
             if meta.requires_python:
-                info['requires_python'] = meta.requires_python
+                info["requires_python"] = meta.requires_python
 
             if meta.requires_dist:
-                info['requires_dist'] = list(meta.requires_dist)
+                info["requires_dist"] = list(meta.requires_dist)
             else:
-                requires = egg_info / 'requires.txt'
+                requires = egg_info / "requires.txt"
                 if requires.exists():
                     with requires.open() as f:
-                        info['requires_dist'] = parse_requires(f.read())
+                        info["requires_dist"] = parse_requires(f.read())
         except Exception:
             pass
 
@@ -512,10 +483,10 @@ class PyPiRepository(Repository):
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = get(url, stream=True)
-        with open(dest, 'wb') as f:
+        with open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
 
-    def _log(self, msg, level='info'):
-        getattr(logger, level)('{}: {}'.format(self._name, msg))
+    def _log(self, msg, level="info"):
+        getattr(logger, level)("{}: {}".format(self._name, msg))

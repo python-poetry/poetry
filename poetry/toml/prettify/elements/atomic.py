@@ -17,10 +17,12 @@ class AtomicElement(common.TokenElement):
 
     def _validate_tokens(self, _tokens):
         if len([token for token in _tokens if not token.type.is_metadata]) != 1:
-            raise InvalidElementError('Tokens making up an AtomicElement must contain only one non-metadata token')
+            raise InvalidElementError(
+                "Tokens making up an AtomicElement must contain only one non-metadata token"
+            )
 
     def serialized(self):
-        return ''.join(token.source_substring for token in self.tokens)
+        return "".join(token.source_substring for token in self.tokens)
 
     def _value_token_index(self):
         """
@@ -30,7 +32,7 @@ class AtomicElement(common.TokenElement):
         for i, token in enumerate(self.tokens):
             if not token.type.is_metadata:
                 return i
-        raise RuntimeError('could not find a value token')
+        raise RuntimeError("could not find a value token")
 
     @property
     def value(self):
@@ -47,6 +49,8 @@ class AtomicElement(common.TokenElement):
         """
         Sets the contained value to the given one.
         """
-        assert (not is_sequence_like(value)) and (not is_dict_like(value)), 'the value must be an atomic primitive'
+        assert (not is_sequence_like(value)) and (
+            not is_dict_like(value)
+        ), "the value must be an atomic primitive"
         token_index = self._value_token_index()
         self._tokens[token_index] = py2toml.create_primitive_token(value)

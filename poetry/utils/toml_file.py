@@ -9,7 +9,6 @@ from ._compat import Path
 
 
 class TomlFile:
-
     def __init__(self, path):
         self._path = Path(path)
 
@@ -30,7 +29,7 @@ class TomlFile:
         else:
             data = dumps(data)
 
-        with self._path.open('w') as f:
+        with self._path.open("w") as f:
             f.write(data)
 
     def __getattr__(self, item):

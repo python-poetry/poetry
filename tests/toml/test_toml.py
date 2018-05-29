@@ -9,7 +9,7 @@ def test_loading_toml_without_trailing_newline():
     toml_text = '[main]\nname = "azmy"'
     toml = loads(toml_text)
 
-    assert toml['main']['name'] == 'azmy'
+    assert toml["main"]["name"] == "azmy"
 
 
 def test_array_edge_cases():
@@ -20,13 +20,13 @@ key = []"""
 
     toml = loads(toml_text)
 
-    assert 'section' in toml
-    assert len(toml['section']['key']) == 0
+    assert "section" in toml
+    assert len(toml["section"]["key"]) == 0
 
 
 def test_loading_an_empty_toml_source():
 
-    toml_text = ''
+    toml_text = ""
 
     loads(toml_text)
 
@@ -60,10 +60,10 @@ cwd = "./handlers"
 
     f = loads(toml)
 
-    assert f['handlers']['env']['REDIS_ADDRESS'] == 'localhost'
-    assert 'REDIS_PASSWORD' not in f['handlers']['env']
+    assert f["handlers"]["env"]["REDIS_ADDRESS"] == "localhost"
+    assert "REDIS_PASSWORD" not in f["handlers"]["env"]
 
-    f['handlers']['env']['REDIS_PASSWORD'] = 'MYPASSWORD'
+    f["handlers"]["env"]["REDIS_PASSWORD"] = "MYPASSWORD"
 
     expected = """[main]
 listen = ":8966"
@@ -153,7 +153,7 @@ creativity = "on vacation"
 """
 
     f = loads(toml_text)
-    assert f['']['l'] == 't'
+    assert f[""]["l"] == "t"
 
 
 def test_accessing_deeply_nested_dicts():
@@ -171,9 +171,9 @@ def test_accessing_deeply_nested_dicts():
 
     f = loads(t)
 
-    assert f['cmds']['sync']['env']['SYNCTHING_URL'] == 'http://localhost:8384'
+    assert f["cmds"]["sync"]["env"]["SYNCTHING_URL"] == "http://localhost:8384"
 
-    f['cmds']['sync']['env']['SYNCTHING_URL'] = 'Nowhere'
+    f["cmds"]["sync"]["env"]["SYNCTHING_URL"] = "Nowhere"
 
     expected_toml = """[cmds]
     [cmds.sync]
@@ -196,7 +196,7 @@ answer = 42"""
 
     parsed = loads(toml)
 
-    assert parsed.primitive['key#group']['answer'] == 42
+    assert parsed.primitive["key#group"]["answer"] == 42
 
 
 def test_fails_to_parse_bad_escape_characters():
@@ -239,26 +239,30 @@ equivalent_three = """\
 
     parsed = loads(toml)
 
-    assert parsed['']['multiline_empty_one'] == parsed['']['multiline_empty_two'] == \
-           parsed['']['multiline_empty_three'] == parsed['']['multiline_empty_four']
+    assert (
+        parsed[""]["multiline_empty_one"]
+        == parsed[""]["multiline_empty_two"]
+        == parsed[""]["multiline_empty_three"]
+        == parsed[""]["multiline_empty_four"]
+    )
 
 
 def test_unicode_string_literals():
     toml = u'answer = "δ"\n'
     parsed = loads(toml)
-    assert parsed['']['answer'] == u"δ"
+    assert parsed[""]["answer"] == u"δ"
 
 
 def test_one_entry_array_of_tables():
-    t = '''[[people]]
+    t = """[[people]]
 first_name = "Bruce"
 last_name = "Springsteen"
-'''
+"""
 
     parsed = loads(t)
 
-    assert parsed['people'][0]['first_name'] == 'Bruce'
-    assert parsed['people'][0]['last_name'] == 'Springsteen'
+    assert parsed["people"][0]["first_name"] == "Bruce"
+    assert parsed["people"][0]["last_name"] == "Springsteen"
 
 
 def non_empty(iterable):
@@ -276,15 +280,15 @@ python = "^3.6"
 """
     parsed = loads(t)
 
-    content = parsed['tool']['poetry']
-    assert content['name'] == 'poetry'
-    assert content['version'] == '0.1.0'
+    content = parsed["tool"]["poetry"]
+    assert content["name"] == "poetry"
+    assert content["version"] == "0.1.0"
 
-    content['version'] = '0.2.0'
+    content["version"] = "0.2.0"
     t = dumps(parsed)
 
     parsed = loads(t)
 
-    content = parsed['tool']['poetry']
-    assert content['name'] == 'poetry'
-    assert content['version'] == '0.2.0'
+    content = parsed["tool"]["poetry"]
+    assert content["name"] == "poetry"
+    assert content["version"] == "0.2.0"

@@ -18,13 +18,21 @@ class NotPrimitiveError(TOMLError):
 
 
 _operator_tokens_by_type = {
-    tokens.TYPE_OP_SQUARE_LEFT_BRACKET: tokens.Token(tokens.TYPE_OP_SQUARE_LEFT_BRACKET, u'['),
-    tokens.TYPE_OP_SQUARE_RIGHT_BRACKET: tokens.Token(tokens.TYPE_OP_SQUARE_RIGHT_BRACKET, u']'),
-    tokens.TYPE_OP_DOUBLE_SQUARE_LEFT_BRACKET: tokens.Token(tokens.TYPE_OP_DOUBLE_SQUARE_LEFT_BRACKET, u'[['),
-    tokens.TYPE_OP_DOUBLE_SQUARE_RIGHT_BRACKET: tokens.Token(tokens.TYPE_OP_DOUBLE_SQUARE_RIGHT_BRACKET, u']]'),
-    tokens.TYPE_OP_COMMA: tokens.Token(tokens.TYPE_OP_COMMA, u','),
-    tokens.TYPE_NEWLINE: tokens.Token(tokens.TYPE_NEWLINE, u'\n'),
-    tokens.TYPE_OPT_DOT: tokens.Token(tokens.TYPE_OPT_DOT, u'.'),
+    tokens.TYPE_OP_SQUARE_LEFT_BRACKET: tokens.Token(
+        tokens.TYPE_OP_SQUARE_LEFT_BRACKET, u"["
+    ),
+    tokens.TYPE_OP_SQUARE_RIGHT_BRACKET: tokens.Token(
+        tokens.TYPE_OP_SQUARE_RIGHT_BRACKET, u"]"
+    ),
+    tokens.TYPE_OP_DOUBLE_SQUARE_LEFT_BRACKET: tokens.Token(
+        tokens.TYPE_OP_DOUBLE_SQUARE_LEFT_BRACKET, u"[["
+    ),
+    tokens.TYPE_OP_DOUBLE_SQUARE_RIGHT_BRACKET: tokens.Token(
+        tokens.TYPE_OP_DOUBLE_SQUARE_RIGHT_BRACKET, u"]]"
+    ),
+    tokens.TYPE_OP_COMMA: tokens.Token(tokens.TYPE_OP_COMMA, u","),
+    tokens.TYPE_NEWLINE: tokens.Token(tokens.TYPE_NEWLINE, u"\n"),
+    tokens.TYPE_OPT_DOT: tokens.Token(tokens.TYPE_OPT_DOT, u"."),
 }
 
 
@@ -39,42 +47,52 @@ def create_primitive_token(value, multiline_strings_allowed=True):
     Raises NotPrimitiveError when the given value is not a primitive atomic value
     """
     if value is None:
-        return create_primitive_token('')
+        return create_primitive_token("")
     elif isinstance(value, bool):
-        return tokens.Token(tokens.TYPE_BOOLEAN, u'true' if value else u'false')
+        return tokens.Token(tokens.TYPE_BOOLEAN, u"true" if value else u"false")
     elif isinstance(value, int):
-        return tokens.Token(tokens.TYPE_INTEGER, u'{}'.format(value))
+        return tokens.Token(tokens.TYPE_INTEGER, u"{}".format(value))
     elif isinstance(value, float):
-        return tokens.Token(tokens.TYPE_FLOAT, u'{}'.format(value))
+        return tokens.Token(tokens.TYPE_FLOAT, u"{}".format(value))
     elif isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
         return tokens.Token(tokens.TYPE_DATE, value.isoformat())
     elif isinstance(value, basestring):
-        return create_string_token(value, multiline_strings_allowed=multiline_strings_allowed)
+        return create_string_token(
+            value, multiline_strings_allowed=multiline_strings_allowed
+        )
 
     raise NotPrimitiveError("{} of type {}".format(value, type(value)))
 
 
-_bare_string_regex = re.compile('^[a-zA-Z0-9_-]*$')
+_bare_string_regex = re.compile("^[a-zA-Z0-9_-]*$")
 
 
-def create_string_token(text, bare_string_allowed=False, multiline_strings_allowed=True):
+def create_string_token(
+    text, bare_string_allowed=False, multiline_strings_allowed=True
+):
     """
     Creates and returns a single string token.
 
     Raises ValueError on non-string input.
     """
     if not isinstance(text, basestring):
-        raise ValueError('Given value must be a string')
+        raise ValueError("Given value must be a string")
 
-    if text == '':
-        return tokens.Token(tokens.TYPE_STRING, '""'.format(_escape_single_line_quoted_string(text)))
+    if text == "":
+        return tokens.Token(
+            tokens.TYPE_STRING, '""'.format(_escape_single_line_quoted_string(text))
+        )
     elif bare_string_allowed and _bare_string_regex.match(text):
         return tokens.Token(tokens.TYPE_BARE_STRING, text)
-    elif multiline_strings_allowed and (len(tuple(c for c in text if c == '\n')) >= 2 or len(text) > 80):
+    elif multiline_strings_allowed and (
+        len(tuple(c for c in text if c == "\n")) >= 2 or len(text) > 80
+    ):
         # If containing two or more newlines or is longer than 80 characters we'll use the multiline string format
         return _create_multiline_string_token(text)
     else:
-        return tokens.Token(tokens.TYPE_STRING, u'"{}"'.format(_escape_single_line_quoted_string(text)))
+        return tokens.Token(
+            tokens.TYPE_STRING, u'"{}"'.format(_escape_single_line_quoted_string(text))
+        )
 
 
 def _escape_single_line_quoted_string(text):
@@ -82,9 +100,12 @@ def _escape_single_line_quoted_string(text):
 
 
 def _create_multiline_string_token(text):
-    escaped = text.replace(u'"""', u'\"\"\"')
+    escaped = text.replace(u'"""', u'"""')
     if len(escaped) > 50:
-        return tokens.Token(tokens.TYPE_MULTILINE_STRING, u'"""\n{}\\\n"""'.format(_break_long_text(escaped)))
+        return tokens.Token(
+            tokens.TYPE_MULTILINE_STRING,
+            u'"""\n{}\\\n"""'.format(_break_long_text(escaped)),
+        )
     else:
         return tokens.Token(tokens.TYPE_MULTILINE_STRING, u'"""{}"""'.format(escaped))
 
@@ -98,14 +119,14 @@ def _break_long_text(text, maximum_length=75):
 
         # Returns a line and the remaining text
 
-        if '\n' in remaining_text and remaining_text.index('\n') < maximum_length:
-            i = remaining_text.index('\n')
-            return remaining_text[:i+1], remaining_text[i+2:]
-        elif len(remaining_text) > maximum_length and ' ' in remaining_text:
-            i = remaining_text[:maximum_length].rfind(' ')
-            return remaining_text[:i+1] + '\\\n', remaining_text[i+2:]
+        if "\n" in remaining_text and remaining_text.index("\n") < maximum_length:
+            i = remaining_text.index("\n")
+            return remaining_text[: i + 1], remaining_text[i + 2 :]
+        elif len(remaining_text) > maximum_length and " " in remaining_text:
+            i = remaining_text[:maximum_length].rfind(" ")
+            return remaining_text[: i + 1] + "\\\n", remaining_text[i + 2 :]
         else:
-            return remaining_text, ''
+            return remaining_text, ""
 
     remaining_text = text
     lines = []
@@ -113,7 +134,7 @@ def _break_long_text(text, maximum_length=75):
         line, remaining_text = next_line(remaining_text)
         lines += [line]
 
-    return ''.join(lines)
+    return "".join(lines)
 
 
 def create_whitespace(source_substring):
@@ -122,6 +143,9 @@ def create_whitespace(source_substring):
 
 def create_multiline_string(text, maximum_line_length=120):
     def escape(t):
-        return t.replace(u'"""', u'\"\"\"')
-    source_substring = u'"""\n{}"""'.format(u'\\\n'.join(chunkate_string(escape(text), maximum_line_length)))
+        return t.replace(u'"""', u'"""')
+
+    source_substring = u'"""\n{}"""'.format(
+        u"\\\n".join(chunkate_string(escape(text), maximum_line_length))
+    )
     return Token(tokens.TYPE_MULTILINE_STRING, source_substring)

@@ -34,7 +34,9 @@ class Capturer:
             element, pending_ts = finder(self._token_stream)
 
             # If result is not a sequence, make it so
-            if isinstance(element, ArrayElement) or not isinstance(element, (tuple, list)):
+            if isinstance(element, ArrayElement) or not isinstance(
+                element, (tuple, list)
+            ):
                 element = (element,)
 
             # Return a Capturer with accumulated findings
@@ -59,8 +61,12 @@ class Capturer:
         """
 
         if self._dormant_error:
-            if parsing_expectation_msg and isinstance(self._dormant_error, ParsingError):
-                raise ParsingError(parsing_expectation_msg, token=self._token_stream.head)
+            if parsing_expectation_msg and isinstance(
+                self._dormant_error, ParsingError
+            ):
+                raise ParsingError(
+                    parsing_expectation_msg, token=self._token_stream.head
+                )
             else:
                 raise self._dormant_error
         return self._value
@@ -112,4 +118,3 @@ class Capturer:
 
 def capture_from(token_stream):
     return Capturer(token_stream)
-

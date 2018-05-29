@@ -16,24 +16,16 @@ class GenericConstraint(BaseConstraint):
     OP_EQ = operator.eq
     OP_NE = operator.ne
 
-    _trans_op_str = {
-        '=': OP_EQ,
-        '==': OP_EQ,
-        '!=': OP_NE
-    }
+    _trans_op_str = {"=": OP_EQ, "==": OP_EQ, "!=": OP_NE}
 
-    _trans_op_int = {
-        OP_EQ: '==',
-        OP_NE: '!='
-    }
+    _trans_op_int = {OP_EQ: "==", OP_NE: "!="}
 
     def __init__(self, operator, version):
         if operator not in self._trans_op_str:
             raise ValueError(
                 'Invalid operator "{}" given, '
-                'expected one of: {}'
-                .format(
-                    operator, ', '.join(self.supported_operators)
+                "expected one of: {}".format(
+                    operator, ", ".join(self.supported_operators)
                 )
             )
 
@@ -67,14 +59,18 @@ class GenericConstraint(BaseConstraint):
         is_provider_non_equal_op = self.OP_NE is provider.operator
 
         if (
-            is_equal_op and is_provider_equal_op
-            or is_non_equal_op and is_provider_non_equal_op
+            is_equal_op
+            and is_provider_equal_op
+            or is_non_equal_op
+            and is_provider_non_equal_op
         ):
             return self._version == provider.version
 
         if (
-            is_equal_op and is_provider_non_equal_op
-            or is_non_equal_op and is_provider_equal_op
+            is_equal_op
+            and is_provider_non_equal_op
+            or is_non_equal_op
+            and is_provider_equal_op
         ):
             return self._version != provider.version
 
@@ -88,12 +84,11 @@ class GenericConstraint(BaseConstraint):
         """
         pretty_constraint = constraints
 
-        or_constraints = re.split('\s*\|\|?\s*', constraints.strip())
+        or_constraints = re.split("\s*\|\|?\s*", constraints.strip())
         or_groups = []
         for constraints in or_constraints:
             and_constraints = re.split(
-                '(?<!^)(?<![ ,]) *(?<!-)[, ](?!-) *(?!,|$)',
-                constraints
+                "(?<!^)(?<![ ,]) *(?<!-)[, ](?!-) *(?!,|$)", constraints
             )
             if len(and_constraints) > 1:
                 constraint_objects = []
@@ -121,30 +116,25 @@ class GenericConstraint(BaseConstraint):
 
     @classmethod
     def _parse_constraint(cls, constraint):
-        m = re.match('(?i)^v?[xX*](\.[xX*])*$', constraint)
+        m = re.match("(?i)^v?[xX*](\.[xX*])*$", constraint)
         if m:
-            return EmptyConstraint(),
+            return (EmptyConstraint(),)
 
         # Basic Comparators
-        m = re.match('^(!=|==?)?\s*(.*)', constraint)
+        m = re.match("^(!=|==?)?\s*(.*)", constraint)
         if m:
-            return GenericConstraint(m.group(1) or '=', m.group(2)),
+            return (GenericConstraint(m.group(1) or "=", m.group(2)),)
 
-        raise ValueError(
-            'Could not parse generic constraint: {}'.format(constraint)
-        )
+        raise ValueError("Could not parse generic constraint: {}".format(constraint))
 
     def __str__(self):
         op = self._trans_op_int[self._operator]
-        if op == '==':
-            op = ''
+        if op == "==":
+            op = ""
         else:
-            op = op + ' '
+            op = op + " "
 
-        return '{}{}'.format(
-            op,
-            self._version
-        )
+        return "{}{}".format(op, self._version)
 
     def __repr__(self):
-        return '<GenericConstraint \'{}\'>'.format(str(self))
+        return "<GenericConstraint '{}'>".format(str(self))

@@ -37,34 +37,28 @@ except ImportError:
 
 
 FOREGROUND_COLORS = {
-    'black': 30,
-    'red': 31,
-    'green': 32,
-    'yellow': 33,
-    'blue': 34,
-    'magenta': 35,
-    'cyan': 36,
-    'white': 37
+    "black": 30,
+    "red": 31,
+    "green": 32,
+    "yellow": 33,
+    "blue": 34,
+    "magenta": 35,
+    "cyan": 36,
+    "white": 37,
 }
 
 BACKGROUND_COLORS = {
-    'black': 40,
-    'red': 41,
-    'green': 42,
-    'yellow': 43,
-    'blue': 44,
-    'magenta': 45,
-    'cyan': 46,
-    'white': 47
+    "black": 40,
+    "red": 41,
+    "green": 42,
+    "yellow": 43,
+    "blue": 44,
+    "magenta": 45,
+    "cyan": 46,
+    "white": 47,
 }
 
-OPTIONS = {
-    'bold': 1,
-    'underscore': 4,
-    'blink': 5,
-    'reverse': 7,
-    'conceal': 8
-}
+OPTIONS = {"bold": 1, "underscore": 4, "blink": 5, "reverse": 7, "conceal": 8}
 
 
 def style(fg, bg, options):
@@ -83,13 +77,13 @@ def style(fg, bg, options):
         for option in options:
             codes.append(OPTIONS[option])
 
-    return '\033[{}m'.format(';'.join(map(str, codes)))
+    return "\033[{}m".format(";".join(map(str, codes)))
 
 
 STYLES = {
-    'info': style('green', None, None),
-    'comment': style('yellow', None, None),
-    'error': style('red', None, None)
+    "info": style("green", None, None),
+    "comment": style("yellow", None, None),
+    "error": style("red", None, None),
 }
 
 
@@ -101,7 +95,7 @@ def colorize(style, text):
     if not is_decorated():
         return text
 
-    return '{}{}\033[0m'.format(STYLES[style], text)
+    return "{}{}\033[0m".format(STYLES[style], text)
 
 
 @contextmanager
@@ -122,15 +116,15 @@ def temporary_directory(*args, **kwargs):
 class Installer:
 
     CURRENT_PYTHON = sys.executable
-    METADATA_URL = 'https://pypi.org/pypi/poetry/json'
+    METADATA_URL = "https://pypi.org/pypi/poetry/json"
     VERSION_REGEX = re.compile(
-        'v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?'
-        '('
-        '[._-]?'
-        '(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?'
-        '([.-]?dev)?'
-        ')?'
-        '(?:\+[^\s]+)?'
+        "v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
+        "("
+        "[._-]?"
+        "(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
+        "([.-]?dev)?"
+        ")?"
+        "(?:\+[^\s]+)?"
     )
 
     def __init__(self, version=None, preview=False):
@@ -141,7 +135,7 @@ class Installer:
         return self._preview
 
     def run(self):
-        print(colorize('info', 'Retrieving metadata'))
+        print(colorize("info", "Retrieving metadata"))
 
         r = urlopen(self.METADATA_URL)
         metadata = json.loads(r.read().decode())
@@ -161,16 +155,13 @@ class Installer:
 
             return 0
 
-        print('')
+        print("")
         releases = sorted(
-            metadata['releases'].keys(),
-            key=cmp_to_key(_compare_versions)
+            metadata["releases"].keys(), key=cmp_to_key(_compare_versions)
         )
 
         if self._version and self._version not in releases:
-            print(colorize(
-                'error', 'Version {} does not exist'.format(self._version)
-            ))
+            print(colorize("error", "Version {} does not exist".format(self._version)))
 
             return 1
 
@@ -187,65 +178,75 @@ class Installer:
 
         try:
             import poetry
+
             poetry_version = poetry.__version__
         except ImportError:
             poetry_version = None
 
         if poetry_version == version:
-            print('Latest version already installed.')
+            print("Latest version already installed.")
             return 0
 
-        print('Installing version: ' + colorize('info', version))
+        print("Installing version: " + colorize("info", version))
 
         try:
             return self.install(version)
         except subprocess.CalledProcessError as e:
-            print(colorize('error', 'An error has occured: {}'.format(str(e))))
+            print(colorize("error", "An error has occured: {}".format(str(e))))
             print(e.output.decode())
 
             return e.returncode
 
     def install(self, version):
         # Most of the work will be delegated to pip
-        with temporary_directory(prefix='poetry-installer-') as dir:
-            dist = os.path.join(dir, 'dist')
-            print('  - Getting dependencies')
+        with temporary_directory(prefix="poetry-installer-") as dir:
+            dist = os.path.join(dir, "dist")
+            print("  - Getting dependencies")
             try:
                 self.call(
-                    self.CURRENT_PYTHON, '-m', 'pip', 'install', 'poetry=={}'.format(version),
-                    '--target', dist
+                    self.CURRENT_PYTHON,
+                    "-m",
+                    "pip",
+                    "install",
+                    "poetry=={}".format(version),
+                    "--target",
+                    dist,
                 )
             except subprocess.CalledProcessError as e:
-                if 'must supply either home or prefix/exec-prefix' in e.output.decode():
+                if "must supply either home or prefix/exec-prefix" in e.output.decode():
                     # Homebrew Python and possible other installations
                     # We workaround this issue by temporarily changing
                     # the --user directory
-                    os.environ['PYTHONUSERBASE'] = dir
+                    os.environ["PYTHONUSERBASE"] = dir
                     self.call(
-                        self.CURRENT_PYTHON, '-m', 'pip', 'install', 'poetry=={}'.format(version),
-                        '--user',
-                        '--ignore-installed'
+                        self.CURRENT_PYTHON,
+                        "-m",
+                        "pip",
+                        "install",
+                        "poetry=={}".format(version),
+                        "--user",
+                        "--ignore-installed",
                     )
 
                     # Finding site-package directory
-                    lib = os.path.join(dir, 'lib')
-                    lib_python = list(glob(os.path.join(lib, 'python*')))[0]
-                    site_packages = os.path.join(lib_python, 'site-packages')
+                    lib = os.path.join(dir, "lib")
+                    lib_python = list(glob(os.path.join(lib, "python*")))[0]
+                    site_packages = os.path.join(lib_python, "site-packages")
                     shutil.copytree(site_packages, dist)
                 else:
                     raise
 
-            print('  - Vendorizing dependencies')
+            print("  - Vendorizing dependencies")
 
-            poetry_dir = os.path.join(dist, 'poetry')
-            vendor_dir = os.path.join(poetry_dir, '_vendor')
+            poetry_dir = os.path.join(dist, "poetry")
+            vendor_dir = os.path.join(poetry_dir, "_vendor")
 
             # Everything, except poetry itself, should
             # be put in the _vendor directory
-            for file in glob(os.path.join(dist, '*')):
+            for file in glob(os.path.join(dist, "*")):
                 if (
-                    os.path.basename(file).startswith('poetry')
-                    or os.path.basename(file) == '__pycache__'
+                    os.path.basename(file).startswith("poetry")
+                    or os.path.basename(file) == "__pycache__"
                 ):
                     continue
 
@@ -258,39 +259,41 @@ class Installer:
                     os.unlink(file)
 
             wheel_data = os.path.join(
-                dist, 'poetry-{}.dist-info'.format(version), 'WHEEL'
+                dist, "poetry-{}.dist-info".format(version), "WHEEL"
             )
             with open(wheel_data) as f:
                 wheel_data = Parser().parsestr(f.read())
 
-            tag = wheel_data['Tag']
+            tag = wheel_data["Tag"]
 
             # Repack everything and install
-            print('  - Installing {}'.format(colorize('info', 'poetry')))
+            print("  - Installing {}".format(colorize("info", "poetry")))
 
             shutil.make_archive(
-                os.path.join(dir, 'poetry-{}-{}'.format(version, tag)),
-                format='zip',
-                root_dir=str(dist)
+                os.path.join(dir, "poetry-{}-{}".format(version, tag)),
+                format="zip",
+                root_dir=str(dist),
             )
 
             os.rename(
-                os.path.join(dir, 'poetry-{}-{}.zip'.format(version, tag)),
-                os.path.join(dir, 'poetry-{}-{}.whl'.format(version, tag))
+                os.path.join(dir, "poetry-{}-{}.zip".format(version, tag)),
+                os.path.join(dir, "poetry-{}-{}.whl".format(version, tag)),
             )
 
             self.call(
-                self.CURRENT_PYTHON, '-m', 'pip', 'install',
-                '--upgrade',
-                '--no-deps',
-                os.path.join(dir, 'poetry-{}-{}.whl'.format(version, tag))
+                self.CURRENT_PYTHON,
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "--no-deps",
+                os.path.join(dir, "poetry-{}-{}.whl".format(version, tag)),
             )
 
-        print('')
+        print("")
         print(
-            '{} ({}) successfully installed!'.format(
-                colorize('info', 'poetry'),
-                colorize('comment', version)
+            "{} ({}) successfully installed!".format(
+                colorize("info", "poetry"), colorize("comment", version)
             )
         )
 
@@ -300,18 +303,12 @@ class Installer:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Installs the latest (or given) version of poetry'
+        description="Installs the latest (or given) version of poetry"
     )
     parser.add_argument(
-        '-p', '--preview',
-        dest='preview',
-        action='store_true',
-        default=False
+        "-p", "--preview", dest="preview", action="store_true", default=False
     )
-    parser.add_argument(
-        '--version',
-        dest='version'
-    )
+    parser.add_argument("--version", dest="version")
 
     args = parser.parse_args()
 
@@ -320,5 +317,5 @@ def main():
     return installer.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

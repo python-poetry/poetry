@@ -30,8 +30,10 @@ def mock_clone(self, source, dest):
 
     folder = (
         Path(__file__).parent.parent
-        / 'fixtures' / 'git'
-        / parts.netloc / parts.path.lstrip('/').rstrip('.git')
+        / "fixtures"
+        / "git"
+        / parts.netloc
+        / parts.path.lstrip("/").rstrip(".git")
     )
 
     shutil.rmtree(str(dest))
@@ -46,24 +48,26 @@ def installed():
 @pytest.fixture(autouse=True)
 def setup(mocker, installer, installed):
     # Set Installer's installer
-    p = mocker.patch('poetry.installation.installer.Installer._get_installer')
+    p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
 
-    p = mocker.patch('poetry.installation.installer.Installer._get_installed')
+    p = mocker.patch("poetry.installation.installer.Installer._get_installed")
     p.return_value = installed
 
-    p = mocker.patch('poetry.repositories.installed_repository.InstalledRepository.load')
+    p = mocker.patch(
+        "poetry.repositories.installed_repository.InstalledRepository.load"
+    )
     p.return_value = installed
 
     # Patch git module to not actually clone projects
-    mocker.patch('poetry.vcs.git.Git.clone', new=mock_clone)
-    mocker.patch('poetry.vcs.git.Git.checkout', new=lambda *_: None)
-    p = mocker.patch('poetry.vcs.git.Git.rev_parse')
-    p.return_value = '9cf87a285a2d3fbb0b9fa621997b3acc3631ed24'
+    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
+    mocker.patch("poetry.vcs.git.Git.checkout", new=lambda *_: None)
+    p = mocker.patch("poetry.vcs.git.Git.rev_parse")
+    p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
     # Setting terminal width
     environ = dict(os.environ)
-    os.environ['COLUMNS'] = '80'
+    os.environ["COLUMNS"] = "80"
 
     yield
 
@@ -72,7 +76,6 @@ def setup(mocker, installer, installed):
 
 
 class Application(BaseApplication):
-
     def __init__(self, poetry):
         super(Application, self).__init__()
 
@@ -85,14 +88,12 @@ class Application(BaseApplication):
 
 
 class Config(BaseConfig):
-
     def __init__(self, _):
         self._raw_content = {}
         self._content = TOMLFile([])
 
 
 class Locker(BaseLocker):
-
     def __init__(self, lock, local_config):
         self._lock = TomlFile(lock)
         self._local_config = local_config
@@ -122,18 +123,12 @@ class Locker(BaseLocker):
 
 
 class Poetry(BasePoetry):
-
-    def __init__(self,
-                 file,
-                 local_config,
-                 package,
-                 locker
-                 ):
+    def __init__(self, file, local_config, package, locker):
         self._file = TomlFile(file)
         self._package = package
         self._local_config = local_config
         self._locker = Locker(locker.lock.path, locker._local_config)
-        self._config = Config.create('config.toml')
+        self._config = Config.create("config.toml")
 
         # Configure sources
         self._pool = Pool()
@@ -146,19 +141,17 @@ def repo():
 
 @pytest.fixture
 def poetry(repo):
-    p = Poetry.create(
-        Path(__file__).parent.parent / 'fixtures' / 'simple_project'
-    )
+    p = Poetry.create(Path(__file__).parent.parent / "fixtures" / "simple_project")
 
     with p.file.path.open() as f:
         content = f.read()
 
-    p.pool.remove_repository('pypi')
+    p.pool.remove_repository("pypi")
     p.pool.add_repository(repo)
 
     yield p
 
-    with p.file.path.open('w') as f:
+    with p.file.path.open("w") as f:
         f.write(content)
 
 

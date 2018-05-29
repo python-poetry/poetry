@@ -2,7 +2,6 @@ from .operation import Operation
 
 
 class Install(Operation):
-
     def __init__(self, package, reason=None):
         super(Install, self).__init__(reason)
 
@@ -14,16 +13,14 @@ class Install(Operation):
 
     @property
     def job_type(self):
-        return 'install'
+        return "install"
 
     def __str__(self):
-        return 'Installing {} ({})'.format(
-            self.package.pretty_name,
-            self.format_version(self.package)
+        return "Installing {} ({})".format(
+            self.package.pretty_name, self.format_version(self.package)
         )
 
     def __repr__(self):
-        return '<Install {} ({})>'.format(
-            self.package.pretty_name,
-            self.format_version(self.package)
+        return "<Install {} ({})>".format(
+            self.package.pretty_name, self.format_version(self.package)
         )

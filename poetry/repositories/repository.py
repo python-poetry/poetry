@@ -5,7 +5,6 @@ from .base_repository import BaseRepository
 
 
 class Repository(BaseRepository):
-
     def __init__(self, packages=None):
         super(Repository, self).__init__()
 
@@ -33,16 +32,16 @@ class Repository(BaseRepository):
 
                 return package
 
-    def find_packages(self, name, constraint=None,
-                      extras=None,
-                      allow_prereleases=False):
+    def find_packages(
+        self, name, constraint=None, extras=None, allow_prereleases=False
+    ):
         name = name.lower()
         packages = []
         if extras is None:
             extras = []
 
         if constraint is None:
-            constraint = '*'
+            constraint = "*"
 
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)

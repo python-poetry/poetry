@@ -24,4 +24,4 @@ class EmptyConstraint(BaseConstraint):
         return
 
     def __str__(self):
-        return '*'
+        return "*"

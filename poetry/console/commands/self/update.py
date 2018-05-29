@@ -23,20 +23,22 @@ class SelfUpdateCommand(Command):
         from poetry.__version__ import __version__
         from poetry.repositories.pypi_repository import PyPiRepository
 
-        version = self.argument('version')
+        version = self.argument("version")
         if not version:
-            version = '>=' + __version__
+            version = ">=" + __version__
 
         repo = PyPiRepository(fallback=False)
-        packages = repo.find_packages('poetry', version, allow_prereleases=self.option('preview'))
+        packages = repo.find_packages(
+            "poetry", version, allow_prereleases=self.option("preview")
+        )
         if not packages:
-            self.line('No release found for the specified version')
+            self.line("No release found for the specified version")
             return
 
         packages.sort(
             key=cmp_to_key(
-                lambda x, y:
-                0 if x.version == y.version
+                lambda x, y: 0
+                if x.version == y.version
                 else int(x.version < y.version or -1)
             )
         )
@@ -44,7 +46,7 @@ class SelfUpdateCommand(Command):
         release = None
         for package in reversed(packages):
             if package.is_prerelease():
-                if self.option('preview'):
+                if self.option("preview"):
                     release = package
 
                     break
@@ -56,22 +58,25 @@ class SelfUpdateCommand(Command):
             break
 
         if release is None:
-            self.line('No new release found')
+            self.line("No new release found")
             return
 
         if release.version == __version__:
-            self.line('You are using the latest version')
+            self.line("You are using the latest version")
             return
 
         try:
             self.update(release)
         except subprocess.CalledProcessError as e:
-            self.line('')
-            self.output.block([
-                '[CalledProcessError]',
-                'An error has occured: {}'.format(str(e)),
-                e.output
-            ], style='error')
+            self.line("")
+            self.output.block(
+                [
+                    "[CalledProcessError]",
+                    "An error has occured: {}".format(str(e)),
+                    e.output,
+                ],
+                style="error",
+            )
 
             return e.returncode
 
@@ -80,48 +85,51 @@ class SelfUpdateCommand(Command):
         from poetry.utils.helpers import temporary_directory
 
         version = release.version
-        self.line('Updating to <info>{}</info>'.format(version))
+        self.line("Updating to <info>{}</info>".format(version))
 
         prefix = sys.prefix
-        base_prefix = getattr(sys, 'base_prefix', None)
-        real_prefix = getattr(sys, 'real_prefix', None)
+        base_prefix = getattr(sys, "base_prefix", None)
+        real_prefix = getattr(sys, "real_prefix", None)
 
-        prefix_poetry = Path(prefix) / 'bin' / 'poetry'
+        prefix_poetry = Path(prefix) / "bin" / "poetry"
         if prefix_poetry.exists():
-            pip = (prefix_poetry.parent / 'pip').resolve()
+            pip = (prefix_poetry.parent / "pip").resolve()
         elif (
             base_prefix
             and base_prefix != prefix
-            and (Path(base_prefix) / 'bin' / 'poetry').exists()
+            and (Path(base_prefix) / "bin" / "poetry").exists()
         ):
-            pip = Path(base_prefix) / 'bin' / 'pip'
+            pip = Path(base_prefix) / "bin" / "pip"
         elif real_prefix:
-            pip = Path(real_prefix) / 'bin' / 'pip'
+            pip = Path(real_prefix) / "bin" / "pip"
         else:
-            pip = Path(prefix) / 'bin' / 'pip'
+            pip = Path(prefix) / "bin" / "pip"
 
             if not pip.exists():
-                raise RuntimeError('Unable to determine poetry\'s path')
+                raise RuntimeError("Unable to determine poetry's path")
 
-        with temporary_directory(prefix='poetry-update-') as temp_dir:
+        with temporary_directory(prefix="poetry-update-") as temp_dir:
             temp_dir = Path(temp_dir)
-            dist = temp_dir / 'dist'
-            self.line('  - Getting dependencies')
+            dist = temp_dir / "dist"
+            self.line("  - Getting dependencies")
             self.process(
-                str(pip), 'install', '-U',
-                'poetry=={}'.format(release.version),
-                '--target', str(dist)
+                str(pip),
+                "install",
+                "-U",
+                "poetry=={}".format(release.version),
+                "--target",
+                str(dist),
             )
 
-            self.line('  - Vendorizing dependencies')
+            self.line("  - Vendorizing dependencies")
 
-            poetry_dir = dist / 'poetry'
-            vendor_dir = poetry_dir / '_vendor'
+            poetry_dir = dist / "poetry"
+            vendor_dir = poetry_dir / "_vendor"
 
             # Everything, except poetry itself, should
             # be put in the _vendor directory
-            for file in dist.glob('*'):
-                if file.name.startswith('poetry'):
+            for file in dist.glob("*"):
+                if file.name.startswith("poetry"):
                     continue
 
                 dest = vendor_dir / file.name
@@ -132,40 +140,38 @@ class SelfUpdateCommand(Command):
                     shutil.copy(str(file), str(dest))
                     os.unlink(str(file))
 
-            wheel_data = dist / 'poetry-{}.dist-info'.format(version) / 'WHEEL'
+            wheel_data = dist / "poetry-{}.dist-info".format(version) / "WHEEL"
             with wheel_data.open() as f:
                 wheel_data = Parser().parsestr(f.read())
 
-            tag = wheel_data['Tag']
+            tag = wheel_data["Tag"]
 
             # Repack everything and install
-            self.line('  - Updating <info>poetry</info>')
+            self.line("  - Updating <info>poetry</info>")
 
             shutil.make_archive(
-                str(temp_dir / 'poetry-{}-{}'.format(version, tag)),
-                format='zip',
-                root_dir=str(dist)
+                str(temp_dir / "poetry-{}-{}".format(version, tag)),
+                format="zip",
+                root_dir=str(dist),
             )
 
             os.rename(
-                str(temp_dir / 'poetry-{}-{}.zip'.format(version, tag)),
-                str(temp_dir / 'poetry-{}-{}.whl'.format(version, tag)),
+                str(temp_dir / "poetry-{}-{}.zip".format(version, tag)),
+                str(temp_dir / "poetry-{}-{}.whl".format(version, tag)),
             )
 
             self.process(
                 str(pip),
-                'install',
-                '--upgrade',
-                '--no-deps',
-                str(temp_dir / 'poetry-{}-{}.whl'.format(version, tag))
+                "install",
+                "--upgrade",
+                "--no-deps",
+                str(temp_dir / "poetry-{}-{}.whl".format(version, tag)),
             )
 
-            self.line('')
+            self.line("")
             self.line(
-                '<info>poetry</> (<comment>{}</>) '
-                'successfully installed!'.format(
-                    version
-                )
+                "<info>poetry</> (<comment>{}</>) "
+                "successfully installed!".format(version)
             )
 
     def process(self, *args):

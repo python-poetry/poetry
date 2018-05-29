@@ -4,7 +4,6 @@ from cleo.inputs import ArgvInput
 
 
 class RawArgvInput(ArgvInput):
-
     def parse(self):
         self._parsed = self._tokens
         while True:

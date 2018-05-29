@@ -1,0 +1,6 @@
+repos:
+-   repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+    - id: black
+      python_version: python3.6

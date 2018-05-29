@@ -5,14 +5,11 @@ from .src import SrcLayout
 from .standard import StandardLayout
 
 
-_LAYOUTS = {
-    'src': SrcLayout,
-    'standard': StandardLayout,
-}
+_LAYOUTS = {"src": SrcLayout, "standard": StandardLayout}
 
 
 def layout(name):  # type: (str) -> Type[Layout]
     if name not in _LAYOUTS:
-        raise ValueError('Invalid layout')
+        raise ValueError("Invalid layout")
 
     return _LAYOUTS[name]

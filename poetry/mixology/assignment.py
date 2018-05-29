@@ -9,9 +9,7 @@ class Assignment(Term):
     A term in a PartialSolution that tracks some additional metadata.
     """
 
-    def __init__(self, dependency, is_positive,
-                 decision_level, index,
-                 cause=None):
+    def __init__(self, dependency, is_positive, decision_level, index, cause=None):
         super(Assignment, self).__init__(dependency, is_positive)
 
         self._decision_level = decision_level
@@ -31,15 +29,16 @@ class Assignment(Term):
         return self._cause
 
     @classmethod
-    def decision(cls, package, decision_level, index
-                 ):  # type: (Any, int, int) -> Assignment
+    def decision(
+        cls, package, decision_level, index
+    ):  # type: (Any, int, int) -> Assignment
         return cls(package.to_dependency(), True, decision_level, index)
 
     @classmethod
-    def derivation(cls, dependency, is_positive, cause, decision_level, index
-                   ):  # type: (Any, bool, Incompatibility, int, int) -> Assignment
+    def derivation(
+        cls, dependency, is_positive, cause, decision_level, index
+    ):  # type: (Any, bool, Incompatibility, int, int) -> Assignment
         return cls(dependency, is_positive, decision_level, index, cause)
 
     def is_decision(self):  # type: () -> bool
         return self._cause is None
-

@@ -10,9 +10,7 @@ from requests import adapters
 from requests.exceptions import HTTPError
 from requests.packages.urllib3 import util
 from requests_toolbelt import user_agent
-from requests_toolbelt.multipart import (
-    MultipartEncoder, MultipartEncoderMonitor
-)
+from requests_toolbelt.multipart import MultipartEncoder, MultipartEncoderMonitor
 
 from poetry.__version__ import __version__
 from poetry.utils.helpers import normalize_version
@@ -24,14 +22,13 @@ wheel_file_re = re.compile(
     r"""^(?P<namever>(?P<name>.+?)(-(?P<ver>\d.+?))?)
         ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
         \.whl|\.dist-info)$""",
-    re.VERBOSE
+    re.VERBOSE,
 )
 
-_has_blake2 = hasattr(hashlib, 'blake2b')
+_has_blake2 = hasattr(hashlib, "blake2b")
 
 
 class Uploader:
-
     def __init__(self, poetry, io):
         self._poetry = poetry
         self._package = poetry.package
@@ -41,14 +38,14 @@ class Uploader:
 
     @property
     def user_agent(self):
-        return user_agent('poetry', __version__)
+        return user_agent("poetry", __version__)
 
     @property
     def adapter(self):
         retry = util.Retry(
             connect=5,
             total=10,
-            method_whitelist=['GET'],
+            method_whitelist=["GET"],
             status_forcelist=[500, 501, 502, 503],
         )
 
@@ -56,18 +53,22 @@ class Uploader:
 
     @property
     def files(self):  # type: () -> List[str]
-        dist = self._poetry.file.parent / 'dist'
+        dist = self._poetry.file.parent / "dist"
         version = normalize_version(self._package.version.text)
 
-        wheels = list(dist.glob(
-            '{}-{}-*.whl'.format(
-                re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
-                re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE),
+        wheels = list(
+            dist.glob(
+                "{}-{}-*.whl".format(
+                    re.sub(
+                        "[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
+                    ),
+                    re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE),
+                )
             )
-        ))
-        tars = list(dist.glob(
-            '{}-{}.tar.gz'.format(self._package.pretty_name, version)
-        ))
+        )
+        tars = list(
+            dist.glob("{}-{}.tar.gz".format(self._package.pretty_name, version))
+        )
 
         return sorted(wheels + tars)
 
@@ -80,8 +81,8 @@ class Uploader:
         if self.is_authenticated():
             session.auth = (self._username, self._password)
 
-        session.headers['User-Agent'] = self.user_agent
-        for scheme in ('http://', 'https://'):
+        session.headers["User-Agent"] = self.user_agent
+        for scheme in ("http://", "https://"):
             session.mount(scheme, self.adapter)
 
         return session
@@ -107,8 +108,8 @@ class Uploader:
 
         md5_hash = hashlib.md5()
         sha256_hash = hashlib.sha256()
-        with file.open('rb') as fp:
-            for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b''):
+        with file.open("rb") as fp:
+            for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
                 md5_hash.update(content)
                 sha256_hash.update(content)
 
@@ -122,7 +123,7 @@ class Uploader:
         else:
             blake2_256_digest = None
 
-        if file_type == 'bdist_wheel':
+        if file_type == "bdist_wheel":
             wheel_info = wheel_file_re.match(file.name)
             py_version = wheel_info.group("pyver")
         else:
@@ -132,11 +133,9 @@ class Uploader:
             # identify release
             "name": meta.name,
             "version": meta.version,
-
             # file content
             "filetype": file_type,
             "pyversion": py_version,
-
             # additional meta-data
             "metadata_version": meta.metadata_version,
             "summary": meta.summary,
@@ -156,12 +155,10 @@ class Uploader:
             "md5_digest": md5_digest,
             "sha256_digest": sha2_digest,
             "blake2_256_digest": blake2_256_digest,
-
             # PEP 314
             "provides": meta.provides,
             "requires": meta.requires,
             "obsoletes": meta.obsoletes,
-
             # Metadata 1.2
             "project_urls": meta.project_urls,
             "provides_dist": meta.provides_dist,
@@ -173,7 +170,7 @@ class Uploader:
 
         # Metadata 2.1
         if meta.description_content_type:
-            data['description_content_type'] = meta.description_content_type
+            data["description_content_type"] = meta.description_content_type
 
         # TODO: Provides extra
 
@@ -185,7 +182,8 @@ class Uploader:
         except HTTPError as e:
             if (
                 e.response.status_code not in (403, 400)
-                or e.response.status_code == 400 and 'was ever registered' not in e.response.text
+                or e.response.status_code == 400
+                and "was ever registered" not in e.response.text
             ):
                 raise
 
@@ -206,25 +204,24 @@ class Uploader:
 
     def _upload_file(self, session, url, file):
         data = self.post_data(file)
-        data.update({
-            # action
-            ":action": "file_upload",
-            "protocol_version": "1",
-        })
+        data.update(
+            {
+                # action
+                ":action": "file_upload",
+                "protocol_version": "1",
+            }
+        )
 
         data_to_send = self._prepare_data(data)
 
-        with file.open('rb') as fp:
-            data_to_send.append((
-                "content",
-                (file.name, fp, "application/octet-stream"),
-            ))
+        with file.open("rb") as fp:
+            data_to_send.append(
+                ("content", (file.name, fp, "application/octet-stream"))
+            )
             encoder = MultipartEncoder(data_to_send)
             bar = self._io.create_progress_bar(encoder.len)
             bar.set_format(
-                " - Uploading <info>{0}</> <comment>%percent%%</>".format(
-                    file.name
-                )
+                " - Uploading <info>{0}</> <comment>%percent%%</>".format(file.name)
             )
             monitor = MultipartEncoderMonitor(
                 encoder, lambda monitor: bar.set_progress(monitor.bytes_read)
@@ -236,15 +233,15 @@ class Uploader:
                 url,
                 data=monitor,
                 allow_redirects=False,
-                headers={'Content-Type': monitor.content_type}
+                headers={"Content-Type": monitor.content_type},
             )
 
             if resp.ok:
                 bar.finish()
 
-                self._io.writeln('')
+                self._io.writeln("")
             else:
-                self._io.overwrite('')
+                self._io.overwrite("")
 
         return resp
 
@@ -252,21 +249,14 @@ class Uploader:
         """
         Register a package to a repository.
         """
-        dist = self._poetry.file.parent / 'dist'
-        file = dist / '{}-{}.tar.gz'.format(
-            self._package.name, self._package.version
-        )
+        dist = self._poetry.file.parent / "dist"
+        file = dist / "{}-{}.tar.gz".format(self._package.name, self._package.version)
 
         if not file.exists():
-            raise RuntimeError(
-                '"{0}" does not exist.'.format(file.name)
-            )
+            raise RuntimeError('"{0}" does not exist.'.format(file.name))
 
         data = self.post_data(file)
-        data.update({
-            ":action": "submit",
-            "protocol_version": "1",
-        })
+        data.update({":action": "submit", "protocol_version": "1"})
 
         data_to_send = self._prepare_data(data)
         encoder = MultipartEncoder(data_to_send)
@@ -274,7 +264,7 @@ class Uploader:
             url,
             data=encoder,
             allow_redirects=False,
-            headers={'Content-Type': encoder.content_type},
+            headers={"Content-Type": encoder.content_type},
         )
 
         return resp
@@ -292,11 +282,9 @@ class Uploader:
 
     def _get_type(self, file):
         exts = file.suffixes
-        if exts[-1] == '.whl':
-            return 'bdist_wheel'
-        elif len(exts) >= 2 and ''.join(exts[-2:]) == '.tar.gz':
-            return 'sdist'
+        if exts[-1] == ".whl":
+            return "bdist_wheel"
+        elif len(exts) >= 2 and "".join(exts[-2:]) == ".tar.gz":
+            return "sdist"
 
-        raise ValueError(
-            'Unknown distribution format {}'.format(''.join(exts))
-        )
+        raise ValueError("Unknown distribution format {}".format("".join(exts)))

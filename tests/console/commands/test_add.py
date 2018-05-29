@@ -7,17 +7,13 @@ from tests.helpers import get_package
 
 
 def test_add_no_constraint(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    repo.add_package(get_package('cachy', '0.1.0'))
-    repo.add_package(get_package('cachy', '0.2.0'))
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
 
-
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['cachy'])
-    ])
+    tester.execute([("command", command.get_name()), ("name", ["cachy"])])
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -37,24 +33,20 @@ Writing lock file
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.file.read(raw=True)['tool']['poetry']
+    content = app.poetry.file.read(raw=True)["tool"]["poetry"]
 
-    assert 'cachy' in content['dependencies']
-    assert content['dependencies']['cachy'] == '^0.2.0'
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == "^0.2.0"
 
 
 def test_add_constraint(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    repo.add_package(get_package('cachy', '0.1.0'))
-    repo.add_package(get_package('cachy', '0.2.0'))
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
 
-
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['cachy=0.1.0'])
-    ])
+    tester.execute([("command", command.get_name()), ("name", ["cachy=0.1.0"])])
 
     expected = """\
 
@@ -75,23 +67,18 @@ Writing lock file
 
 
 def test_add_constraint_dependencies(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    cachy2 = get_package('cachy', '0.2.0')
-    msgpack_dep = get_dependency('msgpack-python', '>=0.5 <0.6')
-    cachy2.requires = [
-        msgpack_dep,
-    ]
+    cachy2 = get_package("cachy", "0.2.0")
+    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
+    cachy2.requires = [msgpack_dep]
 
-    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
-    repo.add_package(get_package('msgpack-python', '0.5.3'))
+    repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['cachy=0.2.0'])
-    ])
+    tester.execute([("command", command.get_name()), ("name", ["cachy=0.2.0"])])
 
     expected = """\
 
@@ -113,16 +100,18 @@ Writing lock file
 
 
 def test_add_git_constraint(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    repo.add_package(get_package('pendulum', '1.4.4'))
+    repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['demo']),
-        ('--git', 'https://github.com/demo/demo.git')
-    ])
+    tester.execute(
+        [
+            ("command", command.get_name()),
+            ("name", ["demo"]),
+            ("--git", "https://github.com/demo/demo.git"),
+        ]
+    )
 
     expected = """\
 
@@ -142,25 +131,27 @@ Writing lock file
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.file.read(raw=True)['tool']['poetry']
+    content = app.poetry.file.read(raw=True)["tool"]["poetry"]
 
-    assert 'demo' in content['dependencies']
-    assert content['dependencies']['demo'] == {
-        'git': 'https://github.com/demo/demo.git'
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "git": "https://github.com/demo/demo.git"
     }
 
 
 def test_add_git_constraint_with_poetry(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    repo.add_package(get_package('pendulum', '1.4.4'))
+    repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['demo']),
-        ('--git', 'https://github.com/demo/pyproject-demo.git')
-    ])
+    tester.execute(
+        [
+            ("command", command.get_name()),
+            ("name", ["demo"]),
+            ("--git", "https://github.com/demo/pyproject-demo.git"),
+        ]
+    )
 
     expected = """\
 
@@ -182,16 +173,18 @@ Writing lock file
 
 
 def test_add_file_constraint_wheel(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    repo.add_package(get_package('pendulum', '1.4.4'))
+    repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['demo']),
-        ('--path', '../distributions/demo-0.1.0-py2.py3-none-any.whl')
-    ])
+    tester.execute(
+        [
+            ("command", command.get_name()),
+            ("name", ["demo"]),
+            ("--path", "../distributions/demo-0.1.0-py2.py3-none-any.whl"),
+        ]
+    )
 
     expected = """\
 
@@ -211,25 +204,27 @@ Writing lock file
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.file.read(raw=True)['tool']['poetry']
+    content = app.poetry.file.read(raw=True)["tool"]["poetry"]
 
-    assert 'demo' in content['dependencies']
-    assert content['dependencies']['demo'] == {
-        'path': '../distributions/demo-0.1.0-py2.py3-none-any.whl'
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "path": "../distributions/demo-0.1.0-py2.py3-none-any.whl"
     }
 
 
 def test_add_file_constraint_sdist(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    repo.add_package(get_package('pendulum', '1.4.4'))
+    repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['demo']),
-        ('--path', '../distributions/demo-0.1.0.tar.gz')
-    ])
+    tester.execute(
+        [
+            ("command", command.get_name()),
+            ("name", ["demo"]),
+            ("--path", "../distributions/demo-0.1.0.tar.gz"),
+        ]
+    )
 
     expected = """\
 
@@ -249,36 +244,34 @@ Writing lock file
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.file.read(raw=True)['tool']['poetry']
+    content = app.poetry.file.read(raw=True)["tool"]["poetry"]
 
-    assert 'demo' in content['dependencies']
-    assert content['dependencies']['demo'] == {
-        'path': '../distributions/demo-0.1.0.tar.gz'
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "path": "../distributions/demo-0.1.0.tar.gz"
     }
 
 
 def test_add_constraint_with_extras(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    cachy2 = get_package('cachy', '0.2.0')
-    cachy2.extras = {
-        'msgpack': [get_dependency('msgpack-python')]
-    }
-    msgpack_dep = get_dependency('msgpack-python', '>=0.5 <0.6', optional=True)
-    cachy2.requires = [
-        msgpack_dep,
-    ]
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
+    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
+    cachy2.requires = [msgpack_dep]
 
-    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
-    repo.add_package(get_package('msgpack-python', '0.5.3'))
+    repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['cachy=0.2.0']),
-        ('--extras', ['msgpack'])
-    ])
+    tester.execute(
+        [
+            ("command", command.get_name()),
+            ("name", ["cachy=0.2.0"]),
+            ("--extras", ["msgpack"]),
+        ]
+    )
 
     expected = """\
 
@@ -298,29 +291,31 @@ Writing lock file
 
     assert len(installer.installs) == 2
 
-    content = app.poetry.file.read(raw=True)['tool']['poetry']
+    content = app.poetry.file.read(raw=True)["tool"]["poetry"]
 
-    assert 'cachy' in content['dependencies']
-    assert content['dependencies']['cachy'] == {
-        'version': '0.2.0',
-        'extras': ['msgpack']
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == {
+        "version": "0.2.0",
+        "extras": ["msgpack"],
     }
 
 
 def test_add_constraint_with_python(app, repo, installer):
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    cachy2 = get_package('cachy', '0.2.0')
+    cachy2 = get_package("cachy", "0.2.0")
 
-    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
 
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['cachy=0.2.0']),
-        ('--python', '>=2.7')
-    ])
+    tester.execute(
+        [
+            ("command", command.get_name()),
+            ("name", ["cachy=0.2.0"]),
+            ("--python", ">=2.7"),
+        ]
+    )
 
     expected = """\
 
@@ -339,30 +334,29 @@ Writing lock file
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.file.read(raw=True)['tool']['poetry']
+    content = app.poetry.file.read(raw=True)["tool"]["poetry"]
 
-    assert 'cachy' in content['dependencies']
-    assert content['dependencies']['cachy'] == {
-        'version': '0.2.0',
-        'python': '>=2.7'
-    }
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == {"version": "0.2.0", "python": ">=2.7"}
 
 
 def test_add_constraint_with_platform(app, repo, installer):
     platform = sys.platform
-    command = app.find('add')
+    command = app.find("add")
     tester = CommandTester(command)
 
-    cachy2 = get_package('cachy', '0.2.0')
+    cachy2 = get_package("cachy", "0.2.0")
 
-    repo.add_package(get_package('cachy', '0.1.0'))
+    repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
 
-    tester.execute([
-        ('command', command.get_name()),
-        ('name', ['cachy=0.2.0']),
-        ('--platform', platform)
-    ])
+    tester.execute(
+        [
+            ("command", command.get_name()),
+            ("name", ["cachy=0.2.0"]),
+            ("--platform", platform),
+        ]
+    )
 
     expected = """\
 
@@ -381,10 +375,10 @@ Writing lock file
 
     assert len(installer.installs) == 1
 
-    content = app.poetry.file.read(raw=True)['tool']['poetry']
+    content = app.poetry.file.read(raw=True)["tool"]["poetry"]
 
-    assert 'cachy' in content['dependencies']
-    assert content['dependencies']['cachy'] == {
-        'version': '0.2.0',
-        'platform': platform
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == {
+        "version": "0.2.0",
+        "platform": platform,
     }

@@ -1,4 +1,3 @@
-
 class InvalidElementError(Exception):
     """
     Raised by Element factories when the given sequence of tokens or sub-elements are invalid for the
@@ -10,4 +9,3 @@ class InvalidElementError(Exception):
 
     def __repr__(self):
         return "InvalidElementError: {}".format(self.message)
-

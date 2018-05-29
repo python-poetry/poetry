@@ -4,7 +4,6 @@ from .prettify import util
 
 
 class ArrayOfTables(list):
-
     def __init__(self, toml_file, name, iterable=None):
         if iterable:
             list.__init__(self, iterable)
@@ -18,11 +17,13 @@ class ArrayOfTables(list):
             index = len(self._toml_file[self._name]) - 1
             for key_seq, value in util.flatten_nested(value).items():
                 # self._toml_file._setitem_with_key_seq((self._name, index) + key_seq, value)
-                self._toml_file._array_setitem_with_key_seq(self._name, index, key_seq, value)
+                self._toml_file._array_setitem_with_key_seq(
+                    self._name, index, key_seq, value
+                )
             # for k, v in value.items():
             #     table[k] = v
         else:
-            raise InvalidValueError('Can only append a dict to an array of tables')
+            raise InvalidValueError("Can only append a dict to an array of tables")
 
     def __getitem__(self, item):
         try:

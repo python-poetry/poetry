@@ -4,7 +4,6 @@ from typing import Union
 
 
 class Operation(object):
-
     def __init__(self, reason=None):  # type: (Union[str, None]) -> None
         self._reason = reason
 

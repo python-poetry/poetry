@@ -14,10 +14,7 @@ class Term(object):
     See https://github.com/dart-lang/pub/tree/master/doc/solver.md#term.
     """
 
-    def __init__(self,
-                 dependency,  # type: Dependency
-                 is_positive  # type: bool
-                 ):
+    def __init__(self, dependency, is_positive):  # type: Dependency  # type: bool
         self._dependency = dependency
         self._positive = is_positive
 
@@ -51,7 +48,9 @@ class Term(object):
         allowed by this term and another.
         """
         if self.dependency.name != other.dependency.name:
-            raise ValueError('{} should refer to {}'.format(other, self.dependency.name))
+            raise ValueError(
+                "{} should refer to {}".format(other, self.dependency.name)
+            )
 
         other_constraint = other.constraint
 
@@ -113,7 +112,9 @@ class Term(object):
         allowed by both this term and another
         """
         if self.dependency.name != other.dependency.name:
-            raise ValueError('{} should refer to {}'.format(other, self.dependency.name))
+            raise ValueError(
+                "{} should refer to {}".format(other, self.dependency.name)
+            )
 
         if self._compatible_dependency(other.dependency):
             if self.is_positive() != other.is_positive():
@@ -122,20 +123,17 @@ class Term(object):
                 negative = other if self.is_positive() else self
 
                 return self._non_empty_term(
-                    positive.constraint.difference(negative.constraint),
-                    True
+                    positive.constraint.difference(negative.constraint), True
                 )
             elif self.is_positive():
                 # foo ^1.0.0 ∩ foo >=1.5.0 <3.0.0 → foo ^1.5.0
                 return self._non_empty_term(
-                    self.constraint.intersect(other.constraint),
-                    True
+                    self.constraint.intersect(other.constraint), True
                 )
             else:
                 # not foo ^1.0.0 ∩ not foo >=1.5.0 <3.0.0 → not foo >=1.0.0 <3.0.0
                 return self._non_empty_term(
-                    self.constraint.union(other.constraint),
-                    False
+                    self.constraint.union(other.constraint), False
                 )
         elif self.is_positive() != other.is_positive():
             return self if self.is_positive() else other
@@ -153,9 +151,7 @@ class Term(object):
         return (
             self.dependency.is_root
             or other.is_root
-            or (
-                other.name == self.dependency.name
-            )
+            or (other.name == self.dependency.name)
         )
 
     def _non_empty_term(self, constraint, is_positive):
@@ -165,10 +161,7 @@ class Term(object):
         return Term(Dependency(self.dependency.name, constraint), is_positive)
 
     def __str__(self):
-        return '{}{}'.format(
-            'not ' if not self.is_positive() else '',
-            self._dependency
-        )
+        return "{}{}".format("not " if not self.is_positive() else "", self._dependency)
 
     def __repr__(self):
-        return '<Term {}>'.format(str(self))
+        return "<Term {}>".format(str(self))

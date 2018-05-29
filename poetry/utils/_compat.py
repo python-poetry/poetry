@@ -6,7 +6,7 @@ try:
 except ImportError:
     from pathlib import Path
 
-try:               # Python 2
+try:  # Python 2
     long = long
     unicode = unicode
     basestring = basestring
@@ -27,7 +27,7 @@ def decode(string, encodings=None):
     if PY2 and isinstance(string, unicode):
         return string
 
-    encodings = encodings or ['utf-8', 'latin1', 'ascii']
+    encodings = encodings or ["utf-8", "latin1", "ascii"]
 
     for encoding in encodings:
         try:
@@ -35,7 +35,7 @@ def decode(string, encodings=None):
         except (UnicodeEncodeError, UnicodeDecodeError):
             pass
 
-    return string.decode(encodings[0], errors='ignore')
+    return string.decode(encodings[0], errors="ignore")
 
 
 def encode(string, encodings=None):
@@ -45,7 +45,7 @@ def encode(string, encodings=None):
     if PY2 and isinstance(string, str):
         return string
 
-    encodings = encodings or ['utf-8', 'latin1', 'ascii']
+    encodings = encodings or ["utf-8", "latin1", "ascii"]
 
     for encoding in encodings:
         try:
@@ -53,7 +53,7 @@ def encode(string, encodings=None):
         except (UnicodeEncodeError, UnicodeDecodeError):
             pass
 
-    return string.encode(encodings[0], errors='ignore')
+    return string.encode(encodings[0], errors="ignore")
 
 
 def to_str(string):
@@ -61,11 +61,11 @@ def to_str(string):
         return string
 
     if PY2:
-        method = 'encode'
+        method = "encode"
     else:
-        method = 'decode'
+        method = "decode"
 
-    encodings = ['utf-8', 'latin1', 'ascii']
+    encodings = ["utf-8", "latin1", "ascii"]
 
     for encoding in encodings:
         try:
@@ -73,4 +73,4 @@ def to_str(string):
         except (UnicodeEncodeError, UnicodeDecodeError):
             pass
 
-    return getattr(string, method)(encodings[0], errors='ignore')
+    return getattr(string, method)(encodings[0], errors="ignore")

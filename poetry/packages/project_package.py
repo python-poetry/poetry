@@ -2,7 +2,6 @@ from .package import Package
 
 
 class ProjectPackage(Package):
-
     def is_root(self):
         return True
 

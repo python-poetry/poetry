@@ -23,27 +23,28 @@ class Poetry:
 
     VERSION = __version__
 
-    def __init__(self,
-                 file,          # type: Path
-                 local_config,  # type: dict
-                 package,       # type: Package
-                 locker         # type: Locker
-                 ):
+    def __init__(
+        self,
+        file,  # type: Path
+        local_config,  # type: dict
+        package,  # type: Package
+        locker,  # type: Locker
+    ):
         self._file = TomlFile(file)
         self._package = package
         self._local_config = local_config
         self._locker = locker
-        self._config = Config.create('config.toml')
+        self._config = Config.create("config.toml")
 
         # Configure sources
         self._pool = Pool()
-        for source in self._local_config.get('source', []):
+        for source in self._local_config.get("source", []):
             self._pool.configure(source)
 
         # Always put PyPI last to prefere private repositories
         self._pool.add_repository(
             PyPiRepository(
-                fallback=self._config.setting('settings.pypi.fallback', True)
+                fallback=self._config.setting("settings.pypi.fallback", True)
             )
         )
 
@@ -68,72 +69,74 @@ class Poetry:
         return self._pool
 
     @classmethod
-    def create(cls, cwd):  # type: () -> Poetry
+    def create(cls, cwd):  # type: (Path) -> Poetry
         candidates = [Path(cwd)]
         candidates.extend(Path(cwd).parents)
 
         for path in candidates:
-            poetry_file = path / 'pyproject.toml'
+            poetry_file = path / "pyproject.toml"
 
             if poetry_file.exists():
                 break
 
         else:
             raise RuntimeError(
-                'Poetry could not find a pyproject.toml file in {} or its parents'.format(cwd)
+                "Poetry could not find a pyproject.toml file in {} or its parents".format(
+                    cwd
+                )
             )
 
         local_config = TomlFile(poetry_file.as_posix()).read(True)
-        if 'tool' not in local_config or 'poetry' not in local_config['tool']:
+        if "tool" not in local_config or "poetry" not in local_config["tool"]:
             raise RuntimeError(
-                '[tool.poetry] section not found in {}'.format(poetry_file.name)
+                "[tool.poetry] section not found in {}".format(poetry_file.name)
             )
-        local_config = local_config['tool']['poetry']
+        local_config = local_config["tool"]["poetry"]
 
         # Checking validity
         cls.check(local_config)
 
         # Load package
-        name = local_config['name']
-        version = local_config['version']
+        name = local_config["name"]
+        version = local_config["version"]
         package = ProjectPackage(name, version, version)
         package.root_dir = poetry_file.parent
 
-        for author in local_config['authors']:
+        for author in local_config["authors"]:
             package.authors.append(author)
 
-        package.description = local_config.get('description', '')
-        package.homepage = local_config.get('homepage')
-        package.repository_url = local_config.get('repository')
-        package.license = local_config.get('license')
-        package.keywords = local_config.get('keywords', [])
-        package.classifiers = local_config.get('classifiers', [])
+        package.description = local_config.get("description", "")
+        package.homepage = local_config.get("homepage")
+        package.repository_url = local_config.get("repository")
+        package.license = local_config.get("license")
+        package.keywords = local_config.get("keywords", [])
+        package.classifiers = local_config.get("classifiers", [])
 
-        if 'readme' in local_config:
-            package.readme = Path(poetry_file.parent) / local_config['readme']
+        if "readme" in local_config:
+            package.readme = Path(poetry_file.parent) / local_config["readme"]
 
-        if 'platform' in local_config:
-            package.platform = local_config['platform']
+        if "platform" in local_config:
+            package.platform = local_config["platform"]
 
-        if 'dependencies' in local_config:
-            for name, constraint in local_config['dependencies'].items():
-                if name.lower() == 'python':
+        if "dependencies" in local_config:
+            for name, constraint in local_config["dependencies"].items():
+                if name.lower() == "python":
                     package.python_versions = constraint
                     continue
 
                 package.add_dependency(name, constraint)
 
-        if 'dev-dependencies' in local_config:
-            for name, constraint in local_config['dev-dependencies'].items():
-                package.add_dependency(name, constraint, category='dev')
+        if "dev-dependencies" in local_config:
+            for name, constraint in local_config["dev-dependencies"].items():
+                package.add_dependency(name, constraint, category="dev")
 
-        extras = local_config.get('extras', {})
+        extras = local_config.get("extras", {})
         for extra_name, requirements in extras.items():
             package.extras[extra_name] = []
 
             # Checking for dependency
             for req in requirements:
-                req = Dependency(req, '*')
+                req = Dependency(req, "*")
 
                 for dep in package.requires:
                     if dep.name == req.name:
@@ -142,16 +145,16 @@ class Poetry:
 
                         break
 
-        if 'build' in local_config:
-            package.build = local_config['build']
+        if "build" in local_config:
+            package.build = local_config["build"]
 
-        if 'include' in local_config:
-            package.include = local_config['include']
+        if "include" in local_config:
+            package.include = local_config["include"]
 
-        if 'exclude' in local_config:
-            package.exclude = local_config['exclude']
+        if "exclude" in local_config:
+            package.exclude = local_config["exclude"]
 
-        locker = Locker(poetry_file.with_suffix('.lock'), local_config)
+        locker = Locker(poetry_file.with_suffix(".lock"), local_config)
 
         return cls(poetry_file, local_config, package, locker)
 
@@ -160,26 +163,17 @@ class Poetry:
         """
         Checks the validity of a configuration
         """
-        schema = (
-            Path(__file__).parent
-            / 'json' / 'schemas' / 'poetry-schema.json'
-        )
+        schema = Path(__file__).parent / "json" / "schemas" / "poetry-schema.json"
 
         with schema.open() as f:
             schema = json.loads(f.read())
 
         try:
-            jsonschema.validate(
-                config,
-                schema
-            )
+            jsonschema.validate(config, schema)
         except jsonschema.ValidationError as e:
             message = e.message
             if e.path:
-                message = "[{}] {}".format(
-                    '.'.join(e.path),
-                    message
-                )
+                message = "[{}] {}".format(".".join(e.path), message)
 
             raise InvalidProjectFile(message)
 
@@ -187,11 +181,11 @@ class Poetry:
             # If strict, check the file more thoroughly
 
             # Checking license
-            license = config.get('license')
+            license = config.get("license")
             if license:
                 try:
                     license_by_id(license)
                 except ValueError:
-                    raise InvalidProjectFile('Invalid license')
+                    raise InvalidProjectFile("Invalid license")
 
         return True

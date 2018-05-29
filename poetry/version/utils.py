@@ -1,5 +1,4 @@
 class Infinity(object):
-
     def __repr__(self):
         return "Infinity"
 
@@ -32,7 +31,6 @@ Infinity = Infinity()
 
 
 class NegativeInfinity(object):
-
     def __repr__(self):
         return "-Infinity"
 

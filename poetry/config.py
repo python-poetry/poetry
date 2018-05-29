@@ -7,7 +7,6 @@ from .utils.toml_file import TOMLFile
 
 
 class Config:
-
     def __init__(self, file):  # type: (TomlFile) -> None
         self._file = file
         if not self._file.exists():
@@ -16,7 +15,7 @@ class Config:
         else:
             self._raw_content = file.read(raw=True)
             self._content = file.read()
-        
+
     @property
     def name(self):
         return str(self._file.path)
@@ -37,7 +36,7 @@ class Config:
         """
         Retrieve a setting value.
         """
-        keys = setting_name.split('.')
+        keys = setting_name.split(".")
 
         config = self._raw_content
         for key in keys:
@@ -49,7 +48,7 @@ class Config:
         return config
 
     def add_property(self, key, value):
-        keys = key.split('.')
+        keys = key.split(".")
 
         config = self._content
         for i, key in enumerate(keys):
@@ -65,7 +64,7 @@ class Config:
         self.dump()
 
     def remove_property(self, key):
-        keys = key.split('.')
+        keys = key.split(".")
 
         config = self._content
         for i, key in enumerate(keys):

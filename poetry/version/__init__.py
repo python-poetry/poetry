@@ -15,19 +15,19 @@ OP_GE = operator.ge
 OP_NE = operator.ne
 
 _trans_op = {
-    '=': OP_EQ,
-    '==': OP_EQ,
-    '<': OP_LT,
-    '<=': OP_LE,
-    '>': OP_GT,
-    '>=': OP_GE,
-    '!=': OP_NE
+    "=": OP_EQ,
+    "==": OP_EQ,
+    "<": OP_LT,
+    "<=": OP_LE,
+    ">": OP_GT,
+    ">=": OP_GE,
+    "!=": OP_NE,
 }
 
 
-def parse(version,      # type: str
-          strict=False  # type: bool
-          ):  # type:(...) -> Union[Version, LegacyVersion]
+def parse(
+    version, strict=False  # type: str  # type: bool
+):  # type:(...) -> Union[Version, LegacyVersion]
     """
     Parse the given version string and return either a :class:`Version` object
     or a LegacyVersion object depending on if the given version is

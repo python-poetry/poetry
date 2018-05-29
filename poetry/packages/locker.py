@@ -12,11 +12,7 @@ from poetry.utils.toml_file import TomlFile
 
 class Locker:
 
-    _relevant_keys = [
-        'dependencies',
-        'dev-dependencies',
-        'source',
-    ]
+    _relevant_keys = ["dependencies", "dev-dependencies", "source"]
 
     def __init__(self, lock, local_config):  # type: (Path, dict) -> None
         self._lock = TomlFile(lock)
@@ -42,22 +38,23 @@ class Locker:
         if not self._lock.exists():
             return False
 
-        return 'package' in self.lock_data
+        return "package" in self.lock_data
 
     def is_fresh(self):  # type: () -> bool
         """
         Checks whether the lock file is still up to date with the current hash.
         """
         lock = self._lock.read(True)
-        metadata = lock.get('metadata', {})
+        metadata = lock.get("metadata", {})
 
-        if 'content-hash' in metadata:
-            return self._content_hash == lock['metadata']['content-hash']
+        if "content-hash" in metadata:
+            return self._content_hash == lock["metadata"]["content-hash"]
 
         return False
 
-    def locked_repository(self, with_dev_reqs=False
-                          ):  # type: (bool) -> poetry.repositories.Repository
+    def locked_repository(
+        self, with_dev_reqs=False
+    ):  # type: (bool) -> poetry.repositories.Repository
         """
         Searches and returns a repository of locked packages.
         """
@@ -68,10 +65,10 @@ class Locker:
         packages = poetry.repositories.Repository()
 
         if with_dev_reqs:
-            locked_packages = lock_data['package']
+            locked_packages = lock_data["package"]
         else:
             locked_packages = [
-                p for p in lock_data['package'] if p['category'] == 'main'
+                p for p in lock_data["package"] if p["category"] == "main"
             ]
 
         if not locked_packages:
@@ -79,52 +76,49 @@ class Locker:
 
         for info in locked_packages:
             package = poetry.packages.Package(
-                info['name'],
-                info['version'],
-                info['version']
+                info["name"], info["version"], info["version"]
             )
-            package.description = info.get('description', '')
-            package.category = info['category']
-            package.optional = info['optional']
-            package.hashes = lock_data['metadata']['hashes'][info['name']]
-            package.python_versions = info['python-versions']
+            package.description = info.get("description", "")
+            package.category = info["category"]
+            package.optional = info["optional"]
+            package.hashes = lock_data["metadata"]["hashes"][info["name"]]
+            package.python_versions = info["python-versions"]
 
-            for dep_name, constraint in info.get('dependencies', {}).items():
+            for dep_name, constraint in info.get("dependencies", {}).items():
                 package.add_dependency(dep_name, constraint)
 
-            if 'requirements' in info:
-                package.requirements = info['requirements']
+            if "requirements" in info:
+                package.requirements = info["requirements"]
 
-            if 'source' in info:
-                package.source_type = info['source']['type']
-                package.source_url = info['source']['url']
-                package.source_reference = info['source']['reference']
+            if "source" in info:
+                package.source_type = info["source"]["type"]
+                package.source_url = info["source"]["url"]
+                package.source_reference = info["source"]["reference"]
 
             packages.add_package(package)
 
         return packages
 
-    def set_lock_data(self,
-                      root, packages):  # type: () -> bool
+    def set_lock_data(self, root, packages):  # type: () -> bool
         hashes = {}
         packages = self._lock_packages(packages)
         # Retrieving hashes
         for package in packages:
-            hashes[package['name']] = package['hashes']
-            del package['hashes']
+            hashes[package["name"]] = package["hashes"]
+            del package["hashes"]
 
         lock = {
-            'package': packages,
-            'metadata': {
-                'python-versions': root.python_versions,
-                'platform': root.platform,
-                'content-hash': self._content_hash,
-                'hashes': hashes,
-            }
+            "package": packages,
+            "metadata": {
+                "python-versions": root.python_versions,
+                "platform": root.platform,
+                "content-hash": self._content_hash,
+                "hashes": hashes,
+            },
         }
 
         if root.extras:
-            lock['extras'] = {
+            lock["extras"] = {
                 extra: [dep.pretty_name for dep in deps]
                 for extra, deps in root.extras.items()
             }
@@ -158,15 +152,13 @@ class Locker:
 
     def _get_lock_data(self):  # type: () -> dict
         if not self._lock.exists():
-            raise RuntimeError(
-                'No lockfile found. Unable to read locked packages'
-            )
+            raise RuntimeError("No lockfile found. Unable to read locked packages")
 
         return self._lock.read(True)
 
-    def _lock_packages(self,
-                       packages
-                       ):  # type: (List['poetry.packages.Package']) -> list
+    def _lock_packages(
+        self, packages
+    ):  # type: (List['poetry.packages.Package']) -> list
         locked = []
 
         for package in sorted(packages, key=lambda x: x.name):
@@ -176,8 +168,7 @@ class Locker:
 
         return locked
 
-    def _dump_package(self, package
-                      ):  # type: (poetry.packages.Package) -> dict
+    def _dump_package(self, package):  # type: (poetry.packages.Package) -> dict
         dependencies = {}
         for dependency in package.requires:
             if dependency.is_optional():
@@ -186,26 +177,25 @@ class Locker:
             dependencies[dependency.pretty_name] = str(dependency.pretty_constraint)
 
         data = {
-            'name': package.pretty_name,
-            'version': package.pretty_version,
-            'description': package.description,
-            'category': package.category,
-            'optional': package.optional,
-            'python-versions': package.python_versions,
-            'platform': package.platform,
-            'hashes': package.hashes,
-            'dependencies': dependencies
+            "name": package.pretty_name,
+            "version": package.pretty_version,
+            "description": package.description,
+            "category": package.category,
+            "optional": package.optional,
+            "python-versions": package.python_versions,
+            "platform": package.platform,
+            "hashes": package.hashes,
+            "dependencies": dependencies,
         }
 
         if package.source_type:
-            data['source'] = {
-                'type': package.source_type,
-                'url': package.source_url,
-                'reference': package.source_reference
+            data["source"] = {
+                "type": package.source_type,
+                "url": package.source_url,
+                "reference": package.source_reference,
             }
 
         if package.requirements:
-            data['requirements'] = package.requirements
+            data["requirements"] = package.requirements
 
         return data
-

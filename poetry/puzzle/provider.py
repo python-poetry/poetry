@@ -36,15 +36,14 @@ from .dependencies import Dependencies
 
 
 class Indicator(ProgressIndicator):
-
     def __init__(self, output):
         super(Indicator, self).__init__(output)
 
-        self.format = '%message% <fg=black;options=bold>(%elapsed:2s%)</>'
+        self.format = "%message% <fg=black;options=bold>(%elapsed:2s%)</>"
 
     @contextmanager
     def auto(self):
-        message = '<info>Resolving dependencies</info>...'
+        message = "<info>Resolving dependencies</info>..."
 
         with super(Indicator, self).auto(message, message):
             yield
@@ -52,18 +51,14 @@ class Indicator(ProgressIndicator):
     def _formatter_elapsed(self):
         elapsed = time.time() - self.start_time
 
-        return '{:.1f}s'.format(elapsed)
+        return "{:.1f}s".format(elapsed)
 
 
 class Provider:
 
-    UNSAFE_PACKAGES = {'setuptools', 'distribute', 'pip'}
+    UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(self,
-                 package,  # type: Package
-                 pool,     # type: Pool
-                 io
-                 ):
+    def __init__(self, package, pool, io):  # type: Package  # type: Pool
         self._package = package
         self._pool = pool
         self._io = io
@@ -77,11 +72,11 @@ class Provider:
 
     @property
     def name_for_explicit_dependency_source(self):  # type: () -> str
-        return 'pyproject.toml'
+        return "pyproject.toml"
 
     @property
     def name_for_locking_dependency_source(self):  # type: () -> str
-        return 'pyproject.lock'
+        return "pyproject.lock"
 
     def is_debugging(self):
         return self._is_debugging
@@ -118,15 +113,15 @@ class Provider:
                 dependency.name,
                 constraint,
                 extras=dependency.extras,
-                allow_prereleases=dependency.allows_prereleases()
+                allow_prereleases=dependency.allows_prereleases(),
             )
 
             packages.sort(
                 key=lambda p: (
                     not p.is_prerelease() and not dependency.allows_prereleases(),
-                    p.version
+                    p.version,
                 ),
-                reverse=True
+                reverse=True,
             )
 
         self._search_for[dependency] = packages
@@ -140,49 +135,43 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        if dependency.vcs != 'git':
-            raise ValueError(
-                'Unsupported VCS dependency {}'.format(dependency.vcs)
-            )
+        if dependency.vcs != "git":
+            raise ValueError("Unsupported VCS dependency {}".format(dependency.vcs))
 
-        tmp_dir = Path(
-            mkdtemp(prefix='pypoetry-git-{}'.format(dependency.name))
-        )
+        tmp_dir = Path(mkdtemp(prefix="pypoetry-git-{}".format(dependency.name)))
 
         try:
             git = Git()
             git.clone(dependency.source, tmp_dir)
             git.checkout(dependency.reference, tmp_dir)
-            revision = git.rev_parse(
-                dependency.reference, tmp_dir
-            ).strip()
+            revision = git.rev_parse(dependency.reference, tmp_dir).strip()
 
             if dependency.tag or dependency.rev:
                 revision = dependency.reference
 
-            pyproject = TomlFile(tmp_dir / 'pyproject.toml')
+            pyproject = TomlFile(tmp_dir / "pyproject.toml")
             pyproject_content = None
             has_poetry = False
             if pyproject.exists():
                 pyproject_content = pyproject.read(True)
                 has_poetry = (
-                    'tool' in pyproject_content
-                    and 'poetry' in pyproject_content['tool']
+                    "tool" in pyproject_content
+                    and "poetry" in pyproject_content["tool"]
                 )
 
             if pyproject_content and has_poetry:
                 # If a pyproject.toml file exists
                 # We use it to get the information we need
-                info = pyproject_content['tool']['poetry']
+                info = pyproject_content["tool"]["poetry"]
 
-                name = info['name']
-                version = info['version']
+                name = info["name"]
+                version = info["version"]
                 package = Package(name, version, version)
                 package.source_type = dependency.vcs
                 package.source_url = dependency.source
                 package.source_reference = dependency.reference
-                for req_name, req_constraint in info['dependencies'].items():
-                    if req_name == 'python':
+                for req_name, req_constraint in info["dependencies"].items():
+                    if req_name == "python":
                         package.python_versions = req_constraint
                         continue
 
@@ -198,11 +187,9 @@ class Provider:
                 os.chdir(tmp_dir.as_posix())
 
                 try:
-                    venv.run(
-                        'python', 'setup.py', 'egg_info'
-                    )
+                    venv.run("python", "setup.py", "egg_info")
 
-                    egg_info = list(tmp_dir.glob('*.egg-info'))[0]
+                    egg_info = list(tmp_dir.glob("*.egg-info"))[0]
 
                     meta = pkginfo.UnpackedSDist(str(egg_info))
 
@@ -210,7 +197,7 @@ class Provider:
                         reqs = list(meta.requires_dist)
                     else:
                         reqs = []
-                        requires = egg_info / 'requires.txt'
+                        requires = egg_info / "requires.txt"
                         if requires.exists():
                             with requires.open() as f:
                                 reqs = parse_requires(f.read())
@@ -224,7 +211,7 @@ class Provider:
                 finally:
                     os.chdir(current_dir)
 
-            package.source_type = 'git'
+            package.source_type = "git"
             package.source_url = dependency.source
             package.source_reference = revision
         except Exception:
@@ -234,10 +221,9 @@ class Provider:
 
         return [package]
 
-    def search_for_file(self, dependency
-                        ):  # type: (FileDependency) -> List[Package]
+    def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
         package = Package(dependency.name, dependency.pretty_constraint)
-        package.source_type = 'file'
+        package.source_type = "file"
         package.source_url = str(dependency.path)
 
         package.description = dependency.metadata.summary
@@ -248,14 +234,15 @@ class Provider:
             package.python_versions = dependency.metadata.requires_python
 
         if dependency.metadata.platforms:
-            package.platform = ' || '.join(dependency.metadata.platforms)
+            package.platform = " || ".join(dependency.metadata.platforms)
 
         package.hashes = [dependency.hash()]
 
         return [package]
 
-    def search_for_directory(self, dependency
-                             ):  # type: (DirectoryDependency) -> List[Package]
+    def search_for_directory(
+        self, dependency
+    ):  # type: (DirectoryDependency) -> List[Package]
         package = dependency.package
         if dependency.extras:
             for extra in dependency.extras:
@@ -265,7 +252,9 @@ class Provider:
 
         return [package]
 
-    def incompatibilities_for(self, package):  # type: (Package) -> List[Incompatibility]
+    def incompatibilities_for(
+        self, package
+    ):  # type: (Package) -> List[Incompatibility]
         """
         Returns incompatibilities that encapsulate a given package's dependencies,
         or that it can't be safely selected.
@@ -275,7 +264,7 @@ class Provider:
         won't return incompatibilities that have already been returned by a
         previous call to _incompatibilities_for().
         """
-        if package.source_type in ['git', 'file', 'directory']:
+        if package.source_type in ["git", "file", "directory"]:
             dependencies = package.requires
         elif package.is_root():
             dependencies = package.all_requires
@@ -286,7 +275,7 @@ class Provider:
             return [
                 Incompatibility(
                     [Term(package.to_dependency(), True)],
-                    PythonCause(package.python_versions)
+                    PythonCause(package.python_versions),
                 )
             ]
 
@@ -294,34 +283,34 @@ class Provider:
             return [
                 Incompatibility(
                     [Term(package.to_dependency(), True)],
-                    PlatformCause(package.platform)
+                    PlatformCause(package.platform),
                 )
             ]
 
         return [
-            Incompatibility([
-                Term(package.to_dependency(), True),
-                Term(dep, False)
-            ], DependencyCause())
+            Incompatibility(
+                [Term(package.to_dependency(), True), Term(dep, False)],
+                DependencyCause(),
+            )
             for dep in dependencies
         ]
 
-    def dependencies_for(self, package
-                         ):  # type: (Package) -> Union[List[Dependency], Dependencies]
-        if package.source_type in ['git', 'file', 'directory']:
+    def dependencies_for(
+        self, package
+    ):  # type: (Package) -> Union[List[Dependency], Dependencies]
+        if package.source_type in ["git", "file", "directory"]:
             # Information should already be set
             return [
-                r for r in package.requires
-                if not r.is_optional()
-                   and r.name not in self.UNSAFE_PACKAGES
+                r
+                for r in package.requires
+                if not r.is_optional() and r.name not in self.UNSAFE_PACKAGES
             ]
         else:
             return Dependencies(package, self)
 
     def _dependencies_for(self, package):  # type: (Package) -> List[Dependency]
         complete_package = self._pool.package(
-            package.name, package.version.text,
-            extras=package.requires_extras
+            package.name, package.version.text, extras=package.requires_extras
         )
 
         # Update package with new information
@@ -333,7 +322,8 @@ class Provider:
         package.extras = complete_package.extras
 
         return [
-            r for r in package.requires
+            r
+            for r in package.requires
             if not r.is_optional()
             and self._package.python_constraint.allows_any(r.python_constraint)
             and self._package.platform_constraint.matches(package.platform_constraint)
@@ -347,14 +337,14 @@ class Provider:
         return self._io
 
     def before_resolution(self):
-        self._io.write('<info>Resolving dependencies</>')
+        self._io.write("<info>Resolving dependencies</>")
 
         if self.is_debugging():
             self._io.new_line()
 
     def indicate_progress(self):
         if not self.is_debugging():
-            self._io.write('.')
+            self._io.write(".")
 
     def after_resolution(self):
         self._io.new_line()
@@ -362,17 +352,22 @@ class Provider:
     def debug(self, message, depth=0):
         if self.is_debugging():
             debug_info = str(message)
-            debug_info = '\n'.join([
-                '<comment>{}:</> {}'.format(str(depth).rjust(4), s)
-                for s in debug_info.split('\n')
-            ]) + '\n'
+            debug_info = (
+                "\n".join(
+                    [
+                        "<comment>{}:</> {}".format(str(depth).rjust(4), s)
+                        for s in debug_info.split("\n")
+                    ]
+                )
+                + "\n"
+            )
 
             self.output.write(debug_info)
 
     @contextmanager
     def progress(self):
         if not self._io.is_decorated() or self.is_debugging():
-            self.output.writeln('Resolving dependencies...')
+            self.output.writeln("Resolving dependencies...")
             yield
         else:
             indicator = Indicator(self._io)

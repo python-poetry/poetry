@@ -12,22 +12,18 @@ from .dependency import Dependency
 
 # Patching pkginfo to support Metadata version 2.1 (PEP 566)
 HEADER_ATTRS.update(
-    {
-        '2.1': HEADER_ATTRS_2_0 + (
-            ('Provides-Extra', 'provides_extra', True),
-        )
-    }
+    {"2.1": HEADER_ATTRS_2_0 + (("Provides-Extra", "provides_extra", True),)}
 )
 
 
 class FileDependency(Dependency):
-
-    def __init__(self,
-                 path,             # type: Path
-                 category='main',  # type: str
-                 optional=False,   # type: bool
-                 base=None         # type: Path
-                 ):
+    def __init__(
+        self,
+        path,  # type: Path
+        category="main",  # type: str
+        optional=False,  # type: bool
+        base=None,  # type: Path
+    ):
         self._path = path
         self._base = base
         self._full_path = path
@@ -36,14 +32,12 @@ class FileDependency(Dependency):
             self._full_path = self._base / self._path
 
         if not self._full_path.exists():
-            raise ValueError('File {} does not exist'.format(self._path))
+            raise ValueError("File {} does not exist".format(self._path))
 
         if self._full_path.is_dir():
-            raise ValueError(
-                '{} is a directory, expected a file'.format(self._path)
-            )
+            raise ValueError("{} is a directory, expected a file".format(self._path))
 
-        if self._path.suffix == '.whl':
+        if self._path.suffix == ".whl":
             self._meta = pkginfo.Wheel(str(self._full_path))
         else:
             # Assume sdist
@@ -54,7 +48,7 @@ class FileDependency(Dependency):
             self._meta.version,
             category=category,
             optional=optional,
-            allows_prereleases=True
+            allows_prereleases=True,
         )
 
     @property
@@ -74,8 +68,8 @@ class FileDependency(Dependency):
 
     def hash(self):
         h = hashlib.sha256()
-        with self._full_path.open('rb') as fp:
-            for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b''):
+        with self._full_path.open("rb") as fp:
+            for content in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
                 h.update(content)
 
         return h.hexdigest()

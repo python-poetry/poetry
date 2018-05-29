@@ -8,7 +8,6 @@ from poetry.repositories import Repository
 from poetry.puzzle.provider import Provider
 
 
-
 @pytest.fixture
 def repo():
     return Repository()
@@ -24,7 +23,7 @@ def pool(repo):
 
 @pytest.fixture
 def root():
-    return ProjectPackage('myapp', '0.0.0')
+    return ProjectPackage("myapp", "0.0.0")
 
 
 @pytest.fixture

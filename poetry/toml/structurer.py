@@ -86,20 +86,27 @@ def structure(table_toplevels):
     for toplevel in table_toplevels:
 
         if isinstance(toplevel, toplevels.AnonymousTable):
-            obj[''] = toplevel.table_element
+            obj[""] = toplevel.table_element
 
         elif isinstance(toplevel, toplevels.Table):
-            if last_array_of_tables and toplevel.name.is_prefixed_with(last_array_of_tables):
+            if last_array_of_tables and toplevel.name.is_prefixed_with(
+                last_array_of_tables
+            ):
                 seq = obj[last_array_of_tables]
                 unprefixed_name = toplevel.name.without_prefix(last_array_of_tables)
 
-                seq[-1] = CascadeDict(seq[-1], NamedDict({unprefixed_name: toplevel.table_element}))
+                seq[-1] = CascadeDict(
+                    seq[-1], NamedDict({unprefixed_name: toplevel.table_element})
+                )
             else:
                 obj[toplevel.name] = toplevel.table_element
-        else:    # It's an ArrayOfTables
+        else:  # It's an ArrayOfTables
 
-            if last_array_of_tables and toplevel.name != last_array_of_tables and \
-                    toplevel.name.is_prefixed_with(last_array_of_tables):
+            if (
+                last_array_of_tables
+                and toplevel.name != last_array_of_tables
+                and toplevel.name.is_prefixed_with(last_array_of_tables)
+            ):
 
                 seq = obj[last_array_of_tables]
                 unprefixed_name = toplevel.name.without_prefix(last_array_of_tables)
@@ -107,7 +114,9 @@ def structure(table_toplevels):
                 if unprefixed_name in seq[-1]:
                     seq[-1][unprefixed_name].append(toplevel.table_element)
                 else:
-                    cascaded_with = NamedDict({unprefixed_name: [toplevel.table_element]})
+                    cascaded_with = NamedDict(
+                        {unprefixed_name: [toplevel.table_element]}
+                    )
                     seq[-1] = CascadeDict(seq[-1], cascaded_with)
 
             else:

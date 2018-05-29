@@ -1,5 +1,4 @@
 class VersionConstraint:
-
     def is_empty(self):  # type: () -> bool
         raise NotImplementedError()
 

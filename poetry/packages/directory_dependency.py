@@ -16,23 +16,19 @@ from .dependency import Dependency
 
 # Patching pkginfo to support Metadata version 2.1 (PEP 566)
 HEADER_ATTRS.update(
-    {
-        '2.1': HEADER_ATTRS_2_0 + (
-            ('Provides-Extra', 'provides_extra', True),
-        )
-    }
+    {"2.1": HEADER_ATTRS_2_0 + (("Provides-Extra", "provides_extra", True),)}
 )
 
 
 class DirectoryDependency(Dependency):
-
-    def __init__(self,
-                 path,             # type: Path
-                 category='main',  # type: str
-                 optional=False,   # type: bool
-                 base=None,        # type: Path
-                 develop=False     # type: bool
-                 ):
+    def __init__(
+        self,
+        path,  # type: Path
+        category="main",  # type: str
+        optional=False,  # type: bool
+        base=None,  # type: Path
+        develop=False,  # type: bool
+    ):
         from . import dependency_from_pep_508
         from .package import Package
 
@@ -45,27 +41,24 @@ class DirectoryDependency(Dependency):
             self._full_path = self._base / self._path
 
         if not self._full_path.exists():
-            raise ValueError('Directory {} does not exist'.format(self._path))
+            raise ValueError("Directory {} does not exist".format(self._path))
 
         if self._full_path.is_file():
-            raise ValueError(
-                '{} is a file, expected a directory'.format(self._path)
-            )
+            raise ValueError("{} is a file, expected a directory".format(self._path))
 
         # Checking content to dertermine actions
-        setup = self._full_path / 'setup.py'
-        pyproject = TomlFile(self._full_path / 'pyproject.toml')
+        setup = self._full_path / "setup.py"
+        pyproject = TomlFile(self._full_path / "pyproject.toml")
         has_poetry = False
         if pyproject.exists():
             pyproject_content = pyproject.read(True)
             has_poetry = (
-                    'tool' in pyproject_content
-                    and 'poetry' in pyproject_content['tool']
+                "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
             )
 
         if not setup.exists() and not has_poetry:
             raise ValueError(
-                'Directory {} does not seem to be a Python package'.format(
+                "Directory {} does not seem to be a Python package".format(
                     self._full_path
                 )
             )
@@ -77,7 +70,7 @@ class DirectoryDependency(Dependency):
             poetry = Poetry.create(self._full_path)
             builder = SdistBuilder(poetry, NullVenv(), NullIO())
 
-            with setup.open('w') as f:
+            with setup.open("w") as f:
                 f.write(decode(builder.build_setup()))
 
             package = poetry.package
@@ -94,13 +87,11 @@ class DirectoryDependency(Dependency):
             try:
                 cwd = base
                 venv = Venv.create(NullIO(), cwd=cwd)
-                venv.run(
-                    'python', 'setup.py', 'egg_info'
-                )
+                venv.run("python", "setup.py", "egg_info")
             finally:
                 os.chdir(current_dir)
 
-            egg_info = list(self._full_path.glob('*.egg-info'))[0]
+            egg_info = list(self._full_path.glob("*.egg-info"))[0]
 
             meta = pkginfo.UnpackedSDist(str(egg_info))
 
@@ -108,7 +99,7 @@ class DirectoryDependency(Dependency):
                 reqs = list(meta.requires_dist)
             else:
                 reqs = []
-                requires = egg_info / 'requires.txt'
+                requires = egg_info / "requires.txt"
                 if requires.exists():
                     with requires.open() as f:
                         reqs = parse_requires(f.read())
@@ -123,17 +114,13 @@ class DirectoryDependency(Dependency):
                 package.python_versions = meta.requires_python
 
             if meta.platforms:
-                platforms = [
-                    p
-                    for p in meta.platforms
-                    if p.lower() != 'unknown'
-                ]
+                platforms = [p for p in meta.platforms if p.lower() != "unknown"]
                 if platforms:
-                    package.platform = ' || '.join(platforms)
+                    package.platform = " || ".join(platforms)
 
             self._package = package
 
-        self._package.source_type = 'directory'
+        self._package.source_type = "directory"
         self._package.source_url = str(self._path)
 
         super(DirectoryDependency, self).__init__(
@@ -141,7 +128,7 @@ class DirectoryDependency(Dependency):
             self._package.version,
             category=category,
             optional=optional,
-            allows_prereleases=True
+            allows_prereleases=True,
         )
 
     @property

@@ -22,12 +22,12 @@ from .vcs_dependency import VCSDependency
 
 def dependency_from_pep_508(name):
     # Removing comments
-    parts = name.split('#', 1)
+    parts = name.split("#", 1)
     name = parts[0].strip()
     if len(parts) > 1:
         rest = parts[1]
-        if ';' in rest:
-            name += ';' + rest.split(';', 1)[1]
+        if ";" in rest:
+            name += ";" + rest.split(";", 1)[1]
 
     req = Requirement(name)
 
@@ -44,8 +44,7 @@ def dependency_from_pep_508(name):
         link = Link(name)
     else:
         p, extras = strip_extras(path)
-        if (os.path.isdir(p) and
-                (os.path.sep in name or name.startswith('.'))):
+        if os.path.isdir(p) and (os.path.sep in name or name.startswith(".")):
 
             if not is_installable_dir(p):
                 raise ValueError(
@@ -59,101 +58,96 @@ def dependency_from_pep_508(name):
     # it's a local file, dir, or url
     if link:
         # Handle relative file URLs
-        if link.scheme == 'file' and re.search(r'\.\./', link.url):
-            link = Link(
-                path_to_url(os.path.normpath(os.path.abspath(link.path)))
-            )
+        if link.scheme == "file" and re.search(r"\.\./", link.url):
+            link = Link(path_to_url(os.path.normpath(os.path.abspath(link.path))))
         # wheel file
         if link.is_wheel:
-            m = re.match(
-                '^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))',
-                link.filename
-            )
+            m = re.match("^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))", link.filename)
             if not m:
-                raise ValueError('Invalid wheel name: {}'.format(link.filename))
+                raise ValueError("Invalid wheel name: {}".format(link.filename))
 
-            name = m.group('name')
-            version = m.group('ver')
+            name = m.group("name")
+            version = m.group("ver")
             dep = Dependency(name, version)
         else:
             name = link.egg_fragment
 
-            if link.scheme == 'git':
-                dep = VCSDependency(name, 'git', link.url_without_fragment)
+            if link.scheme == "git":
+                dep = VCSDependency(name, "git", link.url_without_fragment)
             else:
-                dep = Dependency(name, '*')
+                dep = Dependency(name, "*")
     else:
         if req.pretty_constraint:
             constraint = req.constraint
         else:
-            constraint = '*'
+            constraint = "*"
 
         dep = Dependency(name, constraint)
 
-    if 'extra' in markers:
+    if "extra" in markers:
         # If we have extras, the dependency is optional
         dep.deactivate()
 
-        for or_ in markers['extra']:
+        for or_ in markers["extra"]:
             for _, extra in or_:
                 dep.extras.append(extra)
 
-    if 'python_version' in markers:
+    if "python_version" in markers:
         ors = []
-        for or_ in markers['python_version']:
+        for or_ in markers["python_version"]:
             ands = []
             for op, version in or_:
                 # Expand python version
-                if op == '==':
-                    version = '~' + version
-                    op = ''
-                elif op == '!=':
-                    version += '.*'
-                elif op == 'in':
+                if op == "==":
+                    version = "~" + version
+                    op = ""
+                elif op == "!=":
+                    version += ".*"
+                elif op == "in":
                     versions = []
-                    for v in re.split('[ ,]+', version):
-                        split = v.split('.')
+                    for v in re.split("[ ,]+", version):
+                        split = v.split(".")
                         if len(split) in [1, 2]:
-                            split.append('*')
-                            op = ''
+                            split.append("*")
+                            op = ""
                         else:
-                            op = '=='
+                            op = "=="
 
-                        versions.append(op + '.'.join(split))
+                        versions.append(op + ".".join(split))
 
                     if versions:
-                        ands.append(' || '.join(versions))
+                        ands.append(" || ".join(versions))
 
                     continue
 
-                ands.append('{}{}'.format(op, version))
+                ands.append("{}{}".format(op, version))
 
-            ors.append(' '.join(ands))
+            ors.append(" ".join(ands))
 
-        dep.python_versions = ' || '.join(ors)
+        dep.python_versions = " || ".join(ors)
 
-    if 'sys_platform' in markers:
+    if "sys_platform" in markers:
         ors = []
-        for or_ in markers['sys_platform']:
+        for or_ in markers["sys_platform"]:
             ands = []
             for op, platform in or_:
-                if op == '==':
-                    op = ''
-                elif op == 'in':
+                if op == "==":
+                    op = ""
+                elif op == "in":
                     platforms = []
-                    for v in re.split('[ ,]+', platform):
+                    for v in re.split("[ ,]+", platform):
                         platforms.append(v)
 
                     if platforms:
-                        ands.append(' || '.join(platforms))
+                        ands.append(" || ".join(platforms))
 
                     continue
 
-                ands.append('{}{}'.format(op, platform))
+                ands.append("{}{}".format(op, platform))
 
-            ors.append(' '.join(ands))
+            ors.append(" ".join(ands))
 
-        dep.platform = ' || '.join(ors)
+        dep.platform = " || ".join(ors)
 
     # Extras
     for extra in req.extras:

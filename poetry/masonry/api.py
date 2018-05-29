@@ -14,7 +14,7 @@ from .builders import WheelBuilder
 log = logging.getLogger(__name__)
 
 # PEP 517 specifies that the CWD will always be the source tree
-poetry = Poetry.create('.')
+poetry = Poetry.create(".")
 
 
 def get_requires_for_build_wheel(config_settings=None):

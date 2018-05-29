@@ -1,5 +1,4 @@
 class BaseVersion:
-
     def __hash__(self):
         return hash(self._key)
 

@@ -1,5 +1,4 @@
 class SolverResult:
-
     def __init__(self, root, packages, attempted_solutions):
         self._root = root
         self._packages = packages

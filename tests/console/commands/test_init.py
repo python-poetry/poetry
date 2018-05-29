@@ -11,7 +11,7 @@ from tests.helpers import get_package
 
 @pytest.fixture
 def tmp_dir():
-    dir_ = tempfile.mkdtemp(prefix='poetry_')
+    dir_ = tempfile.mkdtemp(prefix="poetry_")
 
     yield dir_
 
@@ -19,26 +19,28 @@ def tmp_dir():
 
 
 def test_basic_interactive(app, mocker, poetry):
-    command = app.find('init')
+    command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch('poetry.utils._compat.Path.open')
-    p = mocker.patch('poetry.utils._compat.Path.cwd')
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__)
 
     tester = CommandTester(command)
-    tester.set_inputs([
-        'my-package',  # Package name
-        '1.2.3',  # Version
-        'This is a description',  # Description
-        'n',  # Author
-        'MIT',  # License
-        '~2.7 || ^3.6',  # Python
-        'n',  # Interactive packages
-        'n',  # Interactive dev packages
-        '\n'  # Generate
-    ])
-    tester.execute([('command', command.name)])
+    tester.set_inputs(
+        [
+            "my-package",  # Package name
+            "1.2.3",  # Version
+            "This is a description",  # Description
+            "n",  # Author
+            "MIT",  # License
+            "~2.7 || ^3.6",  # Python
+            "n",  # Interactive packages
+            "n",  # Interactive dev packages
+            "\n",  # Generate
+        ]
+    )
+    tester.execute([("command", command.name)])
 
     output = tester.get_display()
     expected = """\
@@ -60,32 +62,34 @@ pytest = "^3.5"
 
 
 def test_interactive_with_dependencies(app, repo, mocker, poetry):
-    repo.add_package(get_package('pendulum', '2.0.0'))
+    repo.add_package(get_package("pendulum", "2.0.0"))
 
-    command = app.find('init')
+    command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch('poetry.utils._compat.Path.open')
-    p = mocker.patch('poetry.utils._compat.Path.cwd')
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
     tester = CommandTester(command)
-    tester.set_inputs([
-        'my-package',  # Package name
-        '1.2.3',  # Version
-        'This is a description',  # Description
-        'n',  # Author
-        'MIT',  # License
-        '~2.7 || ^3.6',  # Python
-        '',  # Interactive packages
-        'pendulum',  # Search for package
-        '0',  # First option
-        '',  # Do not set constraint
-        '',  # Stop searching for packages
-        'n',  # Interactive dev packages
-        '\n'  # Generate
-    ])
-    tester.execute([('command', command.name)])
+    tester.set_inputs(
+        [
+            "my-package",  # Package name
+            "1.2.3",  # Version
+            "This is a description",  # Description
+            "n",  # Author
+            "MIT",  # License
+            "~2.7 || ^3.6",  # Python
+            "",  # Interactive packages
+            "pendulum",  # Search for package
+            "0",  # First option
+            "",  # Do not set constraint
+            "",  # Stop searching for packages
+            "n",  # Interactive dev packages
+            "\n",  # Generate
+        ]
+    )
+    tester.execute([("command", command.name)])
 
     output = tester.get_display()
     expected = """\

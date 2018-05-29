@@ -22,7 +22,7 @@ class ArrayElement(ContainerElement, traversal.TraversalMixin, list):
 
     def _check_homogeneity(self):
         if len(set(type(v) for v in self.primitive_value)) > 1:
-            raise InvalidElementError('Array should be homogeneous')
+            raise InvalidElementError("Array should be homogeneous")
 
     def __len__(self):
         return len(tuple(self._enumerate_non_metadata_sub_elements()))
@@ -35,12 +35,18 @@ class ArrayElement(ContainerElement, traversal.TraversalMixin, list):
 
     def __setitem__(self, i, value):
         value_i, _ = self._find_value(i)
-        new_element = value if isinstance(value, Element) else factory.create_element(value)
-        self._sub_elements = self.sub_elements[:value_i] + [new_element] + self.sub_elements[value_i+1:]
+        new_element = (
+            value if isinstance(value, Element) else factory.create_element(value)
+        )
+        self._sub_elements = (
+            self.sub_elements[:value_i]
+            + [new_element]
+            + self.sub_elements[value_i + 1 :]
+        )
 
     @property
     def value(self):
-        return self     # self is a sequence-like value
+        return self  # self is a sequence-like value
 
     @property
     def primitive_value(self):
@@ -48,9 +54,9 @@ class ArrayElement(ContainerElement, traversal.TraversalMixin, list):
         Returns a primitive Python value without any formatting or markup metadata.
         """
         return list(
-            self[i].primitive_value if hasattr(self[i], 'primitive_value')
-            else self[i]
-            for i in range(len(self)))
+            self[i].primitive_value if hasattr(self[i], "primitive_value") else self[i]
+            for i in range(len(self))
+        )
 
     def __str__(self):
         return "{}".format(self.primitive_value)
@@ -61,15 +67,18 @@ class ArrayElement(ContainerElement, traversal.TraversalMixin, list):
     def append(self, v):
         new_entry = [create_element(v)]
 
-        if self:    # If not empty, we need a comma and whitespace prefix!
+        if self:  # If not empty, we need a comma and whitespace prefix!
             new_entry = [
-                factory.create_operator_element(','),
+                factory.create_operator_element(","),
                 factory.create_whitespace_element(),
             ] + new_entry
 
         insertion_index = self._find_closing_square_bracket()
-        self._sub_elements = self._sub_elements[:insertion_index] + new_entry + \
-                             self._sub_elements[insertion_index:]
+        self._sub_elements = (
+            self._sub_elements[:insertion_index]
+            + new_entry
+            + self._sub_elements[insertion_index:]
+        )
 
     def _find_value(self, i):
         """
@@ -82,7 +91,7 @@ class ArrayElement(ContainerElement, traversal.TraversalMixin, list):
     def __delitem__(self, i):
         value_i, value = self._find_value(i)
 
-        begin, end = value_i, value_i+1
+        begin, end = value_i, value_i + 1
 
         # Rules:
         #   1. begin should be index to the preceding comma to the value
@@ -130,10 +139,10 @@ class ArrayElement(ContainerElement, traversal.TraversalMixin, list):
         def next_comma_i():
             return self._find_following_comma(i)
 
-        while i < len(self.elements)-1:
+        while i < len(self.elements) - 1:
             if next_newline_i() < next_entry_i():
-                self.elements.insert(i+1, factory.create_newline_element())
-                if float('-inf') < next_comma_i() < next_closing_bracket_i():
+                self.elements.insert(i + 1, factory.create_newline_element())
+                if float("-inf") < next_comma_i() < next_closing_bracket_i():
                     i = next_comma_i()
                 else:
                     i = next_closing_bracket_i()

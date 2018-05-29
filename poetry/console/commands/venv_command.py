@@ -2,7 +2,6 @@ from .command import Command
 
 
 class VenvCommand(Command):
-
     def __init__(self):
         self._venv = None
 
@@ -14,14 +13,11 @@ class VenvCommand(Command):
         super(VenvCommand, self).initialize(i, o)
 
         self._venv = Venv.create(
-            o, self.poetry.package.name,
-            cwd=self.poetry.file.parent
+            o, self.poetry.package.name, cwd=self.poetry.file.parent
         )
 
         if self._venv.is_venv() and o.is_verbose():
-            o.writeln(
-                'Using virtualenv: <comment>{}</>'.format(self._venv.venv)
-            )
+            o.writeln("Using virtualenv: <comment>{}</>".format(self._venv.venv))
 
     @property
     def venv(self):

@@ -8,7 +8,6 @@ from .repository import Repository
 
 
 class Pool(BaseRepository):
-
     def __init__(self, repositories=None):  # type: (Union[list, None]) -> None
         if repositories is None:
             repositories = []
@@ -19,7 +18,7 @@ class Pool(BaseRepository):
             self.add_repository(repository)
 
         super(Pool, self).__init__()
-            
+
     @property
     def repositories(self):  # type: () -> List[Repository]
         return self._repositories
@@ -40,7 +39,7 @@ class Pool(BaseRepository):
                 break
 
         return self
-    
+
     def configure(self, source):  # type: (dict) -> Pool
         """
         Configures a repository based on a source
@@ -48,14 +47,14 @@ class Pool(BaseRepository):
         """
         from .legacy_repository import LegacyRepository
 
-        if 'url' in source:
+        if "url" in source:
             # PyPI-like repository
-            if 'name' not in source:
-                raise RuntimeError('Missing [name] in source.')
+            if "name" not in source:
+                raise RuntimeError("Missing [name] in source.")
 
-            repository = LegacyRepository(source['name'], source['url'])
+            repository = LegacyRepository(source["name"], source["url"])
         else:
-            raise RuntimeError('Unsupported source specified')
+            raise RuntimeError("Unsupported source specified")
 
         return self.add_repository(repository)
 
@@ -76,16 +75,12 @@ class Pool(BaseRepository):
 
         return None
 
-    def find_packages(self,
-                      name,
-                      constraint=None,
-                      extras=None,
-                      allow_prereleases=False):
+    def find_packages(
+        self, name, constraint=None, extras=None, allow_prereleases=False
+    ):
         for repository in self._repositories:
             packages = repository.find_packages(
-                name, constraint,
-                extras=extras,
-                allow_prereleases=allow_prereleases
+                name, constraint, extras=extras, allow_prereleases=allow_prereleases
             )
             if packages:
                 return packages

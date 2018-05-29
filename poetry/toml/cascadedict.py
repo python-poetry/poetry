@@ -12,7 +12,7 @@ class CascadeDict:
     """
 
     def __init__(self, *internal_dicts):
-        assert internal_dicts, 'internal_dicts cannot be empty'
+        assert internal_dicts, "internal_dicts cannot be empty"
         self._internal_dicts = tuple(internal_dicts)
 
     def cascaded_with(self, one_more_dict):
@@ -48,7 +48,9 @@ class CascadeDict:
         return set(reduce(operator.or_, (set(d.keys()) for d in self._internal_dicts)))
 
     def items(self):
-        all_items = reduce(operator.add, (list(d.items()) for d in reversed(self._internal_dicts)))
+        all_items = reduce(
+            operator.add, (list(d.items()) for d in reversed(self._internal_dicts))
+        )
         unique_items = {k: v for k, v in all_items}.items()
         return tuple(unique_items)
 
@@ -64,7 +66,7 @@ class CascadeDict:
     @property
     def neutralized(self):
         return {k: raw.to_raw(v) for k, v in self.items()}
-    
+
     @property
     def primitive_value(self):
         return self.neutralized

@@ -6,22 +6,22 @@ class VCSDependency(Dependency):
     Represents a VCS dependency
     """
 
-    def __init__(self, name, vcs, source,
-                 branch=None, tag=None, rev=None,
-                 optional=False):
+    def __init__(
+        self, name, vcs, source, branch=None, tag=None, rev=None, optional=False
+    ):
         self._vcs = vcs
         self._source = source
 
         if not any([branch, tag, rev]):
             # If nothing has been specified, we assume master
-            branch = 'master'
+            branch = "master"
 
         self._branch = branch
         self._tag = tag
         self._rev = rev
-        
+
         super(VCSDependency, self).__init__(
-            name, '*', optional=optional, allows_prereleases=True
+            name, "*", optional=optional, allows_prereleases=True
         )
 
     @property
@@ -51,16 +51,16 @@ class VCSDependency(Dependency):
     @property
     def pretty_constraint(self):  # type: () -> str
         if self._branch:
-            what = 'branch'
+            what = "branch"
             version = self._branch
         elif self._tag:
-            what = 'tag'
+            what = "tag"
             version = self._tag
         else:
-            what = 'rev'
+            what = "rev"
             version = self._rev
 
-        return '{} {}'.format(what, version)
+        return "{} {}".format(what, version)
 
     def is_vcs(self):  # type: () -> bool
         return True

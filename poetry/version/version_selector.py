@@ -6,15 +6,15 @@ from poetry.semver import Version
 
 
 class VersionSelector(object):
-
     def __init__(self, pool):
         self._pool = pool
 
-    def find_best_candidate(self,
-                            package_name,                 # type: str
-                            target_package_version=None,  # type:  Union[str, None]
-                            allow_prereleases=False       # type: bool
-                            ):  # type: (...) -> Union[Package, bool]
+    def find_best_candidate(
+        self,
+        package_name,  # type: str
+        target_package_version=None,  # type:  Union[str, None]
+        allow_prereleases=False,  # type: bool
+    ):  # type: (...) -> Union[Package, bool]
         """
         Given a package name and optional version,
         returns the latest Package that matches
@@ -25,8 +25,7 @@ class VersionSelector(object):
             constraint = None
 
         candidates = self._pool.find_packages(
-            package_name, constraint,
-            allow_prereleases=allow_prereleases
+            package_name, constraint, allow_prereleases=allow_prereleases
         )
 
         if not candidates:
@@ -64,10 +63,10 @@ class VersionSelector(object):
             if parts[0] != 0:
                 del parts[2]
 
-            version = '.'.join(str(p) for p in parts)
+            version = ".".join(str(p) for p in parts)
             if parsed.is_prerelease():
-                version += '-{}'.format('.'.join(str(p) for p in parsed.prerelease))
+                version += "-{}".format(".".join(str(p) for p in parsed.prerelease))
         else:
             return pretty_version
 
-        return '^{}'.format(version)
+        return "^{}".format(version)
