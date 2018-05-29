@@ -7,6 +7,7 @@ from typing import List
 from typing import Tuple
 
 from .command import Command
+from .venv_command import VenvCommand
 
 
 class InitCommand(Command):
@@ -31,17 +32,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
     def __init__(self):
         super(InitCommand, self).__init__()
 
-        self.pool = None
-
-    def initialize(self, i, o):
-        from poetry.repositories import Pool
-        from poetry.repositories.pypi_repository import PyPiRepository
-
-        super(InitCommand, self).initialize(i, o)
-
-        if self.pool is None:
-            self.pool = Pool()
-            self.pool.add_repository(PyPiRepository())
+        self._pool = None
 
     def handle(self):
         from poetry.layouts import layout
@@ -326,7 +317,14 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         return author
 
     def _get_pool(self):
-        if self.pool is None:
-            self.pool = self.poetry.pool
+        from poetry.repositories import Pool
+        from poetry.repositories.pypi_repository import PyPiRepository
 
-        return self.pool
+        if isinstance(self, VenvCommand):
+            return self.poetry.pool
+
+        if self._pool is None:
+            self._pool = Pool()
+            self._pool.add_repository(PyPiRepository())
+
+        return self._pool

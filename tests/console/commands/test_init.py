@@ -18,8 +18,10 @@ def tmp_dir():
     shutil.rmtree(dir_)
 
 
-def test_basic_interactive(app, mocker):
+def test_basic_interactive(app, mocker, poetry):
     command = app.find('init')
+    command._pool = poetry.pool
+
     mocker.patch('poetry.utils._compat.Path.open')
     p = mocker.patch('poetry.utils._compat.Path.cwd')
     p.return_value = Path(__file__)
@@ -57,10 +59,12 @@ pytest = "^3.5"
     assert expected in output
 
 
-def test_interactive_with_dependencies(app, repo, mocker):
+def test_interactive_with_dependencies(app, repo, mocker, poetry):
     repo.add_package(get_package('pendulum', '2.0.0'))
 
     command = app.find('init')
+    command._pool = poetry.pool
+
     mocker.patch('poetry.utils._compat.Path.open')
     p = mocker.patch('poetry.utils._compat.Path.cwd')
     p.return_value = Path(__file__).parent
@@ -99,7 +103,5 @@ pendulum = "^2.0"
 [tool.poetry.dev-dependencies]
 pytest = "^3.5"
 """
-
-    print(output)
 
     assert expected in output

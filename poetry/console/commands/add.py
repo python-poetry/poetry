@@ -29,9 +29,6 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         'poetry.repositories.pypi_repository'
     ]
 
-    def initialize(self, i, o):
-        super(AddCommand, self).initialize(i, o)
-
     def handle(self):
         from poetry.installation import Installer
         from poetry.semver import parse_constraint
