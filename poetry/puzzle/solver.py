@@ -102,7 +102,7 @@ class Solver:
         return sorted(
             operations,
             key=lambda o: (
-                1 if not o.package.name not in requested_names else 0,
+                1 if o.package.name in requested_names else 0,
                 o.package.name
             )
         )
