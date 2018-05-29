@@ -70,12 +70,14 @@ class SelfUpdateCommand(Command):
             self.output.block([
                 '[CalledProcessError]',
                 'An error has occured: {}'.format(str(e)),
-                e.output
+                str(e.output)
             ], style='error')
 
             return e.returncode
 
     def update(self, release):
+        from platform import system
+
         from poetry.utils._compat import Path
         from poetry.utils.helpers import temporary_directory
 
@@ -85,20 +87,23 @@ class SelfUpdateCommand(Command):
         prefix = sys.prefix
         base_prefix = getattr(sys, 'base_prefix', None)
         real_prefix = getattr(sys, 'real_prefix', None)
+        bin_dir = 'Scripts' if system() == 'Windows' else 'bin'
+        poetry_exe = 'poetry.exe' if system() == 'Windows' else 'poetry'
+        pip_exe = 'pip.exe' if system() == 'Windows' else 'pip'
 
-        prefix_poetry = Path(prefix) / 'bin' / 'poetry'
+        prefix_poetry = Path(prefix) / bin_dir / poetry_exe
         if prefix_poetry.exists():
-            pip = (prefix_poetry.parent / 'pip').resolve()
+            pip = (prefix_poetry.parent / pip_exe).resolve()
         elif (
             base_prefix
             and base_prefix != prefix
-            and (Path(base_prefix) / 'bin' / 'poetry').exists()
+            and (Path(base_prefix) / bin_dir / poetry_exe).exists()
         ):
-            pip = Path(base_prefix) / 'bin' / 'pip'
+            pip = Path(base_prefix) / bin_dir / pip_exe
         elif real_prefix:
-            pip = Path(real_prefix) / 'bin' / 'pip'
+            pip = Path(real_prefix) / bin_dir / pip_exe
         else:
-            pip = Path(prefix) / 'bin' / 'pip'
+            pip = Path(prefix) / bin_dir / pip_exe
 
             if not pip.exists():
                 raise RuntimeError('Unable to determine poetry\'s path')
@@ -155,8 +160,10 @@ class SelfUpdateCommand(Command):
             self.process(
                 str(pip),
                 'install',
+                '--user',
                 '--upgrade',
                 '--no-deps',
+                '--no-warn-script-location',
                 str(temp_dir / 'poetry-{}-{}.whl'.format(version, tag))
             )
 
