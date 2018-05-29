@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed handling of `in` environment markers with commas.
+
+
 ## [0.10.1] - 2018-05-28
 
 ### Fixed

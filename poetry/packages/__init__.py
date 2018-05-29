@@ -111,7 +111,7 @@ def dependency_from_pep_508(name):
                     version += '.*'
                 elif op == 'in':
                     versions = []
-                    for v in version.split(' '):
+                    for v in re.split('[ ,]+', version):
                         split = v.split('.')
                         if len(split) in [1, 2]:
                             split.append('*')
@@ -141,7 +141,7 @@ def dependency_from_pep_508(name):
                     op = ''
                 elif op == 'in':
                     platforms = []
-                    for v in platform.split(' '):
+                    for v in re.split('[ ,]+', platform):
                         platforms.append(v)
 
                     if platforms:
