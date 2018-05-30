@@ -16,7 +16,7 @@ from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | sudo -H python3
 ```
 
 Alternatively, you can download the `get-poetry.py` file and execute it separately.
