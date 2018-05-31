@@ -69,6 +69,8 @@ class Application(BaseApplication):
 
         if o is None:
             o = ConsoleOutput()
+
+            self._formatter.with_colors(o.is_decorated())
             o.set_formatter(self._formatter)
 
         name = i.get_first_argument()
