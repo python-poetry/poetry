@@ -316,6 +316,7 @@ def test_run_with_optional_and_python_restricted_dependencies(
     repo.add_package(package_c13)
     repo.add_package(package_d)
 
+    package.extras = {"foo": [get_dependency("A", "~1.0")]}
     package.add_dependency("A", {"version": "~1.0", "optional": True})
     package.add_dependency("B", {"version": "^1.0", "python": "~2.4"})
     package.add_dependency("C", {"version": "^1.0", "python": "~2.7 || ^3.4"})
@@ -350,6 +351,7 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     repo.add_package(package_c13)
     repo.add_package(package_d)
 
+    package.extras = {"foo": [get_dependency("A", "~1.0")]}
     package.add_dependency("A", {"version": "~1.0", "optional": True})
     package.add_dependency("B", {"version": "^1.0", "platform": "custom"})
     package.add_dependency("C", {"version": "^1.0", "platform": "darwin"})

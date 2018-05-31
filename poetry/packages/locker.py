@@ -171,7 +171,7 @@ class Locker:
     def _dump_package(self, package):  # type: (poetry.packages.Package) -> dict
         dependencies = {}
         for dependency in package.requires:
-            if dependency.is_optional():
+            if dependency.is_optional() and not dependency.is_activated():
                 continue
 
             dependencies[dependency.pretty_name] = str(dependency.pretty_constraint)

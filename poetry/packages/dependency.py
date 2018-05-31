@@ -44,6 +44,8 @@ class Dependency(object):
         self._extras = []
         self._in_extras = []
 
+        self._activated = not self._optional
+
         self.is_root = False
 
     @property
@@ -105,6 +107,9 @@ class Dependency(object):
 
     def is_optional(self):
         return self._optional
+
+    def is_activated(self):
+        return self._activated
 
     def is_vcs(self):
         return False
@@ -244,13 +249,16 @@ class Dependency(object):
         """
         Set the dependency as mandatory.
         """
-        self._optional = False
+        self._activated = True
 
     def deactivate(self):
         """
         Set the dependency as optional.
         """
-        self._optional = True
+        if not self._optional:
+            self._optional = True
+
+        self._activated = False
 
     def with_constraint(self, constraint):
         new = Dependency(

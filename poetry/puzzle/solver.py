@@ -41,8 +41,9 @@ class Solver:
         requested = self._package.all_requires
 
         for package in packages:
+            graph = self._build_graph(self._package, packages)
             category, optional, python, platform = self._get_tags_for_package(
-                package, packages, requested
+                package, graph
             )
 
             package.category = category
@@ -106,164 +107,111 @@ class Solver:
             ),
         )
 
-    def _get_graph_for_package(self, package, packages, requested, original=None):
+    def _build_graph(self, package, packages, previous=None, dep=None):
+        if not previous:
+            category = "dev"
+            optional = True
+            python_version = None
+            platform = None
+        else:
+            category = dep.category
+            optional = dep.is_optional() and not dep.is_activated()
+            python_version = (
+                dep.python_versions
+                if previous.python_constraint.allows_all(dep.python_constraint)
+                else previous.python_versions
+            )
+            platform = (
+                dep.platform
+                if previous.platform_constraint.matches(dep.platform_constraint)
+                and dep.platform != "*"
+                else previous.platform
+            )
+
         graph = {
-            package.name: {
-                "category": "dev",
-                "optional": True,
-                "python_version": None,
-                "platform": None,
-                "dependencies": {},
-                "parents": {},
-            }
+            "name": package.name,
+            "category": category,
+            "optional": optional,
+            "python_version": python_version,
+            "platform": platform,
+            "children": [],
         }
 
-        roots = []
-        for dep in requested:
-            if dep.name == package.name:
-                roots.append(dep)
-
-        origins = []
-        for pkg in packages:
-            for dep in pkg.all_requires:
-                if original and original.name == pkg.name:
-                    # Circular dependency
-                    continue
-
-                if dep.name == package.name:
-                    origins.append((pkg, dep))
-
-        if roots and (not origins or len(roots) > 1):
-            # Root dependency
-            if len(roots) == 1:
-                root = roots[0]
-            else:
-                root1 = [r for r in roots if r.category == "main"][0]
-                root2 = [r for r in roots if r.category == "dev"][0]
-                if root1.extras == root2.extras or original is None:
-                    root = root1
-                else:
-                    root1_extra_dependencies = []
-                    for extra in root1.extras:
-                        if extra in package.extras:
-                            for dep in package.extras[extra]:
-                                root1_extra_dependencies.append(dep.name)
-
-                    root2_extra_dependencies = []
-                    for extra in root2.extras:
-                        if extra in package.extras:
-                            for dep in package.extras[extra]:
-                                root2_extra_dependencies.append(dep.name)
-
-                    if (
-                        original.name in root1_extra_dependencies
-                        and original.name in root2_extra_dependencies
-                    ):
-                        root = root1
-                    elif original.name in root2_extra_dependencies:
-                        root = root2
-                    else:
-                        root = root1
-
-            category = root.category
-            optional = root.is_optional()
-
-            python_version = str(root.python_constraint)
-            platform = str(root.platform_constraint)
-
-            graph[package.name]["category"] = category
-            graph[package.name]["optional"] = optional
-            graph[package.name]["python_version"] = python_version
-            graph[package.name]["platform"] = platform
-
+        if previous and previous is not dep and previous.name == dep.name:
             return graph
 
-        for pkg, dep in origins:
-            graph[package.name]["dependencies"][pkg.name] = {
-                "constraint": dep.pretty_constraint,
-                "python_version": dep.python_versions,
-                "platform": dep.platform,
-            }
-            graph[package.name]["parents"].update(
-                self._get_graph_for_package(pkg, packages, requested, original=package)
-            )
+        for dependency in package.all_requires:
+            if dependency.is_optional():
+                if not package.is_root() and (not dep or not dep.extras):
+                    continue
+
+                is_activated = False
+                for group, extras in package.extras.items():
+                    if dep:
+                        extras = dep.extras
+                    elif package.is_root():
+                        extras = package.extras
+                    else:
+                        extras = []
+
+                    if group in extras:
+                        is_activated = True
+                        break
+
+                if not is_activated:
+                    continue
+
+            for pkg in packages:
+                if pkg.name == dependency.name:
+                    graph["children"].append(
+                        self._build_graph(pkg, packages, dependency, dep or dependency)
+                    )
 
         return graph
 
-    def _get_tags_for_package(self, package, packages, requested):
-        graph = self._get_graph_for_package(package, packages, requested)[package.name]
-
-        return self._get_tags_from_graph(graph, packages)
-
-    def _get_tags_from_graph(self, graph, packages):
-        category = graph["category"]
-        optional = graph["optional"]
-        python_version = graph["python_version"]
-        platform = graph["platform"]
-
-        if not graph["parents"]:
-            # Root dependency
-            return category, optional, python_version, platform
-
+    def _get_tags_for_package(self, package, graph):
+        categories = ["dev"]
+        optionals = [True]
         python_versions = []
         platforms = []
 
-        for parent_name, parent_graph in graph["parents"].items():
-            dep_python_version = graph["dependencies"][parent_name]["python_version"]
-            dep_platform = graph["dependencies"][parent_name]["platform"]
+        children = graph["children"]
+        for child in children:
+            if child["name"] == package.name:
+                category = child["category"]
+                optional = child["optional"]
+                python_version = child["python_version"]
+                platform = child["platform"]
+            else:
+                (
+                    category,
+                    optional,
+                    python_version,
+                    platform,
+                ) = self._get_tags_for_package(package, child)
 
-            for pkg in packages:
-                if pkg.name == parent_name:
-                    (
-                        top_category,
-                        top_optional,
-                        top_python_version,
-                        top_platform,
-                    ) = self._get_tags_from_graph(parent_graph, packages)
+            categories.append(category)
+            optionals.append(optional)
+            if python_version is not None:
+                python_versions.append(python_version)
 
-                    if category is None or category != "main":
-                        category = top_category
+            if platform is not None:
+                platforms.append(platform)
 
-                    optional = optional and top_optional
+        if "main" in categories:
+            category = "main"
+        else:
+            category = "dev"
 
-                    # Take the most restrictive constraints
-                    if top_python_version is not None:
-                        if dep_python_version is not None:
-                            previous = parse_constraint(dep_python_version)
-                            current = parse_constraint(top_python_version)
-
-                            if previous.allows_all(current):
-                                python_versions.append(top_python_version)
-                            else:
-                                python_versions.append(dep_python_version)
-                        else:
-                            python_versions.append(top_python_version)
-                    elif dep_python_version is not None:
-                        python_versions.append(dep_python_version)
-
-                    if top_platform is not None:
-                        if dep_platform is not None:
-                            previous = GenericConstraint.parse(dep_platform)
-                            current = GenericConstraint.parse(top_platform)
-
-                            if top_platform != "*" and previous.matches(current):
-                                platforms.append(top_platform)
-                            else:
-                                platforms.append(dep_platform)
-                        else:
-                            platforms.append(top_platform)
-                    elif dep_platform is not None:
-                        platforms.append(dep_platform)
-
-                    break
+        optional = all(optionals)
 
         if not python_versions:
             python_version = None
         else:
             # Find the least restrictive constraint
             python_version = python_versions[0]
-            previous = parse_constraint(python_version)
             for constraint in python_versions[1:]:
+                previous = parse_constraint(python_version)
                 current = parse_constraint(constraint)
 
                 if python_version == "*":
@@ -277,8 +225,8 @@ class Solver:
             platform = None
         else:
             platform = platforms[0]
-            previous = GenericConstraint.parse(platform)
             for constraint in platforms[1:]:
+                previous = GenericConstraint.parse(platform)
                 current = GenericConstraint.parse(constraint)
 
                 if platform == "*":

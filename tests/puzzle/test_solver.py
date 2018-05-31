@@ -540,9 +540,9 @@ def test_solver_sub_dependencies_with_requirements(solver, repo, package):
 
 
 def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package):
-    package.add_dependency("A")
-    package.add_dependency("B")
-    package.add_dependency("C")
+    package.add_dependency("A", {"version": "^1.0", "python": "<5.0"})
+    package.add_dependency("B", {"version": "^1.0", "python": "<5.0"})
+    package.add_dependency("C", {"version": "^1.0", "python": "<4.0"})
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -551,11 +551,11 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package
     package_e = get_package("E", "1.0")
     package_f = get_package("F", "1.0")
 
-    package_a.add_dependency("B", "^1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<4.0"})
     package_a.add_dependency("D", {"version": "^1.0", "python": "<4.0"})
     package_b.add_dependency("E", {"version": "^1.0", "platform": "win32"})
-    package_b.add_dependency("F")
-    package_c.add_dependency("F", "^1.0")
+    package_b.add_dependency("F", {"version": "^1.0", "python": "<5.0"})
+    package_c.add_dependency("F", {"version": "^1.0", "python": "<4.0"})
     package_d.add_dependency("F")
 
     repo.add_package(package_a)
@@ -579,11 +579,17 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package
         ],
     )
 
+    op = ops[0]
+    assert op.package.requirements == {"python": "<4.0"}
+
     op = ops[1]
-    assert op.package.requirements == {"platform": "win32"}
+    assert op.package.requirements == {"platform": "win32", "python": "<5.0"}
 
     op = ops[2]
-    assert op.package.requirements == {}
+    assert op.package.requirements == {"python": "<5.0"}
+
+    op = ops[4]
+    assert op.package.requirements == {"python": "<5.0"}
 
 
 def test_solver_sub_dependencies_with_not_supported_python_version(
@@ -719,6 +725,29 @@ def test_solver_with_dependency_and_prerelease_sub_dependencies(solver, repo, pa
     repo.add_package(get_package("B", "1.0.0.dev2"))
     repo.add_package(get_package("B", "1.0.0.dev3"))
     package_b = get_package("B", "1.0.0.dev4")
+    repo.add_package(package_b)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+
+def test_solver_circular_dependency(solver, repo, package):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", "^1.0")
+
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency("A", "^1.0")
+
+    repo.add_package(package_a)
     repo.add_package(package_b)
 
     ops = solver.solve()

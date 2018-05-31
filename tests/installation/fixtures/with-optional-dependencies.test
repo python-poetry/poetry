@@ -17,7 +17,7 @@ python-versions = "*"
 platform = "*"
 
 [package.requirements]
-python = ">=2.4,<2.5"
+python = "~2.4"
 
 [[package]]
 name = "C"
@@ -32,7 +32,7 @@ platform = "*"
 D = "^1.2"
 
 [package.requirements]
-python = ">=2.7,<2.8 || >=3.4,<4.0"
+python = "~2.7 || ^3.4"
 
 [[package]]
 name = "D"
@@ -44,7 +44,10 @@ python-versions = "*"
 platform = "*"
 
 [package.requirements]
-python = ">=2.7,<2.8 || >=3.4,<4.0"
+python = "~2.7 || ^3.4"
+
+[extras]
+foo = ["A"]
 
 [metadata]
 python-versions = "~2.7 || ^3.4"

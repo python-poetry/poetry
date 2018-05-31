@@ -303,7 +303,7 @@ class Provider:
             return [
                 r
                 for r in package.requires
-                if not r.is_optional() and r.name not in self.UNSAFE_PACKAGES
+                if not r.is_activated() and r.name not in self.UNSAFE_PACKAGES
             ]
         else:
             return Dependencies(package, self)
@@ -324,7 +324,7 @@ class Provider:
         return [
             r
             for r in package.requires
-            if not r.is_optional()
+            if r.is_activated()
             and self._package.python_constraint.allows_any(r.python_constraint)
             and self._package.platform_constraint.matches(package.platform_constraint)
             and r.name not in self.UNSAFE_PACKAGES

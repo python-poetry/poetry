@@ -46,6 +46,9 @@ platform = "*"
 [package.requirements]
 platform = "darwin"
 
+[extras]
+foo = ["A"]
+
 [metadata]
 python-versions = "*"
 platform = "*"
