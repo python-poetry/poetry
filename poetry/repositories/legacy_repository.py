@@ -48,6 +48,9 @@ class Page:
     VERSION_REGEX = re.compile("(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
 
     def __init__(self, url, content, headers):
+        if not url.endswith("/"):
+            url += "/"
+
         self._url = url
         encoding = None
         if headers and "Content-Type" in headers:
@@ -57,9 +60,13 @@ class Page:
                 encoding = params["charset"]
 
         self._content = content
-        self._parsed = html5lib.parse(
-            content, transport_encoding=encoding, namespaceHTMLElements=False
-        )
+
+        if encoding is None:
+            self._parsed = html5lib.parse(content, namespaceHTMLElements=False)
+        else:
+            self._parsed = html5lib.parse(
+                content, transport_encoding=encoding, namespaceHTMLElements=False
+            )
 
     @property
     def versions(self):  # type: () -> Generator[Version]
@@ -122,7 +129,7 @@ class Page:
 
 
 class LegacyRepository(PyPiRepository):
-    def __init__(self, name, url):
+    def __init__(self, name, url, disable_cache=False):
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
@@ -146,6 +153,8 @@ class LegacyRepository(PyPiRepository):
         self._session = CacheControl(
             requests.session(), cache=FileCache(str(self._cache_dir / "_http"))
         )
+
+        self._disable_cache = disable_cache
 
     @property
     def name(self):
@@ -196,7 +205,7 @@ class LegacyRepository(PyPiRepository):
         We have to download a package to get the dependencies.
         We also need to download every file matching this release
         to get the various hashes.
-        
+
         Note that, this will be cached so the subsequent operations
         should be much faster.
         """
@@ -251,17 +260,6 @@ class LegacyRepository(PyPiRepository):
             self._packages.append(package)
 
             return package
-
-    def get_release_info(self, name, version):  # type: (str, str) -> dict
-        """
-        Return the release information given a package name and a version.
-
-        The information is returned from the cache if it exists
-        or retrieved from the remote server.
-        """
-        return self._cache.store("releases").remember_forever(
-            "{}:{}".format(name, version), lambda: self._get_release_info(name, version)
-        )
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         page = self._get("/{}".format(canonicalize_name(name).replace(".", "-")))

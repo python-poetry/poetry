@@ -9,6 +9,7 @@
 - Fixed Python requirements not properly set when resolving dependencies.
 - Fixed terminal coloring being activated even if not supported.
 - Fixed wrong executable being picked up on Windows in `poetry run`.
+- Fixed error when listing distribution links for private repositories.
 
 
 ## [0.10.1] - 2018-05-28
