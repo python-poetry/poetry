@@ -312,7 +312,10 @@ def main():
 
     args = parser.parse_args()
 
-    installer = Installer(version=args.version, preview=args.preview)
+    installer = Installer(
+        version=args.version or os.getenv("POETRY_VERSION"),
+        preview=args.preview or os.getenv("POETRY_PREVIEW"),
+    )
 
     return installer.run()
 
