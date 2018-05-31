@@ -287,7 +287,7 @@ class Installer:
                 "install",
                 "--upgrade",
                 "--no-deps",
-                '--user',
+                "--user",
                 os.path.join(dir, "poetry-{}-{}.whl".format(version, tag)),
             )
 
