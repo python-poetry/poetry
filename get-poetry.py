@@ -19,6 +19,7 @@ directory, it will look for them in the base system.
 import argparse
 import json
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -88,7 +89,20 @@ STYLES = {
 
 
 def is_decorated():
-    return sys.stdout.isatty()
+    if platform.system().lower() == "windows":
+        return (
+            os.getenv("ANSICON") is not None
+            or "ON" == os.getenv("ConEmuANSI")
+            or "xterm" == os.getenv("Term")
+        )
+
+    if not hasattr(sys.stdout, "fileno"):
+        return False
+
+    try:
+        return os.isatty(sys.stdout.fileno())
+    except UnsupportedOperation:
+        return False
 
 
 def colorize(style, text):
