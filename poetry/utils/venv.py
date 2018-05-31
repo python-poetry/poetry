@@ -235,6 +235,9 @@ class Venv(object):
         """
         Run a command inside the virtual env.
         """
+        if self._windows:
+            bin = self._bin(bin)
+
         cmd = [bin] + list(args)
         shell = kwargs.get("shell", False)
         call = kwargs.pop("call", False)
@@ -276,6 +279,9 @@ class Venv(object):
         if not self.is_venv():
             return subprocess.call([bin] + list(args))
         else:
+            if self._windows:
+                bin = self._bin(bin)
+
             with self.temp_environ():
                 os.environ["PATH"] = self._path()
                 os.environ["VIRTUAL_ENV"] = str(self._venv)
@@ -313,7 +319,11 @@ class Venv(object):
         if not self.is_venv():
             return bin
 
-        return str(self._bin_dir / bin) + (".exe" if self._windows else "")
+        bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._windows else "")
+        if not bin_path.exists():
+            return bin
+
+        return str(bin_path)
 
     def is_venv(self):  # type: () -> bool
         return self._venv is not None
