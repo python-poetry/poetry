@@ -10,6 +10,7 @@
 - Fixed terminal coloring being activated even if not supported.
 - Fixed wrong executable being picked up on Windows in `poetry run`.
 - Fixed error when listing distribution links for private repositories.
+- Fixed handling of PEP 440 `~=` version constraint.
 
 
 ## [0.10.1] - 2018-05-28

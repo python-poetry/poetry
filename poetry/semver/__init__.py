@@ -4,6 +4,7 @@ from .empty_constraint import EmptyConstraint
 from .patterns import BASIC_CONSTRAINT
 from .patterns import CARET_CONSTRAINT
 from .patterns import TILDE_CONSTRAINT
+from .patterns import TILDE_PEP440_CONSTRAINT
 from .patterns import X_CONSTRAINT
 from .version import Version
 from .version_constraint import VersionConstraint
@@ -59,6 +60,28 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
             high = version.stable.next_major
 
         return VersionRange(version, high, include_min=True)
+        return VersionRange()
+
+    # PEP 440 Tilde range (~=)
+    m = TILDE_PEP440_CONSTRAINT.match(constraint)
+    if m:
+        precision = 1
+        if m.group(3):
+            precision += 1
+
+            if m.group(4):
+                precision += 1
+
+        version = Version.parse(m.group(1))
+
+        if precision == 2:
+            low = version
+            high = version.stable.next_major
+        else:
+            low = Version(version.major, version.minor, 0)
+            high = version.stable.next_minor
+
+        return VersionRange(low, high, include_min=True)
 
     # Caret range
     m = CARET_CONSTRAINT.match(constraint)

@@ -60,6 +60,9 @@ def test_parse_constraint_wildcard(input, constraint):
         ("~1.2-beta", VersionRange(Version(1, 2, 0, "beta"), Version(1, 3, 0), True)),
         ("~1.2-b2", VersionRange(Version(1, 2, 0, "b2"), Version(1, 3, 0), True)),
         ("~0.3", VersionRange(Version(0, 3, 0), Version(0, 4, 0), True)),
+        ("~3.5", VersionRange(Version(3, 5, 0), Version(3, 6, 0), True)),
+        ("~=3.5", VersionRange(Version(3, 5, 0), Version(4, 0, 0), True)),  # PEP 440
+        ("~=3.5.3", VersionRange(Version(3, 5, 0), Version(3, 6, 0), True)),  # PEP 440
     ],
 )
 def test_parse_constraint_tilde(input, constraint):

@@ -11,7 +11,8 @@ _COMPLETE_VERSION = "v?(\d+)(?:\.(\d+))?(?:\.(\d+))?{}(?:\+[^\s]+)?".format(MODI
 COMPLETE_VERSION = re.compile("(?i)" + _COMPLETE_VERSION)
 
 CARET_CONSTRAINT = re.compile("(?i)^\^({})$".format(_COMPLETE_VERSION))
-TILDE_CONSTRAINT = re.compile("(?i)^~=?({})$".format(_COMPLETE_VERSION))
+TILDE_CONSTRAINT = re.compile("(?i)^~(?!=)({})$".format(_COMPLETE_VERSION))
+TILDE_PEP440_CONSTRAINT = re.compile("(?i)^~=({})$".format(_COMPLETE_VERSION))
 X_CONSTRAINT = re.compile("^(!= ?|==)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$")
 BASIC_CONSTRAINT = re.compile(
     "(?i)^(<>|!=|>=?|<=?|==?)?\s*({})".format(_COMPLETE_VERSION)
