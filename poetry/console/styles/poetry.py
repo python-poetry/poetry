@@ -8,8 +8,8 @@ class PoetryStyle(CleoStyle):
 
         self.output.get_formatter().add_style("error", "red")
         self.output.get_formatter().add_style("warning", "yellow")
-        self.output.get_formatter().add_style("question", "cyan")
-        self.output.get_formatter().add_style("comment", "blue")
+        self.output.get_formatter().add_style("question", "blue")
+        self.output.get_formatter().add_style("comment", "cyan")
 
     def writeln(
         self,

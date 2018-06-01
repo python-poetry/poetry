@@ -489,4 +489,4 @@ class PyPiRepository(Repository):
                     f.write(chunk)
 
     def _log(self, msg, level="info"):
-        getattr(logger, level)("{}: {}".format(self._name, msg))
+        getattr(logger, level)("<comment>{}:</comment> {}".format(self._name, msg))

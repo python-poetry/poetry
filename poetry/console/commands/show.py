@@ -159,7 +159,9 @@ lists all packages available."""
                 color, name, name_length - len(install_marker), install_marker
             )
             if write_version:
-                line += " {:{}}".format(locked.full_pretty_version, version_length)
+                line += " <comment>{:{}}</comment>".format(
+                    locked.full_pretty_version, version_length
+                )
             if show_latest and write_latest:
                 latest = latest_packages[locked.pretty_name]
 
