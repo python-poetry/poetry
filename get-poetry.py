@@ -231,6 +231,7 @@ class Installer:
                     # Homebrew Python and possible other installations
                     # We workaround this issue by temporarily changing
                     # the --user directory
+                    original_user = os.getenv("PYTHONUSERBASE")
                     os.environ["PYTHONUSERBASE"] = dir
                     self.call(
                         self.CURRENT_PYTHON,
@@ -241,6 +242,11 @@ class Installer:
                         "--user",
                         "--ignore-installed",
                     )
+
+                    if original_user is not None:
+                        os.environ["PYTHONUSERBASE"] = original_user
+                    else:
+                        del os.environ["PYTHONUSERBASE"]
 
                     # Finding site-package directory
                     lib = os.path.join(dir, "lib")
