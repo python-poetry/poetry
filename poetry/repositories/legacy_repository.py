@@ -93,7 +93,12 @@ class Page:
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
 
-                yield Link(url, self, requires_python=pyrequire)
+                link = Link(url, self, requires_python=pyrequire)
+
+                if link.ext == ".egg":
+                    continue
+
+                yield link
 
     def links_for_version(self, version):  # type: (Version) -> Generator[Link]
         for link in self.links:
