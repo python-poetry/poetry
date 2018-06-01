@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed `self:update` command on Windows.
+- Fixed `self:update` not picking up new versions.
+
+
 ## [0.10.2] - 2018-05-31
 
 ### Fixed

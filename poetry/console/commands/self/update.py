@@ -22,6 +22,8 @@ class SelfUpdateCommand(Command):
     def handle(self):
         from poetry.__version__ import __version__
         from poetry.repositories.pypi_repository import PyPiRepository
+        from poetry.semver import Version
+        from poetry.utils._compat import decode
 
         version = self.argument("version")
         if not version:
@@ -44,7 +46,7 @@ class SelfUpdateCommand(Command):
         )
 
         release = None
-        for package in reversed(packages):
+        for package in packages:
             if package.is_prerelease():
                 if self.option("preview"):
                     release = package
@@ -61,7 +63,7 @@ class SelfUpdateCommand(Command):
             self.line("No new release found")
             return
 
-        if release.version == __version__:
+        if release.version == Version.parse(__version__):
             self.line("You are using the latest version")
             return
 
@@ -73,7 +75,7 @@ class SelfUpdateCommand(Command):
                 [
                     "[CalledProcessError]",
                     "An error has occured: {}".format(str(e)),
-                    e.output,
+                    decode(e.output),
                 ],
                 style="error",
             )
@@ -91,19 +93,19 @@ class SelfUpdateCommand(Command):
         base_prefix = getattr(sys, "base_prefix", None)
         real_prefix = getattr(sys, "real_prefix", None)
 
-        prefix_poetry = Path(prefix) / "bin" / "poetry"
+        prefix_poetry = self._bin_path(Path(prefix), "poetry")
         if prefix_poetry.exists():
-            pip = (prefix_poetry.parent / "pip").resolve()
+            pip = self._bin_path(prefix_poetry.parent.parent, "pip").resolve()
         elif (
             base_prefix
             and base_prefix != prefix
-            and (Path(base_prefix) / "bin" / "poetry").exists()
+            and self._bin_path(Path(base_prefix), "poetry").exists()
         ):
-            pip = Path(base_prefix) / "bin" / "pip"
+            pip = self._bin_path(Path(base_prefix), "pip")
         elif real_prefix:
-            pip = Path(real_prefix) / "bin" / "pip"
+            pip = self._bin_path(Path(real_prefix), "pip")
         else:
-            pip = Path(prefix) / "bin" / "pip"
+            pip = self._bin_path(Path(prefix), "pip")
 
             if not pip.exists():
                 raise RuntimeError("Unable to determine poetry's path")
@@ -176,3 +178,9 @@ class SelfUpdateCommand(Command):
 
     def process(self, *args):
         return subprocess.check_output(list(args), stderr=subprocess.STDOUT)
+
+    def _bin_path(self, base_path, bin):
+        if sys.platform == "win32":
+            return (base_path / "Scripts" / bin).with_suffix(".exe")
+
+        return base_path / "bin" / bin
