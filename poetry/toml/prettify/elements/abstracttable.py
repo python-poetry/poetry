@@ -21,7 +21,10 @@ class AbstractTable(ContainerElement, traversal.TraversalMixin, dict):
         """
         non_metadata = self._enumerate_non_metadata_sub_elements()
         while True:
-            yield next(non_metadata), next(non_metadata)
+            try:
+                yield next(non_metadata), next(non_metadata)
+            except StopIteration:
+                return
 
     def items(self):
         for (key_i, key), (value_i, value) in self._enumerate_items():

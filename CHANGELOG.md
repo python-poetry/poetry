@@ -6,6 +6,7 @@
 
 - Fixed `self:update` command on Windows.
 - Fixed `self:update` not picking up new versions.
+- Fixed a `RuntimeError` on Python 3.7.
 
 
 ## [0.10.2] - 2018-05-31
