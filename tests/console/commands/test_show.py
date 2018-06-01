@@ -159,8 +159,8 @@ def test_show_basic_with_not_installed_packages_decorated(app, poetry, installed
     tester.execute([("command", command.get_name())], {"decorated": True})
 
     expected = """\
-\033[32mcachy   \033[0m 0.1.0 Cachy package
-\033[31mpendulum\033[0m 2.0.0 Pendulum package
+\033[32mcachy   \033[0m \033[36m0.1.0\033[0m Cachy package
+\033[31mpendulum\033[0m \033[36m2.0.0\033[0m Pendulum package
 """
 
     assert tester.get_display() == expected
@@ -291,8 +291,8 @@ def test_show_latest_decorated(app, poetry, installed, repo):
     )
 
     expected = """\
-\033[32mcachy   \033[0m 0.1.0 \033[33m0.2.0\033[0m Cachy package
-\033[32mpendulum\033[0m 2.0.0 \033[31m2.0.1\033[0m Pendulum package
+\033[32mcachy   \033[0m \033[36m0.1.0\033[0m \033[33m0.2.0\033[0m Cachy package
+\033[32mpendulum\033[0m \033[36m2.0.0\033[0m \033[31m2.0.1\033[0m Pendulum package
 """
 
     assert tester.get_display() == expected
