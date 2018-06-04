@@ -60,7 +60,6 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
             high = version.stable.next_major
 
         return VersionRange(version, high, include_min=True)
-        return VersionRange()
 
     # PEP 440 Tilde range (~=)
     m = TILDE_PEP440_CONSTRAINT.match(constraint)

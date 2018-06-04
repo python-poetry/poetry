@@ -3,6 +3,7 @@ import pytest
 from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionRange
+from poetry.semver import VersionUnion
 
 
 @pytest.mark.parametrize(
@@ -109,6 +110,17 @@ def test_parse_constraint_caret(input, constraint):
 def test_parse_constraint_multi(input):
     assert parse_constraint(input) == VersionRange(
         Version(2, 0, 0), Version(3, 0, 0), include_min=False, include_max=True
+    )
+
+
+@pytest.mark.parametrize(
+    "input",
+    [">=2.7,!=3.0.*,!=3.1.*", ">=2.7, !=3.0.*, !=3.1.*", ">= 2.7, != 3.0.*, != 3.1.*"],
+)
+def test_parse_constraint_multi_wilcard(input):
+    assert parse_constraint(input) == VersionUnion(
+        VersionRange(Version(2, 7, 0), Version(3, 0, 0), True, False),
+        VersionRange(Version(3, 2, 0), None, True, False),
     )
 
 
