@@ -10,6 +10,7 @@
 - Fixed bad version number being picked with private repositories.
 - Fixed handling of duplicate dependencies with same constraint.
 - Fixed installation from custom repositories.
+- Fixed setting an explicit version in `version` command.
 
 
 ## [0.10.2] - 2018-05-31

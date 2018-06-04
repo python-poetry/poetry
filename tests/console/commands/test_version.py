@@ -31,6 +31,7 @@ def command():
         ("1.2.3beta1", "prerelease", "1.2.3-beta.2"),
         ("1.2.3b1", "prerelease", "1.2.3-beta.2"),
         ("1.2.3", "prerelease", "1.2.4-alpha.0"),
+        ("0.0.0", "1.2.3", "1.2.3"),
     ],
 )
 def test_increment_version(version, rule, expected, command):
