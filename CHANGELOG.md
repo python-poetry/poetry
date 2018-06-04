@@ -11,6 +11,7 @@
 - Fixed handling of duplicate dependencies with same constraint.
 - Fixed installation from custom repositories.
 - Fixed setting an explicit version in `version` command.
+- Fixed parsing of wildcards version constraints.
 
 
 ## [0.10.2] - 2018-05-31
