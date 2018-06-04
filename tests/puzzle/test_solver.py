@@ -759,3 +759,29 @@ def test_solver_circular_dependency(solver, repo, package):
             {"job": "install", "package": package_a},
         ],
     )
+
+
+def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "2.7"})
+    package_a.add_dependency("B", {"version": "^1.0", "python": ">=3.4"})
+
+    package_b = get_package("B", "1.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    op = ops[0]
+    assert op.package.requirements == {"python": "~2.7 || >=3.4"}

@@ -264,12 +264,10 @@ class Provider:
         won't return incompatibilities that have already been returned by a
         previous call to _incompatibilities_for().
         """
-        if package.source_type in ["git", "file", "directory"]:
-            dependencies = package.requires
-        elif package.is_root():
+        if package.is_root():
             dependencies = package.all_requires
         else:
-            dependencies = self._dependencies_for(package)
+            dependencies = package.requires
 
         if not self._package.python_constraint.allows_any(package.python_constraint):
             return [
@@ -295,40 +293,106 @@ class Provider:
             for dep in dependencies
         ]
 
-    def dependencies_for(
-        self, package
-    ):  # type: (Package) -> Union[List[Dependency], Dependencies]
-        if package.source_type in ["git", "file", "directory"]:
-            # Information should already be set
-            return [
-                r
-                for r in package.requires
-                if not r.is_activated() and r.name not in self.UNSAFE_PACKAGES
-            ]
-        else:
-            return Dependencies(package, self)
+    def complete_package(self, package):  # type: (str, Version) -> Package
+        if package.is_root() or package.source_type in {"git", "file", "directory"}:
+            return package
 
-    def _dependencies_for(self, package):  # type: (Package) -> List[Dependency]
-        complete_package = self._pool.package(
+        package = self._pool.package(
             package.name, package.version.text, extras=package.requires_extras
         )
 
-        # Update package with new information
-        package.requires = complete_package.requires
-        package.description = complete_package.description
-        package.python_versions = complete_package.python_versions
-        package.platform = complete_package.platform
-        package.hashes = complete_package.hashes
-        package.extras = complete_package.extras
-
-        return [
+        dependencies = [
             r
             for r in package.requires
             if r.is_activated()
             and self._package.python_constraint.allows_any(r.python_constraint)
             and self._package.platform_constraint.matches(package.platform_constraint)
-            and r.name not in self.UNSAFE_PACKAGES
         ]
+
+        # Searching for duplicate dependencies
+        #
+        # If the duplicate dependencies have the same constraint,
+        # the requirements will be merged.
+        #
+        # For instance:
+        #   - enum34; python_version=="2.7"
+        #   - enum34; python_version=="3.3"
+        #
+        # will become:
+        #   - enum34; python_version=="2.7" or python_version=="3.3"
+        #
+        # TODO: If the duplicate dependencies have different constraints
+        # we should notify the resolver in some way to make it split the
+        # current graph.
+        #
+        # An example of this is:
+        #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
+        #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
+        if not package.is_root():
+            duplicates = {}
+            for dep in dependencies:
+                if dep.name not in duplicates:
+                    duplicates[dep.name] = []
+
+                duplicates[dep.name].append(dep)
+
+            dependencies = []
+            for dep_name, deps in duplicates.items():
+                if len(deps) == 1:
+                    dependencies.append(deps[0])
+                    continue
+
+                # Regrouping by constraint
+                by_constraint = {}
+                for dep in deps:
+                    if dep.constraint not in by_constraint:
+                        by_constraint[dep.constraint] = []
+
+                    by_constraint[dep.constraint].append(dep)
+
+                # We merge by constraint
+                for constraint, _deps in by_constraint.items():
+                    new_markers = []
+                    for dep in _deps:
+                        pep_508_dep = dep.to_pep_508()
+                        if ";" not in pep_508_dep:
+                            continue
+
+                        markers = pep_508_dep.split(";")[1].strip()
+                        new_markers.append("({})".format(markers))
+
+                    if not new_markers:
+                        dependencies += _deps
+                        continue
+
+                    dep = _deps[0]
+                    new_requirement = "{}; {}".format(
+                        dep.to_pep_508().split(";")[0], " or ".join(new_markers)
+                    )
+                    new_dep = dependency_from_pep_508(new_requirement)
+                    if dep.is_optional() and not dep.is_activated():
+                        new_dep.deactivate()
+                    else:
+                        new_dep.activate()
+
+                    by_constraint[constraint] = [new_dep]
+
+                    continue
+
+                if len(by_constraint) == 1:
+                    dependencies.append(list(by_constraint.values())[0][0])
+                    continue
+
+                # At this point, we have one dependency by constraint
+                # So we add them to the dependency set
+                for constraint, _deps in by_constraint.items():
+                    _dep = _deps[0]
+
+                    dependencies.append(_dep)
+
+        package.requires = dependencies
+
+        return package
 
     # UI
 

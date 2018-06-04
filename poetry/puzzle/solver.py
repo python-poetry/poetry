@@ -39,9 +39,9 @@ class Solver:
 
         packages = result.packages
         requested = self._package.all_requires
+        graph = self._build_graph(self._package, packages)
 
         for package in packages:
-            graph = self._build_graph(self._package, packages)
             category, optional, python, platform = self._get_tags_for_package(
                 package, graph
             )
@@ -163,9 +163,27 @@ class Solver:
 
             for pkg in packages:
                 if pkg.name == dependency.name:
-                    graph["children"].append(
-                        self._build_graph(pkg, packages, dependency, dep or dependency)
+                    # If there is already a child with this name
+                    # we merge the requirements
+                    existing = None
+                    for child in graph["children"]:
+                        if child["name"] == pkg.name:
+                            existing = child
+                            continue
+
+                    child_graph = self._build_graph(
+                        pkg, packages, dependency, dep or dependency
                     )
+
+                    if existing:
+                        existing["python_version"] = str(
+                            parse_constraint(existing["python_version"]).union(
+                                parse_constraint(child_graph["python_version"])
+                            )
+                        )
+                        continue
+
+                    graph["children"].append(child_graph)
 
         return graph
 
