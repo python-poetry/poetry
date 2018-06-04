@@ -193,6 +193,9 @@ class LegacyRepository(PyPiRepository):
 
         for version in versions:
             package = Package(name, version)
+            package.source_type = "legacy"
+            package.source_url = self._url
+
             if extras is not None:
                 package.requires_extras = extras
 
@@ -227,6 +230,9 @@ class LegacyRepository(PyPiRepository):
             release_info = self.get_release_info(name, version)
 
             package = poetry.packages.Package(name, version, version)
+            package.source_type = "legacy"
+            package.source_url = self._url
+
             requires_dist = release_info["requires_dist"] or []
             for req in requires_dist:
                 try:

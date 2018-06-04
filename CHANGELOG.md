@@ -9,6 +9,7 @@
 - Fixed a `RuntimeError` on Python 3.7.
 - Fixed bad version number being picked with private repositories.
 - Fixed handling of duplicate dependencies with same constraint.
+- Fixed installation from custom repositories.
 
 
 ## [0.10.2] - 2018-05-31
