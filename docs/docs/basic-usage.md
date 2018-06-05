@@ -31,9 +31,11 @@ your project and its dependencies. For now, it looks like this:
 [tool.poetry]
 name = "poetry-demo"
 version = "0.1.0"
-authors = [ "Sébastien Eustace <sebastien@eustace.io>",]
+description = ""
+authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 
 [tool.poetry.dependencies]
+python = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.4"
