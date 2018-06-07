@@ -279,7 +279,7 @@ def test_run_with_python_versions(installer, locker, repo, package):
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c12 = get_package("C", "1.2")
-    package_c12.python_versions = "~2.7 || ^3.6"
+    package_c12.python_versions = "~2.7 || ^3.3"
     package_c13 = get_package("C", "1.3")
     package_c13.python_versions = "~3.3"
 
@@ -740,3 +740,39 @@ def test_run_update_with_locked_extras(installer, locker, repo, package):
     expected = fixture("update-with-locked-extras")
 
     assert locker.written_data == expected
+
+
+def test_run_install_duplicate_dependencies_different_constraints(
+    installer, locker, repo, package
+):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<4.0"})
+    package_a.add_dependency("B", {"version": "^2.0", "python": ">=4.0"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+    package_b10.add_dependency("C", "1.2")
+    package_b20.add_dependency("C", "1.5")
+
+    package_c12 = get_package("C", "1.2")
+    package_c15 = get_package("C", "1.5")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+    repo.add_package(package_c12)
+    repo.add_package(package_c15)
+
+    installer.run()
+
+    expected = fixture("with-duplicate-dependencies")
+
+    assert locker.written_data == expected
+
+    installs = installer.installer.installs
+    assert len(installs) == 3
+    assert installs[0] == package_b10
+    assert installs[1] == package_c12
+    assert installs[2] == package_a

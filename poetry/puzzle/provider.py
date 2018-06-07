@@ -1,3 +1,4 @@
+import logging
 import os
 import pkginfo
 import shutil
@@ -33,6 +34,10 @@ from poetry.utils.venv import Venv
 from poetry.vcs.git import Git
 
 from .dependencies import Dependencies
+from .exceptions import CompatibilityError
+
+
+logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):
@@ -65,6 +70,7 @@ class Provider:
         self._python_constraint = package.python_constraint
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
+        self._in_progress = False
 
     @property
     def pool(self):  # type: () -> Pool
@@ -321,9 +327,8 @@ class Provider:
         # will become:
         #   - enum34; python_version=="2.7" or python_version=="3.3"
         #
-        # TODO: If the duplicate dependencies have different constraints
-        # we should notify the resolver in some way to make it split the
-        # current graph.
+        # If the duplicate dependencies have different constraints
+        # we have to split the dependency graph.
         #
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
@@ -341,6 +346,8 @@ class Provider:
                 if len(deps) == 1:
                     dependencies.append(deps[0])
                     continue
+
+                self.debug("Duplicate dependencies for {}".format(dep_name))
 
                 # Regrouping by constraint
                 by_constraint = {}
@@ -380,15 +387,24 @@ class Provider:
                     continue
 
                 if len(by_constraint) == 1:
+                    self.debug("Merging requirements for {}".format(str(deps[0])))
                     dependencies.append(list(by_constraint.values())[0][0])
                     continue
 
-                # At this point, we have one dependency by constraint
-                # So we add them to the dependency set
+                # At this point, we raise an exception that will
+                # tell the solver to enter compatibility mode
+                # which means it will resolve for each minor
+                # Python version supported
+                python_constraints = []
                 for constraint, _deps in by_constraint.items():
-                    _dep = _deps[0]
+                    python_constraints.append(_deps[0].python_versions)
 
-                    dependencies.append(_dep)
+                self.debug(
+                    "<warning>Uncompatible constraints for {}.</warning>".format(
+                        dep_name
+                    )
+                )
+                raise CompatibilityError(*python_constraints)
 
         package.requires = dependencies
 
@@ -399,19 +415,6 @@ class Provider:
     @property
     def output(self):
         return self._io
-
-    def before_resolution(self):
-        self._io.write("<info>Resolving dependencies</>")
-
-        if self.is_debugging():
-            self._io.new_line()
-
-    def indicate_progress(self):
-        if not self.is_debugging():
-            self._io.write(".")
-
-    def after_resolution(self):
-        self._io.new_line()
 
     def debug(self, message, depth=0):
         if self.is_debugging():
@@ -438,3 +441,5 @@ class Provider:
 
             with indicator.auto():
                 yield
+
+        self._in_progress = False

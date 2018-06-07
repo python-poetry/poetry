@@ -62,10 +62,6 @@ class Pool(BaseRepository):
         raise NotImplementedError()
 
     def package(self, name, version, extras=None):
-        package = poetry.packages.Package(name, version, version)
-        if package in self._packages:
-            return self._packages[self._packages.index(package)]
-
         for repository in self._repositories:
             package = repository.package(name, version, extras=extras)
             if package:

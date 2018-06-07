@@ -174,7 +174,25 @@ class Locker:
             if dependency.is_optional() and not dependency.is_activated():
                 continue
 
-            dependencies[dependency.pretty_name] = str(dependency.pretty_constraint)
+            if dependency.pretty_name not in dependencies:
+                dependencies[dependency.pretty_name] = []
+
+            constraint = {"version": str(dependency.pretty_constraint)}
+
+            if not dependency.python_constraint.is_any():
+                constraint["python"] = str(dependency.python_constraint)
+
+            if dependency.platform != "*":
+                constraint["platform"] = dependency.platform
+
+            if len(constraint) == 1:
+                dependencies[dependency.pretty_name].append(constraint["version"])
+            else:
+                dependencies[dependency.pretty_name].append(constraint)
+
+        for name, constraints in dependencies.items():
+            if len(constraints) == 1:
+                dependencies[name] = constraints[0]
 
         data = {
             "name": package.pretty_name,

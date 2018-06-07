@@ -3,6 +3,7 @@ import sys
 from typing import List
 from typing import Union
 
+from poetry.io import NullIO
 from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
@@ -181,6 +182,23 @@ class Installer:
             ops = self._get_operations_from_lock(locked_repository)
 
         self._populate_local_repo(local_repo, ops, locked_repository)
+
+        with self._package.with_python_versions(
+            ".".join([str(i) for i in self._venv.version_info[:3]])
+        ):
+            # We resolve again by only using the lock file
+            pool = Pool()
+            pool.add_repository(local_repo)
+
+            solver = Solver(
+                self._package,
+                pool,
+                self._installed_repository,
+                locked_repository,
+                NullIO(),
+            )
+
+            ops = solver.solve()
 
         # We need to filter operations so that packages
         # not compatible with the current system,
@@ -365,13 +383,17 @@ class Installer:
                         local_repo.remove_package(pkg)
                         local_repo.add_package(op.target_package)
                     elif op.job_type == "uninstall":
-                        local_repo.remove_package(op.package)
+                        if pkg.version == package.version:
+                            local_repo.remove_package(op.package)
                     else:
                         # Even though the package already exists
                         # in the lock file we will prefer the new one
                         # to force updates
-                        local_repo.remove_package(pkg)
-                        local_repo.add_package(package)
+                        if pkg.version == package.version:
+                            local_repo.remove_package(pkg)
+                            local_repo.add_package(package)
+                        else:
+                            local_repo.add_package(package)
 
                     acted_on = True
 

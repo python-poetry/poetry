@@ -22,7 +22,7 @@ version = "1.2"
 description = ""
 category = "main"
 optional = false
-python-versions = "~2.7 || ^3.6"
+python-versions = "~2.7 || ^3.3"
 platform = "*"
 
 [metadata]

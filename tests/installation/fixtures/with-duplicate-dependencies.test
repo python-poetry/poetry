@@ -8,8 +8,10 @@ python-versions = "*"
 platform = "*"
 
 [package.dependencies]
-"B" = "^1.0"
-"C" = {"version" = "^1.0", "python" = ">=2.7,<2.8"}
+B = [
+    {"version" = "^1.0", "python" = "<4.0"},
+    {"version" = "^2.0", "python" = ">=4.0"},
+]
 
 [[package]]
 name = "B"
@@ -20,21 +22,39 @@ optional = false
 python-versions = "*"
 platform = "*"
 
+[package.dependencies]
+C = "1.2"
+
+[package.requirements]
+python = "<4.0"
+
 [[package]]
-name = "C"
-version = "1.1"
+name = "B"
+version = "2.0"
 description = ""
 category = "main"
 optional = false
 python-versions = "*"
 platform = "*"
 
+[package.dependencies]
+C = "1.5"
+
 [package.requirements]
-python = "~2.7"
+python = ">=4.0"
 
 [[package]]
-name = "D"
-version = "1.1"
+name = "C"
+version = "1.2"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+platform = "*"
+
+[[package]]
+name = "C"
+version = "1.5"
 description = ""
 category = "main"
 optional = false
@@ -47,7 +67,6 @@ platform = "*"
 content-hash = "123456789"
 
 [metadata.hashes]
-"A" = []
-"B" = []
-"C" = []
-"D" = []
+A = []
+B = []
+C = []

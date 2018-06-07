@@ -30,7 +30,7 @@ class Repository(BaseRepository):
                                 if dep.name == extra_dep.lower():
                                     dep.activate()
 
-                return package
+                return package.clone()
 
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False

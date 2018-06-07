@@ -77,8 +77,8 @@ setuptools = "*"
 attrs = ">=17.4.0"
 more-itertools = ">=4.0.0"
 pluggy = ">=0.5,<0.7"
-funcsigs = "*"
-colorama = "*"
+funcsigs = {"version" = "*", "python" = "<3.0"}
+colorama = {"version" = "*", "platform" = "win32"}
 
 [[package]]
 name = "setuptools"

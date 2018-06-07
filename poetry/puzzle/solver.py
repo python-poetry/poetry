@@ -6,6 +6,7 @@ from poetry.packages.constraints.generic_constraint import GenericConstraint
 
 from poetry.semver import parse_constraint
 
+from .exceptions import CompatibilityError
 from .exceptions import SolverProblemError
 
 from .operations import Install
@@ -23,41 +24,13 @@ class Solver:
         self._installed = installed
         self._locked = locked
         self._io = io
+        self._provider = Provider(self._package, self._pool, self._io)
 
     def solve(self, use_latest=None):  # type: (...) -> List[Operation]
-        provider = Provider(self._package, self._pool, self._io)
-        locked = {}
-        for package in self._locked.packages:
-            locked[package.name] = package
+        with self._provider.progress():
+            packages = self._solve(use_latest=use_latest)
 
-        try:
-            result = resolve_version(
-                self._package, provider, locked=locked, use_latest=use_latest
-            )
-        except SolveFailure as e:
-            raise SolverProblemError(e)
-
-        packages = result.packages
         requested = self._package.all_requires
-        graph = self._build_graph(self._package, packages)
-
-        for package in packages:
-            category, optional, python, platform = self._get_tags_for_package(
-                package, graph
-            )
-
-            package.category = category
-            package.optional = optional
-
-            # If requirements are empty, drop them
-            requirements = {}
-            if python is not None and python != "*":
-                requirements["python"] = python
-
-            if platform is not None and platform != "*":
-                requirements["platform"] = platform
-
-            package.requirements = requirements
 
         operations = []
         for package in packages:
@@ -104,8 +77,73 @@ class Solver:
             key=lambda o: (
                 1 if o.package.name in requested_names else 0,
                 o.package.name,
+                o.package.version,
             ),
         )
+
+    def solve_in_compatibility_mode(self, constraints, use_latest=None):
+        locked = {}
+        for package in self._locked.packages:
+            locked[package.name] = package
+
+        packages = []
+        for constraint in constraints:
+            constraint = parse_constraint(constraint)
+            intersection = constraint.intersect(self._package.python_constraint)
+
+            with self._package.with_python_versions(str(intersection)):
+                for package in self._solve(use_latest=use_latest):
+                    if package not in packages:
+                        packages.append(package)
+                        continue
+
+                    current_package = packages[packages.index(package)]
+                    for dep in package.requires:
+                        if dep not in current_package.requires:
+                            current_package.requires.append(dep)
+
+        return list(set(packages))
+
+    def _solve(self, use_latest=None):
+        locked = {}
+        for package in self._locked.packages:
+            locked[package.name] = package
+
+        try:
+            result = resolve_version(
+                self._package, self._provider, locked=locked, use_latest=use_latest
+            )
+
+            packages = result.packages
+        except CompatibilityError as e:
+            return self.solve_in_compatibility_mode(
+                e.constraints, use_latest=use_latest
+            )
+        except SolveFailure as e:
+            raise SolverProblemError(e)
+
+        requested = self._package.all_requires
+        graph = self._build_graph(self._package, packages)
+
+        for package in packages:
+            category, optional, python, platform = self._get_tags_for_package(
+                package, graph
+            )
+
+            package.category = category
+            package.optional = optional
+
+            # If requirements are empty, drop them
+            requirements = {}
+            if python is not None and python != "*":
+                requirements["python"] = python
+
+            if platform is not None and platform != "*":
+                requirements["platform"] = platform
+
+            package.requirements = requirements
+
+        return packages
 
     def _build_graph(self, package, packages, previous=None, dep=None):
         if not previous:

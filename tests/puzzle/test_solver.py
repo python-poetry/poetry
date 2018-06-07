@@ -284,9 +284,9 @@ def test_solver_sets_categories(solver, repo, package):
         ],
     )
 
-    assert package_c.category == "dev"
-    assert package_b.category == "dev"
-    assert package_a.category == "main"
+    assert ops[0].package.category == "dev"
+    assert ops[2].package.category == "dev"
+    assert ops[1].package.category == "main"
 
 
 def test_solver_respects_root_package_python_versions(solver, repo, package):
@@ -785,3 +785,76 @@ def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
 
     op = ops[0]
     assert op.package.requirements == {"python": "~2.7 || >=3.4"}
+
+
+def test_solver_duplicate_dependencies_different_constraints(solver, repo, package):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<3.4"})
+    package_a.add_dependency("B", {"version": "^2.0", "python": ">=3.4"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    op = ops[0]
+    assert op.package.requirements == {"python": "<3.4"}
+
+    op = ops[1]
+    assert op.package.requirements == {"python": ">=3.4"}
+
+
+def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<3.4"})
+    package_a.add_dependency("B", {"version": "^2.0", "python": ">=3.4"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+    package_b10.add_dependency("C", "1.2")
+    package_b20.add_dependency("C", "1.5")
+
+    package_c12 = get_package("C", "1.2")
+    package_c15 = get_package("C", "1.5")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+    repo.add_package(package_c12)
+    repo.add_package(package_c15)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_c12},
+            {"job": "install", "package": package_c15},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    op = ops[0]
+    assert op.package.requirements == {"python": "<3.4"}
+
+    op = ops[1]
+    assert op.package.requirements == {"python": ">=3.4"}
