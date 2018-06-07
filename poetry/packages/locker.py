@@ -85,6 +85,12 @@ class Locker:
             package.python_versions = info["python-versions"]
 
             for dep_name, constraint in info.get("dependencies", {}).items():
+                if isinstance(constraint, list):
+                    for c in constraint:
+                        package.add_dependency(dep_name, c)
+
+                    continue
+
                 package.add_dependency(dep_name, constraint)
 
             if "requirements" in info:

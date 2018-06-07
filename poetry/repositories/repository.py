@@ -27,7 +27,7 @@ class Repository(BaseRepository):
                     if extra in package.extras:
                         for extra_dep in package.extras[extra]:
                             for dep in package.requires:
-                                if dep.name == extra_dep.lower():
+                                if dep.name == extra_dep.name:
                                     dep.activate()
 
                 return package.clone()

@@ -191,14 +191,10 @@ class Installer:
             pool.add_repository(local_repo)
 
             solver = Solver(
-                self._package,
-                pool,
-                self._installed_repository,
-                locked_repository,
-                NullIO(),
+                self._package, pool, self._installed_repository, Repository(), NullIO()
             )
 
-            ops = solver.solve()
+            ops = solver.solve() + [o for o in ops if o.job_type == "uninstall"]
 
         # We need to filter operations so that packages
         # not compatible with the current system,
@@ -360,12 +356,7 @@ class Installer:
         self._installer.remove(operation.package)
 
     def _populate_local_repo(self, local_repo, ops, locked_repository):
-        # Add all locked packages from the lock and go from there
-        for package in locked_repository.packages:
-            if not local_repo.has_package(package):
-                local_repo.add_package(package)
-
-        # Now, walk through all operations and add/remove/update accordingly
+        # We walk through all operations and add/remove/update accordingly
         for op in ops:
             if isinstance(op, Update):
                 package = op.target_package
@@ -373,7 +364,7 @@ class Installer:
                 package = op.package
 
             acted_on = False
-            for pkg in local_repo.packages:
+            for pkg in locked_repository.packages:
                 if pkg.name == package.name:
                     # The package we operate on is in the local repo
                     if op.job_type == "update":
@@ -383,17 +374,13 @@ class Installer:
                         local_repo.remove_package(pkg)
                         local_repo.add_package(op.target_package)
                     elif op.job_type == "uninstall":
-                        if pkg.version == package.version:
-                            local_repo.remove_package(op.package)
+                        local_repo.remove_package(op.package)
                     else:
                         # Even though the package already exists
                         # in the lock file we will prefer the new one
                         # to force updates
-                        if pkg.version == package.version:
-                            local_repo.remove_package(pkg)
-                            local_repo.add_package(package)
-                        else:
-                            local_repo.add_package(package)
+                        local_repo.remove_package(pkg)
+                        local_repo.add_package(package)
 
                     acted_on = True
 
