@@ -3,6 +3,7 @@ import poetry.packages
 from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
 from poetry.semver import VersionUnion
 from poetry.utils.helpers import canonicalize_name
 
@@ -34,6 +35,12 @@ class Dependency(object):
         self._pretty_constraint = str(constraint)
         self._optional = optional
         self._category = category
+
+        if isinstance(self._constraint, VersionRange) and self._constraint.min:
+            allows_prereleases = (
+                allows_prereleases or self._constraint.min.is_prerelease()
+            )
+
         self._allows_prereleases = allows_prereleases
 
         self._python_versions = "*"

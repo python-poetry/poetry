@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed handling of duplicate dependencies with different constraints.
+- Fixed detection of new prereleases.
+
+
 ## [0.10.3] - 2018-06-04
 
 ### Fixed

@@ -1,5 +1,6 @@
 from typing import Union
 
+from poetry.packages import Dependency
 from poetry.packages import Package
 from poetry.semver import parse_constraint
 from poetry.semver import Version
@@ -22,7 +23,7 @@ class VersionSelector(object):
         if target_package_version:
             constraint = parse_constraint(target_package_version)
         else:
-            constraint = None
+            constraint = parse_constraint("*")
 
         candidates = self._pool.find_packages(
             package_name, constraint, allow_prereleases=allow_prereleases
@@ -31,10 +32,12 @@ class VersionSelector(object):
         if not candidates:
             return False
 
+        dependency = Dependency(package_name, constraint)
+
         # Select highest version if we have many
         package = candidates[0]
         for candidate in candidates:
-            if candidate.is_prerelease() and not allow_prereleases:
+            if candidate.is_prerelease() and not dependency.allows_prereleases():
                 continue
 
             # Select highest version of the two
