@@ -95,7 +95,7 @@ class Page:
 
                 link = Link(url, self, requires_python=pyrequire)
 
-                if link.ext == ".egg":
+                if link.ext not in [".tar.gz", ".whl", ".zip"]:
                     continue
 
                 yield link
@@ -182,7 +182,7 @@ class LegacyRepository(PyPiRepository):
         else:
             page = self._get("/{}".format(canonicalize_name(name).replace(".", "-")))
             if page is None:
-                raise ValueError('No package named "{}"'.format(name))
+                return []
 
             versions = []
             for version in page.versions:
@@ -200,6 +200,11 @@ class LegacyRepository(PyPiRepository):
                 package.requires_extras = extras
 
             packages.append(package)
+
+        self._log(
+            "{} packages found for {} {}".format(len(packages), name, str(constraint)),
+            level="debug",
+        )
 
         return packages
 
