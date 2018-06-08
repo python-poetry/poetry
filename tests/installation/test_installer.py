@@ -161,6 +161,79 @@ def test_run_with_dependencies(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
+def test_run_update_after_removing_dependencies(
+    installer, locker, repo, package, installed
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "B",
+                    "version": "1.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": [], "C": []},
+            },
+        }
+    )
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    package_c = get_package("C", "1.2")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    installed.add_package(package_a)
+    installed.add_package(package_b)
+    installed.add_package(package_c)
+
+    package.add_dependency("A", "~1.0")
+    package.add_dependency("B", "~1.1")
+
+    installer.update(True)
+    installer.run()
+    expected = fixture("with-dependencies")
+
+    assert locker.written_data == expected
+
+    installs = installer.installer.installs
+    assert len(installs) == 0
+
+    updates = installer.installer.updates
+    assert len(updates) == 0
+
+    removals = installer.installer.removals
+    assert len(removals) == 1
+
+
 def test_run_whitelist_add(installer, locker, repo, package):
     locker.locked(True)
     locker.mock_lock_data(
