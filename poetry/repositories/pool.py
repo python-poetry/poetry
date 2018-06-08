@@ -79,11 +79,14 @@ class Pool(BaseRepository):
         self, name, constraint=None, extras=None, allow_prereleases=False
     ):
         for repository in self._repositories:
-            packages = repository.find_packages(
-                name, constraint, extras=extras, allow_prereleases=allow_prereleases
-            )
-            if packages:
-                return packages
+            try:
+                packages = repository.find_packages(
+                    name, constraint, extras=extras, allow_prereleases=allow_prereleases
+                )
+                if packages:
+                    return packages
+            except ValueError:
+                pass
 
         return []
 
