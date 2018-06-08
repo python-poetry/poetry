@@ -110,7 +110,10 @@ class Locker:
         packages = self._lock_packages(packages)
         # Retrieving hashes
         for package in packages:
-            hashes[package["name"]] = package["hashes"]
+            if package["name"] not in hashes:
+                hashes[package["name"]] = []
+
+            hashes[package["name"]] += package["hashes"]
             del package["hashes"]
 
         lock = {
