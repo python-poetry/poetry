@@ -275,6 +275,10 @@ class Provider:
         else:
             dependencies = package.requires
 
+        dependencies = [
+            dep for dep in dependencies if dep.name not in self.UNSAFE_PACKAGES
+        ]
+
         if not self._package.python_constraint.allows_any(package.python_constraint):
             return [
                 Incompatibility(

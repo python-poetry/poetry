@@ -6,6 +6,7 @@
 
 - Fixed handling of duplicate dependencies with different constraints.
 - Fixed detection of new prereleases.
+- Fixed unsafe packages being locked.
 
 
 ## [0.10.3] - 2018-06-04
