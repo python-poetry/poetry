@@ -275,10 +275,6 @@ class Provider:
         else:
             dependencies = package.requires
 
-        dependencies = [
-            dep for dep in dependencies if dep.name not in self.UNSAFE_PACKAGES
-        ]
-
         if not self._package.python_constraint.allows_any(package.python_constraint):
             return [
                 Incompatibility(
@@ -294,6 +290,14 @@ class Provider:
                     PlatformCause(package.platform),
                 )
             ]
+
+        dependencies = [
+            dep
+            for dep in dependencies
+            if dep.name not in self.UNSAFE_PACKAGES
+            and self._package.python_constraint.allows_any(dep.python_constraint)
+            and self._package.platform_constraint.matches(dep.platform_constraint)
+        ]
 
         return [
             Incompatibility(
@@ -316,7 +320,7 @@ class Provider:
             for r in package.requires
             if r.is_activated()
             and self._package.python_constraint.allows_any(r.python_constraint)
-            and self._package.platform_constraint.matches(package.platform_constraint)
+            and self._package.platform_constraint.matches(r.platform_constraint)
         ]
 
         # Searching for duplicate dependencies
