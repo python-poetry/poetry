@@ -8,8 +8,6 @@ from .incompatibility_cause import ConflictCause
 
 class SolveFailure(Exception):
     def __init__(self, incompatibility):  # type: (Incompatibility) -> None
-        assert incompatibility.terms[0].dependency.is_root
-
         self._incompatibility = incompatibility
 
     @property
