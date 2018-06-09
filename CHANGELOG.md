@@ -9,6 +9,7 @@
 - Fixed unsafe packages being locked.
 - Fixed versions detection in custom repositories.
 - Fixed package finding with multiple custom repositories.
+- Fixed handling of root incompatibilities.
 
 
 ## [0.10.3] - 2018-06-04
