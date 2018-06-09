@@ -399,6 +399,28 @@ class Provider:
                     dependencies.append(list(by_constraint.values())[0][0])
                     continue
 
+                # We leave dependencies as-is if they have the same
+                # python/platform constraints.
+                # That way the resolver will pickup the conflict
+                # and display a proper error.
+                _deps = [value[0] for value in by_constraint.values()]
+                seen = set()
+                for _dep in _deps:
+                    pep_508_dep = _dep.to_pep_508()
+                    if ";" not in pep_508_dep:
+                        _requirements = ""
+                    else:
+                        _requirements = pep_508_dep.split(";")[1].strip()
+
+                    if _requirements not in seen:
+                        seen.add(_requirements)
+
+                if len(_deps) != len(seen):
+                    for _dep in _deps:
+                        dependencies.append(_dep)
+
+                    continue
+
                 # At this point, we raise an exception that will
                 # tell the solver to enter compatibility mode
                 # which means it will resolve for each minor

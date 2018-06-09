@@ -819,6 +819,33 @@ def test_solver_duplicate_dependencies_different_constraints(solver, repo, packa
     assert op.package.requirements == {"python": ">=3.4"}
 
 
+def test_solver_duplicate_dependencies_different_constraints_same_requirements(
+    solver, repo, package
+):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0"})
+    package_a.add_dependency("B", {"version": "^2.0"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    with pytest.raises(SolverProblemError) as e:
+        solver.solve()
+
+    expected = """\
+Because a (1.0) depends on both B (^1.0) and B (^2.0), a is forbidden.
+So, because no versions of a match <1.0 || >1.0
+ and root depends on A (*), version solving failed."""
+
+    assert str(e.value) == expected
+
+
 def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
     package.add_dependency("A")
 
