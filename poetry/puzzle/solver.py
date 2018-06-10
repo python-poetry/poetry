@@ -91,6 +91,10 @@ class Solver:
             constraint = parse_constraint(constraint)
             intersection = constraint.intersect(self._package.python_constraint)
 
+            self._provider.debug(
+                "<comment>Retrying dependency resolution "
+                "for Python ({}).</comment>".format(intersection)
+            )
             with self._package.with_python_versions(str(intersection)):
                 for package in self._solve(use_latest=use_latest):
                     if package not in packages:

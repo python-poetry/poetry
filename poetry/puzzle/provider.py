@@ -423,15 +423,22 @@ class Provider:
 
                 # At this point, we raise an exception that will
                 # tell the solver to enter compatibility mode
-                # which means it will resolve for each minor
-                # Python version supported
+                # which means it will resolve for subsets
+                # Python constraints
+                #
+                # For instance, if our root package requires Python ~2.7 || ^3.6
+                # And we have one dependency that requires Python <3.6
+                # and the other Python >=3.6 than the solver will solve
+                # dependencies for Python >=2.7,<2.8 || >=3.4,<3.6
+                # and Python >=3.6,<4.0
                 python_constraints = []
                 for constraint, _deps in by_constraint.items():
                     python_constraints.append(_deps[0].python_versions)
 
+                _deps = [str(_dep[0]) for _dep in by_constraint.values()]
                 self.debug(
-                    "<warning>Uncompatible constraints for {}.</warning>".format(
-                        dep_name
+                    "<warning>Different requirements found for {}.</warning>".format(
+                        ", ".join(_deps[:-1]) + " and " + _deps[-1]
                     )
                 )
                 raise CompatibilityError(*python_constraints)
