@@ -8,14 +8,16 @@ class ShellCommand(VenvCommand):
     shell [options]
     """
 
-    help = """The <info>shell</info> command spawns a shell, according to the
+    help = """The <info>shell</> command spawns a shell, according to the
 <comment>$SHELL</> environment variable, within the virtual environment.
 If one doesn't exist yet, it will be created.
 """
 
     def handle(self):
         if self.venv.is_venv():
-            self.line(f"Spawning shell within <info>{self.venv.venv}</info>")
+            self.line(
+                "Spawning shell within <info>{}</>".format(self.venv.venv)
+            )
 
             shell = self.venv.get_shell()
             self.venv.execute(shell)
