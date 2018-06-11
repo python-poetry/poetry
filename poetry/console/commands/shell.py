@@ -25,9 +25,7 @@ If one doesn't exist yet, it will be created.
                     return
                 self.venv.execute(shell)
 
-            self.line(
-                "Spawning shell within <info>{}</>".format(self.venv.venv)
-            )
+            self.line("Spawning shell within <info>{}</>".format(self.venv.venv))
 
         else:
             self.line("Virtual environment already activated.")
