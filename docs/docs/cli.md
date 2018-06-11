@@ -54,6 +54,26 @@ the `--name` option:
 poetry new my-folder --name my-package
 ```
 
+If you want to use a src folder, you can use the `--src` option:
+
+```bash
+poetry new --src my-package
+```
+
+That will create a folder structure as follows:
+
+```text
+my-package
+├── pyproject.toml
+├── README.rst
+├── src
+│   └── my_package
+│       └── __init__.py
+└── tests
+    ├── __init__.py
+    └── test_my_package
+```
+
 ## init
 
 This command will help you create a `pyproject.toml` file interactively
