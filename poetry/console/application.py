@@ -28,6 +28,7 @@ from .commands import RemoveCommand
 from .commands import RunCommand
 from .commands import ScriptCommand
 from .commands import SearchCommand
+from .commands import ShellCommand
 from .commands import ShowCommand
 from .commands import UpdateCommand
 from .commands import VersionCommand
@@ -119,6 +120,7 @@ class Application(BaseApplication):
             RunCommand(),
             ScriptCommand(),
             SearchCommand(),
+            ShellCommand(),
             ShowCommand(),
             UpdateCommand(),
             VersionCommand(),
