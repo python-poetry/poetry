@@ -63,7 +63,7 @@ and you have [configured your credentials](/repositories/#adding-credentials) pr
     If you want to build your packages separately and later publish them,
     just pass the `--no-build` option.
     
-Once this is done, your library will be availbale to anyone.
+Once this is done, your library will be available to anyone.
 
 
 ## Publishing to a private repository
