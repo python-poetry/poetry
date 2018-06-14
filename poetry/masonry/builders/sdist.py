@@ -127,7 +127,7 @@ class SdistBuilder(Builder):
                     pkg_dir, _packages, _package_data = self.find_packages(include)
 
                     if pkg_dir is not None:
-                        package_dir[""] = str(pkg_dir.relative_to(self._path))
+                        package_dir[""] = os.path.relpath(pkg_dir, str(self._path))
 
                     packages += _packages
                     package_data.update(_package_data)
@@ -229,9 +229,9 @@ class SdistBuilder(Builder):
         """
         pkgdir = None
         if include.source is not None:
-            pkgdir = include.base
+            pkgdir = str(include.base)
 
-        base = include.elements[0].parent
+        base = str(include.elements[0].parent)
 
         pkg_name = include.package
         pkg_data = defaultdict(list)

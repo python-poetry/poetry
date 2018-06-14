@@ -170,7 +170,7 @@ def test_find_packages():
 
     pkg_dir, packages, pkg_data = builder.find_packages(include)
 
-    assert pkg_dir == base / "src"
+    assert pkg_dir == str(base / "src")
     assert packages == ["package_src"]
     assert pkg_data == {"": ["*"]}
 
