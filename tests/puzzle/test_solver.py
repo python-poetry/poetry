@@ -784,7 +784,7 @@ def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
     )
 
     op = ops[0]
-    assert op.package.requirements == {"python": "~2.7 || >=3.4"}
+    assert op.package.requirements == {"python": ">=2.7,<2.8 || >=3.4"}
 
 
 def test_solver_duplicate_dependencies_different_constraints(solver, repo, package):

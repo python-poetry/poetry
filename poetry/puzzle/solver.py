@@ -149,25 +149,29 @@ class Solver:
 
         return packages
 
-    def _build_graph(self, package, packages, previous=None, dep=None):
+    def _build_graph(
+        self, package, packages, previous=None, previous_dep=None, dep=None
+    ):
         if not previous:
             category = "dev"
             optional = True
-            python_version = None
-            platform = None
+            python_version = "*"
+            platform = "*"
         else:
             category = dep.category
             optional = dep.is_optional() and not dep.is_activated()
-            python_version = (
-                dep.python_versions
-                if previous.python_constraint.allows_all(dep.python_constraint)
-                else previous.python_versions
+            python_version = str(
+                parse_constraint(previous["python_version"]).intersect(
+                    previous_dep.python_constraint
+                )
             )
-            platform = (
-                dep.platform
-                if previous.platform_constraint.matches(dep.platform_constraint)
-                and dep.platform != "*"
-                else previous.platform
+            platform = str(
+                previous_dep.platform
+                if GenericConstraint.parse(previous["platform"]).matches(
+                    previous_dep.platform_constraint
+                )
+                and previous_dep.platform != "*"
+                else previous["platform"]
             )
 
         graph = {
@@ -179,7 +183,7 @@ class Solver:
             "children": [],
         }
 
-        if previous and previous is not dep and previous.name == dep.name:
+        if previous_dep and previous_dep is not dep and previous_dep.name == dep.name:
             return graph
 
         for dependency in package.all_requires:
@@ -214,7 +218,7 @@ class Solver:
                             continue
 
                     child_graph = self._build_graph(
-                        pkg, packages, dependency, dep or dependency
+                        pkg, packages, graph, dependency, dep or dependency
                     )
 
                     if existing:

@@ -30,7 +30,7 @@ python-versions = "*"
 platform = "*"
 
 [package.requirements]
-python = "~2.7"
+python = ">=2.7,<2.8"
 
 [[package]]
 name = "D"

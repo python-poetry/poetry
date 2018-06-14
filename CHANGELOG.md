@@ -9,6 +9,7 @@
 ### Fixed
 
 - Fixed handling of duplicate dependencies with different constraints.
+- Fixed system requirements in lock file for sub dependencies.
 - Fixed detection of new prereleases.
 - Fixed unsafe packages being locked.
 - Fixed versions detection in custom repositories.
