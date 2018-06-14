@@ -3,7 +3,11 @@
     "name": "Package",
     "type": "object",
     "additionalProperties": false,
-    "required": [ "name", "version", "description" ],
+    "required": [
+        "name",
+        "version",
+        "description"
+    ],
     "properties": {
         "name": {
             "type": "string",
@@ -50,14 +54,46 @@
             "type": "string",
             "description": "The path to the README file"
         },
-        "classifiers":  {
+        "classifiers": {
             "type": "array",
             "description": "A list of trove classifers."
+        },
+        "packages": {
+            "type": "array",
+            "description": "A list of packages to include in the final distribution.",
+            "items": {
+                "type": "object",
+                "description": "Information about where the package resides.",
+                "additionalProperties": false,
+                "required": [
+                    "include"
+                ],
+                "properties": {
+                    "include": {
+                        "type": "string",
+                        "description": "What to include in the package."
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "Where the source directory of the package resides."
+                    }
+                }
+            }
+        },
+        "include": {
+            "type": "array",
+            "description": "A list of files and folders to include."
+        },
+        "exclude": {
+            "type": "array",
+            "description": "A list of files and folders to exclude."
         },
         "dependencies": {
             "type": "object",
             "description": "This is a hash of package name (keys) and version constraints (values) that are required to run this package.",
-            "required": ["python"],
+            "required": [
+                "python"
+            ],
             "properties": {
                 "python": {
                     "type": "string",
@@ -171,7 +207,9 @@
         },
         "long-dependency": {
             "type": "object",
-            "required": ["version"],
+            "required": [
+                "version"
+            ],
             "additionalProperties": false,
             "properties": {
                 "version": {
@@ -205,7 +243,9 @@
         },
         "git-dependency": {
             "type": "object",
-            "required": ["git"],
+            "required": [
+                "git"
+            ],
             "additionalProperties": false,
             "properties": {
                 "git": {
@@ -252,7 +292,9 @@
         },
         "file-dependency": {
             "type": "object",
-            "required": ["file"],
+            "required": [
+                "file"
+            ],
             "additionalProperties": false,
             "properties": {
                 "file": {
@@ -282,7 +324,9 @@
         },
         "path-dependency": {
             "type": "object",
-            "required": ["path"],
+            "required": [
+                "path"
+            ],
             "additionalProperties": false,
             "properties": {
                 "path": {

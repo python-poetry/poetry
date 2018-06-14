@@ -17,6 +17,7 @@ from poetry.utils._compat import encode
 from poetry.utils._compat import to_str
 
 from ..utils.helpers import normalize_file_permissions
+from ..utils.package_include import PackageInclude
 
 from .builder import Builder
 
@@ -108,6 +109,7 @@ class SdistBuilder(Builder):
 
     def build_setup(self):  # type: () -> bytes
         before, extra, after = [], [], []
+        package_dir = {}
 
         # If we have a build script, use it
         if self._package.build:
@@ -116,18 +118,42 @@ class SdistBuilder(Builder):
                 "build(setup_kwargs)",
             ]
 
-        if self._module.is_in_src():
-            before.append("package_dir = \\\n{}\n".format(pformat({"": "src"})))
+        modules = []
+        packages = []
+        package_data = {}
+        for include in self._module.includes:
+            if isinstance(include, PackageInclude):
+                if include.is_package():
+                    pkg_dir, _packages, _package_data = self.find_packages(include)
+
+                    if pkg_dir is not None:
+                        package_dir[""] = str(pkg_dir.relative_to(self._path))
+
+                    packages += _packages
+                    package_data.update(_package_data)
+                else:
+                    if include.source is not None:
+                        package_dir[""] = str(include.base.relative_to(self._path))
+
+                    modules.append(include.elements[0].relative_to(include.base).stem)
+            else:
+                pass
+
+        if package_dir:
+            before.append("package_dir = \\\n{}\n".format(pformat(package_dir)))
             extra.append("'package_dir': package_dir,")
 
-        if self._module.is_package():
-            packages, package_data = self.find_packages(self._module.path.as_posix())
+        if packages:
             before.append("packages = \\\n{}\n".format(pformat(sorted(packages))))
-            before.append("package_data = \\\n{}\n".format(pformat(package_data)))
             extra.append("'packages': packages,")
+
+        if package_data:
+            before.append("package_data = \\\n{}\n".format(pformat(package_data)))
             extra.append("'package_data': package_data,")
-        else:
-            extra.append("'py_modules': {!r},".format(to_str(self._module.name)))
+
+        if modules:
+            before.append("modules = \\\n{}".format(pformat(modules)))
+            extra.append("'py_modules': modules,".format())
 
         dependencies, extras = self.convert_dependencies(
             self._package, self._package.requires
@@ -195,14 +221,19 @@ class SdistBuilder(Builder):
         return encode(pkg_info)
 
     @classmethod
-    def find_packages(cls, path):
+    def find_packages(cls, include):
         """
         Discover subpackages and data.
 
-        It also retrieve necessary files
+        It also retrieves necessary files.
         """
-        pkgdir = os.path.normpath(path)
-        pkg_name = os.path.basename(pkgdir)
+        pkgdir = None
+        if include.source is not None:
+            pkgdir = include.base
+
+        base = include.elements[0].parent
+
+        pkg_name = include.package
         pkg_data = defaultdict(list)
         # Undocumented distutils feature:
         # the empty string matches all package names
@@ -221,11 +252,11 @@ class SdistBuilder(Builder):
             # Relative to the top-level package
             return pkg_name, rel_path
 
-        for path, dirnames, filenames in os.walk(pkgdir, topdown=True):
+        for path, dirnames, filenames in os.walk(str(base), topdown=True):
             if os.path.basename(path) == "__pycache__":
                 continue
 
-            from_top_level = os.path.relpath(path, pkgdir)
+            from_top_level = os.path.relpath(path, base)
             if from_top_level == ".":
                 continue
 
@@ -241,7 +272,7 @@ class SdistBuilder(Builder):
         # Sort values in pkg_data
         pkg_data = {k: sorted(v) for (k, v) in pkg_data.items()}
 
-        return sorted(packages), pkg_data
+        return pkgdir, sorted(packages), pkg_data
 
     @classmethod
     def convert_dependencies(

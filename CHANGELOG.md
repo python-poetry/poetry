@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added support for `packages`, `include` and `exclude` properties.
+
 ### Fixed
 
 - Fixed handling of duplicate dependencies with different constraints.
