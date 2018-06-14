@@ -962,6 +962,67 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
     assert len(removals) == 0
 
 
+def test_run_update_uninstalls_after_removal_transient_dependency(
+    installer, locker, repo, package, installed
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"B": {"version": "^1.0", "python": "<2.0"}},
+                },
+                {
+                    "name": "B",
+                    "version": "1.0",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": []},
+            },
+        }
+    )
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<2.0"})
+
+    package_b10 = get_package("B", "1.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+
+    installed.add_package(get_package("A", "1.0"))
+    installed.add_package(get_package("B", "1.0"))
+
+    installer.update(True)
+    installer.run()
+
+    print(locker.written_data)
+
+    installs = installer.installer.installs
+    assert len(installs) == 0
+    updates = installer.installer.updates
+    assert len(updates) == 0
+    removals = installer.installer.removals
+    assert len(removals) == 1
+
+
 def test_run_install_duplicate_dependencies_different_constraints_with_lock_update(
     installer, locker, repo, package, installed
 ):
