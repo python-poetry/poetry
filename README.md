@@ -740,7 +740,7 @@ This section describe the scripts or executable that will be installed when inst
 
 ```toml
 [tool.poetry.scripts]
-poetry = 'poetry:console.run'
+poetry = 'poetry.console:run'
 ```
 
 After installing a package with the above toml, `poetry` will be a global command available from the command line that will execute `console.run` in the `poetry` package.
