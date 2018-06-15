@@ -15,6 +15,7 @@
 - Fixed versions detection in custom repositories.
 - Fixed package finding with multiple custom repositories.
 - Fixed handling of root incompatibilities.
+- Fixed an error where packages from custom repositories would not be found.
 
 
 ## [0.10.3] - 2018-06-04
