@@ -242,7 +242,7 @@ dependency. This means that **any** version of this package can be installed whi
 can lead to compatibility issues.
 
 Also, you have to explicitly tell it to not update the locked packages when you
-installed new ones. This should be the default.
+install new ones. This should be the default.
 
 #### Remove command
 
