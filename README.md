@@ -225,7 +225,7 @@ Here is a breakdown of what exactly happens here:
 
 What interests us is `pbr (>=0.6,!=0.7,<1.0)`.
 
-At his point, poetry will choose `pbr==0.11.1` which is the latest version that matches the constraint.
+At this point, poetry will choose `pbr==0.11.1` which is the latest version that matches the constraint.
 
 Next it will try to select `oslo.i18n==3.20.0` which is the latest version that matches `oslo.i18n (>=1.3.0)`.
 
