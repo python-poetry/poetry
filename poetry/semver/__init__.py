@@ -119,6 +119,9 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
         op = m.group(1)
         version = m.group(2)
 
+        if version == "dev":
+            version = "0.0-dev"
+
         try:
             version = Version.parse(version)
         except ValueError:

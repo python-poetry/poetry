@@ -15,5 +15,5 @@ TILDE_CONSTRAINT = re.compile("(?i)^~(?!=)({})$".format(_COMPLETE_VERSION))
 TILDE_PEP440_CONSTRAINT = re.compile("(?i)^~=({})$".format(_COMPLETE_VERSION))
 X_CONSTRAINT = re.compile("^(!=|==)?\s*v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$")
 BASIC_CONSTRAINT = re.compile(
-    "(?i)^(<>|!=|>=?|<=?|==?)?\s*({})".format(_COMPLETE_VERSION)
+    "(?i)^(<>|!=|>=?|<=?|==?)?\s*({}|dev)".format(_COMPLETE_VERSION)
 )
