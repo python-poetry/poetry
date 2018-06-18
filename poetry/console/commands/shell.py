@@ -1,3 +1,5 @@
+from os import environ
+
 from .venv_command import VenvCommand
 
 
@@ -14,18 +16,28 @@ If one doesn't exist yet, it will be created.
 """
 
     def handle(self):
-        if self.venv.is_venv():
-            if self.venv._windows:
-                self.venv.execute("cmd", "/k")
+        current_venv = environ.get("POETRY_ACTIVE")
 
-            else:
-                shell = self.venv.get_shell()
-                if shell is None:
-                    self.error("SHELL environment variable must be set.")
-                    return
-                self.venv.execute(shell)
+        if not current_venv and not self.venv.is_venv():
+            current_venv = environ.get("VIRTUAL_ENV")
 
-            self.line("Spawning shell within <info>{}</>".format(self.venv.venv))
+        if current_venv:
+            self.line(
+                "Virtual environment already activated: "
+                "<info>{}</>".format(current_venv)
+            )
+            return
 
+        if self.venv._windows:
+            shell, *args = ("cmd", "/k")
         else:
-            self.line("Virtual environment already activated.")
+            shell, *args = (environ.get("SHELL"),)
+            if shell is None:
+                self.error("The SHELL environment variable must be set.")
+                return
+
+        self.line("Spawning shell within <info>{}</>".format(self.venv.venv))
+
+        environ["POETRY_ACTIVE"] = str(self.venv.venv)
+        self.venv.execute(shell, *args)
+        environ.pop("POETRY_ACTIVE")
