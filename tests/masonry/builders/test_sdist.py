@@ -134,7 +134,7 @@ def test_make_pkg_info():
     builder = SdistBuilder(poetry, NullVenv(), NullIO())
     pkg_info = builder.build_pkg_info()
     p = Parser()
-    parsed = p.parsestr(pkg_info.decode("utf-8"))
+    parsed = p.parsestr(to_str(pkg_info))
 
     assert parsed["Metadata-Version"] == "2.1"
     assert parsed["Name"] == "my-package"
@@ -172,7 +172,7 @@ def test_make_pkg_info_any_python():
     builder = SdistBuilder(poetry, NullVenv(), NullIO())
     pkg_info = builder.build_pkg_info()
     p = Parser()
-    parsed = p.parsestr(pkg_info.decode("utf-8"))
+    parsed = p.parsestr(to_str(pkg_info))
 
     assert "Requires-Python" not in parsed
 
