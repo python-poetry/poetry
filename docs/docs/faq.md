@@ -32,3 +32,22 @@ with the new major version of your dependency.
 
 For example instead of using `>=3.4` you should use `~3.4` which allows all versions `<4.0`.
 The `^` operator works very well with libraries following [semantic versioning](https://semver.org).
+
+## Is tox supported?
+
+For now, you can use Poetry with [tox](https://tox.readthedocs.io/en/latest/) by using something similar to what is done in the [Pendulum](https://github.com/sdispater/pendulum/blob/master/tox.ini) package.
+
+Minimal viable `tox.ini` configuration file looks like this:
+
+```INI
+[tox]
+skipsdist = True
+envlist = py27, py36
+
+[testenv]
+whitelist_externals = poetry
+skip_install = true
+commands =
+    poetry install -v
+    poetry run pytest tests/
+```
