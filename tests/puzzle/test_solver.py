@@ -194,8 +194,8 @@ def test_install_with_deps_in_order(solver, repo, package):
         ops,
         [
             {"job": "install", "package": package_a},
-            {"job": "install", "package": package_b},
             {"job": "install", "package": package_c},
+            {"job": "install", "package": package_b},
         ],
     )
 
@@ -342,6 +342,7 @@ def test_solver_fails_if_mismatch_root_python_versions(solver, repo, package):
 
 def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
     package.python_versions = "^3.4"
+    package.extras["foo"] = [get_dependency("B")]
     package.add_dependency("A", {"version": "*", "python": "~3.5"})
     package.add_dependency("B", {"version": "*", "optional": True})
 
@@ -528,8 +529,8 @@ def test_solver_sub_dependencies_with_requirements(solver, repo, package):
     check_solver_result(
         ops,
         [
-            {"job": "install", "package": package_c},
             {"job": "install", "package": package_d},
+            {"job": "install", "package": package_c},
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
         ],
@@ -570,25 +571,25 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package
     check_solver_result(
         ops,
         [
-            {"job": "install", "package": package_d},
             {"job": "install", "package": package_e},
             {"job": "install", "package": package_f},
-            {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
+            {"job": "install", "package": package_d},
+            {"job": "install", "package": package_a},
             {"job": "install", "package": package_c},
         ],
     )
 
-    op = ops[0]
+    op = ops[3]  # d
     assert op.package.requirements == {"python": "<4.0"}
 
-    op = ops[1]
+    op = ops[0]  # e
     assert op.package.requirements == {"platform": "win32", "python": "<5.0"}
 
-    op = ops[2]
+    op = ops[1]  # f
     assert op.package.requirements == {"python": "<5.0"}
 
-    op = ops[4]
+    op = ops[4]  # a
     assert op.package.requirements == {"python": "<5.0"}
 
 
@@ -641,16 +642,16 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     check_solver_result(
         ops,
         [
+            {"job": "install", "package": package_d},
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_c},
-            {"job": "install", "package": package_d},
             {"job": "install", "package": package_a},
         ],
     )
 
-    b = ops[0].package
-    c = ops[1].package
-    d = ops[2].package
+    b = ops[1].package
+    c = ops[2].package
+    d = ops[0].package
     a = ops[3].package
 
     assert d.category == "dev"
@@ -693,17 +694,17 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
         ops,
         [
             {"job": "install", "package": package_b},
-            {"job": "install", "package": package_c},
             {"job": "install", "package": package_d},
             {"job": "install", "package": package_a},
+            {"job": "install", "package": package_c},
             {"job": "install", "package": package_e},
         ],
     )
 
     b = ops[0].package
-    c = ops[1].package
-    d = ops[2].package
-    a = ops[3].package
+    c = ops[3].package
+    d = ops[1].package
+    a = ops[2].package
     e = ops[4].package
 
     assert d.category == "dev"
@@ -872,16 +873,16 @@ def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
     check_solver_result(
         ops,
         [
-            {"job": "install", "package": package_b10},
-            {"job": "install", "package": package_b20},
             {"job": "install", "package": package_c12},
             {"job": "install", "package": package_c15},
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
             {"job": "install", "package": package_a},
         ],
     )
 
-    op = ops[0]
+    op = ops[2]
     assert op.package.requirements == {"python": "<3.4"}
 
-    op = ops[1]
+    op = ops[3]
     assert op.package.requirements == {"python": ">=3.4"}

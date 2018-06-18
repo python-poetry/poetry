@@ -846,8 +846,8 @@ def test_run_install_duplicate_dependencies_different_constraints(
 
     installs = installer.installer.installs
     assert len(installs) == 3
-    assert installs[0] == package_b10
-    assert installs[1] == package_c12
+    assert installs[0] == package_c12
+    assert installs[1] == package_b10
     assert installs[2] == package_a
 
     updates = installer.installer.updates
@@ -1012,8 +1012,6 @@ def test_run_update_uninstalls_after_removal_transient_dependency(
 
     installer.update(True)
     installer.run()
-
-    print(locker.written_data)
 
     installs = installer.installer.installs
     assert len(installs) == 0

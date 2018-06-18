@@ -28,7 +28,7 @@ class Solver:
 
     def solve(self, use_latest=None):  # type: (...) -> List[Operation]
         with self._provider.progress():
-            packages = self._solve(use_latest=use_latest)
+            packages, depths = self._solve(use_latest=use_latest)
 
         requested = self._package.all_requires
 
@@ -70,14 +70,14 @@ class Solver:
 
                 operations.append(op)
 
-        requested_names = [r.name for r in self._package.all_requires]
-
         return sorted(
             operations,
             key=lambda o: (
-                1 if o.package.name in requested_names else 0,
+                o.job_type == "uninstall",
+                # Packages to be uninstalled have no depth so we default to 0
+                # since it actually doesn't matter since removals are always on top.
+                -depths[packages.index(o.package)] if o.job_type != "uninstall" else 0,
                 o.package.name,
-                o.package.version,
             ),
         )
 
@@ -87,6 +87,7 @@ class Solver:
             locked[package.name] = package
 
         packages = []
+        depths = []
         for constraint in constraints:
             constraint = parse_constraint(constraint)
             intersection = constraint.intersect(self._package.python_constraint)
@@ -96,9 +97,11 @@ class Solver:
                 "for Python ({}).</comment>".format(intersection)
             )
             with self._package.with_python_versions(str(intersection)):
-                for package in self._solve(use_latest=use_latest):
+                _packages, _depths = self._solve(use_latest=use_latest)
+                for index, package in enumerate(_packages):
                     if package not in packages:
                         packages.append(package)
+                        depths.append(_depths[index])
                         continue
 
                     current_package = packages[packages.index(package)]
@@ -106,7 +109,7 @@ class Solver:
                         if dep not in current_package.requires:
                             current_package.requires.append(dep)
 
-        return list(set(packages))
+        return packages, depths
 
     def _solve(self, use_latest=None):
         locked = {}
@@ -126,13 +129,14 @@ class Solver:
         except SolveFailure as e:
             raise SolverProblemError(e)
 
-        requested = self._package.all_requires
         graph = self._build_graph(self._package, packages)
 
+        depths = []
         for package in packages:
-            category, optional, python, platform = self._get_tags_for_package(
+            category, optional, python, platform, depth = self._get_tags_for_package(
                 package, graph
             )
+            depths.append(depth)
 
             package.category = category
             package.optional = optional
@@ -147,7 +151,7 @@ class Solver:
 
             package.requirements = requirements
 
-        return packages
+        return packages, depths
 
     def _build_graph(
         self, package, packages, previous=None, previous_dep=None, dep=None
@@ -188,13 +192,15 @@ class Solver:
 
         for dependency in package.all_requires:
             if dependency.is_optional():
-                if not package.is_root() and (not dep or not dep.extras):
+                if not package.is_root() and (
+                    not previous_dep or not previous_dep.extras
+                ):
                     continue
 
                 is_activated = False
                 for group, extras in package.extras.items():
                     if dep:
-                        extras = dep.extras
+                        extras = previous_dep.extras
                     elif package.is_root():
                         extras = package.extras
                     else:
@@ -213,7 +219,10 @@ class Solver:
                     # we merge the requirements
                     existing = None
                     for child in graph["children"]:
-                        if child["name"] == pkg.name:
+                        if (
+                            child["name"] == pkg.name
+                            and child["category"] == dependency.category
+                        ):
                             existing = child
                             continue
 
@@ -233,26 +242,32 @@ class Solver:
 
         return graph
 
-    def _get_tags_for_package(self, package, graph):
+    def _get_tags_for_package(self, package, graph, depth=0):
         categories = ["dev"]
         optionals = [True]
         python_versions = []
         platforms = []
+        _depths = [0]
 
         children = graph["children"]
+        found = False
         for child in children:
             if child["name"] == package.name:
                 category = child["category"]
                 optional = child["optional"]
                 python_version = child["python_version"]
                 platform = child["platform"]
+                _depths.append(depth)
             else:
                 (
                     category,
                     optional,
                     python_version,
                     platform,
-                ) = self._get_tags_for_package(package, child)
+                    _depth,
+                ) = self._get_tags_for_package(package, child, depth=depth + 1)
+
+                _depths.append(_depth)
 
             categories.append(category)
             optionals.append(optional)
@@ -300,4 +315,6 @@ class Solver:
                 elif current.matches(previous):
                     platform = constraint
 
-        return category, optional, python_version, platform
+        depth = max(*(_depths + [0]))
+
+        return category, optional, python_version, platform, depth

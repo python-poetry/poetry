@@ -6,6 +6,10 @@
 
 - Added support for `packages`, `include` and `exclude` properties.
 
+### Changed
+
+- Changed the dependency installation order, deepest dependencies are now installed first.
+
 ### Fixed
 
 - Fixed handling of duplicate dependencies with different constraints.
