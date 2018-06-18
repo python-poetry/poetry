@@ -16,8 +16,6 @@ If one doesn't exist yet, it will be created.
 """
 
     def handle(self):
-        from poetry.config import Config
-
         # Check if it's already activated or doesn't exist and won't be created
         if "POETRY_ACTIVE" in environ or not self.venv.is_venv():
             current_venv = environ.get("VIRTUAL_ENV")
@@ -29,9 +27,7 @@ If one doesn't exist yet, it will be created.
                 )
 
             else:
-                config = Config.create("config.toml")
-                if not config.setting("settings.virtualenvs.create"):
-                    self.error("Virtual environment not found")
+                self.error("Virtual environment wasn't found")
 
             return
 
