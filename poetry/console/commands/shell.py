@@ -34,9 +34,11 @@ If one doesn't exist yet, it will be created.
         if self.venv._windows:
             # Windows is probably more complicated than this
             # and support to cmd alternatives should probably be added
-            shell, *args = ("cmd", "/k")
+            shell = "cmd"
+            args = ["/k"]
         else:
-            shell, *args = (environ.get("SHELL"),)
+            shell = environ.get("SHELL")
+            args = []
             if shell is None:
                 self.error("The SHELL environment variable must be set.")
                 return
