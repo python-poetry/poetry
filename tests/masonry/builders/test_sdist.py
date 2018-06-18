@@ -4,6 +4,8 @@ import re
 import shutil
 import tarfile
 
+from email.parser import Parser
+
 from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.masonry.utils.package_include import PackageInclude
@@ -123,6 +125,55 @@ def test_make_setup():
         ]
     }
     assert ns["extras_require"] == {"time": ["pendulum>=1.4,<2.0"]}
+
+
+def test_make_pkg_info():
+    poetry = Poetry.create(project("complete"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(pkg_info.decode())
+
+    assert parsed["Metadata-Version"] == "2.1"
+    assert parsed["Name"] == "my-package"
+    assert parsed["Version"] == "1.2.3"
+    assert parsed["Summary"] == "Some description."
+    assert parsed["Author"] == "Sébastien Eustace"
+    assert parsed["Author-email"] == "sebastien@eustace.io"
+    assert parsed["Keywords"] == "packaging,dependency,poetry"
+    assert parsed["Requires-Python"] == ">=3.6,<4.0"
+
+    classifiers = parsed.get_all("Classifier")
+    assert classifiers == [
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Software Development :: Build Tools",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ]
+
+    extras = parsed.get_all("Provides-Extra")
+    assert extras == ["time"]
+
+    requires = parsed.get_all("Requires-Dist")
+    assert requires == [
+        "cachy[msgpack] (>=0.2.0,<0.3.0)",
+        "cleo (>=0.6,<0.7)",
+        'pendulum (>=1.4,<2.0); extra == "time"',
+    ]
+
+
+def test_make_pkg_info_any_python():
+    poetry = Poetry.create(project("module1"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(pkg_info.decode())
+
+    assert "Requires-Python" not in parsed
 
 
 def test_find_files_to_add():
