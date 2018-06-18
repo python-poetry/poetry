@@ -1,4 +1,5 @@
 from os import environ
+from distutils.util import strtobool
 
 from .venv_command import VenvCommand
 
@@ -17,7 +18,7 @@ If one doesn't exist yet, it will be created.
 
     def handle(self):
         # Check if it's already activated or doesn't exist and won't be created
-        if "POETRY_ACTIVE" in environ or not self.venv.is_venv():
+        if strtobool(environ.get("POETRY_ACTIVE", "0")) or not self.venv.is_venv():
             current_venv = environ.get("VIRTUAL_ENV")
 
             if current_venv:
