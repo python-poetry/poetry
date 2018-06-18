@@ -46,6 +46,6 @@ If one doesn't exist yet, it will be created.
         self.line("Spawning shell within <info>{}</>".format(self.venv.venv))
 
         # Setting this to avoid spawning unnecessary nested shells
-        environ["POETRY_ACTIVE"] = str(self.venv.venv)
+        environ["POETRY_ACTIVE"] = "1"
         self.venv.execute(shell, *args)
         environ.pop("POETRY_ACTIVE")
