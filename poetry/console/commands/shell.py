@@ -16,19 +16,23 @@ If one doesn't exist yet, it will be created.
 """
 
     def handle(self):
-        # This variable will be set if the current shell was spawned by poetry
-        current_venv = environ.get("POETRY_ACTIVE")
+        from poetry.config import Config
 
-        # Alternatively, a virtual environment might have already been
-        # activated in some other way
-        if not current_venv and not self.venv.is_venv():
+        # Check if it's already activated or doesn't exist and won't be created
+        if "POETRY_ACTIVE" in environ or not self.venv.is_venv():
             current_venv = environ.get("VIRTUAL_ENV")
 
-        if current_venv:
-            self.line(
-                "Virtual environment already activated: "
-                "<info>{}</>".format(current_venv)
-            )
+            if current_venv:
+                self.line(
+                    "Virtual environment already activated: "
+                    "<info>{}</>".format(current_venv)
+                )
+
+            else:
+                config = Config.create("config.toml")
+                if not config.setting("settings.virtualenvs.create"):
+                    self.error("Virtual environment not found")
+
             return
 
         if self.venv._windows:
