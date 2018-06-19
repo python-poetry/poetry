@@ -5,6 +5,7 @@
 ### Added
 
 - Added support for `packages`, `include` and `exclude` properties.
+- Added license validation in `init` command.
 
 ### Changed
 
