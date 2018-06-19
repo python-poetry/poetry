@@ -12,6 +12,7 @@ pages:
   - Basic Usage: basic-usage.md
   - Libraries: libraries.md
   - Commands: cli.md
+  - Configuration: configuration.md
   - Repositories: repositories.md
   - Versions: versions.md
   - The pyproject.toml file: pyproject.md
