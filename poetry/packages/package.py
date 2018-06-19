@@ -318,6 +318,9 @@ class Package(object):
         clone.python_versions = self.python_versions
         clone.platform = self.platform
         clone.extras = self.extras
+        clone.source_type = self.source_type
+        clone.source_url = self.source_url
+        clone.source_reference = self.source_reference
 
         for dep in self.requires:
             clone.requires.append(dep)

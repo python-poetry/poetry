@@ -3,6 +3,11 @@ import tempfile
 
 from subprocess import CalledProcessError
 
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
 from poetry.utils._compat import encode
 from poetry.utils.venv import Venv
 
@@ -18,6 +23,15 @@ class PipInstaller(BaseInstaller):
         args = ["install", "--no-deps"]
 
         if package.source_type == "legacy" and package.source_url:
+            parsed = urlparse.urlparse(package.source_url)
+            if parsed.scheme == "http":
+                self._io.write_error(
+                    "    <warning>Installing from unsecure host: {}</warning>".format(
+                        parsed.netloc
+                    )
+                )
+                args += ["--trusted-host", parsed.netloc]
+
             args += ["--index-url", package.source_url]
 
         if update:
