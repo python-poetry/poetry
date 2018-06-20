@@ -27,7 +27,12 @@ class Builder(object):
         self._io = io
         self._package = poetry.package
         self._path = poetry.file.parent
-        self._module = Module(self._package.name, self._path.as_posix())
+        self._module = Module(
+            self._package.name,
+            self._path.as_posix(),
+            packages=self._package.packages,
+            includes=self._package.include,
+        )
         self._meta = Metadata.from_package(self._package)
 
     def build(self):
@@ -39,7 +44,12 @@ class Builder(object):
         if not vcs:
             return []
 
-        ignored = vcs.get_ignored_files()
+        explicitely_excluded = []
+        for excluded_glob in self._package.exclude:
+            for excluded in self._path.glob(excluded_glob):
+                explicitely_excluded.append(excluded)
+
+        ignored = vcs.get_ignored_files() + explicitely_excluded
         result = []
         for file in ignored:
             try:
@@ -55,39 +65,32 @@ class Builder(object):
     def find_files_to_add(self, exclude_build=True):  # type: () -> list
         """
         Finds all files to add to the tarball
-
-        TODO: Support explicit include/exclude
         """
         excluded = self.find_excluded_files()
         src = self._module.path
         to_add = []
 
-        if not self._module.is_package():
-            if self._module.is_in_src():
-                to_add.append(src.relative_to(src.parent.parent))
-            else:
-                to_add.append(src.relative_to(src.parent))
-        else:
-            for root, dirs, files in os.walk(src.as_posix()):
-                root = Path(root)
-                if root.name == "__pycache__":
+        for include in self._module.includes:
+            for file in include.elements:
+                if "__pycache__" in str(file):
                     continue
 
-                for file in files:
-                    file = root / file
-                    file = file.relative_to(self._path)
+                if file.is_dir():
+                    continue
 
-                    if file in excluded:
-                        continue
+                file = file.relative_to(self._path)
 
-                    if file.suffix == ".pyc":
-                        continue
+                if file in excluded:
+                    continue
 
-                    self._io.writeln(
-                        " - Adding: <comment>{}</comment>".format(str(file)),
-                        verbosity=self._io.VERBOSITY_VERY_VERBOSE,
-                    )
-                    to_add.append(file)
+                if file.suffix == ".pyc":
+                    continue
+
+                self._io.writeln(
+                    " - Adding: <comment>{}</comment>".format(str(file)),
+                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                )
+                to_add.append(file)
 
         # Include project files
         self._io.writeln(

@@ -68,6 +68,53 @@ An URL to the documentation of the project. **Optional**
 
 A list of keywords (max: 5) that the package is related to. **Optional**
 
+## packages
+
+A list of packages and modules to include in the final distribution.
+
+If your project structure differs from the standard one supported by `poetry`,
+you can specify the packages you want to include in the final distribution.
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "mypackage" },
+    { include = "extra_package/**/*.py" },
+]
+```
+
+If your package is stored inside a "source" directory, you must specify it:
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "mypackage", from = "lib" },
+]
+```
+
+!!!note
+
+    Using `packages` disables the package auto-detection feature meaning you have to
+    **explicitly** specify the "default" package.
+
+    For instance, if you have a package named `my_package` and you want to also include
+    another package named `extra_package`, you will need to specify `my_package` explicitely:
+
+    ```toml
+    packages = [
+        { include = "mypackage" },
+        { include = "extra_package" },
+    ]
+    ```
+
+!!!note
+
+    Poetry is clever enough to detect Python subpackages.
+
+    So, if you only have to specify the directory where you root package resides.
+
 ## include and exclude
 
 A list of patterns that will be included in the final package.
@@ -78,13 +125,13 @@ The globs specified in the exclude field identify a set of files that are not in
 If a VCS is being used for a package, the exclude field will be seeded with the VCS’ ignore settings (`.gitignore` for git for example).
 
 ```toml
-[package]
+[tool.poetry]
 # ...
-include = ["package/**/*.py", "package/**/.c"]
+include = ["CHANGELOG.md"]
 ```
 
 ```toml
-exclude = ["package/excluded.py"]
+exclude = ["my_package/excluded.py"]
 ```
 
 ## `dependencies` and `dev-dependencies`
@@ -109,7 +156,7 @@ url = 'http://example.com/simple'
 
     Be aware that declaring the python version for which your package
     is compatible is mandatory:
-    
+
     ```toml
     [tool.poetry.dependencies]
     python = "^3.6"

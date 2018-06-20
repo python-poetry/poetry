@@ -52,6 +52,9 @@ optional = false
 python-versions = "*"
 platform = "*"
 
+[package.requirements]
+python = "<4.0"
+
 [[package]]
 name = "C"
 version = "1.5"
@@ -60,6 +63,9 @@ category = "main"
 optional = false
 python-versions = "*"
 platform = "*"
+
+[package.requirements]
+python = ">=4.0"
 
 [metadata]
 python-versions = "*"

@@ -187,13 +187,32 @@ class Installer:
         ):
             # We resolve again by only using the lock file
             pool = Pool()
-            pool.add_repository(local_repo)
+
+            # Making a new repo containing the packages
+            # newly resolved and the ones from the current lock file
+            locked_repository = self._locker.locked_repository(True)
+            repo = Repository()
+            for package in local_repo.packages + locked_repository.packages:
+                if not repo.has_package(package):
+                    repo.add_package(package)
+
+            pool.add_repository(repo)
+
+            # We whitelist all packages to be sure
+            # that the latest ones are picked up
+            whitelist = []
+            for pkg in locked_repository.packages:
+                whitelist.append(pkg.name)
 
             solver = Solver(
-                self._package, pool, self._installed_repository, Repository(), NullIO()
+                self._package,
+                pool,
+                self._installed_repository,
+                locked_repository,
+                NullIO(),
             )
 
-            ops = solver.solve() + [o for o in ops if o.job_type == "uninstall"]
+            ops = solver.solve(use_latest=whitelist)
 
         # We need to filter operations so that packages
         # not compatible with the current system,

@@ -154,6 +154,9 @@ class Poetry:
         if "exclude" in local_config:
             package.exclude = local_config["exclude"]
 
+        if "packages" in local_config:
+            package.packages = local_config["packages"]
+
         locker = Locker(poetry_file.with_suffix(".lock"), local_config)
 
         return cls(poetry_file, local_config, package, locker)

@@ -102,6 +102,22 @@ def test_poetry():
     ]
 
 
+def test_poetry_with_packages_and_includes():
+    poetry = Poetry.create(
+        str(fixtures_dir.parent / "masonry" / "builders" / "fixtures" / "with-include")
+    )
+
+    package = poetry.package
+
+    assert package.packages == [
+        {"include": "extra_dir/**/*.py"},
+        {"include": "my_module.py"},
+        {"include": "package_with_include"},
+    ]
+
+    assert package.include == ["notes.txt"]
+
+
 def test_check():
     complete = fixtures_dir / "complete.toml"
     with complete.open() as f:

@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
 import ast
 import pytest
 import re
 import shutil
 import tarfile
 
+from email.parser import Parser
+
 from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
+from poetry.masonry.utils.package_include import PackageInclude
 from poetry.packages import Package
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
@@ -124,6 +128,55 @@ def test_make_setup():
     assert ns["extras_require"] == {"time": ["pendulum>=1.4,<2.0"]}
 
 
+def test_make_pkg_info():
+    poetry = Poetry.create(project("complete"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(to_str(pkg_info))
+
+    assert parsed["Metadata-Version"] == "2.1"
+    assert parsed["Name"] == "my-package"
+    assert parsed["Version"] == "1.2.3"
+    assert parsed["Summary"] == "Some description."
+    assert parsed["Author"] == "Sébastien Eustace"
+    assert parsed["Author-email"] == "sebastien@eustace.io"
+    assert parsed["Keywords"] == "packaging,dependency,poetry"
+    assert parsed["Requires-Python"] == ">=3.6,<4.0"
+
+    classifiers = parsed.get_all("Classifier")
+    assert classifiers == [
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Software Development :: Build Tools",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ]
+
+    extras = parsed.get_all("Provides-Extra")
+    assert extras == ["time"]
+
+    requires = parsed.get_all("Requires-Dist")
+    assert requires == [
+        "cachy[msgpack] (>=0.2.0,<0.3.0)",
+        "cleo (>=0.6,<0.7)",
+        'pendulum (>=1.4,<2.0); extra == "time"',
+    ]
+
+
+def test_make_pkg_info_any_python():
+    poetry = Poetry.create(project("module1"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(to_str(pkg_info))
+
+    assert "Requires-Python" not in parsed
+
+
 def test_find_files_to_add():
     poetry = Poetry.create(project("complete"))
 
@@ -140,6 +193,38 @@ def test_find_files_to_add():
         Path("my_package/sub_pkg2/data2/data.json"),
         Path("pyproject.toml"),
     ]
+
+
+def test_find_packages():
+    poetry = Poetry.create(project("complete"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+
+    base = project("complete")
+    include = PackageInclude(base, "my_package")
+
+    pkg_dir, packages, pkg_data = builder.find_packages(include)
+
+    assert pkg_dir is None
+    assert packages == ["my_package", "my_package.sub_pkg1", "my_package.sub_pkg2"]
+    assert pkg_data == {
+        "": ["*"],
+        "my_package": ["data1/*"],
+        "my_package.sub_pkg2": ["data2/*"],
+    }
+
+    poetry = Poetry.create(project("source_package"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+
+    base = project("source_package")
+    include = PackageInclude(base, "package_src", "src")
+
+    pkg_dir, packages, pkg_data = builder.find_packages(include)
+
+    assert pkg_dir == str(base / "src")
+    assert packages == ["package_src"]
+    assert pkg_data == {"": ["*"]}
 
 
 def test_package():
@@ -212,7 +297,7 @@ def test_with_src_module_file():
     ns = {}
     exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
     assert ns["package_dir"] == {"": "src"}
-    assert re.search("'py_modules': 'module_src'", to_str(setup)) is not None
+    assert ns["modules"] == ["module_src"]
 
     builder.build()
 
@@ -250,3 +335,40 @@ def test_with_src_module_dir():
 
     assert "package-src-0.1/src/package_src/__init__.py" in tar.getnames()
     assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
+
+
+def test_package_with_include():
+    poetry = Poetry.create(project("with-include"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+
+    # Check setup.py
+    setup = builder.build_setup()
+    setup_ast = ast.parse(setup)
+
+    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    ns = {}
+    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+    assert "package_dir" not in ns
+    assert ns["packages"] == ["extra_dir", "extra_dir.sub_pkg", "package_with_include"]
+    assert ns["modules"] == ["my_module"]
+
+    builder.build()
+
+    sdist = fixtures_dir / "with-include" / "dist" / "with-include-1.2.3.tar.gz"
+
+    assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), "r")
+
+    names = tar.getnames()
+    assert "with-include-1.2.3/LICENSE" in names
+    assert "with-include-1.2.3/README.rst" in names
+    assert "with-include-1.2.3/extra_dir/__init__.py" in names
+    assert "with-include-1.2.3/extra_dir/sub_pkg/__init__.py" in names
+    assert "with-include-1.2.3/my_module.py" in names
+    assert "with-include-1.2.3/notes.txt" in names
+    assert "with-include-1.2.3/package_with_include/__init__.py" in names
+    assert "with-include-1.2.3/pyproject.toml" in names
+    assert "with-include-1.2.3/setup.py" in names
+    assert "with-include-1.2.3/PKG-INFO" in names

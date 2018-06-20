@@ -26,11 +26,6 @@ class Package(object):
 
     AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
 
-    supported_link_types = {
-        "require": {"description": "requires", "method": "requires"},
-        "provide": {"description": "provides", "method": "provides"},
-    }
-
     def __init__(self, name, version, pretty_version=None):
         """
         Creates a new in memory package.
@@ -70,10 +65,6 @@ class Package(object):
 
         # Requirements for making it mandatory
         self.requirements = {}
-
-        self.build = None
-        self.include = []
-        self.exclude = []
 
         self.classifiers = []
 
@@ -327,6 +318,9 @@ class Package(object):
         clone.python_versions = self.python_versions
         clone.platform = self.platform
         clone.extras = self.extras
+        clone.source_type = self.source_type
+        clone.source_url = self.source_url
+        clone.source_reference = self.source_reference
 
         for dep in self.requires:
             clone.requires.append(dep)

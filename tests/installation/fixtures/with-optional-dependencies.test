@@ -20,7 +20,7 @@ platform = "*"
 D = "^1.2"
 
 [package.requirements]
-python = "~2.7 || ^3.4"
+python = ">=2.7,<2.8 || >=3.4,<4.0"
 
 [[package]]
 name = "D"
@@ -32,7 +32,7 @@ python-versions = "*"
 platform = "*"
 
 [package.requirements]
-python = "~2.7 || ^3.4"
+python = ">=2.7,<2.8 || >=3.4,<4.0"
 
 [extras]
 foo = ["A"]

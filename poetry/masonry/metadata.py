@@ -62,12 +62,12 @@ class Metadata:
         # Version 1.2
         meta.maintainer = meta.author
         meta.maintainer_email = meta.author_email
-        meta.requires_python = package.python_constraint
-
-        meta.requires_dist = [d.to_pep_508() for d in package.requires]
 
         # Requires python
-        meta.requires_python = format_python_constraint(package.python_constraint)
+        if not package.python_constraint.is_any():
+            meta.requires_python = format_python_constraint(package.python_constraint)
+
+        meta.requires_dist = [d.to_pep_508() for d in package.requires]
 
         # Version 2.1
         if package.readme:

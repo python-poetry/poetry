@@ -17,6 +17,7 @@ from poetry.semver import parse_constraint
 from poetry.utils._compat import Path
 
 from ..utils.helpers import normalize_file_permissions
+from ..utils.package_include import PackageInclude
 from ..utils.tags import get_abbr_impl
 from ..utils.tags import get_abi_tag
 from ..utils.tags import get_impl_ver
@@ -120,29 +121,41 @@ class WheelBuilder(Builder):
                 shutil.copytree(str(pkg), str(self._path / pkg.name))
 
     def copy_module(self):
-        if self._module.is_package():
-            files = self.find_files_to_add()
+        excluded = self.find_excluded_files()
+        src = self._module.path
+        to_add = []
 
-            # Walk the files and compress them,
-            # sorting everything so the order is stable.
-            for file in sorted(files):
-                full_path = self._path / file
+        for include in self._module.includes:
+            include.refresh()
 
-                if self._module.is_in_src():
-                    try:
-                        file = file.relative_to(
-                            self._module.path.parent.relative_to(self._path)
-                        )
-                    except ValueError:
-                        pass
-
-                # Do not include topmost files
-                if full_path.relative_to(self._path) == Path(file.name):
+            for file in include.elements:
+                if "__pycache__" in str(file):
                     continue
 
-                self._add_file(full_path, file)
-        else:
-            self._add_file(str(self._module.path), self._module.path.name)
+                if file.is_dir():
+                    continue
+
+                if isinstance(include, PackageInclude) and include.source:
+                    rel_file = file.relative_to(include.base)
+                else:
+                    rel_file = file.relative_to(self._path)
+
+                if file in excluded:
+                    continue
+
+                if file.suffix == ".pyc":
+                    continue
+
+                self._io.writeln(
+                    " - Adding: <comment>{}</comment>".format(str(file)),
+                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                )
+                to_add.append((file, rel_file))
+
+        # Walk the files and compress them,
+        # sorting everything so the order is stable.
+        for full_path, rel_path in sorted(to_add, key=lambda x: x[1]):
+            self._add_file(full_path, rel_path)
 
     def write_metadata(self):
         if (

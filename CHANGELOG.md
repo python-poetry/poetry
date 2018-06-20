@@ -2,14 +2,27 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added support for `packages`, `include` and `exclude` properties.
+- Added license validation in `init` command.
+
+### Changed
+
+- Changed the dependency installation order, deepest dependencies are now installed first.
+
 ### Fixed
 
 - Fixed handling of duplicate dependencies with different constraints.
+- Fixed system requirements in lock file for sub dependencies.
 - Fixed detection of new prereleases.
 - Fixed unsafe packages being locked.
 - Fixed versions detection in custom repositories.
 - Fixed package finding with multiple custom repositories.
 - Fixed handling of root incompatibilities.
+- Fixed an error where packages from custom repositories would not be found.
+- Fixed wildcard Python requirement being wrongly set in distributions metadata.
+- Fixed installation of packages from a custom repository.
 
 
 ## [0.10.3] - 2018-06-04

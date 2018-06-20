@@ -63,7 +63,11 @@ class Pool(BaseRepository):
 
     def package(self, name, version, extras=None):
         for repository in self._repositories:
-            package = repository.package(name, version, extras=extras)
+            try:
+                package = repository.package(name, version, extras=extras)
+            except ValueError:
+                continue
+
             if package:
                 self._packages.append(package)
 
