@@ -142,10 +142,13 @@ class SdistBuilder(Builder):
             before.append("extras_require = \\\n{}\n".format(pformat(extras)))
             extra.append("'extras_require': extras_require,")
 
-        entry_points = self.convert_entry_points()
+        entry_points, scripts = self.convert_entry_points()
         if entry_points:
             before.append("entry_points = \\\n{}\n".format(pformat(entry_points)))
             extra.append("'entry_points': entry_points,")
+        if scripts:
+            before.append("scripts = \\\n{}\n".format(pformat(scripts)))
+            extra.append("'scripts': scripts,")
 
         if self._package.python_versions != "*":
             python_requires = self._meta.requires_python

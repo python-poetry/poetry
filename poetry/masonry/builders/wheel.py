@@ -179,6 +179,10 @@ class WheelBuilder(Builder):
         return self.dist_info_name(self._package.name, self._meta.version)
 
     @property
+    def data_info(self):  # type: () -> str
+        return self.data_info_name(self._package.name, self._meta.version)
+
+    @property
     def wheel_filename(self):  # type: () -> str
         return "{}-{}-{}.whl".format(
             re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
@@ -196,6 +200,12 @@ class WheelBuilder(Builder):
         escaped_version = re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE)
 
         return "{}-{}.dist-info".format(escaped_name, escaped_version)
+
+    def data_info_name(self, distribution, version):  # type: (...) -> str
+        escaped_name = re.sub("[^\w\d.]+", "_", distribution, flags=re.UNICODE)
+        escaped_version = re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE)
+
+        return "{}-{}.data".format(escaped_name, escaped_version)
 
     @property
     def tag(self):
@@ -217,7 +227,7 @@ class WheelBuilder(Builder):
 
         return "-".join(tag)
 
-    def _add_file(self, full_path, rel_path):
+    def _add_file(self, full_path, rel_path, executable=False):
         full_path, rel_path = str(full_path), str(rel_path)
         if os.sep != "/":
             # We always want to have /-separated paths in the zip file and in
@@ -228,7 +238,7 @@ class WheelBuilder(Builder):
 
         # Normalize permission bits to either 755 (executable) or 644
         st_mode = os.stat(full_path).st_mode
-        new_mode = normalize_file_permissions(st_mode)
+        new_mode = normalize_file_permissions(st_mode, executable=executable)
         zinfo.external_attr = (new_mode & 0xFFFF) << 16  # Unix attributes
 
         if stat.S_ISDIR(st_mode):
@@ -271,7 +281,7 @@ class WheelBuilder(Builder):
         """
         Write entry_points.txt.
         """
-        entry_points = self.convert_entry_points()
+        entry_points, scripts = self.convert_entry_points()
 
         for group_name in sorted(entry_points):
             fp.write("[{}]\n".format(group_name))
@@ -279,6 +289,15 @@ class WheelBuilder(Builder):
                 fp.write(ep.replace(" ", "") + "\n")
 
             fp.write("\n")
+
+        for script in scripts:
+            file = Path(script)
+            full_path = self._path / file
+            self._add_file(
+                full_path,
+                self.data_info + "/scripts/" + script.lstrip("/"),
+                executable=True,
+            )
 
     def _write_wheel_file(self, fp):
         fp.write(

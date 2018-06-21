@@ -89,6 +89,10 @@ class Builder(object):
                     )
                     to_add.append(file)
 
+        _, scripts = self.convert_entry_points()
+        for script in scripts:
+            to_add.append(Path(script))
+
         # Include project files
         self._io.writeln(
             " - Adding: <comment>pyproject.toml</comment>",
@@ -126,12 +130,16 @@ class Builder(object):
 
         return sorted(to_add)
 
-    def convert_entry_points(self):  # type: () -> dict
+    def convert_entry_points(self):  # type: () -> (dict, list)
         result = defaultdict(list)
+        scripts = []
 
         # Scripts -> Entry points
         for name, ep in self._poetry.local_config.get("scripts", {}).items():
-            result["console_scripts"].append("{} = {}".format(name, ep))
+            if isinstance(ep, dict):
+                scripts.append(ep["path"])
+            else:
+                result["console_scripts"].append("{} = {}".format(name, ep))
 
         # Plugins -> entry points
         plugins = self._poetry.local_config.get("plugins", {})
@@ -141,8 +149,7 @@ class Builder(object):
 
         for groupname in result:
             result[groupname] = sorted(result[groupname])
-
-        return dict(result)
+        return dict(result), scripts
 
     @classmethod
     def convert_author(cls, author):  # type: () -> dict
