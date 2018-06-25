@@ -121,6 +121,7 @@ def test_make_setup():
             "my-script = my_package:main",
         ]
     }
+    assert ns["scripts"] == ["bin/my-special-script"]
     assert ns["extras_require"] == {"time": ["pendulum>=1.4,<2.0"]}
 
 
@@ -133,6 +134,7 @@ def test_find_files_to_add():
     assert result == [
         Path("LICENSE"),
         Path("README.rst"),
+        Path("bin/my-special-script"),
         Path("my_package/__init__.py"),
         Path("my_package/data1/test.json"),
         Path("my_package/sub_pkg1/__init__.py"),

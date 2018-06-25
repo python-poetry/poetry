@@ -137,6 +137,8 @@ class Builder(object):
         # Scripts -> Entry points
         for name, ep in self._poetry.local_config.get("scripts", {}).items():
             if isinstance(ep, dict):
+                if ep["path"].split("/")[-1] != name:
+                    raise ValueError("Path based scripts name must match their file name, {name} does not ({path})".format(name=name, path=ep["path"]))
                 scripts.append(ep["path"])
             else:
                 result["console_scripts"].append("{} = {}".format(name, ep))
