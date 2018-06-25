@@ -33,6 +33,7 @@ def clear_samples_dist():
             shutil.rmtree(str(dist))
 
 
+@pytest.mark.skipif(sys.platform == "win32" and sys.version_info <= (3, 4))
 def test_wheel_c_extension():
     module_path = fixtures_dir / "extended"
     builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True), NullIO())
