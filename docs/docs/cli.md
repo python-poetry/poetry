@@ -258,25 +258,7 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 ````
 
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
-
-### Modifying repositories
-
-In addition to modifying the config section,
-the config command also supports making changes to the repositories section by using it the following way:
-
-```bash
-poetry config repositories.foo https://foo.bar/simple/
-```
-
-This will set the url for repository `foo` to `https://foo.bar/simple/`.
-
-If you want to store your credentials for a specific repository, you can do so easily:
-
-```bash
-poetry config http-basic.foo username password
-```
-
-If you do not specify the password you will be prompted to write it.
+See [Configuration](/configuration/) for all available settings.
 
 ### Options
 
