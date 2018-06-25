@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import pytest
 import re
 import shutil
+import sys
 import tarfile
 import zipfile
 
