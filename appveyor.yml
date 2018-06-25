@@ -4,6 +4,9 @@ environment:
   PYTHONIOENCODING: "UTF-8"
 
   matrix:
+    - PYTHON: "C:/Python27-x64"
+    - PYTHON: "C:/Python34-x64"
+    - PYTHON: "C:/Python35-x64"
     - PYTHON: "C:/Python36-x64"
 
 install:
@@ -11,15 +14,14 @@ install:
 
   # Upgrade to the latest version of pip to avoid it displaying warnings
   # about it being out of date.
-  - pip install --disable-pip-version-check --user --upgrade pip
+  - "python -m pip install --disable-pip-version-check --user --upgrade pip"
 
   # Create poetry virtualenv
-  - pip install poetry --pre
-  - python -m venv venv
-  - venv\\Scripts\\activate.bat
+  - curl -fsS -o get-poetry.py https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
+  - python get-poetry.py --preview
 
   # Install dependencies
   - poetry install -v
 
 test_script:
-  - "pytest --cov=poetry tests/"
+  - "poetry run pytest --cov=poetry tests/ -W ignore"
