@@ -230,7 +230,7 @@ class Provider:
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
         package = Package(dependency.name, dependency.pretty_constraint)
         package.source_type = "file"
-        package.source_url = str(dependency.path)
+        package.source_url = dependency.path.as_posix()
 
         package.description = dependency.metadata.summary
         for req in dependency.metadata.requires_dist:
