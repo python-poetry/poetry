@@ -189,7 +189,7 @@ class Provider:
                 try:
                     venv.run("python", "setup.py", "egg_info")
 
-                    egg_info = list(tmp_dir.glob("*.egg-info"))[0]
+                    egg_info = next(tmp_dir.glob("**/*.egg-info"))
 
                     meta = pkginfo.UnpackedSDist(str(egg_info))
 
