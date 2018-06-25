@@ -5,6 +5,7 @@
 ### Added
 
 - Added support for `packages`, `include` and `exclude` properties.
+- Added a new `shell` command. (Thanks to [@cauebs](https://github.com/cauebs))
 - Added license validation in `init` command.
 
 ### Changed
