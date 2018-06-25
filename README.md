@@ -225,7 +225,7 @@ Here is a breakdown of what exactly happens here:
 
 What interests us is `pbr (>=0.6,!=0.7,<1.0)`.
 
-At his point, poetry will choose `pbr==0.11.1` which is the latest version that matches the constraint.
+At this point, poetry will choose `pbr==0.11.1` which is the latest version that matches the constraint.
 
 Next it will try to select `oslo.i18n==3.20.0` which is the latest version that matches `oslo.i18n (>=1.3.0)`.
 
@@ -242,7 +242,7 @@ dependency. This means that **any** version of this package can be installed whi
 can lead to compatibility issues.
 
 Also, you have to explicitly tell it to not update the locked packages when you
-installed new ones. This should be the default.
+install new ones. This should be the default.
 
 #### Remove command
 
@@ -740,7 +740,7 @@ This section describe the scripts or executable that will be installed when inst
 
 ```toml
 [tool.poetry.scripts]
-poetry = 'poetry:console.run'
+poetry = 'poetry.console:run'
 ```
 
 After installing a package with the above toml, `poetry` will be a global command available from the command line that will execute `console.run` in the `poetry` package.

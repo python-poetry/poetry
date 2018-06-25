@@ -7,7 +7,7 @@ class NewCommand(Command):
 
     new
         { path : The path to create the project at. }
-        { --name : Set the resulting package name. }
+        { --name= : Set the resulting package name. }
         { --src : Use the src layout for the project. }
     """
 
