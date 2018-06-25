@@ -17,7 +17,7 @@ class TomlFile:
         return self._path
 
     def read(self, raw=False):  # type: (bool) -> dict
-        with self._path.open() as f:
+        with self._path.open(encoding="utf-8") as f:
             if raw:
                 return toml.loads(f.read())
 
@@ -29,7 +29,7 @@ class TomlFile:
         else:
             data = dumps(data)
 
-        with self._path.open("w") as f:
+        with self._path.open("w", encoding="utf-8") as f:
             f.write(data)
 
     def __getattr__(self, item):
