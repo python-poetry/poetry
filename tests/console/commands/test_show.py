@@ -55,7 +55,7 @@ cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
 
 def test_show_basic_with_not_installed_packages_non_decorated(app, poetry, installed):
@@ -109,7 +109,7 @@ cachy        0.1.0 Cachy package
 pendulum (!) 2.0.0 Pendulum package
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
 
 def test_show_basic_with_not_installed_packages_decorated(app, poetry, installed):
@@ -163,7 +163,7 @@ def test_show_basic_with_not_installed_packages_decorated(app, poetry, installed
 \033[31mpendulum\033[0m \033[36m2.0.0\033[0m Pendulum package
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
 
 def test_show_latest_non_decorated(app, poetry, installed, repo):
@@ -228,7 +228,7 @@ cachy    0.1.0 0.2.0 Cachy package
 pendulum 2.0.0 2.0.1 Pendulum package
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
 
 def test_show_latest_decorated(app, poetry, installed, repo):
@@ -295,7 +295,7 @@ def test_show_latest_decorated(app, poetry, installed, repo):
 \033[32mpendulum\033[0m \033[36m2.0.0\033[0m \033[31m2.0.1\033[0m Pendulum package
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
 
 def test_show_outdated(app, poetry, installed, repo):
@@ -356,7 +356,7 @@ def test_show_outdated(app, poetry, installed, repo):
 cachy    0.1.0 0.2.0 Cachy package
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
 
 def test_show_hides_incompatible_package(app, poetry, installed, repo):
@@ -411,7 +411,7 @@ def test_show_hides_incompatible_package(app, poetry, installed, repo):
 pendulum 2.0.0 Pendulum package
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
 
 def test_show_all_shows_incompatible_package(app, poetry, installed, repo):
@@ -467,4 +467,4 @@ cachy     0.1.0 Cachy package
 pendulum  2.0.0 Pendulum package
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected

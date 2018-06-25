@@ -42,7 +42,7 @@ def test_basic_interactive(app, mocker, poetry):
     )
     tester.execute([("command", command.name)])
 
-    output = tester.get_display()
+    output = tester.get_display(True)
     expected = """\
 [tool.poetry]
 name = "my-package"
@@ -91,7 +91,7 @@ def test_interactive_with_dependencies(app, repo, mocker, poetry):
     )
     tester.execute([("command", command.name)])
 
-    output = tester.get_display()
+    output = tester.get_display(True)
     expected = """\
 [tool.poetry]
 name = "my-package"

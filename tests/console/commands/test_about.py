@@ -15,4 +15,4 @@ See https://github.com/sdispater/poetry for more information.
 
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
