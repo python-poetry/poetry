@@ -183,16 +183,18 @@ def test_find_files_to_add():
     builder = SdistBuilder(poetry, NullVenv(), NullIO())
     result = builder.find_files_to_add()
 
-    assert result == [
-        Path("LICENSE"),
-        Path("README.rst"),
-        Path("my_package/__init__.py"),
-        Path("my_package/data1/test.json"),
-        Path("my_package/sub_pkg1/__init__.py"),
-        Path("my_package/sub_pkg2/__init__.py"),
-        Path("my_package/sub_pkg2/data2/data.json"),
-        Path("pyproject.toml"),
-    ]
+    assert sorted(result) == sorted(
+        [
+            Path("LICENSE"),
+            Path("README.rst"),
+            Path("my_package/__init__.py"),
+            Path("my_package/data1/test.json"),
+            Path("my_package/sub_pkg1/__init__.py"),
+            Path("my_package/sub_pkg2/__init__.py"),
+            Path("my_package/sub_pkg2/data2/data.json"),
+            Path("pyproject.toml"),
+        ]
+    )
 
 
 def test_find_packages():

@@ -55,7 +55,7 @@ def test_wheel_c_extension():
 
     has_compiled_extension = False
     for name in zip.namelist():
-        if name.startswith("extended/extended") and name.endswith(".so"):
+        if name.startswith("extended/extended") and name.endswith((".so", ".pyd")):
             has_compiled_extension = True
 
     assert has_compiled_extension
@@ -172,7 +172,10 @@ def test_module_src():
 
     zip = zipfile.ZipFile(str(whl))
 
-    assert "module_src.py" in zip.namelist()
+    try:
+        assert "module_src.py" in zip.namelist()
+    finally:
+        zip.close()
 
 
 def test_package_src():
@@ -194,5 +197,8 @@ def test_package_src():
 
     zip = zipfile.ZipFile(str(whl))
 
-    assert "package_src/__init__.py" in zip.namelist()
-    assert "package_src/module.py" in zip.namelist()
+    try:
+        assert "package_src/__init__.py" in zip.namelist()
+        assert "package_src/module.py" in zip.namelist()
+    finally:
+        zip.close()
