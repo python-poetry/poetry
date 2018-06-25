@@ -4,6 +4,7 @@ from typing import Tuple
 
 from .incompatibility import Incompatibility
 from .incompatibility_cause import ConflictCause
+from .incompatibility_cause import PythonCause
 
 
 class SolveFailure(Exception):
@@ -30,6 +31,20 @@ class _Writer:
     def write(self):
         buffer = []
 
+        required_python_version = None
+        for incompatibility in self._root.external_incompatibilities:
+            if isinstance(incompatibility.cause, PythonCause):
+                required_python_version = incompatibility.cause.root_python_version
+                break
+
+        if required_python_version is not None:
+            buffer.append(
+                "The current supported Python versions are {}".format(
+                    required_python_version
+                )
+            )
+            buffer.append("")
+
         if isinstance(self._root.cause, ConflictCause):
             self._visit(self._root, {})
         else:
@@ -40,7 +55,7 @@ class _Writer:
         padding = (
             0
             if not self._line_numbers
-            else len("({})".format(list(self._line_numbers.values())[-1]))
+            else len("({}) ".format(list(self._line_numbers.values())[-1]))
         )
 
         last_was_empty = False
@@ -79,7 +94,7 @@ class _Writer:
         self, incompatibility, details_for_incompatibility, conclusion=False
     ):  # type: (Incompatibility, Dict, bool) -> None
         numbered = conclusion or self._derivations[incompatibility] > 1
-        conjunction = conclusion or ("So," if incompatibility == self._root else "And")
+        conjunction = "So," if conclusion or incompatibility == self._root else "And"
         incompatibility_string = str(incompatibility)
 
         cause = incompatibility.cause  # type: ConflictCause

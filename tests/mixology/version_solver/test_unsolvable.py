@@ -79,7 +79,7 @@ def test_no_valid_solution(root, provider, repo):
 
     error = """\
 Because no versions of b match <1.0.0 || >1.0.0,<2.0.0 || >2.0.0
- and b (1.0.0) depends on a (2.0.0), b (<2.0.0 || >2.0.0) requires a (2.0.0).
+ and b (1.0.0) depends on a (2.0.0), b (!=2.0.0) requires a (2.0.0).
 And because a (2.0.0) depends on b (2.0.0), b is forbidden.
 Because b (2.0.0) depends on a (1.0.0) which depends on b (1.0.0), b is forbidden.
 Thus, b is forbidden.

@@ -10,6 +10,7 @@
 ### Changed
 
 - Changed the dependency installation order, deepest dependencies are now installed first.
+- Improved solver error messages.
 
 ### Fixed
 

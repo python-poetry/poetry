@@ -841,7 +841,7 @@ def test_solver_duplicate_dependencies_different_constraints_same_requirements(
 
     expected = """\
 Because a (1.0) depends on both B (^1.0) and B (^2.0), a is forbidden.
-So, because no versions of a match <1.0 || >1.0
+So, because no versions of a match !=1.0
  and root depends on A (*), version solving failed."""
 
     assert str(e.value) == expected

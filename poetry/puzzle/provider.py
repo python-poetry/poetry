@@ -279,7 +279,7 @@ class Provider:
             return [
                 Incompatibility(
                     [Term(package.to_dependency(), True)],
-                    PythonCause(package.python_versions),
+                    PythonCause(package.python_versions, self._package.python_versions),
                 )
             ]
 

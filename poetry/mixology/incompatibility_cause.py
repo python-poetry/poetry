@@ -48,12 +48,17 @@ class PythonCause(IncompatibilityCause):
     with the current python version.
     """
 
-    def __init__(self, python_version):
+    def __init__(self, python_version, root_python_version):
         self._python_version = python_version
+        self._root_python_version = root_python_version
 
     @property
     def python_version(self):
         return self._python_version
+
+    @property
+    def root_python_version(self):
+        return self._root_python_version
 
 
 class PlatformCause(IncompatibilityCause):
