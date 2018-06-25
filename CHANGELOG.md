@@ -26,6 +26,8 @@
 - Fixed wildcard Python requirement being wrongly set in distributions metadata.
 - Fixed installation of packages from a custom repository.
 - Fixed `remove` command's case sensitivity. (Thanks to [@cauebs](https://github.com/cauebs))
+- Fixed detection of `.egg-info` directory for non-poetry projects. (Thanks to [@gtors](https://github.com/gtors))
+- Fixed only-wheel builds. (Thanks to [@gtors](https://github.com/gtors))
 
 
 ## [0.10.3] - 2018-06-04
