@@ -25,6 +25,7 @@
 - Fixed an error where packages from custom repositories would not be found.
 - Fixed wildcard Python requirement being wrongly set in distributions metadata.
 - Fixed installation of packages from a custom repository.
+- Fixed `remove` command's case sensitivity. (Thanks to [@cauebs](https://github.com/cauebs))
 
 
 ## [0.10.3] - 2018-06-04
