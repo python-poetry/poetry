@@ -39,7 +39,7 @@ list of installed packages
             for key in poetry_content[section]:
                 if key.lower() == name.lower():
                     found = True
-                    requirements[name] = poetry_content[section][name]
+                    requirements[key] = poetry_content[section][key]
                     break
 
             if not found:
