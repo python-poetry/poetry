@@ -21,7 +21,7 @@ class GitConfig:
             if m:
                 for group in m:
                     self._config[group[0]] = group[1]
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, OSError):
             pass
 
     def get(self, key, default=None):
