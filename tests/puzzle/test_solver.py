@@ -886,3 +886,10 @@ def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
 
     op = ops[3]
     assert op.package.requirements == {"python": ">=3.4"}
+
+
+def test_solver_fails_if_dependency_name_does_not_match_package(solver, repo, package):
+    package.add_dependency("my-demo", {"git": "https://github.com/demo/demo.git"})
+
+    with pytest.raises(RuntimeError):
+        solver.solve()

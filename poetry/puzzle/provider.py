@@ -225,6 +225,14 @@ class Provider:
         finally:
             shutil.rmtree(tmp_dir.as_posix())
 
+        if dependency.name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                "The dependency name for {} does not match the actual package's name: {}".format(
+                    dependency.name, package.name
+                )
+            )
+
         return [package]
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
