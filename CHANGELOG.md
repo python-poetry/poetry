@@ -13,6 +13,7 @@
 - Changed the dependency installation order, deepest dependencies are now installed first.
 - Improved solver error messages.
 - `poetry` now always reads/writes the `pyproject.toml` file with the `utf-8` encoding.
+- `config --list` now lists all available settings.
 
 ### Fixed
 

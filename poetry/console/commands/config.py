@@ -43,6 +43,26 @@ To remove a repository (repo is a short alias for repositories):
         self._config = Config.create("config.toml")
         self._auth_config = Config.create("auth.toml")
 
+    @property
+    def unique_config_values(self):
+        boolean_validator = lambda val: val in {"true", "false", "1", "0"}
+        boolean_normalizer = lambda val: True if val in ["true", "1"] else False
+
+        unique_config_values = {
+            "settings.virtualenvs.create": (
+                boolean_validator,
+                boolean_normalizer,
+                True,
+            ),
+            "settings.virtualenvs.in-project": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
+        }
+
+        return unique_config_values
+
     def initialize(self, i, o):
         super(ConfigCommand, self).initialize(i, o)
 
@@ -93,15 +113,7 @@ To remove a repository (repo is a short alias for repositories):
 
         values = self.argument("value")
 
-        boolean_validator = lambda val: val in {"true", "false", "1", "0"}
-        boolean_normalizer = lambda val: True if val in ["true", "1"] else False
-
-        unique_config_values = {
-            "settings.virtualenvs.create": (boolean_validator, boolean_normalizer),
-            "settings.virtualenvs.in-project": (boolean_validator, boolean_normalizer),
-            "settings.pypi.fallback": (boolean_validator, boolean_normalizer),
-        }
-
+        unique_config_values = self.unique_config_values
         if setting_key in unique_config_values:
             if self.option("unset"):
                 return self._remove_single_value(setting_key)
@@ -180,7 +192,7 @@ To remove a repository (repo is a short alias for repositories):
         raise ValueError("Setting {} does not exist".format(self.argument("key")))
 
     def _handle_single_value(self, key, callbacks, values):
-        validator, normalizer = callbacks
+        validator, normalizer, _ = callbacks
 
         if len(values) > 1:
             raise RuntimeError("You can only pass one value.")
@@ -198,32 +210,74 @@ To remove a repository (repo is a short alias for repositories):
 
         return 0
 
-    def _list_configuration(self, contents, k=None):
+    def _list_configuration(self, contents):
+        settings = contents.get("settings", {})
+        for setting_key, value in sorted(self.unique_config_values.items()):
+            self._list_setting(
+                settings,
+                setting_key.replace("settings.", ""),
+                "settings.",
+                default=value[-1],
+            )
+
+        repositories = contents.get("repositories")
+        if not repositories:
+            self.line("<comment>repositories</comment> = <info>{}</info>")
+        else:
+            self._list_setting(repositories, k="repositories.")
+
+    def _list_setting(self, contents, setting=None, k=None, default=None):
         orig_k = k
 
-        for key, value in contents.items():
-            if k is None and key not in ["config", "repositories", "settings"]:
-                continue
-
-            if isinstance(value, dict) or key == "repositories" and k is None:
-                if k is None:
-                    k = ""
-
-                k += re.sub("^config\.", "", key + ".")
-                self._list_configuration(value, k=k)
-                k = orig_k
-
-                continue
-
-            if isinstance(value, list):
-                value = [
-                    json.dumps(val) if isinstance(val, list) else val for val in value
-                ]
-
-                value = "[{}]".format(", ".join(value))
-
-            value = json.dumps(value)
+        if setting and setting.split(".")[0] not in contents:
+            value = json.dumps(default)
 
             self.line(
-                "[<comment>{}</comment>] <info>{}</info>".format((k or "") + key, value)
+                "<comment>{}</comment> = <info>{}</info>".format(
+                    (k or "") + setting, value
+                )
             )
+        else:
+            for key, value in contents.items():
+                if k is None and key not in ["config", "repositories", "settings"]:
+                    continue
+
+                if setting and key != setting.split(".")[0]:
+                    continue
+
+                if isinstance(value, dict) or key == "repositories" and k is None:
+                    if k is None:
+                        k = ""
+
+                    k += re.sub("^config\.", "", key + ".")
+                    if setting and len(setting) > 1:
+                        setting = ".".join(setting.split(".")[1:])
+
+                    self._list_setting(value, k=k, setting=setting, default=default)
+                    k = orig_k
+
+                    continue
+
+                if isinstance(value, list):
+                    value = [
+                        json.dumps(val) if isinstance(val, list) else val
+                        for val in value
+                    ]
+
+                    value = "[{}]".format(", ".join(value))
+
+                value = json.dumps(value)
+
+                self.line(
+                    "<comment>{}</comment> = <info>{}</info>".format(
+                        (k or "") + key, value
+                    )
+                )
+
+    def _get_formatted_value(self, value):
+        if isinstance(value, list):
+            value = [json.dumps(val) if isinstance(val, list) else val for val in value]
+
+            value = "[{}]".format(", ".join(value))
+
+        return json.dumps(value)
