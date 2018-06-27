@@ -45,4 +45,6 @@ The <info>develop</info> command installs the current project in development mod
                 self.poetry.package.pretty_name, self.poetry.package.pretty_version
             )
         )
-        self.venv.run("pip", "install", "-e", str(setup.parent), "--no-deps")
+        self.venv.run(
+            "python", "-m", "pip", "install", "-e", str(setup.parent), "--no-deps"
+        )

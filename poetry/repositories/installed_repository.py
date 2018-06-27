@@ -14,7 +14,7 @@ class InstalledRepository(Repository):
         """
         repo = cls()
 
-        freeze_output = venv.run("pip", "freeze")
+        freeze_output = venv.run("python", "-m", "pip", "freeze")
         for line in freeze_output.split("\n"):
             if "==" in line:
                 name, version = line.split("==")
