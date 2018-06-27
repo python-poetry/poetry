@@ -39,8 +39,9 @@ shellingham = "^1.1"
 # The typing module is not in the stdlib in Python 2.7 and 3.4
 typing = { version = "^3.6", python = "~2.7 || ~3.4" }
 
-# Use pathlib2 and virtualenv for Python 2.7
-pathlib2 = { version = "^2.3", python = "~2.7" }
+# Use pathlib2 for Python 2.7 and 3.4
+pathlib2 = { version = "^2.3", python = "~2.7 || ~3.4" }
+# Use virtualenv for Python 2.7 since venv does not exist
 virtualenv = { version = "^16.0", python = "~2.7" }
 
 [tool.poetry.dev-dependencies]

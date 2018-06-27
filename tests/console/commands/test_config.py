@@ -11,6 +11,8 @@ from poetry.utils.toml_file import TomlFile
 @pytest.fixture
 def config():
     with tempfile.NamedTemporaryFile() as f:
+        f.close()
+
         return Config(TomlFile(f.name))
 
 

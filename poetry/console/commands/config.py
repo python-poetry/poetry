@@ -64,18 +64,20 @@ To remove a repository (repo is a short alias for repositories):
         return unique_config_values
 
     def initialize(self, i, o):
+        from poetry.utils._compat import decode
+
         super(ConfigCommand, self).initialize(i, o)
 
         # Create config file if it does not exist
         if not self._config.file.exists():
             self._config.file.parent.mkdir(parents=True, exist_ok=True)
-            with self._config.file.open("w") as f:
-                f.write(TEMPLATE)
+            with self._config.file.open("w", encoding="utf-8") as f:
+                f.write(decode(TEMPLATE))
 
         if not self._auth_config.file.exists():
             self._auth_config.file.parent.mkdir(parents=True, exist_ok=True)
-            with self._auth_config.file.open("w") as f:
-                f.write(AUTH_TEMPLATE)
+            with self._auth_config.file.open("w", encoding="utf-8") as f:
+                f.write(decode(AUTH_TEMPLATE))
 
     def handle(self):
         if self.option("list"):
