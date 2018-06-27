@@ -36,7 +36,9 @@ class PackageInclude(Include):
 
     def check_elements(self):  # type: () -> PackageInclude
         if not self._elements:
-            raise ValueError("{} does not contain any element".format(base / include))
+            raise ValueError(
+                "{} does not contain any element".format(self._base / self._include)
+            )
 
         if len(self._elements) > 1:
             # Probably glob
