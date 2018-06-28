@@ -1,3 +1,9 @@
+---
+name: Bug report
+about: Report errors and problems
+
+---
+
 <!--
   Hi there! Thank you for discovering and submitting an issue.
 
