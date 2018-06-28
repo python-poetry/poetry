@@ -1,6 +1,6 @@
 ---
-name: Bug report
-about: Report errors and problems with the [documentation](https://poetry.eustace.io/docs/)
+name: Documentation issue
+about: Report errors and problems with the documentation (https://poetry.eustace.io/docs/)
 
 ---
 

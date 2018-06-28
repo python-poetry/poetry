@@ -1,6 +1,6 @@
 ---
-name: Feature request
-about: Questions about Poetry that are not covered in the [documentation](https://poetry.eustace.io/docs/)
+name: Support question
+about: Questions about Poetry that are not covered in the documentation (https://poetry.eustace.io/docs/)
 
 ---
 
