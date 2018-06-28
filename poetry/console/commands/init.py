@@ -106,7 +106,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         self.line("")
 
-        requirements = []
+        requirements = {}
 
         question = "Would you like to define your dependencies" " (require) interactively?"
         if self.confirm(question, True):
@@ -114,7 +114,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 self._determine_requirements(self.option("dependency"))
             )
 
-        dev_requirements = []
+        dev_requirements = {}
 
         question = "Would you like to define your dev dependencies" " (require-dev) interactively"
         if self.confirm(question, True):

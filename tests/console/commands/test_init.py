@@ -55,7 +55,6 @@ license = "MIT"
 python = "~2.7 || ^3.6"
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.5"
 """
 
     assert expected in output
@@ -63,6 +62,7 @@ pytest = "^3.5"
 
 def test_interactive_with_dependencies(app, repo, mocker, poetry):
     repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
 
     command = app.find("init")
     command._pool = poetry.pool
@@ -85,7 +85,11 @@ def test_interactive_with_dependencies(app, repo, mocker, poetry):
             "0",  # First option
             "",  # Do not set constraint
             "",  # Stop searching for packages
-            "n",  # Interactive dev packages
+            "",  # Interactive dev packages
+            "pytest",  # Search for package
+            "0",
+            "",
+            "",
             "\n",  # Generate
         ]
     )
@@ -105,7 +109,7 @@ python = "~2.7 || ^3.6"
 pendulum = "^2.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.5"
+pytest = "^3.6"
 """
 
     assert expected in output

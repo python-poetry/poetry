@@ -58,7 +58,10 @@ class Layout(object):
         self._license = license
         self._python = python
         self._dependencies = dependencies or {}
-        self._dev_dependencies = dev_dependencies or {"pytest": "^3.5"}
+        if dev_dependencies is None:
+            dev_dependencies = {"pytest": "^3.5"}
+
+        self._dev_dependencies = dev_dependencies
 
         if not author:
             author = "Your Name <you@example.com>"
