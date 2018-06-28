@@ -53,6 +53,19 @@ def test_wheel_package():
     assert "my_package/sub_pkg1/__init__.py" in z.namelist()
 
 
+def test_wheel_namespace():
+    module_path = fixtures_dir / "namespace"
+    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+
+    whl = module_path / "dist" / "my_package-1.2.3-py2.py3-none-any.whl"
+
+    assert whl.exists()
+
+    z = zipfile.ZipFile(str(whl))
+
+    assert "my/package/__init__.py" in z.namelist()
+
+
 def test_wheel_prerelease():
     module_path = fixtures_dir / "prerelease"
     WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())

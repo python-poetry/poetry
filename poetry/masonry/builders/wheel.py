@@ -105,7 +105,7 @@ class WheelBuilder(Builder):
                 shutil.copytree(str(pkg), str(self._path / pkg.name))
 
     def _copy_module(self, wheel):
-        if self._module.is_package():
+        if self._module.is_package:
             files = self.find_files_to_add()
 
             # Walk the files and compress them,

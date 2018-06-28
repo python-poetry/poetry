@@ -82,6 +82,7 @@ class Package(object):
         self._platform_constraint = EmptyConstraint()
 
         self.root_dir = None
+        self.module = None
 
         self.develop = False
 

@@ -172,6 +172,21 @@ def test_module():
     assert "module1-0.1/module1.py" in tar.getnames()
 
 
+def test_namespace():
+    poetry = Poetry.create(project("namespace"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder.build()
+
+    sdist = fixtures_dir / "namespace" / "dist" / "my-package-1.2.3.tar.gz"
+
+    assert sdist.exists()
+
+    tar = tarfile.open(str(sdist), "r")
+
+    assert "my-package-1.2.3/my/package/__init__.py" in tar.getnames()
+
+
 def test_prelease():
     poetry = Poetry.create(project("prerelease"))
 

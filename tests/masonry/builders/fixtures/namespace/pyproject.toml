@@ -1,0 +1,9 @@
+[tool.poetry]
+name = "my-package"
+module = "my.package"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Jordan Speicher"
+]
+

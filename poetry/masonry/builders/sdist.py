@@ -120,7 +120,7 @@ class SdistBuilder(Builder):
             before.append("package_dir = \\\n{}\n".format(pformat({"": "src"})))
             extra.append("'package_dir': package_dir,")
 
-        if self._module.is_package():
+        if self._module.is_package:
             packages, package_data = self.find_packages(self._module.path.as_posix())
             before.append("packages = \\\n{}\n".format(pformat(sorted(packages))))
             before.append("package_data = \\\n{}\n".format(pformat(package_data)))

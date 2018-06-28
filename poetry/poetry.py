@@ -112,6 +112,9 @@ class Poetry:
         package.keywords = local_config.get("keywords", [])
         package.classifiers = local_config.get("classifiers", [])
 
+        if "module" in local_config:
+            package.module = local_config["module"]
+
         if "readme" in local_config:
             package.readme = Path(poetry_file.parent) / local_config["readme"]
 

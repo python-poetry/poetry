@@ -9,6 +9,10 @@
             "type": "string",
             "description": "Package name."
         },
+        "module": {
+            "type": "string",
+            "description": "Package module path."
+        },
         "version": {
             "type": "string",
             "description": "Package version."
