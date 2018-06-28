@@ -42,11 +42,7 @@ class Poetry:
             self._pool.configure(source)
 
         # Always put PyPI last to prefere private repositories
-        self._pool.add_repository(
-            PyPiRepository(
-                fallback=self._config.setting("settings.pypi.fallback", True)
-            )
-        )
+        self._pool.add_repository(PyPiRepository())
 
     @property
     def file(self):
