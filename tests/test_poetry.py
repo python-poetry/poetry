@@ -2,10 +2,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import toml
-
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
+from poetry.utils.toml_file import TomlFile
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
@@ -122,8 +121,7 @@ def test_poetry_with_packages_and_includes():
 
 
 def test_check():
-    complete = fixtures_dir / "complete.toml"
-    with complete.open() as f:
-        content = toml.loads(f.read())["tool"]["poetry"]
+    complete = TomlFile(fixtures_dir / "complete.toml")
+    content = complete.read(raw=True)["tool"]["poetry"]
 
     assert Poetry.check(content)

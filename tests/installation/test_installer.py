@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import sys
 
 import pytest
-import toml
 
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
@@ -15,6 +14,7 @@ from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import Path
 from poetry.utils._compat import PY2
+from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency
@@ -76,8 +76,6 @@ class Locker(BaseLocker):
 
             package["python-versions"] = python_versions
             package["platform"] = platform
-            if not package["dependencies"]:
-                del package["dependencies"]
 
         self._written_data = data
 
@@ -133,10 +131,9 @@ def installer(package, pool, locker, venv, installed):
 
 
 def fixture(name):
-    file = Path(__file__).parent / "fixtures" / "{}.test".format(name)
+    file = TomlFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
 
-    with file.open() as f:
-        return toml.loads(f.read())
+    return file.read(raw=True)
 
 
 def test_run_no_dependencies(installer, locker):

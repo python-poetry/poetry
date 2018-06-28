@@ -24,8 +24,8 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
 cleo = "^0.6.7"
+pytoml = "^0.1.16"
 requests = "^2.18"
-toml = "^0.9"
 cachy = "^0.2"
 requests-toolbelt = "^0.8.0"
 jsonschema = "^2.6"

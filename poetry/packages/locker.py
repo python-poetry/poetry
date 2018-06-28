@@ -140,7 +140,18 @@ class Locker:
         return False
 
     def _write_lock_data(self, data):
-        self._lock.write(data)
+        # We want a clean lock file so we write
+        # packages first and metadata after
+        with self._lock.open("w", encoding="utf-8") as f:
+            f.write(self._lock.dumps({"package": data["package"]}, sort=True))
+            f.write("\n")
+            if "extras" in data:
+                f.write(self._lock.dumps({"extras": data["extras"]}, sort=True))
+                f.write("\n")
+
+            f.write(self._lock.dumps({"metadata": data["metadata"]}, sort=True))
+            f.write("\n")
+
         self._lock_data = None
 
     def _get_content_hash(self):  # type: () -> str
@@ -211,9 +222,11 @@ class Locker:
             "optional": package.optional,
             "python-versions": package.python_versions,
             "platform": package.platform,
-            "hashes": package.hashes,
-            "dependencies": dependencies,
+            "hashes": sorted(package.hashes),
         }
+
+        if dependencies:
+            data["dependencies"] = dependencies
 
         if package.source_type:
             data["source"] = {

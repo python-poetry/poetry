@@ -1,7 +1,6 @@
-import toml
-
 from poetry.locations import CONFIG_DIR
 from poetry.utils._compat import Path
+from poetry.utils.toml_file import TomlFile
 
 from .uploader import Uploader
 
@@ -44,7 +43,7 @@ class Publisher:
             repository_name = "pypi"
         else:
             # Retrieving config information
-            config_file = Path(CONFIG_DIR) / "config.toml"
+            config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
 
             if not config_file.exists():
                 raise RuntimeError(
@@ -52,8 +51,7 @@ class Publisher:
                     "Unable to get repository information"
                 )
 
-            with config_file.open() as f:
-                config = toml.loads(f.read())
+            config = config_file.read(raw=True)
 
             if (
                 "repositories" not in config
@@ -66,10 +64,9 @@ class Publisher:
             url = config["repositories"][repository_name]["url"]
 
         if not (username and password):
-            auth_file = Path(CONFIG_DIR) / "auth.toml"
+            auth_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
             if auth_file.exists():
-                with auth_file.open() as f:
-                    auth_config = toml.loads(f.read())
+                auth_config = auth_file.read(raw=True)
 
                 if (
                     "http-basic" in auth_config
