@@ -27,6 +27,7 @@ packages = [
 ]
 
 include = [
+    "extra_dir/vcs_excluded.txt",
     "notes.txt"
 ]
 

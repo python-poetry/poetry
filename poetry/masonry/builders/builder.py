@@ -12,6 +12,7 @@ from poetry.vcs import get_vcs
 
 from ..metadata import Metadata
 from ..utils.module import Module
+from ..utils.package_include import PackageInclude
 
 
 AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
@@ -80,7 +81,7 @@ class Builder(object):
 
                 file = file.relative_to(self._path)
 
-                if file in excluded:
+                if file in excluded and isinstance(include, PackageInclude):
                     continue
 
                 if file.suffix == ".pyc":

@@ -117,7 +117,7 @@ def test_poetry_with_packages_and_includes():
         {"include": "package_with_include"},
     ]
 
-    assert package.include == ["notes.txt"]
+    assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
 
 
 def test_check():

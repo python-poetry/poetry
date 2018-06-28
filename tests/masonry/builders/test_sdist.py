@@ -339,7 +339,26 @@ def test_with_src_module_dir():
     assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
 
 
-def test_package_with_include():
+def test_package_with_include(mocker):
+    # Patch git module to return specific excluded files
+    p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
+    p.return_value = [
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "with-include"
+            / "extra_dir"
+            / "vcs_excluded.txt"
+        ),
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "with-include"
+            / "extra_dir"
+            / "sub_pkg"
+            / "vcs_excluded.txt"
+        ),
+    ]
     poetry = Poetry.create(project("with-include"))
 
     builder = SdistBuilder(poetry, NullVenv(), NullIO())
@@ -367,7 +386,9 @@ def test_package_with_include():
     assert "with-include-1.2.3/LICENSE" in names
     assert "with-include-1.2.3/README.rst" in names
     assert "with-include-1.2.3/extra_dir/__init__.py" in names
+    assert "with-include-1.2.3/extra_dir/vcs_excluded.txt" in names
     assert "with-include-1.2.3/extra_dir/sub_pkg/__init__.py" in names
+    assert "with-include-1.2.3/extra_dir/sub_pkg/vcs_excluded.txt" not in names
     assert "with-include-1.2.3/my_module.py" in names
     assert "with-include-1.2.3/notes.txt" in names
     assert "with-include-1.2.3/package_with_include/__init__.py" in names
