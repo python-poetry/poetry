@@ -32,6 +32,7 @@
 - Fixed detection of `.egg-info` directory for non-poetry projects. (Thanks to [@gtors](https://github.com/gtors))
 - Fixed only-wheel builds. (Thanks to [@gtors](https://github.com/gtors))
 - Fixed key and array order in lock file to avoid having differences when relocking.
+- Fixed errors when `git` could not be found.
 
 
 ## [0.10.3] - 2018-06-04

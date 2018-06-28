@@ -7,7 +7,7 @@ from poetry.utils._compat import decode
 
 
 class GitConfig:
-    def __init__(self):
+    def __init__(self, requires_git_presence=False):
         self._config = {}
 
         try:
@@ -22,7 +22,8 @@ class GitConfig:
                 for group in m:
                     self._config[group[0]] = group[1]
         except (subprocess.CalledProcessError, OSError):
-            pass
+            if requires_git_presence:
+                raise
 
     def get(self, key, default=None):
         return self._config.get(key, default)
@@ -33,7 +34,7 @@ class GitConfig:
 
 class Git:
     def __init__(self, work_dir=None):
-        self._config = GitConfig()
+        self._config = GitConfig(requires_git_presence=True)
         self._work_dir = work_dir
 
     @property
