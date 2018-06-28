@@ -45,6 +45,9 @@ To remove a repository (repo is a short alias for repositories):
 
     @property
     def unique_config_values(self):
+        from poetry.locations import CACHE_DIR
+        from poetry.utils._compat import Path
+
         boolean_validator = lambda val: val in {"true", "false", "1", "0"}
         boolean_normalizer = lambda val: True if val in ["true", "1"] else False
 
@@ -58,6 +61,11 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_validator,
                 boolean_normalizer,
                 False,
+            ),
+            "settings.virtualenvs.path": (
+                str,
+                lambda val: str(Path(val).resolve()),
+                str(Path(CACHE_DIR) / "virtualenvs"),
             ),
         }
 
