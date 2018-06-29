@@ -16,11 +16,10 @@ install:
   - "python -m pip install --disable-pip-version-check --user --upgrade pip"
 
   # Create poetry virtualenv
-  - curl -fsS -o get-poetry.py https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
-  - python get-poetry.py --preview
+  - "python get-poetry.py --preview"
 
   # Install dependencies
-  - poetry install -v
+  - "python -m poetry install -v"
 
 test_script:
-  - "poetry run pytest --cov=poetry tests/ -W ignore"
+  - "python -m poetry run pytest --cov=poetry tests/ -W ignore"
