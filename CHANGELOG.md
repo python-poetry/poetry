@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed an error when locking dependencies on Python 2.7.
+
+
 ## [0.11.0] - 2018-06-28
 
 ### Added
