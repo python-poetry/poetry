@@ -144,13 +144,12 @@ class Locker:
         # packages first and metadata after
         with self._lock.open("w", encoding="utf-8") as f:
             f.write(self._lock.dumps({"package": data["package"]}, sort=True))
-            f.write("\n")
+            f.write(u"\n")
             if "extras" in data:
                 f.write(self._lock.dumps({"extras": data["extras"]}, sort=True))
-                f.write("\n")
+                f.write(u"\n")
 
             f.write(self._lock.dumps({"metadata": data["metadata"]}, sort=True))
-            f.write("\n")
 
         self._lock_data = None
 
