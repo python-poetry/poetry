@@ -140,6 +140,9 @@
                         },
                         {
                             "$ref": "#/definitions/file-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/path-dependency"
                         }
                     ]
                 }
