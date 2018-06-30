@@ -382,6 +382,12 @@ class Provider:
                             continue
 
                         markers = pep_508_dep.split(";")[1].strip()
+                        if not markers:
+                            # One of the constraint has no markers
+                            # so this means we don't actually need to merge
+                            new_markers = []
+                            break
+
                         new_markers.append("({})".format(markers))
 
                     if not new_markers:
