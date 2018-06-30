@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed missing dependencies when resolving in some cases.
+
+
 ## [0.11.1] - 2018-06-29
 
 ### Fixed

@@ -275,7 +275,7 @@ class PyPiRepository(Repository):
             # dependencies by introspecting packages
             urls = {}
             for url in json_data["urls"]:
-                # Only get sdist and universal wheels
+                # Only get sdist and universal wheels if they exist
                 dist_type = url["packagetype"]
                 if dist_type not in ["sdist", "bdist_wheel"]:
                     continue
@@ -297,6 +297,23 @@ class PyPiRepository(Repository):
 
                 if "-none-any" not in filename:
                     continue
+
+            if not urls:
+                # If we don't have urls, we try to take the first one
+                # we find and go from there
+                if not json_data["urls"]:
+                    return data
+
+                for url in json_data["urls"]:
+                    # Only get sdist and universal wheels if they exist
+                    dist_type = url["packagetype"]
+
+                    if dist_type != "bdist_wheel":
+                        continue
+
+                    urls[url["packagetype"]] = url["url"]
+
+                    break
 
             if not urls:
                 return data
