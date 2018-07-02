@@ -48,7 +48,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         self.line(
             [
                 "",
-                "This command will guide you through creating your <info>poetry.toml</> config.",
+                "This command will guide you through creating your <info>pyproject.toml</> config.",
                 "",
             ]
         )
