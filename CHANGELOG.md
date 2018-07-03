@@ -6,6 +6,7 @@
 
 - Fixed missing dependencies when resolving in some cases.
 - Fixed path dependencies not working in `dev-dependencies`.
+- Fixed license validation in `init`. (Thanks to [@cauebs](https://github.com/cauebs))
 
 
 ## [0.11.1] - 2018-06-29
