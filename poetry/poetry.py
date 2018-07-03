@@ -3,11 +3,11 @@ from __future__ import unicode_literals
 
 import json
 
-import jsonschema
-
 from .__version__ import __version__
 from .config import Config
 from .exceptions import InvalidProjectFile
+from .json import validate_object
+from .json import ValidationError
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
@@ -162,19 +162,10 @@ class Poetry:
         """
         Checks the validity of a configuration
         """
-        schema = Path(__file__).parent / "json" / "schemas" / "poetry-schema.json"
-
-        with schema.open() as f:
-            schema = json.loads(f.read())
-
         try:
-            jsonschema.validate(config, schema)
-        except jsonschema.ValidationError as e:
-            message = e.message
-            if e.path:
-                message = "[{}] {}".format(".".join(e.path), message)
-
-            raise InvalidProjectFile(message)
+            validate_object(config, "poetry-schema")
+        except ValidationError:
+            raise InvalidProjectFile(str(e))
 
         if strict:
             # If strict, check the file more thoroughly
