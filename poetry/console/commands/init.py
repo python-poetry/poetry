@@ -296,7 +296,8 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
     def _validate_license(self, license):
         from poetry.spdx import license_by_id
 
-        license_by_id(license)
+        if license:
+            license_by_id(license)
 
         return license
 

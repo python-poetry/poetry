@@ -113,3 +113,44 @@ pytest = "^3.6"
 """
 
     assert expected in output
+
+
+def test_empty_license(app, mocker, poetry):
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__)
+
+    tester = CommandTester(command)
+    tester.set_inputs(
+        [
+            "my-package",  # Package name
+            "1.2.3",  # Version
+            "",  # Description
+            "n",  # Author
+            "",  # License
+            "",  # Python
+            "n",  # Interactive packages
+            "n",  # Interactive dev packages
+            "\n",  # Generate
+        ]
+    )
+    tester.execute([("command", command.name)])
+
+    output = tester.get_display(True)
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "*"
+
+[tool.poetry.dev-dependencies]
+"""
+
+    assert expected in output
