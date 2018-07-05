@@ -10,7 +10,7 @@ class EnvCommand(VenvCommand):
         { --p|path : Show the path to virtual environment. }
         { --python : Show the path to the python executable. }
         { --pip : Show the path to the pip executable. }
-        { --r|remove : Remove the virtual environment. }
+        { --rm : Remove the virtual environment. }
     """
 
     help = """The env command displays information about the virtual environment.
@@ -28,7 +28,7 @@ If it doesn't exist when the command is ran, it will be created."""
         elif self.option("pip"):
             self.info(self.venv.pip)
 
-        elif self.option("remove"):
+        elif self.option("rm"):
             self.line("Removing virtual environment at <info>{}</>".format(path))
             rmtree(path, ignore_errors=True)
 
