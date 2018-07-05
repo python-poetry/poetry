@@ -5,7 +5,6 @@ from shutil import rmtree
 class EnvCommand(VenvCommand):
     """
     Shows information about the virtual environment.
-    If it doesn't exist when the command is ran, it will be created.
 
     env
         { --p|path : Show the path to virtual environment. }
@@ -14,7 +13,8 @@ class EnvCommand(VenvCommand):
         { --r|remove : Remove the virtual environment. }
     """
 
-    help = """The env command displays information about the virtual environment."""
+    help = """The env command displays information about the virtual environment.
+If it doesn't exist when the command is ran, it will be created."""
 
     def handle(self):
         path = self.venv.venv
