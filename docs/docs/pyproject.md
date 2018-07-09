@@ -48,7 +48,7 @@ Authors must be in the form `name <email>`.
 
 ## readme
 
-The readme file of the package. **Required**
+The readme file of the package. **Optional**
 
 The file can be either `README.rst` or `README.md`.
 

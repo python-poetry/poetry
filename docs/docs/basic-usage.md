@@ -16,7 +16,7 @@ This will create the `poetry-demo` directory with the following content:
 ```text
 poetry-demo
 ├── pyproject.toml
-├── README.rst
+├── README.md
 ├── poetry_demo
 │   └── __init__.py
 └── tests
@@ -56,7 +56,7 @@ Poetry uses this information to search for the right set of files in package "re
 in the `tool.poetry.repositories` section, or on [PyPI](https://pypi.org) by default.
 
 Also, instead of modifying the `pyproject.toml` file by hand, you can use the `add` command.
-    
+
 ```bash
 $ poetry add pendulum
 ```
@@ -75,20 +75,20 @@ Please read [versions](/versions/) for more in-depth information on versions, ho
 !!!note
 
     **How does Poetry download the right files?**
-    
+
     When you specify a dependency in `pyproject.toml`, Poetry first take the name of the package
     that you have requested and searches for it in any repository you have registered using the `repositories` key.
     If you have not registered any extra repositories, or it does not find a package with that name in the
     repositories you have specified, it falls back on PyPI.
-    
+
     When Poetry finds the right package, it then attempts to find the best match
     for the version constraint you have specified.
-    
+
 
 ## Installing dependencies
 
 To install the defined dependencies for your project, just run the `install` command.
-    
+
 ```bash
 poetry install
 ```
@@ -132,7 +132,7 @@ the dependencies installed are still working even if your dependencies released 
 !!!note
 
     For libraries it is not necessary to commit the lock file.
-    
+
 
 ## Updating dependencies to their latest versions
 
@@ -159,7 +159,7 @@ or create a brand new one for you to always work isolated from your global Pytho
 
     The created virtualenv will use the Python executable for which
     `poetry` has been installed.
-    
+
     What this means is if you project is Python 2.7 only you should
     install `poetry` for your global Python 2.7 executable and use
     it to manage your project.
