@@ -107,12 +107,10 @@ class Layout(object):
         raise NotImplementedError()
 
     def _create_readme(self, path):
-        if self._readme_format == "rst":
-            readme_file = path / "README.rst"
-        else:
-            readme_file = path / "README.md"
+        readme_file = path / "README.{}".format(self._readme_format)
 
-        readme_file.touch()
+        with open(readme_file, "w") as f:
+            f.write("# {}".format(self._project))
 
     def _create_tests(self, path):
         self._dev_dependencies["pytest"] = "^3.0"

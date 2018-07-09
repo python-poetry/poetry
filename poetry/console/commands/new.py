@@ -34,7 +34,7 @@ class NewCommand(Command):
                     "exists and is not empty".format(path)
                 )
 
-        readme_format = "rst"
+        readme_format = "md"
 
         config = GitConfig()
         author = None
