@@ -43,6 +43,7 @@ class Layout(object):
         project,
         version="0.1.0",
         description="",
+        readme=None,
         readme_format="md",
         author=None,
         license=None,
@@ -54,6 +55,7 @@ class Layout(object):
         self._package_name = module_name(project)
         self._version = version
         self._description = description
+        self._readme = readme
         self._readme_format = readme_format
         self._license = license
         self._python = python
@@ -68,11 +70,11 @@ class Layout(object):
 
         self._author = author
 
-    def create(self, path, with_tests=True):
+    def create(self, path, with_tests=True, readme_format="md"):
         path.mkdir(parents=True, exist_ok=True)
 
         self._create_default(path)
-        self._create_readme(path)
+        self._create_readme(path, readme_format)
 
         if with_tests:
             self._create_tests(path)
@@ -89,6 +91,10 @@ class Layout(object):
         poetry_content["name"] = self._project
         poetry_content["version"] = self._version
         poetry_content["description"] = self._description
+
+        if self._readme:
+            poetry_content["readme"] = self._readme
+
         poetry_content["authors"].append(self._author)
         if self._license:
             poetry_content["license"] = self._license
@@ -106,11 +112,18 @@ class Layout(object):
     def _create_default(self, path, src=True):
         raise NotImplementedError()
 
-    def _create_readme(self, path):
+    def _create_readme(self, path, readme_format):
         readme_file = path / "README.{}".format(self._readme_format)
 
         with open(readme_file, "w") as f:
-            f.write("# {}".format(self._project))
+            if readme_format == "md":
+                f.write("# {}".format(self._project))
+            elif readme_format == "rst":
+                f.write("=" * len(self._project))
+                f.write("# {}".format(self._project))
+                f.write("=" * len(self._project))
+
+        self._readme = readme_file
 
     def _create_tests(self, path):
         self._dev_dependencies["pytest"] = "^3.0"

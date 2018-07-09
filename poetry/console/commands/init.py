@@ -17,6 +17,7 @@ class InitCommand(Command):
     init
         {--name= : Name of the package}
         {--description= : Description of the package}
+        {--readme= : Readme file of the package}
         {--author= : Author name of the package}
         {--dependency=* : Package to require with an optional version constraint,
                           e.g. requests:^2.10.0 or requests=2.11.1}
@@ -48,7 +49,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         self.line(
             [
                 "",
-                "This command will guide you through creating your <info>poetry.toml</> config.",
+                "This command will guide you through creating your <info>pyproject.toml</> config.",
                 "",
             ]
         )
@@ -74,6 +75,12 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             default=description,
         )
         description = self.ask(question)
+
+        readme = self.option("readme") or ""
+        question = self.create_question(
+            "Readme [<comment>{}</comment>]: ".format(readme), default=readme
+        )
+        readme = self.ask(question)
 
         author = self.option("author")
         if not author and vcs_config and vcs_config.get("user.name"):
@@ -126,6 +133,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             name,
             version,
             description=description,
+            readme=readme,
             author=authors[0] if authors else None,
             license=license,
             python=python,
