@@ -10,6 +10,7 @@ from functools import cmp_to_key
 from tempfile import mkdtemp
 from typing import List
 from typing import Union
+import stat
 
 from poetry.packages import Dependency
 from poetry.packages import DirectoryDependency
@@ -223,7 +224,11 @@ class Provider:
         except Exception:
             raise
         finally:
-            shutil.rmtree(tmp_dir.as_posix())
+            def on_rm_error(func, path, exc_info):
+                os.chmod(path, stat.S_IWRITE)
+                os.unlink(path)
+
+            shutil.rmtree(tmp_dir.as_posix(), onerror=on_rm_error)
 
         if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
