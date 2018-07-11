@@ -224,6 +224,7 @@ class Provider:
         except Exception:
             raise
         finally:
+
             def on_rm_error(func, path, exc_info):
                 os.chmod(path, stat.S_IWRITE)
                 os.unlink(path)
