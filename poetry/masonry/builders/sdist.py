@@ -76,10 +76,10 @@ class SdistBuilder(Builder):
 
             files_to_add = self.find_files_to_add(exclude_build=False)
 
-            for relpath in files_to_add:
+            for relpath, targetpath in files_to_add:
                 path = self._path / relpath
                 tar_info = tar.gettarinfo(
-                    str(path), arcname=pjoin(tar_dir, str(relpath))
+                    str(path), arcname=pjoin(tar_dir, str(targetpath))
                 )
                 tar_info = self.clean_tarinfo(tar_info)
 
@@ -173,7 +173,11 @@ class SdistBuilder(Builder):
             before.append("entry_points = \\\n{}\n".format(pformat(entry_points)))
             extra.append("'entry_points': entry_points,")
         if scripts:
-            before.append("scripts = \\\n{}\n".format(pformat(scripts)))
+            before.append(
+                "scripts = \\\n{}\n".format(
+                    pformat([f"bin/{name}" for name in scripts])
+                )
+            )
             extra.append("'scripts': scripts,")
 
         if self._package.python_versions != "*":

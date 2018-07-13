@@ -37,4 +37,4 @@ time = ["pendulum"]
 [tool.poetry.scripts]
 my-script = "my_package:main"
 my-2nd-script = "my_package:main2"
-my-special-script = {path = "bin/my-special-script"}
+different-name = {path = "bin/my-special-script"}

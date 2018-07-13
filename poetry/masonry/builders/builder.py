@@ -68,7 +68,6 @@ class Builder(object):
         Finds all files to add to the tarball
         """
         excluded = self.find_excluded_files()
-        src = self._module.path
         to_add = []
 
         for include in self._module.includes:
@@ -91,18 +90,18 @@ class Builder(object):
                     " - Adding: <comment>{}</comment>".format(str(file)),
                     verbosity=self._io.VERBOSITY_VERY_VERBOSE,
                 )
-                to_add.append(file)
+                to_add.append((file, file))
 
         _, scripts = self.convert_entry_points()
-        for script in scripts:
-            to_add.append(Path(script))
+        for name, script in scripts.items():
+            to_add.append((Path(script), Path("bin") / name))
 
         # Include project files
         self._io.writeln(
             " - Adding: <comment>pyproject.toml</comment>",
             verbosity=self._io.VERBOSITY_VERY_VERBOSE,
         )
-        to_add.append(Path("pyproject.toml"))
+        to_add.append((Path("pyproject.toml"), Path("pyproject.toml")))
 
         # If a license file exists, add it
         for license_file in self._path.glob("LICENSE*"):
@@ -112,7 +111,8 @@ class Builder(object):
                 ),
                 verbosity=self._io.VERBOSITY_VERY_VERBOSE,
             )
-            to_add.append(license_file.relative_to(self._path))
+            file_path = license_file.relative_to(self._path)
+            to_add.append((file_path, file_path))
 
         # If a README is specificed we need to include it
         # to avoid errors
@@ -125,25 +125,24 @@ class Builder(object):
                     ),
                     verbosity=self._io.VERBOSITY_VERY_VERBOSE,
                 )
-                to_add.append(readme.relative_to(self._path))
+                readme_path = readme.relative_to(self._path)
+                to_add.append((readme_path, readme_path))
 
         # If a build script is specified and explicitely required
         # we add it to the list of files
         if self._package.build and not exclude_build:
-            to_add.append(Path(self._package.build))
+            to_add.append((Path(self._package.build), Path(self._package.build)))
 
         return sorted(to_add)
 
-    def convert_entry_points(self):  # type: () -> (dict, list)
+    def convert_entry_points(self):  # type: () -> (dict, dict)
         result = defaultdict(list)
-        scripts = []
+        scripts = {}
 
         # Scripts -> Entry points
         for name, ep in self._poetry.local_config.get("scripts", {}).items():
             if isinstance(ep, dict):
-                if ep["path"].split("/")[-1] != name:
-                    raise ValueError("Path based scripts name must match their file name, {name} does not ({path})".format(name=name, path=ep["path"]))
-                scripts.append(ep["path"])
+                scripts[name] = ep["path"]
             else:
                 result["console_scripts"].append("{} = {}".format(name, ep))
 

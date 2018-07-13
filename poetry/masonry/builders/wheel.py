@@ -107,7 +107,6 @@ class WheelBuilder(Builder):
 
     def _copy_module(self, wheel):
         excluded = self.find_excluded_files()
-        src = self._module.path
         to_add = []
 
         for include in self._module.includes:
@@ -288,14 +287,10 @@ class WheelBuilder(Builder):
 
             fp.write("\n")
 
-        for script in scripts:
-            file = Path(script)
-            full_path = self._path / file
+        for name, script in scripts.items():
+            full_path = self._original_path / script
             self._add_file(
-                wheel,
-                full_path,
-                self.data_info + "/scripts/" + script.lstrip("/"),
-                executable=True,
+                wheel, full_path, self.data_info + "/scripts/" + name, executable=True
             )
 
     def _write_wheel_file(self, fp):
