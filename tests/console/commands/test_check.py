@@ -11,4 +11,4 @@ def test_about(app):
 All set!
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected

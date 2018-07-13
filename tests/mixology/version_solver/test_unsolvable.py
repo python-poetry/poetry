@@ -51,6 +51,20 @@ Because bar (1.0.0) depends on shared (>3.0.0)
 So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving failed."""
 
     check_solver_result(root, provider, error=error)
+    check_solver_result(root, provider, error=error)
+
+
+def test_disjoint_root_constraints(root, provider, repo):
+    root.add_dependency("foo", "1.0.0")
+    root.add_dependency("foo", "2.0.0")
+
+    add_to_repo(repo, "foo", "1.0.0")
+    add_to_repo(repo, "foo", "2.0.0")
+
+    error = """\
+Because myapp depends on both foo (1.0.0) and foo (2.0.0), version solving failed."""
+
+    check_solver_result(root, provider, error=error)
 
 
 def test_no_valid_solution(root, provider, repo):
@@ -65,7 +79,7 @@ def test_no_valid_solution(root, provider, repo):
 
     error = """\
 Because no versions of b match <1.0.0 || >1.0.0,<2.0.0 || >2.0.0
- and b (1.0.0) depends on a (2.0.0), b (<2.0.0 || >2.0.0) requires a (2.0.0).
+ and b (1.0.0) depends on a (2.0.0), b (!=2.0.0) requires a (2.0.0).
 And because a (2.0.0) depends on b (2.0.0), b is forbidden.
 Because b (2.0.0) depends on a (1.0.0) which depends on b (1.0.0), b is forbidden.
 Thus, b is forbidden.

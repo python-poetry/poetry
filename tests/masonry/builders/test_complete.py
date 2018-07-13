@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import pytest
 import re
 import shutil
+import sys
 import tarfile
 import zipfile
 
@@ -33,6 +34,10 @@ def clear_samples_dist():
             shutil.rmtree(str(dist))
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32" and sys.version_info <= (3, 4),
+    reason="Disable test on Windows for Python <=3.4",
+)
 def test_wheel_c_extension():
     module_path = fixtures_dir / "extended"
     builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True), NullIO())
@@ -55,7 +60,7 @@ def test_wheel_c_extension():
 
     has_compiled_extension = False
     for name in zip.namelist():
-        if name.startswith("extended/extended") and name.endswith(".so"):
+        if name.startswith("extended/extended") and name.endswith((".so", ".pyd")):
             has_compiled_extension = True
 
     assert has_compiled_extension
@@ -172,7 +177,10 @@ def test_module_src():
 
     zip = zipfile.ZipFile(str(whl))
 
-    assert "module_src.py" in zip.namelist()
+    try:
+        assert "module_src.py" in zip.namelist()
+    finally:
+        zip.close()
 
 
 def test_package_src():
@@ -194,5 +202,8 @@ def test_package_src():
 
     zip = zipfile.ZipFile(str(whl))
 
-    assert "package_src/__init__.py" in zip.namelist()
-    assert "package_src/module.py" in zip.namelist()
+    try:
+        assert "package_src/__init__.py" in zip.namelist()
+        assert "package_src/module.py" in zip.namelist()
+    finally:
+        zip.close()

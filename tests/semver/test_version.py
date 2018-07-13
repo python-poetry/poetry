@@ -27,7 +27,6 @@ from poetry.semver import VersionRange
 )
 def test_parse_valid(input, version):
     parsed = Version.parse(input)
-    print(parsed.build)
 
     assert parsed == version
     assert parsed.text == input

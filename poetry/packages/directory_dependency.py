@@ -121,7 +121,7 @@ class DirectoryDependency(Dependency):
             self._package = package
 
         self._package.source_type = "directory"
-        self._package.source_url = str(self._path)
+        self._package.source_url = self._path.as_posix()
 
         super(DirectoryDependency, self).__init__(
             self._package.name,

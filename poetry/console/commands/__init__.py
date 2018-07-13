@@ -13,6 +13,7 @@ from .remove import RemoveCommand
 from .run import RunCommand
 from .script import ScriptCommand
 from .search import SearchCommand
+from .shell import ShellCommand
 from .show import ShowCommand
 from .update import UpdateCommand
 from .version import VersionCommand

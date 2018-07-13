@@ -29,7 +29,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 1
 
@@ -61,7 +61,7 @@ Writing lock file
   - Installing cachy (0.1.0)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 1
 
@@ -94,7 +94,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 2
 
@@ -127,7 +127,7 @@ Writing lock file
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 2
 
@@ -167,7 +167,7 @@ Writing lock file
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 2
 
@@ -200,7 +200,7 @@ Writing lock file
   - Installing demo (0.1.0)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 2
 
@@ -240,7 +240,7 @@ Writing lock file
   - Installing demo (0.1.0)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 2
 
@@ -287,7 +287,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 2
 
@@ -330,7 +330,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 1
 
@@ -371,7 +371,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display() == expected
+    assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 1
 

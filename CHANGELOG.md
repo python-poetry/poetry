@@ -1,5 +1,56 @@
 # Change Log
 
+## [0.11.2] - 2018-07-03
+
+### Fixed
+
+- Fixed missing dependencies when resolving in some cases.
+- Fixed path dependencies not working in `dev-dependencies`.
+- Fixed license validation in `init`. (Thanks to [@cauebs](https://github.com/cauebs))
+
+
+## [0.11.1] - 2018-06-29
+
+### Fixed
+
+- Fixed an error when locking dependencies on Python 2.7.
+
+
+## [0.11.0] - 2018-06-28
+
+### Added
+
+- Added support for `packages`, `include` and `exclude` properties.
+- Added a new `shell` command. (Thanks to [@cauebs](https://github.com/cauebs))
+- Added license validation in `init` command.
+
+### Changed
+
+- Changed the dependency installation order, deepest dependencies are now installed first.
+- Improved solver error messages.
+- `poetry` now always reads/writes the `pyproject.toml` file with the `utf-8` encoding.
+- `config --list` now lists all available settings.
+- `init` no longer adds `pytest` to development dependencies.
+
+### Fixed
+
+- Fixed handling of duplicate dependencies with different constraints.
+- Fixed system requirements in lock file for sub dependencies.
+- Fixed detection of new prereleases.
+- Fixed unsafe packages being locked.
+- Fixed versions detection in custom repositories.
+- Fixed package finding with multiple custom repositories.
+- Fixed handling of root incompatibilities.
+- Fixed an error where packages from custom repositories would not be found.
+- Fixed wildcard Python requirement being wrongly set in distributions metadata.
+- Fixed installation of packages from a custom repository.
+- Fixed `remove` command's case sensitivity. (Thanks to [@cauebs](https://github.com/cauebs))
+- Fixed detection of `.egg-info` directory for non-poetry projects. (Thanks to [@gtors](https://github.com/gtors))
+- Fixed only-wheel builds. (Thanks to [@gtors](https://github.com/gtors))
+- Fixed key and array order in lock file to avoid having differences when relocking.
+- Fixed errors when `git` could not be found.
+
+
 ## [0.10.3] - 2018-06-04
 
 ### Fixed
@@ -377,7 +428,10 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.10.3...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.2...master
+[0.11.2]: https://github.com/sdispater/poetry/releases/tag/0.11.2
+[0.11.1]: https://github.com/sdispater/poetry/releases/tag/0.11.1
+[0.11.0]: https://github.com/sdispater/poetry/releases/tag/0.11.0
 [0.10.3]: https://github.com/sdispater/poetry/releases/tag/0.10.3
 [0.10.2]: https://github.com/sdispater/poetry/releases/tag/0.10.2
 [0.10.1]: https://github.com/sdispater/poetry/releases/tag/0.10.1

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import toml
+import pytoml as toml
 
 from poetry.toml import dumps
 from poetry.toml import loads
@@ -17,19 +17,24 @@ class TomlFile:
         return self._path
 
     def read(self, raw=False):  # type: (bool) -> dict
-        with self._path.open() as f:
+        with self._path.open(encoding="utf-8") as f:
             if raw:
                 return toml.loads(f.read())
 
             return loads(f.read())
 
-    def write(self, data):  # type: (...) -> None
+    def dumps(self, data, sort=False):  # type: (...) -> str
         if not isinstance(data, TOMLFile):
-            data = toml.dumps(data)
+            data = toml.dumps(data, sort_keys=sort)
         else:
             data = dumps(data)
 
-        with self._path.open("w") as f:
+        return data
+
+    def write(self, data, sort=False):  # type: (...) -> None
+        data = self.dumps(data, sort=sort)
+
+        with self._path.open("w", encoding="utf-8") as f:
             f.write(data)
 
     def __getattr__(self, item):

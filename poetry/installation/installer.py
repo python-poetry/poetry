@@ -3,6 +3,7 @@ import sys
 from typing import List
 from typing import Union
 
+from poetry.io import NullIO
 from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
@@ -47,7 +48,7 @@ class Installer:
         self._develop = []
         self._execute_operations = True
 
-        self._whitelist = {}
+        self._whitelist = []
 
         self._extras = []
 
@@ -131,15 +132,14 @@ class Installer:
     def _do_install(self, local_repo):
         locked_repository = Repository()
         if self._update:
-            if self._locker.is_locked() and self._whitelist:
-                # If we update with a lock file present and
-                # we have whitelisted packages (the ones we want to update)
-                # we get the lock file packages to only update
-                # what is strictly needed.
-                #
-                # Otherwise, the lock file information is irrelevant
-                # since we want to update everything.
+            if self._locker.is_locked():
                 locked_repository = self._locker.locked_repository(True)
+
+                # If no packages have been whitelisted (The ones we want to update),
+                # we whitelist every package in the lock file.
+                if not self._whitelist:
+                    for pkg in locked_repository.packages:
+                        self._whitelist.append(pkg.name)
 
             # Checking extras
             for extra in self._extras:
@@ -181,6 +181,38 @@ class Installer:
             ops = self._get_operations_from_lock(locked_repository)
 
         self._populate_local_repo(local_repo, ops, locked_repository)
+
+        with self._package.with_python_versions(
+            ".".join([str(i) for i in self._venv.version_info[:3]])
+        ):
+            # We resolve again by only using the lock file
+            pool = Pool()
+
+            # Making a new repo containing the packages
+            # newly resolved and the ones from the current lock file
+            locked_repository = self._locker.locked_repository(True)
+            repo = Repository()
+            for package in local_repo.packages + locked_repository.packages:
+                if not repo.has_package(package):
+                    repo.add_package(package)
+
+            pool.add_repository(repo)
+
+            # We whitelist all packages to be sure
+            # that the latest ones are picked up
+            whitelist = []
+            for pkg in locked_repository.packages:
+                whitelist.append(pkg.name)
+
+            solver = Solver(
+                self._package,
+                pool,
+                self._installed_repository,
+                locked_repository,
+                NullIO(),
+            )
+
+            ops = solver.solve(use_latest=whitelist)
 
         # We need to filter operations so that packages
         # not compatible with the current system,
@@ -342,12 +374,7 @@ class Installer:
         self._installer.remove(operation.package)
 
     def _populate_local_repo(self, local_repo, ops, locked_repository):
-        # Add all locked packages from the lock and go from there
-        for package in locked_repository.packages:
-            if not local_repo.has_package(package):
-                local_repo.add_package(package)
-
-        # Now, walk through all operations and add/remove/update accordingly
+        # We walk through all operations and add/remove/update accordingly
         for op in ops:
             if isinstance(op, Update):
                 package = op.target_package
@@ -355,7 +382,7 @@ class Installer:
                 package = op.package
 
             acted_on = False
-            for pkg in local_repo.packages:
+            for pkg in locked_repository.packages:
                 if pkg.name == package.name:
                     # The package we operate on is in the local repo
                     if op.job_type == "update":

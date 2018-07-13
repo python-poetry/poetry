@@ -194,8 +194,8 @@ def test_install_with_deps_in_order(solver, repo, package):
         ops,
         [
             {"job": "install", "package": package_a},
-            {"job": "install", "package": package_b},
             {"job": "install", "package": package_c},
+            {"job": "install", "package": package_b},
         ],
     )
 
@@ -284,9 +284,9 @@ def test_solver_sets_categories(solver, repo, package):
         ],
     )
 
-    assert package_c.category == "dev"
-    assert package_b.category == "dev"
-    assert package_a.category == "main"
+    assert ops[0].package.category == "dev"
+    assert ops[2].package.category == "dev"
+    assert ops[1].package.category == "main"
 
 
 def test_solver_respects_root_package_python_versions(solver, repo, package):
@@ -342,6 +342,7 @@ def test_solver_fails_if_mismatch_root_python_versions(solver, repo, package):
 
 def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
     package.python_versions = "^3.4"
+    package.extras["foo"] = [get_dependency("B")]
     package.add_dependency("A", {"version": "*", "python": "~3.5"})
     package.add_dependency("B", {"version": "*", "optional": True})
 
@@ -528,8 +529,8 @@ def test_solver_sub_dependencies_with_requirements(solver, repo, package):
     check_solver_result(
         ops,
         [
-            {"job": "install", "package": package_c},
             {"job": "install", "package": package_d},
+            {"job": "install", "package": package_c},
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
         ],
@@ -570,25 +571,25 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package
     check_solver_result(
         ops,
         [
-            {"job": "install", "package": package_d},
             {"job": "install", "package": package_e},
             {"job": "install", "package": package_f},
-            {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
+            {"job": "install", "package": package_d},
+            {"job": "install", "package": package_a},
             {"job": "install", "package": package_c},
         ],
     )
 
-    op = ops[0]
+    op = ops[3]  # d
     assert op.package.requirements == {"python": "<4.0"}
 
-    op = ops[1]
+    op = ops[0]  # e
     assert op.package.requirements == {"platform": "win32", "python": "<5.0"}
 
-    op = ops[2]
+    op = ops[1]  # f
     assert op.package.requirements == {"python": "<5.0"}
 
-    op = ops[4]
+    op = ops[4]  # a
     assert op.package.requirements == {"python": "<5.0"}
 
 
@@ -641,16 +642,16 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     check_solver_result(
         ops,
         [
+            {"job": "install", "package": package_d},
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_c},
-            {"job": "install", "package": package_d},
             {"job": "install", "package": package_a},
         ],
     )
 
-    b = ops[0].package
-    c = ops[1].package
-    d = ops[2].package
+    b = ops[1].package
+    c = ops[2].package
+    d = ops[0].package
     a = ops[3].package
 
     assert d.category == "dev"
@@ -693,17 +694,17 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
         ops,
         [
             {"job": "install", "package": package_b},
-            {"job": "install", "package": package_c},
             {"job": "install", "package": package_d},
             {"job": "install", "package": package_a},
+            {"job": "install", "package": package_c},
             {"job": "install", "package": package_e},
         ],
     )
 
     b = ops[0].package
-    c = ops[1].package
-    d = ops[2].package
-    a = ops[3].package
+    c = ops[3].package
+    d = ops[1].package
+    a = ops[2].package
     e = ops[4].package
 
     assert d.category == "dev"
@@ -784,4 +785,111 @@ def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
     )
 
     op = ops[0]
-    assert op.package.requirements == {"python": "~2.7 || >=3.4"}
+    assert op.package.requirements == {"python": ">=2.7,<2.8 || >=3.4"}
+
+
+def test_solver_duplicate_dependencies_different_constraints(solver, repo, package):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<3.4"})
+    package_a.add_dependency("B", {"version": "^2.0", "python": ">=3.4"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    op = ops[0]
+    assert op.package.requirements == {"python": "<3.4"}
+
+    op = ops[1]
+    assert op.package.requirements == {"python": ">=3.4"}
+
+
+def test_solver_duplicate_dependencies_different_constraints_same_requirements(
+    solver, repo, package
+):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0"})
+    package_a.add_dependency("B", {"version": "^2.0"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    with pytest.raises(SolverProblemError) as e:
+        solver.solve()
+
+    expected = """\
+Because a (1.0) depends on both B (^1.0) and B (^2.0), a is forbidden.
+So, because no versions of a match !=1.0
+ and root depends on A (*), version solving failed."""
+
+    assert str(e.value) == expected
+
+
+def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<3.4"})
+    package_a.add_dependency("B", {"version": "^2.0", "python": ">=3.4"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+    package_b10.add_dependency("C", "1.2")
+    package_b20.add_dependency("C", "1.5")
+
+    package_c12 = get_package("C", "1.2")
+    package_c15 = get_package("C", "1.5")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+    repo.add_package(package_c12)
+    repo.add_package(package_c15)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_c12},
+            {"job": "install", "package": package_c15},
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    op = ops[2]
+    assert op.package.requirements == {"python": "<3.4"}
+
+    op = ops[3]
+    assert op.package.requirements == {"python": ">=3.4"}
+
+
+def test_solver_fails_if_dependency_name_does_not_match_package(solver, repo, package):
+    package.add_dependency("my-demo", {"git": "https://github.com/demo/demo.git"})
+
+    with pytest.raises(RuntimeError):
+        solver.solve()

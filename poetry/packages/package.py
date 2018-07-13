@@ -2,6 +2,7 @@
 import copy
 import re
 
+from contextlib import contextmanager
 from typing import Union
 
 from poetry.semver import Version
@@ -24,11 +25,6 @@ AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)
 class Package(object):
 
     AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
-
-    supported_link_types = {
-        "require": {"description": "requires", "method": "requires"},
-        "provide": {"description": "provides", "method": "provides"},
-    }
 
     def __init__(self, name, version, pretty_version=None):
         """
@@ -69,10 +65,6 @@ class Package(object):
 
         # Requirements for making it mandatory
         self.requirements = {}
-
-        self.build = None
-        self.include = []
-        self.exclude = []
 
         self.classifiers = []
 
@@ -308,6 +300,32 @@ class Package(object):
 
     def to_dependency(self):
         return Dependency(self.name, self._version)
+
+    @contextmanager
+    def with_python_versions(self, python_versions):
+        original_python_versions = self.python_versions
+
+        self.python_versions = python_versions
+
+        yield
+
+        self.python_versions = original_python_versions
+
+    def clone(self):  # type: () -> Package
+        clone = Package(self.pretty_name, self.version)
+        clone.category = self.category
+        clone.optional = self.optional
+        clone.python_versions = self.python_versions
+        clone.platform = self.platform
+        clone.extras = self.extras
+        clone.source_type = self.source_type
+        clone.source_url = self.source_url
+        clone.source_reference = self.source_reference
+
+        for dep in self.requires:
+            clone.requires.append(dep)
+
+        return clone
 
     def __hash__(self):
         return hash((self._name, self._version))

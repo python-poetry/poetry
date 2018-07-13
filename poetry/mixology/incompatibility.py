@@ -84,6 +84,22 @@ class Incompatibility:
     def cause(self):  # type: () -> IncompatibilityCause
         return self._cause
 
+    @property
+    def external_incompatibilities(self):  # type: () -> Generator[Incompatibility]
+        """
+        Returns all external incompatibilities in this incompatibility's
+        derivation graph.
+        """
+        if isinstance(self._cause, ConflictCause):
+            cause = self._cause  # type: ConflictCause
+            for incompatibility in cause.conflict.external_incompatibilities:
+                yield incompatibility
+
+            for incompatibility in cause.other.external_incompatibilities:
+                yield incompatibility
+        else:
+            yield self
+
     def is_failure(self):  # type: () -> bool
         return len(self._terms) == 0 or (
             len(self._terms) == 1 and self._terms[0].dependency.is_root

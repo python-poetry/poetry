@@ -85,6 +85,12 @@ class Locker:
             package.python_versions = info["python-versions"]
 
             for dep_name, constraint in info.get("dependencies", {}).items():
+                if isinstance(constraint, list):
+                    for c in constraint:
+                        package.add_dependency(dep_name, c)
+
+                    continue
+
                 package.add_dependency(dep_name, constraint)
 
             if "requirements" in info:
@@ -104,7 +110,10 @@ class Locker:
         packages = self._lock_packages(packages)
         # Retrieving hashes
         for package in packages:
-            hashes[package["name"]] = package["hashes"]
+            if package["name"] not in hashes:
+                hashes[package["name"]] = []
+
+            hashes[package["name"]] += package["hashes"]
             del package["hashes"]
 
         lock = {
@@ -131,7 +140,17 @@ class Locker:
         return False
 
     def _write_lock_data(self, data):
-        self._lock.write(data)
+        # We want a clean lock file so we write
+        # packages first and metadata after
+        with self._lock.open("w", encoding="utf-8") as f:
+            f.write(self._lock.dumps({"package": data["package"]}, sort=True))
+            f.write(u"\n")
+            if "extras" in data:
+                f.write(self._lock.dumps({"extras": data["extras"]}, sort=True))
+                f.write(u"\n")
+
+            f.write(self._lock.dumps({"metadata": data["metadata"]}, sort=True))
+
         self._lock_data = None
 
     def _get_content_hash(self):  # type: () -> str
@@ -174,7 +193,25 @@ class Locker:
             if dependency.is_optional() and not dependency.is_activated():
                 continue
 
-            dependencies[dependency.pretty_name] = str(dependency.pretty_constraint)
+            if dependency.pretty_name not in dependencies:
+                dependencies[dependency.pretty_name] = []
+
+            constraint = {"version": str(dependency.pretty_constraint)}
+
+            if not dependency.python_constraint.is_any():
+                constraint["python"] = str(dependency.python_constraint)
+
+            if dependency.platform != "*":
+                constraint["platform"] = dependency.platform
+
+            if len(constraint) == 1:
+                dependencies[dependency.pretty_name].append(constraint["version"])
+            else:
+                dependencies[dependency.pretty_name].append(constraint)
+
+        for name, constraints in dependencies.items():
+            if len(constraints) == 1:
+                dependencies[name] = constraints[0]
 
         data = {
             "name": package.pretty_name,
@@ -184,9 +221,11 @@ class Locker:
             "optional": package.optional,
             "python-versions": package.python_versions,
             "platform": package.platform,
-            "hashes": package.hashes,
-            "dependencies": dependencies,
+            "hashes": sorted(package.hashes),
         }
+
+        if dependencies:
+            data["dependencies"] = dependencies
 
         if package.source_type:
             data["source"] = {

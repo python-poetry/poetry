@@ -225,6 +225,12 @@ class VersionUnion(VersionConstraint):
 
         raise ValueError("Unknown VersionConstraint type {}".format(constraint))
 
+    def _excludes_single_version(self):  # type: () -> bool
+        from .version import Version
+        from .version_range import VersionRange
+
+        return isinstance(VersionRange().difference(self), Version)
+
     def __eq__(self, other):
         if not isinstance(other, VersionUnion):
             return False
@@ -232,6 +238,11 @@ class VersionUnion(VersionConstraint):
         return self._ranges == other.ranges
 
     def __str__(self):
+        from .version_range import VersionRange
+
+        if self._excludes_single_version():
+            return "!={}".format(VersionRange().difference(self))
+
         return " || ".join([str(r) for r in self._ranges])
 
     def __repr__(self):

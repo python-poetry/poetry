@@ -1,3 +1,4 @@
+import logging
 import os
 import pkginfo
 import shutil
@@ -33,6 +34,10 @@ from poetry.utils.venv import Venv
 from poetry.vcs.git import Git
 
 from .dependencies import Dependencies
+from .exceptions import CompatibilityError
+
+
+logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):
@@ -65,6 +70,7 @@ class Provider:
         self._python_constraint = package.python_constraint
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
+        self._in_progress = False
 
     @property
     def pool(self):  # type: () -> Pool
@@ -189,7 +195,7 @@ class Provider:
                 try:
                     venv.run("python", "setup.py", "egg_info")
 
-                    egg_info = list(tmp_dir.glob("*.egg-info"))[0]
+                    egg_info = next(tmp_dir.glob("**/*.egg-info"))
 
                     meta = pkginfo.UnpackedSDist(str(egg_info))
 
@@ -219,12 +225,20 @@ class Provider:
         finally:
             shutil.rmtree(tmp_dir.as_posix())
 
+        if dependency.name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                "The dependency name for {} does not match the actual package's name: {}".format(
+                    dependency.name, package.name
+                )
+            )
+
         return [package]
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
         package = Package(dependency.name, dependency.pretty_constraint)
         package.source_type = "file"
-        package.source_url = str(dependency.path)
+        package.source_url = dependency.path.as_posix()
 
         package.description = dependency.metadata.summary
         for req in dependency.metadata.requires_dist:
@@ -273,7 +287,7 @@ class Provider:
             return [
                 Incompatibility(
                     [Term(package.to_dependency(), True)],
-                    PythonCause(package.python_versions),
+                    PythonCause(package.python_versions, self._package.python_versions),
                 )
             ]
 
@@ -284,6 +298,14 @@ class Provider:
                     PlatformCause(package.platform),
                 )
             ]
+
+        dependencies = [
+            dep
+            for dep in dependencies
+            if dep.name not in self.UNSAFE_PACKAGES
+            and self._package.python_constraint.allows_any(dep.python_constraint)
+            and self._package.platform_constraint.matches(dep.platform_constraint)
+        ]
 
         return [
             Incompatibility(
@@ -306,7 +328,7 @@ class Provider:
             for r in package.requires
             if r.is_activated()
             and self._package.python_constraint.allows_any(r.python_constraint)
-            and self._package.platform_constraint.matches(package.platform_constraint)
+            and self._package.platform_constraint.matches(r.platform_constraint)
         ]
 
         # Searching for duplicate dependencies
@@ -321,9 +343,8 @@ class Provider:
         # will become:
         #   - enum34; python_version=="2.7" or python_version=="3.3"
         #
-        # TODO: If the duplicate dependencies have different constraints
-        # we should notify the resolver in some way to make it split the
-        # current graph.
+        # If the duplicate dependencies have different constraints
+        # we have to split the dependency graph.
         #
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
@@ -342,6 +363,8 @@ class Provider:
                     dependencies.append(deps[0])
                     continue
 
+                self.debug("Duplicate dependencies for {}".format(dep_name))
+
                 # Regrouping by constraint
                 by_constraint = {}
                 for dep in deps:
@@ -359,6 +382,12 @@ class Provider:
                             continue
 
                         markers = pep_508_dep.split(";")[1].strip()
+                        if not markers:
+                            # One of the constraint has no markers
+                            # so this means we don't actually need to merge
+                            new_markers = []
+                            break
+
                         new_markers.append("({})".format(markers))
 
                     if not new_markers:
@@ -380,15 +409,53 @@ class Provider:
                     continue
 
                 if len(by_constraint) == 1:
+                    self.debug("Merging requirements for {}".format(str(deps[0])))
                     dependencies.append(list(by_constraint.values())[0][0])
                     continue
 
-                # At this point, we have one dependency by constraint
-                # So we add them to the dependency set
-                for constraint, _deps in by_constraint.items():
-                    _dep = _deps[0]
+                # We leave dependencies as-is if they have the same
+                # python/platform constraints.
+                # That way the resolver will pickup the conflict
+                # and display a proper error.
+                _deps = [value[0] for value in by_constraint.values()]
+                seen = set()
+                for _dep in _deps:
+                    pep_508_dep = _dep.to_pep_508()
+                    if ";" not in pep_508_dep:
+                        _requirements = ""
+                    else:
+                        _requirements = pep_508_dep.split(";")[1].strip()
 
-                    dependencies.append(_dep)
+                    if _requirements not in seen:
+                        seen.add(_requirements)
+
+                if len(_deps) != len(seen):
+                    for _dep in _deps:
+                        dependencies.append(_dep)
+
+                    continue
+
+                # At this point, we raise an exception that will
+                # tell the solver to enter compatibility mode
+                # which means it will resolve for subsets
+                # Python constraints
+                #
+                # For instance, if our root package requires Python ~2.7 || ^3.6
+                # And we have one dependency that requires Python <3.6
+                # and the other Python >=3.6 than the solver will solve
+                # dependencies for Python >=2.7,<2.8 || >=3.4,<3.6
+                # and Python >=3.6,<4.0
+                python_constraints = []
+                for constraint, _deps in by_constraint.items():
+                    python_constraints.append(_deps[0].python_versions)
+
+                _deps = [str(_dep[0]) for _dep in by_constraint.values()]
+                self.debug(
+                    "<warning>Different requirements found for {}.</warning>".format(
+                        ", ".join(_deps[:-1]) + " and " + _deps[-1]
+                    )
+                )
+                raise CompatibilityError(*python_constraints)
 
         package.requires = dependencies
 
@@ -399,19 +466,6 @@ class Provider:
     @property
     def output(self):
         return self._io
-
-    def before_resolution(self):
-        self._io.write("<info>Resolving dependencies</>")
-
-        if self.is_debugging():
-            self._io.new_line()
-
-    def indicate_progress(self):
-        if not self.is_debugging():
-            self._io.write(".")
-
-    def after_resolution(self):
-        self._io.new_line()
 
     def debug(self, message, depth=0):
         if self.is_debugging():
@@ -438,3 +492,5 @@ class Provider:
 
             with indicator.auto():
                 yield
+
+        self._in_progress = False

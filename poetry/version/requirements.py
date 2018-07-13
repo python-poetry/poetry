@@ -20,8 +20,7 @@ from poetry.semver import parse_constraint
 from .markers import MARKER_EXPR, Marker
 
 
-LEGACY_REGEX = (
-    r"""
+LEGACY_REGEX = r"""
     (?P<operator>(==|!=|<=|>=|<|>))
     \s*
     (?P<version>
@@ -32,11 +31,9 @@ LEGACY_REGEX = (
                   # them, and a comma since it's a version separator.
     )
     """
-)
 
 
-REGEX = (
-    r"""
+REGEX = r"""
             (?P<operator>(~=|==|!=|<=|>=|<|>|===))
             (?P<version>
                 (?:
@@ -128,7 +125,6 @@ REGEX = (
                 )
             )
 """
-)
 
 
 class InvalidRequirement(ValueError):

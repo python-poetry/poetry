@@ -26,7 +26,7 @@ class InitCommand(Command):
     """
 
     help = """\
-The <info>init</info> command creates a basic <comment>pyproject.toml</> file in the current directory.  
+The <info>init</info> command creates a basic <comment>pyproject.toml</> file in the current directory.
 """
 
     def __init__(self):
@@ -98,7 +98,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         question = self.create_question(
             "License [<comment>{}</comment>]: ".format(license), default=license
         )
-
+        question.validator = self._validate_license
         license = self.ask(question)
 
         question = self.create_question("Compatible Python versions [*]: ", default="*")
@@ -106,7 +106,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         self.line("")
 
-        requirements = []
+        requirements = {}
 
         question = "Would you like to define your dependencies" " (require) interactively?"
         if self.confirm(question, True):
@@ -114,7 +114,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 self._determine_requirements(self.option("dependency"))
             )
 
-        dev_requirements = []
+        dev_requirements = {}
 
         question = "Would you like to define your dev dependencies" " (require-dev) interactively"
         if self.confirm(question, True):
@@ -292,6 +292,14 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             )
 
         return author
+
+    def _validate_license(self, license):
+        from poetry.spdx import license_by_id
+
+        if license:
+            license_by_id(license)
+
+        return license
 
     def _get_pool(self):
         from poetry.repositories import Pool

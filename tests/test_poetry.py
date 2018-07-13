@@ -2,10 +2,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import toml
-
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
+from poetry.utils.toml_file import TomlFile
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
@@ -21,7 +20,10 @@ def test_poetry():
     assert package.description == "Some description."
     assert package.authors == ["Sébastien Eustace <sebastien@eustace.io>"]
     assert package.license.id == "MIT"
-    assert str(package.readme.relative_to(fixtures_dir)) == "sample_project/README.rst"
+    assert (
+        package.readme.relative_to(fixtures_dir).as_posix()
+        == "sample_project/README.rst"
+    )
     assert package.homepage == "https://poetry.eustace.io"
     assert package.repository_url == "https://github.com/sdispater/poetry"
     assert package.keywords == ["packaging", "dependency", "poetry"]
@@ -102,9 +104,24 @@ def test_poetry():
     ]
 
 
+def test_poetry_with_packages_and_includes():
+    poetry = Poetry.create(
+        str(fixtures_dir.parent / "masonry" / "builders" / "fixtures" / "with-include")
+    )
+
+    package = poetry.package
+
+    assert package.packages == [
+        {"include": "extra_dir/**/*.py"},
+        {"include": "my_module.py"},
+        {"include": "package_with_include"},
+    ]
+
+    assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
+
+
 def test_check():
-    complete = fixtures_dir / "complete.toml"
-    with complete.open() as f:
-        content = toml.loads(f.read())["tool"]["poetry"]
+    complete = TomlFile(fixtures_dir / "complete.toml")
+    content = complete.read(raw=True)["tool"]["poetry"]
 
     assert Poetry.check(content)

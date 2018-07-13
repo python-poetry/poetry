@@ -78,6 +78,9 @@ class DebugResolveCommand(Command):
                     package.name, package.version
                 )
             )
+            if package.requirements:
+                for req_name, req_value in package.requirements.items():
+                    self.line("    - {}: {}".format(req_name, req_value))
 
     def _determine_requirements(self, requires):  # type: (List[str]) -> List[str]
         if not requires:

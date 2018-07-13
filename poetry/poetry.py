@@ -3,11 +3,11 @@ from __future__ import unicode_literals
 
 import json
 
-import jsonschema
-
 from .__version__ import __version__
 from .config import Config
 from .exceptions import InvalidProjectFile
+from .json import validate_object
+from .json import ValidationError
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
@@ -42,11 +42,7 @@ class Poetry:
             self._pool.configure(source)
 
         # Always put PyPI last to prefere private repositories
-        self._pool.add_repository(
-            PyPiRepository(
-                fallback=self._config.setting("settings.pypi.fallback", True)
-            )
-        )
+        self._pool.add_repository(PyPiRepository())
 
     @property
     def file(self):
@@ -154,6 +150,9 @@ class Poetry:
         if "exclude" in local_config:
             package.exclude = local_config["exclude"]
 
+        if "packages" in local_config:
+            package.packages = local_config["packages"]
+
         locker = Locker(poetry_file.with_suffix(".lock"), local_config)
 
         return cls(poetry_file, local_config, package, locker)
@@ -163,19 +162,10 @@ class Poetry:
         """
         Checks the validity of a configuration
         """
-        schema = Path(__file__).parent / "json" / "schemas" / "poetry-schema.json"
-
-        with schema.open() as f:
-            schema = json.loads(f.read())
-
         try:
-            jsonschema.validate(config, schema)
-        except jsonschema.ValidationError as e:
-            message = e.message
-            if e.path:
-                message = "[{}] {}".format(".".join(e.path), message)
-
-            raise InvalidProjectFile(message)
+            validate_object(config, "poetry-schema")
+        except ValidationError:
+            raise InvalidProjectFile(str(e))
 
         if strict:
             # If strict, check the file more thoroughly

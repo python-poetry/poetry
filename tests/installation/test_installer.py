@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import sys
 
 import pytest
-import toml
 
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
@@ -15,6 +14,7 @@ from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import Path
 from poetry.utils._compat import PY2
+from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import NullVenv
 
 from tests.helpers import get_dependency
@@ -76,8 +76,6 @@ class Locker(BaseLocker):
 
             package["python-versions"] = python_versions
             package["platform"] = platform
-            if not package["dependencies"]:
-                del package["dependencies"]
 
         self._written_data = data
 
@@ -133,10 +131,9 @@ def installer(package, pool, locker, venv, installed):
 
 
 def fixture(name):
-    file = Path(__file__).parent / "fixtures" / "{}.test".format(name)
+    file = TomlFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
 
-    with file.open() as f:
-        return toml.loads(f.read())
+    return file.read(raw=True)
 
 
 def test_run_no_dependencies(installer, locker):
@@ -159,6 +156,79 @@ def test_run_with_dependencies(installer, locker, repo, package):
     expected = fixture("with-dependencies")
 
     assert locker.written_data == expected
+
+
+def test_run_update_after_removing_dependencies(
+    installer, locker, repo, package, installed
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "B",
+                    "version": "1.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": [], "C": []},
+            },
+        }
+    )
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    package_c = get_package("C", "1.2")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    installed.add_package(package_a)
+    installed.add_package(package_b)
+    installed.add_package(package_c)
+
+    package.add_dependency("A", "~1.0")
+    package.add_dependency("B", "~1.1")
+
+    installer.update(True)
+    installer.run()
+    expected = fixture("with-dependencies")
+
+    assert locker.written_data == expected
+
+    installs = installer.installer.installs
+    assert len(installs) == 0
+
+    updates = installer.installer.updates
+    assert len(updates) == 0
+
+    removals = installer.installer.removals
+    assert len(removals) == 1
 
 
 def test_run_whitelist_add(installer, locker, repo, package):
@@ -279,7 +349,7 @@ def test_run_with_python_versions(installer, locker, repo, package):
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c12 = get_package("C", "1.2")
-    package_c12.python_versions = "~2.7 || ^3.6"
+    package_c12.python_versions = "~2.7 || ^3.3"
     package_c13 = get_package("C", "1.3")
     package_c13.python_versions = "~3.3"
 
@@ -717,7 +787,7 @@ def test_run_update_with_locked_extras(installer, locker, repo, package):
         }
     )
     package_a = get_package("A", "1.0")
-    package_a.extras["foo"] = ["B"]
+    package_a.extras["foo"] = [get_dependency("B")]
     b_dependency = get_dependency("B", "^1.0", optional=True)
     b_dependency.in_extras.append("foo")
     c_dependency = get_dependency("C", "^1.0")
@@ -740,3 +810,317 @@ def test_run_update_with_locked_extras(installer, locker, repo, package):
     expected = fixture("update-with-locked-extras")
 
     assert locker.written_data == expected
+
+
+def test_run_install_duplicate_dependencies_different_constraints(
+    installer, locker, repo, package
+):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<4.0"})
+    package_a.add_dependency("B", {"version": "^2.0", "python": ">=4.0"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+    package_b10.add_dependency("C", "1.2")
+    package_b20.add_dependency("C", "1.5")
+
+    package_c12 = get_package("C", "1.2")
+    package_c15 = get_package("C", "1.5")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+    repo.add_package(package_c12)
+    repo.add_package(package_c15)
+
+    installer.run()
+
+    expected = fixture("with-duplicate-dependencies")
+
+    assert locker.written_data == expected
+
+    installs = installer.installer.installs
+    assert len(installs) == 3
+    assert installs[0] == package_c12
+    assert installs[1] == package_b10
+    assert installs[2] == package_a
+
+    updates = installer.installer.updates
+    assert len(updates) == 0
+    removals = installer.installer.removals
+    assert len(removals) == 0
+
+
+def test_run_install_duplicate_dependencies_different_constraints_with_lock(
+    installer, locker, repo, package
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {
+                        "B": [
+                            {"version": "^1.0", "python": "<4.0"},
+                            {"version": "^2.0", "python": ">=4.0"},
+                        ]
+                    },
+                },
+                {
+                    "name": "B",
+                    "version": "1.0",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"C": "1.2"},
+                    "requirements": {"python": "<4.0"},
+                },
+                {
+                    "name": "B",
+                    "version": "2.0",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"C": "1.5"},
+                    "requirements": {"python": ">=4.0"},
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.5",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": [], "C": []},
+            },
+        }
+    )
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<4.0"})
+    package_a.add_dependency("B", {"version": "^2.0", "python": ">=4.0"})
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+    package_b10.add_dependency("C", "1.2")
+    package_b20.add_dependency("C", "1.5")
+
+    package_c12 = get_package("C", "1.2")
+    package_c15 = get_package("C", "1.5")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+    repo.add_package(package_c12)
+    repo.add_package(package_c15)
+
+    installer.update(True)
+    installer.run()
+
+    expected = fixture("with-duplicate-dependencies")
+
+    assert locker.written_data == expected
+
+    installs = installer.installer.installs
+    assert len(installs) == 3
+    updates = installer.installer.updates
+    assert len(updates) == 0
+    removals = installer.installer.removals
+    assert len(removals) == 0
+
+
+def test_run_update_uninstalls_after_removal_transient_dependency(
+    installer, locker, repo, package, installed
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"B": {"version": "^1.0", "python": "<2.0"}},
+                },
+                {
+                    "name": "B",
+                    "version": "1.0",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": []},
+            },
+        }
+    )
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", {"version": "^1.0", "python": "<2.0"})
+
+    package_b10 = get_package("B", "1.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+
+    installed.add_package(get_package("A", "1.0"))
+    installed.add_package(get_package("B", "1.0"))
+
+    installer.update(True)
+    installer.run()
+
+    installs = installer.installer.installs
+    assert len(installs) == 0
+    updates = installer.installer.updates
+    assert len(updates) == 0
+    removals = installer.installer.removals
+    assert len(removals) == 1
+
+
+def test_run_install_duplicate_dependencies_different_constraints_with_lock_update(
+    installer, locker, repo, package, installed
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {
+                        "B": [
+                            {"version": "^1.0", "python": "<4.0"},
+                            {"version": "^2.0", "python": ">=4.0"},
+                        ]
+                    },
+                },
+                {
+                    "name": "B",
+                    "version": "1.0",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"C": "1.2"},
+                    "requirements": {"python": "<4.0"},
+                },
+                {
+                    "name": "B",
+                    "version": "2.0",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"C": "1.5"},
+                    "requirements": {"python": ">=4.0"},
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.5",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": [], "C": []},
+            },
+        }
+    )
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.1")
+    package_a.add_dependency("B", "^2.0")
+
+    package_b10 = get_package("B", "1.0")
+    package_b20 = get_package("B", "2.0")
+    package_b10.add_dependency("C", "1.2")
+    package_b20.add_dependency("C", "1.5")
+
+    package_c12 = get_package("C", "1.2")
+    package_c15 = get_package("C", "1.5")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+    repo.add_package(package_c12)
+    repo.add_package(package_c15)
+
+    installed.add_package(get_package("A", "1.0"))
+
+    installer.update(True)
+    installer.whitelist(["A"])
+    installer.run()
+
+    expected = fixture("with-duplicate-dependencies-update")
+
+    assert locker.written_data == expected
+
+    installs = installer.installer.installs
+    assert len(installs) == 2
+    updates = installer.installer.updates
+    assert len(updates) == 1
+    removals = installer.installer.removals
+    assert len(removals) == 0

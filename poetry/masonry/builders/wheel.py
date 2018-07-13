@@ -17,6 +17,7 @@ from poetry.semver import parse_constraint
 from poetry.utils._compat import Path
 
 from ..utils.helpers import normalize_file_permissions
+from ..utils.package_include import PackageInclude
 from ..utils.tags import get_abbr_impl
 from ..utils.tags import get_abi_tag
 from ..utils.tags import get_impl_ver
@@ -33,61 +34,46 @@ Tag: {tag}
 
 
 class WheelBuilder(Builder):
-    def __init__(self, poetry, venv, io, target_fp, original=None):
+    def __init__(self, poetry, venv, io, target_dir=None, original=None):
         super(WheelBuilder, self).__init__(poetry, venv, io)
 
         self._records = []
         self._original_path = self._path
+        self._target_dir = target_dir or (self._poetry.file.parent / "dist")
         if original:
             self._original_path = original.file.parent
 
-        # Open the zip file ready to write
-        self._wheel_zip = zipfile.ZipFile(
-            target_fp, "w", compression=zipfile.ZIP_DEFLATED
-        )
-
     @classmethod
-    def make_in(cls, poetry, venv, io, directory, original=None):
-        # We don't know the final filename until metadata is loaded, so write to
-        # a temporary_file, and rename it afterwards.
-        (fd, temp_path) = tempfile.mkstemp(suffix=".whl", dir=str(directory))
-        os.close(fd)
-
-        try:
-            with open(temp_path, "w+b") as fp:
-                wb = WheelBuilder(poetry, venv, io, fp, original=original)
-                wb.build()
-
-            wheel_path = directory / wb.wheel_filename
-            if wheel_path.exists():
-                os.unlink(str(wheel_path))
-
-            os.rename(temp_path, str(wheel_path))
-        except:
-            os.unlink(temp_path)
-            raise
+    def make_in(cls, poetry, venv, io, directory=None, original=None):
+        wb = WheelBuilder(poetry, venv, io, target_dir=directory, original=original)
+        wb.build()
 
     @classmethod
     def make(cls, poetry, venv, io):
-        """Build a wheel in the dist/ directory, and optionally upload it.
-            """
-        dist_dir = poetry.file.parent / "dist"
-        try:
-            dist_dir.mkdir()
-        except FileExistsError:
-            pass
-
-        cls.make_in(poetry, venv, io, dist_dir)
+        """Build a wheel in the dist/ directory, and optionally upload it."""
+        cls.make_in(poetry, venv, io)
 
     def build(self):
         self._io.writeln(" - Building <info>wheel</info>")
-        try:
+
+        dist_dir = self._target_dir
+        if not dist_dir.exists():
+            dist_dir.mkdir()
+
+        (fd, temp_path) = tempfile.mkstemp(suffix=".whl")
+
+        with zipfile.ZipFile(
+            os.fdopen(fd, "w+b"), mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as zip_file:
             self._build()
-            self.copy_module()
-            self.write_metadata()
-            self.write_record()
-        finally:
-            self._wheel_zip.close()
+            self._copy_module(zip_file)
+            self._write_metadata(zip_file)
+            self._write_record(zip_file)
+
+        wheel_path = dist_dir / self.wheel_filename
+        if wheel_path.exists():
+            wheel_path.unlink()
+        shutil.move(temp_path, str(wheel_path))
 
         self._io.writeln(" - Built <fg=cyan>{}</>".format(self.wheel_filename))
 
@@ -119,52 +105,64 @@ class WheelBuilder(Builder):
                 shutil.rmtree(str(self._path / pkg.name))
                 shutil.copytree(str(pkg), str(self._path / pkg.name))
 
-    def copy_module(self):
-        if self._module.is_package():
-            files = self.find_files_to_add()
+    def _copy_module(self, wheel):
+        excluded = self.find_excluded_files()
+        src = self._module.path
+        to_add = []
 
-            # Walk the files and compress them,
-            # sorting everything so the order is stable.
-            for file in sorted(files):
-                full_path = self._path / file
+        for include in self._module.includes:
+            include.refresh()
 
-                if self._module.is_in_src():
-                    try:
-                        file = file.relative_to(
-                            self._module.path.parent.relative_to(self._path)
-                        )
-                    except ValueError:
-                        pass
-
-                # Do not include topmost files
-                if full_path.relative_to(self._path) == Path(file.name):
+            for file in include.elements:
+                if "__pycache__" in str(file):
                     continue
 
-                self._add_file(full_path, file)
-        else:
-            self._add_file(str(self._module.path), self._module.path.name)
+                if file.is_dir():
+                    continue
 
-    def write_metadata(self):
+                if isinstance(include, PackageInclude) and include.source:
+                    rel_file = file.relative_to(include.base)
+                else:
+                    rel_file = file.relative_to(self._path)
+
+                if file in excluded:
+                    continue
+
+                if file.suffix == ".pyc":
+                    continue
+
+                self._io.writeln(
+                    " - Adding: <comment>{}</comment>".format(str(file)),
+                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                )
+                to_add.append((file, rel_file))
+
+        # Walk the files and compress them,
+        # sorting everything so the order is stable.
+        for full_path, rel_path in sorted(to_add, key=lambda x: x[1]):
+            self._add_file(wheel, full_path, rel_path)
+
+    def _write_metadata(self, wheel):
         if (
             "scripts" in self._poetry.local_config
             or "plugins" in self._poetry.local_config
         ):
-            with self._write_to_zip(self.dist_info + "/entry_points.txt") as f:
-                self._write_entry_points(f)
+            with self._write_to_zip(wheel, self.dist_info + "/entry_points.txt") as f:
+                self._write_entry_points(wheel, f)
 
         for base in ("COPYING", "LICENSE"):
             for path in sorted(self._path.glob(base + "*")):
-                self._add_file(path, "%s/%s" % (self.dist_info, path.name))
+                self._add_file(wheel, path, "%s/%s" % (self.dist_info, path.name))
 
-        with self._write_to_zip(self.dist_info + "/WHEEL") as f:
+        with self._write_to_zip(wheel, self.dist_info + "/WHEEL") as f:
             self._write_wheel_file(f)
 
-        with self._write_to_zip(self.dist_info + "/METADATA") as f:
+        with self._write_to_zip(wheel, self.dist_info + "/METADATA") as f:
             self._write_metadata_file(f)
 
-    def write_record(self):
+    def _write_record(self, wheel):
         # Write a record of the files in the wheel
-        with self._write_to_zip(self.dist_info + "/RECORD") as f:
+        with self._write_to_zip(wheel, self.dist_info + "/RECORD") as f:
             for path, hash, size in self._records:
                 f.write("{},sha256={},{}\n".format(path, hash, size))
             # RECORD itself is recorded with no hash or size
@@ -227,7 +225,7 @@ class WheelBuilder(Builder):
 
         return "-".join(tag)
 
-    def _add_file(self, full_path, rel_path, executable=False):
+    def _add_file(self, wheel, full_path, rel_path, executable=False):
         full_path, rel_path = str(full_path), str(rel_path)
         if os.sep != "/":
             # We always want to have /-separated paths in the zip file and in
@@ -253,7 +251,7 @@ class WheelBuilder(Builder):
                 hashsum.update(buf)
 
             src.seek(0)
-            self._wheel_zip.writestr(zinfo, src.read())
+            wheel.writestr(zinfo, src.read())
 
         size = os.stat(full_path).st_size
         hash_digest = urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
@@ -261,7 +259,7 @@ class WheelBuilder(Builder):
         self._records.append((rel_path, hash_digest, size))
 
     @contextlib.contextmanager
-    def _write_to_zip(self, rel_path):
+    def _write_to_zip(self, wheel, rel_path):
         sio = StringIO()
         yield sio
 
@@ -274,10 +272,10 @@ class WheelBuilder(Builder):
         hashsum = hashlib.sha256(b)
         hash_digest = urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
 
-        self._wheel_zip.writestr(zi, b, compress_type=zipfile.ZIP_DEFLATED)
+        wheel.writestr(zi, b, compress_type=zipfile.ZIP_DEFLATED)
         self._records.append((rel_path, hash_digest, len(b)))
 
-    def _write_entry_points(self, fp):
+    def _write_entry_points(self, wheel, fp):
         """
         Write entry_points.txt.
         """
@@ -294,6 +292,7 @@ class WheelBuilder(Builder):
             file = Path(script)
             full_path = self._path / file
             self._add_file(
+                wheel,
                 full_path,
                 self.data_info + "/scripts/" + script.lstrip("/"),
                 executable=True,

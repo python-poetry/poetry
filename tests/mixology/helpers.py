@@ -3,8 +3,10 @@ from poetry.mixology.failure import SolveFailure
 from poetry.mixology.version_solver import VersionSolver
 
 
-def add_to_repo(repository, name, version, deps=None):
+def add_to_repo(repository, name, version, deps=None, python=None):
     package = Package(name, version)
+    if python:
+        package.python_versions = python
 
     if deps:
         for dep_name, dep_constraint in deps.items():
