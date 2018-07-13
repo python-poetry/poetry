@@ -164,7 +164,7 @@ class Poetry:
         """
         try:
             validate_object(config, "poetry-schema")
-        except ValidationError:
+        except ValidationError as e:
             raise InvalidProjectFile(str(e))
 
         if strict:
