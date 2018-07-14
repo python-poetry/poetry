@@ -173,6 +173,14 @@ poetry = 'poetry:console.run'
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
 
+Poetry also supports scripts which are not necessarily Python functions. To include these in your package,
+provide the path to the script:
+
+```toml
+[tool.poetry.scripts]
+my-script = {path = "path/to/script"}
+```
+
 ## `extras`
 
 Poetry supports extras to allow expression of:
