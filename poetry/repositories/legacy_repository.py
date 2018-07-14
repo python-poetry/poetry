@@ -28,6 +28,7 @@ from cachy import CacheManager
 
 import poetry.packages
 
+from poetry.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.masonry.publishing.uploader import wheel_file_re
 from poetry.packages import Package
@@ -158,6 +159,18 @@ class LegacyRepository(PyPiRepository):
         self._session = CacheControl(
             requests.session(), cache=FileCache(str(self._cache_dir / "_http"))
         )
+
+        url_parts = urlparse.urlparse(self._url)
+        if not url_parts.username:
+            config = Config.create("auth.toml")
+            repo_auth = config.setting("http-basic.{}".format(self.name))
+            if repo_auth:
+                netloc = "{}:{}@{}".format(
+                    repo_auth["username"], repo_auth["password"], url_parts.netloc
+                )
+                self._url = urlparse.urlunsplit(
+                    (url_parts.scheme, netloc, url_parts.path, "", "")
+                )
 
         self._disable_cache = disable_cache
 

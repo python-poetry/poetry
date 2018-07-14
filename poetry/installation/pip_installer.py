@@ -25,9 +25,14 @@ class PipInstaller(BaseInstaller):
         if package.source_type == "legacy" and package.source_url:
             parsed = urlparse.urlparse(package.source_url)
             if parsed.scheme == "http":
+                if not parsed.username:
+                    from_host = parsed.netloc
+                else:
+                    from_host = parsed.netloc[parsed.netloc.index("@") + 1 :]
+
                 self._io.write_error(
                     "    <warning>Installing from unsecure host: {}</warning>".format(
-                        parsed.netloc
+                        from_host
                     )
                 )
                 args += ["--trusted-host", parsed.netloc]
