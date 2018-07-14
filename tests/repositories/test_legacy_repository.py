@@ -1,4 +1,5 @@
 import pytest
+from mock import MagicMock, mock
 
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
@@ -43,3 +44,15 @@ def test_page_absolute_links_path_are_correct():
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
         assert link.path.startswith("/packages/")
+
+
+@mock.patch("poetry.repositories.legacy_repository.Config")
+def test_http_basic_auth_repo(mock_config):
+    class MockConfig(object):
+        def setting(self, _, **__):
+            return {"username": "user1", "password": "p4ss"}
+
+    mock_config.create = MagicMock(return_value=MockConfig())
+
+    repo = MockRepository()
+    assert "user1:p4ss@" in repo._url
