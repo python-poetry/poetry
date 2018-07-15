@@ -1,6 +1,7 @@
 from poetry.locations import CONFIG_DIR
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
+from poetry.utils.helpers import get_basic_auth
 
 from .uploader import Uploader
 
@@ -64,18 +65,7 @@ class Publisher:
             url = config["repositories"][repository_name]["url"]
 
         if not (username and password):
-            auth_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
-            if auth_file.exists():
-                auth_config = auth_file.read(raw=True)
-
-                if (
-                    "http-basic" in auth_config
-                    and repository_name in auth_config["http-basic"]
-                ):
-                    config = auth_config["http-basic"][repository_name]
-
-                    username = config.get("username")
-                    password = config.get("password")
+            username, password = get_basic_auth(repository_name)
 
         # Requesting missing credentials
         if not username:

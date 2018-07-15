@@ -37,7 +37,7 @@ from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionConstraint
 from poetry.utils._compat import Path
-from poetry.utils.helpers import canonicalize_name
+from poetry.utils.helpers import canonicalize_name, get_basic_auth
 from poetry.version.markers import InvalidMarker
 
 from .pypi_repository import PyPiRepository
@@ -140,6 +140,7 @@ class LegacyRepository(PyPiRepository):
 
         self._packages = []
         self._name = name
+        self._auth = get_basic_auth(name)
         self._url = url.rstrip("/")
         self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
 
@@ -334,8 +335,12 @@ class LegacyRepository(PyPiRepository):
         return data
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
+        kwargs, username, password = {}, *self._auth
+        if username and password:
+            kwargs["auth"] = (username, password)
+
         url = self._url + endpoint
-        response = self._session.get(url)
+        response = self._session.get(url, **kwargs)
         if response.status_code == 404:
             return
 
