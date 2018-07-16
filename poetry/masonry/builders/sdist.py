@@ -175,7 +175,7 @@ class SdistBuilder(Builder):
         if scripts:
             before.append(
                 "scripts = \\\n{}\n".format(
-                    pformat([f"bin/{name}" for name in scripts])
+                    pformat(["bin/{name}".format(name=name) for name in scripts])
                 )
             )
             extra.append("'scripts': scripts,")
