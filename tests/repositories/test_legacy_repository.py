@@ -46,13 +46,9 @@ def test_page_absolute_links_path_are_correct():
         assert link.path.startswith("/packages/")
 
 
-@mock.patch("poetry.repositories.legacy_repository.Config")
-def test_http_basic_auth_repo(mock_config):
-    class MockConfig(object):
-        def setting(self, _, **__):
-            return {"username": "user1", "password": "p4ss"}
-
-    mock_config.create = MagicMock(return_value=MockConfig())
+@mock.patch("poetry.repositories.legacy_repository.get_http_basic_auth")
+def test_http_basic_auth_repo(mock_get_auth):
+    mock_get_auth.return_value = ("user1", "p4ss")
 
     repo = MockRepository()
     assert "user1:p4ss@" in repo._url

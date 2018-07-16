@@ -38,7 +38,7 @@ from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionConstraint
 from poetry.utils._compat import Path
-from poetry.utils.helpers import canonicalize_name
+from poetry.utils.helpers import canonicalize_name, get_http_basic_auth
 from poetry.version.markers import InvalidMarker
 
 from .pypi_repository import PyPiRepository
@@ -162,12 +162,9 @@ class LegacyRepository(PyPiRepository):
 
         url_parts = urlparse.urlparse(self._url)
         if not url_parts.username:
-            config = Config.create("auth.toml")
-            repo_auth = config.setting("http-basic.{}".format(self.name))
-            if repo_auth:
-                netloc = "{}:{}@{}".format(
-                    repo_auth["username"], repo_auth["password"], url_parts.netloc
-                )
+            username, password = get_http_basic_auth(self.name)
+            if username and password:
+                netloc = "{}:{}@{}".format(username, password, url_parts.netloc)
                 self._url = urlparse.urlunsplit(
                     (url_parts.scheme, netloc, url_parts.path, "", "")
                 )
