@@ -335,7 +335,9 @@ class LegacyRepository(PyPiRepository):
         return data
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
-        kwargs, username, password = {}, *self._auth
+        kwargs = {}
+
+        username, password = self._auth
         if username and password:
             kwargs["auth"] = (username, password)
 
