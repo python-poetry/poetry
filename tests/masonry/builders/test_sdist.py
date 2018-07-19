@@ -239,9 +239,8 @@ def test_package():
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "my-package-1.2.3/LICENSE" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "my-package-1.2.3/LICENSE" in tar.getnames()
 
 
 def test_module():
@@ -254,9 +253,8 @@ def test_module():
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "module1-0.1/module1.py" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "module1-0.1/module1.py" in tar.getnames()
 
 
 def test_prelease():
@@ -280,10 +278,9 @@ def test_with_c_extensions():
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "extended-0.1/build.py" in tar.getnames()
-    assert "extended-0.1/extended/extended.c" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "extended-0.1/build.py" in tar.getnames()
+        assert "extended-0.1/extended/extended.c" in tar.getnames()
 
 
 def test_with_src_module_file():
@@ -307,9 +304,8 @@ def test_with_src_module_file():
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "module-src-0.1/src/module_src.py" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "module-src-0.1/src/module_src.py" in tar.getnames()
 
 
 def test_with_src_module_dir():
@@ -333,10 +329,9 @@ def test_with_src_module_dir():
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "package-src-0.1/src/package_src/__init__.py" in tar.getnames()
-    assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "package-src-0.1/src/package_src/__init__.py" in tar.getnames()
+        assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
 
 
 def test_package_with_include(mocker):
@@ -380,21 +375,20 @@ def test_package_with_include(mocker):
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    names = tar.getnames()
-    assert "with-include-1.2.3/LICENSE" in names
-    assert "with-include-1.2.3/README.rst" in names
-    assert "with-include-1.2.3/extra_dir/__init__.py" in names
-    assert "with-include-1.2.3/extra_dir/vcs_excluded.txt" in names
-    assert "with-include-1.2.3/extra_dir/sub_pkg/__init__.py" in names
-    assert "with-include-1.2.3/extra_dir/sub_pkg/vcs_excluded.txt" not in names
-    assert "with-include-1.2.3/my_module.py" in names
-    assert "with-include-1.2.3/notes.txt" in names
-    assert "with-include-1.2.3/package_with_include/__init__.py" in names
-    assert "with-include-1.2.3/pyproject.toml" in names
-    assert "with-include-1.2.3/setup.py" in names
-    assert "with-include-1.2.3/PKG-INFO" in names
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert "with-include-1.2.3/LICENSE" in names
+        assert "with-include-1.2.3/README.rst" in names
+        assert "with-include-1.2.3/extra_dir/__init__.py" in names
+        assert "with-include-1.2.3/extra_dir/vcs_excluded.txt" in names
+        assert "with-include-1.2.3/extra_dir/sub_pkg/__init__.py" in names
+        assert "with-include-1.2.3/extra_dir/sub_pkg/vcs_excluded.txt" not in names
+        assert "with-include-1.2.3/my_module.py" in names
+        assert "with-include-1.2.3/notes.txt" in names
+        assert "with-include-1.2.3/package_with_include/__init__.py" in names
+        assert "with-include-1.2.3/pyproject.toml" in names
+        assert "with-include-1.2.3/setup.py" in names
+        assert "with-include-1.2.3/PKG-INFO" in names
 
 
 def test_proper_python_requires_if_single_version_specified():

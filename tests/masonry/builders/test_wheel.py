@@ -35,9 +35,8 @@ def test_wheel_module():
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "module1.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "module1.py" in z.namelist()
 
 
 def test_wheel_package():
@@ -48,9 +47,8 @@ def test_wheel_package():
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "my_package/sub_pkg1/__init__.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "my_package/sub_pkg1/__init__.py" in z.namelist()
 
 
 def test_wheel_prerelease():
@@ -70,10 +68,9 @@ def test_wheel_package_src():
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "package_src/__init__.py" in z.namelist()
-    assert "package_src/module.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "package_src/__init__.py" in z.namelist()
+        assert "package_src/module.py" in z.namelist()
 
 
 def test_wheel_module_src():
@@ -84,6 +81,5 @@ def test_wheel_module_src():
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "module_src.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "module_src.py" in z.namelist()
