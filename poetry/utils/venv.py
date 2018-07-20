@@ -64,7 +64,7 @@ class Venv(object):
                 if root_venv:
                     if not cwd:
                         raise RuntimeError(
-                            "Unbale to determine the project's directory"
+                            "Unable to determine the project's directory"
                         )
 
                     venv_path = cwd / ".venv"
