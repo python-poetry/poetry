@@ -24,15 +24,15 @@ class ConfigCommand(Command):
         { --unset : Unset configuration setting }
     """
 
-    help = """This command allows you to edit the poetry config settings and repositories..
+    help = """This command allows you to edit the poetry config settings and repositories.
 
 To add a repository:
 
-    <comment>poetry repositories.foo https://bar.com/simple/</comment>
+    <comment>poetry config repositories.foo https://bar.com/simple/</comment>
 
 To remove a repository (repo is a short alias for repositories):
 
-    <comment>poetry --unset repo.foo</comment>
+    <comment>poetry config --unset repo.foo</comment>
 """
 
     def __init__(self):
