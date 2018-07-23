@@ -51,7 +51,7 @@ class DirectoryDependency(Dependency):
         pyproject = TomlFile(self._full_path / "pyproject.toml")
         has_poetry = False
         if pyproject.exists():
-            pyproject_content = pyproject.read(True)
+            pyproject_content = pyproject.read()
             has_poetry = (
                 "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
             )

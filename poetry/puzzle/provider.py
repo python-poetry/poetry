@@ -6,10 +6,8 @@ import time
 
 from cleo import ProgressIndicator
 from contextlib import contextmanager
-from functools import cmp_to_key
 from tempfile import mkdtemp
 from typing import List
-from typing import Union
 
 from poetry.packages import Dependency
 from poetry.packages import DirectoryDependency
@@ -33,7 +31,6 @@ from poetry.utils.venv import Venv
 
 from poetry.vcs.git import Git
 
-from .dependencies import Dependencies
 from .exceptions import CompatibilityError
 
 
@@ -63,7 +60,7 @@ class Provider:
 
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(self, package, pool, io):  # type: Package  # type: Pool
+    def __init__(self, package, pool, io):  # type: (Package, Pool, ...) -> None
         self._package = package
         self._pool = pool
         self._io = io
@@ -159,7 +156,7 @@ class Provider:
             pyproject_content = None
             has_poetry = False
             if pyproject.exists():
-                pyproject_content = pyproject.read(True)
+                pyproject_content = pyproject.read()
                 has_poetry = (
                     "tool" in pyproject_content
                     and "poetry" in pyproject_content["tool"]

@@ -14,7 +14,7 @@ def test_toml_file(fixture):
 
     content = f.read()
 
-    assert content[""]["title"] == "TOML Example"
+    assert content["title"] == "TOML Example"
 
     assert content["owner"]["name"] == "Tom Preston-Werner"
     assert isinstance(content["owner"], dict)

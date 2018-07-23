@@ -89,7 +89,7 @@ To remove a repository (repo is a short alias for repositories):
 
     def handle(self):
         if self.option("list"):
-            self._list_configuration(self._config.raw_content)
+            self._list_configuration(self._config.content)
 
             return 0
 
@@ -221,7 +221,10 @@ To remove a repository (repo is a short alias for repositories):
         return 0
 
     def _list_configuration(self, contents):
-        settings = contents.get("settings", {})
+        if "settings" not in contents:
+            settings = {}
+        else:
+            settings = contents["settings"]
         for setting_key, value in sorted(self.unique_config_values.items()):
             self._list_setting(
                 settings,
