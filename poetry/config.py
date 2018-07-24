@@ -1,19 +1,19 @@
 from typing import Any
 
+from tomlkit import document
+from tomlkit import table
+
 from .locations import CONFIG_DIR
 from .utils._compat import Path
 from .utils.toml_file import TomlFile
-from .utils.toml_file import TOMLFile
 
 
 class Config:
     def __init__(self, file):  # type: (TomlFile) -> None
         self._file = file
         if not self._file.exists():
-            self._raw_content = {}
-            self._content = TOMLFile([])
+            self._content = document()
         else:
-            self._raw_content = file.read(raw=True)
             self._content = file.read()
 
     @property
@@ -25,10 +25,6 @@ class Config:
         return self._file
 
     @property
-    def raw_content(self):
-        return self._raw_content
-
-    @property
     def content(self):
         return self._content
 
@@ -38,7 +34,7 @@ class Config:
         """
         keys = setting_name.split(".")
 
-        config = self._raw_content
+        config = self._content
         for key in keys:
             if key not in config:
                 return default
@@ -53,7 +49,7 @@ class Config:
         config = self._content
         for i, key in enumerate(keys):
             if key not in config and i < len(keys) - 1:
-                config[key] = {}
+                config[key] = table()
 
             if i == len(keys) - 1:
                 config[key] = value

@@ -30,6 +30,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
     def handle(self):
         from poetry.installation import Installer
         from poetry.semver import parse_constraint
+        from tomlkit import inline_table
 
         packages = self.argument("name")
         is_dev = self.option("dev")
@@ -70,8 +71,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             for constraint in requirements.values():
                 parse_constraint(constraint)
 
-        for name, constraint in requirements.items():
-            constraint = {"version": constraint}
+        for name, _constraint in requirements.items():
+            constraint = inline_table()
+            constraint["version"] = _constraint
 
             if self.option("git"):
                 del constraint["version"]

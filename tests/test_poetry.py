@@ -122,6 +122,6 @@ def test_poetry_with_packages_and_includes():
 
 def test_check():
     complete = TomlFile(fixtures_dir / "complete.toml")
-    content = complete.read(raw=True)["tool"]["poetry"]
+    content = complete.read()["tool"]["poetry"]
 
     assert Poetry.check(content)
