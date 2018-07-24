@@ -163,3 +163,20 @@ or create a brand new one for you to always work isolated from your global Pytho
     What this means is if you project is Python 2.7 only you should
     install `poetry` for your global Python 2.7 executable and use
     it to manage your project.
+
+
+## Using a specific python version
+
+A recommended approach to set a specific python version for your project is to use [pyenv](https://github.com/pyenv/pyenv).
+
+Here are the steps you would take to achieve that:
+1. [Install pyenv](https://github.com/pyenv/pyenv#installation) to your system
+2. Install a specific python version:
+```
+pyenv install 3.7.0
+```
+3. Install poetry for this python version
+```
+pyenv global 3.7.0 && curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+```
+After that you can follow the steps described in [basic usage documentation](/basic-usage/).
