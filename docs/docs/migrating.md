@@ -2,13 +2,13 @@
 
 This section covers how to migrate from other common worflows to using poetry.
 
-#### `virtualenv/pip`
+## virtualenv/pip
 If you used plain `virtualenv` in your project before, that probably means you have a `.venv` folder at the root of your project. In that case, all you need to do is to install requirements from your `requirements.txt` file with poetry. Poetry will use the `.venv` folder of your project.
 
-#### `virtualenvwrapper/pip`
+## virtualenvwrapper/pip
 If you used `virtualenvwrapper` then the path is the same as with `virtualenv` with an extra step of locating the folder in which your virtual environment is stored. An alternate route would be to (if needed) set a specific python version with pyenv and create a new virtual environment [with poetry](/basic-usage/).
 
-#### `pipenv`
+## pipenv
 If you're coming from `pipenv`, then `poetry` will strike you as something similar but different.
 
 The main difference that might cause you confusion is different the approach to setting a specific python version to your environment.
