@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed missing dependency information for some packages.
+
+
 ## [0.11.2] - 2018-07-03
 
 ### Fixed
