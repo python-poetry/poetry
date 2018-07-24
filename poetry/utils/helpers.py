@@ -5,6 +5,9 @@ import tempfile
 from contextlib import contextmanager
 from typing import Union
 
+from poetry.locations import CONFIG_DIR
+from poetry.utils._compat import Path
+from poetry.utils.toml_file import TomlFile
 from poetry.version import Version
 
 _canonicalize_regex = re.compile("[-_]+")
@@ -77,3 +80,19 @@ def parse_requires(requires):  # type: (str) -> Union[list, None]
 
     if requires_dist:
         return requires_dist
+
+
+def get_basic_auth(repository_name):
+    username, password = None, None
+
+    auth_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
+    if auth_file.exists():
+        auth_config = auth_file.read(raw=True)
+
+        if "http-basic" in auth_config and repository_name in auth_config["http-basic"]:
+            config = auth_config["http-basic"][repository_name]
+
+            username = config.get("username")
+            password = config.get("password")
+
+    return username, password

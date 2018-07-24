@@ -32,3 +32,4 @@ MANIFEST.in
 pyproject.lock
 /tests/fixtures/simple_project/setup.py
 .mypy_cache
+.venv/
