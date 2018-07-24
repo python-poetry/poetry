@@ -54,6 +54,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         content = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
+        if section not in poetry_content:
+            poetry_content[section] = {}
+
         for name in packages:
             for key in poetry_content[section]:
                 if key.lower() == name.lower():

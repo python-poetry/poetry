@@ -382,3 +382,38 @@ Writing lock file
         "version": "0.2.0",
         "platform": platform,
     }
+
+
+def test_add_to_section_that_does_no_exist_yet(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute(
+        [("command", command.get_name()), ("name", ["cachy"]), ("--dev", True)]
+    )
+
+    expected = """\
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+Writing lock file
+
+  - Installing cachy (0.2.0)
+"""
+
+    assert tester.get_display(True) == expected
+
+    assert len(installer.installs) == 1
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "cachy" in content["dev-dependencies"]
+    assert content["dev-dependencies"]["cachy"] == "^0.2.0"
