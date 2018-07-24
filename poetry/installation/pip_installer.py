@@ -3,6 +3,9 @@ import tempfile
 
 from subprocess import CalledProcessError
 
+from poetry.utils.helpers import get_http_basic_auth
+
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -25,19 +28,27 @@ class PipInstaller(BaseInstaller):
         if package.source_type == "legacy" and package.source_url:
             parsed = urlparse.urlparse(package.source_url)
             if parsed.scheme == "http":
-                if not parsed.username:
-                    from_host = parsed.netloc
-                else:
-                    from_host = parsed.netloc[parsed.netloc.index("@") + 1 :]
-
                 self._io.write_error(
                     "    <warning>Installing from unsecure host: {}</warning>".format(
-                        from_host
+                        parsed.netloc
                     )
                 )
                 args += ["--trusted-host", parsed.netloc]
 
-            args += ["--index-url", package.source_url]
+            # This here won't work, need some pointers
+            auth = get_http_basic_auth(package.source_url)
+            if auth:
+                index_url = "{scheme}://{username}:{password}@{netloc}{path}".format(
+                    scheme=parsed.scheme,
+                    username=auth[0],
+                    password=auth[1],
+                    netloc=parsed.netloc,
+                    path=parsed.path,
+                )
+            else:
+                index_url = package.source_url
+
+            args += ["--index-url", index_url]
 
         if update:
             args.append("-U")
