@@ -298,7 +298,7 @@ class PyPiRepository(Repository):
                 if "-none-any" not in filename:
                     continue
 
-            if not urls:
+            if not urls or "bdist_wheel" not in urls:
                 # If we don't have urls, we try to take the first one
                 # we find and go from there
                 if not json_data["urls"]:
