@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Poetry now only uses [TOML Kit](https://github.com/sdispater/tomlkit) for TOML files manipulation.
+
+
 ### Fixed
 
 - Fixed missing dependency information for some packages.
