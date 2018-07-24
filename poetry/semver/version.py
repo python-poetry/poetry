@@ -23,7 +23,7 @@ class Version(VersionRange):
         pre=None,  # type: Union[str, None]
         build=None,  # type: Union[str, None]
         text=None,  # type: Union[str, None]
-        precision=None,  # type: Union[str, None]
+        precision=None,  # type: Union[int, None]
     ):  # type: () -> None
         self._major = int(major)
         self._precision = None
@@ -104,6 +104,10 @@ class Version(VersionRange):
     @property
     def text(self):
         return self._text
+
+    @property
+    def precision(self):  # type: () -> int
+        return self._precision
 
     @property
     def stable(self):
