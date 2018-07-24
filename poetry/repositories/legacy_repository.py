@@ -162,12 +162,7 @@ class LegacyRepository(PyPiRepository):
 
         url_parts = urlparse.urlparse(self._url)
         if not url_parts.username:
-            username, password = get_http_basic_auth(self.name)
-            if username and password:
-                netloc = "{}:{}@{}".format(username, password, url_parts.netloc)
-                self._url = urlparse.urlunsplit(
-                    (url_parts.scheme, netloc, url_parts.path, "", "")
-                )
+            self._session.auth = get_http_basic_auth(self.name)
 
         self._disable_cache = disable_cache
 
@@ -342,6 +337,13 @@ class LegacyRepository(PyPiRepository):
         data["requires_python"] = info["requires_python"]
 
         return data
+
+    def _download(self, url, dest):  # type: (str, str) -> None
+        r = self._session.get(url, stream=True)
+        with open(dest, "wb") as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint

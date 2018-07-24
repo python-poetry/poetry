@@ -80,9 +80,9 @@ def parse_requires(requires):  # type: (str) -> Union[list, None]
         return requires_dist
 
 
-def get_http_basic_auth(repository_name):  # type: (str) -> (str, str)
+def get_http_basic_auth(repository_name):  # type: (str) -> tuple
     config = Config.create("auth.toml")
     repo_auth = config.setting("http-basic.{}".format(repository_name))
     if repo_auth:
         return repo_auth["username"], repo_auth["password"]
-    return "", ""
+    return None

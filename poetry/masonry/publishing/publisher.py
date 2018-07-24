@@ -65,7 +65,10 @@ class Publisher:
             url = config["repositories"][repository_name]["url"]
 
         if not (username and password):
-            username, password = get_http_basic_auth(repository_name)
+            auth = get_http_basic_auth(repository_name)
+            if auth:
+                username = auth[0]
+                password = auth[1]
 
         # Requesting missing credentials
         if not username:
