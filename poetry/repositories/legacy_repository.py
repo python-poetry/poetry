@@ -242,6 +242,7 @@ class LegacyRepository(PyPiRepository):
             package = poetry.packages.Package(name, version, version)
             package.source_type = "legacy"
             package.source_url = self._url
+            package.source_reference = self.name
 
             requires_dist = release_info["requires_dist"] or []
             for req in requires_dist:

@@ -35,8 +35,7 @@ class PipInstaller(BaseInstaller):
                 )
                 args += ["--trusted-host", parsed.netloc]
 
-            # This here won't work, need some pointers
-            auth = get_http_basic_auth(package.source_url)
+            auth = get_http_basic_auth(package.source_reference)
             if auth:
                 index_url = "{scheme}://{username}:{password}@{netloc}{path}".format(
                     scheme=parsed.scheme,
