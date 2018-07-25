@@ -3,6 +3,9 @@ import tempfile
 
 from subprocess import CalledProcessError
 
+from poetry.utils.helpers import get_http_basic_auth
+
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -32,7 +35,19 @@ class PipInstaller(BaseInstaller):
                 )
                 args += ["--trusted-host", parsed.netloc]
 
-            args += ["--index-url", package.source_url]
+            auth = get_http_basic_auth(package.source_reference)
+            if auth:
+                index_url = "{scheme}://{username}:{password}@{netloc}{path}".format(
+                    scheme=parsed.scheme,
+                    username=auth[0],
+                    password=auth[1],
+                    netloc=parsed.netloc,
+                    path=parsed.path,
+                )
+            else:
+                index_url = package.source_url
+
+            args += ["--index-url", index_url]
 
         if update:
             args.append("-U")
