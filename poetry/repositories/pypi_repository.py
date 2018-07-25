@@ -280,7 +280,7 @@ class PyPiRepository(Repository):
                 if dist_type not in ["sdist", "bdist_wheel"]:
                     continue
 
-                if dist_type == "sdist" and "dist" not in urls:
+                if dist_type == "sdist" and "sdist" not in urls:
                     urls[url["packagetype"]] = url["url"]
                     continue
 
@@ -340,8 +340,15 @@ class PyPiRepository(Repository):
         self, urls
     ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
         if "bdist_wheel" in urls:
+            self._log(
+                "Downloading wheel: {}".format(urls["bdist_wheel"].split("/")[-1]),
+                level="debug",
+            )
             return self._get_info_from_wheel(urls["bdist_wheel"])
 
+        self._log(
+            "Downloading sdist: {}".format(urls["sdist"].split("/")[-1]), level="debug"
+        )
         return self._get_info_from_sdist(urls["sdist"])
 
     def _get_info_from_wheel(
@@ -411,6 +418,7 @@ class PyPiRepository(Repository):
                     gz = BZ2File(str(filepath))
                 else:
                     gz = GzipFile(str(filepath))
+                    suffix = ".tar.gz"
 
                 tar = tarfile.TarFile(str(filepath), fileobj=gz)
 
@@ -423,7 +431,7 @@ class PyPiRepository(Repository):
                 tar.close()
 
             unpacked = Path(temp_dir) / "unpacked"
-            sdist_dir = unpacked / Path(filename).name.rstrip(".tar.gz")
+            sdist_dir = unpacked / Path(filename).name.rstrip(suffix)
 
             # Checking for .egg-info at root
             eggs = list(sdist_dir.glob("*.egg-info"))
