@@ -28,6 +28,7 @@ from cachy import CacheManager
 
 import poetry.packages
 
+from poetry.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.masonry.publishing.uploader import wheel_file_re
 from poetry.packages import Package
@@ -37,7 +38,7 @@ from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionConstraint
 from poetry.utils._compat import Path
-from poetry.utils.helpers import canonicalize_name
+from poetry.utils.helpers import canonicalize_name, get_http_basic_auth
 from poetry.version.markers import InvalidMarker
 
 from .pypi_repository import PyPiRepository
@@ -159,6 +160,10 @@ class LegacyRepository(PyPiRepository):
             requests.session(), cache=FileCache(str(self._cache_dir / "_http"))
         )
 
+        url_parts = urlparse.urlparse(self._url)
+        if not url_parts.username:
+            self._session.auth = get_http_basic_auth(self.name)
+
         self._disable_cache = disable_cache
 
     @property
@@ -237,6 +242,7 @@ class LegacyRepository(PyPiRepository):
             package = poetry.packages.Package(name, version, version)
             package.source_type = "legacy"
             package.source_url = self._url
+            package.source_reference = self.name
 
             requires_dist = release_info["requires_dist"] or []
             for req in requires_dist:
@@ -332,6 +338,13 @@ class LegacyRepository(PyPiRepository):
         data["requires_python"] = info["requires_python"]
 
         return data
+
+    def _download(self, url, dest):  # type: (str, str) -> None
+        r = self._session.get(url, stream=True)
+        with open(dest, "wb") as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
