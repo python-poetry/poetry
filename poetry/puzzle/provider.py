@@ -472,6 +472,9 @@ class Provider:
         return self._io
 
     def debug(self, message, depth=0):
+        if not (self.output.is_very_verbose() or self.output.is_debug()):
+            return
+
         if message.startswith("fact:"):
             if "depends on" in message:
                 m = re.match("fact: (.+?) depends on (.+?) \((.+?)\)", message)
@@ -489,12 +492,19 @@ class Provider:
                         name, version, m.group(2), m.group(3)
                     )
                 )
-            else:
+            elif " is " in message:
                 message = re.sub(
                     "fact: (.+) is (.+)",
                     "<fg=blue>fact</>: <info>\\1</info> is <comment>\\2</comment>",
                     message,
                 )
+            else:
+                message = re.sub(
+                    "(?<=: )(.+?) \((.+?)\)",
+                    "<info>\\1</info> (<comment>\\2</comment>)",
+                    message,
+                )
+                message = "<fg=blue>fact</>: {}".format(message.split("fact: ")[1])
         elif message.startswith("selecting "):
             message = re.sub(
                 "selecting (.+?) \((.+?)\)",
