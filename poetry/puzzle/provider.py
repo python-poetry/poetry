@@ -409,7 +409,11 @@ class Provider:
                     continue
 
                 if len(by_constraint) == 1:
-                    self.debug("Merging requirements for {}".format(str(deps[0])))
+                    self.debug(
+                        "<debug>Merging requirements for {}</debug>".format(
+                            str(deps[0])
+                        )
+                    )
                     dependencies.append(list(by_constraint.values())[0][0])
                     continue
 
@@ -470,11 +474,20 @@ class Provider:
     def debug(self, message, depth=0):
         if message.startswith("fact:"):
             if "depends on" in message:
-                message = re.sub(
-                    "fact: (.+?)(?:( \()(.+?)(\)))? depends on (.+?) \((.+?)\)",
-                    "<fg=blue>fact</>: <info>\\1</info>\\2<comment>\\3</comment>\\4 "
-                    "depends on <info>\\5</info> (<comment>\\6</comment>)",
-                    message,
+                m = re.match("fact: (.+?) depends on (.+?) \((.+?)\)", message)
+                m2 = re.match("(.+?) \((.+?)\)", m.group(1))
+                if m2:
+                    name = m2.group(1)
+                    version = " (<comment>{}</comment>)".format(m2.group(2))
+                else:
+                    name = m.group(1)
+                    version = ""
+
+                message = (
+                    "<fg=blue>fact</>: <info>{}</info>{} "
+                    "depends on <info>{}</info> (<comment>{}</comment>)".format(
+                        name, version, m.group(2), m.group(3)
+                    )
                 )
             else:
                 message = re.sub(
@@ -489,18 +502,36 @@ class Provider:
                 message,
             )
         elif message.startswith("derived:"):
-            message = re.sub(
-                "derived: (.+?)(?:( \()(.+?)(\)))?$",
-                "<fg=blue>derived</>: <info>\\1</info>\\2<comment>\\3</comment>\\4",
-                message,
-            )
+            m = re.match("derived: (.+?) \((.+?)\)$", message)
+            if m:
+                message = "<fg=blue>derived</>: <info>{}</info> (<comment>{}</comment>)".format(
+                    m.group(1), m.group(2)
+                )
+            else:
+                message = "<fg=blue>derived</>: <info>{}</info>".format(
+                    message.split("derived: ")[1]
+                )
         elif message.startswith("conflict:"):
-            message = re.sub(
-                "conflict: (.+?)(?:( \()(.+?)(\)))? depends on (.+?) \((.+?)\)",
-                "<fg=red;options=bold>conflict</>: <info>\\1</info>\\2<comment>\\3</comment>\\4 "
-                "depends on <info>\\5</info> (<comment>\\6</comment>)",
-                message,
-            )
+            m = re.match("conflict: (.+?) depends on (.+?) \((.+?)\)", message)
+            if m:
+                m2 = re.match("(.+?) \((.+?)\)", m.group(1))
+                if m2:
+                    name = m2.group(1)
+                    version = " (<comment>{}</comment>)".format(m2.group(2))
+                else:
+                    name = m.group(1)
+                    version = ""
+
+                message = (
+                    "<fg=red;options=bold>conflict</>: <info>{}</info>{} "
+                    "depends on <info>{}</info> (<comment>{}</comment>)".format(
+                        name, version, m.group(2), m.group(3)
+                    )
+                )
+            else:
+                message = "<fg=red;options=bold>conflict</>: {}".format(
+                    message.split("conflict: ")[1]
+                )
 
         message = message.replace("! ", "<error>!</error> ")
 
