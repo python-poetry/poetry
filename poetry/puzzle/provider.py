@@ -1,6 +1,7 @@
 import logging
 import os
 import pkginfo
+import re
 import shutil
 import time
 
@@ -360,7 +361,9 @@ class Provider:
                     dependencies.append(deps[0])
                     continue
 
-                self.debug("Duplicate dependencies for {}".format(dep_name))
+                self.debug(
+                    "<debug>Duplicate dependencies for {}</debug>".format(dep_name)
+                )
 
                 # Regrouping by constraint
                 by_constraint = {}
@@ -465,6 +468,42 @@ class Provider:
         return self._io
 
     def debug(self, message, depth=0):
+        if message.startswith("fact:"):
+            if "depends on" in message:
+                message = re.sub(
+                    "fact: (.+?)(?:( \()(.+?)(\)))? depends on (.+?) \((.+?)\)",
+                    "<fg=blue>fact</>: <info>\\1</info>\\2<comment>\\3</comment>\\4 "
+                    "depends on <info>\\5</info> (<comment>\\6</comment>)",
+                    message,
+                )
+            else:
+                message = re.sub(
+                    "fact: (.+) is (.+)",
+                    "<fg=blue>fact</>: <info>\\1</info> is <comment>\\2</comment>",
+                    message,
+                )
+        elif message.startswith("selecting "):
+            message = re.sub(
+                "selecting (.+?) \((.+?)\)",
+                "<fg=blue>selecting</> <info>\\1</info> (<comment>\\2</comment>)",
+                message,
+            )
+        elif message.startswith("derived:"):
+            message = re.sub(
+                "derived: (.+?)(?:( \()(.+?)(\)))?$",
+                "<fg=blue>derived</>: <info>\\1</info>\\2<comment>\\3</comment>\\4",
+                message,
+            )
+        elif message.startswith("conflict:"):
+            message = re.sub(
+                "conflict: (.+?)(?:( \()(.+?)(\)))? depends on (.+?) \((.+?)\)",
+                "<fg=red;options=bold>conflict</>: <info>\\1</info>\\2<comment>\\3</comment>\\4 "
+                "depends on <info>\\5</info> (<comment>\\6</comment>)",
+                message,
+            )
+
+        message = message.replace("! ", "<error>!</error> ")
+
         if self.is_debugging():
             debug_info = str(message)
             debug_info = (
