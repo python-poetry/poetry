@@ -11,6 +11,7 @@
 - Fixed missing dependency information for some packages.
 - Fixed handling of single versions when packaging.
 - Fixed dependency information retrieval from `.zip` and `.bz2` archives.
+- Fixed searching for and installing packages from private repositories with authentication.
 
 
 ## [0.11.2] - 2018-07-03
