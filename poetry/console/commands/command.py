@@ -7,7 +7,12 @@ from ..styles.poetry import PoetryStyle
 
 class CommandFormatter(logging.Formatter):
 
-    _colors = {"error": "fg=red", "warning": "fg=yellow", "debug": "fg=blue"}
+    _colors = {
+        "error": "fg=red",
+        "warning": "fg=yellow",
+        "debug": "debug",
+        "info": "fg=blue",
+    }
 
     def format(self, record):
         if not record.exc_info:

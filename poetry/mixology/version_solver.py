@@ -169,7 +169,7 @@ class VersionSolver:
             return _conflict
 
         self._log(
-            "<fg=blue>derived</>: {}{}".format(
+            "derived: {}{}".format(
                 "not " if unsatisfied.is_positive() else "", unsatisfied.dependency
             )
         )
@@ -193,7 +193,7 @@ class VersionSolver:
 
         .. _conflict resolution: https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
         """
-        self._log("<fg=red;options=bold>conflict</>: {}".format(incompatibility))
+        self._log("conflict: {}".format(incompatibility))
 
         new_incompatibility = False
         while not incompatibility.is_failure():
@@ -302,7 +302,7 @@ class VersionSolver:
             new_incompatibility = True
 
             partially = "" if difference is None else " partially"
-            bang = "<fg=red>!</>"
+            bang = "!"
             self._log(
                 "{} {} is{} satisfied by {}".format(
                     bang, most_recent_term, partially, most_recent_satisfier
@@ -397,9 +397,7 @@ class VersionSolver:
         if not conflict:
             self._solution.decide(version)
             self._log(
-                "<fg=blue>selecting</> {} ({})".format(
-                    version.name, version.full_pretty_version
-                )
+                "selecting {} ({})".format(version.name, version.full_pretty_version)
             )
 
         return dependency.name
@@ -420,7 +418,7 @@ class VersionSolver:
         )
 
     def _add_incompatibility(self, incompatibility):  # type: (Incompatibility) -> None
-        self._log("<fg=blue>fact</>: {}".format(incompatibility))
+        self._log("fact: {}".format(incompatibility))
 
         for term in incompatibility.terms:
             if term.dependency.name not in self._incompatibilities:
