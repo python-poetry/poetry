@@ -13,12 +13,12 @@ class InstallCommand(VenvCommand):
         { --develop=* : Install given packages in development mode. }
     """
 
-    help = """The <info>install</info> command reads the <comment>pyproject.toml</> file from
+    help = """The <info>install</info> command reads the <comment>pyproject.lock</> file from
 the current directory, processes it, and downloads and installs all the
 libraries and dependencies outlined in that file. If the file does not
 exist it will look for <comment>pyproject.toml</> and do the same.
 
-<info>poetry install</info>    
+<info>poetry install</info>
 """
 
     _loggers = ["poetry.repositories.pypi_repository"]
