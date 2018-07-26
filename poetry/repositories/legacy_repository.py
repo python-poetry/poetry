@@ -185,7 +185,7 @@ class LegacyRepository(PyPiRepository):
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get("/{}".format(canonicalize_name(name).replace(".", "-")))
+            page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
             if page is None:
                 return []
 
@@ -284,7 +284,7 @@ class LegacyRepository(PyPiRepository):
             return package
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
-        page = self._get("/{}".format(canonicalize_name(name).replace(".", "-")))
+        page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:
             raise ValueError('No package named "{}"'.format(name))
 
