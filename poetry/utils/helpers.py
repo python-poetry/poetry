@@ -1,10 +1,14 @@
+import os
 import re
 import shutil
 import tempfile
 
 from contextlib import contextmanager
+from dotenv import load_dotenv
 from typing import Union
 
+
+from poetry.utils._compat import Path
 from poetry.version import Version
 
 _canonicalize_regex = re.compile("[-_]+")
@@ -77,3 +81,10 @@ def parse_requires(requires):  # type: (str) -> Union[list, None]
 
     if requires_dist:
         return requires_dist
+
+
+def load_dotenv_if_exists():
+    workdir_path = Path(os.getcwd())
+    env_file_path = workdir_path / ".env"
+    if env_file_path.is_file():
+        load_dotenv(env_file_path)

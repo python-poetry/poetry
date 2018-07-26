@@ -308,6 +308,8 @@ You can execute it like so:
 poetry run my-script
 ```
 
+This command will also automatically load any `.env` file that is next to your `pyproject.toml` file.
+
 Note that this command has no option.
 
 ## check
