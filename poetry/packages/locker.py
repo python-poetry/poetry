@@ -14,7 +14,7 @@ from poetry.utils.toml_file import TomlFile
 
 class Locker:
 
-    _relevant_keys = ["dependencies", "dev-dependencies", "source"]
+    _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
     def __init__(self, lock, local_config):  # type: (Path, dict) -> None
         self._lock = TomlFile(lock)
