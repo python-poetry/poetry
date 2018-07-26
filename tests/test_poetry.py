@@ -132,7 +132,7 @@ def test_check():
 
 def test_check_fails():
     complete = TomlFile(fixtures_dir / "complete.toml")
-    content = complete.read(raw=True)["tool"]["poetry"]
+    content = complete.read()["tool"]["poetry"]
     content["this key is not in the schema"] = ""
     with pytest.raises(InvalidProjectFile):
         Poetry.check(content)
