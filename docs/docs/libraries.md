@@ -46,7 +46,7 @@ Poetry will publish to [PyPI](https://pypi.org) by default. Anything that is pub
 is available automatically through Poetry. Since [pendulum](https://pypi.org/project/pendulum/)
 is on PyPI we can depend on it without having to specify any additional repositories.
 
-If we wanted to share `poetry-demo` with the Python community, we would publish on PyPI as weel.
+If we wanted to share `poetry-demo` with the Python community, we would publish on PyPI as well.
 Doing so is really easy.
 
 ```bash
@@ -58,10 +58,10 @@ and you have [configured your credentials](/repositories/#adding-credentials) pr
 
 !!!note
 
-    The `publish` command also executes `build` by default.
+    The `publish` command does not execute `build` by default.
     
-    If you want to build your packages separately and later publish them,
-    just pass the `--no-build` option.
+    If you want to build and publish your packages together,
+    just pass the `--build` option.
     
 Once this is done, your library will be available to anyone.
 
