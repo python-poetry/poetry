@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import tarfile
 import zipfile
 
@@ -298,17 +299,22 @@ class PyPiRepository(Repository):
                 if "-none-any" not in filename:
                     continue
 
+                # Found a universal wheel, use it
+                urls[url["packagetype"]] = url["url"]
+
             if not urls or "bdist_wheel" not in urls:
-                # If we don't have urls, we try to take the first one
-                # we find and go from there
+                # If we don't have urls, try to find one matching the python version
                 if not json_data["urls"]:
                     return data
 
                 for url in json_data["urls"]:
-                    # Only get sdist and universal wheels if they exist
                     dist_type = url["packagetype"]
+                    python_version = url["python_version"]
+                    v_info = sys.version_info
 
-                    if dist_type != "bdist_wheel":
+                    if dist_type != "bdist_wheel" or python_version != "{}.{}".format(
+                        v_info.major, v_info.minor
+                    ):
                         continue
 
                     urls[url["packagetype"]] = url["url"]
