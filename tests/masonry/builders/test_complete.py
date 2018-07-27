@@ -47,10 +47,9 @@ def test_wheel_c_extension():
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "extended-0.1/build.py" in tar.getnames()
-    assert "extended-0.1/extended/extended.c" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "extended-0.1/build.py" in tar.getnames()
+        assert "extended-0.1/extended/extended.c" in tar.getnames()
 
     whl = list((module_path / "dist").glob("extended-0.1-cp*-cp*-*.whl"))[0]
 
@@ -167,9 +166,8 @@ def test_module_src():
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "module-src-0.1/src/module_src.py" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "module-src-0.1/src/module_src.py" in tar.getnames()
 
     whl = module_path / "dist" / "module_src-0.1-py2.py3-none-any.whl"
 
@@ -192,9 +190,8 @@ def test_package_src():
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
 
     whl = module_path / "dist" / "package_src-0.1-py2.py3-none-any.whl"
 
