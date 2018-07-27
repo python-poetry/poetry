@@ -82,7 +82,7 @@ class Poetry:
                 )
             )
 
-        local_config = TomlFile(poetry_file.as_posix()).read(True)
+        local_config = TomlFile(poetry_file.as_posix()).read()
         if "tool" not in local_config or "poetry" not in local_config["tool"]:
             raise RuntimeError(
                 "[tool.poetry] section not found in {}".format(poetry_file.name)
@@ -164,7 +164,7 @@ class Poetry:
         """
         try:
             validate_object(config, "poetry-schema")
-        except ValidationError:
+        except ValidationError as e:
             raise InvalidProjectFile(str(e))
 
         if strict:

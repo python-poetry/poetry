@@ -63,3 +63,8 @@ url = "https://foo.bar/simple/"
 ```
 
 From now on, Poetry will also look for packages in your private repository.
+
+If your private repository requires HTTP Basic Auth be sure to add the username and
+password to your `http-basic` config using the example above (be sure to use the
+same name than in the `tool.poetry.source` section). Poetry will use these values
+to authenticate to your private repository when downloading or looking for packages.

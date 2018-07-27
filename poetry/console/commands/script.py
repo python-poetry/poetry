@@ -10,6 +10,9 @@ class ScriptCommand(VenvCommand):
         { args?* : The command and arguments/options to pass to the script. }
     """
 
+    help = """The <info>script</> command is deprecated. Please use <info>run</info> instead.
+    """
+
     def handle(self):
         self.line("<warning>script is deprecated use run instead.</warning>")
         self.line("")

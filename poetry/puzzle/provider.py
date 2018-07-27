@@ -1,16 +1,18 @@
 import logging
 import os
 import pkginfo
+import re
 import shutil
 import time
 
 from cleo import ProgressIndicator
 from contextlib import contextmanager
-from functools import cmp_to_key
 from tempfile import mkdtemp
 from typing import List
+
 from typing import Union
 import stat
+
 
 from poetry.packages import Dependency
 from poetry.packages import DirectoryDependency
@@ -34,7 +36,6 @@ from poetry.utils.venv import Venv
 
 from poetry.vcs.git import Git
 
-from .dependencies import Dependencies
 from .exceptions import CompatibilityError
 
 
@@ -64,7 +65,7 @@ class Provider:
 
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(self, package, pool, io):  # type: Package  # type: Pool
+    def __init__(self, package, pool, io):  # type: (Package, Pool, ...) -> None
         self._package = package
         self._pool = pool
         self._io = io
@@ -160,7 +161,7 @@ class Provider:
             pyproject_content = None
             has_poetry = False
             if pyproject.exists():
-                pyproject_content = pyproject.read(True)
+                pyproject_content = pyproject.read()
                 has_poetry = (
                     "tool" in pyproject_content
                     and "poetry" in pyproject_content["tool"]
@@ -369,7 +370,9 @@ class Provider:
                     dependencies.append(deps[0])
                     continue
 
-                self.debug("Duplicate dependencies for {}".format(dep_name))
+                self.debug(
+                    "<debug>Duplicate dependencies for {}</debug>".format(dep_name)
+                )
 
                 # Regrouping by constraint
                 by_constraint = {}
@@ -415,7 +418,11 @@ class Provider:
                     continue
 
                 if len(by_constraint) == 1:
-                    self.debug("Merging requirements for {}".format(str(deps[0])))
+                    self.debug(
+                        "<debug>Merging requirements for {}</debug>".format(
+                            str(deps[0])
+                        )
+                    )
                     dependencies.append(list(by_constraint.values())[0][0])
                     continue
 
@@ -474,6 +481,79 @@ class Provider:
         return self._io
 
     def debug(self, message, depth=0):
+        if not (self.output.is_very_verbose() or self.output.is_debug()):
+            return
+
+        if message.startswith("fact:"):
+            if "depends on" in message:
+                m = re.match("fact: (.+?) depends on (.+?) \((.+?)\)", message)
+                m2 = re.match("(.+?) \((.+?)\)", m.group(1))
+                if m2:
+                    name = m2.group(1)
+                    version = " (<comment>{}</comment>)".format(m2.group(2))
+                else:
+                    name = m.group(1)
+                    version = ""
+
+                message = (
+                    "<fg=blue>fact</>: <info>{}</info>{} "
+                    "depends on <info>{}</info> (<comment>{}</comment>)".format(
+                        name, version, m.group(2), m.group(3)
+                    )
+                )
+            elif " is " in message:
+                message = re.sub(
+                    "fact: (.+) is (.+)",
+                    "<fg=blue>fact</>: <info>\\1</info> is <comment>\\2</comment>",
+                    message,
+                )
+            else:
+                message = re.sub(
+                    "(?<=: )(.+?) \((.+?)\)",
+                    "<info>\\1</info> (<comment>\\2</comment>)",
+                    message,
+                )
+                message = "<fg=blue>fact</>: {}".format(message.split("fact: ")[1])
+        elif message.startswith("selecting "):
+            message = re.sub(
+                "selecting (.+?) \((.+?)\)",
+                "<fg=blue>selecting</> <info>\\1</info> (<comment>\\2</comment>)",
+                message,
+            )
+        elif message.startswith("derived:"):
+            m = re.match("derived: (.+?) \((.+?)\)$", message)
+            if m:
+                message = "<fg=blue>derived</>: <info>{}</info> (<comment>{}</comment>)".format(
+                    m.group(1), m.group(2)
+                )
+            else:
+                message = "<fg=blue>derived</>: <info>{}</info>".format(
+                    message.split("derived: ")[1]
+                )
+        elif message.startswith("conflict:"):
+            m = re.match("conflict: (.+?) depends on (.+?) \((.+?)\)", message)
+            if m:
+                m2 = re.match("(.+?) \((.+?)\)", m.group(1))
+                if m2:
+                    name = m2.group(1)
+                    version = " (<comment>{}</comment>)".format(m2.group(2))
+                else:
+                    name = m.group(1)
+                    version = ""
+
+                message = (
+                    "<fg=red;options=bold>conflict</>: <info>{}</info>{} "
+                    "depends on <info>{}</info> (<comment>{}</comment>)".format(
+                        name, version, m.group(2), m.group(3)
+                    )
+                )
+            else:
+                message = "<fg=red;options=bold>conflict</>: {}".format(
+                    message.split("conflict: ")[1]
+                )
+
+        message = message.replace("! ", "<error>!</error> ")
+
         if self.is_debugging():
             debug_info = str(message)
             debug_info = (

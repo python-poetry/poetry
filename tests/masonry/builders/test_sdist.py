@@ -395,3 +395,14 @@ def test_package_with_include(mocker):
     assert "with-include-1.2.3/pyproject.toml" in names
     assert "with-include-1.2.3/setup.py" in names
     assert "with-include-1.2.3/PKG-INFO" in names
+
+
+def test_proper_python_requires_if_single_version_specified():
+    poetry = Poetry.create(project("simple_version"))
+
+    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(to_str(pkg_info))
+
+    assert parsed["Requires-Python"] == ">=3.6,<3.7"

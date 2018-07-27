@@ -133,7 +133,7 @@ def installer(package, pool, locker, venv, installed):
 def fixture(name):
     file = TomlFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
 
-    return file.read(raw=True)
+    return file.read()
 
 
 def test_run_no_dependencies(installer, locker):

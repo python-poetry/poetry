@@ -215,5 +215,5 @@ To match the example in the setuptools documentation, you would use the followin
 [tool.poetry.plugins] # Optional super table
 
 [tool.poetry.plugins."blogtool.parsers"]
-".rst" = "some_module::SomeClass"
+".rst" = "some_module:SomeClass"
 ```

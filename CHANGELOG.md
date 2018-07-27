@@ -1,5 +1,23 @@
 # Change Log
 
+## [0.11.3] - 2018-07-26
+
+### Changed
+
+- Poetry now only uses [TOML Kit](https://github.com/sdispater/tomlkit) for TOML files manipulation.
+- Improved dependency resolution debug information.
+
+### Fixed
+
+- Fixed missing dependency information for some packages.
+- Fixed handling of single versions when packaging.
+- Fixed dependency information retrieval from `.zip` and `.bz2` archives.
+- Fixed searching for and installing packages from private repositories with authentication. (Thanks to [@MarcDufresne](https://github.com/MarcDufresne))
+- Fixed a potential error when checking the `pyproject.toml` validity. (Thanks to [@ojii](https://github.com/ojii))
+- Fixed the lock file not tracking the `extras` information from `pyproject.toml`. (Thanks to [@cauebs](https://github.com/cauebs))
+- Fixed missing trailing slash in the Simple API urls for private repositories. (Thanks to [@bradsbrown](https://github.com/bradsbrown))
+
+
 ## [0.11.2] - 2018-07-03
 
 ### Fixed
@@ -428,7 +446,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.2...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.3...master
+[0.11.3]: https://github.com/sdispater/poetry/releases/tag/0.11.3
 [0.11.2]: https://github.com/sdispater/poetry/releases/tag/0.11.2
 [0.11.1]: https://github.com/sdispater/poetry/releases/tag/0.11.1
 [0.11.0]: https://github.com/sdispater/poetry/releases/tag/0.11.0
