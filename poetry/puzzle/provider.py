@@ -314,12 +314,13 @@ class Provider:
         ]
 
     def complete_package(self, package):  # type: (str, Version) -> Package
-        if package.is_root() or package.source_type in {"git", "file", "directory"}:
+        if package.is_root() or package.source_type in {"git", "file"}:
             return package
 
-        package = self._pool.package(
-            package.name, package.version.text, extras=package.requires_extras
-        )
+        if package.source_type != "directory":
+            package = self._pool.package(
+                package.name, package.version.text, extras=package.requires_extras
+            )
 
         dependencies = [
             r

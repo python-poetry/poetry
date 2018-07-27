@@ -609,7 +609,26 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
     assert len(installer.installer.installs) == 2
 
 
-def test_run_installs_with_local_directory(installer, locker, repo, package):
+def test_run_installs_with_local_poetry_directory_and_extras(
+    installer, locker, repo, package, tmpdir
+):
+    file_path = Path("tests/fixtures/project_with_extras/")
+    package.add_dependency("demo", {"path": str(file_path), "extras": ["extras_a"]})
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    installer.run()
+
+    expected = fixture("with-directory-dependency-poetry")
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 2
+
+
+def test_run_installs_with_local_setuptools_directory(
+    installer, locker, repo, package, tmpdir
+):
     file_path = Path("tests/fixtures/project_with_setup/")
     package.add_dependency("demo", {"path": str(file_path)})
 
@@ -618,7 +637,7 @@ def test_run_installs_with_local_directory(installer, locker, repo, package):
 
     installer.run()
 
-    expected = fixture("with-directory-dependency")
+    expected = fixture("with-directory-dependency-setuptools")
 
     assert locker.written_data == expected
 
