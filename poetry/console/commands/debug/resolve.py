@@ -13,6 +13,7 @@ class DebugResolveCommand(Command):
         { package?* : packages to resolve. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --python= : Python version(s) to use for resolution. }
+        { --tree : Displays the dependency tree. }
     """
 
     _loggers = ["poetry.repositories.pypi_repository"]
@@ -70,6 +71,23 @@ class DebugResolveCommand(Command):
         self.line("")
         self.line("Resolution results:")
         self.line("")
+
+        if self.option("tree"):
+            show_command = self.get_application().find("show")
+            show_command.output = self.output
+            show_command.init_styles()
+
+            packages = [op.package for op in ops]
+            repo = Repository(packages)
+
+            requires = package.requires + package.dev_requires
+            for pkg in repo.packages:
+                for require in requires:
+                    if pkg.name == require.name:
+                        show_command.display_package_tree(pkg, repo)
+                        break
+
+            return 0
 
         for op in ops:
             package = op.package
