@@ -308,7 +308,9 @@ You can execute it like so:
 poetry run my-script
 ```
 
-This command will also automatically load any `.env` file that is next to your `pyproject.toml` file.
+This command will also automatically load any dotenv file that is next to your
+`pyproject.toml` file. The name is defined by the `settings.dotenv.name` config
+value and defaults to `.env`.
 
 Note that this command has no option.
 

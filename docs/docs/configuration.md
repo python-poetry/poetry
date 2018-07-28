@@ -31,3 +31,11 @@ Defaults to one of the following directories:
 
 ### `repository.<name>`: string
 Set a new alternative repository. See [Repositories](/repositories/) for more information.
+
+### `settings.dotenv.disabled`: boolean
+Disables automatic loading of dotenv files.
+Defaults to `false`.
+
+### `settings.dotenv.name`: string
+Name of the dotenv file to load.
+Defaults to `.env`
