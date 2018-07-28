@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from dotenv import load_dotenv
 from typing import Union
 
-
+from poetry.config import Config
 from poetry.utils._compat import Path
 from poetry.version import Version
 
@@ -83,8 +83,15 @@ def parse_requires(requires):  # type: (str) -> Union[list, None]
         return requires_dist
 
 
-def load_dotenv_if_exists():
+def try_load_dotenv():
+    config = Config.general_config()
+
+    if config.setting("settings.dotenv.disabled"):
+        return
+
     workdir_path = Path(os.getcwd())
-    env_file_path = workdir_path / ".env"
+    dotenv_file_name = config.setting("settings.dotenv.name", default=".env")
+
+    env_file_path = workdir_path / dotenv_file_name
     if env_file_path.is_file():
         load_dotenv(env_file_path)

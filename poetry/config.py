@@ -90,3 +90,11 @@ class Config:
         file = TomlFile(Path(base_dir) / file)
 
         return cls(file)
+
+    @classmethod
+    def general_config(cls, base_dir=None):  # type: (...) -> Config
+        return Config.create("config.toml", base_dir=base_dir)
+
+    @classmethod
+    def auth_config(cls, base_dir=None):  # type: (...) -> Config
+        return Config.create("auth.toml", base_dir=base_dir)

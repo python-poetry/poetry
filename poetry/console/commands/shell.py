@@ -1,7 +1,7 @@
 from os import environ
 from distutils.util import strtobool
 
-from poetry.utils.helpers import load_dotenv_if_exists
+from poetry.utils.helpers import try_load_dotenv
 from .venv_command import VenvCommand
 
 
@@ -40,7 +40,7 @@ If one doesn't exist yet, it will be created.
         # Setting this to avoid spawning unnecessary nested shells
         environ["POETRY_ACTIVE"] = "1"
 
-        load_dotenv_if_exists()
+        try_load_dotenv()
 
         shell = Shell.get()
         self.venv.execute(shell.path)

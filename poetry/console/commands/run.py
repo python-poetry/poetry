@@ -1,4 +1,4 @@
-from poetry.utils.helpers import load_dotenv_if_exists
+from poetry.utils.helpers import try_load_dotenv
 from .venv_command import VenvCommand
 
 
@@ -11,7 +11,7 @@ class RunCommand(VenvCommand):
     """
 
     def handle(self):
-        load_dotenv_if_exists()
+        try_load_dotenv()
 
         args = self.argument("args")
         script = args[0]
