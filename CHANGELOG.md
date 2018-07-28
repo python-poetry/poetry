@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.11.X] - 2018-XX-XX
+
+### Fixed
+
+- Fixed wheel packages building in case if `packages` directive used in `pyproject.toml`.
+
 ## [0.11.3] - 2018-07-26
 
 ### Changed
