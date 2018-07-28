@@ -97,10 +97,9 @@ def try_load_dotenv():
         load_dotenv(env_file_path)
 
 
-def get_http_basic_auth(repository_name):  # type: (str) -> tuple
-    config = Config.create("auth.toml")
+def get_http_basic_auth(repository_name):  # type: (str) -> Union[tuple, None]
+    config = Config.auth_config()
     repo_auth = config.setting("http-basic.{}".format(repository_name))
     if repo_auth:
         return repo_auth["username"], repo_auth["password"]
     return None
-
