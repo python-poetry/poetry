@@ -100,50 +100,13 @@
                     "description": "The Python versions the package is compatible with."
                 }
             },
-            "patternProperties": {
-                "^[a-zA-Z-_.0-9]+$": {
-                    "oneOf": [
-                        {
-                            "$ref": "#/definitions/dependency"
-                        },
-                        {
-                            "$ref": "#/definitions/long-dependency"
-                        },
-                        {
-                            "$ref": "#/definitions/git-dependency"
-                        },
-                        {
-                            "$ref": "#/definitions/file-dependency"
-                        },
-                        {
-                            "$ref": "#/definitions/path-dependency"
-                        }
-                    ]
-                }
-            },
+            "$ref": "#/definitions/dependencies",
             "additionalProperties": false
         },
         "dev-dependencies": {
             "type": "object",
             "description": "This is a hash of package name (keys) and version constraints (values) that this package requires for developing it (testing tools and such).",
-            "patternProperties": {
-                "^[a-zA-Z-_.0-9]+$": {
-                    "oneOf": [
-                        {
-                            "$ref": "#/definitions/dependency"
-                        },
-                        {
-                            "$ref": "#/definitions/long-dependency"
-                        },
-                        {
-                            "$ref": "#/definitions/git-dependency"
-                        },
-                        {
-                            "$ref": "#/definitions/file-dependency"
-                        }
-                    ]
-                }
-            },
+            "$ref": "#/definitions/dependencies",
             "additionalProperties": false
         },
         "extras": {
@@ -199,6 +162,30 @@
             "description": "List of authors that contributed to the package. This is typically the main maintainers, not the full list.",
             "items": {
                 "type": "string"
+            }
+        },
+        "dependencies": {
+            "type": "object",
+            "patternProperties": {
+                "^[a-zA-Z-_.0-9]+$": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/long-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/git-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/file-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/path-dependency"
+                        }
+                    ]
+                }
             }
         },
         "dependency": {

@@ -1,9 +1,6 @@
-import pytest
-
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
 from poetry.utils._compat import Path
-from poetry.utils._compat import decode
 
 
 class MockRepository(LegacyRepository):
@@ -43,3 +40,13 @@ def test_page_absolute_links_path_are_correct():
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
         assert link.path.startswith("/packages/")
+
+
+def test_http_basic_auth_repo(mocker):
+    mock = mocker.patch("poetry.repositories.legacy_repository.get_http_basic_auth")
+    mock.return_value = ("user1", "p4ss")
+
+    repo = MockRepository()
+
+    mock.assert_called_once_with("legacy")
+    assert repo._session.auth == ("user1", "p4ss")

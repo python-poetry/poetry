@@ -7,6 +7,8 @@ try:
 except ImportError:
     import urlparse
 
+from tomlkit import document
+
 from poetry.config import Config as BaseConfig
 from poetry.console import Application as BaseApplication
 from poetry.installation.noop_installer import NoopInstaller
@@ -16,7 +18,6 @@ from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
-from poetry.utils.toml_file import TOMLFile
 
 
 @pytest.fixture()
@@ -89,8 +90,7 @@ class Application(BaseApplication):
 
 class Config(BaseConfig):
     def __init__(self, _):
-        self._raw_content = {}
-        self._content = TOMLFile([])
+        self._content = document()
 
 
 class Locker(BaseLocker):

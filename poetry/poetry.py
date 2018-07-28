@@ -3,11 +3,11 @@ from __future__ import unicode_literals
 
 import json
 
-import jsonschema
-
 from .__version__ import __version__
 from .config import Config
 from .exceptions import InvalidProjectFile
+from .json import validate_object
+from .json import ValidationError
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
@@ -82,7 +82,7 @@ class Poetry:
                 )
             )
 
-        local_config = TomlFile(poetry_file.as_posix()).read(True)
+        local_config = TomlFile(poetry_file.as_posix()).read()
         if "tool" not in local_config or "poetry" not in local_config["tool"]:
             raise RuntimeError(
                 "[tool.poetry] section not found in {}".format(poetry_file.name)
@@ -162,19 +162,10 @@ class Poetry:
         """
         Checks the validity of a configuration
         """
-        schema = Path(__file__).parent / "json" / "schemas" / "poetry-schema.json"
-
-        with schema.open() as f:
-            schema = json.loads(f.read())
-
         try:
-            jsonschema.validate(config, schema)
-        except jsonschema.ValidationError as e:
-            message = e.message
-            if e.path:
-                message = "[{}] {}".format(".".join(e.path), message)
-
-            raise InvalidProjectFile(message)
+            validate_object(config, "poetry-schema")
+        except ValidationError as e:
+            raise InvalidProjectFile(str(e))
 
         if strict:
             # If strict, check the file more thoroughly

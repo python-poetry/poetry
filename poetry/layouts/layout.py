@@ -1,5 +1,6 @@
-from poetry.toml import dumps
-from poetry.toml import loads
+from tomlkit import dumps
+from tomlkit import loads
+
 from poetry.utils.helpers import module_name
 
 

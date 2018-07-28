@@ -4,6 +4,8 @@ import poetry.packages
 import poetry.repositories
 
 from hashlib import sha256
+from tomlkit import document
+from tomlkit import inline_table
 from typing import List
 
 from poetry.utils._compat import Path
@@ -12,7 +14,7 @@ from poetry.utils.toml_file import TomlFile
 
 class Locker:
 
-    _relevant_keys = ["dependencies", "dev-dependencies", "source"]
+    _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
     def __init__(self, lock, local_config):  # type: (Path, dict) -> None
         self._lock = TomlFile(lock)
@@ -44,7 +46,7 @@ class Locker:
         """
         Checks whether the lock file is still up to date with the current hash.
         """
-        lock = self._lock.read(True)
+        lock = self._lock.read()
         metadata = lock.get("metadata", {})
 
         if "content-hash" in metadata:
@@ -116,21 +118,21 @@ class Locker:
             hashes[package["name"]] += package["hashes"]
             del package["hashes"]
 
-        lock = {
-            "package": packages,
-            "metadata": {
-                "python-versions": root.python_versions,
-                "platform": root.platform,
-                "content-hash": self._content_hash,
-                "hashes": hashes,
-            },
-        }
+        lock = document()
+        lock["package"] = packages
 
         if root.extras:
             lock["extras"] = {
                 extra: [dep.pretty_name for dep in deps]
                 for extra, deps in root.extras.items()
             }
+
+        lock["metadata"] = {
+            "python-versions": root.python_versions,
+            "platform": root.platform,
+            "content-hash": self._content_hash,
+            "hashes": hashes,
+        }
 
         if not self.is_locked() or lock != self.lock_data:
             self._write_lock_data(lock)
@@ -140,17 +142,11 @@ class Locker:
         return False
 
     def _write_lock_data(self, data):
-        # We want a clean lock file so we write
-        # packages first and metadata after
-        with self._lock.open("w", encoding="utf-8") as f:
-            f.write(self._lock.dumps({"package": data["package"]}, sort=True))
-            f.write("\n")
-            if "extras" in data:
-                f.write(self._lock.dumps({"extras": data["extras"]}, sort=True))
-                f.write("\n")
+        self.lock.write(data)
 
-            f.write(self._lock.dumps({"metadata": data["metadata"]}, sort=True))
-            f.write("\n")
+        # Checking lock file data consistency
+        if data != self.lock.read():
+            raise RuntimeError("Inconsistent lock file data.")
 
         self._lock_data = None
 
@@ -174,7 +170,7 @@ class Locker:
         if not self._lock.exists():
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
-        return self._lock.read(True)
+        return self._lock.read()
 
     def _lock_packages(
         self, packages
@@ -190,7 +186,7 @@ class Locker:
 
     def _dump_package(self, package):  # type: (poetry.packages.Package) -> dict
         dependencies = {}
-        for dependency in package.requires:
+        for dependency in sorted(package.requires, key=lambda d: d.name):
             if dependency.is_optional() and not dependency.is_activated():
                 continue
 
@@ -226,6 +222,10 @@ class Locker:
         }
 
         if dependencies:
+            for k, constraints in dependencies.items():
+                if len(constraints) == 1:
+                    dependencies[k] = constraints[0]
+
             data["dependencies"] = dependencies
 
         if package.source_type:
