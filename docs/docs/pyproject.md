@@ -68,6 +68,19 @@ An URL to the documentation of the project. **Optional**
 
 A list of keywords (max: 5) that the package is related to. **Optional**
 
+## classifiers
+
+A list of Python [trove classifiers](https://pypi.org/classifiers/) that describe what kind of project this is. **Optional**
+
+Example:
+
+```py
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+```
+
 ## packages
 
 A list of packages and modules to include in the final distribution.
