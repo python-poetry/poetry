@@ -8,6 +8,7 @@ from cleo.formatters import Formatter
 from cleo.inputs import ArgvInput
 from cleo.outputs import ConsoleOutput
 from cleo.outputs import Output
+from cleo.inputs import InputOption
 
 from poetry import __version__
 
@@ -47,8 +48,14 @@ class Application(BaseApplication):
 
         self._poetry = None
         self._skip_io_configuration = False
+        self._project_dir = None
         self._formatter = Formatter(True)
         self._formatter.add_style("error", "red", options=["bold"])
+        self._definition.add_option(
+            InputOption(
+                "--project", "", InputOption.VALUE_REQUIRED, "Path to project directory"
+            )
+        )
 
     @property
     def poetry(self):
@@ -57,7 +64,7 @@ class Application(BaseApplication):
         if self._poetry is not None:
             return self._poetry
 
-        self._poetry = Poetry.create(os.getcwd())
+        self._poetry = Poetry.create(self._project_dir or os.getcwd())
 
         return self._poetry
 
@@ -74,11 +81,12 @@ class Application(BaseApplication):
             self._formatter.with_colors(o.is_decorated())
             o.set_formatter(self._formatter)
 
+        if i.has_parameter_option("--project"):
+            self._project_dir = i.get_parameter_option("--project")
         name = i.get_first_argument()
         if name in ["run", "script"]:
             self._skip_io_configuration = True
             i = RawArgvInput()
-
         return super(Application, self).run(i, o)
 
     def do_run(self, i, o):
@@ -88,6 +96,8 @@ class Application(BaseApplication):
             return super(Application, self).do_run(i, o)
 
         command = self.find(name)
+
+        i._tokens = i._tokens[i._tokens.index(name) :]
 
         self._running_command = command
         status_code = command.run(i, o)
