@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed wrong wheel being selected when resolving dependencies.
+
+
 ## [0.11.3] - 2018-07-26
 
 ### Changed
