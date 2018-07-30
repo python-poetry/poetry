@@ -118,6 +118,17 @@ To remove a repository (repo is a short alias for repositories):
                     value = repo
 
                 self.line(str(value))
+            else:
+                values = self.unique_config_values
+                if setting_key not in values:
+                    raise ValueError("There is no {} setting.".format(setting_key))
+
+                values = self._get_setting(
+                    self._config.content, setting_key, default=values[setting_key][-1]
+                )
+
+                for value in values:
+                    self.line(value[1])
 
             return 0
 
@@ -240,17 +251,22 @@ To remove a repository (repo is a short alias for repositories):
             self._list_setting(repositories, k="repositories.")
 
     def _list_setting(self, contents, setting=None, k=None, default=None):
+        values = self._get_setting(contents, setting, k, default)
+
+        for value in values:
+            self.line(
+                "<comment>{}</comment> = <info>{}</info>".format(value[0], value[1])
+            )
+
+    def _get_setting(self, contents, setting=None, k=None, default=None):
         orig_k = k
 
         if setting and setting.split(".")[0] not in contents:
             value = json.dumps(default)
 
-            self.line(
-                "<comment>{}</comment> = <info>{}</info>".format(
-                    (k or "") + setting, value
-                )
-            )
+            return [((k or "") + setting, value)]
         else:
+            values = []
             for key, value in contents.items():
                 if k is None and key not in ["config", "repositories", "settings"]:
                     continue
@@ -266,7 +282,9 @@ To remove a repository (repo is a short alias for repositories):
                     if setting and len(setting) > 1:
                         setting = ".".join(setting.split(".")[1:])
 
-                    self._list_setting(value, k=k, setting=setting, default=default)
+                    values += self._get_setting(
+                        value, k=k, setting=setting, default=default
+                    )
                     k = orig_k
 
                     continue
@@ -281,11 +299,9 @@ To remove a repository (repo is a short alias for repositories):
 
                 value = json.dumps(value)
 
-                self.line(
-                    "<comment>{}</comment> = <info>{}</info>".format(
-                        (k or "") + key, value
-                    )
-                )
+                values.append(((k or "") + key, value))
+
+            return values
 
     def _get_formatted_value(self, value):
         if isinstance(value, list):
