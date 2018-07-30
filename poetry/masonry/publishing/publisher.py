@@ -52,7 +52,7 @@ class Publisher:
                     "Unable to get repository information"
                 )
 
-            config = config_file.read(raw=True)
+            config = config_file.read()
 
             if (
                 "repositories" not in config

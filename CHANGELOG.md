@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed wrong wheel being selected when resolving dependencies.
+- Fixed an error when publishing.
 
 
 ## [0.11.3] - 2018-07-26
