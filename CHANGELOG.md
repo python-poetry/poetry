@@ -6,6 +6,7 @@
 
 - Fixed wrong wheel being selected when resolving dependencies.
 - Fixed an error when publishing.
+- Fixed an error when building wheels with the `packages` property set.
 
 
 ## [0.11.3] - 2018-07-26

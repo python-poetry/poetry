@@ -19,9 +19,9 @@ class Include(object):
 
     def __init__(self, base, include):  # type: (Path, str) -> None
         self._base = base
-        self._include = include
+        self._include = str(include)
 
-        self._elements = sorted(list(self._base.glob(str(self._include))))
+        self._elements = sorted(list(self._base.glob(self._include)))
 
     @property
     def base(self):  # type: () -> Path
