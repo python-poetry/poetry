@@ -10,18 +10,20 @@ This file can typically be found in one of the following directories:
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
 That means, by default `~/.config/pypoetry`
 
-
 ## Available settings
 
 ### `settings.virtualenvs.create`: boolean
+
 Create a new virtualenv if one doesn't already exist.
 Defaults to `true`.
 
 ### `settings.virtualenvs.in-project`: boolean
+
 Create the virtualenv inside the project's root directory.
 Defaults to `false`.
 
 ### `settings.virtualenvs.path`: string
+
 Directory where virtualenvs will be created.
 Defaults to one of the following directories:
 
@@ -30,4 +32,5 @@ Defaults to one of the following directories:
 - Unix:    `~/.cache/pypoetry/virtualenvs`
 
 ### `repositories.<name>`: string
+
 Set a new alternative repository. See [Repositories](/repositories/) for more information.
