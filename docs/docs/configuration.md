@@ -29,5 +29,5 @@ Defaults to one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache/virtualenvs`
 - Unix:    `~/.cache/pypoetry/virtualenvs`
 
-### `repository.<name>`: string
+### `repositories.<name>`: string
 Set a new alternative repository. See [Repositories](/repositories/) for more information.
