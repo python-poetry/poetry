@@ -85,7 +85,7 @@ classifiers = [
 
     Note that Python classifiers are still automatically added for you and are determined by your `python` requirement.
 
-    The `license` property will also set the License classifer automatically.
+    The `license` property will also set the License classifier automatically.
 
 ## packages
 
