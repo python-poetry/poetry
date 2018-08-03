@@ -1,6 +1,8 @@
 import cgi
 import re
 
+from requests.auth import HTTPBasicAuth, AuthBase
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -134,6 +136,29 @@ class Page:
         return self._clean_re.sub(lambda match: "%%%2x" % ord(match.group(0)), url)
 
 
+class PoetryAuth(AuthBase):
+    def __init__(self):
+        main_config = Config.create("config.toml")
+        repositories = main_config.setting("repositories", {})
+        auth_config = Config.create("auth.toml")
+        self.auths = {}
+        for name, config in repositories.items():
+            if "url" not in config:
+                continue
+            repo_auth = auth_config.setting("http-basic.{}".format(name))
+            if repo_auth:
+                self.auths[urlparse.urlparse(config["url"]).netloc] = HTTPBasicAuth(
+                    repo_auth["username"], repo_auth["password"]
+                )
+
+    def __call__(self, r):
+        host = urlparse.urlparse(r.url).netloc
+        try:
+            return self.auths[host](r)
+        except KeyError:
+            return r
+
+
 class LegacyRepository(PyPiRepository):
     def __init__(self, name, url, disable_cache=False):
         if name == "pypi":
@@ -162,7 +187,7 @@ class LegacyRepository(PyPiRepository):
 
         url_parts = urlparse.urlparse(self._url)
         if not url_parts.username:
-            self._session.auth = get_http_basic_auth(self.name)
+            self._session.auth = PoetryAuth()
 
         self._disable_cache = disable_cache
 
@@ -341,6 +366,7 @@ class LegacyRepository(PyPiRepository):
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = self._session.get(url, stream=True)
+        r.raise_for_status()
         with open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
