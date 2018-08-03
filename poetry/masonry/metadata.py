@@ -46,7 +46,7 @@ class Metadata:
         meta.version = normalize_version(package.version.text)
         meta.summary = package.description
         if package.readme:
-            with package.readme.open() as f:
+            with package.readme.open(encoding="utf-8") as f:
                 meta.description = f.read()
 
         meta.keywords = ",".join(package.keywords)
