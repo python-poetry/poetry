@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.11.4] - 2018-07-30
+
+### Fixed
+
+- Fixed wrong wheel being selected when resolving dependencies.
+- Fixed an error when publishing.
+- Fixed an error when building wheels with the `packages` property set.
+- Fixed single value display in `config` command.
+
+
 ## [0.11.3] - 2018-07-26
 
 ### Changed
@@ -446,7 +456,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.3...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.4...master
+[0.11.4]: https://github.com/sdispater/poetry/releases/tag/0.11.4
 [0.11.3]: https://github.com/sdispater/poetry/releases/tag/0.11.3
 [0.11.2]: https://github.com/sdispater/poetry/releases/tag/0.11.2
 [0.11.1]: https://github.com/sdispater/poetry/releases/tag/0.11.1

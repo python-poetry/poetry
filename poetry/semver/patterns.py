@@ -6,7 +6,9 @@ MODIFIERS = (
     "([+-]?([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?"
 )
 
-_COMPLETE_VERSION = "v?(\d+)(?:\.(\d+))?(?:\.(\d+))?{}(?:\+[^\s]+)?".format(MODIFIERS)
+_COMPLETE_VERSION = "v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?{}(?:\+[^\s]+)?".format(
+    MODIFIERS
+)
 
 COMPLETE_VERSION = re.compile("(?i)" + _COMPLETE_VERSION)
 

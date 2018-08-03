@@ -35,9 +35,8 @@ def test_wheel_module():
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "module1.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "module1.py" in z.namelist()
 
 
 def test_wheel_package():
@@ -48,9 +47,8 @@ def test_wheel_package():
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "my_package/sub_pkg1/__init__.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "my_package/sub_pkg1/__init__.py" in z.namelist()
 
 
 def test_wheel_prerelease():
@@ -70,10 +68,9 @@ def test_wheel_package_src():
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "package_src/__init__.py" in z.namelist()
-    assert "package_src/module.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "package_src/__init__.py" in z.namelist()
+        assert "package_src/module.py" in z.namelist()
 
 
 def test_wheel_module_src():
@@ -84,6 +81,44 @@ def test_wheel_module_src():
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "module_src.py" in z.namelist()
 
-    assert "module_src.py" in z.namelist()
+
+def test_package_with_include(mocker):
+    # Patch git module to return specific excluded files
+    p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
+    p.return_value = [
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "with-include"
+            / "extra_dir"
+            / "vcs_excluded.txt"
+        ),
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "with-include"
+            / "extra_dir"
+            / "sub_pkg"
+            / "vcs_excluded.txt"
+        ),
+    ]
+    module_path = fixtures_dir / "with-include"
+    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+
+    whl = module_path / "dist" / "with_include-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        names = z.namelist()
+        assert "with_include-1.2.3.dist-info/LICENSE" in names
+        assert "extra_dir/__init__.py" in names
+        assert "extra_dir/vcs_excluded.txt" in names
+        assert "extra_dir/sub_pkg/__init__.py" in names
+        assert "extra_dir/sub_pkg/vcs_excluded.txt" not in names
+        assert "my_module.py" in names
+        assert "notes.txt" in names
+        assert "package_with_include/__init__.py" in names
