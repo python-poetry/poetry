@@ -28,7 +28,7 @@ The <info>develop</info> command installs the current project in development mod
         else:
             builder = SdistBuilder(self.poetry, NullVenv(), NullIO())
 
-            with setup.open("w") as f:
+            with setup.open("w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
 
         try:
