@@ -70,7 +70,7 @@ class DirectoryDependency(Dependency):
             poetry = Poetry.create(self._full_path)
             builder = SdistBuilder(poetry, NullVenv(), NullIO())
 
-            with setup.open("w") as f:
+            with setup.open("w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
 
             package = poetry.package
