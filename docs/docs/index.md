@@ -20,30 +20,63 @@ recommended way of installing `poetry`.
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
 ```
 
-Alternatively, you can download the `get-poetry.py` file and execute it separately.
+The installer installs the `poetry` tool to Poetry's `bin` directory.
+On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
 
-If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`:
-
-```bash
-python get-poetry.py --preview
-```
-
-Similarly, if you want to install a specific version, you can use `--version`:
+This directory will be in your `$PATH` environment variable,
+which means you can run them from the shell without further configuration.
+Open a new shell and type the following:
 
 ```bash
-python get-poetry.py --version 0.7.0
+poetry --version
 ```
+
+If you see something like `Poetry 0.11.4` then you are ready to use Poetry.
+If you decide Poetry isn't your thing, you can completely remove it from your system
+by running the installer again with the `--uninstall` option.
 
 !!!note
 
-    Using `pip` to install `poetry` is also possible.
-    
+    Alternatively, you can download the `get-poetry.py` file and execute it separately.
+
+    If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`:
+
     ```bash
-    pip install --user poetry
-    ``` 
-    
-    Be aware, however, that it will also install poetry's dependencies
-    which might cause conflicts.
+    python get-poetry.py --preview
+    ```
+
+    Similarly, if you want to install a specific version, you can use `--version`:
+
+    ```bash
+    python get-poetry.py --version 0.7.0
+    ```
+
+### Alternative installation methods (not recommended)
+
+#### Installing with `pip`
+
+Using `pip` to install Poetry is possible.
+
+```bash
+pip install --user poetry
+```
+
+!!!warning
+
+    Be aware that it will also install Poetry's dependencies
+    which might cause conflicts with other packages.
+
+#### Installing with `pipsi`
+
+Using [`pipsi`](https://github.com/mitsuhiko/pipsi) to install Poetry is also possible.
+
+```bash
+pipsi install poetry
+```
+
+Make sure your installed version of `pipsi` is at least version `0.10`,
+otherwise Poetry will not function properly. You can get it from its
+[Github repository](https://github.com/mitsuhiko/pipsi).
 
 
 ## Updating `poetry`
@@ -66,6 +99,11 @@ to `self:update`.
 ```bash
 poetry self:update 0.8.0
 ```
+
+!!!note
+
+    The `self:update` command will only work if you used the recommended
+    installer to install Poetry.
 
 
 ## Enable tab completion for Bash, Fish, or Zsh
@@ -91,7 +129,7 @@ poetry completions zsh > ~/.zfunc/_poetry
 !!! note
 
     You may need to restart your shell in order for the changes to take effect.
-    
+
 For `zsh`, you must then add the following line in your `~/.zshrc` before `compinit`:
 
 ```bash
