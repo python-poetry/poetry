@@ -102,7 +102,7 @@ class DirectoryDependency(Dependency):
                 reqs = []
                 requires = egg_info / "requires.txt"
                 if requires.exists():
-                    with requires.open() as f:
+                    with requires.open(encoding="utf-8") as f:
                         reqs = parse_requires(f.read())
 
             package = Package(meta.name, meta.version)
