@@ -20,7 +20,7 @@ class Updater:
 
         licenses_url = self._base_url + "licenses.json"
 
-        with open(file, "w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(self.get_licenses(licenses_url), indent=2, sort_keys=True)
             )
@@ -28,7 +28,7 @@ class Updater:
     def get_licenses(self, url):
         licenses = {}
         with urlopen(url) as r:
-            data = json.loads(r.read().decode())
+            data = json.loads(r.read().decode("utf-8"))
 
         for info in data["licenses"]:
             licenses[info["licenseId"]] = [

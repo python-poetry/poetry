@@ -152,7 +152,7 @@ class Installer:
         print(colorize("info", "Retrieving metadata"))
 
         r = urlopen(self.METADATA_URL)
-        metadata = json.loads(r.read().decode())
+        metadata = json.loads(r.read().decode("utf-8"))
         r.close()
 
         def _compare_versions(x, y):
