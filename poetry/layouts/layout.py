@@ -137,5 +137,5 @@ class Layout(object):
 
         poetry = path / "pyproject.toml"
 
-        with poetry.open("w") as f:
+        with poetry.open("w", encoding="utf-8") as f:
             f.write(content)
