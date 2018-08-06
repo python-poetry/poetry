@@ -64,7 +64,7 @@ class Metadata:
         meta.maintainer_email = meta.author_email
 
         # Requires python
-        if not package.python_constraint.is_any():
+        if package.python_versions != "*":
             meta.requires_python = format_python_constraint(package.python_constraint)
 
         meta.requires_dist = [d.to_pep_508() for d in package.requires]
