@@ -11,7 +11,7 @@ cache:
     - $HOME/.cache/pre-commit
 
 install:
-  - python get-poetry.py --preview
+  - python get-poetry.py --preview -y
   - poetry install -v
 
 script: pytest -q tests/

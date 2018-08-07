@@ -247,11 +247,12 @@ class Installer:
         "(?:\+[^\s]+)?"
     )
 
-    def __init__(self, version=None, preview=False, force=False):
+    def __init__(self, version=None, preview=False, force=False, accept_all=False):
         self._version = version
         self._preview = preview
         self._force = force
         self._modify_path = True
+        self._accept_all = accept_all
 
     def allows_prereleases(self):
         return self._preview
@@ -345,17 +346,15 @@ class Installer:
         return version, current_version
 
     def customize_install(self):
-        print(
-            """Before we start, please answer the following questions.
-You may simple press the Enter key to keave unchanged.
-"""
-        )
+        if not self._accept_all:
+            print("Before we start, please answer the following questions.")
+            print("You may simple press the Enter key to keave unchanged.")
 
-        modify_path = input("Modify PATH variable? ([y]/n)") or "y"
-        if modify_path.lower() in {"n", "no"}:
-            self._modify_path = False
+            modify_path = input("Modify PATH variable? ([y]/n)") or "y"
+            if modify_path.lower() in {"n", "no"}:
+                self._modify_path = False
 
-        print("")
+            print("")
 
     def ensure_home(self):
         """
@@ -607,6 +606,9 @@ def main():
     parser.add_argument(
         "-f", "--force", dest="force", action="store_true", default=False
     )
+    parser.add_argument(
+        "-y", "--yes", dest="accept_all", action="store_true", default=False
+    )
 
     args = parser.parse_args()
 
@@ -614,6 +616,7 @@ def main():
         version=args.version or os.getenv("POETRY_VERSION"),
         preview=args.preview or os.getenv("POETRY_PREVIEW"),
         force=args.force,
+        accept_all=args.accept_all,
     )
 
     return installer.run()
