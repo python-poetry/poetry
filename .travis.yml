@@ -12,6 +12,7 @@ cache:
 
 install:
   - python get-poetry.py --preview -y
+  - source $HOME/.poetry/env
   - poetry install -v
 
 script: pytest -q tests/
