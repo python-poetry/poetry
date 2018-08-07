@@ -295,7 +295,7 @@ class PyPiRepository(Repository):
 
                 urls[dist_type] = url["url"]
 
-            if "sdist" in url and "bdist_wheel" not in urls:
+            if "sdist" in urls and "bdist_wheel" not in urls:
                 # If can't found a universal wheel
                 # but we found an sdist, inspect the sdist first
                 info = self._get_info_from_urls(urls)
