@@ -44,6 +44,15 @@ except NameError:
     pass
 
 
+try:
+    try:
+        import winreg
+    except ImportError:
+        import _winreg as winreg
+except ImportError:
+    winreg = None
+
+
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
 
@@ -172,6 +181,8 @@ if __name__ == "__main__":
     main()
 """
 
+BAT = "@echo off\r\npython %USERPROFILE%/.poetry/bin/poetry %*\r\n"
+
 
 PRE_MESSAGE = """# Welcome to {poetry}!
 
@@ -187,6 +198,17 @@ It will add the `poetry` command to {poetry}'s bin directory, located at:
 You can uninstall at any time with `poetry self:uninstall`,
 or by executing this script with the --uninstall option,
 and these changes will be reverted.
+"""
+
+PRE_UNINSTALL_MESSAGE = """# We are sorry to see you go!
+
+This will uninstall {poetry}.
+
+It will remove the `poetry` command from {poetry}'s bin directory, located at:
+
+{poetry_home_bin}
+
+This will also remove {poetry} from your system's PATH.
 """
 
 
@@ -279,6 +301,15 @@ class Installer:
 
         return 0
 
+    def uninstall(self):
+        self.display_pre_uninstall_message()
+
+        if not self.customize_uninstall():
+            return
+
+        self.remove_home()
+        self.remove_from_path()
+
     def get_version(self):
         print(colorize("info", "Retrieving Poetry metadata"))
 
@@ -350,6 +381,31 @@ class Installer:
             print("Before we start, please answer the following questions.")
             print("You may simple press the Enter key to keave unchanged.")
 
+            modify_path = input("Modify PATH variable? ([y]/n) ") or "y"
+            if modify_path.lower() in {"n", "no"}:
+                self._modify_path = False
+
+            print("")
+
+    def customize_uninstall(self):
+        if not self._accept_all:
+            print()
+
+            uninstall = (
+                input("Are you sure you want to uninstall Poetry? (y/[n]) ") or "n"
+            )
+            if uninstall.lower() not in {"y", "yes"}:
+                return False
+
+            print("")
+
+        return True
+
+    def customize_install(self):
+        if not self._accept_all:
+            print("Before we start, please answer the following questions.")
+            print("You may simple press the Enter key to keave unchanged.")
+
             modify_path = input("Modify PATH variable? ([y]/n)") or "y"
             if modify_path.lower() in {"n", "no"}:
                 self._modify_path = False
@@ -362,6 +418,15 @@ class Installer:
         """
         if not os.path.exists(POETRY_HOME):
             os.mkdir(POETRY_HOME, 0o755)
+
+    def remove_home(self):
+        """
+        Removes $POETRY_HOME.
+        """
+        if not os.path.exists(POETRY_HOME):
+            return
+
+        shutil.rmtree(POETRY_HOME)
 
     def install(self, version, upgrade=False):
         """
@@ -477,10 +542,15 @@ class Installer:
         if not os.path.exists(POETRY_BIN):
             os.mkdir(POETRY_BIN, 0o755)
 
-        if not WINDOWS:
-            with open(os.path.join(POETRY_BIN, "poetry"), "w") as f:
-                f.write(BIN)
+        ext = ""
+        if WINDOWS:
+            with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
+                f.write(BAT)
 
+        with open(os.path.join(POETRY_BIN, "poetry"), "w") as f:
+            f.write(BIN)
+
+        if not WINDOWS:
             # Making the file executable
             st = os.stat(os.path.join(POETRY_BIN, "poetry"))
             os.chmod(os.path.join(POETRY_BIN, "poetry"), st.st_mode | stat.S_IEXEC)
@@ -497,7 +567,7 @@ class Installer:
         Tries to update the $PATH automatically.
         """
         if WINDOWS:
-            return self._update_windows_path()
+            return self.add_to_windows_path()
 
         # Updating any profile we can on UNIX systems
         export_string = self.get_export_string()
@@ -519,6 +589,91 @@ class Installer:
 
                 updated.append(os.path.relpath(profile, HOME))
 
+    def add_to_windows_path(self):
+        try:
+            old_path = self.get_windows_path_var()
+        except WindowsError:
+            old_path = None
+
+        if old_path is None:
+            print(
+                colorize(
+                    "warning",
+                    "Unable to get the PATH value. It will not be updated automatically",
+                )
+            )
+            self._modify_path = False
+
+            return
+
+        new_path = POETRY_BIN
+        if POETRY_BIN in old_path:
+            old_path = old_path.replace(POETRY_BIN + ";", "")
+
+        if old_path:
+            new_path += ";"
+            new_path += old_path
+
+        self.set_windows_path_var(new_path)
+
+    def get_windows_path_var(self):
+        with winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER) as root:
+            with winreg.OpenKey(root, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
+                path, _ = winreg.QueryValueEx(key, "PATH")
+
+                return path
+
+    def set_windows_path_var(self, value):
+        import ctypes
+        from ctypes.wintypes import HWND
+        from ctypes.wintypes import LPARAM
+        from ctypes.wintypes import LPVOID
+        from ctypes.wintypes import UINT
+        from ctypes.wintypes import WPARAM
+
+        with winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER) as root:
+            with winreg.OpenKey(root, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
+                winreg.SetValueEx(key, "PATH", 0, winreg.REG_EXPAND_SZ, value)
+
+        # Tell other processes to update their environment
+        HWND_BROADCAST = 0xFFFF
+        WM_SETTINGCHANGE = 0x1A
+
+        SMTO_ABORTIFHUNG = 0x0002
+
+        result = ctypes.c_long()
+        SendMessageTimeoutW = ctypes.windll.user32.SendMessageTimeoutW
+        SendMessageTimeoutW(
+            HWND_BROADCAST,
+            WM_SETTINGCHANGE,
+            0,
+            u"Environment",
+            SMTO_ABORTIFHUNG,
+            5000,
+            ctypes.byref(result),
+        )
+
+    def remove_from_path(self):
+        if WINDOWS:
+            return self.remove_from_windows_path()
+
+        return self.remove_from_unix_path()
+
+    def remove_from_windows_path(self):
+        path = self.get_windows_path_var()
+
+        poetry_path = POETRY_BIN
+        if poetry_path in path:
+            path = path.replace(POETRY_BIN + ";", "")
+
+            if poetry_path in path:
+                path = path.replace(POETRY_BIN, "")
+
+        self.set_windows_path_var(path)
+
+    def remove_from_unix_path(self):
+        pass
+
     def get_export_string(self):
         path = POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME")
         export_string = 'export PATH="{}:$PATH"'.format(path)
@@ -539,15 +694,15 @@ class Installer:
 
         return profiles
 
-    def update_windows_path(self):
-        return False
-
     def display_pre_message(self):
+        if WINDOWS:
+            home = POETRY_BIN.replace(os.getenv("USERPROFILE", ""), "%USERPROFILE%")
+        else:
+            home = POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME")
+
         kwargs = {
             "poetry": colorize("info", "Poetry"),
-            "poetry_home_bin": colorize(
-                "comment", POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME")
-            ),
+            "poetry_home_bin": colorize("comment", home),
         }
 
         if not self._modify_path:
@@ -566,17 +721,24 @@ class Installer:
 
         print(PRE_MESSAGE.format(**kwargs))
 
+    def display_pre_uninstall_message(self):
+        kwargs = {
+            "poetry": colorize("info", "Poetry"),
+            "poetry_home_bin": colorize(
+                "comment",
+                POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME").replace(
+                    os.getenv("USERPROFILE", ""), "%USERPROFILE%"
+                ),
+            ),
+        }
+
+        print(PRE_UNINSTALL_MESSAGE.format(**kwargs))
+
     def display_post_message(self, version):
         print("")
 
         kwargs = {
             "poetry": colorize("info", "Poetry"),
-            "poetry_home_bin": colorize(
-                "comment", POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME")
-            ),
-            "poetry_home_env": colorize(
-                "comment", POETRY_ENV.replace(os.getenv("HOME", ""), "$HOME")
-            ),
             "version": colorize("comment", version),
         }
 
@@ -584,10 +746,21 @@ class Installer:
             message = POST_MESSAGE_WINDOWS
             if not self._modify_path:
                 message = POST_MESSAGE_WINDOWS_NO_MODIFY_PATH
+
+            poetry_home_bin = POETRY_BIN.replace(
+                os.getenv("USERPROFILE", ""), "%USERPROFILE%"
+            )
         else:
             message = POST_MESSAGE_UNIX
             if not self._modify_path:
                 message = POST_MESSAGE_UNIX_NO_MODIFY_PATH
+
+            poetry_home_bin = POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME")
+            kwargs["poetry_home_env"] = colorize(
+                "comment", POETRY_ENV.replace(os.getenv("HOME", ""), "$HOME")
+            )
+
+        kwargs["poetry_home_bin"] = colorize("comment", poetry_home_bin)
 
         print(message.format(**kwargs))
 
@@ -609,6 +782,9 @@ def main():
     parser.add_argument(
         "-y", "--yes", dest="accept_all", action="store_true", default=False
     )
+    parser.add_argument(
+        "--uninstall", dest="uninstall", action="store_true", default=False
+    )
 
     args = parser.parse_args()
 
@@ -618,6 +794,9 @@ def main():
         force=args.force,
         accept_all=args.accept_all,
     )
+
+    if args.uninstall:
+        return installer.uninstall()
 
     return installer.run()
 

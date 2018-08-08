@@ -15,8 +15,10 @@ install:
   # about it being out of date.
   - "python -m pip install --disable-pip-version-check --user --upgrade pip"
 
-  # Create poetry virtualenv
-  - "python -m pip install poetry --pre"
+  # Installing Poetry
+  - "python get-poetry.py --preview -y"
+  # Add Poetry to PATH
+  - set PATH=%PATH%;C:\Users\appveyor\.poetry\bin
 
   # Install dependencies
   - "poetry install -v"
