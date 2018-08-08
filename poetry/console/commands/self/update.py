@@ -23,7 +23,21 @@ class SelfUpdateCommand(Command):
         from poetry.__version__ import __version__
         from poetry.repositories.pypi_repository import PyPiRepository
         from poetry.semver import Version
+        from poetry.utils._compat import Path
         from poetry.utils._compat import decode
+        from poetry.utils.appdirs import expanduser
+
+        home = Path(expanduser("~"))
+        poetry_home = home / ".poetry"
+
+        current_file = Path(__file__)
+
+        try:
+            current_file.relative_to(poetry_home)
+        except ValueError:
+            raise RuntimeError(
+                "Poetry has not been installed with the recommended installer. Aborting."
+            )
 
         version = self.argument("version")
         if not version:
@@ -84,38 +98,66 @@ class SelfUpdateCommand(Command):
 
     def update(self, release):
         from poetry.utils._compat import Path
-        from poetry.utils.helpers import temporary_directory
+        from poetry.utils.appdirs import expanduser
+
+        home = Path(expanduser("~"))
+        poetry_home = home / ".poetry"
+        poetry_bin = poetry_home / "bin"
+        poetry_lib = poetry_home / "lib"
+        poetry_lib_backup = poetry_home / "lib.backup"
 
         version = release.version
         self.line("Updating to <info>{}</info>".format(version))
 
-        prefix = sys.prefix
-        base_prefix = getattr(sys, "base_prefix", None)
-        real_prefix = getattr(sys, "real_prefix", None)
+        if poetry_lib.exists():
+            # Backing up the current lib directory
+            if poetry_lib_backup.exists():
+                shutil.rmtree(str(poetry_lib_backup))
 
-        prefix_poetry = self._bin_path(Path(prefix), "poetry")
-        if prefix_poetry.exists():
-            pip = self._bin_path(prefix_poetry.parent.parent, "pip").resolve()
-        elif (
-            base_prefix
-            and base_prefix != prefix
-            and self._bin_path(Path(base_prefix), "poetry").exists()
-        ):
-            pip = self._bin_path(Path(base_prefix), "pip")
-        elif real_prefix:
-            pip = self._bin_path(Path(real_prefix), "pip")
-        else:
-            pip = self._bin_path(Path(prefix), "pip")
+            shutil.copytree(str(poetry_lib), str(poetry_lib_backup))
+            shutil.rmtree(str(poetry_lib))
 
-            if not pip.exists():
-                raise RuntimeError("Unable to determine poetry's path")
+        try:
+            self._update(release, poetry_lib)
+        except Exception as e:
+            # Reverting changes
+            if poetry_lib_backup.exists():
+                if poetry_lib.exists():
+                    shutil.rmtree(str(poetry_lib))
+
+                shutil.copytree(str(poetry_lib_backup), str(poetry_lib))
+
+            message = (
+                "An error occured when updating Poetry. "
+                "The changes have been rolled back."
+            )
+
+            if self.output.is_debug():
+                message += " Original error: {}".format(e)
+
+            raise RuntimeError(message)
+        finally:
+            if poetry_lib_backup.exists():
+                shutil.rmtree(str(poetry_lib_backup))
+
+        self.line("")
+        self.line(
+            "<info>Poetry</> (<comment>{}</>) "
+            "is installed now. Great!".format(version)
+        )
+
+    def _update(self, release, lib):
+        from poetry.utils._compat import Path
+        from poetry.utils.helpers import temporary_directory
 
         with temporary_directory(prefix="poetry-update-") as temp_dir:
             temp_dir = Path(temp_dir)
             dist = temp_dir / "dist"
             self.line("  - Getting dependencies")
             self.process(
-                str(pip),
+                sys.executable,
+                "-m",
+                "pip",
                 "install",
                 "-U",
                 "poetry=={}".format(release.version),
@@ -142,39 +184,7 @@ class SelfUpdateCommand(Command):
                     shutil.copy(str(file), str(dest))
                     os.unlink(str(file))
 
-            wheel_data = dist / "poetry-{}.dist-info".format(version) / "WHEEL"
-            with wheel_data.open() as f:
-                wheel_data = Parser().parsestr(f.read())
-
-            tag = wheel_data["Tag"]
-
-            # Repack everything and install
-            self.line("  - Updating <info>poetry</info>")
-
-            shutil.make_archive(
-                str(temp_dir / "poetry-{}-{}".format(version, tag)),
-                format="zip",
-                root_dir=str(dist),
-            )
-
-            os.rename(
-                str(temp_dir / "poetry-{}-{}.zip".format(version, tag)),
-                str(temp_dir / "poetry-{}-{}.whl".format(version, tag)),
-            )
-
-            self.process(
-                str(pip),
-                "install",
-                "--upgrade",
-                "--no-deps",
-                str(temp_dir / "poetry-{}-{}.whl".format(version, tag)),
-            )
-
-            self.line("")
-            self.line(
-                "<info>poetry</> (<comment>{}</>) "
-                "successfully installed!".format(version)
-            )
+            shutil.copytree(dist, str(lib))
 
     def process(self, *args):
         return subprocess.check_output(list(args), stderr=subprocess.STDOUT)
