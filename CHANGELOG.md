@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed a recursion error with circular dependencies.
+
+
 ## [0.11.4] - 2018-07-30
 
 ### Fixed
