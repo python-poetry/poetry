@@ -1,4 +1,5 @@
 import cgi
+import io
 import re
 
 try:
@@ -341,7 +342,7 @@ class LegacyRepository(PyPiRepository):
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = self._session.get(url, stream=True)
-        with open(dest, "wb") as f:
+        with io.open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)

@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import contextlib
 import hashlib
+import io
 import os
 import re
 import tempfile
@@ -233,7 +234,7 @@ class WheelBuilder(Builder):
             zinfo.external_attr |= 0x10  # MS-DOS directory flag
 
         hashsum = hashlib.sha256()
-        with open(full_path, "rb") as src:
+        with io.open(full_path, "rb") as src:
             while True:
                 buf = src.read(1024 * 8)
                 if not buf:

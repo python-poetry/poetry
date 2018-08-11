@@ -1,4 +1,5 @@
 import logging
+import io
 import os
 import re
 import tarfile
@@ -512,7 +513,7 @@ class PyPiRepository(Repository):
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = get(url, stream=True)
-        with open(dest, "wb") as f:
+        with io.open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
