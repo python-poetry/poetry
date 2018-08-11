@@ -1,3 +1,4 @@
+import io
 import json
 import os
 
@@ -26,7 +27,7 @@ def load_licenses():
 
     licenses_file = os.path.join(os.path.dirname(__file__), "data", "licenses.json")
 
-    with open(licenses_file, encoding="utf-8") as f:
+    with io.open(licenses_file, encoding="utf-8") as f:
         data = json.loads(f.read())
 
     for name, license in data.items():

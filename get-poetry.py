@@ -17,6 +17,7 @@ since if poetry does not find the dependencies in the _vendor
 directory, it will look for them in the base system.
 """
 import argparse
+import io
 import json
 import os
 import platform
@@ -281,7 +282,7 @@ class Installer:
             wheel_data = os.path.join(
                 dist, "poetry-{}.dist-info".format(version), "WHEEL"
             )
-            with open(wheel_data, encoding="utf-8") as f:
+            with io.open(wheel_data, encoding="utf-8") as f:
                 wheel_data = Parser().parsestr(f.read())
 
             tag = wheel_data["Tag"]
