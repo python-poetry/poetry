@@ -143,7 +143,7 @@ class SelfUpdateCommand(Command):
                     os.unlink(str(file))
 
             wheel_data = dist / "poetry-{}.dist-info".format(version) / "WHEEL"
-            with wheel_data.open() as f:
+            with wheel_data.open(encoding="utf-8") as f:
                 wheel_data = Parser().parsestr(f.read())
 
             tag = wheel_data["Tag"]

@@ -281,7 +281,7 @@ class Installer:
             wheel_data = os.path.join(
                 dist, "poetry-{}.dist-info".format(version), "WHEEL"
             )
-            with open(wheel_data) as f:
+            with open(wheel_data, encoding="utf-8") as f:
                 wheel_data = Parser().parsestr(f.read())
 
             tag = wheel_data["Tag"]
