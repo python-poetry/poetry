@@ -152,7 +152,7 @@ class Locker:
 
     def _get_content_hash(self):  # type: () -> str
         """
-        Returns the sha256 hash of the sorted content of the composer file.
+        Returns the sha256 hash of the sorted content of the pyproject file.
         """
         content = self._local_config
 
