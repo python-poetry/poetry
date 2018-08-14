@@ -298,8 +298,13 @@ class LegacyRepository(PyPiRepository):
         }
 
         links = list(page.links_for_version(Version.parse(version)))
+
+        if not links:
+            return data
+
         urls = {}
         hashes = []
+
         default_link = links[0]
         for link in links:
             if link.is_wheel:
