@@ -30,16 +30,14 @@ class DebugResolveCommand(Command):
         if not packages:
             package = self.poetry.package
         else:
-            requirements = self._determine_requirements(packages)
-            requirements = self._format_requirements(requirements)
-
-            # validate requirements format
-            for constraint in requirements.values():
-                parse_constraint(constraint)
+            package = ProjectPackage(
+                self.poetry.package.name, self.poetry.package.version
+            )
+            requirements = self._format_requirements(packages)
 
             dependencies = []
             for name, constraint in requirements.items():
-                dep = Dependency(name, constraint)
+                dep = package.add_dependency(name, constraint)
                 extras = []
                 for extra in self.option("extras"):
                     if " " in extra:
@@ -50,17 +48,9 @@ class DebugResolveCommand(Command):
                 for ex in extras:
                     dep.extras.append(ex)
 
-                dependencies.append(dep)
-
-            package = ProjectPackage(
-                self.poetry.package.name, self.poetry.package.version
-            )
-
             package.python_versions = (
                 self.option("python") or self.poetry.package.python_versions
             )
-            for dep in dependencies:
-                package.requires.append(dep)
 
         solver = Solver(
             package, self.poetry.pool, Repository(), Repository(), self.output
@@ -101,23 +91,34 @@ class DebugResolveCommand(Command):
                     self.line("    - {}: {}".format(req_name, req_value))
 
     def _determine_requirements(self, requires):  # type: (List[str]) -> List[str]
+        from poetry.semver import parse_constraint
+
         if not requires:
             return []
 
         requires = self._parse_name_version_pairs(requires)
         result = []
         for requirement in requires:
-            if "version" not in requirement:
-                requirement["version"] = "*"
+            if "version" in requirement:
+                parse_constraint(requirement["version"])
 
-            result.append("{} {}".format(requirement["name"], requirement["version"]))
-
-        return result
+        return requires
 
     def _parse_name_version_pairs(self, pairs):  # type: (list) -> list
         result = []
 
         for i in range(len(pairs)):
+            if pairs[i].startswith("git+https://"):
+                url = pairs[i].lstrip("git+")
+                url, rev = url.split("@")
+                pair = {"name": url.split("/")[-1].rstrip(".git"), "git": url}
+                if rev:
+                    pair["rev"] = rev
+
+                result.append(pair)
+
+                continue
+
             pair = re.sub("^([^=: ]+)[=: ](.*)$", "\\1 \\2", pairs[i].strip())
             pair = pair.strip()
 
@@ -125,14 +126,16 @@ class DebugResolveCommand(Command):
                 name, version = pair.split(" ", 2)
                 result.append({"name": name, "version": version})
             else:
-                result.append({"name": pair})
+                result.append({"name": pair, "version": "*"})
 
         return result
 
     def _format_requirements(self, requirements):  # type: (List[str]) -> dict
         requires = {}
-        requirements = self._parse_name_version_pairs(requirements)
+        requirements = self._determine_requirements(requirements)
+
         for requirement in requirements:
-            requires[requirement["name"]] = requirement["version"]
+            name = requirement.pop("name")
+            requires[name] = requirement
 
         return requires
