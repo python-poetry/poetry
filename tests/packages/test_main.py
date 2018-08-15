@@ -39,7 +39,7 @@ def test_dependency_from_pep_508_with_extras():
 
     assert dep.name == "requests"
     assert str(dep.constraint) == "2.18.0"
-    assert dep.extras == ["foo", "bar"]
+    assert dep.in_extras == ["foo", "bar"]
 
 
 def test_dependency_from_pep_508_with_python_version():
@@ -84,7 +84,7 @@ def test_dependency_from_pep_508_complex():
 
     assert dep.name == "requests"
     assert str(dep.constraint) == "2.18.0"
-    assert dep.extras == ["foo"]
+    assert dep.in_extras == ["foo"]
     assert dep.python_versions == ">=2.7 !=3.2.*"
     assert dep.platform == "win32 || darwin"
 

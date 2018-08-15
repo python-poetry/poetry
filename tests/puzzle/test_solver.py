@@ -12,6 +12,7 @@ from poetry.puzzle.exceptions import SolverProblemError
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+from tests.repositories.test_pypi_repository import MockRepository
 
 
 @pytest.fixture()
@@ -919,5 +920,46 @@ def test_solver_does_not_get_stuck_in_recursion_on_circular_dependency(
             {"job": "install", "package": package_c},
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_a},
+        ],
+    )
+
+
+def test_solver_can_resolve_git_dependencies(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.2")},
+        ],
+    )
+
+
+def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    package.add_dependency(
+        "demo", {"git": "https://github.com/demo/demo.git", "extras": ["foo"]}
+    )
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": cleo},
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.2")},
         ],
     )

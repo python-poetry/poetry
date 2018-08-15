@@ -209,7 +209,15 @@ class Provider:
                     package = Package(meta.name, meta.version)
 
                     for req in reqs:
-                        package.requires.append(dependency_from_pep_508(req))
+                        dep = dependency_from_pep_508(req)
+                        if dep.in_extras:
+                            for extra in dep.in_extras:
+                                if extra not in package.extras:
+                                    package.extras[extra] = []
+
+                                package.extras[extra].append(dep)
+
+                        package.requires.append(dep)
                 except Exception:
                     raise
                 finally:
@@ -230,6 +238,12 @@ class Provider:
                     dependency.name, package.name
                 )
             )
+
+        if dependency.extras:
+            for extra in dependency.extras:
+                if extra in package.extras:
+                    for dep in package.extras[extra]:
+                        dep.activate()
 
         return [package]
 
@@ -314,10 +328,10 @@ class Provider:
         ]
 
     def complete_package(self, package):  # type: (str, Version) -> Package
-        if package.is_root() or package.source_type in {"git", "file"}:
+        if package.is_root():
             return package
 
-        if package.source_type != "directory":
+        if package.source_type not in {"directory", "file", "git"}:
             package = self._pool.package(
                 package.name, package.version.text, extras=package.requires_extras
             )
