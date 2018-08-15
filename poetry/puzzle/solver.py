@@ -213,6 +213,9 @@ class Solver:
                 if not is_activated:
                     continue
 
+            if previous and previous["name"] == dependency.name:
+                break
+
             for pkg in packages:
                 if pkg.name == dependency.name:
                     # If there is already a child with this name

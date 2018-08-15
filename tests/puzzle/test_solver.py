@@ -893,3 +893,31 @@ def test_solver_fails_if_dependency_name_does_not_match_package(solver, repo, pa
 
     with pytest.raises(RuntimeError):
         solver.solve()
+
+
+def test_solver_does_not_get_stuck_in_recursion_on_circular_dependency(
+    solver, repo, package
+):
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", "^1.0")
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency("C", "^1.0")
+    package_c = get_package("C", "1.0")
+    package_c.add_dependency("B", "^1.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    package.add_dependency("A", "^1.0")
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
