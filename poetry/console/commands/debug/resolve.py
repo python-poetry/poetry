@@ -110,7 +110,10 @@ class DebugResolveCommand(Command):
         for i in range(len(pairs)):
             if pairs[i].startswith("git+https://"):
                 url = pairs[i].lstrip("git+")
-                url, rev = url.split("@")
+                rev = None
+                if "@" in url:
+                    url, rev = url.split("@")
+
                 pair = {"name": url.split("/")[-1].rstrip(".git"), "git": url}
                 if rev:
                     pair["rev"] = rev
