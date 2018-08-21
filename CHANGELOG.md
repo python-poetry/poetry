@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed a recursion error with circular dependencies.
+- Fixed the `config` command setting incorrect values for paths.
 
 
 ## [0.11.4] - 2018-07-30
