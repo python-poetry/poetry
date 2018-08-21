@@ -112,8 +112,13 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "git":
+            url = (
+                "ssh://" + package.source_url.replace(":", "/")
+                if package.source_url.startswith("git@")
+                else package.source_url
+            )
             return "git+{}@{}#egg={}".format(
-                package.source_url, package.source_reference, package.name
+                url, package.source_reference, package.name
             )
 
         return "{}=={}".format(package.name, package.version)
