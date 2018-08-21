@@ -67,6 +67,11 @@ To remove a repository (repo is a short alias for repositories):
                 lambda val: str(Path(val).resolve()),
                 str(Path(CACHE_DIR) / "virtualenvs"),
             ),
+            "settings.virtualenvs.system-site-packages": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
         }
 
         return unique_config_values

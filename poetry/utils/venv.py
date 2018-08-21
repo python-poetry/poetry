@@ -59,6 +59,9 @@ class Venv(object):
 
                 create_venv = config.setting("settings.virtualenvs.create")
                 root_venv = config.setting("settings.virtualenvs.in-project")
+                system_site_pkgs = config.setting(
+                    "settings.virtualenvs.system-site-packages"
+                )
 
                 venv_path = config.setting("settings.virtualenvs.path")
                 if root_venv:
@@ -102,7 +105,7 @@ class Venv(object):
                         )
                     )
 
-                    cls.build(str(venv))
+                    cls.build(str(venv), system_site_pkgs)
                 else:
                     if io.is_very_verbose():
                         io.writeln(
@@ -132,17 +135,21 @@ class Venv(object):
         return cls(venv)
 
     @classmethod
-    def build(cls, path):
+    def build(cls, path, system_site_packages=False):
         try:
             from venv import EnvBuilder
 
-            builder = EnvBuilder(with_pip=True)
+            builder = EnvBuilder(
+                with_pip=True, system_site_packages=system_site_packages
+            )
             build = builder.create
         except ImportError:
             # We fallback on virtualenv for Python 2.7
             from virtualenv import create_environment
 
-            build = create_environment
+            build: lambda path: create_environment(
+                path, site_packages=system_site_packages
+            )
 
         build(path)
 

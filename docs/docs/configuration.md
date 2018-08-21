@@ -31,3 +31,7 @@ Defaults to one of the following directories:
 
 ### `repository.<name>`: string
 Set a new alternative repository. See [Repositories](/repositories/) for more information.
+
+### `settings.virtualenvs.system-site-packages`: boolean
+Sets the virtualenv `system-site-packages` flag when creating the virtualenv.
+Defaults to `false`.
