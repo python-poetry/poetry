@@ -193,7 +193,11 @@ lists all packages available."""
 
     def display_package_tree(self, package, installed_repo):
         self.write("<info>{}</info>".format(package.pretty_name))
-        self.line(" {} {}".format(package.pretty_version, package.description))
+        description = ""
+        if package.description:
+            description = " " + package.description
+
+        self.line(" {}{}".format(package.pretty_version, description))
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
