@@ -9,8 +9,8 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
-from poetry.utils.venv import NullVenv
-from poetry.utils.venv import Venv
+from poetry.utils.env import NullEnv
+from poetry.utils.env import Env
 
 from .dependency import Dependency
 
@@ -68,7 +68,7 @@ class DirectoryDependency(Dependency):
             from poetry.poetry import Poetry
 
             poetry = Poetry.create(self._full_path)
-            builder = SdistBuilder(poetry, NullVenv(), NullIO())
+            builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
             with setup.open("w") as f:
                 f.write(decode(builder.build_setup()))
@@ -87,7 +87,7 @@ class DirectoryDependency(Dependency):
 
             try:
                 cwd = base
-                venv = Venv.create(NullIO(), cwd=cwd)
+                venv = Env.create_venv(NullIO(), cwd=cwd)
                 venv.run("python", "setup.py", "egg_info")
             finally:
                 os.chdir(current_dir)

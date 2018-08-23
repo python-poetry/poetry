@@ -38,7 +38,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.venv import Venv
+from poetry.utils.env import Env
 from poetry.version.markers import InvalidMarker
 
 from .repository import Repository
@@ -499,7 +499,7 @@ class PyPiRepository(Repository):
         if not setup.exists():
             return info
 
-        venv = Venv.create(NullIO())
+        venv = Env.create_venv(NullIO())
 
         current_dir = os.getcwd()
         os.chdir(sdist_dir.as_posix())

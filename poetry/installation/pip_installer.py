@@ -12,14 +12,14 @@ except ImportError:
     import urlparse
 
 from poetry.utils._compat import encode
-from poetry.utils.venv import Venv
+from poetry.utils.env import Env
 
 from .base_installer import BaseInstaller
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, venv, io):  # type: (Venv, ...) -> None
-        self._venv = venv
+    def __init__(self, env, io):  # type: (Env, ...) -> None
+        self._env = env
         self._io = io
 
     def install(self, package, update=False):
@@ -88,7 +88,7 @@ class PipInstaller(BaseInstaller):
             raise
 
     def run(self, *args, **kwargs):  # type: (...) -> str
-        return self._venv.run("pip", *args, **kwargs)
+        return self._env.run("pip", *args, **kwargs)
 
     def requirement(self, package, formatted=False):
         if formatted and not package.source_type:

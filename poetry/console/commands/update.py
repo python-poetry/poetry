@@ -1,7 +1,7 @@
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class UpdateCommand(VenvCommand):
+class UpdateCommand(EnvCommand):
     """
     Update dependencies as according to the <comment>pyproject.toml</> file.
 
@@ -21,7 +21,7 @@ class UpdateCommand(VenvCommand):
 
         installer = Installer(
             self.output,
-            self.venv,
+            self.env,
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool,

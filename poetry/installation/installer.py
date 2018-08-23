@@ -28,14 +28,14 @@ class Installer:
     def __init__(
         self,
         io,
-        venv,
+        env,
         package,  # type: Package
         locker,  # type: Locker
         pool,  # type: Pool
         installed=None,  # type: (Union[InstalledRepository, None])
     ):
         self._io = io
-        self._venv = venv
+        self._env = env
         self._package = package
         self._locker = locker
         self._pool = pool
@@ -183,7 +183,7 @@ class Installer:
         self._populate_local_repo(local_repo, ops, locked_repository)
 
         with self._package.with_python_versions(
-            ".".join([str(i) for i in self._venv.version_info[:3]])
+            ".".join([str(i) for i in self._env.version_info[:3]])
         ):
             # We resolve again by only using the lock file
             pool = Pool()
@@ -458,7 +458,7 @@ class Installer:
                     op.unskip()
 
             python = Version.parse(
-                ".".join([str(i) for i in self._venv.version_info[:3]])
+                ".".join([str(i) for i in self._env.version_info[:3]])
             )
             if "python" in package.requirements:
                 python_constraint = parse_constraint(package.requirements["python"])
@@ -535,7 +535,7 @@ class Installer:
         return _extra_packages(extra_packages)
 
     def _get_installer(self):  # type: () -> BaseInstaller
-        return PipInstaller(self._venv, self._io)
+        return PipInstaller(self._env, self._io)
 
     def _get_installed(self):  # type: () -> InstalledRepository
-        return InstalledRepository.load(self._venv)
+        return InstalledRepository.load(self._env)
