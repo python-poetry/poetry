@@ -1,10 +1,10 @@
 import os
 import sys
 
-from ..venv_command import VenvCommand
+from ..command import Command
 
 
-class DebugInfoCommand(VenvCommand):
+class DebugInfoCommand(Command):
     """
     Shows debug information.
 
@@ -12,9 +12,11 @@ class DebugInfoCommand(VenvCommand):
     """
 
     def handle(self):
+        from ....utils.env import Env
+
         poetry = self.poetry
         package = poetry.package
-        venv = self.venv
+        env = Env.get()
 
         poetry_python_version = ".".join(str(s) for s in sys.version_info[:3])
 
@@ -28,18 +30,18 @@ class DebugInfoCommand(VenvCommand):
 
         self.line("")
 
-        venv_python_version = ".".join(str(s) for s in venv.version_info[:3])
+        env_python_version = ".".join(str(s) for s in env.version_info[:3])
         self.output.title("Virtualenv")
         self.output.listing(
             [
                 "<info>Python</info>:         <comment>{}</>".format(
-                    venv_python_version
+                    env_python_version
                 ),
                 "<info>Implementation</info>: <comment>{}</>".format(
-                    venv.python_implementation
+                    env.python_implementation
                 ),
                 "<info>Path</info>:           <comment>{}</>".format(
-                    venv.venv if venv.is_venv() else "NA"
+                    env.path if env.is_venv() else "NA"
                 ),
             ]
         )
@@ -51,6 +53,7 @@ class DebugInfoCommand(VenvCommand):
             [
                 "<info>Platform</info>: <comment>{}</>".format(sys.platform),
                 "<info>OS</info>:       <comment>{}</>".format(os.name),
+                "<info>Python</info>:   <comment>{}</>".format(env.base),
             ]
         )
 
