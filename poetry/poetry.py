@@ -120,10 +120,22 @@ class Poetry:
                     package.python_versions = constraint
                     continue
 
+                if isinstance(constraint, list):
+                    for _constraint in constraint:
+                        package.add_dependency(name, _constraint)
+
+                    continue
+
                 package.add_dependency(name, constraint)
 
         if "dev-dependencies" in local_config:
             for name, constraint in local_config["dev-dependencies"].items():
+                if isinstance(constraint, list):
+                    for _constraint in constraint:
+                        package.add_dependency(name, _constraint)
+
+                    continue
+
                 package.add_dependency(name, constraint, category="dev")
 
         extras = local_config.get("extras", {})

@@ -197,6 +197,45 @@ def test_find_files_to_add():
     )
 
 
+def test_make_pkg_info_multi_constraints_dependency():
+    poetry = Poetry.create(
+        Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "project_with_multi_constraints_dependency"
+    )
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(to_str(pkg_info))
+
+    requires = parsed.get_all("Requires-Dist")
+    assert requires == [
+        'pendulum (>=1.5,<2.0); python_version < "3.4"',
+        'pendulum (>=2.0,<3.0); python_version >= "3.4" and python_version < "4.0"',
+    ]
+
+
+def test_find_files_to_add():
+    poetry = Poetry.create(project("complete"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    result = builder.find_files_to_add()
+
+    assert sorted(result) == sorted(
+        [
+            Path("LICENSE"),
+            Path("README.rst"),
+            Path("my_package/__init__.py"),
+            Path("my_package/data1/test.json"),
+            Path("my_package/sub_pkg1/__init__.py"),
+            Path("my_package/sub_pkg2/__init__.py"),
+            Path("my_package/sub_pkg2/data2/data.json"),
+            Path("pyproject.toml"),
+        ]
+    )
+
+
 def test_find_packages():
     poetry = Poetry.create(project("complete"))
 
