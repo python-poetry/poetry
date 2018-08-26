@@ -81,7 +81,7 @@ class Env(object):
         return self._bin("pip")
 
     @classmethod
-    def get(cls, reload=False):  # type: (IO, bool) -> Env
+    def get(cls, reload=False, cwd=None):  # type: (IO, bool) -> Env
         if cls._env is not None and not reload:
             return cls._env
 
@@ -93,6 +93,14 @@ class Env(object):
         )
 
         if not in_venv:
+            # Checking if a local virtualenv exists
+            if cwd and (cwd / ".venv").exists():
+                venv = cwd / ".venv"
+
+                return VirtualEnv(
+                    Path(venv), Path(getattr(sys, "base_prefix", sys.prefix))
+                )
+
             return SystemEnv(Path(sys.prefix))
 
         return VirtualEnv(
@@ -101,77 +109,60 @@ class Env(object):
         )
 
     @classmethod
-    def create_venv(cls, io, name=None, cwd=None):  # type: (IO, bool) -> Env
+    def create_venv(cls, io, name=None, cwd=None):  # type: (IO, bool, Path) -> Env
         if cls._env is not None:
             return cls._env
 
-        # Check if we are inside a virtualenv or not
-        in_venv = (
-            os.environ.get("VIRTUAL_ENV") is not None
-            or hasattr(sys, "real_prefix")
-            or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
-        )
+        env = cls.get(cwd=cwd)
+        if env.is_venv():
+            # Already inside a virtualenv.
+            return env
 
-        venv = os.environ.get("VIRTUAL_ENV", getattr(sys, "real_prefix", sys.prefix))
-        venv = Path(venv)
-        if not in_venv:
-            # Not currently in a virtual env, we create one
-            if cwd and (cwd / ".venv").exists():
-                venv = cwd / ".venv"
-            else:
-                config = Config.create("config.toml")
+        config = Config.create("config.toml")
 
-                create_venv = config.setting("settings.virtualenvs.create")
-                root_venv = config.setting("settings.virtualenvs.in-project")
+        create_venv = config.setting("settings.virtualenvs.create")
+        root_venv = config.setting("settings.virtualenvs.in-project")
 
-                venv_path = config.setting("settings.virtualenvs.path")
-                if root_venv:
-                    if not cwd:
-                        raise RuntimeError(
-                            "Unable to determine the project's directory"
-                        )
+        venv_path = config.setting("settings.virtualenvs.path")
+        if root_venv:
+            if not cwd:
+                raise RuntimeError("Unable to determine the project's directory")
 
-                    venv_path = cwd / ".venv"
-                elif venv_path is None:
-                    venv_path = Path(CACHE_DIR) / "virtualenvs"
-                else:
-                    venv_path = Path(venv_path)
+            venv_path = cwd / ".venv"
+        elif venv_path is None:
+            venv_path = Path(CACHE_DIR) / "virtualenvs"
+        else:
+            venv_path = Path(venv_path)
 
-                if not name:
-                    name = Path.cwd().name
+        if not name:
+            name = Path.cwd().name
 
-                name = "{}-py{}".format(
-                    name, ".".join([str(v) for v in sys.version_info[:2]])
+        name = "{}-py{}".format(name, ".".join([str(v) for v in sys.version_info[:2]]))
+
+        if root_venv:
+            venv = venv_path
+        else:
+            venv = venv_path / name
+
+        if not venv.exists():
+            if create_venv is False:
+                io.writeln(
+                    "<fg=black;bg=yellow>"
+                    "Skipping virtualenv creation, "
+                    "as specified in config file."
+                    "</>"
                 )
 
-                if root_venv:
-                    venv = venv_path
-                else:
-                    venv = venv_path / name
+                return SystemEnv(Path(sys.prefix))
 
-                if not venv.exists():
-                    if create_venv is False:
-                        io.writeln(
-                            "<fg=black;bg=yellow>"
-                            "Skipping virtualenv creation, "
-                            "as specified in config file."
-                            "</>"
-                        )
+            io.writeln(
+                "Creating virtualenv <info>{}</> in {}".format(name, str(venv_path))
+            )
 
-                        return SystemEnv(Path(sys.prefix))
-
-                    io.writeln(
-                        "Creating virtualenv <info>{}</> in {}".format(
-                            name, str(venv_path)
-                        )
-                    )
-
-                    cls.build_venv(str(venv))
-                else:
-                    if io.is_very_verbose():
-                        io.writeln(
-                            "Virtualenv <info>{}</> already exists.".format(name)
-                        )
+            cls.build_venv(str(venv))
+        else:
+            if io.is_very_verbose():
+                io.writeln("Virtualenv <info>{}</> already exists.".format(name))
 
         # venv detection:
         # stdlib venv may symlink sys.executable, so we can't use realpath.

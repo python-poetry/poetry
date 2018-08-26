@@ -16,7 +16,7 @@ class DebugInfoCommand(Command):
 
         poetry = self.poetry
         package = poetry.package
-        env = Env.get()
+        env = Env.get(cwd=poetry.file.parent)
 
         poetry_python_version = ".".join(str(s) for s in sys.version_info[:3])
 
