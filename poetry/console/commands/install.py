@@ -1,7 +1,7 @@
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class InstallCommand(VenvCommand):
+class InstallCommand(EnvCommand):
     """
     Installs the project dependencies.
 
@@ -28,7 +28,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 
         installer = Installer(
             self.output,
-            self.venv,
+            self.env,
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool,

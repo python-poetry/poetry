@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import tarfile
 import zipfile
 
@@ -37,7 +38,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.venv import Venv
+from poetry.utils.env import Env
 from poetry.version.markers import InvalidMarker
 
 from .repository import Repository
@@ -288,15 +289,42 @@ class PyPiRepository(Repository):
                     continue
 
                 # If bdist_wheel, check if it's universal
-                python_version = url["python_version"]
-                if python_version not in ["py2.py3", "py3", "py2"]:
+                filename = url["filename"]
+                if not re.search("-py2\.py3-none-any.whl", filename):
                     continue
 
-                parts = urlparse.urlparse(url["url"])
-                filename = os.path.basename(parts.path)
+                urls[dist_type] = url["url"]
 
-                if "-none-any" not in filename:
-                    continue
+            if "sdist" in urls and "bdist_wheel" not in urls:
+                # If can't found a universal wheel
+                # but we found an sdist, inspect the sdist first
+                info = self._get_info_from_urls(urls)
+                if info["requires_dist"]:
+                    data["requires_dist"] = info["requires_dist"]
+
+                    if not data["requires_python"]:
+                        data["requires_python"] = info["requires_python"]
+
+                    return data
+                else:
+                    del urls["sdist"]
+
+            if not urls:
+                # If we don't have urls, we try to take the first one
+                # we find and go from there
+                if not json_data["urls"]:
+                    return data
+
+                for url in json_data["urls"]:
+                    # Only get sdist and universal wheels if they exist
+                    dist_type = url["packagetype"]
+
+                    if dist_type != "bdist_wheel":
+                        continue
+
+                    urls[url["packagetype"]] = url["url"]
+
+                    break
 
             if not urls or "bdist_wheel" not in urls:
                 # If we don't have urls, we try to take the first one
@@ -471,7 +499,7 @@ class PyPiRepository(Repository):
         if not setup.exists():
             return info
 
-        venv = Venv.create(NullIO())
+        venv = Env.create_venv(NullIO())
 
         current_dir = os.getcwd()
         os.chdir(sdist_dir.as_posix())

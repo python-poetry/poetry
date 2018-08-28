@@ -1,9 +1,9 @@
 import os
 
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class DevelopCommand(VenvCommand):
+class DevelopCommand(EnvCommand):
     """
     Installs the current project in development mode.
 
@@ -18,7 +18,7 @@ The <info>develop</info> command installs the current project in development mod
         from poetry.masonry.builders import SdistBuilder
         from poetry.io import NullIO
         from poetry.utils._compat import decode
-        from poetry.utils.venv import NullVenv
+        from poetry.utils.env import NullEnv
 
         setup = self.poetry.file.parent / "setup.py"
         has_setup = setup.exists()
@@ -26,7 +26,7 @@ The <info>develop</info> command installs the current project in development mod
         if has_setup:
             self.line("<warning>A setup.py file already exists. Using it.</warning>")
         else:
-            builder = SdistBuilder(self.poetry, NullVenv(), NullIO())
+            builder = SdistBuilder(self.poetry, NullEnv(), NullIO())
 
             with setup.open("w") as f:
                 f.write(decode(builder.build_setup()))
@@ -45,4 +45,4 @@ The <info>develop</info> command installs the current project in development mod
                 self.poetry.package.pretty_name, self.poetry.package.pretty_version
             )
         )
-        self.venv.run("pip", "install", "-e", str(setup.parent), "--no-deps")
+        self.env.run("pip", "install", "-e", str(setup.parent), "--no-deps")

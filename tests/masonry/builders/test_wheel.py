@@ -6,7 +6,7 @@ from poetry.io import NullIO
 from poetry.masonry.builders import WheelBuilder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
-from poetry.utils.venv import NullVenv
+from poetry.utils.env import NullEnv
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
@@ -29,33 +29,31 @@ def clear_samples_dist():
 
 def test_wheel_module():
     module_path = fixtures_dir / "module1"
-    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
 
     whl = module_path / "dist" / "module1-0.1-py2.py3-none-any.whl"
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "module1.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "module1.py" in z.namelist()
 
 
 def test_wheel_package():
     module_path = fixtures_dir / "complete"
-    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
 
     whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "my_package/sub_pkg1/__init__.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "my_package/sub_pkg1/__init__.py" in z.namelist()
 
 
 def test_wheel_prerelease():
     module_path = fixtures_dir / "prerelease"
-    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
 
     whl = module_path / "dist" / "prerelease-0.1b1-py2.py3-none-any.whl"
 
@@ -64,26 +62,63 @@ def test_wheel_prerelease():
 
 def test_wheel_package_src():
     module_path = fixtures_dir / "source_package"
-    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
 
     whl = module_path / "dist" / "package_src-0.1-py2.py3-none-any.whl"
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
-
-    assert "package_src/__init__.py" in z.namelist()
-    assert "package_src/module.py" in z.namelist()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "package_src/__init__.py" in z.namelist()
+        assert "package_src/module.py" in z.namelist()
 
 
 def test_wheel_module_src():
     module_path = fixtures_dir / "source_file"
-    WheelBuilder.make(Poetry.create(str(module_path)), NullVenv(), NullIO())
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
 
     whl = module_path / "dist" / "module_src-0.1-py2.py3-none-any.whl"
 
     assert whl.exists()
 
-    z = zipfile.ZipFile(str(whl))
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "module_src.py" in z.namelist()
 
-    assert "module_src.py" in z.namelist()
+
+def test_package_with_include(mocker):
+    # Patch git module to return specific excluded files
+    p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
+    p.return_value = [
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "with-include"
+            / "extra_dir"
+            / "vcs_excluded.txt"
+        ),
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "with-include"
+            / "extra_dir"
+            / "sub_pkg"
+            / "vcs_excluded.txt"
+        ),
+    ]
+    module_path = fixtures_dir / "with-include"
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "with_include-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        names = z.namelist()
+        assert "with_include-1.2.3.dist-info/LICENSE" in names
+        assert "extra_dir/__init__.py" in names
+        assert "extra_dir/vcs_excluded.txt" in names
+        assert "extra_dir/sub_pkg/__init__.py" in names
+        assert "extra_dir/sub_pkg/vcs_excluded.txt" not in names
+        assert "my_module.py" in names
+        assert "notes.txt" in names
+        assert "package_with_include/__init__.py" in names

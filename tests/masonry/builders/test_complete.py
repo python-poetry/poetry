@@ -14,7 +14,7 @@ from poetry.masonry.builders import CompleteBuilder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
-from poetry.utils.venv import NullVenv
+from poetry.utils.env import NullEnv
 
 fixtures_dir = Path(__file__).parent / "fixtures"
 
@@ -40,17 +40,18 @@ def clear_samples_dist():
 )
 def test_wheel_c_extension():
     module_path = fixtures_dir / "extended"
-    builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True), NullIO())
+    builder = CompleteBuilder(
+        Poetry.create(module_path), NullEnv(execute=True), NullIO()
+    )
     builder.build()
 
     sdist = fixtures_dir / "extended" / "dist" / "extended-0.1.tar.gz"
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "extended-0.1/build.py" in tar.getnames()
-    assert "extended-0.1/extended/extended.c" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "extended-0.1/build.py" in tar.getnames()
+        assert "extended-0.1/extended/extended.c" in tar.getnames()
 
     whl = list((module_path / "dist").glob("extended-0.1-cp*-cp*-*.whl"))[0]
 
@@ -88,7 +89,9 @@ $""".format(
 
 def test_complete():
     module_path = fixtures_dir / "complete"
-    builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True), NullIO())
+    builder = CompleteBuilder(
+        Poetry.create(module_path), NullEnv(execute=True), NullIO()
+    )
     builder.build()
 
     whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
@@ -160,16 +163,17 @@ My Package
 
 def test_module_src():
     module_path = fixtures_dir / "source_file"
-    builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True), NullIO())
+    builder = CompleteBuilder(
+        Poetry.create(module_path), NullEnv(execute=True), NullIO()
+    )
     builder.build()
 
     sdist = module_path / "dist" / "module-src-0.1.tar.gz"
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "module-src-0.1/src/module_src.py" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "module-src-0.1/src/module_src.py" in tar.getnames()
 
     whl = module_path / "dist" / "module_src-0.1-py2.py3-none-any.whl"
 
@@ -185,16 +189,17 @@ def test_module_src():
 
 def test_package_src():
     module_path = fixtures_dir / "source_package"
-    builder = CompleteBuilder(Poetry.create(module_path), NullVenv(True), NullIO())
+    builder = CompleteBuilder(
+        Poetry.create(module_path), NullEnv(execute=True), NullIO()
+    )
     builder.build()
 
     sdist = module_path / "dist" / "package-src-0.1.tar.gz"
 
     assert sdist.exists()
 
-    tar = tarfile.open(str(sdist), "r")
-
-    assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
 
     whl = module_path / "dist" / "package_src-0.1-py2.py3-none-any.whl"
 

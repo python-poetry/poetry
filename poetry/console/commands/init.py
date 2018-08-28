@@ -7,7 +7,7 @@ from typing import List
 from typing import Tuple
 
 from .command import Command
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
 class InitCommand(Command):
@@ -305,7 +305,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 
-        if isinstance(self, VenvCommand):
+        if isinstance(self, EnvCommand):
             return self.poetry.pool
 
         if self._pool is None:

@@ -1,8 +1,8 @@
 from poetry.utils.helpers import try_load_dotenv
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class RunCommand(VenvCommand):
+class RunCommand(EnvCommand):
     """
     Runs a command in the appropriate environment.
 
@@ -20,9 +20,7 @@ class RunCommand(VenvCommand):
         if scripts and script in scripts:
             return self.run_script(scripts[script], args)
 
-        venv = self.venv
-
-        return venv.execute(*args)
+        return self.env.execute(*args)
 
     def run_script(self, script, args):
         module, callable_ = script.split(":")
@@ -40,7 +38,7 @@ class RunCommand(VenvCommand):
             )
         ]
 
-        return self.venv.run(*cmd, shell=True, call=True)
+        return self.env.run(*cmd, shell=True, call=True)
 
     @property
     def _module(self):

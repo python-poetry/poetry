@@ -64,3 +64,18 @@ repositories = {}
 """
 
     assert tester.get_display(True) == expected
+
+
+def test_display_single_setting(app, config):
+    command = app.find("config")
+    command._config = Config(config.file)
+    tester = CommandTester(command)
+
+    tester.execute(
+        [("command", command.get_name()), ("key", "settings.virtualenvs.create")]
+    )
+
+    expected = """true
+"""
+
+    assert tester.get_display(True) == expected

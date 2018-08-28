@@ -34,8 +34,8 @@ Tag: {tag}
 
 
 class WheelBuilder(Builder):
-    def __init__(self, poetry, venv, io, target_dir=None, original=None):
-        super(WheelBuilder, self).__init__(poetry, venv, io)
+    def __init__(self, poetry, env, io, target_dir=None, original=None):
+        super(WheelBuilder, self).__init__(poetry, env, io)
 
         self._records = []
         self._original_path = self._path
@@ -44,14 +44,14 @@ class WheelBuilder(Builder):
             self._original_path = original.file.parent
 
     @classmethod
-    def make_in(cls, poetry, venv, io, directory=None, original=None):
-        wb = WheelBuilder(poetry, venv, io, target_dir=directory, original=original)
+    def make_in(cls, poetry, env, io, directory=None, original=None):
+        wb = WheelBuilder(poetry, env, io, target_dir=directory, original=original)
         wb.build()
 
     @classmethod
-    def make(cls, poetry, venv, io):
+    def make(cls, poetry, env, io):
         """Build a wheel in the dist/ directory, and optionally upload it."""
-        cls.make_in(poetry, venv, io)
+        cls.make_in(poetry, env, io)
 
     def build(self):
         self._io.writeln(" - Building <info>wheel</info>")
@@ -86,7 +86,7 @@ class WheelBuilder(Builder):
             current_path = os.getcwd()
             try:
                 os.chdir(str(self._path))
-                self._venv.run(
+                self._env.run(
                     "python", str(setup), "build", "-b", str(self._path / "build")
                 )
             finally:
@@ -199,10 +199,10 @@ class WheelBuilder(Builder):
     def tag(self):
         if self._package.build:
             platform = get_platform().replace(".", "_").replace("-", "_")
-            impl_name = get_abbr_impl(self._venv)
-            impl_ver = get_impl_ver(self._venv)
+            impl_name = get_abbr_impl(self._env)
+            impl_ver = get_impl_ver(self._env)
             impl = impl_name + impl_ver
-            abi_tag = str(get_abi_tag(self._venv)).lower()
+            abi_tag = str(get_abi_tag(self._env)).lower()
             tag = (impl, abi_tag, platform)
         else:
             platform = "any"

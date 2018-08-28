@@ -15,7 +15,7 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import Path
 from poetry.utils._compat import PY2
 from poetry.utils.toml_file import TomlFile
-from poetry.utils.venv import NullVenv
+from poetry.utils.env import NullEnv
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -29,7 +29,7 @@ class Installer(BaseInstaller):
 
 class CustomInstalledRepository(InstalledRepository):
     @classmethod
-    def load(cls, venv):
+    def load(cls, env):
         return cls()
 
 
@@ -121,13 +121,13 @@ def locker():
 
 
 @pytest.fixture()
-def venv():
-    return NullVenv()
+def env():
+    return NullEnv()
 
 
 @pytest.fixture()
-def installer(package, pool, locker, venv, installed):
-    return Installer(NullIO(), venv, package, locker, pool, installed=installed)
+def installer(package, pool, locker, env, installed):
+    return Installer(NullIO(), env, package, locker, pool, installed=installed)
 
 
 def fixture(name):
@@ -583,7 +583,7 @@ def test_installer_with_pypi_repository(package, locker, installed):
     pool.add_repository(MockRepository())
 
     installer = Installer(
-        NullIO(), NullVenv(), package, locker, pool, installed=installed
+        NullIO(), NullEnv(), package, locker, pool, installed=installed
     )
 
     package.add_dependency("pytest", "^3.5", category="dev")
@@ -609,7 +609,26 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
     assert len(installer.installer.installs) == 2
 
 
-def test_run_installs_with_local_directory(installer, locker, repo, package):
+def test_run_installs_with_local_poetry_directory_and_extras(
+    installer, locker, repo, package, tmpdir
+):
+    file_path = Path("tests/fixtures/project_with_extras/")
+    package.add_dependency("demo", {"path": str(file_path), "extras": ["extras_a"]})
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    installer.run()
+
+    expected = fixture("with-directory-dependency-poetry")
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 2
+
+
+def test_run_installs_with_local_setuptools_directory(
+    installer, locker, repo, package, tmpdir
+):
     file_path = Path("tests/fixtures/project_with_setup/")
     package.add_dependency("demo", {"path": str(file_path)})
 
@@ -618,7 +637,7 @@ def test_run_installs_with_local_directory(installer, locker, repo, package):
 
     installer.run()
 
-    expected = fixture("with-directory-dependency")
+    expected = fixture("with-directory-dependency-setuptools")
 
     assert locker.written_data == expected
 

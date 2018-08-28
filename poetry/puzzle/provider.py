@@ -28,7 +28,7 @@ from poetry.repositories import Pool
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
-from poetry.utils.venv import Venv
+from poetry.utils.env import Env
 
 from poetry.vcs.git import Git
 
@@ -185,7 +185,7 @@ class Provider:
                 # to figure the information we need
                 # We need to place ourselves in the proper
                 # folder for it to work
-                venv = Venv.create(self._io)
+                venv = Env.get(self._io)
 
                 current_dir = os.getcwd()
                 os.chdir(tmp_dir.as_posix())
@@ -314,12 +314,13 @@ class Provider:
         ]
 
     def complete_package(self, package):  # type: (str, Version) -> Package
-        if package.is_root() or package.source_type in {"git", "file", "directory"}:
+        if package.is_root() or package.source_type in {"git", "file"}:
             return package
 
-        package = self._pool.package(
-            package.name, package.version.text, extras=package.requires_extras
-        )
+        if package.source_type != "directory":
+            package = self._pool.package(
+                package.name, package.version.text, extras=package.requires_extras
+            )
 
         dependencies = [
             r

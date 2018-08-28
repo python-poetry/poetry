@@ -1,4 +1,5 @@
 import json
+import shutil
 
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import Path
@@ -6,11 +7,12 @@ from poetry.utils._compat import Path
 
 class MockRepository(PyPiRepository):
 
-    FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
+    JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
+    DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
-    def __init__(self):
+    def __init__(self, fallback=False):
         super(MockRepository, self).__init__(
-            url="http://foo.bar", disable_cache=True, fallback=False
+            url="http://foo.bar", disable_cache=True, fallback=fallback
         )
 
     def _get(self, url):
@@ -22,14 +24,21 @@ class MockRepository(PyPiRepository):
             version = None
 
         if not version:
-            fixture = self.FIXTURES / (name + ".json")
+            fixture = self.JSON_FIXTURES / (name + ".json")
         else:
-            fixture = self.FIXTURES / name / (version + ".json")
+            fixture = self.JSON_FIXTURES / name / (version + ".json")
             if not fixture.exists():
-                fixture = self.FIXTURES / (name + ".json")
+                fixture = self.JSON_FIXTURES / (name + ".json")
 
         with fixture.open() as f:
             return json.loads(f.read())
+
+    def _download(self, url, dest):
+        filename = url.split("/")[-1]
+
+        fixture = self.DIST_FIXTURES / filename
+
+        shutil.copyfile(str(fixture), dest)
 
 
 def test_find_packages():
@@ -60,3 +69,35 @@ def test_package():
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
     assert win_inet.platform == "win32"
+
+
+def test_fallback_on_downloading_packages():
+    repo = MockRepository(fallback=True)
+
+    package = repo.package("jupyter", "1.0.0")
+
+    assert package.name == "jupyter"
+    assert len(package.requires) == 6
+
+    dependency_names = sorted([dep.name for dep in package.requires])
+    assert dependency_names == [
+        "ipykernel",
+        "ipywidgets",
+        "jupyter-console",
+        "nbconvert",
+        "notebook",
+        "qtconsole",
+    ]
+
+
+def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():
+    repo = MockRepository(fallback=True)
+
+    package = repo.package("isort", "4.3.4")
+
+    assert package.name == "isort"
+    assert len(package.requires) == 1
+
+    dep = package.requires[0]
+    assert dep.name == "futures"
+    assert dep.python_versions == "~2.7"
