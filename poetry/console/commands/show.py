@@ -10,6 +10,7 @@ class ShowCommand(EnvCommand):
 
     show
         { package? : Package to inspect. }
+        { --no-dev : Do not list the dev dependencies. }
         { --t|tree : List the dependencies as a tree. }
         { --l|latest : Show the latest version. }
         { --o|outdated : Show the latest version
@@ -38,7 +39,7 @@ lists all packages available."""
         if self.option("outdated"):
             self.input.set_option("latest", True)
 
-        locked_repo = self.poetry.locker.locked_repository(True)
+        locked_repo = self.poetry.locker.locked_repository(not self.option("no-dev"))
 
         # Show tree view if requested
         if self.option("tree") and not package:
