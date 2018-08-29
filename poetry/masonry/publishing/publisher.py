@@ -74,7 +74,7 @@ class Publisher:
         if not username:
             username = self._io.ask("Username:")
 
-        if not password:
+        if password is None:
             password = self._io.ask_hidden("Password:")
 
         # TODO: handle certificates
