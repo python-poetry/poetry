@@ -204,7 +204,8 @@ class Provider:
                         egg_info = next(
                             Path(p)
                             for p in glob.glob(
-                                os.path.join(str(tmp_dir), "**", "*.egg-info")
+                                os.path.join(str(tmp_dir), "**", "*.egg-info"),
+                                recursive=True,
                             )
                         )
                     else:
