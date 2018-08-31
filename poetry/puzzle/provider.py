@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 import pkginfo
@@ -25,6 +26,7 @@ from poetry.mixology.term import Term
 
 from poetry.repositories import Pool
 
+from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
@@ -193,7 +195,20 @@ class Provider:
                 try:
                     venv.run("python", "setup.py", "egg_info")
 
-                    egg_info = next(tmp_dir.glob("**/*.egg-info"))
+                    # Sometimes pathlib will fail on recursive
+                    # symbolic links, so we need to workaround it
+                    # and use the glob module instead.
+                    # Note that this does not happen with pathlib2
+                    # so it's safe to use it for Python < 3.4.
+                    if PY35:
+                        egg_info = next(
+                            Path(p)
+                            for p in glob.glob(
+                                os.path.join(str(tmp_dir), "**", "*.egg-info")
+                            )
+                        )
+                    else:
+                        egg_info = next(tmp_dir.glob("**/*.egg-info"))
 
                     meta = pkginfo.UnpackedSDist(str(egg_info))
 
