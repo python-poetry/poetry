@@ -7,6 +7,7 @@
 - Fixed a recursion error with circular dependencies.
 - Fixed the `config` command setting incorrect values for paths.
 - Fixed an `OSError` on Python >= 3.5 for `git` dependencies with recursive symlinks.
+- Fixed the possible deletion of system paths by `cache:clear`.
 
 
 ## [0.11.4] - 2018-07-30
