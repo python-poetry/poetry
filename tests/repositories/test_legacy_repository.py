@@ -54,7 +54,7 @@ def test_http_basic_auth_repo(mocker):
 
 def test_sdist_format_support():
     repo = MockRepository()
-    page = repo._get('/relative')
-    bz2_links = list(filter(lambda link: link.ext == '.tar.bz2', page.links))
+    page = repo._get("/relative")
+    bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
     assert len(bz2_links) == 1
-    assert bz2_links[0].filename == 'poetry-0.1.1.tar.bz2'
+    assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
