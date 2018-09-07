@@ -226,7 +226,7 @@ poetry install -E mysql -E pgsql
 
 ## `plugins`
 
-Poetry supports arbitrary plugins wich work similarly to
+Poetry supports arbitrary plugins which work similarly to
 [setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
 To match the example in the setuptools documentation, you would use the following:
 
