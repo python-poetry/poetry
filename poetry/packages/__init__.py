@@ -90,7 +90,7 @@ def dependency_from_pep_508(name):
 
         for or_ in markers["extra"]:
             for _, extra in or_:
-                dep.extras.append(extra)
+                dep.in_extras.append(extra)
 
     if "python_version" in markers:
         ors = []

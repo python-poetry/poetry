@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 import pkginfo
@@ -25,6 +26,7 @@ from poetry.mixology.term import Term
 
 from poetry.repositories import Pool
 
+from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
@@ -193,7 +195,21 @@ class Provider:
                 try:
                     venv.run("python", "setup.py", "egg_info")
 
-                    egg_info = next(tmp_dir.glob("**/*.egg-info"))
+                    # Sometimes pathlib will fail on recursive
+                    # symbolic links, so we need to workaround it
+                    # and use the glob module instead.
+                    # Note that this does not happen with pathlib2
+                    # so it's safe to use it for Python < 3.4.
+                    if PY35:
+                        egg_info = next(
+                            Path(p)
+                            for p in glob.glob(
+                                os.path.join(str(tmp_dir), "**", "*.egg-info"),
+                                recursive=True,
+                            )
+                        )
+                    else:
+                        egg_info = next(tmp_dir.glob("**/*.egg-info"))
 
                     meta = pkginfo.UnpackedSDist(str(egg_info))
 
@@ -209,7 +225,15 @@ class Provider:
                     package = Package(meta.name, meta.version)
 
                     for req in reqs:
-                        package.requires.append(dependency_from_pep_508(req))
+                        dep = dependency_from_pep_508(req)
+                        if dep.in_extras:
+                            for extra in dep.in_extras:
+                                if extra not in package.extras:
+                                    package.extras[extra] = []
+
+                                package.extras[extra].append(dep)
+
+                        package.requires.append(dep)
                 except Exception:
                     raise
                 finally:
@@ -230,6 +254,12 @@ class Provider:
                     dependency.name, package.name
                 )
             )
+
+        if dependency.extras:
+            for extra in dependency.extras:
+                if extra in package.extras:
+                    for dep in package.extras[extra]:
+                        dep.activate()
 
         return [package]
 
@@ -314,10 +344,10 @@ class Provider:
         ]
 
     def complete_package(self, package):  # type: (str, Version) -> Package
-        if package.is_root() or package.source_type in {"git", "file"}:
+        if package.is_root():
             return package
 
-        if package.source_type != "directory":
+        if package.source_type not in {"directory", "file", "git"}:
             package = self._pool.package(
                 package.name, package.version.text, extras=package.requires_extras
             )

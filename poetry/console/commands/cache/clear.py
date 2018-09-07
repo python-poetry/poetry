@@ -15,16 +15,26 @@ class CacheClearCommand(Command):
     def handle(self):
         from cachy import CacheManager
         from poetry.locations import CACHE_DIR
+        from poetry.utils._compat import Path
 
         cache = self.argument("cache")
 
         parts = cache.split(":")
-        cache_dir = os.path.join(CACHE_DIR, "cache", "repositories", parts[0])
+        root = parts[0]
+
+        base_cache = Path(CACHE_DIR) / "cache" / "repositories"
+        cache_dir = base_cache / root
+
+        try:
+            cache_dir.relative_to(base_cache)
+        except ValueError:
+            raise ValueError("{} is not a valid repository cache".format(root))
+
         cache = CacheManager(
             {
                 "default": parts[0],
                 "serializer": "json",
-                "stores": {parts[0]: {"driver": "file", "path": cache_dir}},
+                "stores": {parts[0]: {"driver": "file", "path": str(cache_dir)}},
             }
         )
 
@@ -41,7 +51,7 @@ class CacheClearCommand(Command):
 
             # Calculate number of entries
             entries_count = 0
-            for path, dirs, files in os.walk(cache_dir):
+            for path, dirs, files in os.walk(str(cache_dir)):
                 entries_count += len(files)
 
             delete = self.confirm(

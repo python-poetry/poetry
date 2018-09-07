@@ -155,8 +155,8 @@ class PyPiRepository(Repository):
                 )
                 continue
 
-            if dependency.extras:
-                for extra in dependency.extras:
+            if dependency.in_extras:
+                for extra in dependency.in_extras:
                     if extra not in package.extras:
                         package.extras[extra] = []
 

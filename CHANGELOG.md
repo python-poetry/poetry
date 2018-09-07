@@ -1,10 +1,14 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.5] - 2018-09-04
 
 ### Fixed
 
 - Fixed a recursion error with circular dependencies.
+- Fixed the `config` command setting incorrect values for paths.
+- Fixed an `OSError` on Python >= 3.5 for `git` dependencies with recursive symlinks.
+- Fixed the possible deletion of system paths by `cache:clear`.
+- Fixed a performance issue when parsing the lock file by upgrading `tomlkit`.
 
 
 ## [0.11.4] - 2018-07-30
@@ -463,7 +467,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.4...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.5...master
+[0.11.5]: https://github.com/sdispater/poetry/releases/tag/0.11.5
 [0.11.4]: https://github.com/sdispater/poetry/releases/tag/0.11.4
 [0.11.3]: https://github.com/sdispater/poetry/releases/tag/0.11.3
 [0.11.2]: https://github.com/sdispater/poetry/releases/tag/0.11.2
