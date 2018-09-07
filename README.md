@@ -177,7 +177,7 @@ that I don't like.
 
 #### Dependency resolution
 
-The dependency resolution is erratic and will fail even is there is a solution. Let's take an example:
+The dependency resolution is erratic and will fail even if there is a solution. Let's take an example:
 
 ```bash
 pipenv install oslo.utils==1.4.0
