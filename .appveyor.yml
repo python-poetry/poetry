@@ -7,6 +7,8 @@ environment:
     - PYTHON: "C:/Python27-x64"
     - PYTHON: "C:/Python35-x64"
     - PYTHON: "C:/Python36-x64"
+    - PYTHON: "C:/Python37-x64"
+
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
@@ -16,12 +18,24 @@ install:
   - "python -m pip install --disable-pip-version-check --user --upgrade pip"
 
   # Installing Poetry
-  - "python get-poetry.py --preview -y"
-  # Add Poetry to PATH
-  - set PATH=%PATH%;C:\Users\appveyor\.poetry\bin
+  - "python -m pip install poetry --pre -U"
 
   # Install dependencies
   - "poetry install -v"
 
 test_script:
   - "poetry run pytest --cov=poetry tests/ -W ignore"
+
+after_test:
+  - "python sonnet make:release -P 2.7:C:/Python27-x64/python.exe -P 3.5:C:/Python35-x64/python.exe -P 3.6:C:/Python36-x64/python.exe -P 3.7:C:/Python37-x64/python.exe"
+
+deploy:
+  provider: S3
+  access_key_id: $(AWS_ACCESS_KEY)
+  secret_access_key:
+    secure: $(AWS_SECRET_KEY)
+  bucket: "poetry.eustace.io"
+  folder: releases
+  artifact: releases
+  on:
+    APPVEYOR_REPO_TAG: true

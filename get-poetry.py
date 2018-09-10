@@ -17,7 +17,7 @@ What this means is that one Poetry installation can serve for multiple
 Python versions.
 """
 import argparse
-import ast
+import hashlib
 import json
 import os
 import platform
@@ -26,16 +26,19 @@ import shutil
 import stat
 import subprocess
 import sys
+import tarfile
 import tempfile
 
 from contextlib import contextmanager
-from email.parser import Parser
 from functools import cmp_to_key
-from glob import glob
+from gzip import GzipFile
+from io import UnsupportedOperation
 
 try:
+    from urllib.error import HTTPError
     from urllib.request import urlopen
 except ImportError:
+    from urllib2 import HTTPError
     from urllib2 import urlopen
 
 try:
@@ -169,10 +172,12 @@ POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
 BIN = """#!/usr/bin/env python
+import glob
 import sys
 import os
 
 lib = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib"))
+
 sys.path.insert(0, lib)
 
 if __name__ == "__main__":
@@ -258,6 +263,7 @@ environment variable. This has not been done automatically.
 class Installer:
 
     CURRENT_PYTHON = sys.executable
+    CURRENT_PYTHON_VERSION = sys.version_info[:2]
     METADATA_URL = "https://pypi.org/pypi/poetry/json"
     VERSION_REGEX = re.compile(
         "v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
@@ -269,12 +275,22 @@ class Installer:
         "(?:\+[^\s]+)?"
     )
 
-    def __init__(self, version=None, preview=False, force=False, accept_all=False):
+    BASE_URL = "https://poetry.eustace.io"
+
+    def __init__(
+        self,
+        version=None,
+        preview=False,
+        force=False,
+        accept_all=False,
+        base_url=BASE_URL,
+    ):
         self._version = version
         self._preview = preview
         self._force = force
         self._modify_path = True
         self._accept_all = accept_all
+        self._base_url = base_url
 
     def allows_prereleases(self):
         return self._preview
@@ -406,7 +422,7 @@ class Installer:
             print("Before we start, please answer the following questions.")
             print("You may simple press the Enter key to keave unchanged.")
 
-            modify_path = input("Modify PATH variable? ([y]/n)") or "y"
+            modify_path = input("Modify PATH variable? ([y]/n) ") or "y"
             if modify_path.lower() in {"n", "no"}:
                 self._modify_path = False
 
@@ -445,98 +461,89 @@ class Installer:
         """
         Packs everything into a single lib/ directory.
         """
-        if os.path.exists(POETRY_LIB):
-            # Backup the current installation
-            if os.path.exists(POETRY_LIB_BACKUP):
-                shutil.rmtree(POETRY_LIB_BACKUP)
+        if os.path.exists(POETRY_LIB_BACKUP):
+            shutil.rmtree(POETRY_LIB_BACKUP)
 
+        # Backup the current installation
+        if os.path.exists(POETRY_LIB):
             shutil.copytree(POETRY_LIB, POETRY_LIB_BACKUP)
             shutil.rmtree(POETRY_LIB)
 
         try:
             self._make_lib(version)
         except Exception:
-            if os.path.exists(POETRY_LIB):
-                shutil.rmtree(POETRY_LIB)
-
             if not os.path.exists(POETRY_LIB_BACKUP):
                 raise
 
             shutil.copytree(POETRY_LIB_BACKUP, POETRY_LIB)
+            shutil.rmtree(POETRY_LIB_BACKUP)
+
+            raise
+        finally:
+            if os.path.exists(POETRY_LIB_BACKUP):
+                shutil.rmtree(POETRY_LIB_BACKUP)
+
+    def _make_lib(self, version):
+        # We get the payload from the remote host
+        name = "poetry-{}-{}.tar.gz".format(version, sys.platform)
+        checksum = "poetry-{}-{}.sha256sum".format(version, sys.platform)
+
+        try:
+            r = urlopen(self._base_url + "/releases/{}".format(checksum))
+        except HTTPError as e:
+            if e.code == 404:
+                raise RuntimeError("Could not find {} file".format(checksum))
 
             raise
 
-        if os.path.exists(POETRY_LIB_BACKUP):
-            shutil.rmtree(POETRY_LIB_BACKUP)
+        checksum = r.read().decode()
 
-    def _make_lib(self, version):
-        # Most of the work will be delegated to pip
-        with temporary_directory(prefix="poetry-installer-") as dir:
-            dist = os.path.join(dir, "dist")
-            print("  - Getting dependencies")
-            try:
-                self.call(
-                    self.CURRENT_PYTHON,
-                    "-m",
-                    "pip",
-                    "install",
-                    "poetry=={}".format(version),
-                    "--target",
-                    dist,
-                )
-            except subprocess.CalledProcessError as e:
-                if "must supply either home or prefix/exec-prefix" in e.output.decode():
-                    # Homebrew Python and possible other installations
-                    # We workaround this issue by temporarily changing
-                    # the --user directory
-                    original_user = os.getenv("PYTHONUSERBASE")
-                    os.environ["PYTHONUSERBASE"] = dir
-                    self.call(
-                        self.CURRENT_PYTHON,
-                        "-m",
-                        "pip",
-                        "install",
-                        "poetry=={}".format(version),
-                        "--user",
-                        "--ignore-installed",
+        try:
+            r = urlopen(self._base_url + "/releases/{}".format(name))
+        except HTTPError as e:
+            if e.code == 404:
+                raise RuntimeError("Could not find {} file".format(name))
+
+            raise
+
+        meta = r.info()
+        size = int(meta["Content-Length"])
+        current = 0
+        block_size = 8192
+
+        print(
+            "  - Downloading {} ({:.2f}MB)".format(
+                colorize("comment", name), size / 1024 / 1024
+            )
+        )
+
+        sha = hashlib.sha256()
+        with temporary_directory(prefix="poetry-installer-") as dir_:
+            tar = os.path.join(dir_, name)
+            with open(tar, "wb") as f:
+                while True:
+                    buffer = r.read(block_size)
+                    if not buffer:
+                        break
+
+                    current += len(buffer)
+                    f.write(buffer)
+                    sha.update(buffer)
+
+            # Checking hashes
+            if checksum != sha.hexdigest():
+                raise RuntimeError(
+                    "Hashes for {} do not match: {} != {}".format(
+                        name, checksum, sha.hexdigest()
                     )
+                )
 
-                    if original_user is not None:
-                        os.environ["PYTHONUSERBASE"] = original_user
-                    else:
-                        del os.environ["PYTHONUSERBASE"]
-
-                    # Finding site-package directory
-                    lib = os.path.join(dir, "lib")
-                    lib_python = list(glob(os.path.join(lib, "python*")))[0]
-                    site_packages = os.path.join(lib_python, "site-packages")
-                    shutil.copytree(site_packages, dist)
-                else:
-                    raise
-
-            print("  - Vendorizing dependencies")
-
-            poetry_dir = os.path.join(dist, "poetry")
-            vendor_dir = os.path.join(poetry_dir, "_vendor")
-
-            # Everything, except poetry itself, should
-            # be put in the _vendor directory
-            for file in glob(os.path.join(dist, "*")):
-                if (
-                    os.path.basename(file).startswith("poetry")
-                    or os.path.basename(file) == "__pycache__"
-                ):
-                    continue
-
-                dest = os.path.join(vendor_dir, os.path.basename(file))
-                if os.path.isdir(file):
-                    shutil.copytree(file, dest)
-                    shutil.rmtree(file)
-                else:
-                    shutil.copy(file, dest)
-                    os.unlink(file)
-
-            shutil.copytree(dist, POETRY_LIB)
+            gz = GzipFile(tar, mode="rb")
+            try:
+                with tarfile.TarFile(tar, fileobj=gz, format=tarfile.PAX_FORMAT) as f:
+                    f.extractall(POETRY_LIB)
+            finally:
+                gz.close()
 
     def make_bin(self):
         if not os.path.exists(POETRY_BIN):
