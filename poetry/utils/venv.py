@@ -243,6 +243,8 @@ class Venv(object):
         call = kwargs.pop("call", False)
 
         if shell:
+            if self._windows:
+                cmd[0] = '"{}"'.format(cmd[0])
             cmd = " ".join(cmd)
 
         try:
