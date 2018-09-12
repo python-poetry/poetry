@@ -3,14 +3,12 @@ language: python
 stages:
   - linting
   - test
-  - build
 
 cache:
   pip: true
   directories:
     - "$HOME/.cache/pypoetry"
     - "$HOME/.cache/pre-commit"
-    - "$HOME/.pyenv_cache"
 
 install:
   - pip install pip -U
@@ -31,38 +29,3 @@ jobs:
     - pre-commit install-hooks
     script:
     - pre-commit run --all-files
-  - stage: build
-    dist: xenial
-    sudo: true
-    python: '3.7'
-    before_install:
-      - |
-          git clone https://github.com/yyuu/pyenv.git ~/.pyenv
-          PYENV_ROOT="$HOME/.pyenv"
-          PYENV_CACHE_PATH="$HOME/.pyenv_cache"
-          PATH="$PYENV_ROOT/bin:$PATH"
-          eval "$(pyenv init -)"
-          pyenv install 3.7.0
-          pyenv install 3.6.6
-          pyenv install 3.5.6
-          pyenv install 3.4.9
-          pyenv install 2.7.15
-          pyenv global 3.7.0 3.6.6 3.5.6 3.4.9 2.7.15
-          pip install poetry --pre -U
-          poetry install --no-dev
-    install: skip
-    script: ./sonnet make:release
-
-deploy:
-  provider: s3
-  bucket: "poetry.eustace.io"
-  skip_cleanup: true
-  local_dir: releases
-  upload-dir: releases
-  detect_encoding: true
-  access_key_id: "$AWS_ACCESS_KEY"
-  secret_access_key:
-    secure: "$AWS_SECRET_KEY"
-  on_build_success: true
-  on:
-    tags: true

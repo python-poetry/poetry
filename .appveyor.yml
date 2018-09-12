@@ -25,17 +25,3 @@ install:
 
 test_script:
   - "poetry run pytest --cov=poetry tests/ -W ignore"
-
-after_test:
-  - "python sonnet make:release -P 2.7:C:/Python27-x64/python.exe -P 3.5:C:/Python35-x64/python.exe -P 3.6:C:/Python36-x64/python.exe -P 3.7:C:/Python37-x64/python.exe"
-
-deploy:
-  provider: S3
-  access_key_id: $(AWS_ACCESS_KEY)
-  secret_access_key:
-    secure: $(AWS_SECRET_KEY)
-  bucket: "poetry.eustace.io"
-  folder: releases
-  artifact: releases
-  on:
-    APPVEYOR_REPO_TAG: true
