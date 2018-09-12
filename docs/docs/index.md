@@ -20,6 +20,11 @@ recommended way of installing `poetry`.
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
 ```
 
+!!! note
+
+    You only need to install Poetry once. It will automatically pick up the current
+    Python version and use it to [create virtualenvs](/docs/basic-usage/#poetry-and-virtualenvs) accordingly.
+
 The installer installs the `poetry` tool to Poetry's `bin` directory.
 On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
 
@@ -50,6 +55,8 @@ by running the installer again with the `--uninstall` option.
     ```bash
     python get-poetry.py --version 0.7.0
     ```
+
+    Note that the installer does not support Poetry releases < 12.0.
 
 ### Alternative installation methods (not recommended)
 
