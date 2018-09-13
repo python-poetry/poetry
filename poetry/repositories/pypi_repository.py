@@ -48,6 +48,9 @@ logger = logging.getLogger(__name__)
 
 
 class PyPiRepository(Repository):
+
+    CACHE_VERSION = parse_constraint("0.12.0")
+
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
         self._name = "PyPI"
         self._url = url
@@ -236,9 +239,22 @@ class PyPiRepository(Repository):
         if self._disable_cache:
             return self._get_release_info(name, version)
 
-        return self._cache.remember_forever(
+        cached = self._cache.remember_forever(
             "{}:{}".format(name, version), lambda: self._get_release_info(name, version)
         )
+
+        cache_version = cached.get("_cache_version", "0.0.0")
+        if parse_constraint(cache_version) != self.CACHE_VERSION:
+            # The cache must be updated
+            self._log(
+                "The cache for {} {} is outdated. Refreshing.".format(name, version),
+                level="debug",
+            )
+            cached = self._get_release_info(name, version)
+
+            self._cache.forever("{}:{}".format(name, version), cached)
+
+        return cached
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         self._log("Getting info for {} ({}) from PyPI".format(name, version), "debug")
@@ -256,7 +272,7 @@ class PyPiRepository(Repository):
             "requires_dist": info["requires_dist"],
             "requires_python": info["requires_python"],
             "digests": [],
-            "_fallback": False,
+            "_cache_version": str(self.CACHE_VERSION),
         }
 
         try:
