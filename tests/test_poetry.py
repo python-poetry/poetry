@@ -123,6 +123,16 @@ def test_poetry_with_packages_and_includes():
     assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
 
 
+def test_poetry_with_multi_constraints_dependency():
+    poetry = Poetry.create(
+        str(fixtures_dir / "project_with_multi_constraints_dependency")
+    )
+
+    package = poetry.package
+
+    assert len(package.requires) == 2
+
+
 def test_check():
     complete = TomlFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
