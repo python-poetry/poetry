@@ -500,7 +500,7 @@ class Installer:
         checksum = r.read().decode()
 
         try:
-            r = urlopen(_url + "{}".format(name))
+            r = urlopen(url + "{}".format(name))
         except HTTPError as e:
             if e.code == 404:
                 raise RuntimeError("Could not find {} file".format(name))
