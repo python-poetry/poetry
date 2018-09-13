@@ -97,16 +97,18 @@ class Env(object):
             if cwd and (cwd / ".venv").exists():
                 venv = cwd / ".venv"
 
-                return VirtualEnv(
-                    Path(venv), Path(getattr(sys, "base_prefix", sys.prefix))
-                )
+                return VirtualEnv(Path(venv))
 
             return SystemEnv(Path(sys.prefix))
 
-        return VirtualEnv(
-            Path(getattr(sys, "real_prefix", sys.prefix)),
-            Path(getattr(sys, "base_prefix", sys.prefix)),
-        )
+        if os.environ.get("VIRTUAL_ENV") is not None:
+            prefix = Path(os.environ["VIRTUAL_ENV"])
+            base_prefix = None
+        else:
+            prefix = sys.prefix
+            base_prefix = cls.get_base_prefix()
+
+        return VirtualEnv(prefix, base_prefix)
 
     @classmethod
     def create_venv(cls, io, name=None, cwd=None):  # type: (IO, bool, Path) -> Env
@@ -178,11 +180,9 @@ class Env(object):
         p_venv = os.path.normcase(str(venv))
         if any(p.startswith(p_venv) for p in paths):
             # Running properly in the virtualenv, don't need to do anything
-            return SystemEnv(
-                Path(sys.prefix), Path(getattr(sys, "base_prefix", sys.prefix))
-            )
+            return SystemEnv(Path(sys.prefix), cls.get_base_prefix())
 
-        return VirtualEnv(venv, Path(getattr(sys, "base_prefix", sys.prefix)))
+        return VirtualEnv(venv)
 
     @classmethod
     def build_venv(cls, path):
@@ -198,6 +198,15 @@ class Env(object):
             build = create_environment
 
         build(path)
+
+    def get_base_prefix(self):  # type: () -> Path
+        if hasattr(sys, "real_prefix"):
+            return sys.real_prefix
+
+        if hasattr(sys, "base_prefix"):
+            return sys.base_prefix
+
+        return sys.prefix
 
     def get_version_info(self):  # type: () -> Tuple[int]
         raise NotImplementedError()
@@ -283,6 +292,30 @@ class VirtualEnv(Env):
     """
     A virtual Python environment.
     """
+
+    def __init__(self, path, base=None):  # type: (Path, Optional[Path]) -> None
+        super(VirtualEnv, self).__init__(path, base)
+
+        # If base is None, it probably means this is
+        # a virtualenv created from VIRTUAL_ENV.
+        # In this case we need to get sys.base_prefix
+        # from inside the virtualenv.
+        if base is None:
+            self._base = Path(
+                self.run(
+                    "python",
+                    "-c",
+                    '"import sys; '
+                    "print("
+                    "    getattr("
+                    "        sys,"
+                    "        'real_prefix', "
+                    "        getattr(sys, 'base_prefix', sys.prefix)"
+                    "    )"
+                    ')"',
+                    shell=True,
+                )
+            )
 
     def get_version_info(self):  # type: () -> Tuple[int]
         output = self.run(
