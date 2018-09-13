@@ -275,7 +275,7 @@ class Installer:
         "(?:\+[^\s]+)?"
     )
 
-    BASE_URL = "https://poetry.eustace.io"
+    BASE_URL = "https://github.com/sdispater/poetry/releases/download/"
 
     def __init__(
         self,
@@ -485,11 +485,12 @@ class Installer:
 
     def _make_lib(self, version):
         # We get the payload from the remote host
+        url = self._base_url + "{}/".format(version)
         name = "poetry-{}-{}.tar.gz".format(version, sys.platform)
         checksum = "poetry-{}-{}.sha256sum".format(version, sys.platform)
 
         try:
-            r = urlopen(self._base_url + "/releases/{}".format(checksum))
+            r = urlopen(url + "{}".format(checksum))
         except HTTPError as e:
             if e.code == 404:
                 raise RuntimeError("Could not find {} file".format(checksum))
@@ -499,7 +500,7 @@ class Installer:
         checksum = r.read().decode()
 
         try:
-            r = urlopen(self._base_url + "/releases/{}".format(name))
+            r = urlopen(_url + "{}".format(name))
         except HTTPError as e:
             if e.code == 404:
                 raise RuntimeError("Could not find {} file".format(name))
