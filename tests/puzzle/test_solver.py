@@ -291,17 +291,17 @@ def test_solver_sets_categories(solver, repo, package):
 
 
 def test_solver_respects_root_package_python_versions(solver, repo, package):
-    package.python_versions = "^3.4"
+    package.python_versions = "~3.4"
     package.add_dependency("A")
     package.add_dependency("B")
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
-    package_b.python_versions = "^3.6"
+    package_b.python_versions = "^3.3"
     package_c = get_package("C", "1.0")
-    package_c.python_versions = "^3.6"
+    package_c.python_versions = "^3.4"
     package_c11 = get_package("C", "1.1")
-    package_c11.python_versions = "~3.3"
+    package_c11.python_versions = "^3.6"
     package_b.add_dependency("C", "^1.0")
 
     repo.add_package(package_a)
@@ -342,16 +342,16 @@ def test_solver_fails_if_mismatch_root_python_versions(solver, repo, package):
 
 
 def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
-    package.python_versions = "^3.4"
+    package.python_versions = "~3.4"
     package.extras["foo"] = [get_dependency("B")]
-    package.add_dependency("A", {"version": "*", "python": "~3.5"})
+    package.add_dependency("A", {"version": "*", "python": "^3.4"})
     package.add_dependency("B", {"version": "*", "optional": True})
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
-    package_b.python_versions = "^3.6"
+    package_b.python_versions = "^3.3"
     package_c = get_package("C", "1.0")
-    package_c.python_versions = "^3.6"
+    package_c.python_versions = "^3.4"
     package_b.add_dependency("C", "^1.0")
 
     repo.add_package(package_a)
@@ -377,7 +377,6 @@ def test_solver_solves_while_respecting_root_platforms(solver, repo, package):
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
-    package_b.python_versions = "^3.6"
     package_c12 = get_package("C", "1.2")
     package_c12.platform = "win32"
     package_c10 = get_package("C", "1.0")

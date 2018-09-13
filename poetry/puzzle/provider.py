@@ -311,21 +311,27 @@ class Provider:
         else:
             dependencies = package.requires
 
-        if not self._package.python_constraint.allows_any(package.python_constraint):
-            return [
-                Incompatibility(
-                    [Term(package.to_dependency(), True)],
-                    PythonCause(package.python_versions, self._package.python_versions),
-                )
-            ]
+            if not package.python_constraint.allows_all(
+                self._package.python_constraint
+            ):
+                return [
+                    Incompatibility(
+                        [Term(package.to_dependency(), True)],
+                        PythonCause(
+                            package.python_versions, self._package.python_versions
+                        ),
+                    )
+                ]
 
-        if not self._package.platform_constraint.matches(package.platform_constraint):
-            return [
-                Incompatibility(
-                    [Term(package.to_dependency(), True)],
-                    PlatformCause(package.platform),
-                )
-            ]
+            if not self._package.platform_constraint.matches(
+                package.platform_constraint
+            ):
+                return [
+                    Incompatibility(
+                        [Term(package.to_dependency(), True)],
+                        PlatformCause(package.platform),
+                    )
+                ]
 
         dependencies = [
             dep
