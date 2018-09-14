@@ -12,7 +12,8 @@ cache:
 
 install:
   - pip install pip -U
-  - pip install poetry --pre -U
+  - python get-poetry.py --preview -y
+  - source $HOME/.poetry/env
   - poetry install -v
 
 script: pytest -q tests/
@@ -22,6 +23,9 @@ jobs:
   - python: '2.7'
   - python: '3.5'
   - python: '3.6'
+  - python: '3.7'
+    dist: xenial
+    sudo: true
   - stage: linting
     python: '3.6'
     install:
