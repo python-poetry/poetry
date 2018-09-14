@@ -29,6 +29,7 @@ import sys
 import tarfile
 import tempfile
 
+from contextlib import closing
 from contextlib import contextmanager
 from functools import cmp_to_key
 from gzip import GzipFile
@@ -36,9 +37,11 @@ from io import UnsupportedOperation
 
 try:
     from urllib.error import HTTPError
+    from urllib.request import Request
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import HTTPError
+    from urllib2 import Request
     from urllib2 import urlopen
 
 try:
@@ -329,9 +332,7 @@ class Installer:
     def get_version(self):
         print(colorize("info", "Retrieving Poetry metadata"))
 
-        r = urlopen(self.METADATA_URL)
-        metadata = json.loads(r.read().decode())
-        r.close()
+        metadata = json.loads(self._get(self.METADATA_URL))
 
         def _compare_versions(x, y):
             mx = self.VERSION_REGEX.match(x)
@@ -774,6 +775,12 @@ class Installer:
 
     def call(self, *args):
         return subprocess.check_output(args, stderr=subprocess.STDOUT)
+
+    def _get(self, url):
+        request = Request(url, headers={"User-Agent": "Python Poetry"})
+
+        with closing(urlopen(request)) as r:
+            return r.read()
 
 
 def main():
