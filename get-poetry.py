@@ -486,9 +486,13 @@ class Installer:
 
     def _make_lib(self, version):
         # We get the payload from the remote host
+        platform = sys.platform
+        if platform == "linux2":
+            platform = "linux"
+
         url = self._base_url + "{}/".format(version)
-        name = "poetry-{}-{}.tar.gz".format(version, sys.platform)
-        checksum = "poetry-{}-{}.sha256sum".format(version, sys.platform)
+        name = "poetry-{}-{}.tar.gz".format(version, platform)
+        checksum = "poetry-{}-{}.sha256sum".format(version, platform)
 
         try:
             r = urlopen(url + "{}".format(checksum))
