@@ -785,7 +785,7 @@ def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
     )
 
     op = ops[0]
-    assert op.package.requirements == {"python": ">=2.7,<2.8 || >=3.4"}
+    assert op.package.requirements == {"python": "2.7 || >=3.4"}
 
 
 def test_solver_duplicate_dependencies_different_constraints(solver, repo, package):
@@ -962,3 +962,19 @@ def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
             {"job": "install", "package": get_package("demo", "0.1.2")},
         ],
     )
+
+
+def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.6"
+    package.add_dependency("A", {"version": "^1.0", "python": "^3.6"})
+
+    package_a = get_package("A", "1.0.0")
+    package_a.python_versions = ">=3.6"
+
+    repo.add_package(package_a)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [{"job": "install", "package": package_a}])

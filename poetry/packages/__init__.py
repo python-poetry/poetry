@@ -4,10 +4,12 @@ import re
 from poetry.version.requirements import Requirement
 
 from .dependency import Dependency
+from .dependency_package import DependencyPackage
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .locker import Locker
 from .package import Package
+from .package_collection import PackageCollection
 from .project_package import ProjectPackage
 from .utils.link import Link
 from .utils.utils import convert_markers

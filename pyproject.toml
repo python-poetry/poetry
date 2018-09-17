@@ -22,7 +22,7 @@ classifiers = [
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.4"
+python = "~2.7.9 || ^3.4"
 cleo = "^0.6.7"
 requests = "^2.18"
 cachy = "^0.2"

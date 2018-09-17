@@ -1,3 +1,4 @@
+from poetry.packages import DependencyPackage
 from poetry.packages import Package
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.version_solver import VersionSolver
@@ -18,6 +19,9 @@ def add_to_repo(repository, name, version, deps=None, python=None):
 def check_solver_result(
     root, provider, result=None, error=None, tries=None, locked=None, use_latest=None
 ):
+    if locked is not None:
+        locked = {k: DependencyPackage(l.to_dependency(), l) for k, l in locked.items()}
+
     solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
 
     try:

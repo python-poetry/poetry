@@ -12,9 +12,11 @@ from tempfile import mkdtemp
 from typing import List
 
 from poetry.packages import Dependency
+from poetry.packages import DependencyPackage
 from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
 from poetry.packages import Package
+from poetry.packages import PackageCollection
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
 
@@ -101,10 +103,10 @@ class Provider:
         order, so the latest version ought to be last.
         """
         if dependency.is_root:
-            return [self._package]
+            return PackageCollection(dependency, [self._package])
 
         if dependency in self._search_for:
-            return self._search_for[dependency]
+            return PackageCollection(dependency, self._search_for[dependency])
 
         if dependency.is_vcs():
             packages = self.search_for_vcs(dependency)
@@ -132,7 +134,7 @@ class Provider:
 
         self._search_for[dependency] = packages
 
-        return self._search_for[dependency]
+        return PackageCollection(dependency, self._search_for[dependency])
 
     def search_for_vcs(self, dependency):  # type: (VCSDependency) -> List[Package]
         """
@@ -314,6 +316,41 @@ class Provider:
             if not package.python_constraint.allows_all(
                 self._package.python_constraint
             ):
+                # The package Python requirement is not compatible
+                # with the root package python requirement.
+                #
+                # However, it should be accepted if it comes from
+                # a dependency with a compatible Python constraint.
+                #
+                # An example of this is:
+                #    - The root package is compatible with Python ~2.7 || ^3.6
+                #    - The root package depends on black for Python ^3.6
+                #    - black is only compatible with Python >=3.6
+                #    - black should be authorized.
+                #
+                # In this particular case, we notify the resolver that it needs
+                # to branch the dependency tree. What this means is if we have
+                # root Python ~2.7 || ^3.6 and dependency Python >=3.6
+                # we have to resolve for ^3.6 (>=3.6, <4.0)
+                if (
+                    not package.dependency.python_constraint.is_any()
+                    and not package.python_constraint.intersect(
+                        package.dependency.python_constraint
+                    ).is_empty()
+                ):
+                    self.debug(
+                        "<warning>Found conditional dependency for {} (Python {}).</warning>".format(
+                            package, package.dependency.python_constraint
+                        )
+                    )
+                    raise CompatibilityError(
+                        str(
+                            package.python_constraint.intersect(
+                                package.dependency.python_constraint
+                            )
+                        )
+                    )
+
                 return [
                     Incompatibility(
                         [Term(package.to_dependency(), True)],
@@ -354,8 +391,11 @@ class Provider:
             return package
 
         if package.source_type not in {"directory", "file", "git"}:
-            package = self._pool.package(
-                package.name, package.version.text, extras=package.requires_extras
+            package = DependencyPackage(
+                package.dependency,
+                self._pool.package(
+                    package.name, package.version.text, extras=package.requires_extras
+                ),
             )
 
         dependencies = [

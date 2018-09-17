@@ -2,6 +2,7 @@ from typing import List
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
+from poetry.packages import DependencyPackage
 from poetry.packages.constraints.generic_constraint import GenericConstraint
 
 from poetry.semver import parse_constraint
@@ -84,7 +85,7 @@ class Solver:
     def solve_in_compatibility_mode(self, constraints, use_latest=None):
         locked = {}
         for package in self._locked.packages:
-            locked[package.name] = package
+            locked[package.name] = DependencyPackage(package.to_dependency(), package)
 
         packages = []
         depths = []
@@ -114,7 +115,7 @@ class Solver:
     def _solve(self, use_latest=None):
         locked = {}
         for package in self._locked.packages:
-            locked[package.name] = package
+            locked[package.name] = DependencyPackage(package.to_dependency(), package)
 
         try:
             result = resolve_version(
@@ -217,7 +218,9 @@ class Solver:
                 break
 
             for pkg in packages:
-                if pkg.name == dependency.name:
+                if pkg.name == dependency.name and dependency.constraint.allows(
+                    pkg.version
+                ):
                     # If there is already a child with this name
                     # we merge the requirements
                     existing = None
