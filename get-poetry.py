@@ -267,7 +267,7 @@ class Installer:
 
     CURRENT_PYTHON = sys.executable
     CURRENT_PYTHON_VERSION = sys.version_info[:2]
-    METADATA_URL = "https://api.github.com/repos/sdispater/poetry/releases"
+    METADATA_URL = "https://pypi.org/pypi/poetry/json"
     VERSION_REGEX = re.compile(
         "v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
         "("
@@ -350,7 +350,7 @@ class Installer:
 
         print("")
         releases = sorted(
-            [m["tag_name"] for m in metadata], key=cmp_to_key(_compare_versions)
+            metadata["releases"].keys(), key=cmp_to_key(_compare_versions)
         )
 
         if self._version and self._version not in releases:
