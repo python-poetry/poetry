@@ -180,18 +180,16 @@ class Uploader:
         try:
             self._do_upload(session, url)
         except HTTPError as e:
-            if (
-                e.response.status_code not in (403, 400)
-                or e.response.status_code == 400
-                and "was ever registered" not in e.response.text
-            ):
-                raise
-
             # It may be the first time we publish the package
             # We'll try to register it and go from there
-            try:
-                self._register(session, url)
-            except HTTPError:
+            if "was ever registered" in e.response.text:
+                try:
+                    self._register(session, url)
+                except HTTPError as e:
+                    print(e)
+                    raise
+            else:
+                print(e)
                 raise
 
     def _do_upload(self, session, url):
