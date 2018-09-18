@@ -22,7 +22,7 @@ classifiers = [
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7.9 || ^3.4"
+python = "~2.7 || ^3.4"
 cleo = "^0.6.7"
 requests = "^2.18"
 cachy = "^0.2"
@@ -47,7 +47,7 @@ virtualenv = { version = "^16.0", python = "~2.7" }
 [tool.poetry.dev-dependencies]
 pytest = "^3.4"
 pytest-cov = "^2.5"
-mkdocs = "^1.0"
+mkdocs = { version = "^1.0", python = "~2.7.9 || ^3.4" }
 pymdown-extensions = "^4.9"
 pygments = "^2.2"
 pytest-mock = "^1.9"

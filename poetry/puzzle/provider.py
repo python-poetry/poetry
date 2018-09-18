@@ -331,7 +331,7 @@ class Provider:
                 # In this particular case, we notify the resolver that it needs
                 # to branch the dependency tree. What this means is if we have
                 # root Python ~2.7 || ^3.6 and dependency Python >=3.6
-                # we have to resolve for ^3.6 (>=3.6, <4.0)
+                # we have to resolve for ^3.6 (>=3.6, <4.0) and for ~2.7 || <3.6
                 if (
                     not package.dependency.python_constraint.is_any()
                     and not package.python_constraint.intersect(
@@ -343,12 +343,12 @@ class Provider:
                             package, package.dependency.python_constraint
                         )
                     )
+                    intersection = self._package.python_constraint.intersect(
+                        package.dependency.python_constraint
+                    )
                     raise CompatibilityError(
-                        str(
-                            package.python_constraint.intersect(
-                                package.dependency.python_constraint
-                            )
-                        )
+                        str(intersection),
+                        str(self._package.python_constraint.difference(intersection)),
                     )
 
                 return [
