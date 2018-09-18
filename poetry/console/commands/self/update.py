@@ -27,7 +27,7 @@ class SelfUpdateCommand(Command):
         { --preview : Install prereleases. }
     """
 
-    BASE_URL = "https://poetry.eustace.io"
+    BASE_URL = "https://github.com/sdispater/poetry/releases/download/"
 
     @property
     def home(self):
@@ -155,7 +155,11 @@ class SelfUpdateCommand(Command):
     def _update(self, version):
         from poetry.utils.helpers import temporary_directory
 
-        checksum = "poetry-{}-{}.sha256sum".format(version, sys.platform)
+        platform = sys.platform
+        if platform == "linux2":
+            platform = "linux"
+
+        checksum = "poetry-{}-{}.sha256sum".format(version, platform)
 
         try:
             r = urlopen(self.BASE_URL + "/releases/{}".format(checksum))
@@ -168,7 +172,7 @@ class SelfUpdateCommand(Command):
         checksum = r.read().decode()
 
         # We get the payload from the remote host
-        name = "poetry-{}-{}.tar.gz".format(version, sys.platform)
+        name = "poetry-{}-{}.tar.gz".format(version, platform)
         try:
             r = urlopen(self.BASE_URL + "/releases/{}".format(name))
         except HTTPError as e:
