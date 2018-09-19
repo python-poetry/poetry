@@ -585,7 +585,7 @@ class Installer:
         # Updating any profile we can on UNIX systems
         export_string = self.get_export_string()
 
-        addition = "\n{}".format(export_string)
+        addition = "\n{}\n".format(export_string)
 
         updated = []
         profiles = self.get_unix_profiles()
