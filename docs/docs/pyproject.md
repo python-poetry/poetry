@@ -217,3 +217,22 @@ To match the example in the setuptools documentation, you would use the followin
 [tool.poetry.plugins."blogtool.parsers"]
 ".rst" = "some_module:SomeClass"
 ```
+
+## Poetry and PEP-517
+
+[PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way
+to define alternative build systems to build a Python project.
+
+Poetry is compliant with PEP-517 so if you use Poetry to manage your Python
+project you should reference it in the `build-system` section of the `pyproject.toml`
+file like so:
+
+```toml
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+```
+
+!!!note
+
+    When using the `new` or `init` command this section will be automatically added.

@@ -48,6 +48,8 @@ class WheelBuilder(Builder):
         wb = WheelBuilder(poetry, env, io, target_dir=directory, original=original)
         wb.build()
 
+        return wb.wheel_filename
+
     @classmethod
     def make(cls, poetry, env, io):
         """Build a wheel in the dist/ directory, and optionally upload it."""
