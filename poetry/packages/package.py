@@ -75,7 +75,7 @@ class Package(object):
 
         self.root_dir = None
 
-        self.develop = False
+        self.develop = True
 
     @property
     def name(self):
@@ -106,6 +106,9 @@ class Package(object):
 
     @property
     def full_pretty_version(self):
+        if self.source_type in ["file", "directory"]:
+            return "{} {}".format(self._pretty_version, self.source_url)
+
         if self.source_type not in ["hg", "git"]:
             return self._pretty_version
 
@@ -266,7 +269,7 @@ class Package(object):
                         category=category,
                         optional=optional,
                         base=self.root_dir,
-                        develop=constraint.get("develop", False),
+                        develop=constraint.get("develop", True),
                     )
             else:
                 version = constraint["version"]
