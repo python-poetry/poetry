@@ -310,6 +310,17 @@ poetry run my-script
 
 Note that this command has no option.
 
+## shell
+
+The `shell` command spawns a shell, 
+according to the `$SHELL` environment variable, 
+within the virtual environment. 
+If one doesn't exist yet, it will be created.
+
+```bash
+poetry shell
+```
+
 ## check
 
 The `check` command validate the structure of the `pyproject.toml` file
