@@ -18,7 +18,7 @@ This has many advantages for the end users and allows them to set appropriate
 
 ## Lock file
 
-For your library, you may commit the `pyproject.lock` file if you want to.
+For your library, you may commit the `poetry.lock` file if you want to.
 This can help your team to always test against the same dependency versions.
 However, this lock file will not have any effect on other projects that depend on it.
 It only has an effect on the main project.
@@ -59,10 +59,10 @@ and you have [configured your credentials](/repositories/#adding-credentials) pr
 !!!note
 
     The `publish` command does not execute `build` by default.
-    
+
     If you want to build and publish your packages together,
     just pass the `--build` option.
-    
+
 Once this is done, your library will be available to anyone.
 
 
