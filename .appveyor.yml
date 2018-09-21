@@ -19,6 +19,7 @@ install:
 
   # Installing Poetry
   - "python get-poetry.py --preview -y"
+  - "SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%"
 
   # Install dependencies
   - "poetry install -v"
