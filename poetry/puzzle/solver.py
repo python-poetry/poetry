@@ -1,9 +1,11 @@
+import time
+
 from typing import List
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
-from poetry.packages.constraints.generic_constraint import GenericConstraint
+from poetry.packages.constraints import parse_constraint as parse_generic_constraint
 
 from poetry.semver import parse_constraint
 
@@ -26,15 +28,37 @@ class Solver:
         self._locked = locked
         self._io = io
         self._provider = Provider(self._package, self._pool, self._io)
+        self._branches = []
 
     def solve(self, use_latest=None):  # type: (...) -> List[Operation]
         with self._provider.progress():
+            start = time.time()
             packages, depths = self._solve(use_latest=use_latest)
+            end = time.time()
+
+            if len(self._branches) > 1:
+                self._provider.debug(
+                    "Complete version solving took {:.3f} seconds for {} branches".format(
+                        end - start, len(self._branches[1:])
+                    )
+                )
+                self._provider.debug(
+                    "Resolved for branches: {}".format(
+                        ", ".join("({})".format(b) for b in self._branches[1:])
+                    )
+                )
 
         requested = self._package.all_requires
 
         operations = []
         for package in packages:
+            requirements = {}
+            for k, v in package.requirements.items():
+                if v != "*":
+                    requirements[k] = v
+
+            package.requirements = requirements
+
             installed = False
             for pkg in self._installed.packages:
                 if package.name == pkg.name:
@@ -79,6 +103,7 @@ class Solver:
                 # since it actually doesn't matter since removals are always on top.
                 -depths[packages.index(o.package)] if o.job_type != "uninstall" else 0,
                 o.package.name,
+                o.package.version,
             ),
         )
 
@@ -102,17 +127,36 @@ class Solver:
                 for index, package in enumerate(_packages):
                     if package not in packages:
                         packages.append(package)
+                        package.requirements["python"] = str(
+                            self._package.python_constraint.intersect(
+                                package.python_constraint
+                            )
+                        )
                         depths.append(_depths[index])
                         continue
+                    else:
+                        idx = packages.index(package)
+                        pkg = packages[idx]
+                        depths[idx] = max(depths[idx], _depths[index])
+                        pkg.requirements["python"] = str(
+                            parse_constraint(pkg.requirements.get("python", "*")).union(
+                                parse_constraint(
+                                    package.requirements.get("python", "*")
+                                )
+                            )
+                        )
 
-                    current_package = packages[packages.index(package)]
-                    for dep in package.requires:
-                        if dep not in current_package.requires:
-                            current_package.requires.append(dep)
+                        for dep in package.requires:
+                            if dep not in pkg.requires:
+                                pkg.requires.append(dep)
+
+                        package = pkg
 
         return packages, depths
 
     def _solve(self, use_latest=None):
+        self._branches.append(self._package.python_versions)
+
         locked = {}
         for package in self._locked.packages:
             locked[package.name] = DependencyPackage(package.to_dependency(), package)
@@ -172,7 +216,7 @@ class Solver:
             )
             platform = str(
                 previous_dep.platform
-                if GenericConstraint.parse(previous["platform"]).matches(
+                if parse_generic_constraint(previous["platform"]).allows_any(
                     previous_dep.platform_constraint
                 )
                 and previous_dep.platform != "*"
@@ -311,14 +355,14 @@ class Solver:
         else:
             platform = platforms[0]
             for constraint in platforms[1:]:
-                previous = GenericConstraint.parse(platform)
-                current = GenericConstraint.parse(constraint)
+                previous = parse_generic_constraint(platform)
+                current = parse_generic_constraint(constraint)
 
                 if platform == "*":
                     continue
                 elif constraint == "*":
                     platform = constraint
-                elif current.matches(previous):
+                elif current.allows_all(previous):
                     platform = constraint
 
         depth = max(*(_depths + [0]))

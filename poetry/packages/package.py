@@ -12,8 +12,8 @@ from poetry.spdx import License
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 
-from .constraints.empty_constraint import EmptyConstraint
-from .constraints.generic_constraint import GenericConstraint
+from .constraints import parse_constraint as parse_generic_constraint
+from .constraints.any_constraint import AnyConstraint
 from .dependency import Dependency
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
@@ -71,7 +71,7 @@ class Package(object):
         self._python_versions = "*"
         self._python_constraint = parse_constraint("*")
         self._platform = "*"
-        self._platform_constraint = EmptyConstraint()
+        self._platform_constraint = AnyConstraint()
 
         self.root_dir = None
 
@@ -165,7 +165,7 @@ class Package(object):
     @platform.setter
     def platform(self, value):  # type: (str) -> None
         self._platform = value
-        self._platform_constraint = GenericConstraint.parse(value)
+        self._platform_constraint = parse_generic_constraint(value)
 
     @property
     def platform_constraint(self):

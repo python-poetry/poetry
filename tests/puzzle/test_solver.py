@@ -370,36 +370,6 @@ def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
     )
 
 
-def test_solver_solves_while_respecting_root_platforms(solver, repo, package):
-    package.platform = "darwin"
-    package.add_dependency("A")
-    package.add_dependency("B")
-
-    package_a = get_package("A", "1.0")
-    package_b = get_package("B", "1.0")
-    package_c12 = get_package("C", "1.2")
-    package_c12.platform = "win32"
-    package_c10 = get_package("C", "1.0")
-    package_c10.platform = "darwin"
-    package_b.add_dependency("C", "^1.0")
-
-    repo.add_package(package_a)
-    repo.add_package(package_b)
-    repo.add_package(package_c10)
-    repo.add_package(package_c12)
-
-    ops = solver.solve()
-
-    check_solver_result(
-        ops,
-        [
-            {"job": "install", "package": package_c10},
-            {"job": "install", "package": package_a},
-            {"job": "install", "package": package_b},
-        ],
-    )
-
-
 def test_solver_does_not_return_extras_if_not_requested(solver, repo, package):
     package.add_dependency("A")
     package.add_dependency("B")
@@ -581,16 +551,19 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package
     )
 
     op = ops[3]  # d
-    assert op.package.requirements == {"python": "<4.0"}
+    assert op.package.requirements == {"python": ">=2.7,<2.8 || >=3.4,<4.0"}
 
     op = ops[0]  # e
-    assert op.package.requirements == {"platform": "win32", "python": "<5.0"}
+    assert op.package.requirements == {
+        "platform": "win32",
+        "python": ">=2.7,<2.8 || >=3.4,<5.0",
+    }
 
     op = ops[1]  # f
-    assert op.package.requirements == {"python": "<5.0"}
+    assert op.package.requirements == {"python": ">=2.7,<2.8 || >=3.4,<5.0"}
 
     op = ops[4]  # a
-    assert op.package.requirements == {"python": "<5.0"}
+    assert op.package.requirements == {"python": ">=2.7,<2.8 || >=3.4,<5.0"}
 
 
 def test_solver_sub_dependencies_with_not_supported_python_version(
@@ -814,7 +787,7 @@ def test_solver_duplicate_dependencies_different_constraints(solver, repo, packa
     )
 
     op = ops[0]
-    assert op.package.requirements == {"python": "<3.4"}
+    assert op.package.requirements == {"python": ">=2.7,<2.8"}
 
     op = ops[1]
     assert op.package.requirements == {"python": ">=3.4"}
@@ -882,7 +855,7 @@ def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
     )
 
     op = ops[2]
-    assert op.package.requirements == {"python": "<3.4"}
+    assert op.package.requirements == {"python": ">=2.7,<2.8"}
 
     op = ops[3]
     assert op.package.requirements == {"python": ">=3.4"}
@@ -967,7 +940,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(
     solver, repo, package
 ):
-    package.python_versions = "~2.7 || ^3.6"
+    package.python_versions = "~2.7 || ^3.4"
     package.add_dependency("A", {"version": "^1.0", "python": "^3.6"})
 
     package_a = get_package("A", "1.0.0")
@@ -978,3 +951,49 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
     ops = solver.solve()
 
     check_solver_result(ops, [{"job": "install", "package": package_a}])
+
+    assert ops[0].package.requirements["python"] == ">=3.6,<4.0"
+
+
+def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_with_package_python(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency("A", {"version": "^1.0", "python": "^3.5"})
+
+    package_a = get_package("A", "1.0.0")
+    package_a.python_versions = ">=3.6"
+
+    repo.add_package(package_a)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
+def test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency("A", {"version": "^1.0", "python": "^3.5"})
+
+    package_a101 = get_package("A", "1.0.1")
+    package_a101.python_versions = ">=3.6"
+
+    package_a100 = get_package("A", "1.0.0")
+    package_a100.python_versions = ">=3.5"
+
+    repo.add_package(package_a100)
+    repo.add_package(package_a101)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_a100},
+            {"job": "install", "package": package_a101},
+        ],
+    )
+
+    assert ops[0].package.requirements["python"] == ">=3.5,<4.0"
+    assert ops[1].package.requirements["python"] == ">=3.6,<4.0"

@@ -7,7 +7,7 @@ from poetry.io import NullIO
 from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
-from poetry.packages.constraints.generic_constraint import GenericConstraint
+from poetry.packages.constraints import parse_constraint as parse_generic_constraint
 from poetry.puzzle import Solver
 from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
@@ -472,11 +472,11 @@ class Installer:
                 continue
 
             if "platform" in package.requirements:
-                platform_constraint = GenericConstraint.parse(
+                platform_constraint = parse_generic_constraint(
                     package.requirements["platform"]
                 )
-                if not platform_constraint.matches(
-                    GenericConstraint("=", sys.platform)
+                if not platform_constraint.allows(
+                    parse_generic_constraint(sys.platform)
                 ):
                     # Incompatible systems
                     op.skip("Not needed for the current platform")

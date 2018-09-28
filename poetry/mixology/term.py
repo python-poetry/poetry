@@ -151,7 +151,7 @@ class Term(object):
         return (
             self.dependency.is_root
             or other.is_root
-            or (other.name == self.dependency.name)
+            or other.name == self.dependency.name
         )
 
     def _non_empty_term(self, constraint, is_positive):

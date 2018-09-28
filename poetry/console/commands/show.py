@@ -23,7 +23,9 @@ lists all packages available."""
     colors = ["green", "yellow", "cyan", "magenta", "blue"]
 
     def handle(self):
-        from poetry.packages.constraints.generic_constraint import GenericConstraint
+        from poetry.packages.constraints import (
+            parse_constraint as parse_generic_constraint
+        )
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.semver import Version
         from poetry.semver import parse_constraint
@@ -105,11 +107,11 @@ lists all packages available."""
         # Computing widths
         for locked in locked_packages:
             python_constraint = parse_constraint(locked.requirements.get("python", "*"))
-            platform_constraint = GenericConstraint.parse(
+            platform_constraint = parse_generic_constraint(
                 locked.requirements.get("platform", "*")
             )
-            if not python_constraint.allows(python) or not platform_constraint.matches(
-                GenericConstraint("=", platform)
+            if not python_constraint.allows(python) or not platform_constraint.allows(
+                parse_generic_constraint(platform)
             ):
                 skipped.append(locked)
 

@@ -12,6 +12,11 @@
 
 - Improved virtualenv detection and management.
 - Wilcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
+- Changed behavior of the resolver for conditional dependencies.
+
+### Fixed
+
+- Fixed a memory leak in the resolver.
 
 
 ## [0.11.5] - 2018-09-04
