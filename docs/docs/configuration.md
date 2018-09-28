@@ -33,4 +33,4 @@ Defaults to one of the following directories:
 
 ### `repositories.<name>`: string
 
-Set a new alternative repository. See [Repositories](/repositories/) for more information.
+Set a new alternative repository. See [Repositories](/docs/repositories/) for more information.
