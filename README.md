@@ -559,6 +559,7 @@ The recommended notation for the most common licenses is (alphabetical):
 * LGPL-3.0
 * LGPL-3.0+
 * MIT
+* Python-2.0
 
 Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://www.spdx.org/licenses/).
