@@ -24,7 +24,8 @@ class RunCommand(VenvCommand):
     def run_script(self, script, args):
         module, callable_ = script.split(":")
 
-        src_in_sys_path = "sys.path.append('src'); " if self._module.is_in_src() else ""
+        src_in_sys_path = "sys.path.append('src'); " \
+            if self._module.is_in_src() else ""
 
         cmd = ["python", "-c"]
 
@@ -52,7 +53,10 @@ class RunCommand(VenvCommand):
     def merge_application_definition(self, merge_args=True):
         if self._application is None or (
             self._application_definition_merged
-            and (self._application_definition_merged_with_args or not merge_args)
+            and (
+                self._application_definition_merged_with_args
+                or not merge_args
+                )
         ):
             return
 

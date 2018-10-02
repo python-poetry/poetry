@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import json
-
 from .__version__ import __version__
 from .config import Config
 from .exceptions import InvalidProjectFile
@@ -10,7 +8,6 @@ from .json import validate_object
 from .json import ValidationError
 from .packages import Dependency
 from .packages import Locker
-from .packages import Package
 from .packages import ProjectPackage
 from .repositories import Pool
 from .repositories.pypi_repository import PyPiRepository
@@ -77,15 +74,15 @@ class Poetry:
 
         else:
             raise RuntimeError(
-                "Poetry could not find a pyproject.toml file in {} or its parents".format(
-                    cwd
-                )
+                "Poetry could not find a pyproject.toml \
+file in {} or its parents".format(cwd)
             )
 
         local_config = TomlFile(poetry_file.as_posix()).read()
         if "tool" not in local_config or "poetry" not in local_config["tool"]:
             raise RuntimeError(
-                "[tool.poetry] section not found in {}".format(poetry_file.name)
+                "[tool.poetry] section not found in {}".format(
+                    poetry_file.name)
             )
         local_config = local_config["tool"]["poetry"]
 
