@@ -28,7 +28,7 @@ from poetry.repositories import Pool
 
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
-from poetry.utils.helpers import parse_requires
+from poetry.utils.helpers import parse_requires, expand_environment_vars
 from poetry.utils.toml_file import TomlFile
 from poetry.utils.venv import Venv
 
@@ -159,7 +159,7 @@ class Provider:
             pyproject_content = None
             has_poetry = False
             if pyproject.exists():
-                pyproject_content = pyproject.read()
+                pyproject_content = expand_environment_vars(pyproject.read())
                 has_poetry = (
                     "tool" in pyproject_content
                     and "poetry" in pyproject_content["tool"]

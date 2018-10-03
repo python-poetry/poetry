@@ -1,6 +1,8 @@
+import os
 import re
 import shutil
 import tempfile
+from collections import Mapping
 
 from contextlib import contextmanager
 from typing import Union
@@ -86,3 +88,33 @@ def get_http_basic_auth(repository_name):  # type: (str) -> tuple
     if repo_auth:
         return repo_auth["username"], repo_auth["password"]
     return None
+
+
+# If the string can be expanded by a call to os.environ.get, then we
+# return that string.  Otherwise, we return the original escaped string.
+def __maybe_expand_env_var(match): # type: (SRE.Match) -> str
+    string = match.group(0)
+    
+    stripped = string[2:-1] # remove environment variable escaping
+
+    value_from_env = os.environ.get(stripped)
+    if value_from_env is not None:
+        return value_from_env
+
+    return string
+
+
+# If the argument to this function is a string, we check if it contains
+# an environment escape sequence and expand it.  If it's a dict, instead
+# we expand it.
+def __expand_env_vars(obj): # type (object) -> object
+    env_escape_pat = "(\$\{[^$]+\})"
+    
+    if isinstance(obj, Mapping): # obj is dict-like
+        return expand_environment_vars(obj)
+
+    return re.sub(env_escape_pat, __maybe_expand_env_var, obj)
+    
+
+def expand_environment_vars(toml_data): # type: (dict) -> dict
+    return {k: __expand_env_vars(v) for k, v in toml_data}
