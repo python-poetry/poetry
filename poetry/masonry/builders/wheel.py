@@ -296,7 +296,7 @@ class WheelBuilder(Builder):
         fp.write("Version: {}\n".format(self._meta.version))
         fp.write("Summary: {}\n".format(self._meta.summary))
         fp.write("Home-page: {}\n".format(self._meta.home_page or "UNKNOWN"))
-        fp.write("License: {}\n".format(self._meta.license or "UNKOWN"))
+        fp.write("License: {}\n".format(self._meta.license or "UNKNOWN"))
 
         # Optional fields
         if self._meta.keywords:
