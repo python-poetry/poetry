@@ -86,3 +86,8 @@ def get_http_basic_auth(repository_name):  # type: (str) -> tuple
     if repo_auth:
         return repo_auth["username"], repo_auth["password"]
     return None
+
+
+def constraint_to_marker(constraint):  # type: (Any) -> Marker
+    if constraint.is_any():
+        return AnyMarker()

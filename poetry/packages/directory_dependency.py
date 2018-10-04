@@ -73,7 +73,6 @@ class DirectoryDependency(Dependency):
             self._package.dev_requires += package.dev_requires
             self._package.extras = package.extras
             self._package.python_versions = package.python_versions
-            self._package.platform = package.platform
         else:
             # Execute egg_info
             current_dir = os.getcwd()

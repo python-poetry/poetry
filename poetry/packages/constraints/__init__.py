@@ -5,7 +5,7 @@ from .constraint import Constraint
 from .union_constraint import UnionConstraint
 
 
-BASIC_CONSTRAINT = re.compile(r"^(!?=)?\s*([^\s]+?)\s*$")
+BASIC_CONSTRAINT = re.compile(r"^(!?==?)?\s*([^\s]+?)\s*$")
 
 
 def parse_constraint(constraints):
@@ -47,7 +47,7 @@ def parse_single_constraint(constraint):  # type: (str) -> BaseConstraint
     if m:
         op = m.group(1)
         if op is None:
-            op = "="
+            op = "=="
 
         version = m.group(2).strip()
 

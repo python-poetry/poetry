@@ -37,7 +37,6 @@ category = "main"
 description = ""
 name = "A"
 optional = false
-platform = "*"
 python-versions = "*"
 version = "1.0.0"
 
@@ -49,13 +48,11 @@ category = "main"
 description = ""
 name = "B"
 optional = false
-platform = "*"
 python-versions = "*"
 version = "1.2"
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-platform = "*"
 python-versions = "*"
 
 [metadata.hashes]

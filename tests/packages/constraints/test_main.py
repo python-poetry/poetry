@@ -13,6 +13,7 @@ from poetry.packages.constraints.union_constraint import UnionConstraint
         ("*", AnyConstraint()),
         ("win32", Constraint("win32", "=")),
         ("=win32", Constraint("win32", "=")),
+        ("==win32", Constraint("win32", "=")),
         ("!=win32", Constraint("win32", "!=")),
         ("!= win32", Constraint("win32", "!=")),
     ],

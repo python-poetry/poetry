@@ -457,30 +457,14 @@ class Installer:
                 if op.skipped:
                     op.unskip()
 
-            python = Version.parse(
-                ".".join([str(i) for i in self._env.version_info[:3]])
+            current_python = parse_constraint(
+                ".".join(str(v) for v in self._env.version_info[:3])
             )
-            if "python" in package.requirements:
-                python_constraint = parse_constraint(package.requirements["python"])
-                if not python_constraint.allows(python):
-                    # Incompatible python versions
-                    op.skip("Not needed for the current python version")
-                    continue
-
-            if not package.python_constraint.allows(python):
-                op.skip("Not needed for the current python version")
+            if not package.python_constraint.allows(
+                current_python
+            ) or not self._env.is_valid_for_marker(package.marker):
+                op.skip("Not needed for the current environment")
                 continue
-
-            if "platform" in package.requirements:
-                platform_constraint = parse_generic_constraint(
-                    package.requirements["platform"]
-                )
-                if not platform_constraint.allows(
-                    parse_generic_constraint(sys.platform)
-                ):
-                    # Incompatible systems
-                    op.skip("Not needed for the current platform")
-                    continue
 
             if self._update:
                 extras = {}

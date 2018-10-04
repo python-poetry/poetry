@@ -5,41 +5,33 @@ description = ""
 category = "main"
 optional = true
 python-versions = "*"
-platform = "*"
 
 [[package]]
 name = "C"
 version = "1.3"
 description = ""
 category = "main"
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"4.0\""
 optional = false
 python-versions = "*"
-platform = "*"
 
 [package.dependencies]
 D = "^1.2"
-
-[package.requirements]
-python = ">=2.7,<2.8 || >=3.4,<4.0"
 
 [[package]]
 name = "D"
 version = "1.4"
 description = ""
 category = "main"
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"4.0\""
 optional = false
 python-versions = "*"
-platform = "*"
-
-[package.requirements]
-python = ">=2.7,<2.8 || >=3.4,<4.0"
 
 [extras]
 foo = ["A"]
 
 [metadata]
 python-versions = "~2.7 || ^3.4"
-platform = "*"
 content-hash = "123456789"
 
 [metadata.hashes]

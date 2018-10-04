@@ -1,13 +1,14 @@
 import time
 
+from typing import Any
+from typing import Dict
 from typing import List
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
-from poetry.packages.constraints import parse_constraint as parse_generic_constraint
-
 from poetry.semver import parse_constraint
+from poetry.version.markers import AnyMarker
 
 from .exceptions import CompatibilityError
 from .exceptions import SolverProblemError
@@ -48,17 +49,8 @@ class Solver:
                     )
                 )
 
-        requested = self._package.all_requires
-
         operations = []
         for package in packages:
-            requirements = {}
-            for k, v in package.requirements.items():
-                if v != "*":
-                    requirements[k] = v
-
-            package.requirements = requirements
-
             installed = False
             for pkg in self._installed.packages:
                 if package.name == pkg.name:
@@ -127,30 +119,17 @@ class Solver:
                 for index, package in enumerate(_packages):
                     if package not in packages:
                         packages.append(package)
-                        package.requirements["python"] = str(
-                            self._package.python_constraint.intersect(
-                                package.python_constraint
-                            )
-                        )
                         depths.append(_depths[index])
                         continue
                     else:
                         idx = packages.index(package)
                         pkg = packages[idx]
                         depths[idx] = max(depths[idx], _depths[index])
-                        pkg.requirements["python"] = str(
-                            parse_constraint(pkg.requirements.get("python", "*")).union(
-                                parse_constraint(
-                                    package.requirements.get("python", "*")
-                                )
-                            )
-                        )
+                        pkg.marker = pkg.marker.union(package.marker)
 
                         for dep in package.requires:
                             if dep not in pkg.requires:
                                 pkg.requires.append(dep)
-
-                        package = pkg
 
         return packages, depths
 
@@ -178,58 +157,37 @@ class Solver:
 
         depths = []
         for package in packages:
-            category, optional, python, platform, depth = self._get_tags_for_package(
+            category, optional, marker, depth = self._get_tags_for_package(
                 package, graph
             )
             depths.append(depth)
 
             package.category = category
             package.optional = optional
-
-            # If requirements are empty, drop them
-            requirements = {}
-            if python is not None and python != "*":
-                requirements["python"] = python
-
-            if platform is not None and platform != "*":
-                requirements["platform"] = platform
-
-            package.requirements = requirements
+            package.marker = marker
 
         return packages, depths
 
     def _build_graph(
         self, package, packages, previous=None, previous_dep=None, dep=None
-    ):
+    ):  # type: (...) -> Dict[str, Any]
         if not previous:
             category = "dev"
             optional = True
-            python_version = "*"
-            platform = "*"
+            marker = package.marker
         else:
             category = dep.category
             optional = dep.is_optional() and not dep.is_activated()
-            python_version = str(
-                parse_constraint(previous["python_version"]).intersect(
-                    previous_dep.python_constraint
-                )
-            )
-            platform = str(
-                previous_dep.platform
-                if parse_generic_constraint(previous["platform"]).allows_any(
-                    previous_dep.platform_constraint
-                )
-                and previous_dep.platform != "*"
-                else previous["platform"]
-            )
+            intersection = previous["marker"].intersect(previous_dep.marker)
+
+            marker = intersection
 
         graph = {
             "name": package.name,
             "category": category,
             "optional": optional,
-            "python_version": python_version,
-            "platform": platform,
-            "children": [],
+            "marker": marker,
+            "children": [],  # type: List[Dict[str, Any]]
         }
 
         if previous_dep and previous_dep is not dep and previous_dep.name == dep.name:
@@ -281,10 +239,8 @@ class Solver:
                     )
 
                     if existing:
-                        existing["python_version"] = str(
-                            parse_constraint(existing["python_version"]).union(
-                                parse_constraint(child_graph["python_version"])
-                            )
+                        existing["marker"] = existing["marker"].union(
+                            child_graph["marker"]
                         )
                         continue
 
@@ -295,37 +251,27 @@ class Solver:
     def _get_tags_for_package(self, package, graph, depth=0):
         categories = ["dev"]
         optionals = [True]
-        python_versions = []
-        platforms = []
+        markers = []
         _depths = [0]
 
         children = graph["children"]
-        found = False
         for child in children:
             if child["name"] == package.name:
                 category = child["category"]
                 optional = child["optional"]
-                python_version = child["python_version"]
-                platform = child["platform"]
+                marker = child["marker"]
                 _depths.append(depth)
             else:
-                (
-                    category,
-                    optional,
-                    python_version,
-                    platform,
-                    _depth,
-                ) = self._get_tags_for_package(package, child, depth=depth + 1)
+                (category, optional, marker, _depth) = self._get_tags_for_package(
+                    package, child, depth=depth + 1
+                )
 
                 _depths.append(_depth)
 
             categories.append(category)
             optionals.append(optional)
-            if python_version is not None:
-                python_versions.append(python_version)
-
-            if platform is not None:
-                platforms.append(platform)
+            if not marker.is_any():
+                markers.append(marker)
 
         if "main" in categories:
             category = "main"
@@ -334,37 +280,13 @@ class Solver:
 
         optional = all(optionals)
 
-        if not python_versions:
-            python_version = None
-        else:
-            # Find the least restrictive constraint
-            python_version = python_versions[0]
-            for constraint in python_versions[1:]:
-                previous = parse_constraint(python_version)
-                current = parse_constraint(constraint)
-
-                if python_version == "*":
-                    continue
-                elif constraint == "*":
-                    python_version = constraint
-                elif current.allows_all(previous):
-                    python_version = constraint
-
-        if not platforms:
-            platform = None
-        else:
-            platform = platforms[0]
-            for constraint in platforms[1:]:
-                previous = parse_generic_constraint(platform)
-                current = parse_generic_constraint(constraint)
-
-                if platform == "*":
-                    continue
-                elif constraint == "*":
-                    platform = constraint
-                elif current.allows_all(previous):
-                    platform = constraint
-
         depth = max(*(_depths + [0]))
 
-        return category, optional, python_version, platform, depth
+        if not markers:
+            marker = AnyMarker()
+        else:
+            marker = markers[0]
+            for m in markers[1:]:
+                marker = marker.union(m)
+
+        return category, optional, marker, depth

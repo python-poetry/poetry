@@ -335,8 +335,14 @@ class Provider:
             if not package.python_constraint.allows_all(
                 self._package.python_constraint
             ):
-                if not package.python_constraint.allows_any(
-                    self._package.python_constraint
+                if (
+                    package.dependency.python_constraint.is_any()
+                    or not self._package.python_constraint.allows_all(
+                        package.dependency.python_constraint
+                    )
+                    or not package.python_constraint.allows_all(
+                        package.dependency.python_constraint
+                    )
                 ):
                     return [
                         Incompatibility(
@@ -346,13 +352,6 @@ class Provider:
                             ),
                         )
                     ]
-
-                intersection = self._package.python_constraint.intersect(
-                    package.python_constraint
-                )
-                difference = self._package.python_constraint.difference(intersection)
-                if not difference.is_empty():
-                    raise CompatibilityError(str(intersection), str(difference))
 
         dependencies = [
             dep
@@ -380,41 +379,6 @@ class Provider:
                     package.name, package.version.text, extras=package.requires_extras
                 ),
             )
-
-        if not package.dependency.python_constraint.is_any():
-            # If the package comes from a dependency with a python constraint
-            # We set the package's python constraint to the intersection of
-            # the dependency's python constraint and the package's python constraint.
-            # This will help the resolver determine the correct Python requirement
-            self.debug(
-                "<warning>Found conditional dependency for {} (Python {}).</warning>".format(
-                    package, package.dependency.python_constraint
-                )
-            )
-
-            package.python_constraint = package.python_constraint.intersect(
-                package.dependency.python_constraint
-            )
-
-            if not self._package.python_constraint.intersect(
-                package.dependency.python_constraint
-            ).is_empty():
-                # An example of this is:
-                #    - The root package is compatible with Python ~2.7 || ^3.6
-                #    - The root package depends on black for Python ^3.6
-                #    - black is only compatible with Python >=3.6
-                #    - black should be authorized.
-                #
-                # In this particular case, we notify the resolver that it needs
-                # to branch the dependency tree. What this means is if we have
-                # root Python ~2.7 || ^3.6 and dependency Python >=3.6
-                # we have to resolve for ^3.6 (>=3.6, <4.0) and for ~2.7 || <3.6
-                intersection = self._package.python_constraint.intersect(
-                    package.dependency.python_constraint
-                )
-                difference = self._package.python_constraint.difference(intersection)
-                if not difference.is_empty():
-                    raise CompatibilityError(str(intersection), str(difference))
 
         dependencies = [
             r

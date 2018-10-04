@@ -59,7 +59,6 @@ class Constraint(BaseConstraint):
     def allows_any(self, other):
         if isinstance(other, Constraint):
             is_non_equal_op = self._operator == "!="
-            is_other_equal_op = other.operator == "=="
             is_other_non_equal_op = other.operator == "!="
 
             if is_non_equal_op and is_other_non_equal_op:
