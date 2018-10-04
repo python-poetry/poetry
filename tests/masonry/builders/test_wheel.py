@@ -128,18 +128,18 @@ def test_package_with_include(mocker):
 def test_write_metadata_file_license_homepage_default(mocker):
     # Preparation
     mocked_poetry = mocker.Mock()
-    mocked_poetry.file.parent = Path('.')
-    mocked_poetry.package = ProjectPackage('pkg_name', '1.0.0')
+    mocked_poetry.file.parent = Path(".")
+    mocked_poetry.package = ProjectPackage("pkg_name", "1.0.0")
     mocked_file = mocker.Mock()
     mocked_venv = mocker.Mock()
     mocked_io = mocker.Mock()
     # patch Module init inside Builder class
-    mocker.patch('poetry.masonry.builders.builder.Module')
+    mocker.patch("poetry.masonry.builders.builder.Module")
     w = WheelBuilder(mocked_poetry, mocked_venv, mocked_io)
 
     # Action
     w._write_metadata_file(mocked_file)
 
     # Assertion
-    mocked_file.write.assert_any_call('Home-page: UNKNOWN\n')
-    mocked_file.write.assert_any_call('License: UNKNOWN\n')
+    mocked_file.write.assert_any_call("Home-page: UNKNOWN\n")
+    mocked_file.write.assert_any_call("License: UNKNOWN\n")
