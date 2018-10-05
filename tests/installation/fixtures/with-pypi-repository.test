@@ -5,31 +5,24 @@ description = "Classes Without Boilerplate"
 category = "dev"
 optional = false
 python-versions = "*"
-platform = "*"
 
 [[package]]
 name = "colorama"
 version = "0.3.9"
 description = "Cross-platform colored terminal text."
 category = "dev"
+marker = "sys_platform == \"win32\""
 optional = false
 python-versions = "*"
-platform = "UNKNOWN"
-
-[package.requirements]
-platform = "win32"
 
 [[package]]
 name = "funcsigs"
 version = "1.0.2"
 description = "Python function signatures from PEP362 for Python 2.6, 2.7 and 3.2+"
 category = "dev"
+marker = "python_version < \"3.0\""
 optional = false
 python-versions = "*"
-platform = "UNKNOWN"
-
-[package.requirements]
-python = "<3.0"
 
 [[package]]
 name = "more-itertools"
@@ -38,7 +31,6 @@ description = "More routines for operating on iterables, beyond itertools"
 category = "dev"
 optional = false
 python-versions = "*"
-platform = "*"
 
 [package.dependencies]
 six = ">=1.0.0,<2.0.0"
@@ -50,7 +42,6 @@ description = "plugin and hook calling mechanisms for python"
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-platform = "unix"
 
 [[package]]
 name = "py"
@@ -59,7 +50,6 @@ description = "library with cross-python path, ini-parsing, io, code, log facili
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-platform = "unix"
 
 [[package]]
 name = "pytest"
@@ -68,7 +58,6 @@ description = "pytest: simple powerful testing with Python"
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-platform = "unix"
 
 [package.dependencies]
 py = ">=1.5.0"
@@ -78,7 +67,7 @@ attrs = ">=17.4.0"
 more-itertools = ">=4.0.0"
 pluggy = ">=0.5,<0.7"
 funcsigs = {"version" = "*", "python" = "<3.0"}
-colorama = {"version" = "*", "platform" = "win32"}
+colorama = "*"
 
 [[package]]
 name = "six"
@@ -87,11 +76,9 @@ description = "Python 2 and 3 compatibility utilities"
 category = "dev"
 optional = false
 python-versions = "*"
-platform = "*"
 
 [metadata]
 python-versions = "*"
-platform = "*"
 content-hash = "123456789"
 
 [metadata.hashes]

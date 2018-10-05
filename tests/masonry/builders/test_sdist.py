@@ -91,12 +91,12 @@ def test_convert_dependencies():
     main = ["B>=1.0,<1.1"]
 
     extra_python = (
-        ':(python_version >= "2.7" and python_version < "2.8") '
-        'or (python_version >= "3.6" and python_version < "4.0")'
+        ':python_version >= "2.7" and python_version < "2.8" '
+        'or python_version >= "3.6" and python_version < "4.0"'
     )
     extra_d_dependency = (
-        'baz:(python_version >= "2.7" and python_version < "2.8") '
-        'or (python_version >= "3.4" and python_version < "4.0")'
+        'baz:python_version >= "2.7" and python_version < "2.8" '
+        'or python_version >= "3.4" and python_version < "4.0"'
     )
     extras = {extra_python: ["C==1.2.3"], extra_d_dependency: ["D==3.4.5"]}
 

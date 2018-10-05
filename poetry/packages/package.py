@@ -11,13 +11,15 @@ from poetry.spdx import license_by_id
 from poetry.spdx import License
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
+from poetry.version.markers import AnyMarker
+from poetry.version.markers import parse_marker
 
-from .constraints.empty_constraint import EmptyConstraint
-from .constraints.generic_constraint import GenericConstraint
+from .constraints import parse_constraint as parse_generic_constraint
 from .dependency import Dependency
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
+from .utils.utils import create_nested_marker
 
 AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 
@@ -63,15 +65,13 @@ class Package(object):
         self.hashes = []
         self.optional = False
 
-        # Requirements for making it mandatory
-        self.requirements = {}
-
         self.classifiers = []
 
         self._python_versions = "*"
         self._python_constraint = parse_constraint("*")
-        self._platform = "*"
-        self._platform_constraint = EmptyConstraint()
+        self._python_marker = AnyMarker()
+
+        self.marker = AnyMarker()
 
         self.root_dir = None
 
@@ -153,10 +153,17 @@ class Package(object):
     def python_versions(self, value):
         self._python_versions = value
         self._python_constraint = parse_constraint(value)
+        self._python_marker = parse_marker(
+            create_nested_marker("python_version", self._python_constraint)
+        )
 
     @property
     def python_constraint(self):
         return self._python_constraint
+
+    @property
+    def python_marker(self):
+        return self._python_marker
 
     @property
     def platform(self):  # type: () -> str
@@ -165,7 +172,7 @@ class Package(object):
     @platform.setter
     def platform(self, value):  # type: (str) -> None
         self._platform = value
-        self._platform_constraint = GenericConstraint.parse(value)
+        self._platform_constraint = parse_generic_constraint(value)
 
     @property
     def platform_constraint(self):
@@ -282,11 +289,28 @@ class Package(object):
                     allows_prereleases=allows_prereleases,
                 )
 
+            marker = AnyMarker()
             if python_versions:
                 dependency.python_versions = python_versions
+                marker = marker.intersect(
+                    parse_marker(
+                        create_nested_marker(
+                            "python_version", dependency.python_constraint
+                        )
+                    )
+                )
 
             if platform:
-                dependency.platform = platform
+                marker = marker.intersect(
+                    parse_marker(
+                        create_nested_marker(
+                            "sys_platform", parse_generic_constraint(platform)
+                        )
+                    )
+                )
+
+            if not marker.is_any():
+                dependency.marker = marker
 
             if "extras" in constraint:
                 for extra in constraint["extras"]:
@@ -319,7 +343,6 @@ class Package(object):
         clone.category = self.category
         clone.optional = self.optional
         clone.python_versions = self.python_versions
-        clone.platform = self.platform
         clone.extras = self.extras
         clone.source_type = self.source_type
         clone.source_url = self.source_url

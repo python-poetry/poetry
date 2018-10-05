@@ -63,10 +63,8 @@ class Locker(BaseLocker):
     def _write_lock_data(self, data):
         for package in data["package"]:
             python_versions = str(package["python-versions"])
-            platform = str(package["platform"])
             if PY2:
                 python_versions = python_versions.decode()
-                platform = platform.decode()
                 if "requirements" in package:
                     requirements = {}
                     for key, value in package["requirements"].items():
@@ -75,7 +73,6 @@ class Locker(BaseLocker):
                     package["requirements"] = requirements
 
             package["python-versions"] = python_versions
-            package["platform"] = platform
 
         self._written_data = data
 
@@ -1143,3 +1140,34 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
     assert len(updates) == 1
     removals = installer.installer.removals
     assert len(removals) == 0
+
+
+@pytest.mark.skip(
+    "This is not working at the moment due to limitations in the resolver"
+)
+def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
+    installer, locker, repo, package, installed
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency("A", {"version": "^1.0", "python": "^3.5"})
+
+    package_a101 = get_package("A", "1.0.1")
+    package_a101.python_versions = ">=3.6"
+
+    package_a100 = get_package("A", "1.0.0")
+    package_a100.python_versions = ">=3.5"
+
+    repo.add_package(package_a100)
+    repo.add_package(package_a101)
+
+    installer.run()
+
+    expected = fixture("with-conditional-dependency")
+    assert locker.written_data == expected
+
+    installs = installer.installer.installs
+
+    if sys.version_info >= (3, 5, 0):
+        assert len(installs) == 1
+    else:
+        assert len(installs) == 0

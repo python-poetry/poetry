@@ -34,7 +34,7 @@ def dependency_from_pep_508(name):
     req = Requirement(name)
 
     if req.marker:
-        markers = convert_markers(req.marker.markers)
+        markers = convert_markers(req.marker)
     else:
         markers = {}
 
@@ -128,28 +128,8 @@ def dependency_from_pep_508(name):
 
         dep.python_versions = " || ".join(ors)
 
-    if "sys_platform" in markers:
-        ors = []
-        for or_ in markers["sys_platform"]:
-            ands = []
-            for op, platform in or_:
-                if op == "==":
-                    op = ""
-                elif op == "in":
-                    platforms = []
-                    for v in re.split("[ ,]+", platform):
-                        platforms.append(v)
-
-                    if platforms:
-                        ands.append(" || ".join(platforms))
-
-                    continue
-
-                ands.append("{}{}".format(op, platform))
-
-            ors.append(" ".join(ands))
-
-        dep.platform = " || ".join(ors)
+    if req.marker:
+        dep.marker = req.marker
 
     # Extras
     for extra in req.extras:

@@ -17,7 +17,8 @@ from pyparsing import Literal as L  # noqa
 
 from poetry.semver import parse_constraint
 
-from .markers import MARKER_EXPR, Marker
+from .markers import MARKER_EXPR
+from .markers import parse_marker
 
 
 LEGACY_REGEX = r"""
@@ -53,7 +54,7 @@ REGEX = r"""
                     # versions to be specified so we have to define these two
                     # operators separately to enable that.
                     (?<===|!=)            # Only match for equals and not equals
-    
+
                     \s*
                     v?
                     (?:[0-9]+!)?          # epoch
@@ -67,7 +68,7 @@ REGEX = r"""
                     (?:                   # post release
                         (?:-[0-9]+)|(?:[-_\.]?(post|rev|r)[-_\.]?[0-9]*)
                     )?
-    
+
                     # You cannot use a wild card and a dev or local version
                     # together so group them with a | and make them optional.
                     (?:
@@ -82,7 +83,7 @@ REGEX = r"""
                     # The compatible operator requires at least two digits in the
                     # release segment.
                     (?<=~=)               # Only match for the compatible operator
-    
+
                     \s*
                     v?
                     (?:[0-9]+!)?          # epoch
@@ -107,7 +108,7 @@ REGEX = r"""
                     (?<!==|!=|~=)         # We have special cases for these
                                           # operators so we want to make sure they
                                           # don't match here.
-    
+
                     \s*
                     v?
                     (?:[0-9]+!)?          # epoch
@@ -171,7 +172,7 @@ VERSION_SPEC.setParseAction(lambda s, l, t: t[1])
 
 MARKER_EXPR = originalTextFor(MARKER_EXPR())("marker")
 MARKER_EXPR.setParseAction(
-    lambda s, l, t: Marker(s[t._original_start : t._original_end])
+    lambda s, l, t: parse_marker(s[t._original_start : t._original_end])
 )
 MARKER_SEPERATOR = SEMICOLON
 MARKER = MARKER_SEPERATOR + MARKER_EXPR

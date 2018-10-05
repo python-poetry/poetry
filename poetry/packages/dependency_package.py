@@ -1,7 +1,4 @@
-from .package import Package
-
-
-class DependencyPackage:
+class DependencyPackage(object):
     def __init__(self, dependency, package):
         self._dependency = dependency
         self._package = package
@@ -16,6 +13,12 @@ class DependencyPackage:
 
     def __getattr__(self, name):
         return getattr(self._package, name)
+
+    def __setattr__(self, key, value):
+        if key in {"_dependency", "_package"}:
+            return super(DependencyPackage, self).__setattr__(key, value)
+
+        setattr(self._package, key, value)
 
     def __str__(self):
         return str(self._package)

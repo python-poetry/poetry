@@ -1,7 +1,9 @@
 from poetry.semver import VersionRange
 from poetry.semver import parse_constraint
+from poetry.version.markers import parse_marker
 
 from .package import Package
+from .utils.utils import create_nested_marker
 
 
 class ProjectPackage(Package):
@@ -33,7 +35,11 @@ class ProjectPackage(Package):
     @python_versions.setter
     def python_versions(self, value):
         self._python_versions = value
+
         if value == "*" or value == VersionRange():
             value = "~2.7 || >=3.4"
 
         self._python_constraint = parse_constraint(value)
+        self._python_marker = parse_marker(
+            create_nested_marker("python_version", self._python_constraint)
+        )

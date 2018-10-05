@@ -1,3 +1,4 @@
+import json
 import os
 import platform
 import subprocess
@@ -8,6 +9,7 @@ import warnings
 from contextlib import contextmanager
 from subprocess import CalledProcessError
 from typing import Any
+from typing import Dict
 from typing import Optional
 from typing import Tuple
 
@@ -15,6 +17,7 @@ from poetry.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from poetry.version.markers import BaseMarker
 
 
 class EnvError(Exception):
@@ -47,8 +50,7 @@ class Env(object):
 
         self._base = base or path
 
-        self._version_info = self.get_version_info()
-        self._python_implementation = self.get_python_implementation()
+        self._marker_env = None
 
     @property
     def path(self):  # type: () -> Path
@@ -60,11 +62,11 @@ class Env(object):
 
     @property
     def version_info(self):  # type: () -> Tuple[int]
-        return self._version_info
+        return tuple(self.marker_env["version_info"])
 
     @property
     def python_implementation(self):  # type: () -> str
-        return self._python_implementation
+        return self.marker_env["platform_python_implementation"]
 
     @property
     def python(self):  # type: () -> str
@@ -72,6 +74,13 @@ class Env(object):
         Path to current python executable
         """
         return self._bin("python")
+
+    @property
+    def marker_env(self):
+        if self._marker_env is None:
+            self._marker_env = self.get_marker_env()
+
+        return self._marker_env
 
     @property
     def pip(self):  # type: () -> str
@@ -214,8 +223,14 @@ class Env(object):
     def get_python_implementation(self):  # type: () -> str
         raise NotImplementedError()
 
-    def config_var(self, var):  # type: () -> Any
+    def get_marker_env(self):  # type: () -> Dict[str, Any]
         raise NotImplementedError()
+
+    def config_var(self, var):  # type: (str) -> Any
+        raise NotImplementedError()
+
+    def is_valid_for_marker(self, marker):  # type: (BaseMarker) -> bool
+        return marker.validate(self.marker_env)
 
     def run(self, bin, *args, **kwargs):
         """
@@ -262,7 +277,7 @@ class Env(object):
         return str(bin_path)
 
     def __repr__(self):
-        return '{}("{}")'.format(self.__class__.__name__, self._base)
+        return '{}("{}")'.format(self.__class__.__name__, self._path)
 
 
 class SystemEnv(Env):
@@ -275,6 +290,34 @@ class SystemEnv(Env):
 
     def get_python_implementation(self):  # type: () -> str
         return platform.python_implementation()
+
+    def get_marker_env(self):  # type: () -> Dict[str, Any]
+        if hasattr(sys, "implementation"):
+            info = sys.implementation.version
+            iver = "{0.major}.{0.minor}.{0.micro}".format(info)
+            kind = info.releaselevel
+            if kind != "final":
+                iver += kind[0] + str(info.serial)
+
+            implementation_name = sys.implementation.name
+        else:
+            iver = "0"
+            implementation_name = ""
+
+        return {
+            "implementation_name": implementation_name,
+            "implementation_version": iver,
+            "os_name": os.name,
+            "platform_machine": platform.machine(),
+            "platform_release": platform.release(),
+            "platform_system": platform.system(),
+            "platform_version": platform.version(),
+            "python_full_version": platform.python_version(),
+            "platform_python_implementation": platform.python_implementation(),
+            "python_version": platform.python_version()[:3],
+            "sys_platform": sys.platform,
+            "version_info": sys.version_info,
+        }
 
     def config_var(self, var):  # type: (str) -> Any
         try:
@@ -314,7 +357,7 @@ class VirtualEnv(Env):
                     "    )"
                     ')"',
                     shell=True,
-                )
+                ).strip()
             )
 
     def get_version_info(self):  # type: () -> Tuple[int]
@@ -328,12 +371,35 @@ class VirtualEnv(Env):
         return tuple([int(s) for s in output.strip().split(".")])
 
     def get_python_implementation(self):  # type: () -> str
-        return self.run(
+        return self.marker_env["platform_python_implementation"]
+
+    def get_marker_env(self):  # type: () -> Dict[str, Any]
+        output = self.run(
             "python",
             "-c",
-            '"import platform; print(platform.python_implementation())"',
+            '"import json; import os; import platform; import sys; '
+            "implementation = getattr(sys, 'implementation', None); "
+            "iver = '{0.major}.{0.minor}.{0.micro}'.format(implementation.version) if implementation else '0'; "
+            "implementation_name = implementation.name if implementation else ''; "
+            "env = {"
+            "'implementation_name': implementation_name,"
+            "'implementation_version': iver,"
+            "'os_name': os.name,"
+            "'platform_machine': platform.machine(),"
+            "'platform_release': platform.release(),"
+            "'platform_system': platform.system(),"
+            "'platform_version': platform.version(),"
+            "'python_full_version': platform.python_version(),"
+            "'platform_python_implementation': platform.python_implementation(),"
+            "'python_version': platform.python_version()[:3],"
+            "'sys_platform': sys.platform,"
+            "'version_info': sys.version_info[:3],"
+            "};"
+            'print(json.dumps(env))"',
             shell=True,
-        ).strip()
+        )
+
+        return json.loads(output)
 
     def config_var(self, var):  # type: (str) -> Any
         try:
@@ -344,7 +410,7 @@ class VirtualEnv(Env):
                 "print(sysconfig.get_config_var('{}'))\"".format(var),
                 shell=True,
             ).strip()
-        except VenvCommandError as e:
+        except EnvCommandError as e:
             warnings.warn("{0}".format(e), RuntimeWarning)
             return None
 
