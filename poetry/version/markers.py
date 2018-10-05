@@ -168,6 +168,9 @@ class BaseMarker(object):
     def validate(self, environment):  # type: (Dict[str, Any]) -> bool
         raise NotImplementedError()
 
+    def without_extras(self):  # type: () -> BaseMarker
+        raise NotImplementedError()
+
     def __repr__(self):
         return "<{} {}>".format(self.__class__.__name__, str(self))
 
@@ -187,6 +190,9 @@ class AnyMarker(BaseMarker):
 
     def validate(self, environment):
         return True
+
+    def without_extras(self):
+        return self
 
     def __str__(self):
         return ""
@@ -210,6 +216,9 @@ class EmptyMarker(BaseMarker):
 
     def validate(self, environment):
         return False
+
+    def without_extras(self):
+        return self
 
     def __str__(self):
         return "<empty>"
@@ -328,6 +337,12 @@ class SingleMarker(BaseMarker):
 
         return self._constraint.allows(self._parser(environment[self._name]))
 
+    def without_extras(self):
+        if self.name == "extra":
+            return EmptyMarker()
+
+        return self
+
     def __eq__(self, other):
         if not isinstance(other, SingleMarker):
             return False
@@ -436,6 +451,17 @@ class MultiMarker(BaseMarker):
                 return False
 
         return True
+
+    def without_extras(self):
+        new_markers = []
+
+        for m in self._markers:
+            marker = m.without_extras()
+
+            if not marker.is_empty():
+                new_markers.append(marker)
+
+        return self.of(*new_markers)
 
     def __eq__(self, other):
         if not isinstance(other, MultiMarker):
@@ -548,6 +574,17 @@ class MarkerUnion(BaseMarker):
                 return True
 
         return False
+
+    def without_extras(self):
+        new_markers = []
+
+        for m in self._markers:
+            marker = m.without_extras()
+
+            if not marker.is_empty():
+                new_markers.append(marker)
+
+        return MarkerUnion(*new_markers)
 
     def __eq__(self, other):
         if not isinstance(other, MarkerUnion):

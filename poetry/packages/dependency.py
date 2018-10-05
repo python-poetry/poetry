@@ -152,7 +152,12 @@ class Dependency(object):
 
         markers = []
         if not self.marker.is_any():
-            markers.append(str(self.marker))
+            marker = self.marker
+            if not with_extras:
+                marker = marker.without_extras()
+
+            if not marker.is_empty():
+                markers.append(str(marker))
         else:
             # Python marker
             if self.python_versions != "*":

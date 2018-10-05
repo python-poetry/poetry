@@ -435,7 +435,7 @@ class Provider:
                 for constraint, _deps in by_constraint.items():
                     new_markers = []
                     for dep in _deps:
-                        pep_508_dep = dep.to_pep_508()
+                        pep_508_dep = dep.to_pep_508(False)
                         if ";" not in pep_508_dep:
                             continue
 
@@ -454,7 +454,7 @@ class Provider:
 
                     dep = _deps[0]
                     new_requirement = "{}; {}".format(
-                        dep.to_pep_508().split(";")[0], " or ".join(new_markers)
+                        dep.to_pep_508(False).split(";")[0], " or ".join(new_markers)
                     )
                     new_dep = dependency_from_pep_508(new_requirement)
                     if dep.is_optional() and not dep.is_activated():
@@ -482,7 +482,7 @@ class Provider:
                 _deps = [value[0] for value in by_constraint.values()]
                 seen = set()
                 for _dep in _deps:
-                    pep_508_dep = _dep.to_pep_508()
+                    pep_508_dep = _dep.to_pep_508(False)
                     if ";" not in pep_508_dep:
                         _requirements = ""
                     else:

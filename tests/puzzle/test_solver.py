@@ -1034,3 +1034,42 @@ def test_solver_sets_appropriate_markers_when_solving(solver, repo, package):
     )
 
     assert str(ops[1].package.marker) == ""
+
+
+def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(
+    solver, repo, package
+):
+    dep1 = dependency_from_pep_508('B (>=1.0); extra == "foo"')
+    dep1.activate()
+    dep2 = dependency_from_pep_508('B (>=2.0); extra == "bar"')
+    dep2.activate()
+
+    package.add_dependency("A", {"version": "^1.0", "extras": ["foo", "bar"]})
+
+    package_a = get_package("A", "1.0.0")
+    package_a.extras = {"foo": [dep1], "bar": [dep2]}
+    package_a.requires.append(dep1)
+    package_a.requires.append(dep2)
+
+    package_b2 = get_package("B", "2.0.0")
+    package_b1 = get_package("B", "1.0.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b1)
+    repo.add_package(package_b2)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b2},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    assert str(ops[0].package.marker) in [
+        'extra == "foo" or extra == "bar"',
+        'extra == "bar" or extra == "foo"',
+    ]
+    assert str(ops[1].package.marker) == ""
