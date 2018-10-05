@@ -324,7 +324,7 @@ poetry shell
 ## check
 
 The `check` command validate the structure of the `pyproject.toml` file
-and returns a detailed report is there are any errors.
+and returns a detailed report if there are any errors.
 
 ```bash
 poetry check
