@@ -56,7 +56,7 @@ Poetry uses this information to search for the right set of files in package "re
 in the `tool.poetry.repositories` section, or on [PyPI](https://pypi.org) by default.
 
 Also, instead of modifying the `pyproject.toml` file by hand, you can use the `add` command.
-    
+
 ```bash
 $ poetry add pendulum
 ```
@@ -75,50 +75,50 @@ Please read [versions](/versions/) for more in-depth information on versions, ho
 !!!note
 
     **How does Poetry download the right files?**
-    
+
     When you specify a dependency in `pyproject.toml`, Poetry first take the name of the package
     that you have requested and searches for it in any repository you have registered using the `repositories` key.
     If you have not registered any extra repositories, or it does not find a package with that name in the
     repositories you have specified, it falls back on PyPI.
-    
+
     When Poetry finds the right package, it then attempts to find the best match
     for the version constraint you have specified.
-    
+
 
 ## Installing dependencies
 
 To install the defined dependencies for your project, just run the `install` command.
-    
+
 ```bash
 poetry install
 ```
 
 When you run this command, one of two things may happen:
 
-### Installing without `pyproject.lock`
+### Installing without `poetry.lock`
 
-If you have never run the command before and there is also no `pyproject.lock` file present,
+If you have never run the command before and there is also no `poetry.lock` file present,
 Poetry simply resolves all dependencies listed in your `pyproject.toml` file and downloads the latest version of their files.
 
-When Poetry has finished installing, it writes all of the packages and the exact versions of them that it downloaded to the `pyproject.lock` file,
+When Poetry has finished installing, it writes all of the packages and the exact versions of them that it downloaded to the `poetry.lock` file,
 locking the project to those specific versions.
-You should commit the `pyproject.lock` file to your project repo so that all people working on the project are locked to the same versions of dependencies (more below).
+You should commit the `poetry.lock` file to your project repo so that all people working on the project are locked to the same versions of dependencies (more below).
 
 
-### Installing with `pyproject.lock`
+### Installing with `poetry.lock`
 
-This brings us to the second scenario. If there is already a `pyproject.lock` file as well as a `pyproject.toml` file
+This brings us to the second scenario. If there is already a `poetry.lock` file as well as a `pyproject.toml` file
 when you run `poetry install`, it means either you ran the `install` command before,
-or someone else on the project ran the `install` command and committed the `pyproject.lock` file to the project (which is good).
+or someone else on the project ran the `install` command and committed the `poetry.lock` file to the project (which is good).
 
-Either way, running `install` when a `pyproject.lock` file is present resolves and installs all dependencies that you listed in `pyproject.toml`,
-but Poetry uses the exact versions listed in `pyproject.lock` to ensure that the package versions are consistent for everyone working on your project.
+Either way, running `install` when a `poetry.lock` file is present resolves and installs all dependencies that you listed in `pyproject.toml`,
+but Poetry uses the exact versions listed in `poetry.lock` to ensure that the package versions are consistent for everyone working on your project.
 As a result you will have all dependencies requested by your `pyproject.toml` file,
 but they may not all be at the very latest available versions
-(some of the dependencies listed in the `pyproject.lock` file may have released newer versions since the file was created).
+(some of the dependencies listed in the `poetry.lock` file may have released newer versions since the file was created).
 This is by design, it ensures that your project does not break because of unexpected changes in dependencies.
 
-### Commit your `pyproject.lock` file to version control
+### Commit your `poetry.lock` file to version control
 
 Committing this file to VC is important because it will cause anyone who sets up the project
 to use the exact same versions of the dependencies that you are using.
@@ -132,20 +132,20 @@ the dependencies installed are still working even if your dependencies released 
 !!!note
 
     For libraries it is not necessary to commit the lock file.
-    
+
 
 ## Updating dependencies to their latest versions
 
-As mentioned above, the `pyproject.lock` file prevents you from automatically getting the latest versions
+As mentioned above, the `poetry.lock` file prevents you from automatically getting the latest versions
 of your dependencies.
 To update to the latest versions, use the `update` command.
 This will fetch the latest matching versions (according to your `pyproject.toml` file)
 and update the lock file with the new versions.
-(This is equivalent to deleting the `pyproject.lock` file and running `install` again.)
+(This is equivalent to deleting the `poetry.lock` file and running `install` again.)
 
 !!!note
 
-    Poetry will display a **Warning** when executing an install command if `pyproject.lock` and `pyproject.toml`
+    Poetry will display a **Warning** when executing an install command if `poetry.lock` and `pyproject.toml`
     are not synchronized.
 
 
@@ -159,7 +159,7 @@ or create a brand new one for you to always work isolated from your global Pytho
 
     The created virtualenv will use the Python executable for which
     `poetry` has been installed.
-    
+
     What this means is if you project is Python 2.7 only you should
     install `poetry` for your global Python 2.7 executable and use
     it to manage your project.

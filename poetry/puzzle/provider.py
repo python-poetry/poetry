@@ -84,7 +84,7 @@ class Provider:
 
     @property
     def name_for_locking_dependency_source(self):  # type: () -> str
-        return "pyproject.lock"
+        return "poetry.lock"
 
     def is_debugging(self):
         return self._is_debugging
