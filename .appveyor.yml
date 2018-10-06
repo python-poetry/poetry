@@ -16,7 +16,7 @@ install:
   - "python -m pip install --disable-pip-version-check --user --upgrade pip"
 
   # Create poetry virtualenv
-  - "python -m pip install poetry --pre"
+  - "python -m pip install poetry"
 
   # Install dependencies
   - "poetry install -v"
