@@ -120,7 +120,5 @@ def __expand_env_vars(obj): # type (object) -> object
     
 
 def expand_environment_vars(toml_data): # type: (dict) -> dict
-    print('before: ' + str(toml_data))
     res = {k: __expand_env_vars(v) for k, v in toml_data.items()}
-    print('after: ' + str(res))
     return res
