@@ -108,13 +108,19 @@ def __maybe_expand_env_var(match): # type: (SRE.Match) -> str
 # an environment escape sequence and expand it.  If it's a dict, instead
 # we expand it.
 def __expand_env_vars(obj): # type (object) -> object
-    env_escape_pat = "(\$\{[^$]+\})"
-    
     if isinstance(obj, Mapping): # obj is dict-like
         return expand_environment_vars(obj)
-
-    return re.sub(env_escape_pat, __maybe_expand_env_var, obj)
+    elif isinstance(obj, list):
+        return list(map(__expand_env_vars, obj))
+    elif isinstance(obj, str):
+        env_escape_pat = "(${[^$]+})"
+        return re.sub(env_escape_pat, __maybe_expand_env_var, str(obj))
+    else:
+        return obj
     
 
 def expand_environment_vars(toml_data): # type: (dict) -> dict
-    return {k: __expand_env_vars(v) for k, v in toml_data}
+    print('before: ' + str(toml_data))
+    res = {k: __expand_env_vars(v) for k, v in toml_data.items()}
+    print('after: ' + str(res))
+    return res

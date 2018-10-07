@@ -17,6 +17,7 @@ from .repositories.pypi_repository import PyPiRepository
 from .spdx import license_by_id
 from .utils._compat import Path
 from .utils.toml_file import TomlFile
+from .utils.helpers import expand_environment_vars
 
 
 class Poetry:
@@ -82,7 +83,7 @@ class Poetry:
                 )
             )
 
-        local_config = TomlFile(poetry_file.as_posix()).read()
+        local_config = expand_environment_vars(TomlFile(poetry_file.as_posix()).read())
         if "tool" not in local_config or "poetry" not in local_config["tool"]:
             raise RuntimeError(
                 "[tool.poetry] section not found in {}".format(poetry_file.name)
