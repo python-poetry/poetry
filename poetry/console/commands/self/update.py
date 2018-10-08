@@ -27,7 +27,7 @@ class SelfUpdateCommand(Command):
         { --preview : Install prereleases. }
     """
 
-    BASE_URL = "https://github.com/sdispater/poetry/releases/download/"
+    BASE_URL = "https://github.com/sdispater/poetry/releases/download"
 
     @property
     def home(self):
@@ -146,6 +146,7 @@ class SelfUpdateCommand(Command):
                 shutil.rmtree(str(self.lib_backup))
 
         self.line("")
+        self.line("")
         self.line(
             "<info>Poetry</info> (<comment>{}</comment>) is installed now. Great!".format(
                 version
@@ -162,7 +163,7 @@ class SelfUpdateCommand(Command):
         checksum = "poetry-{}-{}.sha256sum".format(version, platform)
 
         try:
-            r = urlopen(self.BASE_URL + "/releases/{}".format(checksum))
+            r = urlopen(self.BASE_URL + "/{}/{}".format(version, checksum))
         except HTTPError as e:
             if e.code == 404:
                 raise RuntimeError("Could not find {} file".format(checksum))
@@ -174,7 +175,7 @@ class SelfUpdateCommand(Command):
         # We get the payload from the remote host
         name = "poetry-{}-{}.tar.gz".format(version, platform)
         try:
-            r = urlopen(self.BASE_URL + "/releases/{}".format(name))
+            r = urlopen(self.BASE_URL + "/{}/{}".format(version, name))
         except HTTPError as e:
             if e.code == 404:
                 raise RuntimeError("Could not find {} file".format(name))
