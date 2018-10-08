@@ -113,8 +113,8 @@ def __expand_env_vars(obj): # type (object) -> object
     elif isinstance(obj, list):
         return list(map(__expand_env_vars, obj))
     elif isinstance(obj, str):
-        env_escape_pat = "(${[^$]+})"
-        return re.sub(env_escape_pat, __maybe_expand_env_var, str(obj))
+        env_escape_pat = r"(\${[^$]+})"
+        return re.sub(env_escape_pat, __maybe_expand_env_var, obj)
     else:
         return obj
     
