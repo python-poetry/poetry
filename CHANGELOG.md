@@ -7,6 +7,7 @@
 - Added a brand new installer.
 - Added support for multi-constraints dependencies.
 - Added a cache versioning system.
+- Added a `--lock` option to `update` to only update the lock file without executing operations.
 
 ### Changed
 
