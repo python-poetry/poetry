@@ -416,6 +416,7 @@ def test_package_with_include(mocker):
 
     with tarfile.open(str(sdist), "r") as tar:
         names = tar.getnames()
+        assert len(names) == len(set(names))
         assert "with-include-1.2.3/LICENSE" in names
         assert "with-include-1.2.3/README.rst" in names
         assert "with-include-1.2.3/extra_dir/__init__.py" in names

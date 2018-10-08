@@ -116,6 +116,7 @@ def test_poetry_with_packages_and_includes():
 
     assert package.packages == [
         {"include": "extra_dir/**/*.py"},
+        {"include": "extra_dir/**/*.py"},
         {"include": "my_module.py"},
         {"include": "package_with_include"},
     ]

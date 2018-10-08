@@ -19,6 +19,7 @@
 - Fixed a memory leak in the resolver.
 - Fixed a recursion error on duplicate dependencies with only different extras.
 - Fixed handling of extras.
+- Fixed duplicate entries in both sdist and wheel.
 
 
 ## [0.11.5] - 2018-09-04

@@ -114,6 +114,7 @@ def test_package_with_include(mocker):
 
     with zipfile.ZipFile(str(whl)) as z:
         names = z.namelist()
+        assert len(names) == len(set(names))
         assert "with_include-1.2.3.dist-info/LICENSE" in names
         assert "extra_dir/__init__.py" in names
         assert "extra_dir/vcs_excluded.txt" in names

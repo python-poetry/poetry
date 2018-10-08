@@ -109,7 +109,6 @@ class WheelBuilder(Builder):
 
     def _copy_module(self, wheel):
         excluded = self.find_excluded_files()
-        src = self._module.path
         to_add = []
 
         for include in self._module.includes:
@@ -131,6 +130,10 @@ class WheelBuilder(Builder):
                     continue
 
                 if file.suffix == ".pyc":
+                    continue
+
+                if (file, rel_file) in to_add:
+                    # Skip duplicates
                     continue
 
                 self._io.writeln(
