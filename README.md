@@ -364,6 +364,8 @@ poetry update requests toml
 #### Options
 
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--no-dev` : Do not install dev dependencies.
+* `--lock` : Do not perform install (only update the lockfile).
 
 ### add
 
