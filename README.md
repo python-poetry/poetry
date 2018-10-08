@@ -790,6 +790,22 @@ To match the example in the setuptools documentation, you would use the followin
 ".rst" = "some_module::SomeClass"
 ```
 
+### Environment variable expansion in config files
+Poetry can also expand environment variables contained in config files to allow
+for keeping secret keys, repo locations, or other sensitive data out of your
+`pyproject.toml`.  Simply include an environment variable as a string at any key
+position in `pyproject.toml` and poetry will try to expand it before proceeding.
+
+Note: If environment variable expansion fails because no such variable is declared,
+poetry will assume that's what you meant to do and silently proceed.
+
+For example:
+
+```toml
+[tool.poetry.dependencies]
+my_package = "${MY_PACKAGE_VERSION}"
+```
+
 ## Resources
 
 * [Official Website](https://poetry.eustace.io)
