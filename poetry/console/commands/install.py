@@ -1,7 +1,7 @@
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class InstallCommand(VenvCommand):
+class InstallCommand(EnvCommand):
     """
     Installs the project dependencies.
 
@@ -13,7 +13,7 @@ class InstallCommand(VenvCommand):
         { --develop=* : Install given packages in development mode. }
     """
 
-    help = """The <info>install</info> command reads the <comment>pyproject.lock</> file from
+    help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
 the current directory, processes it, and downloads and installs all the
 libraries and dependencies outlined in that file. If the file does not
 exist it will look for <comment>pyproject.toml</> and do the same.
@@ -28,7 +28,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 
         installer = Installer(
             self.output,
-            self.venv,
+            self.env,
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool,

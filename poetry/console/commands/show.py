@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class ShowCommand(VenvCommand):
+class ShowCommand(EnvCommand):
     """
     Shows information about packages.
 
@@ -23,7 +23,9 @@ lists all packages available."""
     colors = ["green", "yellow", "cyan", "magenta", "blue"]
 
     def handle(self):
-        from poetry.packages.constraints.generic_constraint import GenericConstraint
+        from poetry.packages.constraints import (
+            parse_constraint as parse_generic_constraint,
+        )
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.semver import Version
         from poetry.semver import parse_constraint
@@ -96,20 +98,16 @@ lists all packages available."""
         width = terminal.width
         name_length = version_length = latest_length = 0
         latest_packages = {}
-        installed_repo = InstalledRepository.load(self.venv)
+        installed_repo = InstalledRepository.load(self.env)
         skipped = []
 
-        platform = sys.platform
-        python = Version.parse(".".join([str(i) for i in self._venv.version_info[:3]]))
+        python = Version.parse(".".join([str(i) for i in self.env.version_info[:3]]))
 
         # Computing widths
         for locked in locked_packages:
-            python_constraint = parse_constraint(locked.requirements.get("python", "*"))
-            platform_constraint = GenericConstraint.parse(
-                locked.requirements.get("platform", "*")
-            )
-            if not python_constraint.allows(python) or not platform_constraint.matches(
-                GenericConstraint("=", platform)
+            python_constraint = locked.python_constraint
+            if not python_constraint.allows(python) or not self.env.is_valid_for_marker(
+                locked.marker
             ):
                 skipped.append(locked)
 
@@ -193,7 +191,11 @@ lists all packages available."""
 
     def display_package_tree(self, package, installed_repo):
         self.write("<info>{}</info>".format(package.pretty_name))
-        self.line(" {} {}".format(package.pretty_version, package.description))
+        description = ""
+        if package.description:
+            description = " " + package.description
+
+        self.line(" {}{}".format(package.pretty_version, description))
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)

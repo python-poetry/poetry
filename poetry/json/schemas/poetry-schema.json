@@ -183,6 +183,9 @@
                         },
                         {
                             "$ref": "#/definitions/path-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/multiple-constraints-dependency"
                         }
                     ]
                 }
@@ -343,6 +346,29 @@
                     "type": "boolean",
                     "description": "Whether to install the dependency in development mode."
                 }
+            }
+        },
+        "multiple-constraints-dependency": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "oneOf": [
+                    {
+                        "$ref": "#/definitions/dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/long-dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/git-dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/file-dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/path-dependency"
+                    }
+                ]
             }
         },
         "repository": {

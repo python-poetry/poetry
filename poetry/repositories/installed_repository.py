@@ -1,12 +1,12 @@
 from poetry.packages import Package
-from poetry.utils.venv import Venv
+from poetry.utils.env import Env
 
 from .repository import Repository
 
 
 class InstalledRepository(Repository):
     @classmethod
-    def load(cls, venv):  # type: (Venv) -> InstalledRepository
+    def load(cls, env):  # type: (Env) -> InstalledRepository
         """
         Load installed packages.
 
@@ -14,7 +14,7 @@ class InstalledRepository(Repository):
         """
         repo = cls()
 
-        freeze_output = venv.run("pip", "freeze")
+        freeze_output = env.run("pip", "freeze")
         for line in freeze_output.split("\n"):
             if "==" in line:
                 name, version = line.split("==")

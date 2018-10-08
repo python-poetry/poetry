@@ -1,5 +1,6 @@
 from tomlkit import dumps
 from tomlkit import loads
+from tomlkit import table
 
 from poetry.utils.helpers import module_name
 
@@ -36,6 +37,9 @@ license = ""
 
 [tool.poetry.dev-dependencies]
 """
+
+BUILD_SYSTEM_MIN_VERSION = "0.12"
+BUILD_SYSTEM_MAX_VERSION = None
 
 
 class Layout(object):
@@ -101,6 +105,17 @@ class Layout(object):
 
         for dep_name, dep_constraint in self._dev_dependencies.items():
             poetry_content["dev-dependencies"][dep_name] = dep_constraint
+
+        # Add build system
+        build_system = table()
+        build_system_version = ">=" + BUILD_SYSTEM_MIN_VERSION
+        if BUILD_SYSTEM_MAX_VERSION is not None:
+            build_system_version += ",<" + BUILD_SYSTEM_MAX_VERSION
+
+        build_system.add("requires", ["poetry" + build_system_version])
+        build_system.add("build-backend", "poetry.masonry.api")
+
+        content.add("build-system", build_system)
 
         return dumps(content)
 

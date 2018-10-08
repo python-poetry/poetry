@@ -1,5 +1,25 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+
+- Added a brand new installer.
+- Added support for multi-constraints dependencies.
+- Added a cache versioning system.
+
+### Changed
+
+- Improved virtualenv detection and management.
+- Wilcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
+- Changed behavior of the resolver for conditional dependencies.
+
+### Fixed
+
+- Fixed a memory leak in the resolver.
+- Fixed a recursion error on duplicate dependencies with only different extras.
+
+
 ## [0.11.5] - 2018-09-04
 
 ### Fixed
@@ -467,7 +487,7 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.5...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/master...develop
 [0.11.5]: https://github.com/sdispater/poetry/releases/tag/0.11.5
 [0.11.4]: https://github.com/sdispater/poetry/releases/tag/0.11.4
 [0.11.3]: https://github.com/sdispater/poetry/releases/tag/0.11.3

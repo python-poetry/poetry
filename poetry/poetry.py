@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
+import shutil
 
 from .__version__ import __version__
 from .config import Config
@@ -121,10 +122,22 @@ class Poetry:
                     package.python_versions = constraint
                     continue
 
+                if isinstance(constraint, list):
+                    for _constraint in constraint:
+                        package.add_dependency(name, _constraint)
+
+                    continue
+
                 package.add_dependency(name, constraint)
 
         if "dev-dependencies" in local_config:
             for name, constraint in local_config["dev-dependencies"].items():
+                if isinstance(constraint, list):
+                    for _constraint in constraint:
+                        package.add_dependency(name, _constraint)
+
+                    continue
+
                 package.add_dependency(name, constraint, category="dev")
 
         extras = local_config.get("extras", {})
@@ -154,7 +167,15 @@ class Poetry:
         if "packages" in local_config:
             package.packages = local_config["packages"]
 
-        locker = Locker(poetry_file.with_suffix(".lock"), local_config)
+        # Moving lock if necessary (pyproject.lock -> poetry.lock)
+        lock = poetry_file.parent / "poetry.lock"
+        if not lock.exists():
+            # Checking for pyproject.lock
+            old_lock = poetry_file.with_suffix(".lock")
+            if old_lock.exists():
+                shutil.move(old_lock, lock)
+
+        locker = Locker(poetry_file.parent / "poetry.lock", local_config)
 
         return cls(poetry_file, local_config, package, locker)
 

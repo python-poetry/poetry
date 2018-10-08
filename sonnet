@@ -1,0 +1,190 @@
+#!/usr/bin/env python
+import hashlib
+import os
+import shutil
+import subprocess
+import sys
+import tarfile
+
+from gzip import GzipFile
+
+from cleo import Application
+from cleo import Command
+
+WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
+
+
+class MakeReleaseCommand(Command):
+    """
+    Makes a self-contained package of Poetry.
+
+    make:release
+        {--P|python=?* : Python version to use}
+    """
+
+    PYTHON = {
+        "2.7": "python2.7",
+        "3.4": "python3.4",
+        "3.5": "python3.5",
+        "3.6": "python3.6",
+        "3.7": "python3.7",
+    }
+
+    def handle(self):
+        pythons = self.PYTHON
+        if self.option("python"):
+            pythons = {}
+            for python in self.option("python"):
+                parts = python.split(":", 1)
+                if len(parts) == 1:
+                    pythons[parts[0]] = self.PYTHON[parts[0]]
+
+                version, python = parts
+                pythons[version] = python
+
+        self.check_system(pythons)
+
+        from poetry import __version__
+        from poetry.poetry import Poetry
+        from poetry.puzzle import Solver
+        from poetry.repositories.pool import Pool
+        from poetry.repositories.repository import Repository
+        from poetry.utils._compat import Path
+        from poetry.utils.helpers import temporary_directory
+
+        project = Poetry.create(Path.cwd())
+        package = project.package
+        del package.dev_requires[:]
+
+        # We only use the lock file to resolve the dependencies
+        pool = Pool()
+        pool.add_repository(project.locker.locked_repository(with_dev_reqs=True))
+
+        with temporary_directory() as tmp_dir:
+            # Copy poetry to tmp dir
+            poetry_dir = os.path.join(tmp_dir, "poetry")
+            shutil.copytree(
+                os.path.join(os.path.dirname(__file__), "poetry"), poetry_dir
+            )
+            for version, python in sorted(pythons.items()):
+                self.line(
+                    "<info>Preparing files for Python <comment>{}</comment></info>".format(
+                        version
+                    )
+                )
+                with package.with_python_versions("^{}".format(version)):
+                    solver = Solver(
+                        package, pool, Repository(), Repository(), self.output
+                    )
+                    ops = solver.solve()
+
+                self.vendorize_for_python(
+                    python, [op.package for op in ops], poetry_dir, version
+                )
+
+                self.line("")
+
+            self.line("<info>Packaging files</info>")
+            with temporary_directory() as tmp_dir2:
+                base_name = "poetry-{}-{}".format(__version__, sys.platform)
+                name = "{}.tar.gz".format(base_name)
+                gz = GzipFile(os.path.join(tmp_dir2, name), mode="wb")
+                try:
+                    with tarfile.TarFile(
+                        os.path.join(tmp_dir2, name),
+                        mode="w",
+                        fileobj=gz,
+                        format=tarfile.PAX_FORMAT,
+                    ) as tar:
+                        for root, dirs, files in os.walk(tmp_dir):
+                            for f in files:
+                                if f.endswith(".pyc"):
+                                    continue
+
+                                path = os.path.join(os.path.realpath(root), f)
+                                relpath = os.path.relpath(
+                                    path, os.path.realpath(tmp_dir)
+                                )
+                                tar_info = tar.gettarinfo(str(path), arcname=relpath)
+
+                                if tar_info.isreg():
+                                    with open(path, "rb") as f:
+                                        tar.addfile(tar_info, f)
+                                else:
+                                    tar.addfile(tar_info)  # Symlinks & ?
+                finally:
+                    gz.close()
+
+                releases_dir = os.path.join(os.path.dirname(__file__), "releases")
+                if not os.path.exists(releases_dir):
+                    os.mkdir(releases_dir)
+
+                shutil.copyfile(
+                    os.path.join(tmp_dir2, name), os.path.join(releases_dir, name)
+                )
+
+                # Compute hash
+                sha = hashlib.sha256()
+                with open(os.path.join(releases_dir, name), "rb") as f:
+                    while True:
+                        buffer = f.read(8192)
+                        if not buffer:
+                            break
+
+                        sha.update(buffer)
+
+                with open(
+                    os.path.join(releases_dir, "{}.sha256sum".format(base_name)), "w"
+                ) as f:
+                    f.write(sha.hexdigest())
+
+                self.line("<info>Built <comment>{}</comment></info>".format(name))
+
+    def check_system(self, pythons):
+        for version, python in sorted(pythons.items()):
+            try:
+                subprocess.check_output(
+                    [python, "-V"], stderr=subprocess.STDOUT, shell=WINDOWS
+                )
+            except subprocess.CalledProcessError:
+                raise RuntimeError("Python {} is not available".format(version))
+
+    def vendorize_for_python(self, python, packages, dest, python_version):
+        vendor_dir = os.path.join(dest, "_vendor", "py{}".format(python_version))
+
+        bar = self.progress_bar(max=len(packages))
+        bar.set_format("%message% %current%/%max%")
+        bar.set_message(
+            "<info>Vendorizing dependencies for Python <comment>{}</comment></info>".format(
+                python_version
+            )
+        )
+        bar.start()
+        for package in packages:
+            subprocess.check_output(
+                [
+                    python,
+                    "-m",
+                    "pip",
+                    "install",
+                    package.name,
+                    "--no-deps",
+                    "--target",
+                    vendor_dir,
+                ],
+                stderr=subprocess.STDOUT,
+                shell=WINDOWS,
+            )
+            bar.advance()
+
+        bar.finish()
+
+        self.line("")
+
+
+app = Application("Sonnet")
+
+app.add(MakeReleaseCommand())
+
+if __name__ == "__main__":
+    app.run()

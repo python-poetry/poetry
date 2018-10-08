@@ -5,7 +5,6 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
-platform = "*"
 
 [package.dependencies]
 B = [
@@ -18,58 +17,45 @@ name = "B"
 version = "1.0"
 description = ""
 category = "main"
+marker = "python_version < \"4.0\""
 optional = false
 python-versions = "*"
-platform = "*"
 
 [package.dependencies]
 C = "1.2"
-
-[package.requirements]
-python = "<4.0"
 
 [[package]]
 name = "B"
 version = "2.0"
 description = ""
 category = "main"
+marker = "python_version >= \"4.0\""
 optional = false
 python-versions = "*"
-platform = "*"
 
 [package.dependencies]
 C = "1.5"
-
-[package.requirements]
-python = ">=4.0"
 
 [[package]]
 name = "C"
 version = "1.2"
 description = ""
 category = "main"
+marker = "python_version < \"4.0\""
 optional = false
 python-versions = "*"
-platform = "*"
-
-[package.requirements]
-python = "<4.0"
 
 [[package]]
 name = "C"
 version = "1.5"
 description = ""
 category = "main"
+marker = "python_version >= \"4.0\""
 optional = false
 python-versions = "*"
-platform = "*"
-
-[package.requirements]
-python = ">=4.0"
 
 [metadata]
 python-versions = "*"
-platform = "*"
 content-hash = "123456789"
 
 [metadata.hashes]

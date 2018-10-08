@@ -14,7 +14,7 @@ from poetry.packages import Package
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
-from poetry.utils.venv import NullVenv
+from poetry.utils.env import NullEnv
 
 from tests.helpers import get_dependency
 
@@ -91,12 +91,12 @@ def test_convert_dependencies():
     main = ["B>=1.0,<1.1"]
 
     extra_python = (
-        ':(python_version >= "2.7" and python_version < "2.8") '
-        'or (python_version >= "3.6" and python_version < "4.0")'
+        ':python_version >= "2.7" and python_version < "2.8" '
+        'or python_version >= "3.6" and python_version < "4.0"'
     )
     extra_d_dependency = (
-        'baz:(python_version >= "2.7" and python_version < "2.8") '
-        'or (python_version >= "3.4" and python_version < "4.0")'
+        'baz:python_version >= "2.7" and python_version < "2.8" '
+        'or python_version >= "3.4" and python_version < "4.0"'
     )
     extras = {extra_python: ["C==1.2.3"], extra_d_dependency: ["D==3.4.5"]}
 
@@ -106,7 +106,7 @@ def test_convert_dependencies():
 def test_make_setup():
     poetry = Poetry.create(project("complete"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     setup = builder.build_setup()
     setup_ast = ast.parse(setup)
 
@@ -131,7 +131,7 @@ def test_make_setup():
 def test_make_pkg_info():
     poetry = Poetry.create(project("complete"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     pkg_info = builder.build_pkg_info()
     p = Parser()
     parsed = p.parsestr(to_str(pkg_info))
@@ -169,7 +169,7 @@ def test_make_pkg_info():
 def test_make_pkg_info_any_python():
     poetry = Poetry.create(project("module1"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     pkg_info = builder.build_pkg_info()
     p = Parser()
     parsed = p.parsestr(to_str(pkg_info))
@@ -180,7 +180,46 @@ def test_make_pkg_info_any_python():
 def test_find_files_to_add():
     poetry = Poetry.create(project("complete"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    result = builder.find_files_to_add()
+
+    assert sorted(result) == sorted(
+        [
+            Path("LICENSE"),
+            Path("README.rst"),
+            Path("my_package/__init__.py"),
+            Path("my_package/data1/test.json"),
+            Path("my_package/sub_pkg1/__init__.py"),
+            Path("my_package/sub_pkg2/__init__.py"),
+            Path("my_package/sub_pkg2/data2/data.json"),
+            Path("pyproject.toml"),
+        ]
+    )
+
+
+def test_make_pkg_info_multi_constraints_dependency():
+    poetry = Poetry.create(
+        Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "project_with_multi_constraints_dependency"
+    )
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(to_str(pkg_info))
+
+    requires = parsed.get_all("Requires-Dist")
+    assert requires == [
+        'pendulum (>=1.5,<2.0); python_version < "3.4"',
+        'pendulum (>=2.0,<3.0); python_version >= "3.4" and python_version < "4.0"',
+    ]
+
+
+def test_find_files_to_add():
+    poetry = Poetry.create(project("complete"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     result = builder.find_files_to_add()
 
     assert sorted(result) == sorted(
@@ -200,7 +239,7 @@ def test_find_files_to_add():
 def test_find_packages():
     poetry = Poetry.create(project("complete"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
     base = project("complete")
     include = PackageInclude(base, "my_package")
@@ -217,7 +256,7 @@ def test_find_packages():
 
     poetry = Poetry.create(project("source_package"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
     base = project("source_package")
     include = PackageInclude(base, "package_src", "src")
@@ -232,7 +271,7 @@ def test_find_packages():
 def test_package():
     poetry = Poetry.create(project("complete"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
 
     sdist = fixtures_dir / "complete" / "dist" / "my-package-1.2.3.tar.gz"
@@ -246,7 +285,7 @@ def test_package():
 def test_module():
     poetry = Poetry.create(project("module1"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
 
     sdist = fixtures_dir / "module1" / "dist" / "module1-0.1.tar.gz"
@@ -260,7 +299,7 @@ def test_module():
 def test_prelease():
     poetry = Poetry.create(project("prerelease"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
 
     sdist = fixtures_dir / "prerelease" / "dist" / "prerelease-0.1b1.tar.gz"
@@ -271,7 +310,7 @@ def test_prelease():
 def test_with_c_extensions():
     poetry = Poetry.create(project("extended"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
 
     sdist = fixtures_dir / "extended" / "dist" / "extended-0.1.tar.gz"
@@ -286,7 +325,7 @@ def test_with_c_extensions():
 def test_with_src_module_file():
     poetry = Poetry.create(project("source_file"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
     # Check setup.py
     setup = builder.build_setup()
@@ -311,7 +350,7 @@ def test_with_src_module_file():
 def test_with_src_module_dir():
     poetry = Poetry.create(project("source_package"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
     # Check setup.py
     setup = builder.build_setup()
@@ -356,7 +395,7 @@ def test_package_with_include(mocker):
     ]
     poetry = Poetry.create(project("with-include"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
     # Check setup.py
     setup = builder.build_setup()
@@ -394,7 +433,7 @@ def test_package_with_include(mocker):
 def test_proper_python_requires_if_single_version_specified():
     poetry = Poetry.create(project("simple_version"))
 
-    builder = SdistBuilder(poetry, NullVenv(), NullIO())
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
     pkg_info = builder.build_pkg_info()
     p = Parser()
     parsed = p.parsestr(to_str(pkg_info))

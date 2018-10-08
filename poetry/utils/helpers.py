@@ -122,3 +122,8 @@ def __expand_env_vars(obj): # type (object) -> object
 def expand_environment_vars(toml_data): # type: (dict) -> dict
     res = {k: __expand_env_vars(v) for k, v in toml_data.items()}
     return res
+
+
+def constraint_to_marker(constraint):  # type: (Any) -> Marker
+    if constraint.is_any():
+        return AnyMarker()

@@ -7,7 +7,7 @@ from typing import List
 from typing import Tuple
 
 from .command import Command
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
 class InitCommand(Command):
@@ -108,7 +108,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         requirements = {}
 
-        question = "Would you like to define your dependencies" " (require) interactively?"
+        question = (
+            "Would you like to define your dependencies" " (require) interactively?"
+        )
         if self.confirm(question, True):
             requirements = self._format_requirements(
                 self._determine_requirements(self.option("dependency"))
@@ -116,7 +118,10 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         dev_requirements = {}
 
-        question = "Would you like to define your dev dependencies" " (require-dev) interactively"
+        question = (
+            "Would you like to define your dev dependencies"
+            " (require-dev) interactively"
+        )
         if self.confirm(question, True):
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
@@ -305,7 +310,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 
-        if isinstance(self, VenvCommand):
+        if isinstance(self, EnvCommand):
             return self.poetry.pool
 
         if self._pool is None:

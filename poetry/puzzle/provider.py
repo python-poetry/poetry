@@ -12,9 +12,11 @@ from tempfile import mkdtemp
 from typing import List
 
 from poetry.packages import Dependency
+from poetry.packages import DependencyPackage
 from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
 from poetry.packages import Package
+from poetry.packages import PackageCollection
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
 
@@ -30,7 +32,7 @@ from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires, expand_environment_vars
 from poetry.utils.toml_file import TomlFile
-from poetry.utils.venv import Venv
+from poetry.utils.env import Env
 
 from poetry.vcs.git import Git
 
@@ -82,7 +84,7 @@ class Provider:
 
     @property
     def name_for_locking_dependency_source(self):  # type: () -> str
-        return "pyproject.lock"
+        return "poetry.lock"
 
     def is_debugging(self):
         return self._is_debugging
@@ -101,10 +103,29 @@ class Provider:
         order, so the latest version ought to be last.
         """
         if dependency.is_root:
-            return [self._package]
+            return PackageCollection(dependency, [self._package])
 
-        if dependency in self._search_for:
-            return self._search_for[dependency]
+        for constraint in self._search_for.keys():
+            if (
+                constraint.name == dependency.name
+                and constraint.constraint.intersect(dependency.constraint)
+                == dependency.constraint
+            ):
+                packages = [
+                    p
+                    for p in self._search_for[constraint]
+                    if dependency.constraint.allows(p.version)
+                ]
+
+                packages.sort(
+                    key=lambda p: (
+                        not p.is_prerelease() and not dependency.allows_prereleases(),
+                        p.version,
+                    ),
+                    reverse=True,
+                )
+
+                return PackageCollection(dependency, packages)
 
         if dependency.is_vcs():
             packages = self.search_for_vcs(dependency)
@@ -132,7 +153,7 @@ class Provider:
 
         self._search_for[dependency] = packages
 
-        return self._search_for[dependency]
+        return PackageCollection(dependency, packages)
 
     def search_for_vcs(self, dependency):  # type: (VCSDependency) -> List[Package]
         """
@@ -187,7 +208,7 @@ class Provider:
                 # to figure the information we need
                 # We need to place ourselves in the proper
                 # folder for it to work
-                venv = Venv.create(self._io)
+                venv = Env.get(self._io)
 
                 current_dir = os.getcwd()
                 os.chdir(tmp_dir.as_posix())
@@ -311,28 +332,32 @@ class Provider:
         else:
             dependencies = package.requires
 
-        if not self._package.python_constraint.allows_any(package.python_constraint):
-            return [
-                Incompatibility(
-                    [Term(package.to_dependency(), True)],
-                    PythonCause(package.python_versions, self._package.python_versions),
-                )
-            ]
-
-        if not self._package.platform_constraint.matches(package.platform_constraint):
-            return [
-                Incompatibility(
-                    [Term(package.to_dependency(), True)],
-                    PlatformCause(package.platform),
-                )
-            ]
+            if not package.python_constraint.allows_all(
+                self._package.python_constraint
+            ):
+                if (
+                    package.dependency.python_constraint.is_any()
+                    or not self._package.python_constraint.allows_all(
+                        package.dependency.python_constraint
+                    )
+                    or not package.python_constraint.allows_all(
+                        package.dependency.python_constraint
+                    )
+                ):
+                    return [
+                        Incompatibility(
+                            [Term(package.to_dependency(), True)],
+                            PythonCause(
+                                package.python_versions, self._package.python_versions
+                            ),
+                        )
+                    ]
 
         dependencies = [
             dep
             for dep in dependencies
             if dep.name not in self.UNSAFE_PACKAGES
             and self._package.python_constraint.allows_any(dep.python_constraint)
-            and self._package.platform_constraint.matches(dep.platform_constraint)
         ]
 
         return [
@@ -348,8 +373,11 @@ class Provider:
             return package
 
         if package.source_type not in {"directory", "file", "git"}:
-            package = self._pool.package(
-                package.name, package.version.text, extras=package.requires_extras
+            package = DependencyPackage(
+                package.dependency,
+                self._pool.package(
+                    package.name, package.version.text, extras=package.requires_extras
+                ),
             )
 
         dependencies = [
@@ -357,7 +385,6 @@ class Provider:
             for r in package.requires
             if r.is_activated()
             and self._package.python_constraint.allows_any(r.python_constraint)
-            and self._package.platform_constraint.matches(r.platform_constraint)
         ]
 
         # Searching for duplicate dependencies
@@ -408,7 +435,7 @@ class Provider:
                 for constraint, _deps in by_constraint.items():
                     new_markers = []
                     for dep in _deps:
-                        pep_508_dep = dep.to_pep_508()
+                        pep_508_dep = dep.to_pep_508(False)
                         if ";" not in pep_508_dep:
                             continue
 
@@ -427,7 +454,7 @@ class Provider:
 
                     dep = _deps[0]
                     new_requirement = "{}; {}".format(
-                        dep.to_pep_508().split(";")[0], " or ".join(new_markers)
+                        dep.to_pep_508(False).split(";")[0], " or ".join(new_markers)
                     )
                     new_dep = dependency_from_pep_508(new_requirement)
                     if dep.is_optional() and not dep.is_activated():
@@ -455,7 +482,7 @@ class Provider:
                 _deps = [value[0] for value in by_constraint.values()]
                 seen = set()
                 for _dep in _deps:
-                    pep_508_dep = _dep.to_pep_508()
+                    pep_508_dep = _dep.to_pep_508(False)
                     if ";" not in pep_508_dep:
                         _requirements = ""
                     else:

@@ -6,10 +6,14 @@ from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
 from poetry.semver import VersionUnion
 from poetry.utils.helpers import canonicalize_name
+from poetry.version.markers import AnyMarker
+from poetry.version.markers import parse_marker
 
-from .constraints.empty_constraint import EmptyConstraint
-from .constraints.generic_constraint import GenericConstraint
+from .constraints import parse_constraint as parse_generic_constraint
+from .constraints.any_constraint import AnyConstraint
+from .constraints.constraint import Constraint
 from .constraints.multi_constraint import MultiConstraint
+from .constraints.union_constraint import UnionConstraint
 
 
 class Dependency(object):
@@ -45,8 +49,6 @@ class Dependency(object):
 
         self._python_versions = "*"
         self._python_constraint = parse_constraint("*")
-        self._platform = "*"
-        self._platform_constraint = EmptyConstraint()
 
         self._extras = []
         self._in_extras = []
@@ -54,6 +56,7 @@ class Dependency(object):
         self._activated = not self._optional
 
         self.is_root = False
+        self.marker = AnyMarker()
 
     @property
     def name(self):
@@ -83,23 +86,18 @@ class Dependency(object):
     def python_versions(self, value):
         self._python_versions = value
         self._python_constraint = parse_constraint(value)
+        if not self._python_constraint.is_any():
+            self.marker = self.marker.intersect(
+                parse_marker(
+                    self._create_nested_marker(
+                        "python_version", self._python_constraint
+                    )
+                )
+            )
 
     @property
     def python_constraint(self):
         return self._python_constraint
-
-    @property
-    def platform(self):
-        return self._platform
-
-    @platform.setter
-    def platform(self, value):
-        self._platform = value
-        self._platform_constraint = GenericConstraint.parse(value)
-
-    @property
-    def platform_constraint(self):
-        return self._platform_constraint
 
     @property
     def extras(self):  # type: () -> list
@@ -152,28 +150,27 @@ class Dependency(object):
         elif not self.constraint.is_any():
             requirement += " ({})".format(str(self.constraint).replace(" ", ""))
 
-        # Markers
         markers = []
+        if not self.marker.is_any():
+            marker = self.marker
+            if not with_extras:
+                marker = marker.without_extras()
 
-        # Python marker
-        if self.python_versions != "*":
-            python_constraint = self.python_constraint
+            if not marker.is_empty():
+                markers.append(str(marker))
+        else:
+            # Python marker
+            if self.python_versions != "*":
+                python_constraint = self.python_constraint
 
-            markers.append(
-                self._create_nested_marker("python_version", python_constraint)
-            )
-
-        if self.platform != "*":
-            platform_constraint = self.platform_constraint
-
-            markers.append(
-                self._create_nested_marker("sys_platform", platform_constraint)
-            )
+                markers.append(
+                    self._create_nested_marker("python_version", python_constraint)
+                )
 
         in_extras = " || ".join(self._in_extras)
         if in_extras and with_extras:
             markers.append(
-                self._create_nested_marker("extra", GenericConstraint.parse(in_extras))
+                self._create_nested_marker("extra", parse_generic_constraint(in_extras))
             )
 
         if markers:
@@ -186,17 +183,17 @@ class Dependency(object):
         return requirement
 
     def _create_nested_marker(self, name, constraint):
-        if isinstance(constraint, MultiConstraint):
+        if isinstance(constraint, (MultiConstraint, UnionConstraint)):
             parts = []
             for c in constraint.constraints:
                 multi = False
-                if isinstance(c, MultiConstraint):
+                if isinstance(c, (MultiConstraint, UnionConstraint)):
                     multi = True
 
                 parts.append((multi, self._create_nested_marker(name, c)))
 
             glue = " and "
-            if constraint.is_disjunctive():
+            if isinstance(constraint, UnionConstraint):
                 parts = [
                     "({})".format(part[1]) if part[0] else part[1] for part in parts
                 ]
@@ -205,10 +202,8 @@ class Dependency(object):
                 parts = [part[1] for part in parts]
 
             marker = glue.join(parts)
-        elif isinstance(constraint, GenericConstraint):
-            marker = '{} {} "{}"'.format(
-                name, constraint.string_operator, constraint.version
-            )
+        elif isinstance(constraint, Constraint):
+            marker = '{} {} "{}"'.format(name, constraint.operator, constraint.version)
         elif isinstance(constraint, VersionUnion):
             parts = []
             for c in constraint.ranges:
@@ -278,7 +273,6 @@ class Dependency(object):
 
         new.is_root = self.is_root
         new.python_versions = self.python_versions
-        new.platform = self.platform
 
         for extra in self.extras:
             new.extras.append(extra)

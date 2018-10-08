@@ -9,8 +9,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
-from poetry.utils.venv import NullVenv
-from poetry.utils.venv import Venv
+from poetry.utils.env import Env
 
 from .dependency import Dependency
 
@@ -27,7 +26,7 @@ class DirectoryDependency(Dependency):
         category="main",  # type: str
         optional=False,  # type: bool
         base=None,  # type: Path
-        develop=False,  # type: bool
+        develop=True,  # type: bool
     ):
         from . import dependency_from_pep_508
         from .package import Package
@@ -36,6 +35,7 @@ class DirectoryDependency(Dependency):
         self._base = base
         self._full_path = path
         self._develop = develop
+        self._supports_poetry = False
 
         if self._base and not self._path.is_absolute():
             self._full_path = self._base / self._path
@@ -49,29 +49,23 @@ class DirectoryDependency(Dependency):
         # Checking content to dertermine actions
         setup = self._full_path / "setup.py"
         pyproject = TomlFile(self._full_path / "pyproject.toml")
-        has_poetry = False
         if pyproject.exists():
             pyproject_content = pyproject.read()
-            has_poetry = (
+            self._supports_poetry = (
                 "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
             )
 
-        if not setup.exists() and not has_poetry:
+        if not setup.exists() and not self._supports_poetry:
             raise ValueError(
                 "Directory {} does not seem to be a Python package".format(
                     self._full_path
                 )
             )
 
-        if has_poetry:
-            from poetry.masonry.builders import SdistBuilder
+        if self._supports_poetry:
             from poetry.poetry import Poetry
 
             poetry = Poetry.create(self._full_path)
-            builder = SdistBuilder(poetry, NullVenv(), NullIO())
-
-            with setup.open("w") as f:
-                f.write(decode(builder.build_setup()))
 
             package = poetry.package
             self._package = Package(package.pretty_name, package.version)
@@ -79,7 +73,6 @@ class DirectoryDependency(Dependency):
             self._package.dev_requires += package.dev_requires
             self._package.extras = package.extras
             self._package.python_versions = package.python_versions
-            self._package.platform = package.platform
         else:
             # Execute egg_info
             current_dir = os.getcwd()
@@ -87,7 +80,7 @@ class DirectoryDependency(Dependency):
 
             try:
                 cwd = base
-                venv = Venv.create(NullIO(), cwd=cwd)
+                venv = Env.create_venv(NullIO(), cwd=cwd)
                 venv.run("python", "setup.py", "egg_info")
             finally:
                 os.chdir(current_dir)
@@ -147,6 +140,9 @@ class DirectoryDependency(Dependency):
     @property
     def develop(self):
         return self._develop
+
+    def supports_poetry(self):
+        return self._supports_poetry
 
     def is_directory(self):
         return True

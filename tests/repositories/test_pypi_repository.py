@@ -68,7 +68,10 @@ def test_package():
     win_inet = package.extras["socks"][0]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
-    assert win_inet.platform == "win32"
+    assert str(win_inet.marker) == (
+        'sys_platform == "win32" and (python_version == "2.7" '
+        'or python_version == "2.6") and extra == "socks"'
+    )
 
 
 def test_fallback_on_downloading_packages():
