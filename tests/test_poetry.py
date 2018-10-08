@@ -136,3 +136,26 @@ def test_check_fails():
     content["this key is not in the schema"] = ""
     with pytest.raises(InvalidProjectFile):
         Poetry.check(content)
+
+
+def test_environment_config():
+    import os
+
+    SECRET_KEY="abc123"
+    MODULE_VERSION="1.1.2.adf"
+    os.environ['SECRET_KEY'] = SECRET_KEY
+    os.environ['MODULE_VERSION'] = MODULE_VERSION
+
+    env_project = Poetry.create(str(fixtures_dir / "project_with_environment_config"))
+
+    package = env_project.package
+
+    assert package.version.text == "0.1.0"
+
+    dependencies = {}
+    for dep in package.requires:
+        dependencies[dep.name] = dep
+    print(env_project.local_config)
+
+    msm_dep = dependencies['my-secret-module']
+    assert msm_dep.pretty_constraint == MODULE_VERSION
