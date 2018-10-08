@@ -913,6 +913,7 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
         ops,
         [
             {"job": "install", "package": pendulum},
+            {"job": "install", "package": cleo},
             {"job": "install", "package": get_package("demo", "0.1.2")},
         ],
     )
@@ -1100,6 +1101,41 @@ def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
     check_solver_result(
         ops,
         [
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
+def test_solver_returns_extras_if_requested_in_dependencies_and_not_in_root_package(
+    solver, repo, package
+):
+    package.add_dependency("A")
+    package.add_dependency("B")
+    package.add_dependency("C")
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+    package_d = get_package("D", "1.0")
+
+    package_b.add_dependency("C", {"version": "^1.0", "extras": ["foo"]})
+
+    package_c.add_dependency("D", {"version": "^1.0", "optional": True})
+    package_c.extras = {"foo": [get_dependency("D", "^1.0")]}
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_d},
+            {"job": "install", "package": package_c},
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
         ],

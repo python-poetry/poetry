@@ -383,8 +383,7 @@ class Provider:
         dependencies = [
             r
             for r in package.requires
-            if r.is_activated()
-            and self._package.python_constraint.allows_any(r.python_constraint)
+            if self._package.python_constraint.allows_any(r.python_constraint)
         ]
 
         # Searching for duplicate dependencies

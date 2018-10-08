@@ -160,11 +160,12 @@ class Solver:
             category, optional, marker, depth = self._get_tags_for_package(
                 package, graph
             )
-            depths.append(depth)
 
             package.category = category
             package.optional = optional
             package.marker = marker
+
+            depths.append(depth)
 
         return packages, depths
 
@@ -194,6 +195,7 @@ class Solver:
             return graph
 
         for dependency in package.all_requires:
+            is_activated = True
             if dependency.is_optional():
                 if not package.is_root() and (
                     not previous_dep or not previous_dep.extras
@@ -201,7 +203,7 @@ class Solver:
                     continue
 
                 is_activated = False
-                for group, extras in package.extras.items():
+                for group, extra_deps in package.extras.items():
                     if dep:
                         extras = previous_dep.extras
                     elif package.is_root():
@@ -209,12 +211,11 @@ class Solver:
                     else:
                         extras = []
 
-                    if group in extras:
+                    if group in extras and dependency.name in (
+                        d.name for d in package.extras[group]
+                    ):
                         is_activated = True
                         break
-
-                if not is_activated:
-                    continue
 
             if previous and previous["name"] == dependency.name:
                 break
@@ -237,6 +238,9 @@ class Solver:
                     child_graph = self._build_graph(
                         pkg, packages, graph, dependency, dep or dependency
                     )
+
+                    if not is_activated:
+                        child_graph["optional"] = True
 
                     if existing:
                         existing["marker"] = existing["marker"].union(

@@ -613,6 +613,7 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     package.add_dependency("demo", {"path": str(file_path), "extras": ["extras_a"]})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cachy", "0.2.0"))
 
     installer.run()
 

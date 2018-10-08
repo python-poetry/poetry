@@ -104,6 +104,7 @@ def test_add_git_constraint(app, repo, installer):
     tester = CommandTester(command)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
 
     tester.execute(
         [
