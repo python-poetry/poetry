@@ -17,6 +17,7 @@
 ### Fixed
 
 - Fixed a memory leak in the resolver.
+- Fixed a recursion error on duplicate dependencies with only different extras.
 
 
 ## [0.11.5] - 2018-09-04
