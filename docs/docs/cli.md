@@ -278,7 +278,7 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 ````
 
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
-See [Configuration](/configuration/) for all available settings.
+See [Configuration](/docs/configuration/) for all available settings.
 
 ### Options
 

@@ -14,7 +14,7 @@ While Poetry does not enforce any convention regarding package versioning,
 it **strongly** recommends to follow [semantic versioning](https://semver.org).
 
 This has many advantages for the end users and allows them to set appropriate
-[version constraints](/versions/).
+[version constraints](/docs/versions/).
 
 ## Lock file
 
@@ -54,7 +54,7 @@ poetry publish
 ```
 
 This will package and publish the library to PyPI, at the condition that you are a registered user
-and you have [configured your credentials](/repositories/#adding-credentials) properly.
+and you have [configured your credentials](/docs/repositories/#adding-credentials) properly.
 
 !!!note
 
@@ -73,7 +73,7 @@ Sometimes, you may want to keep your library private but also being accessible t
 In this case, you will need to use a private repository.
 
 In order to publish to a private repository, you will need to add it to your
-global list of repositories. See [Adding a repository](/repositories/#adding-a-repository)
+global list of repositories. See [Adding a repository](/docs/repositories/#adding-a-repository)
 for more information.
 
 Once this is done, you can actually publish to it like so:
