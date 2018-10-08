@@ -42,6 +42,16 @@ pip install --user poetry
 Be aware, however, that it will also install poetry's dependencies
 which might cause conflicts.
 
+Using [pipsi](https://github.com/mitsuhiko/pipsi) to install `poetry` is also possible.
+
+```bash
+pipsi install poetry
+```
+
+Make sure your installed version of `pipsi` is at least version `0.10`,
+otherwise `poetry` will not function properly. You can get it from its
+[Github repository](https://github.com/mitsuhiko/pipsi).
+
 ## Updating `poetry`
 
 Updating poetry to the latest stable version is as simple as calling the `self:update` command.

@@ -37,13 +37,25 @@ python get-poetry.py --version 0.7.0
 !!!note
 
     Using `pip` to install `poetry` is also possible.
-    
+
     ```bash
     pip install --user poetry
-    ``` 
-    
+    ```
+
     Be aware, however, that it will also install poetry's dependencies
     which might cause conflicts.
+
+!!!note
+
+    Using [pipsi](https://github.com/mitsuhiko/pipsi) to install `poetry` is also possible.
+
+    ```bash
+    pipsi install poetry
+    ```
+
+    Make sure your installed version of `pipsi` is at least version `0.10`,
+    otherwise `poetry` will not function properly. You can get it from its
+    [Github repository](https://github.com/mitsuhiko/pipsi).
 
 
 ## Updating `poetry`
@@ -91,7 +103,7 @@ poetry completions zsh > ~/.zfunc/_poetry
 !!! note
 
     You may need to restart your shell in order for the changes to take effect.
-    
+
 For `zsh`, you must then add the following line in your `~/.zshrc` before `compinit`:
 
 ```bash
