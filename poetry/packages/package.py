@@ -19,6 +19,7 @@ from .dependency import Dependency
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
+from .utils.utils import convert_markers
 from .utils.utils import create_nested_marker
 
 AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
@@ -326,7 +327,14 @@ class Package(object):
         return dependency
 
     def to_dependency(self):
-        return Dependency(self.name, self._version)
+        from . import dependency_from_pep_508
+
+        name = "{} (=={})".format(self._name, self._version)
+
+        if not self.marker.is_any():
+            name += " ; {}".format(str(self.marker))
+
+        return dependency_from_pep_508(name)
 
     @contextmanager
     def with_python_versions(self, python_versions):

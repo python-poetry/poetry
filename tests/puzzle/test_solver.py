@@ -10,6 +10,7 @@ from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.version.markers import parse_marker
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -1073,3 +1074,33 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
         'extra == "bar" or extra == "foo"',
     ]
     assert str(ops[1].package.marker) == ""
+
+
+def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency("A", {"version": "^1.0", "python": "^3.6"})
+    package.add_dependency("B", "^1.0")
+
+    package_a = get_package("A", "1.0.0")
+    package_a.python_versions = ">=3.6"
+    package_a.marker = parse_marker(
+        'python_version >= "3.6" and python_version < "4.0"'
+    )
+
+    package_b = get_package("B", "1.0.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    solver._locked = Repository([package_a])
+    ops = solver.solve(use_latest=[package_b.name])
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b},
+        ],
+    )
