@@ -1,4 +1,6 @@
-from poetry.utils.helpers import parse_requires
+import pytest
+from poetry.utils.helpers import parse_requires,\
+    __expand_env_vars
 
 
 def test_parse_requires():
@@ -48,3 +50,48 @@ zipfile36>=0.1.0.0,<0.2.0.0
         'zipfile36>=0.1.0.0,<0.2.0.0; python_version >= "3.4.0.0" and python_version < "3.6.0.0"',
     ]
     assert result == expected
+
+
+@pytest.fixture(scope="module")
+def simple_env_var():
+    import os
+    env_var_name = "__POETRY_ENV_TEST"
+    env_var_value = "deadbeef"
+    os.environ[env_var_name] = env_var_value
+    
+    yield (env_var_name, env_var_value)
+    del os.environ[env_var_name] # only guaranteed to work on some platforms!
+
+
+def test_string_env_var_expansion(simple_env_var):
+    (var_name, var_value) = simple_env_var
+
+    x = "${" + var_name + "}"
+    res = __expand_env_vars(x)
+    assert res == var_value
+
+
+def test_dict_env_var_expansion(simple_env_var):
+    (var_name, var_value) = simple_env_var
+
+    x = {"key": "${" + var_name + "}"}
+    res = __expand_env_vars(x)
+    assert res['key'] == var_value
+
+
+def test_list_env_var_expansion(simple_env_var):
+    (var_name, var_value) = simple_env_var
+
+    x = ["${" + var_name + "}"]*2
+    res = __expand_env_vars(x)
+
+    assert res == [var_value, var_value]
+
+
+def test_list_nested_dict_env_var_expansion(simple_env_var):
+    (var_name, var_value) = simple_env_var
+
+    x = {'key': ["${" + var_name + "}"]*2}
+    res = __expand_env_vars(x)
+
+    assert res['key'] == [var_value, var_value]
