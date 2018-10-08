@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "environment-config-project"
+version = "0.1.0"
+description = "A project that needs environment variables in its config."
+authors = [
+    "Jared Kofron <jared.kofron@gmail.com>"
+]
+license = "MIT"
+
+readme = "README.rst"
+
+homepage = "https://poetry.eustace.io/"
+repository = "https://github.com/sdispater/poet"
+documentation = "https://poetry.eustace.io/docs"
+
+keywords = ["packaging", "dependency", "poetry"]
+
+[[tool.poetry.source]]
+name = "a repo with a secret access key"
+url = "https://secret.com/${SUPER_SECRET_KEY}/pypi"
+
+[tool.poetry.dependencies]
+my_secret_module = "${MODULE_VERSION}"
