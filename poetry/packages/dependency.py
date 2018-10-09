@@ -10,7 +10,6 @@ from poetry.version.markers import AnyMarker
 from poetry.version.markers import parse_marker
 
 from .constraints import parse_constraint as parse_generic_constraint
-from .constraints.any_constraint import AnyConstraint
 from .constraints.constraint import Constraint
 from .constraints.multi_constraint import MultiConstraint
 from .constraints.union_constraint import UnionConstraint
@@ -49,6 +48,8 @@ class Dependency(object):
 
         self._python_versions = "*"
         self._python_constraint = parse_constraint("*")
+        self._transitive_python_versions = None
+        self._transitive_python_constraint = None
 
         self._extras = []
         self._in_extras = []
@@ -96,8 +97,27 @@ class Dependency(object):
             )
 
     @property
+    def transitive_python_versions(self):
+        if self._transitive_python_versions is None:
+            return self._python_versions
+
+        return self._transitive_python_versions
+
+    @transitive_python_versions.setter
+    def transitive_python_versions(self, value):
+        self._transitive_python_versions = value
+        self._transitive_python_constraint = parse_constraint(value)
+
+    @property
     def python_constraint(self):
         return self._python_constraint
+
+    @property
+    def transitive_python_constraint(self):
+        if self._transitive_python_constraint is None:
+            return self._python_constraint
+
+        return self._transitive_python_constraint
 
     @property
     def extras(self):  # type: () -> list

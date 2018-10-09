@@ -432,9 +432,6 @@ class MultiMarker(BaseMarker):
         if other.is_empty():
             return other
 
-        if other in self._markers:
-            return other
-
         new_markers = self._markers + [other]
 
         return MultiMarker.of(*new_markers)

@@ -70,6 +70,15 @@ def test_single_marker_intersect_with_multi():
     )
 
 
+def test_single_marker_intersect_with_multi_with_duplicate():
+    m = parse_marker('python_version < "4.0"')
+
+    intersection = m.intersect(
+        parse_marker('sys_platform == "darwin" and python_version < "4.0"')
+    )
+    assert str(intersection) == 'sys_platform == "darwin" and python_version < "4.0"'
+
+
 def test_single_marker_intersect_with_multi_compacts_constraint():
     m = parse_marker('python_version < "3.6"')
 

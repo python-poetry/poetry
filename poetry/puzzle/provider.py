@@ -317,7 +317,7 @@ class Provider:
 
     def incompatibilities_for(
         self, package
-    ):  # type: (Package) -> List[Incompatibility]
+    ):  # type: (DependencyPackage) -> List[Incompatibility]
         """
         Returns incompatibilities that encapsulate a given package's dependencies,
         or that it can't be safely selected.
@@ -335,14 +335,19 @@ class Provider:
             if not package.python_constraint.allows_all(
                 self._package.python_constraint
             ):
+                intersection = package.python_constraint.intersect(
+                    package.dependency.transitive_python_constraint
+                )
+                difference = package.dependency.transitive_python_constraint.difference(
+                    intersection
+                )
                 if (
-                    package.dependency.python_constraint.is_any()
-                    or not self._package.python_constraint.allows_all(
+                    package.dependency.transitive_python_constraint.is_any()
+                    or self._package.python_constraint.intersect(
                         package.dependency.python_constraint
-                    )
-                    or not package.python_constraint.allows_all(
-                        package.dependency.python_constraint
-                    )
+                    ).is_empty()
+                    or intersection.is_empty()
+                    or not difference.is_empty()
                 ):
                     return [
                         Incompatibility(
@@ -368,7 +373,9 @@ class Provider:
             for dep in dependencies
         ]
 
-    def complete_package(self, package):  # type: (str, Version) -> Package
+    def complete_package(
+        self, package
+    ):  # type: (DependencyPackage) -> DependencyPackage
         if package.is_root():
             return package
 
@@ -517,6 +524,14 @@ class Provider:
                     )
                 )
                 raise CompatibilityError(*python_constraints)
+
+        if not package.dependency.python_constraint.is_any():
+            for dep in dependencies:
+                dep.transitive_python_versions = str(
+                    dep.python_constraint.intersect(
+                        package.dependency.python_constraint
+                    )
+                )
 
         package.requires = dependencies
 

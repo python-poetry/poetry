@@ -962,6 +962,39 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
     )
 
 
+def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible_multiple(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency("A", {"version": "^1.0", "python": "^3.6"})
+    package.add_dependency("B", {"version": "^1.0", "python": "^3.5.3"})
+
+    package_a = get_package("A", "1.0.0")
+    package_a.python_versions = ">=3.6"
+    package_a.add_dependency("B", "^1.0")
+
+    package_b = get_package("B", "1.0.0")
+    package_b.python_versions = ">=3.5.3"
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    assert str(ops[0].package.marker) == (
+        'python_version >= "3.6" and python_version < "4.0" '
+        'or python_version >= "3.5.3" and python_version < "4.0.0"'
+    )
+
+
 def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_with_package_python(
     solver, repo, package
 ):

@@ -48,9 +48,9 @@ class DebugResolveCommand(Command):
                 for ex in extras:
                     dep.extras.append(ex)
 
-            package.python_versions = self.option("python") or (
-                self.poetry.package.python_versions
-            )
+        package.python_versions = self.option("python") or (
+            self.poetry.package.python_versions
+        )
 
         pool = self.poetry.pool
 
