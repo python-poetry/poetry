@@ -132,13 +132,13 @@ class Installer:
     CURRENT_PYTHON = sys.executable
     METADATA_URL = "https://pypi.org/pypi/poetry/json"
     VERSION_REGEX = re.compile(
-        "v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
+        r"v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
         "("
         "[._-]?"
-        "(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
+        r"(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
         "([.-]?dev)?"
         ")?"
-        "(?:\+[^\s]+)?"
+        r"(?:\+[^\s]+)?"
     )
 
     def __init__(self, version=None, preview=False):

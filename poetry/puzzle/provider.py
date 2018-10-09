@@ -508,8 +508,8 @@ class Provider:
 
         if message.startswith("fact:"):
             if "depends on" in message:
-                m = re.match("fact: (.+?) depends on (.+?) \((.+?)\)", message)
-                m2 = re.match("(.+?) \((.+?)\)", m.group(1))
+                m = re.match(r"fact: (.+?) depends on (.+?) \((.+?)\)", message)
+                m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
                     version = " (<comment>{}</comment>)".format(m2.group(2))
@@ -531,19 +531,19 @@ class Provider:
                 )
             else:
                 message = re.sub(
-                    "(?<=: )(.+?) \((.+?)\)",
+                    r"(?<=: )(.+?) \((.+?)\)",
                     "<info>\\1</info> (<comment>\\2</comment>)",
                     message,
                 )
                 message = "<fg=blue>fact</>: {}".format(message.split("fact: ")[1])
         elif message.startswith("selecting "):
             message = re.sub(
-                "selecting (.+?) \((.+?)\)",
+                r"selecting (.+?) \((.+?)\)",
                 "<fg=blue>selecting</> <info>\\1</info> (<comment>\\2</comment>)",
                 message,
             )
         elif message.startswith("derived:"):
-            m = re.match("derived: (.+?) \((.+?)\)$", message)
+            m = re.match(r"derived: (.+?) \((.+?)\)$", message)
             if m:
                 message = "<fg=blue>derived</>: <info>{}</info> (<comment>{}</comment>)".format(
                     m.group(1), m.group(2)
@@ -553,9 +553,9 @@ class Provider:
                     message.split("derived: ")[1]
                 )
         elif message.startswith("conflict:"):
-            m = re.match("conflict: (.+?) depends on (.+?) \((.+?)\)", message)
+            m = re.match(r"conflict: (.+?) depends on (.+?) \((.+?)\)", message)
             if m:
-                m2 = re.match("(.+?) \((.+?)\)", m.group(1))
+                m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
                     version = " (<comment>{}</comment>)".format(m2.group(2))

@@ -46,7 +46,7 @@ from .pypi_repository import PyPiRepository
 
 class Page:
 
-    VERSION_REGEX = re.compile("(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
+    VERSION_REGEX = re.compile(r"(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
 
     def __init__(self, url, content, headers):
         if not url.endswith("/"):

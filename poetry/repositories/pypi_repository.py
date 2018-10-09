@@ -290,7 +290,7 @@ class PyPiRepository(Repository):
 
                 # If bdist_wheel, check if it's universal
                 filename = url["filename"]
-                if not re.search("-py2\.py3-none-any.whl", filename):
+                if not re.search(r"-py2\.py3-none-any.whl", filename):
                     continue
 
                 urls[dist_type] = url["url"]
