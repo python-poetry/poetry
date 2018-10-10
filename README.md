@@ -237,9 +237,9 @@ At this point the rest of the resolution is straightforward since there is no mo
 
 #### Install command
 
-When you specify a package to the `install` command without specifying any version constraints, it will add it as a wildcard
-dependency. This means that **any** version of this package can be installed which
-can lead to compatibility issues.
+When you specify a package to the `install` command without specifying any version constraints,
+it will add it as a wildcard dependency. This means that **any** version of this package
+can be installed which can lead to compatibility issues.
 
 Also, you have to explicitly tell it to not update the locked packages when you
 install new ones. This should be the default.
@@ -253,8 +253,8 @@ You have to use `clean` to fix that.
 
 #### Too limited in scope
 
-Finally, the `Pipfile` is just an upgrade from `requirements.txt` and, in the end, you will still need to
-manage a few configuration files to properly setup your project.
+Finally, the `Pipfile` is just an upgrade from `requirements.txt` and, in the end,
+you will still need to manage a few configuration files to properly setup your project.
 
 
 ## Commands
