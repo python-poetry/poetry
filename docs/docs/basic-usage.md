@@ -21,7 +21,7 @@ poetry-demo
 │   └── __init__.py
 └── tests
     ├── __init__.py
-    └── test_poetry_demo
+    └── test_poetry_demo.py
 ```
 
 The `pyproject.toml` file is what is the most important here. This will orchestrate
