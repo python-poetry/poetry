@@ -351,6 +351,7 @@ class Package(object):
         clone.category = self.category
         clone.optional = self.optional
         clone.python_versions = self.python_versions
+        clone.marker = self.marker
         clone.extras = self.extras
         clone.source_type = self.source_type
         clone.source_url = self.source_url

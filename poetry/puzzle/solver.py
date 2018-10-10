@@ -161,6 +161,9 @@ class Solver:
                 package, graph
             )
 
+            if marker is None:
+                marker = AnyMarker()
+
             package.category = category
             package.optional = optional
             package.marker = marker
@@ -180,6 +183,7 @@ class Solver:
             category = dep.category
             optional = dep.is_optional() and not dep.is_activated()
             intersection = previous["marker"].intersect(previous_dep.marker)
+            intersection = intersection.intersect(package.marker)
 
             marker = intersection
 
@@ -274,7 +278,7 @@ class Solver:
 
             categories.append(category)
             optionals.append(optional)
-            if not marker.is_any():
+            if marker is not None:
                 markers.append(marker)
 
         if "main" in categories:
@@ -287,7 +291,7 @@ class Solver:
         depth = max(*(_depths + [0]))
 
         if not markers:
-            marker = AnyMarker()
+            marker = None
         else:
             marker = markers[0]
             for m in markers[1:]:
