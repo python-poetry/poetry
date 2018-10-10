@@ -237,25 +237,24 @@ At this point the rest of the resolution is straightforward since there is no mo
 
 #### Install command
 
-When you specify a package to the `install` command it will add it as a wildcard
+When you specify a package to the `install` command without specifying any version constraints, it will add it as a wildcard
 dependency. This means that **any** version of this package can be installed which
 can lead to compatibility issues.
 
 Also, you have to explicitly tell it to not update the locked packages when you
 install new ones. This should be the default.
 
-#### Remove command
+#### Uninstall command
 
-The `remove` command will only remove the package specified but not its dependencies
+The `uninstall` command will only remove the package specified but not its dependencies
 if they are no longer needed.
 
-You either have to use `sync` or `clean` to fix that.
+You have to use `clean` to fix that.
 
 #### Too limited in scope
 
-Finally, the `Pipfile` is just a replacement from `requirements.txt` and, in the end, you will still need to
-populate your `setup.py` file (or `setup.cfg`) with the exact same dependencies you declared in your `Pipfile`.
-So, in the end, you will still need to manage a few configuration files to properly setup your project.
+Finally, the `Pipfile` is just an upgrade from `requirements.txt` and, in the end, you will still need to
+manage a few configuration files to properly setup your project.
 
 
 ## Commands
