@@ -64,7 +64,7 @@ def user_cache_dir(appname):
 
 
 def user_data_dir(appname, roaming=False):
-    """
+    r"""
     Return full path to the user-specific data dir for this application.
 
         "appname" is the name of application.
@@ -137,7 +137,7 @@ def user_config_dir(appname, roaming=True):
 # for the discussion regarding site_config_dirs locations
 # see <https://github.com/pypa/pip/issues/1733>
 def site_config_dirs(appname):
-    """Return a list of potential user-shared config dirs for this application.
+    r"""Return a list of potential user-shared config dirs for this application.
 
         "appname" is the name of application.
 

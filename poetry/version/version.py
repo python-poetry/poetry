@@ -12,7 +12,7 @@ _Version = namedtuple("_Version", ["epoch", "release", "dev", "pre", "post", "lo
 
 
 VERSION_PATTERN = re.compile(
-    """
+    r"""
     ^
     v?
     (?:
