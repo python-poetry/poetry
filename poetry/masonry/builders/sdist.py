@@ -252,7 +252,7 @@ class SdistBuilder(Builder):
                     return pkg, "/".join(parts[i:])
 
             # Relative to the top-level package
-            return pkg_name, rel_path
+            return pkg_name, Path(rel_path).as_posix()
 
         excluded_files = self.find_excluded_files()
         for path, dirnames, filenames in os.walk(str(base), topdown=True):
