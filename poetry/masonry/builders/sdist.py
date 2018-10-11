@@ -223,8 +223,7 @@ class SdistBuilder(Builder):
 
         return encode(pkg_info)
 
-    @classmethod
-    def find_packages(cls, include):
+    def find_packages(self, include):
         """
         Discover subpackages and data.
 
@@ -255,6 +254,7 @@ class SdistBuilder(Builder):
             # Relative to the top-level package
             return pkg_name, rel_path
 
+        excluded_files = self.find_excluded_files()
         for path, dirnames, filenames in os.walk(str(base), topdown=True):
             if os.path.basename(path) == "__pycache__":
                 continue
@@ -270,10 +270,28 @@ class SdistBuilder(Builder):
                 packages.append(".".join([pkg_name] + parts))
             else:
                 pkg, from_nearest_pkg = find_nearest_pkg(from_top_level)
-                pkg_data[pkg].append(pjoin(from_nearest_pkg, "*"))
+
+                data_elements = [
+                    f.relative_to(self._path)
+                    for f in Path(path).glob("*")
+                    if not f.is_dir()
+                ]
+
+                data = [e for e in data_elements if e not in excluded_files]
+                if not data:
+                    continue
+
+                if len(data) == len(data_elements):
+                    pkg_data[pkg].append(pjoin(from_nearest_pkg, "*"))
+                else:
+                    for d in data:
+                        if d.is_dir():
+                            continue
+
+                        pkg_data[pkg] += [pjoin(from_nearest_pkg, d.name) for d in data]
 
         # Sort values in pkg_data
-        pkg_data = {k: sorted(v) for (k, v) in pkg_data.items()}
+        pkg_data = {k: sorted(v) for (k, v) in pkg_data.items() if v}
 
         return pkgdir, sorted(packages), pkg_data
 

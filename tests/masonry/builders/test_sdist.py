@@ -406,6 +406,7 @@ def test_package_with_include(mocker):
     exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
     assert "package_dir" not in ns
     assert ns["packages"] == ["extra_dir", "extra_dir.sub_pkg", "package_with_include"]
+    assert ns["package_data"] == {"": ["*"]}
     assert ns["modules"] == ["my_module"]
 
     builder.build()
@@ -429,6 +430,58 @@ def test_package_with_include(mocker):
         assert "with-include-1.2.3/pyproject.toml" in names
         assert "with-include-1.2.3/setup.py" in names
         assert "with-include-1.2.3/PKG-INFO" in names
+
+
+def test_default_with_excluded_data(mocker):
+    # Patch git module to return specific excluded files
+    p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
+    p.return_value = [
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "default_with_excluded_data"
+            / "my_package"
+            / "data"
+            / "sub_data"
+            / "data2.txt"
+        )
+    ]
+    poetry = Poetry.create(project("default_with_excluded_data"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+
+    # Check setup.py
+    setup = builder.build_setup()
+    setup_ast = ast.parse(setup)
+
+    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    ns = {}
+    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+    assert "package_dir" not in ns
+    assert ns["packages"] == ["my_package"]
+    assert ns["package_data"] == {
+        "": ["*"],
+        "my_package": ["data/*", "data/sub_data/data3.txt"],
+    }
+
+    builder.build()
+
+    sdist = (
+        fixtures_dir / "default_with_excluded_data" / "dist" / "my-package-1.2.3.tar.gz"
+    )
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert len(names) == len(set(names))
+        assert "my-package-1.2.3/LICENSE" in names
+        assert "my-package-1.2.3/README.rst" in names
+        assert "my-package-1.2.3/my_package/__init__.py" in names
+        assert "my-package-1.2.3/my_package/data/data1.txt" in names
+        assert "my-package-1.2.3/pyproject.toml" in names
+        assert "my-package-1.2.3/setup.py" in names
+        assert "my-package-1.2.3/PKG-INFO" in names
 
 
 def test_proper_python_requires_if_single_version_specified():
