@@ -440,10 +440,10 @@ description = "Extension pack for Python Markdown."
 name = "pymdown-extensions"
 optional = false
 python-versions = "*"
-version = "4.12"
+version = "6.0"
 
 [package.dependencies]
-Markdown = ">=2.6.10"
+Markdown = ">=3.0.1"
 
 [[package]]
 category = "main"
@@ -660,7 +660,7 @@ python-versions = "*"
 version = "0.5.1"
 
 [metadata]
-content-hash = "39b7f1660472b5b5d4db23bdf13c56cae616f260870026c753d762cfdb64281a"
+content-hash = "a51d7d14083ea9bfb51cc7b27c958663c237b27e202bd5c92105b7429d2e8518"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.hashes]
@@ -707,7 +707,7 @@ py = ["bf92637198836372b520efcba9e020c330123be8ce527e535d185ed4b6f45694", "e7682
 pygments = ["78f3f434bcc5d6ee09020f92ba487f95ba50f1e3ef83ae96b9d5ffa1bab25c5d", "dbae1046def0efb574852fab9e90209b23f556367b5a320c0bcb871c77c3e8cc"]
 pygments-github-lexers = ["0f9e9fb607d351c127a1e55e82a6eb491ed1fc11b2d6a0444ba217dc6d1f82c1", "aaca57e77cd6fcfce8d6ee97a998962eebf7fbb810519a8ebde427c62823e133"]
 pylev = ["063910098161199b81e453025653ec53556c1be7165a9b7c50be2f4d57eae1c3", "1d29a87beb45ebe1e821e7a3b10da2b6b2f4c79b43f482c2df1a1f748a6e114e"]
-pymdown-extensions = ["20f2ae1067ab850cab92fcf57487267a7fd1365a7b1e7c5394e1e0778455eec1", "7d3fcbb4c5d70a78d1f4c2c7eef02dbe7e1ba08b06cb72e08b3d1027eb77458b"]
+pymdown-extensions = ["25b0a7967fa697b5035e23340a48594e3e93acb10b06d74574218ace3347d1df", "6cf0cf36b5a03b291ace22dc2f320f4789ce56fbdb6635a3be5fadbf5d7694dd"]
 pyparsing = ["bc6c7146b91af3f567cf6daeaec360bc07d45ffec4cf5353f4d7a208ce7ca30a", "d29593d8ebe7b57d6967b62494f8c72b03ac0262b1eed63826c6f788b3606401"]
 pyrsistent = ["4024f838472cba9ea1ccbc638e0bcafec2efda28594a9905177ec365f1a95fea"]
 pytest = ["7e258ee50338f4e46957f9e09a0f10fb1c2d05493fa901d113a8dafd0790de4e", "9332147e9af2dcf46cd7ceb14d5acadb6564744ddff1fe8c17f0ce60ece7d9a2"]
