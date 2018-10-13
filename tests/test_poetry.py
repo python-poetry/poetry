@@ -138,12 +138,17 @@ def test_check():
     complete = TomlFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
 
-    assert Poetry.check(content)
+    assert Poetry.check(content) == {"errors": [], "warnings": []}
 
 
 def test_check_fails():
     complete = TomlFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
     content["this key is not in the schema"] = ""
-    with pytest.raises(InvalidProjectFile):
-        Poetry.check(content)
+    assert Poetry.check(content) == {
+        "errors": [
+            "Additional properties are not allowed "
+            "('this key is not in the schema' was unexpected)"
+        ],
+        "warnings": [],
+    }

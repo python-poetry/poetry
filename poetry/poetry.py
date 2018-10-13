@@ -1,14 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import json
 import shutil
+
+from typing import Dict
+from typing import List
 
 from .__version__ import __version__
 from .config import Config
 from .exceptions import InvalidProjectFile
 from .json import validate_object
-from .json import ValidationError
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
@@ -105,7 +106,12 @@ class Poetry:
         package.description = local_config.get("description", "")
         package.homepage = local_config.get("homepage")
         package.repository_url = local_config.get("repository")
-        package.license = local_config.get("license")
+        try:
+            license_ = license_by_id(local_config.get("license"))
+        except ValueError:
+            license_ = None
+
+        package.license = license_
         package.keywords = local_config.get("keywords", [])
         package.classifiers = local_config.get("classifiers", [])
 
@@ -179,14 +185,15 @@ class Poetry:
         return cls(poetry_file, local_config, package, locker)
 
     @classmethod
-    def check(cls, config, strict=False):  # type: (dict, bool) -> bool
+    def check(cls, config, strict=False):  # type: (dict, bool) -> Dict[str, List[str]]
         """
         Checks the validity of a configuration
         """
-        try:
-            validate_object(config, "poetry-schema")
-        except ValidationError as e:
-            raise InvalidProjectFile(str(e))
+        result = {"errors": [], "warnings": []}
+        # Schema validation errors
+        validation_errors = validate_object(config, "poetry-schema")
+
+        result["errors"] += validation_errors
 
         if strict:
             # If strict, check the file more thoroughly
@@ -197,6 +204,14 @@ class Poetry:
                 try:
                     license_by_id(license)
                 except ValueError:
-                    raise InvalidProjectFile("Invalid license")
+                    result["errors"].append("{} is not a valid license".format(license))
 
-        return True
+            if "dependencies" in config:
+                python_versions = config["dependencies"]["python"]
+                if python_versions == "*":
+                    result["warnings"].append(
+                        "A wildcard Python dependency is ambiguous. "
+                        "Consider specifying a more explicit one."
+                    )
+
+        return result

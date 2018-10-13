@@ -14,6 +14,7 @@
 - Improved virtualenv detection and management.
 - Wilcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
 - Changed behavior of the resolver for conditional dependencies.
+- Improved the `check` command.
 
 ### Fixed
 
