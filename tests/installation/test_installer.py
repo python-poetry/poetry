@@ -624,6 +624,26 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     assert len(installer.installer.installs) == 2
 
 
+def test_run_installs_with_local_poetry_directory_transitive(
+    installer, locker, repo, package, tmpdir
+):
+    file_path = Path(
+        "tests/fixtures/directory/project_with_transitive_directory_dependencies/"
+    )
+    package.add_dependency("demo", {"path": str(file_path)})
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    installer.run()
+
+    expected = fixture("with-directory-dependency-poetry-transitive")
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 2
+
+
 def test_run_installs_with_local_setuptools_directory(
     installer, locker, repo, package, tmpdir
 ):

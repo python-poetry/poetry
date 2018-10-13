@@ -22,7 +22,6 @@ from poetry.packages import dependency_from_pep_508
 
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause
-from poetry.mixology.incompatibility_cause import PlatformCause
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.term import Term
 
@@ -525,13 +524,24 @@ class Provider:
                 )
                 raise CompatibilityError(*python_constraints)
 
-        if not package.dependency.python_constraint.is_any():
-            for dep in dependencies:
+        # Modifying dependencies as needed
+        for dep in dependencies:
+            if not package.dependency.python_constraint.is_any():
                 dep.transitive_python_versions = str(
                     dep.python_constraint.intersect(
                         package.dependency.python_constraint
                     )
                 )
+
+            if package.dependency.is_directory() and dep.is_directory():
+                if dep.package.source_url.startswith(package.source_url):
+                    relative = (
+                        Path(package.source_url) / dep.package.source_url
+                    ).relative_to(package.source_url)
+                else:
+                    relative = Path(package.source_url) / dep.package.source_url
+
+                dep.package.source_url = relative.as_posix()
 
         package.requires = dependencies
 

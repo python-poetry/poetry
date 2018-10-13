@@ -215,10 +215,6 @@ class Locker:
             else:
                 dependencies[dependency.pretty_name].append(constraint)
 
-        for name, constraints in dependencies.items():
-            if len(constraints) == 1:
-                dependencies[name] = constraints[0]
-
         data = {
             "name": package.pretty_name,
             "version": package.pretty_version,
