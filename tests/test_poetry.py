@@ -2,10 +2,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import pytest
-
-from poetry.exceptions import InvalidProjectFile
 from poetry.poetry import Poetry
+from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
@@ -145,10 +143,16 @@ def test_check_fails():
     complete = TomlFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
     content["this key is not in the schema"] = ""
-    assert Poetry.check(content) == {
-        "errors": [
+
+    if PY2:
+        expected = (
+            "Additional properties are not allowed "
+            "(u'this key is not in the schema' was unexpected)"
+        )
+    else:
+        expected = (
             "Additional properties are not allowed "
             "('this key is not in the schema' was unexpected)"
-        ],
-        "warnings": [],
-    }
+        )
+
+    assert Poetry.check(content) == {"errors": [expected], "warnings": []}
