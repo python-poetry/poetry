@@ -6,7 +6,7 @@ from .constraint import Constraint
 class WilcardConstraint(Constraint):
     def __init__(self, constraint):  # type: (str) -> None
         m = re.match(
-            "^(!= ?|==)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$", constraint
+            r"^(!= ?|==)?v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.[xX*])+$", constraint
         )
         if not m:
             raise ValueError("Invalid value for wildcard constraint")
