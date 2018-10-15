@@ -20,6 +20,9 @@ class RunCommand(EnvCommand):
         return self.env.execute(*args)
 
     def run_script(self, script, args):
+        if isinstance(script, dict):
+            script = script["callable"]
+
         module, callable_ = script.split(":")
 
         src_in_sys_path = "sys.path.append('src'); " if self._module.is_in_src() else ""

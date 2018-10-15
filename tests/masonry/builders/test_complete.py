@@ -107,6 +107,7 @@ def test_complete():
             decode(entry_points.decode())
             == """\
 [console_scripts]
+extra-script=my_package.extra:main[time]
 my-2nd-script=my_package:main2
 my-script=my_package:main
 

@@ -138,7 +138,12 @@ class Builder(object):
 
         # Scripts -> Entry points
         for name, ep in self._poetry.local_config.get("scripts", {}).items():
-            result["console_scripts"].append("{} = {}".format(name, ep))
+            extras = ""
+            if isinstance(ep, dict):
+                extras = "[{}]".format(", ".join(ep["extras"]))
+                ep = ep["callable"]
+
+            result["console_scripts"].append("{} = {}{}".format(name, ep, extras))
 
         # Plugins -> entry points
         plugins = self._poetry.local_config.get("plugins", {})

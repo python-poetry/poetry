@@ -121,6 +121,7 @@ def test_make_setup():
     assert ns["install_requires"] == ["cachy[msgpack]>=0.2.0,<0.3.0", "cleo>=0.6,<0.7"]
     assert ns["entry_points"] == {
         "console_scripts": [
+            "extra-script = my_package.extra:main[time]",
             "my-2nd-script = my_package:main2",
             "my-script = my_package:main",
         ]
@@ -220,26 +221,6 @@ def test_make_pkg_info_multi_constraints_dependency():
         'pendulum (>=1.5,<2.0); python_version < "3.4"',
         'pendulum (>=2.0,<3.0); python_version >= "3.4" and python_version < "4.0"',
     ]
-
-
-def test_find_files_to_add():
-    poetry = Poetry.create(project("complete"))
-
-    builder = SdistBuilder(poetry, NullEnv(), NullIO())
-    result = builder.find_files_to_add()
-
-    assert sorted(result) == sorted(
-        [
-            Path("LICENSE"),
-            Path("README.rst"),
-            Path("my_package/__init__.py"),
-            Path("my_package/data1/test.json"),
-            Path("my_package/sub_pkg1/__init__.py"),
-            Path("my_package/sub_pkg2/__init__.py"),
-            Path("my_package/sub_pkg2/data2/data.json"),
-            Path("pyproject.toml"),
-        ]
-    )
 
 
 def test_find_packages():

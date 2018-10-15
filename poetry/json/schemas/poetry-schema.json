@@ -371,6 +371,41 @@
                 ]
             }
         },
+        "scripts": {
+            "type": "object",
+            "patternProperties": {
+                "^[a-zA-Z-_.0-9]+$": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/script"
+                        },
+                        {
+                            "$ref": "#/definitions/extra-script"
+                        }
+                    ]
+                }
+            }
+        },
+        "script": {
+            "type": "string",
+            "description": "A simple script pointing to a callable object."
+        },
+        "extra-script": {
+            "type": "object",
+            "description": "A script that should be installed only if extras are activated.",
+            "properties": {
+                "callable": {
+                    "$ref": "#/definitions/script"
+                },
+                "extras": {
+                    "type": "array",
+                    "description": "The required extras for this script.",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "repository": {
             "type": "object",
             "properties": {

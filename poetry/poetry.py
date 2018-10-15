@@ -215,4 +215,20 @@ class Poetry:
                         "Consider specifying a more explicit one."
                     )
 
+            # Checking for scripts with extras
+            if "scripts" in config:
+                scripts = config["scripts"]
+                for name, script in scripts.items():
+                    if not isinstance(script, dict):
+                        continue
+
+                    extras = script["extras"]
+                    for extra in extras:
+                        if extra not in config["extras"]:
+                            result["errors"].append(
+                                'Script "{}" requires extra "{}" which is not defined.'.format(
+                                    name, extra
+                                )
+                            )
+
         return result

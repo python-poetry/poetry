@@ -9,6 +9,7 @@
 - Added a cache version system.
 - Added a `--lock` option to `update` to only update the lock file without executing operations.
 - Added support for the `Project-URL` metadata.
+- Added support for optional scripts.
 
 ### Changed
 
