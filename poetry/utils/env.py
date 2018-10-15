@@ -208,7 +208,8 @@ class Env(object):
 
         build(path)
 
-    def get_base_prefix(self):  # type: () -> Path
+    @classmethod
+    def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
             return sys.real_prefix
 
