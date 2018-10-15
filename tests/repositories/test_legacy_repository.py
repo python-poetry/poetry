@@ -1,3 +1,5 @@
+import pytest
+
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
 from poetry.utils._compat import Path
@@ -50,3 +52,10 @@ def test_http_basic_auth_repo(mocker):
 
     mock.assert_called_once_with("legacy")
     assert repo._session.auth == ("user1", "p4ss")
+
+
+def test_missing_version(mocker):
+    repo = MockRepository()
+
+    with pytest.raises(ValueError):
+        repo._get_release_info("missing_version", "1.1.0")

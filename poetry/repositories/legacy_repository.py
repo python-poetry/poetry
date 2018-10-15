@@ -298,6 +298,12 @@ class LegacyRepository(PyPiRepository):
         }
 
         links = list(page.links_for_version(Version.parse(version)))
+        if not links:
+            raise ValueError(
+                'No valid distribution links found for package: "{}" version: "{}"'.format(
+                    name, version
+                )
+            )
         urls = {}
         hashes = []
         default_link = links[0]
