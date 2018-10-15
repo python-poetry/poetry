@@ -153,6 +153,12 @@ def temporary_directory(*args, **kwargs):
         shutil.rmtree(name)
 
 
+def string_to_bool(value):
+    value = value.lower()
+
+    return value in {"true", "1", "y", "yes"}
+
+
 def expanduser(path):
     """
     Expand ~ and ~user constructions.
@@ -809,12 +815,12 @@ def main():
 
     installer = Installer(
         version=args.version or os.getenv("POETRY_VERSION"),
-        preview=args.preview or os.getenv("POETRY_PREVIEW"),
+        preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
         force=args.force,
-        accept_all=args.accept_all,
+        accept_all=args.accept_all or string_to_bool(os.getenv("POETRY_ACCEPT", "0")),
     )
 
-    if args.uninstall:
+    if args.uninstall or string_to_bool(os.getenv("POETRY_UNINSTALL", "0")):
         return installer.uninstall()
 
     return installer.run()

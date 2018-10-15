@@ -36,27 +36,37 @@ Open a new shell and type the following:
 poetry --version
 ```
 
-If you see something like `Poetry 0.11.4` then you are ready to use Poetry.
+If you see something like `Poetry 0.12.0` then you are ready to use Poetry.
 If you decide Poetry isn't your thing, you can completely remove it from your system
-by running the installer again with the `--uninstall` option.
+by running the installer again with the `--uninstall` option or by setting
+the `POETRY_UNINSTALL` environment variable before executing the installer.
+
+```bash
+python get-poetry.py --uninstall
+POETRY_UNINSTALL=1 python get-poetry.py
+```
 
 !!!note
 
     Alternatively, you can download the `get-poetry.py` file and execute it separately.
 
-    If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`:
+    If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`
+    or by using the `POETRY_PREVIEW` environement variable:
 
     ```bash
     python get-poetry.py --preview
+    POETRY_PREVIEW=1 python get-poetry.py
     ```
 
-    Similarly, if you want to install a specific version, you can use `--version`:
+    Similarly, if you want to install a specific version, you can use `--version` or the `POETRY_VERSION`
+    environment variable:
 
     ```bash
-    python get-poetry.py --version 0.7.0
+    python get-poetry.py --version 0.12.0
+    POETRY_VERSION=0.12.0 python get-poetry.py
     ```
 
-    Note that the installer does not support Poetry releases < 12.0.
+    Note that the installer does not support Poetry releases < 0.12.0.
 
 ### Alternative installation methods (not recommended)
 
