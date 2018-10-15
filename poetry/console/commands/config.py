@@ -102,7 +102,7 @@ To remove a repository (repo is a short alias for repositories):
 
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
-            m = re.match("^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
+            m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
             if m:
                 if not m.group(1):
                     value = {}
@@ -144,7 +144,7 @@ To remove a repository (repo is a short alias for repositories):
             )
 
         # handle repositories
-        m = re.match("^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
+        m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
         if m:
             if not m.group(1):
                 raise ValueError("You cannot remove the [repositories] section")
@@ -173,7 +173,7 @@ To remove a repository (repo is a short alias for repositories):
             )
 
         # handle auth
-        m = re.match("^(http-basic)\.(.+)", self.argument("key"))
+        m = re.match(r"^(http-basic)\.(.+)", self.argument("key"))
         if m:
             if self.option("unset"):
                 if not self._auth_config.setting(
@@ -278,7 +278,7 @@ To remove a repository (repo is a short alias for repositories):
                     if k is None:
                         k = ""
 
-                    k += re.sub("^config\.", "", key + ".")
+                    k += re.sub(r"^config\.", "", key + ".")
                     if setting and len(setting) > 1:
                         setting = ".".join(setting.split(".")[1:])
 

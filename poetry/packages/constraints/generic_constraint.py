@@ -84,7 +84,7 @@ class GenericConstraint(BaseConstraint):
         """
         pretty_constraint = constraints
 
-        or_constraints = re.split("\s*\|\|?\s*", constraints.strip())
+        or_constraints = re.split(r"\s*\|\|?\s*", constraints.strip())
         or_groups = []
         for constraints in or_constraints:
             and_constraints = re.split(
@@ -116,12 +116,12 @@ class GenericConstraint(BaseConstraint):
 
     @classmethod
     def _parse_constraint(cls, constraint):
-        m = re.match("(?i)^v?[xX*](\.[xX*])*$", constraint)
+        m = re.match(r"(?i)^v?[xX*](\.[xX*])*$", constraint)
         if m:
             return (EmptyConstraint(),)
 
         # Basic Comparators
-        m = re.match("^(!=|==?)?\s*(.*)", constraint)
+        m = re.match(r"^(!=|==?)?\s*(.*)", constraint)
         if m:
             return (GenericConstraint(m.group(1) or "=", m.group(2)),)
 
