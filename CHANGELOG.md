@@ -6,13 +6,13 @@
 
 - Added a brand new installer.
 - Added support for multi-constraints dependencies.
-- Added a cache versioning system.
+- Added a cache version system.
 - Added a `--lock` option to `update` to only update the lock file without executing operations.
 
 ### Changed
 
 - Improved virtualenv detection and management.
-- Wilcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
+- Wildcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
 - Changed behavior of the resolver for conditional dependencies.
 - Improved the `check` command.
 
