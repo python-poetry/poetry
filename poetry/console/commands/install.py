@@ -1,3 +1,5 @@
+import os
+
 from .env_command import EnvCommand
 
 
@@ -25,6 +27,10 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 
     def handle(self):
         from poetry.installation import Installer
+        from poetry.io import NullIO
+        from poetry.masonry.builders import SdistBuilder
+        from poetry.utils._compat import decode
+        from poetry.utils.env import NullEnv
 
         installer = Installer(
             self.output,
@@ -47,4 +53,29 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         installer.dry_run(self.option("dry-run"))
         installer.verbose(self.option("verbose"))
 
-        return installer.run()
+        return_code = installer.run()
+
+        if return_code != 0:
+            return return_code
+
+        setup = self.poetry.file.parent / "setup.py"
+        has_setup = setup.exists()
+
+        if has_setup:
+            self.line("<warning>A setup.py file already exists. Using it.</warning>")
+        else:
+            builder = SdistBuilder(self.poetry, NullEnv(), NullIO())
+
+            with setup.open("w") as f:
+                f.write(decode(builder.build_setup()))
+
+        self.line(
+            "Installing <info>{}</info> (<comment>{}</comment>)".format(
+                self.poetry.package.pretty_name, self.poetry.package.pretty_version
+            )
+        )
+        try:
+            self.env.run("pip", "install", "-e", str(setup.parent), "--no-deps")
+        finally:
+            if not has_setup:
+                os.remove(str(setup))

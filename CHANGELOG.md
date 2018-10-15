@@ -15,6 +15,8 @@
 - Improved virtualenv detection and management.
 - Wildcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
 - Changed behavior of the resolver for conditional dependencies.
+- The `install` command will now install the current project in editable mode.
+- The `develop` command is now deprecated in favor of `install`.
 - Improved the `check` command.
 
 ### Fixed
