@@ -425,6 +425,7 @@ dependencies:
 
 #### Options
 
+* `--no-dev`: Do not list the dev dependencies.
 * `--tree`: List the dependencies as a tree.
 * `-l|--latest`: Show the latest version.
 *  `-o|--outdated`: Show the latest version but only for packages that are outdated.
