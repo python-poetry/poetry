@@ -47,6 +47,15 @@ from .pypi_repository import PyPiRepository
 class Page:
 
     VERSION_REGEX = re.compile("(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
+    SUPPORTED_FORMATS = [
+        ".tar.gz",
+        ".whl",
+        ".zip",
+        ".tar.bz2",
+        ".tar.xz",
+        ".tar.Z",
+        ".tar",
+    ]
 
     def __init__(self, url, content, headers):
         if not url.endswith("/"):
@@ -96,7 +105,7 @@ class Page:
 
                 link = Link(url, self, requires_python=pyrequire)
 
-                if link.ext not in [".tar.gz", ".whl", ".zip"]:
+                if link.ext not in self.SUPPORTED_FORMATS:
                     continue
 
                 yield link
@@ -306,7 +315,10 @@ class LegacyRepository(PyPiRepository):
                 urls["bdist_wheel"] = link.url
             elif link.filename.endswith(".tar.gz"):
                 urls["sdist"] = link.url
-            elif link.filename.endswith((".zip", ".bz2")) and "sdist" not in urls:
+            elif (
+                link.filename.endswith((".zip", ".bz2", ".xz", ".Z", ".tar"))
+                and "sdist" not in urls
+            ):
                 urls["sdist"] = link.url
 
             hash = link.hash
