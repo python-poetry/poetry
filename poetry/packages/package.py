@@ -49,6 +49,7 @@ class Package(object):
 
         self.homepage = None
         self.repository_url = None
+        self.documentation_url = None
         self.keywords = []
         self._license = None
         self.readme = None
@@ -220,6 +221,21 @@ class Package(object):
         classifiers = set(classifiers)
 
         return sorted(classifiers)
+
+    @property
+    def urls(self):
+        urls = {}
+
+        if self.homepage:
+            urls["Homepage"] = self.homepage
+
+        if self.repository_url:
+            urls["Repository"] = self.repository_url
+
+        if self.documentation_url:
+            urls["Documentation"] = self.documentation_url
+
+        return urls
 
     def is_prerelease(self):
         return self._version.is_prerelease()

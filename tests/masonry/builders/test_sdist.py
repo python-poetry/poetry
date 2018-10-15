@@ -165,6 +165,12 @@ def test_make_pkg_info():
         'pendulum (>=1.4,<2.0); extra == "time"',
     ]
 
+    urls = parsed.get_all("Project-URL")
+    assert urls == [
+        "Documentation, https://poetry.eustace.io/docs",
+        "Repository, https://github.com/sdispater/poetry",
+    ]
+
 
 def test_make_pkg_info_any_python():
     poetry = Poetry.create(project("module1"))

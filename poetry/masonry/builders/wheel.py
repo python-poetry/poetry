@@ -325,6 +325,9 @@ class WheelBuilder(Builder):
         for dep in sorted(self._meta.requires_dist):
             fp.write("Requires-Dist: {}\n".format(dep))
 
+        for name, url in sorted(self._meta.project_urls, key=lambda u: u[0]):
+            fp.write("Project-URL: {}, {}\n".format(name, url))
+
         if self._meta.description_content_type:
             fp.write(
                 "Description-Content-Type: "

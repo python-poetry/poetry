@@ -80,4 +80,11 @@ class Metadata:
 
         meta.provides_extra = [e for e in package.extras]
 
+        if package.urls:
+            for name, url in package.urls.items():
+                if name == "Homepage" and meta.home_page == url:
+                    continue
+
+                meta.project_urls += ((name, url),)
+
         return meta

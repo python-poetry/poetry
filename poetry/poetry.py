@@ -106,6 +106,7 @@ class Poetry:
         package.description = local_config.get("description", "")
         package.homepage = local_config.get("homepage")
         package.repository_url = local_config.get("repository")
+        package.documentation_url = local_config.get("documentation")
         try:
             license_ = license_by_id(local_config.get("license"))
         except ValueError:
