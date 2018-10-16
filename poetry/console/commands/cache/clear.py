@@ -45,7 +45,7 @@ class CacheClearCommand(Command):
                     "{} caches".format(parts[0])
                 )
 
-            if not os.path.exists(cache_dir):
+            if not os.path.exists(str(cache_dir)):
                 self.line("No cache entries for {}".format(parts[0]))
                 return 0
 
