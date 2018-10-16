@@ -167,7 +167,7 @@ class MakeReleaseCommand(Command):
                     "-m",
                     "pip",
                     "install",
-                    package.name,
+                    "{}=={}".format(package.name, package.version),
                     "--no-deps",
                     "--target",
                     vendor_dir,
