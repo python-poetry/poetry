@@ -1,0 +1,520 @@
+{
+  "info": {
+    "author": "",
+    "author_email": "",
+    "classifiers": [],
+    "description": "",
+    "description_content_type": "",
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "",
+    "keywords": "",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "torch",
+    "package_url": "https://pypi.org/project/torch/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/torch/",
+    "release_url": "https://pypi.org/project/torch/0.4.1.post2/",
+    "requires_python": "",
+    "requires_dist": [],
+    "summary": "Tensors and Dynamic neural networks in Python with strong GPU acceleration",
+    "version": "0.4.1.post2"
+  },
+  "last_serial": 4107132,
+  "releases": {
+    "0.1.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "cb4f758e0336bce03781c25026343161",
+          "sha256": "93e87a9573db7f40a12818661ea436d5bb7c79a541f66063e5f1c3bc44877b5e"
+        },
+        "downloads": -1,
+        "filename": "torch-0.1.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "cb4f758e0336bce03781c25026343161",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "size": 294096,
+        "upload_time": "2017-03-06T15:53:21",
+        "url": "https://files.pythonhosted.org/packages/c0/66/2a0696bdac7ed0a99b65f6d8a5da7bc2583835ea04cac058bcd982cbb9ef/torch-0.1.2.tar.gz"
+      }
+    ],
+    "0.1.2.post1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e410e539fee324552e8099f24744ac93",
+          "sha256": "4e9560ce89042e0bc40cda5b1f3ed7e0a2339d76356435a302e88a115c1e0c71"
+        },
+        "downloads": -1,
+        "filename": "torch-0.1.2.post1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "e410e539fee324552e8099f24744ac93",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "size": 1109,
+        "upload_time": "2017-03-07T04:19:45",
+        "url": "https://files.pythonhosted.org/packages/5f/e9/bac4204fe9cb1a002ec6140b47f51affda1655379fe302a1caef421f9846/torch-0.1.2.post1.tar.gz"
+      }
+    ],
+    "0.3.0.post4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "50de151f7eae4779b60f0c7b515d9e89",
+          "sha256": "2f51160b720829f4f5295fe158bd87211d1d26323220cbf25fc60dcd548ef1c2"
+        },
+        "downloads": -1,
+        "has_sig": true,
+        "md5_digest": "50de151f7eae4779b60f0c7b515d9e89",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 6907504,
+        "upload_time": "2018-01-25T05:15:01"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "cbc3803c9e427d15925faa0e1107d760",
+          "sha256": "444577bb356fa64eaa530ca4948ea10fd5effec5b5d5edbc39e729c603ca0521"
+        },
+        "downloads": -1,
+        "filename": "torch-0.3.0.post4-cp35-cp35m-macosx_10_6_x86_64.whl",
+        "has_sig": true,
+        "md5_digest": "cbc3803c9e427d15925faa0e1107d760",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "size": 6859810,
+        "upload_time": "2018-01-25T05:15:14",
+        "url": "https://files.pythonhosted.org/packages/d7/13/f3b4b9073cae2be3c061b78511f874d89e0ea9b587828bfc26936b90cca6/torch-0.3.0.post4-cp35-cp35m-macosx_10_6_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5139922dc84ca2f10ab8dde7aed0b900",
+          "sha256": "40717581b8616c9d3c18192bcf53d76ea469399e1d475d45e8ac1859824ffc59"
+        },
+        "downloads": -1,
+        "filename": "torch-0.3.0.post4-cp36-cp36m-macosx_10_7_x86_64.whl",
+        "has_sig": true,
+        "md5_digest": "5139922dc84ca2f10ab8dde7aed0b900",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "size": 6859816,
+        "upload_time": "2018-01-25T05:15:30",
+        "url": "https://files.pythonhosted.org/packages/6e/d2/234d568c3ea8c09a598b55b7c574c7fcb9b8bd2b6e8e5780e97783b12a5b/torch-0.3.0.post4-cp36-cp36m-macosx_10_7_x86_64.whl"
+      }
+    ],
+    "0.3.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5a23d5e49e9bb031238641eb625b0043",
+          "sha256": "bf8f79bd2e01341d9983390d23411f90883f13352e3c835e4ec136456a4ab7fb"
+        },
+        "downloads": -1,
+        "filename": "torch-0.3.1-cp27-cp27m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "5a23d5e49e9bb031238641eb625b0043",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 496944784,
+        "upload_time": "2018-04-03T15:39:44",
+        "url": "https://files.pythonhosted.org/packages/91/02/1f4ee5dbbc6c3177772e467f5c19be2ee275e532a59f9a74924acf052e63/torch-0.3.1-cp27-cp27m-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "3b60fd6df6abfb1f093e83d026abe1c6",
+          "sha256": "db31189d3f4008db7aa988a912cbc358f006151da4f10f1448ab87bcc0477829"
+        },
+        "downloads": -1,
+        "filename": "torch-0.3.1-cp27-cp27mu-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "3b60fd6df6abfb1f093e83d026abe1c6",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 496940050,
+        "upload_time": "2018-04-03T15:42:14",
+        "url": "https://files.pythonhosted.org/packages/e0/d2/e069611c5e05b4c0d77f841969aa0e6136c43b7a81c0a6cde4910e49a0ce/torch-0.3.1-cp27-cp27mu-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "09f99d315b4064dfb28dd5fb6b8fa5ae",
+          "sha256": "fc0894f970693fcdb369d887c1662ff96a069690747d79a43d18f6115808026b"
+        },
+        "downloads": -1,
+        "has_sig": false,
+        "md5_digest": "09f99d315b4064dfb28dd5fb6b8fa5ae",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 7031788,
+        "upload_time": "2018-04-03T15:42:37"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "32df569f763eb8673a4c0faf0575a9c2",
+          "sha256": "67722a24be80beca362eb6e612b5e29f358143d62f2b53729f2c6b4184f89d09"
+        },
+        "downloads": -1,
+        "filename": "torch-0.3.1-cp35-cp35m-macosx_10_6_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "32df569f763eb8673a4c0faf0575a9c2",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "size": 6971720,
+        "upload_time": "2018-04-03T15:42:41",
+        "url": "https://files.pythonhosted.org/packages/7f/c6/88c317d2e1941ca268d9166ba2b6d52ee8151998500d4355a856e5af9313/torch-0.3.1-cp35-cp35m-macosx_10_6_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "bf0754cd2ecd06b9635c97c96c6ab25d",
+          "sha256": "9bd42b43a1e078ca40c73d4c585ae921dd2271427f55f589d544508433205637"
+        },
+        "downloads": -1,
+        "filename": "torch-0.3.1-cp35-cp35m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "bf0754cd2ecd06b9635c97c96c6ab25d",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "size": 496385553,
+        "upload_time": "2018-04-03T15:43:03",
+        "url": "https://files.pythonhosted.org/packages/e8/c5/0763a145e051ce7c84c128621693d1c5dfad5a42d551e8d79742261002e2/torch-0.3.1-cp35-cp35m-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "5b73fc9e5fe63f5234c8b69e347d8475",
+          "sha256": "5af3ff750ca2b78b86cbb2da1689a70ffcab88b801bcbf92d6810e182526e654"
+        },
+        "downloads": -1,
+        "filename": "torch-0.3.1-cp36-cp36m-macosx_10_7_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "5b73fc9e5fe63f5234c8b69e347d8475",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "size": 6971724,
+        "upload_time": "2018-04-03T15:42:47",
+        "url": "https://files.pythonhosted.org/packages/2a/dd/28850f603ae154988771ea58014890fc3f2e1a3573416987faaaeda9a204/torch-0.3.1-cp36-cp36m-macosx_10_7_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e38deb5ad34d1b41e3caa74d9d04a7b4",
+          "sha256": "3e1d77faad3cd6c9009249406f333239c1dd06321b0a27142cf996297af5f0e5"
+        },
+        "downloads": -1,
+        "filename": "torch-0.3.1-cp36-cp36m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "e38deb5ad34d1b41e3caa74d9d04a7b4",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "size": 496387591,
+        "upload_time": "2018-04-03T15:45:48",
+        "url": "https://files.pythonhosted.org/packages/5b/a5/e8b50b55b1abac9f1e3346c4242f1e42a82d368a8442cbd50c532922f6c4/torch-0.3.1-cp36-cp36m-manylinux1_x86_64.whl"
+      }
+    ],
+    "0.4.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "1add2825ea2fbcf82a50a20e997072b7",
+          "sha256": "06ba3249027330073339de369a0584c938cfddec740f26ce15be88bb40746b42"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.0-cp27-cp27m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "1add2825ea2fbcf82a50a20e997072b7",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 484035944,
+        "upload_time": "2018-04-24T18:48:54",
+        "url": "https://files.pythonhosted.org/packages/d5/2e/e9f03a61e05bbc2148348ec913203865589c9cde8f8f87506d137f98ada9/torch-0.4.0-cp27-cp27m-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "0aa819feeafd00da9644dc5c3263ea8d",
+          "sha256": "292417c83d09fe14741d9cb7928375c40ee24803634ac31ada1e43c7fc26b847"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.0-cp27-cp27mu-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "0aa819feeafd00da9644dc5c3263ea8d",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 484038634,
+        "upload_time": "2018-04-24T18:51:06",
+        "url": "https://files.pythonhosted.org/packages/df/a4/7f5ec6e9df1bf13f1881353702aa9713fcd997481b26018f35e0be85faf7/torch-0.4.0-cp27-cp27mu-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "942eb2886d925630e42418142ad5090a",
+          "sha256": "1ea154c7042fd0ae573a16540fdcf9b9f732857001fad2e5569a0bc2d37ff30c"
+        },
+        "downloads": -1,
+        "has_sig": false,
+        "md5_digest": "942eb2886d925630e42418142ad5090a",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 8191108,
+        "upload_time": "2018-04-24T20:17:33"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "00a8bb59b16e9d0c15e6607172653966",
+          "sha256": "05573009d20a7cfc551f919b2abc52dbac43d269bc40f98fb67eddcd4145a6ae"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.0-cp35-cp35m-macosx_10_6_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "00a8bb59b16e9d0c15e6607172653966",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "size": 8186022,
+        "upload_time": "2018-04-24T20:17:36",
+        "url": "https://files.pythonhosted.org/packages/57/ae/361fc39440d35d5dd729a558698c09a2812b2f0b5a9ddc8d390d437cdf4b/torch-0.4.0-cp35-cp35m-macosx_10_6_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4870818e4b59b6ce411208b5b7011f9a",
+          "sha256": "6c9ac80a4487028e343cb4ae3be9a676e51caeecdc94aefbd6c11916ecf36760"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.0-cp35-cp35m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "4870818e4b59b6ce411208b5b7011f9a",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "size": 483976731,
+        "upload_time": "2018-04-24T18:53:20",
+        "url": "https://files.pythonhosted.org/packages/33/65/e40bc02754ad2fd66e4953e276d8c608cdb0e3b6b516fb485ea1efaeeeea/torch-0.4.0-cp35-cp35m-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "400c59ead4a2a4a2a8e67eee006b9b0d",
+          "sha256": "bde3b8131973dd8a454be9e0aa3b1a7df410afe16c58ae7eed848005bd449aac"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.0-cp36-cp36m-macosx_10_7_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "400c59ead4a2a4a2a8e67eee006b9b0d",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "size": 8186037,
+        "upload_time": "2018-04-24T20:17:39",
+        "url": "https://files.pythonhosted.org/packages/6c/41/5454da652b9cf75f4b5706ef71404352b6131484bb966f05c7899e6ac25d/torch-0.4.0-cp36-cp36m-macosx_10_7_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e49700abc3ca43584d96392814231983",
+          "sha256": "c043adef934051df1308d7d9a3ef7a299c0cf1accb04b3790b2342c23ae6fdea"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.0-cp36-cp36m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "e49700abc3ca43584d96392814231983",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "size": 483974546,
+        "upload_time": "2018-04-24T18:55:33",
+        "url": "https://files.pythonhosted.org/packages/69/43/380514bd9663f1bf708abeb359b8b48d3fabb1c8e95bb3427a980a064c57/torch-0.4.0-cp36-cp36m-manylinux1_x86_64.whl"
+      }
+    ],
+    "0.4.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "655f9cb0d419ffaa7a5a3854161fc06f",
+          "sha256": "762eeb0ef4c6de1d9bf12616f362d979cabf1c2b988d5a90bb074adcdc30a079"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1-cp27-cp27m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "655f9cb0d419ffaa7a5a3854161fc06f",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 519499464,
+        "upload_time": "2018-07-26T17:54:38",
+        "url": "https://files.pythonhosted.org/packages/75/05/d60c1e8a297e1cc55a3d44fc48f03084e6a8abe5ffcf17e5dfccde8706a0/torch-0.4.1-cp27-cp27m-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "57c4c828edc6c5171de3deb2cf583b20",
+          "sha256": "108aef4c2744724d19d76c2344108db6abb60e86cfc9e06eb3d46386ea3b6097"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1-cp27-cp27mu-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "57c4c828edc6c5171de3deb2cf583b20",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 519512159,
+        "upload_time": "2018-07-26T17:55:29",
+        "url": "https://files.pythonhosted.org/packages/06/a7/6a173738dd6be014ebf9ba6f0b441d91b113b1506a98e10da4ff60994b54/torch-0.4.1-cp27-cp27mu-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9cbb143abe717682a06b1a0e69a0bafb",
+          "sha256": "400f50a9551c5ed2fbea9bd199e14e2ec79964dd792053802b51269eec96320b"
+        },
+        "downloads": -1,
+        "has_sig": false,
+        "md5_digest": "9cbb143abe717682a06b1a0e69a0bafb",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp27",
+        "size": 11525169,
+        "upload_time": "2018-07-26T17:58:35"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "cce6b4e600b23034ffb4be55b39d2786",
+          "sha256": "db668180b11144579d503041339025cc76a70bc0da877f2f91f386fe9229e292"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1-cp35-cp35m-macosx_10_6_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "cce6b4e600b23034ffb4be55b39d2786",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "size": 11519218,
+        "upload_time": "2018-07-26T17:59:09",
+        "url": "https://files.pythonhosted.org/packages/79/d5/4e75fc60b1b84ea1cbb501f102e53c9e09c755ec47bb90655628049691ae/torch-0.4.1-cp35-cp35m-macosx_10_6_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4f610a0ebfe08179223a909b785b4fda",
+          "sha256": "725ae85be70a569583863c263e281938b21e5e92d9a8f480094555b59a82936d"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1-cp35-cp35m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "4f610a0ebfe08179223a909b785b4fda",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp35",
+        "size": 519503482,
+        "upload_time": "2018-07-26T17:56:21",
+        "url": "https://files.pythonhosted.org/packages/f9/4e/1bcb4688b7506c340ca6ba5b9f57f4ad3b59a193bba365bf2b51e9e4bb3e/torch-0.4.1-cp35-cp35m-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a0f81ca78264f7b1d4ffde4c8ff757a8",
+          "sha256": "e740fb4442ab0cf6a5e5c5279b6ad3cebdeb8f30ce1dabb293cf437178f12a78"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1-cp36-cp36m-macosx_10_7_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "a0f81ca78264f7b1d4ffde4c8ff757a8",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "size": 11519230,
+        "upload_time": "2018-07-26T17:59:13",
+        "url": "https://files.pythonhosted.org/packages/59/cf/404677f62d18609b3d8b4fdcd62c98981e1a6bd2d086ece3f84c880623a3/torch-0.4.1-cp36-cp36m-macosx_10_7_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "71ae3becc1140ad6754f50e040a7cf6e",
+          "sha256": "7e3bac584473688720e26323bf209b97c015fc4e9a12a34962df3ff7ad0ce597"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1-cp36-cp36m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "71ae3becc1140ad6754f50e040a7cf6e",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp36",
+        "size": 519512644,
+        "upload_time": "2018-07-26T17:57:14",
+        "url": "https://files.pythonhosted.org/packages/49/0e/e382bcf1a6ae8225f50b99cc26effa2d4cc6d66975ccf3fa9590efcbedce/torch-0.4.1-cp36-cp36m-manylinux1_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "7b40dc3a88f07defde42f9fe55f34f01",
+          "sha256": "4bf7ffe72bf1af8305b6a3acbe246351f4e09a1c4d4de2364066064da56c869b"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1-cp37-cp37m-macosx_10_7_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "7b40dc3a88f07defde42f9fe55f34f01",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "size": 11519437,
+        "upload_time": "2018-07-26T17:59:17",
+        "url": "https://files.pythonhosted.org/packages/ea/89/cf01b153c80977b4649404612f0ff6ad636e11d1a0bbcae6ec3bde4ffa19/torch-0.4.1-cp37-cp37m-macosx_10_7_x86_64.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a4adef16e58d3bdf6076e7305c1dcd70",
+          "sha256": "2acd73723a0f0bd0b8114531e78b7ad3c753a2f2c0047623043cba4dae08ae90"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1-cp37-cp37m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "a4adef16e58d3bdf6076e7305c1dcd70",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "size": 519482169,
+        "upload_time": "2018-07-26T17:58:09",
+        "url": "https://files.pythonhosted.org/packages/a2/6f/60e77fe7a4b4e23808f1e4c6261dec2ea15abbfd91b0d791f107365f4f2b/torch-0.4.1-cp37-cp37m-manylinux1_x86_64.whl"
+      }
+    ],
+    "0.4.1.post2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "ab730cd1b5a3dd9b3278daa029cb3cde",
+          "sha256": "61d653dc464bc51402b73379af9a025b3b7eaa258b37e576601e3e0d92f2b97e"
+        },
+        "downloads": -1,
+        "filename": "torch-0.4.1.post2-cp37-cp37m-manylinux1_x86_64.whl",
+        "has_sig": false,
+        "md5_digest": "ab730cd1b5a3dd9b3278daa029cb3cde",
+        "packagetype": "bdist_wheel",
+        "python_version": "cp37",
+        "size": 519533778,
+        "upload_time": "2018-07-27T02:58:39",
+        "url": "https://files.pythonhosted.org/packages/d3/91/1b2871d6c8ca079254deae5872af32e02e9a85f07dd0834e8b3489ce138f/torch-0.4.1.post2-cp37-cp37m-manylinux1_x86_64.whl"
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "ab730cd1b5a3dd9b3278daa029cb3cde",
+        "sha256": "61d653dc464bc51402b73379af9a025b3b7eaa258b37e576601e3e0d92f2b97e"
+      },
+      "downloads": -1,
+      "filename": "torch-0.4.1.post2-cp37-cp37m-manylinux1_x86_64.whl",
+      "has_sig": false,
+      "md5_digest": "ab730cd1b5a3dd9b3278daa029cb3cde",
+      "packagetype": "bdist_wheel",
+      "python_version": "cp37",
+      "size": 519533778,
+      "upload_time": "2018-07-27T02:58:39",
+      "url": "https://files.pythonhosted.org/packages/d3/91/1b2871d6c8ca079254deae5872af32e02e9a85f07dd0834e8b3489ce138f/torch-0.4.1.post2-cp37-cp37m-manylinux1_x86_64.whl"
+    }
+  ]
+}
