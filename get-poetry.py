@@ -702,7 +702,7 @@ class Installer:
     def get_unix_profiles(self):
         profiles = [os.path.join(HOME, ".profile")]
 
-        shell = os.getenv("SHELL")
+        shell = os.getenv("SHELL", "")
         if "zsh" in shell:
             zdotdir = os.getenv("ZDOTDIR", HOME)
             profiles.append(os.path.join(zdotdir, ".zprofile"))
