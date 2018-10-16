@@ -172,7 +172,7 @@ version = "1.0.2"
 [[package]]
 category = "main"
 description = "Backport of the functools module from Python 3.2.3 for use on 2.7 and PyPy."
-marker = "python_version < \"3\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\""
 name = "functools32"
 optional = false
 python-versions = "*"
@@ -382,7 +382,7 @@ description = "plugin and hook calling mechanisms for python"
 name = "pluggy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.7.1"
+version = "0.8.0"
 
 [[package]]
 category = "dev"
@@ -613,12 +613,16 @@ description = "Style preserving TOML library"
 name = "tomlkit"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.4.5"
+version = "0.4.6"
 
 [package.dependencies]
 [package.dependencies.enum34]
 python = ">=2.7,<2.8"
 version = ">=1.1,<2.0"
+
+[package.dependencies.functools32]
+python = ">=2.7,<2.8"
+version = ">=3.2.3,<4.0.0"
 
 [package.dependencies.typing]
 python = ">=2.7,<2.8 || >=3.4,<3.5"
@@ -725,7 +729,7 @@ pastel = ["3108af417ec0fa6d0a620e676ec4f02c839ca13e10611586e5d2174b46aa0bc3", "d
 pathlib2 = ["8eb170f8d0d61825e09a95b38be068299ddeda82f35e96c3301a8a5e7604cb83", "d1aa2a11ba7b8f7b21ab852b1fb5afb277e1bb99d5dfc663380b5015c0d80c5a"]
 pbr = ["1be135151a0da949af8c5d0ee9013d9eafada71237eb80b3ba8896b4f12ec5dc", "cf36765bf2218654ae824ec8e14257259ba44e43b117fd573c8d07a9895adbdd"]
 pkginfo = ["5878d542a4b3f237e359926384f1dde4e099c9f5525d236b1840cf704fa8d474", "a39076cb3eb34c333a0dd390b568e9e1e881c7bf2cc0aee12120636816f55aee"]
-pluggy = ["6e3836e39f4d36ae72840833db137f7b7d35105079aee6ec4a62d9f80d594dd1", "95eb8364a4708392bae89035f45341871286a333f749c3141c20573d2b3876e1"]
+pluggy = ["447ba94990e8014ee25ec853339faf7b0fc8050cdc3289d4d71f7f410fb90095", "bde19360a8ec4dfd8a20dcb811780a30998101f078fc7ded6162f0076f50508f"]
 pre-commit = ["98ec318db1f255e3d5089ae416959ef3c775215a3509620027d446eeabbba740", "b68f9219c56b50ebafb57f378c5325f9876d06fb29e9cd05daf5cbd6676ce8f2"]
 py = ["bf92637198836372b520efcba9e020c330123be8ce527e535d185ed4b6f45694", "e76826342cefe3c3d5f7e8ee4316b80d1dd8a300781612ddbc765c17ba25a6c6"]
 pygments = ["78f3f434bcc5d6ee09020f92ba487f95ba50f1e3ef83ae96b9d5ffa1bab25c5d", "dbae1046def0efb574852fab9e90209b23f556367b5a320c0bcb871c77c3e8cc"]
@@ -746,7 +750,7 @@ shellingham = ["c9fd71508d4363e8a3dadf405e681021461dca9ca9a2b48c9461fdfbfceaebff
 six = ["70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9", "832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb"]
 termcolor = ["1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"]
 toml = ["229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c", "235682dd292d5899d361a811df37e04a8828a5b1da3115886b73cf81ebc9100e", "f1db651f9657708513243e61e6cc67d101a39bad662eaa9b5546f789338e07a3"]
-tomlkit = ["aa027a507e0761043ba6e60242d7b17ee1acd714e9643e1b27e3f4f07f099d07", "e46718f3e71970cdbea1e0b5ed99aa1284ec20eb5e99fca016ec13aac9dd2c4b"]
+tomlkit = ["27ddd2796855428a0316057884ec081a1c967c8d29c3d489fcfccd1bb2976ede", "8f857398aefa2c6a488c824f1e7f757e73a4f68246f1874f9df5eb53903231de"]
 tornado = ["0662d28b1ca9f67108c7e3b77afabfb9c7e87bde174fbda78186ecedc2499a9d", "4e5158d97583502a7e2739951553cbd88a72076f152b4b11b64b9a10c4c49409", "732e836008c708de2e89a31cb2fa6c0e5a70cb60492bee6f1ea1047500feaf7f", "8154ec22c450df4e06b35f131adc4f2f3a12ec85981a203301d310abf580500f", "8e9d728c4579682e837c92fdd98036bd5cdefa1da2aaf6acf26947e6dd0c01c5", "d4b3e5329f572f055b587efc57d29bd051589fb5a43ec8898c77a47ec2fa2bbb", "e5f2585afccbff22390cddac29849df463b252b711aa2ce7c5f3f342a5b3b444"]
 tox = ["217fb84aecf9792a98f93f07cfcaf014205a76c64e52bd7c2b4135458e6ad2a1", "4baeb3d8ebdcd9f43afce38aa67d06f1165a87d221d5bb21e8b39a0d4880c134"]
 typing = ["4027c5f6127a6267a435201981ba156de91ad0d1d98e9ddc2aa173453453492d", "57dcf675a99b74d64dacf6fba08fb17cf7e3d5fdff53d4a30ea2a5e7e52543d4", "a4c8473ce11a65999c8f59cb093e70686b6c84c98df58c1dae9b3b196089858a"]
