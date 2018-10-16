@@ -46,25 +46,23 @@ python get-poetry.py --uninstall
 POETRY_UNINSTALL=1 python get-poetry.py
 ```
 
+If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`
+or by using the `POETRY_PREVIEW` environment variable:
+
+```bash
+python get-poetry.py --preview
+POETRY_PREVIEW=1 python get-poetry.py
+```
+
+Similarly, if you want to install a specific version, you can use `--version` or the `POETRY_VERSION`
+environment variable:
+
+```bash
+python get-poetry.py --version 0.12.0
+POETRY_VERSION=0.12.0 python get-poetry.py
+```
+
 !!!note
-
-    Alternatively, you can download the `get-poetry.py` file and execute it separately.
-
-    If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`
-    or by using the `POETRY_PREVIEW` environement variable:
-
-    ```bash
-    python get-poetry.py --preview
-    POETRY_PREVIEW=1 python get-poetry.py
-    ```
-
-    Similarly, if you want to install a specific version, you can use `--version` or the `POETRY_VERSION`
-    environment variable:
-
-    ```bash
-    python get-poetry.py --version 0.12.0
-    POETRY_VERSION=0.12.0 python get-poetry.py
-    ```
 
     Note that the installer does not support Poetry releases < 0.12.0.
 
