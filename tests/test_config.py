@@ -1,5 +1,6 @@
 import os
 import pytest
+import sys
 import tempfile
 
 from poetry.config import Config
@@ -14,6 +15,7 @@ def config():
         return Config(TomlFile(f.name))
 
 
+@pytest.mark.skipif(sys.platform == "win32", "Permissions are different on Windows")
 def test_config_sets_the_proper_file_permissions(config):
     config.add_property("settings.virtualenvs.create", True)
 
