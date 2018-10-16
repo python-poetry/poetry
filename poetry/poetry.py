@@ -37,6 +37,7 @@ class Poetry:
         self._local_config = local_config
         self._locker = locker
         self._config = Config.create("config.toml")
+        self._auth_config = Config.create("auth.toml")
 
         # Configure sources
         self._pool = Pool()
@@ -65,6 +66,14 @@ class Poetry:
     @property
     def pool(self):  # type: () -> Pool
         return self._pool
+
+    @property
+    def config(self):  # type: () -> Config
+        return self._config
+
+    @property
+    def auth_config(self):  # type: () -> Config
+        return self._auth_config
 
     @classmethod
     def create(cls, cwd):  # type: (Path) -> Poetry

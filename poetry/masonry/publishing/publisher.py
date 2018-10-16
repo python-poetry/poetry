@@ -65,7 +65,7 @@ class Publisher:
             url = config["repositories"][repository_name]["url"]
 
         if not (username and password):
-            auth = get_http_basic_auth(repository_name)
+            auth = get_http_basic_auth(self._poetry.auth_config, repository_name)
             if auth:
                 username = auth[0]
                 password = auth[1]
@@ -74,7 +74,7 @@ class Publisher:
         if not username:
             username = self._io.ask("Username:")
 
-        if not password:
+        if password is None:
             password = self._io.ask_hidden("Password:")
 
         # TODO: handle certificates

@@ -20,6 +20,7 @@
 - The `install` command will now install the current project in editable mode.
 - The `develop` command is now deprecated in favor of `install`.
 - Improved the `check` command.
+- Empty passwords are now supported when publishing.
 
 ### Fixed
 

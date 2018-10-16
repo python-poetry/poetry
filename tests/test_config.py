@@ -1,18 +1,6 @@
 import os
 import pytest
 import sys
-import tempfile
-
-from poetry.config import Config
-from poetry.utils.toml_file import TomlFile
-
-
-@pytest.fixture
-def config():
-    with tempfile.NamedTemporaryFile() as f:
-        f.close()
-
-        return Config(TomlFile(f.name))
 
 
 @pytest.mark.skipif(

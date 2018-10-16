@@ -171,7 +171,9 @@ class LegacyRepository(PyPiRepository):
 
         url_parts = urlparse.urlparse(self._url)
         if not url_parts.username:
-            self._session.auth = get_http_basic_auth(self.name)
+            self._session.auth = get_http_basic_auth(
+                Config.create("auth.toml"), self.name
+            )
 
         self._disable_cache = disable_cache
 
