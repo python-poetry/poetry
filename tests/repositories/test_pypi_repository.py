@@ -115,7 +115,7 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():
     "package,version,python_constraint",
     (
         ("requests", "2.18.0", semver.VersionRange()),
-        ("requests", "2.19.0", semver.parse_constraint("^2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*")),
+        ("requests", "2.19.0", semver.parse_constraint(">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*")),
         ("torch", "0.4.0", semver.parse_constraint(">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"))
     )
 )
