@@ -9,9 +9,7 @@ from gzip import GzipFile
 from io import BytesIO
 from posixpath import join as pjoin
 from pprint import pformat
-from typing import List
 
-from poetry.packages import Dependency
 from poetry.utils._compat import Path
 from poetry.utils._compat import encode
 from poetry.utils._compat import to_str

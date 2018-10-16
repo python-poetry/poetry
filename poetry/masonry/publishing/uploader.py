@@ -250,7 +250,9 @@ class Uploader:
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / "dist"
-        file = dist / "{}-{}.tar.gz".format(self._package.name, self._package.version)
+        file = dist / "{}-{}.tar.gz".format(
+            self._package.name, normalize_version(self._package.version.text)
+        )
 
         if not file.exists():
             raise RuntimeError('"{0}" does not exist.'.format(file.name))
