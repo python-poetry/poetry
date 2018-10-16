@@ -1,8 +1,12 @@
 import json
 import shutil
 
+import pytest
+
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import Path
+from poetry import semver
+
 
 
 class MockRepository(PyPiRepository):
@@ -104,3 +108,20 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():
     dep = package.requires[0]
     assert dep.name == "futures"
     assert dep.python_versions == "~2.7"
+
+
+
+@pytest.mark.parametrize(
+    "package,version,python_constraint",
+    (
+        ("requests", "2.18.0", semver.VersionRange()),
+        ("requests", "2.19.0", semver.parse_constraint("^2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*")),
+        ("torch", "0.4.0", semver.parse_constraint(">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"))
+    )
+)
+def test_pyversion_parsing(package, version, python_constraint):
+    repo = MockRepository()
+    package = repo.package(package, version)
+    print(python_constraint)
+    assert package.python_constraint == python_constraint
+
