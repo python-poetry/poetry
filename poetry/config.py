@@ -93,11 +93,14 @@ class Config:
             if current_mode != 384:
                 os.remove(str(self._file))
 
-        umask_original = os.umask(umask)
-        try:
-            fd = os.open(str(self._file), os.O_WRONLY | os.O_CREAT, mode)
-        finally:
-            os.umask(umask_original)
+        if self._file.exists():
+            fd = str(self._file)
+        else:
+            umask_original = os.umask(umask)
+            try:
+                fd = os.open(str(self._file), os.O_WRONLY | os.O_CREAT, mode)
+            finally:
+                os.umask(umask_original)
 
         with io.open(fd, "w", encoding="utf-8") as f:
             f.write(self._content.as_string())

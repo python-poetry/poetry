@@ -28,6 +28,7 @@
 - Fixed duplicate entries in both sdist and wheel.
 - Fixed excluded files appearing in the `package_data` of the generated `setup.py`.
 - Fixed transitive directory dependencies installation.
+- Fixed file permissions for configuration and authentication files.
 
 
 ## [0.11.5] - 2018-09-04
