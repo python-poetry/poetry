@@ -7,9 +7,10 @@
 - Added a brand new installer.
 - Added support for multi-constraints dependencies.
 - Added a cache version system.
-- Added a `--lock` option to `update` to only update the lock file without executing operations.
+- Added a `--lock` option to `update` to only update the lock file without executing operations. (Thanks to [@greysteil](https://github.com/greysteil))
 - Added support for the `Project-URL` metadata.
 - Added support for optional scripts.
+- Added a `--no-dev` option to `show`. (Thanks to [@rodcloutier](https://github.com/rodcloutier))
 
 ### Changed
 
