@@ -221,8 +221,8 @@ class SdistBuilder(Builder):
         for dep in sorted(self._meta.requires_dist):
             pkg_info += "Requires-Dist: {}\n".format(dep)
 
-        for name, url in sorted(self._meta.project_urls, key=lambda u: u[0]):
-            pkg_info += "Project-URL: {}, {}\n".format(name, url)
+        for url in sorted(self._meta.project_urls, key=lambda u: u[0]):
+            pkg_info += "Project-URL: {}\n".format(url)
 
         return encode(pkg_info)
 
