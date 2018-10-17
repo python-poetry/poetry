@@ -11,7 +11,7 @@ def license_by_id(identifier):
     if _licenses is None:
         load_licenses()
 
-    id = identifier.lower()
+    id = identifier.lower() if identifier else None
 
     if id not in _licenses:
         raise ValueError("Invalid license id: {}".format(identifier))
