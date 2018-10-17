@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed an error when license is unspecified.
+
+
 ## [0.12.0] - 2018-10-17
 
 ### Added

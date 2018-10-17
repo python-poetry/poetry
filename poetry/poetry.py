@@ -117,7 +117,7 @@ class Poetry:
         package.repository_url = local_config.get("repository")
         package.documentation_url = local_config.get("documentation")
         try:
-            license_ = license_by_id(local_config.get("license"))
+            license_ = license_by_id(local_config.get("license", ""))
         except ValueError:
             license_ = None
 
