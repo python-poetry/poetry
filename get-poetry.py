@@ -131,6 +131,16 @@ def is_decorated():
         return False
 
 
+def is_interactive():
+    if not hasattr(sys.stdin, "fileno"):
+        return False
+
+    try:
+        return os.isatty(sys.stdin.fileno())
+    except UnsupportedOperation:
+        return False
+
+
 def colorize(style, text):
     if not is_decorated():
         return text
@@ -644,11 +654,6 @@ class Installer:
 
     def set_windows_path_var(self, value):
         import ctypes
-        from ctypes.wintypes import HWND
-        from ctypes.wintypes import LPARAM
-        from ctypes.wintypes import LPVOID
-        from ctypes.wintypes import UINT
-        from ctypes.wintypes import WPARAM
 
         with winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER) as root:
             with winreg.OpenKey(root, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
@@ -817,7 +822,9 @@ def main():
         version=args.version or os.getenv("POETRY_VERSION"),
         preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
         force=args.force,
-        accept_all=args.accept_all or string_to_bool(os.getenv("POETRY_ACCEPT", "0")),
+        accept_all=args.accept_all
+        or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
+        or not is_interactive(),
     )
 
     if args.uninstall or string_to_bool(os.getenv("POETRY_UNINSTALL", "0")):
