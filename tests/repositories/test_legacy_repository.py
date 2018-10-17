@@ -42,11 +42,9 @@ def test_page_absolute_links_path_are_correct():
         assert link.path.startswith("/packages/")
 
 
-def test_http_basic_auth_repo(mocker):
-    mock = mocker.patch("poetry.repositories.legacy_repository.get_http_basic_auth")
-    mock.return_value = ("user1", "p4ss")
-
+def test_sdist_format_support():
     repo = MockRepository()
-
-    mock.assert_called_once_with("legacy")
-    assert repo._session.auth == ("user1", "p4ss")
+    page = repo._get("/relative")
+    bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
+    assert len(bz2_links) == 1
+    assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"

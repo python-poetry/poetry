@@ -104,6 +104,7 @@ def test_add_git_constraint(app, repo, installer):
     tester = CommandTester(command)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
 
     tester.execute(
         [
@@ -197,7 +198,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 Writing lock file
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0)
+  - Installing demo (0.1.0 ../distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
     assert tester.get_display(True) == expected
@@ -237,7 +238,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 Writing lock file
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0)
+  - Installing demo (0.1.0 ../distributions/demo-0.1.0.tar.gz)
 """
 
     assert tester.get_display(True) == expected

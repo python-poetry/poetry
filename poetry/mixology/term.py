@@ -14,7 +14,7 @@ class Term(object):
     See https://github.com/dart-lang/pub/tree/master/doc/solver.md#term.
     """
 
-    def __init__(self, dependency, is_positive):  # type: Dependency  # type: bool
+    def __init__(self, dependency, is_positive):  # type: (Dependency, bool)  -> None
         self._dependency = dependency
         self._positive = is_positive
 
@@ -151,14 +151,17 @@ class Term(object):
         return (
             self.dependency.is_root
             or other.is_root
-            or (other.name == self.dependency.name)
+            or other.name == self.dependency.name
         )
 
     def _non_empty_term(self, constraint, is_positive):
         if constraint.is_empty():
             return
 
-        return Term(Dependency(self.dependency.name, constraint), is_positive)
+        dep = Dependency(self.dependency.name, constraint)
+        dep.python_versions = str(self.dependency.python_versions)
+
+        return Term(dep, is_positive)
 
     def __str__(self):
         return "{}{}".format("not " if not self.is_positive() else "", self._dependency)

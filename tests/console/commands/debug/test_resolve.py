@@ -60,6 +60,7 @@ cachy 0.2.0
 
 def test_debug_resolve_git_dependency(app, repo):
     repo.add_package(get_package("pendulum", "2.0.3"))
+    repo.add_package(get_package("cleo", "0.6.5"))
 
     command = app.find("debug:resolve")
     tester = CommandTester(command)
@@ -77,6 +78,7 @@ Resolving dependencies...
 Resolution results:
 
   - pendulum (2.0.3)
+  - cleo (0.6.5)
   - demo (0.1.2)
 """
 

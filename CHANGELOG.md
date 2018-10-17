@@ -2,9 +2,48 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added a brand new installer.
+- Added support for multi-constraints dependencies.
+- Added a cache version system.
+- Added a `--lock` option to `update` to only update the lock file without executing operations. (Thanks to [@greysteil](https://github.com/greysteil))
+- Added support for the `Project-URL` metadata.
+- Added support for optional scripts.
+- Added a `--no-dev` option to `show`. (Thanks to [@rodcloutier](https://github.com/rodcloutier))
+
+### Changed
+
+- Improved virtualenv detection and management.
+- Wildcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
+- Changed behavior of the resolver for conditional dependencies.
+- The `install` command will now install the current project in editable mode.
+- The `develop` command is now deprecated in favor of `install`.
+- Improved the `check` command.
+- Empty passwords are now supported when publishing.
+
+### Fixed
+
+- Fixed a memory leak in the resolver.
+- Fixed a recursion error on duplicate dependencies with only different extras.
+- Fixed handling of extras.
+- Fixed duplicate entries in both sdist and wheel.
+- Fixed excluded files appearing in the `package_data` of the generated `setup.py`.
+- Fixed transitive directory dependencies installation.
+- Fixed file permissions for configuration and authentication files.
+- Fixed an error in `cache:clear` for Python 2.7.
+- Fixed publishing for the first time with a prerelease.
+
+
+## [0.11.5] - 2018-09-04
+
 ### Fixed
 
 - Fixed a recursion error with circular dependencies.
+- Fixed the `config` command setting incorrect values for paths.
+- Fixed an `OSError` on Python >= 3.5 for `git` dependencies with recursive symlinks.
+- Fixed the possible deletion of system paths by `cache:clear`.
+- Fixed a performance issue when parsing the lock file by upgrading `tomlkit`.
 
 
 ## [0.11.4] - 2018-07-30
@@ -463,7 +502,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.4...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/master...develop
+[0.11.5]: https://github.com/sdispater/poetry/releases/tag/0.11.5
 [0.11.4]: https://github.com/sdispater/poetry/releases/tag/0.11.4
 [0.11.3]: https://github.com/sdispater/poetry/releases/tag/0.11.3
 [0.11.2]: https://github.com/sdispater/poetry/releases/tag/0.11.2

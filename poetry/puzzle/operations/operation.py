@@ -26,6 +26,10 @@ class Operation(object):
     def skip_reason(self):  # type: () -> Union[str, None]
         return self._skip_reason
 
+    @property
+    def package(self):
+        raise NotImplementedError()
+
     def format_version(self, package):  # type: (...) -> str
         return package.full_pretty_version
 

@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+
+import io
+import os
+
 from typing import Any
 
 from tomlkit import document
@@ -76,7 +81,29 @@ class Config:
         self.dump()
 
     def dump(self):
-        self._file.write(self._content)
+        # Ensuring the file is only readable and writable
+        # by the current user
+        mode = 0o600
+        umask = 0o777 ^ mode
+
+        if self._file.exists():
+            # If the file already exists, remove it
+            # if the permissions are higher than what we want
+            current_mode = os.stat(str(self._file)).st_mode & 0o777
+            if current_mode != 384:
+                os.remove(str(self._file))
+
+        if self._file.exists():
+            fd = str(self._file)
+        else:
+            umask_original = os.umask(umask)
+            try:
+                fd = os.open(str(self._file), os.O_WRONLY | os.O_CREAT, mode)
+            finally:
+                os.umask(umask_original)
+
+        with io.open(fd, "w", encoding="utf-8") as f:
+            f.write(self._content.as_string())
 
     @classmethod
     def create(cls, file, base_dir=None):  # type: (...) -> Config

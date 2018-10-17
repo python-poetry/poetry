@@ -7,26 +7,29 @@ stages:
 cache:
   pip: true
   directories:
-    - $HOME/.cache/pypoetry
-    - $HOME/.cache/pre-commit
+    - "$HOME/.cache/pypoetry"
+    - "$HOME/.cache/pre-commit"
 
 install:
-  - pip install poetry --pre
+  - pip install pip -U
+  - python get-poetry.py --preview -y
+  - source $HOME/.poetry/env
   - poetry install -v
 
 script: pytest -q tests/
 
 jobs:
   include:
-    - python: "2.7"
-    - python: "3.4"
-    - python: "3.5"
-    - python: "3.6"
-
-    - stage: linting
-      python: "3.6"
-      install:
-        - pip install pre-commit
-        - pre-commit install-hooks
-      script:
-        - pre-commit run --all-files
+  - python: '2.7'
+  - python: '3.5'
+  - python: '3.6'
+  - python: '3.7'
+    dist: xenial
+    sudo: true
+  - stage: linting
+    python: '3.6'
+    install:
+    - pip install pre-commit
+    - pre-commit install-hooks
+    script:
+    - pre-commit run --all-files

@@ -84,7 +84,7 @@ def get_abi_tag(env):
         if get_flag(
             env,
             "Py_UNICODE_SIZE",
-            lambda: sys.maxunicode == 0x10ffff,
+            lambda: sys.maxunicode == 0x10FFFF,
             expected=4,
             warn=(impl == "cp" and env.version_info < (3, 3)),
         ) and env.version_info < (3, 3):

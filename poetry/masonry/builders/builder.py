@@ -68,7 +68,6 @@ class Builder(object):
         Finds all files to add to the tarball
         """
         excluded = self.find_excluded_files()
-        src = self._module.path
         to_add = []
 
         for include in self._module.includes:
@@ -85,6 +84,10 @@ class Builder(object):
                     continue
 
                 if file.suffix == ".pyc":
+                    continue
+
+                if file in to_add:
+                    # Skip duplicates
                     continue
 
                 self._io.writeln(
@@ -135,7 +138,12 @@ class Builder(object):
 
         # Scripts -> Entry points
         for name, ep in self._poetry.local_config.get("scripts", {}).items():
-            result["console_scripts"].append("{} = {}".format(name, ep))
+            extras = ""
+            if isinstance(ep, dict):
+                extras = "[{}]".format(", ".join(ep["extras"]))
+                ep = ep["callable"]
+
+            result["console_scripts"].append("{} = {}{}".format(name, ep, extras))
 
         # Plugins -> entry points
         plugins = self._poetry.local_config.get("plugins", {})

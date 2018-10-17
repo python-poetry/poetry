@@ -48,6 +48,8 @@ class WheelBuilder(Builder):
         wb = WheelBuilder(poetry, env, io, target_dir=directory, original=original)
         wb.build()
 
+        return wb.wheel_filename
+
     @classmethod
     def make(cls, poetry, env, io):
         """Build a wheel in the dist/ directory, and optionally upload it."""
@@ -107,7 +109,6 @@ class WheelBuilder(Builder):
 
     def _copy_module(self, wheel):
         excluded = self.find_excluded_files()
-        src = self._module.path
         to_add = []
 
         for include in self._module.includes:
@@ -129,6 +130,10 @@ class WheelBuilder(Builder):
                     continue
 
                 if file.suffix == ".pyc":
+                    continue
+
+                if (file, rel_file) in to_add:
+                    # Skip duplicates
                     continue
 
                 self._io.writeln(
@@ -319,6 +324,9 @@ class WheelBuilder(Builder):
 
         for dep in sorted(self._meta.requires_dist):
             fp.write("Requires-Dist: {}\n".format(dep))
+
+        for url in sorted(self._meta.project_urls, key=lambda u: u[0]):
+            fp.write("Project-URL: {}\n".format(url))
 
         if self._meta.description_content_type:
             fp.write(

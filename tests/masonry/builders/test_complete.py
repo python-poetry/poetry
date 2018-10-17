@@ -107,6 +107,7 @@ def test_complete():
             decode(entry_points.decode())
             == """\
 [console_scripts]
+extra-script=my_package.extra:main[time]
 my-2nd-script=my_package:main2
 my-script=my_package:main
 
@@ -150,6 +151,8 @@ Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
 Requires-Dist: pendulum (>=1.4,<2.0); extra == "time"
+Project-URL: Documentation, https://poetry.eustace.io/docs
+Project-URL: Repository, https://github.com/sdispater/poetry
 Description-Content-Type: text/x-rst
 
 My Package

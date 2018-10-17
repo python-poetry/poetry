@@ -23,6 +23,16 @@ class PipInstaller(BaseInstaller):
         self._io = io
 
     def install(self, package, update=False):
+        if package.source_type == "directory":
+            self.install_directory(package, update=update)
+
+            return
+
+        if package.source_type == "git":
+            self.install_git(package)
+
+            return
+
         args = ["install", "--no-deps"]
 
         if package.source_type == "legacy" and package.source_url:
@@ -129,3 +139,72 @@ class PipInstaller(BaseInstaller):
             os.close(fd)
 
         return name
+
+    def install_directory(self, package, update=False):
+        from poetry.io import NullIO
+        from poetry.masonry.builder import SdistBuilder
+        from poetry.poetry import Poetry
+        from poetry.utils._compat import decode
+        from poetry.utils.env import NullEnv
+        from poetry.utils.toml_file import TomlFile
+
+        if package.root_dir:
+            req = os.path.join(package.root_dir, package.source_url)
+        else:
+            req = os.path.realpath(package.source_url)
+
+        args = ["install", "--no-deps", "-U"]
+
+        pyproject = TomlFile(os.path.join(req, "pyproject.toml"))
+
+        has_poetry = False
+        if pyproject.exists():
+            pyproject_content = pyproject.read()
+            has_poetry = (
+                "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
+            )
+            has_build_system = "build-system" in pyproject_content
+
+        setup = os.path.join(req, "setup.py")
+        has_setup = os.path.exists(setup)
+        if not has_setup and has_poetry and (package.develop or not has_build_system):
+            # We actually need to rely on creating a temporary setup.py
+            # file since pip, as of this comment, does not support
+            # build-system for editable packages
+            # We also need it for non-PEP-517 packages
+            builder = SdistBuilder(Poetry.create(pyproject.parent), NullEnv(), NullIO())
+
+            with open(setup, "w") as f:
+                f.write(decode(builder.build_setup()))
+
+        if package.develop:
+            args.append("-e")
+
+        args.append(req)
+
+        try:
+            return self.run(*args)
+        finally:
+            if not has_setup and os.path.exists(setup):
+                os.remove(setup)
+
+    def install_git(self, package):
+        from poetry.packages import Package
+        from poetry.utils._compat import Path
+        from poetry.utils.helpers import temporary_directory
+        from poetry.vcs import Git
+
+        with temporary_directory() as tmp_dir:
+            tmp_dir = Path(tmp_dir)
+
+            git = Git()
+            git.clone(package.source_url, tmp_dir)
+            git.checkout(package.source_reference, tmp_dir)
+
+            # Now we just need to install from the temporary directory
+            pkg = Package(package.name, package.version)
+            pkg.source_type = "directory"
+            pkg.source_url = str(tmp_dir)
+            pkg.develop = False
+
+            self.install_directory(pkg)

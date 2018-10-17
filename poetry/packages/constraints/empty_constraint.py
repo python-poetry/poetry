@@ -23,5 +23,8 @@ class EmptyConstraint(BaseConstraint):
     def difference(self, other):
         return
 
+    def __eq__(self, other):
+        return other.is_empty()
+
     def __str__(self):
-        return "*"
+        return ""

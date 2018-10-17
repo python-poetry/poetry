@@ -64,7 +64,7 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "settings.virtualenvs.path": (
                 str,
-                lambda val: str(Path(val).resolve()),
+                lambda val: str(Path(val)),
                 str(Path(CACHE_DIR) / "virtualenvs"),
             ),
         }

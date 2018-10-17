@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 import pkginfo
@@ -11,20 +12,22 @@ from tempfile import mkdtemp
 from typing import List
 
 from poetry.packages import Dependency
+from poetry.packages import DependencyPackage
 from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
 from poetry.packages import Package
+from poetry.packages import PackageCollection
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
 
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause
-from poetry.mixology.incompatibility_cause import PlatformCause
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.term import Term
 
 from poetry.repositories import Pool
 
+from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
@@ -80,7 +83,7 @@ class Provider:
 
     @property
     def name_for_locking_dependency_source(self):  # type: () -> str
-        return "pyproject.lock"
+        return "poetry.lock"
 
     def is_debugging(self):
         return self._is_debugging
@@ -99,10 +102,29 @@ class Provider:
         order, so the latest version ought to be last.
         """
         if dependency.is_root:
-            return [self._package]
+            return PackageCollection(dependency, [self._package])
 
-        if dependency in self._search_for:
-            return self._search_for[dependency]
+        for constraint in self._search_for.keys():
+            if (
+                constraint.name == dependency.name
+                and constraint.constraint.intersect(dependency.constraint)
+                == dependency.constraint
+            ):
+                packages = [
+                    p
+                    for p in self._search_for[constraint]
+                    if dependency.constraint.allows(p.version)
+                ]
+
+                packages.sort(
+                    key=lambda p: (
+                        not p.is_prerelease() and not dependency.allows_prereleases(),
+                        p.version,
+                    ),
+                    reverse=True,
+                )
+
+                return PackageCollection(dependency, packages)
 
         if dependency.is_vcs():
             packages = self.search_for_vcs(dependency)
@@ -130,7 +152,7 @@ class Provider:
 
         self._search_for[dependency] = packages
 
-        return self._search_for[dependency]
+        return PackageCollection(dependency, packages)
 
     def search_for_vcs(self, dependency):  # type: (VCSDependency) -> List[Package]
         """
@@ -193,7 +215,21 @@ class Provider:
                 try:
                     venv.run("python", "setup.py", "egg_info")
 
-                    egg_info = next(tmp_dir.glob("**/*.egg-info"))
+                    # Sometimes pathlib will fail on recursive
+                    # symbolic links, so we need to workaround it
+                    # and use the glob module instead.
+                    # Note that this does not happen with pathlib2
+                    # so it's safe to use it for Python < 3.4.
+                    if PY35:
+                        egg_info = next(
+                            Path(p)
+                            for p in glob.glob(
+                                os.path.join(str(tmp_dir), "**", "*.egg-info"),
+                                recursive=True,
+                            )
+                        )
+                    else:
+                        egg_info = next(tmp_dir.glob("**/*.egg-info"))
 
                     meta = pkginfo.UnpackedSDist(str(egg_info))
 
@@ -209,7 +245,15 @@ class Provider:
                     package = Package(meta.name, meta.version)
 
                     for req in reqs:
-                        package.requires.append(dependency_from_pep_508(req))
+                        dep = dependency_from_pep_508(req)
+                        if dep.in_extras:
+                            for extra in dep.in_extras:
+                                if extra not in package.extras:
+                                    package.extras[extra] = []
+
+                                package.extras[extra].append(dep)
+
+                        package.requires.append(dep)
                 except Exception:
                     raise
                 finally:
@@ -230,6 +274,12 @@ class Provider:
                     dependency.name, package.name
                 )
             )
+
+        if dependency.extras:
+            for extra in dependency.extras:
+                if extra in package.extras:
+                    for dep in package.extras[extra]:
+                        dep.activate()
 
         return [package]
 
@@ -266,7 +316,7 @@ class Provider:
 
     def incompatibilities_for(
         self, package
-    ):  # type: (Package) -> List[Incompatibility]
+    ):  # type: (DependencyPackage) -> List[Incompatibility]
         """
         Returns incompatibilities that encapsulate a given package's dependencies,
         or that it can't be safely selected.
@@ -281,28 +331,37 @@ class Provider:
         else:
             dependencies = package.requires
 
-        if not self._package.python_constraint.allows_any(package.python_constraint):
-            return [
-                Incompatibility(
-                    [Term(package.to_dependency(), True)],
-                    PythonCause(package.python_versions, self._package.python_versions),
+            if not package.python_constraint.allows_all(
+                self._package.python_constraint
+            ):
+                intersection = package.python_constraint.intersect(
+                    package.dependency.transitive_python_constraint
                 )
-            ]
-
-        if not self._package.platform_constraint.matches(package.platform_constraint):
-            return [
-                Incompatibility(
-                    [Term(package.to_dependency(), True)],
-                    PlatformCause(package.platform),
+                difference = package.dependency.transitive_python_constraint.difference(
+                    intersection
                 )
-            ]
+                if (
+                    package.dependency.transitive_python_constraint.is_any()
+                    or self._package.python_constraint.intersect(
+                        package.dependency.python_constraint
+                    ).is_empty()
+                    or intersection.is_empty()
+                    or not difference.is_empty()
+                ):
+                    return [
+                        Incompatibility(
+                            [Term(package.to_dependency(), True)],
+                            PythonCause(
+                                package.python_versions, self._package.python_versions
+                            ),
+                        )
+                    ]
 
         dependencies = [
             dep
             for dep in dependencies
             if dep.name not in self.UNSAFE_PACKAGES
             and self._package.python_constraint.allows_any(dep.python_constraint)
-            and self._package.platform_constraint.matches(dep.platform_constraint)
         ]
 
         return [
@@ -313,21 +372,24 @@ class Provider:
             for dep in dependencies
         ]
 
-    def complete_package(self, package):  # type: (str, Version) -> Package
-        if package.is_root() or package.source_type in {"git", "file"}:
+    def complete_package(
+        self, package
+    ):  # type: (DependencyPackage) -> DependencyPackage
+        if package.is_root():
             return package
 
-        if package.source_type != "directory":
-            package = self._pool.package(
-                package.name, package.version.text, extras=package.requires_extras
+        if package.source_type not in {"directory", "file", "git"}:
+            package = DependencyPackage(
+                package.dependency,
+                self._pool.package(
+                    package.name, package.version.text, extras=package.requires_extras
+                ),
             )
 
         dependencies = [
             r
             for r in package.requires
-            if r.is_activated()
-            and self._package.python_constraint.allows_any(r.python_constraint)
-            and self._package.platform_constraint.matches(r.platform_constraint)
+            if self._package.python_constraint.allows_any(r.python_constraint)
         ]
 
         # Searching for duplicate dependencies
@@ -378,7 +440,7 @@ class Provider:
                 for constraint, _deps in by_constraint.items():
                     new_markers = []
                     for dep in _deps:
-                        pep_508_dep = dep.to_pep_508()
+                        pep_508_dep = dep.to_pep_508(False)
                         if ";" not in pep_508_dep:
                             continue
 
@@ -397,7 +459,7 @@ class Provider:
 
                     dep = _deps[0]
                     new_requirement = "{}; {}".format(
-                        dep.to_pep_508().split(";")[0], " or ".join(new_markers)
+                        dep.to_pep_508(False).split(";")[0], " or ".join(new_markers)
                     )
                     new_dep = dependency_from_pep_508(new_requirement)
                     if dep.is_optional() and not dep.is_activated():
@@ -425,7 +487,7 @@ class Provider:
                 _deps = [value[0] for value in by_constraint.values()]
                 seen = set()
                 for _dep in _deps:
-                    pep_508_dep = _dep.to_pep_508()
+                    pep_508_dep = _dep.to_pep_508(False)
                     if ";" not in pep_508_dep:
                         _requirements = ""
                     else:
@@ -461,6 +523,25 @@ class Provider:
                     )
                 )
                 raise CompatibilityError(*python_constraints)
+
+        # Modifying dependencies as needed
+        for dep in dependencies:
+            if not package.dependency.python_constraint.is_any():
+                dep.transitive_python_versions = str(
+                    dep.python_constraint.intersect(
+                        package.dependency.python_constraint
+                    )
+                )
+
+            if package.dependency.is_directory() and dep.is_directory():
+                if dep.package.source_url.startswith(package.source_url):
+                    relative = (
+                        Path(package.source_url) / dep.package.source_url
+                    ).relative_to(package.source_url)
+                else:
+                    relative = Path(package.source_url) / dep.package.source_url
+
+                dep.package.source_url = relative.as_posix()
 
         package.requires = dependencies
 
