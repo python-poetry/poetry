@@ -3,6 +3,7 @@ import tempfile
 
 from subprocess import CalledProcessError
 
+from poetry.config import Config
 from poetry.utils.helpers import get_http_basic_auth
 
 
@@ -45,7 +46,9 @@ class PipInstaller(BaseInstaller):
                 )
                 args += ["--trusted-host", parsed.hostname]
 
-            auth = get_http_basic_auth(package.source_reference)
+            auth = get_http_basic_auth(
+                Config.create("auth.toml"), package.source_reference
+            )
             if auth:
                 index_url = "{scheme}://{username}:{password}@{netloc}{path}".format(
                     scheme=parsed.scheme,

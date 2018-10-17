@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed an error when installing from private repositories.
+
+
 ## [0.12.1] - 2018-10-17
 
 ### Fixed
