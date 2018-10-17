@@ -64,7 +64,7 @@ def dependency_from_pep_508(name):
             link = Link(path_to_url(os.path.normpath(os.path.abspath(link.path))))
         # wheel file
         if link.is_wheel:
-            m = re.match("^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))", link.filename)
+            m = re.match(r"^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))", link.filename)
             if not m:
                 raise ValueError("Invalid wheel name: {}".format(link.filename))
 

@@ -20,16 +20,17 @@ script: pytest -q tests/
 
 jobs:
   include:
-  - python: '2.7'
-  - python: '3.5'
-  - python: '3.6'
-  - python: '3.7'
-    dist: xenial
-    sudo: true
-  - stage: linting
-    python: '3.6'
-    install:
-    - pip install pre-commit
-    - pre-commit install-hooks
-    script:
-    - pre-commit run --all-files
+    - python: "2.7"
+    - python: "3.4"
+    - python: "3.5"
+    - python: "3.6"
+    - python: "3.7"
+      dist: xenial
+
+    - stage: linting
+      python: "3.6"
+      install:
+        - pip install pre-commit
+        - pre-commit install-hooks
+      script:
+        - pre-commit run --all-files

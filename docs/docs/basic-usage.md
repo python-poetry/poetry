@@ -1,7 +1,7 @@
 # Basic usage
 
 For the basic usage introduction we will be installing `pendulum`, a datetime library.
-If you have not yet installed Poetry, refer to the [Introduction](/) chapter.
+If you have not yet installed Poetry, refer to the [Introduction](/docs/) chapter.
 
 ## Project setup
 
@@ -21,7 +21,7 @@ poetry-demo
 │   └── __init__.py
 └── tests
     ├── __init__.py
-    └── test_poetry_demo
+    └── test_poetry_demo.py
 ```
 
 The `pyproject.toml` file is what is the most important here. This will orchestrate
@@ -69,7 +69,7 @@ It will automatically find a suitable version constraint.
 In our example, we are requesting the `pendulum` package with the version constraint `^1.4`.
 This means any version greater or equal to 1.4.0 and less than 2.0.0 (`>=1.4.0 <2.0.0`).
 
-Please read [versions](/versions/) for more in-depth information on versions, how versions relate to each other, and on version constraints.
+Please read [versions](/docs/versions/) for more in-depth information on versions, how versions relate to each other, and on version constraints.
 
 
 !!!note

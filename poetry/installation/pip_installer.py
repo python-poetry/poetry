@@ -40,10 +40,10 @@ class PipInstaller(BaseInstaller):
             if parsed.scheme == "http":
                 self._io.write_error(
                     "    <warning>Installing from unsecure host: {}</warning>".format(
-                        parsed.netloc
+                        parsed.hostname
                     )
                 )
-                args += ["--trusted-host", parsed.netloc]
+                args += ["--trusted-host", parsed.hostname]
 
             auth = get_http_basic_auth(package.source_reference)
             if auth:

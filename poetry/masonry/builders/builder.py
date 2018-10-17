@@ -15,7 +15,7 @@ from ..utils.module import Module
 from ..utils.package_include import PackageInclude
 
 
-AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
 
 
 class Builder(object):

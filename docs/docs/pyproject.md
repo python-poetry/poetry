@@ -68,6 +68,25 @@ An URL to the documentation of the project. **Optional**
 
 A list of keywords (max: 5) that the package is related to. **Optional**
 
+## classifiers
+
+A list of PyPI [trove classifiers](https://pypi.org/classifiers/) that describe the project. **Optional**
+
+```toml
+[tool.poetry]
+# ...
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+```
+
+!!!note
+
+    Note that Python classifiers are still automatically added for you and are determined by your `python` requirement.
+
+    The `license` property will also set the License classifier automatically.
+
 ## packages
 
 A list of packages and modules to include in the final distribution.
@@ -207,7 +226,7 @@ poetry install -E mysql -E pgsql
 
 ## `plugins`
 
-Poetry supports arbitrary plugins wich work similarly to
+Poetry supports arbitrary plugins which work similarly to
 [setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
 To match the example in the setuptools documentation, you would use the following:
 

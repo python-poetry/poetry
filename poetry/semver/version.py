@@ -280,7 +280,7 @@ class Version(VersionRange):
         if not pre:
             return
 
-        m = re.match("(?i)^(a|alpha|b|beta|c|pre|rc|dev)[-.]?(\d+)?$", pre)
+        m = re.match(r"(?i)^(a|alpha|b|beta|c|pre|rc|dev)[-.]?(\d+)?$", pre)
         if not m:
             return
 

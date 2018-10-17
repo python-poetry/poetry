@@ -16,7 +16,7 @@ def parse_constraint(constraints):  # type: (str) -> VersionConstraint
     if constraints == "*":
         return VersionRange()
 
-    or_constraints = re.split("\s*\|\|?\s*", constraints.strip())
+    or_constraints = re.split(r"\s*\|\|?\s*", constraints.strip())
     or_groups = []
     for constraints in or_constraints:
         and_constraints = re.split(
@@ -46,7 +46,7 @@ def parse_constraint(constraints):  # type: (str) -> VersionConstraint
 
 
 def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
-    m = re.match("(?i)^v?[xX*](\.[xX*])*$", constraint)
+    m = re.match(r"(?i)^v?[xX*](\.[xX*])*$", constraint)
     if m:
         return VersionRange()
 

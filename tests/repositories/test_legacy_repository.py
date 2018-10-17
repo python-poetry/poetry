@@ -1,3 +1,5 @@
+import pytest
+
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
 from poetry.utils._compat import Path
@@ -48,3 +50,10 @@ def test_sdist_format_support():
     bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
     assert len(bz2_links) == 1
     assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
+
+
+def test_missing_version(mocker):
+    repo = MockRepository()
+
+    with pytest.raises(ValueError):
+        repo._get_release_info("missing_version", "1.1.0")

@@ -281,7 +281,7 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 ````
 
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
-See [Configuration](/configuration/) for all available settings.
+See [Configuration](/docs/configuration/) for all available settings.
 
 ### Options
 
@@ -313,10 +313,21 @@ poetry run my-script
 
 Note that this command has no option.
 
+## shell
+
+The `shell` command spawns a shell, 
+according to the `$SHELL` environment variable, 
+within the virtual environment. 
+If one doesn't exist yet, it will be created.
+
+```bash
+poetry shell
+```
+
 ## check
 
 The `check` command validate the structure of the `pyproject.toml` file
-and returns a detailed report is there are any errors.
+and returns a detailed report if there are any errors.
 
 ```bash
 poetry check

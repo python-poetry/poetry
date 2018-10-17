@@ -302,7 +302,7 @@ class SdistBuilder(Builder):
     ):
         main = []
         extras = defaultdict(list)
-        req_regex = re.compile("^(.+) \((.+)\)$")
+        req_regex = re.compile(r"^(.+) \((.+)\)$")
 
         for dependency in dependencies:
             if dependency.is_optional():

@@ -22,7 +22,7 @@ from .vcs_dependency import VCSDependency
 from .utils.utils import convert_markers
 from .utils.utils import create_nested_marker
 
-AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 
 
 class Package(object):

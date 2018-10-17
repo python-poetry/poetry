@@ -60,9 +60,9 @@ class Uploader:
             dist.glob(
                 "{}-{}-*.whl".format(
                     re.sub(
-                        "[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
+                        r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
                     ),
-                    re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE),
+                    re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE),
                 )
             )
         )

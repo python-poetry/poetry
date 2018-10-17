@@ -275,13 +275,13 @@ class Installer:
     CURRENT_PYTHON_VERSION = sys.version_info[:2]
     METADATA_URL = "https://pypi.org/pypi/poetry/json"
     VERSION_REGEX = re.compile(
-        "v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
+        r"v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
         "("
         "[._-]?"
-        "(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
+        r"(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
         "([.-]?dev)?"
         ")?"
-        "(?:\+[^\s]+)?"
+        r"(?:\+[^\s]+)?"
     )
 
     BASE_URL = "https://github.com/sdispater/poetry/releases/download/"

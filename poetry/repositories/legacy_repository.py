@@ -46,7 +46,7 @@ from .pypi_repository import PyPiRepository
 
 class Page:
 
-    VERSION_REGEX = re.compile("(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
+    VERSION_REGEX = re.compile(r"(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
     SUPPORTED_FORMATS = [
         ".tar.gz",
         ".whl",
@@ -309,6 +309,12 @@ class LegacyRepository(PyPiRepository):
         }
 
         links = list(page.links_for_version(Version.parse(version)))
+        if not links:
+            raise ValueError(
+                'No valid distribution links found for package: "{}" version: "{}"'.format(
+                    name, version
+                )
+            )
         urls = {}
         hashes = []
         default_link = links[0]

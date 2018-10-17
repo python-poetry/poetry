@@ -184,8 +184,8 @@ class WheelBuilder(Builder):
     @property
     def wheel_filename(self):  # type: () -> str
         return "{}-{}-{}.whl".format(
-            re.sub("[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
-            re.sub("[^\w\d.]+", "_", self._meta.version, flags=re.UNICODE),
+            re.sub(r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
+            re.sub(r"[^\w\d.]+", "_", self._meta.version, flags=re.UNICODE),
             self.tag,
         )
 
@@ -195,8 +195,8 @@ class WheelBuilder(Builder):
         )
 
     def dist_info_name(self, distribution, version):  # type: (...) -> str
-        escaped_name = re.sub("[^\w\d.]+", "_", distribution, flags=re.UNICODE)
-        escaped_version = re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE)
+        escaped_name = re.sub(r"[^\w\d.]+", "_", distribution, flags=re.UNICODE)
+        escaped_version = re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE)
 
         return "{}-{}.dist-info".format(escaped_name, escaped_version)
 
@@ -301,7 +301,7 @@ class WheelBuilder(Builder):
         fp.write("Version: {}\n".format(self._meta.version))
         fp.write("Summary: {}\n".format(self._meta.summary))
         fp.write("Home-page: {}\n".format(self._meta.home_page or "UNKNOWN"))
-        fp.write("License: {}\n".format(self._meta.license or "UNKOWN"))
+        fp.write("License: {}\n".format(self._meta.license or "UNKNOWN"))
 
         # Optional fields
         if self._meta.keywords:
