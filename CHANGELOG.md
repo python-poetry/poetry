@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed an error when installing from private repositories.
+- Fixed an error when trying to move the lock file on Python 2.7.
 
 
 ## [0.12.1] - 2018-10-17

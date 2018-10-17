@@ -188,7 +188,7 @@ class Poetry:
             # Checking for pyproject.lock
             old_lock = poetry_file.with_suffix(".lock")
             if old_lock.exists():
-                shutil.move(old_lock, lock)
+                shutil.move(str(old_lock), str(lock))
 
         locker = Locker(poetry_file.parent / "poetry.lock", local_config)
 
