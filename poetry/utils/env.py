@@ -114,7 +114,7 @@ class Env(object):
             prefix = Path(os.environ["VIRTUAL_ENV"])
             base_prefix = None
         else:
-            prefix = sys.prefix
+            prefix = Path(sys.prefix)
             base_prefix = cls.get_base_prefix()
 
         return VirtualEnv(prefix, base_prefix)
