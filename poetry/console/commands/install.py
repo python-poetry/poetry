@@ -75,7 +75,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         else:
             builder = SdistBuilder(self.poetry, NullEnv(), NullIO())
 
-            with setup.open("w") as f:
+            with setup.open("w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
 
         try:
