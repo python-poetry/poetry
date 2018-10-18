@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed the `--no-dev` option in `install` not working properly.
+- Fixed prereleases being selected even if another constraint conflicted with them.
 
 
 ## [0.12.2] - 2018-10-17

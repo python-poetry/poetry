@@ -1173,3 +1173,22 @@ def test_solver_returns_extras_if_requested_in_dependencies_and_not_in_root_pack
             {"job": "install", "package": package_b},
         ],
     )
+
+
+def test_solver_should_not_resolve_prerelease_version_if_not_requested(
+    solver, repo, package
+):
+    package.add_dependency("A", "~1.8.0")
+    package.add_dependency("B", "^0.5.0")
+
+    package_a185 = get_package("A", "1.8.5")
+    package_a19b1 = get_package("A", "1.9b1")
+    package_b = get_package("B", "0.5.0")
+    package_b.add_dependency("A", ">=1.9b1")
+
+    repo.add_package(package_a185)
+    repo.add_package(package_a19b1)
+    repo.add_package(package_b)
+
+    with pytest.raises(SolverProblemError):
+        solver.solve()
