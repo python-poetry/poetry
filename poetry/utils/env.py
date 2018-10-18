@@ -108,7 +108,32 @@ class Env(object):
 
                 return VirtualEnv(Path(venv))
 
-            return SystemEnv(Path(sys.prefix))
+            config = Config.create("config.toml")
+            create_venv = config.setting("settings.virtualenvs.create", True)
+
+            if not create_venv:
+                return SystemEnv(Path(sys.prefix))
+
+            venv_path = config.setting("settings.virtualenvs.path")
+            if venv_path is None:
+                venv_path = Path(CACHE_DIR) / "virtualenvs"
+            else:
+                venv_path = Path(venv_path)
+
+            if cwd is None:
+                cwd = Path.cwd()
+
+            name = cwd.name
+            name = "{}-py{}".format(
+                name, ".".join([str(v) for v in sys.version_info[:2]])
+            )
+
+            venv = venv_path / name
+
+            if not venv.exists():
+                return SystemEnv(Path(sys.prefix))
+
+            return VirtualEnv(venv)
 
         if os.environ.get("VIRTUAL_ENV") is not None:
             prefix = Path(os.environ["VIRTUAL_ENV"])
@@ -146,7 +171,10 @@ class Env(object):
             venv_path = Path(venv_path)
 
         if not name:
-            name = Path.cwd().name
+            if not cwd:
+                cwd = Path.cwd()
+
+            name = cwd.name
 
         name = "{}-py{}".format(name, ".".join([str(v) for v in sys.version_info[:2]]))
 
@@ -232,6 +260,12 @@ class Env(object):
 
     def is_valid_for_marker(self, marker):  # type: (BaseMarker) -> bool
         return marker.validate(self.marker_env)
+
+    def is_sane(self):  # type: () -> bool
+        """
+        Checks whether the current environment is sane or not.
+        """
+        return True
 
     def run(self, bin, *args, **kwargs):
         """
@@ -426,6 +460,10 @@ class VirtualEnv(Env):
 
     def is_venv(self):  # type: () -> bool
         return True
+
+    def is_sane(self):
+        # A virtualenv is considered sane if both "python" and "pip" exist.
+        return os.path.exists(self._bin("python")) and os.path.exists(self._bin("pip"))
 
     def run(self, bin, *args, **kwargs):
         with self.temp_environ():
