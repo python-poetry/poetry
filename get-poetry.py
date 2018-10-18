@@ -205,7 +205,7 @@ if __name__ == "__main__":
     main()
 """
 
-BAT = "@echo off\r\npython %USERPROFILE%/.poetry/bin/poetry %*\r\n"
+BAT = "@echo off\r\npython {poetry_bin} %*\r\n"
 
 
 PRE_MESSAGE = """# Welcome to {poetry}!
@@ -571,10 +571,15 @@ class Installer:
         if not os.path.exists(POETRY_BIN):
             os.mkdir(POETRY_BIN, 0o755)
 
-        ext = ""
         if WINDOWS:
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
-                f.write(BAT)
+                f.write(
+                    BAT.format(
+                        poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
+                            os.environ["USERPROFILE"], "%USERPROFILE%"
+                        )
+                    )
+                )
 
         with open(os.path.join(POETRY_BIN, "poetry"), "w") as f:
             f.write(BIN)
@@ -746,14 +751,15 @@ class Installer:
         print(PRE_MESSAGE.format(**kwargs))
 
     def display_pre_uninstall_message(self):
+        home_bin = POETRY_BIN
+        if WINDOWS:
+            home_bin = home_bin.replace(os.getenv("USERPROFILE", ""), "%USERPROFILE%")
+        else:
+            home_bin = home_bin.replace(os.getenv("HOME", ""), "$HOME")
+
         kwargs = {
             "poetry": colorize("info", "Poetry"),
-            "poetry_home_bin": colorize(
-                "comment",
-                POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME").replace(
-                    os.getenv("USERPROFILE", ""), "%USERPROFILE%"
-                ),
-            ),
+            "poetry_home_bin": colorize("comment", home_bin),
         }
 
         print(PRE_UNINSTALL_MESSAGE.format(**kwargs))
