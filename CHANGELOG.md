@@ -8,6 +8,7 @@
 - Fixed prereleases being selected even if another constraint conflicted with them.
 - Fixed an error when installing current package in development mode if the generated `setup.py` had special characters.
 - Fixed an error in `install` for applications not following a known structure.
+- Fixed an error when trying to retrieve the current environment.
 
 
 ## [0.12.2] - 2018-10-17
