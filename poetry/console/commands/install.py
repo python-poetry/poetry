@@ -58,6 +58,15 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         if return_code != 0:
             return return_code
 
+        self.line(
+            "  - Installing <info>{}</info> (<comment>{}</comment>)".format(
+                self.poetry.package.pretty_name, self.poetry.package.pretty_version
+            )
+        )
+
+        if self.option("dry-run"):
+            return 0
+
         setup = self.poetry.file.parent / "setup.py"
         has_setup = setup.exists()
 
@@ -69,11 +78,6 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             with setup.open("w") as f:
                 f.write(decode(builder.build_setup()))
 
-        self.line(
-            "Installing <info>{}</info> (<comment>{}</comment>)".format(
-                self.poetry.package.pretty_name, self.poetry.package.pretty_version
-            )
-        )
         try:
             self.env.run("pip", "install", "-e", str(setup.parent), "--no-deps")
         finally:
