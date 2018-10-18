@@ -157,9 +157,17 @@ or create a brand new one for you to always work isolated from your global Pytho
 
 !!!note
 
-    The created virtualenv will use the Python executable for which
-    `poetry` has been installed.
-
-    What this means is if you project is Python 2.7 only you should
-    install `poetry` for your global Python 2.7 executable and use
-    it to manage your project.
+    To create the virtualenv for the current project, Poetry will use
+    the currently activated Python version.
+    
+    To easily switch between Python versions, it is recommended to
+    use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
+    
+    For instance, if you project is Python 2.7 only, a standard workflow
+    would be:
+    
+    ```bash
+    pyenv install 2.7.15
+    pyenv local 2.7.15  # Activate Python 2.7 for the current project
+    poetry install
+    ```
