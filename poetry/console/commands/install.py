@@ -29,6 +29,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         from poetry.installation import Installer
         from poetry.io import NullIO
         from poetry.masonry.builders import SdistBuilder
+        from poetry.masonry.utils.module import ModuleOrPackageNotFound
         from poetry.utils._compat import decode
         from poetry.utils.env import NullEnv
 
@@ -58,6 +59,14 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         if return_code != 0:
             return return_code
 
+        try:
+            builder = SdistBuilder(self.poetry, NullEnv(), NullIO())
+        except ModuleOrPackageNotFound:
+            # This is likely due to the fact that the project is an application
+            # not following the structure expected by Poetry
+            # If this is a true error it will be picked up later by build anyway.
+            return 0
+
         self.line(
             "  - Installing <info>{}</info> (<comment>{}</comment>)".format(
                 self.poetry.package.pretty_name, self.poetry.package.pretty_version
@@ -73,8 +82,6 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         if has_setup:
             self.line("<warning>A setup.py file already exists. Using it.</warning>")
         else:
-            builder = SdistBuilder(self.poetry, NullEnv(), NullIO())
-
             with setup.open("w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
 
