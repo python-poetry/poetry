@@ -182,7 +182,12 @@ class Installer:
 
         self._populate_local_repo(local_repo, ops, locked_repository)
 
-        with self._package.with_python_versions(
+        root = self._package
+        if not self.is_dev_mode():
+            root = root.clone()
+            del root.dev_requires[:]
+
+        with root.with_python_versions(
             ".".join([str(i) for i in self._env.version_info[:3]])
         ):
             # We resolve again by only using the lock file
@@ -205,11 +210,7 @@ class Installer:
                 whitelist.append(pkg.name)
 
             solver = Solver(
-                self._package,
-                pool,
-                self._installed_repository,
-                locked_repository,
-                NullIO(),
+                root, pool, self._installed_repository, locked_repository, NullIO()
             )
 
             ops = solver.solve(use_latest=whitelist)
@@ -482,7 +483,7 @@ class Installer:
                     op.skip("Not required")
 
             # If the package is a dev package and dev packages
-            # are not requests, we skip it
+            # are not requested, we skip it
             if package.category == "dev" and not self.is_dev_mode():
                 op.skip("Dev dependencies not requested")
 

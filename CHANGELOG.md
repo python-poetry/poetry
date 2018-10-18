@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed the `--no-dev` option in `install` not working properly.
+
+
 ## [0.12.2] - 2018-10-17
 
 ### Fixed
