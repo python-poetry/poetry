@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed possible error on some combinations of markers.
+
+
 ## [0.12.3] - 2018-10-18
 
 ### Fixed
