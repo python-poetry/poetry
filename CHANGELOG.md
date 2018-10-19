@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed possible error on some combinations of markers.
+- Fixed venv detection so that it only uses `VIRTUAL_ENV` to detect activated virtualenvs.
 
 
 ## [0.12.3] - 2018-10-18

@@ -90,23 +90,19 @@ class Env(object):
         return self._bin("pip")
 
     @classmethod
-    def get(cls, reload=False, cwd=None):  # type: (IO, bool) -> Env
+    def get(cls, reload=False, cwd=None):  # type: (bool, Path) -> Env
         if cls._env is not None and not reload:
             return cls._env
 
         # Check if we are inside a virtualenv or not
-        in_venv = (
-            os.environ.get("VIRTUAL_ENV") is not None
-            or hasattr(sys, "real_prefix")
-            or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
-        )
+        in_venv = os.environ.get("VIRTUAL_ENV") is not None
 
         if not in_venv:
             # Checking if a local virtualenv exists
             if cwd and (cwd / ".venv").exists():
                 venv = cwd / ".venv"
 
-                return VirtualEnv(Path(venv))
+                return VirtualEnv(venv)
 
             config = Config.create("config.toml")
             create_venv = config.setting("settings.virtualenvs.create", True)
