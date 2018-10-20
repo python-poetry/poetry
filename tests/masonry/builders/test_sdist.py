@@ -117,7 +117,7 @@ def test_make_setup():
 
     # Change working directory to execute data file globs, then go back.
     original_working_dir = os.getcwd()
-    os.chdir(project("complete"))
+    os.chdir(str(project("complete")))
     exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
     os.chdir(original_working_dir)
 

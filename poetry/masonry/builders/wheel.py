@@ -279,13 +279,12 @@ class WheelBuilder(Builder):
         self._records.append((rel_path, hash_digest, len(b)))
 
     def _copy_to_zip(self, wheel, source, rel_path_target_dir):
-        with open(source, "rb") as f:
-            data = f.read()
+        data = source.read_bytes()
         hashsum = hashlib.sha256(data)
         hash_digest = urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
 
         rel_path_target = "{}/{}".format(rel_path_target_dir, source.name)
-        wheel.write(source, rel_path_target, compress_type=zipfile.ZIP_DEFLATED)
+        wheel.write(str(source), rel_path_target, compress_type=zipfile.ZIP_DEFLATED)
         self._records.append((rel_path_target, hash_digest, len(data)))
 
     def _write_entry_points(self, fp):
