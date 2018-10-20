@@ -131,6 +131,11 @@ class Builder(object):
         if self._package.build and not exclude_build:
             to_add.append(Path(self._package.build))
 
+        for data_file in self._package.data_files:
+            for source in data_file["source"]:
+                for match in self._path.glob(source):
+                    to_add.append(match.relative_to(self._path))
+
         return sorted(to_add)
 
     def convert_entry_points(self):  # type: () -> dict

@@ -144,3 +144,19 @@ def test_write_metadata_file_license_homepage_default(mocker):
     # Assertion
     mocked_file.write.assert_any_call("Home-page: UNKNOWN\n")
     mocked_file.write.assert_any_call("License: UNKNOWN\n")
+
+
+def test_package_with_data_files():
+    module_path = fixtures_dir / "complete"
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        names = z.namelist()
+        assert len(names) == len(set(names))
+        assert "my_package-1.2.3.data/data/data-files/bar.md" in names
+        assert "my_package-1.2.3.data/data/data-files/foo.txt" in names
+        assert "my_package-1.2.3.data/data/data-files/nested/baz.html" in names

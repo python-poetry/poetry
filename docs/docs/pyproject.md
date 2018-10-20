@@ -153,6 +153,20 @@ include = ["CHANGELOG.md"]
 exclude = ["my_package/excluded.py"]
 ```
 
+## data-files
+
+A list of data files to copy to target directories. The targets are relative
+to `sys.prefix`.
+
+```toml
+[tool.poetry]
+# ...
+data-files = [
+    { target = "example", source = ["assets/*.txt", "assets/*.md"] },
+    { target = "example/docs", source = ["docs/*.html"] }
+]
+```
+
 ## `dependencies` and `dev-dependencies`
 
 Poetry is configured to look for dependencies on [PyPi](https://pypi.org) by default.

@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import ast
 import pytest
+import os
 import re
 import shutil
 import tarfile
 
 from email.parser import Parser
+from glob import glob
 
 from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
@@ -111,8 +113,14 @@ def test_make_setup():
     setup_ast = ast.parse(setup)
 
     setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
-    ns = {}
+    ns = {"glob": glob}
+
+    # Change working directory to execute data file globs, then go back.
+    original_working_dir = os.getcwd()
+    os.chdir(project("complete"))
     exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+    os.chdir(original_working_dir)
+
     assert ns["packages"] == [
         "my_package",
         "my_package.sub_pkg1",
@@ -127,6 +135,11 @@ def test_make_setup():
         ]
     }
     assert ns["extras_require"] == {"time": ["pendulum>=1.4,<2.0"]}
+    assert ns["setup_kwargs"]["data_files"] == [
+        ("data-files", [str(Path("assets/foo.txt"))]),
+        ("data-files", [str(Path("assets/bar.md"))]),
+        ("data-files/nested", [str(Path("assets/baz.html"))]),
+    ]
 
 
 def test_make_pkg_info():
@@ -192,6 +205,9 @@ def test_find_files_to_add():
 
     assert sorted(result) == sorted(
         [
+            Path("assets/bar.md"),
+            Path("assets/baz.html"),
+            Path("assets/foo.txt"),
             Path("LICENSE"),
             Path("README.rst"),
             Path("my_package/__init__.py"),

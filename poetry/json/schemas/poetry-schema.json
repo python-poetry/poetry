@@ -88,6 +88,24 @@
             "type": "array",
             "description": "A list of files and folders to exclude."
         },
+        "data-files": {
+            "type": "array",
+            "description": "A list of data files (from glob sources) to deliver to target folders within sys.prefix.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "target": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "dependencies": {
             "type": "object",
             "description": "This is a hash of package name (keys) and version constraints (values) that are required to run this package.",

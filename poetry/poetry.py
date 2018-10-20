@@ -182,6 +182,9 @@ class Poetry:
         if "packages" in local_config:
             package.packages = local_config["packages"]
 
+        if "data-files" in local_config:
+            package.data_files = local_config["data-files"]
+
         # Moving lock if necessary (pyproject.lock -> poetry.lock)
         lock = poetry_file.parent / "poetry.lock"
         if not lock.exists():

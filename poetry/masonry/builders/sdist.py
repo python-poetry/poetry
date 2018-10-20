@@ -179,6 +179,16 @@ class SdistBuilder(Builder):
 
             extra.append("'python_requires': {!r},".format(python_requires))
 
+        if self._package.data_files:
+            before.append("from glob import glob")
+            extra.append("'data_files': [")
+            for data_file in self._package.data_files:
+                for source in data_file["source"]:
+                    extra.append(
+                        "('{}', glob('{}')),".format(data_file["target"], source)
+                    )
+            extra.append("]")
+
         return encode(
             SETUP.format(
                 before="\n".join(before),

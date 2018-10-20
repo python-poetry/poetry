@@ -69,6 +69,7 @@ class WheelBuilder(Builder):
         ) as zip_file:
             self._build()
             self._copy_module(zip_file)
+            self._add_data_files(zip_file)
             self._write_metadata(zip_file)
             self._write_record(zip_file)
 
@@ -182,6 +183,10 @@ class WheelBuilder(Builder):
         return self.dist_info_name(self._package.name, self._meta.version)
 
     @property
+    def data(self):  # type: () -> str
+        return self.data_name(self._package.name, self._meta.version)
+
+    @property
     def wheel_filename(self):  # type: () -> str
         return "{}-{}-{}.whl".format(
             re.sub(r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
@@ -199,6 +204,9 @@ class WheelBuilder(Builder):
         escaped_version = re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE)
 
         return "{}-{}.dist-info".format(escaped_name, escaped_version)
+
+    def data_name(self, distribution, version):  # type: (...) -> str
+        return self.dist_info_name(distribution, version)[:-9] + "data/data"
 
     @property
     def tag(self):
@@ -270,6 +278,16 @@ class WheelBuilder(Builder):
         wheel.writestr(zi, b, compress_type=zipfile.ZIP_DEFLATED)
         self._records.append((rel_path, hash_digest, len(b)))
 
+    def _copy_to_zip(self, wheel, source, rel_path_target_dir):
+        with open(source, "rb") as f:
+            data = f.read()
+        hashsum = hashlib.sha256(data)
+        hash_digest = urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
+
+        rel_path_target = "{}/{}".format(rel_path_target_dir, source.name)
+        wheel.write(source, rel_path_target, compress_type=zipfile.ZIP_DEFLATED)
+        self._records.append((rel_path_target, hash_digest, len(data)))
+
     def _write_entry_points(self, fp):
         """
         Write entry_points.txt.
@@ -336,3 +354,11 @@ class WheelBuilder(Builder):
 
         if self._meta.description is not None:
             fp.write("\n" + self._meta.description + "\n")
+
+    def _add_data_files(self, fp):
+        for data_file in self._package.data_files:
+            for source in data_file["source"]:
+                for match in self._path.glob(source):
+                    self._copy_to_zip(
+                        fp, match, self.data + "/" + data_file["target"].strip("/")
+                    )

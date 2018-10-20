@@ -20,6 +20,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
+data-files = [
+    { target = "data-files", source = ["assets/*.txt", "assets/*.md"] },
+    { target = "data-files/nested", source = ["assets/*.html"] }
+]
+
 # Requirements
 [tool.poetry.dependencies]
 python = "^3.6"
