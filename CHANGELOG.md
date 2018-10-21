@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.12.4] - 2018-10-21
 
 ### Fixed
 
@@ -537,7 +537,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.3...develop
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.4...develop
+[0.12.4]: https://github.com/sdispater/poetry/releases/tag/0.12.4
 [0.12.3]: https://github.com/sdispater/poetry/releases/tag/0.12.3
 [0.12.2]: https://github.com/sdispater/poetry/releases/tag/0.12.2
 [0.12.1]: https://github.com/sdispater/poetry/releases/tag/0.12.1
