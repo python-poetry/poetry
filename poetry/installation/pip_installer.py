@@ -143,7 +143,7 @@ class PipInstaller(BaseInstaller):
 
         return name
 
-    def install_directory(self, package, update=False):
+    def install_directory(self, package):
         from poetry.io import NullIO
         from poetry.masonry.builder import SdistBuilder
         from poetry.poetry import Poetry
@@ -161,12 +161,16 @@ class PipInstaller(BaseInstaller):
         pyproject = TomlFile(os.path.join(req, "pyproject.toml"))
 
         has_poetry = False
+        has_build_system = False
         if pyproject.exists():
             pyproject_content = pyproject.read()
             has_poetry = (
                 "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
             )
-            has_build_system = "build-system" in pyproject_content
+            # Even if there is a build system specified
+            # pip as of right now does not support it fully
+            # TODO: Check for pip version when proper PEP-517 support lands
+            # has_build_system = ("build-system" in pyproject_content)
 
         setup = os.path.join(req, "setup.py")
         has_setup = os.path.exists(setup)

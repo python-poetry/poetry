@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed installation of Poetry git dependencies with a build system.
+
+
 ## [0.12.4] - 2018-10-21
 
 ### Fixed
