@@ -39,6 +39,7 @@ from .commands.debug import DebugInfoCommand
 from .commands.debug import DebugResolveCommand
 
 from .commands.self import SelfUpdateCommand
+from .commands.self import SelfUninstallCommand
 
 
 class Application(BaseApplication):
@@ -133,7 +134,7 @@ class Application(BaseApplication):
         commands += [DebugInfoCommand(), DebugResolveCommand()]
 
         # Self commands
-        commands += [SelfUpdateCommand()]
+        commands += [SelfUpdateCommand(), SelfUninstallCommand()]
 
         return commands
 
