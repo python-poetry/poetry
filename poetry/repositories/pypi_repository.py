@@ -41,6 +41,7 @@ from poetry.utils.helpers import temporary_directory
 from poetry.utils.env import Env
 from poetry.version.markers import InvalidMarker
 
+from .exceptions import PackageNotFound
 from .repository import Repository
 
 
@@ -225,7 +226,7 @@ class PyPiRepository(Repository):
     def _get_package_info(self, name):  # type: (str) -> dict
         data = self._get("pypi/{}/json".format(name))
         if data is None:
-            raise ValueError("Package [{}] not found.".format(name))
+            raise PackageNotFound("Package [{}] not found.".format(name))
 
         return data
 
@@ -261,7 +262,7 @@ class PyPiRepository(Repository):
 
         json_data = self._get("pypi/{}/{}/json".format(name, version))
         if json_data is None:
-            raise ValueError("Package [{}] not found.".format(name))
+            raise PackageNotFound("Package [{}] not found.".format(name))
 
         info = json_data["info"]
         data = {

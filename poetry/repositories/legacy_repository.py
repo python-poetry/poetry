@@ -41,6 +41,7 @@ from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name, get_http_basic_auth
 from poetry.version.markers import InvalidMarker
 
+from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
 
 
@@ -297,7 +298,7 @@ class LegacyRepository(PyPiRepository):
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:
-            raise ValueError('No package named "{}"'.format(name))
+            raise PackageNotFound('No package named "{}"'.format(name))
 
         data = {
             "name": name,
@@ -310,7 +311,7 @@ class LegacyRepository(PyPiRepository):
 
         links = list(page.links_for_version(Version.parse(version)))
         if not links:
-            raise ValueError(
+            raise PackageNotFound(
                 'No valid distribution links found for package: "{}" version: "{}"'.format(
                     name, version
                 )

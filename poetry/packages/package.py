@@ -73,6 +73,7 @@ class Package(object):
         self._python_constraint = parse_constraint("*")
         self._python_marker = AnyMarker()
 
+        self.platform = None
         self.marker = AnyMarker()
 
         self.root_dir = None
@@ -166,19 +167,6 @@ class Package(object):
     @property
     def python_marker(self):
         return self._python_marker
-
-    @property
-    def platform(self):  # type: () -> str
-        return self._platform
-
-    @platform.setter
-    def platform(self, value):  # type: (str) -> None
-        self._platform = value
-        self._platform_constraint = parse_generic_constraint(value)
-
-    @property
-    def platform_constraint(self):
-        return self._platform_constraint
 
     @property
     def license(self):

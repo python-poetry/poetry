@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed installation of Poetry git dependencies with a build system.
+- Fixed possible errors when resolving dependencies for specific packages.
 
 
 ## [0.12.4] - 2018-10-21
