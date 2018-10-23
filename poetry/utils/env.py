@@ -95,8 +95,9 @@ class Env(object):
             return cls._env
 
         # Check if we are inside a virtualenv or not
+        env = os.getenv("VIRTUAL_ENV") or os.getenv("CONDA_PREFIX")
         in_venv = (
-            os.environ.get("VIRTUAL_ENV") is not None
+            env is not None
             or hasattr(sys, "real_prefix")
             or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
         )
@@ -110,8 +111,8 @@ class Env(object):
 
             return SystemEnv(Path(sys.prefix))
 
-        if os.environ.get("VIRTUAL_ENV") is not None:
-            prefix = Path(os.environ["VIRTUAL_ENV"])
+        if env is not None:
+            prefix = Path(env)
             base_prefix = None
         else:
             prefix = sys.prefix
