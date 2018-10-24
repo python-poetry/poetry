@@ -8,6 +8,7 @@
 - Fixed possible errors when resolving dependencies for specific packages.
 - Fixed handling of Python versions compatibility.
 - Fixed the dependency resolver picking up unnecessary dependencies due to not using the `python_full_version` marker.
+- Fixed the `Python-Requires` metadata being invalid for single Python versions.
 
 
 ## [0.12.4] - 2018-10-21

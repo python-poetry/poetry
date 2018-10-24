@@ -471,7 +471,7 @@ def test_default_with_excluded_data(mocker):
         assert "my-package-1.2.3/PKG-INFO" in names
 
 
-def test_proper_python_requires_if_single_version_specified():
+def test_proper_python_requires_if_two_digits_precision_version_specified():
     poetry = Poetry.create(project("simple_version"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
@@ -480,3 +480,14 @@ def test_proper_python_requires_if_single_version_specified():
     parsed = p.parsestr(to_str(pkg_info))
 
     assert parsed["Requires-Python"] == ">=3.6,<3.7"
+
+
+def test_proper_python_requires_if_three_digits_precision_version_specified():
+    poetry = Poetry.create(project("single_python"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(to_str(pkg_info))
+
+    assert parsed["Requires-Python"] == "==2.7.15"
