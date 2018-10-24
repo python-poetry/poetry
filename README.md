@@ -153,7 +153,7 @@ There are some things we can notice here:
 `poetry` will also detect if you are inside a virtualenv and install the packages accordingly.
 So, `poetry` can be installed globally and used everywhere.
 
-`poetry` also comes with a full fledged dependency resolution library, inspired by [Molinillo](https://github.com/CocoaPods/Molinillo).
+`poetry` also comes with a full fledged dependency resolution library.
 
 ## Why?
 
