@@ -1192,3 +1192,35 @@ def test_solver_should_not_resolve_prerelease_version_if_not_requested(
 
     with pytest.raises(SolverProblemError):
         solver.solve()
+
+
+def test_solver_ignores_dependencies_with_incompatible_python_full_version_marker(
+    solver, repo, package
+):
+    package.python_versions = "^3.6"
+    package.add_dependency("A", "^1.0")
+    package.add_dependency("B", "^2.0")
+
+    package_a = get_package("A", "1.0.0")
+    package_a.requires.append(
+        dependency_from_pep_508(
+            'B (<2.0); platform_python_implementation == "PyPy" and python_full_version < "2.7.9"'
+        )
+    )
+
+    package_b200 = get_package("B", "2.0.0")
+    package_b100 = get_package("B", "1.0.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b100)
+    repo.add_package(package_b200)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b200},
+        ],
+    )

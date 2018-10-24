@@ -146,6 +146,12 @@ def convert_markers(marker):
             else:
                 variable, op, value = group
                 group_name = str(variable)
+
+                # python_full_version is equivalent to python_version
+                # for Poetry so we merge them
+                if group_name == "python_full_version":
+                    group_name = "python_version"
+
                 if group_name not in requirements:
                     requirements[group_name] = []
 
