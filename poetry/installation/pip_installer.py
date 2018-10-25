@@ -25,7 +25,7 @@ class PipInstaller(BaseInstaller):
 
     def install(self, package, update=False):
         if package.source_type == "directory":
-            self.install_directory(package, update=update)
+            self.install_directory(package)
 
             return
 
