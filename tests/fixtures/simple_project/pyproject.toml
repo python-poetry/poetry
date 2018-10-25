@@ -23,3 +23,8 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
+
+# Extra Source
+[[tool.poetry.source]]
+name = "foo"
+url = "https://bar.com"

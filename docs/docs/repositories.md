@@ -54,7 +54,11 @@ with the `--username` and `--password` options.
 Now that you can publish to your private repository, you need to be able to
 install dependencies from it.
 
-For that, you have to edit your `pyproject.toml` file, like so
+By default, Poetry uses all repositories configured as shown above for package
+installation.
+
+If you would like to use a repository that was not configured like above, you have to
+edit your `pyproject.toml` file, like so
 
 ```toml
 [[tool.poetry.source]]

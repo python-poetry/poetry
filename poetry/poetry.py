@@ -46,6 +46,17 @@ class Poetry:
         for source in self._local_config.get("source", []):
             self._pool.add_repository(self.create_legacy_repository(source))
 
+        # Add any additional repositories configured globally as source
+        # This is done after local config sources and before PyPI
+        extra_repositories = self._config.setting("repositories", default={})
+        for repository_name, repository_config in extra_repositories.items():
+            if "url" in repository_config:
+                self._pool.add_repository(
+                    self.create_legacy_repository(
+                        {"name": repository_name, "url": repository_config["url"]}
+                    )
+                )
+
         # Always put PyPI last to prefer private repositories
         self._pool.add_repository(PyPiRepository())
 

@@ -3,9 +3,15 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from poetry.poetry import Poetry
+from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
+
+if PY2:
+    from mock import patch
+else:
+    from unittest.mock import patch
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
@@ -152,3 +158,23 @@ def test_check_fails():
         )
 
     assert Poetry.check(content) == {"errors": [expected], "warnings": []}
+
+
+@patch("poetry.config.CONFIG_DIR", fixtures_dir / "config_with_repositories")
+def test_sources():
+    poetry = Poetry.create(str(fixtures_dir / "simple_project"))
+    repositories = [
+        r._url for r in poetry.pool.repositories if isinstance(r, PyPiRepository)
+    ]
+
+    source_local = "https://bar.com"
+    source_global = "https://baz.com"
+    source_pypi = "https://pypi.org/"
+
+    assert source_local in repositories
+    assert source_global in repositories
+    assert source_pypi in repositories
+
+    assert repositories.index(source_local) < repositories.index(source_global)
+    assert repositories.index(source_global) < repositories.index(source_pypi)
+    assert repositories.index(source_pypi) == len(repositories) - 1
