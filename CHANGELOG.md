@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Slightly changed the lock file, making it potentially incompatible with previous Poetry versions.
+
 ### Fixed
 
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
