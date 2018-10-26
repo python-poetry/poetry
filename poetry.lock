@@ -34,11 +34,6 @@ optional = false
 python-versions = "*"
 version = "18.2.0"
 
-[package.extras]
-dev = ["pre-commit", "zope.interface", "sphinx", "zope.interface", "six", "pytest", "pympler", "hypothesis", "coverage"]
-docs = ["zope.interface", "sphinx"]
-tests = ["zope.interface", "six", "pytest", "pympler", "hypothesis", "coverage"]
-
 [[package]]
 category = "dev"
 description = "The uncompromising code formatter."
@@ -54,9 +49,6 @@ attrs = ">=17.4.0"
 click = ">=6.5"
 toml = ">=0.9.4"
 
-[package.extras]
-d = ["aiohttp (>=3.3.2)"]
-
 [[package]]
 category = "main"
 description = "httplib2 caching for requests"
@@ -66,16 +58,9 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.12.5"
 
 [package.dependencies]
+lockfile = ">=0.9"
 msgpack = "*"
 requests = "*"
-
-[package.dependencies.lockfile]
-optional = true
-version = ">=0.9"
-
-[package.extras]
-filecache = ["lockfile (>=0.9)"]
-redis = ["redis (>=2.10.5)"]
 
 [[package]]
 category = "dev"
@@ -92,11 +77,6 @@ name = "cachy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.2.0"
-
-[package.extras]
-memcached = ["python-memcached (>=1.59.0.0,<2.0.0.0)"]
-msgpack = ["msgpack-python (>=0.5.0.0,<0.6.0.0)"]
-redis = ["redis (>=2.10.0.0,<3.0.0.0)"]
 
 [[package]]
 category = "main"
@@ -219,13 +199,6 @@ version = "1.0.1"
 six = ">=1.9"
 webencodings = "*"
 
-[package.extras]
-all = ["genshi", "chardet (>=2.2)", "datrie", "lxml"]
-chardet = ["chardet (>=2.2)"]
-datrie = ["datrie"]
-genshi = ["genshi"]
-lxml = ["lxml"]
-
 [[package]]
 category = "dev"
 description = "File identification library for Python"
@@ -292,9 +265,6 @@ version = "2.10"
 [package.dependencies]
 MarkupSafe = ">=0.23"
 
-[package.extras]
-i18n = ["Babel (>=0.8)"]
-
 [[package]]
 category = "main"
 description = "An implementation of JSON Schema validation for Python"
@@ -311,9 +281,6 @@ six = ">=1.11.0"
 [package.dependencies.functools32]
 python = "<3"
 version = "*"
-
-[package.extras]
-format = ["jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors"]
 
 [[package]]
 category = "dev"
@@ -388,10 +355,6 @@ six = ">=1.9"
 python = "<3.3"
 version = ">=1"
 
-[package.extras]
-docs = ["sphinx", "Pygments (<2)", "jinja2 (<2.7)", "sphinx (<1.3)"]
-test = ["unittest2 (>=1.1.0)"]
-
 [[package]]
 category = "dev"
 description = "More routines for operating on iterables, beyond itertools"
@@ -460,9 +423,6 @@ optional = false
 python-versions = "*"
 version = "1.4.2"
 
-[package.extras]
-testing = ["nose", "coverage"]
-
 [[package]]
 category = "dev"
 description = "plugin and hook calling mechanisms for python"
@@ -470,9 +430,6 @@ name = "pluggy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.8.0"
-
-[package.extras]
-dev = ["tox", "pre-commit"]
 
 [[package]]
 category = "dev"
@@ -650,10 +607,6 @@ chardet = ">=3.0.2,<3.1.0"
 idna = ">=2.5,<2.8"
 urllib3 = ">=1.21.1,<1.25"
 
-[package.extras]
-security = ["idna (>=2.0.0)", "cryptography (>=1.3.4)", "pyOpenSSL (>=0.14)"]
-socks = ["win-inet-pton", "PySocks (>=1.5.6,<1.5.7 || >1.5.7)"]
-
 [[package]]
 category = "main"
 description = "A utility belt for advanced users of python-requests"
@@ -753,10 +706,6 @@ six = ">=1.0.0,<2"
 toml = ">=0.9.4"
 virtualenv = ">=1.11.2"
 
-[package.extras]
-docs = ["sphinxcontrib-autoprogram (>=0.1.5)", "pygments-github-lexers (>=0.0.5)", "towncrier (>=18.5.0)", "sphinx (>=1.8.0,<2)"]
-testing = ["pytest-randomly (>=1.2.3,<2)", "pytest-xdist (>=1.22.2,<2)", "pytest-timeout (>=1.3.0,<2)", "pytest-mock (>=1.10.0,<2)", "pytest-cov (>=2.5.1,<3)", "pytest (>=3.0.0,<4)"]
-
 [[package]]
 category = "main"
 description = "Type Hints for Python"
@@ -773,10 +722,6 @@ name = "urllib3"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4"
 version = "1.24"
-
-[package.extras]
-secure = ["ipaddress", "certifi", "idna (>=2.0.0)", "cryptography (>=1.3.4)", "pyOpenSSL (>=0.14)"]
-socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
 
 [[package]]
 category = "main"
@@ -802,9 +747,6 @@ name = "wheel"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.32.2"
-
-[package.extras]
-test = ["pytest-cov", "pytest (>=3.0.0)"]
 
 [metadata]
 content-hash = "7d4198bfede7f32d4992ec73c05701c841eea21306a8d3acfdde6a1db49a34f2"
