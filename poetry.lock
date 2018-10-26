@@ -34,6 +34,11 @@ optional = false
 python-versions = "*"
 version = "18.2.0"
 
+[package.extras]
+dev = ["pre-commit", "zope.interface", "sphinx", "zope.interface", "six", "pytest", "pympler", "hypothesis", "coverage"]
+docs = ["zope.interface", "sphinx"]
+tests = ["zope.interface", "six", "pytest", "pympler", "hypothesis", "coverage"]
+
 [[package]]
 category = "dev"
 description = "The uncompromising code formatter."
@@ -49,6 +54,9 @@ attrs = ">=17.4.0"
 click = ">=6.5"
 toml = ">=0.9.4"
 
+[package.extras]
+d = ["aiohttp (>=3.3.2)"]
+
 [[package]]
 category = "main"
 description = "httplib2 caching for requests"
@@ -58,9 +66,16 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.12.5"
 
 [package.dependencies]
-lockfile = ">=0.9"
 msgpack = "*"
 requests = "*"
+
+[package.dependencies.lockfile]
+optional = true
+version = ">=0.9"
+
+[package.extras]
+filecache = ["lockfile (>=0.9)"]
+redis = ["redis (>=2.10.5)"]
 
 [[package]]
 category = "dev"
@@ -77,6 +92,11 @@ name = "cachy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.2.0"
+
+[package.extras]
+memcached = ["python-memcached (>=1.59.0.0,<2.0.0.0)"]
+msgpack = ["msgpack-python (>=0.5.0.0,<0.6.0.0)"]
+redis = ["redis (>=2.10.0.0,<3.0.0.0)"]
 
 [[package]]
 category = "main"
@@ -137,6 +157,15 @@ version = "0.4.0"
 
 [[package]]
 category = "dev"
+description = "Backports and enhancements for the contextlib module"
+marker = "python_version < \"3\""
+name = "contextlib2"
+optional = false
+python-versions = "*"
+version = "0.5.5"
+
+[[package]]
+category = "dev"
 description = "Code coverage measurement for Python"
 name = "coverage"
 optional = false
@@ -190,6 +219,13 @@ version = "1.0.1"
 six = ">=1.9"
 webencodings = "*"
 
+[package.extras]
+all = ["genshi", "chardet (>=2.2)", "datrie", "lxml"]
+chardet = ["chardet (>=2.2)"]
+datrie = ["datrie"]
+genshi = ["genshi"]
+lxml = ["lxml"]
+
 [[package]]
 category = "dev"
 description = "File identification library for Python"
@@ -208,6 +244,44 @@ version = "2.7"
 
 [[package]]
 category = "dev"
+description = "Read metadata from Python packages"
+name = "importlib-metadata"
+optional = false
+python-versions = ">=2.7,!=3.0,!=3.1,!=3.2,!=3.3"
+version = "0.6"
+
+[package.dependencies]
+[package.dependencies.contextlib2]
+python = "<3"
+version = "*"
+
+[package.dependencies.pathlib2]
+python = "<3"
+version = "*"
+
+[[package]]
+category = "dev"
+description = "Read resources from Python packages"
+marker = "python_version < \"3.7\""
+name = "importlib-resources"
+optional = false
+python-versions = ">=2.7,!=3.0,!=3.1,!=3.2,!=3.3"
+version = "1.0.1"
+
+[package.dependencies]
+setuptools = "*"
+wheel = "*"
+
+[package.dependencies.pathlib2]
+python = "<3"
+version = "*"
+
+[package.dependencies.typing]
+python = "<3.5"
+version = "*"
+
+[[package]]
+category = "dev"
 description = "A small but fast and easy to use stand-alone template engine written in pure python."
 marker = "python_version >= \"2.7.9\" and python_version < \"2.8.0\" or python_version >= \"3.4\" and python_version < \"4.0\""
 name = "jinja2"
@@ -217,6 +291,9 @@ version = "2.10"
 
 [package.dependencies]
 MarkupSafe = ">=0.23"
+
+[package.extras]
+i18n = ["Babel (>=0.8)"]
 
 [[package]]
 category = "main"
@@ -234,6 +311,9 @@ six = ">=1.11.0"
 [package.dependencies.functools32]
 python = "<3"
 version = "*"
+
+[package.extras]
+format = ["jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors"]
 
 [[package]]
 category = "dev"
@@ -308,6 +388,10 @@ six = ">=1.9"
 python = "<3.3"
 version = ">=1"
 
+[package.extras]
+docs = ["sphinx", "Pygments (<2)", "jinja2 (<2.7)", "sphinx (<1.3)"]
+test = ["unittest2 (>=1.1.0)"]
+
 [[package]]
 category = "dev"
 description = "More routines for operating on iterables, beyond itertools"
@@ -366,7 +450,7 @@ marker = "python_version < \"3.0\""
 name = "pbr"
 optional = false
 python-versions = "*"
-version = "5.0.0"
+version = "5.1.0"
 
 [[package]]
 category = "main"
@@ -376,6 +460,9 @@ optional = false
 python-versions = "*"
 version = "1.4.2"
 
+[package.extras]
+testing = ["nose", "coverage"]
+
 [[package]]
 category = "dev"
 description = "plugin and hook calling mechanisms for python"
@@ -384,24 +471,32 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.8.0"
 
+[package.extras]
+dev = ["tox", "pre-commit"]
+
 [[package]]
 category = "dev"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
 name = "pre-commit"
 optional = false
 python-versions = "*"
-version = "1.11.2"
+version = "1.12.0"
 
 [package.dependencies]
 "aspy.yaml" = "*"
 cached-property = "*"
 cfgv = ">=1.0.0"
 identify = ">=1.0.0"
+importlib-metadata = "*"
 nodeenv = ">=0.11.1"
 pyyaml = "*"
 six = "*"
 toml = "*"
 virtualenv = "*"
+
+[package.dependencies.importlib-resources]
+python = "<3.7"
+version = "*"
 
 [[package]]
 category = "dev"
@@ -474,7 +569,7 @@ description = "pytest: simple powerful testing with Python"
 name = "pytest"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "3.9.1"
+version = "3.9.2"
 
 [package.dependencies]
 atomicwrites = ">=1.0"
@@ -554,6 +649,10 @@ certifi = ">=2017.4.17"
 chardet = ">=3.0.2,<3.1.0"
 idna = ">=2.5,<2.8"
 urllib3 = ">=1.21.1,<1.25"
+
+[package.extras]
+security = ["idna (>=2.0.0)", "cryptography (>=1.3.4)", "pyOpenSSL (>=0.14)"]
+socks = ["win-inet-pton", "PySocks (>=1.5.6,<1.5.7 || >1.5.7)"]
 
 [[package]]
 category = "main"
@@ -654,10 +753,14 @@ six = ">=1.0.0,<2"
 toml = ">=0.9.4"
 virtualenv = ">=1.11.2"
 
+[package.extras]
+docs = ["sphinxcontrib-autoprogram (>=0.1.5)", "pygments-github-lexers (>=0.0.5)", "towncrier (>=18.5.0)", "sphinx (>=1.8.0,<2)"]
+testing = ["pytest-randomly (>=1.2.3,<2)", "pytest-xdist (>=1.22.2,<2)", "pytest-timeout (>=1.3.0,<2)", "pytest-mock (>=1.10.0,<2)", "pytest-cov (>=2.5.1,<3)", "pytest (>=3.0.0,<4)"]
+
 [[package]]
 category = "main"
 description = "Type Hints for Python"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\" or python_version < \"3.5\""
 name = "typing"
 optional = false
 python-versions = "*"
@@ -670,6 +773,10 @@ name = "urllib3"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4"
 version = "1.24"
+
+[package.extras]
+secure = ["ipaddress", "certifi", "idna (>=2.0.0)", "cryptography (>=1.3.4)", "pyOpenSSL (>=0.14)"]
+socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
 
 [[package]]
 category = "main"
@@ -686,6 +793,18 @@ name = "webencodings"
 optional = false
 python-versions = "*"
 version = "0.5.1"
+
+[[package]]
+category = "dev"
+description = "A built-package format for Python."
+marker = "python_version < \"3.7\""
+name = "wheel"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "0.32.2"
+
+[package.extras]
+test = ["pytest-cov", "pytest (>=3.0.0)"]
 
 [metadata]
 content-hash = "7d4198bfede7f32d4992ec73c05701c841eea21306a8d3acfdde6a1db49a34f2"
@@ -706,6 +825,7 @@ chardet = ["84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae", "
 cleo = ["85a63076b72ca376fb06668be1fc7758dc16740b394783d5cc65200c4b32f71b", "9b7f79f1aa470a025c0d28c76aa225ee9e65028d32f80032e871aa3500df61b8"]
 click = ["2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13", "5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"]
 colorama = ["a3d89af5db9e9806a779a50296b5fdb466e281147c2c235e8225ecc6dbf7bbf3", "c9b54bebe91a6a803e0772c8561d53f2926bfeb17cd141fbabcb08424086595c"]
+contextlib2 = ["509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48", "f5260a6e679d2ff42ec91ec5252f4eeffdcf21053db9113bd0a8e4d953769c00"]
 coverage = ["03481e81d558d30d230bc12999e3edffe392d244349a90f4ef9b88425fac74ba", "0b136648de27201056c1869a6c0d4e23f464750fd9a9ba9750b8336a244429ed", "104ab3934abaf5be871a583541e8829d6c19ce7bde2923b2751e0d3ca44db60a", "10a46017fef60e16694a30627319f38a2b9b52e90182dddb6e37dcdab0f4bf95", "15b111b6a0f46ee1a485414a52a7ad1d703bdf984e9ed3c288a4414d3871dcbd", "198626739a79b09fa0a2f06e083ffd12eb55449b5f8bfdbeed1df4910b2ca640", "1c383d2ef13ade2acc636556fd544dba6e14fa30755f26812f54300e401f98f2", "23d341cdd4a0371820eb2b0bd6b88f5003a7438bbedb33688cd33b8eae59affd", "28b2191e7283f4f3568962e373b47ef7f0392993bb6660d079c62bd50fe9d162", "2a5b73210bad5279ddb558d9a2bfedc7f4bf6ad7f3c988641d83c40293deaec1", "2eb564bbf7816a9d68dd3369a510be3327f1c618d2357fa6b1216994c2e3d508", "337ded681dd2ef9ca04ef5d93cfc87e52e09db2594c296b4a0a3662cb1b41249", "3a2184c6d797a125dca8367878d3b9a178b6fdd05fdc2d35d758c3006a1cd694", "3c79a6f7b95751cdebcd9037e4d06f8d5a9b60e4ed0cd231342aa8ad7124882a", "3d72c20bd105022d29b14a7d628462ebdc61de2f303322c0212a054352f3b287", "3eb42bf89a6be7deb64116dd1cc4b08171734d721e7a7e57ad64cc4ef29ed2f1", "4635a184d0bbe537aa185a34193898eee409332a8ccb27eea36f262566585000", "56e448f051a201c5ebbaa86a5efd0ca90d327204d8b059ab25ad0f35fbfd79f1", "5a13ea7911ff5e1796b6d5e4fbbf6952381a611209b736d48e675c2756f3f74e", "69bf008a06b76619d3c3f3b1983f5145c75a305a0fea513aca094cae5c40a8f5", "6bc583dc18d5979dc0f6cec26a8603129de0304d5ae1f17e57a12834e7235062", "701cd6093d63e6b8ad7009d8a92425428bc4d6e7ab8d75efbb665c806c1d79ba", "7608a3dd5d73cb06c531b8925e0ef8d3de31fed2544a7de6c63960a1e73ea4bc", "76ecd006d1d8f739430ec50cc872889af1f9c1b6b8f48e29941814b09b0fd3cc", "7aa36d2b844a3e4a4b356708d79fd2c260281a7390d678a10b91ca595ddc9e99", "7d3f553904b0c5c016d1dad058a7554c7ac4c91a789fca496e7d8347ad040653", "7e1fe19bd6dce69d9fd159d8e4a80a8f52101380d5d3a4d374b6d3eae0e5de9c", "8c3cb8c35ec4d9506979b4cf90ee9918bc2e49f84189d9bf5c36c0c1119c6558", "9d6dd10d49e01571bf6e147d3b505141ffc093a06756c60b053a859cb2128b1f", "9e112fcbe0148a6fa4f0a02e8d58e94470fc6cb82a5481618fea901699bf34c4", "ac4fef68da01116a5c117eba4dd46f2e06847a497de5ed1d64bb99a5fda1ef91", "b8815995e050764c8610dbc82641807d196927c3dbed207f0a079833ffcf588d", "be6cfcd8053d13f5f5eeb284aa8a814220c3da1b0078fa859011c7fffd86dab9", "c1bb572fab8208c400adaf06a8133ac0712179a334c09224fb11393e920abcdd", "de4418dadaa1c01d497e539210cb6baa015965526ff5afc078c57ca69160108d", "e05cb4d9aad6233d67e0541caa7e511fa4047ed7750ec2510d466e806e0255d6", "e4d96c07229f58cb686120f168276e434660e4358cc9cf3b0464210b04913e77", "f3f501f345f24383c0000395b26b726e46758b71393267aeae0bd36f8b3ade80", "f8a923a85cb099422ad5a2e345fe877bbc89a8a8b23235824a93488150e45f6e"]
 enum34 = ["2d81cbbe0e73112bdfe6ef8576f2238f2ba27dd0d55752a776c41d38b7da2850", "644837f692e5f550741432dd3f223bbb9852018674981b1664e5dc339387588a", "6bd0f6ad48ec2aa117d3d141940d484deccda84d4fcd884f5c3d93c23ecd8c79", "8ad8c4783bf61ded74527bffb48ed9b54166685e4230386a9ed9b1279e2df5b1"]
 filelock = ["86fe6af56ae08ebc9c66d54ba3398c35b98916d0862d782b276a65816ff39392", "97694f181bdf58f213cca0a7cb556dc7bf90e2f8eb9aa3151260adac56701afb"]
@@ -714,6 +834,8 @@ functools32 = ["89d824aa6c358c421a234d7f9ee0bd75933a67c29588ce50aaa3acdf4d403fa0
 html5lib = ["20b159aa3badc9d5ee8f5c647e5efd02ed2a66ab8d354930bd9ff139fc1dc0a3", "66cb0dcfdbbc4f9c3ba1a63fdb511ffdbd4f513b2b6d81b80cd26ce6b3fb3736"]
 identify = ["5e956558a9a1e3b3891d7c6609fc9709657a11878af288ace484d1a46a93922b", "623086059219cc7b86c77a3891f3700cb175d4ce02b8fb8802b047301d71e783"]
 idna = ["156a6814fb5ac1fc6850fb002e0852d56c0c8d2531923a51032d1b70760e186e", "684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16"]
+importlib-metadata = ["36b02c84f9001adf65209fefdf951be8e9014a95eab9938c0779ad5670359b1c", "60b6481a72908c93ccb707abeb926fb5a15319b9e6f0b76639a718837ee12de0"]
+importlib-resources = ["73f454e062ac149bafd262b18c1f9ebc91f53bd6474e028d1bf1c59ebd152efb"]
 jinja2 = ["74c935a1b8bb9a3947c50a54766a969d4846290e1e788ea44c1392163723c3bd", "f84be1bb0040caca4cea721fcbbbbd61f9be9464ca236387158b0feea01914a4"]
 jsonschema = ["3ae8afd6f4ca6417f14bf43ef61341311598f14234cdb4174fe43d42b236a3c8", "dfd8426040892c8d0ef6da574085f282569f189cb24b70091a66c21c12d6705e"]
 livereload = ["583179dc8d49b040a9da79bd33de59e160d2a8802b939e304eb359a4419f6498", "dd4469a8f5a6833576e9f5433f1439c306de15dbbfeceabd32479b1123380fa5"]
@@ -727,10 +849,10 @@ msgpack = ["0b3b1773d2693c70598585a34ca2715873ba899565f0a7c9a1545baef7e7fbdc", "
 nodeenv = ["aa040ab5189bae17d272175609010be6c5b589ec4b8dbd832cc50c9e9cb7496f"]
 pastel = ["3108af417ec0fa6d0a620e676ec4f02c839ca13e10611586e5d2174b46aa0bc3", "d1fee8079534f99f1805a044fef946d23eee6d6a7cd34292c30e6c16be9a80b9"]
 pathlib2 = ["8eb170f8d0d61825e09a95b38be068299ddeda82f35e96c3301a8a5e7604cb83", "d1aa2a11ba7b8f7b21ab852b1fb5afb277e1bb99d5dfc663380b5015c0d80c5a"]
-pbr = ["ab94783019179bf48f5784edc63f5bc8328ec5ff93f33591567f266d21ac7323", "bfcff1a3878eebf559392c2130a17f612a03f96a0d44c3559d9c1e62a4235a2d"]
+pbr = ["8fc938b1123902f5610b06756a31b1e6febf0d105ae393695b0c9d4244ed2910", "f20ec0abbf132471b68963bb34d9c78e603a5cf9e24473f14358e66551d47475"]
 pkginfo = ["5878d542a4b3f237e359926384f1dde4e099c9f5525d236b1840cf704fa8d474", "a39076cb3eb34c333a0dd390b568e9e1e881c7bf2cc0aee12120636816f55aee"]
 pluggy = ["447ba94990e8014ee25ec853339faf7b0fc8050cdc3289d4d71f7f410fb90095", "bde19360a8ec4dfd8a20dcb811780a30998101f078fc7ded6162f0076f50508f"]
-pre-commit = ["98ec318db1f255e3d5089ae416959ef3c775215a3509620027d446eeabbba740", "b68f9219c56b50ebafb57f378c5325f9876d06fb29e9cd05daf5cbd6676ce8f2"]
+pre-commit = ["7542bd8ae1c58745175ea0a9295964ee82a10f7e18c4344f5e4c02bd85d02561", "87f687da6a2651d5067cfec95b854b004e95b70143cbf2369604bb3acbce25ec"]
 py = ["bf92637198836372b520efcba9e020c330123be8ce527e535d185ed4b6f45694", "e76826342cefe3c3d5f7e8ee4316b80d1dd8a300781612ddbc765c17ba25a6c6"]
 pygments = ["78f3f434bcc5d6ee09020f92ba487f95ba50f1e3ef83ae96b9d5ffa1bab25c5d", "dbae1046def0efb574852fab9e90209b23f556367b5a320c0bcb871c77c3e8cc"]
 pygments-github-lexers = ["0f9e9fb607d351c127a1e55e82a6eb491ed1fc11b2d6a0444ba217dc6d1f82c1", "aaca57e77cd6fcfce8d6ee97a998962eebf7fbb810519a8ebde427c62823e133"]
@@ -738,7 +860,7 @@ pylev = ["063910098161199b81e453025653ec53556c1be7165a9b7c50be2f4d57eae1c3", "1d
 pymdown-extensions = ["25b0a7967fa697b5035e23340a48594e3e93acb10b06d74574218ace3347d1df", "6cf0cf36b5a03b291ace22dc2f320f4789ce56fbdb6635a3be5fadbf5d7694dd"]
 pyparsing = ["bc6c7146b91af3f567cf6daeaec360bc07d45ffec4cf5353f4d7a208ce7ca30a", "d29593d8ebe7b57d6967b62494f8c72b03ac0262b1eed63826c6f788b3606401"]
 pyrsistent = ["f64dd1b706c31f7aa24495a7da58c0407c072981289b675331e2a16364355102"]
-pytest = ["10e59f84267370ab20cec9305bafe7505ba4d6b93ecbf66a1cce86193ed511d5", "8c827e7d4816dfe13e9329c8226aef8e6e75d65b939bc74fda894143b6d1df59"]
+pytest = ["212be78a6fa5352c392738a49b18f74ae9aeec1040f47c81cadbfd8d1233c310", "6f6c1efc8d0ccc21f8f6c34d8330baca883cf109b66b3df954b0a117e5528fb4"]
 pytest-cov = ["513c425e931a0344944f84ea47f3956be0e416d95acbd897a44970c8d926d5d7", "e360f048b7dae3f2f2a9a4d067b2dd6b6a015d384d1577c994a43f3f7cbad762"]
 pytest-mock = ["53801e621223d34724926a5c98bd90e8e417ce35264365d39d6c896388dcc928", "d89a8209d722b8307b5e351496830d5cc5e192336003a485443ae9adeb7dd4c0"]
 pytest-sugar = ["ab8cc42faf121344a4e9b13f39a51257f26f410e416c52ea11078cdd00d98a2c"]
@@ -757,3 +879,4 @@ typing = ["4027c5f6127a6267a435201981ba156de91ad0d1d98e9ddc2aa173453453492d", "5
 urllib3 = ["41c3db2fc01e5b907288010dec72f9d0a74e37d6994e6eb56849f59fea2265ae", "8819bba37a02d143296a4d032373c4dd4aca11f6d4c9973335ca75f9c8475f59"]
 virtualenv = ["2ce32cd126117ce2c539f0134eb89de91a8413a29baac49cbab3eb50e2026669", "ca07b4c0b54e14a91af9f34d0919790b016923d157afda5efdde55c96718f752"]
 webencodings = ["a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78", "b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"]
+wheel = ["196c9842d79262bb66fcf59faa4bd0deb27da911dbc7c6cdca931080eb1f0783", "c93e2d711f5f9841e17f53b0e6c0ff85593f3b416b6eec7a9452041a59a42688"]
