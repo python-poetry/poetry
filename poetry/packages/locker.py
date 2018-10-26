@@ -85,7 +85,6 @@ class Locker:
             package.optional = info["optional"]
             package.hashes = lock_data["metadata"]["hashes"][info["name"]]
             package.python_versions = info["python-versions"]
-            package.extras = info.get("extras", {})
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
@@ -208,12 +207,6 @@ class Locker:
 
             constraint = {"version": str(dependency.pretty_constraint)}
 
-            if dependency.extras:
-                constraint["extras"] = dependency.extras
-
-            if dependency.is_optional():
-                constraint["optional"] = True
-
             if not dependency.python_constraint.is_any():
                 constraint["python"] = str(dependency.python_constraint)
 
@@ -233,16 +226,6 @@ class Locker:
         }
         if not package.marker.is_any():
             data["marker"] = str(package.marker)
-
-        if package.extras:
-            extras = {}
-            for name, deps in package.extras.items():
-                extras[name] = [
-                    str(dep) if not dep.constraint.is_any() else dep.name
-                    for dep in deps
-                ]
-
-            data["extras"] = extras
 
         if dependencies:
             for k, constraints in dependencies.items():

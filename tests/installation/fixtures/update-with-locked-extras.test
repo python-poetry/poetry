@@ -7,11 +7,8 @@ optional = false
 python-versions = "*"
 
 [package.dependencies]
-"B" = {version = "^1.0", optional = true}
+"B" = "^1.0"
 "C" = {"version" = "^1.0", "python" = ">=2.7,<2.8"}
-
-[package.extras]
-foo = ["b"]
 
 [[package]]
 name = "B"

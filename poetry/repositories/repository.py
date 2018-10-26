@@ -66,9 +66,6 @@ class Repository(BaseRepository):
                                 if req.name == dep.name:
                                     dep.activate()
 
-                    if extras:
-                        package.requires_extras = extras
-
                     packages.append(package)
 
         return packages

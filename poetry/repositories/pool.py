@@ -73,7 +73,7 @@ class Pool(BaseRepository):
 
                 return package
 
-        raise PackageNotFound("Package [{}] not found.".format(name))
+        return None
 
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False
