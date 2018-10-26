@@ -5,6 +5,11 @@ from .include import Include
 from .package_include import PackageInclude
 
 
+class ModuleOrPackageNotFound(ValueError):
+
+    pass
+
+
 class Module:
     def __init__(self, name, directory=".", packages=None, includes=None):
         self._name = module_name(name)
@@ -48,7 +53,9 @@ class Module:
                         }
                     ]
                 else:
-                    raise ValueError("No file/folder found for package {}".format(name))
+                    raise ModuleOrPackageNotFound(
+                        "No file/folder found for package {}".format(name)
+                    )
 
         for package in packages:
             self._includes.append(

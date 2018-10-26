@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "0.12.2"
+version = "0.12.4"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -10,7 +10,7 @@ license = "MIT"
 readme = "README.md"
 
 homepage = "https://poetry.eustace.io/"
-repository = "https://github.com/sdispater/poet"
+repository = "https://github.com/sdispater/poetry"
 documentation = "https://poetry.eustace.io/docs"
 
 keywords = ["packaging", "dependency", "poetry"]

@@ -139,22 +139,27 @@ def convert_markers(marker):
     requirements = {}
 
     def _group(_groups, or_=False):
+        ors = {}
         for group in _groups:
-            if isinstance(group, tuple):
+            if isinstance(group, list):
+                _group(group, or_=True)
+            else:
                 variable, op, value = group
                 group_name = str(variable)
                 if group_name not in requirements:
-                    requirements[group_name] = [[]]
-                elif or_:
+                    requirements[group_name] = []
+
+                if group_name not in ors:
+                    ors[group_name] = or_
+
+                if ors[group_name] or not requirements[group_name]:
                     requirements[group_name].append([])
 
-                or_ = False
-
                 requirements[group_name][-1].append((str(op), str(value)))
-            else:
-                _group(group, or_=True)
 
-    _group(groups)
+                ors[group_name] = False
+
+    _group(groups, or_=True)
 
     return requirements
 

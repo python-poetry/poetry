@@ -1,5 +1,25 @@
 # Change Log
 
+## [0.12.4] - 2018-10-21
+
+### Fixed
+
+- Fixed possible error on some combinations of markers.
+- Fixed venv detection so that it only uses `VIRTUAL_ENV` to detect activated virtualenvs.
+
+
+## [0.12.3] - 2018-10-18
+
+### Fixed
+
+- Fixed the `--no-dev` option in `install` not working properly.
+- Fixed prereleases being selected even if another constraint conflicted with them.
+- Fixed an error when installing current package in development mode if the generated `setup.py` had special characters.
+- Fixed an error in `install` for applications not following a known structure.
+- Fixed an error when trying to retrieve the current environment.
+- Fixed `debug:info` not showing the current project's virtualenv.
+
+
 ## [0.12.2] - 2018-10-17
 
 ### Fixed
@@ -517,7 +537,9 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.2...develop
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.4...develop
+[0.12.4]: https://github.com/sdispater/poetry/releases/tag/0.12.4
+[0.12.3]: https://github.com/sdispater/poetry/releases/tag/0.12.3
 [0.12.2]: https://github.com/sdispater/poetry/releases/tag/0.12.2
 [0.12.1]: https://github.com/sdispater/poetry/releases/tag/0.12.1
 [0.12.0]: https://github.com/sdispater/poetry/releases/tag/0.12.0

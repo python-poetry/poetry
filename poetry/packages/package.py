@@ -363,7 +363,7 @@ class Package(object):
         self.python_versions = original_python_versions
 
     def clone(self):  # type: () -> Package
-        clone = Package(self.pretty_name, self.version)
+        clone = self.__class__(self.pretty_name, self.version)
         clone.category = self.category
         clone.optional = self.optional
         clone.python_versions = self.python_versions

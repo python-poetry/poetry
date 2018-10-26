@@ -90,32 +90,53 @@ class Env(object):
         return self._bin("pip")
 
     @classmethod
-    def get(cls, reload=False, cwd=None):  # type: (IO, bool) -> Env
+    def get(cls, reload=False, cwd=None):  # type: (bool, Path) -> Env
         if cls._env is not None and not reload:
             return cls._env
 
         # Check if we are inside a virtualenv or not
         env = os.getenv("VIRTUAL_ENV") or os.getenv("CONDA_PREFIX")
-        in_venv = (
-            env is not None
-            or hasattr(sys, "real_prefix")
-            or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
-        )
-
+        in_venv = env is not None
+ 
         if not in_venv:
             # Checking if a local virtualenv exists
             if cwd and (cwd / ".venv").exists():
                 venv = cwd / ".venv"
 
-                return VirtualEnv(Path(venv))
+                return VirtualEnv(venv)
 
-            return SystemEnv(Path(sys.prefix))
+            config = Config.create("config.toml")
+            create_venv = config.setting("settings.virtualenvs.create", True)
+
+            if not create_venv:
+                return SystemEnv(Path(sys.prefix))
+
+            venv_path = config.setting("settings.virtualenvs.path")
+            if venv_path is None:
+                venv_path = Path(CACHE_DIR) / "virtualenvs"
+            else:
+                venv_path = Path(venv_path)
+
+            if cwd is None:
+                cwd = Path.cwd()
+
+            name = cwd.name
+            name = "{}-py{}".format(
+                name, ".".join([str(v) for v in sys.version_info[:2]])
+            )
+
+            venv = venv_path / name
+
+            if not venv.exists():
+                return SystemEnv(Path(sys.prefix))
+
+            return VirtualEnv(venv)
 
         if env is not None:
             prefix = Path(env)
             base_prefix = None
         else:
-            prefix = sys.prefix
+            prefix = Path(sys.prefix)
             base_prefix = cls.get_base_prefix()
 
         return VirtualEnv(prefix, base_prefix)
@@ -147,7 +168,10 @@ class Env(object):
             venv_path = Path(venv_path)
 
         if not name:
-            name = Path.cwd().name
+            if not cwd:
+                cwd = Path.cwd()
+
+            name = cwd.name
 
         name = "{}-py{}".format(name, ".".join([str(v) for v in sys.version_info[:2]]))
 
@@ -233,6 +257,12 @@ class Env(object):
 
     def is_valid_for_marker(self, marker):  # type: (BaseMarker) -> bool
         return marker.validate(self.marker_env)
+
+    def is_sane(self):  # type: () -> bool
+        """
+        Checks whether the current environment is sane or not.
+        """
+        return True
 
     def run(self, bin, *args, **kwargs):
         """
@@ -427,6 +457,10 @@ class VirtualEnv(Env):
 
     def is_venv(self):  # type: () -> bool
         return True
+
+    def is_sane(self):
+        # A virtualenv is considered sane if both "python" and "pip" exist.
+        return os.path.exists(self._bin("python")) and os.path.exists(self._bin("pip"))
 
     def run(self, bin, *args, **kwargs):
         with self.temp_environ():
