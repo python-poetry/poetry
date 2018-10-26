@@ -348,7 +348,7 @@ class VersionSolver:
         else:
             dependency = min(*unsatisfied, key=_get_min)
 
-        locked = self._get_locked(dependency.name)
+        locked = self._get_locked(dependency)
         if locked is None or not dependency.constraint.allows(locked.version):
             try:
                 packages = self._provider.search_for(dependency)
@@ -429,17 +429,16 @@ class VersionSolver:
 
             self._incompatibilities[term.dependency.name].append(incompatibility)
 
-    def _get_locked(self, package_name):  # type: (str) -> Union[Package, None]
-        if package_name in self._use_latest:
+    def _get_locked(self, dependency):  # type: (Dependency) -> Union[Package, None]
+        if dependency.name in self._use_latest:
             return
 
-        locked = self._locked.get(package_name)
+        locked = self._locked.get(dependency.name)
         if not locked:
             return
 
-        for dep in self._root.all_requires:
-            if dep.name == locked.name:
-                locked.requires_extras = dep.extras
+        if dependency.extras:
+            locked.requires_extras = dependency.extras
 
         return locked
 

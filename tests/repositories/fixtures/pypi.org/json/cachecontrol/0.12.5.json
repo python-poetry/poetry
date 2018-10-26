@@ -1,0 +1,184 @@
+{
+  "info": {
+    "author": "Eric Larson",
+    "author_email": "eric@ionrock.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Environment :: Web Environment",
+      "License :: OSI Approved :: Apache Software License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Topic :: Internet :: WWW/HTTP"
+    ],
+    "description": "",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/ionrock/cachecontrol",
+    "keywords": "requests http caching web",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "CacheControl",
+    "package_url": "https://pypi.org/project/CacheControl/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/CacheControl/",
+    "project_urls": {
+      "Homepage": "https://github.com/ionrock/cachecontrol"
+    },
+    "release_url": "https://pypi.org/project/CacheControl/0.12.5/",
+    "requires_dist": [
+      "lockfile; extra == \"filecache\""
+    ],
+    "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+    "summary": "httplib2 caching for requests",
+    "version": "0.12.5"
+  },
+  "last_serial": 3939938,
+  "releases": {
+    "0.12.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "807c457b3b7df9d1f23b1aad7f9c9a22",
+          "sha256": "ce479e88e697dc088297a5781daa2e812aa0dc888dc439602a308af6f4ff09e8"
+        },
+        "downloads": -1,
+        "filename": "CacheControl-0.12.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "807c457b3b7df9d1f23b1aad7f9c9a22",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 13815,
+        "upload_time": "2017-01-30T05:05:38",
+        "url": "https://files.pythonhosted.org/packages/41/ae/b9c375b001f13d73c0d8eba2264f6de955769f7cef9140d7fc192814255e/CacheControl-0.12.0.tar.gz"
+      }
+    ],
+    "0.12.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c6c5944d3a6f73bb752a4b4e2e1ffca5",
+          "sha256": "99c1506b98d53c222493e0ff65904c91aaedd7c8e235cb4f00287ddbbb597072"
+        },
+        "downloads": -1,
+        "filename": "CacheControl-0.12.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c6c5944d3a6f73bb752a4b4e2e1ffca5",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 13939,
+        "upload_time": "2017-03-14T21:42:44",
+        "url": "https://files.pythonhosted.org/packages/3a/f7/075de886ad249f4ca08615ebd8bec9ce995ed6852790b6d9df38ae059e43/CacheControl-0.12.1.tar.gz"
+      }
+    ],
+    "0.12.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "38667f538f36c641eb0b00d0db145823",
+          "sha256": "d7d919830d7edc5f4b355fa678a2ea49e9ccb67966abc373ec20f93f3f471265"
+        },
+        "downloads": -1,
+        "filename": "CacheControl-0.12.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "38667f538f36c641eb0b00d0db145823",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 14327,
+        "upload_time": "2017-03-27T15:49:21",
+        "url": "https://files.pythonhosted.org/packages/d2/6c/221f699710a6a643bd9a4324cf22ffb9fb73a089d2bfbed5fe4694f3caaf/CacheControl-0.12.2.tar.gz"
+      }
+    ],
+    "0.12.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "45bf98a2e3435438dcee89e519b34195",
+          "sha256": "a9fc50e216c7c101f4ec4312f012dea501c2859cb256c7a68186a172ab71f632"
+        },
+        "downloads": -1,
+        "filename": "CacheControl-0.12.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "45bf98a2e3435438dcee89e519b34195",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 14345,
+        "upload_time": "2017-05-25T13:49:06",
+        "url": "https://files.pythonhosted.org/packages/a3/b3/6bb6c1535a283f01fe0c4e9644784756fee2ec080e2a6097f1c59325609e/CacheControl-0.12.3.tar.gz"
+      }
+    ],
+    "0.12.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "464675fc575b3a0b841598cb916be516",
+          "sha256": "a7d21ba4e3633d95ac9fed5be205ee6d1da36bdc4b8914eb7a57ff50b7e5628c"
+        },
+        "downloads": -1,
+        "filename": "CacheControl-0.12.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "464675fc575b3a0b841598cb916be516",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 14471,
+        "upload_time": "2018-01-27T06:24:40",
+        "url": "https://files.pythonhosted.org/packages/98/f5/76619a63f0e4a1d2f5a1792ebc233a395c648c63d3461dc0331479ef120a/CacheControl-0.12.4.tar.gz"
+      }
+    ],
+    "0.12.5": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "f1baef403e8dd68c5a203e2eb23a0f2e",
+          "sha256": "cef77effdf51b43178f6a2d3b787e3734f98ade253fa3187f3bb7315aaa42ff7"
+        },
+        "downloads": -1,
+        "filename": "CacheControl-0.12.5.tar.gz",
+        "has_sig": false,
+        "md5_digest": "f1baef403e8dd68c5a203e2eb23a0f2e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 14383,
+        "upload_time": "2018-06-07T14:53:13",
+        "url": "https://files.pythonhosted.org/packages/5e/f0/2c193ed1f17c97ae539da7e1c2d48b80d8cccb1917163b26a91ca4355aa6/CacheControl-0.12.5.tar.gz"
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "f1baef403e8dd68c5a203e2eb23a0f2e",
+        "sha256": "cef77effdf51b43178f6a2d3b787e3734f98ade253fa3187f3bb7315aaa42ff7"
+      },
+      "downloads": -1,
+      "filename": "CacheControl-0.12.5.tar.gz",
+      "has_sig": false,
+      "md5_digest": "f1baef403e8dd68c5a203e2eb23a0f2e",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 14383,
+      "upload_time": "2018-06-07T14:53:13",
+      "url": "https://files.pythonhosted.org/packages/5e/f0/2c193ed1f17c97ae539da7e1c2d48b80d8cccb1917163b26a91ca4355aa6/CacheControl-0.12.5.tar.gz"
+    }
+  ]
+}
