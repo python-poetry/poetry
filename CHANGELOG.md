@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed transitive extra dependencies being removed when updating a specific dependency.
+
+
 ## [0.12.4] - 2018-10-21
 
 ### Fixed

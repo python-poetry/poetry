@@ -1,0 +1,122 @@
+{
+  "info": {
+    "author": "OpenStack",
+    "author_email": "openstack-dev@lists.openstack.org",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: MacOS",
+      "Operating System :: Microsoft :: Windows :: Windows NT/2000",
+      "Operating System :: POSIX",
+      "Operating System :: POSIX :: Linux",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.3",
+      "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
+    "description": "",
+    "description_content_type": null,
+    "docs_url": "https://pythonhosted.org/lockfile/",
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "http://launchpad.net/pylockfile",
+    "keywords": "",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "lockfile",
+    "package_url": "https://pypi.org/project/lockfile/",
+    "platform": "UNKNOWN",
+    "project_url": "https://pypi.org/project/lockfile/",
+    "project_urls": {
+      "Homepage": "http://launchpad.net/pylockfile"
+    },
+    "release_url": "https://pypi.org/project/lockfile/0.12.2/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "Platform-independent file locking module",
+    "version": "0.12.2"
+  },
+  "last_serial": 2139845,
+  "releases": {
+    "0.12.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "07b04864472c90cdf4452cf250687334",
+          "sha256": "6c3cb24f344923d30b2785d5ad75182c8ea7ac1b6171b08657258ec7429d50fa"
+        },
+        "downloads": -1,
+        "filename": "lockfile-0.12.2-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "07b04864472c90cdf4452cf250687334",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": null,
+        "size": 13564,
+        "upload_time": "2015-11-25T18:29:51",
+        "url": "https://files.pythonhosted.org/packages/c8/22/9460e311f340cb62d26a38c419b1381b8593b0bb6b5d1f056938b086d362/lockfile-0.12.2-py2.py3-none-any.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a6a1a82957a23afdf44cfdd039b65ff9",
+          "sha256": "6aed02de03cba24efabcd600b30540140634fc06cfa603822d508d5361e9f799"
+        },
+        "downloads": -1,
+        "filename": "lockfile-0.12.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "a6a1a82957a23afdf44cfdd039b65ff9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 20874,
+        "upload_time": "2015-11-25T18:29:58",
+        "url": "https://files.pythonhosted.org/packages/17/47/72cb04a58a35ec495f96984dddb48232b551aafb95bde614605b754fe6f7/lockfile-0.12.2.tar.gz"
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "07b04864472c90cdf4452cf250687334",
+        "sha256": "6c3cb24f344923d30b2785d5ad75182c8ea7ac1b6171b08657258ec7429d50fa"
+      },
+      "downloads": -1,
+      "filename": "lockfile-0.12.2-py2.py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "07b04864472c90cdf4452cf250687334",
+      "packagetype": "bdist_wheel",
+      "python_version": "py2.py3",
+      "requires_python": null,
+      "size": 13564,
+      "upload_time": "2015-11-25T18:29:51",
+      "url": "https://files.pythonhosted.org/packages/c8/22/9460e311f340cb62d26a38c419b1381b8593b0bb6b5d1f056938b086d362/lockfile-0.12.2-py2.py3-none-any.whl"
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "a6a1a82957a23afdf44cfdd039b65ff9",
+        "sha256": "6aed02de03cba24efabcd600b30540140634fc06cfa603822d508d5361e9f799"
+      },
+      "downloads": -1,
+      "filename": "lockfile-0.12.2.tar.gz",
+      "has_sig": false,
+      "md5_digest": "a6a1a82957a23afdf44cfdd039b65ff9",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 20874,
+      "upload_time": "2015-11-25T18:29:58",
+      "url": "https://files.pythonhosted.org/packages/17/47/72cb04a58a35ec495f96984dddb48232b551aafb95bde614605b754fe6f7/lockfile-0.12.2.tar.gz"
+    }
+  ]
+}
