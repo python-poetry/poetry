@@ -412,7 +412,7 @@ class Installer:
     def customize_install(self):
         if not self._accept_all:
             print("Before we start, please answer the following questions.")
-            print("You may simple press the Enter key to keave unchanged.")
+            print("You may simply press the Enter key to leave unchanged.")
 
             modify_path = input("Modify PATH variable? ([y]/n) ") or "y"
             if modify_path.lower() in {"n", "no"}:
