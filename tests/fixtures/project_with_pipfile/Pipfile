@@ -1,0 +1,14 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pendulum = "*"
+foo = {git = "https://git.com/foo", ref = "ed2e1d51c893cfc9c9253fe6717be262e6215007"}
+
+[dev-packages]
+pytest = "*"
+
+[requires]
+python_version = "3.6"
