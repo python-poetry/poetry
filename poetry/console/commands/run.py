@@ -47,7 +47,7 @@ class RunCommand(EnvCommand):
         poetry = self.poetry
         package = poetry.package
         path = poetry.file.parent
-        module = Module(package.name, path.as_posix())
+        module = Module(package.name, path.as_posix(), package.packages)
         return module
 
     def merge_application_definition(self, merge_args=True):
