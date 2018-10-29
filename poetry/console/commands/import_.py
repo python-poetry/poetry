@@ -34,7 +34,7 @@ class ImportCommand(Command):
         return self.import_pipfile(from_file)
 
     def import_pipfile(self, pipfile):
-        # When using Pipfile, there's now way to get name and version
+        # When using Pipfile, there's no way to get name and version
         # so ask user to set them on the command line
         name = self.get_required_name()
         if not name:
