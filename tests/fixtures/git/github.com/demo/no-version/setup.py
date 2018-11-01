@@ -1,11 +1,21 @@
 # -*- coding: utf-8 -*-
+import ast
+import os
+
 from setuptools import setup
+
+
+def read_version():
+    with open(os.path.join(os.path.dirname(__file__), "demo", "__init__.py")) as f:
+        for line in f:
+            if line.startswith("__version__ = "):
+                return ast.literal_eval(line[len("__version__ = ") :].strip())
 
 
 kwargs = dict(
     name="demo",
     license="MIT",
-    version="0.1.2",
+    version=read_version(),
     description="Demo project.",
     author="Sébastien Eustace",
     author_email="sebastien@eustace.io",

@@ -1,3 +1,4 @@
+import glob
 import os
 import pkginfo
 
@@ -5,11 +6,13 @@ from pkginfo.distribution import HEADER_ATTRS
 from pkginfo.distribution import HEADER_ATTRS_2_0
 
 from poetry.io import NullIO
+from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
-from poetry.utils._compat import decode
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
 from poetry.utils.env import Env
+from poetry.utils.env import EnvCommandError
+from poetry.utils.setup_reader import SetupReader
 
 from .dependency import Dependency
 
@@ -80,37 +83,91 @@ class DirectoryDependency(Dependency):
 
             try:
                 cwd = base
-                venv = Env.create_venv(NullIO(), cwd=cwd)
+                venv = Env.get(NullIO(), cwd=cwd)
                 venv.run("python", "setup.py", "egg_info")
+            except EnvCommandError:
+                result = SetupReader.read_from_directory(self._full_path)
+                if not result["name"]:
+                    # The name could not be determined
+                    # so we raise an error since it is mandatory
+                    raise RuntimeError(
+                        "Unable to retrieve the package name for {}".format(path)
+                    )
+
+                if not result["version"]:
+                    # The version could not be determined
+                    # so we raise an error since it is mandatory
+                    raise RuntimeError(
+                        "Unable to retrieve the package version for {}".format(path)
+                    )
+
+                package_name = result["name"]
+                package_version = result["version"]
+                python_requires = result["python_requires"]
+                if python_requires is None:
+                    python_requires = "*"
+
+                package_summary = ""
+
+                requires = ""
+                for dep in result["install_requires"]:
+                    requires += dep + "\n"
+
+                if result["extras_require"]:
+                    requires += "\n"
+
+                for extra_name, deps in result["extras_require"].items():
+                    requires += "[{}]\n".format(extra_name)
+
+                    for dep in deps:
+                        requires += dep + "\n"
+
+                    requires += "\n"
+
+                reqs = parse_requires(requires)
+            else:
+                os.chdir(current_dir)
+                # Sometimes pathlib will fail on recursive
+                # symbolic links, so we need to workaround it
+                # and use the glob module instead.
+                # Note that this does not happen with pathlib2
+                # so it's safe to use it for Python < 3.4.
+                if PY35:
+                    egg_info = next(
+                        Path(p)
+                        for p in glob.glob(
+                            os.path.join(str(self._full_path), "**", "*.egg-info"),
+                            recursive=True,
+                        )
+                    )
+                else:
+                    egg_info = next(self._full_path.glob("**/*.egg-info"))
+
+                meta = pkginfo.UnpackedSDist(str(egg_info))
+                package_name = meta.name
+                package_version = meta.version
+                package_summary = meta.summary
+                python_requires = meta.requires_python
+
+                if meta.requires_dist:
+                    reqs = list(meta.requires_dist)
+                else:
+                    reqs = []
+                    requires = egg_info / "requires.txt"
+                    if requires.exists():
+                        with requires.open() as f:
+                            reqs = parse_requires(f.read())
             finally:
                 os.chdir(current_dir)
 
-            egg_info = list(self._full_path.glob("*.egg-info"))[0]
-
-            meta = pkginfo.UnpackedSDist(str(egg_info))
-
-            if meta.requires_dist:
-                reqs = list(meta.requires_dist)
-            else:
-                reqs = []
-                requires = egg_info / "requires.txt"
-                if requires.exists():
-                    with requires.open() as f:
-                        reqs = parse_requires(f.read())
-
-            package = Package(meta.name, meta.version)
-            package.description = meta.summary
+            package = Package(package_name, package_version)
+            package.description = package_summary
 
             for req in reqs:
                 package.requires.append(dependency_from_pep_508(req))
 
-            if meta.requires_python:
-                package.python_versions = meta.requires_python
-
-            if meta.platforms:
-                platforms = [p for p in meta.platforms if p.lower() != "unknown"]
-                if platforms:
-                    package.platform = " || ".join(platforms)
+            if python_requires:
+                package.python_versions = python_requires
 
             self._package = package
 

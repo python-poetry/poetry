@@ -39,6 +39,7 @@ from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.env import Env
+from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
 
 from .exceptions import PackageNotFound
@@ -502,45 +503,40 @@ class PyPiRepository(Repository):
 
                         return info
 
-            # Still nothing, assume no dependencies
-            # We could probably get them by executing
-            # python setup.py egg-info but I don't feel
-            # confortable executing a file just for the sake
-            # of getting dependencies.
-            return info
+            # Still nothing, try reading (without executing it)
+            # the setup.py file.
+            try:
+                return self._inspect_sdist_with_setup(sdist_dir)
+            except Exception as e:
+                self._log(
+                    "An error occurred when reading setup.py or setup.cfg: {}".format(
+                        str(e)
+                    ),
+                    "warning",
+                )
+                return info
 
     def _inspect_sdist_with_setup(self, sdist_dir):
         info = {"requires_python": None, "requires_dist": None}
 
-        setup = sdist_dir / "setup.py"
-        if not setup.exists():
-            return info
+        result = SetupReader.read_from_directory(sdist_dir)
+        requires = ""
+        for dep in result["install_requires"]:
+            requires += dep + "\n"
 
-        venv = Env.create_venv(NullIO())
+        if result["extras_require"]:
+            requires += "\n"
 
-        current_dir = os.getcwd()
-        os.chdir(sdist_dir.as_posix())
+        for extra_name, deps in result["extras_require"].items():
+            requires += "[{}]\n".format(extra_name)
 
-        try:
-            venv.run("python", "setup.py", "egg_info")
+            for dep in deps:
+                requires += dep + "\n"
 
-            egg_info = list(sdist_dir.glob("**/*.egg-info"))[0]
+            requires += "\n"
 
-            meta = pkginfo.UnpackedSDist(str(egg_info))
-            if meta.requires_python:
-                info["requires_python"] = meta.requires_python
-
-            if meta.requires_dist:
-                info["requires_dist"] = list(meta.requires_dist)
-            else:
-                requires = egg_info / "requires.txt"
-                if requires.exists():
-                    with requires.open() as f:
-                        info["requires_dist"] = parse_requires(f.read())
-        except Exception:
-            pass
-
-        os.chdir(current_dir)
+        info["requires_dist"] = parse_requires(requires)
+        info["requires_python"] = result["python_requires"]
 
         return info
 

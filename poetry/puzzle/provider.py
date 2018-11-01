@@ -32,6 +32,8 @@ from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
 from poetry.utils.toml_file import TomlFile
 from poetry.utils.env import Env
+from poetry.utils.env import EnvCommandError
+from poetry.utils.setup_reader import SetupReader
 
 from poetry.vcs.git import Git
 
@@ -213,36 +215,81 @@ class Provider:
                 os.chdir(tmp_dir.as_posix())
 
                 try:
-                    venv.run("python", "setup.py", "egg_info")
-
-                    # Sometimes pathlib will fail on recursive
-                    # symbolic links, so we need to workaround it
-                    # and use the glob module instead.
-                    # Note that this does not happen with pathlib2
-                    # so it's safe to use it for Python < 3.4.
-                    if PY35:
-                        egg_info = next(
-                            Path(p)
-                            for p in glob.glob(
-                                os.path.join(str(tmp_dir), "**", "*.egg-info"),
-                                recursive=True,
-                            )
+                    try:
+                        venv.run("python", "setup.py", "egg_info")
+                    except EnvCommandError:
+                        # Most likely an error with the egg_info command
+                        self.debug(
+                            "<warning>Error executing the egg_info command. Reading setup files.</warning>"
                         )
+                        result = SetupReader.read_from_directory(tmp_dir)
+                        if not result["name"]:
+                            result["name"] = dependency.name
+
+                        if not result["version"]:
+                            # The version could not be determined
+                            # so we raise an error since it is mandatory
+                            raise RuntimeError(
+                                "Unable to retrieve the version for {}".format(
+                                    dependency.name
+                                )
+                            )
+
+                        package_name = result["name"]
+                        package_version = result["version"]
+                        python_requires = result["python_requires"]
+
+                        requires = ""
+                        for dep in result["install_requires"]:
+                            requires += dep + "\n"
+
+                        if result["extras_require"]:
+                            requires += "\n"
+
+                        for extra_name, deps in result["extras_require"].items():
+                            requires += "[{}]\n".format(extra_name)
+
+                            for dep in deps:
+                                requires += dep + "\n"
+
+                            requires += "\n"
+
+                        reqs = parse_requires(requires)
                     else:
-                        egg_info = next(tmp_dir.glob("**/*.egg-info"))
+                        # Sometimes pathlib will fail on recursive
+                        # symbolic links, so we need to workaround it
+                        # and use the glob module instead.
+                        # Note that this does not happen with pathlib2
+                        # so it's safe to use it for Python < 3.4.
+                        if PY35:
+                            egg_info = next(
+                                Path(p)
+                                for p in glob.glob(
+                                    os.path.join(str(tmp_dir), "**", "*.egg-info"),
+                                    recursive=True,
+                                )
+                            )
+                        else:
+                            egg_info = next(tmp_dir.glob("**/*.egg-info"))
 
-                    meta = pkginfo.UnpackedSDist(str(egg_info))
+                        meta = pkginfo.UnpackedSDist(str(egg_info))
 
-                    if meta.requires_dist:
-                        reqs = list(meta.requires_dist)
-                    else:
-                        reqs = []
-                        requires = egg_info / "requires.txt"
-                        if requires.exists():
-                            with requires.open() as f:
-                                reqs = parse_requires(f.read())
+                        package_name = meta.name
+                        package_version = meta.version
+                        python_requires = meta.requires_python
 
-                    package = Package(meta.name, meta.version)
+                        if meta.requires_dist:
+                            reqs = list(meta.requires_dist)
+                        else:
+                            reqs = []
+                            requires = egg_info / "requires.txt"
+                            if requires.exists():
+                                with requires.open() as f:
+                                    reqs = parse_requires(f.read())
+
+                    package = Package(package_name, package_version)
+                    if python_requires:
+                        package.python_versions = python_requires
 
                     for req in reqs:
                         dep = dependency_from_pep_508(req)

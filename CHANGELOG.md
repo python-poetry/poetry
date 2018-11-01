@@ -2,6 +2,10 @@
 
 ## [0.12.5] - 2018-10-26
 
+### Changed
+
+- Poetry will now try to read, without executing, setup files (`setup.py` and/or `setup.cfg`) if the `egg_info` command fails when resolving dependencies.
+
 ### Fixed
 
 - Fixed installation of Poetry git dependencies with a build system.
