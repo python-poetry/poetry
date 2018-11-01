@@ -20,6 +20,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
+exclude = [
+    "**/*.xml"
+]
+
 # Requirements
 [tool.poetry.dependencies]
 python = "^3.6"
