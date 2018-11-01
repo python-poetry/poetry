@@ -25,7 +25,7 @@ pip-log.txt
 /test.py
 /test_*.*
 
-setup.cfg
+/setup.cfg
 MANIFEST.in
 /setup.py
 /docs/site/*
