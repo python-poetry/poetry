@@ -192,6 +192,20 @@ poetry = 'poetry:console.run'
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
 
+## `tasks`
+
+This section describes the tasks that may be run when developing the project inside its virtualenv
+
+```toml
+[tool.poetry.tasks]
+test = 'pytest tests/'
+clean = 'rm -rf temp/'
+```
+
+Here we have two tasks, `test` which will run the project tests and `clean` which will wipe a temporary directory from the project.
+
+These tasks may be used in development only, they will _not_ be available to the users that have installed your package.
+
 ## `extras`
 
 Poetry supports extras to allow expression of:

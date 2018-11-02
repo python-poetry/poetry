@@ -313,11 +313,27 @@ poetry run my-script
 
 Note that this command has no option.
 
+## task
+The `task` command executes the given task inside the project's virtualenv according to its definition in `pyproject.toml`. So if you have some tasks defined like this:
+```toml
+[tool.poetry.tasks]
+lint = "black --check ."
+test = "pytest tests/"
+clean = "rm -rf temp/"
+```
+
+You can execute them like so:
+```bash
+poetry task lint
+poetry task test
+poetry task clean
+```
+
 ## shell
 
-The `shell` command spawns a shell, 
-according to the `$SHELL` environment variable, 
-within the virtual environment. 
+The `shell` command spawns a shell,
+according to the `$SHELL` environment variable,
+within the virtual environment.
 If one doesn't exist yet, it will be created.
 
 ```bash
