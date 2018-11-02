@@ -508,11 +508,11 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed = []
 
-    def run(self, bin, *args):
+    def run(self, bin, *args, **kwargs):
         self.executed.append([bin] + list(args))
 
         if self._execute:
-            return super(NullEnv, self).run(bin, *args)
+            return super(NullEnv, self).run(bin, *args, **kwargs)
 
     def _bin(self, bin):
         return bin

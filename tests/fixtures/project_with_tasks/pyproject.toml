@@ -1,0 +1,9 @@
+[tool.poetry]
+name = "project-with-tasks"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.tasks]
+echo = "echo 'Hello World!' > /tmp/poetry_test_task.txt"

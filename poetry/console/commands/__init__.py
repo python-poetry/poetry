@@ -15,5 +15,6 @@ from .script import ScriptCommand
 from .search import SearchCommand
 from .shell import ShellCommand
 from .show import ShowCommand
+from .task import TaskCommand
 from .update import UpdateCommand
 from .version import VersionCommand

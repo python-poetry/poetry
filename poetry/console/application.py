@@ -30,6 +30,7 @@ from .commands import ScriptCommand
 from .commands import SearchCommand
 from .commands import ShellCommand
 from .commands import ShowCommand
+from .commands import TaskCommand
 from .commands import UpdateCommand
 from .commands import VersionCommand
 
@@ -122,6 +123,7 @@ class Application(BaseApplication):
             SearchCommand(),
             ShellCommand(),
             ShowCommand(),
+            TaskCommand(),
             UpdateCommand(),
             VersionCommand(),
         ]
