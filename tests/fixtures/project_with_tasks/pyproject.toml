@@ -6,4 +6,4 @@ authors = ["Your Name <you@example.com>"]
 license = "MIT"
 
 [tool.poetry.tasks]
-echo = "echo 'Hello World!' > /tmp/poetry_test_task.txt"
+echo = "mkdir .temp && echo 'Hello World!' > .temp/poetry_test_task.txt"

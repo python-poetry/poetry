@@ -12,5 +12,11 @@ def test_task(app):
     tester = CommandTester(command)
 
     tester.execute([("command", command.get_name()), ("task", "echo")])
-    with open("/tmp/poetry_test_task.txt", "r") as f:
-        assert f.read() == "Hello World!\n"
+
+    path = Path(".temp/poetry_test_task.txt")
+    with path.open("r") as f:
+        assert "Hello World!" in f.read()
+
+    # cleanup
+    Path.unlink(path)
+    Path.rmdir(path.parent)
