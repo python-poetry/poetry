@@ -9,6 +9,7 @@
 ### Fixed
 
 - Fixed installation of directory dependencies.
+- Fixed handling of dependencies with a `not in` marker operator.
 
 
 ## [0.12.5] - 2018-10-26

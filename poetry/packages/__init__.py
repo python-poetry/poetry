@@ -105,20 +105,21 @@ def dependency_from_pep_508(name):
                     op = ""
                 elif op == "!=":
                     version += ".*"
-                elif op == "in":
+                elif op in ("in", "not in"):
                     versions = []
                     for v in re.split("[ ,]+", version):
                         split = v.split(".")
                         if len(split) in [1, 2]:
                             split.append("*")
-                            op = ""
+                            op_ = "" if op == "in" else "!="
                         else:
-                            op = "=="
+                            op_ = "==" if op == "in" else "!="
 
-                        versions.append(op + ".".join(split))
+                        versions.append(op_ + ".".join(split))
 
+                    glue = " || " if op == "in" else ", "
                     if versions:
-                        ands.append(" || ".join(versions))
+                        ands.append(glue.join(versions))
 
                     continue
 
