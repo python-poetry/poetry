@@ -10,6 +10,7 @@
 
 - Fixed installation of directory dependencies.
 - Fixed handling of dependencies with a `not in` marker operator.
+- Fixed support for VCS dependencies.
 
 
 ## [0.12.5] - 2018-10-26

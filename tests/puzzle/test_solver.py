@@ -1224,3 +1224,69 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
             {"job": "install", "package": package_b200},
         ],
     )
+
+
+def test_solver_git_dependencies_update(solver, repo, package, installed):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "123456"
+    installed.add_package(demo)
+
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": cleo},
+            {
+                "job": "update",
+                "from": get_package("demo", "0.1.2"),
+                "to": get_package("demo", "0.1.2"),
+            },
+        ],
+    )
+
+    op = ops[2]
+
+    assert op.job_type == "update"
+    assert op.package.source_reference.startswith("9cf87a2")
+    assert op.initial_package.source_reference == "123456"
+
+
+def test_solver_git_dependencies_update_skipped(solver, repo, package, installed):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    installed.add_package(demo)
+
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": cleo},
+            {
+                "job": "install",
+                "package": get_package("demo", "0.1.2"),
+                "skipped": True,
+            },
+        ],
+    )

@@ -7,6 +7,7 @@ from typing import List
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
+from poetry.packages import Package
 from poetry.semver import parse_constraint
 from poetry.version.markers import AnyMarker
 
@@ -55,8 +56,33 @@ class Solver:
             for pkg in self._installed.packages:
                 if package.name == pkg.name:
                     installed = True
-                    # Checking version
-                    if package.version != pkg.version:
+
+                    if pkg.source_type == "git" and package.source_type == "git":
+                        # Trying to find the currently installed version
+                        for locked in self._locked.packages:
+                            if (
+                                locked.name == pkg.name
+                                and locked.source_type == pkg.source_type
+                                and locked.source_url == pkg.source_url
+                                and locked.source_reference == pkg.source_reference
+                            ):
+                                pkg = Package(pkg.name, locked.version)
+                                pkg.source_type = "git"
+                                pkg.source_url = locked.source_url
+                                pkg.source_reference = locked.source_reference
+                                break
+
+                        if (
+                            pkg.source_url != package.source_url
+                            or pkg.source_reference != package.source_reference
+                        ):
+                            operations.append(Update(pkg, package))
+                        else:
+                            operations.append(
+                                Install(package).skip("Already installed")
+                            )
+                    elif package.version != pkg.version:
+                        # Checking version
                         operations.append(Update(pkg, package))
                     else:
                         operations.append(Install(package).skip("Already installed"))

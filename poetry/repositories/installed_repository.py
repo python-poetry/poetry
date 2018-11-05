@@ -19,5 +19,24 @@ class InstalledRepository(Repository):
             if "==" in line:
                 name, version = line.split("==")
                 repo.add_package(Package(name, version, version))
+            elif line.startswith("-e "):
+                line = line[3:].strip()
+                if line.startswith("git+"):
+                    url = line.lstrip("git+")
+                    if "@" in url:
+                        url, rev = url.rsplit("@", 1)
+                    else:
+                        rev = "master"
+
+                    name = url.split("/")[-1].rstrip(".git")
+                    if "#egg=" in rev:
+                        rev, name = rev.split("#egg=")
+
+                    package = Package(name, "0.0.0")
+                    package.source_type = "git"
+                    package.source_url = url
+                    package.source_reference = rev
+
+                    repo.add_package(package)
 
         return repo

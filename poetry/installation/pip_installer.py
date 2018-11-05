@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 
 from subprocess import CalledProcessError
@@ -92,6 +93,12 @@ class PipInstaller(BaseInstaller):
         self.install(target, update=True)
 
     def remove(self, package):
+        # If we have a VCS package, remove its source directory
+        if package.source_type == "git":
+            src_dir = self._env.path / "src" / package.name
+            if src_dir.exists():
+                shutil.rmtree(str(src_dir))
+
         try:
             self.run("uninstall", package.name, "-y")
         except CalledProcessError as e:
@@ -197,21 +204,22 @@ class PipInstaller(BaseInstaller):
 
     def install_git(self, package):
         from poetry.packages import Package
-        from poetry.utils._compat import Path
-        from poetry.utils.helpers import temporary_directory
         from poetry.vcs import Git
 
-        with temporary_directory() as tmp_dir:
-            tmp_dir = Path(tmp_dir)
+        src_dir = self._env.path / "src" / package.name
+        if src_dir.exists():
+            shutil.rmtree(str(src_dir))
 
-            git = Git()
-            git.clone(package.source_url, tmp_dir)
-            git.checkout(package.source_reference, tmp_dir)
+        src_dir.parent.mkdir(exist_ok=True)
 
-            # Now we just need to install from the temporary directory
-            pkg = Package(package.name, package.version)
-            pkg.source_type = "directory"
-            pkg.source_url = str(tmp_dir)
-            pkg.develop = False
+        git = Git()
+        git.clone(package.source_url, src_dir)
+        git.checkout(package.source_reference, src_dir)
 
-            self.install_directory(pkg)
+        # Now we just need to install from the source directory
+        pkg = Package(package.name, package.version)
+        pkg.source_type = "directory"
+        pkg.source_url = str(src_dir)
+        pkg.develop = True
+
+        self.install_directory(pkg)
