@@ -43,14 +43,16 @@ class Builder(object):
         # Checking VCS
         vcs = get_vcs(self._path)
         if not vcs:
-            return []
+            vcs_ignored_files = []
+        else:
+            vcs_ignored_files = vcs.get_ignored_files()
 
         explicitely_excluded = []
         for excluded_glob in self._package.exclude:
             for excluded in self._path.glob(excluded_glob):
                 explicitely_excluded.append(excluded)
 
-        ignored = vcs.get_ignored_files() + explicitely_excluded
+        ignored = vcs_ignored_files + explicitely_excluded
         result = []
         for file in ignored:
             try:
