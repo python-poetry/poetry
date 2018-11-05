@@ -506,7 +506,9 @@ class PyPiRepository(Repository):
             # Still nothing, try reading (without executing it)
             # the setup.py file.
             try:
-                return self._inspect_sdist_with_setup(sdist_dir)
+                info.update(self._inspect_sdist_with_setup(sdist_dir))
+
+                return info
             except Exception as e:
                 self._log(
                     "An error occurred when reading setup.py or setup.cfg: {}".format(
