@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed reading of some `setup.py` files.
+
+
 ## [0.12.6] - 2018-11-05
 
 ### Changed

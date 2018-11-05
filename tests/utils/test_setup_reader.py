@@ -132,3 +132,20 @@ def test_setup_reader_read_setup_kwargs(setup):
     assert expected_install_requires == result["install_requires"]
     assert expected_extras_require == result["extras_require"]
     assert expected_python_requires == result["python_requires"]
+
+
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_setup_reader_read_setup_call_in_main(setup):
+    result = SetupReader.read_from_directory(setup("pyyaml"))
+
+    expected_name = "PyYAML"
+    expected_version = "3.13"
+    expected_install_requires = []
+    expected_extras_require = {}
+    expected_python_requires = None
+
+    assert expected_name == result["name"]
+    assert expected_version == result["version"]
+    assert expected_install_requires == result["install_requires"]
+    assert expected_extras_require == result["extras_require"]
+    assert expected_python_requires == result["python_requires"]

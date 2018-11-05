@@ -40,19 +40,21 @@ class SetupReader(object):
         if isinstance(directory, basestring):
             directory = Path(directory)
 
+        result = cls.DEFAULT.copy()
         for filename in cls.FILES:
             filepath = directory / filename
             if not filepath.exists():
                 continue
 
-            result = getattr(cls(), "read_{}".format(filename.replace(".", "_")))(
+            new_result = getattr(cls(), "read_{}".format(filename.replace(".", "_")))(
                 filepath
             )
 
-            if not cls._is_empty_result(result):
-                return result
+            for key in result.keys():
+                if new_result[key]:
+                    result[key] = new_result[key]
 
-        return cls.DEFAULT
+        return result
 
     @classmethod
     def _is_empty_result(cls, result):  # type: (Dict[str, Any]) -> bool
@@ -146,7 +148,27 @@ class SetupReader(object):
         self, elements
     ):  # type: (List[Any]) -> Tuple[Optional[ast.Call], Optional[List[Any]]]
         funcdefs = []
-        for element in elements:
+        for i, element in enumerate(elements):
+            if isinstance(element, ast.If) and i == len(elements) - 1:
+                # Checking if the last element is an if statement
+                # and if it is 'if __name__ == "__main__"' which
+                # could contain the call to setup()
+                test = element.test
+                if not isinstance(test, ast.Compare):
+                    continue
+
+                left = test.left
+                if not isinstance(left, ast.Name):
+                    continue
+
+                if left.id != "__name__":
+                    continue
+
+                setup_call, body = self._find_sub_setup_call([element])
+                if not setup_call:
+                    continue
+
+                return setup_call, body + elements
             if not isinstance(element, ast.Expr):
                 if isinstance(element, ast.FunctionDef):
                     funcdefs.append(element)
@@ -173,16 +195,18 @@ class SetupReader(object):
         self, elements
     ):  # type: (List[Any]) -> Tuple[Optional[ast.Call], Optional[List[Any]]]
         for element in elements:
-            if not isinstance(element, ast.FunctionDef):
+            if not isinstance(element, (ast.FunctionDef, ast.If)):
                 continue
 
             setup_call = self._find_setup_call(element.body)
-            if setup_call:
+            if setup_call != (None, None):
                 setup_call, body = setup_call
 
                 body = elements + body
 
                 return setup_call, body
+
+        return None, None
 
     def _find_install_requires(
         self, call, body
