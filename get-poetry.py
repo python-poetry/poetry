@@ -690,7 +690,34 @@ class Installer:
         self.set_windows_path_var(path)
 
     def remove_from_unix_path(self):
-        pass
+        # Updating any profile we can on UNIX systems
+        export_string = self.get_export_string()
+
+        addition = "{}\n".format(export_string)
+
+        profiles = self.get_unix_profiles()
+        for profile in profiles:
+            if not os.path.exists(profile):
+                continue
+
+            with open(profile, "r") as f:
+                content = f.readlines()
+
+            if addition not in content:
+                continue
+
+            new_content = []
+            for line in content:
+                if line == addition:
+                    if new_content and not new_content[-1].strip():
+                        new_content = new_content[:-1]
+
+                    continue
+
+                new_content.append(line)
+
+            with open(profile, "w") as f:
+                f.writelines(new_content)
 
     def get_export_string(self):
         path = POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME")
