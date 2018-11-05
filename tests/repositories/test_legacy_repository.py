@@ -10,6 +10,7 @@ from poetry.packages import Dependency
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
+from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 
 
@@ -84,11 +85,13 @@ def test_get_package_information_fallback_read_setup():
         package.description
         == "Jupyter metapackage. Install all the Jupyter components in one go."
     )
-    assert package.requires == [
-        Dependency("notebook", "*"),
-        Dependency("qtconsole", "*"),
-        Dependency("jupyter-console", "*"),
-        Dependency("nbconvert", "*"),
-        Dependency("ipykernel", "*"),
-        Dependency("ipywidgets", "*"),
-    ]
+
+    if PY35:
+        assert package.requires == [
+            Dependency("notebook", "*"),
+            Dependency("qtconsole", "*"),
+            Dependency("jupyter-console", "*"),
+            Dependency("nbconvert", "*"),
+            Dependency("ipykernel", "*"),
+            Dependency("ipywidgets", "*"),
+        ]
