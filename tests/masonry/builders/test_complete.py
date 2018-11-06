@@ -87,7 +87,7 @@ $""".format(
 
         records = decode(zip.read("extended-0.1.dist-info/RECORD"))
 
-        assert re.search(r"\s+extended/extended\..+\.(so|pyd)", records) is not None
+        assert re.search(r"\s+extended/extended.*\.(so|pyd)", records) is not None
     finally:
         zip.close()
 
@@ -144,7 +144,7 @@ $""".format(
 
         records = decode(zip.read("extended-0.1.dist-info/RECORD"))
 
-        assert re.search(r"\s+extended/extended\..+\.(so|pyd)", records) is not None
+        assert re.search(r"\s+extended/extended.*\.(so|pyd)", records) is not None
     finally:
         zip.close()
 
