@@ -6,6 +6,7 @@
 
 - Fixed reading of some `setup.py` files.
 - Fixed a `KeyError` when getting information for packages which require reading setup files.
+- Fixed the building of wheels with C extensions and an `src` layout.
 
 
 ## [0.12.6] - 2018-11-05

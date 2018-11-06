@@ -309,6 +309,21 @@ def test_with_c_extensions():
         assert "extended-0.1/extended/extended.c" in tar.getnames()
 
 
+def test_with_c_extensions_src_layout():
+    poetry = Poetry.create(project("src_extended"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    builder.build()
+
+    sdist = fixtures_dir / "src_extended" / "dist" / "extended-0.1.tar.gz"
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "extended-0.1/build.py" in tar.getnames()
+        assert "extended-0.1/src/extended/extended.c" in tar.getnames()
+
+
 def test_with_src_module_file():
     poetry = Poetry.create(project("source_file"))
 
