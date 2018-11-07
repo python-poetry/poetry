@@ -170,6 +170,17 @@ def test_allows_any(
     assert range.allows_any(VersionRange(v123, v234).union(v300))
     assert not range.allows_any(VersionRange(v234, v300).union(v010))
 
+    # pre-release min does not allow lesser than itself
+    range = VersionRange(Version.parse("1.9b1"), include_min=True)
+    assert not range.allows_any(
+        VersionRange(
+            Version.parse("1.8.0"),
+            Version.parse("1.9.0"),
+            include_min=True,
+            always_include_max_prerelease=True,
+        )
+    )
+
 
 def test_intersect(v114, v123, v124, v200, v250, v300):
     # two overlapping ranges

@@ -7,6 +7,8 @@ environment:
     - PYTHON: "C:/Python27-x64"
     - PYTHON: "C:/Python35-x64"
     - PYTHON: "C:/Python36-x64"
+    - PYTHON: "C:/Python37-x64"
+
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
@@ -15,8 +17,9 @@ install:
   # about it being out of date.
   - "python -m pip install --disable-pip-version-check --user --upgrade pip"
 
-  # Create poetry virtualenv
-  - "python -m pip install poetry --pre"
+  # Installing Poetry
+  - "python get-poetry.py --preview -y"
+  - "SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%"
 
   # Install dependencies
   - "poetry install -v"

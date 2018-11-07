@@ -1,22 +1,22 @@
 {%- if nav_item.url %}
-    <a class="{% if nav_item.active%}current{%endif%}" href="{{ nav_item.url }}">{{ nav_item.title }}</a>
+<a class="{% if nav_item.active%}current{%endif%}" href="{{ base_url }}/{{ nav_item.url }}">{{ nav_item.title }}</a>
 {%- else %}
-    <span class="caption-text">{{ nav_item.title }}</span>
+<span class="caption-text">{{ nav_item.title }}</span>
 {%- endif %}
 
 {%- if nav_item == page or nav_item.children %}
-    <ul class="subnav">
-        {%- if nav_item == page %}
-            {% include 'toc.html' %}
-        {%- endif %}
-        {%- if nav_item.children %}
-            {%- set navlevel = navlevel + 1%}
-            {%- for nav_item in nav_item.children %}
-                <li class="{% if navlevel > 2 %}toctree-l{{ navlevel }}{% endif %}{% if nav_item.active%} current{%endif%}">
-                    {% include 'nav.html' %}
-                </li>
-            {%- endfor %}
-            {%- set navlevel = navlevel - 1%}
-        {%- endif %}
-    </ul>
+<ul class="subnav">
+    {%- if nav_item == page %}
+    {% include 'toc.html' %}
+    {%- endif %}
+    {%- if nav_item.children %}
+    {%- set navlevel = navlevel + 1%}
+    {%- for nav_item in nav_item.children %}
+    <li class="{% if navlevel > 2 %}toctree-l{{ navlevel }}{% endif %}{% if nav_item.active%} current{%endif%}">
+        {% include 'nav.html' %}
+    </li>
+    {%- endfor %}
+    {%- set navlevel = navlevel - 1%}
+    {%- endif %}
+</ul>
 {%- endif %}

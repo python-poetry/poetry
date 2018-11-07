@@ -10,7 +10,7 @@ license = "MIT"
 readme = "README.md"
 
 homepage = "https://poetry.eustace.io/"
-repository = "https://github.com/sdispater/poet"
+repository = "https://github.com/sdispater/poetry"
 documentation = "https://poetry.eustace.io/docs"
 
 keywords = ["packaging", "dependency", "poetry"]

@@ -183,6 +183,9 @@
                         },
                         {
                             "$ref": "#/definitions/path-dependency"
+                        },
+                        {
+                            "$ref": "#/definitions/multiple-constraints-dependency"
                         }
                     ]
                 }
@@ -342,6 +345,64 @@
                 "develop": {
                     "type": "boolean",
                     "description": "Whether to install the dependency in development mode."
+                }
+            }
+        },
+        "multiple-constraints-dependency": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "oneOf": [
+                    {
+                        "$ref": "#/definitions/dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/long-dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/git-dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/file-dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/path-dependency"
+                    }
+                ]
+            }
+        },
+        "scripts": {
+            "type": "object",
+            "patternProperties": {
+                "^[a-zA-Z-_.0-9]+$": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/script"
+                        },
+                        {
+                            "$ref": "#/definitions/extra-script"
+                        }
+                    ]
+                }
+            }
+        },
+        "script": {
+            "type": "string",
+            "description": "A simple script pointing to a callable object."
+        },
+        "extra-script": {
+            "type": "object",
+            "description": "A script that should be installed only if extras are activated.",
+            "properties": {
+                "callable": {
+                    "$ref": "#/definitions/script"
+                },
+                "extras": {
+                    "type": "array",
+                    "description": "The required extras for this script.",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

@@ -25,13 +25,13 @@ pip-log.txt
 /test.py
 /test_*.*
 
-setup.cfg
+/setup.cfg
 MANIFEST.in
 /setup.py
 /docs/site/*
-pyproject.lock
 /tests/fixtures/simple_project/setup.py
 /tests/fixtures/project_with_extras/setup.py
 .mypy_cache
 
 .venv
+/releases/*

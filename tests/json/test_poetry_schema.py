@@ -18,4 +18,4 @@ def test_path_dependencies(base_object):
     base_object["dependencies"].update({"foo": {"path": "../foo"}})
     base_object["dev-dependencies"].update({"foo": {"path": "../foo"}})
 
-    assert validate_object(base_object, "poetry-schema") is None
+    assert len(validate_object(base_object, "poetry-schema")) == 0

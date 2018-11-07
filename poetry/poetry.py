@@ -1,13 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import json
+import shutil
+
+from typing import Dict
+from typing import List
 
 from .__version__ import __version__
 from .config import Config
 from .exceptions import InvalidProjectFile
 from .json import validate_object
-from .json import ValidationError
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
@@ -35,6 +37,7 @@ class Poetry:
         self._local_config = local_config
         self._locker = locker
         self._config = Config.create("config.toml")
+        self._auth_config = Config.create("auth.toml")
 
         # Configure sources
         self._pool = Pool()
@@ -63,6 +66,14 @@ class Poetry:
     @property
     def pool(self):  # type: () -> Pool
         return self._pool
+
+    @property
+    def config(self):  # type: () -> Config
+        return self._config
+
+    @property
+    def auth_config(self):  # type: () -> Config
+        return self._auth_config
 
     @classmethod
     def create(cls, cwd):  # type: (Path) -> Poetry
@@ -104,7 +115,13 @@ class Poetry:
         package.description = local_config.get("description", "")
         package.homepage = local_config.get("homepage")
         package.repository_url = local_config.get("repository")
-        package.license = local_config.get("license")
+        package.documentation_url = local_config.get("documentation")
+        try:
+            license_ = license_by_id(local_config.get("license", ""))
+        except ValueError:
+            license_ = None
+
+        package.license = license_
         package.keywords = local_config.get("keywords", [])
         package.classifiers = local_config.get("classifiers", [])
 
@@ -120,10 +137,22 @@ class Poetry:
                     package.python_versions = constraint
                     continue
 
+                if isinstance(constraint, list):
+                    for _constraint in constraint:
+                        package.add_dependency(name, _constraint)
+
+                    continue
+
                 package.add_dependency(name, constraint)
 
         if "dev-dependencies" in local_config:
             for name, constraint in local_config["dev-dependencies"].items():
+                if isinstance(constraint, list):
+                    for _constraint in constraint:
+                        package.add_dependency(name, _constraint)
+
+                    continue
+
                 package.add_dependency(name, constraint, category="dev")
 
         extras = local_config.get("extras", {})
@@ -153,19 +182,28 @@ class Poetry:
         if "packages" in local_config:
             package.packages = local_config["packages"]
 
-        locker = Locker(poetry_file.with_suffix(".lock"), local_config)
+        # Moving lock if necessary (pyproject.lock -> poetry.lock)
+        lock = poetry_file.parent / "poetry.lock"
+        if not lock.exists():
+            # Checking for pyproject.lock
+            old_lock = poetry_file.with_suffix(".lock")
+            if old_lock.exists():
+                shutil.move(str(old_lock), str(lock))
+
+        locker = Locker(poetry_file.parent / "poetry.lock", local_config)
 
         return cls(poetry_file, local_config, package, locker)
 
     @classmethod
-    def check(cls, config, strict=False):  # type: (dict, bool) -> bool
+    def check(cls, config, strict=False):  # type: (dict, bool) -> Dict[str, List[str]]
         """
         Checks the validity of a configuration
         """
-        try:
-            validate_object(config, "poetry-schema")
-        except ValidationError as e:
-            raise InvalidProjectFile(str(e))
+        result = {"errors": [], "warnings": []}
+        # Schema validation errors
+        validation_errors = validate_object(config, "poetry-schema")
+
+        result["errors"] += validation_errors
 
         if strict:
             # If strict, check the file more thoroughly
@@ -176,6 +214,30 @@ class Poetry:
                 try:
                     license_by_id(license)
                 except ValueError:
-                    raise InvalidProjectFile("Invalid license")
+                    result["errors"].append("{} is not a valid license".format(license))
 
-        return True
+            if "dependencies" in config:
+                python_versions = config["dependencies"]["python"]
+                if python_versions == "*":
+                    result["warnings"].append(
+                        "A wildcard Python dependency is ambiguous. "
+                        "Consider specifying a more explicit one."
+                    )
+
+            # Checking for scripts with extras
+            if "scripts" in config:
+                scripts = config["scripts"]
+                for name, script in scripts.items():
+                    if not isinstance(script, dict):
+                        continue
+
+                    extras = script["extras"]
+                    for extra in extras:
+                        if extra not in config["extras"]:
+                            result["errors"].append(
+                                'Script "{}" requires extra "{}" which is not defined.'.format(
+                                    name, extra
+                                )
+                            )
+
+        return result

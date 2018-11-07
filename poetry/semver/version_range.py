@@ -12,8 +12,23 @@ class VersionRange(VersionConstraint):
         include_max=False,
         always_include_max_prerelease=False,
     ):
+        full_max = max
+        if (
+            always_include_max_prerelease
+            and not include_max
+            and not full_max.is_prerelease()
+            and not full_max.build
+            and (
+                min is None
+                or not min.is_prerelease()
+                or not min.equals_without_prerelease(full_max)
+            )
+        ):
+            full_max = full_max.first_prerelease
+
         self._min = min
         self._max = max
+        self._full_max = full_max
         self._include_min = include_min
         self._include_max = include_max
 
@@ -24,6 +39,10 @@ class VersionRange(VersionConstraint):
     @property
     def max(self):
         return self._max
+
+    @property
+    def full_max(self):
+        return self._full_max
 
     @property
     def include_min(self):
@@ -323,10 +342,10 @@ class VersionRange(VersionConstraint):
         if self.max is None or other.min is None:
             return False
 
-        if self.max < other.min:
+        if self.full_max < other.min:
             return True
 
-        if self.max > other.min:
+        if self.full_max > other.min:
             return False
 
         return not self.include_max or not other.include_min

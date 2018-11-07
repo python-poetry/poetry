@@ -41,12 +41,22 @@ from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name, get_http_basic_auth
 from poetry.version.markers import InvalidMarker
 
+from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
 
 
 class Page:
 
-    VERSION_REGEX = re.compile("(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
+    VERSION_REGEX = re.compile(r"(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
+    SUPPORTED_FORMATS = [
+        ".tar.gz",
+        ".whl",
+        ".zip",
+        ".tar.bz2",
+        ".tar.xz",
+        ".tar.Z",
+        ".tar",
+    ]
 
     def __init__(self, url, content, headers):
         if not url.endswith("/"):
@@ -96,7 +106,7 @@ class Page:
 
                 link = Link(url, self, requires_python=pyrequire)
 
-                if link.ext not in [".tar.gz", ".whl", ".zip"]:
+                if link.ext not in self.SUPPORTED_FORMATS:
                     continue
 
                 yield link
@@ -162,7 +172,9 @@ class LegacyRepository(PyPiRepository):
 
         url_parts = urlparse.urlparse(self._url)
         if not url_parts.username:
-            self._session.auth = get_http_basic_auth(self.name)
+            self._session.auth = get_http_basic_auth(
+                Config.create("auth.toml"), self.name
+            )
 
         self._disable_cache = disable_cache
 
@@ -286,7 +298,7 @@ class LegacyRepository(PyPiRepository):
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:
-            raise ValueError('No package named "{}"'.format(name))
+            raise PackageNotFound('No package named "{}"'.format(name))
 
         data = {
             "name": name,
@@ -298,6 +310,12 @@ class LegacyRepository(PyPiRepository):
         }
 
         links = list(page.links_for_version(Version.parse(version)))
+        if not links:
+            raise PackageNotFound(
+                'No valid distribution links found for package: "{}" version: "{}"'.format(
+                    name, version
+                )
+            )
         urls = {}
         hashes = []
         default_link = links[0]
@@ -306,7 +324,10 @@ class LegacyRepository(PyPiRepository):
                 urls["bdist_wheel"] = link.url
             elif link.filename.endswith(".tar.gz"):
                 urls["sdist"] = link.url
-            elif link.filename.endswith((".zip", ".bz2")) and "sdist" not in urls:
+            elif (
+                link.filename.endswith((".zip", ".bz2", ".xz", ".Z", ".tar"))
+                and "sdist" not in urls
+            ):
                 urls["sdist"] = link.url
 
             hash = link.hash

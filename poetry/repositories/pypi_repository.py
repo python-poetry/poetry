@@ -38,9 +38,11 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.venv import Venv
+from poetry.utils.env import Env
+from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
 
+from .exceptions import PackageNotFound
 from .repository import Repository
 
 
@@ -48,6 +50,9 @@ logger = logging.getLogger(__name__)
 
 
 class PyPiRepository(Repository):
+
+    CACHE_VERSION = parse_constraint("0.12.0")
+
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
         self._name = "PyPI"
         self._url = url
@@ -222,7 +227,7 @@ class PyPiRepository(Repository):
     def _get_package_info(self, name):  # type: (str) -> dict
         data = self._get("pypi/{}/json".format(name))
         if data is None:
-            raise ValueError("Package [{}] not found.".format(name))
+            raise PackageNotFound("Package [{}] not found.".format(name))
 
         return data
 
@@ -236,16 +241,29 @@ class PyPiRepository(Repository):
         if self._disable_cache:
             return self._get_release_info(name, version)
 
-        return self._cache.remember_forever(
+        cached = self._cache.remember_forever(
             "{}:{}".format(name, version), lambda: self._get_release_info(name, version)
         )
+
+        cache_version = cached.get("_cache_version", "0.0.0")
+        if parse_constraint(cache_version) != self.CACHE_VERSION:
+            # The cache must be updated
+            self._log(
+                "The cache for {} {} is outdated. Refreshing.".format(name, version),
+                level="debug",
+            )
+            cached = self._get_release_info(name, version)
+
+            self._cache.forever("{}:{}".format(name, version), cached)
+
+        return cached
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         self._log("Getting info for {} ({}) from PyPI".format(name, version), "debug")
 
         json_data = self._get("pypi/{}/{}/json".format(name, version))
         if json_data is None:
-            raise ValueError("Package [{}] not found.".format(name))
+            raise PackageNotFound("Package [{}] not found.".format(name))
 
         info = json_data["info"]
         data = {
@@ -256,7 +274,7 @@ class PyPiRepository(Repository):
             "requires_dist": info["requires_dist"],
             "requires_python": info["requires_python"],
             "digests": [],
-            "_fallback": False,
+            "_cache_version": str(self.CACHE_VERSION),
         }
 
         try:
@@ -290,7 +308,7 @@ class PyPiRepository(Repository):
 
                 # If bdist_wheel, check if it's universal
                 filename = url["filename"]
-                if not re.search("-py2\.py3-none-any.whl", filename):
+                if not re.search(r"-py2\.py3-none-any.whl", filename):
                     continue
 
                 urls[dist_type] = url["url"]
@@ -310,6 +328,23 @@ class PyPiRepository(Repository):
                     del urls["sdist"]
 
             if not urls:
+                # If we don't have urls, we try to take the first one
+                # we find and go from there
+                if not json_data["urls"]:
+                    return data
+
+                for url in json_data["urls"]:
+                    # Only get sdist and universal wheels if they exist
+                    dist_type = url["packagetype"]
+
+                    if dist_type != "bdist_wheel":
+                        continue
+
+                    urls[url["packagetype"]] = url["url"]
+
+                    break
+
+            if not urls or "bdist_wheel" not in urls:
                 # If we don't have urls, we try to take the first one
                 # we find and go from there
                 if not json_data["urls"]:
@@ -468,45 +503,42 @@ class PyPiRepository(Repository):
 
                         return info
 
-            # Still nothing, assume no dependencies
-            # We could probably get them by executing
-            # python setup.py egg-info but I don't feel
-            # confortable executing a file just for the sake
-            # of getting dependencies.
-            return info
+            # Still nothing, try reading (without executing it)
+            # the setup.py file.
+            try:
+                info.update(self._inspect_sdist_with_setup(sdist_dir))
+
+                return info
+            except Exception as e:
+                self._log(
+                    "An error occurred when reading setup.py or setup.cfg: {}".format(
+                        str(e)
+                    ),
+                    "warning",
+                )
+                return info
 
     def _inspect_sdist_with_setup(self, sdist_dir):
         info = {"requires_python": None, "requires_dist": None}
 
-        setup = sdist_dir / "setup.py"
-        if not setup.exists():
-            return info
+        result = SetupReader.read_from_directory(sdist_dir)
+        requires = ""
+        for dep in result["install_requires"]:
+            requires += dep + "\n"
 
-        venv = Venv.create(NullIO())
+        if result["extras_require"]:
+            requires += "\n"
 
-        current_dir = os.getcwd()
-        os.chdir(sdist_dir.as_posix())
+        for extra_name, deps in result["extras_require"].items():
+            requires += "[{}]\n".format(extra_name)
 
-        try:
-            venv.run("python", "setup.py", "egg_info")
+            for dep in deps:
+                requires += dep + "\n"
 
-            egg_info = list(sdist_dir.glob("**/*.egg-info"))[0]
+            requires += "\n"
 
-            meta = pkginfo.UnpackedSDist(str(egg_info))
-            if meta.requires_python:
-                info["requires_python"] = meta.requires_python
-
-            if meta.requires_dist:
-                info["requires_dist"] = list(meta.requires_dist)
-            else:
-                requires = egg_info / "requires.txt"
-                if requires.exists():
-                    with requires.open() as f:
-                        info["requires_dist"] = parse_requires(f.read())
-        except Exception:
-            pass
-
-        os.chdir(current_dir)
+        info["requires_dist"] = parse_requires(requires)
+        info["requires_python"] = result["python_requires"]
 
         return info
 

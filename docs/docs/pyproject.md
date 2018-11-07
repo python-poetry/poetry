@@ -48,7 +48,7 @@ Authors must be in the form `name <email>`.
 
 ## readme
 
-The readme file of the package. **Required**
+The readme file of the package. **Optional**
 
 The file can be either `README.rst` or `README.md`.
 
@@ -67,6 +67,25 @@ An URL to the documentation of the project. **Optional**
 ## keywords
 
 A list of keywords (max: 5) that the package is related to. **Optional**
+
+## classifiers
+
+A list of PyPI [trove classifiers](https://pypi.org/classifiers/) that describe the project. **Optional**
+
+```toml
+[tool.poetry]
+# ...
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+```
+
+!!!note
+
+    Note that Python classifiers are still automatically added for you and are determined by your `python` requirement.
+
+    The `license` property will also set the License classifier automatically.
 
 ## packages
 
@@ -207,7 +226,7 @@ poetry install -E mysql -E pgsql
 
 ## `plugins`
 
-Poetry supports arbitrary plugins wich work similarly to
+Poetry supports arbitrary plugins which work similarly to
 [setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
 To match the example in the setuptools documentation, you would use the following:
 
@@ -217,3 +236,22 @@ To match the example in the setuptools documentation, you would use the followin
 [tool.poetry.plugins."blogtool.parsers"]
 ".rst" = "some_module:SomeClass"
 ```
+
+## Poetry and PEP-517
+
+[PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way
+to define alternative build systems to build a Python project.
+
+Poetry is compliant with PEP-517 so if you use Poetry to manage your Python
+project you should reference it in the `build-system` section of the `pyproject.toml`
+file like so:
+
+```toml
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+```
+
+!!!note
+
+    When using the `new` or `init` command this section will be automatically added.

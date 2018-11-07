@@ -1,7 +1,10 @@
 import json
+import pytest
 import shutil
 
+from poetry.packages import Dependency
 from poetry.repositories.pypi_repository import PyPiRepository
+from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 
 
@@ -68,7 +71,10 @@ def test_package():
     win_inet = package.extras["socks"][0]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
-    assert win_inet.platform == "win32"
+    assert str(win_inet.marker) == (
+        'sys_platform == "win32" and (python_version == "2.7" '
+        'or python_version == "2.6") and extra == "socks"'
+    )
 
 
 def test_fallback_on_downloading_packages():
@@ -101,3 +107,25 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():
     dep = package.requires[0]
     assert dep.name == "futures"
     assert dep.python_versions == "~2.7"
+
+
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_fallback_can_read_setup_to_get_dependencies():
+    repo = MockRepository(fallback=True)
+
+    package = repo.package("sqlalchemy", "1.2.12")
+
+    assert package.name == "sqlalchemy"
+    assert len(package.requires) == 0
+
+    assert package.extras == {
+        "mssql_pymssql": [Dependency("pymssql", "*")],
+        "mssql_pyodbc": [Dependency("pyodbc", "*")],
+        "mysql": [Dependency("mysqlclient", "*")],
+        "oracle": [Dependency("cx_oracle", "*")],
+        "postgresql": [Dependency("psycopg2", "*")],
+        "postgresql_pg8000": [Dependency("pg8000", "*")],
+        "postgresql_psycopg2binary": [Dependency("psycopg2-binary", "*")],
+        "postgresql_psycopg2cffi": [Dependency("psycopg2cffi", "*")],
+        "pymysql": [Dependency("pymysql", "*")],
+    }

@@ -13,7 +13,6 @@ def test_file_dependency_wheel():
     assert dependency.name == "demo"
     assert dependency.pretty_constraint == "0.1.0"
     assert dependency.python_versions == "*"
-    assert dependency.platform == "*"
 
     meta = dependency.metadata
     assert meta.requires_dist == ["pendulum (>=1.4.0.0,<2.0.0.0)"]
@@ -26,7 +25,6 @@ def test_file_dependency_sdist():
     assert dependency.name == "demo"
     assert dependency.pretty_constraint == "0.1.0"
     assert dependency.python_versions == "*"
-    assert dependency.platform == "*"
 
     meta = dependency.metadata
     assert meta.requires_dist == ["pendulum (>=1.4.0.0,<2.0.0.0)"]

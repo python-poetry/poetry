@@ -15,7 +15,7 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import Path
 from poetry.utils._compat import PY2
 from poetry.utils.toml_file import TomlFile
-from poetry.utils.venv import NullVenv
+from poetry.utils.env import NullEnv
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -29,7 +29,7 @@ class Installer(BaseInstaller):
 
 class CustomInstalledRepository(InstalledRepository):
     @classmethod
-    def load(cls, venv):
+    def load(cls, env):
         return cls()
 
 
@@ -63,10 +63,8 @@ class Locker(BaseLocker):
     def _write_lock_data(self, data):
         for package in data["package"]:
             python_versions = str(package["python-versions"])
-            platform = str(package["platform"])
             if PY2:
                 python_versions = python_versions.decode()
-                platform = platform.decode()
                 if "requirements" in package:
                     requirements = {}
                     for key, value in package["requirements"].items():
@@ -75,7 +73,6 @@ class Locker(BaseLocker):
                     package["requirements"] = requirements
 
             package["python-versions"] = python_versions
-            package["platform"] = platform
 
         self._written_data = data
 
@@ -121,13 +118,13 @@ def locker():
 
 
 @pytest.fixture()
-def venv():
-    return NullVenv()
+def env():
+    return NullEnv()
 
 
 @pytest.fixture()
-def installer(package, pool, locker, venv, installed):
-    return Installer(NullIO(), venv, package, locker, pool, installed=installed)
+def installer(package, pool, locker, env, installed):
+    return Installer(NullIO(), env, package, locker, pool, installed=installed)
 
 
 def fixture(name):
@@ -220,6 +217,75 @@ def test_run_update_after_removing_dependencies(
     expected = fixture("with-dependencies")
 
     assert locker.written_data == expected
+
+    installs = installer.installer.installs
+    assert len(installs) == 0
+
+    updates = installer.installer.updates
+    assert len(updates) == 0
+
+    removals = installer.installer.removals
+    assert len(removals) == 1
+
+
+def test_run_install_no_dev(installer, locker, repo, package, installed):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "B",
+                    "version": "1.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": [], "C": []},
+            },
+        }
+    )
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    package_c = get_package("C", "1.2")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    installed.add_package(package_a)
+    installed.add_package(package_b)
+    installed.add_package(package_c)
+
+    package.add_dependency("A", "~1.0")
+    package.add_dependency("B", "~1.1")
+    package.add_dependency("C", "~1.2", category="dev")
+
+    installer.dev_mode(False)
+    installer.run()
 
     installs = installer.installer.installs
     assert len(installs) == 0
@@ -583,7 +649,7 @@ def test_installer_with_pypi_repository(package, locker, installed):
     pool.add_repository(MockRepository())
 
     installer = Installer(
-        NullIO(), NullVenv(), package, locker, pool, installed=installed
+        NullIO(), NullEnv(), package, locker, pool, installed=installed
     )
 
     package.add_dependency("pytest", "^3.5", category="dev")
@@ -616,10 +682,31 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     package.add_dependency("demo", {"path": str(file_path), "extras": ["extras_a"]})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cachy", "0.2.0"))
 
     installer.run()
 
     expected = fixture("with-directory-dependency-poetry")
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 2
+
+
+def test_run_installs_with_local_poetry_directory_transitive(
+    installer, locker, repo, package, tmpdir
+):
+    file_path = Path(
+        "tests/fixtures/directory/project_with_transitive_directory_dependencies/"
+    )
+    package.add_dependency("demo", {"path": str(file_path)})
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    installer.run()
+
+    expected = fixture("with-directory-dependency-poetry-transitive")
 
     assert locker.written_data == expected
 
@@ -1143,3 +1230,34 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
     assert len(updates) == 1
     removals = installer.installer.removals
     assert len(removals) == 0
+
+
+@pytest.mark.skip(
+    "This is not working at the moment due to limitations in the resolver"
+)
+def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
+    installer, locker, repo, package, installed
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency("A", {"version": "^1.0", "python": "^3.5"})
+
+    package_a101 = get_package("A", "1.0.1")
+    package_a101.python_versions = ">=3.6"
+
+    package_a100 = get_package("A", "1.0.0")
+    package_a100.python_versions = ">=3.5"
+
+    repo.add_package(package_a100)
+    repo.add_package(package_a101)
+
+    installer.run()
+
+    expected = fixture("with-conditional-dependency")
+    assert locker.written_data == expected
+
+    installs = installer.installer.installs
+
+    if sys.version_info >= (3, 5, 0):
+        assert len(installs) == 1
+    else:
+        assert len(installs) == 0

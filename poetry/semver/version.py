@@ -182,6 +182,10 @@ class Version(VersionRange):
         return self
 
     @property
+    def full_max(self):
+        return self
+
+    @property
     def include_min(self):
         return True
 
@@ -265,6 +269,13 @@ class Version(VersionRange):
 
         return self
 
+    def equals_without_prerelease(self, other):  # type: (Version) -> bool
+        return (
+            self.major == other.major
+            and self.minor == other.minor
+            and self.patch == other.patch
+        )
+
     def _increment_major(self):  # type: () -> Version
         return Version(self.major + 1, 0, 0, precision=self._precision)
 
@@ -280,7 +291,7 @@ class Version(VersionRange):
         if not pre:
             return
 
-        m = re.match("(?i)^(a|alpha|b|beta|c|pre|rc|dev)[-.]?(\d+)?$", pre)
+        m = re.match(r"(?i)^(a|alpha|b|beta|c|pre|rc|dev)[-.]?(\d+)?$", pre)
         if not m:
             return
 

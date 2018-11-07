@@ -5,7 +5,6 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
-platform = "*"
 
 [[package]]
 name = "B"
@@ -14,7 +13,6 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
-platform = "*"
 
 [[package]]
 name = "C"
@@ -23,11 +21,9 @@ description = ""
 category = "main"
 optional = false
 python-versions = "~2.7 || ^3.3"
-platform = "*"
 
 [metadata]
 python-versions = "~2.7 || ^3.4"
-platform = "*"
 content-hash = "123456789"
 
 [metadata.hashes]

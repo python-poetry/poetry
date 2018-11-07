@@ -21,7 +21,10 @@ def format_python_constraint(constraint):
     This helper will help in transforming
     disjunctive constraint into proper constraint.
     """
-    if isinstance(constraint, Version) and constraint.precision < 3:
+    if isinstance(constraint, Version):
+        if constraint.precision >= 3:
+            return "=={}".format(str(constraint))
+
         # Transform 3.6 or 3
         if constraint.precision == 2:
             # 3.6

@@ -7,7 +7,7 @@ from poetry.io import NullIO
 from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
-from poetry.packages.constraints.generic_constraint import GenericConstraint
+from poetry.packages.constraints import parse_constraint as parse_generic_constraint
 from poetry.puzzle import Solver
 from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
@@ -28,14 +28,14 @@ class Installer:
     def __init__(
         self,
         io,
-        venv,
+        env,
         package,  # type: Package
         locker,  # type: Locker
         pool,  # type: Pool
         installed=None,  # type: (Union[InstalledRepository, None])
     ):
         self._io = io
-        self._venv = venv
+        self._env = env
         self._package = package
         self._locker = locker
         self._pool = pool
@@ -182,8 +182,13 @@ class Installer:
 
         self._populate_local_repo(local_repo, ops, locked_repository)
 
-        with self._package.with_python_versions(
-            ".".join([str(i) for i in self._venv.version_info[:3]])
+        root = self._package
+        if not self.is_dev_mode():
+            root = root.clone()
+            del root.dev_requires[:]
+
+        with root.with_python_versions(
+            ".".join([str(i) for i in self._env.version_info[:3]])
         ):
             # We resolve again by only using the lock file
             pool = Pool()
@@ -205,11 +210,7 @@ class Installer:
                 whitelist.append(pkg.name)
 
             solver = Solver(
-                self._package,
-                pool,
-                self._installed_repository,
-                locked_repository,
-                NullIO(),
+                root, pool, self._installed_repository, locked_repository, NullIO()
             )
 
             ops = solver.solve(use_latest=whitelist)
@@ -457,30 +458,14 @@ class Installer:
                 if op.skipped:
                     op.unskip()
 
-            python = Version.parse(
-                ".".join([str(i) for i in self._venv.version_info[:3]])
+            current_python = parse_constraint(
+                ".".join(str(v) for v in self._env.version_info[:3])
             )
-            if "python" in package.requirements:
-                python_constraint = parse_constraint(package.requirements["python"])
-                if not python_constraint.allows(python):
-                    # Incompatible python versions
-                    op.skip("Not needed for the current python version")
-                    continue
-
-            if not package.python_constraint.allows(python):
-                op.skip("Not needed for the current python version")
+            if not package.python_constraint.allows(
+                current_python
+            ) or not self._env.is_valid_for_marker(package.marker):
+                op.skip("Not needed for the current environment")
                 continue
-
-            if "platform" in package.requirements:
-                platform_constraint = GenericConstraint.parse(
-                    package.requirements["platform"]
-                )
-                if not platform_constraint.matches(
-                    GenericConstraint("=", sys.platform)
-                ):
-                    # Incompatible systems
-                    op.skip("Not needed for the current platform")
-                    continue
 
             if self._update:
                 extras = {}
@@ -498,7 +483,7 @@ class Installer:
                     op.skip("Not required")
 
             # If the package is a dev package and dev packages
-            # are not requests, we skip it
+            # are not requested, we skip it
             if package.category == "dev" and not self.is_dev_mode():
                 op.skip("Dev dependencies not requested")
 
@@ -535,7 +520,7 @@ class Installer:
         return _extra_packages(extra_packages)
 
     def _get_installer(self):  # type: () -> BaseInstaller
-        return PipInstaller(self._venv, self._io)
+        return PipInstaller(self._env, self._io)
 
     def _get_installed(self):  # type: () -> InstalledRepository
-        return InstalledRepository.load(self._venv)
+        return InstalledRepository.load(self._env)

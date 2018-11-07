@@ -60,9 +60,9 @@ class Uploader:
             dist.glob(
                 "{}-{}-*.whl".format(
                     re.sub(
-                        "[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
+                        r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
                     ),
-                    re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE),
+                    re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE),
                 )
             )
         )
@@ -250,7 +250,9 @@ class Uploader:
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / "dist"
-        file = dist / "{}-{}.tar.gz".format(self._package.name, self._package.version)
+        file = dist / "{}-{}.tar.gz".format(
+            self._package.name, normalize_version(self._package.version.text)
+        )
 
         if not file.exists():
             raise RuntimeError('"{0}" does not exist.'.format(file.name))

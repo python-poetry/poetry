@@ -1,5 +1,16 @@
+import pytest
+import shutil
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
+from poetry.packages import Dependency
+from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
+from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 
 
@@ -20,6 +31,12 @@ class MockRepository(LegacyRepository):
 
         with fixture.open() as f:
             return Page(self._url + endpoint, f.read(), {})
+
+    def _download(self, url, dest):
+        filename = urlparse.urlparse(url).path.rsplit("/")[-1]
+        filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
+
+        shutil.copyfile(str(filepath), dest)
 
 
 def test_page_relative_links_path_are_correct():
@@ -42,11 +59,39 @@ def test_page_absolute_links_path_are_correct():
         assert link.path.startswith("/packages/")
 
 
-def test_http_basic_auth_repo(mocker):
-    mock = mocker.patch("poetry.repositories.legacy_repository.get_http_basic_auth")
-    mock.return_value = ("user1", "p4ss")
+def test_sdist_format_support():
+    repo = MockRepository()
+    page = repo._get("/relative")
+    bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
+    assert len(bz2_links) == 1
+    assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
 
+
+def test_missing_version(mocker):
     repo = MockRepository()
 
-    mock.assert_called_once_with("legacy")
-    assert repo._session.auth == ("user1", "p4ss")
+    with pytest.raises(PackageNotFound):
+        repo._get_release_info("missing_version", "1.1.0")
+
+
+def test_get_package_information_fallback_read_setup():
+    repo = MockRepository()
+
+    package = repo.package("jupyter", "1.0.0")
+
+    assert package.name == "jupyter"
+    assert package.version.text == "1.0.0"
+    assert (
+        package.description
+        == "Jupyter metapackage. Install all the Jupyter components in one go."
+    )
+
+    if PY35:
+        assert package.requires == [
+            Dependency("notebook", "*"),
+            Dependency("qtconsole", "*"),
+            Dependency("jupyter-console", "*"),
+            Dependency("nbconvert", "*"),
+            Dependency("ipykernel", "*"),
+            Dependency("ipywidgets", "*"),
+        ]
