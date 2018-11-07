@@ -17,6 +17,7 @@ from poetry.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from poetry.utils.helpers import escape_shell_args
 from poetry.version.markers import BaseMarker
 
 
@@ -270,11 +271,11 @@ class Env(object):
         bin = self._bin(bin)
 
         cmd = [bin] + list(args)
-        shell = kwargs.get("shell", False)
+        shell = kwargs.get("shell", False) or self._is_windows
         call = kwargs.pop("call", False)
 
         if shell:
-            cmd = " ".join(cmd)
+            cmd = " ".join(escape_shell_args(cmd, self._is_windows))
 
         try:
             if self._is_windows:

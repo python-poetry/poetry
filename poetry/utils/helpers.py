@@ -89,3 +89,15 @@ def get_http_basic_auth(
         return repo_auth["username"], repo_auth.get("password")
 
     return None
+
+def escape_shell_args(args, is_windows):
+    quote = "'" if not is_windows else '"'
+
+    escaped_args = []
+    for arg in args:
+        if arg[0] + arg[-1] == "''" or arg[0] + arg[-1] == '""':
+            escaped_args.append(arg)
+        else:
+            escaped_args.append("{}{}{}".format(quote, arg, quote))
+
+    return escaped_args
