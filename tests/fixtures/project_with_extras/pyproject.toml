@@ -13,5 +13,7 @@ cachy = { version = ">=0.2.0", optional = true }
 [tool.poetry.extras]
 extras_a = [ "pendulum" ]
 extras_b = [ "cachy" ]
+extras_c = [ "black" ]
 
 [tool.poetry.dev-dependencies]
+black = { version = "18.9b0", optional = true }

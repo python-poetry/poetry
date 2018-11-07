@@ -163,7 +163,7 @@ class Poetry:
             for req in requirements:
                 req = Dependency(req, "*")
 
-                for dep in package.requires:
+                for dep in package.all_requires:
                     if dep.name == req.name:
                         dep.in_extras.append(extra_name)
                         package.extras[extra_name].append(dep)

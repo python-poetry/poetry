@@ -156,3 +156,21 @@ def test_check_fails():
         )
 
     assert Poetry.check(content) == {"errors": [expected], "warnings": []}
+
+
+def test_poetry_writes_extras_from_dev_dependencies():
+    poetry = Poetry.create(str(fixtures_dir / "project_with_extras"))
+
+    package = poetry.package
+
+    dev_dependencies = {}
+    for dep in package.dev_requires:
+        dev_dependencies[dep.name] = dep
+
+    black = dev_dependencies["black"]
+    assert black.is_optional()
+
+    assert "extras_c" in package.extras
+    extras_c = package.extras["extras_c"]
+    assert len(extras_c) == 1
+    assert extras_c[0].name == "black"
