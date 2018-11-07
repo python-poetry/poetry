@@ -17,3 +17,6 @@ class TomlFile(BaseTOMLFile):
 
     def __getattr__(self, item):
         return getattr(self._path_, item)
+
+    def __str__(self):
+        return str(self._path)

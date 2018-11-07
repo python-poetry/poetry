@@ -153,7 +153,7 @@ There are some things we can notice here:
 `poetry` will also detect if you are inside a virtualenv and install the packages accordingly.
 So, `poetry` can be installed globally and used everywhere.
 
-`poetry` also comes with a full fledged dependency resolution library, inspired by [Molinillo](https://github.com/CocoaPods/Molinillo).
+`poetry` also comes with a full fledged dependency resolution library.
 
 ## Why?
 
@@ -177,7 +177,7 @@ that I don't like.
 
 #### Dependency resolution
 
-The dependency resolution is erratic and will fail even is there is a solution. Let's take an example:
+The dependency resolution is erratic and will fail even if there is a solution. Let's take an example:
 
 ```bash
 pipenv install oslo.utils==1.4.0
@@ -318,11 +318,11 @@ and installs them.
 poetry install
 ```
 
-If there is a `pyproject.lock` file in the current directory,
+If there is a `poetry.lock` file in the current directory,
 it will use the exact versions from there instead of resolving them.
 This ensures that everyone using the library will get the same versions of the dependencies.
 
-If there is no `pyproject.lock` file, Poetry will create one after dependency resolution.
+If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
 You can specify to the command that you do not want the development dependencies installed by passing
 the `--no-dev` option.
@@ -346,14 +346,14 @@ poetry install -E mysql -E pgsql
 
 ### update
 
-In order to get the latest versions of the dependencies and to update the `pyproject.lock` file,
+In order to get the latest versions of the dependencies and to update the `poetry.lock` file,
 you should use the `update` command.
 
 ```bash
 poetry update
 ```
 
-This will resolve all dependencies of the project and write the exact versions into `pyproject.lock`.
+This will resolve all dependencies of the project and write the exact versions into `poetry.lock`.
 
 If you just want to update a few packages and not all, you can list them as such:
 
@@ -364,6 +364,8 @@ poetry update requests toml
 #### Options
 
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--no-dev` : Do not install dev dependencies.
+* `--lock` : Do not perform install (only update the lockfile).
 
 ### add
 
@@ -423,6 +425,7 @@ dependencies:
 
 #### Options
 
+* `--no-dev`: Do not list the dev dependencies.
 * `--tree`: List the dependencies as a tree.
 * `-l|--latest`: Show the latest version.
 *  `-o|--outdated`: Show the latest version but only for packages that are outdated.

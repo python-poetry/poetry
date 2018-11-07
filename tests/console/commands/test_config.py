@@ -4,7 +4,6 @@ import tempfile
 from cleo.testers import CommandTester
 
 from poetry.config import Config
-from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
 

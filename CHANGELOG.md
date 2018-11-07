@@ -1,5 +1,109 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed reading of some `setup.py` files.
+- Fixed a `KeyError` when getting information for packages which require reading setup files.
+- Fixed the building of wheels with C extensions and an `src` layout.
+
+
+## [0.12.6] - 2018-11-05
+
+### Changed
+
+- Poetry will now try to read, without executing, setup files (`setup.py` and/or `setup.cfg`) if the `egg_info` command fails when resolving dependencies.
+
+### Fixed
+
+- Fixed installation of directory dependencies.
+- Fixed handling of dependencies with a `not in` marker operator.
+- Fixed support for VCS dependencies.
+- Fixed the `exclude` property not being respected if no VCS was available.
+
+
+## [0.12.5] - 2018-10-26
+
+### Fixed
+
+- Fixed installation of Poetry git dependencies with a build system.
+- Fixed possible errors when resolving dependencies for specific packages.
+- Fixed handling of Python versions compatibility.
+- Fixed the dependency resolver picking up unnecessary dependencies due to not using the `python_full_version` marker.
+- Fixed the `Python-Requires` metadata being invalid for single Python versions.
+
+
+## [0.12.4] - 2018-10-21
+
+### Fixed
+
+- Fixed possible error on some combinations of markers.
+- Fixed venv detection so that it only uses `VIRTUAL_ENV` to detect activated virtualenvs.
+
+
+## [0.12.3] - 2018-10-18
+
+### Fixed
+
+- Fixed the `--no-dev` option in `install` not working properly.
+- Fixed prereleases being selected even if another constraint conflicted with them.
+- Fixed an error when installing current package in development mode if the generated `setup.py` had special characters.
+- Fixed an error in `install` for applications not following a known structure.
+- Fixed an error when trying to retrieve the current environment.
+- Fixed `debug:info` not showing the current project's virtualenv.
+
+
+## [0.12.2] - 2018-10-17
+
+### Fixed
+
+- Fixed an error when installing from private repositories.
+- Fixed an error when trying to move the lock file on Python 2.7.
+
+
+## [0.12.1] - 2018-10-17
+
+### Fixed
+
+- Fixed an error when license is unspecified.
+
+
+## [0.12.0] - 2018-10-17
+
+### Added
+
+- Added a brand new installer.
+- Added support for multi-constraints dependencies.
+- Added a cache version system.
+- Added a `--lock` option to `update` to only update the lock file without executing operations. (Thanks to [@greysteil](https://github.com/greysteil))
+- Added support for the `Project-URL` metadata.
+- Added support for optional scripts.
+- Added a `--no-dev` option to `show`. (Thanks to [@rodcloutier](https://github.com/rodcloutier))
+
+### Changed
+
+- Improved virtualenv detection and management.
+- Wildcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
+- Changed behavior of the resolver for conditional dependencies.
+- The `install` command will now install the current project in editable mode.
+- The `develop` command is now deprecated in favor of `install`.
+- Improved the `check` command.
+- Empty passwords are now supported when publishing.
+
+### Fixed
+
+- Fixed a memory leak in the resolver.
+- Fixed a recursion error on duplicate dependencies with only different extras.
+- Fixed handling of extras.
+- Fixed duplicate entries in both sdist and wheel.
+- Fixed excluded files appearing in the `package_data` of the generated `setup.py`.
+- Fixed transitive directory dependencies installation.
+- Fixed file permissions for configuration and authentication files.
+- Fixed an error in `cache:clear` for Python 2.7.
+- Fixed publishing for the first time with a prerelease.
+
+
 ## [0.11.5] - 2018-09-04
 
 ### Fixed
@@ -467,7 +571,14 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.11.5...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.6...develop
+[0.12.6]: https://github.com/sdispater/poetry/releases/tag/0.12.6
+[0.12.5]: https://github.com/sdispater/poetry/releases/tag/0.12.5
+[0.12.4]: https://github.com/sdispater/poetry/releases/tag/0.12.4
+[0.12.3]: https://github.com/sdispater/poetry/releases/tag/0.12.3
+[0.12.2]: https://github.com/sdispater/poetry/releases/tag/0.12.2
+[0.12.1]: https://github.com/sdispater/poetry/releases/tag/0.12.1
+[0.12.0]: https://github.com/sdispater/poetry/releases/tag/0.12.0
 [0.11.5]: https://github.com/sdispater/poetry/releases/tag/0.11.5
 [0.11.4]: https://github.com/sdispater/poetry/releases/tag/0.11.4
 [0.11.3]: https://github.com/sdispater/poetry/releases/tag/0.11.3

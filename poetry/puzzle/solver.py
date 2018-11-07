@@ -1,10 +1,15 @@
+import time
+
+from typing import Any
+from typing import Dict
 from typing import List
 
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
-from poetry.packages.constraints.generic_constraint import GenericConstraint
-
+from poetry.packages import DependencyPackage
+from poetry.packages import Package
 from poetry.semver import parse_constraint
+from poetry.version.markers import AnyMarker
 
 from .exceptions import CompatibilityError
 from .exceptions import SolverProblemError
@@ -25,12 +30,25 @@ class Solver:
         self._locked = locked
         self._io = io
         self._provider = Provider(self._package, self._pool, self._io)
+        self._branches = []
 
     def solve(self, use_latest=None):  # type: (...) -> List[Operation]
         with self._provider.progress():
+            start = time.time()
             packages, depths = self._solve(use_latest=use_latest)
+            end = time.time()
 
-        requested = self._package.all_requires
+            if len(self._branches) > 1:
+                self._provider.debug(
+                    "Complete version solving took {:.3f} seconds for {} branches".format(
+                        end - start, len(self._branches[1:])
+                    )
+                )
+                self._provider.debug(
+                    "Resolved for branches: {}".format(
+                        ", ".join("({})".format(b) for b in self._branches[1:])
+                    )
+                )
 
         operations = []
         for package in packages:
@@ -38,8 +56,33 @@ class Solver:
             for pkg in self._installed.packages:
                 if package.name == pkg.name:
                     installed = True
-                    # Checking version
-                    if package.version != pkg.version:
+
+                    if pkg.source_type == "git" and package.source_type == "git":
+                        # Trying to find the currently installed version
+                        for locked in self._locked.packages:
+                            if (
+                                locked.name == pkg.name
+                                and locked.source_type == pkg.source_type
+                                and locked.source_url == pkg.source_url
+                                and locked.source_reference == pkg.source_reference
+                            ):
+                                pkg = Package(pkg.name, locked.version)
+                                pkg.source_type = "git"
+                                pkg.source_url = locked.source_url
+                                pkg.source_reference = locked.source_reference
+                                break
+
+                        if (
+                            pkg.source_url != package.source_url
+                            or pkg.source_reference != package.source_reference
+                        ):
+                            operations.append(Update(pkg, package))
+                        else:
+                            operations.append(
+                                Install(package).skip("Already installed")
+                            )
+                    elif package.version != pkg.version:
+                        # Checking version
                         operations.append(Update(pkg, package))
                     else:
                         operations.append(Install(package).skip("Already installed"))
@@ -78,13 +121,14 @@ class Solver:
                 # since it actually doesn't matter since removals are always on top.
                 -depths[packages.index(o.package)] if o.job_type != "uninstall" else 0,
                 o.package.name,
+                o.package.version,
             ),
         )
 
     def solve_in_compatibility_mode(self, constraints, use_latest=None):
         locked = {}
         for package in self._locked.packages:
-            locked[package.name] = package
+            locked[package.name] = DependencyPackage(package.to_dependency(), package)
 
         packages = []
         depths = []
@@ -103,18 +147,24 @@ class Solver:
                         packages.append(package)
                         depths.append(_depths[index])
                         continue
+                    else:
+                        idx = packages.index(package)
+                        pkg = packages[idx]
+                        depths[idx] = max(depths[idx], _depths[index])
+                        pkg.marker = pkg.marker.union(package.marker)
 
-                    current_package = packages[packages.index(package)]
-                    for dep in package.requires:
-                        if dep not in current_package.requires:
-                            current_package.requires.append(dep)
+                        for dep in package.requires:
+                            if dep not in pkg.requires:
+                                pkg.requires.append(dep)
 
         return packages, depths
 
     def _solve(self, use_latest=None):
+        self._branches.append(self._package.python_versions)
+
         locked = {}
         for package in self._locked.packages:
-            locked[package.name] = package
+            locked[package.name] = DependencyPackage(package.to_dependency(), package)
 
         try:
             result = resolve_version(
@@ -133,64 +183,49 @@ class Solver:
 
         depths = []
         for package in packages:
-            category, optional, python, platform, depth = self._get_tags_for_package(
+            category, optional, marker, depth = self._get_tags_for_package(
                 package, graph
             )
-            depths.append(depth)
+
+            if marker is None:
+                marker = AnyMarker()
 
             package.category = category
             package.optional = optional
+            package.marker = marker
 
-            # If requirements are empty, drop them
-            requirements = {}
-            if python is not None and python != "*":
-                requirements["python"] = python
-
-            if platform is not None and platform != "*":
-                requirements["platform"] = platform
-
-            package.requirements = requirements
+            depths.append(depth)
 
         return packages, depths
 
     def _build_graph(
         self, package, packages, previous=None, previous_dep=None, dep=None
-    ):
+    ):  # type: (...) -> Dict[str, Any]
         if not previous:
             category = "dev"
             optional = True
-            python_version = "*"
-            platform = "*"
+            marker = package.marker
         else:
             category = dep.category
             optional = dep.is_optional() and not dep.is_activated()
-            python_version = str(
-                parse_constraint(previous["python_version"]).intersect(
-                    previous_dep.python_constraint
-                )
-            )
-            platform = str(
-                previous_dep.platform
-                if GenericConstraint.parse(previous["platform"]).matches(
-                    previous_dep.platform_constraint
-                )
-                and previous_dep.platform != "*"
-                else previous["platform"]
-            )
+            intersection = previous["marker"].intersect(previous_dep.marker)
+            intersection = intersection.intersect(package.marker)
+
+            marker = intersection
 
         graph = {
             "name": package.name,
             "category": category,
             "optional": optional,
-            "python_version": python_version,
-            "platform": platform,
-            "children": [],
+            "marker": marker,
+            "children": [],  # type: List[Dict[str, Any]]
         }
 
         if previous_dep and previous_dep is not dep and previous_dep.name == dep.name:
             return graph
 
         for dependency in package.all_requires:
+            is_activated = True
             if dependency.is_optional():
                 if not package.is_root() and (
                     not previous_dep or not previous_dep.extras
@@ -198,7 +233,7 @@ class Solver:
                     continue
 
                 is_activated = False
-                for group, extras in package.extras.items():
+                for group, extra_deps in package.extras.items():
                     if dep:
                         extras = previous_dep.extras
                     elif package.is_root():
@@ -206,18 +241,19 @@ class Solver:
                     else:
                         extras = []
 
-                    if group in extras:
+                    if group in extras and dependency.name in (
+                        d.name for d in package.extras[group]
+                    ):
                         is_activated = True
                         break
-
-                if not is_activated:
-                    continue
 
             if previous and previous["name"] == dependency.name:
                 break
 
             for pkg in packages:
-                if pkg.name == dependency.name:
+                if pkg.name == dependency.name and dependency.constraint.allows(
+                    pkg.version
+                ):
                     # If there is already a child with this name
                     # we merge the requirements
                     existing = None
@@ -233,11 +269,12 @@ class Solver:
                         pkg, packages, graph, dependency, dep or dependency
                     )
 
+                    if not is_activated:
+                        child_graph["optional"] = True
+
                     if existing:
-                        existing["python_version"] = str(
-                            parse_constraint(existing["python_version"]).union(
-                                parse_constraint(child_graph["python_version"])
-                            )
+                        existing["marker"] = existing["marker"].union(
+                            child_graph["marker"]
                         )
                         continue
 
@@ -248,37 +285,27 @@ class Solver:
     def _get_tags_for_package(self, package, graph, depth=0):
         categories = ["dev"]
         optionals = [True]
-        python_versions = []
-        platforms = []
+        markers = []
         _depths = [0]
 
         children = graph["children"]
-        found = False
         for child in children:
             if child["name"] == package.name:
                 category = child["category"]
                 optional = child["optional"]
-                python_version = child["python_version"]
-                platform = child["platform"]
+                marker = child["marker"]
                 _depths.append(depth)
             else:
-                (
-                    category,
-                    optional,
-                    python_version,
-                    platform,
-                    _depth,
-                ) = self._get_tags_for_package(package, child, depth=depth + 1)
+                (category, optional, marker, _depth) = self._get_tags_for_package(
+                    package, child, depth=depth + 1
+                )
 
                 _depths.append(_depth)
 
             categories.append(category)
             optionals.append(optional)
-            if python_version is not None:
-                python_versions.append(python_version)
-
-            if platform is not None:
-                platforms.append(platform)
+            if marker is not None:
+                markers.append(marker)
 
         if "main" in categories:
             category = "main"
@@ -287,37 +314,13 @@ class Solver:
 
         optional = all(optionals)
 
-        if not python_versions:
-            python_version = None
-        else:
-            # Find the least restrictive constraint
-            python_version = python_versions[0]
-            for constraint in python_versions[1:]:
-                previous = parse_constraint(python_version)
-                current = parse_constraint(constraint)
-
-                if python_version == "*":
-                    continue
-                elif constraint == "*":
-                    python_version = constraint
-                elif current.allows_all(previous):
-                    python_version = constraint
-
-        if not platforms:
-            platform = None
-        else:
-            platform = platforms[0]
-            for constraint in platforms[1:]:
-                previous = GenericConstraint.parse(platform)
-                current = GenericConstraint.parse(constraint)
-
-                if platform == "*":
-                    continue
-                elif constraint == "*":
-                    platform = constraint
-                elif current.matches(previous):
-                    platform = constraint
-
         depth = max(*(_depths + [0]))
 
-        return category, optional, python_version, platform, depth
+        if not markers:
+            marker = None
+        else:
+            marker = markers[0]
+            for m in markers[1:]:
+                marker = marker.union(m)
+
+        return category, optional, marker, depth

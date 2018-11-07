@@ -1,7 +1,7 @@
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class ScriptCommand(VenvCommand):
+class ScriptCommand(EnvCommand):
     """
     Executes a script defined in <comment>pyproject.toml</comment>. (<error>Deprecated</error>)
 
@@ -42,7 +42,7 @@ class ScriptCommand(VenvCommand):
             )
         ]
 
-        self.venv.run(*cmd, shell=True, call=True)
+        self.env.run(*cmd, shell=True, call=True)
 
     @property
     def _module(self):

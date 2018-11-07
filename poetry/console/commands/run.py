@@ -1,7 +1,7 @@
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class RunCommand(VenvCommand):
+class RunCommand(EnvCommand):
     """
     Runs a command in the appropriate environment.
 
@@ -17,11 +17,12 @@ class RunCommand(VenvCommand):
         if scripts and script in scripts:
             return self.run_script(scripts[script], args)
 
-        venv = self.venv
-
-        return venv.execute(*args)
+        return self.env.execute(*args)
 
     def run_script(self, script, args):
+        if isinstance(script, dict):
+            script = script["callable"]
+
         module, callable_ = script.split(":")
 
         src_in_sys_path = "sys.path.append('src'); " if self._module.is_in_src() else ""
@@ -37,7 +38,7 @@ class RunCommand(VenvCommand):
             )
         ]
 
-        return self.venv.run(*cmd, shell=True, call=True)
+        return self.env.run(*cmd, shell=True, call=True)
 
     @property
     def _module(self):

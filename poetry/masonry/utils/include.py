@@ -21,7 +21,7 @@ class Include(object):
         self._base = base
         self._include = str(include)
 
-        self._elements = sorted(list(self._base.glob(self._include)))
+        self._elements = sorted(list(self._base.glob(str(self._include))))
 
     @property
     def base(self):  # type: () -> Path

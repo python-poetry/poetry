@@ -1,0 +1,28 @@
+[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.requirements]
+python = ">=3.5,<4.0"
+
+[[package]]
+name = "A"
+version = "1.0.1"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.requirements]
+python = ">=3.6,<4.0"
+
+[metadata]
+python-versions = "~2.7 || ^3.4"
+content-hash = "123456789"
+
+[metadata.hashes]
+A = []

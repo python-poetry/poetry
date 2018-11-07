@@ -2,28 +2,29 @@
 PEP-517 compliant buildsystem API
 """
 import logging
-from pathlib import Path
+import sys
 
 from poetry.poetry import Poetry
 from poetry.io import NullIO
-from poetry.utils.venv import Venv
+from poetry.utils._compat import Path
+from poetry.utils._compat import unicode
+from poetry.utils.env import SystemEnv
 
 from .builders import SdistBuilder
 from .builders import WheelBuilder
 
 log = logging.getLogger(__name__)
 
-# PEP 517 specifies that the CWD will always be the source tree
-poetry = Poetry.create(".")
-
 
 def get_requires_for_build_wheel(config_settings=None):
     """
     Returns a list of requirements for building, as strings
     """
-    main, extras = SdistBuilder.convert_dependencies(poetry.package.requires)
+    poetry = Poetry.create(".")
 
-    return main + extras
+    main, _ = SdistBuilder.convert_dependencies(poetry.package, poetry.package.requires)
+
+    return main
 
 
 # For now, we require all dependencies to build either a wheel or an sdist.
@@ -32,13 +33,21 @@ get_requires_for_build_sdist = get_requires_for_build_wheel
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds a wheel, places it in wheel_directory"""
-    info = WheelBuilder.make_in(poetry, NullIO(), Path(wheel_directory))
+    poetry = Poetry.create(".")
 
-    return info.file.name
+    return unicode(
+        WheelBuilder.make_in(
+            poetry, SystemEnv(Path(sys.prefix)), NullIO(), Path(wheel_directory)
+        )
+    )
 
 
 def build_sdist(sdist_directory, config_settings=None):
     """Builds an sdist, places it in sdist_directory"""
-    path = SdistBuilder(poetry, Venv(), NullIO()).build(Path(sdist_directory))
+    poetry = Poetry.create(".")
 
-    return path.name
+    path = SdistBuilder(poetry, SystemEnv(Path(sys.prefix)), NullIO()).build(
+        Path(sdist_directory)
+    )
+
+    return unicode(path.name)

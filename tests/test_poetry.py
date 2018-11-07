@@ -2,10 +2,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import pytest
-
-from poetry.exceptions import InvalidProjectFile
 from poetry.poetry import Poetry
+from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
@@ -116,6 +114,7 @@ def test_poetry_with_packages_and_includes():
 
     assert package.packages == [
         {"include": "extra_dir/**/*.py"},
+        {"include": "extra_dir/**/*.py"},
         {"include": "my_module.py"},
         {"include": "package_with_include"},
     ]
@@ -123,16 +122,37 @@ def test_poetry_with_packages_and_includes():
     assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
 
 
+def test_poetry_with_multi_constraints_dependency():
+    poetry = Poetry.create(
+        str(fixtures_dir / "project_with_multi_constraints_dependency")
+    )
+
+    package = poetry.package
+
+    assert len(package.requires) == 2
+
+
 def test_check():
     complete = TomlFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
 
-    assert Poetry.check(content)
+    assert Poetry.check(content) == {"errors": [], "warnings": []}
 
 
 def test_check_fails():
     complete = TomlFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
     content["this key is not in the schema"] = ""
-    with pytest.raises(InvalidProjectFile):
-        Poetry.check(content)
+
+    if PY2:
+        expected = (
+            "Additional properties are not allowed "
+            "(u'this key is not in the schema' was unexpected)"
+        )
+    else:
+        expected = (
+            "Additional properties are not allowed "
+            "('this key is not in the schema' was unexpected)"
+        )
+
+    assert Poetry.check(content) == {"errors": [expected], "warnings": []}

@@ -35,18 +35,26 @@ The `^` operator works very well with libraries following [semantic versioning](
 
 ## Is tox supported?
 
-For now, you can use Poetry with [tox](https://tox.readthedocs.io/en/latest/) by using something similar to what is done in the [Pendulum](https://github.com/sdispater/pendulum/blob/master/tox.ini) package.
+Yes. By using the [isolated builds](https://tox.readthedocs.io/en/latest/config.html#conf-isolated_build) `tox` provides,
+you can use it in combination with the PEP 517 compliant build system provided by Poetry.
 
-Minimal viable `tox.ini` configuration file looks like this:
+So, in your `pyproject.toml` file add this section if does not already exists:
+
+```toml
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+```
+
+And use a `tox.ini` configuration file similar to this:
 
 ```INI
 [tox]
-skipsdist = True
+isolated_build = true
 envlist = py27, py36
 
 [testenv]
 whitelist_externals = poetry
-skip_install = true
 commands =
     poetry install -v
     poetry run pytest tests/

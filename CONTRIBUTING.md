@@ -102,7 +102,7 @@ $ poetry run pytest tests/
 Poetry uses the [black](https://github.com/ambv/black) coding style and you must ensure that your
 code follows it. If not, the CI will fail and your Pull Request will not be merged.
 
-To make sure that you don't accidently commit code that does not follow the coding style, you can
+To make sure that you don't accidentally commit code that does not follow the coding style, you can
 install a pre-commit hook that will check that everything is in order:
 
 ```bash
@@ -117,4 +117,3 @@ will not be merged.
 * Fill in [the required template](https://github.com/sdispater/poetry/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
 * Be sure that you pull request contains tests that cover the changed or added code.
 * If you changes warrant a documentation change, the pull request must also update the documentation.
-

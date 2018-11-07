@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class ShowCommand(VenvCommand):
+class ShowCommand(EnvCommand):
     """
     Shows information about packages.
 
     show
         { package? : Package to inspect. }
+        { --no-dev : Do not list the dev dependencies. }
         { --t|tree : List the dependencies as a tree. }
         { --l|latest : Show the latest version. }
         { --o|outdated : Show the latest version
@@ -23,10 +24,8 @@ lists all packages available."""
     colors = ["green", "yellow", "cyan", "magenta", "blue"]
 
     def handle(self):
-        from poetry.packages.constraints.generic_constraint import GenericConstraint
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.semver import Version
-        from poetry.semver import parse_constraint
 
         package = self.argument("package")
 
@@ -36,7 +35,7 @@ lists all packages available."""
         if self.option("outdated"):
             self.input.set_option("latest", True)
 
-        locked_repo = self.poetry.locker.locked_repository(True)
+        locked_repo = self.poetry.locker.locked_repository(not self.option("no-dev"))
 
         # Show tree view if requested
         if self.option("tree") and not package:
@@ -96,20 +95,16 @@ lists all packages available."""
         width = terminal.width
         name_length = version_length = latest_length = 0
         latest_packages = {}
-        installed_repo = InstalledRepository.load(self.venv)
+        installed_repo = InstalledRepository.load(self.env)
         skipped = []
 
-        platform = sys.platform
-        python = Version.parse(".".join([str(i) for i in self._venv.version_info[:3]]))
+        python = Version.parse(".".join([str(i) for i in self.env.version_info[:3]]))
 
         # Computing widths
         for locked in locked_packages:
-            python_constraint = parse_constraint(locked.requirements.get("python", "*"))
-            platform_constraint = GenericConstraint.parse(
-                locked.requirements.get("platform", "*")
-            )
-            if not python_constraint.allows(python) or not platform_constraint.matches(
-                GenericConstraint("=", platform)
+            python_constraint = locked.python_constraint
+            if not python_constraint.allows(python) or not self.env.is_valid_for_marker(
+                locked.marker
             ):
                 skipped.append(locked)
 
@@ -173,7 +168,7 @@ lists all packages available."""
                     color = "yellow"
 
                 line += " <fg={}>{:{}}</>".format(
-                    color, latest.pretty_version, latest_length
+                    color, latest.full_pretty_version, latest_length
                 )
                 if self.option("outdated") and update_status == "up-to-date":
                     continue
@@ -193,7 +188,11 @@ lists all packages available."""
 
     def display_package_tree(self, package, installed_repo):
         self.write("<info>{}</info>".format(package.pretty_name))
-        self.line(" {} {}".format(package.pretty_version, package.description))
+        description = ""
+        if package.description:
+            description = " " + package.description
+
+        self.line(" {}{}".format(package.pretty_version, description))
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
@@ -288,11 +287,17 @@ lists all packages available."""
             self.set_style(color, color)
 
     def find_latest_package(self, package):
+        from poetry.io import NullIO
+        from poetry.puzzle.provider import Provider
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
         if package.source_type == "git":
-            return
+            for dep in self.poetry.package.requires:
+                if dep.name == package.name and dep.is_vcs():
+                    return Provider(
+                        self.poetry.package, self.poetry.pool, NullIO()
+                    ).search_for_vcs(dep)[0]
 
         name = package.name
         selector = VersionSelector(self.poetry.pool)
