@@ -30,6 +30,7 @@ from .commands import ScriptCommand
 from .commands import SearchCommand
 from .commands import ShellCommand
 from .commands import ShowCommand
+from .commands.venv import VenvCommand
 from .commands import UpdateCommand
 from .commands import VersionCommand
 
@@ -124,6 +125,7 @@ class Application(BaseApplication):
             ShowCommand(),
             UpdateCommand(),
             VersionCommand(),
+            VenvCommand(),
         ]
 
         # Cache commands

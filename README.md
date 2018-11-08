@@ -423,6 +423,22 @@ dependencies:
  - pytzdata >=2017.2.2
 ```
 
+
+### venv
+
+To find the path to the virtualenv directory, you can use the `venv` command.
+
+```bash
+poetry venv
+```
+
+This may be helpful if you need to find paths relative to the virtualenv. For
+example if you'd like to activate the virtualenv manually.
+
+```bash
+source ${poetry venv}/bin/activate
+```
+
 #### Options
 
 * `--no-dev`: Do not list the dev dependencies.
