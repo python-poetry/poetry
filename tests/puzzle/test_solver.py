@@ -1295,7 +1295,7 @@ def test_solver_can_resolve_directory_dependencies(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = s(
+    path = (
         Path(__file__).parent.parent
         / "fixtures"
         / "git"
