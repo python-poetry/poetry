@@ -1,12 +1,6 @@
 import sys
 
 try:
-    import pathlib2
-    from pathlib2 import Path
-except ImportError:
-    from pathlib import Path
-
-try:
     from functools32 import lru_cache
 except ImportError:
     from functools import lru_cache
@@ -24,6 +18,12 @@ except NameError:  # Python 3
 PY2 = sys.version_info[0] == 2
 PY35 = sys.version_info >= (3, 5)
 PY36 = sys.version_info >= (3, 6)
+
+
+if PY35:
+    from pathlib import Path
+else:
+    from pathlib2 import Path
 
 
 def decode(string, encodings=None):

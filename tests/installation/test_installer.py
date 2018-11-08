@@ -91,7 +91,10 @@ def setup():
 
 @pytest.fixture()
 def package():
-    return ProjectPackage("root", "1.0")
+    p = ProjectPackage("root", "1.0")
+    p.root_dir = Path.cwd()
+
+    return p
 
 
 @pytest.fixture()
