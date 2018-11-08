@@ -1,14 +1,6 @@
 [[package]]
 description = ""
 category = "main"
-name = "cachy"
-optional = true
-python-versions = "*"
-version = "0.2.0"
-
-[[package]]
-description = ""
-category = "main"
 name = "pendulum"
 optional = false
 python-versions = "*"
@@ -35,6 +27,5 @@ content-hash = "123456789"
 python-versions = "*"
 
 [metadata.hashes]
-cachy = []
 project-with-extras = []
 pendulum = []

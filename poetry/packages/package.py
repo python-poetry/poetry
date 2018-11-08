@@ -261,7 +261,7 @@ class Package(object):
                 file_path = Path(constraint["file"])
 
                 dependency = FileDependency(
-                    file_path, category=category, base=self.root_dir
+                    name, file_path, category=category, base=self.root_dir
                 )
             elif "path" in constraint:
                 path = Path(constraint["path"])
@@ -273,10 +273,15 @@ class Package(object):
 
                 if is_file:
                     dependency = FileDependency(
-                        path, category=category, optional=optional, base=self.root_dir
+                        name,
+                        path,
+                        category=category,
+                        optional=optional,
+                        base=self.root_dir,
                     )
                 else:
                     dependency = DirectoryDependency(
+                        name,
                         path,
                         category=category,
                         optional=optional,
