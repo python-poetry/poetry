@@ -6,6 +6,11 @@ try:
 except ImportError:
     from pathlib import Path
 
+try:
+    from functools32 import lru_cache
+except ImportError:
+    from functools import lru_cache
+
 try:  # Python 2
     long = long
     unicode = unicode

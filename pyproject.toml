@@ -43,6 +43,8 @@ typing = { version = "^3.6", python = "~2.7 || ~3.4" }
 pathlib2 = { version = "^2.3", python = "~2.7 || ~3.4" }
 # Use virtualenv for Python 2.7 since venv does not exist
 virtualenv = { version = "^16.0", python = "~2.7" }
+# functools32 is needed for Python 2.7
+functools32 = { version = "^3.2.3", python = "~2.7" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.4"

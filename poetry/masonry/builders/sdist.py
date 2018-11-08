@@ -278,7 +278,7 @@ class SdistBuilder(Builder):
                     if not f.is_dir()
                 ]
 
-                data = [e for e in data_elements if e not in excluded_files]
+                data = [e for e in data_elements if not self.is_excluded(e)]
                 if not data:
                     continue
 

@@ -439,13 +439,15 @@ def test_default_with_excluded_data(mocker):
     p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
     p.return_value = [
         str(
-            Path(__file__).parent
-            / "fixtures"
-            / "default_with_excluded_data"
-            / "my_package"
-            / "data"
-            / "sub_data"
-            / "data2.txt"
+            (
+                Path(__file__).parent
+                / "fixtures"
+                / "default_with_excluded_data"
+                / "my_package"
+                / "data"
+                / "sub_data"
+                / "data2.txt"
+            ).relative_to(project("default_with_excluded_data"))
         )
     ]
     poetry = Poetry.create(project("default_with_excluded_data"))

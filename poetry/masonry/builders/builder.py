@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
-import os
 import re
 import shutil
 import tempfile
 
 from collections import defaultdict
 from contextlib import contextmanager
+from typing import Set
+from typing import Union
 
 from poetry.utils._compat import Path
+from poetry.utils._compat import basestring
+from poetry.utils._compat import lru_cache
 from poetry.vcs import get_vcs
 
 from ..metadata import Metadata
@@ -39,40 +42,40 @@ class Builder(object):
     def build(self):
         raise NotImplementedError()
 
-    def find_excluded_files(self):  # type: () -> list
+    @lru_cache(maxsize=None)
+    def find_excluded_files(self):  # type: () -> Set[str]
         # Checking VCS
         vcs = get_vcs(self._path)
         if not vcs:
-            vcs_ignored_files = []
+            vcs_ignored_files = set()
         else:
-            vcs_ignored_files = vcs.get_ignored_files()
+            vcs_ignored_files = set(vcs.get_ignored_files())
 
-        explicitely_excluded = []
+        explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
             for excluded in self._path.glob(excluded_glob):
-                explicitely_excluded.append(excluded)
+                explicitely_excluded.add(str(excluded.relative_to(self._path)))
 
-        ignored = vcs_ignored_files + explicitely_excluded
-        result = []
+        ignored = vcs_ignored_files | explicitely_excluded
+        result = set()
         for file in ignored:
-            try:
-                file = Path(file).absolute().relative_to(self._path)
-            except ValueError:
-                # Should only happen in tests
-                continue
-
-            result.append(file)
+            result.add(file)
 
         # The list of excluded files might be big and we will do a lot
         # containment check (x in excluded).
         # Returning a set make those tests much much faster.
-        return set(result)
+        return result
 
-    def find_files_to_add(self, exclude_build=True):  # type: () -> list
+    def is_excluded(self, filepath):  # type: (Union[str, Path]) -> bool
+        if not isinstance(filepath, basestring):
+            filepath = str(filepath)
+
+        return filepath in self.find_excluded_files()
+
+    def find_files_to_add(self, exclude_build=True):  # type: (bool) -> list
         """
         Finds all files to add to the tarball
         """
-        excluded = self.find_excluded_files()
         to_add = []
 
         for include in self._module.includes:
@@ -85,7 +88,7 @@ class Builder(object):
 
                 file = file.relative_to(self._path)
 
-                if file in excluded and isinstance(include, PackageInclude):
+                if self.is_excluded(file) and isinstance(include, PackageInclude):
                     continue
 
                 if file.suffix == ".pyc":
