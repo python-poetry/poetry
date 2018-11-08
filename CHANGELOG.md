@@ -9,6 +9,7 @@
 - Fixed the building of wheels with C extensions and an `src` layout.
 - Fixed extras being selected when resolving dependencies even when not required.
 - Fixed performance issues when packaging projects if a lot of files were excluded.
+- Fixed installation of files.
 
 
 ## [0.12.6] - 2018-11-05
