@@ -54,7 +54,7 @@ class Builder(object):
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
             for excluded in self._path.glob(excluded_glob):
-                explicitely_excluded.add(str(excluded.relative_to(self._path)))
+                explicitely_excluded.add(excluded.relative_to(self._path).as_posix())
 
         ignored = vcs_ignored_files | explicitely_excluded
         result = set()
@@ -68,7 +68,7 @@ class Builder(object):
 
     def is_excluded(self, filepath):  # type: (Union[str, Path]) -> bool
         if not isinstance(filepath, basestring):
-            filepath = str(filepath)
+            filepath = filepath.as_posix()
 
         return filepath in self.find_excluded_files()
 

@@ -1295,14 +1295,14 @@ def test_solver_can_resolve_directory_dependencies(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = str(
+    path = s(
         Path(__file__).parent.parent
         / "fixtures"
         / "git"
         / "github.com"
         / "demo"
         / "demo"
-    )
+    ).as_posix()
 
     package.add_dependency("demo", {"path": path})
 
@@ -1330,14 +1330,14 @@ def test_solver_can_resolve_directory_dependencies_with_extras(solver, repo, pac
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = str(
+    path = (
         Path(__file__).parent.parent
         / "fixtures"
         / "git"
         / "github.com"
         / "demo"
         / "demo"
-    )
+    ).as_posix()
 
     package.add_dependency("demo", {"path": path, "extras": ["foo"]})
 
@@ -1364,12 +1364,12 @@ def test_solver_can_resolve_sdist_dependencies(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = str(
+    path = (
         Path(__file__).parent.parent
         / "fixtures"
         / "distributions"
         / "demo-0.1.0.tar.gz"
-    )
+    ).as_posix()
 
     package.add_dependency("demo", {"path": path})
 
@@ -1397,12 +1397,12 @@ def test_solver_can_resolve_sdist_dependencies_with_extras(solver, repo, package
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = str(
+    path = (
         Path(__file__).parent.parent
         / "fixtures"
         / "distributions"
         / "demo-0.1.0.tar.gz"
-    )
+    ).as_posix()
 
     package.add_dependency("demo", {"path": path, "extras": ["foo"]})
 
@@ -1429,12 +1429,12 @@ def test_solver_can_resolve_wheel_dependencies(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
-    path = str(
+    path = (
         Path(__file__).parent.parent
         / "fixtures"
         / "distributions"
         / "demo-0.1.0-py2.py3-none-any.whl"
-    )
+    ).as_posix()
 
     package.add_dependency("demo", {"path": path})
 
@@ -1462,12 +1462,12 @@ def test_solver_can_resolve_wheel_dependencies_with_extras(solver, repo, package
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    path = str(
+    path = (
         Path(__file__).parent.parent
         / "fixtures"
         / "distributions"
         / "demo-0.1.0-py2.py3-none-any.whl"
-    )
+    ).as_posix()
 
     package.add_dependency("demo", {"path": path, "extras": ["foo"]})
 

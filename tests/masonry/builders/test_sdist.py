@@ -438,7 +438,7 @@ def test_default_with_excluded_data(mocker):
     # Patch git module to return specific excluded files
     p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
     p.return_value = [
-        str(
+        (
             (
                 Path(__file__).parent
                 / "fixtures"
@@ -447,7 +447,9 @@ def test_default_with_excluded_data(mocker):
                 / "data"
                 / "sub_data"
                 / "data2.txt"
-            ).relative_to(project("default_with_excluded_data"))
+            )
+            .relative_to(project("default_with_excluded_data"))
+            .as_posix()
         )
     ]
     poetry = Poetry.create(project("default_with_excluded_data"))
