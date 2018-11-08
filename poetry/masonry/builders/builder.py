@@ -63,7 +63,10 @@ class Builder(object):
 
             result.append(file)
 
-        return result
+        # The list of excluded files might be big and we will do a lot
+        # containment check (x in excluded).
+        # Returning a set make those tests much much faster.
+        return set(result)
 
     def find_files_to_add(self, exclude_build=True):  # type: () -> list
         """
