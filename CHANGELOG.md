@@ -10,6 +10,8 @@
 - Fixed extras being selected when resolving dependencies even when not required.
 - Fixed performance issues when packaging projects if a lot of files were excluded.
 - Fixed installation of files.
+- Fixed extras not being retrieved for legacy repositories.
+- Fixed invalid transitive constraints raising an error for legacy repositories.
 
 
 ## [0.12.6] - 2018-11-05

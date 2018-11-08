@@ -67,7 +67,7 @@ def test_sdist_format_support():
     assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
 
 
-def test_missing_version(mocker):
+def test_missing_version():
     repo = MockRepository()
 
     with pytest.raises(PackageNotFound):
@@ -95,3 +95,36 @@ def test_get_package_information_fallback_read_setup():
             Dependency("ipykernel", "*"),
             Dependency("ipywidgets", "*"),
         ]
+
+
+def test_get_package_information_skips_dependencies_with_invalid_constraints():
+    repo = MockRepository()
+
+    package = repo.package("python-language-server", "0.21.2")
+
+    assert package.name == "python-language-server"
+    assert package.version.text == "0.21.2"
+    assert (
+        package.description == "Python Language Server for the Language Server Protocol"
+    )
+
+    assert sorted(package.requires, key=lambda r: r.name) == [
+        Dependency("configparser", "*"),
+        Dependency("future", ">=0.14.0"),
+        Dependency("futures", "*"),
+        Dependency("jedi", ">=0.12"),
+        Dependency("pluggy", "*"),
+        Dependency("python-jsonrpc-server", "*"),
+    ]
+
+    all_extra = package.extras["all"]
+
+    # rope>-0.10.5 should be discarded
+    assert sorted(all_extra, key=lambda r: r.name) == [
+        Dependency("autopep8", "*"),
+        Dependency("mccabe", "*"),
+        Dependency("pycodestyle", "*"),
+        Dependency("pydocstyle", ">=2.0.0"),
+        Dependency("pyflakes", ">=1.6.0"),
+        Dependency("yapf", "*"),
+    ]

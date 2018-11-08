@@ -266,9 +266,17 @@ class LegacyRepository(PyPiRepository):
                     req = req.split(";")[0]
 
                     dependency = dependency_from_pep_508(req)
+                except ValueError:
+                    # Likely unable to parse constraint so we skip it
+                    self._log(
+                        "Invalid constraint ({}) found in {}-{} dependencies, "
+                        "skipping".format(req, package.name, package.version),
+                        level="debug",
+                    )
+                    continue
 
-                if dependency.extras:
-                    for extra in dependency.extras:
+                if dependency.in_extras:
+                    for extra in dependency.in_extras:
                         if extra not in package.extras:
                             package.extras[extra] = []
 
