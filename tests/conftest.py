@@ -12,17 +12,6 @@ from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
 
-def pytest_configure():
-    workaround_sugar_issue_159()
-
-
-def workaround_sugar_issue_159():
-    "https://github.com/Frozenball/pytest-sugar/159"
-    import pytest_sugar
-
-    pytest_sugar.SugarTerminalReporter.pytest_runtest_logfinish = lambda self: None
-
-
 @pytest.fixture
 def config():  # type: () -> Config
     with tempfile.NamedTemporaryFile() as f:

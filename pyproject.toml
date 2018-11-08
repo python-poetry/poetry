@@ -34,7 +34,7 @@ cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
-tomlkit = "^0.4.4"
+tomlkit = "^0.5.1"
 
 # The typing module is not in the stdlib in Python 2.7 and 3.4
 typing = { version = "^3.6", python = "~2.7 || ~3.4" }
@@ -57,7 +57,7 @@ pygments-github-lexers = "^0.0.5"
 black = { version = "^18.3-alpha.0", python = "^3.6" }
 pre-commit = "^1.10"
 tox = "^3.0"
-pytest-sugar = "^0.9.1"
+pytest-sugar = "^0.9.2"
 
 
 [tool.poetry.scripts]
