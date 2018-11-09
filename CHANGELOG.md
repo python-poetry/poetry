@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed permission errors when adding/removing git dependencies on Windows.
+
+
 ## [0.12.7] - 2018-11-08
 
 ### Fixed

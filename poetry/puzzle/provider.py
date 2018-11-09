@@ -32,7 +32,7 @@ from poetry.repositories import Pool
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
-from poetry.utils.toml_file import TomlFile
+from poetry.utils.helpers import safe_rmtree
 from poetry.utils.env import Env
 from poetry.utils.env import EnvCommandError
 from poetry.utils.setup_reader import SetupReader
@@ -196,7 +196,7 @@ class Provider:
         except Exception:
             raise
         finally:
-            shutil.rmtree(tmp_dir.as_posix())
+            safe_rmtree(str(tmp_dir))
 
         return [package]
 

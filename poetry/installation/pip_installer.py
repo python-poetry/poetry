@@ -6,6 +6,7 @@ from subprocess import CalledProcessError
 
 from poetry.config import Config
 from poetry.utils.helpers import get_http_basic_auth
+from poetry.utils.helpers import safe_rmtree
 
 
 try:
@@ -97,7 +98,7 @@ class PipInstaller(BaseInstaller):
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
             if src_dir.exists():
-                shutil.rmtree(str(src_dir))
+                safe_rmtree(str(src_dir))
 
         try:
             self.run("uninstall", package.name, "-y")
@@ -208,7 +209,7 @@ class PipInstaller(BaseInstaller):
 
         src_dir = self._env.path / "src" / package.name
         if src_dir.exists():
-            shutil.rmtree(str(src_dir))
+            safe_rmtree(str(src_dir))
 
         src_dir.parent.mkdir(exist_ok=True)
 
