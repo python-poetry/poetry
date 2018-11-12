@@ -9,6 +9,10 @@ ensuring you have the right stack everywhere.
 
 It supports Python 2.7 and 3.4+.
 
+You can quickly start playing with Poetry right in your browser:
+
+[![Try in browser](https://cdn.rawgit.com/rootnroll/library/assets/try.svg)](https://rootnroll.com/d/poetry/)
+
 ## Installation
 
 Poetry provides a custom installer that will install `poetry` isolated
