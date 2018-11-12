@@ -5,9 +5,9 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import warnings
 
 from gzip import GzipFile
-from warnings import catch_warnings
 
 from cleo import Application
 from cleo import Command
@@ -62,11 +62,14 @@ class MakeReleaseCommand(Command):
         pool = Pool()
         pool.add_repository(project.locker.locked_repository(with_dev_reqs=True))
 
-        with catch_warnings():
-            try:
-                vcs = get_vcs(Path(__file__).parent)
-            except Warning as warning:
-                self._io.writeln(warning, verbosity=self._io.VERBOSITY_VERY_VERBOSE)
+        with warnings.catch_warnings():
+            if self._io.is_verbose() or self._io.is_very_verbose():
+                action = "always"
+            else:
+                action = "ignore"
+            warnings.simplefilter(action)
+            vcs = get_vcs(Path(__file__).parent)
+            warnings.resetwarnings()
 
         if vcs:
             vcs_excluded = [str(f) for f in vcs.get_ignored_files()]

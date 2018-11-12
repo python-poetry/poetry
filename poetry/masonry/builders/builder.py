@@ -2,12 +2,12 @@
 import re
 import shutil
 import tempfile
+import warnings
 
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import Set
 from typing import Union
-from warnings import catch_warnings
 
 from poetry.utils._compat import Path
 from poetry.utils._compat import basestring
@@ -46,11 +46,14 @@ class Builder(object):
     @lru_cache(maxsize=None)
     def find_excluded_files(self):  # type: () -> Set[str]
         # Checking VCS
-        with catch_warnings():
-            try:
-                vcs = get_vcs(self._path)
-            except Warning as warning:
-                self._io.writeln(warning, verbosity=self._io.VERBOSITY_VERY_VERBOSE)
+        with warnings.catch_warnings():
+            if self._io.is_verbose() or self._io.is_very_verbose():
+                action = "always"
+            else:
+                action = "ignore"
+            warnings.simplefilter(action)
+            vcs = get_vcs(self._path)
+            warnings.resetwarnings()
 
         if not vcs:
             vcs_ignored_files = set()
