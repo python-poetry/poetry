@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed permission errors when adding/removing git dependencies on Windows.
+- Fixed `Pool` not raising an exception when no package could be found.
 
 
 ## [0.12.7] - 2018-11-08
