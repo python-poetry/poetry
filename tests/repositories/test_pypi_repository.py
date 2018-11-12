@@ -129,3 +129,40 @@ def test_fallback_can_read_setup_to_get_dependencies():
         "postgresql_psycopg2cffi": [Dependency("psycopg2cffi", "*")],
         "pymysql": [Dependency("pymysql", "*")],
     }
+
+
+def test_pypi_repository_supports_reading_bz2_files():
+    repo = MockRepository(fallback=True)
+
+    package = repo.package("twisted", "18.9.0")
+
+    assert package.name == "twisted"
+    assert sorted(package.requires, key=lambda r: r.name) == [
+        Dependency("attrs", ">=17.4.0"),
+        Dependency("Automat", ">=0.3.0"),
+        Dependency("constantly", ">=15.1"),
+        Dependency("hyperlink", ">=17.1.1"),
+        Dependency("incremental", ">=16.10.1"),
+        Dependency("PyHamcrest", ">=1.9.0"),
+        Dependency("zope.interface", ">=4.4.2"),
+    ]
+
+    expected_extras = {
+        "all_non_platform": [
+            Dependency("appdirs", ">=1.4.0"),
+            Dependency("cryptography", ">=1.5"),
+            Dependency("h2", ">=3.0,<4.0"),
+            Dependency("idna", ">=0.6,!=2.3"),
+            Dependency("priority", ">=1.1.0,<2.0"),
+            Dependency("pyasn1", "*"),
+            Dependency("pyopenssl", ">=16.0.0"),
+            Dependency("pyserial", ">=3.0"),
+            Dependency("service_identity", "*"),
+            Dependency("soappy", "*"),
+        ]
+    }
+
+    for name, deps in expected_extras.items():
+        assert expected_extras[name] == sorted(
+            package.extras[name], key=lambda r: r.name
+        )

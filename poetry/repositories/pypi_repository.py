@@ -462,6 +462,9 @@ class PyPiRepository(Repository):
             else:
                 if suffix == ".bz2":
                     gz = BZ2File(str(filepath))
+                    suffixes = filepath.suffixes
+                    if len(suffixes) > 1 and suffixes[-2] == ".tar":
+                        suffix = ".tar.bz2"
                 else:
                     gz = GzipFile(str(filepath))
                     suffix = ".tar.gz"
