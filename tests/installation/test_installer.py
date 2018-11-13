@@ -77,18 +77,6 @@ class Locker(BaseLocker):
         self._written_data = data
 
 
-@pytest.fixture(autouse=True)
-def setup():
-    # Mock python version and platform to get reliable tests
-    original_platform = sys.platform
-
-    sys.platform = "darwin"
-
-    yield
-
-    sys.platform = original_platform
-
-
 @pytest.fixture()
 def package():
     p = ProjectPackage("root", "1.0")
@@ -475,8 +463,10 @@ def test_run_with_optional_and_python_restricted_dependencies(
 
 
 def test_run_with_optional_and_platform_restricted_dependencies(
-    installer, locker, repo, package
+    installer, locker, repo, package, mocker
 ):
+    mocker.patch("sys.platform", "darwin")
+
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c12 = get_package("C", "1.2")
