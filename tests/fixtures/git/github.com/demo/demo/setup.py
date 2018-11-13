@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from setuptools import setup
 
 
@@ -13,7 +12,7 @@ kwargs = dict(
     url="https://github.com/demo/demo",
     packages=["demo"],
     install_requires=["pendulum>=1.4.4"],
-    extras_require={"foo": ["cleo"]},
+    extras_require={"foo": ["cleo"], "bar": ["tomlkit"]},
 )
 
 

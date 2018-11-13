@@ -11,6 +11,8 @@ from contextlib import contextmanager
 from tempfile import mkdtemp
 from typing import List
 
+from poetry.io import NullIO
+
 from poetry.packages import Dependency
 from poetry.packages import DependencyPackage
 from poetry.packages import DirectoryDependency
@@ -30,8 +32,10 @@ from poetry.repositories import Pool
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
-from poetry.utils.toml_file import TomlFile
+from poetry.utils.helpers import safe_rmtree
 from poetry.utils.env import Env
+from poetry.utils.env import EnvCommandError
+from poetry.utils.setup_reader import SetupReader
 
 from poetry.vcs.git import Git
 
@@ -175,89 +179,16 @@ class Provider:
             if dependency.tag or dependency.rev:
                 revision = dependency.reference
 
-            pyproject = TomlFile(tmp_dir / "pyproject.toml")
-            pyproject_content = None
-            has_poetry = False
-            if pyproject.exists():
-                pyproject_content = pyproject.read()
-                has_poetry = (
-                    "tool" in pyproject_content
-                    and "poetry" in pyproject_content["tool"]
-                )
+            directory_dependency = DirectoryDependency(
+                dependency.name,
+                tmp_dir,
+                category=dependency.category,
+                optional=dependency.is_optional(),
+            )
+            for extra in dependency.extras:
+                directory_dependency.extras.append(extra)
 
-            if pyproject_content and has_poetry:
-                # If a pyproject.toml file exists
-                # We use it to get the information we need
-                info = pyproject_content["tool"]["poetry"]
-
-                name = info["name"]
-                version = info["version"]
-                package = Package(name, version, version)
-                package.source_type = dependency.vcs
-                package.source_url = dependency.source
-                package.source_reference = dependency.reference
-                for req_name, req_constraint in info["dependencies"].items():
-                    if req_name == "python":
-                        package.python_versions = req_constraint
-                        continue
-
-                    package.add_dependency(req_name, req_constraint)
-            else:
-                # We need to use setup.py here
-                # to figure the information we need
-                # We need to place ourselves in the proper
-                # folder for it to work
-                venv = Env.get(self._io)
-
-                current_dir = os.getcwd()
-                os.chdir(tmp_dir.as_posix())
-
-                try:
-                    venv.run("python", "setup.py", "egg_info")
-
-                    # Sometimes pathlib will fail on recursive
-                    # symbolic links, so we need to workaround it
-                    # and use the glob module instead.
-                    # Note that this does not happen with pathlib2
-                    # so it's safe to use it for Python < 3.4.
-                    if PY35:
-                        egg_info = next(
-                            Path(p)
-                            for p in glob.glob(
-                                os.path.join(str(tmp_dir), "**", "*.egg-info"),
-                                recursive=True,
-                            )
-                        )
-                    else:
-                        egg_info = next(tmp_dir.glob("**/*.egg-info"))
-
-                    meta = pkginfo.UnpackedSDist(str(egg_info))
-
-                    if meta.requires_dist:
-                        reqs = list(meta.requires_dist)
-                    else:
-                        reqs = []
-                        requires = egg_info / "requires.txt"
-                        if requires.exists():
-                            with requires.open() as f:
-                                reqs = parse_requires(f.read())
-
-                    package = Package(meta.name, meta.version)
-
-                    for req in reqs:
-                        dep = dependency_from_pep_508(req)
-                        if dep.in_extras:
-                            for extra in dep.in_extras:
-                                if extra not in package.extras:
-                                    package.extras[extra] = []
-
-                                package.extras[extra].append(dep)
-
-                        package.requires.append(dep)
-                except Exception:
-                    raise
-                finally:
-                    os.chdir(current_dir)
+            package = self.search_for_directory(directory_dependency)[0]
 
             package.source_type = "git"
             package.source_url = dependency.source
@@ -265,52 +196,198 @@ class Provider:
         except Exception:
             raise
         finally:
-            shutil.rmtree(tmp_dir.as_posix())
-
-        if dependency.name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                "The dependency name for {} does not match the actual package's name: {}".format(
-                    dependency.name, package.name
-                )
-            )
-
-        if dependency.extras:
-            for extra in dependency.extras:
-                if extra in package.extras:
-                    for dep in package.extras[extra]:
-                        dep.activate()
+            safe_rmtree(str(tmp_dir))
 
         return [package]
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
-        package = Package(dependency.name, dependency.pretty_constraint)
+        if dependency.path.suffix == ".whl":
+            meta = pkginfo.Wheel(str(dependency.full_path))
+        else:
+            # Assume sdist
+            meta = pkginfo.SDist(str(dependency.full_path))
+
+        if dependency.name != meta.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                "The dependency name for {} does not match the actual package's name: {}".format(
+                    dependency.name, meta.name
+                )
+            )
+
+        package = Package(meta.name, meta.version)
         package.source_type = "file"
         package.source_url = dependency.path.as_posix()
 
-        package.description = dependency.metadata.summary
-        for req in dependency.metadata.requires_dist:
-            package.requires.append(dependency_from_pep_508(req))
+        package.description = meta.summary
+        for req in meta.requires_dist:
+            dep = dependency_from_pep_508(req)
+            for extra in dep.in_extras:
+                if extra not in package.extras:
+                    package.extras[extra] = []
 
-        if dependency.metadata.requires_python:
-            package.python_versions = dependency.metadata.requires_python
+                package.extras[extra].append(dep)
 
-        if dependency.metadata.platforms:
-            package.platform = " || ".join(dependency.metadata.platforms)
+            if not dep.is_optional():
+                package.requires.append(dep)
+
+        if meta.requires_python:
+            package.python_versions = meta.requires_python
 
         package.hashes = [dependency.hash()]
+
+        for extra in dependency.extras:
+            if extra in package.extras:
+                for dep in package.extras[extra]:
+                    dep.activate()
+
+                package.requires += package.extras[extra]
 
         return [package]
 
     def search_for_directory(
         self, dependency
     ):  # type: (DirectoryDependency) -> List[Package]
-        package = dependency.package
-        if dependency.extras:
-            for extra in dependency.extras:
-                if extra in package.extras:
-                    for dep in package.extras[extra]:
-                        dep.activate()
+        if dependency.supports_poetry():
+            from poetry.poetry import Poetry
+
+            poetry = Poetry.create(dependency.full_path)
+
+            pkg = poetry.package
+            package = Package(pkg.name, pkg.version)
+
+            for dep in pkg.requires:
+                if not dep.is_optional():
+                    package.requires.append(dep)
+
+            for extra, deps in pkg.extras.items():
+                if extra not in package.extras:
+                    package.extras[extra] = []
+
+                for dep in deps:
+                    package.extras[extra].append(dep)
+
+            package.python_versions = pkg.python_versions
+        else:
+            # Execute egg_info
+            current_dir = os.getcwd()
+            os.chdir(str(dependency.full_path))
+
+            try:
+                cwd = dependency.full_path
+                venv = Env.get(NullIO(), cwd=cwd)
+                venv.run("python", "setup.py", "egg_info")
+            except EnvCommandError:
+                result = SetupReader.read_from_directory(dependency.full_path)
+                if not result["name"]:
+                    # The name could not be determined
+                    # We use the dependency name
+                    result["name"] = dependency.name
+
+                if not result["version"]:
+                    # The version could not be determined
+                    # so we raise an error since it is mandatory
+                    raise RuntimeError(
+                        "Unable to retrieve the package version for {}".format(
+                            dependency.path
+                        )
+                    )
+
+                package_name = result["name"]
+                package_version = result["version"]
+                python_requires = result["python_requires"]
+                if python_requires is None:
+                    python_requires = "*"
+
+                package_summary = ""
+
+                requires = ""
+                for dep in result["install_requires"]:
+                    requires += dep + "\n"
+
+                if result["extras_require"]:
+                    requires += "\n"
+
+                for extra_name, deps in result["extras_require"].items():
+                    requires += "[{}]\n".format(extra_name)
+
+                    for dep in deps:
+                        requires += dep + "\n"
+
+                    requires += "\n"
+
+                reqs = parse_requires(requires)
+            else:
+                os.chdir(current_dir)
+                # Sometimes pathlib will fail on recursive
+                # symbolic links, so we need to workaround it
+                # and use the glob module instead.
+                # Note that this does not happen with pathlib2
+                # so it's safe to use it for Python < 3.4.
+                if PY35:
+                    egg_info = next(
+                        Path(p)
+                        for p in glob.glob(
+                            os.path.join(str(dependency.full_path), "**", "*.egg-info"),
+                            recursive=True,
+                        )
+                    )
+                else:
+                    egg_info = next(dependency.full_path.glob("**/*.egg-info"))
+
+                meta = pkginfo.UnpackedSDist(str(egg_info))
+                package_name = meta.name
+                package_version = meta.version
+                package_summary = meta.summary
+                python_requires = meta.requires_python
+
+                if meta.requires_dist:
+                    reqs = list(meta.requires_dist)
+                else:
+                    reqs = []
+                    requires = egg_info / "requires.txt"
+                    if requires.exists():
+                        with requires.open() as f:
+                            reqs = parse_requires(f.read())
+            finally:
+                os.chdir(current_dir)
+
+            package = Package(package_name, package_version)
+
+            if dependency.name != package.name:
+                # For now, the dependency's name must match the actual package's name
+                raise RuntimeError(
+                    "The dependency name for {} does not match the actual package's name: {}".format(
+                        dependency.name, package.name
+                    )
+                )
+
+            package.description = package_summary
+
+            for req in reqs:
+                dep = dependency_from_pep_508(req)
+                if dep.in_extras:
+                    for extra in dep.in_extras:
+                        if extra not in package.extras:
+                            package.extras[extra] = []
+
+                        package.extras[extra].append(dep)
+
+                if not dep.is_optional():
+                    package.requires.append(dep)
+
+            if python_requires:
+                package.python_versions = python_requires
+
+        package.source_type = "directory"
+        package.source_url = dependency.path.as_posix()
+
+        for extra in dependency.extras:
+            if extra in package.extras:
+                for dep in package.extras[extra]:
+                    dep.activate()
+
+                package.requires += package.extras[extra]
 
         return [package]
 
@@ -534,14 +611,15 @@ class Provider:
                 )
 
             if package.dependency.is_directory() and dep.is_directory():
-                if dep.package.source_url.startswith(package.source_url):
-                    relative = (
-                        Path(package.source_url) / dep.package.source_url
-                    ).relative_to(package.source_url)
+                if dep.path.as_posix().startswith(package.source_url):
+                    relative = (Path(package.source_url) / dep.path).relative_to(
+                        package.source_url
+                    )
                 else:
-                    relative = Path(package.source_url) / dep.package.source_url
+                    relative = Path(package.source_url) / dep.path
 
-                dep.package.source_url = relative.as_posix()
+                # TODO: Improve the way we set the correct relative path for dependencies
+                dep._path = relative
 
         package.requires = dependencies
 

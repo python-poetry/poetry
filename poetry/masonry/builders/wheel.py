@@ -11,10 +11,10 @@ import zipfile
 
 from base64 import urlsafe_b64encode
 from io import StringIO
+from typing import Set
 
 from poetry.__version__ import __version__
 from poetry.semver import parse_constraint
-from poetry.utils._compat import Path
 
 from ..utils.helpers import normalize_file_permissions
 from ..utils.package_include import PackageInclude
@@ -67,8 +67,8 @@ class WheelBuilder(Builder):
         with zipfile.ZipFile(
             os.fdopen(fd, "w+b"), mode="w", compression=zipfile.ZIP_DEFLATED
         ) as zip_file:
-            self._build()
             self._copy_module(zip_file)
+            self._build(zip_file)
             self._write_metadata(zip_file)
             self._write_record(zip_file)
 
@@ -79,7 +79,7 @@ class WheelBuilder(Builder):
 
         self._io.writeln(" - Built <fg=cyan>{}</>".format(self.wheel_filename))
 
-    def _build(self):
+    def _build(self, wheel):
         if self._package.build:
             setup = self._path / "setup.py"
 
@@ -103,9 +103,22 @@ class WheelBuilder(Builder):
                 return
 
             lib = lib[0]
-            for pkg in lib.glob("*"):
-                shutil.rmtree(str(self._path / pkg.name))
-                shutil.copytree(str(pkg), str(self._path / pkg.name))
+            excluded = self.find_excluded_files()
+            for pkg in lib.glob("**/*"):
+                if pkg.is_dir() or pkg in excluded:
+                    continue
+
+                rel_path = str(pkg.relative_to(lib))
+
+                if rel_path in wheel.namelist():
+                    continue
+
+                self._io.writeln(
+                    " - Adding: <comment>{}</comment>".format(rel_path),
+                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                )
+
+                self._add_file(wheel, pkg, rel_path)
 
     def _copy_module(self, wheel):
         excluded = self.find_excluded_files()
@@ -173,9 +186,9 @@ class WheelBuilder(Builder):
             # RECORD itself is recorded with no hash or size
             f.write(self.dist_info + "/RECORD,,\n")
 
-    def find_excluded_files(self):  # type: () -> list
+    def find_excluded_files(self):  # type: () -> Set
         # Checking VCS
-        return []
+        return set()
 
     @property
     def dist_info(self):  # type: () -> str

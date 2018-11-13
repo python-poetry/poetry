@@ -1,5 +1,7 @@
+import os
 import re
 import shutil
+import stat
 import tempfile
 
 from contextlib import contextmanager
@@ -89,3 +91,12 @@ def get_http_basic_auth(
         return repo_auth["username"], repo_auth.get("password")
 
     return None
+
+
+def _on_rm_error(func, path, exc_info):
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def safe_rmtree(path):
+    shutil.rmtree(path, onerror=_on_rm_error)

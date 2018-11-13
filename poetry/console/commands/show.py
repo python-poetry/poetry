@@ -24,12 +24,8 @@ lists all packages available."""
     colors = ["green", "yellow", "cyan", "magenta", "blue"]
 
     def handle(self):
-        from poetry.packages.constraints import (
-            parse_constraint as parse_generic_constraint,
-        )
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.semver import Version
-        from poetry.semver import parse_constraint
 
         package = self.argument("package")
 
@@ -172,7 +168,7 @@ lists all packages available."""
                     color = "yellow"
 
                 line += " <fg={}>{:{}}</>".format(
-                    color, latest.pretty_version, latest_length
+                    color, latest.full_pretty_version, latest_length
                 )
                 if self.option("outdated") and update_status == "up-to-date":
                     continue
@@ -291,11 +287,17 @@ lists all packages available."""
             self.set_style(color, color)
 
     def find_latest_package(self, package):
+        from poetry.io import NullIO
+        from poetry.puzzle.provider import Provider
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
         if package.source_type == "git":
-            return
+            for dep in self.poetry.package.requires:
+                if dep.name == package.name and dep.is_vcs():
+                    return Provider(
+                        self.poetry.package, self.poetry.pool, NullIO()
+                    ).search_for_vcs(dep)[0]
 
         name = package.name
         selector = VersionSelector(self.poetry.pool)

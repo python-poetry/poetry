@@ -1,9 +1,9 @@
 from typing import List
 from typing import Union
 
-import poetry.packages
 
 from .base_repository import BaseRepository
+from .exceptions import PackageNotFound
 from .repository import Repository
 
 
@@ -65,7 +65,7 @@ class Pool(BaseRepository):
         for repository in self._repositories:
             try:
                 package = repository.package(name, version, extras=extras)
-            except ValueError:
+            except PackageNotFound:
                 continue
 
             if package:
@@ -73,7 +73,7 @@ class Pool(BaseRepository):
 
                 return package
 
-        raise PackageNotFound("Package [{}] not found.".format(name))
+        raise PackageNotFound("Package {} ({}) not found.".format(name, version))
 
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False

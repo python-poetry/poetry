@@ -1,8 +1,5 @@
-import sys
-
 from cleo.testers import CommandTester
 
-from tests.helpers import get_dependency
 from tests.helpers import get_package
 
 
@@ -78,7 +75,6 @@ Resolving dependencies...
 Resolution results:
 
   - pendulum (2.0.3)
-  - cleo (0.6.5)
   - demo (0.1.2)
 """
 

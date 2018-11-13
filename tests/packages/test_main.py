@@ -152,3 +152,20 @@ def test_dependency_from_pep_508_with_python_version_union_of_multi():
         'python_version >= "2.7" and python_version < "2.8" '
         'or python_version >= "3.4" and python_version < "3.5"'
     )
+
+
+def test_dependency_from_pep_508_with_not_in_op_marker():
+    name = (
+        "jinja2 (>=2.7,<2.8)"
+        '; python_version not in "3.0,3.1,3.2" and extra == "export"'
+    )
+
+    dep = dependency_from_pep_508(name)
+
+    assert dep.name == "jinja2"
+    assert str(dep.constraint) == ">=2.7,<2.8"
+    assert dep.in_extras == ["export"]
+    assert dep.python_versions == "!=3.0.*, !=3.1.*, !=3.2.*"
+    assert (
+        str(dep.marker) == 'python_version not in "3.0,3.1,3.2" and extra == "export"'
+    )

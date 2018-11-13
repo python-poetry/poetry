@@ -309,6 +309,21 @@ def test_with_c_extensions():
         assert "extended-0.1/extended/extended.c" in tar.getnames()
 
 
+def test_with_c_extensions_src_layout():
+    poetry = Poetry.create(project("src_extended"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    builder.build()
+
+    sdist = fixtures_dir / "src_extended" / "dist" / "extended-0.1.tar.gz"
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "extended-0.1/build.py" in tar.getnames()
+        assert "extended-0.1/src/extended/extended.c" in tar.getnames()
+
+
 def test_with_src_module_file():
     poetry = Poetry.create(project("source_file"))
 
@@ -423,14 +438,18 @@ def test_default_with_excluded_data(mocker):
     # Patch git module to return specific excluded files
     p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
     p.return_value = [
-        str(
-            Path(__file__).parent
-            / "fixtures"
-            / "default_with_excluded_data"
-            / "my_package"
-            / "data"
-            / "sub_data"
-            / "data2.txt"
+        (
+            (
+                Path(__file__).parent
+                / "fixtures"
+                / "default_with_excluded_data"
+                / "my_package"
+                / "data"
+                / "sub_data"
+                / "data2.txt"
+            )
+            .relative_to(project("default_with_excluded_data"))
+            .as_posix()
         )
     ]
     poetry = Poetry.create(project("default_with_excluded_data"))
@@ -471,7 +490,7 @@ def test_default_with_excluded_data(mocker):
         assert "my-package-1.2.3/PKG-INFO" in names
 
 
-def test_proper_python_requires_if_single_version_specified():
+def test_proper_python_requires_if_two_digits_precision_version_specified():
     poetry = Poetry.create(project("simple_version"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
@@ -480,3 +499,14 @@ def test_proper_python_requires_if_single_version_specified():
     parsed = p.parsestr(to_str(pkg_info))
 
     assert parsed["Requires-Python"] == ">=3.6,<3.7"
+
+
+def test_proper_python_requires_if_three_digits_precision_version_specified():
+    poetry = Poetry.create(project("single_python"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(to_str(pkg_info))
+
+    assert parsed["Requires-Python"] == "==2.7.15"

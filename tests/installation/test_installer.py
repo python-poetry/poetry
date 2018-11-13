@@ -77,21 +77,12 @@ class Locker(BaseLocker):
         self._written_data = data
 
 
-@pytest.fixture(autouse=True)
-def setup():
-    # Mock python version and platform to get reliable tests
-    original_platform = sys.platform
-
-    sys.platform = "darwin"
-
-    yield
-
-    sys.platform = original_platform
-
-
 @pytest.fixture()
 def package():
-    return ProjectPackage("root", "1.0")
+    p = ProjectPackage("root", "1.0")
+    p.root_dir = Path.cwd()
+
+    return p
 
 
 @pytest.fixture()
@@ -472,8 +463,10 @@ def test_run_with_optional_and_python_restricted_dependencies(
 
 
 def test_run_with_optional_and_platform_restricted_dependencies(
-    installer, locker, repo, package
+    installer, locker, repo, package, mocker
 ):
+    mocker.patch("sys.platform", "darwin")
+
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c12 = get_package("C", "1.2")
@@ -678,11 +671,12 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
 def test_run_installs_with_local_poetry_directory_and_extras(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path("tests/fixtures/project_with_extras/")
-    package.add_dependency("demo", {"path": str(file_path), "extras": ["extras_a"]})
+    file_path = Path("tests/fixtures/project_with_extras")
+    package.add_dependency(
+        "project-with-extras", {"path": str(file_path), "extras": ["extras_a"]}
+    )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cachy", "0.2.0"))
 
     installer.run()
 
@@ -699,7 +693,9 @@ def test_run_installs_with_local_poetry_directory_transitive(
     file_path = Path(
         "tests/fixtures/directory/project_with_transitive_directory_dependencies/"
     )
-    package.add_dependency("demo", {"path": str(file_path)})
+    package.add_dependency(
+        "project-with-transitive-directory-dependencies", {"path": str(file_path)}
+    )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -717,7 +713,7 @@ def test_run_installs_with_local_setuptools_directory(
     installer, locker, repo, package, tmpdir
 ):
     file_path = Path("tests/fixtures/project_with_setup/")
-    package.add_dependency("demo", {"path": str(file_path)})
+    package.add_dependency("my-package", {"path": str(file_path)})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cachy", "0.2.0"))

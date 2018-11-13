@@ -10,6 +10,7 @@ from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
+from poetry.utils._compat import Path
 from poetry.version.markers import parse_marker
 
 from tests.helpers import get_dependency
@@ -913,7 +914,6 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
         ops,
         [
             {"job": "install", "package": pendulum},
-            {"job": "install", "package": cleo},
             {"job": "install", "package": get_package("demo", "0.1.2")},
         ],
     )
@@ -1192,3 +1192,299 @@ def test_solver_should_not_resolve_prerelease_version_if_not_requested(
 
     with pytest.raises(SolverProblemError):
         solver.solve()
+
+
+def test_solver_ignores_dependencies_with_incompatible_python_full_version_marker(
+    solver, repo, package
+):
+    package.python_versions = "^3.6"
+    package.add_dependency("A", "^1.0")
+    package.add_dependency("B", "^2.0")
+
+    package_a = get_package("A", "1.0.0")
+    package_a.requires.append(
+        dependency_from_pep_508(
+            'B (<2.0); platform_python_implementation == "PyPy" and python_full_version < "2.7.9"'
+        )
+    )
+
+    package_b200 = get_package("B", "2.0.0")
+    package_b100 = get_package("B", "1.0.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b100)
+    repo.add_package(package_b200)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_b200},
+        ],
+    )
+
+
+def test_solver_git_dependencies_update(solver, repo, package, installed):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "123456"
+    installed.add_package(demo)
+
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {
+                "job": "update",
+                "from": get_package("demo", "0.1.2"),
+                "to": get_package("demo", "0.1.2"),
+            },
+        ],
+    )
+
+    op = ops[1]
+
+    assert op.job_type == "update"
+    assert op.package.source_type == "git"
+    assert op.package.source_reference.startswith("9cf87a2")
+    assert op.initial_package.source_reference == "123456"
+
+
+def test_solver_git_dependencies_update_skipped(solver, repo, package, installed):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    installed.add_package(demo)
+
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {
+                "job": "install",
+                "package": get_package("demo", "0.1.2"),
+                "skipped": True,
+            },
+        ],
+    )
+
+
+def test_solver_can_resolve_directory_dependencies(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "demo"
+    ).as_posix()
+
+    package.add_dependency("demo", {"path": path})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.2")},
+        ],
+    )
+
+    op = ops[1]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.2"
+    assert op.package.source_type == "directory"
+    assert op.package.source_url == path
+
+
+def test_solver_can_resolve_directory_dependencies_with_extras(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "demo"
+    ).as_posix()
+
+    package.add_dependency("demo", {"path": path, "extras": ["foo"]})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": cleo},
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.2")},
+        ],
+    )
+
+    op = ops[2]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.2"
+    assert op.package.source_type == "directory"
+    assert op.package.source_url == path
+
+
+def test_solver_can_resolve_sdist_dependencies(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "distributions"
+        / "demo-0.1.0.tar.gz"
+    ).as_posix()
+
+    package.add_dependency("demo", {"path": path})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.0")},
+        ],
+    )
+
+    op = ops[1]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.0"
+    assert op.package.source_type == "file"
+    assert op.package.source_url == path
+
+
+def test_solver_can_resolve_sdist_dependencies_with_extras(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "distributions"
+        / "demo-0.1.0.tar.gz"
+    ).as_posix()
+
+    package.add_dependency("demo", {"path": path, "extras": ["foo"]})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": cleo},
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.0")},
+        ],
+    )
+
+    op = ops[2]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.0"
+    assert op.package.source_type == "file"
+    assert op.package.source_url == path
+
+
+def test_solver_can_resolve_wheel_dependencies(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    repo.add_package(pendulum)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "distributions"
+        / "demo-0.1.0-py2.py3-none-any.whl"
+    ).as_posix()
+
+    package.add_dependency("demo", {"path": path})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.0")},
+        ],
+    )
+
+    op = ops[1]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.0"
+    assert op.package.source_type == "file"
+    assert op.package.source_url == path
+
+
+def test_solver_can_resolve_wheel_dependencies_with_extras(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "distributions"
+        / "demo-0.1.0-py2.py3-none-any.whl"
+    ).as_posix()
+
+    package.add_dependency("demo", {"path": path, "extras": ["foo"]})
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": cleo},
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.0")},
+        ],
+    )
+
+    op = ops[2]
+
+    assert op.package.name == "demo"
+    assert op.package.version.text == "0.1.0"
+    assert op.package.source_type == "file"
+    assert op.package.source_url == path

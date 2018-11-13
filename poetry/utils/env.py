@@ -302,8 +302,6 @@ class Env(object):
         Return path to the given executable.
         """
         bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._is_windows else "")
-        if not bin_path.exists():
-            return bin
 
         return str(bin_path)
 
@@ -516,3 +514,19 @@ class NullEnv(SystemEnv):
 
     def _bin(self, bin):
         return bin
+
+
+class MockEnv(NullEnv):
+    def __init__(self, version_info=(3, 7, 0), python_implementation="cpython"):
+        super(MockEnv, self).__init__()
+
+        self._version_info = version_info
+        self._python_implementation = python_implementation
+
+    @property
+    def version_info(self):  # type: () -> Tuple[int]
+        return self._version_info
+
+    @property
+    def python_implementation(self):  # type: () -> str
+        return self._python_implementation

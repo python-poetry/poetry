@@ -148,7 +148,7 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = "*"
+python = "^3.7"
 
 [tool.poetry.dev-dependencies]
 """

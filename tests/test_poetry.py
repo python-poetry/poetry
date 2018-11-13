@@ -64,25 +64,21 @@ def test_poetry():
     assert demo.is_file()
     assert not demo.is_vcs()
     assert demo.name == "demo"
-    assert demo.pretty_constraint == "0.1.0"
+    assert demo.pretty_constraint == "*"
 
     demo = dependencies["my-package"]
     assert not demo.is_file()
     assert demo.is_directory()
     assert not demo.is_vcs()
     assert demo.name == "my-package"
-    assert demo.pretty_constraint == "0.1.2"
-    assert demo.package.requires[0].name == "pendulum"
-    assert demo.package.requires[1].name == "cachy"
-    assert demo.package.requires[1].extras == ["msgpack"]
+    assert demo.pretty_constraint == "*"
 
     simple_project = dependencies["simple-project"]
     assert not simple_project.is_file()
     assert simple_project.is_directory()
     assert not simple_project.is_vcs()
     assert simple_project.name == "simple-project"
-    assert simple_project.pretty_constraint == "1.2.3"
-    assert simple_project.package.requires == []
+    assert simple_project.pretty_constraint == "*"
 
     assert "db" in package.extras
 

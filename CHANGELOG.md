@@ -11,6 +11,55 @@
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
 
 
+## [0.12.8] - 2018-11-13
+
+### Fixed
+
+- Fixed permission errors when adding/removing git dependencies on Windows.
+- Fixed `Pool` not raising an exception when no package could be found.
+- Fixed reading `bz2` source distribution.
+- Fixed handling of arbitrary equals in `InstalledRepository`.
+
+
+## [0.12.7] - 2018-11-08
+
+### Fixed
+
+- Fixed reading of some `setup.py` files.
+- Fixed a `KeyError` when getting information for packages which require reading setup files.
+- Fixed the building of wheels with C extensions and an `src` layout.
+- Fixed extras being selected when resolving dependencies even when not required.
+- Fixed performance issues when packaging projects if a lot of files were excluded.
+- Fixed installation of files.
+- Fixed extras not being retrieved for legacy repositories.
+- Fixed invalid transitive constraints raising an error for legacy repositories.
+
+
+## [0.12.6] - 2018-11-05
+
+### Changed
+
+- Poetry will now try to read, without executing, setup files (`setup.py` and/or `setup.cfg`) if the `egg_info` command fails when resolving dependencies.
+
+### Fixed
+
+- Fixed installation of directory dependencies.
+- Fixed handling of dependencies with a `not in` marker operator.
+- Fixed support for VCS dependencies.
+- Fixed the `exclude` property not being respected if no VCS was available.
+
+
+## [0.12.5] - 2018-10-26
+
+### Fixed
+
+- Fixed installation of Poetry git dependencies with a build system.
+- Fixed possible errors when resolving dependencies for specific packages.
+- Fixed handling of Python versions compatibility.
+- Fixed the dependency resolver picking up unnecessary dependencies due to not using the `python_full_version` marker.
+- Fixed the `Python-Requires` metadata being invalid for single Python versions.
+
+
 ## [0.12.4] - 2018-10-21
 
 ### Fixed
@@ -548,7 +597,11 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.4...develop
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.8...master
+[0.12.8]: https://github.com/sdispater/poetry/releases/tag/0.12.8
+[0.12.7]: https://github.com/sdispater/poetry/releases/tag/0.12.7
+[0.12.6]: https://github.com/sdispater/poetry/releases/tag/0.12.6
+[0.12.5]: https://github.com/sdispater/poetry/releases/tag/0.12.5
 [0.12.4]: https://github.com/sdispater/poetry/releases/tag/0.12.4
 [0.12.3]: https://github.com/sdispater/poetry/releases/tag/0.12.3
 [0.12.2]: https://github.com/sdispater/poetry/releases/tag/0.12.2

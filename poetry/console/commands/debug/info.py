@@ -31,19 +31,22 @@ class DebugInfoCommand(Command):
 
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
         self.output.title("Virtualenv")
-        self.output.listing(
-            [
-                "<info>Python</info>:         <comment>{}</>".format(
-                    env_python_version
-                ),
-                "<info>Implementation</info>: <comment>{}</>".format(
-                    env.python_implementation
-                ),
-                "<info>Path</info>:           <comment>{}</>".format(
-                    env.path if env.is_venv() else "NA"
-                ),
-            ]
-        )
+        listing = [
+            "<info>Python</info>:         <comment>{}</>".format(env_python_version),
+            "<info>Implementation</info>: <comment>{}</>".format(
+                env.python_implementation
+            ),
+            "<info>Path</info>:           <comment>{}</>".format(
+                env.path if env.is_venv() else "NA"
+            ),
+        ]
+        if env.is_venv():
+            listing.append(
+                "<info>Valid</info>:          <{tag}>{is_valid}</{tag}>".format(
+                    tag="comment" if env.is_sane() else "error", is_valid=env.is_sane()
+                )
+            )
+        self.output.listing(listing)
 
         self.line("")
 
