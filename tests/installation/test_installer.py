@@ -1306,8 +1306,10 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
 
 
 def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(
-    locker, repo, package, installed, env
+    locker, repo, package, installed, env, mocker
 ):
+    mocker.patch("sys.platform", "darwin")
+
     pool = Pool()
     pool.add_repository(MockRepository())
 
