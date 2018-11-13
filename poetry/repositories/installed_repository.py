@@ -1,3 +1,5 @@
+import re
+
 from poetry.packages import Package
 from poetry.utils.env import Env
 
@@ -17,7 +19,7 @@ class InstalledRepository(Repository):
         freeze_output = env.run("pip", "freeze")
         for line in freeze_output.split("\n"):
             if "==" in line:
-                name, version = line.split("==")
+                name, version = re.split("={2,3}", line)
                 repo.add_package(Package(name, version, version))
             elif line.startswith("-e "):
                 line = line[3:].strip()
