@@ -302,8 +302,6 @@ class Env(object):
         Return path to the given executable.
         """
         bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._is_windows else "")
-        if not bin_path.exists():
-            return bin
 
         return str(bin_path)
 
