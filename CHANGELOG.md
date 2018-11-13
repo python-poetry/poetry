@@ -7,6 +7,7 @@
 - Fixed permission errors when adding/removing git dependencies on Windows.
 - Fixed `Pool` not raising an exception when no package could be found.
 - Fixed reading `bz2` source distribution.
+- Fixed handling of arbitrary equals in `InstalledRepository`.
 
 
 ## [0.12.7] - 2018-11-08
