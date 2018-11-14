@@ -154,6 +154,14 @@ class Env(object):
         """
         return self._bin("pip")
 
+    @property
+    def platform(self):  # type: () -> str
+        return sys.platform
+
+    @property
+    def os(self):  # type: () -> str
+        return os.name
+
     @classmethod
     def get(cls, cwd, reload=False):  # type: (Path, bool) -> Env
         if cls._env is not None and not reload:

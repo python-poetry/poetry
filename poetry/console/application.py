@@ -33,6 +33,8 @@ from .commands.self import SelfCommand
 
 from .config import ApplicationConfig
 
+from .commands.env import EnvCommand
+
 
 class Application(BaseApplication):
     def __init__(self):
@@ -88,6 +90,9 @@ class Application(BaseApplication):
 
         # Debug command
         commands += [DebugCommand()]
+
+        # Env command
+        commands += [EnvCommand()]
 
         # Self commands
         commands += [SelfCommand()]

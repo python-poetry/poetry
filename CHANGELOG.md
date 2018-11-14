@@ -5,6 +5,7 @@
 ### Added
 
 - Added an `export` command to export the lock file to other formats (only `requirements.txt` is currently supported).
+- Added a `env:info` command to get basic information about the current environment.
 
 ### Changed
 
