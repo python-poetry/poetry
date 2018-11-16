@@ -301,7 +301,10 @@ class Env(object):
         """
         Return path to the given executable.
         """
-        bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._is_windows else "")
+        bin_path = self._bin_dir / bin
+        if self._is_windows:
+            bin_path = bin_path.with_suffix(".exe")
+
         if not bin_path.exists():
             return bin
 
