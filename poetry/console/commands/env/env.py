@@ -1,6 +1,7 @@
 from ..command import Command
 
 from .info import EnvInfoCommand
+from .use import EnvUseCommand
 
 
 class EnvCommand(Command):
@@ -10,7 +11,7 @@ class EnvCommand(Command):
     env
     """
 
-    commands = [EnvInfoCommand()]
+    commands = [EnvInfoCommand(), EnvUseCommand()]
 
     def handle(self):  # type: () -> int
         return self.call("help", self._config.name)

@@ -49,9 +49,12 @@ def installed():
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed):
+def setup(mocker, installer, installed, config):
     mocker.patch(
-        "poetry.utils.env.Env.get", return_value=MockEnv(is_venv=True, execute=True)
+        "poetry.utils.env.EnvManager.get",
+        return_value=MockEnv(
+            path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True
+        ),
     )
 
     # Set Installer's installer

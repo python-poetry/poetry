@@ -155,19 +155,44 @@ When you execute the `install` command (or any other "install" commands like `ad
 Poetry will check if it's currently inside a virtualenv and, if not, will use an existing one
 or create a brand new one for you to always work isolated from your global Python installation.
 
-!!!note
+By default, Poetry will use the currently activated Python version
+to create the virtualenv for the current project.
+    
+To easily switch between Python versions, it is recommended to
+use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
+    
+For instance, if your project is Python 2.7 only, a standard workflow
+would be:
+    
+```bash
+pyenv install 2.7.15
+pyenv local 2.7.15  # Activate Python 2.7 for the current project
+poetry install
+```
 
-    To create the virtualenv for the current project, Poetry will use
-    the currently activated Python version.
+However, this might not be feasible for your system, especially Windows where `pyenv`,
+is not available. To circumvent that you can use the `env:use` command to tell
+Poetry which Python version to use for the current project.
 
-    To easily switch between Python versions, it is recommended to
-    use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
+```bash
+poetry env:use /full/path/to/python
+```
 
-    For instance, if your project is Python 2.7 only, a standard workflow
-    would be:
+If you have the python executable in your `PATH` you can use it:
 
-    ```bash
-    pyenv install 2.7.15
-    pyenv local 2.7.15  # Activate Python 2.7 for the current project
-    poetry install
-    ```
+```bash
+poetry env:use python3.7
+```
+
+You can even just use the minor Python version in this case:
+
+```bash
+poetry env:use 3.7
+```
+
+If you want to disable the explicitly activated virtualenv, you can use the
+special `system` Python version to retrieve the default behavior:
+
+```bash
+poetry env:use system
+```

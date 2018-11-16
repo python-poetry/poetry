@@ -57,18 +57,20 @@ class ApplicationConfig(BaseApplicationConfig):
 
     def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, ...) -> None
         from poetry.semver import parse_constraint
-        from poetry.utils.env import Env
+        from poetry.utils.env import EnvManager
 
-        command = event.command.config.handler
+        command = event.command.config.handler  # type: EnvCommand
         if not isinstance(command, EnvCommand):
             return
 
         io = event.io
         poetry = command.poetry
 
+        env_manager = EnvManager(poetry.config)
+
         # Checking compatibility of the current environment with
         # the python dependency specified in pyproject.toml
-        current_env = Env.get(poetry.file.parent)
+        current_env = env_manager.get(poetry.file.parent)
         supported_python = poetry.package.python_constraint
         current_python = parse_constraint(
             ".".join(str(v) for v in current_env.version_info[:3])
@@ -82,7 +84,7 @@ class ApplicationConfig(BaseApplicationConfig):
                 )
             )
 
-        env = Env.create_venv(poetry.file.parent, io, poetry.package.name)
+        env = env_manager.create_venv(poetry.file.parent, io, poetry.package.name)
 
         if env.is_venv() and io.is_verbose():
             io.write_line("Using virtualenv: <comment>{}</>".format(env.path))

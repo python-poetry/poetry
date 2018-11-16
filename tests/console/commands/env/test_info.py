@@ -29,7 +29,7 @@ System
     assert tester.get_display(True) == expected
 
 
-def test_env_info_displays_path_onlyo(app):
+def test_env_info_displays_path_only(app):
     command = app.find("env:info")
     tester = CommandTester(command)
 

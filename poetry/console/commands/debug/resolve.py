@@ -24,7 +24,7 @@ class DebugResolveCommand(Command):
         from poetry.puzzle import Solver
         from poetry.repositories.repository import Repository
         from poetry.semver import parse_constraint
-        from poetry.utils.env import Env
+        from poetry.utils.env import EnvManager
 
         packages = self.argument("package")
 
@@ -78,7 +78,7 @@ class DebugResolveCommand(Command):
 
             return 0
 
-        env = Env.get(self.poetry.file.parent)
+        env = EnvManager(self.poetry.config).get(self.poetry.file.parent)
         current_python_version = parse_constraint(
             ".".join(str(v) for v in env.version_info)
         )

@@ -30,7 +30,7 @@ from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import safe_rmtree
-from poetry.utils.env import Env
+from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
 from poetry.utils.setup_reader import SetupReader
 
@@ -260,7 +260,7 @@ class Provider:
 
             try:
                 cwd = dependency.full_path
-                venv = Env.get(cwd)
+                venv = EnvManager().get(cwd)
                 venv.run("python", "setup.py", "egg_info")
             except EnvCommandError:
                 result = SetupReader.read_from_directory(dependency.full_path)
