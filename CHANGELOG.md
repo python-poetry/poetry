@@ -7,6 +7,7 @@
 - Fixed executables from outside the virtualenv not being accessible.
 - Fixed a possible error when building distributions with the `exclude` option.
 - Fixed the `run` command for namespaced packages.
+- Fixed errors for virtualenvs with spaces in their path.
 
 
 ## [0.12.8] - 2018-11-13

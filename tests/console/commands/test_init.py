@@ -1,21 +1,8 @@
-import pytest
-import shutil
-import tempfile
-
 from cleo.testers import CommandTester
 
 from poetry.utils._compat import Path
 
 from tests.helpers import get_package
-
-
-@pytest.fixture
-def tmp_dir():
-    dir_ = tempfile.mkdtemp(prefix="poetry_")
-
-    yield dir_
-
-    shutil.rmtree(dir_)
 
 
 def test_basic_interactive(app, mocker, poetry):

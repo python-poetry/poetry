@@ -1,3 +1,4 @@
+import subprocess
 import sys
 
 try:
@@ -18,6 +19,17 @@ except NameError:  # Python 3
 PY2 = sys.version_info[0] == 2
 PY35 = sys.version_info >= (3, 5)
 PY36 = sys.version_info >= (3, 6)
+
+WINDOWS = sys.platform == "win32"
+
+if PY2:
+    import pipes
+
+    shell_quote = pipes.quote
+else:
+    import shlex
+
+    shell_quote = shlex.quote
 
 
 if PY35:
@@ -80,3 +92,10 @@ def to_str(string):
             pass
 
     return getattr(string, method)(encodings[0], errors="ignore")
+
+
+def list_to_shell_command(cmd):
+    if not WINDOWS:
+        cmd = [cmd[0]] + [shell_quote(a) for a in cmd[1:]]
+
+    return subprocess.list2cmdline(cmd)

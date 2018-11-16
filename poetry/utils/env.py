@@ -17,7 +17,70 @@ from poetry.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from poetry.utils._compat import encode
+from poetry.utils._compat import list_to_shell_command
 from poetry.version.markers import BaseMarker
+
+
+GET_ENVIRONMENT_INFO = """\
+import json
+import os
+import platform
+import sys
+
+if hasattr(sys, "implementation"):
+    info = sys.implementation.version
+    iver = "{0.major}.{0.minor}.{0.micro}".format(info)
+    kind = info.releaselevel
+    if kind != "final":
+        iver += kind[0] + str(info.serial)
+
+    implementation_name = sys.implementation.name
+else:
+    iver = "0"
+    implementation_name = ""
+
+env = {
+    "implementation_name": implementation_name,
+    "implementation_version": iver,
+    "os_name": os.name,
+    "platform_machine": platform.machine(),
+    "platform_release": platform.release(),
+    "platform_system": platform.system(),
+    "platform_version": platform.version(),
+    "python_full_version": platform.python_version(),
+    "platform_python_implementation": platform.python_implementation(),
+    "python_version": platform.python_version()[:3],
+    "sys_platform": sys.platform,
+    "version_info": tuple(sys.version_info),
+}
+
+print(json.dumps(env))
+"""
+
+
+GET_BASE_PREFIX = """\
+import sys
+
+if hasattr(sys, "real_prefix"):
+    print(sys.real_prefix)
+elif hasattr(sys, "base_prefix"):
+    print(sys.base_prefix)
+else:
+    print(sys.prefix)
+"""
+
+GET_CONFIG_VAR = """\
+import sysconfig
+
+print(sysconfig.get_config_var("{config_var}")),
+"""
+
+GET_PYTHON_VERSION = """\
+import sys
+
+print('.'.join([str(s) for s in sys.version_info[:3]]))
+"""
 
 
 class EnvError(Exception):
@@ -272,18 +335,30 @@ class Env(object):
         cmd = [bin] + list(args)
         shell = kwargs.get("shell", False)
         call = kwargs.pop("call", False)
+        input_ = kwargs.pop("input_", None)
 
         if shell:
-            cmd = " ".join(cmd)
+            cmd = list_to_shell_command(cmd)
 
         try:
             if self._is_windows:
                 kwargs["shell"] = True
 
-            if call:
+            if input_:
+                p = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    **kwargs
+                )
+                output = p.communicate(encode(input_))[0]
+            elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
-
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, **kwargs)
+            else:
+                output = subprocess.check_output(
+                    cmd, stderr=subprocess.STDOUT, **kwargs
+                )
         except CalledProcessError as e:
             raise EnvCommandError(e)
 
@@ -375,29 +450,10 @@ class VirtualEnv(Env):
         # In this case we need to get sys.base_prefix
         # from inside the virtualenv.
         if base is None:
-            self._base = Path(
-                self.run(
-                    "python",
-                    "-c",
-                    '"import sys; '
-                    "print("
-                    "    getattr("
-                    "        sys,"
-                    "        'real_prefix', "
-                    "        getattr(sys, 'base_prefix', sys.prefix)"
-                    "    )"
-                    ')"',
-                    shell=True,
-                ).strip()
-            )
+            self._base = Path(self.run("python", "-", input_=GET_BASE_PREFIX).strip())
 
     def get_version_info(self):  # type: () -> Tuple[int]
-        output = self.run(
-            "python",
-            "-c",
-            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-            shell=True,
-        )
+        output = self.run("python", "-", input_=GET_PYTHON_VERSION)
 
         return tuple([int(s) for s in output.strip().split(".")])
 
@@ -405,41 +461,14 @@ class VirtualEnv(Env):
         return self.marker_env["platform_python_implementation"]
 
     def get_marker_env(self):  # type: () -> Dict[str, Any]
-        output = self.run(
-            "python",
-            "-c",
-            '"import json; import os; import platform; import sys; '
-            "implementation = getattr(sys, 'implementation', None); "
-            "iver = '{0.major}.{0.minor}.{0.micro}'.format(implementation.version) if implementation else '0'; "
-            "implementation_name = implementation.name if implementation else ''; "
-            "env = {"
-            "'implementation_name': implementation_name,"
-            "'implementation_version': iver,"
-            "'os_name': os.name,"
-            "'platform_machine': platform.machine(),"
-            "'platform_release': platform.release(),"
-            "'platform_system': platform.system(),"
-            "'platform_version': platform.version(),"
-            "'python_full_version': platform.python_version(),"
-            "'platform_python_implementation': platform.python_implementation(),"
-            "'python_version': platform.python_version()[:3],"
-            "'sys_platform': sys.platform,"
-            "'version_info': sys.version_info[:3],"
-            "};"
-            'print(json.dumps(env))"',
-            shell=True,
-        )
+        output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)
 
         return json.loads(output)
 
     def config_var(self, var):  # type: (str) -> Any
         try:
             value = self.run(
-                "python",
-                "-c",
-                '"import sysconfig; '
-                "print(sysconfig.get_config_var('{}'))\"".format(var),
-                shell=True,
+                "python", "-", input_=GET_CONFIG_VAR.format(config_var=var)
             ).strip()
         except EnvCommandError as e:
             warnings.warn("{0}".format(e), RuntimeWarning)

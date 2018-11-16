@@ -13,6 +13,15 @@ from poetry.utils.toml_file import TomlFile
 
 
 @pytest.fixture
+def tmp_dir():
+    dir_ = tempfile.mkdtemp(prefix="poetry_")
+
+    yield dir_
+
+    shutil.rmtree(dir_)
+
+
+@pytest.fixture
 def config():  # type: () -> Config
     with tempfile.NamedTemporaryFile() as f:
         f.close()
