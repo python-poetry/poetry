@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed executables from outside the virtualenv not being accessible.
+
+
 ## [0.12.8] - 2018-11-13
 
 ### Fixed
