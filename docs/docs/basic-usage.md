@@ -163,7 +163,7 @@ or create a brand new one for you to always work isolated from your global Pytho
     To easily switch between Python versions, it is recommended to
     use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
     
-    For instance, if you project is Python 2.7 only, a standard workflow
+    For instance, if your project is Python 2.7 only, a standard workflow
     would be:
     
     ```bash
