@@ -42,6 +42,18 @@ def remove_venv(path):
     shutil.rmtree(path)
 
 
+def check_output_wrapper(version=Version.parse("3.7.1")):
+    def check_output(cmd, *args, **kwargs):
+        if "sys.version_info[:3]" in cmd:
+            return version.text
+        elif "sys.version_info[:2]" in cmd:
+            return "{}.{}".format(version.major, version.minor)
+        else:
+            return str(Path("/prefix"))
+
+    return check_output
+
+
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
     tmp_dir, config, mocker, environ
 ):
@@ -50,7 +62,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
-    mocker.patch("subprocess.check_output", side_effect=["3.7.1", "3.7"])
+    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None)],
@@ -83,7 +95,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
-    mocker.patch("subprocess.check_output", side_effect=["3.7.1"])
+    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
     mocker.patch("subprocess.Popen.communicate", side_effect=[("/prefix", None)])
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
@@ -116,7 +128,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
-    mocker.patch("subprocess.check_output", side_effect=["3.7.1"])
+    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
     mocker.patch("subprocess.Popen.communicate", side_effect=[("/prefix", None)])
     m = mocker.patch("poetry.utils.env.EnvManager.create_venv")
 
@@ -148,7 +160,10 @@ def test_activate_activates_different_virtualenv_with_envs_file(
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
-    mocker.patch("subprocess.check_output", side_effect=["3.6.6", "3.6", "3.6"])
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
@@ -185,7 +200,7 @@ def test_activate_activates_recreates_for_different_minor(
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
-    mocker.patch("subprocess.check_output", side_effect=["3.7.1", "3.7", "3.7"])
+    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
@@ -225,7 +240,7 @@ def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker, environ)
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
-    mocker.patch("subprocess.check_output", side_effect=["/prefix", "/prefix"])
+    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
 
     EnvManager(config).deactivate(CWD, NullIO())
     env = EnvManager(config).get(CWD)
@@ -260,7 +275,7 @@ def test_deactivate_activated(tmp_dir, config, mocker, environ):
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
-    mocker.patch("subprocess.check_output", side_effect=["/prefix", "/prefix"])
+    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
 
     EnvManager(config).deactivate(CWD, NullIO())
     env = EnvManager(config).get(CWD)
@@ -287,6 +302,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     doc["simple_project"] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
+    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
     mocker.patch("subprocess.Popen.communicate", side_effect=[("/prefix", None)])
 
     env = EnvManager(config).get(CWD)
