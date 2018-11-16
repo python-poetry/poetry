@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed executables from outside the virtualenv not being accessible.
+- Fixed a possible error when building distributions with the `exclude` option.
 
 
 ## [0.12.8] - 2018-11-13
