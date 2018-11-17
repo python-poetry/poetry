@@ -128,3 +128,11 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
         Dependency("pyflakes", ">=1.6.0"),
         Dependency("yapf", "*"),
     ]
+
+
+def test_find_packages_no_prereleases():
+    repo = MockRepository()
+
+    packages = repo.find_packages("pyyaml")
+
+    assert len(packages) == 1

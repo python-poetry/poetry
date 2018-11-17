@@ -37,6 +37,7 @@ from poetry.packages.utils.link import Link
 from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name, get_http_basic_auth
 from poetry.version.markers import InvalidMarker
@@ -187,11 +188,23 @@ class LegacyRepository(PyPiRepository):
     ):
         packages = []
 
-        if constraint is not None and not isinstance(constraint, VersionConstraint):
+        if constraint is None:
+            constraint = "*"
+
+        if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        if isinstance(constraint, VersionRange):
+            if (
+                constraint.max is not None
+                and constraint.max.is_prerelease()
+                or constraint.min is not None
+                and constraint.min.is_prerelease()
+            ):
+                allow_prereleases = True
+
         key = name
-        if constraint:
+        if not constraint.is_any():
             key = "{}:{}".format(key, str(constraint))
 
         if self._cache.store("matches").has(key):
@@ -203,7 +216,10 @@ class LegacyRepository(PyPiRepository):
 
             versions = []
             for version in page.versions:
-                if not constraint or (constraint and constraint.allows(version)):
+                if version.is_prerelease() and not allow_prereleases:
+                    continue
+
+                if constraint.allows(version):
                     versions.append(version)
 
             self._cache.store("matches").put(key, versions, 5)

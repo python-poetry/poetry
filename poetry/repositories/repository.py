@@ -1,5 +1,6 @@
 from poetry.semver import parse_constraint
 from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
 
 from .base_repository import BaseRepository
 
@@ -46,16 +47,21 @@ class Repository(BaseRepository):
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        if isinstance(constraint, VersionRange):
+            if (
+                constraint.max is not None
+                and constraint.max.is_prerelease()
+                or constraint.min is not None
+                and constraint.min.is_prerelease()
+            ):
+                allow_prereleases = True
+
         for package in self.packages:
             if name == package.name:
-                if (
-                    package.is_prerelease()
-                    and not allow_prereleases
-                    and not constraint.allows(package.version)
-                ):
+                if package.is_prerelease() and not allow_prereleases:
                     continue
 
-                if constraint is None or constraint.allows(package.version):
+                if constraint.allows(package.version):
                     for dep in package.requires:
                         for extra in extras:
                             if extra not in package.extras:

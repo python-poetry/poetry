@@ -28,17 +28,16 @@ from cachy import CacheManager
 from requests import get
 from requests import session
 
-from poetry.io import NullIO
 from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
 from poetry.semver import parse_constraint
 from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.env import Env
 from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
 
@@ -93,6 +92,15 @@ class PyPiRepository(Repository):
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        if isinstance(constraint, VersionRange):
+            if (
+                constraint.max is not None
+                and constraint.max.is_prerelease()
+                or constraint.min is not None
+                and constraint.min.is_prerelease()
+            ):
+                allow_prereleases = True
+
         info = self.get_package_info(name)
 
         packages = []
@@ -110,11 +118,7 @@ class PyPiRepository(Repository):
 
             package = Package(name, version)
 
-            if (
-                package.is_prerelease()
-                and not allow_prereleases
-                and not constraint.allows(package.version)
-            ):
+            if package.is_prerelease() and not allow_prereleases:
                 continue
 
             if not constraint or (constraint and constraint.allows(package.version)):
