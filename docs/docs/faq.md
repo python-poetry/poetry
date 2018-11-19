@@ -11,7 +11,7 @@ and, as such, they are not available via the PyPI JSON API. At this point, Poetr
 but downloading the packages and inspect them to get the necessary information. This is an expensive
 operation, both in bandwidth and time, which is why it seems this is a long process.
 
-At the moment there is not way around it.
+At the moment there is no way around it.
 
 !!!note
 
@@ -38,7 +38,7 @@ The `^` operator works very well with libraries following [semantic versioning](
 Yes. By using the [isolated builds](https://tox.readthedocs.io/en/latest/config.html#conf-isolated_build) `tox` provides,
 you can use it in combination with the PEP 517 compliant build system provided by Poetry.
 
-So, in your `pyproject.toml` file add this section if does not already exists:
+So, in your `pyproject.toml` file, add this section if it does not already exist:
 
 ```toml
 [build-system]
