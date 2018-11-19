@@ -190,7 +190,7 @@ poetry add my-package --path ../my-package/dist/my_package-0.1.0.whl
 ## remove
 
 The `remove` command removes a package from the current
-list of installed packages
+list of installed packages.
 
 ```bash
 poetry remove pendulum
@@ -296,7 +296,7 @@ The `run` command executes the given command inside the project's virtualenv.
 poetry run python -V
 ```
 
-It can also executes one of the scripts defined in `pyproject.toml`.
+It can also execute one of the scripts defined in `pyproject.toml`.
 
 So, if you have a script defined like this:
 
@@ -315,9 +315,9 @@ Note that this command has no option.
 
 ## shell
 
-The `shell` command spawns a shell, 
-according to the `$SHELL` environment variable, 
-within the virtual environment. 
+The `shell` command spawns a shell,
+according to the `$SHELL` environment variable,
+within the virtual environment.
 If one doesn't exist yet, it will be created.
 
 ```bash
@@ -326,7 +326,7 @@ poetry shell
 
 ## check
 
-The `check` command validate the structure of the `pyproject.toml` file
+The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
 ```bash
