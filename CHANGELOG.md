@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed `run` not executing scripts.
+
+
 ## [0.12.9] - 2018-11-19
 
 ### Fixed

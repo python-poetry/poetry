@@ -95,7 +95,10 @@ def to_str(string):
 
 
 def list_to_shell_command(cmd):
-    if not WINDOWS:
-        cmd = [cmd[0]] + [shell_quote(a) for a in cmd[1:]]
+    executable = cmd[0]
 
-    return subprocess.list2cmdline(cmd)
+    if " " in executable:
+        executable = '"{}"'.format(executable)
+        cmd[0] = executable
+
+    return " ".join(cmd)
