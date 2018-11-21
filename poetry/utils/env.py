@@ -153,7 +153,7 @@ class Env(object):
         return self._bin("pip")
 
     @classmethod
-    def get(cls, reload=False, cwd=None):  # type: (bool, Path) -> Env
+    def get(cls, cwd, reload=False):  # type: (Path, bool) -> Env
         if cls._env is not None and not reload:
             return cls._env
 
@@ -162,7 +162,7 @@ class Env(object):
 
         if not in_venv:
             # Checking if a local virtualenv exists
-            if cwd and (cwd / ".venv").exists():
+            if (cwd / ".venv").exists():
                 venv = cwd / ".venv"
 
                 return VirtualEnv(venv)
@@ -178,9 +178,6 @@ class Env(object):
                 venv_path = Path(CACHE_DIR) / "virtualenvs"
             else:
                 venv_path = Path(venv_path)
-
-            if cwd is None:
-                cwd = Path.cwd()
 
             name = cwd.name
             name = "{}-py{}".format(
@@ -204,11 +201,11 @@ class Env(object):
         return VirtualEnv(prefix, base_prefix)
 
     @classmethod
-    def create_venv(cls, io, name=None, cwd=None):  # type: (IO, bool, Path) -> Env
+    def create_venv(cls, cwd, io, name=None):  # type: (Path, IO, bool) -> Env
         if cls._env is not None:
             return cls._env
 
-        env = cls.get(cwd=cwd)
+        env = cls.get(cwd)
         if env.is_venv():
             # Already inside a virtualenv.
             return env
@@ -220,9 +217,6 @@ class Env(object):
 
         venv_path = config.setting("settings.virtualenvs.path")
         if root_venv:
-            if not cwd:
-                raise RuntimeError("Unable to determine the project's directory")
-
             venv_path = cwd / ".venv"
         elif venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
@@ -230,9 +224,6 @@ class Env(object):
             venv_path = Path(venv_path)
 
         if not name:
-            if not cwd:
-                cwd = Path.cwd()
-
             name = cwd.name
 
         name = "{}-py{}".format(name, ".".join([str(v) for v in sys.version_info[:2]]))

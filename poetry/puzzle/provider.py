@@ -275,7 +275,7 @@ class Provider:
 
             try:
                 cwd = dependency.full_path
-                venv = Env.get(NullIO(), cwd=cwd)
+                venv = Env.get(cwd)
                 venv.run("python", "setup.py", "egg_info")
             except EnvCommandError:
                 result = SetupReader.read_from_directory(dependency.full_path)

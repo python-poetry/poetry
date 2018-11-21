@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed `run` not executing scripts.
+- Fixed environment detection.
 
 
 ## [0.12.9] - 2018-11-19

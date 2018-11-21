@@ -1,3 +1,4 @@
+import os
 import pytest
 import shutil
 import tempfile
@@ -43,6 +44,15 @@ def mock_clone(_, source, dest):
 
     shutil.rmtree(str(dest))
     shutil.copytree(str(folder), str(dest))
+
+
+@pytest.fixture
+def environ():
+    original_environ = os.environ
+
+    yield os.environ
+
+    os.environ = original_environ
 
 
 @pytest.fixture(autouse=True)
