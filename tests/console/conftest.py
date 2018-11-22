@@ -50,7 +50,9 @@ def installed():
 
 @pytest.fixture(autouse=True)
 def setup(mocker, installer, installed):
-    Env._env = MockEnv()
+    mocker.patch(
+        "poetry.utils.env.Env.get", return_value=MockEnv(is_venv=True, execute=True)
+    )
 
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
@@ -78,7 +80,6 @@ def setup(mocker, installer, installed):
 
     os.environ.clear()
     os.environ.update(environ)
-    Env._env = None
 
 
 class Application(BaseApplication):
