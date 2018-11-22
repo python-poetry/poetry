@@ -8,16 +8,18 @@ from typing import List
 
 from .__version__ import __version__
 from .config import Config
-from .exceptions import InvalidProjectFile
 from .json import validate_object
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
 from .packages import ProjectPackage
 from .repositories import Pool
+from .repositories.auth import Auth
+from .repositories.legacy_repository import LegacyRepository
 from .repositories.pypi_repository import PyPiRepository
 from .spdx import license_by_id
 from .utils._compat import Path
+from .utils.helpers import get_http_basic_auth
 from .utils.toml_file import TomlFile
 
 
@@ -42,9 +44,9 @@ class Poetry:
         # Configure sources
         self._pool = Pool()
         for source in self._local_config.get("source", []):
-            self._pool.configure(source)
+            self._pool.add_repository(self.create_legacy_repository(source))
 
-        # Always put PyPI last to prefere private repositories
+        # Always put PyPI last to prefer private repositories
         self._pool.add_repository(PyPiRepository())
 
     @property
@@ -193,6 +195,26 @@ class Poetry:
         locker = Locker(poetry_file.parent / "poetry.lock", local_config)
 
         return cls(poetry_file, local_config, package, locker)
+
+    def create_legacy_repository(
+        self, source
+    ):  # type: (Dict[str, str]) -> LegacyRepository
+        if "url" in source:
+            # PyPI-like repository
+            if "name" not in source:
+                raise RuntimeError("Missing [name] in source.")
+        else:
+            raise RuntimeError("Unsupported source specified")
+
+        name = source["name"]
+        url = source["url"]
+        credentials = get_http_basic_auth(self._auth_config, name)
+        if not credentials:
+            return LegacyRepository(name, url)
+
+        auth = Auth(url, credentials[0], credentials[1])
+
+        return LegacyRepository(name, url, auth=auth)
 
     @classmethod
     def check(cls, config, strict=False):  # type: (dict, bool) -> Dict[str, List[str]]

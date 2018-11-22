@@ -6,6 +6,7 @@
 
 - Fixed `run` not executing scripts.
 - Fixed environment detection.
+- Fixed handling of authentication for legacy repositories.
 
 
 ## [0.12.9] - 2018-11-19

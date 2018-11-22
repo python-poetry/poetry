@@ -6,6 +6,11 @@ try:
 except ImportError:
     from functools import lru_cache
 
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
 try:  # Python 2
     long = long
     unicode = unicode

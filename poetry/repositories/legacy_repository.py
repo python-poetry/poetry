@@ -17,6 +17,7 @@ except ImportError:
     unescape = HTMLParser().unescape
 
 from typing import Generator
+from typing import Optional
 from typing import Union
 
 import html5lib
@@ -28,7 +29,6 @@ from cachy import CacheManager
 
 import poetry.packages
 
-from poetry.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.masonry.publishing.uploader import wheel_file_re
 from poetry.packages import Package
@@ -39,9 +39,10 @@ from poetry.semver import Version
 from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
 from poetry.utils._compat import Path
-from poetry.utils.helpers import canonicalize_name, get_http_basic_auth
+from poetry.utils.helpers import canonicalize_name
 from poetry.version.markers import InvalidMarker
 
+from .auth import Auth
 from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
 
@@ -146,7 +147,9 @@ class Page:
 
 
 class LegacyRepository(PyPiRepository):
-    def __init__(self, name, url, disable_cache=False):
+    def __init__(
+        self, name, url, auth=None, disable_cache=False
+    ):  # type: (str, str, Optional[Auth], bool) -> None
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
@@ -172,10 +175,8 @@ class LegacyRepository(PyPiRepository):
         )
 
         url_parts = urlparse.urlparse(self._url)
-        if not url_parts.username:
-            self._session.auth = get_http_basic_auth(
-                Config.create("auth.toml"), self.name
-            )
+        if not url_parts.username and auth:
+            self._session.auth = auth
 
         self._disable_cache = disable_cache
 

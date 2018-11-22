@@ -391,13 +391,18 @@ class PyPiRepository(Repository):
     ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
         if "bdist_wheel" in urls:
             self._log(
-                "Downloading wheel: {}".format(urls["bdist_wheel"].split("/")[-1]),
+                "Downloading wheel: {}".format(
+                    urlparse.urlparse(urls["bdist_wheel"]).path.rsplit("/")[-1]
+                ),
                 level="debug",
             )
             return self._get_info_from_wheel(urls["bdist_wheel"])
 
         self._log(
-            "Downloading sdist: {}".format(urls["sdist"].split("/")[-1]), level="debug"
+            "Downloading sdist: {}".format(
+                urlparse.urlparse(urls["sdist"]).path.rsplit("/")[-1]
+            ),
+            level="debug",
         )
         return self._get_info_from_sdist(urls["sdist"])
 
@@ -406,7 +411,7 @@ class PyPiRepository(Repository):
     ):  # type: (str) -> Dict[str, Union[str, List, None]]
         info = {"summary": "", "requires_python": None, "requires_dist": None}
 
-        filename = os.path.basename(urlparse.urlparse(url).path)
+        filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
 
         with temporary_directory() as temp_dir:
             filepath = os.path.join(temp_dir, filename)
@@ -551,6 +556,8 @@ class PyPiRepository(Repository):
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = get(url, stream=True)
+        r.raise_for_status()
+
         with open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:

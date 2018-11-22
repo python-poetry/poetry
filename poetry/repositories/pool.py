@@ -40,24 +40,6 @@ class Pool(BaseRepository):
 
         return self
 
-    def configure(self, source):  # type: (dict) -> Pool
-        """
-        Configures a repository based on a source
-        specification and add it to the pool.
-        """
-        from .legacy_repository import LegacyRepository
-
-        if "url" in source:
-            # PyPI-like repository
-            if "name" not in source:
-                raise RuntimeError("Missing [name] in source.")
-
-            repository = LegacyRepository(source["name"], source["url"])
-        else:
-            raise RuntimeError("Unsupported source specified")
-
-        return self.add_repository(repository)
-
     def has_package(self, package):
         raise NotImplementedError()
 
