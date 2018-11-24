@@ -8,7 +8,7 @@ This file can typically be found in one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Roaming\pypoetry`
 
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
-That means, by default `~/.config/pypoetry`
+That means, by default `~/.config/pypoetry`.
 
 ## Available settings
 

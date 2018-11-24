@@ -58,6 +58,13 @@ def test_find_packages_with_prereleases():
     assert len(packages) == 7
 
 
+def test_find_packages_does_not_select_prereleases_if_not_allowed():
+    repo = MockRepository()
+    packages = repo.find_packages("pyyaml")
+
+    assert len(packages) == 1
+
+
 def test_package():
     repo = MockRepository()
 

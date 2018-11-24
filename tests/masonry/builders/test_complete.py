@@ -163,6 +163,8 @@ def test_complete():
     zip = zipfile.ZipFile(str(whl))
 
     try:
+        assert "my_package/sub_pgk1/extra_file.xml" not in zip.namelist()
+
         entry_points = zip.read("my_package-1.2.3.dist-info/entry_points.txt")
 
         assert (

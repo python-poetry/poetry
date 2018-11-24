@@ -443,7 +443,7 @@ Note that, at the moment, only pure python wheels are supported.
 
 #### Options
 
-* `-F|--format`: Limit the format to either wheel or sdist.
+* `-f|--format`: Limit the format to either wheel or sdist.
 
 ### publish
 

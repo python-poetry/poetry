@@ -73,7 +73,7 @@ POETRY_VERSION=0.12.0 python get-poetry.py
     Using alternative installation methods will make Poetry always
     use the Python version for which it has been installed to create
     virtualenvs.
-    
+
     So, you will need to install Poetry for each Python version you
     want to use and switch between them.
 

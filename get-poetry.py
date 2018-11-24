@@ -205,7 +205,7 @@ if __name__ == "__main__":
     main()
 """
 
-BAT = "@echo off\r\npython {poetry_bin} %*\r\n"
+BAT = '@echo off\r\npython "{poetry_bin}" %*\r\n'
 
 
 PRE_MESSAGE = """# Welcome to {poetry}!

@@ -15,6 +15,9 @@ from poetry.version.markers import parse_marker
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+from tests.repositories.test_legacy_repository import (
+    MockRepository as MockLegacyRepository,
+)
 
 
 @pytest.fixture()
@@ -1488,3 +1491,46 @@ def test_solver_can_resolve_wheel_dependencies_with_extras(solver, repo, package
     assert op.package.version.text == "0.1.0"
     assert op.package.source_type == "file"
     assert op.package.source_url == path
+
+
+def test_solver_can_solve_with_legacy_repository_using_proper_dists(
+    package, installed, locked, io
+):
+    repo = MockLegacyRepository()
+    pool = Pool([repo])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    package.add_dependency("isort", "4.3.4")
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("futures", "3.2.0")},
+            {"job": "install", "package": get_package("isort", "4.3.4")},
+        ],
+    )
+
+    futures = ops[0].package
+    assert futures.python_versions == ">=2.6, <3"
+
+
+def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_dists(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+
+    repo = MockLegacyRepository()
+    pool = Pool([repo])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    package.add_dependency("isort", "4.3.4")
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("isort", "4.3.4")}]
+    )

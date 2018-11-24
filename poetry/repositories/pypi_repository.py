@@ -28,17 +28,16 @@ from cachy import CacheManager
 from requests import get
 from requests import session
 
-from poetry.io import NullIO
 from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
 from poetry.semver import parse_constraint
 from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.env import Env
 from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
 
@@ -93,6 +92,15 @@ class PyPiRepository(Repository):
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        if isinstance(constraint, VersionRange):
+            if (
+                constraint.max is not None
+                and constraint.max.is_prerelease()
+                or constraint.min is not None
+                and constraint.min.is_prerelease()
+            ):
+                allow_prereleases = True
+
         info = self.get_package_info(name)
 
         packages = []
@@ -110,11 +118,7 @@ class PyPiRepository(Repository):
 
             package = Package(name, version)
 
-            if (
-                package.is_prerelease()
-                and not allow_prereleases
-                and not constraint.allows(package.version)
-            ):
+            if package.is_prerelease() and not allow_prereleases:
                 continue
 
             if not constraint or (constraint and constraint.allows(package.version)):
@@ -387,13 +391,18 @@ class PyPiRepository(Repository):
     ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
         if "bdist_wheel" in urls:
             self._log(
-                "Downloading wheel: {}".format(urls["bdist_wheel"].split("/")[-1]),
+                "Downloading wheel: {}".format(
+                    urlparse.urlparse(urls["bdist_wheel"]).path.rsplit("/")[-1]
+                ),
                 level="debug",
             )
             return self._get_info_from_wheel(urls["bdist_wheel"])
 
         self._log(
-            "Downloading sdist: {}".format(urls["sdist"].split("/")[-1]), level="debug"
+            "Downloading sdist: {}".format(
+                urlparse.urlparse(urls["sdist"]).path.rsplit("/")[-1]
+            ),
+            level="debug",
         )
         return self._get_info_from_sdist(urls["sdist"])
 
@@ -402,7 +411,7 @@ class PyPiRepository(Repository):
     ):  # type: (str) -> Dict[str, Union[str, List, None]]
         info = {"summary": "", "requires_python": None, "requires_dist": None}
 
-        filename = os.path.basename(urlparse.urlparse(url).path)
+        filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
 
         with temporary_directory() as temp_dir:
             filepath = os.path.join(temp_dir, filename)
@@ -509,7 +518,13 @@ class PyPiRepository(Repository):
             # Still nothing, try reading (without executing it)
             # the setup.py file.
             try:
-                info.update(self._inspect_sdist_with_setup(sdist_dir))
+                setup_info = self._inspect_sdist_with_setup(sdist_dir)
+
+                for key, value in info.items():
+                    if value:
+                        continue
+
+                    info[key] = setup_info[key]
 
                 return info
             except Exception as e:
@@ -547,6 +562,8 @@ class PyPiRepository(Repository):
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = get(url, stream=True)
+        r.raise_for_status()
+
         with open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:

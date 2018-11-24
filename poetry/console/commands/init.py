@@ -102,7 +102,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         question.validator = self._validate_license
         license = self.ask(question)
 
-        current_env = Env.get()
+        current_env = Env.get(Path.cwd())
         default_python = "^{}".format(
             ".".join(str(v) for v in current_env.version_info[:2])
         )

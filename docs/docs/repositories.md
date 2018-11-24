@@ -8,7 +8,7 @@ for package installation and publishing.
 So, when you add dependencies to your project, Poetry will assume they are available
 on PyPI.
 
-This represent most cases and will likely be enough for most users.
+This represents most cases and will likely be enough for most users.
 
 
 ## Using a private repository
@@ -41,11 +41,11 @@ If you do not specify the password you will be prompted to write it.
 
     To publish to PyPI, you can set your credentials for the repository
     named `pypi`:
-    
+
     ```bash
     poetry config http-basic.pypi username password
     ```
-    
+
 You can also specify the username and password when using the `publish` command
 with the `--username` and `--password` options.
 
@@ -66,5 +66,5 @@ From now on, Poetry will also look for packages in your private repository.
 
 If your private repository requires HTTP Basic Auth be sure to add the username and
 password to your `http-basic` config using the example above (be sure to use the
-same name than in the `tool.poetry.source` section). Poetry will use these values
+same name that is in the `tool.poetry.source` section). Poetry will use these values
 to authenticate to your private repository when downloading or looking for packages.

@@ -1,9 +1,15 @@
+import subprocess
 import sys
 
 try:
     from functools32 import lru_cache
 except ImportError:
     from functools import lru_cache
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 try:  # Python 2
     long = long
@@ -18,6 +24,17 @@ except NameError:  # Python 3
 PY2 = sys.version_info[0] == 2
 PY35 = sys.version_info >= (3, 5)
 PY36 = sys.version_info >= (3, 6)
+
+WINDOWS = sys.platform == "win32"
+
+if PY2:
+    import pipes
+
+    shell_quote = pipes.quote
+else:
+    import shlex
+
+    shell_quote = shlex.quote
 
 
 if PY35:
@@ -80,3 +97,13 @@ def to_str(string):
             pass
 
     return getattr(string, method)(encodings[0], errors="ignore")
+
+
+def list_to_shell_command(cmd):
+    executable = cmd[0]
+
+    if " " in executable:
+        executable = '"{}"'.format(executable)
+        cmd[0] = executable
+
+    return " ".join(cmd)

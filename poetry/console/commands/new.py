@@ -45,7 +45,7 @@ class NewCommand(Command):
             if author_email:
                 author += " <{}>".format(author_email)
 
-        current_env = Env.get()
+        current_env = Env.get(Path.cwd())
         default_python = "^{}".format(
             ".".join(str(v) for v in current_env.version_info[:2])
         )

@@ -11,6 +11,26 @@
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
 
 
+## [0.12.10] - 2018-11-22
+
+### Fixed
+
+- Fixed `run` not executing scripts.
+- Fixed environment detection.
+- Fixed handling of authentication for legacy repositories.
+
+
+## [0.12.9] - 2018-11-19
+
+### Fixed
+
+- Fixed executables from outside the virtualenv not being accessible.
+- Fixed a possible error when building distributions with the `exclude` option.
+- Fixed the `run` command for namespaced packages.
+- Fixed errors for virtualenvs with spaces in their path.
+- Fixed prerelease versions being selected with the `add` command.
+
+
 ## [0.12.8] - 2018-11-13
 
 ### Fixed
@@ -597,7 +617,9 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.8...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.10...master
+[0.12.10]: https://github.com/sdispater/poetry/releases/tag/0.12.10
+[0.12.9]: https://github.com/sdispater/poetry/releases/tag/0.12.9
 [0.12.8]: https://github.com/sdispater/poetry/releases/tag/0.12.8
 [0.12.7]: https://github.com/sdispater/poetry/releases/tag/0.12.7
 [0.12.6]: https://github.com/sdispater/poetry/releases/tag/0.12.6
