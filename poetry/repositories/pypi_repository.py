@@ -518,7 +518,13 @@ class PyPiRepository(Repository):
             # Still nothing, try reading (without executing it)
             # the setup.py file.
             try:
-                info.update(self._inspect_sdist_with_setup(sdist_dir))
+                setup_info = self._inspect_sdist_with_setup(sdist_dir)
+
+                for key, value in info.items():
+                    if value:
+                        continue
+
+                    info[key] = setup_info[key]
 
                 return info
             except Exception as e:
