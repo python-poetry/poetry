@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed the way packages information are retrieved for legacy repositories.
+
+
 ## [0.12.10] - 2018-11-22
 
 ### Fixed

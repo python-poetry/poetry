@@ -30,7 +30,6 @@ from cachy import CacheManager
 import poetry.packages
 
 from poetry.locations import CACHE_DIR
-from poetry.masonry.publishing.uploader import wheel_file_re
 from poetry.packages import Package
 from poetry.packages import dependency_from_pep_508
 from poetry.packages.utils.link import Link
@@ -40,6 +39,7 @@ from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.patterns import wheel_file_re
 from poetry.version.markers import InvalidMarker
 
 from .auth import Auth
@@ -269,6 +269,9 @@ class LegacyRepository(PyPiRepository):
             release_info = self.get_release_info(name, version)
 
             package = poetry.packages.Package(name, version, version)
+            if release_info["requires_python"]:
+                package.python_versions = release_info["requires_python"]
+
             package.source_type = "legacy"
             package.source_url = self._url
             package.source_reference = self.name
@@ -330,7 +333,7 @@ class LegacyRepository(PyPiRepository):
             "version": version,
             "summary": "",
             "requires_dist": [],
-            "requires_python": [],
+            "requires_python": None,
             "digests": [],
         }
 
@@ -346,7 +349,11 @@ class LegacyRepository(PyPiRepository):
         default_link = links[0]
         for link in links:
             if link.is_wheel:
-                urls["bdist_wheel"] = link.url
+                m = wheel_file_re.match(default_link.filename)
+                python = m.group("pyver")
+                platform = m.group("plat")
+                if python == "py2.py3" and platform == "any":
+                    urls["bdist_wheel"] = default_link.url
             elif link.filename.endswith(".tar.gz"):
                 urls["sdist"] = link.url
             elif (
@@ -363,11 +370,7 @@ class LegacyRepository(PyPiRepository):
 
         if not urls:
             if default_link.is_wheel:
-                m = wheel_file_re.match(default_link.filename)
-                python = m.group("pyver")
-                platform = m.group("plat")
-                if python == "py2.py3" and platform == "any":
-                    urls["bdist_wheel"] = default_link.url
+                urls["bdist_wheel"] = default_link.url
             elif default_link.filename.endswith(".tar.gz"):
                 urls["sdist"] = default_link.url
             elif (

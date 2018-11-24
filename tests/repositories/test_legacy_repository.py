@@ -136,3 +136,36 @@ def test_find_packages_no_prereleases():
     packages = repo.find_packages("pyyaml")
 
     assert len(packages) == 1
+
+
+def test_get_package_information_chooses_correct_distribution():
+    repo = MockRepository()
+
+    package = repo.package("isort", "4.3.4")
+
+    assert package.name == "isort"
+    assert package.version.text == "4.3.4"
+
+    assert package.requires == [Dependency("futures", "*")]
+    futures_dep = package.requires[0]
+    assert futures_dep.python_versions == "~2.7"
+
+
+def test_get_package_information_includes_python_requires():
+    repo = MockRepository()
+
+    package = repo.package("futures", "3.2.0")
+
+    assert package.name == "futures"
+    assert package.version.text == "3.2.0"
+    assert package.python_versions == ">=2.6, <3"
+
+
+def test_get_package_information_sets_appropriate_python_versions_if_wheels_only():
+    repo = MockRepository()
+
+    package = repo.package("futures", "3.2.0")
+
+    assert package.name == "futures"
+    assert package.version.text == "3.2.0"
+    assert package.python_versions == ">=2.6, <3"

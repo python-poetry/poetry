@@ -14,16 +14,10 @@ from requests_toolbelt.multipart import MultipartEncoder, MultipartEncoderMonito
 
 from poetry.__version__ import __version__
 from poetry.utils.helpers import normalize_version
+from poetry.utils.patterns import wheel_file_re
 
 from ..metadata import Metadata
 
-
-wheel_file_re = re.compile(
-    r"""^(?P<namever>(?P<name>.+?)(-(?P<ver>\d.+?))?)
-        ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
-        \.whl|\.dist-info)$""",
-    re.VERBOSE,
-)
 
 _has_blake2 = hasattr(hashlib, "blake2b")
 
