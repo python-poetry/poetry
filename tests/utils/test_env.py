@@ -2,7 +2,7 @@ import os
 import shutil
 import sys
 import tomlkit
-from poetry.io import NullIO
+from clikit.io import NullIO
 from poetry.semver import Version
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
@@ -70,18 +70,19 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
     env = EnvManager(config).activate("python3.7", CWD, NullIO())
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "simple_project-py3.7"), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
     )
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     assert envs_file.exists()
     envs = envs_file.read()
-    assert envs["simple_project"]["minor"] == "3.7"
-    assert envs["simple_project"]["patch"] == "3.7.1"
+    assert envs[venv_name]["minor"] == "3.7"
+    assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / "simple_project-py3.7"
+    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
     assert env.base == Path("/prefix")
 
 
@@ -91,7 +92,9 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     if "VIRTUAL_ENV" in environ:
         del environ["VIRTUAL_ENV"]
 
-    os.mkdir(os.path.join(tmp_dir, "simple_project-py3.7"))
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+
+    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
@@ -106,10 +109,10 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     assert envs_file.exists()
     envs = envs_file.read()
-    assert envs["simple_project"]["minor"] == "3.7"
-    assert envs["simple_project"]["patch"] == "3.7.1"
+    assert envs[venv_name]["minor"] == "3.7"
+    assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / "simple_project-py3.7"
+    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
     assert env.base == Path("/prefix")
 
 
@@ -119,12 +122,14 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     if "VIRTUAL_ENV" in environ:
         del environ["VIRTUAL_ENV"]
 
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
-    doc["simple_project"] = {"minor": "3.7", "patch": "3.7.1"}
+    doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, "simple_project-py3.7"))
+    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
@@ -138,10 +143,10 @@ def test_activate_activates_same_virtualenv_with_envs_file(
 
     assert envs_file.exists()
     envs = envs_file.read()
-    assert envs["simple_project"]["minor"] == "3.7"
-    assert envs["simple_project"]["patch"] == "3.7.1"
+    assert envs[venv_name]["minor"] == "3.7"
+    assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / "simple_project-py3.7"
+    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
     assert env.base == Path("/prefix")
 
 
@@ -151,12 +156,13 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     if "VIRTUAL_ENV" in environ:
         del environ["VIRTUAL_ENV"]
 
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
-    doc["simple_project"] = {"minor": "3.7", "patch": "3.7.1"}
+    doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, "simple_project-py3.7"))
+    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
@@ -173,15 +179,15 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = EnvManager(config).activate("python3.6", CWD, NullIO())
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "simple_project-py3.6"), executable="python3.6"
+        os.path.join(tmp_dir, "{}-py3.6".format(venv_name)), executable="python3.6"
     )
 
     assert envs_file.exists()
     envs = envs_file.read()
-    assert envs["simple_project"]["minor"] == "3.6"
-    assert envs["simple_project"]["patch"] == "3.6.6"
+    assert envs[venv_name]["minor"] == "3.6"
+    assert envs[venv_name]["patch"] == "3.6.6"
 
-    assert env.path == Path(tmp_dir) / "simple_project-py3.6"
+    assert env.path == Path(tmp_dir) / "{}-py3.6".format(venv_name)
     assert env.base == Path("/prefix")
 
 
@@ -191,12 +197,13 @@ def test_activate_activates_recreates_for_different_minor(
     if "VIRTUAL_ENV" in environ:
         del environ["VIRTUAL_ENV"]
 
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
-    doc["simple_project"] = {"minor": "3.7", "patch": "3.7.0"}
+    doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, "simple_project-py3.7"))
+    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
@@ -215,27 +222,31 @@ def test_activate_activates_recreates_for_different_minor(
     env = EnvManager(config).activate("python3.7", CWD, NullIO())
 
     build_venv_m.assert_called_with(
-        os.path.join(tmp_dir, "simple_project-py3.7"), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
     )
-    remove_venv_m.assert_called_with(os.path.join(tmp_dir, "simple_project-py3.7"))
+    remove_venv_m.assert_called_with(
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name))
+    )
 
     assert envs_file.exists()
     envs = envs_file.read()
-    assert envs["simple_project"]["minor"] == "3.7"
-    assert envs["simple_project"]["patch"] == "3.7.1"
+    assert envs[venv_name]["minor"] == "3.7"
+    assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / "simple_project-py3.7"
+    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
     assert env.base == Path("/prefix")
-    assert (Path(tmp_dir) / "simple_project-py3.7").exists()
+    assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)).exists()
 
 
 def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker, environ):
     if "VIRTUAL_ENV" in environ:
         del environ["VIRTUAL_ENV"]
 
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+
     (
         Path(tmp_dir)
-        / "simple_project-py{}".format(".".join(str(c) for c in sys.version_info[:2]))
+        / "{}-py{}".format(venv_name, ".".join(str(c) for c in sys.version_info[:2]))
     ).mkdir()
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
@@ -245,8 +256,8 @@ def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker, environ)
     EnvManager(config).deactivate(CWD, NullIO())
     env = EnvManager(config).get(CWD)
 
-    assert env.path == Path(tmp_dir) / "simple_project-py{}".format(
-        ".".join(str(c) for c in sys.version_info[:2])
+    assert env.path == Path(tmp_dir) / "{}-py{}".format(
+        venv_name, ".".join(str(c) for c in sys.version_info[:2])
     )
     assert Path("/prefix")
 
@@ -255,19 +266,20 @@ def test_deactivate_activated(tmp_dir, config, mocker, environ):
     if "VIRTUAL_ENV" in environ:
         del environ["VIRTUAL_ENV"]
 
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
     version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
     other_version = Version.parse("3.4") if version.major == 2 else version.next_minor
     (
-        Path(tmp_dir) / "simple_project-py{}.{}".format(version.major, version.minor)
+        Path(tmp_dir) / "{}-py{}.{}".format(venv_name, version.major, version.minor)
     ).mkdir()
     (
         Path(tmp_dir)
-        / "simple_project-py{}.{}".format(other_version.major, other_version.minor)
+        / "{}-py{}.{}".format(venv_name, other_version.major, other_version.minor)
     ).mkdir()
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
-    doc["simple_project"] = {
+    doc[venv_name] = {
         "minor": "{}.{}".format(other_version.major, other_version.minor),
         "patch": other_version.text,
     }
@@ -280,8 +292,8 @@ def test_deactivate_activated(tmp_dir, config, mocker, environ):
     EnvManager(config).deactivate(CWD, NullIO())
     env = EnvManager(config).get(CWD)
 
-    assert env.path == Path(tmp_dir) / "simple_project-py{}.{}".format(
-        version.major, version.minor
+    assert env.path == Path(tmp_dir) / "{}-py{}.{}".format(
+        venv_name, version.major, version.minor
     )
     assert Path("/prefix")
 
@@ -294,12 +306,14 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 ):
     environ["VIRTUAL_ENV"] = "/environment/prefix"
 
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
-    (Path(tmp_dir) / "simple_project-py3.7").mkdir()
+    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
-    doc["simple_project"] = {"minor": "3.7", "patch": "3.7.0"}
+    doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
     mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
@@ -307,5 +321,5 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 
     env = EnvManager(config).get(CWD)
 
-    assert env.path == Path(tmp_dir) / "simple_project-py3.7"
+    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
     assert env.base == Path("/prefix")

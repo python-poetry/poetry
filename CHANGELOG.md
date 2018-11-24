@@ -15,6 +15,7 @@
 - The `debug:info` command has been renamed to `debug info`.
 - The `debug:resolve` command has been renamed to `debug resolve`.
 - The `self:update` command has been renamed to `self update`.
+- Changed the way virtualenvs are stored (names now dependent of the project's path).
 
 ### Fixed
 
