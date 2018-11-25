@@ -8,6 +8,23 @@ from .utils.utils import create_nested_marker
 
 class ProjectPackage(Package):
     def __init__(self, name, version, pretty_version=None):
+        if isinstance(version, str) and version.startswith('attr:'):
+            version_pkg, _, version_attr = (
+                version[6:].strip().rpartition('.')
+            )
+            if not version_pkg:
+                version_pkg = 'builtins'
+            version_getter = getattr(
+                __import__(version_pkg, fromlist=(version_pkg, )),
+                version_attr,
+            )
+            version = version_getter()
+            if version is None:
+                raise RuntimeError(
+                    'The version getter callable must return a string '
+                    'or a Version instance'
+                )
+
         super(ProjectPackage, self).__init__(name, version, pretty_version)
 
         self.build = None
