@@ -639,6 +639,22 @@ version = "1.9.0"
 
 [[package]]
 category = "main"
+description = "the blessed package to manage your versions by scm tags"
+name = "setuptools-scm"
+optional = true
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "3.1.0"
+
+[[package]]
+category = "main"
+description = "setuptools_scm plugin for git archives"
+name = "setuptools-scm-git-archive"
+optional = true
+python-versions = "*"
+version = "1.0"
+
+[[package]]
+category = "main"
 description = "Tool to Detect Surrounding Shell"
 name = "shellingham"
 optional = false
@@ -749,6 +765,9 @@ optional = false
 python-versions = "*"
 version = "0.5.1"
 
+[extras]
+scm-version-source = ["setuptools-scm", "setuptools-scm-git-archive"]
+
 [metadata]
 content-hash = "cc0af5d7cff3183d13e844efc25bfabc912de0a22eea948614a0895ab4be5ed1"
 python-versions = "~2.7 || ^3.4"
@@ -812,6 +831,8 @@ pyyaml = ["3d7da3009c0f3e783b2c873687652d83b1bbfd5c88e9813fb7e5b03c0dd3108b", "3
 requests = ["65b3a120e4329e33c9889db89c80976c5272f56ea92d3e74da8a463992e3ff54", "ea881206e59f41dbd0bd445437d792e43906703fff75ca8ff43ccdb11f33f263"]
 requests-toolbelt = ["42c9c170abc2cacb78b8ab23ac957945c7716249206f90874651971a4acff237", "f6a531936c6fa4c6cfce1b9c10d5c4f498d16528d2a54a22ca00011205a187b5"]
 scandir = ["04b8adb105f2ed313a7c2ef0f1cf7aff4871aa7a1883fa4d8c44b5551ab052d6", "1444134990356c81d12f30e4b311379acfbbcd03e0bab591de2696a3b126d58e", "1b5c314e39f596875e5a95dd81af03730b338c277c54a454226978d5ba95dbb6", "346619f72eb0ddc4cf355ceffd225fa52506c92a2ff05318cfabd02a144e7c4e", "44975e209c4827fc18a3486f257154d34ec6eaec0f90fef0cca1caa482db7064", "61859fd7e40b8c71e609c202db5b0c1dbec0d5c7f1449dec2245575bdc866792", "a5e232a0bf188362fa00123cc0bb842d363a292de7126126df5527b6a369586a", "c14701409f311e7a9b7ec8e337f0815baf7ac95776cc78b419a1e6d49889a383", "c7708f29d843fc2764310732e41f0ce27feadde453261859ec0fca7865dfc41b", "c9009c527929f6e25604aec39b0a43c3f831d2947d89d6caaab22f057b7055c8", "f5c71e29b4e2af7ccdc03a020c626ede51da471173b4a6ad1e904f2b2e04b4bd"]
+setuptools-scm = ["1191f2a136b5e86f7ca8ab00a97ef7aef997131f1f6d4971be69a1ef387d8b40", "14db63c379b69393e9581df438e761b10d2d4060ae81b22a910d87751c0dc15a", "5be82a2168dcac8994b6db467c101019424b475e6239ec347dc719df08e6baf9", "7eb101cc7412b1a2d2be9a9996508e147f91648bf2fee6222d476639b48626f5", "c9e9e5ca820bc26793e55a06af56ad180aec3c355b77dc52959efcecda5af2d5", "cc6953d224a22f10e933fa2f55c95979317c55259016adcf93310ba2997febfa"]
+setuptools-scm-git-archive = ["52425f905518247c685fc64c5fdba6e1e74443c8562e141c8de56059be0e31da", "af6b40a3f2f6d79b2b6b495258ff441641908ff2c4c9aaa66765b87ec6f72c35"]
 shellingham = ["c9fd71508d4363e8a3dadf405e681021461dca9ca9a2b48c9461fdfbfceaebff", "f56b5547ed84296318c21162ce345d83dd5e4755a0e4f57daee1948479f47119"]
 six = ["70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9", "832dc0e10feb1aa2c68dcc57dbb658f1c7e65b9b61af69048abc87a2db00a0eb"]
 termcolor = ["1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"]
