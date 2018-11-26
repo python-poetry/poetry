@@ -17,7 +17,6 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.utils._compat import Path
-from poetry.utils.env import Env
 from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
 
@@ -107,6 +106,10 @@ class Locker(BaseLocker):
         self._content_hash = self._get_content_hash()
         self._locked = False
         self._lock_data = None
+        self._write = False
+
+    def write(self, write=True):
+        self._write = write
 
     def is_locked(self):
         return self._locked
@@ -125,6 +128,11 @@ class Locker(BaseLocker):
         return True
 
     def _write_lock_data(self, data):
+        if self._write:
+            super(Locker, self)._write_lock_data(data)
+            self._locked = True
+            return
+
         self._lock_data = None
 
 

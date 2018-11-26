@@ -12,7 +12,7 @@ from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import parse_marker
 
 
-class Locker:
+class Locker(object):
 
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
