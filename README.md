@@ -94,6 +94,23 @@ fpath+=~/.zfunc
 ```
 
 
+## Using `poetry shell` or `poetry run` alongside `pyenv`
+
+The commonly used python version management tool [pyenv](https://github.com/pyenv/pyenv) includes, by design,
+a layer of 'shims' that allow the same commands to route to different executables
+based on configuration variables. To avoid interference between the two systems,
+you should wrap your pyenv initialization in a check for the POETRY_ACTIVE environment variable:
+
+```bash
+# Fish
+if not set -q POETRY_ACTIVE
+    set -x PATH $PYENV_ROOT/bin $PATH
+    status --is-interactive; and source (pyenv init -|psub)
+    status --is-interactive; and source (pyenv virtualenv-init -|psub)
+end
+```
+
+
 ## Introduction
 
 `poetry` is a tool to handle dependency installation as well as building and packaging of Python packages.
