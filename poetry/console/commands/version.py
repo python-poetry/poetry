@@ -9,6 +9,7 @@ class VersionCommand(Command):
 
     version
         { version=patch }
+        {--s|show : show current version}
     """
 
     help = """\
@@ -30,6 +31,10 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
     }
 
     def handle(self):
+        if self.option("show"):
+            self.line("<info>{}</>".format(self.poetry.package.pretty_version))
+            return
+
         version = self.argument("version")
 
         version = self.increment_version(self.poetry.package.pretty_version, version)

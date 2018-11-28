@@ -1,5 +1,8 @@
+from cleo import CommandTester
 import pytest
 
+from poetry import __version__
+from poetry.console import Application
 from poetry.console.commands import VersionCommand
 
 
@@ -36,3 +39,11 @@ def command():
 )
 def test_increment_version(version, rule, expected, command):
     assert expected == command.increment_version(version, rule).text
+
+
+def test_show_version(command):
+    application = Application()
+    call = application.find("version")
+    command_tester = CommandTester(call)
+    command_tester.execute([("command", command.get_name()), ("--show", True)])
+    assert command_tester.get_display().strip("\n") == __version__
