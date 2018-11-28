@@ -539,9 +539,7 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
 cachy      0.1.0                       0.2.0                      
 my-package 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 """
-    actual = tester.get_display(True)
-
-    assert actual == expected
+    assert tester.get_display(True) == expected
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
@@ -557,8 +555,12 @@ def test_show_outdated_git_dev_dependency(app, poetry, installed, repo):
     pendulum_200 = get_package("pendulum", "2.0.0")
     pendulum_200.description = "Pendulum package"
 
+    demo_011 = get_package("demo", "0.1.1")
+    demo_011.description = "Demo package"
+
     installed.add_package(cachy_010)
     installed.add_package(pendulum_200)
+    installed.add_package(demo_011)
 
     repo.add_package(cachy_010)
     repo.add_package(cachy_020)
@@ -589,7 +591,7 @@ def test_show_outdated_git_dev_dependency(app, poetry, installed, repo):
                 },
                 {
                     "name": "demo",
-                    "version": "0.1.2",
+                    "version": "0.1.1",
                     "description": "Demo package",
                     "category": "dev",
                     "optional": False,
@@ -615,7 +617,8 @@ def test_show_outdated_git_dev_dependency(app, poetry, installed, repo):
     tester.execute([("command", command.get_name()), ("--outdated", True)])
 
     expected = """\
-cachy 0.1.0 0.2.0 Cachy package
+cachy 0.1.0         0.2.0         Cachy package
+demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
 """
 
     assert tester.get_display(True) == expected
@@ -634,8 +637,12 @@ def test_show_outdated_no_dev_git_dev_dependency(app, poetry, installed, repo):
     pendulum_200 = get_package("pendulum", "2.0.0")
     pendulum_200.description = "Pendulum package"
 
+    demo_011 = get_package("demo", "0.1.1")
+    demo_011.description = "Demo package"
+
     installed.add_package(cachy_010)
     installed.add_package(pendulum_200)
+    installed.add_package(demo_011)
 
     repo.add_package(cachy_010)
     repo.add_package(cachy_020)
@@ -666,7 +673,7 @@ def test_show_outdated_no_dev_git_dev_dependency(app, poetry, installed, repo):
                 },
                 {
                     "name": "demo",
-                    "version": "0.1.2",
+                    "version": "0.1.1",
                     "description": "Demo package",
                     "category": "dev",
                     "optional": False,
