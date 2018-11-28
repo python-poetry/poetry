@@ -9,7 +9,7 @@ class VersionCommand(Command):
 
     version
         { version=patch }
-        {--s|show : show current version}
+        {--s|show : show current version and exit}
     """
 
     help = """\
