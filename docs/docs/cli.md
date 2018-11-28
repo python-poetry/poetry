@@ -360,3 +360,18 @@ and writes the new version back to `pyproject.toml`
 
 The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
+
+
+## export
+
+This command exports the lock file to other formats.
+
+If the lock file does not exist, it will be created automatically.
+
+```bash
+poetry export -f requirements.txt
+```
+
+!!!note
+
+    Only the `requirements.txt` format is currently supported.

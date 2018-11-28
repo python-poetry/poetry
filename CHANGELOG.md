@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added an `export` command to export the lock file to other formats (only `requirements.txt` is currently supported).
+
 ### Changed
 
 - Slightly changed the lock file, making it potentially incompatible with previous Poetry versions.
