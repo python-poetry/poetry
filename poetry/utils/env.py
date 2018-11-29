@@ -163,9 +163,16 @@ class Env(object):
         if not in_venv:
             # Checking if a local virtualenv exists
             if (cwd / ".venv").exists():
-                venv = cwd / ".venv"
-
-                return VirtualEnv(venv)
+                venv_path = cwd / ".venv"
+                venv = VirtualEnv(venv_path)
+                if venv.is_sane():
+                    return venv
+                assert venv_path.is_dir(), ".venv should be a directory"
+                assert (
+                    sum(1 for _ in venv_path.iterdir()) == 0
+                ), ".venv should be empty if not a virtual environment"
+                cls.build_venv(str(venv_path))
+                return VirtualEnv(venv_path)
 
             config = Config.create("config.toml")
             create_venv = config.setting("settings.virtualenvs.create", True)
