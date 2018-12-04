@@ -35,7 +35,8 @@ lists all packages available."""
         if self.option("outdated"):
             self.input.set_option("latest", True)
 
-        locked_repo = self.poetry.locker.locked_repository(not self.option("no-dev"))
+        include_dev = not self.option("no-dev")
+        locked_repo = self.poetry.locker.locked_repository(include_dev)
 
         # Show tree view if requested
         if self.option("tree") and not package:
@@ -95,6 +96,7 @@ lists all packages available."""
         width = terminal.width
         name_length = version_length = latest_length = 0
         latest_packages = {}
+        latest_statuses = {}
         installed_repo = InstalledRepository.load(self.env)
         skipped = []
 
@@ -118,15 +120,25 @@ lists all packages available."""
                 if installed_status == "not-installed":
                     current_length += 4
 
-            name_length = max(name_length, current_length)
-            version_length = max(version_length, len(locked.full_pretty_version))
             if show_latest:
-                latest = self.find_latest_package(locked)
+                latest = self.find_latest_package(locked, include_dev)
                 if not latest:
                     latest = locked
 
                 latest_packages[locked.pretty_name] = latest
-                latest_length = max(latest_length, len(latest.full_pretty_version))
+                update_status = latest_statuses[
+                    locked.pretty_name
+                ] = self.get_update_status(latest, locked)
+
+                if not self.option("outdated") or update_status != "up-to-date":
+                    name_length = max(name_length, current_length)
+                    version_length = max(
+                        version_length, len(locked.full_pretty_version)
+                    )
+                    latest_length = max(latest_length, len(latest.full_pretty_version))
+            else:
+                name_length = max(name_length, current_length)
+                version_length = max(version_length, len(locked.full_pretty_version))
 
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
@@ -157,21 +169,23 @@ lists all packages available."""
                 line += " <comment>{:{}}</comment>".format(
                     locked.full_pretty_version, version_length
                 )
-            if show_latest and write_latest:
+            if show_latest:
                 latest = latest_packages[locked.pretty_name]
+                update_status = latest_statuses[locked.pretty_name]
 
-                update_status = self.get_update_status(latest, locked)
-                color = "green"
-                if update_status == "semver-safe-update":
-                    color = "red"
-                elif update_status == "update-possible":
-                    color = "yellow"
-
-                line += " <fg={}>{:{}}</>".format(
-                    color, latest.full_pretty_version, latest_length
-                )
                 if self.option("outdated") and update_status == "up-to-date":
                     continue
+
+                if write_latest:
+                    color = "green"
+                    if update_status == "semver-safe-update":
+                        color = "red"
+                    elif update_status == "update-possible":
+                        color = "yellow"
+
+                    line += " <fg={}>{:{}}</>".format(
+                        color, latest.full_pretty_version, latest_length
+                    )
 
             if write_description:
                 description = locked.description
@@ -286,18 +300,27 @@ lists all packages available."""
         for color in self.colors:
             self.set_style(color, color)
 
-    def find_latest_package(self, package):
+    def find_latest_package(self, package, include_dev):
         from poetry.io import NullIO
         from poetry.puzzle.provider import Provider
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
-        if package.source_type == "git":
-            for dep in self.poetry.package.requires:
-                if dep.name == package.name and dep.is_vcs():
-                    return Provider(
-                        self.poetry.package, self.poetry.pool, NullIO()
-                    ).search_for_vcs(dep)[0]
+        if package.source_type in ("git", "file", "directory"):
+            requires = self.poetry.package.requires
+            if include_dev:
+                requires = requires + self.poetry.package.dev_requires
+
+            for dep in requires:
+                if dep.name == package.name:
+                    provider = Provider(self.poetry.package, self.poetry.pool, NullIO())
+
+                    if dep.is_vcs():
+                        return provider.search_for_vcs(dep)[0]
+                    if dep.is_file():
+                        return provider.search_for_file(dep)[0]
+                    if dep.is_directory():
+                        return provider.search_for_directory(dep)[0]
 
         name = package.name
         selector = VersionSelector(self.poetry.pool)

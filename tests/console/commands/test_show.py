@@ -1,3 +1,4 @@
+import pytest
 from cleo.testers import CommandTester
 
 from tests.helpers import get_package
@@ -370,7 +371,337 @@ def test_show_outdated(app, poetry, installed, repo):
     tester.execute([("command", command.get_name()), ("--outdated", True)])
 
     expected = """\
+cachy 0.1.0 0.2.0 Cachy package
+"""
+
+    assert tester.get_display(True) == expected
+
+
+def test_show_outdated_formatting(app, poetry, installed, repo):
+    command = app.find("show")
+    tester = CommandTester(command)
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+    pendulum_201 = get_package("pendulum", "2.0.1")
+    pendulum_201.description = "Pendulum package"
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+
+    repo.add_package(cachy_010)
+    repo.add_package(cachy_020)
+    repo.add_package(pendulum_200)
+    repo.add_package(pendulum_201)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": []},
+            },
+        }
+    )
+
+    tester.execute([("command", command.get_name()), ("--outdated", True)])
+
+    expected = """\
 cachy    0.1.0 0.2.0 Cachy package
+pendulum 2.0.0 2.0.1 Pendulum package
+"""
+
+    assert tester.get_display(True) == expected
+
+
+@pytest.mark.parametrize("project_directory", ["project_with_local_dependencies"])
+def test_show_outdated_local_dependencies(app, poetry, installed, repo):
+    command = app.find("show")
+    tester = CommandTester(command)
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+
+    demo_010 = get_package("demo", "0.1.0")
+    demo_010.description = ""
+
+    my_package_012 = get_package("my-package", "0.1.2")
+    my_package_012.description = "Demo project."
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+    installed.add_package(demo_010)
+    installed.add_package(my_package_012)
+
+    repo.add_package(cachy_010)
+    repo.add_package(cachy_020)
+    repo.add_package(pendulum_200)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "demo",
+                    "version": "0.1.0",
+                    "description": "Demo package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "file",
+                        "reference": "",
+                        "url": "../distributions/demo-0.1.0-py2.py3-none-any.whl",
+                    },
+                },
+                {
+                    "name": "my-package",
+                    "version": "0.1.1",
+                    "description": "Demo project.",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "directory",
+                        "reference": "",
+                        "url": "../project_with_setup",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": [], "demo": [], "my-package": []},
+            },
+        }
+    )
+
+    tester.execute([("command", command.get_name()), ("--outdated", True)])
+
+    expected = """\
+cachy      0.1.0                       0.2.0                      
+my-package 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
+"""
+    assert tester.get_display(True) == expected
+
+
+@pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+def test_show_outdated_git_dev_dependency(app, poetry, installed, repo):
+    command = app.find("show")
+    tester = CommandTester(command)
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+
+    demo_011 = get_package("demo", "0.1.1")
+    demo_011.description = "Demo package"
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+    installed.add_package(demo_011)
+
+    repo.add_package(cachy_010)
+    repo.add_package(cachy_020)
+    repo.add_package(pendulum_200)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "demo",
+                    "version": "0.1.1",
+                    "description": "Demo package",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "git",
+                        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+                        "url": "https://github.com/demo/pyproject-demo.git",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": [], "demo": []},
+            },
+        }
+    )
+
+    tester.execute([("command", command.get_name()), ("--outdated", True)])
+
+    expected = """\
+cachy 0.1.0         0.2.0         Cachy package
+demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
+"""
+
+    assert tester.get_display(True) == expected
+
+
+@pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+def test_show_outdated_no_dev_git_dev_dependency(app, poetry, installed, repo):
+    command = app.find("show")
+    tester = CommandTester(command)
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+
+    demo_011 = get_package("demo", "0.1.1")
+    demo_011.description = "Demo package"
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+    installed.add_package(demo_011)
+
+    repo.add_package(cachy_010)
+    repo.add_package(cachy_020)
+    repo.add_package(pendulum_200)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "demo",
+                    "version": "0.1.1",
+                    "description": "Demo package",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "source": {
+                        "type": "git",
+                        "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+                        "url": "https://github.com/demo/pyproject-demo.git",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": [], "demo": []},
+            },
+        }
+    )
+
+    tester.execute(
+        [("command", command.get_name()), ("--outdated", True), ("--no-dev", True)]
+    )
+
+    expected = """\
+cachy 0.1.0 0.2.0 Cachy package
 """
 
     assert tester.get_display(True) == expected
