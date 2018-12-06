@@ -318,6 +318,10 @@ class Version(VersionRange):
 
         if build.startswith("post"):
             build = build.lstrip("post")
+        else:
+            match = re.match(r"r(\d+)$", build)
+            if match:
+                build = match.group(1)
 
         if not build:
             return

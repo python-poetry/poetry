@@ -21,6 +21,7 @@ from poetry.semver import VersionRange
         ("1.0.0.0", Version(1, 0, 0)),
         ("1.0.0-post", Version(1, 0, 0)),
         ("1.0.0-post1", Version(1, 0, 0, build="1")),
+        ("1.0.0-r1", Version(1, 0, 0, build="1")),
         ("0.6c", Version(0, 6, 0, pre="rc0")),
         ("0.6pre", Version(0, 6, 0, pre="rc0")),
     ],
