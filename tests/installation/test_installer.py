@@ -1341,3 +1341,35 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     assert len(installer.installer.installs) == 6 if not PY2 else 7
     assert len(installer.installer.updates) == 0
     assert len(installer.installer.removals) == 0
+
+
+def test_installer_required_extras_should_be_installed(
+    locker, repo, package, installed, env, mocker
+):
+    pool = Pool()
+    pool.add_repository(MockRepository())
+
+    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+    package.add_dependency(
+        "cachecontrol", {"version": "^0.12.5", "extras": ["filecache"]}
+    )
+
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 2
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0
+
+    locker.locked(True)
+    locker.mock_lock_data(locker.written_data)
+
+    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 2
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0

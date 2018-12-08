@@ -92,7 +92,7 @@ class Locker(object):
                     package.extras[name] = []
 
                     for dep in deps:
-                        m = re.match(r"^(.+)(?=\s+\((.+)\))?$", dep)
+                        m = re.match(r"^(.+?)(?:\s+\((.+)\))?$", dep)
                         dep_name = m.group(1)
                         constraint = m.group(2) or "*"
 
