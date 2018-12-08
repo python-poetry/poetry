@@ -18,7 +18,7 @@ class MakeReleaseCommand(Command):
     """
     Makes a self-contained package of Poetry.
 
-    make:release
+    release
         {--P|python=?* : Python version to use}
     """
 
@@ -198,9 +198,22 @@ class MakeReleaseCommand(Command):
         self.line("")
 
 
-app = Application("Sonnet")
+class MakeCommand(Command):
+    """
+    Build poetry releases.
 
-app.add(MakeReleaseCommand())
+    make
+    """
+
+    commands = [MakeReleaseCommand()]
+
+    def handle(self):
+        return self.call("help", self.config.name)
+
+
+app = Application("sonnet")
+
+app.add(MakeCommand())
 
 if __name__ == "__main__":
     app.run()
