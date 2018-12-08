@@ -1,6 +1,7 @@
 import pytest
 
-from poetry.io import NullIO
+from clikit.io import NullIO
+
 from poetry.packages import ProjectPackage
 from poetry.packages.directory_dependency import DirectoryDependency
 from poetry.packages.file_dependency import FileDependency

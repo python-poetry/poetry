@@ -1,1 +1,1 @@
-from .update import SelfUpdateCommand
+from .self import SelfCommand

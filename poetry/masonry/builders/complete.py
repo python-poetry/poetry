@@ -17,7 +17,7 @@ class CompleteBuilder(Builder):
         sdist_builder = SdistBuilder(self._poetry, self._env, self._io)
         sdist_file = sdist_builder.build()
 
-        self._io.writeln("")
+        self._io.write_line("")
 
         dist_dir = self._path / "dist"
         with self.unpacked_tarball(sdist_file) as tmpdir:

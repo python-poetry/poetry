@@ -9,6 +9,13 @@ class RunCommand(EnvCommand):
         { args* : The command and arguments/options to run. }
     """
 
+    def __init__(self):  # type: () -> None
+        from poetry.console.args.run_args_parser import RunArgsParser
+
+        super(RunCommand, self).__init__()
+
+        self.config.set_args_parser(RunArgsParser())
+
     def handle(self):
         args = self.argument("args")
         script = args[0]
@@ -48,22 +55,5 @@ class RunCommand(EnvCommand):
         package = poetry.package
         path = poetry.file.parent
         module = Module(package.name, path.as_posix(), package.packages)
+
         return module
-
-    def merge_application_definition(self, merge_args=True):
-        if self._application is None or (
-            self._application_definition_merged
-            and (self._application_definition_merged_with_args or not merge_args)
-        ):
-            return
-
-        if merge_args:
-            current_arguments = self._definition.get_arguments()
-            self._definition.set_arguments(
-                self._application.get_definition().get_arguments()
-            )
-            self._definition.add_arguments(current_arguments)
-
-        self._application_definition_merged = True
-        if merge_args:
-            self._application_definition_merged_with_args = True

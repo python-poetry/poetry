@@ -34,6 +34,11 @@ optional = false
 python-versions = "*"
 version = "18.2.0"
 
+[package.extras]
+dev = ["pre-commit", "zope.interface", "sphinx", "zope.interface", "six", "pytest", "pympler", "hypothesis", "coverage"]
+docs = ["zope.interface", "sphinx"]
+tests = ["zope.interface", "six", "pytest", "pympler", "hypothesis", "coverage"]
+
 [[package]]
 category = "dev"
 description = "The uncompromising code formatter."
@@ -49,6 +54,9 @@ attrs = ">=17.4.0"
 click = ">=6.5"
 toml = ">=0.9.4"
 
+[package.extras]
+d = ["aiohttp (>=3.3.2)"]
+
 [[package]]
 category = "main"
 description = "httplib2 caching for requests"
@@ -58,9 +66,16 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.12.5"
 
 [package.dependencies]
-lockfile = ">=0.9"
 msgpack = "*"
 requests = "*"
+
+[package.dependencies.lockfile]
+optional = true
+version = ">=0.9"
+
+[package.extras]
+filecache = ["lockfile (>=0.9)"]
+redis = ["redis (>=2.10.5)"]
 
 [[package]]
 category = "dev"
@@ -77,6 +92,11 @@ name = "cachy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.2.0"
+
+[package.extras]
+memcached = ["python-memcached (>=1.59.0.0,<2.0.0.0)"]
+msgpack = ["msgpack-python (>=0.5.0.0,<0.6.0.0)"]
+redis = ["redis (>=2.10.0.0,<3.0.0.0)"]
 
 [[package]]
 category = "main"
@@ -111,9 +131,10 @@ description = "Cleo allows you to create beautiful and testable command-line int
 name = "cleo"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.6.8"
+version = "0.7.2"
 
 [package.dependencies]
+clikit = ">=0.2.0,<0.3.0"
 pastel = ">=0.1.0,<0.2.0"
 pylev = ">=1.3,<2.0"
 
@@ -125,6 +146,26 @@ name = "click"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "7.0"
+
+[[package]]
+category = "main"
+description = "CliKit is a group of utilities to build beautiful and testable command line interfaces."
+name = "clikit"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "0.2.2"
+
+[package.dependencies]
+pastel = ">=0.1.0,<0.2.0"
+pylev = ">=1.3,<2.0"
+
+[package.dependencies.enum34]
+python = ">=2.7,<2.8"
+version = ">=1.1,<2.0"
+
+[package.dependencies.typing]
+python = ">=2.7,<2.8 || >=3.4,<3.5"
+version = ">=3.6,<4.0"
 
 [[package]]
 category = "dev"
@@ -199,6 +240,13 @@ version = "1.0.1"
 six = ">=1.9"
 webencodings = "*"
 
+[package.extras]
+all = ["genshi", "chardet (>=2.2)", "datrie", "lxml"]
+chardet = ["chardet (>=2.2)"]
+datrie = ["datrie"]
+genshi = ["genshi"]
+lxml = ["lxml"]
+
 [[package]]
 category = "dev"
 description = "File identification library for Python"
@@ -262,6 +310,9 @@ version = "2.10"
 [package.dependencies]
 MarkupSafe = ">=0.23"
 
+[package.extras]
+i18n = ["Babel (>=0.8)"]
+
 [[package]]
 category = "main"
 description = "An implementation of JSON Schema validation for Python"
@@ -278,6 +329,9 @@ six = ">=1.11.0"
 [package.dependencies.functools32]
 python = "<3"
 version = "*"
+
+[package.extras]
+format = ["jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors"]
 
 [[package]]
 category = "dev"
@@ -351,6 +405,10 @@ six = ">=1.9"
 [package.dependencies.funcsigs]
 python = "<3.3"
 version = ">=1"
+
+[package.extras]
+docs = ["sphinx", "Pygments (<2)", "jinja2 (<2.7)", "sphinx (<1.3)"]
+test = ["unittest2 (>=1.1.0)"]
 
 [[package]]
 category = "dev"
@@ -432,6 +490,9 @@ optional = false
 python-versions = "*"
 version = "1.4.2"
 
+[package.extras]
+testing = ["nose", "coverage"]
+
 [[package]]
 category = "dev"
 description = "plugin and hook calling mechanisms for python"
@@ -439,6 +500,9 @@ name = "pluggy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.8.0"
+
+[package.extras]
+dev = ["tox", "pre-commit"]
 
 [[package]]
 category = "dev"
@@ -617,6 +681,10 @@ chardet = ">=3.0.2,<3.1.0"
 idna = ">=2.5,<2.8"
 urllib3 = ">=1.21.1,<1.25"
 
+[package.extras]
+security = ["idna (>=2.0.0)", "cryptography (>=1.3.4)", "pyOpenSSL (>=0.14)"]
+socks = ["win-inet-pton", "PySocks (>=1.5.6,<1.5.7 || >1.5.7)"]
+
 [[package]]
 category = "main"
 description = "A utility belt for advanced users of python-requests"
@@ -716,6 +784,10 @@ six = ">=1.0.0,<2"
 toml = ">=0.9.4"
 virtualenv = ">=1.11.2"
 
+[package.extras]
+docs = ["sphinxcontrib-autoprogram (>=0.1.5)", "pygments-github-lexers (>=0.0.5)", "towncrier (>=18.5.0)", "sphinx (>=1.8.0,<2)"]
+testing = ["pytest-randomly (>=1.2.3,<2)", "pytest-xdist (>=1.22.2,<2)", "pytest-timeout (>=1.3.0,<2)", "pytest-mock (>=1.10.0,<2)", "pytest-cov (>=2.5.1,<3)", "pytest (>=3.0.0,<4)"]
+
 [[package]]
 category = "main"
 description = "Type Hints for Python"
@@ -733,6 +805,10 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4"
 version = "1.24.1"
 
+[package.extras]
+secure = ["ipaddress", "certifi", "idna (>=2.0.0)", "cryptography (>=1.3.4)", "pyOpenSSL (>=0.14)"]
+socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
+
 [[package]]
 category = "main"
 description = "Virtual Python Environment builder"
@@ -740,6 +816,10 @@ name = "virtualenv"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 version = "16.1.0"
+
+[package.extras]
+docs = ["sphinx (>=1.8.0,<2)"]
+testing = ["mock", "pytest-timeout (>=1.3.0,<2)", "coverage (>=4.5.0,<5)", "pytest (>=3.0.0,<4)"]
 
 [[package]]
 category = "main"
@@ -750,7 +830,7 @@ python-versions = "*"
 version = "0.5.1"
 
 [metadata]
-content-hash = "cc0af5d7cff3183d13e844efc25bfabc912de0a22eea948614a0895ab4be5ed1"
+content-hash = "8618ec2332b366abaf70c871e9afd0f52d410e0cf17c9715525b9157c8874161"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.hashes]
@@ -765,8 +845,9 @@ cachy = ["b71513e5a38ce90c1280c02b7d8d6bb3fdf64666c9cc0584f2479afea097d56c", "b7
 certifi = ["339dc09518b07e2fa7eda5450740925974815557727d6bd35d319c1524a04a4c", "6d58c986d22b038c8c0df30d639f23a3e6d172a05c3583e766f4c0b785c0986a"]
 cfgv = ["73f48a752bd7aab103c4b882d6596c6360b7aa63b34073dd2c35c7b4b8f93010", "d1791caa9ff5c0c7bce80e7ecc1921752a2eb7c2463a08ed9b6c96b85a2f75aa"]
 chardet = ["84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae", "fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691"]
-cleo = ["85a63076b72ca376fb06668be1fc7758dc16740b394783d5cc65200c4b32f71b", "9b7f79f1aa470a025c0d28c76aa225ee9e65028d32f80032e871aa3500df61b8"]
+cleo = ["7a5000de616de42fd78f968192651b9174bf333a9079fc9d68ccc672ddfd3624", "a39fa806fd3f64ff0ae4e3a55bb80c8ce60ca73634e13619731d63a04a63be69"]
 click = ["2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13", "5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"]
+clikit = ["9dbdb3a0f3ddcd2e1851f11b13dc5173d8a4333d627be24e46ddbbc0d83a84e8", "b65cecedfabc2c73865454a57faeca8696408130fc5c2c74df0770335c787bec"]
 colorama = ["a3d89af5db9e9806a779a50296b5fdb466e281147c2c235e8225ecc6dbf7bbf3", "c9b54bebe91a6a803e0772c8561d53f2926bfeb17cd141fbabcb08424086595c"]
 contextlib2 = ["509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48", "f5260a6e679d2ff42ec91ec5252f4eeffdcf21053db9113bd0a8e4d953769c00"]
 coverage = ["06123b58a1410873e22134ca2d88bd36680479fe354955b3579fb8ff150e4d27", "09e47c529ff77bf042ecfe858fb55c3e3eb97aac2c87f0349ab5a7efd6b3939f", "0a1f9b0eb3aa15c990c328535655847b3420231af299386cfe5efc98f9c250fe", "0cc941b37b8c2ececfed341444a456912e740ecf515d560de58b9a76562d966d", "0d34245f824cc3140150ab7848d08b7e2ba67ada959d77619c986f2062e1f0e8", "10e8af18d1315de936d67775d3a814cc81d0747a1a0312d84e27ae5610e313b0", "1b4276550b86caa60606bd3572b52769860a81a70754a54acc8ba789ce74d607", "1e8a2627c48266c7b813975335cfdea58c706fe36f607c97d9392e61502dc79d", "258b21c5cafb0c3768861a6df3ab0cfb4d8b495eee5ec660e16f928bf7385390", "2b224052bfd801beb7478b03e8a66f3f25ea56ea488922e98903914ac9ac930b", "3ad59c84c502cd134b0088ca9038d100e8fb5081bbd5ccca4863f3804d81f61d", "447c450a093766744ab53bf1e7063ec82866f27bcb4f4c907da25ad293bba7e3", "46101fc20c6f6568561cdd15a54018bb42980954b79aa46da8ae6f008066a30e", "4710dc676bb4b779c4361b54eb308bc84d64a2fa3d78e5f7228921eccce5d815", "510986f9a280cd05189b42eee2b69fecdf5bf9651d4cd315ea21d24a964a3c36", "5535dda5739257effef56e49a1c51c71f1d37a6e5607bb25a5eee507c59580d1", "5a7524042014642b39b1fcae85fb37556c200e64ec90824ae9ecf7b667ccfc14", "5f55028169ef85e1fa8e4b8b1b91c0b3b0fa3297c4fb22990d46ff01d22c2d6c", "6694d5573e7790a0e8d3d177d7a416ca5f5c150742ee703f3c18df76260de794", "6831e1ac20ac52634da606b658b0b2712d26984999c9d93f0c6e59fe62ca741b", "71afc1f5cd72ab97330126b566bbf4e8661aab7449f08895d21a5d08c6b051ff", "7349c27128334f787ae63ab49d90bf6d47c7288c63a0a5dfaa319d4b4541dd2c", "77f0d9fa5e10d03aa4528436e33423bfa3718b86c646615f04616294c935f840", "828ad813c7cdc2e71dcf141912c685bfe4b548c0e6d9540db6418b807c345ddd", "859714036274a75e6e57c7bab0c47a4602d2a8cfaaa33bbdb68c8359b2ed4f5c", "85a06c61598b14b015d4df233d249cd5abfa61084ef5b9f64a48e997fd829a82", "869ef4a19f6e4c6987e18b315721b8b971f7048e6eaea29c066854242b4e98d9", "8cb4febad0f0b26c6f62e1628f2053954ad2c555d67660f28dfb1b0496711952", "977e2d9a646773cc7428cdd9a34b069d6ee254fadfb4d09b3f430e95472f3cf3", "99bd767c49c775b79fdcd2eabff405f1063d9d959039c0bdd720527a7738748a", "a5c58664b23b248b16b96253880b2868fb34358911400a7ba39d7f6399935389", "aaa0f296e503cda4bc07566f592cd7a28779d433f3a23c48082af425d6d5a78f", "ab235d9fe64833f12d1334d29b558aacedfbca2356dfb9691f2d0d38a8a7bfb4", "b3b0c8f660fae65eac74fbf003f3103769b90012ae7a460863010539bb7a80da", "bab8e6d510d2ea0f1d14f12642e3f35cefa47a9b2e4c7cea1852b52bc9c49647", "c45297bbdbc8bb79b02cf41417d63352b70bcb76f1bbb1ee7d47b3e89e42f95d", "d19bca47c8a01b92640c614a9147b081a1974f69168ecd494687c827109e8f42", "d64b4340a0c488a9e79b66ec9f9d77d02b99b772c8b8afd46c1294c1d39ca478", "da969da069a82bbb5300b59161d8d7c8d423bc4ccd3b410a9b4d8932aeefc14b", "ed02c7539705696ecb7dc9d476d861f3904a8d2b7e894bd418994920935d36bb", "ee5b8abc35b549012e03a7b1e86c09491457dba6c94112a2482b18589cc2bdb9"]

@@ -2,7 +2,8 @@ import pytest
 import shutil
 import zipfile
 
-from poetry.io import NullIO
+from clikit.io import NullIO
+
 from poetry.masonry.builders import WheelBuilder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path

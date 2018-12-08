@@ -69,7 +69,7 @@ def test_export_exports_requirements_txt_file_locks_if_no_lock_file(app, repo):
 
     repo.add_package(get_package("foo", "1.0.0"))
 
-    tester.execute([("command", command.get_name()), ("--format", "requirements.txt")])
+    tester.execute("--format requirements.txt")
 
     requirements = app.poetry.file.parent / "requirements.txt"
     assert requirements.exists()
@@ -84,7 +84,7 @@ foo==1.0.0
 """
 
     assert expected == content
-    assert "The lock file does not exist. Locking." in tester.get_display(True)
+    assert "The lock file does not exist. Locking." in tester.io.fetch_output()
 
 
 def test_export_exports_requirements_txt_uses_lock_file(app, repo):
@@ -92,14 +92,14 @@ def test_export_exports_requirements_txt_uses_lock_file(app, repo):
 
     command = app.find("lock")
     tester = CommandTester(command)
-    tester.execute([("command", "lock")])
+    tester.execute()
 
     assert app.poetry.locker.lock.exists()
 
     command = app.find("export")
     tester = CommandTester(command)
 
-    tester.execute([("command", command.get_name()), ("--format", "requirements.txt")])
+    tester.execute("--format requirements.txt")
 
     requirements = app.poetry.file.parent / "requirements.txt"
     assert requirements.exists()
@@ -114,7 +114,7 @@ foo==1.0.0
 """
 
     assert expected == content
-    assert "The lock file does not exist. Locking." not in tester.get_display(True)
+    assert "The lock file does not exist. Locking." not in tester.io.fetch_output()
 
 
 def test_export_fails_on_invalid_format(app, repo):
@@ -122,7 +122,7 @@ def test_export_fails_on_invalid_format(app, repo):
 
     command = app.find("lock")
     tester = CommandTester(command)
-    tester.execute([("command", "lock")])
+    tester.execute()
 
     assert app.poetry.locker.lock.exists()
 
@@ -130,4 +130,4 @@ def test_export_fails_on_invalid_format(app, repo):
     tester = CommandTester(command)
 
     with pytest.raises(ValueError):
-        tester.execute([("command", command.get_name()), ("--format", "invalid")])
+        tester.execute("--format invalid")

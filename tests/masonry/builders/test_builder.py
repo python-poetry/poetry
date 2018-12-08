@@ -1,4 +1,5 @@
-from poetry.io import NullIO
+from clikit.io import NullIO
+
 from poetry.masonry.builders.builder import Builder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path

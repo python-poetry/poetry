@@ -25,7 +25,7 @@ class AddCommand(EnvCommand, InitCommand):
 If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.
 """
 
-    _loggers = ["poetry.repositories.pypi_repository"]
+    loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.installation import Installer
@@ -124,11 +124,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         self.reset_poetry()
 
         installer = Installer(
-            self.output,
-            self.env,
-            self.poetry.package,
-            self.poetry.locker,
-            self.poetry.pool,
+            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
 
         installer.dry_run(self.option("dry-run"))

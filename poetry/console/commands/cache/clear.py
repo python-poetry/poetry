@@ -7,7 +7,7 @@ class CacheClearCommand(Command):
     """
     Clears poetry's cache.
 
-    cache:clear
+    clear
         { cache : The name of the cache to clear. }
         { --all : Clear all caches. }
     """

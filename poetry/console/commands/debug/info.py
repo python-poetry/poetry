@@ -8,7 +8,7 @@ class DebugInfoCommand(Command):
     """
     Shows debug information.
 
-    debug:info
+    info
     """
 
     def handle(self):
@@ -19,18 +19,17 @@ class DebugInfoCommand(Command):
 
         poetry_python_version = ".".join(str(s) for s in sys.version_info[:3])
 
-        self.output.title("Poetry")
-        self.output.listing(
-            [
-                "<info>Version</info>: <comment>{}</>".format(poetry.VERSION),
-                "<info>Python</info>:  <comment>{}</>".format(poetry_python_version),
-            ]
-        )
+        self.line("")
+        self.line("<b>Poetry</b>")
+        self.line("")
+        self.line("<info>Version</info>: <comment>{}</>".format(poetry.VERSION))
+        self.line("<info>Python</info>:  <comment>{}</>".format(poetry_python_version))
 
         self.line("")
 
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
-        self.output.title("Virtualenv")
+        self.line("<b>Virtualenv</b>")
+        self.line("")
         listing = [
             "<info>Python</info>:         <comment>{}</>".format(env_python_version),
             "<info>Implementation</info>: <comment>{}</>".format(
@@ -46,17 +45,21 @@ class DebugInfoCommand(Command):
                     tag="comment" if env.is_sane() else "error", is_valid=env.is_sane()
                 )
             )
-        self.output.listing(listing)
+
+        for line in listing:
+            self.line(line)
 
         self.line("")
 
-        self.output.title("System")
-        self.output.listing(
-            [
-                "<info>Platform</info>: <comment>{}</>".format(sys.platform),
-                "<info>OS</info>:       <comment>{}</>".format(os.name),
-                "<info>Python</info>:   <comment>{}</>".format(env.base),
-            ]
-        )
+        self.line("<b>System</b>")
+        self.line("")
+        listing = [
+            "<info>Platform</info>: <comment>{}</>".format(sys.platform),
+            "<info>OS</info>:       <comment>{}</>".format(os.name),
+            "<info>Python</info>:   <comment>{}</>".format(env.base),
+        ]
+
+        for line in listing:
+            self.line(line)
 
         self.line("")

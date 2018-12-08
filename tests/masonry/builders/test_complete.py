@@ -9,8 +9,9 @@ import tarfile
 import zipfile
 import tempfile
 
+from clikit.io import NullIO
+
 from poetry import __version__
-from poetry.io import NullIO
 from poetry.masonry.builders import CompleteBuilder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path

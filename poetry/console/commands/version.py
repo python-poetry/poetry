@@ -1,5 +1,3 @@
-import re
-
 from .command import Command
 
 
@@ -8,7 +6,7 @@ class VersionCommand(Command):
     Bumps the version of the project.
 
     version
-        { version=patch }
+        { version=patch : The version number or the rule to update version }
     """
 
     help = """\

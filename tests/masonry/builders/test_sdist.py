@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import ast
 import pytest
-import re
 import shutil
 import tarfile
 
 from email.parser import Parser
 
-from poetry.io import NullIO
+from clikit.io import NullIO
+
 from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.masonry.utils.package_include import PackageInclude
 from poetry.packages import Package
