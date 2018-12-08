@@ -1,4 +1,5 @@
 import json
+import re
 
 import poetry.packages
 import poetry.repositories
@@ -85,7 +86,19 @@ class Locker(object):
             package.optional = info["optional"]
             package.hashes = lock_data["metadata"]["hashes"][info["name"]]
             package.python_versions = info["python-versions"]
-            package.extras = info.get("extras", {})
+            extras = info.get("extras", {})
+            if extras:
+                for name, deps in extras.items():
+                    package.extras[name] = []
+
+                    for dep in deps:
+                        m = re.match(r"^(.+)(?=\s+\((.+)\))?$", dep)
+                        dep_name = m.group(1)
+                        constraint = m.group(2) or "*"
+
+                        package.extras[name].append(
+                            poetry.packages.Dependency(dep_name, constraint)
+                        )
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
