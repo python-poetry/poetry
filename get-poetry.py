@@ -301,13 +301,15 @@ class Installer:
         version=None,
         preview=False,
         force=False,
+        nosetpath=False,
         accept_all=False,
         base_url=BASE_URL,
     ):
         self._version = version
         self._preview = preview
         self._force = force
-        self._modify_path = True
+        self._no_set_path = nosetpath  # This indicates --no-set-path
+        self._modify_path = True  # This indicates STDIN replied 'yes'
         self._accept_all = accept_all
         self._base_url = base_url
 
@@ -410,7 +412,7 @@ class Installer:
         return version, current_version
 
     def customize_install(self):
-        if not self._accept_all:
+        if not self._accept_all and not self._no_set_path:
             print("Before we start, please answer the following questions.")
             print("You may simply press the Enter key to leave unchanged.")
 
@@ -459,7 +461,8 @@ class Installer:
         self.make_lib(version)
         self.make_bin()
         self.make_env()
-        self.update_path()
+        if not self._no_set_path:
+            self.update_path()
 
         return 0
 
@@ -837,6 +840,9 @@ def main():
     parser.add_argument(
         "--uninstall", dest="uninstall", action="store_true", default=False
     )
+    parser.add_argument(
+        "--no-set-path", dest="nosetpath", action="store_true", default=False
+    )
 
     args = parser.parse_args()
 
@@ -844,6 +850,7 @@ def main():
         version=args.version or os.getenv("POETRY_VERSION"),
         preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
         force=args.force,
+        nosetpath=args.nosetpath,
         accept_all=args.accept_all
         or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
         or not is_interactive(),
