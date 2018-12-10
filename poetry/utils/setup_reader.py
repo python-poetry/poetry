@@ -282,7 +282,11 @@ class SetupReader(object):
 
         if isinstance(value, ast.Dict):
             for key, val in zip(value.keys, value.values):
-                extras_require[key.s] = [e.s for e in val.elts]
+                if isinstance(val, ast.Name):
+                    val = self._find_variable_in_body(body, val.id)
+
+                if isinstance(val, ast.List):
+                    extras_require[key.s] = [e.s for e in val.elts]
         elif isinstance(value, ast.Name):
             variable = self._find_variable_in_body(body, value.id)
 
@@ -290,7 +294,11 @@ class SetupReader(object):
                 return extras_require
 
             for key, val in zip(variable.keys, variable.values):
-                extras_require[key.s] = [e.s for e in val.elts]
+                if isinstance(val, ast.Name):
+                    val = self._find_variable_in_body(body, val.id)
+
+                if isinstance(val, ast.List):
+                    extras_require[key.s] = [e.s for e in val.elts]
 
         return extras_require
 
