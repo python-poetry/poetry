@@ -17,7 +17,7 @@ calls `poetry update`.
 
 ## Global options
 
-* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug.
+* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
 * `--help (-h)` : Display help information.
 * `--quiet (-q)` : Do not output any message.
 * `--ansi`: Force ANSI output.
