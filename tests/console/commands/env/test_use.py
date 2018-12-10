@@ -37,12 +37,12 @@ def check_output_wrapper(version=Version.parse("3.7.1")):
 
 
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
-    app, tmp_dir, config, mocker, environ
+    app, tmp_dir, config, mocker
 ):
     app.poetry._config = config
 
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
@@ -84,11 +84,11 @@ Using virtualenv: {}
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
-    app, tmp_dir, config, mocker, environ
+    app, tmp_dir, config, mocker
 ):
     app.poetry._config = config
 
-    environ["VIRTUAL_ENV"] = "/environment/prefix"
+    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     venv_name = EnvManager.generate_env_name(
         "simple_project", str(app.poetry.file.parent)
@@ -105,7 +105,10 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     doc[venv_name] = {"minor": python_minor, "patch": python_patch}
     envs_file.write(doc)
 
-    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version(*current_python)),
+    )
     mocker.patch(
         "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
@@ -119,6 +122,58 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 Using virtualenv: {}
 """.format(
         os.path.join(tmp_dir, "{}-py{}".format(venv_name, python_minor))
+    )
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
+    app, tmp_dir, config, mocker
+):
+    app.poetry._config = config
+
+    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
+
+    venv_name = EnvManager.generate_env_name(
+        "simple_project", str(app.poetry.file.parent)
+    )
+    current_python = sys.version_info[:3]
+    python_minor = ".".join(str(v) for v in current_python[:2])
+
+    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+
+    mocker.patch(
+        "poetry.utils.env.EnvManager._env",
+        new_callable=mocker.PropertyMock,
+        return_value=MockEnv(
+            path=Path("/environment/prefix"),
+            base=Path("/base/prefix"),
+            version_info=current_python,
+            is_venv=True,
+        ),
+    )
+
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version(*current_python)),
+    )
+    mocker.patch(
+        "subprocess.Popen.communicate",
+        side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
+    )
+    mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
+
+    command = app.find("env use")
+    tester = CommandTester(command)
+    tester.execute(python_minor)
+
+    expected = """\
+Creating virtualenv {} in {}
+Using virtualenv: {}
+""".format(
+        "{}-py{}".format(venv_name, python_minor),
+        tmp_dir,
+        os.path.join(tmp_dir, "{}-py{}".format(venv_name, python_minor)),
     )
 
     assert expected == tester.io.fetch_output()

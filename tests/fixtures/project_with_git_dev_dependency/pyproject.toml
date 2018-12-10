@@ -20,7 +20,7 @@ classifiers = [
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+python = "~2.7 || ^3.4"
 cachy = "^0.1.0"
 pendulum = "^2.0.0"
 

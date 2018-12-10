@@ -198,6 +198,10 @@ class EnvManager(object):
 
         # Create if needed
         if not venv.exists() or venv.exists() and create:
+            in_venv = os.environ.get("VIRTUAL_ENV") is not None
+            if in_venv:
+                create = True
+
             self.create_venv(cwd, io, executable=python, force=create)
 
         # Activate
@@ -293,7 +297,7 @@ class EnvManager(object):
     def create_venv(
         self, cwd, io, name=None, executable=None, force=False
     ):  # type: (Path, IO, Optional[str], Optional[str], bool) -> Env
-        if self._env is not None:
+        if self._env is not None and not force:
             return self._env
 
         env = self.get(cwd, reload=True)

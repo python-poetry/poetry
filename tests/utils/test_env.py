@@ -20,9 +20,9 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, config)
     assert venv.run("python", "-V", shell=True).startswith("Python")
 
 
-def test_env_get_in_project_venv(tmp_dir, environ, config):
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+def test_env_get_in_project_venv(tmp_dir, config):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     (Path(tmp_dir) / ".venv").mkdir()
 
@@ -55,10 +55,10 @@ def check_output_wrapper(version=Version.parse("3.7.1")):
 
 
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
-    tmp_dir, config, mocker, environ
+    tmp_dir, config, mocker
 ):
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
@@ -86,11 +86,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     assert env.base == Path("/prefix")
 
 
-def test_activate_activates_existing_virtualenv_no_envs_file(
-    tmp_dir, config, mocker, environ
-):
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+def test_activate_activates_existing_virtualenv_no_envs_file(tmp_dir, config, mocker):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
 
@@ -116,11 +114,9 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     assert env.base == Path("/prefix")
 
 
-def test_activate_activates_same_virtualenv_with_envs_file(
-    tmp_dir, config, mocker, environ
-):
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+def test_activate_activates_same_virtualenv_with_envs_file(tmp_dir, config, mocker):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
 
@@ -151,10 +147,10 @@ def test_activate_activates_same_virtualenv_with_envs_file(
 
 
 def test_activate_activates_different_virtualenv_with_envs_file(
-    tmp_dir, config, mocker, environ
+    tmp_dir, config, mocker
 ):
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
@@ -191,11 +187,9 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     assert env.base == Path("/prefix")
 
 
-def test_activate_activates_recreates_for_different_minor(
-    tmp_dir, config, mocker, environ
-):
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+def test_activate_activates_recreates_for_different_minor(tmp_dir, config, mocker):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
@@ -238,9 +232,9 @@ def test_activate_activates_recreates_for_different_minor(
     assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)).exists()
 
 
-def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker, environ):
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
 
@@ -262,9 +256,9 @@ def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker, environ)
     assert Path("/prefix")
 
 
-def test_deactivate_activated(tmp_dir, config, mocker, environ):
-    if "VIRTUAL_ENV" in environ:
-        del environ["VIRTUAL_ENV"]
+def test_deactivate_activated(tmp_dir, config, mocker):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
 
     venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
     version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
@@ -302,9 +296,9 @@ def test_deactivate_activated(tmp_dir, config, mocker, environ):
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
-    tmp_dir, config, mocker, environ
+    tmp_dir, config, mocker
 ):
-    environ["VIRTUAL_ENV"] = "/environment/prefix"
+    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
 

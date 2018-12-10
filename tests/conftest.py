@@ -57,11 +57,12 @@ def tmp_dir():
 
 @pytest.fixture
 def environ():
-    original_environ = os.environ
+    original_environ = dict(os.environ)
 
-    yield os.environ
+    yield
 
-    os.environ = original_environ
+    os.environ.clear()
+    os.environ.update(original_environ)
 
 
 @pytest.fixture(autouse=True)
