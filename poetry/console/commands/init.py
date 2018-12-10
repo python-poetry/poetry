@@ -41,18 +41,16 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         from poetry.vcs.git import GitConfig
 
         if (Path.cwd() / "pyproject.toml").exists():
-            self.error("A pyproject.toml file already exists.")
+            self.line("<error>A pyproject.toml file already exists.</error>")
             return 1
 
         vcs_config = GitConfig()
 
+        self.line("")
         self.line(
-            [
-                "",
-                "This command will guide you through creating your <info>pyproject.toml</> config.",
-                "",
-            ]
+            "This command will guide you through creating your <info>pyproject.toml</> config."
         )
+        self.line("")
 
         name = self.option("name")
         if not name:
@@ -86,7 +84,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         question = self.create_question(
             "Author [<comment>{}</comment>, n to skip]: ".format(author), default=author
         )
-        question.validator = lambda v: self._validate_author(v, author)
+        question.set_validator(lambda v: self._validate_author(v, author))
         author = self.ask(question)
 
         if not author:
@@ -99,7 +97,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         question = self.create_question(
             "License [<comment>{}</comment>]: ".format(license), default=license
         )
-        question.validator = self._validate_license
+        question.set_validator(self._validate_license)
         license = self.ask(question)
 
         current_env = Env.get(Path.cwd())
@@ -125,6 +123,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             requirements = self._format_requirements(
                 self._determine_requirements(self.option("dependency"))
             )
+            self.line("")
 
         dev_requirements = {}
 
@@ -136,6 +135,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
             )
+            self.line("")
 
         layout_ = layout("standard")(
             name,
@@ -149,9 +149,11 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         )
 
         content = layout_.generate_poetry_content()
-        if self.input.is_interactive():
+        if self.io.is_interactive():
             self.line("<info>Generated file</info>")
-            self.line(["", content, ""])
+            self.line("")
+            self.line(content)
+            self.line("")
 
         if not self.confirm("Do you confirm generation?", True):
             self.line("<error>Command aborted</error>")
@@ -203,7 +205,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
                     constraint = self.ask(question)
 
-                    if constraint is False:
+                    if constraint is None:
                         _, constraint = self._find_best_version_for_package(package)
 
                         self.line(

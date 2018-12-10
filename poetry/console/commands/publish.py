@@ -24,7 +24,7 @@ the config command.
     def handle(self):
         from poetry.masonry.publishing.publisher import Publisher
 
-        publisher = Publisher(self.poetry, self.output)
+        publisher = Publisher(self.poetry, self.io)
 
         # Building package first, if told
         if self.option("build"):

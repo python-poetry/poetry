@@ -9,13 +9,13 @@ def test_check_valid(app):
     command = app.find("check")
     tester = CommandTester(command)
 
-    tester.execute([("command", command.get_name())])
+    tester.execute()
 
     expected = """\
 All set!
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
 
 def test_check_invalid(app):
@@ -25,7 +25,7 @@ def test_check_invalid(app):
     command = app.find("check")
     tester = CommandTester(command)
 
-    tester.execute([("command", command.get_name())])
+    tester.execute()
 
     if PY2:
         expected = """\
@@ -40,4 +40,4 @@ Error: INVALID is not a valid license
 Warning: A wildcard Python dependency is ambiguous. Consider specifying a more explicit one.
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()

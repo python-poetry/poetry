@@ -23,5 +23,5 @@ class BuildCommand(EnvCommand):
             )
         )
 
-        builder = Builder(self.poetry, self.env, self.output)
+        builder = Builder(self.poetry, self.env, self.io)
         builder.build(fmt)

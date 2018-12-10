@@ -23,7 +23,7 @@ class Publisher:
 
     def publish(self, repository_name, username, password):
         if repository_name:
-            self._io.writeln(
+            self._io.write_line(
                 "Publishing <info>{}</info> (<comment>{}</comment>) "
                 "to <fg=cyan>{}</>".format(
                     self._package.pretty_name,
@@ -32,7 +32,7 @@ class Publisher:
                 )
             )
         else:
-            self._io.writeln(
+            self._io.write_line(
                 "Publishing <info>{}</info> (<comment>{}</comment>) "
                 "to <fg=cyan>PyPI</>".format(
                     self._package.pretty_name, self._package.pretty_version

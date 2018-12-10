@@ -18,7 +18,7 @@ class ConfigCommand(Command):
     Sets/Gets config options.
 
     config
-        { key : Setting key. }
+        { key? : Setting key. }
         { value?* : Setting value. }
         { --list : List configuration settings }
         { --unset : Unset configuration setting }
@@ -40,7 +40,7 @@ To remove a repository (repo is a short alias for repositories):
 
         super(ConfigCommand, self).__init__()
 
-        self._config = Config.create("config.toml")
+        self._settings_config = Config.create("config.toml")
         self._auth_config = Config.create("auth.toml")
 
     @property
@@ -74,12 +74,10 @@ To remove a repository (repo is a short alias for repositories):
     def initialize(self, i, o):
         from poetry.utils._compat import decode
 
-        super(ConfigCommand, self).initialize(i, o)
-
         # Create config file if it does not exist
-        if not self._config.file.exists():
-            self._config.file.parent.mkdir(parents=True, exist_ok=True)
-            with self._config.file.open("w", encoding="utf-8") as f:
+        if not self._settings_config.file.exists():
+            self._settings_config.file.parent.mkdir(parents=True, exist_ok=True)
+            with self._settings_config.file.open("w", encoding="utf-8") as f:
                 f.write(decode(TEMPLATE))
 
         if not self._auth_config.file.exists():
@@ -89,7 +87,7 @@ To remove a repository (repo is a short alias for repositories):
 
     def handle(self):
         if self.option("list"):
-            self._list_configuration(self._config.content)
+            self._list_configuration(self._settings_config.content)
 
             return 0
 
@@ -106,10 +104,12 @@ To remove a repository (repo is a short alias for repositories):
             if m:
                 if not m.group(1):
                     value = {}
-                    if self._config.setting("repositories") is not None:
-                        value = self._config.setting("repositories")
+                    if self._settings_config.setting("repositories") is not None:
+                        value = self._settings_config.setting("repositories")
                 else:
-                    repo = self._config.setting("repositories.{}".format(m.group(1)))
+                    repo = self._settings_config.setting(
+                        "repositories.{}".format(m.group(1))
+                    )
                     if repo is None:
                         raise ValueError(
                             "There is no {} repository defined".format(m.group(1))
@@ -124,7 +124,9 @@ To remove a repository (repo is a short alias for repositories):
                     raise ValueError("There is no {} setting.".format(setting_key))
 
                 values = self._get_setting(
-                    self._config.content, setting_key, default=values[setting_key][-1]
+                    self._settings_config.content,
+                    setting_key,
+                    default=values[setting_key][-1],
                 )
 
                 for value in values:
@@ -150,20 +152,26 @@ To remove a repository (repo is a short alias for repositories):
                 raise ValueError("You cannot remove the [repositories] section")
 
             if self.option("unset"):
-                repo = self._config.setting("repositories.{}".format(m.group(1)))
+                repo = self._settings_config.setting(
+                    "repositories.{}".format(m.group(1))
+                )
                 if repo is None:
                     raise ValueError(
                         "There is no {} repository defined".format(m.group(1))
                     )
 
-                self._config.remove_property("repositories.{}".format(m.group(1)))
+                self._settings_config.remove_property(
+                    "repositories.{}".format(m.group(1))
+                )
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                self._config.add_property("repositories.{}.url".format(m.group(1)), url)
+                self._settings_config.add_property(
+                    "repositories.{}.url".format(m.group(1)), url
+                )
 
                 return 0
 
@@ -222,12 +230,12 @@ To remove a repository (repo is a short alias for repositories):
         if not validator(value):
             raise RuntimeError('"{}" is an invalid value for {}'.format(value, key))
 
-        self._config.add_property(key, normalizer(value))
+        self._settings_config.add_property(key, normalizer(value))
 
         return 0
 
     def _remove_single_value(self, key):
-        self._config.remove_property(key)
+        self._settings_config.remove_property(key)
 
         return 0
 

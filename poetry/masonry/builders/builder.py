@@ -8,6 +8,8 @@ from contextlib import contextmanager
 from typing import Set
 from typing import Union
 
+from clikit.api.io.flags import VERY_VERBOSE
+
 from poetry.utils._compat import Path
 from poetry.utils._compat import basestring
 from poetry.utils._compat import lru_cache
@@ -98,26 +100,24 @@ class Builder(object):
                     # Skip duplicates
                     continue
 
-                self._io.writeln(
-                    " - Adding: <comment>{}</comment>".format(str(file)),
-                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                self._io.write_line(
+                    " - Adding: <comment>{}</comment>".format(str(file)), VERY_VERBOSE
                 )
                 to_add.append(file)
 
         # Include project files
-        self._io.writeln(
-            " - Adding: <comment>pyproject.toml</comment>",
-            verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+        self._io.write_line(
+            " - Adding: <comment>pyproject.toml</comment>", VERY_VERBOSE
         )
         to_add.append(Path("pyproject.toml"))
 
         # If a license file exists, add it
         for license_file in self._path.glob("LICENSE*"):
-            self._io.writeln(
+            self._io.write_line(
                 " - Adding: <comment>{}</comment>".format(
                     license_file.relative_to(self._path)
                 ),
-                verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                VERY_VERBOSE,
             )
             to_add.append(license_file.relative_to(self._path))
 
@@ -126,11 +126,11 @@ class Builder(object):
         if "readme" in self._poetry.local_config:
             readme = self._path / self._poetry.local_config["readme"]
             if readme.exists():
-                self._io.writeln(
+                self._io.write_line(
                     " - Adding: <comment>{}</comment>".format(
                         readme.relative_to(self._path)
                     ),
-                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                    VERY_VERBOSE,
                 )
                 to_add.append(readme.relative_to(self._path))
 

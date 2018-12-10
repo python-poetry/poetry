@@ -13,6 +13,8 @@ from typing import Dict
 from typing import Optional
 from typing import Tuple
 
+from clikit.api.io import IO
+
 from poetry.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.utils._compat import Path
@@ -235,7 +237,7 @@ class Env(object):
 
         if not venv.exists():
             if create_venv is False:
-                io.writeln(
+                io.write_line(
                     "<fg=black;bg=yellow>"
                     "Skipping virtualenv creation, "
                     "as specified in config file."
@@ -244,14 +246,14 @@ class Env(object):
 
                 return SystemEnv(Path(sys.prefix))
 
-            io.writeln(
+            io.write_line(
                 "Creating virtualenv <info>{}</> in {}".format(name, str(venv_path))
             )
 
             cls.build_venv(str(venv))
         else:
             if io.is_very_verbose():
-                io.writeln("Virtualenv <info>{}</> already exists.".format(name))
+                io.write_line("Virtualenv <info>{}</> already exists.".format(name))
 
         # venv detection:
         # stdlib venv may symlink sys.executable, so we can't use realpath.
@@ -528,11 +530,17 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed = []
 
-    def run(self, bin, *args):
+    def run(self, bin, *args, **kwargs):
         self.executed.append([bin] + list(args))
 
         if self._execute:
-            return super(NullEnv, self).run(bin, *args)
+            return super(NullEnv, self).run(bin, *args, **kwargs)
+
+    def execute(self, bin, *args, **kwargs):
+        self.executed.append([bin] + list(args))
+
+        if self._execute:
+            return super(NullEnv, self).execute(bin, *args, **kwargs)
 
     def _bin(self, bin):
         return bin

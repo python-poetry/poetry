@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
-
 from .env_command import EnvCommand
 
 
@@ -24,16 +22,17 @@ lists all packages available."""
     colors = ["green", "yellow", "cyan", "magenta", "blue"]
 
     def handle(self):
+        from clikit.utils.terminal import Terminal
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.semver import Version
 
         package = self.argument("package")
 
         if self.option("tree"):
-            self.init_styles()
+            self.init_styles(self.io)
 
         if self.option("outdated"):
-            self.input.set_option("latest", True)
+            self._args.set_option("latest", True)
 
         include_dev = not self.option("no-dev")
         locked_repo = self.poetry.locker.locked_repository(include_dev)
@@ -45,13 +44,13 @@ lists all packages available."""
             for package in packages:
                 for require in requires:
                     if package.name == require.name:
-                        self.display_package_tree(package, locked_repo)
+                        self.display_package_tree(self._io, package, locked_repo)
                         break
 
             return 0
 
         table = self.table(style="compact")
-        table.get_style().set_vertical_border_char("")
+        # table.style.line_vc_char = ""
         locked_packages = locked_repo.packages
 
         if package:
@@ -65,7 +64,7 @@ lists all packages available."""
                 raise ValueError("Package {} not found".format(package))
 
             if self.option("tree"):
-                self.display_package_tree(pkg, locked_repo)
+                self.display_package_tree(self.io, pkg, locked_repo)
 
                 return 0
 
@@ -92,7 +91,7 @@ lists all packages available."""
 
         show_latest = self.option("latest")
         show_all = self.option("all")
-        terminal = self.get_application().terminal
+        terminal = Terminal()
         width = terminal.width
         name_length = version_length = latest_length = 0
         latest_packages = {}
@@ -114,7 +113,7 @@ lists all packages available."""
                     continue
 
             current_length = len(locked.pretty_name)
-            if not self.output.is_decorated():
+            if not self._io.output.supports_ansi():
                 installed_status = self.get_installed_status(locked, installed_repo)
 
                 if installed_status == "not-installed":
@@ -158,7 +157,7 @@ lists all packages available."""
                 if installed_status == "not-installed":
                     color = "red"
 
-                    if not self.output.is_decorated():
+                    if not self._io.output.supports_ansi():
                         # Non installed in non decorated mode
                         install_marker = " (!)"
 
@@ -200,13 +199,13 @@ lists all packages available."""
 
             self.line(line)
 
-    def display_package_tree(self, package, installed_repo):
-        self.write("<info>{}</info>".format(package.pretty_name))
+    def display_package_tree(self, io, package, installed_repo):
+        io.write("<info>{}</info>".format(package.pretty_name))
         description = ""
         if package.description:
             description = " " + package.description
 
-        self.line(" {}{}".format(package.pretty_version, description))
+        io.write_line(" {}{}".format(package.pretty_version, description))
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
@@ -226,17 +225,18 @@ lists all packages available."""
                 name=dependency.name,
                 constraint=dependency.pretty_constraint,
             )
-            self._write_tree_line(info)
+            self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
             packages_in_tree = [package.name, dependency.name]
 
             self._display_tree(
-                dependency, installed_repo, packages_in_tree, tree_bar, level + 1
+                io, dependency, installed_repo, packages_in_tree, tree_bar, level + 1
             )
 
     def _display_tree(
         self,
+        io,
         dependency,
         installed_repo,
         packages_in_tree,
@@ -276,7 +276,7 @@ lists all packages available."""
                 constraint=dependency.pretty_constraint,
                 warn=circular_warn,
             )
-            self._write_tree_line(info)
+            self._write_tree_line(io, info)
 
             tree_bar = tree_bar.replace("└", " ")
 
@@ -284,24 +284,28 @@ lists all packages available."""
                 current_tree.append(dependency.name)
 
                 self._display_tree(
-                    dependency, installed_repo, current_tree, tree_bar, level + 1
+                    io, dependency, installed_repo, current_tree, tree_bar, level + 1
                 )
 
-    def _write_tree_line(self, line):
-        if not self.output.is_decorated():
+    def _write_tree_line(self, io, line):
+        if not io.output.supports_ansi():
             line = line.replace("└", "`-")
             line = line.replace("├", "|-")
             line = line.replace("──", "-")
             line = line.replace("│", "|")
 
-        self.line(line)
+        io.write_line(line)
 
-    def init_styles(self):
+    def init_styles(self, io):
+        from clikit.api.formatter import Style
+
         for color in self.colors:
-            self.set_style(color, color)
+            style = Style(color).fg(color)
+            io.output.formatter.add_style(style)
+            io.error_output.formatter.add_style(style)
 
     def find_latest_package(self, package, include_dev):
-        from poetry.io import NullIO
+        from clikit.io import NullIO
         from poetry.puzzle.provider import Provider
         from poetry.version.version_selector import VersionSelector
 

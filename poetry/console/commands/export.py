@@ -23,11 +23,11 @@ class ExportCommand(Command):
         if not locker.is_locked():
             self.line("<comment>The lock file does not exist. Locking.</comment>")
             options = []
-            if self.output.is_debug():
+            if self.io.is_debug():
                 options.append(("-vvv", None))
-            elif self.output.is_very_verbose():
+            elif self.io.is_very_verbose():
                 options.append(("-vv", None))
-            elif self.output.is_verbose():
+            elif self.io.is_verbose():
                 options.append(("-v", None))
 
             self.call("lock", options)
