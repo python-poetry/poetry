@@ -9,6 +9,10 @@
 ### Changed
 
 - Slightly changed the lock file, making it potentially incompatible with previous Poetry versions.
+- The `cache:clear` command has been renamed to `cache clear`.
+- The `debug:info` command has been renamed to `debug info`.
+- The `debug:resolve` command has been renamed to `debug resolve`.
+- The `self:update` command has been renamed to `self update`.
 
 ### Fixed
 
