@@ -171,28 +171,83 @@ poetry install
 ```
 
 However, this might not be feasible for your system, especially Windows where `pyenv`,
-is not available. To circumvent that you can use the `env:use` command to tell
+is not available. To circumvent that you can use the `env use` command to tell
 Poetry which Python version to use for the current project.
 
 ```bash
-poetry env:use /full/path/to/python
+poetry env use /full/path/to/python
 ```
 
 If you have the python executable in your `PATH` you can use it:
 
 ```bash
-poetry env:use python3.7
+poetry env use python3.7
 ```
 
 You can even just use the minor Python version in this case:
 
 ```bash
-poetry env:use 3.7
+poetry env use 3.7
 ```
 
 If you want to disable the explicitly activated virtualenv, you can use the
 special `system` Python version to retrieve the default behavior:
 
 ```bash
-poetry env:use system
+poetry env use system
 ```
+
+If you want to get basic information about the currently activated virtualenv,
+you can use the `env info` command:
+
+```bash
+poetry env info
+```
+
+will output something similar to this:
+
+```text
+Virtualenv
+Python:         3.7.1
+Implementation: CPython
+Path:           /path/to/poetry/cache/virtualenvs/test-O3eWbxRl-py3.7
+Valid:          True
+
+System
+Platform: darwin
+OS:       posix
+Python:   /path/to/main/python
+```
+
+If you only want to know the path to the virtualenv, you can pass the `--path` option
+to `env info`:
+
+```bash
+poetry env info --path
+```
+
+You can also list all the virtualenvs associated with the current virtualenv
+with the `env list` command:
+
+```bash
+poetry env list
+```
+
+will output something like the following:
+
+```text
+test-O3eWbxRl-py2.7
+test-O3eWbxRl-py3.6
+test-O3eWbxRl-py3.7 (Activated)
+```
+
+Finally, you can delete existing virtualenvs by using `env remove`:
+
+```bash
+poetry env remove /full/path/to/python
+poetry env remove python3.7
+poetry env remove 3.7
+poetry env remove test-O3eWbxRl-py3.7
+```
+
+If your remove the currently activated virtualenv, it will be automatically deactivated.
