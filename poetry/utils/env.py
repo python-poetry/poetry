@@ -429,6 +429,26 @@ class SystemEnv(Env):
     def is_venv(self):  # type: () -> bool
         return self._path != self._base
 
+    def _bin(self, bin):  # type: (str) -> str
+        """
+        Return path to the given executable.
+        """
+        bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._is_windows else "")
+        if not bin_path.exists():
+            if self._is_windows and bin in (
+                "python",
+                "pythonw",
+                "python.exe",
+                "pythonw.exe",
+            ):
+                bin_path = (self._bin_dir / ".." / bin).with_suffix(".exe")
+                if not bin_path.exists():
+                    return bin
+            else:
+                return bin
+
+        return str(bin_path)
+
 
 class VirtualEnv(Env):
     """
