@@ -317,6 +317,98 @@ class EnvManager(object):
             for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
         ]
 
+    def remove(self, python, cwd):  # type: (str, Optional[Path]) -> Env
+        venv_path = self._config.setting("settings.virtualenvs.path")
+        if venv_path is None:
+            venv_path = Path(CACHE_DIR) / "virtualenvs"
+        else:
+            venv_path = Path(venv_path)
+
+        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+
+        if python.startswith(base_env_name):
+            venvs = self.list(cwd)
+            for venv in venvs:
+                if venv.path.name == python:
+                    # Exact virtualenv name
+                    if not envs_file.exists():
+                        self.remove_venv(str(venv.path))
+
+                        return venv
+
+                    venv_minor = ".".join(str(v) for v in venv.version_info[:2])
+                    base_env_name = self.generate_env_name(cwd.name, str(cwd))
+                    envs = envs_file.read()
+
+                    current_env = envs.get(base_env_name)
+                    if not current_env:
+                        self.remove_venv(str(venv.path))
+
+                        return venv
+
+                    if current_env["minor"] == venv_minor:
+                        del envs[base_env_name]
+                        envs_file.write(envs)
+
+                    self.remove_venv(str(venv.path))
+
+                    return venv
+
+            raise ValueError(
+                '<warning>Environment "{}" does not exist.</warning>'.format(python)
+            )
+
+        try:
+            python_version = Version.parse(python)
+            python = "python{}".format(python_version.major)
+            if python_version.precision > 1:
+                python += ".{}".format(python_version.minor)
+        except ValueError:
+            # Executable in PATH or full executable path
+            pass
+
+        try:
+            python_version = decode(
+                subprocess.check_output(
+                    " ".join(
+                        [
+                            python,
+                            "-c",
+                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                        ]
+                    ),
+                    shell=True,
+                )
+            )
+        except CalledProcessError as e:
+            raise EnvCommandError(e)
+
+        python_version = Version.parse(python_version.strip())
+        minor = "{}.{}".format(python_version.major, python_version.minor)
+
+        name = "{}-py{}".format(base_env_name, minor)
+        venv = venv_path / name
+
+        if not venv.exists():
+            raise ValueError(
+                '<warning>Environment "{}" does not exist.</warning>'.format(name)
+            )
+
+        if envs_file.exists():
+            envs = envs_file.read()
+            current_env = envs.get(base_env_name)
+            if current_env is not None:
+                current_minor = current_env["minor"]
+
+                if current_minor == minor:
+                    del envs[base_env_name]
+                    envs_file.write(envs)
+
+        self.remove_venv(str(venv))
+
+        return VirtualEnv(venv)
+
     def create_venv(
         self, cwd, io, name=None, executable=None, force=False
     ):  # type: (Path, IO, Optional[str], Optional[str], bool) -> Env

@@ -382,3 +382,71 @@ def test_list(tmp_dir, config):
     assert 2 == len(venvs)
     assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venvs[0].path
     assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == venvs[1].path
+
+
+def test_remove_by_python_version(tmp_dir, config, mocker):
+    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+
+    manager = EnvManager(config)
+
+    venv = manager.remove("3.6", CWD)
+
+    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
+    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+
+
+def test_remove_by_name(tmp_dir, config, mocker):
+    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+
+    manager = EnvManager(config)
+
+    venv = manager.remove("{}-py3.6".format(venv_name), CWD)
+
+    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
+    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+
+
+def test_remove_also_deactivates(tmp_dir, config, mocker):
+    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+
+    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    doc = tomlkit.document()
+    doc[venv_name] = {"minor": "3.6", "patch": "3.6.6"}
+    envs_file.write(doc)
+
+    manager = EnvManager(config)
+
+    venv = manager.remove("python3.6", CWD)
+
+    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
+    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+
+    envs = envs_file.read()
+    assert venv_name not in envs
