@@ -317,3 +317,17 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 
     assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
     assert env.base == Path("/prefix")
+
+
+def test_list(tmp_dir, config):
+    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    venvs = EnvManager(config).list(CWD)
+
+    assert 2 == len(venvs)
+    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venvs[0].path
+    assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == venvs[1].path

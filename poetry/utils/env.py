@@ -16,6 +16,7 @@ from contextlib import contextmanager
 from subprocess import CalledProcessError
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Tuple
 
@@ -293,6 +294,23 @@ class EnvManager(object):
             base_prefix = self.get_base_prefix()
 
         return VirtualEnv(prefix, base_prefix)
+
+    def list(self, cwd, name=None):  # type: (Path, Optional[str]) -> List[VirtualEnv]
+        if name is None:
+            name = cwd.name
+
+        venv_name = self.generate_env_name(name, str(cwd))
+
+        venv_path = self._config.setting("settings.virtualenvs.path")
+        if venv_path is None:
+            venv_path = Path(CACHE_DIR) / "virtualenvs"
+        else:
+            venv_path = Path(venv_path)
+
+        return [
+            VirtualEnv(Path(p))
+            for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
+        ]
 
     def create_venv(
         self, cwd, io, name=None, executable=None, force=False
@@ -580,6 +598,9 @@ class Env(object):
             return bin
 
         return str(bin_path)
+
+    def __eq__(self, other):  # type: (Env) -> bool
+        return other.__class__ == self.__class__ and other.path == self.path
 
     def __repr__(self):
         return '{}("{}")'.format(self.__class__.__name__, self._path)
