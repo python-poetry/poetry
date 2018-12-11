@@ -187,7 +187,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     assert env.base == Path("/prefix")
 
 
-def test_activate_activates_recreates_for_different_minor(tmp_dir, config, mocker):
+def test_activate_activates_recreates_for_different_patch(tmp_dir, config, mocker):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -204,7 +204,13 @@ def test_activate_activates_recreates_for_different_minor(tmp_dir, config, mocke
     mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
     mocker.patch(
         "subprocess.Popen.communicate",
-        side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
+        side_effect=[
+            ("/prefix", None),
+            ('{"version_info": [3, 7, 0]}', None),
+            ("/prefix", None),
+            ("/prefix", None),
+            ("/prefix", None),
+        ],
     )
     build_venv_m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
@@ -230,6 +236,51 @@ def test_activate_activates_recreates_for_different_minor(tmp_dir, config, mocke
     assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
     assert env.base == Path("/prefix")
     assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)).exists()
+
+
+def test_activate_does_not_recreate_when_switching_minor(tmp_dir, config, mocker):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    doc = tomlkit.document()
+    doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
+    envs_file.write(doc)
+
+    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
+    os.mkdir(os.path.join(tmp_dir, "{}-py3.6".format(venv_name)))
+
+    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+    mocker.patch(
+        "subprocess.Popen.communicate",
+        side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
+    )
+    build_venv_m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
+    )
+    remove_venv_m = mocker.patch(
+        "poetry.utils.env.EnvManager.remove_venv", side_effect=remove_venv
+    )
+
+    env = EnvManager(config).activate("python3.6", CWD, NullIO())
+
+    build_venv_m.assert_not_called()
+    remove_venv_m.assert_not_called()
+
+    assert envs_file.exists()
+    envs = envs_file.read()
+    assert envs[venv_name]["minor"] == "3.6"
+    assert envs[venv_name]["patch"] == "3.6.6"
+
+    assert env.path == Path(tmp_dir) / "{}-py3.6".format(venv_name)
+    assert env.base == Path("/prefix")
+    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
 
 
 def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker):

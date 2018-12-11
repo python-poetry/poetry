@@ -187,10 +187,7 @@ class EnvManager(object):
                 current_minor = current_env["minor"]
                 current_patch = current_env["patch"]
 
-                if current_minor != minor:
-                    # We need to activate and/or create
-                    create = True
-                elif current_patch != patch:
+                if current_minor == minor and current_patch != patch:
                     # We need to recreate
                     create = True
 
@@ -200,8 +197,16 @@ class EnvManager(object):
         # Create if needed
         if not venv.exists() or venv.exists() and create:
             in_venv = os.environ.get("VIRTUAL_ENV") is not None
-            if in_venv:
+            if in_venv or not venv.exists():
                 create = True
+
+            if venv.exists():
+                # We need to check if the patch version is correct
+                _venv = VirtualEnv(venv)
+                current_patch = ".".join(str(v) for v in _venv.version_info[:3])
+
+                if patch != current_patch:
+                    create = True
 
             self.create_venv(cwd, io, executable=python, force=create)
 
