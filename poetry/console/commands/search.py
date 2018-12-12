@@ -15,7 +15,7 @@ class SearchCommand(Command):
 
         flags = PyPiRepository.SEARCH_FULLTEXT
         if self.option("only-name"):
-            flags = PyPiRepository.SEARCH_FULLTEXT
+            flags = PyPiRepository.SEARCH_NAME
 
         results = PyPiRepository().search(self.argument("tokens"), flags)
 
