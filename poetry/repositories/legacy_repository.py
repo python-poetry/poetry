@@ -349,11 +349,11 @@ class LegacyRepository(PyPiRepository):
         default_link = links[0]
         for link in links:
             if link.is_wheel:
-                m = wheel_file_re.match(default_link.filename)
+                m = wheel_file_re.match(link.filename)
                 python = m.group("pyver")
                 platform = m.group("plat")
                 if python == "py2.py3" and platform == "any":
-                    urls["bdist_wheel"] = default_link.url
+                    urls["bdist_wheel"] = link.url
             elif link.filename.endswith(".tar.gz"):
                 urls["sdist"] = link.url
             elif (
