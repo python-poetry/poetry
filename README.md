@@ -1,13 +1,14 @@
 # Poetry: Dependency Management for Python
 
-![Poetry build status](https://travis-ci.org/sdispater/poetry.svg)
-
 Poetry helps you declare, manage and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/sdispater/poetry/master/assets/install.gif)
 
 It supports Python 2.7 and 3.4+.
+
+[![Unix Build Status](https://img.shields.io/travis/sdispater/poetry.svg?label=Unix)](https://travis-ci.org/sdispater/poetry)
+[![Windows Build Status](https://img.shields.io/appveyor/ci/sdispater/poetry.svg?label=Windows)](https://ci.appveyor.com/project/sdispater/poetry)
 
 ## Installation
 
