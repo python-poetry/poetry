@@ -291,8 +291,17 @@ class Env(object):
         from setuptools import __version__ as setuptools_version
 
         the_venv = VirtualEnv(Path(path))
-        the_venv.run("python", "-m", "pip", "install", "--upgrade", "pip=={}".format(pip_version))
-        the_venv.run("python", "-m", "pip", "install", "--upgrade", "setuptools=={}".format(setuptools_version))
+        the_venv.run(
+            "python", "-m", "pip", "install", "--upgrade", "pip=={}".format(pip_version)
+        )
+        the_venv.run(
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            "setuptools=={}".format(setuptools_version),
+        )
 
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path

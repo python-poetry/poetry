@@ -48,15 +48,22 @@ def test_virtualenvs_pip_and_setuptools_versions(tmp_dir):
     from pip import __version__ as pip_version
 
     venv_pip_version = venv.run(
-        "python", "-c", '"from __future__ import print_function;from pip import __version__; print(__version__)"',
-        shell=True
+        "python",
+        "-c",
+        '"from __future__ import print_function;from pip import __version__; print(__version__)"',
+        shell=True,
     )
-    venv_pip_version = sub(r'\s', '', venv_pip_version)
+    venv_pip_version = sub(r"\s", "", venv_pip_version)
 
     venv_setuptools_version = venv.run(
-        "python", "-c", '"from __future__ import print_function;from setuptools import __version__; print(__version__)"',
-        shell=True
+        "python",
+        "-c",
+        '"from __future__ import print_function;from setuptools import __version__; print(__version__)"',
+        shell=True,
     )
-    venv_setuptools_version = sub(r'\s', '', venv_setuptools_version)
+    venv_setuptools_version = sub(r"\s", "", venv_setuptools_version)
 
-    assert venv_pip_version == pip_version and venv_setuptools_version == setuptools_version
+    assert (
+        venv_pip_version == pip_version
+        and venv_setuptools_version == setuptools_version
+    )
