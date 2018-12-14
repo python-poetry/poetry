@@ -286,6 +286,14 @@ class Env(object):
 
         build(path)
 
+        # make sure pip and setuptools are on the same version as the base environment
+        from pip import __version__ as pip_version
+        from setuptools import __version__ as setuptools_version
+
+        the_venv = VirtualEnv(Path(path))
+        the_venv.run("python", "-m", "pip", "install", "--upgrade", "pip=={}".format(pip_version))
+        the_venv.run("python", "-m", "pip", "install", "--upgrade", "setuptools=={}".format(setuptools_version))
+
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
