@@ -34,6 +34,8 @@ class ApplicationConfig(BaseApplicationConfig):
     def configure(self):
         super(ApplicationConfig, self).configure()
 
+        self.add_option("no-plugins", description="Disable plugins")
+
         self.add_style(Style("c1").fg("cyan"))
         self.add_style(Style("info").fg("blue"))
         self.add_style(Style("comment").fg("green"))

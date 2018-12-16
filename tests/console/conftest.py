@@ -173,6 +173,7 @@ def poetry(repo, project_directory, config):
 def app(poetry):
     app_ = Application(poetry)
     app_.config.set_terminate_after_run(False)
+    app_.boot()
 
     return app_
 

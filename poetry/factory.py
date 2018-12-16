@@ -17,6 +17,7 @@ from .locations import CONFIG_DIR
 from .packages.dependency import Dependency
 from .packages.locker import Locker
 from .packages.project_package import ProjectPackage
+from .plugins.plugin_manager import PluginManager
 from .poetry import Poetry
 from .repositories.pypi_repository import PyPiRepository
 from .spdx import license_by_id
@@ -30,7 +31,7 @@ class Factory:
     """
 
     def create_poetry(
-        self, cwd=None, io=None
+        self, cwd=None, io=None, disable_plugins=False
     ):  # type: (Optional[Path], Optional[IO]) -> Poetry
         if io is None:
             io = NullIO()
@@ -189,6 +190,11 @@ class Factory:
         else:
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
+
+        plugin_manager = PluginManager("plugin", disable_plugins)
+        plugin_manager.load_plugins()
+        poetry.set_plugin_manager(plugin_manager)
+        plugin_manager.activate(poetry, io)
 
         return poetry
 

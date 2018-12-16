@@ -68,7 +68,10 @@ def poetry(repo, tmp_dir):
 
 @pytest.fixture
 def app(poetry):
-    return Application(poetry)
+    application = Application(poetry)
+    application.boot()
+
+    return application
 
 
 def test_export_exports_requirements_txt_file_locks_if_no_lock_file(app, repo):

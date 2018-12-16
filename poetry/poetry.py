@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from clikit.api.event import EventDispatcher
+
 from .__version__ import __version__
 from .config.config import Config
 from .packages import Locker
 from .packages import ProjectPackage
+from .plugins import PluginManager
 from .repositories.pool import Pool
 from .utils._compat import Path
 from .utils.toml_file import TomlFile
@@ -27,6 +30,8 @@ class Poetry:
         self._local_config = local_config
         self._locker = locker
         self._config = config
+        self._event_dispatcher = EventDispatcher()
+        self._plugin_manager = None
         self._pool = Pool()
 
     @property
@@ -53,6 +58,14 @@ class Poetry:
     def config(self):  # type: () -> Config
         return self._config
 
+    @property
+    def event_dispatcher(self):  # type: () -> EventDispatcher
+        return self._event_dispatcher
+
+    @property
+    def plugin_manager(self):  # type: () -> PluginManager
+        return self._plugin_manager
+
     def set_locker(self, locker):  # type: (Locker) -> Poetry
         self._locker = locker
 
@@ -65,5 +78,17 @@ class Poetry:
 
     def set_config(self, config):  # type: (Config) -> Poetry
         self._config = config
+
+        return self
+
+    def set_event_dispatcher(
+        self, event_dispatcher
+    ):  # type: (EventDispatcher) -> Poetry
+        self._event_dispatcher = event_dispatcher
+
+        return self
+
+    def set_plugin_manager(self, plugin_manager):  # type: (PluginManager) -> Poetry
+        self._plugin_manager = plugin_manager
 
         return self

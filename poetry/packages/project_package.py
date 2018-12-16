@@ -1,3 +1,6 @@
+from typing import Union
+
+from poetry.semver import Version
 from poetry.semver import VersionRange
 from poetry.semver import parse_constraint
 from poetry.version.markers import parse_marker
@@ -28,6 +31,14 @@ class ProjectPackage(Package):
         dependency.is_root = True
 
         return dependency
+
+    def set_version(self, version):  # type: (Union[str, Version]) -> None
+        if not isinstance(version, Version):
+            self._version = Version.parse(version)
+            self._pretty_version = self._pretty_version or version
+        else:
+            self._version = version
+            self._pretty_version = self._pretty_version or self._version.text
 
     @property
     def python_versions(self):
