@@ -37,7 +37,7 @@ classifiers = [
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+python = "~2.7 || ^3.4"
 foo = "^1.0"
 """
 

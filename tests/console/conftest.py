@@ -17,7 +17,6 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository as BaseRepository
 from poetry.utils._compat import Path
-from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
 from poetry.repositories.exceptions import PackageNotFound
 
@@ -49,11 +48,7 @@ def installed():
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed):
-    mocker.patch(
-        "poetry.utils.env.Env.get", return_value=MockEnv(is_venv=True, execute=True)
-    )
-
+def setup(mocker, installer, installed, config):
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer

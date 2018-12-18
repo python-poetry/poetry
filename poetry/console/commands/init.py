@@ -37,7 +37,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
     def handle(self):
         from poetry.layouts import layout
         from poetry.utils._compat import Path
-        from poetry.utils.env import Env
+        from poetry.utils.env import EnvManager
         from poetry.vcs.git import GitConfig
 
         if (Path.cwd() / "pyproject.toml").exists():
@@ -100,7 +100,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         question.set_validator(self._validate_license)
         license = self.ask(question)
 
-        current_env = Env.get(Path.cwd())
+        current_env = EnvManager().get(Path.cwd())
         default_python = "^{}".format(
             ".".join(str(v) for v in current_env.version_info[:2])
         )

@@ -5,6 +5,10 @@
 ### Added
 
 - Added an `export` command to export the lock file to other formats (only `requirements.txt` is currently supported).
+- Added a `env info` command to get basic information about the current environment.
+- Added a `env use` command to control the Python version used by the project.
+- Added a `env list` command to list the virtualenvs associated with the current project.
+- Added a `env remove` command to delete virtualenvs associated with the current project.
 
 ### Changed
 
@@ -13,6 +17,7 @@
 - The `debug:info` command has been renamed to `debug info`.
 - The `debug:resolve` command has been renamed to `debug resolve`.
 - The `self:update` command has been renamed to `self update`.
+- Changed the way virtualenvs are stored (names now depend on the project's path).
 
 ### Fixed
 

@@ -1,3 +1,4 @@
+import sys
 from cleo.testers import CommandTester
 
 from poetry.utils._compat import Path
@@ -126,9 +127,11 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^{python}"
 
 [tool.poetry.dev-dependencies]
-"""
+""".format(
+        python=".".join(str(c) for c in sys.version_info[:2])
+    )
 
     assert expected in tester.io.fetch_output()
