@@ -4,6 +4,7 @@ from typing import List
 from typing import Union
 
 from .empty_constraint import EmptyConstraint
+from .exceptions import ParseVersionError
 from .patterns import COMPLETE_VERSION
 from .version_constraint import VersionConstraint
 from .version_range import VersionRange
@@ -197,7 +198,7 @@ class Version(VersionRange):
     def parse(cls, text):  # type: (str) -> Version
         match = COMPLETE_VERSION.match(text)
         if match is None:
-            raise ValueError('Unable to parse "{}".'.format(text))
+            raise ParseVersionError('Unable to parse "{}".'.format(text))
 
         text = text.rstrip(".")
 
