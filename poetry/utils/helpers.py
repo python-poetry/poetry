@@ -5,6 +5,7 @@ import stat
 import tempfile
 
 from contextlib import contextmanager
+from typing import List
 from typing import Optional
 from typing import Union
 
@@ -41,7 +42,7 @@ def temporary_directory(*args, **kwargs):
         shutil.rmtree(name)
 
 
-def parse_requires(requires):  # type: (str) -> Union[list, None]
+def parse_requires(requires):  # type: (str) -> List[str]
     lines = requires.split("\n")
 
     requires_dist = []
@@ -79,8 +80,7 @@ def parse_requires(requires):  # type: (str) -> Union[list, None]
 
         requires_dist.append(line)
 
-    if requires_dist:
-        return requires_dist
+    return requires_dist
 
 
 def get_http_basic_auth(

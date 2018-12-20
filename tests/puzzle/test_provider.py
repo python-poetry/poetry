@@ -227,6 +227,28 @@ def test_search_for_directory_setup_read_setup_with_extras(provider, mocker):
     }
 
 
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_search_for_directory_setup_read_setup_with_no_dependencies(provider, mocker):
+    mocker.patch("poetry.utils.env.Env.get", return_value=MockEnv())
+
+    dependency = DirectoryDependency(
+        "demo",
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "no-dependencies",
+    )
+
+    package = provider.search_for_directory(dependency)[0]
+
+    assert package.name == "demo"
+    assert package.version.text == "0.1.2"
+    assert package.requires == []
+    assert package.extras == {}
+
+
 def test_search_for_directory_poetry(provider):
     dependency = DirectoryDependency(
         "demo", Path(__file__).parent.parent / "fixtures" / "project_with_extras"
