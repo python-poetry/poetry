@@ -7,6 +7,7 @@
 - Fixed the way packages information are retrieved for legacy repositories.
 - Fixed an error when adding packages with invalid versions.
 - Fixed an error when resolving directory dependencies with no sub dependencies.
+- Fixed an error when locking packages with no description.
 
 
 ## [0.12.10] - 2018-11-22

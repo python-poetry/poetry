@@ -218,7 +218,7 @@ class Locker:
         data = {
             "name": package.pretty_name,
             "version": package.pretty_version,
-            "description": package.description,
+            "description": package.description or "",
             "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,
