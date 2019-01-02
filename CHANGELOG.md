@@ -8,6 +8,7 @@
 - Fixed an error when adding packages with invalid versions.
 - Fixed an error when resolving directory dependencies with no sub dependencies.
 - Fixed an error when locking packages with no description.
+- Fixed path resolution for transitive file dependencies.
 
 
 ## [0.12.10] - 2018-11-22

@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "project-with-transitive-file-dependencies"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "*"
+demo = {path = "../../distributions/demo-0.1.0-py2.py3-none-any.whl"}
+
+[tool.poetry.dev-dependencies]

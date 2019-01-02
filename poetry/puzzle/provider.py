@@ -610,7 +610,9 @@ class Provider:
                     )
                 )
 
-            if package.dependency.is_directory() and dep.is_directory():
+            if (package.dependency.is_directory() or package.dependency.is_file()) and (
+                dep.is_directory() or dep.is_file()
+            ):
                 if dep.path.as_posix().startswith(package.source_url):
                     relative = (Path(package.source_url) / dep.path).relative_to(
                         package.source_url
