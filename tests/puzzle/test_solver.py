@@ -1552,3 +1552,21 @@ def test_solver_skips_invalid_versions(package, installed, locked, io):
     check_solver_result(
         ops, [{"job": "install", "package": get_package("trackpy", "0.4.1")}]
     )
+
+
+def test_multiple_constraints_on_root(package, solver, repo):
+    package.add_dependency("foo", {"version": "^1.0", "python": "^2.7"})
+    package.add_dependency("foo", {"version": "^2.0", "python": "^3.7"})
+
+    foo15 = get_package("foo", "1.5.0")
+    foo25 = get_package("foo", "2.5.0")
+
+    repo.add_package(foo15)
+    repo.add_package(foo25)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [{"job": "install", "package": foo15}, {"job": "install", "package": foo25}],
+    )

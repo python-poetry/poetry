@@ -453,9 +453,13 @@ class Provider:
         self, package
     ):  # type: (DependencyPackage) -> DependencyPackage
         if package.is_root():
-            return package
+            package = package.clone()
 
-        if package.source_type not in {"directory", "file", "git"}:
+        if not package.is_root() and package.source_type not in {
+            "directory",
+            "file",
+            "git",
+        }:
             package = DependencyPackage(
                 package.dependency,
                 self._pool.package(
@@ -487,119 +491,114 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        if not package.is_root():
-            duplicates = {}
-            for dep in dependencies:
-                if dep.name not in duplicates:
-                    duplicates[dep.name] = []
+        duplicates = {}
+        for dep in dependencies:
+            if dep.name not in duplicates:
+                duplicates[dep.name] = []
 
-                duplicates[dep.name].append(dep)
+            duplicates[dep.name].append(dep)
 
-            dependencies = []
-            for dep_name, deps in duplicates.items():
-                if len(deps) == 1:
-                    dependencies.append(deps[0])
-                    continue
+        dependencies = []
+        for dep_name, deps in duplicates.items():
+            if len(deps) == 1:
+                dependencies.append(deps[0])
+                continue
 
-                self.debug(
-                    "<debug>Duplicate dependencies for {}</debug>".format(dep_name)
-                )
+            self.debug("<debug>Duplicate dependencies for {}</debug>".format(dep_name))
 
-                # Regrouping by constraint
-                by_constraint = {}
-                for dep in deps:
-                    if dep.constraint not in by_constraint:
-                        by_constraint[dep.constraint] = []
+            # Regrouping by constraint
+            by_constraint = {}
+            for dep in deps:
+                if dep.constraint not in by_constraint:
+                    by_constraint[dep.constraint] = []
 
-                    by_constraint[dep.constraint].append(dep)
+                by_constraint[dep.constraint].append(dep)
 
-                # We merge by constraint
-                for constraint, _deps in by_constraint.items():
-                    new_markers = []
-                    for dep in _deps:
-                        pep_508_dep = dep.to_pep_508(False)
-                        if ";" not in pep_508_dep:
-                            continue
-
-                        markers = pep_508_dep.split(";")[1].strip()
-                        if not markers:
-                            # One of the constraint has no markers
-                            # so this means we don't actually need to merge
-                            new_markers = []
-                            break
-
-                        new_markers.append("({})".format(markers))
-
-                    if not new_markers:
-                        dependencies += _deps
+            # We merge by constraint
+            for constraint, _deps in by_constraint.items():
+                new_markers = []
+                for dep in _deps:
+                    pep_508_dep = dep.to_pep_508(False)
+                    if ";" not in pep_508_dep:
                         continue
 
-                    dep = _deps[0]
-                    new_requirement = "{}; {}".format(
-                        dep.to_pep_508(False).split(";")[0], " or ".join(new_markers)
-                    )
-                    new_dep = dependency_from_pep_508(new_requirement)
-                    if dep.is_optional() and not dep.is_activated():
-                        new_dep.deactivate()
-                    else:
-                        new_dep.activate()
+                    markers = pep_508_dep.split(";")[1].strip()
+                    if not markers:
+                        # One of the constraint has no markers
+                        # so this means we don't actually need to merge
+                        new_markers = []
+                        break
 
-                    by_constraint[constraint] = [new_dep]
+                    new_markers.append("({})".format(markers))
 
+                if not new_markers:
+                    dependencies += _deps
                     continue
 
-                if len(by_constraint) == 1:
-                    self.debug(
-                        "<debug>Merging requirements for {}</debug>".format(
-                            str(deps[0])
-                        )
-                    )
-                    dependencies.append(list(by_constraint.values())[0][0])
-                    continue
-
-                # We leave dependencies as-is if they have the same
-                # python/platform constraints.
-                # That way the resolver will pickup the conflict
-                # and display a proper error.
-                _deps = [value[0] for value in by_constraint.values()]
-                seen = set()
-                for _dep in _deps:
-                    pep_508_dep = _dep.to_pep_508(False)
-                    if ";" not in pep_508_dep:
-                        _requirements = ""
-                    else:
-                        _requirements = pep_508_dep.split(";")[1].strip()
-
-                    if _requirements not in seen:
-                        seen.add(_requirements)
-
-                if len(_deps) != len(seen):
-                    for _dep in _deps:
-                        dependencies.append(_dep)
-
-                    continue
-
-                # At this point, we raise an exception that will
-                # tell the solver to enter compatibility mode
-                # which means it will resolve for subsets
-                # Python constraints
-                #
-                # For instance, if our root package requires Python ~2.7 || ^3.6
-                # And we have one dependency that requires Python <3.6
-                # and the other Python >=3.6 than the solver will solve
-                # dependencies for Python >=2.7,<2.8 || >=3.4,<3.6
-                # and Python >=3.6,<4.0
-                python_constraints = []
-                for constraint, _deps in by_constraint.items():
-                    python_constraints.append(_deps[0].python_versions)
-
-                _deps = [str(_dep[0]) for _dep in by_constraint.values()]
-                self.debug(
-                    "<warning>Different requirements found for {}.</warning>".format(
-                        ", ".join(_deps[:-1]) + " and " + _deps[-1]
-                    )
+                dep = _deps[0]
+                new_requirement = "{}; {}".format(
+                    dep.to_pep_508(False).split(";")[0], " or ".join(new_markers)
                 )
-                raise CompatibilityError(*python_constraints)
+                new_dep = dependency_from_pep_508(new_requirement)
+                if dep.is_optional() and not dep.is_activated():
+                    new_dep.deactivate()
+                else:
+                    new_dep.activate()
+
+                by_constraint[constraint] = [new_dep]
+
+                continue
+
+            if len(by_constraint) == 1:
+                self.debug(
+                    "<debug>Merging requirements for {}</debug>".format(str(deps[0]))
+                )
+                dependencies.append(list(by_constraint.values())[0][0])
+                continue
+
+            # We leave dependencies as-is if they have the same
+            # python/platform constraints.
+            # That way the resolver will pickup the conflict
+            # and display a proper error.
+            _deps = [value[0] for value in by_constraint.values()]
+            seen = set()
+            for _dep in _deps:
+                pep_508_dep = _dep.to_pep_508(False)
+                if ";" not in pep_508_dep:
+                    _requirements = ""
+                else:
+                    _requirements = pep_508_dep.split(";")[1].strip()
+
+                if _requirements not in seen:
+                    seen.add(_requirements)
+
+            if len(_deps) != len(seen):
+                for _dep in _deps:
+                    dependencies.append(_dep)
+
+                continue
+
+            # At this point, we raise an exception that will
+            # tell the solver to enter compatibility mode
+            # which means it will resolve for subsets
+            # Python constraints
+            #
+            # For instance, if our root package requires Python ~2.7 || ^3.6
+            # And we have one dependency that requires Python <3.6
+            # and the other Python >=3.6 than the solver will solve
+            # dependencies for Python >=2.7,<2.8 || >=3.4,<3.6
+            # and Python >=3.6,<4.0
+            python_constraints = []
+            for constraint, _deps in by_constraint.items():
+                python_constraints.append(_deps[0].python_versions)
+
+            _deps = [str(_dep[0]) for _dep in by_constraint.values()]
+            self.debug(
+                "<warning>Different requirements found for {}.</warning>".format(
+                    ", ".join(_deps[:-1]) + " and " + _deps[-1]
+                )
+            )
+            raise CompatibilityError(*python_constraints)
 
         # Modifying dependencies as needed
         for dep in dependencies:

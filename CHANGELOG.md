@@ -9,6 +9,7 @@
 - Fixed an error when resolving directory dependencies with no sub dependencies.
 - Fixed an error when locking packages with no description.
 - Fixed path resolution for transitive file dependencies.
+- Fixed multiple constraints handling for the root package.
 
 
 ## [0.12.10] - 2018-11-22
