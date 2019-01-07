@@ -261,6 +261,15 @@ So, in the end, you will still need to manage a few configuration files to prope
 
 ## Commands
 
+### Global options
+
+* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug.
+* `--help (-h)`: Display help information.
+* `--quiet (-q)`: Do not output any message.
+* `--ansi`: Force ANSI output.
+* `--no-ansi`: Disable ANSI output.
+* `--version (-V)`: Display this application version.
+
 
 ### new
 
@@ -289,6 +298,26 @@ the `--name` option:
 
 ```bash
 poetry new my-folder --name my-package
+```
+
+If you want to use a src folder, you can use the ```--src``` option:
+
+```bash
+poetry new --src my-package
+```
+
+That will create a folder as follows:
+
+```text
+my-package
+├── pyproject.toml
+├── README.rst
+├── src
+│   └── my_package
+│       └── __init__.py
+└── tests
+    ├── __init__.py
+    └── test_my_package
 ```
 
 ### init
@@ -382,6 +411,9 @@ poetry add requests pendulum
 #### Options
 
 * `--D|dev`: Add package as development dependency.
+* `--git`: The url of the Git repository.
+* `--path` : The path to a dependency.
+* `--extras (-E)` : Extras to activate for the dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
@@ -464,7 +496,7 @@ Should match a repository name set by the [`config`](#config) command.
 * `--password (-p)`: The password to access the repository.
 
 
-### `config`
+### config
 
 The `config` command allows you to edit poetry config settings and repositories.
 
