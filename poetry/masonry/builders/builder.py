@@ -72,7 +72,7 @@ class Builder(object):
                         if matches != matches_lower:
                             # The path contains sections separated
                             # by wildcards that share the same
-                            # .lower()-name. Parsing this will need
+                            # .lower()-name.
                             raise NotImplementedError(
                                 "Unable to determine exclusion of path containing "
                                 "the same substring with different capitalization."
