@@ -56,20 +56,19 @@ class Builder(object):
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
             for excluded in self._path.glob(str(excluded_glob)):
-                if excluded_glob.lower() != excluded_glob and \
-                        isinstance(excluded, WindowsPath):
+                if excluded_glob.lower() != excluded_glob and isinstance(
+                    excluded, WindowsPath
+                ):
                     # WindowsPaths are case-sensitive (path.glob() returns
                     # lowercase results even for CamelCase paths)
                     excluded = str(excluded)
                     if "*" in excluded_glob:
                         sections = excluded_glob.split("*")
                         # Wildcards handled separately
-                        matches = sum([excluded_glob.count(s)
-                                       for s in sections])
-                        matches_lower = sum([
-                            excluded_glob.lower().count(s.lower())
-                            for s in sections
-                        ])
+                        matches = sum([excluded_glob.count(s) for s in sections])
+                        matches_lower = sum(
+                            [excluded_glob.lower().count(s.lower()) for s in sections]
+                        )
                         if matches != matches_lower:
                             # The path contains sections separated
                             # by wildcards that share the same
@@ -83,12 +82,12 @@ class Builder(object):
                             # case-sensitive representations
                             excluded = excluded.replace(
                                 str(WindowsPath(section.lower())),
-                                str(WindowsPath(section))
+                                str(WindowsPath(section)),
                             )
                     else:
                         excluded = excluded.replace(
                             str(WindowsPath(excluded_glob)).lower(),
-                            str(WindowsPath(excluded_glob))
+                            str(WindowsPath(excluded_glob)),
                         )
                     excluded = WindowsPath(excluded)
                 explicitely_excluded.add(excluded.relative_to(self._path).as_posix())

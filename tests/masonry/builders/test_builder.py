@@ -30,21 +30,25 @@ def test_builder_find_case_sensitive_excluded_files(mocker):
         NullIO(),
     )
 
-    assert builder.find_excluded_files() == {"my_package/FooBar/Bar.py",
-                                             "my_package/FooBar/lowercasebar.py",
-                                             "my_package/Foo/SecondBar.py",
-                                             "my_package/Foo/Bar.py",
-                                             "my_package/Foo/lowercasebar.py",
-                                             "my_package/bar/foo.py",
-                                             "my_package/bar/CapitalFoo.py"}
+    assert builder.find_excluded_files() == {
+        "my_package/FooBar/Bar.py",
+        "my_package/FooBar/lowercasebar.py",
+        "my_package/Foo/SecondBar.py",
+        "my_package/Foo/Bar.py",
+        "my_package/Foo/lowercasebar.py",
+        "my_package/bar/foo.py",
+        "my_package/bar/CapitalFoo.py",
+    }
+
 
 def test_builder_find_invalid_case_sensitive_excluded_files(mocker):
     p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
     p.return_value = []
 
     builder = Builder(
-        Poetry.create(Path(__file__).parent / "fixtures" /
-                      "invalid_case_sensitive_exclusions"),
+        Poetry.create(
+            Path(__file__).parent / "fixtures" / "invalid_case_sensitive_exclusions"
+        ),
         NullEnv(),
         NullIO(),
     )
