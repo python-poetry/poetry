@@ -2,7 +2,9 @@
 import re
 import shutil
 import tempfile
+import os
 
+from pathlib import WindowsPath
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import Set
@@ -54,6 +56,17 @@ class Builder(object):
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
             for excluded in self._path.glob(str(excluded_glob)):
+                if excluded_glob.lower() != excluded_glob and \
+                        isinstance(excluded, WindowsPath):
+                    # WindowsPaths are case-sensitive (path.glob() return lowercase results even for CamelCase paths)
+                    excluded = str(excluded)
+                    if "*" in excluded_glob:
+                        for section in excluded_glob.split("*"):
+                            excluded = excluded.replace(str(WindowsPath(section.lower())), str(WindowsPath(section)))
+                    else:
+                        excluded = excluded.replace(str(WindowsPath(excluded_glob)).lower(),
+                                                    str(WindowsPath(excluded_glob)))
+                    excluded = WindowsPath(excluded)
                 explicitely_excluded.add(excluded.relative_to(self._path).as_posix())
 
         ignored = vcs_ignored_files | explicitely_excluded
