@@ -62,6 +62,8 @@ class Builder(object):
                     if "*" in excluded_glob:
                         sections = excluded_glob.split("*")
                         # Wildcards handled separately
+                        # Also account for partial matches as we don't want to replace
+                        # "/bar32/" by "/Bar32/" if a different section is "/Bar"
                         matches = sum([excluded_glob.count(s) for s in sections])
                         matches_lower = sum(
                             [excluded_glob.lower().count(s.lower()) for s in sections]
@@ -69,7 +71,7 @@ class Builder(object):
                         if matches != matches_lower:
                             # The path contains sections separated
                             # by wildcards that share the same
-                            # .lower()-name.
+                            # .lower()-name (but with different case-sensitive names).
                             raise NotImplementedError(
                                 "Unable to determine exclusion of path containing "
                                 "the same substring with different capitalization."
