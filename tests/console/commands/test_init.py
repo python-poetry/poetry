@@ -573,13 +573,11 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-pendulum = "^2.0"
-pyramid = "^1.10"
-
-[tool.poetry.dev-dependencies]
 """
 
     assert expected in output
+    assert 'pendulum = "^2.0"' in output
+    assert 'pyramid = "^1.10"' in output
 
 
 def test_predefined_dev_dependency(app, repo, mocker, poetry):
@@ -671,8 +669,8 @@ license = "MIT"
 python = "~2.7 || ^3.6"
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.6"
-pytest-requests = "^0.2.0"
 """
 
     assert expected in output
+    assert 'pytest-requests = "^0.2.0"' in output
+    assert 'pytest = "^3.6"' in output
