@@ -144,6 +144,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         self.line("")
 
         requirements = {}
+        if self.option("dependency"):
+            requirements = self._format_requirements(
+                self._determine_requirements(self.option("dependency"))
+            )
 
         question = "Would you like to define your main dependencies interactively?"
         help_message = (
@@ -160,12 +164,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if self.confirm(question, True):
             self.line(help_message)
             help_displayed = True
-            requirements = self._format_requirements(
-                self._determine_requirements(self.option("dependency"))
+            requirements.update(
+                self._format_requirements(self._determine_requirements([]))
             )
             self.line("")
 
         dev_requirements = {}
+        if self.option("dev-dependency"):
+            dev_requirements = self._format_requirements(
+                self._determine_requirements(self.option("dev-dependency"))
+            )
 
         question = (
             "Would you like to define your development dependencies interactively?"
@@ -174,8 +182,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if not help_displayed:
                 self.line(help_message)
 
-            dev_requirements = self._format_requirements(
-                self._determine_requirements(self.option("dev-dependency"))
+            dev_requirements.update(
+                self._format_requirements(self._determine_requirements([]))
             )
             self.line("")
 
