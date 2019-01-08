@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from poetry.io import NullIO
@@ -52,6 +54,10 @@ def test_builder_find_invalid_case_sensitive_excluded_files(mocker):
         NullEnv(),
         NullIO(),
     )
-
-    with pytest.raises(NotImplementedError):
+    if sys.platform == "win32":
+        # Test will fail on case insensitive filesystems
+        with pytest.raises(NotImplementedError):
+            builder.find_excluded_files()
+    else:
+        # Otherwise test will pass
         builder.find_excluded_files()
