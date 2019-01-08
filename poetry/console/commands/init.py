@@ -117,24 +117,32 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         self.line("")
 
         requirements = {}
+        if self.option("dependency"):
+            requirements = self._format_requirements(
+                self._determine_requirements(self.option("dependency"))
+            )
 
         question = (
             "Would you like to define your dependencies" " (require) interactively?"
         )
         if self.confirm(question, True):
-            requirements = self._format_requirements(
-                self._determine_requirements(self.option("dependency"))
+            requirements.update(
+                self._format_requirements(self._determine_requirements([]))
             )
 
         dev_requirements = {}
+        if self.option("dev-dependency"):
+            dev_requirements = self._format_requirements(
+                self._determine_requirements(self.option("dev-dependency"))
+            )
 
         question = (
             "Would you like to define your dev dependencies"
             " (require-dev) interactively"
         )
         if self.confirm(question, True):
-            dev_requirements = self._format_requirements(
-                self._determine_requirements(self.option("dev-dependency"))
+            dev_requirements.update(
+                self._format_requirements(self._determine_requirements([]))
             )
 
         layout_ = layout("standard")(
