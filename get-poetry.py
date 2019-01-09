@@ -589,6 +589,9 @@ class Installer:
         """
         Tries to update the $PATH automatically.
         """
+        if not self._modify_path:
+            return
+
         if WINDOWS:
             return self.add_to_windows_path()
 
