@@ -46,6 +46,12 @@ python get-poetry.py --uninstall
 POETRY_UNINSTALL=1 python get-poetry.py
 ```
 
+By default, Poetry is installed into the user's platform-specific home directory. If you wish to change this, you may define the `POETRY_HOME` environment variable:
+
+```bash
+POETRY_HOME=/etc/poetry python get-poetry.py
+```
+
 If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`
 or by using the `POETRY_PREVIEW` environment variable:
 
