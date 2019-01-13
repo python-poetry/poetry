@@ -10,6 +10,7 @@
 - Fixed an error when locking packages with no description.
 - Fixed path resolution for transitive file dependencies.
 - Fixed multiple constraints handling for the root package.
+- Fixed exclude functionality on case sensitive systems.
 
 
 ## [0.12.10] - 2018-11-22

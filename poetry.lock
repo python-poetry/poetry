@@ -189,6 +189,15 @@ version = "3.2.3-2"
 
 [[package]]
 category = "main"
+description = "Version of the glob module that can capture patterns and supports recursive wildcards"
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\""
+name = "glob2"
+optional = false
+python-versions = "*"
+version = "0.6"
+
+[[package]]
+category = "main"
 description = "HTML parser based on the WHATWG HTML specification"
 name = "html5lib"
 optional = false
@@ -750,7 +759,7 @@ python-versions = "*"
 version = "0.5.1"
 
 [metadata]
-content-hash = "cc0af5d7cff3183d13e844efc25bfabc912de0a22eea948614a0895ab4be5ed1"
+content-hash = "b42091ed7cc94500aeacca996b2c371c0d610c36e0ba61209e78f8532b56fcd9"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.hashes]
@@ -774,6 +783,7 @@ enum34 = ["2d81cbbe0e73112bdfe6ef8576f2238f2ba27dd0d55752a776c41d38b7da2850", "6
 filelock = ["b8d5ca5ca1c815e1574aee746650ea7301de63d87935b3463d26368b76e31633", "d610c1bb404daf85976d7a82eb2ada120f04671007266b708606565dd03b5be6"]
 funcsigs = ["330cc27ccbf7f1e992e69fef78261dc7c6569012cf397db8d3de0234e6c937ca", "a7bb0f2cf3a3fd1ab2732cb49eba4252c2af4240442415b4abce3b87022a8f50"]
 functools32 = ["89d824aa6c358c421a234d7f9ee0bd75933a67c29588ce50aaa3acdf4d403fa0", "f6253dfbe0538ad2e387bd8fdfd9293c925d63553f5813c4e587745416501e6d"]
+glob2 = ["f5b0a686ff21f820c4d3f0c4edd216704cea59d79d00fa337e244a2f2ff83ed6"]
 html5lib = ["20b159aa3badc9d5ee8f5c647e5efd02ed2a66ab8d354930bd9ff139fc1dc0a3", "66cb0dcfdbbc4f9c3ba1a63fdb511ffdbd4f513b2b6d81b80cd26ce6b3fb3736"]
 identify = ["5e956558a9a1e3b3891d7c6609fc9709657a11878af288ace484d1a46a93922b", "623086059219cc7b86c77a3891f3700cb175d4ce02b8fb8802b047301d71e783"]
 idna = ["156a6814fb5ac1fc6850fb002e0852d56c0c8d2531923a51032d1b70760e186e", "684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16"]
