@@ -49,7 +49,7 @@ virtualenv = { version = "^16.0", python = "~2.7" }
 functools32 = { version = "^3.2.3", python = "~2.7" }
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.4"
+pytest = "^4.1"
 pytest-cov = "^2.5"
 mkdocs = { version = "^1.0", python = "~2.7.9 || ^3.4" }
 pymdown-extensions = "^6.0"
