@@ -43,6 +43,12 @@ else:
     from pathlib2 import Path
 
 
+if not PY36:
+    from collections import OrderedDict
+else:
+    OrderedDict = dict
+
+
 def decode(string, encodings=None):
     if not PY2 and not isinstance(string, bytes):
         return string

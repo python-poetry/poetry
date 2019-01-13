@@ -3,15 +3,12 @@ import logging
 import os
 import pkginfo
 import re
-import shutil
 import time
 
 from cleo import ProgressIndicator
 from contextlib import contextmanager
 from tempfile import mkdtemp
 from typing import List
-
-from poetry.io import NullIO
 
 from poetry.packages import Dependency
 from poetry.packages import DependencyPackage
@@ -31,6 +28,7 @@ from poetry.repositories import Pool
 
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
+from poetry.utils._compat import OrderedDict
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.env import Env
@@ -491,7 +489,7 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates = {}
+        duplicates = OrderedDict()
         for dep in dependencies:
             if dep.name not in duplicates:
                 duplicates[dep.name] = []
@@ -507,7 +505,7 @@ class Provider:
             self.debug("<debug>Duplicate dependencies for {}</debug>".format(dep_name))
 
             # Regrouping by constraint
-            by_constraint = {}
+            by_constraint = OrderedDict()
             for dep in deps:
                 if dep.constraint not in by_constraint:
                     by_constraint[dep.constraint] = []
