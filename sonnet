@@ -85,9 +85,7 @@ class MakeReleaseCommand(Command):
                     )
                 )
                 with package.with_python_versions("^{}".format(version)):
-                    solver = Solver(
-                        package, pool, Repository(), Repository(), self.output
-                    )
+                    solver = Solver(package, pool, Repository(), Repository(), self.io)
                     ops = solver.solve()
 
                 self.vendorize_for_python(
