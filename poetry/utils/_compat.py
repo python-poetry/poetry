@@ -1,10 +1,14 @@
-import subprocess
 import sys
 
 try:
     from functools32 import lru_cache
 except ImportError:
     from functools import lru_cache
+
+try:
+    from glob2 import glob
+except ImportError:
+    from glob import glob
 
 try:
     import urllib.parse as urlparse
@@ -41,6 +45,12 @@ if PY35:
     from pathlib import Path
 else:
     from pathlib2 import Path
+
+
+if not PY36:
+    from collections import OrderedDict
+else:
+    OrderedDict = dict
 
 
 def decode(string, encodings=None):

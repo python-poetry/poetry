@@ -37,9 +37,10 @@ class MakeReleaseCommand(Command):
             for python in self.option("python"):
                 parts = python.split(":", 1)
                 if len(parts) == 1:
-                    pythons[parts[0]] = self.PYTHON[parts[0]]
-
-                version, python = parts
+                    python = self.PYTHON[parts[0]]
+                    version = parts[0]
+                else:
+                    version, python = parts
                 pythons[version] = python
 
         self.check_system(pythons)

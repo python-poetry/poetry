@@ -43,3 +43,13 @@ class ProjectPackage(Package):
         self._python_marker = parse_marker(
             create_nested_marker("python_version", self._python_constraint)
         )
+
+    def clone(self):  # type: () -> ProjectPackage
+        package = super(ProjectPackage, self).clone()
+
+        package.build = self.build
+        package.packages = self.packages[:]
+        package.include = self.include[:]
+        package.exclude = self.exclude[:]
+
+        return package

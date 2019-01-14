@@ -369,6 +369,9 @@ class Package(object):
         for dep in self.requires:
             clone.requires.append(dep)
 
+        for dep in self.dev_requires:
+            clone.dev_requires.append(dep)
+
         return clone
 
     def __hash__(self):

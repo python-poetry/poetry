@@ -17,6 +17,7 @@ from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
     MockRepository as MockLegacyRepository,
 )
+from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRepository
 
 
 @pytest.fixture()
@@ -1532,4 +1533,39 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
 
     check_solver_result(
         ops, [{"job": "install", "package": get_package("isort", "4.3.4")}]
+    )
+
+
+def test_solver_skips_invalid_versions(package, installed, locked, io):
+    package.python_versions = "^3.7"
+
+    repo = MockPyPIRepository()
+    pool = Pool([repo])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    package.add_dependency("trackpy", "^0.4")
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("trackpy", "0.4.1")}]
+    )
+
+
+def test_multiple_constraints_on_root(package, solver, repo):
+    package.add_dependency("foo", {"version": "^1.0", "python": "^2.7"})
+    package.add_dependency("foo", {"version": "^2.0", "python": "^3.7"})
+
+    foo15 = get_package("foo", "1.5.0")
+    foo25 = get_package("foo", "2.5.0")
+
+    repo.add_package(foo15)
+    repo.add_package(foo25)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [{"job": "install", "package": foo15}, {"job": "install", "package": foo25}],
     )

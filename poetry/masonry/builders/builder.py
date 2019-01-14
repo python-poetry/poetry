@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import re
 import shutil
 import tempfile
@@ -12,6 +13,7 @@ from clikit.api.io.flags import VERY_VERBOSE
 
 from poetry.utils._compat import Path
 from poetry.utils._compat import basestring
+from poetry.utils._compat import glob
 from poetry.utils._compat import lru_cache
 from poetry.vcs import get_vcs
 
@@ -55,8 +57,12 @@ class Builder(object):
 
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
-            for excluded in self._path.glob(str(excluded_glob)):
-                explicitely_excluded.add(excluded.relative_to(self._path).as_posix())
+            for excluded in glob(
+                os.path.join(self._path.as_posix(), str(excluded_glob)), recursive=True
+            ):
+                explicitely_excluded.add(
+                    Path(excluded).relative_to(self._path).as_posix()
+                )
 
         ignored = vcs_ignored_files | explicitely_excluded
         result = set()

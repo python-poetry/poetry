@@ -148,6 +148,11 @@ poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
+
+# Oh-My-Zsh
+mkdir $ZSH/plugins/poetry
+poetry completions zsh > $ZSH/plugins/poetry/_poetry
+
 ```
 
 !!! note
@@ -158,4 +163,13 @@ For `zsh`, you must then add the following line in your `~/.zshrc` before `compi
 
 ```bash
 fpath+=~/.zfunc
+```
+
+For `oh-my-zsh`, you must then enable poetry in your `~/.zshrc` plugins
+
+```
+plugins(
+	poetry
+	...
+	)
 ```

@@ -34,6 +34,7 @@ from poetry.packages import Package
 from poetry.semver import parse_constraint
 from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
+from poetry.semver.exceptions import ParseVersionError
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
@@ -116,7 +117,16 @@ class PyPiRepository(Repository):
                 )
                 continue
 
-            package = Package(name, version)
+            try:
+                package = Package(name, version)
+            except ParseVersionError:
+                self._log(
+                    'Unable to parse version "{}" for the {} package, skipping'.format(
+                        version, name
+                    ),
+                    level="debug",
+                )
+                continue
 
             if package.is_prerelease() and not allow_prereleases:
                 continue

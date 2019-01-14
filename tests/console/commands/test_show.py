@@ -1,5 +1,7 @@
 import pytest
+
 from cleo.testers import CommandTester
+from clikit.formatter.ansi_formatter import AnsiFormatter
 
 from tests.helpers import get_package
 
@@ -174,7 +176,8 @@ def test_show_basic_with_not_installed_packages_decorated(app, poetry, installed
         }
     )
 
-    tester.execute(decorated=True)
+    tester.io.set_formatter(AnsiFormatter(forced=True))
+    tester.execute()
 
     expected = """\
 \033[32mcachy   \033[0m \033[36m0.1.0\033[0m Cachy package
@@ -304,7 +307,8 @@ def test_show_latest_decorated(app, poetry, installed, repo):
         }
     )
 
-    tester.execute("--latest", decorated=True)
+    tester.io.set_formatter(AnsiFormatter(forced=True))
+    tester.execute("--latest")
 
     expected = """\
 \033[32mcachy   \033[0m \033[36m0.1.0\033[0m \033[33m0.2.0\033[0m Cachy package

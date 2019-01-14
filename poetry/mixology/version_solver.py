@@ -374,8 +374,7 @@ class VersionSolver:
 
             return dependency.name
 
-        if not version.is_root():
-            version = self._provider.complete_package(version)
+        version = self._provider.complete_package(version)
 
         conflict = False
         for incompatibility in self._provider.incompatibilities_for(version):

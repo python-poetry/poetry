@@ -24,6 +24,19 @@
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
 
 
+## [0.12.11] - 2019-01-13
+
+### Fixed
+
+- Fixed the way packages information are retrieved for legacy repositories.
+- Fixed an error when adding packages with invalid versions.
+- Fixed an error when resolving directory dependencies with no sub dependencies.
+- Fixed an error when locking packages with no description.
+- Fixed path resolution for transitive file dependencies.
+- Fixed multiple constraints handling for the root package.
+- Fixed exclude functionality on case sensitive systems.
+
+
 ## [0.12.10] - 2018-11-22
 
 ### Fixed
@@ -630,7 +643,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.10...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.11...develop
+[0.12.11]: https://github.com/sdispater/poetry/releases/tag/0.12.11
 [0.12.10]: https://github.com/sdispater/poetry/releases/tag/0.12.10
 [0.12.9]: https://github.com/sdispater/poetry/releases/tag/0.12.9
 [0.12.8]: https://github.com/sdispater/poetry/releases/tag/0.12.8

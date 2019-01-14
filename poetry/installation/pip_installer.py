@@ -110,7 +110,7 @@ class PipInstaller(BaseInstaller):
             raise
 
     def run(self, *args, **kwargs):  # type: (...) -> str
-        return self._env.run("pip", *args, **kwargs)
+        return self._env.run("python", "-m", "pip", *args, **kwargs)
 
     def requirement(self, package, formatted=False):
         if formatted and not package.source_type:
