@@ -124,10 +124,18 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
+You can bundle all dependencies into a target directory. This is useful when building
+AWS Lambda packages.
+
+```bash
+poetry install --target ./build/
+```
+
 ### Options
 
 * `--no-dev`: Do not install dev dependencies.
 * `--extras (-E)`: Features to install (multiple values allowed).
+* `--target`: Target directory to install dependencies.
 
 ## update
 

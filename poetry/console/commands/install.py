@@ -99,9 +99,12 @@ exist it will look for <comment>pyproject.toml</> and do the same.
                 f.write(decode(builder.build_setup()))
 
         try:
-            cmd = ["pip", "install", "-e", str(setup.parent), "--no-deps"]
+            cmd = ["pip", "install"]
             if self.target:
                 cmd.extend(["--target", self.target])
+            else:
+                cmd.extend(["-e"])
+            cmd.extend([str(setup.parent), "--no-deps"])
             self.env.run(**cmd)
         finally:
             if not has_setup:
