@@ -17,6 +17,7 @@ from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.semver import parse_constraint
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils._compat import Path
 
 from .base_installer import BaseInstaller
 from .pip_installer import PipInstaller
@@ -30,6 +31,7 @@ class Installer:
         package,  # type: Package
         locker,  # type: Locker
         pool,  # type: Pool
+        target=None,  # type: (Union[Path, None])
         installed=None,  # type: (Union[InstalledRepository, None])
     ):
         self._io = io
@@ -37,6 +39,7 @@ class Installer:
         self._package = package
         self._locker = locker
         self._pool = pool
+        self._target = target
 
         self._dry_run = False
         self._update = False
@@ -151,6 +154,7 @@ class Installer:
                 self._installed_repository,
                 locked_repository,
                 self._io,
+                self._target is not None,
             )
 
             ops = solver.solve(use_latest=self._whitelist)
@@ -208,7 +212,12 @@ class Installer:
                 whitelist.append(pkg.name)
 
             solver = Solver(
-                root, pool, self._installed_repository, locked_repository, NullIO()
+                root,
+                pool,
+                self._installed_repository,
+                locked_repository,
+                NullIO(),
+                self._target is not None,
             )
 
             ops = solver.solve(use_latest=whitelist)
@@ -431,7 +440,7 @@ class Installer:
                 continue
 
             op = Install(locked)
-            if is_installed:
+            if is_installed and not self._target:
                 op.skip("Already installed")
 
             ops.append(op)
@@ -518,7 +527,7 @@ class Installer:
         return _extra_packages(extra_packages)
 
     def _get_installer(self):  # type: () -> BaseInstaller
-        return PipInstaller(self._env, self._io)
+        return PipInstaller(self._env, self._io, self._target)
 
     def _get_installed(self):  # type: () -> InstalledRepository
         return InstalledRepository.load(self._env)

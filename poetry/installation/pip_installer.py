@@ -22,9 +22,10 @@ from .base_installer import BaseInstaller
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env, io):  # type: (Env, ...) -> None
+    def __init__(self, env, io, target=None):  # type: (Env, ...) -> None
         self._env = env
         self._io = io
+        self._target = target
 
     def install(self, package, update=False):
         if package.source_type == "directory":
@@ -38,6 +39,9 @@ class PipInstaller(BaseInstaller):
             return
 
         args = ["install", "--no-deps"]
+
+        if self._target is not None:
+            args.extend(["--target", self._target])
 
         if package.source_type == "legacy" and package.source_url:
             parsed = urlparse.urlparse(package.source_url)
@@ -192,8 +196,11 @@ class PipInstaller(BaseInstaller):
             with open(setup, "w") as f:
                 f.write(decode(builder.build_setup()))
 
-        if package.develop:
+        if package.develop and not self._target:
             args.append("-e")
+
+        if self._target:
+            args.extend(["--target", os.path.realpath(self._target)])
 
         args.append(req)
 

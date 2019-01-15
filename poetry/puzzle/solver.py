@@ -23,7 +23,7 @@ from .provider import Provider
 
 
 class Solver:
-    def __init__(self, package, pool, installed, locked, io):
+    def __init__(self, package, pool, installed, locked, io, target=False):
         self._package = package
         self._pool = pool
         self._installed = installed
@@ -31,6 +31,7 @@ class Solver:
         self._io = io
         self._provider = Provider(self._package, self._pool, self._io)
         self._branches = []
+        self._target = target
 
     def solve(self, use_latest=None):  # type: (...) -> List[Operation]
         with self._provider.progress():
@@ -53,41 +54,45 @@ class Solver:
         operations = []
         for package in packages:
             installed = False
-            for pkg in self._installed.packages:
-                if package.name == pkg.name:
-                    installed = True
+            # install all packages to target, even if they exist in the env
+            if not self._target:
+                for pkg in self._installed.packages:
+                    if package.name == pkg.name:
+                        installed = True
 
-                    if pkg.source_type == "git" and package.source_type == "git":
-                        # Trying to find the currently installed version
-                        for locked in self._locked.packages:
+                        if pkg.source_type == "git" and package.source_type == "git":
+                            # Trying to find the currently installed version
+                            for locked in self._locked.packages:
+                                if (
+                                    locked.name == pkg.name
+                                    and locked.source_type == pkg.source_type
+                                    and locked.source_url == pkg.source_url
+                                    and locked.source_reference == pkg.source_reference
+                                ):
+                                    pkg = Package(pkg.name, locked.version)
+                                    pkg.source_type = "git"
+                                    pkg.source_url = locked.source_url
+                                    pkg.source_reference = locked.source_reference
+                                    break
+
                             if (
-                                locked.name == pkg.name
-                                and locked.source_type == pkg.source_type
-                                and locked.source_url == pkg.source_url
-                                and locked.source_reference == pkg.source_reference
+                                pkg.source_url != package.source_url
+                                or pkg.source_reference != package.source_reference
                             ):
-                                pkg = Package(pkg.name, locked.version)
-                                pkg.source_type = "git"
-                                pkg.source_url = locked.source_url
-                                pkg.source_reference = locked.source_reference
-                                break
-
-                        if (
-                            pkg.source_url != package.source_url
-                            or pkg.source_reference != package.source_reference
-                        ):
+                                operations.append(Update(pkg, package))
+                            else:
+                                operations.append(
+                                    Install(package).skip("Already installed")
+                                )
+                        elif package.version != pkg.version:
+                            # Checking version
                             operations.append(Update(pkg, package))
                         else:
                             operations.append(
                                 Install(package).skip("Already installed")
                             )
-                    elif package.version != pkg.version:
-                        # Checking version
-                        operations.append(Update(pkg, package))
-                    else:
-                        operations.append(Install(package).skip("Already installed"))
 
-                    break
+                        break
 
             if not installed:
                 operations.append(Install(package))

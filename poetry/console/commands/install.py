@@ -13,6 +13,7 @@ class InstallCommand(EnvCommand):
                       (implicitly enables --verbose). }
         { --E|extras=* : Extra sets of dependencies to install. }
         { --develop=* : Install given packages in development mode. }
+        { --target=./build/ : Install all dependencies into target directory. }
     """
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -32,9 +33,25 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         from poetry.masonry.utils.module import ModuleOrPackageNotFound
         from poetry.utils._compat import decode
         from poetry.utils.env import NullEnv
+        from poetry.utils._compat import Path
+        from poetry.utils.helpers import safe_rmtree
+
+        self.target = Path(self.option("target"))
+        self.line("target: {}".format(self.target))
+
+        if self.target is not None:
+            self.line(" - Installing to target <info>{}</info>".format(self.target))
+            if self.target.exists():
+                safe_rmtree(self.target)
+            self.target.mkdir()
 
         installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
+            self.io,
+            self.env,
+            self.poetry.package,
+            self.poetry.locker,
+            self.poetry.pool,
+            self.target,
         )
 
         extras = []
@@ -82,7 +99,10 @@ exist it will look for <comment>pyproject.toml</> and do the same.
                 f.write(decode(builder.build_setup()))
 
         try:
-            self.env.run("pip", "install", "-e", str(setup.parent), "--no-deps")
+            cmd = ["pip", "install", "-e", str(setup.parent), "--no-deps"]
+            if self.target:
+                cmd.extend(["--target", self.target])
+            self.env.run(**cmd)
         finally:
             if not has_setup:
                 os.remove(str(setup))
