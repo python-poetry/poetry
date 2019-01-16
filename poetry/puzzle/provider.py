@@ -218,13 +218,21 @@ class Provider:
         with tmp_file.open("wb") as f:
             shutil.copyfileobj(response.raw, f)
 
-        file_dep = FileDependency(
+        file_dependency = FileDependency(
             dependency.name,
             tmp_file,
             category=dependency.category,
             optional=dependency.is_optional(),
         )
-        return self.search_for_file(file_dep)
+        for extra in dependency.extras:
+            file_dependency.extras.append(extra)
+
+        package = self.search_for_file(file_dependency)[0]
+
+        package.source_type = "url"
+        package.source_url = dependency.url
+
+        return [package]
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
         if dependency.path.suffix == ".whl":
@@ -485,6 +493,7 @@ class Provider:
             "directory",
             "file",
             "git",
+            "url",
         }:
             package = DependencyPackage(
                 package.dependency,

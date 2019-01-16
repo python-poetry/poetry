@@ -132,6 +132,9 @@ class PipInstaller(BaseInstaller):
 
             return req
 
+        if package.source_type == "url":
+            return package.source_url
+
         if package.source_type == "git":
             return "git+{}@{}#egg={}".format(
                 package.source_url, package.source_reference, package.name
