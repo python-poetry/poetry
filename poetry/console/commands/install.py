@@ -105,7 +105,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             else:
                 cmd.extend(["-e"])
             cmd.extend([str(setup.parent), "--no-deps"])
-            self.env.run(**cmd)
+            self.env.run(*cmd)
         finally:
             if not has_setup:
                 os.remove(str(setup))
