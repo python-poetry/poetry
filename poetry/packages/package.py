@@ -5,6 +5,7 @@ import re
 from contextlib import contextmanager
 from typing import Union
 
+from poetry.packages.url_dependency import UrlDependency
 from poetry.semver import Version
 from poetry.semver import parse_constraint
 from poetry.spdx import license_by_id
@@ -262,6 +263,12 @@ class Package(object):
 
                 dependency = FileDependency(
                     name, file_path, category=category, base=self.root_dir
+                )
+            elif "url" in constraint:
+                url = constraint["url"]
+
+                dependency = UrlDependency(
+                    name, url, category=category, optional=optional
                 )
             elif "path" in constraint:
                 path = Path(constraint["path"])

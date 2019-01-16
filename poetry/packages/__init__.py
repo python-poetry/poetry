@@ -7,6 +7,7 @@ from .dependency import Dependency
 from .dependency_package import DependencyPackage
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
+from .url_dependency import UrlDependency
 from .locker import Locker
 from .package import Package
 from .package_collection import PackageCollection

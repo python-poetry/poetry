@@ -1,10 +1,15 @@
 import glob
 import logging
 import os
+import shutil
+
 import pkginfo
 import re
 import time
 
+from six.moves.urllib.parse import urlparse
+
+import requests
 from cleo import ProgressIndicator
 from contextlib import contextmanager
 from tempfile import mkdtemp
@@ -14,6 +19,7 @@ from poetry.packages import Dependency
 from poetry.packages import DependencyPackage
 from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
+from poetry.packages import UrlDependency
 from poetry.packages import Package
 from poetry.packages import PackageCollection
 from poetry.packages import VCSDependency
@@ -130,6 +136,8 @@ class Provider:
 
         if dependency.is_vcs():
             packages = self.search_for_vcs(dependency)
+        elif dependency.is_url():
+            packages = self.search_for_url(dependency)
         elif dependency.is_file():
             packages = self.search_for_file(dependency)
         elif dependency.is_directory():
@@ -197,6 +205,26 @@ class Provider:
             safe_rmtree(str(tmp_dir))
 
         return [package]
+
+    def search_for_url(self, dependency):  # type: (UrlDependency) -> List[Package]
+        tmp_dir = Path(mkdtemp(prefix="pypoetry-git-{}".format(dependency.name)))
+
+        # TODO: The file name might be in the request header itself
+        file_name = urlparse(dependency.url).path.split("/")[-1]
+
+        tmp_file = tmp_dir / file_name
+
+        response = requests.get(dependency.url, stream=True)
+        with tmp_file.open("wb") as f:
+            shutil.copyfileobj(response.raw, f)
+
+        file_dep = FileDependency(
+            dependency.name,
+            tmp_file,
+            category=dependency.category,
+            optional=dependency.is_optional(),
+        )
+        return self.search_for_file(file_dep)
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
         if dependency.path.suffix == ".whl":

@@ -10,6 +10,7 @@ class AddCommand(EnvCommand, InitCommand):
         { name* : Packages to add. }
         { --D|dev : Add package as development dependency. }
         { --git= : The url of the Git repository. }
+        { --url= : The url of the package. }
         { --path= : The path to a dependency. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --optional : Add as an optional dependency. }
@@ -35,9 +36,12 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         packages = self.argument("name")
         is_dev = self.option("dev")
 
-        if (self.option("git") or self.option("path") or self.option("extras")) and len(
-            packages
-        ) > 1:
+        if (
+            self.option("url")
+            or self.option("git")
+            or self.option("path")
+            or self.option("extras")
+        ) and len(packages) > 1:
             raise ValueError(
                 "You can only specify one package "
                 "when using the --git or --path options"
@@ -62,7 +66,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 if key.lower() == name.lower():
                     raise ValueError("Package {} is already present".format(name))
 
-        if self.option("git") or self.option("path"):
+        if self.option("git") or self.option("path") or self.option("url"):
             requirements = {packages[0]: ""}
         else:
             requirements = self._determine_requirements(
@@ -86,6 +90,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 del constraint["version"]
 
                 constraint["path"] = self.option("path")
+            elif self.option("url"):
+                del constraint["version"]
+
+                constraint["url"] = self.option("url")
 
             if self.option("optional"):
                 constraint["optional"] = True

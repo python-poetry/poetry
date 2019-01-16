@@ -139,6 +139,9 @@ class Dependency(object):
     def is_vcs(self):
         return False
 
+    def is_url(self):
+        return False
+
     def is_file(self):
         return False
 
