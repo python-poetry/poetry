@@ -9,6 +9,7 @@
 - Added a `env use` command to control the Python version used by the project.
 - Added a `env list` command to list the virtualenvs associated with the current project.
 - Added a `env remove` command to delete virtualenvs associated with the current project.
+- Added a `--target` option to the `install` command to bundle dependencies to a target folder.
 
 ### Changed
 
