@@ -1,8 +1,8 @@
 import hashlib
 import io
 
-from pkginfo.distribution import HEADER_ATTRS
-from pkginfo.distribution import HEADER_ATTRS_2_0
+from pkginfo.distribution import HEADER_ATTRS, HEADER_ATTRS_2_0
+from pkginfo import SDist, Wheel
 
 from poetry.utils._compat import Path
 
@@ -36,8 +36,14 @@ class FileDependency(Dependency):
         if self._full_path.is_dir():
             raise ValueError("{} is a directory, expected a file".format(self._path))
 
+        if path.suffix == ".whl":
+            meta = Wheel(str(path))
+        else:
+            # Assume sdist
+            meta = SDist(str(path))
+
         super(FileDependency, self).__init__(
-            name, "*", category=category, optional=optional, allows_prereleases=True
+            name, meta.version, category=category, optional=optional, allows_prereleases=True
         )
 
     @property
