@@ -43,7 +43,11 @@ class FileDependency(Dependency):
             meta = SDist(str(path))
 
         super(FileDependency, self).__init__(
-            name, meta.version, category=category, optional=optional, allows_prereleases=True
+            name,
+            meta.version,
+            category=category,
+            optional=optional,
+            allows_prereleases=True,
         )
 
     @property
