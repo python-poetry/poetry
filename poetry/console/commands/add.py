@@ -13,7 +13,7 @@ class AddCommand(EnvCommand, InitCommand):
         { --path= : The path to a dependency. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --optional : Add as an optional dependency. }
-        { --python= : Python version( for which the dependencies must be installed. }
+        { --python= : Python version for which the dependencies must be installed. }
         { --platform= : Platforms for which the dependencies must be installed. }
         { --allow-prereleases : Accept prereleases. }
         { --dry-run : Outputs the operations but will not execute anything
