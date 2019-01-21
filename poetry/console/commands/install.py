@@ -13,7 +13,7 @@ class InstallCommand(EnvCommand):
                       (implicitly enables --verbose). }
         { --E|extras=* : Extra sets of dependencies to install. }
         { --develop=* : Install given packages in development mode. }
-        { --target=./build/ : Install all dependencies into target directory. }
+        { --target= : Install all dependencies into target directory. }
     """
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -36,10 +36,11 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         from poetry.utils._compat import Path
         from poetry.utils.helpers import safe_rmtree
 
-        self.target = Path(self.option("target"))
-        self.line("target: {}".format(self.target))
+        self.target = self.option("target")
 
         if self.target is not None:
+            self.target = Path(self.option("target"))
+            self.line("target: {}".format(self.target))
             self.line(" - Installing to target <info>{}</info>".format(self.target))
             if self.target.exists():
                 safe_rmtree(self.target)
