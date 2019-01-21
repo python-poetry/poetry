@@ -130,7 +130,11 @@ To remove a repository (repo is a short alias for repositories):
                 )
 
                 for value in values:
-                    self.line(value[1])
+                    if isinstance(value[1], str) and value[1][0] == value[1][-1] == '"':
+                        # remove double quotes added by json.dumps
+                        self.line(value[1][1:-1])
+                    else:
+                        self.line(value[1])
 
             return 0
 

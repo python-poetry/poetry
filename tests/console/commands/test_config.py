@@ -70,3 +70,17 @@ def test_display_single_setting(app, config):
 """
 
     assert expected == tester.io.fetch_output()
+
+
+def test_get_set_virtualenv_path_setting(app, config):
+    command = app.find("config")
+    command._settings_config = Config(config.file)
+
+    tester = CommandTester(command)
+    tester.execute("settings.virtualenvs.path /some/path/dir")
+    tester.execute("settings.virtualenvs.path")
+
+    expected = """/some/path/dir
+"""
+
+    assert expected == tester.io.fetch_output()
