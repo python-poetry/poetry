@@ -196,11 +196,12 @@ class Version(VersionRange):
 
     @classmethod
     def parse(cls, text):  # type: (str) -> Version
+        match = COMPLETE_VERSION.match(text)
         try:
             match = COMPLETE_VERSION.match(text)
         except TypeError:
             raise ParseVersionError('Unable to parse "{}".'.format(text))
-        
+
         if match is None:
             raise ParseVersionError('Unable to parse "{}".'.format(text))
 
