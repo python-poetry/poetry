@@ -772,6 +772,9 @@ class Env(object):
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         raise NotImplementedError()
 
+    def get_pip_command(self):  # type: () -> List[str]
+        raise NotImplementedError()
+
     def config_var(self, var):  # type: (str) -> Any
         raise NotImplementedError()
 
@@ -788,12 +791,19 @@ class Env(object):
         return True
 
     def run(self, bin, *args, **kwargs):
+        bin = self._bin(bin)
+        cmd = [bin] + list(args)
+        return self._run(cmd, **kwargs)
+
+    def run_pip(self, *args, **kwargs):
+        pip = self.get_pip_command()
+        cmd = pip + list(args)
+        return self._run(cmd, **kwargs)
+
+    def _run(self, cmd, **kwargs):
         """
         Run a command inside the Python environment.
         """
-        bin = self._bin(bin)
-
-        cmd = [bin] + list(args)
         shell = kwargs.get("shell", False)
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
@@ -886,6 +896,11 @@ class SystemEnv(Env):
     def get_python_implementation(self):  # type: () -> str
         return platform.python_implementation()
 
+    def get_pip_command(self):  # type: () -> List[str]
+        # If we're not in a venv, assume the interpreter we're running on
+        # has a pip and use that
+        return [sys.executable, "-m", "pip"]
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
@@ -960,6 +975,11 @@ class VirtualEnv(Env):
     def get_python_implementation(self):  # type: () -> str
         return self.marker_env["platform_python_implementation"]
 
+    def get_pip_command(self):  # type: () -> List[str]
+        # We're in a virtualenv that is known to be sane,
+        # so assume that we have a functional pip
+        return [self._bin("pip")]
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)
 
@@ -984,7 +1004,7 @@ class VirtualEnv(Env):
         return value
 
     def get_pip_version(self):  # type: () -> Version
-        output = self.run("python", "-m", "pip", "--version").strip()
+        output = self.run_pip("--version").strip()
         m = re.match("pip (.+?)(?: from .+)?$", output)
         if not m:
             return Version.parse("0.0")
@@ -998,7 +1018,7 @@ class VirtualEnv(Env):
         # A virtualenv is considered sane if both "python" and "pip" exist.
         return os.path.exists(self._bin("python")) and os.path.exists(self._bin("pip"))
 
-    def run(self, bin, *args, **kwargs):
+    def _run(self, cmd, **kwargs):
         with self.temp_environ():
             os.environ["PATH"] = self._updated_path()
             os.environ["VIRTUAL_ENV"] = str(self._path)
@@ -1006,7 +1026,7 @@ class VirtualEnv(Env):
             self.unset_env("PYTHONHOME")
             self.unset_env("__PYVENV_LAUNCHER__")
 
-            return super(VirtualEnv, self).run(bin, *args, **kwargs)
+            return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def execute(self, bin, *args, **kwargs):
         with self.temp_environ():
@@ -1045,11 +1065,11 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed = []
 
-    def run(self, bin, *args, **kwargs):
-        self.executed.append([bin] + list(args))
+    def _run(self, cmd, **kwargs):
+        self.executed.append(cmd)
 
         if self._execute:
-            return super(NullEnv, self).run(bin, *args, **kwargs)
+            return super(NullEnv, self)._run(cmd, **kwargs)
 
     def execute(self, bin, *args, **kwargs):
         self.executed.append([bin] + list(args))
