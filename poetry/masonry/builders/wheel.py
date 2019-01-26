@@ -259,7 +259,7 @@ class WheelBuilder(Builder):
                 hashsum.update(buf)
 
             src.seek(0)
-            wheel.writestr(zinfo, src.read())
+            wheel.writestr(zinfo, src.read(), compress_type=zipfile.ZIP_DEFLATED)
 
         size = os.stat(full_path).st_size
         hash_digest = urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
