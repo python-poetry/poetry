@@ -42,6 +42,8 @@ To remove a repository (repo is a short alias for repositories):
 
         self._settings_config = Config.create("config.toml")
         self._auth_config = Config.create("auth.toml")
+        
+        self.initialize()
 
     @property
     def unique_config_values(self):
@@ -71,7 +73,7 @@ To remove a repository (repo is a short alias for repositories):
 
         return unique_config_values
 
-    def initialize(self, i, o):
+    def initialize(self):
         from poetry.utils._compat import decode
 
         # Create config file if it does not exist
