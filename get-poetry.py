@@ -814,9 +814,14 @@ class Installer:
         return subprocess.check_output(args, stderr=subprocess.STDOUT)
 
     def _get(self, url):
+        """Perform a GET request through Python to a specific URL
+
+        The URL connection has a specific timeout set to 2 seconds
+        to prevent indefinite hanging in certain edge cases
+        """
         request = Request(url, headers={"User-Agent": "Python Poetry"})
 
-        with closing(urlopen(request)) as r:
+        with closing(urlopen(request, timeout=2)) as r:
             return r.read()
 
 
