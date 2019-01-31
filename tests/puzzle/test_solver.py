@@ -1,7 +1,6 @@
 import pytest
 
-from cleo.outputs.null_output import NullOutput
-from cleo.styles import OutputStyle
+from clikit.io import NullIO
 
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import ProjectPackage
@@ -23,7 +22,7 @@ from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRe
 
 @pytest.fixture()
 def io():
-    return OutputStyle(NullOutput())
+    return NullIO()
 
 
 @pytest.fixture()

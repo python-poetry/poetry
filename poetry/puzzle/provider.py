@@ -5,7 +5,7 @@ import pkginfo
 import re
 import time
 
-from cleo import ProgressIndicator
+from clikit.ui.components import ProgressIndicator
 from contextlib import contextmanager
 from tempfile import mkdtemp
 from typing import List
@@ -31,7 +31,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import safe_rmtree
-from poetry.utils.env import Env
+from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
 from poetry.utils.setup_reader import SetupReader
 
@@ -44,20 +44,8 @@ logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):
-    def __init__(self, output):
-        super(Indicator, self).__init__(output)
-
-        self.format = "%message% <fg=black;options=bold>(%elapsed:2s%)</>"
-
-    @contextmanager
-    def auto(self):
-        message = "<info>Resolving dependencies</info>..."
-
-        with super(Indicator, self).auto(message, message):
-            yield
-
     def _formatter_elapsed(self):
-        elapsed = time.time() - self.start_time
+        elapsed = time.time() - self._start_time
 
         return "{:.1f}s".format(elapsed)
 
@@ -273,7 +261,7 @@ class Provider:
 
             try:
                 cwd = dependency.full_path
-                venv = Env.get(cwd)
+                venv = EnvManager().get(cwd)
                 venv.run("python", "setup.py", "egg_info")
             except EnvCommandError:
                 result = SetupReader.read_from_directory(dependency.full_path)
@@ -624,14 +612,8 @@ class Provider:
 
         return package
 
-    # UI
-
-    @property
-    def output(self):
-        return self._io
-
     def debug(self, message, depth=0):
-        if not (self.output.is_very_verbose() or self.output.is_debug()):
+        if not (self._io.is_very_verbose() or self._io.is_debug()):
             return
 
         if message.startswith("fact:"):
@@ -716,17 +698,22 @@ class Provider:
                 + "\n"
             )
 
-            self.output.write(debug_info)
+            self._io.write(debug_info)
 
     @contextmanager
     def progress(self):
-        if not self._io.is_decorated() or self.is_debugging():
-            self.output.writeln("Resolving dependencies...")
+        if not self._io.output.supports_ansi() or self.is_debugging():
+            self._io.write_line("Resolving dependencies...")
             yield
         else:
-            indicator = Indicator(self._io)
+            indicator = Indicator(
+                self._io, "{message} <fg=black;options=bold>({elapsed:2s})</>"
+            )
 
-            with indicator.auto():
+            with indicator.auto(
+                "<info>Resolving dependencies...</info>",
+                "<info>Resolving dependencies...</info>",
+            ):
                 yield
 
         self._in_progress = False

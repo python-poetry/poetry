@@ -26,10 +26,10 @@ def setup(config):
 
 def test_list_displays_default_value_if_not_set(app, config):
     command = app.find("config")
-    command._config = Config(config.file)
+    command._settings_config = Config(config.file)
     tester = CommandTester(command)
 
-    tester.execute([("command", command.get_name()), ("--list", True)])
+    tester.execute("--list")
 
     expected = """settings.virtualenvs.create = true
 settings.virtualenvs.in-project = false
@@ -37,24 +37,18 @@ settings.virtualenvs.path = "."
 repositories = {}
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
 
 def test_list_displays_set_get_setting(app, config):
     command = app.find("config")
-    command._config = Config(config.file)
+    command._settings_config = Config(config.file)
     tester = CommandTester(command)
 
-    tester.execute(
-        [
-            ("command", command.get_name()),
-            ("key", "settings.virtualenvs.create"),
-            ("value", ["false"]),
-        ]
-    )
+    tester.execute("settings.virtualenvs.create false")
 
-    command._config = Config(config.file)
-    tester.execute([("command", command.get_name()), ("--list", True)])
+    command._settings_config = Config(config.file)
+    tester.execute("--list")
 
     expected = """settings.virtualenvs.create = false
 settings.virtualenvs.in-project = false
@@ -62,19 +56,17 @@ settings.virtualenvs.path = "."
 repositories = {}
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
 
 def test_display_single_setting(app, config):
     command = app.find("config")
-    command._config = Config(config.file)
+    command._settings_config = Config(config.file)
     tester = CommandTester(command)
 
-    tester.execute(
-        [("command", command.get_name()), ("key", "settings.virtualenvs.create")]
-    )
+    tester.execute("settings.virtualenvs.create")
 
     expected = """true
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()

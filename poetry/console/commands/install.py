@@ -26,19 +26,15 @@ exist it will look for <comment>pyproject.toml</> and do the same.
     _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
+        from clikit.io import NullIO
         from poetry.installation import Installer
-        from poetry.io import NullIO
         from poetry.masonry.builders import SdistBuilder
         from poetry.masonry.utils.module import ModuleOrPackageNotFound
         from poetry.utils._compat import decode
         from poetry.utils.env import NullEnv
 
         installer = Installer(
-            self.output,
-            self.env,
-            self.poetry.package,
-            self.poetry.locker,
-            self.poetry.pool,
+            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
 
         extras = []

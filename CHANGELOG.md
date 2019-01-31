@@ -1,5 +1,29 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+
+- Added an `export` command to export the lock file to other formats (only `requirements.txt` is currently supported).
+- Added a `env info` command to get basic information about the current environment.
+- Added a `env use` command to control the Python version used by the project.
+- Added a `env list` command to list the virtualenvs associated with the current project.
+- Added a `env remove` command to delete virtualenvs associated with the current project.
+
+### Changed
+
+- Slightly changed the lock file, making it potentially incompatible with previous Poetry versions.
+- The `cache:clear` command has been renamed to `cache clear`.
+- The `debug:info` command has been renamed to `debug info`.
+- The `debug:resolve` command has been renamed to `debug resolve`.
+- The `self:update` command has been renamed to `self update`.
+- Changed the way virtualenvs are stored (names now depend on the project's path).
+
+### Fixed
+
+- Fixed transitive extra dependencies being removed when updating a specific dependency.
+
+
 ## [0.12.11] - 2019-01-13
 
 ### Fixed
@@ -619,7 +643,7 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.11...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.11...develop
 [0.12.11]: https://github.com/sdispater/poetry/releases/tag/0.12.11
 [0.12.10]: https://github.com/sdispater/poetry/releases/tag/0.12.10
 [0.12.9]: https://github.com/sdispater/poetry/releases/tag/0.12.9

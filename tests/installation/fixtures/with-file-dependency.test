@@ -14,6 +14,10 @@ url = "tests/fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
 [package.dependencies]
 pendulum = ">=1.4.4"
 
+[package.extras]
+bar = ["tomlkit"]
+foo = ["cleo"]
+
 [[package]]
 name = "pendulum"
 version = "1.4.4"

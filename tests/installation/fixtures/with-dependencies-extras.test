@@ -15,7 +15,10 @@ optional = false
 python-versions = "*"
 
 [package.dependencies]
-C = "^1.0"
+C = {version = "^1.0", optional = true}
+
+[package.extras]
+foo = ["C (^1.0)"]
 
 [[package]]
 name = "C"

@@ -1,2 +1,1 @@
-from .info import DebugInfoCommand
-from .resolve import DebugResolveCommand
+from .debug import DebugCommand

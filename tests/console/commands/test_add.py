@@ -13,7 +13,7 @@ def test_add_no_constraint(app, repo, installer):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    tester.execute([("command", command.get_name()), ("name", ["cachy"])])
+    tester.execute("cachy")
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -29,7 +29,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 1
 
@@ -46,7 +46,7 @@ def test_add_constraint(app, repo, installer):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    tester.execute([("command", command.get_name()), ("name", ["cachy=0.1.0"])])
+    tester.execute("cachy=0.1.0")
 
     expected = """\
 
@@ -61,7 +61,7 @@ Writing lock file
   - Installing cachy (0.1.0)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 1
 
@@ -78,7 +78,7 @@ def test_add_constraint_dependencies(app, repo, installer):
     repo.add_package(cachy2)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    tester.execute([("command", command.get_name()), ("name", ["cachy=0.2.0"])])
+    tester.execute("cachy=0.2.0")
 
     expected = """\
 
@@ -94,7 +94,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 2
 
@@ -106,13 +106,7 @@ def test_add_git_constraint(app, repo, installer):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    tester.execute(
-        [
-            ("command", command.get_name()),
-            ("name", ["demo"]),
-            ("--git", "https://github.com/demo/demo.git"),
-        ]
-    )
+    tester.execute("demo --git https://github.com/demo/demo.git")
 
     expected = """\
 
@@ -128,7 +122,7 @@ Writing lock file
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 2
 
@@ -146,13 +140,7 @@ def test_add_git_constraint_with_poetry(app, repo, installer):
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute(
-        [
-            ("command", command.get_name()),
-            ("name", ["demo"]),
-            ("--git", "https://github.com/demo/pyproject-demo.git"),
-        ]
-    )
+    tester.execute("demo --git https://github.com/demo/pyproject-demo.git")
 
     expected = """\
 
@@ -168,7 +156,7 @@ Writing lock file
   - Installing demo (0.1.2 9cf87a2)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 2
 
@@ -179,13 +167,7 @@ def test_add_file_constraint_wheel(app, repo, installer):
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute(
-        [
-            ("command", command.get_name()),
-            ("name", ["demo"]),
-            ("--path", "../distributions/demo-0.1.0-py2.py3-none-any.whl"),
-        ]
-    )
+    tester.execute("demo --path ../distributions/demo-0.1.0-py2.py3-none-any.whl")
 
     expected = """\
 
@@ -201,7 +183,7 @@ Writing lock file
   - Installing demo (0.1.0 ../distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 2
 
@@ -219,13 +201,7 @@ def test_add_file_constraint_sdist(app, repo, installer):
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute(
-        [
-            ("command", command.get_name()),
-            ("name", ["demo"]),
-            ("--path", "../distributions/demo-0.1.0.tar.gz"),
-        ]
-    )
+    tester.execute("demo --path ../distributions/demo-0.1.0.tar.gz")
 
     expected = """\
 
@@ -241,7 +217,7 @@ Writing lock file
   - Installing demo (0.1.0 ../distributions/demo-0.1.0.tar.gz)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 2
 
@@ -266,13 +242,7 @@ def test_add_constraint_with_extras(app, repo, installer):
     repo.add_package(cachy2)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    tester.execute(
-        [
-            ("command", command.get_name()),
-            ("name", ["cachy=0.2.0"]),
-            ("--extras", ["msgpack"]),
-        ]
-    )
+    tester.execute("cachy=0.2.0 --extras msgpack")
 
     expected = """\
 
@@ -288,7 +258,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 2
 
@@ -310,13 +280,7 @@ def test_add_constraint_with_python(app, repo, installer):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
 
-    tester.execute(
-        [
-            ("command", command.get_name()),
-            ("name", ["cachy=0.2.0"]),
-            ("--python", ">=2.7"),
-        ]
-    )
+    tester.execute("cachy=0.2.0 --python >=2.7")
 
     expected = """\
 
@@ -331,7 +295,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 1
 
@@ -351,13 +315,7 @@ def test_add_constraint_with_platform(app, repo, installer):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
 
-    tester.execute(
-        [
-            ("command", command.get_name()),
-            ("name", ["cachy=0.2.0"]),
-            ("--platform", platform),
-        ]
-    )
+    tester.execute("cachy=0.2.0 --platform {}".format(platform))
 
     expected = """\
 
@@ -372,7 +330,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 1
 
@@ -392,9 +350,7 @@ def test_add_to_section_that_does_no_exist_yet(app, repo, installer):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    tester.execute(
-        [("command", command.get_name()), ("name", ["cachy"]), ("--dev", True)]
-    )
+    tester.execute("cachy --dev")
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -410,7 +366,7 @@ Writing lock file
   - Installing cachy (0.2.0)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 1
 
@@ -427,7 +383,7 @@ def test_add_should_not_select_prereleases(app, repo, installer):
     repo.add_package(get_package("pyyaml", "3.13"))
     repo.add_package(get_package("pyyaml", "4.2b2"))
 
-    tester.execute([("command", command.get_name()), ("name", ["pyyaml"])])
+    tester.execute("pyyaml")
 
     expected = """\
 Using version ^3.13 for pyyaml
@@ -443,7 +399,7 @@ Writing lock file
   - Installing pyyaml (3.13)
 """
 
-    assert tester.get_display(True) == expected
+    assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 1
 

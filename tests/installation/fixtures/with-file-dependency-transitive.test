@@ -9,6 +9,10 @@ version = "0.1.0"
 [package.dependencies]
 pendulum = ">=1.4.4"
 
+[package.extras]
+bar = ["tomlkit"]
+foo = ["cleo"]
+
 [package.source]
 reference = ""
 type = "file"

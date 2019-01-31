@@ -1,8 +1,9 @@
 import os
-import shutil
 import tempfile
 
 from subprocess import CalledProcessError
+
+from clikit.io import NullIO
 
 from poetry.config import Config
 from poetry.utils.helpers import get_http_basic_auth
@@ -41,7 +42,7 @@ class PipInstaller(BaseInstaller):
         if package.source_type == "legacy" and package.source_url:
             parsed = urlparse.urlparse(package.source_url)
             if parsed.scheme == "http":
-                self._io.write_error(
+                self._io.error(
                     "    <warning>Installing from unsecure host: {}</warning>".format(
                         parsed.hostname
                     )
@@ -152,7 +153,6 @@ class PipInstaller(BaseInstaller):
         return name
 
     def install_directory(self, package):
-        from poetry.io import NullIO
         from poetry.masonry.builder import SdistBuilder
         from poetry.poetry import Poetry
         from poetry.utils._compat import decode

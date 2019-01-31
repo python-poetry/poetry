@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "0.12.11"
+version = "1.0.0a2"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -23,7 +23,7 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
-cleo = "^0.6.7"
+cleo = "^0.7.2"
 requests = "^2.18"
 cachy = "^0.2"
 requests-toolbelt = "^0.8.0"

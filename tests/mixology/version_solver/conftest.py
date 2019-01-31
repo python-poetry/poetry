@@ -1,6 +1,6 @@
 import pytest
 
-from poetry.io import NullIO
+from clikit.io import NullIO
 from poetry.packages.project_package import ProjectPackage
 from poetry.repositories import Pool
 from poetry.repositories import Repository

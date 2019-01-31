@@ -47,12 +47,22 @@ def mock_clone(_, source, dest):
 
 
 @pytest.fixture
+def tmp_dir():
+    dir_ = tempfile.mkdtemp(prefix="poetry_")
+
+    yield dir_
+
+    shutil.rmtree(dir_)
+
+
+@pytest.fixture
 def environ():
-    original_environ = os.environ
+    original_environ = dict(os.environ)
 
-    yield os.environ
+    yield
 
-    os.environ = original_environ
+    os.environ.clear()
+    os.environ.update(original_environ)
 
 
 @pytest.fixture(autouse=True)
