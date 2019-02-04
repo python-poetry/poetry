@@ -1,3 +1,5 @@
+from requests import HTTPError
+
 from .command import Command
 
 
@@ -50,6 +52,12 @@ the config command.
 
         self.line("")
 
-        publisher.publish(
-            self.option("repository"), self.option("username"), self.option("password")
-        )
+        try:
+            publisher.publish(
+                self.option("repository"),
+                self.option("username"),
+                self.option("password"),
+            )
+        except HTTPError as e:
+            self.line_error("<error>Server responded with error: {}</error>".format(e))
+            return 1
