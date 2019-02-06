@@ -58,7 +58,7 @@ class SdistBuilder(Builder):
         target = target_dir / "{}-{}.tar.gz".format(
             self._package.pretty_name, self._meta.version
         )
-        gz = GzipFile(target.as_posix(), mode="wb")
+        gz = GzipFile(target.as_posix(), mode="wb", mtime=0)
         tar = tarfile.TarFile(
             target.as_posix(), mode="w", fileobj=gz, format=tarfile.PAX_FORMAT
         )

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
+import gzip
 import shutil
 import tarfile
 
@@ -473,3 +474,18 @@ def test_proper_python_requires_if_three_digits_precision_version_specified():
     parsed = p.parsestr(to_str(pkg_info))
 
     assert parsed["Requires-Python"] == "==2.7.15"
+
+
+def test_sdist_mtime_zero():
+    poetry = Poetry.create(project("module1"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    builder.build()
+
+    sdist = fixtures_dir / "module1" / "dist" / "module1-0.1.tar.gz"
+
+    assert sdist.exists()
+
+    with gzip.open(str(sdist), "rb") as gz:
+        gz.read(100)
+        assert gz.mtime == 0
