@@ -31,7 +31,7 @@ python-versions = "*"
 version = "1.2.3"
 
 [package.dependencies]
-demo = "*"
+demo = "0.1.0"
 
 [package.source]
 reference = ""

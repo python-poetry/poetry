@@ -37,10 +37,10 @@ class FileDependency(Dependency):
             raise ValueError("{} is a directory, expected a file".format(self._path))
 
         if path.suffix == ".whl":
-            meta = Wheel(str(path))
+            meta = Wheel(str(self._full_path))
         else:
             # Assume sdist
-            meta = SDist(str(path))
+            meta = SDist(str(self._full_path))
 
         super(FileDependency, self).__init__(
             name,

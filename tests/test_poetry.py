@@ -64,7 +64,7 @@ def test_poetry():
     assert demo.is_file()
     assert not demo.is_vcs()
     assert demo.name == "demo"
-    assert demo.pretty_constraint == "*"
+    assert demo.pretty_constraint == "0.1.0"
 
     demo = dependencies["my-package"]
     assert not demo.is_file()
