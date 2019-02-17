@@ -1569,3 +1569,77 @@ def test_multiple_constraints_on_root(package, solver, repo):
         ops,
         [{"job": "install", "package": foo15}, {"job": "install", "package": foo25}],
     )
+
+
+def test_solver_chooses_most_recent_version_amongst_repositories(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("tomlkit", {"version": "^0.5"})
+
+    repo = MockLegacyRepository()
+    pool = Pool([repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("tomlkit", "0.5.3")}]
+    )
+
+    assert "" == ops[0].package.source_type
+    assert "" == ops[0].package.source_url
+
+
+def test_solver_chooses_from_correct_repository_if_forced(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
+
+    repo = MockLegacyRepository()
+    pool = Pool([repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("tomlkit", "0.5.2")}]
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+
+
+def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("foo", "^1.0")
+    package.add_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
+
+    repo = Repository()
+    foo = get_package("foo", "1.0.0")
+    foo.add_dependency("tomlkit", "^0.5.0")
+    repo.add_package(foo)
+    pool = Pool([MockLegacyRepository(), repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("tomlkit", "0.5.2")},
+            {"job": "install", "package": foo},
+        ],
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+
+    assert "" == ops[1].package.source_type
+    assert "" == ops[1].package.source_url

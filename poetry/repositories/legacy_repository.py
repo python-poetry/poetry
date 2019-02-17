@@ -186,10 +186,6 @@ class LegacyRepository(PyPiRepository):
 
         self._disable_cache = disable_cache
 
-    @property
-    def name(self):
-        return self._name
-
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False
     ):
