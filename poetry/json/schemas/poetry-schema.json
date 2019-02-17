@@ -228,6 +228,10 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "source": {
+                    "type": "string",
+                    "description": "The exclusive source used to search for this dependency."
                 }
             }
         },

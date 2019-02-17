@@ -57,7 +57,6 @@ class PyPiRepository(Repository):
     CACHE_VERSION = parse_constraint("0.12.0")
 
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
-        self._name = "PyPI"
         self._url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
@@ -79,6 +78,8 @@ class PyPiRepository(Repository):
         )
 
         super(PyPiRepository, self).__init__()
+
+        self._name = "PyPI"
 
     def find_packages(
         self,
@@ -105,7 +106,14 @@ class PyPiRepository(Repository):
             ):
                 allow_prereleases = True
 
-        info = self.get_package_info(name)
+        try:
+            info = self.get_package_info(name)
+        except PackageNotFound:
+            self._log(
+                "No packages found for {} {}".format(name, str(constraint)),
+                level="debug",
+            )
+            return []
 
         packages = []
 

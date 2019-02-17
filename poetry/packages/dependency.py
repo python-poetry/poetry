@@ -1,3 +1,5 @@
+from typing import Optional
+
 import poetry.packages
 
 from poetry.semver import parse_constraint
@@ -23,6 +25,7 @@ class Dependency(object):
         optional=False,  # type: bool
         category="main",  # type: str
         allows_prereleases=False,  # type: bool
+        source_name=None,  # type: Optional[str]
     ):
         self._name = canonicalize_name(name)
         self._pretty_name = name
@@ -45,6 +48,7 @@ class Dependency(object):
             )
 
         self._allows_prereleases = allows_prereleases
+        self._source_name = source_name
 
         self._python_versions = "*"
         self._python_constraint = parse_constraint("*")
@@ -78,6 +82,10 @@ class Dependency(object):
     @property
     def category(self):
         return self._category
+
+    @property
+    def source_name(self):
+        return self._source_name
 
     @property
     def python_versions(self):
