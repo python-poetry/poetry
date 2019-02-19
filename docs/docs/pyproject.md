@@ -133,6 +133,59 @@ packages = [
     Poetry is clever enough to detect Python subpackages.
 
     Thus, you only have to specify the directory where your root package resides.
+    
+## data_files
+
+A list of files to be installed using the [data_files](https://docs.python.org/2/distutils/setupscript.html#installing-additional-files)
+installation mechanism.  Data files are particularly useful when shipping non-code artifacts that may need to be used
+by other packages at a well-known location.  Example uses include distribution of Protobuf proto definition files and 
+Avro avsc schemas.
+
+```toml
+[tool.poetry.data_files]
+my_package_name = ["a.txt", "subdir/subsubdir/b.txt"]
+"my_target_dir.has.dots" = ["**/*.txt"]
+"my_package_name/with/subdirectories" = ["subdir/subsubdir/b.txt"]
+```
+
+### Effect on produced wheel archives
+
+The above TOML snippet will result in the addition of a [.data](https://www.python.org/dev/peps/pep-0427/#the-data-directory) 
+directory to your wheel.  For example, given my package, `my_package_name`, and a version of `2.3.4`, the wheel will now
+contain the following:
+
+```
+my_package_name-2.3.4.data/my_package_name/a.txt
+my_package_name-2.3.4.data/my_package_name/b.txt
+my_package_name-2.3.4.data/my_target_dir.has.dots/a.txt
+my_package_name-2.3.4.data/my_target_dir.has.dots/b.txt
+my_package_name-2.3.4.data/my_packge_name/with/subdirectories/b.txt
+```
+
+All of the entries added to the wheel are also added to the RECORD with their appropriate secure hashes.
+
+### Effect on produced sdist archives
+
+The above TOML snippet will result in the addition of the following `data_files` element to the generated setup.py:
+
+```python
+# [...]
+data_files = \
+[('my_package_name', ['a.txt', 'subdir/subsubdir/b.txt']),
+ ('my_target_dir.has.dots', ['a.txt', 'subdir/subsubdir/b.txt']),
+ ('my_package_name/with/subdirectories', ['subdir/subsubdir/b.txt'])]
+
+setup_kwargs = {
+    # [...]
+    'data_files': data_files,
+}
+```
+
+
+!!!note
+
+    The path information in the files or globs is discarded during installation.  If you need your files to be placed
+    in a nested directory, it must be a part of the "name" of the `data_files` element.
 
 ## include and exclude
 

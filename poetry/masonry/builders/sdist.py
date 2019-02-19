@@ -15,6 +15,7 @@ from poetry.utils._compat import encode
 from poetry.utils._compat import to_str
 
 from ..utils.helpers import normalize_file_permissions
+from ..utils.data_file_include import DataFileInclude
 from ..utils.package_include import PackageInclude
 
 from .builder import Builder
@@ -119,6 +120,7 @@ class SdistBuilder(Builder):
         modules = []
         packages = []
         package_data = {}
+        data_files = {}
         for include in self._module.includes:
             if isinstance(include, PackageInclude):
                 if include.is_package():
@@ -137,6 +139,10 @@ class SdistBuilder(Builder):
 
                     if module not in modules:
                         modules.append(module)
+            elif isinstance(include, DataFileInclude):
+                data_files.setdefault(include.data_file_path_prefix, []).extend(
+                    str(element.relative_to(self._path)) for element in include.elements
+                )
             else:
                 pass
 
@@ -153,8 +159,16 @@ class SdistBuilder(Builder):
             extra.append("'package_data': package_data,")
 
         if modules:
-            before.append("modules = \\\n{}".format(pformat(modules)))
-            extra.append("'py_modules': modules,".format())
+            before.append("modules = \\\n{}\n".format(pformat(modules)))
+            extra.append("'py_modules': modules,")
+
+        if data_files:
+            before.append(
+                "data_files = \\\n{}\n".format(
+                    pformat([(k, v) for k, v in data_files.items()])
+                )
+            )
+            extra.append("'data_files': data_files,")
 
         dependencies, extras = self.convert_dependencies(
             self._package, self._package.requires

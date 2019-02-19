@@ -2,6 +2,7 @@ from poetry.utils._compat import Path
 from poetry.utils.helpers import module_name
 
 from .include import Include
+from .data_file_include import DataFileInclude
 from .package_include import PackageInclude
 
 
@@ -11,7 +12,9 @@ class ModuleOrPackageNotFound(ValueError):
 
 
 class Module:
-    def __init__(self, name, directory=".", packages=None, includes=None):
+    def __init__(
+        self, name, directory=".", packages=None, includes=None, data_files=None
+    ):
         self._name = module_name(name)
         self._in_src = False
         self._is_package = False
@@ -19,6 +22,7 @@ class Module:
         self._includes = []
         packages = packages or []
         includes = includes or []
+        data_files = data_files or {}
 
         if not packages:
             # It must exist either as a .py file or a directory, but not both
@@ -61,6 +65,10 @@ class Module:
             self._includes.append(
                 PackageInclude(self._path, package["include"], package.get("from"))
             )
+
+        for base, globs in data_files.items():
+            for glob in globs:
+                self._includes.append(DataFileInclude(self._path, glob, base))
 
         for include in includes:
             self._includes.append(Include(self._path, include))

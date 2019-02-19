@@ -1,0 +1,10 @@
+[tool.poetry]
+name = "data_files_example"
+version = "0.1.0"
+description = "An example TOML file describing a package with data_files"
+authors = ["delphyne <delphyne@gmail.com>"]
+
+[tool.poetry.data_files]
+easy = ["a.txt", "**/c.csv"]
+"a.little.more.difficult" = ["**/*.txt"]
+"nested/directories" = ["subdir/subsubdir/b.txt"]

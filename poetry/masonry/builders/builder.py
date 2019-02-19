@@ -40,6 +40,7 @@ class Builder(object):
             self._path.as_posix(),
             packages=self._package.packages,
             includes=self._package.include,
+            data_files=self._package.data_files,
         )
         self._meta = Metadata.from_package(self._package)
 

@@ -19,6 +19,7 @@ from poetry.__version__ import __version__
 from poetry.semver import parse_constraint
 
 from ..utils.helpers import normalize_file_permissions
+from ..utils.data_file_include import DataFileInclude
 from ..utils.package_include import PackageInclude
 from ..utils.tags import get_abbr_impl
 from ..utils.tags import get_abi_tag
@@ -26,6 +27,7 @@ from ..utils.tags import get_impl_ver
 from ..utils.tags import get_platform
 from .builder import Builder
 
+from poetry.utils._compat import Path
 
 wheel_file_template = """\
 Wheel-Version: 1.0
@@ -137,6 +139,14 @@ class WheelBuilder(Builder):
 
                 if isinstance(include, PackageInclude) and include.source:
                     rel_file = file.relative_to(include.base)
+                elif isinstance(include, DataFileInclude):
+                    rel_file = Path(
+                        self.wheel_meta_dir_name(
+                            self._package.name, self._meta.version, "data"
+                        ),
+                        include.data_file_path_prefix,
+                        file.name,
+                    )
                 else:
                     rel_file = file.relative_to(self._path)
 
@@ -192,7 +202,7 @@ class WheelBuilder(Builder):
 
     @property
     def dist_info(self):  # type: () -> str
-        return self.dist_info_name(self._package.name, self._meta.version)
+        return self.wheel_meta_dir_name(self._package.name, self._meta.version)
 
     @property
     def wheel_filename(self):  # type: () -> str
@@ -207,11 +217,13 @@ class WheelBuilder(Builder):
             parse_constraint(">=2.0.0 <3.0.0")
         )
 
-    def dist_info_name(self, distribution, version):  # type: (...) -> str
+    def wheel_meta_dir_name(
+        self, distribution, version, suffix="dist-info"
+    ):  # type: (...) -> str
         escaped_name = re.sub(r"[^\w\d.]+", "_", distribution, flags=re.UNICODE)
         escaped_version = re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE)
 
-        return "{}-{}.dist-info".format(escaped_name, escaped_version)
+        return "{}-{}.{}".format(escaped_name, escaped_version, suffix)
 
     @property
     def tag(self):

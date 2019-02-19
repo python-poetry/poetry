@@ -14,6 +14,7 @@ class ProjectPackage(Package):
         self.packages = []
         self.include = []
         self.exclude = []
+        self.data_files = {}
 
         if self._python_versions == "*":
             self._python_constraint = parse_constraint("~2.7 || >=3.4")

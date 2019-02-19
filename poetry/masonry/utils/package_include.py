@@ -26,7 +26,7 @@ class PackageInclude(Include):
     def is_package(self):  # type: () -> bool
         return self._is_package
 
-    def is_module(self):  # type: ()
+    def is_module(self):  # type: () -> bool
         return self._is_module
 
     def refresh(self):  # type: () -> PackageInclude

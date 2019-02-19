@@ -145,3 +145,28 @@ def test_write_metadata_file_license_homepage_default(mocker):
     # Assertion
     mocked_file.write.assert_any_call("Home-page: UNKNOWN\n")
     mocked_file.write.assert_any_call("License: UNKNOWN\n")
+
+
+def test_with_data_files():
+    module_path = fixtures_dir / "data_files"
+    p = Poetry.create(str(module_path))
+    WheelBuilder.make(p, NullEnv(), NullIO())
+    whl = module_path / "dist" / "data_files_example-0.1.0-py2.py3-none-any.whl"
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        names = z.namelist()
+        with z.open("data_files_example-0.1.0.dist-info/RECORD") as record_file:
+            record = record_file.readlines()
+
+            def validate(path):
+                assert path in names
+                assert (
+                    len([r for r in record if r.decode("utf-8").startswith(path)]) == 1
+                )
+
+            validate("data_files_example-0.1.0.data/easy/a.txt")
+            validate("data_files_example-0.1.0.data/easy/c.csv")
+            validate("data_files_example-0.1.0.data/a.little.more.difficult/a.txt")
+            validate("data_files_example-0.1.0.data/a.little.more.difficult/b.txt")
+            validate("data_files_example-0.1.0.data/nested/directories/b.txt")

@@ -510,3 +510,38 @@ def test_proper_python_requires_if_three_digits_precision_version_specified():
     parsed = p.parsestr(to_str(pkg_info))
 
     assert parsed["Requires-Python"] == "==2.7.15"
+
+
+def test_with_data_files():
+    poetry = Poetry.create(project("data_files"))
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+
+    # Check setup.py
+    setup = builder.build_setup()
+    setup_ast = ast.parse(setup)
+
+    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    ns = {}
+    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+
+    assert [
+        ("easy", ["a.txt", "subdir/subsubdir/c.csv"]),
+        ("a.little.more.difficult", ["a.txt", "subdir/subsubdir/b.txt"]),
+        ("nested/directories", ["subdir/subsubdir/b.txt"]),
+    ] == ns.get("data_files")
+
+    assert ns.get("setup_kwargs", {}).get("data_files") == ns.get("data_files")
+
+    builder.build()
+
+    sdist = fixtures_dir / "data_files" / "dist" / "data_files_example-0.1.0.tar.gz"
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert "data_files_example-0.1.0/data_files_example/__init__.py" in names
+        assert "data_files_example-0.1.0/a.txt" in names
+        assert "data_files_example-0.1.0/subdir/subsubdir/b.txt" in names
+        assert "data_files_example-0.1.0/subdir/subsubdir/c.csv" in names
+        assert "data_files_example-0.1.0/setup.py" in names
