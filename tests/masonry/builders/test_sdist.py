@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
+import os
 import pytest
 import shutil
 import tarfile
@@ -520,14 +521,21 @@ def test_with_data_files():
     setup = builder.build_setup()
     setup_ast = ast.parse(setup)
 
-    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    setup_ast.body = [
+        n
+        for n in setup_ast.body
+        if isinstance(n, ast.Assign) or isinstance(n, ast.Import)
+    ]
     ns = {}
     exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
 
     assert [
-        ("easy", ["a.txt", "subdir/subsubdir/c.csv"]),
-        ("a.little.more.difficult", ["a.txt", "subdir/subsubdir/b.txt"]),
-        ("nested/directories", ["subdir/subsubdir/b.txt"]),
+        (
+            "a.little.more.difficult",
+            ["a.txt", os.path.join("subdir", "subsubdir", "b.txt")],
+        ),
+        ("easy", ["a.txt", os.path.join("subdir", "subsubdir", "c.csv")]),
+        ("nested/directories", [os.path.join("subdir", "subsubdir", "b.txt")]),
     ] == ns.get("data_files")
 
     assert ns.get("setup_kwargs", {}).get("data_files") == ns.get("data_files")

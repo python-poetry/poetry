@@ -2,6 +2,7 @@
 import os
 import re
 import tarfile
+import textwrap
 
 from collections import defaultdict
 from copy import copy
@@ -24,6 +25,7 @@ from .builder import Builder
 SETUP = """\
 # -*- coding: utf-8 -*-
 from distutils.core import setup
+import os
 
 {before}
 setup_kwargs = {{
@@ -141,7 +143,7 @@ class SdistBuilder(Builder):
                         modules.append(module)
             elif isinstance(include, DataFileInclude):
                 data_files.setdefault(include.data_file_path_prefix, []).extend(
-                    str(element.relative_to(self._path)) for element in include.elements
+                    element.relative_to(self._path) for element in include.elements
                 )
             else:
                 pass
@@ -163,9 +165,30 @@ class SdistBuilder(Builder):
             extra.append("'py_modules': modules,")
 
         if data_files:
+            # this code breaks from the prior pformat pattern in order to ensure that the setup.py
+            # that is generated may be read properly from unix or windows platforms.
+
+            # sort the dictionary to guarantee consistent order across python versions
+            sorted_items = sorted(data_files.items(), key=lambda pair: pair[0])
+            tuple_lines = [
+                "('{}', [{}])".format(
+                    data_file_root,
+                    str.join(
+                        ", ",
+                        [
+                            "os.path.join({})".format(
+                                ", ".join("'{}'".format(s) for s in path.parts)
+                            )
+                            for path in rel_paths
+                        ],
+                    ),
+                )
+                for data_file_root, rel_paths in sorted_items
+            ]
+
             before.append(
-                "data_files = \\\n{}\n".format(
-                    pformat([(k, v) for k, v in data_files.items()])
+                "data_files = [\n{}\n]\n".format(
+                    textwrap.indent(",\n".join(tuple_lines), " ")
                 )
             )
             extra.append("'data_files': data_files,")
