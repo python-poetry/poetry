@@ -161,13 +161,15 @@ class Env(object):
         in_venv = os.environ.get("VIRTUAL_ENV") is not None
 
         if not in_venv:
+            config = Config.create("config.toml")
+
             # Checking if a local virtualenv exists
-            if (cwd / ".venv").exists():
-                venv = cwd / ".venv"
+            venv_name = config.setting("settings.virtualenvs.name", ".venv")
+            if (cwd / venv_name).exists():
+                venv = cwd / venv_name
 
                 return VirtualEnv(venv)
 
-            config = Config.create("config.toml")
             create_venv = config.setting("settings.virtualenvs.create", True)
 
             if not create_venv:
@@ -216,8 +218,9 @@ class Env(object):
         root_venv = config.setting("settings.virtualenvs.in-project")
 
         venv_path = config.setting("settings.virtualenvs.path")
+        venv_name = config.setting("settings.virtualenvs.name")
         if root_venv:
-            venv_path = cwd / ".venv"
+            venv_path = cwd / venv_name
         elif venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
