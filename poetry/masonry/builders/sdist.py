@@ -2,7 +2,6 @@
 import os
 import re
 import tarfile
-import textwrap
 
 from collections import defaultdict
 from copy import copy
@@ -186,11 +185,7 @@ class SdistBuilder(Builder):
                 for data_file_root, rel_paths in sorted_items
             ]
 
-            before.append(
-                "data_files = [\n{}\n]\n".format(
-                    textwrap.indent(",\n".join(tuple_lines), " ")
-                )
-            )
+            before.append("data_files = [\n  {}\n]\n".format(",\n  ".join(tuple_lines)))
             extra.append("'data_files': data_files,")
 
         dependencies, extras = self.convert_dependencies(
