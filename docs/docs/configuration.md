@@ -22,6 +22,11 @@ Defaults to `true`.
 Create the virtualenv inside the project's root directory.
 Defaults to `false`.
 
+### `settings.virtualenvs.name`: string
+
+The name of the virtualenv folder that will be created.
+Defaults to `.venv`.
+
 ### `settings.virtualenvs.path`: string
 
 Directory where virtualenvs will be created.
