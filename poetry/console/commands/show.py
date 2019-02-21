@@ -69,7 +69,7 @@ lists all packages available."""
                 return 0
 
             rows = [
-                ["<info>name</>", " : <fg=cyan>{}</>".format(pkg.pretty_name)],
+                ["<info>name</>", " : <info>{}</>".format(pkg.pretty_name)],
                 ["<info>version</>", " : <comment>{}</>".format(pkg.pretty_version)],
                 ["<info>description</>", " : {}".format(pkg.description)],
             ]
@@ -144,7 +144,7 @@ lists all packages available."""
         write_description = name_length + version_length + latest_length + 24 <= width
 
         for locked in locked_packages:
-            color = "green"
+            color = "cyan"
             name = locked.pretty_name
             install_marker = ""
             if locked in skipped:
@@ -165,7 +165,7 @@ lists all packages available."""
                 color, name, name_length - len(install_marker), install_marker
             )
             if write_version:
-                line += " <comment>{:{}}</comment>".format(
+                line += " <b>{:{}}</b>".format(
                     locked.full_pretty_version, version_length
                 )
             if show_latest:
@@ -205,7 +205,7 @@ lists all packages available."""
         if package.description:
             description = " " + package.description
 
-        io.write_line(" {}{}".format(package.pretty_version, description))
+        io.write_line(" <b>{}</b>{}".format(package.pretty_version, description))
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
