@@ -207,7 +207,7 @@ class Provider:
         return [package]
 
     def search_for_url(self, dependency):  # type: (UrlDependency) -> List[Package]
-        tmp_dir = Path(mkdtemp(prefix="pypoetry-git-{}".format(dependency.name)))
+        tmp_dir = Path(mkdtemp(prefix="pypoetry-url-{}".format(dependency.name)))
 
         # TODO: The file name might be in the request header itself
         file_name = urlparse(dependency.url).path.split("/")[-1]
