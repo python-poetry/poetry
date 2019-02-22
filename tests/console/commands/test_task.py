@@ -11,7 +11,7 @@ def test_task(app):
     command = app.find("task")
     tester = CommandTester(command)
 
-    tester.execute([("command", command.get_name()), ("task", "echo")])
+    tester.execute("task echo")
 
     path = Path(".temp/poetry_test_task.txt")
     with path.open("r") as f:
