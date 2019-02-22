@@ -119,7 +119,7 @@ packages = [
     **explicitly** specify the "default" package.
 
     For instance, if you have a package named `my_package` and you want to also include
-    another package named `extra_package`, you will need to specify `my_package` explicitely:
+    another package named `extra_package`, you will need to specify `my_package` explicitly:
 
     ```toml
     packages = [
@@ -132,7 +132,7 @@ packages = [
 
     Poetry is clever enough to detect Python subpackages.
 
-    So, if you only have to specify the directory where you root package resides.
+    Thus, you only have to specify the directory where your root package resides.
 
 ## include and exclude
 

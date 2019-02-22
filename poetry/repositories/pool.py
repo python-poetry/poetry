@@ -1,9 +1,9 @@
 from typing import List
 from typing import Union
 
-import poetry.packages
 
 from .base_repository import BaseRepository
+from .exceptions import PackageNotFound
 from .repository import Repository
 
 
@@ -40,24 +40,6 @@ class Pool(BaseRepository):
 
         return self
 
-    def configure(self, source):  # type: (dict) -> Pool
-        """
-        Configures a repository based on a source
-        specification and add it to the pool.
-        """
-        from .legacy_repository import LegacyRepository
-
-        if "url" in source:
-            # PyPI-like repository
-            if "name" not in source:
-                raise RuntimeError("Missing [name] in source.")
-
-            repository = LegacyRepository(source["name"], source["url"])
-        else:
-            raise RuntimeError("Unsupported source specified")
-
-        return self.add_repository(repository)
-
     def has_package(self, package):
         raise NotImplementedError()
 
@@ -65,7 +47,7 @@ class Pool(BaseRepository):
         for repository in self._repositories:
             try:
                 package = repository.package(name, version, extras=extras)
-            except ValueError:
+            except PackageNotFound:
                 continue
 
             if package:
@@ -73,7 +55,7 @@ class Pool(BaseRepository):
 
                 return package
 
-        return None
+        raise PackageNotFound("Package {} ({}) not found.".format(name, version))
 
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False

@@ -1,1 +1,1 @@
-from .clear import CacheClearCommand
+from .cache import CacheCommand

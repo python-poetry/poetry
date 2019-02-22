@@ -28,19 +28,21 @@ from cachy import CacheManager
 from requests import get
 from requests import session
 
-from poetry.io import NullIO
 from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
 from poetry.semver import parse_constraint
 from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
+from poetry.semver.exceptions import ParseVersionError
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.env import Env
+from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
 
+from .exceptions import PackageNotFound
 from .repository import Repository
 
 
@@ -91,6 +93,15 @@ class PyPiRepository(Repository):
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        if isinstance(constraint, VersionRange):
+            if (
+                constraint.max is not None
+                and constraint.max.is_prerelease()
+                or constraint.min is not None
+                and constraint.min.is_prerelease()
+            ):
+                allow_prereleases = True
+
         info = self.get_package_info(name)
 
         packages = []
@@ -106,13 +117,18 @@ class PyPiRepository(Repository):
                 )
                 continue
 
-            package = Package(name, version)
+            try:
+                package = Package(name, version)
+            except ParseVersionError:
+                self._log(
+                    'Unable to parse version "{}" for the {} package, skipping'.format(
+                        version, name
+                    ),
+                    level="debug",
+                )
+                continue
 
-            if (
-                package.is_prerelease()
-                and not allow_prereleases
-                and not constraint.allows(package.version)
-            ):
+            if package.is_prerelease() and not allow_prereleases:
                 continue
 
             if not constraint or (constraint and constraint.allows(package.version)):
@@ -225,7 +241,7 @@ class PyPiRepository(Repository):
     def _get_package_info(self, name):  # type: (str) -> dict
         data = self._get("pypi/{}/json".format(name))
         if data is None:
-            raise ValueError("Package [{}] not found.".format(name))
+            raise PackageNotFound("Package [{}] not found.".format(name))
 
         return data
 
@@ -261,7 +277,7 @@ class PyPiRepository(Repository):
 
         json_data = self._get("pypi/{}/{}/json".format(name, version))
         if json_data is None:
-            raise ValueError("Package [{}] not found.".format(name))
+            raise PackageNotFound("Package [{}] not found.".format(name))
 
         info = json_data["info"]
         data = {
@@ -385,13 +401,18 @@ class PyPiRepository(Repository):
     ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
         if "bdist_wheel" in urls:
             self._log(
-                "Downloading wheel: {}".format(urls["bdist_wheel"].split("/")[-1]),
+                "Downloading wheel: {}".format(
+                    urlparse.urlparse(urls["bdist_wheel"]).path.rsplit("/")[-1]
+                ),
                 level="debug",
             )
             return self._get_info_from_wheel(urls["bdist_wheel"])
 
         self._log(
-            "Downloading sdist: {}".format(urls["sdist"].split("/")[-1]), level="debug"
+            "Downloading sdist: {}".format(
+                urlparse.urlparse(urls["sdist"]).path.rsplit("/")[-1]
+            ),
+            level="debug",
         )
         return self._get_info_from_sdist(urls["sdist"])
 
@@ -400,7 +421,7 @@ class PyPiRepository(Repository):
     ):  # type: (str) -> Dict[str, Union[str, List, None]]
         info = {"summary": "", "requires_python": None, "requires_dist": None}
 
-        filename = os.path.basename(urlparse.urlparse(url).path)
+        filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
 
         with temporary_directory() as temp_dir:
             filepath = os.path.join(temp_dir, filename)
@@ -460,6 +481,9 @@ class PyPiRepository(Repository):
             else:
                 if suffix == ".bz2":
                     gz = BZ2File(str(filepath))
+                    suffixes = filepath.suffixes
+                    if len(suffixes) > 1 and suffixes[-2] == ".tar":
+                        suffix = ".tar.bz2"
                 else:
                     gz = GzipFile(str(filepath))
                     suffix = ".tar.gz"
@@ -501,50 +525,55 @@ class PyPiRepository(Repository):
 
                         return info
 
-            # Still nothing, assume no dependencies
-            # We could probably get them by executing
-            # python setup.py egg-info but I don't feel
-            # confortable executing a file just for the sake
-            # of getting dependencies.
-            return info
+            # Still nothing, try reading (without executing it)
+            # the setup.py file.
+            try:
+                setup_info = self._inspect_sdist_with_setup(sdist_dir)
+
+                for key, value in info.items():
+                    if value:
+                        continue
+
+                    info[key] = setup_info[key]
+
+                return info
+            except Exception as e:
+                self._log(
+                    "An error occurred when reading setup.py or setup.cfg: {}".format(
+                        str(e)
+                    ),
+                    "warning",
+                )
+                return info
 
     def _inspect_sdist_with_setup(self, sdist_dir):
         info = {"requires_python": None, "requires_dist": None}
 
-        setup = sdist_dir / "setup.py"
-        if not setup.exists():
-            return info
+        result = SetupReader.read_from_directory(sdist_dir)
+        requires = ""
+        for dep in result["install_requires"]:
+            requires += dep + "\n"
 
-        venv = Env.create_venv(NullIO())
+        if result["extras_require"]:
+            requires += "\n"
 
-        current_dir = os.getcwd()
-        os.chdir(sdist_dir.as_posix())
+        for extra_name, deps in result["extras_require"].items():
+            requires += "[{}]\n".format(extra_name)
 
-        try:
-            venv.run("python", "setup.py", "egg_info")
+            for dep in deps:
+                requires += dep + "\n"
 
-            egg_info = list(sdist_dir.glob("**/*.egg-info"))[0]
+            requires += "\n"
 
-            meta = pkginfo.UnpackedSDist(str(egg_info))
-            if meta.requires_python:
-                info["requires_python"] = meta.requires_python
-
-            if meta.requires_dist:
-                info["requires_dist"] = list(meta.requires_dist)
-            else:
-                requires = egg_info / "requires.txt"
-                if requires.exists():
-                    with requires.open() as f:
-                        info["requires_dist"] = parse_requires(f.read())
-        except Exception:
-            pass
-
-        os.chdir(current_dir)
+        info["requires_dist"] = parse_requires(requires)
+        info["requires_python"] = result["python_requires"]
 
         return info
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = get(url, stream=True)
+        r.raise_for_status()
+
         with open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:

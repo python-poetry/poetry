@@ -205,7 +205,7 @@ if __name__ == "__main__":
     main()
 """
 
-BAT = "@echo off\r\npython {poetry_bin} %*\r\n"
+BAT = '@echo off\r\npython "{poetry_bin}" %*\r\n'
 
 
 PRE_MESSAGE = """# Welcome to {poetry}!
@@ -412,7 +412,7 @@ class Installer:
     def customize_install(self):
         if not self._accept_all:
             print("Before we start, please answer the following questions.")
-            print("You may simple press the Enter key to keave unchanged.")
+            print("You may simply press the Enter key to leave unchanged.")
 
             modify_path = input("Modify PATH variable? ([y]/n) ") or "y"
             if modify_path.lower() in {"n", "no"}:
@@ -433,17 +433,6 @@ class Installer:
             print("")
 
         return True
-
-    def customize_install(self):
-        if not self._accept_all:
-            print("Before we start, please answer the following questions.")
-            print("You may simple press the Enter key to keave unchanged.")
-
-            modify_path = input("Modify PATH variable? ([y]/n) ") or "y"
-            if modify_path.lower() in {"n", "no"}:
-                self._modify_path = False
-
-            print("")
 
     def ensure_home(self):
         """
@@ -701,7 +690,34 @@ class Installer:
         self.set_windows_path_var(path)
 
     def remove_from_unix_path(self):
-        pass
+        # Updating any profile we can on UNIX systems
+        export_string = self.get_export_string()
+
+        addition = "{}\n".format(export_string)
+
+        profiles = self.get_unix_profiles()
+        for profile in profiles:
+            if not os.path.exists(profile):
+                continue
+
+            with open(profile, "r") as f:
+                content = f.readlines()
+
+            if addition not in content:
+                continue
+
+            new_content = []
+            for line in content:
+                if line == addition:
+                    if new_content and not new_content[-1].strip():
+                        new_content = new_content[:-1]
+
+                    continue
+
+                new_content.append(line)
+
+            with open(profile, "w") as f:
+                f.writelines(new_content)
 
     def get_export_string(self):
         path = POETRY_BIN.replace(os.getenv("HOME", ""), "$HOME")

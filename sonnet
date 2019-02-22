@@ -18,7 +18,7 @@ class MakeReleaseCommand(Command):
     """
     Makes a self-contained package of Poetry.
 
-    make:release
+    release
         {--P|python=?* : Python version to use}
     """
 
@@ -37,9 +37,10 @@ class MakeReleaseCommand(Command):
             for python in self.option("python"):
                 parts = python.split(":", 1)
                 if len(parts) == 1:
-                    pythons[parts[0]] = self.PYTHON[parts[0]]
-
-                version, python = parts
+                    python = self.PYTHON[parts[0]]
+                    version = parts[0]
+                else:
+                    version, python = parts
                 pythons[version] = python
 
         self.check_system(pythons)
@@ -51,6 +52,7 @@ class MakeReleaseCommand(Command):
         from poetry.repositories.repository import Repository
         from poetry.utils._compat import Path
         from poetry.utils.helpers import temporary_directory
+        from poetry.vcs import get_vcs
 
         project = Poetry.create(Path.cwd())
         package = project.package
@@ -60,11 +62,21 @@ class MakeReleaseCommand(Command):
         pool = Pool()
         pool.add_repository(project.locker.locked_repository(with_dev_reqs=True))
 
+        vcs = get_vcs(Path(__file__).parent)
+        if vcs:
+            vcs_excluded = [str(f) for f in vcs.get_ignored_files()]
+        else:
+            vcs_excluded = []
+
         with temporary_directory() as tmp_dir:
             # Copy poetry to tmp dir
             poetry_dir = os.path.join(tmp_dir, "poetry")
             shutil.copytree(
-                os.path.join(os.path.dirname(__file__), "poetry"), poetry_dir
+                os.path.join(os.path.dirname(__file__), "poetry"),
+                poetry_dir,
+                ignore=lambda dir_, names: set(vcs_excluded).intersection(
+                    set([os.path.join(dir_, name) for name in names])
+                ),
             )
             for version, python in sorted(pythons.items()):
                 self.line(
@@ -73,9 +85,7 @@ class MakeReleaseCommand(Command):
                     )
                 )
                 with package.with_python_versions("^{}".format(version)):
-                    solver = Solver(
-                        package, pool, Repository(), Repository(), self.output
-                    )
+                    solver = Solver(package, pool, Repository(), Repository(), self.io)
                     ops = solver.solve()
 
                 self.vendorize_for_python(
@@ -102,9 +112,14 @@ class MakeReleaseCommand(Command):
                                     continue
 
                                 path = os.path.join(os.path.realpath(root), f)
+
                                 relpath = os.path.relpath(
                                     path, os.path.realpath(tmp_dir)
                                 )
+
+                                if relpath in vcs_excluded:
+                                    continue
+
                                 tar_info = tar.gettarinfo(str(path), arcname=relpath)
 
                                 if tar_info.isreg():
@@ -182,9 +197,22 @@ class MakeReleaseCommand(Command):
         self.line("")
 
 
-app = Application("Sonnet")
+class MakeCommand(Command):
+    """
+    Build poetry releases.
 
-app.add(MakeReleaseCommand())
+    make
+    """
+
+    commands = [MakeReleaseCommand()]
+
+    def handle(self):
+        return self.call("help", self.config.name)
+
+
+app = Application("sonnet")
+
+app.add(MakeCommand())
 
 if __name__ == "__main__":
     app.run()

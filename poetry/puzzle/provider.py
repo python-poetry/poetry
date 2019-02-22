@@ -3,10 +3,9 @@ import logging
 import os
 import pkginfo
 import re
-import shutil
 import time
 
-from cleo import ProgressIndicator
+from clikit.ui.components import ProgressIndicator
 from contextlib import contextmanager
 from tempfile import mkdtemp
 from typing import List
@@ -29,9 +28,12 @@ from poetry.repositories import Pool
 
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
+from poetry.utils._compat import OrderedDict
 from poetry.utils.helpers import parse_requires
-from poetry.utils.toml_file import TomlFile
-from poetry.utils.env import Env
+from poetry.utils.helpers import safe_rmtree
+from poetry.utils.env import EnvManager
+from poetry.utils.env import EnvCommandError
+from poetry.utils.setup_reader import SetupReader
 
 from poetry.vcs.git import Git
 
@@ -42,20 +44,8 @@ logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):
-    def __init__(self, output):
-        super(Indicator, self).__init__(output)
-
-        self.format = "%message% <fg=black;options=bold>(%elapsed:2s%)</>"
-
-    @contextmanager
-    def auto(self):
-        message = "<info>Resolving dependencies</info>..."
-
-        with super(Indicator, self).auto(message, message):
-            yield
-
     def _formatter_elapsed(self):
-        elapsed = time.time() - self.start_time
+        elapsed = time.time() - self._start_time
 
         return "{:.1f}s".format(elapsed)
 
@@ -175,89 +165,16 @@ class Provider:
             if dependency.tag or dependency.rev:
                 revision = dependency.reference
 
-            pyproject = TomlFile(tmp_dir / "pyproject.toml")
-            pyproject_content = None
-            has_poetry = False
-            if pyproject.exists():
-                pyproject_content = pyproject.read()
-                has_poetry = (
-                    "tool" in pyproject_content
-                    and "poetry" in pyproject_content["tool"]
-                )
+            directory_dependency = DirectoryDependency(
+                dependency.name,
+                tmp_dir,
+                category=dependency.category,
+                optional=dependency.is_optional(),
+            )
+            for extra in dependency.extras:
+                directory_dependency.extras.append(extra)
 
-            if pyproject_content and has_poetry:
-                # If a pyproject.toml file exists
-                # We use it to get the information we need
-                info = pyproject_content["tool"]["poetry"]
-
-                name = info["name"]
-                version = info["version"]
-                package = Package(name, version, version)
-                package.source_type = dependency.vcs
-                package.source_url = dependency.source
-                package.source_reference = dependency.reference
-                for req_name, req_constraint in info["dependencies"].items():
-                    if req_name == "python":
-                        package.python_versions = req_constraint
-                        continue
-
-                    package.add_dependency(req_name, req_constraint)
-            else:
-                # We need to use setup.py here
-                # to figure the information we need
-                # We need to place ourselves in the proper
-                # folder for it to work
-                venv = Env.get(self._io)
-
-                current_dir = os.getcwd()
-                os.chdir(tmp_dir.as_posix())
-
-                try:
-                    venv.run("python", "setup.py", "egg_info")
-
-                    # Sometimes pathlib will fail on recursive
-                    # symbolic links, so we need to workaround it
-                    # and use the glob module instead.
-                    # Note that this does not happen with pathlib2
-                    # so it's safe to use it for Python < 3.4.
-                    if PY35:
-                        egg_info = next(
-                            Path(p)
-                            for p in glob.glob(
-                                os.path.join(str(tmp_dir), "**", "*.egg-info"),
-                                recursive=True,
-                            )
-                        )
-                    else:
-                        egg_info = next(tmp_dir.glob("**/*.egg-info"))
-
-                    meta = pkginfo.UnpackedSDist(str(egg_info))
-
-                    if meta.requires_dist:
-                        reqs = list(meta.requires_dist)
-                    else:
-                        reqs = []
-                        requires = egg_info / "requires.txt"
-                        if requires.exists():
-                            with requires.open() as f:
-                                reqs = parse_requires(f.read())
-
-                    package = Package(meta.name, meta.version)
-
-                    for req in reqs:
-                        dep = dependency_from_pep_508(req)
-                        if dep.in_extras:
-                            for extra in dep.in_extras:
-                                if extra not in package.extras:
-                                    package.extras[extra] = []
-
-                                package.extras[extra].append(dep)
-
-                        package.requires.append(dep)
-                except Exception:
-                    raise
-                finally:
-                    os.chdir(current_dir)
+            package = self.search_for_directory(directory_dependency)[0]
 
             package.source_type = "git"
             package.source_url = dependency.source
@@ -265,52 +182,198 @@ class Provider:
         except Exception:
             raise
         finally:
-            shutil.rmtree(tmp_dir.as_posix())
-
-        if dependency.name != package.name:
-            # For now, the dependency's name must match the actual package's name
-            raise RuntimeError(
-                "The dependency name for {} does not match the actual package's name: {}".format(
-                    dependency.name, package.name
-                )
-            )
-
-        if dependency.extras:
-            for extra in dependency.extras:
-                if extra in package.extras:
-                    for dep in package.extras[extra]:
-                        dep.activate()
+            safe_rmtree(str(tmp_dir))
 
         return [package]
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
-        package = Package(dependency.name, dependency.pretty_constraint)
+        if dependency.path.suffix == ".whl":
+            meta = pkginfo.Wheel(str(dependency.full_path))
+        else:
+            # Assume sdist
+            meta = pkginfo.SDist(str(dependency.full_path))
+
+        if dependency.name != meta.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                "The dependency name for {} does not match the actual package's name: {}".format(
+                    dependency.name, meta.name
+                )
+            )
+
+        package = Package(meta.name, meta.version)
         package.source_type = "file"
         package.source_url = dependency.path.as_posix()
 
-        package.description = dependency.metadata.summary
-        for req in dependency.metadata.requires_dist:
-            package.requires.append(dependency_from_pep_508(req))
+        package.description = meta.summary
+        for req in meta.requires_dist:
+            dep = dependency_from_pep_508(req)
+            for extra in dep.in_extras:
+                if extra not in package.extras:
+                    package.extras[extra] = []
 
-        if dependency.metadata.requires_python:
-            package.python_versions = dependency.metadata.requires_python
+                package.extras[extra].append(dep)
 
-        if dependency.metadata.platforms:
-            package.platform = " || ".join(dependency.metadata.platforms)
+            if not dep.is_optional():
+                package.requires.append(dep)
+
+        if meta.requires_python:
+            package.python_versions = meta.requires_python
 
         package.hashes = [dependency.hash()]
+
+        for extra in dependency.extras:
+            if extra in package.extras:
+                for dep in package.extras[extra]:
+                    dep.activate()
+
+                package.requires += package.extras[extra]
 
         return [package]
 
     def search_for_directory(
         self, dependency
     ):  # type: (DirectoryDependency) -> List[Package]
-        package = dependency.package
-        if dependency.extras:
-            for extra in dependency.extras:
-                if extra in package.extras:
-                    for dep in package.extras[extra]:
-                        dep.activate()
+        if dependency.supports_poetry():
+            from poetry.poetry import Poetry
+
+            poetry = Poetry.create(dependency.full_path)
+
+            pkg = poetry.package
+            package = Package(pkg.name, pkg.version)
+
+            for dep in pkg.requires:
+                if not dep.is_optional():
+                    package.requires.append(dep)
+
+            for extra, deps in pkg.extras.items():
+                if extra not in package.extras:
+                    package.extras[extra] = []
+
+                for dep in deps:
+                    package.extras[extra].append(dep)
+
+            package.python_versions = pkg.python_versions
+        else:
+            # Execute egg_info
+            current_dir = os.getcwd()
+            os.chdir(str(dependency.full_path))
+
+            try:
+                cwd = dependency.full_path
+                venv = EnvManager().get(cwd)
+                venv.run("python", "setup.py", "egg_info")
+            except EnvCommandError:
+                result = SetupReader.read_from_directory(dependency.full_path)
+                if not result["name"]:
+                    # The name could not be determined
+                    # We use the dependency name
+                    result["name"] = dependency.name
+
+                if not result["version"]:
+                    # The version could not be determined
+                    # so we raise an error since it is mandatory
+                    raise RuntimeError(
+                        "Unable to retrieve the package version for {}".format(
+                            dependency.path
+                        )
+                    )
+
+                package_name = result["name"]
+                package_version = result["version"]
+                python_requires = result["python_requires"]
+                if python_requires is None:
+                    python_requires = "*"
+
+                package_summary = ""
+
+                requires = ""
+                for dep in result["install_requires"]:
+                    requires += dep + "\n"
+
+                if result["extras_require"]:
+                    requires += "\n"
+
+                for extra_name, deps in result["extras_require"].items():
+                    requires += "[{}]\n".format(extra_name)
+
+                    for dep in deps:
+                        requires += dep + "\n"
+
+                    requires += "\n"
+
+                reqs = parse_requires(requires)
+            else:
+                os.chdir(current_dir)
+                # Sometimes pathlib will fail on recursive
+                # symbolic links, so we need to workaround it
+                # and use the glob module instead.
+                # Note that this does not happen with pathlib2
+                # so it's safe to use it for Python < 3.4.
+                if PY35:
+                    egg_info = next(
+                        Path(p)
+                        for p in glob.glob(
+                            os.path.join(str(dependency.full_path), "**", "*.egg-info"),
+                            recursive=True,
+                        )
+                    )
+                else:
+                    egg_info = next(dependency.full_path.glob("**/*.egg-info"))
+
+                meta = pkginfo.UnpackedSDist(str(egg_info))
+                package_name = meta.name
+                package_version = meta.version
+                package_summary = meta.summary
+                python_requires = meta.requires_python
+
+                if meta.requires_dist:
+                    reqs = list(meta.requires_dist)
+                else:
+                    reqs = []
+                    requires = egg_info / "requires.txt"
+                    if requires.exists():
+                        with requires.open() as f:
+                            reqs = parse_requires(f.read())
+            finally:
+                os.chdir(current_dir)
+
+            package = Package(package_name, package_version)
+
+            if dependency.name != package.name:
+                # For now, the dependency's name must match the actual package's name
+                raise RuntimeError(
+                    "The dependency name for {} does not match the actual package's name: {}".format(
+                        dependency.name, package.name
+                    )
+                )
+
+            package.description = package_summary
+
+            for req in reqs:
+                dep = dependency_from_pep_508(req)
+                if dep.in_extras:
+                    for extra in dep.in_extras:
+                        if extra not in package.extras:
+                            package.extras[extra] = []
+
+                        package.extras[extra].append(dep)
+
+                if not dep.is_optional():
+                    package.requires.append(dep)
+
+            if python_requires:
+                package.python_versions = python_requires
+
+        package.source_type = "directory"
+        package.source_url = dependency.path.as_posix()
+
+        for extra in dependency.extras:
+            if extra in package.extras:
+                for dep in package.extras[extra]:
+                    dep.activate()
+
+                package.requires += package.extras[extra]
 
         return [package]
 
@@ -376,9 +439,13 @@ class Provider:
         self, package
     ):  # type: (DependencyPackage) -> DependencyPackage
         if package.is_root():
-            return package
+            package = package.clone()
 
-        if package.source_type not in {"directory", "file", "git"}:
+        if not package.is_root() and package.source_type not in {
+            "directory",
+            "file",
+            "git",
+        }:
             package = DependencyPackage(
                 package.dependency,
                 self._pool.package(
@@ -410,119 +477,114 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        if not package.is_root():
-            duplicates = {}
-            for dep in dependencies:
-                if dep.name not in duplicates:
-                    duplicates[dep.name] = []
+        duplicates = OrderedDict()
+        for dep in dependencies:
+            if dep.name not in duplicates:
+                duplicates[dep.name] = []
 
-                duplicates[dep.name].append(dep)
+            duplicates[dep.name].append(dep)
 
-            dependencies = []
-            for dep_name, deps in duplicates.items():
-                if len(deps) == 1:
-                    dependencies.append(deps[0])
-                    continue
+        dependencies = []
+        for dep_name, deps in duplicates.items():
+            if len(deps) == 1:
+                dependencies.append(deps[0])
+                continue
 
-                self.debug(
-                    "<debug>Duplicate dependencies for {}</debug>".format(dep_name)
-                )
+            self.debug("<debug>Duplicate dependencies for {}</debug>".format(dep_name))
 
-                # Regrouping by constraint
-                by_constraint = {}
-                for dep in deps:
-                    if dep.constraint not in by_constraint:
-                        by_constraint[dep.constraint] = []
+            # Regrouping by constraint
+            by_constraint = OrderedDict()
+            for dep in deps:
+                if dep.constraint not in by_constraint:
+                    by_constraint[dep.constraint] = []
 
-                    by_constraint[dep.constraint].append(dep)
+                by_constraint[dep.constraint].append(dep)
 
-                # We merge by constraint
-                for constraint, _deps in by_constraint.items():
-                    new_markers = []
-                    for dep in _deps:
-                        pep_508_dep = dep.to_pep_508(False)
-                        if ";" not in pep_508_dep:
-                            continue
-
-                        markers = pep_508_dep.split(";")[1].strip()
-                        if not markers:
-                            # One of the constraint has no markers
-                            # so this means we don't actually need to merge
-                            new_markers = []
-                            break
-
-                        new_markers.append("({})".format(markers))
-
-                    if not new_markers:
-                        dependencies += _deps
+            # We merge by constraint
+            for constraint, _deps in by_constraint.items():
+                new_markers = []
+                for dep in _deps:
+                    pep_508_dep = dep.to_pep_508(False)
+                    if ";" not in pep_508_dep:
                         continue
 
-                    dep = _deps[0]
-                    new_requirement = "{}; {}".format(
-                        dep.to_pep_508(False).split(";")[0], " or ".join(new_markers)
-                    )
-                    new_dep = dependency_from_pep_508(new_requirement)
-                    if dep.is_optional() and not dep.is_activated():
-                        new_dep.deactivate()
-                    else:
-                        new_dep.activate()
+                    markers = pep_508_dep.split(";")[1].strip()
+                    if not markers:
+                        # One of the constraint has no markers
+                        # so this means we don't actually need to merge
+                        new_markers = []
+                        break
 
-                    by_constraint[constraint] = [new_dep]
+                    new_markers.append("({})".format(markers))
 
+                if not new_markers:
+                    dependencies += _deps
                     continue
 
-                if len(by_constraint) == 1:
-                    self.debug(
-                        "<debug>Merging requirements for {}</debug>".format(
-                            str(deps[0])
-                        )
-                    )
-                    dependencies.append(list(by_constraint.values())[0][0])
-                    continue
-
-                # We leave dependencies as-is if they have the same
-                # python/platform constraints.
-                # That way the resolver will pickup the conflict
-                # and display a proper error.
-                _deps = [value[0] for value in by_constraint.values()]
-                seen = set()
-                for _dep in _deps:
-                    pep_508_dep = _dep.to_pep_508(False)
-                    if ";" not in pep_508_dep:
-                        _requirements = ""
-                    else:
-                        _requirements = pep_508_dep.split(";")[1].strip()
-
-                    if _requirements not in seen:
-                        seen.add(_requirements)
-
-                if len(_deps) != len(seen):
-                    for _dep in _deps:
-                        dependencies.append(_dep)
-
-                    continue
-
-                # At this point, we raise an exception that will
-                # tell the solver to enter compatibility mode
-                # which means it will resolve for subsets
-                # Python constraints
-                #
-                # For instance, if our root package requires Python ~2.7 || ^3.6
-                # And we have one dependency that requires Python <3.6
-                # and the other Python >=3.6 than the solver will solve
-                # dependencies for Python >=2.7,<2.8 || >=3.4,<3.6
-                # and Python >=3.6,<4.0
-                python_constraints = []
-                for constraint, _deps in by_constraint.items():
-                    python_constraints.append(_deps[0].python_versions)
-
-                _deps = [str(_dep[0]) for _dep in by_constraint.values()]
-                self.debug(
-                    "<warning>Different requirements found for {}.</warning>".format(
-                        ", ".join(_deps[:-1]) + " and " + _deps[-1]
-                    )
+                dep = _deps[0]
+                new_requirement = "{}; {}".format(
+                    dep.to_pep_508(False).split(";")[0], " or ".join(new_markers)
                 )
-                raise CompatibilityError(*python_constraints)
+                new_dep = dependency_from_pep_508(new_requirement)
+                if dep.is_optional() and not dep.is_activated():
+                    new_dep.deactivate()
+                else:
+                    new_dep.activate()
+
+                by_constraint[constraint] = [new_dep]
+
+                continue
+
+            if len(by_constraint) == 1:
+                self.debug(
+                    "<debug>Merging requirements for {}</debug>".format(str(deps[0]))
+                )
+                dependencies.append(list(by_constraint.values())[0][0])
+                continue
+
+            # We leave dependencies as-is if they have the same
+            # python/platform constraints.
+            # That way the resolver will pickup the conflict
+            # and display a proper error.
+            _deps = [value[0] for value in by_constraint.values()]
+            seen = set()
+            for _dep in _deps:
+                pep_508_dep = _dep.to_pep_508(False)
+                if ";" not in pep_508_dep:
+                    _requirements = ""
+                else:
+                    _requirements = pep_508_dep.split(";")[1].strip()
+
+                if _requirements not in seen:
+                    seen.add(_requirements)
+
+            if len(_deps) != len(seen):
+                for _dep in _deps:
+                    dependencies.append(_dep)
+
+                continue
+
+            # At this point, we raise an exception that will
+            # tell the solver to enter compatibility mode
+            # which means it will resolve for subsets
+            # Python constraints
+            #
+            # For instance, if our root package requires Python ~2.7 || ^3.6
+            # And we have one dependency that requires Python <3.6
+            # and the other Python >=3.6 than the solver will solve
+            # dependencies for Python >=2.7,<2.8 || >=3.4,<3.6
+            # and Python >=3.6,<4.0
+            python_constraints = []
+            for constraint, _deps in by_constraint.items():
+                python_constraints.append(_deps[0].python_versions)
+
+            _deps = [str(_dep[0]) for _dep in by_constraint.values()]
+            self.debug(
+                "<warning>Different requirements found for {}.</warning>".format(
+                    ", ".join(_deps[:-1]) + " and " + _deps[-1]
+                )
+            )
+            raise CompatibilityError(*python_constraints)
 
         # Modifying dependencies as needed
         for dep in dependencies:
@@ -533,28 +595,25 @@ class Provider:
                     )
                 )
 
-            if package.dependency.is_directory() and dep.is_directory():
-                if dep.package.source_url.startswith(package.source_url):
-                    relative = (
-                        Path(package.source_url) / dep.package.source_url
-                    ).relative_to(package.source_url)
+            if (package.dependency.is_directory() or package.dependency.is_file()) and (
+                dep.is_directory() or dep.is_file()
+            ):
+                if dep.path.as_posix().startswith(package.source_url):
+                    relative = (Path(package.source_url) / dep.path).relative_to(
+                        package.source_url
+                    )
                 else:
-                    relative = Path(package.source_url) / dep.package.source_url
+                    relative = Path(package.source_url) / dep.path
 
-                dep.package.source_url = relative.as_posix()
+                # TODO: Improve the way we set the correct relative path for dependencies
+                dep._path = relative
 
         package.requires = dependencies
 
         return package
 
-    # UI
-
-    @property
-    def output(self):
-        return self._io
-
     def debug(self, message, depth=0):
-        if not (self.output.is_very_verbose() or self.output.is_debug()):
+        if not (self._io.is_very_verbose() or self._io.is_debug()):
             return
 
         if message.startswith("fact:"):
@@ -639,17 +698,22 @@ class Provider:
                 + "\n"
             )
 
-            self.output.write(debug_info)
+            self._io.write(debug_info)
 
     @contextmanager
     def progress(self):
-        if not self._io.is_decorated() or self.is_debugging():
-            self.output.writeln("Resolving dependencies...")
+        if not self._io.output.supports_ansi() or self.is_debugging():
+            self._io.write_line("Resolving dependencies...")
             yield
         else:
-            indicator = Indicator(self._io)
+            indicator = Indicator(
+                self._io, "{message} <fg=black;options=bold>({elapsed:2s})</>"
+            )
 
-            with indicator.auto():
+            with indicator.auto(
+                "<info>Resolving dependencies...</info>",
+                "<info>Resolving dependencies...</info>",
+            ):
                 yield
 
         self._in_progress = False

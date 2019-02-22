@@ -15,9 +15,10 @@ from poetry.installation.noop_installer import NoopInstaller
 from poetry.poetry import Poetry as BasePoetry
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
-from poetry.repositories import Repository
+from poetry.repositories import Repository as BaseRepository
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
+from poetry.repositories.exceptions import PackageNotFound
 
 
 @pytest.fixture()
@@ -43,11 +44,11 @@ def mock_clone(self, source, dest):
 
 @pytest.fixture
 def installed():
-    return Repository()
+    return BaseRepository()
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed):
+def setup(mocker, installer, installed, config):
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
@@ -101,6 +102,10 @@ class Locker(BaseLocker):
         self._content_hash = self._get_content_hash()
         self._locked = False
         self._lock_data = None
+        self._write = False
+
+    def write(self, write=True):
+        self._write = write
 
     def is_locked(self):
         return self._locked
@@ -119,6 +124,11 @@ class Locker(BaseLocker):
         return True
 
     def _write_lock_data(self, data):
+        if self._write:
+            super(Locker, self)._write_lock_data(data)
+            self._locked = True
+            return
+
         self._lock_data = None
 
 
@@ -134,14 +144,31 @@ class Poetry(BasePoetry):
         self._pool = Pool()
 
 
+class Repository(BaseRepository):
+    def find_packages(
+        self, name, constraint=None, extras=None, allow_prereleases=False
+    ):
+        packages = super(Repository, self).find_packages(
+            name, constraint, extras, allow_prereleases
+        )
+        if len(packages) == 0:
+            raise PackageNotFound("Package [{}] not found.".format(name))
+        return packages
+
+
 @pytest.fixture
 def repo():
     return Repository()
 
 
 @pytest.fixture
-def poetry(repo):
-    p = Poetry.create(Path(__file__).parent.parent / "fixtures" / "simple_project")
+def project_directory():
+    return "simple_project"
+
+
+@pytest.fixture
+def poetry(repo, project_directory):
+    p = Poetry.create(Path(__file__).parent.parent / "fixtures" / project_directory)
 
     with p.file.path.open() as f:
         content = f.read()

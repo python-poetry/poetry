@@ -73,7 +73,7 @@ POETRY_VERSION=0.12.0 python get-poetry.py
     Using alternative installation methods will make Poetry always
     use the Python version for which it has been installed to create
     virtualenvs.
-    
+
     So, you will need to install Poetry for each Python version you
     want to use and switch between them.
 
@@ -148,6 +148,11 @@ poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
+
+# Oh-My-Zsh
+mkdir $ZSH/plugins/poetry
+poetry completions zsh > $ZSH/plugins/poetry/_poetry
+
 ```
 
 !!! note
@@ -158,4 +163,13 @@ For `zsh`, you must then add the following line in your `~/.zshrc` before `compi
 
 ```bash
 fpath+=~/.zfunc
+```
+
+For `oh-my-zsh`, you must then enable poetry in your `~/.zshrc` plugins
+
+```
+plugins(
+	poetry
+	...
+	)
 ```

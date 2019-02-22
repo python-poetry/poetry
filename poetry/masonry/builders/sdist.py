@@ -54,7 +54,7 @@ Author-email: {author_email}
 
 class SdistBuilder(Builder):
     def build(self, target_dir=None):  # type: (Path) -> Path
-        self._io.writeln(" - Building <info>sdist</info>")
+        self._io.write_line(" - Building <info>sdist</info>")
         if target_dir is None:
             target_dir = self._path / "dist"
 
@@ -101,7 +101,7 @@ class SdistBuilder(Builder):
             tar.close()
             gz.close()
 
-        self._io.writeln(" - Built <fg=cyan>{}</>".format(target.name))
+        self._io.write_line(" - Built <fg=cyan>{}</>".format(target.name))
 
         return target
 
@@ -278,7 +278,7 @@ class SdistBuilder(Builder):
                     if not f.is_dir()
                 ]
 
-                data = [e for e in data_elements if e not in excluded_files]
+                data = [e for e in data_elements if not self.is_excluded(e)]
                 if not data:
                     continue
 

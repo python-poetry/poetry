@@ -14,16 +14,10 @@ from requests_toolbelt.multipart import MultipartEncoder, MultipartEncoderMonito
 
 from poetry.__version__ import __version__
 from poetry.utils.helpers import normalize_version
+from poetry.utils.patterns import wheel_file_re
 
 from ..metadata import Metadata
 
-
-wheel_file_re = re.compile(
-    r"""^(?P<namever>(?P<name>.+?)(-(?P<ver>\d.+?))?)
-        ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
-        \.whl|\.dist-info)$""",
-    re.VERBOSE,
-)
 
 _has_blake2 = hasattr(hashlib, "blake2b")
 
@@ -219,7 +213,7 @@ class Uploader:
                 ("content", (file.name, fp, "application/octet-stream"))
             )
             encoder = MultipartEncoder(data_to_send)
-            bar = self._io.create_progress_bar(encoder.len)
+            bar = self._io.progress_bar(encoder.len)
             bar.set_format(
                 " - Uploading <info>{0}</> <comment>%percent%%</>".format(file.name)
             )
@@ -239,7 +233,7 @@ class Uploader:
             if resp.ok:
                 bar.finish()
 
-                self._io.writeln("")
+                self._io.write_line("")
             else:
                 self._io.overwrite("")
 

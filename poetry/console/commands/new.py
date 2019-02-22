@@ -14,6 +14,7 @@ class NewCommand(Command):
     def handle(self):
         from poetry.layouts import layout
         from poetry.utils._compat import Path
+        from poetry.utils.env import EnvManager
         from poetry.vcs.git import GitConfig
 
         if self.option("src"):
@@ -44,7 +45,17 @@ class NewCommand(Command):
             if author_email:
                 author += " <{}>".format(author_email)
 
-        layout_ = layout_(name, "0.1.0", author=author, readme_format=readme_format)
+        current_env = EnvManager().get(Path.cwd())
+        default_python = "^{}".format(
+            ".".join(str(v) for v in current_env.version_info[:2])
+        )
+        layout_ = layout_(
+            name,
+            "0.1.0",
+            author=author,
+            readme_format=readme_format,
+            python=default_python,
+        )
         layout_.create(path)
 
         self.line(

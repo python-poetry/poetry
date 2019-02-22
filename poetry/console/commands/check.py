@@ -17,7 +17,7 @@ class CheckCommand(Command):
             return 0
 
         for error in check_result["errors"]:
-            self.error("Error: {}".format(error))
+            self.line("<error>Error: {}</error>".format(error))
 
         for error in check_result["warnings"]:
             self.line("<warning>Warning: {}</warning>".format(error))

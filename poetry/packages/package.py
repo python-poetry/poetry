@@ -73,6 +73,7 @@ class Package(object):
         self._python_constraint = parse_constraint("*")
         self._python_marker = AnyMarker()
 
+        self.platform = None
         self.marker = AnyMarker()
 
         self.root_dir = None
@@ -168,19 +169,6 @@ class Package(object):
         return self._python_marker
 
     @property
-    def platform(self):  # type: () -> str
-        return self._platform
-
-    @platform.setter
-    def platform(self, value):  # type: (str) -> None
-        self._platform = value
-        self._platform_constraint = parse_generic_constraint(value)
-
-    @property
-    def platform_constraint(self):
-        return self._platform_constraint
-
-    @property
     def license(self):
         return self._license
 
@@ -273,7 +261,7 @@ class Package(object):
                 file_path = Path(constraint["file"])
 
                 dependency = FileDependency(
-                    file_path, category=category, base=self.root_dir
+                    name, file_path, category=category, base=self.root_dir
                 )
             elif "path" in constraint:
                 path = Path(constraint["path"])
@@ -285,10 +273,15 @@ class Package(object):
 
                 if is_file:
                     dependency = FileDependency(
-                        path, category=category, optional=optional, base=self.root_dir
+                        name,
+                        path,
+                        category=category,
+                        optional=optional,
+                        base=self.root_dir,
                     )
                 else:
                     dependency = DirectoryDependency(
+                        name,
                         path,
                         category=category,
                         optional=optional,
@@ -375,6 +368,9 @@ class Package(object):
 
         for dep in self.requires:
             clone.requires.append(dep)
+
+        for dep in self.dev_requires:
+            clone.dev_requires.append(dep)
 
         return clone
 

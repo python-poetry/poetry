@@ -1,0 +1,94 @@
+{
+  "info": {
+    "author": "Trackpy Contributors",
+    "author_email": "daniel.b.allan@gmail.com",
+    "bugtrack_url": null,
+    "classifiers": [],
+    "description": "",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://github.com/soft-matter/trackpy",
+    "keywords": "",
+    "license": "",
+    "maintainer": "",
+    "maintainer_email": "",
+    "name": "trackpy",
+    "package_url": "https://pypi.org/project/trackpy/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/trackpy/",
+    "project_urls": {
+      "Homepage": "https://github.com/soft-matter/trackpy"
+    },
+    "release_url": "https://pypi.org/project/trackpy/0.4.1/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "particle-tracking toolkit",
+    "version": "0.4.1"
+  },
+  "last_serial": 3786947,
+  "releases": {
+    "0.4.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "4c92e8b74840f57c6047f56a4a4412c4",
+          "sha256": "f682f75e99f6c29c65e8531899b957c67d9d5a027b28b44258fa2c4a18e851cd"
+        },
+        "downloads": -1,
+        "filename": "trackpy-0.4.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "4c92e8b74840f57c6047f56a4a4412c4",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 121998,
+        "upload_time": "2018-04-21T09:59:50",
+        "url": "https://files.pythonhosted.org/packages/62/31/797febf2ea8ea316c345c1d0f10503c3901f3fca5c3ffdc6e92717efdcad/trackpy-0.4.1.tar.gz"
+      }
+    ],
+    "unknown": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "6a879fe7871bd5c62d41b5a2ed84a5cd",
+          "sha256": "88fedb53b03451a56422d4ecb393ea6bb043e821b3ee1e6518485b303e3bddf5"
+        },
+        "downloads": -1,
+        "filename": "trackpy-unknown.tar.gz",
+        "has_sig": false,
+        "md5_digest": "6a879fe7871bd5c62d41b5a2ed84a5cd",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 63292,
+        "upload_time": "2014-10-13T17:33:16",
+        "url": "https://files.pythonhosted.org/packages/35/23/3b6422d3c006251e2ad857f5fe520b193d473154f88d1f27de50798f2c6c/trackpy-unknown.tar.gz"
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "4c92e8b74840f57c6047f56a4a4412c4",
+        "sha256": "f682f75e99f6c29c65e8531899b957c67d9d5a027b28b44258fa2c4a18e851cd"
+      },
+      "downloads": -1,
+      "filename": "trackpy-0.4.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "4c92e8b74840f57c6047f56a4a4412c4",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 121998,
+      "upload_time": "2018-04-21T09:59:50",
+      "url": "https://files.pythonhosted.org/packages/62/31/797febf2ea8ea316c345c1d0f10503c3901f3fca5c3ffdc6e92717efdcad/trackpy-0.4.1.tar.gz"
+    }
+  ]
+}

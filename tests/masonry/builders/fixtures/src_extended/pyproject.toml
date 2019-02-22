@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "extended"
+version = "0.1"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+readme = "README.rst"
+
+homepage = "https://poetry.eustace.io/"
+
+build = "build.py"

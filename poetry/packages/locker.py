@@ -1,4 +1,5 @@
 import json
+import re
 
 import poetry.packages
 import poetry.repositories
@@ -12,7 +13,7 @@ from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import parse_marker
 
 
-class Locker:
+class Locker(object):
 
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
@@ -85,6 +86,19 @@ class Locker:
             package.optional = info["optional"]
             package.hashes = lock_data["metadata"]["hashes"][info["name"]]
             package.python_versions = info["python-versions"]
+            extras = info.get("extras", {})
+            if extras:
+                for name, deps in extras.items():
+                    package.extras[name] = []
+
+                    for dep in deps:
+                        m = re.match(r"^(.+?)(?:\s+\((.+)\))?$", dep)
+                        dep_name = m.group(1)
+                        constraint = m.group(2) or "*"
+
+                        package.extras[name].append(
+                            poetry.packages.Dependency(dep_name, constraint)
+                        )
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
@@ -207,6 +221,12 @@ class Locker:
 
             constraint = {"version": str(dependency.pretty_constraint)}
 
+            if dependency.extras:
+                constraint["extras"] = dependency.extras
+
+            if dependency.is_optional():
+                constraint["optional"] = True
+
             if not dependency.python_constraint.is_any():
                 constraint["python"] = str(dependency.python_constraint)
 
@@ -218,7 +238,7 @@ class Locker:
         data = {
             "name": package.pretty_name,
             "version": package.pretty_version,
-            "description": package.description,
+            "description": package.description or "",
             "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,
@@ -226,6 +246,16 @@ class Locker:
         }
         if not package.marker.is_any():
             data["marker"] = str(package.marker)
+
+        if package.extras:
+            extras = {}
+            for name, deps in package.extras.items():
+                extras[name] = [
+                    str(dep) if not dep.constraint.is_any() else dep.name
+                    for dep in deps
+                ]
+
+            data["extras"] = extras
 
         if dependencies:
             for k, constraints in dependencies.items():

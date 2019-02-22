@@ -1,14 +1,6 @@
 [[package]]
 description = ""
 category = "main"
-name = "cachy"
-optional = true
-python-versions = "*"
-version = "0.2.0"
-
-[[package]]
-description = ""
-category = "main"
 name = "pendulum"
 optional = false
 python-versions = "*"
@@ -23,7 +15,11 @@ python-versions = "*"
 version = "1.2.3"
 
 [package.dependencies]
-pendulum = ">=1.4.4"
+pendulum = {version = ">=1.4.4", optional = true}
+
+[package.extras]
+extras_a = ["pendulum (>=1.4.4)"]
+extras_b = ["cachy (>=0.2.0)"]
 
 [package.source]
 reference = ""
@@ -35,6 +31,5 @@ content-hash = "123456789"
 python-versions = "*"
 
 [metadata.hashes]
-cachy = []
 project-with-extras = []
 pendulum = []

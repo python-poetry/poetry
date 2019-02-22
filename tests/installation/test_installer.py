@@ -4,9 +4,10 @@ import sys
 
 import pytest
 
+from clikit.io import NullIO
+
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
-from poetry.io import NullIO
 from poetry.packages import Locker as BaseLocker
 from poetry.packages import ProjectPackage
 from poetry.repositories import Pool
@@ -77,21 +78,12 @@ class Locker(BaseLocker):
         self._written_data = data
 
 
-@pytest.fixture(autouse=True)
-def setup():
-    # Mock python version and platform to get reliable tests
-    original_platform = sys.platform
-
-    sys.platform = "darwin"
-
-    yield
-
-    sys.platform = original_platform
-
-
 @pytest.fixture()
 def package():
-    return ProjectPackage("root", "1.0")
+    p = ProjectPackage("root", "1.0")
+    p.root_dir = Path.cwd()
+
+    return p
 
 
 @pytest.fixture()
@@ -472,8 +464,10 @@ def test_run_with_optional_and_python_restricted_dependencies(
 
 
 def test_run_with_optional_and_platform_restricted_dependencies(
-    installer, locker, repo, package
+    installer, locker, repo, package, mocker
 ):
+    mocker.patch("sys.platform", "darwin")
+
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c12 = get_package("C", "1.2")
@@ -678,11 +672,12 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
 def test_run_installs_with_local_poetry_directory_and_extras(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path("tests/fixtures/project_with_extras/")
-    package.add_dependency("demo", {"path": str(file_path), "extras": ["extras_a"]})
+    file_path = Path("tests/fixtures/project_with_extras")
+    package.add_dependency(
+        "project-with-extras", {"path": str(file_path), "extras": ["extras_a"]}
+    )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cachy", "0.2.0"))
 
     installer.run()
 
@@ -699,7 +694,9 @@ def test_run_installs_with_local_poetry_directory_transitive(
     file_path = Path(
         "tests/fixtures/directory/project_with_transitive_directory_dependencies/"
     )
-    package.add_dependency("demo", {"path": str(file_path)})
+    package.add_dependency(
+        "project-with-transitive-directory-dependencies", {"path": str(file_path)}
+    )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -713,11 +710,33 @@ def test_run_installs_with_local_poetry_directory_transitive(
     assert len(installer.installer.installs) == 2
 
 
+def test_run_installs_with_local_poetry_file_transitive(
+    installer, locker, repo, package, tmpdir
+):
+    file_path = Path(
+        "tests/fixtures/directory/project_with_transitive_file_dependencies/"
+    )
+    package.add_dependency(
+        "project-with-transitive-file-dependencies", {"path": str(file_path)}
+    )
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    installer.run()
+
+    expected = fixture("with-file-dependency-transitive")
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 3
+
+
 def test_run_installs_with_local_setuptools_directory(
     installer, locker, repo, package, tmpdir
 ):
     file_path = Path("tests/fixtures/project_with_setup/")
-    package.add_dependency("demo", {"path": str(file_path)})
+    package.add_dependency("my-package", {"path": str(file_path)})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -1261,3 +1280,119 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
         assert len(installs) == 1
     else:
         assert len(installs) == 0
+
+
+def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(
+    installer, locker, repo, package, installed, env, pool
+):
+    package.add_dependency("A", {"version": "^1.0"})
+
+    package_a = get_package("A", "1.0.0")
+    package_a.add_dependency("B", {"version": "^1.0", "extras": ["foo"]})
+
+    package_b = get_package("B", "1.0.0")
+    package_b.add_dependency("C", {"version": "^1.0", "optional": True})
+    package_b.extras = {"foo": [get_dependency("C")]}
+
+    package_c = get_package("C", "1.0.0")
+    package_d = get_package("D", "1.0.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 3
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0
+
+    package.add_dependency("D", "^1.0")
+    locker.locked(True)
+    locker.mock_lock_data(locker.written_data)
+
+    installed.add_package(package_a)
+    installed.add_package(package_b)
+    installed.add_package(package_c)
+
+    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+    installer.update(True)
+    installer.whitelist(["D"])
+    installer.run()
+
+    assert len(installer.installer.installs) == 1
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0
+
+
+def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(
+    locker, repo, package, installed, env, mocker
+):
+    mocker.patch("sys.platform", "darwin")
+
+    pool = Pool()
+    pool.add_repository(MockRepository())
+
+    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+    package.add_dependency("poetry", {"version": "^0.12.0"})
+
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 3
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0
+
+    package.add_dependency("pytest", "^3.5")
+
+    locker.locked(True)
+    locker.mock_lock_data(locker.written_data)
+
+    for pkg in installer.installer.installs:
+        installed.add_package(pkg)
+
+    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+    installer.update(True)
+    installer.whitelist(["pytest"])
+    installer.run()
+
+    assert len(installer.installer.installs) == 6 if not PY2 else 7
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0
+
+
+def test_installer_required_extras_should_be_installed(
+    locker, repo, package, installed, env, mocker
+):
+    pool = Pool()
+    pool.add_repository(MockRepository())
+
+    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+    package.add_dependency(
+        "cachecontrol", {"version": "^0.12.5", "extras": ["filecache"]}
+    )
+
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 2
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0
+
+    locker.locked(True)
+    locker.mock_lock_data(locker.written_data)
+
+    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 2
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0

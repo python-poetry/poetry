@@ -1,7 +1,10 @@
 import json
+import pytest
 import shutil
 
+from poetry.packages import Dependency
 from poetry.repositories.pypi_repository import PyPiRepository
+from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 
 
@@ -55,6 +58,13 @@ def test_find_packages_with_prereleases():
     assert len(packages) == 7
 
 
+def test_find_packages_does_not_select_prereleases_if_not_allowed():
+    repo = MockRepository()
+    packages = repo.find_packages("pyyaml")
+
+    assert len(packages) == 1
+
+
 def test_package():
     repo = MockRepository()
 
@@ -104,3 +114,62 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():
     dep = package.requires[0]
     assert dep.name == "futures"
     assert dep.python_versions == "~2.7"
+
+
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_fallback_can_read_setup_to_get_dependencies():
+    repo = MockRepository(fallback=True)
+
+    package = repo.package("sqlalchemy", "1.2.12")
+
+    assert package.name == "sqlalchemy"
+    assert len(package.requires) == 0
+
+    assert package.extras == {
+        "mssql_pymssql": [Dependency("pymssql", "*")],
+        "mssql_pyodbc": [Dependency("pyodbc", "*")],
+        "mysql": [Dependency("mysqlclient", "*")],
+        "oracle": [Dependency("cx_oracle", "*")],
+        "postgresql": [Dependency("psycopg2", "*")],
+        "postgresql_pg8000": [Dependency("pg8000", "*")],
+        "postgresql_psycopg2binary": [Dependency("psycopg2-binary", "*")],
+        "postgresql_psycopg2cffi": [Dependency("psycopg2cffi", "*")],
+        "pymysql": [Dependency("pymysql", "*")],
+    }
+
+
+def test_pypi_repository_supports_reading_bz2_files():
+    repo = MockRepository(fallback=True)
+
+    package = repo.package("twisted", "18.9.0")
+
+    assert package.name == "twisted"
+    assert sorted(package.requires, key=lambda r: r.name) == [
+        Dependency("attrs", ">=17.4.0"),
+        Dependency("Automat", ">=0.3.0"),
+        Dependency("constantly", ">=15.1"),
+        Dependency("hyperlink", ">=17.1.1"),
+        Dependency("incremental", ">=16.10.1"),
+        Dependency("PyHamcrest", ">=1.9.0"),
+        Dependency("zope.interface", ">=4.4.2"),
+    ]
+
+    expected_extras = {
+        "all_non_platform": [
+            Dependency("appdirs", ">=1.4.0"),
+            Dependency("cryptography", ">=1.5"),
+            Dependency("h2", ">=3.0,<4.0"),
+            Dependency("idna", ">=0.6,!=2.3"),
+            Dependency("priority", ">=1.1.0,<2.0"),
+            Dependency("pyasn1", "*"),
+            Dependency("pyopenssl", ">=16.0.0"),
+            Dependency("pyserial", ">=3.0"),
+            Dependency("service_identity", "*"),
+            Dependency("soappy", "*"),
+        ]
+    }
+
+    for name, deps in expected_extras.items():
+        assert expected_extras[name] == sorted(
+            package.extras[name], key=lambda r: r.name
+        )

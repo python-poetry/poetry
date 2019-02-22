@@ -4,8 +4,9 @@ PEP-517 compliant buildsystem API
 import logging
 import sys
 
+from clikit.io import NullIO
+
 from poetry.poetry import Poetry
-from poetry.io import NullIO
 from poetry.utils._compat import Path
 from poetry.utils._compat import unicode
 from poetry.utils.env import SystemEnv

@@ -3,8 +3,11 @@ import tempfile
 
 from subprocess import CalledProcessError
 
+from clikit.io import NullIO
+
 from poetry.config import Config
 from poetry.utils.helpers import get_http_basic_auth
+from poetry.utils.helpers import safe_rmtree
 
 
 try:
@@ -25,7 +28,7 @@ class PipInstaller(BaseInstaller):
 
     def install(self, package, update=False):
         if package.source_type == "directory":
-            self.install_directory(package, update=update)
+            self.install_directory(package)
 
             return
 
@@ -39,7 +42,7 @@ class PipInstaller(BaseInstaller):
         if package.source_type == "legacy" and package.source_url:
             parsed = urlparse.urlparse(package.source_url)
             if parsed.scheme == "http":
-                self._io.write_error(
+                self._io.error(
                     "    <warning>Installing from unsecure host: {}</warning>".format(
                         parsed.hostname
                     )
@@ -92,6 +95,12 @@ class PipInstaller(BaseInstaller):
         self.install(target, update=True)
 
     def remove(self, package):
+        # If we have a VCS package, remove its source directory
+        if package.source_type == "git":
+            src_dir = self._env.path / "src" / package.name
+            if src_dir.exists():
+                safe_rmtree(str(src_dir))
+
         try:
             self.run("uninstall", package.name, "-y")
         except CalledProcessError as e:
@@ -101,7 +110,7 @@ class PipInstaller(BaseInstaller):
             raise
 
     def run(self, *args, **kwargs):  # type: (...) -> str
-        return self._env.run("pip", *args, **kwargs)
+        return self._env.run("python", "-m", "pip", *args, **kwargs)
 
     def requirement(self, package, formatted=False):
         if formatted and not package.source_type:
@@ -119,7 +128,7 @@ class PipInstaller(BaseInstaller):
             else:
                 req = os.path.realpath(package.source_url)
 
-            if package.develop:
+            if package.develop and package.source_type == "directory":
                 req = ["-e", req]
 
             return req
@@ -143,8 +152,7 @@ class PipInstaller(BaseInstaller):
 
         return name
 
-    def install_directory(self, package, update=False):
-        from poetry.io import NullIO
+    def install_directory(self, package):
         from poetry.masonry.builder import SdistBuilder
         from poetry.poetry import Poetry
         from poetry.utils._compat import decode
@@ -161,12 +169,16 @@ class PipInstaller(BaseInstaller):
         pyproject = TomlFile(os.path.join(req, "pyproject.toml"))
 
         has_poetry = False
+        has_build_system = False
         if pyproject.exists():
             pyproject_content = pyproject.read()
             has_poetry = (
                 "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
             )
-            has_build_system = "build-system" in pyproject_content
+            # Even if there is a build system specified
+            # pip as of right now does not support it fully
+            # TODO: Check for pip version when proper PEP-517 support lands
+            # has_build_system = ("build-system" in pyproject_content)
 
         setup = os.path.join(req, "setup.py")
         has_setup = os.path.exists(setup)
@@ -193,21 +205,22 @@ class PipInstaller(BaseInstaller):
 
     def install_git(self, package):
         from poetry.packages import Package
-        from poetry.utils._compat import Path
-        from poetry.utils.helpers import temporary_directory
         from poetry.vcs import Git
 
-        with temporary_directory() as tmp_dir:
-            tmp_dir = Path(tmp_dir)
+        src_dir = self._env.path / "src" / package.name
+        if src_dir.exists():
+            safe_rmtree(str(src_dir))
 
-            git = Git()
-            git.clone(package.source_url, tmp_dir)
-            git.checkout(package.source_reference, tmp_dir)
+        src_dir.parent.mkdir(exist_ok=True)
 
-            # Now we just need to install from the temporary directory
-            pkg = Package(package.name, package.version)
-            pkg.source_type = "directory"
-            pkg.source_url = str(tmp_dir)
-            pkg.develop = False
+        git = Git()
+        git.clone(package.source_url, src_dir)
+        git.checkout(package.source_reference, src_dir)
 
-            self.install_directory(pkg)
+        # Now we just need to install from the source directory
+        pkg = Package(package.name, package.version)
+        pkg.source_type = "directory"
+        pkg.source_url = str(src_dir)
+        pkg.develop = True
+
+        self.install_directory(pkg)

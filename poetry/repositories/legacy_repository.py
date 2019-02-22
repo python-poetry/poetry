@@ -17,6 +17,7 @@ except ImportError:
     unescape = HTMLParser().unescape
 
 from typing import Generator
+from typing import Optional
 from typing import Union
 
 import html5lib
@@ -28,19 +29,21 @@ from cachy import CacheManager
 
 import poetry.packages
 
-from poetry.config import Config
 from poetry.locations import CACHE_DIR
-from poetry.masonry.publishing.uploader import wheel_file_re
 from poetry.packages import Package
 from poetry.packages import dependency_from_pep_508
 from poetry.packages.utils.link import Link
 from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
 from poetry.utils._compat import Path
-from poetry.utils.helpers import canonicalize_name, get_http_basic_auth
+from poetry.utils.helpers import canonicalize_name
+from poetry.utils.patterns import wheel_file_re
 from poetry.version.markers import InvalidMarker
 
+from .auth import Auth
+from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
 
 
@@ -144,7 +147,9 @@ class Page:
 
 
 class LegacyRepository(PyPiRepository):
-    def __init__(self, name, url, disable_cache=False):
+    def __init__(
+        self, name, url, auth=None, disable_cache=False
+    ):  # type: (str, str, Optional[Auth], bool) -> None
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
@@ -170,10 +175,8 @@ class LegacyRepository(PyPiRepository):
         )
 
         url_parts = urlparse.urlparse(self._url)
-        if not url_parts.username:
-            self._session.auth = get_http_basic_auth(
-                Config.create("auth.toml"), self.name
-            )
+        if not url_parts.username and auth:
+            self._session.auth = auth
 
         self._disable_cache = disable_cache
 
@@ -186,11 +189,23 @@ class LegacyRepository(PyPiRepository):
     ):
         packages = []
 
-        if constraint is not None and not isinstance(constraint, VersionConstraint):
+        if constraint is None:
+            constraint = "*"
+
+        if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        if isinstance(constraint, VersionRange):
+            if (
+                constraint.max is not None
+                and constraint.max.is_prerelease()
+                or constraint.min is not None
+                and constraint.min.is_prerelease()
+            ):
+                allow_prereleases = True
+
         key = name
-        if constraint:
+        if not constraint.is_any():
             key = "{}:{}".format(key, str(constraint))
 
         if self._cache.store("matches").has(key):
@@ -202,7 +217,10 @@ class LegacyRepository(PyPiRepository):
 
             versions = []
             for version in page.versions:
-                if not constraint or (constraint and constraint.allows(version)):
+                if version.is_prerelease() and not allow_prereleases:
+                    continue
+
+                if constraint.allows(version):
                     versions.append(version)
 
             self._cache.store("matches").put(key, versions, 5)
@@ -251,6 +269,9 @@ class LegacyRepository(PyPiRepository):
             release_info = self.get_release_info(name, version)
 
             package = poetry.packages.Package(name, version, version)
+            if release_info["requires_python"]:
+                package.python_versions = release_info["requires_python"]
+
             package.source_type = "legacy"
             package.source_url = self._url
             package.source_reference = self.name
@@ -265,9 +286,17 @@ class LegacyRepository(PyPiRepository):
                     req = req.split(";")[0]
 
                     dependency = dependency_from_pep_508(req)
+                except ValueError:
+                    # Likely unable to parse constraint so we skip it
+                    self._log(
+                        "Invalid constraint ({}) found in {}-{} dependencies, "
+                        "skipping".format(req, package.name, package.version),
+                        level="debug",
+                    )
+                    continue
 
-                if dependency.extras:
-                    for extra in dependency.extras:
+                if dependency.in_extras:
+                    for extra in dependency.in_extras:
                         if extra not in package.extras:
                             package.extras[extra] = []
 
@@ -297,20 +326,20 @@ class LegacyRepository(PyPiRepository):
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:
-            raise ValueError('No package named "{}"'.format(name))
+            raise PackageNotFound('No package named "{}"'.format(name))
 
         data = {
             "name": name,
             "version": version,
             "summary": "",
             "requires_dist": [],
-            "requires_python": [],
+            "requires_python": None,
             "digests": [],
         }
 
         links = list(page.links_for_version(Version.parse(version)))
         if not links:
-            raise ValueError(
+            raise PackageNotFound(
                 'No valid distribution links found for package: "{}" version: "{}"'.format(
                     name, version
                 )
@@ -320,7 +349,11 @@ class LegacyRepository(PyPiRepository):
         default_link = links[0]
         for link in links:
             if link.is_wheel:
-                urls["bdist_wheel"] = link.url
+                m = wheel_file_re.match(link.filename)
+                python = m.group("pyver")
+                platform = m.group("plat")
+                if python == "py2.py3" and platform == "any":
+                    urls["bdist_wheel"] = link.url
             elif link.filename.endswith(".tar.gz"):
                 urls["sdist"] = link.url
             elif (
@@ -337,11 +370,7 @@ class LegacyRepository(PyPiRepository):
 
         if not urls:
             if default_link.is_wheel:
-                m = wheel_file_re.match(default_link.filename)
-                python = m.group("pyver")
-                platform = m.group("plat")
-                if python == "py2.py3" and platform == "any":
-                    urls["bdist_wheel"] = default_link.url
+                urls["bdist_wheel"] = default_link.url
             elif default_link.filename.endswith(".tar.gz"):
                 urls["sdist"] = default_link.url
             elif (

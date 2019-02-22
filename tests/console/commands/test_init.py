@@ -1,21 +1,9 @@
-import pytest
-import shutil
-import tempfile
-
+import sys
 from cleo.testers import CommandTester
 
 from poetry.utils._compat import Path
 
 from tests.helpers import get_package
-
-
-@pytest.fixture
-def tmp_dir():
-    dir_ = tempfile.mkdtemp(prefix="poetry_")
-
-    yield dir_
-
-    shutil.rmtree(dir_)
 
 
 def test_basic_interactive(app, mocker, poetry):
@@ -27,22 +15,19 @@ def test_basic_interactive(app, mocker, poetry):
     p.return_value = Path(__file__)
 
     tester = CommandTester(command)
-    tester.set_inputs(
-        [
-            "my-package",  # Package name
-            "1.2.3",  # Version
-            "This is a description",  # Description
-            "n",  # Author
-            "MIT",  # License
-            "~2.7 || ^3.6",  # Python
-            "n",  # Interactive packages
-            "n",  # Interactive dev packages
-            "\n",  # Generate
-        ]
-    )
-    tester.execute([("command", command.name)])
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
 
-    output = tester.get_display(True)
     expected = """\
 [tool.poetry]
 name = "my-package"
@@ -57,7 +42,7 @@ python = "~2.7 || ^3.6"
 [tool.poetry.dev-dependencies]
 """
 
-    assert expected in output
+    assert expected in tester.io.fetch_output()
 
 
 def test_interactive_with_dependencies(app, repo, mocker, poetry):
@@ -72,30 +57,27 @@ def test_interactive_with_dependencies(app, repo, mocker, poetry):
     p.return_value = Path(__file__).parent
 
     tester = CommandTester(command)
-    tester.set_inputs(
-        [
-            "my-package",  # Package name
-            "1.2.3",  # Version
-            "This is a description",  # Description
-            "n",  # Author
-            "MIT",  # License
-            "~2.7 || ^3.6",  # Python
-            "",  # Interactive packages
-            "pendulum",  # Search for package
-            "0",  # First option
-            "",  # Do not set constraint
-            "",  # Stop searching for packages
-            "",  # Interactive dev packages
-            "pytest",  # Search for package
-            "0",
-            "",
-            "",
-            "\n",  # Generate
-        ]
-    )
-    tester.execute([("command", command.name)])
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "",  # Interactive packages
+        "pendulum",  # Search for package
+        "0",  # First option
+        "",  # Do not set constraint
+        "",  # Stop searching for packages
+        "",  # Interactive dev packages
+        "pytest",  # Search for package
+        "0",
+        "",
+        "",
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
 
-    output = tester.get_display(True)
     expected = """\
 [tool.poetry]
 name = "my-package"
@@ -112,7 +94,7 @@ pendulum = "^2.0"
 pytest = "^3.6"
 """
 
-    assert expected in output
+    assert expected in tester.io.fetch_output()
 
 
 def test_empty_license(app, mocker, poetry):
@@ -124,22 +106,19 @@ def test_empty_license(app, mocker, poetry):
     p.return_value = Path(__file__)
 
     tester = CommandTester(command)
-    tester.set_inputs(
-        [
-            "my-package",  # Package name
-            "1.2.3",  # Version
-            "",  # Description
-            "n",  # Author
-            "",  # License
-            "",  # Python
-            "n",  # Interactive packages
-            "n",  # Interactive dev packages
-            "\n",  # Generate
-        ]
-    )
-    tester.execute([("command", command.name)])
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "",  # Description
+        "n",  # Author
+        "",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
 
-    output = tester.get_display(True)
     expected = """\
 [tool.poetry]
 name = "my-package"
@@ -148,9 +127,11 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = "*"
+python = "^{python}"
 
 [tool.poetry.dev-dependencies]
-"""
+""".format(
+        python=".".join(str(c) for c in sys.version_info[:2])
+    )
 
-    assert expected in output
+    assert expected in tester.io.fetch_output()

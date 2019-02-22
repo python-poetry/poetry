@@ -9,7 +9,7 @@ class DebugResolveCommand(Command):
     """
     Debugs dependency resolution.
 
-    debug:resolve
+    resolve
         { package?* : packages to resolve. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --python= : Python version(s) to use for resolution. }
@@ -17,14 +17,14 @@ class DebugResolveCommand(Command):
         { --install : Show what would be installed for the current system. }
     """
 
-    _loggers = ["poetry.repositories.pypi_repository"]
+    loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.packages import ProjectPackage
         from poetry.puzzle import Solver
         from poetry.repositories.repository import Repository
         from poetry.semver import parse_constraint
-        from poetry.utils.env import Env
+        from poetry.utils.env import EnvManager
 
         packages = self.argument("package")
 
@@ -54,7 +54,7 @@ class DebugResolveCommand(Command):
 
         pool = self.poetry.pool
 
-        solver = Solver(package, pool, Repository(), Repository(), self.output)
+        solver = Solver(package, pool, Repository(), Repository(), self._io)
 
         ops = solver.solve()
 
@@ -63,9 +63,8 @@ class DebugResolveCommand(Command):
         self.line("")
 
         if self.option("tree"):
-            show_command = self.get_application().find("show")
-            show_command.output = self.output
-            show_command.init_styles()
+            show_command = self.application.find("show")
+            show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]
             repo = Repository(packages)
@@ -74,12 +73,12 @@ class DebugResolveCommand(Command):
             for pkg in repo.packages:
                 for require in requires:
                     if pkg.name == require.name:
-                        show_command.display_package_tree(pkg, repo)
+                        show_command.display_package_tree(self.io, pkg, repo)
                         break
 
             return 0
 
-        env = Env.get()
+        env = EnvManager(self.poetry.config).get(self.poetry.file.parent)
         current_python_version = parse_constraint(
             ".".join(str(v) for v in env.version_info)
         )

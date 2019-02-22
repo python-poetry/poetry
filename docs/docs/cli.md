@@ -17,7 +17,7 @@ calls `poetry update`.
 
 ## Global options
 
-* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug.
+* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
 * `--help (-h)` : Display help information.
 * `--quiet (-q)` : Do not output any message.
 * `--ansi`: Force ANSI output.
@@ -190,7 +190,7 @@ poetry add my-package --path ../my-package/dist/my_package-0.1.0.whl
 ## remove
 
 The `remove` command removes a package from the current
-list of installed packages
+list of installed packages.
 
 ```bash
 poetry remove pendulum
@@ -296,7 +296,7 @@ The `run` command executes the given command inside the project's virtualenv.
 poetry run python -V
 ```
 
-It can also executes one of the scripts defined in `pyproject.toml`.
+It can also execute one of the scripts defined in `pyproject.toml`.
 
 So, if you have a script defined like this:
 
@@ -342,7 +342,7 @@ poetry shell
 
 ## check
 
-The `check` command validate the structure of the `pyproject.toml` file
+The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
 ```bash
@@ -376,3 +376,127 @@ and writes the new version back to `pyproject.toml`
 
 The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
+
+
+## export
+
+This command exports the lock file to other formats.
+
+If the lock file does not exist, it will be created automatically.
+
+```bash
+poetry export -f requirements.txt
+```
+
+!!!note
+
+    Only the `requirements.txt` format is currently supported.
+
+## env
+
+The `env` command regroups sub commands to interact with the virtualenvs
+associated with a specific project.
+
+### env use
+
+The `env use` command tells Poetry which Python version
+to use for the current project.
+
+```bash
+poetry env use /full/path/to/python
+```
+
+If you have the python executable in your `PATH` you can use it:
+
+```bash
+poetry env use python3.7
+```
+
+You can even just use the minor Python version in this case:
+
+```bash
+poetry env use 3.7
+```
+
+If you want to disable the explicitly activated virtualenv, you can use the
+special `system` Python version to retrieve the default behavior:
+
+```bash
+poetry env use system
+```
+
+### env info
+
+The `env info` command displays basic information about the currently activated virtualenv:
+
+```bash
+poetry env info
+```
+
+will output something similar to this:
+
+```text
+Virtualenv
+Python:         3.7.1
+Implementation: CPython
+Path:           /path/to/poetry/cache/virtualenvs/test-O3eWbxRl-py3.7
+Valid:          True
+
+System
+Platform: darwin
+OS:       posix
+Python:   /path/to/main/python
+```
+
+If you only want to know the path to the virtualenv, you can pass the `--path` option
+to `env info`:
+
+```bash
+poetry env info --path
+```
+
+#### Options
+
+* `--path`: Only display the path of the virtualenv.
+
+
+### env list
+
+The `env list` command lists all the virtualenvs associated with the current virtualenv.
+
+```bash
+poetry env list
+```
+
+will output something like the following:
+
+```text
+test-O3eWbxRl-py2.7
+test-O3eWbxRl-py3.6
+test-O3eWbxRl-py3.7 (Activated)
+```
+
+#### Options
+
+* `--full-path`: Display the full path of the virtualenvs.
+
+### env remove
+
+The `env remove` command deletes virtualenvs associated with the current project:
+
+```bash
+poetry env remove /full/path/to/python
+```
+
+Similarly to `env use`, you can either pass `python3.7`, `3.7` or the name of
+the virtualenv (as returned by `env list`):
+
+```bash
+poetry env remove python3.7
+poetry env remove 3.7
+poetry env remove test-O3eWbxRl-py3.7
+```
+
+!!!note
+
+    If your remove the currently activated virtualenv, it will be automatically deactivated.

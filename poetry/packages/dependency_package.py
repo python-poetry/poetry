@@ -11,6 +11,9 @@ class DependencyPackage(object):
     def package(self):
         return self._package
 
+    def clone(self):  # type: () -> DependencyPackage
+        return self.__class__(self._dependency, self._package.clone())
+
     def __getattr__(self, name):
         return getattr(self._package, name)
 

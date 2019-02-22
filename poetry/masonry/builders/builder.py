@@ -6,8 +6,15 @@ import tempfile
 
 from collections import defaultdict
 from contextlib import contextmanager
+from typing import Set
+from typing import Union
+
+from clikit.api.io.flags import VERY_VERBOSE
 
 from poetry.utils._compat import Path
+from poetry.utils._compat import basestring
+from poetry.utils._compat import glob
+from poetry.utils._compat import lru_cache
 from poetry.vcs import get_vcs
 
 from ..metadata import Metadata
@@ -39,35 +46,44 @@ class Builder(object):
     def build(self):
         raise NotImplementedError()
 
-    def find_excluded_files(self):  # type: () -> list
+    @lru_cache(maxsize=None)
+    def find_excluded_files(self):  # type: () -> Set[str]
         # Checking VCS
         vcs = get_vcs(self._path)
         if not vcs:
-            return []
+            vcs_ignored_files = set()
+        else:
+            vcs_ignored_files = set(vcs.get_ignored_files())
 
-        explicitely_excluded = []
+        explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
-            for excluded in self._path.glob(excluded_glob):
-                explicitely_excluded.append(excluded)
+            for excluded in glob(
+                os.path.join(self._path.as_posix(), str(excluded_glob)), recursive=True
+            ):
+                explicitely_excluded.add(
+                    Path(excluded).relative_to(self._path).as_posix()
+                )
 
-        ignored = vcs.get_ignored_files() + explicitely_excluded
-        result = []
+        ignored = vcs_ignored_files | explicitely_excluded
+        result = set()
         for file in ignored:
-            try:
-                file = Path(file).absolute().relative_to(self._path)
-            except ValueError:
-                # Should only happen in tests
-                continue
+            result.add(file)
 
-            result.append(file)
-
+        # The list of excluded files might be big and we will do a lot
+        # containment check (x in excluded).
+        # Returning a set make those tests much much faster.
         return result
 
-    def find_files_to_add(self, exclude_build=True):  # type: () -> list
+    def is_excluded(self, filepath):  # type: (Union[str, Path]) -> bool
+        if not isinstance(filepath, basestring):
+            filepath = filepath.as_posix()
+
+        return filepath in self.find_excluded_files()
+
+    def find_files_to_add(self, exclude_build=True):  # type: (bool) -> list
         """
         Finds all files to add to the tarball
         """
-        excluded = self.find_excluded_files()
         to_add = []
 
         for include in self._module.includes:
@@ -80,7 +96,7 @@ class Builder(object):
 
                 file = file.relative_to(self._path)
 
-                if file in excluded and isinstance(include, PackageInclude):
+                if self.is_excluded(file) and isinstance(include, PackageInclude):
                     continue
 
                 if file.suffix == ".pyc":
@@ -90,26 +106,24 @@ class Builder(object):
                     # Skip duplicates
                     continue
 
-                self._io.writeln(
-                    " - Adding: <comment>{}</comment>".format(str(file)),
-                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                self._io.write_line(
+                    " - Adding: <comment>{}</comment>".format(str(file)), VERY_VERBOSE
                 )
                 to_add.append(file)
 
         # Include project files
-        self._io.writeln(
-            " - Adding: <comment>pyproject.toml</comment>",
-            verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+        self._io.write_line(
+            " - Adding: <comment>pyproject.toml</comment>", VERY_VERBOSE
         )
         to_add.append(Path("pyproject.toml"))
 
         # If a license file exists, add it
         for license_file in self._path.glob("LICENSE*"):
-            self._io.writeln(
+            self._io.write_line(
                 " - Adding: <comment>{}</comment>".format(
                     license_file.relative_to(self._path)
                 ),
-                verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                VERY_VERBOSE,
             )
             to_add.append(license_file.relative_to(self._path))
 
@@ -118,11 +132,11 @@ class Builder(object):
         if "readme" in self._poetry.local_config:
             readme = self._path / self._poetry.local_config["readme"]
             if readme.exists():
-                self._io.writeln(
+                self._io.write_line(
                     " - Adding: <comment>{}</comment>".format(
                         readme.relative_to(self._path)
                     ),
-                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                    VERY_VERBOSE,
                 )
                 to_add.append(readme.relative_to(self._path))
 
