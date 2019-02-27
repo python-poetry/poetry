@@ -16,6 +16,7 @@ except ImportError:
 
     unescape = HTMLParser().unescape
 
+from collections import defaultdict
 from typing import Generator
 from typing import Optional
 from typing import Union
@@ -344,41 +345,21 @@ class LegacyRepository(PyPiRepository):
                     name, version
                 )
             )
-        urls = {}
+        urls = defaultdict(list)
         hashes = []
-        default_link = links[0]
         for link in links:
             if link.is_wheel:
-                m = wheel_file_re.match(link.filename)
-                python = m.group("pyver")
-                platform = m.group("plat")
-                if python == "py2.py3" and platform == "any":
-                    urls["bdist_wheel"] = link.url
-            elif link.filename.endswith(".tar.gz"):
-                urls["sdist"] = link.url
-            elif (
-                link.filename.endswith((".zip", ".bz2", ".xz", ".Z", ".tar"))
-                and "sdist" not in urls
+                urls["bdist_wheel"].append(link.url)
+            elif link.filename.endswith(
+                (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")
             ):
-                urls["sdist"] = link.url
+                urls["sdist"].append(link.url)
 
             hash = link.hash
             if link.hash_name == "sha256":
                 hashes.append(hash)
 
         data["digests"] = hashes
-
-        if not urls:
-            if default_link.is_wheel:
-                urls["bdist_wheel"] = default_link.url
-            elif default_link.filename.endswith(".tar.gz"):
-                urls["sdist"] = default_link.url
-            elif (
-                default_link.filename.endswith((".zip", ".bz2")) and "sdist" not in urls
-            ):
-                urls["sdist"] = default_link.url
-            else:
-                return data
 
         info = self._get_info_from_urls(urls)
 
