@@ -207,7 +207,7 @@ class Installer:
             ".".join([str(i) for i in self._env.version_info[:3]])
         ):
             # We resolve again by only using the lock file
-            pool = Pool()
+            pool = Pool(ignore_repository_names=True)
 
             # Making a new repo containing the packages
             # newly resolved and the ones from the current lock file

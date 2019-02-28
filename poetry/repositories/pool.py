@@ -1,4 +1,3 @@
-from typing import Dict
 from typing import List
 from typing import Optional
 
@@ -10,7 +9,9 @@ from .repository import Repository
 
 
 class Pool(BaseRepository):
-    def __init__(self, repositories=None):  # type: (Optional[List[Repository]]) -> None
+    def __init__(
+        self, repositories=None, ignore_repository_names=False
+    ):  # type: (Optional[List[Repository]], bool) -> None
         if repositories is None:
             repositories = []
 
@@ -18,6 +19,8 @@ class Pool(BaseRepository):
 
         for repository in repositories:
             self.add_repository(repository)
+
+        self._ignore_repository_names = ignore_repository_names
 
         super(Pool, self).__init__()
 
@@ -41,10 +44,14 @@ class Pool(BaseRepository):
     def package(
         self, name, version, extras=None, repository=None
     ):  # type: (str, str, List[str], str) -> Package
-        if repository is not None and repository not in self._repositories:
+        if (
+            repository is not None
+            and repository not in self._repositories
+            and not self._ignore_repository_names
+        ):
             raise ValueError('Repository "{}" does not exist.'.format(repository))
 
-        if repository is not None:
+        if repository is not None and not self._ignore_repository_names:
             try:
                 return self._repositories[repository].package(
                     name, version, extras=extras
@@ -73,10 +80,14 @@ class Pool(BaseRepository):
         allow_prereleases=False,
         repository=None,
     ):
-        if repository is not None and repository not in self._repositories:
+        if (
+            repository is not None
+            and repository not in self._repositories
+            and not self._ignore_repository_names
+        ):
             raise ValueError('Repository "{}" does not exist.'.format(repository))
 
-        if repository is not None:
+        if repository is not None and not self._ignore_repository_names:
             return self._repositories[repository].find_packages(
                 name, constraint, extras=extras, allow_prereleases=allow_prereleases
             )
