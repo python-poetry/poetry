@@ -24,6 +24,10 @@ class Pool(BaseRepository):
 
         super(Pool, self).__init__()
 
+    @property
+    def repositories(self):  # type: () -> List[Repository]
+        return list(self._repositories.values())
+
     def add_repository(self, repository):  # type: (Repository) -> Pool
         """
         Adds a repository to the pool.
