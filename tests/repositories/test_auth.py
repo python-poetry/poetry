@@ -21,6 +21,20 @@ def test_auth_with_request_on_the_same_host():
     )
 
 
+def test_auth_with_request_with_same_authentication():
+    auth = Auth("https://poetry.eustace.io", "foo", "bar")
+
+    request = Request("GET", "https://foo:bar@poetry.eustace.io/docs/")
+    assert "Authorization" not in request.headers
+
+    request = auth(request)
+
+    assert "Authorization" in request.headers
+    assert request.headers["Authorization"] == "Basic {}".format(
+        decode(base64.b64encode(encode(":".join(("foo", "bar")))))
+    )
+
+
 def test_auth_with_request_on_different_hosts():
     auth = Auth("https://poetry.eustace.io", "foo", "bar")
 

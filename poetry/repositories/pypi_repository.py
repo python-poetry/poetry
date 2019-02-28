@@ -1,12 +1,12 @@
 import logging
 import os
-import re
 import tarfile
 import zipfile
 
 import pkginfo
 
 from bz2 import BZ2File
+from collections import defaultdict
 from gzip import GzipFile
 from typing import Dict
 from typing import List
@@ -31,6 +31,7 @@ from requests import session
 from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
+from poetry.packages.utils.link import Link
 from poetry.semver import parse_constraint
 from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
@@ -39,8 +40,10 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
+from poetry.utils.patterns import wheel_file_re
 from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
+from poetry.version.markers import parse_marker
 
 from .exceptions import PackageNotFound
 from .repository import Repository
@@ -306,74 +309,14 @@ class PyPiRepository(Repository):
             # or badly set metadata when uploading
             # So, we need to make sure there is actually no
             # dependencies by introspecting packages
-            urls = {}
+            urls = defaultdict(list)
             for url in json_data["urls"]:
-                # Only get sdist and universal wheels if they exist
+                # Only get sdist and wheels if they exist
                 dist_type = url["packagetype"]
                 if dist_type not in ["sdist", "bdist_wheel"]:
                     continue
 
-                if dist_type == "sdist" and "sdist" not in urls:
-                    urls[url["packagetype"]] = url["url"]
-                    continue
-
-                if "bdist_wheel" in urls:
-                    continue
-
-                # If bdist_wheel, check if it's universal
-                filename = url["filename"]
-                if not re.search(r"-py2\.py3-none-any.whl", filename):
-                    continue
-
-                urls[dist_type] = url["url"]
-
-            if "sdist" in urls and "bdist_wheel" not in urls:
-                # If can't found a universal wheel
-                # but we found an sdist, inspect the sdist first
-                info = self._get_info_from_urls(urls)
-                if info["requires_dist"]:
-                    data["requires_dist"] = info["requires_dist"]
-
-                    if not data["requires_python"]:
-                        data["requires_python"] = info["requires_python"]
-
-                    return data
-                else:
-                    del urls["sdist"]
-
-            if not urls:
-                # If we don't have urls, we try to take the first one
-                # we find and go from there
-                if not json_data["urls"]:
-                    return data
-
-                for url in json_data["urls"]:
-                    # Only get sdist and universal wheels if they exist
-                    dist_type = url["packagetype"]
-
-                    if dist_type != "bdist_wheel":
-                        continue
-
-                    urls[url["packagetype"]] = url["url"]
-
-                    break
-
-            if not urls or "bdist_wheel" not in urls:
-                # If we don't have urls, we try to take the first one
-                # we find and go from there
-                if not json_data["urls"]:
-                    return data
-
-                for url in json_data["urls"]:
-                    # Only get sdist and universal wheels if they exist
-                    dist_type = url["packagetype"]
-
-                    if dist_type != "bdist_wheel":
-                        continue
-
-                    urls[url["packagetype"]] = url["url"]
-
-                    break
+                urls[dist_type].append(url["url"])
 
             if not urls:
                 return data
@@ -398,27 +341,98 @@ class PyPiRepository(Repository):
 
     def _get_info_from_urls(
         self, urls
-    ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
+    ):  # type: (Dict[str, List[str]]) -> Dict[str, Union[str, List, None]]
+        # Checking wheels first as they are more likely to hold
+        # the necessary information
         if "bdist_wheel" in urls:
-            self._log(
-                "Downloading wheel: {}".format(
-                    urlparse.urlparse(urls["bdist_wheel"]).path.rsplit("/")[-1]
-                ),
-                level="debug",
-            )
-            return self._get_info_from_wheel(urls["bdist_wheel"])
+            # Check fo a universal wheel
+            wheels = urls["bdist_wheel"]
 
-        self._log(
-            "Downloading sdist: {}".format(
-                urlparse.urlparse(urls["sdist"]).path.rsplit("/")[-1]
-            ),
-            level="debug",
-        )
-        return self._get_info_from_sdist(urls["sdist"])
+            universal_wheel = None
+            universal_python2_wheel = None
+            universal_python3_wheel = None
+            platform_specific_wheels = []
+            for wheel in wheels:
+                link = Link(wheel)
+                m = wheel_file_re.match(link.filename)
+                if not m:
+                    continue
+
+                pyver = m.group("pyver")
+                abi = m.group("abi")
+                plat = m.group("plat")
+                if abi == "none" and plat == "any":
+                    # Universal wheel
+                    if pyver == "py2.py3":
+                        # Any Python
+                        universal_wheel = wheel
+                    elif pyver == "py2":
+                        universal_python2_wheel = wheel
+                    else:
+                        universal_python3_wheel = wheel
+                else:
+                    platform_specific_wheels.append(wheel)
+
+            if universal_wheel is not None:
+                return self._get_info_from_wheel(universal_wheel)
+
+            info = {}
+            if universal_python2_wheel and universal_python3_wheel:
+                info = self._get_info_from_wheel(universal_python2_wheel)
+
+                py3_info = self._get_info_from_wheel(universal_python3_wheel)
+                if py3_info["requires_dist"]:
+                    if not info["requires_dist"]:
+                        info["requires_dist"] = py3_info["requires_dist"]
+
+                        return info
+
+                    py2_requires_dist = set(
+                        dependency_from_pep_508(r).to_pep_508()
+                        for r in info["requires_dist"]
+                    )
+                    py3_requires_dist = set(
+                        dependency_from_pep_508(r).to_pep_508()
+                        for r in py3_info["requires_dist"]
+                    )
+                    base_requires_dist = py2_requires_dist & py3_requires_dist
+                    py2_only_requires_dist = py2_requires_dist - py3_requires_dist
+                    py3_only_requires_dist = py3_requires_dist - py2_requires_dist
+
+                    # Normalizing requires_dist
+                    requires_dist = list(base_requires_dist)
+                    for requirement in py2_only_requires_dist:
+                        dep = dependency_from_pep_508(requirement)
+                        dep.marker = dep.marker.intersect(
+                            parse_marker("python_version == '2.7'")
+                        )
+                        requires_dist.append(dep.to_pep_508())
+
+                    for requirement in py3_only_requires_dist:
+                        dep = dependency_from_pep_508(requirement)
+                        dep.marker = dep.marker.intersect(
+                            parse_marker("python_version >= '3'")
+                        )
+                        requires_dist.append(dep.to_pep_508())
+
+                    info["requires_dist"] = sorted(list(set(requires_dist)))
+
+            if info:
+                return info
+
+            if platform_specific_wheels and "sdist" not in urls:
+                # Pick the first wheel available and hope for the best
+                return self._get_info_from_wheel(platform_specific_wheels[0])
+
+        return self._get_info_from_sdist(urls["sdist"][0])
 
     def _get_info_from_wheel(
         self, url
     ):  # type: (str) -> Dict[str, Union[str, List, None]]
+        self._log(
+            "Downloading wheel: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
+            level="debug",
+        )
         info = {"summary": "", "requires_python": None, "requires_dist": None}
 
         filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
@@ -447,6 +461,10 @@ class PyPiRepository(Repository):
     def _get_info_from_sdist(
         self, url
     ):  # type: (str) -> Dict[str, Union[str, List, None]]
+        self._log(
+            "Downloading sdist: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
+            level="debug",
+        )
         info = {"summary": "", "requires_python": None, "requires_dist": None}
 
         filename = os.path.basename(urlparse.urlparse(url).path)
