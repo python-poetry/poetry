@@ -47,6 +47,7 @@ class Installer:
         self._dev_mode = True
         self._develop = []
         self._execute_operations = True
+        self._lock = False
 
         self._whitelist = []
 
@@ -108,6 +109,16 @@ class Installer:
 
     def update(self, update=True):  # type: (bool) -> Installer
         self._update = update
+
+        return self
+
+    def lock(self):  # type: () -> Installer
+        """
+        Prepare the installer for locking only.
+        """
+        self.update()
+        self.execute_operations(False)
+        self._lock = True
 
         return self
 
@@ -181,6 +192,12 @@ class Installer:
             ops = self._get_operations_from_lock(locked_repository)
 
         self._populate_local_repo(local_repo, ops, locked_repository)
+
+        if self._lock:
+            # If we are only in lock mode, no need to go any further
+            self._write_lock_file(local_repo)
+
+            return 0
 
         root = self._package
         if not self.is_dev_mode():
@@ -273,18 +290,19 @@ class Installer:
             )
 
         # Writing lock before installing
-        if self._update and self._write_lock:
-            updated_lock = self._locker.set_lock_data(
-                self._package, local_repo.packages
-            )
-
-            if updated_lock:
-                self._io.writeln("")
-                self._io.writeln("<info>Writing lock file</>")
+        self._write_lock_file(local_repo)
 
         self._io.writeln("")
         for op in ops:
             self._execute(op)
+
+    def _write_lock_file(self, repo):  # type: (Repository) -> None
+        if self._update and self._write_lock:
+            updated_lock = self._locker.set_lock_data(self._package, repo.packages)
+
+            if updated_lock:
+                self._io.writeln("")
+                self._io.writeln("<info>Writing lock file</>")
 
     def _execute(self, operation):  # type: (Operation) -> None
         """
