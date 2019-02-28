@@ -421,6 +421,10 @@
                     "type": "string",
                     "description": "The url of the repository",
                     "format": "uri"
+                },
+                "default": {
+                    "type": "boolean",
+                    "description": "Make this repository the default (disable PyPI)"
                 }
             }
         }

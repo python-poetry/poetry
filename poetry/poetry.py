@@ -42,12 +42,21 @@ class Poetry:
         self._auth_config = Config.create("auth.toml")
 
         # Configure sources
+        has_default_source = False
         self._pool = Pool()
         for source in self._local_config.get("source", []):
+            if source.get("default", False):
+                if has_default_source:
+                    raise ValueError("Only one source can be the default")
+
+                has_default_source = True
+
             self._pool.add_repository(self.create_legacy_repository(source))
 
         # Always put PyPI last to prefer private repositories
-        self._pool.add_repository(PyPiRepository())
+        # but only if we have no other default source
+        if not has_default_source:
+            self._pool.add_repository(PyPiRepository())
 
     @property
     def file(self):
