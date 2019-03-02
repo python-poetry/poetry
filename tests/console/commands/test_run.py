@@ -14,3 +14,15 @@ def test_run_passes_all_args(app, mocker):
     tester.execute("python -V")
 
     assert [["python", "-V"]] == env.executed
+
+
+def test_double_dash(app, mocker):
+    env = MockEnv(path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True)
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
+
+    command = app.find("run")
+    tester = CommandTester(command)
+
+    tester.execute("python -h -- -v")
+
+    assert [["python", "-v"]] == env.executed
