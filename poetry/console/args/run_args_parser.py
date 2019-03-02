@@ -30,12 +30,14 @@ class RunArgsParser(DefaultArgsParser):
         tokens = raw_args.tokens[:]
 
         last_arg = list(fmt.get_arguments().values())[-1]
+
         self._arguments[last_arg.name] = []
 
-        while True:
-            try:
-                token = tokens.pop(0)
-            except IndexError:
-                break
-
-            self._arguments[last_arg.name].append(token)
+        if "--" in tokens:
+            # Do not include options that preceed the double dash
+            double_dash_idx = tokens.index("--")
+            for idx, token in enumerate(tokens):
+                if not (idx < double_dash_idx and token.startswith("-")):
+                    self._arguments[last_arg.name].append(token)
+        else:
+            self._arguments[last_arg.name] = tokens[:]
