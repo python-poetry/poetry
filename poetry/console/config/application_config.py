@@ -26,6 +26,29 @@ class ApplicationConfig(BaseApplicationConfig):
             ConsoleEvents.PRE_HANDLE.value, self.register_command_loggers
         )
         self.add_event_listener(ConsoleEvents.PRE_HANDLE.value, self.set_env)
+        self.add_event_listener(
+            ConsoleEvents.PRE_RESOLVE.value, self.suppress_global_options, priority=1
+        )
+
+    def suppress_global_options(
+        self, event, event_name, _
+    ):  # type: (PreHandleEvent, str, ...) -> None
+        args = event.raw_args
+        application = event.application
+
+        if len(args.tokens) > 0 and args.tokens[0] == "run" and "--" in args.tokens:
+            # Check if a global option token preceeds the first double dash
+            double_dash_idx = args.tokens.index("--")
+            for idx in range(double_dash_idx):
+                if args.tokens[idx].startswith("-"):
+                    return
+
+            command = application.get_command("run")
+
+            parsed_args = command.parse(args)
+
+            event.set_resolved_command(ResolvedCommand(command, parsed_args))
+            event.stop_propagation()
 
     def register_command_loggers(
         self, event, event_name, _
