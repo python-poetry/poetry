@@ -313,6 +313,8 @@ poetry run my-script
 
 Note that this command has no option.
 
+All arguments following a double dash (`--`) are passed on to the given command. 
+
 ## shell
 
 The `shell` command spawns a shell,
