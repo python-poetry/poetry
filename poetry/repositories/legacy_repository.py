@@ -21,7 +21,6 @@ from typing import Generator
 from typing import Optional
 from typing import Union
 
-import html5lib
 import requests
 
 from cachecontrol import CacheControl
@@ -46,6 +45,12 @@ from poetry.version.markers import InvalidMarker
 from .auth import Auth
 from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
+
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import html5lib
 
 
 class Page:
