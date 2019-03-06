@@ -90,17 +90,23 @@ pip install --user poetry
     Be aware that it will also install Poetry's dependencies
     which might cause conflicts with other packages.
 
-#### Installing with `pipsi`
+#### Installing with `pipx`
 
-Using [`pipsi`](https://github.com/mitsuhiko/pipsi) to install Poetry is also possible.
+Using [`pipx`](https://github.com/cs01/pipx) to install Poetry is also possible. [pipx] is used to install Python CLI applications globally while still isolating them in virtual environments. This allows for clean upgrades and uninstalls. pipx supports Python 3.6 and later. If using an earlier version of Python, consider [pipsi](https://github.com/mitsuhiko/pipsi).
 
 ```bash
-pipsi install poetry
+pipx install poetry
 ```
 
-Make sure your installed version of `pipsi` is at least version `0.10`,
-otherwise Poetry will not function properly. You can get it from its
-[Github repository](https://github.com/mitsuhiko/pipsi).
+```bash
+pipx upgrade poetry
+```
+
+```bash
+pipx uninstall poetry
+```
+
+[Github repository](https://github.com/cs01/pipx).
 
 
 ## Updating `poetry`
