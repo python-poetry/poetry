@@ -340,9 +340,28 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
+By default `poetry` will install your project's package everytime you run `install`:
+
+```bash
+$ poetry install
+Installing dependencies from lock file
+
+Nothing to install or update
+
+  - Installing <your-package-name> (x.x.x)
+
+```
+
+If you want to skip this installation, use the `--no-root` option.
+
+```bash
+poetry install --no-root
+```
+
 #### Options
 
 * `--no-dev`: Do not install dev dependencies.
+* `--no-root`: Do not install the root package (your project).
 * `-E|--extras`: Features to install (multiple values allowed).
 
 ### update
