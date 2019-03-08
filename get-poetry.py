@@ -600,7 +600,6 @@ class Installer:
 
         addition = "\n{}\n".format(export_string)
 
-        updated = []
         profiles = self.get_unix_profiles()
         for profile in profiles:
             if not os.path.exists(profile):
@@ -612,8 +611,6 @@ class Installer:
             if addition not in content:
                 with open(profile, "a") as f:
                     f.write(addition)
-
-                updated.append(os.path.relpath(profile, HOME))
 
     def add_to_windows_path(self):
         try:
