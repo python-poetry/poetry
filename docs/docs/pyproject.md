@@ -187,7 +187,7 @@ This section describe the scripts or executable that will be installed when inst
 
 ```toml
 [tool.poetry.scripts]
-poetry = 'poetry:console.run'
+poetry = 'poetry.console:run'
 ```
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
