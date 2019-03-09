@@ -27,7 +27,15 @@ class Exporter(object):
         self, cwd, with_hashes=True, dev=False
     ):  # type: (Path, bool, bool) -> None
         filepath = cwd / "requirements.txt"
-        content = ""
+
+        repositories = {
+            package.source_url
+            for package in self._lock.locked_repository(dev).packages
+            if package.source_type == "legacy" and package.source_url
+        }
+        content = "".join(
+            sorted(["--extra-index-url {}\n".format(url) for url in repositories])
+        )
 
         for package in sorted(
             self._lock.locked_repository(dev).packages, key=lambda p: p.name
@@ -44,10 +52,6 @@ class Exporter(object):
                 line += package.source_url
             else:
                 line = "{}=={}".format(package.name, package.version.text)
-
-                if package.source_type == "legacy" and package.source_url:
-                    line += " \\\n"
-                    line += "    --index-url {}".format(package.source_url)
 
                 if package.hashes and with_hashes:
                     line += " \\\n"

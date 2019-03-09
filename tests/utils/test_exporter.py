@@ -395,11 +395,82 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, locker)
         content = f.read()
 
     expected = """\
+--extra-index-url https://example.com/simple/
 bar==4.5.6 \\
-    --index-url https://example.com/simple/ \\
     --hash=sha256:67890
 foo==1.2.3 \\
     --hash=sha256:12345
+"""
+
+    assert expected == content
+
+
+def test_exporter_exports_requirements_txt_with_multiple_legacy_packages(
+    tmp_dir, locker
+):
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example2.com/simple/",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/simple/",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "gar",
+                    "version": "7.8.9",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/simple/",
+                        "reference": "",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": ["12345"], "bar": ["67890"], "gar": ["abcde"]},
+            },
+        }
+    )
+    exporter = Exporter(locker)
+
+    exporter.export("requirements.txt", Path(tmp_dir), dev=True)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+--extra-index-url https://example.com/simple/
+--extra-index-url https://example2.com/simple/
+bar==4.5.6 \\
+    --hash=sha256:67890
+foo==1.2.3 \\
+    --hash=sha256:12345
+gar==7.8.9 \\
+    --hash=sha256:abcde
 """
 
     assert expected == content
