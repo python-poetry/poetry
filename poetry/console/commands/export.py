@@ -42,7 +42,7 @@ class ExportCommand(Command):
                 "</warning>"
             )
 
-        exporter = Exporter(self.poetry.locker)
+        exporter = Exporter(self.poetry.locker, self.poetry.pool)
         exporter.export(
             fmt,
             self.poetry.file.parent,

@@ -93,6 +93,9 @@ class Config(BaseConfig):
     def __init__(self, _):
         self._content = document()
 
+    def dump(self):
+        pass
+
 
 class Locker(BaseLocker):
     def __init__(self, lock, local_config):
@@ -139,9 +142,12 @@ class Poetry(BasePoetry):
         self._local_config = local_config
         self._locker = Locker(locker.lock.path, locker._local_config)
         self._config = Config.create("config.toml")
+        self._auth_config = Config.create("auth.toml")
 
         # Configure sources
         self._pool = Pool()
+        for source in self._local_config.get("source", []):
+            self._pool.add_repository(self.create_legacy_repository(source))
 
 
 class Repository(BaseRepository):

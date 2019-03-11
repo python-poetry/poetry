@@ -1,4 +1,9 @@
+import requests
+
 from poetry.packages.locker import Locker
+from poetry.repositories import Pool
+from poetry.repositories.auth import NetrcAuth
+from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 
@@ -10,8 +15,9 @@ class Exporter(object):
 
     ACCEPTED_FORMATS = ("requirements.txt",)
 
-    def __init__(self, lock):  # type: (Locker) -> None
+    def __init__(self, lock, pool):  # type: (Locker, Pool) -> None
         self._lock = lock
+        self._pool = pool
 
     def export(
         self, fmt, cwd, with_hashes=True, dev=False
@@ -23,16 +29,24 @@ class Exporter(object):
             cwd, with_hashes=with_hashes, dev=dev
         )
 
+    @staticmethod
+    def _format_repositories(repositories):
+        formatted_repos = set()
+        for repo in repositories:
+            if isinstance(repo, LegacyRepository) and repo.auth:
+                auth = NetrcAuth.from_auth(repo.auth)
+                r = auth(requests.Request("GET", repo.url))
+                formatted_repos.add(r.url)
+            else:
+                formatted_repos.add(repo.url)
+        return formatted_repos
+
     def _export_requirements_txt(
         self, cwd, with_hashes=True, dev=False
     ):  # type: (Path, bool, bool) -> None
         filepath = cwd / "requirements.txt"
 
-        repositories = {
-            package.source_url
-            for package in self._lock.locked_repository(dev).packages
-            if package.source_type == "legacy" and package.source_url
-        }
+        repositories = Exporter._format_repositories(self._pool.repositories)
         content = "".join(
             sorted(["--extra-index-url {}\n".format(url) for url in repositories])
         )

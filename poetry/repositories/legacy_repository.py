@@ -183,12 +183,25 @@ class LegacyRepository(PyPiRepository):
         url_parts = urlparse.urlparse(self._url)
         if not url_parts.username and auth:
             self._session.auth = auth
+            self._auth = auth
+        elif url_parts.username:
+            self._auth = Auth(self._url, url_parts.username, url_parts.password)
+        else:
+            self._auth = None
 
         self._disable_cache = disable_cache
 
     @property
     def name(self):
         return self._name
+
+    @property
+    def auth(self):  # type: () -> Optional[Auth]
+        return self._auth
+
+    @property
+    def url(self):
+        return self._url
 
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False

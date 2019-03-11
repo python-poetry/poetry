@@ -1,6 +1,9 @@
 import pytest
 
 from poetry.packages import Locker as BaseLocker
+from poetry.repositories import Pool
+from poetry.repositories.auth import Auth
+from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
 from poetry.utils.exporter import Exporter
 
@@ -33,7 +36,14 @@ def locker():
     return Locker()
 
 
-def test_exporter_can_export_requirements_txt_with_standard_packages(tmp_dir, locker):
+@pytest.fixture
+def pool():
+    return Pool()
+
+
+def test_exporter_can_export_requirements_txt_with_standard_packages(
+    tmp_dir, locker, pool
+):
     locker.mock_lock_data(
         {
             "package": [
@@ -59,7 +69,7 @@ def test_exporter_can_export_requirements_txt_with_standard_packages(tmp_dir, lo
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
 
     exporter.export("requirements.txt", Path(tmp_dir))
 
@@ -75,7 +85,7 @@ foo==1.2.3
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
-    tmp_dir, locker
+    tmp_dir, locker, pool
 ):
     locker.mock_lock_data(
         {
@@ -102,7 +112,7 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
 
     exporter.export("requirements.txt", Path(tmp_dir))
 
@@ -120,7 +130,7 @@ foo==1.2.3 \\
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_disabled(
-    tmp_dir, locker
+    tmp_dir, locker, pool
 ):
     locker.mock_lock_data(
         {
@@ -147,7 +157,7 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
 
     exporter.export("requirements.txt", Path(tmp_dir), with_hashes=False)
 
@@ -163,7 +173,7 @@ foo==1.2.3
 
 
 def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
-    tmp_dir, locker
+    tmp_dir, locker, pool
 ):
     locker.mock_lock_data(
         {
@@ -190,7 +200,7 @@ def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
 
     exporter.export("requirements.txt", Path(tmp_dir))
 
@@ -206,7 +216,7 @@ foo==1.2.3 \\
 
 
 def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
-    tmp_dir, locker
+    tmp_dir, locker, pool
 ):
     locker.mock_lock_data(
         {
@@ -233,7 +243,7 @@ def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
 
     exporter.export("requirements.txt", Path(tmp_dir), dev=True)
 
@@ -250,7 +260,7 @@ foo==1.2.3 \\
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, locker):
+def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, locker, pool):
     locker.mock_lock_data(
         {
             "package": [
@@ -274,7 +284,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, locker)
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
 
     exporter.export("requirements.txt", Path(tmp_dir))
 
@@ -288,7 +298,9 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, locker)
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, locker):
+def test_exporter_can_export_requirements_txt_with_directory_packages(
+    tmp_dir, locker, pool
+):
     locker.mock_lock_data(
         {
             "package": [
@@ -308,7 +320,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, l
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
 
     exporter.export("requirements.txt", Path(tmp_dir))
 
@@ -322,7 +334,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, l
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, locker):
+def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, locker, pool):
     locker.mock_lock_data(
         {
             "package": [
@@ -342,7 +354,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, locker
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
 
     exporter.export("requirements.txt", Path(tmp_dir))
 
@@ -356,7 +368,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, locker
     assert expected == content
 
 
-def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, locker):
+def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, locker, pool):
     locker.mock_lock_data(
         {
             "package": [
@@ -387,7 +399,8 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, locker)
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
+    pool.add_repository(LegacyRepository("bar", "https://example.com/simple/"))
 
     exporter.export("requirements.txt", Path(tmp_dir), dev=True)
 
@@ -395,7 +408,7 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, locker)
         content = f.read()
 
     expected = """\
---extra-index-url https://example.com/simple/
+--extra-index-url https://example.com/simple
 bar==4.5.6 \\
     --hash=sha256:67890
 foo==1.2.3 \\
@@ -406,7 +419,7 @@ foo==1.2.3 \\
 
 
 def test_exporter_exports_requirements_txt_with_multiple_legacy_packages(
-    tmp_dir, locker
+    tmp_dir, locker, pool
 ):
     locker.mock_lock_data(
         {
@@ -419,7 +432,7 @@ def test_exporter_exports_requirements_txt_with_multiple_legacy_packages(
                     "python-versions": "*",
                     "source": {
                         "type": "legacy",
-                        "url": "https://example2.com/simple/",
+                        "url": "https://user_john:passwd1234@example2.com/simple/",
                         "reference": "",
                     },
                 },
@@ -455,7 +468,12 @@ def test_exporter_exports_requirements_txt_with_multiple_legacy_packages(
             },
         }
     )
-    exporter = Exporter(locker)
+    exporter = Exporter(locker, pool)
+    pool.add_repository(LegacyRepository("repo_public", "https://example.com/simple/"))
+    auth = Auth("https://example2.com/simple/", "user_john", "passwd1234")
+    pool.add_repository(
+        LegacyRepository("repo_private", "https://example2.com/simple/", auth)
+    )
 
     exporter.export("requirements.txt", Path(tmp_dir), dev=True)
 
@@ -463,8 +481,8 @@ def test_exporter_exports_requirements_txt_with_multiple_legacy_packages(
         content = f.read()
 
     expected = """\
---extra-index-url https://example.com/simple/
---extra-index-url https://example2.com/simple/
+--extra-index-url https://example.com/simple
+--extra-index-url https://user_john:passwd1234@example2.com/simple
 bar==4.5.6 \\
     --hash=sha256:67890
 foo==1.2.3 \\
