@@ -24,7 +24,7 @@ class Auth(AuthBase):
         return r
 
 
-class NetrcAuth(AuthBase):
+class URLAuth(AuthBase):
     def __init__(self, url, username, password):  # type: (str, str, str) -> None
 
         self._url = url
@@ -45,5 +45,5 @@ class NetrcAuth(AuthBase):
         return r
 
     @classmethod
-    def from_auth(cls, auth):  # type: (Auth) -> NetrcAuth
-        return NetrcAuth(auth._url, auth._username, auth._password)
+    def from_auth(cls, auth):  # type: (Auth) -> URLAuth
+        return URLAuth(auth._url, auth._username, auth._password)

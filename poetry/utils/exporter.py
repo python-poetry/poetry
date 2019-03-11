@@ -2,7 +2,7 @@ import requests
 
 from poetry.packages.locker import Locker
 from poetry.repositories import Pool
-from poetry.repositories.auth import NetrcAuth
+from poetry.repositories.auth import URLAuth
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
@@ -35,7 +35,7 @@ class Exporter(object):
         for repo in repositories:
             if isinstance(repo, LegacyRepository):
                 if repo.auth:
-                    auth = NetrcAuth.from_auth(repo.auth)
+                    auth = URLAuth.from_auth(repo.auth)
                     r = auth(requests.Request("GET", repo.url))
                     formatted_repos.add(r.url)
                 else:
