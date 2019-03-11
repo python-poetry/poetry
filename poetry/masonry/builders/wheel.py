@@ -203,7 +203,7 @@ class WheelBuilder(Builder):
     def wheel_filename(self):  # type: () -> str
         return "{}-{}-{}.whl".format(
             re.sub(r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
-            re.sub(r"[^\w\d.]+", "_", self._meta.version, flags=re.UNICODE),
+            re.sub(r"[^\w\d.\+]+", "_", self._meta.version, flags=re.UNICODE),
             self.tag,
         )
 
