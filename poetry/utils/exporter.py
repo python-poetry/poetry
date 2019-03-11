@@ -33,12 +33,13 @@ class Exporter(object):
     def _format_repositories(repositories):
         formatted_repos = set()
         for repo in repositories:
-            if isinstance(repo, LegacyRepository) and repo.auth:
-                auth = NetrcAuth.from_auth(repo.auth)
-                r = auth(requests.Request("GET", repo.url))
-                formatted_repos.add(r.url)
-            else:
-                formatted_repos.add(repo.url)
+            if isinstance(repo, LegacyRepository):
+                if repo.auth:
+                    auth = NetrcAuth.from_auth(repo.auth)
+                    r = auth(requests.Request("GET", repo.url))
+                    formatted_repos.add(r.url)
+                else:
+                    formatted_repos.add(repo.url)
         return formatted_repos
 
     def _export_requirements_txt(
