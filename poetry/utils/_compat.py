@@ -15,6 +15,11 @@ try:
 except ImportError:
     import urlparse
 
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
+
 try:  # Python 2
     long = long
     unicode = unicode

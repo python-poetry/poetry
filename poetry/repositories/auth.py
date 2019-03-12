@@ -2,7 +2,7 @@ from requests import Request
 from requests.auth import AuthBase
 from requests.auth import HTTPBasicAuth
 
-from poetry.utils._compat import urlparse
+from poetry.utils._compat import urlparse, quote
 
 
 def _hostnames_matches(url, base_url):
@@ -37,11 +37,11 @@ class URLAuth(AuthBase):
 
         url_parts = urlparse.urlparse(r.url)
         netrc_url = "{}:{}@{}".format(
-            urlparse.quote(self._username, safe=""),
-            urlparse.quote(self._password, safe=""),
-            url_parts[1],
+            quote(self._username, safe=""), quote(self._password, safe=""), url_parts[1]
         )
-        r.url = urlparse.urlunparse([url_parts[0], netrc_url, *url_parts[2:]])
+        url_parts_with_cred = list(url_parts)
+        url_parts_with_cred[1] = netrc_url
+        r.url = urlparse.urlunparse(url_parts_with_cred)
         return r
 
     @classmethod
