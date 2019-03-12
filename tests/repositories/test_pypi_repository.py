@@ -13,10 +13,14 @@ class MockRepository(PyPiRepository):
     JSON_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "json"
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
-    def __init__(self, fallback=False):
+    def __init__(self, fallback=False, plat="Linux", machine="amd64", pyver=(3, 7, 2)):
         super(MockRepository, self).__init__(
             url="http://foo.bar", disable_cache=True, fallback=fallback
         )
+
+        self.plat = plat
+        self.machine = machine
+        self.pyver = pyver
 
     def _get(self, url):
         parts = url.split("/")[1:]
@@ -42,6 +46,14 @@ class MockRepository(PyPiRepository):
         fixture = self.DIST_FIXTURES / filename
 
         shutil.copyfile(str(fixture), dest)
+
+    def get_sys_info(self):
+        # Mock different hardware configurations by overriding this method
+        return {
+            "plat": self.plat.lower(),
+            "machine": self.machine.lower(),
+            "pyver": self.pyver,
+        }
 
 
 def test_find_packages():
@@ -101,6 +113,72 @@ def test_fallback_on_downloading_packages():
         "notebook",
         "qtconsole",
     ]
+
+
+# Mock platform specific wheels for testing
+numpy_plat_spec_wheels = [
+    (
+        "numpy-1.16.2-cp27-cp27m-macosx_10_6_intel.macosx_10_9_intel."
+        "macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl"
+    ),
+    "numpy-1.16.2-cp27-cp27m-manylinux1_i686.whl",
+    "numpy-1.16.2-cp27-cp27m-manylinux1_x86_64.whl",
+    "numpy-1.16.2-cp27-cp27mu-manylinux1_i686.whl",
+    "numpy-1.16.2-cp27-cp27mu-manylinux1_x86_64.whl",
+    "numpy-1.16.2-cp27-cp27m-win32.whl",
+    "numpy-1.16.2-cp27-cp27m-win_amd64.whl",
+    (
+        "numpy-1.16.2-cp35-cp35m-macosx_10_6_intel.macosx_10_9_intel."
+        "macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl"
+    ),
+    "numpy-1.16.2-cp35-cp35m-manylinux1_i686.whl",
+    "numpy-1.16.2-cp35-cp35m-manylinux1_x86_64.whl",
+    "numpy-1.16.2-cp35-cp35m-win32.whl",
+    "numpy-1.16.2-cp35-cp35m-win_amd64.whl",
+    (
+        "numpy-1.16.2-cp36-cp36m-macosx_10_6_intel.macosx_10_9_intel."
+        "macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl"
+    ),
+    "numpy-1.16.2-cp36-cp36m-manylinux1_i686.whl",
+    "numpy-1.16.2-cp36-cp36m-manylinux1_x86_64.whl",
+    "numpy-1.16.2-cp36-cp36m-win32.whl",
+    "numpy-1.16.2-cp36-cp36m-win_amd64.whl",
+    (
+        "numpy-1.16.2-cp37-cp37m-macosx_10_6_intel.macosx_10_9_intel."
+        "macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl"
+    ),
+    "numpy-1.16.2-cp37-cp37m-manylinux1_i686.whl",
+    "numpy-1.16.2-cp37-cp37m-manylinux1_x86_64.whl",
+    "numpy-1.16.2-cp37-cp37m-win32.whl",
+    "numpy-1.16.2-cp37-cp37m-win_amd64.whl",
+]
+
+
+@pytest.mark.parametrize(
+    "plat,machine,pyver,best_wheel",
+    [
+        (
+            "Linux",
+            "x86_64",
+            ("3", "7", "2"),
+            "numpy-1.16.2-cp37-cp37m-manylinux1_x86_64.whl",
+        ),
+        (
+            "Darwin",
+            "x86_64",
+            ("2", "7", "3"),
+            (
+                "numpy-1.16.2-cp27-cp27m-macosx_10_6_intel.macosx_10_9_intel."
+                "macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl"
+            ),
+        ),
+        ("Windows", "AMD64", ("3", "6", "2"), "numpy-1.16.2-cp36-cp36m-win_amd64.whl"),
+        ("Windows", "32", ("3", "5", "0a1"), "numpy-1.16.2-cp35-cp35m-win32.whl"),
+    ],
+)
+def test_fallback_selects_correct_platform_wheel(plat, machine, pyver, best_wheel):
+    repo = MockRepository(fallback=True, plat=plat, machine=machine, pyver=pyver)
+    assert best_wheel == repo._pick_platform_specific_wheel(numpy_plat_spec_wheels)
 
 
 def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():

@@ -1,5 +1,6 @@
 import logging
 import os
+import platform
 import tarfile
 import zipfile
 
@@ -421,10 +422,64 @@ class PyPiRepository(Repository):
                 return info
 
             if platform_specific_wheels and "sdist" not in urls:
-                # Pick the first wheel available and hope for the best
-                return self._get_info_from_wheel(platform_specific_wheels[0])
+                # Attempt to select the best platform-specific wheel
+                best_wheel = self._pick_platform_specific_wheel(
+                    platform_specific_wheels
+                )
+                return self._get_info_from_wheel(best_wheel)
 
         return self._get_info_from_sdist(urls["sdist"][0])
+
+    def get_sys_info(self):  # type: () -> Dict[str, str]
+        # Return system information. Can be overridden for testing
+        return {
+            "plat": platform.system().lower(),
+            "machine": platform.machine().lower(),
+            "pyver": platform.python_version_tuple(),
+        }
+
+    def _pick_platform_specific_wheel(
+        self, platform_specific_wheels
+    ):  # type: (list) -> str
+        sys_info = self.get_sys_info()
+        # Format the expected platform name as used by package authors
+        os_map = {"windows": "win", "darwin": "macosx"}
+        os_name = (
+            os_map[sys_info["plat"]]
+            if sys_info["plat"] in os_map
+            else sys_info["plat"]
+        )
+        machine = sys_info["machine"]
+        if os_name == "win" and machine == "x86":
+            machine = "32"  # Fix search string for Windows 32bit systems
+        py_label = "cp{}".format("".join(sys_info["pyver"][:2]))
+        self._log(
+            "Attempting to determine best match for: {}".format(sys_info), level="debug"
+        )
+
+        platform_matches = []
+        for url in platform_specific_wheels:
+            m = wheel_file_re.match(Link(url).filename)
+            plat = m.group("plat")
+            if os_name in plat:
+                match_py = m.group("pyver") == py_label
+                if match_py and (machine in plat or "x86_64" in plat):
+                    self._log("Found best wheel match: {}".format(url), level="debug")
+                    return url
+                elif match_py:
+                    platform_matches.insert(0, url)
+        if len(platform_matches) > 0:
+            # Return first platform match as more specificity couldn't be determined
+            self._log(
+                "Selecting wheel file: {}".format(platform_matches[0]), level="debug"
+            )
+            return platform_matches[0]
+        # Could not pick the best wheel, return the first available and hope for the best
+        self._log(
+            "Matching failed, selecting wheel file: {}".format(platform_matches[0]),
+            level="debug",
+        )
+        return platform_specific_wheels[0]
 
     def _get_info_from_wheel(
         self, url
