@@ -27,7 +27,6 @@ the current directory, processes it, and locks the depdencies in the <comment>po
             self.poetry.pool,
         )
 
-        installer.update(True)
-        installer.execute_operations(False)
+        installer.lock()
 
         return installer.run()
