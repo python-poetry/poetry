@@ -195,7 +195,7 @@ import glob
 import sys
 import os
 
-lib = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "lib"))
+lib = os.path.normpath(os.path.join(os.path.realpath(__file__), "../..", "lib"))
 
 sys.path.insert(0, lib)
 
