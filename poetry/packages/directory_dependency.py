@@ -6,6 +6,9 @@ from poetry.utils.toml_file import TomlFile
 
 from .dependency import Dependency
 
+from os.path import abspath
+import sys
+
 # Patching pkginfo to support Metadata version 2.1 (PEP 566)
 HEADER_ATTRS.update(
     {"2.1": HEADER_ATTRS_2_0 + (("Provides-Extra", "provides_extra", True),)}
@@ -27,6 +30,7 @@ class DirectoryDependency(Dependency):
         self._full_path = path
         self._develop = develop
         self._supports_poetry = False
+        self._is_windows = sys.platform == "win32"
 
         if self._base and not self._path.is_absolute():
             self._full_path = self._base / self._path
@@ -63,7 +67,12 @@ class DirectoryDependency(Dependency):
 
     @property
     def full_path(self):
-        return self._full_path.resolve()
+        if not self._is_windows:
+            return self._full_path.resolve()
+        else:
+            # pathlib's .resolve will return UNC paths, which do not
+            # play nice with cmd.exe
+            return Path(abspath(str(self._full_path)))
 
     @property
     def base(self):
