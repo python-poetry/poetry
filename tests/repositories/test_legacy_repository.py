@@ -169,3 +169,39 @@ def test_get_package_information_sets_appropriate_python_versions_if_wheels_only
     assert package.name == "futures"
     assert package.version.text == "3.2.0"
     assert package.python_versions == ">=2.6, <3"
+
+
+def test_get_package_from_both_py2_and_py3_specific_wheels():
+    repo = MockRepository()
+
+    package = repo.package("ipython", "5.7.0")
+
+    assert "ipython" == package.name
+    assert "5.7.0" == package.version.text
+    assert "*" == package.python_versions
+
+    expected = [
+        Dependency("appnope", "*"),
+        Dependency("backports.shutil-get-terminal-size", "*"),
+        Dependency("colorama", "*"),
+        Dependency("decorator", "*"),
+        Dependency("pathlib2", "*"),
+        Dependency("pexpect", "*"),
+        Dependency("pickleshare", "*"),
+        Dependency("prompt-toolkit", ">=1.0.4,<2.0.0"),
+        Dependency("pygments", "*"),
+        Dependency("setuptools", ">=18.5"),
+        Dependency("simplegeneric", ">0.8"),
+        Dependency("traitlets", ">=4.2"),
+        Dependency("win-unicode-console", ">=0.5"),
+    ]
+    assert expected == package.requires
+
+    assert 'python_version == "2.7"' == str(package.requires[1].marker)
+    assert 'sys_platform == "win32" and python_version < "3.6"' == str(
+        package.requires[12].marker
+    )
+    assert 'python_version == "2.7" or python_version == "3.3"' == str(
+        package.requires[4].marker
+    )
+    assert 'sys_platform != "win32"' == str(package.requires[5].marker)
