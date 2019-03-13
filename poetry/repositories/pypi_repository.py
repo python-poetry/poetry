@@ -445,9 +445,7 @@ class PyPiRepository(Repository):
         # Format the expected platform name as used by package authors
         os_map = {"windows": "win", "darwin": "macosx"}
         os_name = (
-            os_map[sys_info["plat"]]
-            if sys_info["plat"] in os_map
-            else sys_info["plat"]
+            os_map[sys_info["plat"]] if sys_info["plat"] in os_map else sys_info["plat"]
         )
         machine = sys_info["machine"]
         if os_name == "win" and machine == "x86":
