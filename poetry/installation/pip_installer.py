@@ -13,6 +13,9 @@ try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
+    import urllib
+
+    urlparse.quote = urllib.quote
 
 from poetry.utils._compat import encode
 from poetry.utils.env import Env
@@ -54,8 +57,8 @@ class PipInstaller(BaseInstaller):
             if auth:
                 index_url = "{scheme}://{username}:{password}@{netloc}{path}".format(
                     scheme=parsed.scheme,
-                    username=auth[0],
-                    password=auth[1],
+                    username=urlparse.quote(auth[0], safe=""),
+                    password=urlparse.quote(auth[1], safe=""),
                     netloc=parsed.netloc,
                     path=parsed.path,
                 )

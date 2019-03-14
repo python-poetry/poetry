@@ -1,3 +1,4 @@
+from tests.helpers import get_package
 from poetry.installation.pip_installer import PipInstaller
 from poetry.io import NullIO
 from poetry.packages.package import Package
@@ -22,3 +23,27 @@ def test_requirement():
     )
 
     assert expected == result
+
+
+def test_pip_install_legacy_password(mocker, config):
+    config.add_property("http-basic.foo.username", "foo")
+    config.add_property("http-basic.foo.password", "bar/?#@:")
+    mocker.patch("poetry.installation.pip_installer.Config.create", return_value=config)
+
+    installer = PipInstaller(NullEnv(), NullIO())
+    run = mocker.patch.object(installer, "run")
+
+    package = get_package("A", "1.0")
+    package.source_type = "legacy"
+    package.source_reference = "foo"
+    package.source_url = "https://www.example.com/pypi/simple"
+
+    installer.install(package)
+
+    assert run.call_args == mocker.call(
+        "install",
+        "--no-deps",
+        "--index-url",
+        "https://foo:bar%2F%3F%23%40%3A@www.example.com/pypi/simple",
+        "a==1.0",
+    )
