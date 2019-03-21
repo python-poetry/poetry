@@ -8,22 +8,7 @@ from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 
 
-fixtures_dir = Path(__file__).parent / "fixtures"
-
-
-@pytest.fixture(autouse=True)
-def setup():
-    clear_samples_dist()
-
-    yield
-
-    clear_samples_dist()
-
-
-def clear_samples_dist():
-    for dist in fixtures_dir.glob("**/dist"):
-        if dist.is_dir():
-            shutil.rmtree(str(dist))
+fixtures_dir = Path(__file__).parent.parent.parent / "fixtures"
 
 
 def project(name):
@@ -32,7 +17,7 @@ def project(name):
 
 def test_uploader_properly_handles_400_errors(http):
     http.register_uri(http.POST, "https://foo.com", status=400, body="Bad request")
-    uploader = Uploader(Poetry.create(project("complete")), NullIO())
+    uploader = Uploader(Poetry.create(project("simple-project")), NullIO())
 
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
@@ -42,7 +27,7 @@ def test_uploader_properly_handles_400_errors(http):
 
 def test_uploader_properly_handles_403_errors(http):
     http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
-    uploader = Uploader(Poetry.create(project("complete")), NullIO())
+    uploader = Uploader(Poetry.create(project("simple-project")), NullIO())
 
     with pytest.raises(UploadError) as e:
         uploader.upload("https://foo.com")
@@ -55,7 +40,7 @@ def test_uploader_registers_for_appropriate_400_errors(mocker, http):
     http.register_uri(
         http.POST, "https://foo.com", status=400, body="No package was ever registered"
     )
-    uploader = Uploader(Poetry.create(project("complete")), NullIO())
+    uploader = Uploader(Poetry.create(project("simple-project")), NullIO())
 
     with pytest.raises(UploadError):
         uploader.upload("https://foo.com")
