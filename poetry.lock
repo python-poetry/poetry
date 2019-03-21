@@ -220,6 +220,17 @@ webencodings = "*"
 
 [[package]]
 category = "dev"
+description = "HTTP client mock for Python"
+name = "httpretty"
+optional = false
+python-versions = "*"
+version = "0.9.6"
+
+[package.dependencies]
+six = "*"
+
+[[package]]
+category = "dev"
 description = "File identification library for Python"
 name = "identify"
 optional = false
@@ -790,7 +801,7 @@ python-versions = ">=2.7"
 version = "0.3.3"
 
 [metadata]
-content-hash = "1f1739517a0fb9f3dfdc2213a6bfc0516d94215cc613ba1e7f2e3361694009ee"
+content-hash = "2ba54ce4f8fd1fde6aeb5ea8d6520859b94e530c5a64526d7da2ad1a30c24e0a"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.hashes]
@@ -817,6 +828,7 @@ functools32 = ["89d824aa6c358c421a234d7f9ee0bd75933a67c29588ce50aaa3acdf4d403fa0
 futures = ["51ecb45f0add83c806c68e4b06106f90db260585b25ef2abfcda0bd95c0132fd", "c4884a65654a7c45435063e14ae85280eb1f111d94e542396717ba9828c4337f"]
 glob2 = ["f5b0a686ff21f820c4d3f0c4edd216704cea59d79d00fa337e244a2f2ff83ed6"]
 html5lib = ["20b159aa3badc9d5ee8f5c647e5efd02ed2a66ab8d354930bd9ff139fc1dc0a3", "66cb0dcfdbbc4f9c3ba1a63fdb511ffdbd4f513b2b6d81b80cd26ce6b3fb3736"]
+httpretty = ["01b52d45077e702eda491f4fe75328d3468fd886aed5dcc530003e7b2b5939dc"]
 identify = ["08826e68e39e7de53cc2ddd8f6228a4e463b4bacb20565e5301c3ec690e68d27", "2364e24a7699fea0dc910e90740adbab43eef3746eeea4e016029c34123ce66d"]
 idna = ["c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407", "ea8b7f6188e6fa117537c3df7da9fc686d485087abf6ac197f9c46432f7e4a3c"]
 importlib-metadata = ["a17ce1a8c7bff1e8674cb12c992375d8d0800c9190177ecf0ad93e0097224095", "b50191ead8c70adfa12495fba19ce6d75f2e0275c14c5a7beb653d6799b512bd"]
