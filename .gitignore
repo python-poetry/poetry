@@ -3,7 +3,7 @@
 # Packages
 *.egg
 *.egg-info
-dist
+/dist/*
 build
 _build
 .cache
