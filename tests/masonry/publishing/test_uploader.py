@@ -1,4 +1,3 @@
-import httpretty
 import pytest
 import shutil
 
@@ -31,11 +30,8 @@ def project(name):
     return Path(__file__).parent / "fixtures" / name
 
 
-@httpretty.activate
-def test_uploader_properly_handles_400_errors():
-    httpretty.register_uri(
-        httpretty.POST, "https://foo.com", status=400, body="Bad request"
-    )
+def test_uploader_properly_handles_400_errors(http):
+    http.register_uri(http.POST, "https://foo.com", status=400, body="Bad request")
     uploader = Uploader(Poetry.create(project("complete")), NullIO())
 
     with pytest.raises(UploadError) as e:
@@ -44,11 +40,8 @@ def test_uploader_properly_handles_400_errors():
     assert "HTTP Error 400: Bad Request" == str(e.value)
 
 
-@httpretty.activate
-def test_uploader_properly_handles_403_errors():
-    httpretty.register_uri(
-        httpretty.POST, "https://foo.com", status=403, body="Unauthorized"
-    )
+def test_uploader_properly_handles_403_errors(http):
+    http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
     uploader = Uploader(Poetry.create(project("complete")), NullIO())
 
     with pytest.raises(UploadError) as e:
@@ -57,18 +50,14 @@ def test_uploader_properly_handles_403_errors():
     assert "HTTP Error 403: Forbidden" == str(e.value)
 
 
-@httpretty.activate
-def test_uploader_registers_for_appropriate_400_errors(mocker):
+def test_uploader_registers_for_appropriate_400_errors(mocker, http):
     register = mocker.patch("poetry.masonry.publishing.uploader.Uploader._register")
-    httpretty.register_uri(
-        httpretty.POST,
-        "https://foo.com",
-        status=400,
-        body="No package was ever registered",
+    http.register_uri(
+        http.POST, "https://foo.com", status=400, body="No package was ever registered"
     )
     uploader = Uploader(Poetry.create(project("complete")), NullIO())
 
     with pytest.raises(UploadError):
         uploader.upload("https://foo.com")
 
-    register.assert_called_once()
+    assert 1 == register.call_count

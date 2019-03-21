@@ -1,15 +1,6 @@
-import httpretty
-
-from cleo.testers import ApplicationTester
-
-
-@httpretty.activate
-def test_publish_returns_non_zero_code_for_upload_errors(app, app_tester):
-    httpretty.register_uri(
-        httpretty.POST,
-        "https://upload.pypi.org/legacy/",
-        status=400,
-        body="Bad Request",
+def test_publish_returns_non_zero_code_for_upload_errors(app, app_tester, http):
+    http.register_uri(
+        http.POST, "https://upload.pypi.org/legacy/", status=400, body="Bad Request"
     )
 
     exit_code = app_tester.run(

@@ -94,7 +94,7 @@ class Uploader:
     def is_authenticated(self):
         return self._username is not None and self._password is not None
 
-    def upload(self, url: str) -> bool:
+    def upload(self, url):
         session = self.make_session()
 
         try:
@@ -180,7 +180,7 @@ class Uploader:
 
         return data
 
-    def _upload(self, session, url) -> bool:
+    def _upload(self, session, url):
         try:
             self._do_upload(session, url)
         except HTTPError as e:
