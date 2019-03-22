@@ -15,6 +15,7 @@ def test_package_authors():
     assert package.author_name == "John Doe"
     assert package.author_email is None
 
+
 def test_author_email_only():
     """
     Checks Package for correct handling of unparsable authors
