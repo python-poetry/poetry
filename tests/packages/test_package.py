@@ -24,3 +24,4 @@ def test_author_email_only():
     package = Package("foo", "0.1.0")
     package.authors.append("<support@example.com>")
     assert not package.author_name
+    assert not package.author_email
