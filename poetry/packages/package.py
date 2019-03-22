@@ -138,10 +138,13 @@ class Package(object):
         return self.requires + self.dev_requires
 
     def _get_author(self):  # type: () -> dict
+        default = {"name": None, "email": None}
         if not self._authors:
-            return {"name": None, "email": None}
+            return default
 
         m = AUTHOR_REGEX.match(self._authors[0])
+        if not m:
+            return default
 
         name = m.group("name")
         email = m.group("email")

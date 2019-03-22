@@ -14,3 +14,12 @@ def test_package_authors():
     package.authors.insert(0, "John Doe")
     assert package.author_name == "John Doe"
     assert package.author_email is None
+
+def test_author_email_only():
+    """
+    Checks Package for correct handling of unparsable authors
+    (email only for example)
+    """
+    package = Package("foo", "0.1.0")
+    package.authors.append("<support@example.com>")
+    assert not package.author_name
