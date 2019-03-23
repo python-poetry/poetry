@@ -230,6 +230,7 @@ class EmptyMarker(BaseMarker):
 class SingleMarker(BaseMarker):
 
     _CONSTRAINT_RE = re.compile(r"(?i)^(~=|!=|>=?|<=?|==?|in|not in)?\s*(.+)$")
+    _VERSION_LIKE_MARKER_NAME = {"python_version", "platform_release"}
 
     def __init__(self, name, constraint):
         from poetry.packages.constraints import (
@@ -248,10 +249,10 @@ class SingleMarker(BaseMarker):
 
         self._value = m.group(2)
         self._parser = parse_generic_constraint
-        if self._name == "python_version":
+
+        if name in self._VERSION_LIKE_MARKER_NAME:
             self._parser = parse_constraint
 
-        if name == "python_version":
             if self._operator in {"in", "not in"}:
                 versions = []
                 for v in re.split("[ ,]+", self._value):

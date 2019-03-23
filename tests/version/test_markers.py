@@ -423,3 +423,18 @@ def test_validate(marker_string, environment, expected):
     m = parse_marker(marker_string)
 
     assert m.validate(environment) is expected
+
+
+@pytest.mark.parametrize(
+    "marker, env",
+    [
+        (
+            'platform_release >= "9.0" and platform_release < "11.0"',
+            {"platform_release": "10.0"},
+        )
+    ],
+)
+def test_parse_version_like_markers(marker, env):
+    m = parse_marker(marker)
+
+    assert m.validate(env)
