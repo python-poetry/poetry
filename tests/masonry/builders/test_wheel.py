@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
 import pytest
 import shutil
 import zipfile
+
+from email.parser import Parser
 
 from poetry.io import NullIO
 from poetry.masonry.builders import WheelBuilder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
+from poetry.utils._compat import to_str
 from poetry.utils.env import NullEnv
 from poetry.packages import ProjectPackage
 
@@ -144,3 +148,23 @@ def test_write_metadata_file_license_homepage_default(mocker):
     # Assertion
     mocked_file.write.assert_any_call("Home-page: UNKNOWN\n")
     mocked_file.write.assert_any_call("License: UNKNOWN\n")
+
+
+def test_metadata_file_with_vcs_dependencies():
+    project_path = fixtures_dir / "with_vcs_dependency"
+    WheelBuilder.make(Poetry.create(str(project_path)), NullEnv(), NullIO())
+
+    whl = project_path / "dist" / "with_vcs_dependency-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    p = Parser()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        metadata = p.parsestr(
+            to_str(z.read("with_vcs_dependency-1.2.3.dist-info/METADATA"))
+        )
+
+    requires_dist = metadata["Requires-Dist"]
+
+    assert "cleo @ git+https://github.com/sdispater/cleo.git@master" == requires_dist

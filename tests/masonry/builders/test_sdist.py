@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
 import pytest
-import re
 import shutil
 import tarfile
 
@@ -11,6 +10,7 @@ from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.masonry.utils.package_include import PackageInclude
 from poetry.packages import Package
+from poetry.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
@@ -49,9 +49,15 @@ def test_convert_dependencies():
             get_dependency("A", "^1.0"),
             get_dependency("B", "~1.0"),
             get_dependency("C", "1.2.3"),
+            VCSDependency("D", "git", "https://github.com/sdispater/d.git"),
         ],
     )
-    main = ["A>=1.0,<2.0", "B>=1.0,<1.1", "C==1.2.3"]
+    main = [
+        "A>=1.0,<2.0",
+        "B>=1.0,<1.1",
+        "C==1.2.3",
+        "D @ git+https://github.com/sdispater/d.git@master",
+    ]
     extras = {}
 
     assert result == (main, extras)
