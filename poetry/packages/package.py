@@ -22,7 +22,11 @@ from .vcs_dependency import VCSDependency
 from .utils.utils import convert_markers
 from .utils.utils import create_nested_marker
 
-AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+# pattern for authors like "Example author <author@example.com>"
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[^@<]+)( <(?P<email>[^ ]+?)>)?$")
+
+# pattern for email-only authors, example: "author@example.com"
+AUTHOR_PARTIAL_REGEX = re.compile(r"(?u)([^ ]+@[^ ]+)")
 
 
 class Package(object):
@@ -138,18 +142,24 @@ class Package(object):
         return self.requires + self.dev_requires
 
     def _get_author(self):  # type: () -> dict
-        default = {"name": None, "email": None}
+        output = {"name": None, "email": None}
         if not self._authors:
-            return default
+            return output
+        author = self._authors[0]
 
-        m = AUTHOR_REGEX.match(self._authors[0])
-        if not m:
-            return default
-
-        name = m.group("name")
-        email = m.group("email")
-
-        return {"name": name, "email": email}
+        # first regex captures name or name with email,
+        # so to capture email-only authors we need a different regex
+        email = None
+        match = AUTHOR_REGEX.match(author)
+        if match:
+            output["name"] = match.group("name")
+            email = match.group("email")
+        if not email:
+            match = AUTHOR_PARTIAL_REGEX.match(author)
+            if match:
+                email = match.group(0)
+        output["email"] = email
+        return output
 
     @property
     def python_versions(self):
