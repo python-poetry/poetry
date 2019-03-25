@@ -3,6 +3,7 @@ import copy
 import re
 
 from contextlib import contextmanager
+import email.utils
 from typing import Union
 
 from poetry.semver import Version
@@ -21,12 +22,6 @@ from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
 from .utils.utils import convert_markers
 from .utils.utils import create_nested_marker
-
-# pattern for authors like "Example author <author@example.com>"
-AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[^@<]+)( <(?P<email>[^ ]+?)>)?$")
-
-# pattern for email-only authors, example: "author@example.com"
-AUTHOR_PARTIAL_REGEX = re.compile(r"(?u)([^ ]+@[^ ]+)")
 
 
 class Package(object):
@@ -146,19 +141,20 @@ class Package(object):
         if not self._authors:
             return output
         author = self._authors[0]
+        name, parsed_email = email.utils.parseaddr(author)
 
-        # first regex captures name or name with email,
-        # so to capture email-only authors we need a different regex
-        email = None
-        match = AUTHOR_REGEX.match(author)
-        if match:
-            output["name"] = match.group("name")
-            email = match.group("email")
-        if not email:
-            match = AUTHOR_PARTIAL_REGEX.match(author)
-            if match:
-                email = match.group(0)
-        output["email"] = email
+        # sometimes (email not present, for example) parseaddr fails,
+        # so we have to parse it by hands
+        if not parsed_email or not name:
+            if "@" not in author:
+                name, parsed_email = author, None
+            else:
+                # if author string is something like "John mail@example.com"
+                bits = author.split()
+                if len(bits) > 1:
+                    *name, parsed_email = bits
+                    name = " ".join(name)
+        output["name"], output["email"] = name or None, parsed_email
         return output
 
     @property
