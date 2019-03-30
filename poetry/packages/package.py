@@ -3,7 +3,6 @@ import copy
 import re
 
 from contextlib import contextmanager
-import email.utils
 from typing import Union
 
 from poetry.semver import Version
@@ -22,6 +21,8 @@ from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
 from .utils.utils import convert_markers
 from .utils.utils import create_nested_marker
+
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 
 
 class Package(object):
@@ -137,25 +138,18 @@ class Package(object):
         return self.requires + self.dev_requires
 
     def _get_author(self):  # type: () -> dict
-        output = {"name": None, "email": None}
         if not self._authors:
-            return output
-        author = self._authors[0]
-        name, parsed_email = email.utils.parseaddr(author)
+            return {"name": None, "email": None}
 
-        # sometimes (email not present, for example) parseaddr fails,
-        # so we have to parse it by hands
-        if not parsed_email or not name:
-            if "@" not in author:
-                name, parsed_email = author, None
-            else:
-                # if author string is something like "John mail@example.com"
-                bits = author.split()
-                if len(bits) > 1:
-                    *name, parsed_email = bits
-                    name = " ".join(name)
-        output["name"], output["email"] = name or None, parsed_email
-        return output
+        author = self._authors[0]
+        m = AUTHOR_REGEX.match(author)
+        if not m:
+            raise ValueError("{} is not a valid author's name".format(author))
+
+        name = m.group("name")
+        email = m.group("email")
+
+        return {"name": name, "email": email}
 
     @property
     def python_versions(self):
