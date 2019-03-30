@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import pytest
+
 from poetry.packages import Package
 
 
@@ -14,3 +16,10 @@ def test_package_authors():
     package.authors[0] = "John Doe"
     assert package.author_name == "John Doe"
     assert package.author_email is None
+
+
+def test_invalid_author():
+    package = Package("foo", "0.1.0")
+    package.authors.append("support@example.com")
+    with pytest.raises(ValueError):
+        assert package.author_name
