@@ -105,3 +105,31 @@ def test_run_console_scripts_of_editable_dependencies_on_windows(
     # We prove that the CMD script executed successfully by verifying the exit code
     # matches what we wrote in the script
     assert tester.execute("quix") == 123
+
+
+def test_run_script_sets_argv(app):
+    """
+    If RunCommand calls a script defined in pyproject.toml, sys.argv[0] should
+    be set to the full path of the script.
+    """
+
+    def mock_foo(bin):
+        return "/full/path/to/" + bin
+
+    def mock_run(*args, **kwargs):
+        return dict(args=args, kwargs=kwargs)
+
+    command = app.find("run")
+    command._env = Env.get()
+    command._env._bin = mock_foo
+    command._env.run = mock_run
+    res = command.run_script("cli:cli", ["foogit", "status"])
+    expected = dict(
+        args=(
+            "python",
+            "-c",
+            "\"import sys; from importlib import import_module; sys.argv = ['/full/path/to/foogit', 'status']; import_module('cli').cli()\"",
+        ),
+        kwargs={"call": True, "shell": True},
+    )
+    assert res == expected
