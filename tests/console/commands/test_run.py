@@ -121,7 +121,9 @@ def test_run_script_sets_argv(app):
 
     command = app.find("run")
     command._env = Env.get()
+    # fake the existence of our script
     command._env._bin = mock_foo
+    # we don't want to run anything
     command._env.run = mock_run
     res = command.run_script("cli:cli", ["foogit", "status"])
     expected = dict(
