@@ -31,7 +31,8 @@ def test_list_displays_default_value_if_not_set(app, config):
 
     tester.execute("--list")
 
-    expected = """settings.virtualenvs.create = true
+    expected = """settings.prepend-index.url = ""
+settings.virtualenvs.create = true
 settings.virtualenvs.in-project = false
 settings.virtualenvs.path = "."
 repositories = {}
@@ -50,7 +51,8 @@ def test_list_displays_set_get_setting(app, config):
     command._settings_config = Config(config.file)
     tester.execute("--list")
 
-    expected = """settings.virtualenvs.create = false
+    expected = """settings.prepend-index.url = ""
+settings.virtualenvs.create = false
 settings.virtualenvs.in-project = false
 settings.virtualenvs.path = "."
 repositories = {}

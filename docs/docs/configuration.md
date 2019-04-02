@@ -31,6 +31,12 @@ Defaults to one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache/virtualenvs`
 - Unix:    `~/.cache/pypoetry/virtualenvs`
 
+### settings.prepend-index.url : string
+
+A repository url can be added to the set of indexes used by setting this
+configuration. It will be prepended and so preferred over other sources of
+packages.
+
 ### `repositories.<name>`: string
 
 Set a new alternative repository. See [Repositories](/docs/repositories/) for more information.

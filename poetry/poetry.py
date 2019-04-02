@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import os
 import shutil
 
 from typing import Dict
@@ -43,6 +44,16 @@ class Poetry:
 
         # Configure sources
         self._pool = Pool()
+
+        # add prepend index from poetry configuration
+        prepend_index_url = self._config.setting("settings.prepend-index.url")
+        if prepend_index_url:
+            self._pool.add_repository(
+                self.create_legacy_repository(
+                    {"name": "prepend-index", "url": prepend_index_url}
+                )
+            )
+
         for source in self._local_config.get("source", []):
             self._pool.add_repository(self.create_legacy_repository(source))
 

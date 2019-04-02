@@ -14,7 +14,6 @@ poetry up
 
 calls `poetry update`.
 
-
 ## Global options
 
 * `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
