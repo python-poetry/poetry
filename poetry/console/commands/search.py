@@ -17,7 +17,7 @@ class SearchCommand(Command):
         if self.option("only-name"):
             flags = PyPiRepository.SEARCH_NAME
 
-        results = PyPiRepository().search(self.argument("tokens"), flags)
+        results = self.poetry.pool.search(self.argument("tokens"), flags)
 
         for result in results:
             self.line("")
