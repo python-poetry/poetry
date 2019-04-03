@@ -381,6 +381,8 @@ class Provider:
         package.source_type = "directory"
         package.source_url = dependency.path.as_posix()
 
+        package.develop = dependency.develop
+
         for extra in dependency.extras:
             if extra in package.extras:
                 for dep in package.extras[extra]:

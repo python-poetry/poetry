@@ -282,6 +282,20 @@ def test_search_for_directory_poetry_with_extras(provider):
     }
 
 
+def test_search_for_directory_poetry_develop_false(provider):
+    dependency = DirectoryDependency(
+        "demo",
+        Path(__file__).parent.parent / "fixtures" / "simple_project",
+        develop=False,
+    )
+
+    package = provider.search_for_directory(dependency)[0]
+
+    assert package.name == "simple-project"
+    assert package.version.text == "1.2.3"
+    assert package.develop is False
+
+
 def test_search_for_file_sdist(provider):
     dependency = FileDependency(
         "demo",
