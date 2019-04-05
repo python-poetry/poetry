@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import copy
 import re
+import email.utils
 
 from contextlib import contextmanager
 from typing import Union
@@ -22,7 +23,7 @@ from .vcs_dependency import VCSDependency
 from .utils.utils import convert_markers
 from .utils.utils import create_nested_marker
 
-AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[^@<]+)(?: <?(?P<email>.+@.+?)>?)?$")
 
 
 class Package(object):
@@ -142,14 +143,14 @@ class Package(object):
             return {"name": None, "email": None}
 
         author = self._authors[0]
-        m = AUTHOR_REGEX.match(author)
-        if not m:
-            raise ValueError("{} is not a valid author's name".format(author))
+        name, mail = email.utils.parseaddr(author)
+        if not name:
+            match = AUTHOR_REGEX.match(author)
+            if not match:
+                raise ValueError("{} is not a valid author's name".format(author))
+            name, mail = match.groups()
 
-        name = m.group("name")
-        email = m.group("email")
-
-        return {"name": name, "email": email}
+        return {"name": name, "email": mail}
 
     @property
     def python_versions(self):
