@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
 import pytest
 import re
 import shutil
@@ -159,6 +160,8 @@ def test_complete():
     whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
 
     assert whl.exists()
+    if sys.platform != "win32":
+        assert (os.stat(str(whl)).st_mode & 0o777) == 0o644
 
     zip = zipfile.ZipFile(str(whl))
 
