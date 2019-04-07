@@ -128,3 +128,26 @@ def test_package_with_include(mocker):
         assert "my_module.py" in names
         assert "notes.txt" in names
         assert "package_with_include/__init__.py" in names
+
+
+def test_dist_info_file_permissions():
+    module_path = fixtures_dir / "complete"
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert (
+            z.getinfo("my_package-1.2.3.dist-info/WHEEL").external_attr == 0o644 << 16
+        )
+        assert (
+            z.getinfo("my_package-1.2.3.dist-info/METADATA").external_attr
+            == 0o644 << 16
+        )
+        assert (
+            z.getinfo("my_package-1.2.3.dist-info/RECORD").external_attr == 0o644 << 16
+        )
+        assert (
+            z.getinfo("my_package-1.2.3.dist-info/entry_points.txt").external_attr
+            == 0o644 << 16
+        )

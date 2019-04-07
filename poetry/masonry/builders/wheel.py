@@ -277,6 +277,7 @@ class WheelBuilder(Builder):
         # give you the exact same result.
         date_time = (2016, 1, 1, 0, 0, 0)
         zi = zipfile.ZipInfo(rel_path, date_time)
+        zi.external_attr = (0o644 & 0xFFFF) << 16  # Unix attributes
         b = sio.getvalue().encode("utf-8")
         hashsum = hashlib.sha256(b)
         hash_digest = urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
