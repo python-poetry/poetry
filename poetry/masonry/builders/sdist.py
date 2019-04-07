@@ -41,17 +41,6 @@ setup(**setup_kwargs)
 """
 
 
-PKG_INFO = """\
-Metadata-Version: 2.1
-Name: {name}
-Version: {version}
-Summary: {summary}
-Home-page: {home_page}
-Author: {author}
-Author-email: {author_email}
-"""
-
-
 class SdistBuilder(Builder):
     def build(self, target_dir=None):  # type: (Path) -> Path
         self._io.writeln(" - Building <info>sdist</info>")
@@ -195,34 +184,7 @@ class SdistBuilder(Builder):
         )
 
     def build_pkg_info(self):
-        pkg_info = PKG_INFO.format(
-            name=self._meta.name,
-            version=self._meta.version,
-            summary=self._meta.summary,
-            home_page=self._meta.home_page,
-            author=to_str(self._meta.author),
-            author_email=to_str(self._meta.author_email),
-        )
-
-        if self._meta.keywords:
-            pkg_info += "Keywords: {}\n".format(self._meta.keywords)
-
-        if self._meta.requires_python:
-            pkg_info += "Requires-Python: {}\n".format(self._meta.requires_python)
-
-        for classifier in self._meta.classifiers:
-            pkg_info += "Classifier: {}\n".format(classifier)
-
-        for extra in sorted(self._meta.provides_extra):
-            pkg_info += "Provides-Extra: {}\n".format(extra)
-
-        for dep in sorted(self._meta.requires_dist):
-            pkg_info += "Requires-Dist: {}\n".format(dep)
-
-        for url in sorted(self._meta.project_urls, key=lambda u: u[0]):
-            pkg_info += "Project-URL: {}\n".format(url)
-
-        return encode(pkg_info)
+        return encode(self.get_metadata_content())
 
     def find_packages(self, include):
         """

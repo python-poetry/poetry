@@ -13,6 +13,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import basestring
 from poetry.utils._compat import glob
 from poetry.utils._compat import lru_cache
+from poetry.utils._compat import to_str
 from poetry.vcs import get_vcs
 
 from ..metadata import Metadata
@@ -21,6 +22,13 @@ from ..utils.package_include import PackageInclude
 
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
+
+METADATA_BASE = """\
+Metadata-Version: 2.1
+Name: {name}
+Version: {version}
+Summary: {summary}
+"""
 
 
 class Builder(object):
@@ -146,6 +154,54 @@ class Builder(object):
             to_add.append(Path(self._package.build))
 
         return sorted(to_add)
+
+    def get_metadata_content(self):  # type: () -> bytes
+        content = METADATA_BASE.format(
+            name=self._meta.name,
+            version=self._meta.version,
+            summary=to_str(self._meta.summary),
+        )
+
+        # Optional fields
+        if self._meta.home_page:
+            content += "Home-page: {}\n".format(self._meta.home_page)
+
+        if self._meta.license:
+            content += "License: {}\n".format(self._meta.license)
+
+        if self._meta.keywords:
+            content += "Keywords: {}\n".format(self._meta.keywords)
+
+        if self._meta.author:
+            content += "Author: {}\n".format(to_str(self._meta.author))
+
+        if self._meta.author_email:
+            content += "Author-email: {}\n".format(to_str(self._meta.author_email))
+
+        if self._meta.requires_python:
+            content += "Requires-Python: {}\n".format(self._meta.requires_python)
+
+        for classifier in self._meta.classifiers:
+            content += "Classifier: {}\n".format(classifier)
+
+        for extra in sorted(self._meta.provides_extra):
+            content += "Provides-Extra: {}\n".format(extra)
+
+        for dep in sorted(self._meta.requires_dist):
+            content += "Requires-Dist: {}\n".format(dep)
+
+        for url in sorted(self._meta.project_urls, key=lambda u: u[0]):
+            content += "Project-URL: {}\n".format(to_str(url))
+
+        if self._meta.description_content_type:
+            content += "Description-Content-Type: {}\n".format(
+                self._meta.description_content_type
+            )
+
+        if self._meta.description is not None:
+            content += "\n" + to_str(self._meta.description) + "\n"
+
+        return content
 
     def convert_entry_points(self):  # type: () -> dict
         result = defaultdict(list)
