@@ -31,6 +31,26 @@ def get_requires_for_build_wheel(config_settings=None):
 get_requires_for_build_sdist = get_requires_for_build_wheel
 
 
+def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
+    poetry = Poetry.create(".")
+    builder = WheelBuilder(poetry, SystemEnv(Path(sys.prefix)), NullIO())
+
+    dist_info = Path(metadata_directory, builder.dist_info)
+    dist_info.mkdir()
+
+    if "scripts" in poetry.local_config or "plugins" in poetry.local_config:
+        with (dist_info / "entry_points.txt").open("w") as f:
+            builder._write_entry_points(f)
+
+    with (dist_info / "WHEEL").open("w") as f:
+        builder._write_wheel_file(f)
+
+    with (dist_info / "METADATA").open("w") as f:
+        builder._write_metadata_file(f)
+
+    return dist_info.name
+
+
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds a wheel, places it in wheel_directory"""
     poetry = Poetry.create(".")
