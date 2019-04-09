@@ -1279,3 +1279,80 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
         assert len(installs) == 1
     else:
         assert len(installs) == 0
+
+
+def test_update_multiple_times_with_split_dependencies_is_idempotent(
+    installer, locker, repo, package
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"B": ">=1.0"},
+                },
+                {
+                    "name": "B",
+                    "version": "1.0.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
+                    "checksum": [],
+                    "dependencies": {},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": []},
+            },
+        }
+    )
+
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency("A", "^1.0")
+
+    a = get_package("A", "1.0")
+    a.add_dependency("B", ">=1.0.1")
+    a.add_dependency("C", {"version": "^1.0", "python": "~2.7"})
+    a.add_dependency("C", {"version": "^2.0", "python": "^3.4"})
+    b101 = get_package("B", "1.0.1")
+    b101.python_versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+    b110 = get_package("B", "1.1.0")
+    b110.python_versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
+    repo.add_package(a)
+    repo.add_package(b101)
+    repo.add_package(b110)
+    repo.add_package(get_package("C", "1.0"))
+    repo.add_package(get_package("C", "2.0"))
+
+    installer.update(True)
+    installer.run()
+
+    expected = fixture("with-multiple-updates")
+    import json
+
+    assert expected == locker.written_data
+
+    locker.mock_lock_data(locker.written_data)
+
+    installer.update(True)
+    installer.run()
+
+    assert expected == locker.written_data
+
+    locker.mock_lock_data(locker.written_data)
+
+    installer.update(True)
+    installer.run()
+
+    assert expected == locker.written_data
