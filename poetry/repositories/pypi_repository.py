@@ -1,4 +1,5 @@
 import logging
+import sys
 import os
 import platform
 import tarfile
@@ -434,7 +435,7 @@ class PyPiRepository(Repository):
         # Return system information. Can be overridden for testing
         return {
             "plat": platform.system().lower(),
-            "machine": platform.machine().lower(),
+            "is32bit": sys.maxsize <= 2 ** 32,
             "pyver": platform.python_version_tuple(),
         }
 
@@ -447,9 +448,7 @@ class PyPiRepository(Repository):
         os_name = (
             os_map[sys_info["plat"]] if sys_info["plat"] in os_map else sys_info["plat"]
         )
-        machine = sys_info["machine"]
-        if os_name == "win" and machine == "x86":
-            machine = "32"  # Fix search string for Windows 32bit systems
+        bit_label = "32" if sys_info["is32bit"] else "64"
         py_label = "cp{}".format("".join(sys_info["pyver"][:2]))
         self._log(
             "Attempting to determine best match for: {}".format(sys_info), level="debug"
@@ -461,7 +460,7 @@ class PyPiRepository(Repository):
             plat = m.group("plat")
             if os_name in plat:
                 match_py = m.group("pyver") == py_label
-                if match_py and (machine in plat or "x86_64" in plat):
+                if match_py and (bit_label in plat or "x86_64" in plat):
                     self._log("Found best wheel match: {}".format(url), level="debug")
                     return url
                 elif match_py:
@@ -469,12 +468,17 @@ class PyPiRepository(Repository):
         if len(platform_matches) > 0:
             # Return first platform match as more specificity couldn't be determined
             self._log(
-                "Selecting wheel file: {}".format(platform_matches[0]), level="debug"
+                "Selecting first wheel file for platform {}: {}".format(
+                    os_name, platform_matches[0]
+                ),
+                level="debug",
             )
             return platform_matches[0]
         # Could not pick the best wheel, return the first available and hope for the best
         self._log(
-            "Matching failed, selecting wheel file: {}".format(platform_matches[0]),
+            "Matching was unsuccessful, selecting first wheel file: {}".format(
+                platform_specific_wheels[0]
+            ),
             level="debug",
         )
         return platform_specific_wheels[0]
