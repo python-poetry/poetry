@@ -49,11 +49,7 @@ class MockRepository(PyPiRepository):
 
     def get_sys_info(self):
         # Mock different hardware configurations by overriding this method
-        return {
-            "plat": self.plat.lower(),
-            "is32bit": self.is32bit,
-            "pyver": self.pyver,
-        }
+        return {"plat": self.plat.lower(), "is32bit": self.is32bit, "pyver": self.pyver}
 
 
 def test_find_packages():

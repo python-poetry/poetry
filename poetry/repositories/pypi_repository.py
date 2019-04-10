@@ -451,7 +451,8 @@ class PyPiRepository(Repository):
         bit_label = "32" if sys_info["is32bit"] else "64"
         py_label = "cp{}".format("".join(sys_info["pyver"][:2]))
         self._log(
-            "Attempting to determine best match for: {}".format(sys_info), level="debug"
+            "Attempting to determine best wheel file for: {}".format(sys_info),
+            level="debug",
         )
 
         platform_matches = []
@@ -461,7 +462,12 @@ class PyPiRepository(Repository):
             if os_name in plat:
                 match_py = m.group("pyver") == py_label
                 if match_py and (bit_label in plat or "x86_64" in plat):
-                    self._log("Found best wheel match: {}".format(url), level="debug")
+                    self._log(
+                        "Selected best platform, bit, and Python version match: {}".format(
+                            url
+                        ),
+                        level="debug",
+                    )
                     return url
                 elif match_py:
                     platform_matches.insert(0, url)
