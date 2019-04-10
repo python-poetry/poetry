@@ -1339,7 +1339,6 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
     installer.run()
 
     expected = fixture("with-multiple-updates")
-    import json
 
     assert expected == locker.written_data
 
