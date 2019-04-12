@@ -21,6 +21,7 @@ from .spdx import license_by_id
 from .utils._compat import Path
 from .utils.helpers import get_http_basic_auth
 from .utils.toml_file import TomlFile
+from .vcs.git import version_from_tags
 
 
 class Poetry:
@@ -107,7 +108,7 @@ class Poetry:
 
         # Load package
         name = local_config["name"]
-        version = local_config["version"]
+        version = local_config.get("version", version_from_tags())
         package = ProjectPackage(name, version, version)
         package.root_dir = poetry_file.parent
 

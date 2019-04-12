@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pkg_resources
 import re
 import subprocess
 
@@ -43,6 +44,9 @@ class Git:
 
     def clone(self, repository, dest):  # type: (...) -> str
         return self.run("clone", repository, str(dest))
+
+    def tag(self):  # type: (...) -> list
+        return self.run("tag").split("\n")
 
     def checkout(self, rev, folder=None):  # type: (...) -> str
         args = []
@@ -100,3 +104,14 @@ class Git:
         return decode(
             subprocess.check_output(["git"] + list(args), stderr=subprocess.STDOUT)
         )
+
+
+def version_from_tags():
+    from poetry.semver import Version
+
+    git = Git()
+    version = "0.0.0"
+    tags = git.tag()
+    if tags:
+        version = max(tags, key=pkg_resources.parse_version)
+    return Version.parse(version)
