@@ -113,6 +113,17 @@ class Solver:
 
                 operations.append(op)
 
+        # Checking for obsolete packages
+        for pkg in self._installed.packages:
+            remove = True
+            for package in packages:
+                if pkg.name == package.name:
+                    remove = False
+                    break
+            if remove:
+                op = Uninstall(pkg, reason="Obsolete package")
+                operations.append(op)
+
         return sorted(
             operations,
             key=lambda o: (
