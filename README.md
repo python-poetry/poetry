@@ -548,7 +548,7 @@ poetry lock
 This command exports the lock file to other formats.
 
 ```bash
-poetry export -f requirements.txt
+poetry export -f requirements.txt > requirements.txt
 ```
 
 #### Options
