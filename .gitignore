@@ -35,3 +35,4 @@ MANIFEST.in
 
 .venv
 /releases/*
+pip-wheel-metadata
