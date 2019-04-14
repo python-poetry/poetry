@@ -24,6 +24,24 @@
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
 
 
+## [0.12.12] - 2019-04-11
+
+### Fixed
+
+- Fix lock idempotency.
+- Fix markers evaluation for `python_version` with precision < 3.
+- Fix permissions of the `dist-info` files.
+- Fix `prepare_metadata_for_build_wheel()` missing in the build backend.
+- Fix metadata inconsistency between wheels and sdists.
+- Fix parsing of `platform_release` markers.
+- Fix metadata information when the project has git dependencies.
+- Fix error reporting when publishing fails.
+- Fix retrieval of `extras_require` in some `setup.py` files. (Thanks to [@asodeur](https://github.com/asodeur))
+- Fix wheel compression when building. (Thanks to [@ccosby](https://github.com/ccosby))
+- Improve retrieval of information for packages with two python specific wheels.
+- Fix request authentication when credentials are included in URLs. (Thanks to [@connorbrinton](https://github.com/connorbrinton))
+
+
 ## [0.12.11] - 2019-01-13
 
 ### Fixed
@@ -643,7 +661,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.11...develop
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.12...develop
+[0.12.12]: https://github.com/sdispater/poetry/releases/tag/0.12.12
 [0.12.11]: https://github.com/sdispater/poetry/releases/tag/0.12.11
 [0.12.10]: https://github.com/sdispater/poetry/releases/tag/0.12.10
 [0.12.9]: https://github.com/sdispater/poetry/releases/tag/0.12.9

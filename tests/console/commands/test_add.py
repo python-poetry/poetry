@@ -21,10 +21,10 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 1 install, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing cachy (0.2.0)
 """
@@ -53,10 +53,10 @@ def test_add_constraint(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 1 install, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing cachy (0.1.0)
 """
@@ -85,10 +85,10 @@ def test_add_constraint_dependencies(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 2 installs, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing msgpack-python (0.5.3)
   - Installing cachy (0.2.0)
@@ -113,10 +113,10 @@ def test_add_git_constraint(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 2 installs, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
@@ -147,10 +147,10 @@ def test_add_git_constraint_with_poetry(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 2 installs, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.2 9cf87a2)
@@ -174,10 +174,10 @@ def test_add_file_constraint_wheel(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 2 installs, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.0 ../distributions/demo-0.1.0-py2.py3-none-any.whl)
@@ -208,10 +208,10 @@ def test_add_file_constraint_sdist(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 2 installs, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing pendulum (1.4.4)
   - Installing demo (0.1.0 ../distributions/demo-0.1.0.tar.gz)
@@ -249,10 +249,10 @@ def test_add_constraint_with_extras(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 2 installs, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing msgpack-python (0.5.3)
   - Installing cachy (0.2.0)
@@ -287,10 +287,10 @@ def test_add_constraint_with_python(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 1 install, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing cachy (0.2.0)
 """
@@ -322,10 +322,10 @@ def test_add_constraint_with_platform(app, repo, installer):
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 1 install, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing cachy (0.2.0)
 """
@@ -358,10 +358,10 @@ Using version ^0.2.0 for cachy
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 1 install, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing cachy (0.2.0)
 """
@@ -391,10 +391,10 @@ Using version ^3.13 for pyyaml
 Updating dependencies
 Resolving dependencies...
 
+Writing lock file
+
 
 Package operations: 1 install, 0 updates, 0 removals
-
-Writing lock file
 
   - Installing pyyaml (3.13)
 """

@@ -7,6 +7,7 @@ try:
 except ImportError:
     import urlparse
 
+from cleo import ApplicationTester
 from tomlkit import document
 
 from poetry.config import Config as BaseConfig
@@ -139,6 +140,7 @@ class Poetry(BasePoetry):
         self._local_config = local_config
         self._locker = Locker(locker.lock.path, locker._local_config)
         self._config = Config.create("config.toml")
+        self._auth_config = Config.create("auth.toml")
 
         # Configure sources
         self._pool = Pool()
@@ -184,4 +186,12 @@ def poetry(repo, project_directory):
 
 @pytest.fixture
 def app(poetry):
-    return Application(poetry)
+    app_ = Application(poetry)
+    app_.config.set_terminate_after_run(False)
+
+    return app_
+
+
+@pytest.fixture
+def app_tester(app):
+    return ApplicationTester(app)

@@ -174,8 +174,8 @@ MARKER_EXPR = originalTextFor(MARKER_EXPR())("marker")
 MARKER_EXPR.setParseAction(
     lambda s, l, t: parse_marker(s[t._original_start : t._original_end])
 )
-MARKER_SEPERATOR = SEMICOLON
-MARKER = MARKER_SEPERATOR + MARKER_EXPR
+MARKER_SEPARATOR = SEMICOLON
+MARKER = MARKER_SEPARATOR + MARKER_EXPR
 
 VERSION_AND_MARKER = VERSION_SPEC + Optional(MARKER)
 URL_AND_MARKER = URL + Optional(MARKER)

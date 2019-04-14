@@ -17,6 +17,7 @@ from clikit.api.io.flags import VERY_VERBOSE
 
 from poetry.__version__ import __version__
 from poetry.semver import parse_constraint
+from poetry.utils._compat import decode
 
 from ..utils.helpers import normalize_file_permissions
 from ..utils.package_include import PackageInclude
@@ -259,7 +260,7 @@ class WheelBuilder(Builder):
                 hashsum.update(buf)
 
             src.seek(0)
-            wheel.writestr(zinfo, src.read())
+            wheel.writestr(zinfo, src.read(), compress_type=zipfile.ZIP_DEFLATED)
 
         size = os.stat(full_path).st_size
         hash_digest = urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
@@ -276,6 +277,7 @@ class WheelBuilder(Builder):
         # give you the exact same result.
         date_time = (2016, 1, 1, 0, 0, 0)
         zi = zipfile.ZipInfo(rel_path, date_time)
+        zi.external_attr = (0o644 & 0xFFFF) << 16  # Unix attributes
         b = sio.getvalue().encode("utf-8")
         hashsum = hashlib.sha256(b)
         hash_digest = urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
@@ -309,43 +311,4 @@ class WheelBuilder(Builder):
         """
         Write out metadata in the 2.x format (email like)
         """
-        fp.write("Metadata-Version: 2.1\n")
-        fp.write("Name: {}\n".format(self._meta.name))
-        fp.write("Version: {}\n".format(self._meta.version))
-        fp.write("Summary: {}\n".format(self._meta.summary))
-        fp.write("Home-page: {}\n".format(self._meta.home_page or "UNKNOWN"))
-        fp.write("License: {}\n".format(self._meta.license or "UNKNOWN"))
-
-        # Optional fields
-        if self._meta.keywords:
-            fp.write("Keywords: {}\n".format(self._meta.keywords))
-
-        if self._meta.author:
-            fp.write("Author: {}\n".format(self._meta.author))
-
-        if self._meta.author_email:
-            fp.write("Author-email: {}\n".format(self._meta.author_email))
-
-        if self._meta.requires_python:
-            fp.write("Requires-Python: {}\n".format(self._meta.requires_python))
-
-        for classifier in self._meta.classifiers:
-            fp.write("Classifier: {}\n".format(classifier))
-
-        for extra in sorted(self._meta.provides_extra):
-            fp.write("Provides-Extra: {}\n".format(extra))
-
-        for dep in sorted(self._meta.requires_dist):
-            fp.write("Requires-Dist: {}\n".format(dep))
-
-        for url in sorted(self._meta.project_urls, key=lambda u: u[0]):
-            fp.write("Project-URL: {}\n".format(url))
-
-        if self._meta.description_content_type:
-            fp.write(
-                "Description-Content-Type: "
-                "{}\n".format(self._meta.description_content_type)
-            )
-
-        if self._meta.description is not None:
-            fp.write("\n" + self._meta.description + "\n")
+        fp.write(decode(self.get_metadata_content()))

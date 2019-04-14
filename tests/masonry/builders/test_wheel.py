@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 import shutil
 import zipfile
@@ -8,7 +9,6 @@ from poetry.masonry.builders import WheelBuilder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
-from poetry.packages import ProjectPackage
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
@@ -127,21 +127,24 @@ def test_package_with_include(mocker):
         assert "package_with_include/__init__.py" in names
 
 
-def test_write_metadata_file_license_homepage_default(mocker):
-    # Preparation
-    mocked_poetry = mocker.Mock()
-    mocked_poetry.file.parent = Path(".")
-    mocked_poetry.package = ProjectPackage("pkg_name", "1.0.0")
-    mocked_file = mocker.Mock()
-    mocked_venv = mocker.Mock()
-    mocked_io = mocker.Mock()
-    # patch Module init inside Builder class
-    mocker.patch("poetry.masonry.builders.builder.Module")
-    w = WheelBuilder(mocked_poetry, mocked_venv, mocked_io)
+def test_dist_info_file_permissions():
+    module_path = fixtures_dir / "complete"
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
 
-    # Action
-    w._write_metadata_file(mocked_file)
+    whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
 
-    # Assertion
-    mocked_file.write.assert_any_call("Home-page: UNKNOWN\n")
-    mocked_file.write.assert_any_call("License: UNKNOWN\n")
+    with zipfile.ZipFile(str(whl)) as z:
+        assert (
+            z.getinfo("my_package-1.2.3.dist-info/WHEEL").external_attr == 0o644 << 16
+        )
+        assert (
+            z.getinfo("my_package-1.2.3.dist-info/METADATA").external_attr
+            == 0o644 << 16
+        )
+        assert (
+            z.getinfo("my_package-1.2.3.dist-info/RECORD").external_attr == 0o644 << 16
+        )
+        assert (
+            z.getinfo("my_package-1.2.3.dist-info/entry_points.txt").external_attr
+            == 0o644 << 16
+        )
