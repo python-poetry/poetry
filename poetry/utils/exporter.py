@@ -1,4 +1,5 @@
 import sys
+from typing import Optional
 
 from poetry.packages.locker import Locker
 from poetry.utils._compat import Path
