@@ -3,6 +3,7 @@ import re
 import shutil
 import stat
 import tempfile
+import time
 
 from contextlib import contextmanager
 from typing import List
@@ -29,17 +30,29 @@ def normalize_version(version):  # type: (str) -> str
 
 @contextmanager
 def temporary_directory(*args, **kwargs):
-    try:
-        from tempfile import TemporaryDirectory
+    name = tempfile.mkdtemp(*args, **kwargs)
 
-        with TemporaryDirectory(*args, **kwargs) as name:
-            yield name
-    except ImportError:
-        name = tempfile.mkdtemp(*args, **kwargs)
+    yield name
 
-        yield name
+    robust_rmtree(name)
 
-        shutil.rmtree(name)
+
+def robust_rmtree(path, max_retries=3):
+    """Robustly tries to delete paths.
+
+    Retries several times if an OSError occurs.
+    If the final attempt fails, the Exception is propagated
+    to the caller.
+    """
+    for i in range(max_retries - 1):
+        try:
+            shutil.rmtree(path)
+            return  # Only hits this on success
+        except OSError:
+            time.sleep(2)
+
+    # Final attempt, pass any Exceptions up to caller.
+    shutil.rmtree(path)
 
 
 def parse_requires(requires):  # type: (str) -> List[str]
