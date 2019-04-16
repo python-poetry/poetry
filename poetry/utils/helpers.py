@@ -3,6 +3,7 @@ import re
 import shutil
 import stat
 import tempfile
+from email.utils import parseaddr
 
 from contextlib import contextmanager
 from typing import List
@@ -100,3 +101,21 @@ def _on_rm_error(func, path, exc_info):
 
 def safe_rmtree(path):
     shutil.rmtree(path, onerror=_on_rm_error)
+
+
+def parse_author(address):  # type: (str) -> tuple
+    """Parse name and address parts from an email address string.
+
+    .. note::
+
+       If the input string does not contain an `@` character, it is
+       assumed that it represents only a name without an email address.
+
+    :param address: the email address string to parse.
+    :return: a 2-tuple with the parsed name and email address.  If a
+             part is missing, ``None`` will be returned in its place.
+    """
+    if "@" not in address:
+        return (address, None)
+    name, email = parseaddr(address)
+    return (name or None, email or None)

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import copy
-import re
 
 from contextlib import contextmanager
 from typing import Union
@@ -10,7 +9,7 @@ from poetry.semver import parse_constraint
 from poetry.spdx import license_by_id
 from poetry.spdx import License
 from poetry.utils._compat import Path
-from poetry.utils.helpers import canonicalize_name
+from poetry.utils.helpers import canonicalize_name, parse_author
 from poetry.version.markers import AnyMarker
 from poetry.version.markers import parse_marker
 
@@ -21,8 +20,6 @@ from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
 from .utils.utils import convert_markers
 from .utils.utils import create_nested_marker
-
-AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 
 
 class Package(object):
@@ -141,10 +138,7 @@ class Package(object):
         if not self._authors:
             return {"name": None, "email": None}
 
-        m = AUTHOR_REGEX.match(self._authors[0])
-
-        name = m.group("name")
-        email = m.group("email")
+        name, email = parse_author(self._authors[0])
 
         return {"name": name, "email": email}
 

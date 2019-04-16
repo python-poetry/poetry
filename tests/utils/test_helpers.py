@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from poetry.utils.helpers import get_http_basic_auth
 from poetry.utils.helpers import parse_requires
+from poetry.utils.helpers import parse_author
 
 
 def test_parse_requires():
@@ -66,3 +70,51 @@ def test_get_http_basic_auth_without_password(config):
 
 def test_get_http_basic_auth_missing(config):
     assert get_http_basic_auth(config, "foo") is None
+
+
+def test_parse_author_simple_name_and_email():
+    name, email = parse_author("John Doe <john.doe@example.com>")
+    assert name == "John Doe"
+    assert email == "john.doe@example.com"
+
+
+def test_parse_author_simple_name_only():
+    name, email = parse_author("John Doe")
+    assert name == "John Doe"
+    assert email is None
+
+
+def test_parse_author_ascii_specialchars_name_and_email():
+    name, email = parse_author("R&D <researchanddevelopment@example.com>")
+    assert name == "R&D"
+    assert email == "researchanddevelopment@example.com"
+
+
+def test_parse_author_ascii_specialchars_name_only():
+    name, email = parse_author("R&D")
+    assert name == "R&D"
+    assert email is None
+
+
+def test_parse_author_unicode_name_and_email():
+    name, email = parse_author("my·fancy·corp <my-fancy-corp@example.com>")
+    assert name == "my·fancy·corp"
+    assert email == "my-fancy-corp@example.com"
+
+
+def test_parse_author_unicode_name_only():
+    name, email = parse_author("my·fancy·corp")
+    assert name == "my·fancy·corp"
+    assert email is None
+
+
+def test_parse_author_email_only_with_angular_brackets():
+    name, email = parse_author("<john.doe@example.com>")
+    assert name is None
+    assert email == "john.doe@example.com"
+
+
+def test_parse_author_email_only_without_angular_brackets():
+    name, email = parse_author("john.doe@example.com")
+    assert name is None
+    assert email == "john.doe@example.com"

@@ -6,6 +6,7 @@ import re
 from typing import List
 from typing import Tuple
 
+from poetry.utils.helpers import parse_author
 from .command import Command
 from .env_command import EnvCommand
 
@@ -294,15 +295,13 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         return requires
 
     def _validate_author(self, author, default):
-        from poetry.packages.package import AUTHOR_REGEX
-
         author = author or default
 
         if author in ["n", "no"]:
             return
 
-        m = AUTHOR_REGEX.match(author)
-        if not m:
+        name, email = parse_author(author)
+        if not name:
             raise ValueError(
                 "Invalid author string. Must be in the format: "
                 "John Smith <john@example.com>"

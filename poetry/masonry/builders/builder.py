@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import re
 import shutil
 import tempfile
 
@@ -16,14 +15,13 @@ from poetry.utils._compat import basestring
 from poetry.utils._compat import glob
 from poetry.utils._compat import lru_cache
 from poetry.utils._compat import to_str
+from poetry.utils.helpers import parse_author
 from poetry.vcs import get_vcs
 
 from ..metadata import Metadata
 from ..utils.module import Module
 from ..utils.package_include import PackageInclude
 
-
-AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
 
 METADATA_BASE = """\
 Metadata-Version: 2.1
@@ -228,10 +226,7 @@ class Builder(object):
 
     @classmethod
     def convert_author(cls, author):  # type: () -> dict
-        m = AUTHOR_REGEX.match(author)
-
-        name = m.group("name")
-        email = m.group("email")
+        name, email = parse_author(author)
 
         return {"name": name, "email": email}
 
