@@ -73,48 +73,44 @@ def test_get_http_basic_auth_missing(config):
 
 
 def test_parse_author_simple_name_and_email():
+    """Test the :func:`parse_author` function."""
+
+    # Verify the (probable) default use case
     name, email = parse_author("John Doe <john.doe@example.com>")
     assert name == "John Doe"
     assert email == "john.doe@example.com"
 
-
-def test_parse_author_simple_name_only():
+    # Name only
     name, email = parse_author("John Doe")
     assert name == "John Doe"
     assert email is None
 
-
-def test_parse_author_ascii_specialchars_name_and_email():
+    # Name with a “special” character + email address
     name, email = parse_author("R&D <researchanddevelopment@example.com>")
     assert name == "R&D"
     assert email == "researchanddevelopment@example.com"
 
-
-def test_parse_author_ascii_specialchars_name_only():
+    # Name with a “special” character only
     name, email = parse_author("R&D")
     assert name == "R&D"
     assert email is None
 
-
-def test_parse_author_unicode_name_and_email():
-    name, email = parse_author("my·fancy·corp <my-fancy-corp@example.com>")
-    assert name == "my·fancy·corp"
+    # Name with fancy unicode character + email address
+    name, email = parse_author("my·fancy corp <my-fancy-corp@example.com>")
+    assert name == "my·fancy corp"
     assert email == "my-fancy-corp@example.com"
 
-
-def test_parse_author_unicode_name_only():
-    name, email = parse_author("my·fancy·corp")
-    assert name == "my·fancy·corp"
+    # Name with fancy unicode character only
+    name, email = parse_author("my·fancy corp")
+    assert name == "my·fancy corp"
     assert email is None
 
-
-def test_parse_author_email_only_with_angular_brackets():
+    # Email address only, wrapped in angular brackets
     name, email = parse_author("<john.doe@example.com>")
     assert name is None
     assert email == "john.doe@example.com"
 
-
-def test_parse_author_email_only_without_angular_brackets():
+    # Email address only
     name, email = parse_author("john.doe@example.com")
     assert name is None
     assert email == "john.doe@example.com"
