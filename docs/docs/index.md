@@ -16,8 +16,13 @@ Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
+### osx / linux / bashonwindows install instructions
 ```bash
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+```
+### windows powershell install instructions
+```powershell
+$(Invoke-WebRequest -Uri https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py).Content | python
 ```
 
 !!! note
