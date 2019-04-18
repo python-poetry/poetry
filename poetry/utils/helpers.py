@@ -106,9 +106,12 @@ def safe_rmtree(path):
 def parse_author(address):  # type: (str) -> tuple
     """Parse name and address parts from an email address string.
 
+    >>> parse_author("John Doe <john.doe@example.com>")
+    ('John Doe', 'john.doe@example.com')
+
     .. note::
 
-       If the input string does not contain an `@` character, it is
+       If the input string does not contain an ``@`` character, it is
        assumed that it represents only a name without an email address.
 
     :param address: the email address string to parse.
