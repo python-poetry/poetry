@@ -114,3 +114,16 @@ def test_parse_author_simple_name_and_email():
     name, email = parse_author("john.doe@example.com")
     assert name is None
     assert email == "john.doe@example.com"
+
+    # Non-RFC-conform cases with unquoted commas
+    name, email = parse_author("asf,dfu@t.b")
+    assert name == "asf"
+    assert email is None
+
+    name, email = parse_author("asf,<dfu@t.b>")
+    assert name == "asf"
+    assert email is None
+
+    name, email = parse_author("asf, dfu@t.b")
+    assert name == "asf"
+    assert email is None

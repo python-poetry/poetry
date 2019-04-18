@@ -121,4 +121,6 @@ def parse_author(address):  # type: (str) -> tuple
     if "@" not in address:
         return (address, None)
     name, email = parseaddr(address)
+    if not name and "@" not in email:
+        return (email, None)
     return (name or None, email or None)
