@@ -22,7 +22,7 @@ from .builder import Builder
 
 SETUP = """\
 # -*- coding: utf-8 -*-
-from distutils.core import setup
+from setuptools import setup
 
 {before}
 setup_kwargs = {{

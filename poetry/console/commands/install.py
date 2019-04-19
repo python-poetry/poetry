@@ -86,7 +86,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
                 f.write(decode(builder.build_setup()))
 
         try:
-            self.env.run("pip", "install", "-e", str(setup.parent), "--no-deps")
+            self.env.run("python", str(setup), "develop", "--no-deps")
         finally:
             if not has_setup:
                 os.remove(str(setup))
