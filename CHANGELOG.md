@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed packages not being removed after using the `remove` command.
+
+
 ## [0.12.12] - 2019-04-11
 
 ### Fixed
