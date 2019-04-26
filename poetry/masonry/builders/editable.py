@@ -14,14 +14,7 @@ from .sdist import SdistBuilder
 
 class EditableBuilder(Builder):
     def build(self):
-        if self._package.build:
-            # If the project has some kind of special
-            # build needs we delegate to the setup.py file
-            return self._setup_build()
-
-        self._build_egg_info()
-        self._build_egg_link()
-        self._add_easy_install_entry()
+        return self._setup_build()
 
     def _setup_build(self):
         builder = SdistBuilder(self._poetry, self._env, self._io)

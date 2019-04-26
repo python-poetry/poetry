@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed root package installation for pure Python packages.
+
+
 ## [0.12.13] - 2019-04-26
 
 ### Fixed
