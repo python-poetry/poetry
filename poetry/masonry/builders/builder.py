@@ -35,7 +35,7 @@ class Builder(object):
 
     AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
 
-    def __init__(self, poetry, env, io):
+    def __init__(self, poetry, env, io):  # type: (Poetry, Env, IO) -> None
         self._poetry = poetry
         self._env = env
         self._io = io

@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Fixed root package installation with `pip>=19.0`.
 - Fixed packages not being removed after using the `remove` command.
 
 

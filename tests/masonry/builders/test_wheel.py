@@ -3,15 +3,11 @@ import pytest
 import shutil
 import zipfile
 
-from email.parser import Parser
-
 from poetry.io import NullIO
 from poetry.masonry.builders import WheelBuilder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
-from poetry.utils._compat import to_str
 from poetry.utils.env import NullEnv
-from poetry.packages import ProjectPackage
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
