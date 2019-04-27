@@ -58,6 +58,14 @@ class PyPiRepository(Repository):
 
     CACHE_VERSION = parse_constraint("0.12.0")
 
+    # Implementation name lookup specified by PEP425
+    IMP_NAME_LOOKUP = {
+        "cpython": "cp",
+        "ironpython": "ip",
+        "pypy": "pp",
+        "jython": "jy",
+    }
+
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
         self._name = "PyPI"
         self._url = url
@@ -436,6 +444,7 @@ class PyPiRepository(Repository):
         return {
             "plat": platform.system().lower(),
             "is32bit": sys.maxsize <= 2 ** 32,
+            "imp_name": sys.implementation.name,
             "pyver": platform.python_version_tuple(),
         }
 
@@ -443,13 +452,13 @@ class PyPiRepository(Repository):
         self, platform_specific_wheels
     ):  # type: (list) -> str
         sys_info = self.get_sys_info()
-        # Format the expected platform name as used by package authors
+        # Format information for checking the PEP425 "Platform Tag"
         os_map = {"windows": "win", "darwin": "macosx"}
-        os_name = (
-            os_map[sys_info["plat"]] if sys_info["plat"] in os_map else sys_info["plat"]
-        )
+        os_name = os_map.get(sys_info["plat"], sys_info["plat"])
         bit_label = "32" if sys_info["is32bit"] else "64"
-        py_label = "cp{}".format("".join(sys_info["pyver"][:2]))
+        # Format information for checking the PEP425 "Python Tag"
+        imp_abbr = self.IMP_NAME_LOOKUP.get(sys_info["imp_name"].lower(), "py")
+        py_abbr = "".join(sys_info["pyver"][:2])
         self._log(
             "Attempting to determine best wheel file for: {}".format(sys_info),
             level="debug",
@@ -460,7 +469,8 @@ class PyPiRepository(Repository):
             m = wheel_file_re.match(Link(url).filename)
             plat = m.group("plat")
             if os_name in plat:
-                match_py = m.group("pyver") == py_label
+                # Check python version and the Python implementation or generic "py"
+                match_py = m.group("pyver") in [imp_abbr + py_abbr, "py" + py_abbr]
                 if match_py and (bit_label in plat or "x86_64" in plat):
                     self._log(
                         "Selected best platform, bit, and Python version match: {}".format(
