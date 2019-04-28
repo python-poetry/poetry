@@ -1,5 +1,6 @@
 from ..command import Command
 
+from .clean import AliasCleanCommand
 from .go import AliasGoCommand
 from .list import AliasListCommand
 from .prune import AliasPruneCommand
@@ -16,6 +17,7 @@ class AliasCommand(Command):
     """
 
     commands = [
+        AliasCleanCommand(),
         AliasGoCommand(),
         AliasListCommand(),
         AliasPruneCommand(),

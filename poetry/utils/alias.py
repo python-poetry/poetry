@@ -109,6 +109,18 @@ class AliasManager(object):
         self.aliases_file.write(self.aliases)
         return removed_aliases
 
+    def clean(self):  # type: () -> Dict[str, str]
+        """
+        Remove all alias definitions.
+        """
+        removed_aliases = self.list()
+
+        for name, project_dirname in self.aliases.items():
+            del self.aliases[name]
+
+        self.aliases_file.write(self.aliases)
+        return removed_aliases
+
 
 class AliasCommandError(Exception):
 
