@@ -2,6 +2,7 @@ from ..command import Command
 
 from .go import AliasGoCommand
 from .list import AliasListCommand
+from .prune import AliasPruneCommand
 from .rm import AliasRmCommand
 from .set import AliasSetCommand
 from .show import AliasShowCommand
@@ -17,6 +18,7 @@ class AliasCommand(Command):
     commands = [
         AliasGoCommand(),
         AliasListCommand(),
+        AliasPruneCommand(),
         AliasRmCommand(),
         AliasSetCommand(),
         AliasShowCommand(),

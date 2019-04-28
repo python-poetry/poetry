@@ -91,6 +91,24 @@ class AliasManager(object):
         self.aliases[name] = project_dirname
         self.aliases_file.write(self.aliases)
 
+    def prune(self):  # type: () -> Dict[str, str]
+        """
+        Clean up dangling aliases.
+        """
+        removed_aliases = {}
+
+        for name, project_dirname in self.aliases.items():
+            poetry_file = Path(project_dirname) / "pyproject.toml"
+
+            if poetry_file.exists():
+                continue
+
+            del self.aliases[name]
+            removed_aliases[name] = project_dirname
+
+        self.aliases_file.write(self.aliases)
+        return removed_aliases
+
 
 class AliasCommandError(Exception):
 
