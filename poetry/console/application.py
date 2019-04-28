@@ -33,6 +33,7 @@ from .commands.self import SelfCommand
 
 from .config import ApplicationConfig
 
+from .commands.alias import AliasCommand
 from .commands.env import EnvCommand
 
 
@@ -90,6 +91,9 @@ class Application(BaseApplication):
 
         # Debug command
         commands += [DebugCommand()]
+
+        # Alias command
+        commands += [AliasCommand()]
 
         # Env command
         commands += [EnvCommand()]

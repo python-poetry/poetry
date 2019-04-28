@@ -8,6 +8,7 @@ from typing import Tuple
 
 from .command import Command
 from .env_command import EnvCommand
+from ...utils.alias import AliasCommandError, AliasManager
 
 
 class InitCommand(Command):
@@ -23,6 +24,7 @@ class InitCommand(Command):
         {--dev-dependency=* : Package to require for development with an optional version constraint,
                               e.g. requests:^2.10.0 or requests=2.11.1}
         {--l|license= : License of the package}
+        {--alias= : Project alias}
     """
 
     help = """\
@@ -33,6 +35,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         super(InitCommand, self).__init__()
 
         self._pool = None
+        self._alias_manager = AliasManager()
 
     def handle(self):
         from poetry.layouts import layout
@@ -112,6 +115,15 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         )
         python = self.ask(question)
 
+        alias = self.option("alias")
+        if not alias:
+            question = self.create_question(
+                "Project alias [<comment>{}</comment>, . to skip]: ".format(name),
+                default=name,
+            )
+            question.set_validator(self._validate_alias)
+            alias = self.ask(question)
+
         self.line("")
 
         requirements = {}
@@ -162,6 +174,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         with (Path.cwd() / "pyproject.toml").open("w") as f:
             f.write(content)
+
+        if alias:
+            self._alias_manager.set(Path.cwd(), alias)
 
     def _determine_requirements(
         self, requires, allow_prereleases=False  # type: List[str]  # type: bool
@@ -317,6 +332,20 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             license_by_id(license)
 
         return license
+
+    def _validate_alias(self, alias):
+        if alias == ".":
+            return
+
+        try:
+            existing_project = self._alias_manager.get_project(alias)
+        except AliasCommandError:
+            existing_project = None
+
+        if existing_project is not None:
+            raise ValueError("Alias already exists")
+
+        return alias
 
     def _get_pool(self):
         from poetry.repositories import Pool
