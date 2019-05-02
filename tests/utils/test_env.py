@@ -33,8 +33,13 @@ def test_env_has_symlinks_on_nix(tmp_dir):
 
     venv = VirtualEnv(venv_path)
 
-    if os.name == "nt":
-        assert not os.path.islink(venv.python)
-    else:
-        print(venv.python)
+    venv_available = False
+    try:
+        from venv import EnvBuilder
+
+        venv_available = True
+    except ImportError:
+        pass
+
+    if os.name != "nt" and venv_available:
         assert os.path.islink(venv.python)
