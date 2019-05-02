@@ -37,19 +37,22 @@ def temporary_directory(*args, **kwargs):
     robust_rmtree(name)
 
 
-def robust_rmtree(path, max_retries=3):
+def robust_rmtree(path):
     """Robustly tries to delete paths.
 
     Retries several times if an OSError occurs.
     If the final attempt fails, the Exception is propagated
     to the caller.
     """
-    for i in range(max_retries - 1):
+    timeout = 0.001
+    while timeout < 2:
         try:
             shutil.rmtree(path)
             return  # Only hits this on success
         except OSError:
-            time.sleep(2)
+            # Increase the timeout and try again
+            time.sleep(timeout)
+            timeout *= 2
 
     # Final attempt, pass any Exceptions up to caller.
     shutil.rmtree(path)
