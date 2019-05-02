@@ -43,7 +43,7 @@ from poetry.utils.patterns import wheel_file_re
 from poetry.version.markers import InvalidMarker
 
 from .auth import Auth
-from .exceptions import PackageNotFound
+from .exceptions import PackageNotFound, RepositoryError
 from .pypi_repository import PyPiRepository
 
 import warnings
@@ -390,7 +390,12 @@ class LegacyRepository(PyPiRepository):
         return data
 
     def _download(self, url, dest):  # type: (str, str) -> None
-        r = self._session.get(url, stream=True)
+        try:
+            r = self._session.get(url, stream=True)
+            r.raise_for_status()
+        except requests.HTTPError as e:
+            raise RepositoryError(e)
+
         with open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
@@ -398,8 +403,12 @@ class LegacyRepository(PyPiRepository):
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
-        response = self._session.get(url)
-        if response.status_code == 404:
-            return
+        try:
+            response = self._session.get(url)
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                return
+            raise RepositoryError(e)
 
         return Page(url, response.content, response.headers)
