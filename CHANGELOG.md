@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed an `AttributeError` in the editable builder.
+
+
 ## [0.12.14] - 2019-04-26
 
 ### Fixed
