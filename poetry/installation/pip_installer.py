@@ -115,7 +115,11 @@ class PipInstaller(BaseInstaller):
         if formatted and not package.source_type:
             req = "{}=={}".format(package.name, package.version)
             for h in package.hashes:
-                req += " --hash sha256:{}".format(h)
+                hash_type = "sha256"
+                if ":" in h:
+                    hash_type, h = h.split(":")
+
+                req += " --hash {}:{}".format(hash_type, h)
 
             req += "\n"
 

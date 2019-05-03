@@ -5,6 +5,8 @@
 ### Fixed
 
 - Fixed an `AttributeError` in the editable builder.
+- Fixed resolution of packages with only Python 3 wheels and sdist when resolving for legacy repositories.
+- Fixed non-sha256 hashes retrieval for legacy repositories.
 
 
 ## [0.12.14] - 2019-04-26

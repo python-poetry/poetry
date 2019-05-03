@@ -205,3 +205,43 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
         package.requires[4].marker
     )
     assert 'sys_platform != "win32"' == str(package.requires[5].marker)
+
+
+def test_get_package_with_dist_and_universal_py3_wheel():
+    repo = MockRepository()
+
+    package = repo.package("ipython", "7.5.0")
+
+    assert "ipython" == package.name
+    assert "7.5.0" == package.version.text
+    assert ">=3.5" == package.python_versions
+
+    expected = [
+        Dependency("appnope", "*"),
+        Dependency("backcall", "*"),
+        Dependency("colorama", "*"),
+        Dependency("decorator", "*"),
+        Dependency("jedi", ">=0.10"),
+        Dependency("pexpect", "*"),
+        Dependency("pickleshare", "*"),
+        Dependency("prompt-toolkit", ">=2.0.0,<2.1.0"),
+        Dependency("pygments", "*"),
+        Dependency("setuptools", ">=18.5"),
+        Dependency("traitlets", ">=4.2"),
+        Dependency("typing", "*"),
+        Dependency("win-unicode-console", ">=0.5"),
+    ]
+    assert expected == sorted(package.requires, key=lambda dep: dep.name)
+
+
+def test_get_package_retrieves_non_sha256_hashes():
+    repo = MockRepository()
+
+    package = repo.package("ipython", "7.5.0")
+
+    expected = [
+        "md5:dbdc53e3918f28fa335a173432402a00",
+        "e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+    ]
+
+    assert expected == package.hashes
