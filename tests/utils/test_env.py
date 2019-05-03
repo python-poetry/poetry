@@ -24,3 +24,22 @@ def test_env_get_in_project_venv(tmp_dir, environ):
     venv = Env.get(cwd=Path(tmp_dir))
 
     assert venv.path == Path(tmp_dir) / ".venv"
+
+
+def test_env_has_symlinks_on_nix(tmp_dir):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+
+    Env.build_venv(str(venv_path))
+
+    venv = VirtualEnv(venv_path)
+
+    venv_available = False
+    try:
+        from venv import EnvBuilder
+
+        venv_available = True
+    except ImportError:
+        pass
+
+    if os.name != "nt" and venv_available:
+        assert os.path.islink(venv.python)
