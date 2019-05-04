@@ -370,7 +370,12 @@ class Env(object):
 
             if input_:
                 output = subprocess.run(
-                    cmd, capture_output=True, input=encode(input_), check=True, **kwargs
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    input=encode(input_),
+                    check=True,
+                    **kwargs
                 ).stdout
             elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
