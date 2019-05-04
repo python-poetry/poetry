@@ -46,6 +46,10 @@ if PY35:
 else:
     from pathlib2 import Path
 
+if PY35:
+    import subprocess as subprocess
+else:
+    import subprocess32 as subprocess
 
 if not PY36:
     from collections import OrderedDict

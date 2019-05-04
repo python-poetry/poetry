@@ -21,6 +21,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
+from poetry.utils._compat import subprocess
 from poetry.version.markers import BaseMarker
 
 
@@ -91,11 +92,13 @@ class EnvError(Exception):
 
 
 class EnvCommandError(EnvError):
-    def __init__(self, e):  # type: (CalledProcessError) -> None
-        message = "Command {} errored with the following output: \n{}".format(
-            e.cmd, decode(e.output)
+    def __init__(self, e, input=None):  # type: (CalledProcessError) -> None
+        self.e = e
+        message = "Command {} errored with the following return code {}, error:\n {} and output: \n{}".format(
+            e.cmd, e.returncode, decode(e.stderr), decode(e.output)
         )
-
+        if input:
+            message += "input was : {}".format(input)
         super(EnvCommandError, self).__init__(message)
 
 
@@ -361,20 +364,14 @@ class Env(object):
 
         if shell:
             cmd = list_to_shell_command(cmd)
-
         try:
             if self._is_windows:
                 kwargs["shell"] = True
 
             if input_:
-                p = subprocess.Popen(
-                    cmd,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    **kwargs
-                )
-                output = p.communicate(encode(input_))[0]
+                output = subprocess.run(
+                    cmd, capture_output=True, input=encode(input_), check=True, **kwargs
+                ).stdout
             elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
             else:
@@ -382,7 +379,7 @@ class Env(object):
                     cmd, stderr=subprocess.STDOUT, **kwargs
                 )
         except CalledProcessError as e:
-            raise EnvCommandError(e)
+            raise EnvCommandError(e, input=input_)
 
         return decode(output)
 
