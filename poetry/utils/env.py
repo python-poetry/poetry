@@ -22,7 +22,6 @@ from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
 from poetry.utils._compat import CalledProcessError
-
 from poetry.version.markers import BaseMarker
 
 

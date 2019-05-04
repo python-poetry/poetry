@@ -71,7 +71,7 @@ def test_env_has_symlinks_on_nix(tmp_dir, tmp_venv):
 def test_run_with_input(tmp_dir, tmp_venv):
     result = tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
 
-    assert result == "Minimal Output\n"
+    assert result == "Minimal Output" + os.linesep
 
 
 def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
