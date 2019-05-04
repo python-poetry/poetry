@@ -10,7 +10,7 @@ version = "1.4.3"
 [[package]]
 category = "dev"
 description = "A few extensions to pyyaml."
-name = "aspy.yaml"  
+name = "aspy.yaml"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
