@@ -24,7 +24,7 @@ from clikit.api.io import IO
 
 from poetry.config import Config
 from poetry.locations import CACHE_DIR
-from poetry.semver import Version
+from poetry.semver.version import Version
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
@@ -516,7 +516,13 @@ class EnvManager(object):
         try:
             from venv import EnvBuilder
 
-            builder = EnvBuilder(with_pip=True)
+            # use the same defaults as python -m venv
+            if os.name == "nt":
+                use_symlinks = False
+            else:
+                use_symlinks = True
+
+            builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
             build = builder.create
         except ImportError:
             # We fallback on virtualenv for Python 2.7
@@ -563,6 +569,7 @@ class Env(object):
         self._base = base or path
 
         self._marker_env = None
+        self._pip_version = None
 
     @property
     def path(self):  # type: () -> Path
@@ -609,6 +616,25 @@ class Env(object):
     def os(self):  # type: () -> str
         return os.name
 
+    @property
+    def pip_version(self):
+        if self._pip_version is None:
+            self._pip_version = self.get_pip_version()
+
+        return self._pip_version
+
+    @property
+    def site_packages(self):  # type: () -> Path
+        if self._is_windows:
+            return self._path / "Lib" / "site-packages"
+
+        return (
+            self._path
+            / "lib"
+            / "python{}.{}".format(*self.version_info[:2])
+            / "site-packages"
+        )
+
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
@@ -629,6 +655,9 @@ class Env(object):
         raise NotImplementedError()
 
     def config_var(self, var):  # type: (str) -> Any
+        raise NotImplementedError()
+
+    def get_pip_version(self):  # type: () -> Version
         raise NotImplementedError()
 
     def is_valid_for_marker(self, marker):  # type: (BaseMarker) -> bool
@@ -750,6 +779,11 @@ class SystemEnv(Env):
 
             return
 
+    def get_pip_version(self):  # type: () -> Version
+        from pip import __version__
+
+        return Version.parse(__version__)
+
     def is_venv(self):  # type: () -> bool
         return self._path != self._base
 
@@ -799,6 +833,14 @@ class VirtualEnv(Env):
             value = 0
 
         return value
+
+    def get_pip_version(self):  # type: () -> Version
+        output = self.run("python", "-m", "pip", "--version").strip()
+        m = re.match("pip (.+?)(?: from .+)?$", output)
+        if not m:
+            return Version.parse("0.0")
+
+        return Version.parse(m.group(1))
 
     def is_venv(self):  # type: () -> bool
         return True
@@ -878,6 +920,7 @@ class MockEnv(NullEnv):
         platform="darwin",
         os_name="posix",
         is_venv=False,
+        pip_version="19.1",
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -887,6 +930,7 @@ class MockEnv(NullEnv):
         self._platform = platform
         self._os_name = os_name
         self._is_venv = is_venv
+        self._pip_version = Version.parse(pip_version)
 
     @property
     def version_info(self):  # type: () -> Tuple[int]
@@ -903,6 +947,10 @@ class MockEnv(NullEnv):
     @property
     def os(self):  # type: () -> str
         return self._os_name
+
+    @property
+    def pip_version(self):
+        return self._pip_version
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv

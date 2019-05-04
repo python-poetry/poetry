@@ -76,6 +76,7 @@ class Locker(BaseLocker):
             package["python-versions"] = python_versions
 
         self._written_data = data
+        self._lock_data = data
 
 
 @pytest.fixture()
@@ -331,7 +332,7 @@ def test_run_whitelist_add(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_whitelist_remove(installer, locker, repo, package):
+def test_run_whitelist_remove(installer, locker, repo, package, installed):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -367,6 +368,7 @@ def test_run_whitelist_remove(installer, locker, repo, package):
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
     repo.add_package(package_b)
+    installed.add_package(package_b)
 
     package.add_dependency("A", "~1.0")
 
@@ -377,6 +379,9 @@ def test_run_whitelist_remove(installer, locker, repo, package):
     expected = fixture("remove")
 
     assert locker.written_data == expected
+    assert len(installer.installer.installs) == 1
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 1
 
 
 def test_add_with_sub_dependencies(installer, locker, repo, package):

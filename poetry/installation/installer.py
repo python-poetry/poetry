@@ -211,7 +211,6 @@ class Installer:
 
             # Making a new repo containing the packages
             # newly resolved and the ones from the current lock file
-            locked_repository = self._locker.locked_repository(True)
             repo = Repository()
             for package in local_repo.packages + locked_repository.packages:
                 if not repo.has_package(package):

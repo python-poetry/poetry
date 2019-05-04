@@ -24,6 +24,30 @@
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
 
 
+## [0.12.15] - 2019-05-03
+
+### Fixed
+
+- Fixed an `AttributeError` in the editable builder.
+- Fixed resolution of packages with only Python 3 wheels and sdist when resolving for legacy repositories.
+- Fixed non-sha256 hashes retrieval for legacy repositories.
+
+
+## [0.12.14] - 2019-04-26
+
+### Fixed
+
+- Fixed root package installation for pure Python packages.
+
+
+## [0.12.13] - 2019-04-26
+
+### Fixed
+
+- Fixed root package installation with `pip>=19.0`.
+- Fixed packages not being removed after using the `remove` command.
+
+
 ## [0.12.12] - 2019-04-11
 
 ### Fixed
@@ -661,7 +685,10 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.12...develop
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.15...develop
+[0.12.15]: https://github.com/sdispater/poetry/releases/tag/0.12.15
+[0.12.14]: https://github.com/sdispater/poetry/releases/tag/0.12.14
+[0.12.13]: https://github.com/sdispater/poetry/releases/tag/0.12.13
 [0.12.12]: https://github.com/sdispater/poetry/releases/tag/0.12.12
 [0.12.11]: https://github.com/sdispater/poetry/releases/tag/0.12.11
 [0.12.10]: https://github.com/sdispater/poetry/releases/tag/0.12.10
