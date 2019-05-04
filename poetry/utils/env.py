@@ -8,7 +8,6 @@ import sysconfig
 import warnings
 
 from contextlib import contextmanager
-from subprocess import CalledProcessError
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -22,6 +21,8 @@ from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
+from poetry.utils._compat import CalledProcessError
+
 from poetry.version.markers import BaseMarker
 
 
@@ -94,8 +95,9 @@ class EnvError(Exception):
 class EnvCommandError(EnvError):
     def __init__(self, e, input=None):  # type: (CalledProcessError) -> None
         self.e = e
-        message = "Command {} errored with the following return code {}, error:\n {} and output: \n{}".format(
-            e.cmd, e.returncode, decode(e.stderr), decode(e.output)
+
+        message = "Command {} errored with the following return code {}, and output: \n{}".format(
+            e.cmd, e.returncode, decode(e.output)
         )
         if input:
             message += "input was : {}".format(input)
@@ -372,7 +374,7 @@ class Env(object):
                 output = subprocess.run(
                     cmd,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
                     input=encode(input_),
                     check=True,
                     **kwargs
