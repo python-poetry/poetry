@@ -19,7 +19,7 @@ class ShowCommand(EnvCommand):
     help = """The show command displays detailed information about a package, or
 lists all packages available."""
 
-    colors = ["green", "yellow", "cyan", "magenta", "blue"]
+    colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
     def handle(self):
         from clikit.utils.terminal import Terminal
