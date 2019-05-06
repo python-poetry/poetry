@@ -80,6 +80,10 @@ class PyPiRepository(Repository):
 
         super(PyPiRepository, self).__init__()
 
+    @property
+    def name(self):
+        return self._name
+
     def find_packages(
         self,
         name,  # type: str

@@ -245,6 +245,7 @@ class Package(object):
             python_versions = constraint.get("python")
             platform = constraint.get("platform")
             allows_prereleases = constraint.get("allows-prereleases", False)
+            repository = constraint.get("repository")
 
             if "git" in constraint:
                 # VCS dependency
@@ -297,6 +298,7 @@ class Package(object):
                     optional=optional,
                     category=category,
                     allows_prereleases=allows_prereleases,
+                    repository=repository,
                 )
 
             marker = AnyMarker()

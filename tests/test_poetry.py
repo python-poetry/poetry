@@ -14,6 +14,10 @@ fixtures_dir = Path(__file__).parent / "fixtures"
 def test_poetry():
     poetry = Poetry.create(str(fixtures_dir / "sample_project"))
 
+    assert len(poetry.pool.repositories) == 2
+    assert poetry.pool.repositories[0].name == "foo"
+    assert poetry.pool.repositories[1].name == "PyPI"
+
     package = poetry.package
 
     assert package.name == "my-package"
@@ -59,6 +63,14 @@ def test_poetry():
     assert pathlib2.pretty_constraint == "^2.2"
     assert pathlib2.python_versions == "~2.7"
     assert not pathlib2.is_optional()
+
+    private_project = dependencies["private-project"]
+    assert not private_project.is_file()
+    assert not private_project.is_directory()
+    assert not private_project.is_vcs()
+    assert private_project.name == "private-project"
+    assert private_project.pretty_constraint == "*"
+    assert private_project.repository == "foo"
 
     demo = dependencies["demo"]
     assert demo.is_file()

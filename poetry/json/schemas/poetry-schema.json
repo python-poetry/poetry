@@ -218,6 +218,10 @@
                     "type": "boolean",
                     "description": "Whether the dependency allows prereleases or not."
                 },
+                "repository": {
+                    "type": "string",
+                    "description": "The repository on which the dependency resides."
+                },
                 "optional": {
                     "type": "boolean",
                     "description": "Whether the dependency is optional or not."

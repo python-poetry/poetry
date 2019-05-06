@@ -58,9 +58,11 @@ class Pool(BaseRepository):
         raise PackageNotFound("Package {} ({}) not found.".format(name, version))
 
     def find_packages(
-        self, name, constraint=None, extras=None, allow_prereleases=False
+        self, name, constraint=None, extras=None, allow_prereleases=False, repository_name=None,
     ):
         for repository in self._repositories:
+            if repository_name and repository.name != repository_name:
+                continue
             packages = repository.find_packages(
                 name, constraint, extras=extras, allow_prereleases=allow_prereleases
             )

@@ -131,6 +131,7 @@ class Provider:
                 constraint,
                 extras=dependency.extras,
                 allow_prereleases=dependency.allows_prereleases(),
+                repository_name=dependency.repository,
             )
 
             packages.sort(

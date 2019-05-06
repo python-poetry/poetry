@@ -23,6 +23,7 @@ class Dependency(object):
         optional=False,  # type: bool
         category="main",  # type: str
         allows_prereleases=False,  # type: bool
+        repository=None,  # type: str
     ):
         self._name = canonicalize_name(name)
         self._pretty_name = name
@@ -45,6 +46,8 @@ class Dependency(object):
             )
 
         self._allows_prereleases = allows_prereleases
+
+        self._repository = repository
 
         self._python_versions = "*"
         self._python_constraint = parse_constraint("*")
@@ -144,6 +147,10 @@ class Dependency(object):
             requirement += " ({})".format(str(self.constraint).replace(" ", ""))
 
         return requirement
+
+    @property
+    def repository(self):
+        return self._repository
 
     def allows_prereleases(self):
         return self._allows_prereleases
