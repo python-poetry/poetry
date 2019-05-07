@@ -215,14 +215,16 @@ class build_ext(_build_ext):
     def check_extension_availability(self, ext):
         cache = os.path.join(self.build_temp, "check_%s.out" % ext.feature_name)
         if not self.force and os.path.isfile(cache):
-            data = open(cache).read().strip()
+            # explicit utf-8
+            data = open(cache, encoding="utf-8").read().strip()
             if data == "1":
                 return True
             elif data == "0":
                 return False
         mkpath(self.build_temp)
         src = os.path.join(self.build_temp, "check_%s.c" % ext.feature_name)
-        open(src, "w").write(ext.feature_check)
+        # explicit utf-8
+        open(src, "w", encoding="utf-8").write(ext.feature_check)
         log.info("checking if %s is compilable" % ext.feature_name)
         try:
             [obj] = self.compiler.compile(
@@ -243,7 +245,8 @@ class build_ext(_build_ext):
             )
             log.warn(" specify the option --include-dirs or uncomment and")
             log.warn(" modify the parameter include_dirs in setup.cfg)")
-            open(cache, "w").write("0\n")
+            # explicit utf-8 (to keep the style)
+            open(cache, "w", encoding="utf-8").write("0\n")
             return False
         prog = "check_%s" % ext.feature_name
         log.info("checking if %s is linkable" % ext.feature_name)
@@ -268,9 +271,11 @@ class build_ext(_build_ext):
             )
             log.warn(" specify the option --library-dirs or uncomment and")
             log.warn(" modify the parameter library_dirs in setup.cfg)")
-            open(cache, "w").write("0\n")
+            # expplicit utf-8 (to keep the style)
+            open(cache, "w", encoding="utf-8").write("0\n")
             return False
-        open(cache, "w").write("1\n")
+        # expplicit utf-8 (to keep the style)
+        open(cache, "w", encoding="utf-8").write("1\n")
         return True
 
 

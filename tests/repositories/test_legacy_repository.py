@@ -29,7 +29,8 @@ class MockRepository(LegacyRepository):
 
         fixture = self.FIXTURES / (name + ".html")
 
-        with fixture.open() as f:
+        # explicit utf-8 for HTML
+        with fixture.open(encoding="utf-8") as f:
             return Page(self._url + endpoint, f.read(), {})
 
     def _download(self, url, dest):

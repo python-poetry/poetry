@@ -54,7 +54,8 @@ def _find_symlinks(topdir, extension=""):
 
 
 def _cache_symlinks(symlink_data):
-    with open(SYMLINK_CACHE, "w") as f:
+    # explicit utf-8 for JSON
+    with open(SYMLINK_CACHE, "w", encoding="utf-8") as f:
         json.dump(symlink_data, f)
 
 
@@ -63,7 +64,9 @@ def _maintain_symlinks(symlink_type, base_path):
     try:
         # Try the cache first because going from git checkout to sdist is the
         # only time we know that we're going to cache correctly
-        with open(SYMLINK_CACHE, "r") as f:
+        
+        # explicit utf-8 for JSON
+        with open(SYMLINK_CACHE, "r", encoding="utf-8") as f:
             symlink_data = json.load(f)
     except (IOError, OSError) as e:
         # IOError on py2, OSError on py3.  Both have errno
@@ -139,7 +142,8 @@ class SDistCommand(SDist):
 
 def read_file(file_name):
     """Read file and return its contents."""
-    with open(file_name, "r") as f:
+    # explicit utf-8 for file such as requirements.txt
+    with open(file_name, "r", encoding="utf-8") as f:
         return f.read()
 
 

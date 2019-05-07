@@ -6,7 +6,10 @@ from setuptools import setup
 
 
 def read_version():
-    with open(os.path.join(os.path.dirname(__file__), "demo", "__init__.py")) as f:
+    # explicit utf-8 for python source
+    with open(
+        os.path.join(os.path.dirname(__file__), "demo", "__init__.py"), encoding="utf-8"
+    ) as f:
         for line in f:
             if line.startswith("__version__ = "):
                 return ast.literal_eval(line[len("__version__ = ") :].strip())
