@@ -33,7 +33,7 @@ from contextlib import closing
 from contextlib import contextmanager
 from functools import cmp_to_key
 from gzip import GzipFile
-from io import UnsupportedOperation
+from io import UnsupportedOperation, open
 
 try:
     from urllib.error import HTTPError

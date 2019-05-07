@@ -3,6 +3,7 @@ import os
 
 import jsonschema
 
+from io import open
 from typing import List
 
 SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schemas")

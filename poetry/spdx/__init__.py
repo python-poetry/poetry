@@ -1,6 +1,8 @@
 import json
 import os
 
+from io import open
+
 from .license import License
 from .updater import Updater
 
