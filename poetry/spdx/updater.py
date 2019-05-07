@@ -20,7 +20,8 @@ class Updater:
 
         licenses_url = self._base_url + "licenses.json"
 
-        with open(file, "w") as f:
+        # explicit utf-8 for JSON
+        with open(file, "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(self.get_licenses(licenses_url), indent=2, sort_keys=True)
             )
