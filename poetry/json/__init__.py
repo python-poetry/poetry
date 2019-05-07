@@ -19,7 +19,8 @@ def validate_object(obj, schema_name):  # type: (dict, str) -> List[str]
     if not os.path.exists(schema):
         raise ValueError("Schema {} does not exist.".format(schema_name))
 
-    with open(schema) as f:
+    # explicit utf-8 for JSON
+    with open(schema, encoding="utf-8") as f:
         schema = json.loads(f.read())
 
     validator = jsonschema.Draft7Validator(schema)
