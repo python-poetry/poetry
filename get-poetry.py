@@ -58,6 +58,10 @@ try:
 except ImportError:
     winreg = None
 
+try:
+    u = unicode
+except NameError:
+    u = str
 
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
@@ -206,7 +210,7 @@ if __name__ == "__main__":
     main()
 """
 
-BAT = u'@echo off\r\npython "{poetry_bin}" %*\r\n'
+BAT = u('@echo off\r\npython "{poetry_bin}" %*\r\n')
 
 
 PRE_MESSAGE = """# Welcome to {poetry}!
@@ -568,16 +572,18 @@ class Installer:
             # implicit system encoding for poetry.bat
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
                 f.write(
-                    BAT.format(
-                        poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
-                            os.environ["USERPROFILE"], "%USERPROFILE%"
+                    u(
+                        BAT.format(
+                            poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
+                                os.environ["USERPROFILE"], "%USERPROFILE%"
+                            )
                         )
                     )
                 )
 
         # explicit utf-8 encoding for python source file
         with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
-            f.write(BIN)
+            f.write(u(BIN))
 
         if not WINDOWS:
             # Making the file executable
@@ -590,7 +596,7 @@ class Installer:
 
         # implicit system encoding for env
         with open(os.path.join(POETRY_HOME, "env"), "w") as f:
-            f.write(self.get_export_string())
+            f.write(u(self.get_export_string()))
 
     def update_path(self):
         """
@@ -617,7 +623,7 @@ class Installer:
             if addition not in content:
                 # implicit system encoding for profile
                 with open(profile, "a") as f:
-                    f.write(addition)
+                    f.write(u(addition))
 
                 updated.append(os.path.relpath(profile, HOME))
 
