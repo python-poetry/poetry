@@ -191,6 +191,7 @@ POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
 BIN = """#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import glob
 import sys
 import os
@@ -387,7 +388,10 @@ class Installer:
 
         current_version = None
         if os.path.exists(POETRY_LIB):
-            with open(os.path.join(POETRY_LIB, "poetry", "__version__.py")) as f:
+            # explicit utf-8 for python source file
+            with open(
+                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
+            ) as f:
                 version_content = f.read()
 
             current_version_re = re.match(
@@ -561,6 +565,7 @@ class Installer:
             os.mkdir(POETRY_BIN, 0o755)
 
         if WINDOWS:
+            # implicit system encoding for poetry.bat
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
                 f.write(
                     BAT.format(
@@ -570,7 +575,8 @@ class Installer:
                     )
                 )
 
-        with open(os.path.join(POETRY_BIN, "poetry"), "w") as f:
+        # explicit utf-8 encoding for python source file
+        with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
             f.write(BIN)
 
         if not WINDOWS:
@@ -582,6 +588,7 @@ class Installer:
         if WINDOWS:
             return
 
+        # implicit system encoding for env
         with open(os.path.join(POETRY_HOME, "env"), "w") as f:
             f.write(self.get_export_string())
 
@@ -603,10 +610,12 @@ class Installer:
             if not os.path.exists(profile):
                 continue
 
+            # implicit system encoding for profile
             with open(profile, "r") as f:
                 content = f.read()
 
             if addition not in content:
+                # implicit system encoding for profile
                 with open(profile, "a") as f:
                     f.write(addition)
 
@@ -700,6 +709,7 @@ class Installer:
             if not os.path.exists(profile):
                 continue
 
+            # implicit system encoding for profile
             with open(profile, "r") as f:
                 content = f.readlines()
 
@@ -716,6 +726,7 @@ class Installer:
 
                 new_content.append(line)
 
+            # implicit system encoding for profile
             with open(profile, "w") as f:
                 f.writelines(new_content)
 
