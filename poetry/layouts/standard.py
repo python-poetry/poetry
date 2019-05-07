@@ -14,5 +14,6 @@ class StandardLayout(Layout):
 
         package_path.mkdir()
 
-        with package_init.open("w") as f:
+        #explicit utf-8 for python source
+        with package_init.open("w", encoding="utf-8") as f:
             f.write(DEFAULT.format(version=self._version))
