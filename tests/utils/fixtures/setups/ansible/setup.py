@@ -6,10 +6,11 @@ import os.path
 import re
 import sys
 import warnings
-
 from collections import defaultdict
 from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
+
+from ansible.release import __author__, __version__
 
 try:
     from setuptools import setup, find_packages
@@ -26,7 +27,6 @@ except ImportError:
     sys.exit(1)
 
 sys.path.insert(0, os.path.abspath("lib"))
-from ansible.release import __version__, __author__
 
 
 SYMLINK_CACHE = "SYMLINK_CACHE.json"
@@ -64,7 +64,7 @@ def _maintain_symlinks(symlink_type, base_path):
     try:
         # Try the cache first because going from git checkout to sdist is the
         # only time we know that we're going to cache correctly
-        
+
         # explicit utf-8 for JSON
         with open(SYMLINK_CACHE, "r", encoding="utf-8") as f:
             symlink_data = json.load(f)
