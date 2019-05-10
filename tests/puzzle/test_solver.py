@@ -1643,3 +1643,25 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
 
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
+
+
+def test_solver_does_not_choose_from_optional_repository_by_default(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("tomlkit", {"version": "^0.5"})
+
+    pool = Pool()
+    pool.add_repository(MockPyPIRepository(), optional=True)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("tomlkit", "0.5.2")}]
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url

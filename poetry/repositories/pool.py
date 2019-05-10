@@ -2,6 +2,8 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
+from poetry.utils._compat import OrderedDict
+
 from .base_repository import BaseRepository
 from .exceptions import PackageNotFound
 from .repository import Repository
@@ -17,6 +19,7 @@ class Pool(BaseRepository):
         self._lookup = {}  # type: Dict[str, int]
         self._repositories = []  # type: List[Repository]
         self._default = None
+        self._optional = OrderedDict()
 
         for repository in repositories:
             self.add_repository(repository)
@@ -40,17 +43,25 @@ class Pool(BaseRepository):
         return self._default is not None
 
     def repository(self, name):  # type: (str) -> Repository
-        if name not in self._lookup:
-            raise ValueError('Repository "{}" does not exist.'.format(name))
+        if name in self._lookup:
+            return self._repositories[self._lookup[name]]
 
-        return self._repositories[self._lookup[name]]
+        if name in self._optional:
+            return self._optional[name]
+
+        raise ValueError('Repository "{}" does not exist.'.format(name))
 
     def add_repository(
-        self, repository, default=False
+        self, repository, default=False, optional=False
     ):  # type: (Repository, bool) -> Pool
         """
         Adds a repository to the pool.
         """
+        if optional:
+            self._optional[repository.name] = repository
+
+            return self
+
         if default:
             if self.has_default():
                 raise ValueError("Only one repository can be the default")
@@ -88,15 +99,19 @@ class Pool(BaseRepository):
         if (
             repository is not None
             and repository not in self._lookup
+            and repository not in self._optional
             and not self._ignore_repository_names
         ):
             raise ValueError('Repository "{}" does not exist.'.format(repository))
 
         if repository is not None and not self._ignore_repository_names:
             try:
-                return self._repositories[self._lookup[repository]].package(
-                    name, version, extras=extras
-                )
+                if repository in self._lookup:
+                    return self._repositories[self._lookup[repository]].package(
+                        name, version, extras=extras
+                    )
+
+                return self._optional[repository].package(name, version, extras=extras)
             except PackageNotFound:
                 pass
         else:
@@ -124,12 +139,18 @@ class Pool(BaseRepository):
         if (
             repository is not None
             and repository not in self._lookup
+            and repository not in self._optional
             and not self._ignore_repository_names
         ):
             raise ValueError('Repository "{}" does not exist.'.format(repository))
 
         if repository is not None and not self._ignore_repository_names:
-            return self._repositories[self._lookup[repository]].find_packages(
+            if repository in self._lookup:
+                return self._repositories[self._lookup[repository]].find_packages(
+                    name, constraint, extras=extras, allow_prereleases=allow_prereleases
+                )
+
+            return self._optional[repository].find_packages(
                 name, constraint, extras=extras, allow_prereleases=allow_prereleases
             )
 

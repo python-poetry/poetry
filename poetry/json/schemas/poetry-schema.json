@@ -425,6 +425,10 @@
                 "default": {
                     "type": "boolean",
                     "description": "Make this repository the default (disable PyPI)"
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Make this repository optional, i.e. it must be explicitely opted in for dependencies that require it"
                 }
             }
         }
