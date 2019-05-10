@@ -512,7 +512,7 @@ class Installer:
         return _extra_packages(extra_packages)
 
     def _get_installer(self):  # type: () -> BaseInstaller
-        return PipInstaller(self._env, self._io)
+        return PipInstaller(self._env, self._io, self._pool)
 
     def _get_installed(self):  # type: () -> InstalledRepository
         return InstalledRepository.load(self._env)
