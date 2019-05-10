@@ -39,6 +39,12 @@ class Pool(BaseRepository):
     def has_default(self):  # type: () -> bool
         return self._default is not None
 
+    def repository(self, name):  # type: (str) -> Repository
+        if name not in self._lookup:
+            raise ValueError('Repository "{}" does not exist.'.format(name))
+
+        return self._repositories[self._lookup[name]]
+
     def add_repository(
         self, repository, default=False
     ):  # type: (Repository, bool) -> Pool

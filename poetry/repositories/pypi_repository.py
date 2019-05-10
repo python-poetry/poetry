@@ -81,6 +81,14 @@ class PyPiRepository(Repository):
 
         self._name = "PyPI"
 
+    @property
+    def url(self):  # type: () -> str
+        return self._url
+
+    @property
+    def authenticated_url(self):  # type: () -> str
+        return self._url
+
     def find_packages(
         self,
         name,  # type: str

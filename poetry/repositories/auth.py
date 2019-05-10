@@ -10,6 +10,14 @@ class Auth(AuthBase):
         self._hostname = urlparse.urlparse(url).hostname
         self._auth = HTTPBasicAuth(username, password)
 
+    @property
+    def hostname(self):  # type: () -> str
+        return self._hostname
+
+    @property
+    def auth(self):  # type: () -> HTTPBasicAuth
+        return self._auth
+
     def __call__(self, r):  # type: (Request) -> Request
         if urlparse.urlparse(r.url).hostname != self._hostname:
             return r
