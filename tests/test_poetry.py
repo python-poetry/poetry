@@ -140,7 +140,7 @@ def test_poetry_with_two_default_sources():
     with pytest.raises(ValueError) as e:
         Poetry.create(fixtures_dir / "with_two_default_sources")
 
-    assert "Only one source can be the default" == str(e.value)
+    assert "Only one repository can be the default" == str(e.value)
 
 
 def test_check():
