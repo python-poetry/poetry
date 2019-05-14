@@ -261,6 +261,23 @@ So, in the end, you will still need to manage a few configuration files to prope
 
 ## Commands
 
+- [Global options](https://poetry.eustace.io/docs/cli/#global-options)
+- [new](https://poetry.eustace.io/docs/cli/#new)
+- [init](https://poetry.eustace.io/docs/cli/#init)
+- [install](https://poetry.eustace.io/docs/cli/#install)
+- [update](https://poetry.eustace.io/docs/cli/#update)
+- [add](https://poetry.eustace.io/docs/cli/#add)
+- [remove](https://poetry.eustace.io/docs/cli/#remove)
+- [show](https://poetry.eustace.io/docs/cli/#show)
+- [build](https://poetry.eustace.io/docs/cli/#build)
+- [publish](https://poetry.eustace.io/docs/cli/#publish)
+- [config](https://poetry.eustace.io/docs/cli/#config)
+- [run](https://poetry.eustace.io/docs/cli/#run)
+- [shell](https://poetry.eustace.io/docs/cli/#shell)
+- [check](https://poetry.eustace.io/docs/cli/#check)
+- [search](https://poetry.eustace.io/docs/cli/#search)
+- [lock](https://poetry.eustace.io/docs/cli/#lock)
+- [version](https://poetry.eustace.io/docs/cli/#version)
 
 ### new
 
