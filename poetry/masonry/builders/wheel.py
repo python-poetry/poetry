@@ -80,7 +80,9 @@ class WheelBuilder(Builder):
             wheel_path.unlink()
         shutil.move(temp_path, str(wheel_path))
 
-        self._io.write_line(" - Built <fg=cyan>{}</>".format(self.wheel_filename))
+        self._io.write_line(
+            " - Built <comment>{}</comment>".format(self.wheel_filename)
+        )
 
     def _build(self, wheel):
         if self._package.build:

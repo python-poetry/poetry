@@ -90,7 +90,7 @@ class SdistBuilder(Builder):
             tar.close()
             gz.close()
 
-        self._io.write_line(" - Built <fg=cyan>{}</>".format(target.name))
+        self._io.write_line(" - Built <comment>{}</comment>".format(target.name))
 
         return target
 
