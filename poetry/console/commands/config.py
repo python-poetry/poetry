@@ -1,6 +1,9 @@
 import json
 import re
 
+from cleo import argument
+from cleo import option
+
 from .command import Command
 
 
@@ -14,15 +17,19 @@ AUTH_TEMPLATE = """[http-basic]
 
 
 class ConfigCommand(Command):
-    """
-    Sets/Gets config options.
 
-    config
-        { key? : Setting key. }
-        { value?* : Setting value. }
-        { --list : List configuration settings }
-        { --unset : Unset configuration setting }
-    """
+    name = "config"
+    description = "Sets/Gets config options."
+
+    arguments = [
+        argument("key", "Setting key.", optional=True),
+        argument("value", "Setting value.", optional=True, multiple=True),
+    ]
+
+    options = [
+        option("list", None, "List configuration settings."),
+        option("unset", None, "Unset configuration setting."),
+    ]
 
     help = """This command allows you to edit the poetry config settings and repositories.
 

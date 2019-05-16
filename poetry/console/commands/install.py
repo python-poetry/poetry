@@ -1,20 +1,39 @@
-import os
+from cleo import option
 
 from .env_command import EnvCommand
 
 
 class InstallCommand(EnvCommand):
-    """
-    Installs the project dependencies.
 
-    install
-        { --no-dev : Do not install dev dependencies. }
-        { --no-root : Do not install the root package (your project). }
-        { --dry-run : Outputs the operations but will not execute anything
-                      (implicitly enables --verbose). }
-        { --E|extras=* : Extra sets of dependencies to install. }
-        { --develop=* : Install given packages in development mode. }
-    """
+    name = "install"
+    description = "Installs the project dependencies."
+
+    options = [
+        option("no-dev", None, "Do not install dev dependencies."),
+        option(
+            "no-root", None, "Do not install the root package (the current project)."
+        ),
+        option(
+            "dry-run",
+            None,
+            "Outputs the operations but will not execute anything "
+            "(implicitly enables --verbose).",
+        ),
+        option(
+            "extras",
+            "E",
+            "Extra sets of dependencies to install.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "develop",
+            None,
+            "Install given packages in development mode.",
+            flag=False,
+            multiple=True,
+        ),
+    ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
 the current directory, processes it, and downloads and installs all the

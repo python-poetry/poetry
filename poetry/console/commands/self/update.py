@@ -15,17 +15,19 @@ except ImportError:
     from urllib2 import HTTPError
     from urllib2 import urlopen
 
+from cleo import argument
+from cleo import option
+
 from ..command import Command
 
 
 class SelfUpdateCommand(Command):
-    """
-    Updates poetry to the latest version.
 
-    update
-        { version? : The version to update to. }
-        { --preview : Install prereleases. }
-    """
+    name = "update"
+    description = "Updates poetry to the latest version."
+
+    arguments = [argument("version", "The version to update to.", optional=True)]
+    options = [option("preview", None, "Install prereleases.")]
 
     BASE_URL = "https://github.com/sdispater/poetry/releases/download"
 

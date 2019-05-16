@@ -1,13 +1,21 @@
+from cleo import argument
+
 from .command import Command
 
 
 class VersionCommand(Command):
-    """
-    Bumps the version of the project.
 
-    version
-        { version=patch : The version number or the rule to update version }
-    """
+    name = "version"
+    description = "Bumps the version of the project."
+
+    arguments = [
+        argument(
+            "version",
+            "The version number or the rule to update the version.",
+            optional=True,
+            default="patch",
+        )
+    ]
 
     help = """\
 The version command bumps the version of the project

@@ -123,10 +123,10 @@ description = "Cleo allows you to create beautiful and testable command-line int
 name = "cleo"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.7.2"
+version = "0.7.4"
 
 [package.dependencies]
-clikit = ">=0.2.0,<0.3.0"
+clikit = ">=0.2.4,<0.3.0"
 pastel = ">=0.1.0,<0.2.0"
 pylev = ">=1.3,<2.0"
 
@@ -145,7 +145,7 @@ description = "CliKit is a group of utilities to build beautiful and testable co
 name = "clikit"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.2.3"
+version = "0.2.4"
 
 [package.dependencies]
 pastel = ">=0.1.0,<0.2.0"
@@ -923,7 +923,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs", "pytest-flake8", "pathlib2", "more-itertools"]
 
 [metadata]
-content-hash = "9485e088cf3b45d2cff74b6dc625373d9aee736721cc4ae0cb9c951e829a03c6"
+content-hash = "f3163ab56506c745d9250f9c04ea512d4996068c85770092590ffb079b465db0"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.hashes]
@@ -937,9 +937,9 @@ cachy = ["b71513e5a38ce90c1280c02b7d8d6bb3fdf64666c9cc0584f2479afea097d56c", "b7
 certifi = ["59b7658e26ca9c7339e00f8f4636cdfe59d34fa37b9b04f6f9e9926b3cece1a5", "b26104d6835d1f5e49452a26eb2ff87fe7090b89dfcaee5ea2212697e1e1d7ae"]
 cfgv = ["6e9f2feea5e84bc71e56abd703140d7a2c250fc5ba38b8702fd6a68ed4e3b2ef", "e7f186d4a36c099a9e20b04ac3108bd8bb9b9257e692ce18c8c3764d5cb12172"]
 chardet = ["84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae", "fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691"]
-cleo = ["7a5000de616de42fd78f968192651b9174bf333a9079fc9d68ccc672ddfd3624", "a39fa806fd3f64ff0ae4e3a55bb80c8ce60ca73634e13619731d63a04a63be69"]
+cleo = ["58d26642fa608a1515093275cd98875100c7d50f01fc1f3bbb7a78dbb73e4b14", "9b7d706309412e43d00723ed3074a300cd7879a0c685f4fef0b5052d7f4ab71f"]
 click = ["2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13", "5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"]
-clikit = ["7bbd38fcb912058c689a03f487a66f8d1eb1f486bc5cf68d4a5798093bd0217f", "e23ac911afb7079ae0e4d89af73ee0d31c8952c64ef4fcf76bcd46bfde9aabaa"]
+clikit = ["a7597999555aeb2ce9946f07187f690ab6864213f337e51250178c4bd19bd810", "d6807cf4a41e6b981b056075c0aefca2db1dabc597ed18fa4d92b8b2e2678835"]
 colorama = ["05eed71e2e327246ad6b38c540c4a3117230b19679b875190486ddd2d721422d", "f8ac84de7840f5b9c4e3347b3c1eaa50f7e49c2b07596221daec5edaabbd7c48"]
 configparser = ["8be81d89d6e7b4c0d4e44bcc525845f6da25821de80cb5e06e7e0238a2899e32", "da60d0014fd8c55eb48c1c5354352e363e2d30bbf7057e5e171a468390184c75"]
 contextlib2 = ["509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48", "f5260a6e679d2ff42ec91ec5252f4eeffdcf21053db9113bd0a8e4d953769c00"]

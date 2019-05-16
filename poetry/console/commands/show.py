@@ -1,20 +1,31 @@
 # -*- coding: utf-8 -*-
+from cleo import argument
+from cleo import option
+
 from .env_command import EnvCommand
 
 
 class ShowCommand(EnvCommand):
-    """
-    Shows information about packages.
 
-    show
-        { package? : Package to inspect. }
-        { --no-dev : Do not list the dev dependencies. }
-        { --t|tree : List the dependencies as a tree. }
-        { --l|latest : Show the latest version. }
-        { --o|outdated : Show the latest version
-                         but only for packages that are outdated. }
-        { --a|all : Show all packages (even those not compatible with current system). }
-    """
+    name = "show"
+    description = "Shows information about packages."
+
+    arguments = [argument("package", "Package to inspect", optional=True)]
+    options = [
+        option("no-dev", None, "Do not list the dev dependencies."),
+        option("tree", "t", "List the dependencies as a tree."),
+        option("latest", "l", "Show the latest version."),
+        option(
+            "outdated",
+            "o",
+            "Show the latest version but only for packages that are outdated.",
+        ),
+        option(
+            "all",
+            "a",
+            "Show all packages (even those not compatible with current system).",
+        ),
+    ]
 
     help = """The show command displays detailed information about a package, or
 lists all packages available."""

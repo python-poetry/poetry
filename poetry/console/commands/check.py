@@ -2,11 +2,9 @@ from .command import Command
 
 
 class CheckCommand(Command):
-    """
-    Checks the validity of the <comment>pyproject.toml</comment> file.
 
-    check
-    """
+    name = "check"
+    description = "Checks the validity of the <comment>pyproject.toml</comment> file."
 
     def handle(self):
         # Load poetry and display errors, if any

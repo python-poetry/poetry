@@ -4,11 +4,9 @@ from .update import SelfUpdateCommand
 
 
 class SelfCommand(Command):
-    """
-    Interact with Poetry directly.
-    """
 
     name = "self"
+    description = "Interact with Poetry directly."
 
     commands = [SelfUpdateCommand()]
 
