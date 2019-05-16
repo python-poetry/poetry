@@ -65,6 +65,10 @@ class WheelBuilder(Builder):
 
         (fd, temp_path) = tempfile.mkstemp(suffix=".whl")
 
+        st_mode = os.stat(temp_path).st_mode
+        new_mode = normalize_file_permissions(st_mode)
+        os.chmod(temp_path, new_mode)
+
         with zipfile.ZipFile(
             os.fdopen(fd, "w+b"), mode="w", compression=zipfile.ZIP_DEFLATED
         ) as zip_file:
