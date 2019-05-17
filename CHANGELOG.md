@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed packages with no hashes retrieval for legacy repositories.
+
+
 ## [0.12.15] - 2019-05-03
 
 ### Fixed
