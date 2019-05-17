@@ -5,6 +5,9 @@
 ### Fixed
 
 - Fixed packages with no hashes retrieval for legacy repositories.
+- Fixed multiple constraints for dev dependencies.
+- Fixed dependency resolution failing on badly formed package versions instead of skipping.
+- Fixed permissions of built wheels.
 
 
 ## [0.12.15] - 2019-05-03
