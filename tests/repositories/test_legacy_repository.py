@@ -245,3 +245,11 @@ def test_get_package_retrieves_non_sha256_hashes():
     ]
 
     assert expected == package.hashes
+
+
+def test_get_package_retrieves_packages_with_no_hashes():
+    repo = MockRepository()
+
+    package = repo.package("jupyter", "1.0.0")
+
+    assert [] == package.hashes

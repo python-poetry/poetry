@@ -364,7 +364,7 @@ class LegacyRepository(PyPiRepository):
             hash = link.hash
             if link.hash_name == "sha256":
                 hashes.append(hash)
-            else:
+            elif hash:
                 hashes.append(link.hash_name + ":" + hash)
 
         data["digests"] = hashes

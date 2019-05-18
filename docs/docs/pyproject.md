@@ -98,7 +98,7 @@ you can specify the packages you want to include in the final distribution.
 [tool.poetry]
 # ...
 packages = [
-    { include = "mypackage" },
+    { include = "my_package" },
     { include = "extra_package/**/*.py" },
 ]
 ```
@@ -109,7 +109,7 @@ If your package is stored inside a "source" directory, you must specify it:
 [tool.poetry]
 # ...
 packages = [
-    { include = "mypackage", from = "lib" },
+    { include = "my_package", from = "lib" },
 ]
 ```
 
@@ -123,7 +123,7 @@ packages = [
 
     ```toml
     packages = [
-        { include = "mypackage" },
+        { include = "my_package" },
         { include = "extra_package" },
     ]
     ```
