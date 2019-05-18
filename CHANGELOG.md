@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.12.16] - 2019-05-17
+
+### Fixed
+
+- Fixed packages with no hashes retrieval for legacy repositories.
+- Fixed multiple constraints for dev dependencies.
+- Fixed dependency resolution failing on badly formed package versions instead of skipping.
+- Fixed permissions of built wheels.
+
+
 ## [0.12.15] - 2019-05-03
 
 ### Fixed
@@ -661,7 +671,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.15...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.16...master
+[0.12.16]: https://github.com/sdispater/poetry/releases/tag/0.12.16
 [0.12.15]: https://github.com/sdispater/poetry/releases/tag/0.12.15
 [0.12.14]: https://github.com/sdispater/poetry/releases/tag/0.12.14
 [0.12.13]: https://github.com/sdispater/poetry/releases/tag/0.12.13
