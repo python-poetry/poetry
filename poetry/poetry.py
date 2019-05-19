@@ -152,13 +152,15 @@ class Poetry:
 
         if "dev-dependencies" in local_config:
             env = Env.get(cwd).get_marker_env()
-            env_python_version = Version.parse(env['python_version'])
+            env_python_version = Version.parse(env["python_version"])
             for name, constraint in local_config["dev-dependencies"].items():
                 if not isinstance(constraint, list):
                     constraint = [constraint]
                 for _constraint in constraint:
-                    if 'python' in _constraint:
-                        python_constraint = parse_single_constraint(_constraint['python'])
+                    if "python" in _constraint:
+                        python_constraint = parse_single_constraint(
+                            _constraint["python"]
+                        )
                         if not python_constraint.allows(env_python_version):
                             continue
                     package.add_dependency(name, _constraint, category="dev")
