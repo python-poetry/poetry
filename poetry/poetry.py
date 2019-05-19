@@ -17,7 +17,10 @@ from .repositories import Pool
 from .repositories.auth import Auth
 from .repositories.legacy_repository import LegacyRepository
 from .repositories.pypi_repository import PyPiRepository
+from .semver import parse_single_constraint
+from .semver.version import Version
 from .spdx import license_by_id
+from .utils.env import Env
 from .utils._compat import Path
 from .utils.helpers import get_http_basic_auth
 from .utils.toml_file import TomlFile
@@ -148,14 +151,17 @@ class Poetry:
                 package.add_dependency(name, constraint)
 
         if "dev-dependencies" in local_config:
+            env = Env.get(cwd).get_marker_env()
+            env_python_version = Version.parse(env['python_version'])
             for name, constraint in local_config["dev-dependencies"].items():
-                if isinstance(constraint, list):
-                    for _constraint in constraint:
-                        package.add_dependency(name, _constraint, category="dev")
-
-                    continue
-
-                package.add_dependency(name, constraint, category="dev")
+                if not isinstance(constraint, list):
+                    constraint = [constraint]
+                for _constraint in constraint:
+                    if 'python' in _constraint:
+                        python_constraint = parse_single_constraint(_constraint['python'])
+                        if not python_constraint.allows(env_python_version):
+                            continue
+                    package.add_dependency(name, _constraint, category="dev")
 
         extras = local_config.get("extras", {})
         for extra_name, requirements in extras.items():
