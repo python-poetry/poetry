@@ -1,3 +1,4 @@
+from requests import ConnectionError
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -115,16 +116,22 @@ class Pool(BaseRepository):
             except PackageNotFound:
                 pass
         else:
+            failed_repositories = []
+            package = None
             for repo in self._repositories:
                 try:
                     package = repo.package(name, version, extras=extras)
                 except PackageNotFound:
                     continue
+                except ConnectionError as e:
+                    failed_repositories.append(e)
 
                 if package:
                     self._packages.append(package)
 
                     return package
+            if len(failed_repositories):
+                raise ConnectionError(failed_repositories)
 
         raise PackageNotFound("Package {} ({}) not found.".format(name, version))
 
