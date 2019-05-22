@@ -425,6 +425,10 @@
                 "default": {
                     "type": "boolean",
                     "description": "Make this repository the default (disable PyPI)"
+                },
+                "secondary": {
+                    "type": "boolean",
+                    "description": "Declare this repository as secondary, i.e. it will only be looked up last for packages."
                 }
             }
         }

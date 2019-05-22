@@ -45,7 +45,11 @@ class Poetry:
         self._pool = Pool()
         for source in self._local_config.get("source", []):
             repository = self.create_legacy_repository(source)
-            self._pool.add_repository(repository, source.get("default", False))
+            self._pool.add_repository(
+                repository,
+                source.get("default", False),
+                secondary=source.get("secondary", False),
+            )
 
         # Always put PyPI last to prefer private repositories
         # but only if we have no other default source

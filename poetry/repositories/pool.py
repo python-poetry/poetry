@@ -16,7 +16,8 @@ class Pool(BaseRepository):
 
         self._lookup = {}  # type: Dict[str, int]
         self._repositories = []  # type: List[Repository]
-        self._default = None
+        self._default = False
+        self._secondary_start_idx = None
 
         for repository in repositories:
             self.add_repository(repository)
@@ -29,25 +30,18 @@ class Pool(BaseRepository):
     def repositories(self):  # type: () -> List[Repository]
         return self._repositories
 
-    @property
-    def default(self):  # type: () -> Optional[Repository]
-        if self._default is None:
-            return
-
-        return self._repositories[self._default]
-
     def has_default(self):  # type: () -> bool
-        return self._default is not None
+        return self._default
 
     def repository(self, name):  # type: (str) -> Repository
-        if name not in self._lookup:
-            raise ValueError('Repository "{}" does not exist.'.format(name))
+        if name in self._lookup:
+            return self._repositories[self._lookup[name]]
 
-        return self._repositories[self._lookup[name]]
+        raise ValueError('Repository "{}" does not exist.'.format(name))
 
     def add_repository(
-        self, repository, default=False
-    ):  # type: (Repository, bool) -> Pool
+        self, repository, default=False, secondary=False
+    ):  # type: (Repository, bool, bool) -> Pool
         """
         Adds a repository to the pool.
         """
@@ -55,20 +49,36 @@ class Pool(BaseRepository):
             if self.has_default():
                 raise ValueError("Only one repository can be the default")
 
-            self._repositories.append(repository)
-            self._default = len(self._repositories) - 1
-            self._lookup[repository.name] = self._default
-        else:
-            if self.has_default():
-                default_repository = self.default
-                self._repositories.insert(self._default, repository)
-                self._lookup[repository.name] = self._default
+            self._default = True
+            self._repositories.insert(0, repository)
+            for name in self._lookup:
+                self._lookup[name] += 1
 
-                self._default = len(self._repositories) - 1
-                self._lookup[default_repository.name] = self._default
-            else:
+            if self._secondary_start_idx is not None:
+                self._secondary_start_idx += 1
+
+            self._lookup[repository.name] = 0
+        elif secondary:
+            if self._secondary_start_idx is None:
+                self._secondary_start_idx = len(self._repositories)
+
+            self._repositories.append(repository)
+            self._lookup[repository.name] = len(self._repositories) - 1
+        else:
+            if self._secondary_start_idx is None:
                 self._repositories.append(repository)
                 self._lookup[repository.name] = len(self._repositories) - 1
+            else:
+                self._repositories.insert(self._secondary_start_idx, repository)
+
+                for name, idx in self._lookup.items():
+                    if idx < self._secondary_start_idx:
+                        continue
+
+                    self._lookup[name] += 1
+
+                self._lookup[repository.name] = self._secondary_start_idx
+                self._secondary_start_idx += 1
 
         return self
 
@@ -100,7 +110,7 @@ class Pool(BaseRepository):
             except PackageNotFound:
                 pass
         else:
-            for repo in self._repositories:
+            for idx, repo in enumerate(self._repositories):
                 try:
                     package = repo.package(name, version, extras=extras)
                 except PackageNotFound:
@@ -134,7 +144,7 @@ class Pool(BaseRepository):
             )
 
         packages = []
-        for repo in self._repositories:
+        for idx, repo in enumerate(self._repositories):
             packages += repo.find_packages(
                 name, constraint, extras=extras, allow_prereleases=allow_prereleases
             )
