@@ -162,6 +162,7 @@ class LegacyRepository(PyPiRepository):
         self._packages = []
         self._name = name
         self._url = url.rstrip("/")
+        self._auth = auth
         self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
 
         self._cache = CacheManager(
@@ -181,14 +182,25 @@ class LegacyRepository(PyPiRepository):
         )
 
         url_parts = urlparse.urlparse(self._url)
-        if not url_parts.username and auth:
-            self._session.auth = auth
+        if not url_parts.username and self._auth:
+            self._session.auth = self._auth
 
         self._disable_cache = disable_cache
 
     @property
-    def name(self):
-        return self._name
+    def authenticated_url(self):  # type: () -> str
+        if not self._auth:
+            return self.url
+
+        parsed = urlparse.urlparse(self.url)
+
+        return "{scheme}://{username}:{password}@{netloc}{path}".format(
+            scheme=parsed.scheme,
+            username=self._auth.auth.username,
+            password=self._auth.auth.password,
+            netloc=parsed.netloc,
+            path=parsed.path,
+        )
 
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False

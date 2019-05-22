@@ -28,6 +28,8 @@ class MockRepository(LegacyRepository):
         name = parts[1]
 
         fixture = self.FIXTURES / (name + ".html")
+        if not fixture.exists():
+            return
 
         with fixture.open() as f:
             return Page(self._url + endpoint, f.read(), {})

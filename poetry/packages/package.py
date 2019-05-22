@@ -54,6 +54,7 @@ class Package(object):
         self._license = None
         self.readme = None
 
+        self.source_name = ""
         self.source_type = ""
         self.source_reference = ""
         self.source_url = ""
@@ -297,6 +298,7 @@ class Package(object):
                     optional=optional,
                     category=category,
                     allows_prereleases=allows_prereleases,
+                    source_name=constraint.get("source"),
                 )
 
             marker = AnyMarker()

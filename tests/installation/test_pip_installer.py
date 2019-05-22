@@ -1,11 +1,12 @@
 from poetry.installation.pip_installer import PipInstaller
 from poetry.io.null_io import NullIO
 from poetry.packages.package import Package
+from poetry.repositories.pool import Pool
 from poetry.utils.env import NullEnv
 
 
 def test_requirement():
-    installer = PipInstaller(NullEnv(), NullIO())
+    installer = PipInstaller(NullEnv(), NullIO(), Pool())
 
     package = Package("ipython", "7.5.0")
     package.hashes = [

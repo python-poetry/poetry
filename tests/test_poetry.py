@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import pytest
+
 from poetry.poetry import Poetry
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
@@ -126,6 +128,19 @@ def test_poetry_with_multi_constraints_dependency():
     package = poetry.package
 
     assert len(package.requires) == 2
+
+
+def test_poetry_with_default_source():
+    poetry = Poetry.create(fixtures_dir / "with_default_source")
+
+    assert 1 == len(poetry.pool.repositories)
+
+
+def test_poetry_with_two_default_sources():
+    with pytest.raises(ValueError) as e:
+        Poetry.create(fixtures_dir / "with_two_default_sources")
+
+    assert "Only one repository can be the default" == str(e.value)
 
 
 def test_check():

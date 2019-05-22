@@ -228,6 +228,10 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "source": {
+                    "type": "string",
+                    "description": "The exclusive source used to search for this dependency."
                 }
             }
         },
@@ -417,6 +421,14 @@
                     "type": "string",
                     "description": "The url of the repository",
                     "format": "uri"
+                },
+                "default": {
+                    "type": "boolean",
+                    "description": "Make this repository the default (disable PyPI)"
+                },
+                "secondary": {
+                    "type": "boolean",
+                    "description": "Declare this repository as secondary, i.e. it will only be looked up last for packages."
                 }
             }
         }
