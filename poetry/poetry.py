@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import shutil
+import sys
 
 from typing import Dict
 from typing import List
@@ -147,7 +148,7 @@ class Poetry:
 
                 package.add_dependency(name, constraint)
 
-        if "dev-dependencies" in local_config:
+        if "dev-dependencies" in local_config and not "--no-dev" in sys.argv:
             for name, constraint in local_config["dev-dependencies"].items():
                 if isinstance(constraint, list):
                     for _constraint in constraint:

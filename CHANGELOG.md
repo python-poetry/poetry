@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.12.17a1] - 2019-05-23
+
+### Fixed
+
+- Fixed path based dev-dependencies break `install --no-dev` when the directory path does not exist.
+
+
 ## [0.12.16] - 2019-05-17
 
 ### Fixed
