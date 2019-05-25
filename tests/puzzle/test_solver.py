@@ -302,6 +302,7 @@ def test_solver_respects_root_package_python_versions(solver, repo, package):
     package.add_dependency("B")
 
     package_a = get_package("A", "1.0")
+    package_a.python_versions = "~=3.0"
     package_b = get_package("B", "1.0")
     package_b.python_versions = "^3.3"
     package_c = get_package("C", "1.0")

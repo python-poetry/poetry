@@ -49,7 +49,7 @@ def test_accepts_fails_with_prerelease_mismatch():
 def test_accepts_fails_with_python_versions_mismatch():
     dependency = Dependency("A", "^1.0")
     dependency.python_versions = "^3.6"
-    package = Package("B", "1.4")
+    package = Package("A", "1.4")
     package.python_versions = "~3.5"
 
     assert not dependency.accepts(package)

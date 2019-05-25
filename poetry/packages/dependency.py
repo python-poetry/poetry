@@ -170,6 +170,7 @@ class Dependency(object):
         return (
             self._name == package.name
             and self._constraint.allows(package.version)
+            and self._python_constraint.allows_all(package.python_constraint)
             and (not package.is_prerelease() or self.allows_prereleases())
         )
 

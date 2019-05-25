@@ -9,6 +9,12 @@ def test_format_python_constraint():
 
     assert result == ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 
+    constraint = parse_constraint("~=3.4")
+
+    result = format_python_constraint(constraint)
+
+    assert result == ">=3.4,<4.0"
+
 
 def test_format_python_constraint_single_version():
     constraint = parse_constraint("3.6")

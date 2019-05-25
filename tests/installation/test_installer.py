@@ -410,6 +410,8 @@ def test_run_with_python_versions(installer, locker, repo, package):
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
+    package_d = get_package("D", "1.1")
+    package_d.python_versions = "~2.7 || ~=3.2"
     package_c12 = get_package("C", "1.2")
     package_c12.python_versions = "~2.7 || ^3.3"
     package_c13 = get_package("C", "1.3")
@@ -419,10 +421,12 @@ def test_run_with_python_versions(installer, locker, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c12)
     repo.add_package(package_c13)
+    repo.add_package(package_d)
 
     package.add_dependency("A", "~1.0")
     package.add_dependency("B", "^1.0")
     package.add_dependency("C", "^1.0")
+    package.add_dependency("D", "^1.0")
 
     installer.run()
     expected = fixture("with-python-versions")
