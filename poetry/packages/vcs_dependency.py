@@ -71,6 +71,9 @@ class VCSDependency(Dependency):
 
         requirement += " @ {}+{}@{}".format(self._vcs, self._source, self.reference)
 
+        if self.in_extras:
+            requirement += " "
+
         return requirement
 
     def is_vcs(self):  # type: () -> bool
