@@ -82,13 +82,16 @@ poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
+
+# Zsh (macOS/Homebrew)
+poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
 ```
 
 *Note:* you may need to restart your shell in order for the changes to take
 effect.
 
 For `zsh`, you must then add the following line in your `~/.zshrc` before
-`compinit`:
+`compinit` (not for homebrew setup):
 
 ```zsh
 fpath+=~/.zfunc
