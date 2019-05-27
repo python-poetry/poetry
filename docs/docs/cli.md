@@ -117,11 +117,17 @@ poetry install --no-dev
 ```
 
 You can also specify the extras you want installed
-by passing the `--E|--extras` option (See [Extras](#extras) for more info)
+by passing the `--E|--extras` option
 
 ```bash
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
+```
+
+Alternatively to install all available extras, pass the `--all-extras` option.
+
+```bash
+poetry install --all-extras
 ```
 
 By default `poetry` will install your project's package everytime you run `install`:
@@ -147,6 +153,7 @@ poetry install --no-root
 * `--no-dev`: Do not install dev dependencies.
 * `--no-root`: Do not install the root package (your project).
 * `--extras (-E)`: Features to install (multiple values allowed).
+* `--all-extras`: Install all available features (overrides `--extras`)
 
 ## update
 

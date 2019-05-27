@@ -27,6 +27,11 @@ class InstallCommand(EnvCommand):
             multiple=True,
         ),
         option(
+            "all-extras",
+            None,
+            "Install all available extra sets of dependencies, overriding --extras",
+        ),
+        option(
             "develop",
             None,
             "Install given packages in development mode.",
@@ -55,12 +60,19 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
 
-        extras = []
-        for extra in self.option("extras"):
-            if " " in extra:
-                extras += [e.strip() for e in extra.split(" ")]
-            else:
-                extras.append(extra)
+        if self.option("all-extras") and self.poetry.package.extras:
+            extras = [extra for extra in self.poetry.package.extras]
+
+            self.line("<info>Installing with all available extra dependencies.</info>")
+            self.line("Extras found: {}".format(", ".join(extras)))
+            self.line("")
+        else:
+            extras = []
+            for extra in self.option("extras"):
+                if " " in extra:
+                    extras += [e.strip() for e in extra.split(" ")]
+                else:
+                    extras.append(extra)
 
         installer.extras(extras)
         installer.dev_mode(not self.option("no-dev"))

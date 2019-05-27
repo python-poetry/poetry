@@ -185,6 +185,22 @@ def poetry(repo, project_directory):
 
 
 @pytest.fixture
+def poetry_with_extras(repo):
+    p = Poetry.create(Path(__file__).parent.parent / "fixtures" / "project_with_extras")
+
+    with p.file.path.open() as f:
+        content = f.read()
+
+    p.pool.remove_repository("pypi")
+    p.pool.add_repository(repo)
+
+    yield p
+
+    with p.file.path.open("w") as f:
+        f.write(content)
+
+
+@pytest.fixture
 def app(poetry):
     app_ = Application(poetry)
     app_.config.set_terminate_after_run(False)
@@ -193,5 +209,18 @@ def app(poetry):
 
 
 @pytest.fixture
+def app_with_extras(poetry_with_extras):
+    app_ = Application(poetry_with_extras)
+    app_.config.set_terminate_after_run(False)
+
+    return app_
+
+
+@pytest.fixture
 def app_tester(app):
     return ApplicationTester(app)
+
+
+@pytest.fixture
+def app_tester_with_extras(app_with_extras):
+    return ApplicationTester(app_with_extras)
