@@ -109,6 +109,9 @@ class SdistBuilder(Builder):
         packages = []
         package_data = {}
         for include in self._module.includes:
+            if include.formats and "sdist" not in include.formats:
+                continue
+
             if isinstance(include, PackageInclude):
                 if include.is_package():
                     pkg_dir, _packages, _package_data = self.find_packages(include)

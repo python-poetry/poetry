@@ -2,7 +2,7 @@ from .include import Include
 
 
 class PackageInclude(Include):
-    def __init__(self, base, include, source=None):
+    def __init__(self, base, include, formats=None, source=None):
         self._package = None
         self._is_package = False
         self._is_module = False
@@ -11,7 +11,7 @@ class PackageInclude(Include):
         if source is not None:
             base = base / source
 
-        super(PackageInclude, self).__init__(base, include)
+        super(PackageInclude, self).__init__(base, include, formats=formats)
 
         self.check_elements()
 

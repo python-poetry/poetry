@@ -221,7 +221,7 @@ def test_find_packages():
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
     base = project("source_package")
-    include = PackageInclude(base, "package_src", "src")
+    include = PackageInclude(base, "package_src", source="src")
 
     pkg_dir, packages, pkg_data = builder.find_packages(include)
 
@@ -348,65 +348,6 @@ def test_with_src_module_dir():
     with tarfile.open(str(sdist), "r") as tar:
         assert "package-src-0.1/src/package_src/__init__.py" in tar.getnames()
         assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
-
-
-def test_package_with_include(mocker):
-    # Patch git module to return specific excluded files
-    p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
-    p.return_value = [
-        str(
-            Path(__file__).parent
-            / "fixtures"
-            / "with-include"
-            / "extra_dir"
-            / "vcs_excluded.txt"
-        ),
-        str(
-            Path(__file__).parent
-            / "fixtures"
-            / "with-include"
-            / "extra_dir"
-            / "sub_pkg"
-            / "vcs_excluded.txt"
-        ),
-    ]
-    poetry = Poetry.create(project("with-include"))
-
-    builder = SdistBuilder(poetry, NullEnv(), NullIO())
-
-    # Check setup.py
-    setup = builder.build_setup()
-    setup_ast = ast.parse(setup)
-
-    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
-    ns = {}
-    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
-    assert "package_dir" not in ns
-    assert ns["packages"] == ["extra_dir", "extra_dir.sub_pkg", "package_with_include"]
-    assert ns["package_data"] == {"": ["*"]}
-    assert ns["modules"] == ["my_module"]
-
-    builder.build()
-
-    sdist = fixtures_dir / "with-include" / "dist" / "with-include-1.2.3.tar.gz"
-
-    assert sdist.exists()
-
-    with tarfile.open(str(sdist), "r") as tar:
-        names = tar.getnames()
-        assert len(names) == len(set(names))
-        assert "with-include-1.2.3/LICENSE" in names
-        assert "with-include-1.2.3/README.rst" in names
-        assert "with-include-1.2.3/extra_dir/__init__.py" in names
-        assert "with-include-1.2.3/extra_dir/vcs_excluded.txt" in names
-        assert "with-include-1.2.3/extra_dir/sub_pkg/__init__.py" in names
-        assert "with-include-1.2.3/extra_dir/sub_pkg/vcs_excluded.txt" not in names
-        assert "with-include-1.2.3/my_module.py" in names
-        assert "with-include-1.2.3/notes.txt" in names
-        assert "with-include-1.2.3/package_with_include/__init__.py" in names
-        assert "with-include-1.2.3/pyproject.toml" in names
-        assert "with-include-1.2.3/setup.py" in names
-        assert "with-include-1.2.3/PKG-INFO" in names
 
 
 def test_default_with_excluded_data(mocker):
