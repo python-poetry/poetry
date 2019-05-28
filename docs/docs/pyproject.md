@@ -113,6 +113,20 @@ packages = [
 ]
 ```
 
+If you want to restrict a package to a specific [build](#build) format you can specify
+it by using `format`:
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package" },
+    { include = "tests", format = "sdist" },
+]
+```
+
+From now on, only the `sdist` build archive will include the `tests` package.
+
 !!!note
 
     Using `packages` disables the package auto-detection feature meaning you have to
