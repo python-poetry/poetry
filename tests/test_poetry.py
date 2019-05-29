@@ -169,3 +169,22 @@ def test_check_fails():
         )
 
     assert Poetry.check(content) == {"errors": [expected], "warnings": []}
+
+
+def test_create_fails_on_invalid_configuration():
+    with pytest.raises(RuntimeError) as e:
+        Poetry.create(
+            Path(__file__).parent / "fixtures" / "invalid_pyproject" / "pyproject.toml"
+        )
+
+    if PY2:
+        expected = """\
+The Poetry configuration is invalid:
+  - u'description' is a required property
+"""
+    else:
+        expected = """\
+The Poetry configuration is invalid:
+  - 'description' is a required property
+"""
+    assert expected == str(e.value)

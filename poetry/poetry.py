@@ -86,21 +86,7 @@ class Poetry:
 
     @classmethod
     def create(cls, cwd):  # type: (Path) -> Poetry
-        candidates = [Path(cwd)]
-        candidates.extend(Path(cwd).parents)
-
-        for path in candidates:
-            poetry_file = path / "pyproject.toml"
-
-            if poetry_file.exists():
-                break
-
-        else:
-            raise RuntimeError(
-                "Poetry could not find a pyproject.toml file in {} or its parents".format(
-                    cwd
-                )
-            )
+        poetry_file = cls.locate(cwd)
 
         local_config = TomlFile(poetry_file.as_posix()).read()
         if "tool" not in local_config or "poetry" not in local_config["tool"]:
@@ -110,7 +96,13 @@ class Poetry:
         local_config = local_config["tool"]["poetry"]
 
         # Checking validity
-        cls.check(local_config)
+        check_result = cls.check(local_config)
+        if check_result["errors"]:
+            message = ""
+            for error in check_result["errors"]:
+                message += "  - {}\n".format(error)
+
+            raise RuntimeError("The Poetry configuration is invalid:\n" + message)
 
         # Load package
         name = local_config["name"]
@@ -222,6 +214,24 @@ class Poetry:
         auth = Auth(url, credentials[0], credentials[1])
 
         return LegacyRepository(name, url, auth=auth)
+
+    @classmethod
+    def locate(cls, cwd):  # type: (Path) -> Poetry
+        candidates = [Path(cwd)]
+        candidates.extend(Path(cwd).parents)
+
+        for path in candidates:
+            poetry_file = path / "pyproject.toml"
+
+            if poetry_file.exists():
+                return poetry_file
+
+        else:
+            raise RuntimeError(
+                "Poetry could not find a pyproject.toml file in {} or its parents".format(
+                    cwd
+                )
+            )
 
     @classmethod
     def check(cls, config, strict=False):  # type: (dict, bool) -> Dict[str, List[str]]

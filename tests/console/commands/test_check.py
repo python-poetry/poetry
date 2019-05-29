@@ -18,10 +18,15 @@ All set!
     assert expected == tester.io.fetch_output()
 
 
-def test_check_invalid(app):
-    app._poetry = Poetry.create(
-        Path(__file__).parent.parent.parent / "fixtures" / "invalid_pyproject"
+def test_check_invalid(app, mocker):
+    mocker.patch(
+        "poetry.poetry.Poetry.locate",
+        return_value=Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "invalid_pyproject"
+        / "pyproject.toml",
     )
+
     command = app.find("check")
     tester = CommandTester(command)
 

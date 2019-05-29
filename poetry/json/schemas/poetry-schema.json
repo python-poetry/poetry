@@ -404,6 +404,7 @@
         "extra-script": {
             "type": "object",
             "description": "A script that should be installed only if extras are activated.",
+            "additionalProperties": false,
             "properties": {
                 "callable": {
                     "$ref": "#/definitions/script"
@@ -419,6 +420,7 @@
         },
         "repository": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                 "name": {
                     "type": "string",
