@@ -1,5 +1,10 @@
+from unittest.mock import patch, mock_open
+
 import pytest
 import shutil
+
+import requests_mock
+
 
 try:
     import urllib.parse as urlparse
@@ -7,7 +12,7 @@ except ImportError:
     import urlparse
 
 from poetry.packages import Dependency
-from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import PackageNotFound, RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
 from poetry.utils._compat import PY35
@@ -255,3 +260,55 @@ def test_get_package_retrieves_packages_with_no_hashes():
     package = repo.package("jupyter", "1.0.0")
 
     assert [] == package.hashes
+
+
+class MockRepositoryWithSession(LegacyRepository):
+    def __init__(self):
+        super(MockRepositoryWithSession, self).__init__(
+            "legacy", url="http://foo.bar", disable_cache=True
+        )
+
+
+def test_repo_get():
+    repo = MockRepositoryWithSession()
+
+    with requests_mock.Mocker() as m:
+        m.get("http://foo.bar/some-package", text="")
+        page = repo._get("/some-package")
+
+    assert page
+
+
+def test_repo_get_http_error():
+    repo = MockRepositoryWithSession()
+
+    with requests_mock.Mocker() as m:
+        m.get("http://foo.bar/some-package", text="Forbidden", status_code=403)
+        with pytest.raises(RepositoryError):
+            repo._get("/some-package")
+
+
+def test_repo_download():
+    repo = MockRepositoryWithSession()
+    url = "http://foo.bar/some-package/some-package-0.1.tar.gz"
+    dest = "/some/dest.tar.gz"
+    content = b"content"
+
+    with requests_mock.Mocker() as m, patch(
+        "poetry.repositories.legacy_repository.open", mock_open()
+    ) as mock_file:
+        m.get(url, content=content)
+        repo._download(url, dest)
+        mock_file.assert_called_with(dest, "wb")
+        mock_file().write.assert_called_once_with(content)
+
+
+def test_repo_download_http_error():
+    repo = MockRepositoryWithSession()
+    url = "http://foo.bar/some-package/some-package-0.1.tar.gz"
+    dest = "/some/dest.tar.gz"
+
+    with requests_mock.Mocker() as m:
+        m.get(url, status_code=403)
+        with pytest.raises(RepositoryError):
+            repo._download(url, dest)
