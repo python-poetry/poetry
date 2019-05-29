@@ -133,6 +133,9 @@ class WheelBuilder(Builder):
         to_add = []
 
         for include in self._module.includes:
+            if include.formats and "wheel" not in include.formats:
+                continue
+
             include.refresh()
 
             for file in include.elements:

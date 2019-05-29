@@ -76,6 +76,13 @@
                     "from": {
                         "type": "string",
                         "description": "Where the source directory of the package resides."
+                    },
+                    "format": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {"type":  "array", "items": {"type":  "string"}}
+                        ],
+                        "description": "The format(s) for which the package must be included."
                     }
                 }
             }
