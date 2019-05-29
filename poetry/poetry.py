@@ -183,6 +183,10 @@ class Poetry:
         if "packages" in local_config:
             package.packages = local_config["packages"]
 
+        # Custom urls
+        if "urls" in local_config:
+            package.custom_urls = local_config["urls"]
+
         # Moving lock if necessary (pyproject.lock -> poetry.lock)
         lock = poetry_file.parent / "poetry.lock"
         if not lock.exists():
