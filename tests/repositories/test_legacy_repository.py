@@ -1,10 +1,11 @@
-from unittest.mock import patch, mock_open
+try:
+    from unittest.mock import mock_open
+except ImportError:
+    from mock import mock_open
 
 import pytest
-import shutil
-
 import requests_mock
-
+import shutil
 
 try:
     import urllib.parse as urlparse
@@ -288,15 +289,15 @@ def test_repo_get_http_error():
             repo._get("/some-package")
 
 
-def test_repo_download():
+def test_repo_download(mocker):
     repo = MockRepositoryWithSession()
     url = "http://foo.bar/some-package/some-package-0.1.tar.gz"
     dest = "/some/dest.tar.gz"
     content = b"content"
 
-    with requests_mock.Mocker() as m, patch(
-        "poetry.repositories.legacy_repository.open", mock_open()
-    ) as mock_file:
+    mock_file = mocker.patch("poetry.repositories.legacy_repository.open", mock_open())
+
+    with requests_mock.Mocker() as m:
         m.get(url, content=content)
         repo._download(url, dest)
         mock_file.assert_called_with(dest, "wb")
