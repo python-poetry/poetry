@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed dependency resolution with circular dependencies.
+
+
 ## [0.12.16] - 2019-05-17
 
 ### Fixed

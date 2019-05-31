@@ -726,19 +726,26 @@ def test_solver_circular_dependency(solver, repo, package):
 
     package_b = get_package("B", "1.0")
     package_b.add_dependency("A", "^1.0")
+    package_b.add_dependency("C", "^1.0")
+
+    package_c = get_package("C", "1.0")
 
     repo.add_package(package_a)
     repo.add_package(package_b)
+    repo.add_package(package_c)
 
     ops = solver.solve()
 
     check_solver_result(
         ops,
         [
+            {"job": "install", "package": package_c},
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_a},
         ],
     )
+
+    assert "main" == ops[0].package.category
 
 
 def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
