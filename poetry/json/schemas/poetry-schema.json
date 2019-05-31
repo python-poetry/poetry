@@ -161,6 +161,15 @@
                     }
                 }
             }
+        },
+        "urls": {
+            "type": "object",
+            "patternProperties": {
+                "^.+$": {
+                    "type": "string",
+                    "description": "The full url of the custom url."
+                }
+            }
         }
     },
     "definitions": {

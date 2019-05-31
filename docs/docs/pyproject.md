@@ -251,6 +251,18 @@ To match the example in the setuptools documentation, you would use the followin
 ".rst" = "some_module:SomeClass"
 ```
 
+## `urls`
+
+In addition to the basic urls (`homepage`, `repository` and `documentation`), you can specify
+any custom url in the `urls` section.
+
+```toml
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/sdispater/poetry/issues"
+```
+
+If you publish you package on PyPI, they will appear in the `Project Links` section.
+
 ## Poetry and PEP-517
 
 [PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way
