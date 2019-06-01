@@ -1,5 +1,7 @@
 import logging
+import sys
 import os
+import platform
 import tarfile
 import zipfile
 
@@ -55,6 +57,14 @@ logger = logging.getLogger(__name__)
 class PyPiRepository(Repository):
 
     CACHE_VERSION = parse_constraint("0.12.0")
+
+    # Implementation name lookup specified by PEP425
+    IMP_NAME_LOOKUP = {
+        "cpython": "cp",
+        "ironpython": "ip",
+        "pypy": "pp",
+        "jython": "jy",
+    }
 
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
         self._url = url
@@ -436,18 +446,74 @@ class PyPiRepository(Repository):
             if info:
                 return info
 
-            # Prefer non platform specific wheels
-            if universal_python3_wheel:
-                return self._get_info_from_wheel(universal_python3_wheel)
-
-            if universal_python2_wheel:
-                return self._get_info_from_wheel(universal_python2_wheel)
-
             if platform_specific_wheels and "sdist" not in urls:
-                # Pick the first wheel available and hope for the best
-                return self._get_info_from_wheel(platform_specific_wheels[0])
+                # Attempt to select the best platform-specific wheel
+                best_wheel = self._pick_platform_specific_wheel(
+                    platform_specific_wheels
+                )
+                return self._get_info_from_wheel(best_wheel)
 
         return self._get_info_from_sdist(urls["sdist"][0])
+
+    def get_sys_info(self):  # type: () -> Dict[str, str]
+        # Return system information. Can be overridden for testing
+        return {
+            "plat": platform.system().lower(),
+            "is32bit": sys.maxsize <= 2 ** 32,
+            "imp_name": sys.implementation.name,
+            "pyver": platform.python_version_tuple(),
+        }
+
+    def _pick_platform_specific_wheel(
+        self, platform_specific_wheels
+    ):  # type: (list) -> str
+        sys_info = self.get_sys_info()
+        # Format information for checking the PEP425 "Platform Tag"
+        os_map = {"windows": "win", "darwin": "macosx"}
+        os_name = os_map.get(sys_info["plat"], sys_info["plat"])
+        bit_label = "32" if sys_info["is32bit"] else "64"
+        # Format information for checking the PEP425 "Python Tag"
+        imp_abbr = self.IMP_NAME_LOOKUP.get(sys_info["imp_name"].lower(), "py")
+        py_abbr = "".join(sys_info["pyver"][:2])
+        self._log(
+            "Attempting to determine best wheel file for: {}".format(sys_info),
+            level="debug",
+        )
+
+        platform_matches = []
+        for url in platform_specific_wheels:
+            m = wheel_file_re.match(Link(url).filename)
+            plat = m.group("plat")
+            if os_name in plat:
+                # Check python version and the Python implementation or generic "py"
+                match_py = m.group("pyver") in [imp_abbr + py_abbr, "py" + py_abbr]
+                if match_py and (bit_label in plat or "x86_64" in plat):
+                    self._log(
+                        "Selected best platform, bit, and Python version match: {}".format(
+                            url
+                        ),
+                        level="debug",
+                    )
+                    return url
+                elif match_py:
+                    platform_matches.insert(0, url)
+        if len(platform_matches) > 0:
+            # Return first platform match as more specificity couldn't be determined
+            self._log(
+                "Selecting first wheel file for platform {}: {}".format(
+                    os_name, platform_matches[0]
+                ),
+                level="debug",
+            )
+            return platform_matches[0]
+        # Could not pick the best wheel, return the first available and hope for the best
+        self._log(
+            "Matching was unsuccessful, selecting first wheel file: {}".format(
+                platform_specific_wheels[0]
+            ),
+            level="debug",
+        )
+        return platform_specific_wheels[0]
 
     def _get_info_from_wheel(
         self, url
