@@ -461,6 +461,13 @@ class PyPiRepository(Repository):
             if info:
                 return info
 
+            # Prefer non platform specific wheels
+            if universal_python3_wheel:
+                return self._get_info_from_wheel(universal_python3_wheel)
+
+            if universal_python2_wheel:
+                return self._get_info_from_wheel(universal_python2_wheel)
+
             if platform_specific_wheels and "sdist" not in urls:
                 # Attempt to select the best platform-specific wheel
                 best_wheel = self._pick_platform_specific_wheel(
