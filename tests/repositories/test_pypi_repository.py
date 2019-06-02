@@ -20,10 +20,13 @@ class MockRepository(PyPiRepository):
             url="http://foo.bar", disable_cache=True, fallback=fallback
         )
 
-        self.plat = plat
-        self.is32bit = is32bit
-        self.imp_name = imp_name
-        self.pyver = pyver
+        # Mock different hardware configurations
+        self._sys_info = {
+            "plat": plat.lower(),
+            "is32bit": is32bit,
+            "imp_name": imp_name,
+            "pyver": pyver,
+        }
 
     def _get(self, url):
         parts = url.split("/")[1:]
@@ -52,15 +55,6 @@ class MockRepository(PyPiRepository):
         fixture = self.DIST_FIXTURES / filename
 
         shutil.copyfile(str(fixture), dest)
-
-    def get_sys_info(self):
-        # Mock different hardware configurations by overriding this method
-        return {
-            "plat": self.plat.lower(),
-            "is32bit": self.is32bit,
-            "imp_name": self.imp_name,
-            "pyver": self.pyver,
-        }
 
 
 def test_find_packages():
