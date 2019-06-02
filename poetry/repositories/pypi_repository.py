@@ -90,6 +90,21 @@ class PyPiRepository(Repository):
 
         super(PyPiRepository, self).__init__()
 
+    @property
+    def sys_info(self):  # type: () -> Dict[str, str]
+        """
+        Return dictionary describing the OS and Python configuration.
+        """
+        if self._sys_info:
+            return self._sys_info
+        self._sys_info = {
+            "plat": platform.system().lower(),
+            "is32bit": sys.maxsize <= 2 ** 32,
+            "imp_name": sys.implementation.name,
+            "pyver": platform.python_version_tuple(),
+        }
+        return self._sys_info
+
     def find_packages(
         self,
         name,  # type: str
@@ -439,28 +454,18 @@ class PyPiRepository(Repository):
 
         return self._get_info_from_sdist(urls["sdist"][0])
 
-    def get_sys_info(self):  # type: () -> Dict[str, str]
-        # Return system information. Can be overridden for testing
-        return {
-            "plat": platform.system().lower(),
-            "is32bit": sys.maxsize <= 2 ** 32,
-            "imp_name": sys.implementation.name,
-            "pyver": platform.python_version_tuple(),
-        }
-
     def _pick_platform_specific_wheel(
         self, platform_specific_wheels
     ):  # type: (list) -> str
-        sys_info = self.get_sys_info()
         # Format information for checking the PEP425 "Platform Tag"
         os_map = {"windows": "win", "darwin": "macosx"}
-        os_name = os_map.get(sys_info["plat"], sys_info["plat"])
-        bit_label = "32" if sys_info["is32bit"] else "64"
+        os_name = os_map.get(self.sys_info["plat"], self.sys_info["plat"])
+        bit_label = "32" if self.sys_info["is32bit"] else "64"
         # Format information for checking the PEP425 "Python Tag"
-        imp_abbr = self.IMP_NAME_LOOKUP.get(sys_info["imp_name"].lower(), "py")
-        py_abbr = "".join(sys_info["pyver"][:2])
+        imp_abbr = self.IMP_NAME_LOOKUP.get(self.sys_info["imp_name"].lower(), "py")
+        py_abbr = "".join(self.sys_info["pyver"][:2])
         self._log(
-            "Attempting to determine best wheel file for: {}".format(sys_info),
+            "Attempting to determine best wheel file for: {}".format(self.sys_info),
             level="debug",
         )
 
