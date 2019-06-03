@@ -140,7 +140,6 @@ class Layout(object):
         tests.mkdir()
         tests_init.touch(exist_ok=False)
 
-        # explicit utf-8 for python source
         with tests_default.open("w", encoding="utf-8") as f:
             f.write(
                 TESTS_DEFAULT.format(
@@ -153,6 +152,5 @@ class Layout(object):
 
         poetry = path / "pyproject.toml"
 
-        # explicit utf-8 for python source
         with poetry.open("w", encoding="utf-8") as f:
             f.write(content)

@@ -28,7 +28,6 @@ def load_licenses():
 
     licenses_file = os.path.join(os.path.dirname(__file__), "data", "licenses.json")
 
-    # explicit utf-8 for JSON
     with open(licenses_file, encoding="utf-8") as f:
         data = json.loads(f.read())
 

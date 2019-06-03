@@ -193,7 +193,6 @@ class PipInstaller(BaseInstaller):
             # We also need it for non-PEP-517 packages
             builder = SdistBuilder(Poetry.create(pyproject.parent), NullEnv(), NullIO())
 
-            # explicit utf-8 for python source
             with open(setup, "w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
 

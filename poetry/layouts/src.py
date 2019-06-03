@@ -14,6 +14,5 @@ class SrcLayout(Layout):
 
         package_path.mkdir(parents=True)
 
-        # explicit utf-8 for python source
         with package_init.open("w", encoding="utf-8") as f:
             f.write(DEFAULT.format(version=self._version))
