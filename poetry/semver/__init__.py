@@ -79,7 +79,8 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
             low = version
             high = version.stable.next_major
         else:
-            low = Version(version.major, version.minor, 0)
+            pre = ".".join(str(p) for p in version.prerelease)
+            low = Version(version.major, version.minor, 0, pre=pre)
             high = version.stable.next_minor
 
         return VersionRange(
