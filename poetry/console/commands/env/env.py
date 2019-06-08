@@ -7,11 +7,9 @@ from .use import EnvUseCommand
 
 
 class EnvCommand(Command):
-    """
-    Interact with Poetry's project environments.
 
-    env
-    """
+    name = "env"
+    description = "Interact with Poetry's project environments."
 
     commands = [EnvInfoCommand(), EnvListCommand(), EnvRemoveCommand(), EnvUseCommand()]
 

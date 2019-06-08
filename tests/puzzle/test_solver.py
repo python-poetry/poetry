@@ -1569,3 +1569,137 @@ def test_multiple_constraints_on_root(package, solver, repo):
         ops,
         [{"job": "install", "package": foo15}, {"job": "install", "package": foo25}],
     )
+
+
+def test_solver_chooses_most_recent_version_amongst_repositories(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("tomlkit", {"version": "^0.5"})
+
+    repo = MockLegacyRepository()
+    pool = Pool([repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("tomlkit", "0.5.3")}]
+    )
+
+    assert "" == ops[0].package.source_type
+    assert "" == ops[0].package.source_url
+
+
+def test_solver_chooses_from_correct_repository_if_forced(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
+
+    repo = MockLegacyRepository()
+    pool = Pool([repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("tomlkit", "0.5.2")}]
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+
+
+def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("foo", "^1.0")
+    package.add_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
+
+    repo = Repository()
+    foo = get_package("foo", "1.0.0")
+    foo.add_dependency("tomlkit", "^0.5.0")
+    repo.add_package(foo)
+    pool = Pool([MockLegacyRepository(), repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("tomlkit", "0.5.2")},
+            {"job": "install", "package": foo},
+        ],
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+
+    assert "" == ops[1].package.source_type
+    assert "" == ops[1].package.source_url
+
+
+def test_solver_does_not_choose_from_secondary_repository_by_default(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("clikit", {"version": "^0.2.0"})
+
+    pool = Pool()
+    pool.add_repository(MockPyPIRepository(), secondary=True)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("pastel", "0.1.0")},
+            {"job": "install", "package": get_package("pylev", "1.3.0")},
+            {"job": "install", "package": get_package("clikit", "0.2.4")},
+        ],
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+    assert "" == ops[1].package.source_type
+    assert "" == ops[1].package.source_url
+    assert "legacy" == ops[2].package.source_type
+    assert "http://foo.bar" == ops[2].package.source_url
+
+
+def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, io):
+    package.python_versions = "^3.7"
+    package.add_dependency("clikit", {"version": "^0.2.0", "source": "PyPI"})
+
+    pool = Pool()
+    pool.add_repository(MockPyPIRepository(), secondary=True)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("pastel", "0.1.0")},
+            {"job": "install", "package": get_package("pylev", "1.3.0")},
+            {"job": "install", "package": get_package("clikit", "0.2.4")},
+        ],
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+    assert "" == ops[1].package.source_type
+    assert "" == ops[1].package.source_url
+    assert "" == ops[2].package.source_type
+    assert "" == ops[2].package.source_url

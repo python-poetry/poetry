@@ -33,6 +33,9 @@ class MockRepository(PyPiRepository):
             if not fixture.exists():
                 fixture = self.JSON_FIXTURES / (name + ".json")
 
+        if not fixture.exists():
+            return
+
         with fixture.open() as f:
             return json.loads(f.read())
 

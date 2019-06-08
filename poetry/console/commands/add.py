@@ -1,24 +1,47 @@
+from cleo import argument
+from cleo import option
+
 from .init import InitCommand
 from .env_command import EnvCommand
 
 
 class AddCommand(EnvCommand, InitCommand):
-    """
-    Add a new dependency to <comment>pyproject.toml</>.
 
-    add
-        { name* : Packages to add. }
-        { --D|dev : Add package as development dependency. }
-        { --git= : The url of the Git repository. }
-        { --path= : The path to a dependency. }
-        { --E|extras=* : Extras to activate for the dependency. }
-        { --optional : Add as an optional dependency. }
-        { --python= : Python version( for which the dependencies must be installed. }
-        { --platform= : Platforms for which the dependencies must be installed. }
-        { --allow-prereleases : Accept prereleases. }
-        { --dry-run : Outputs the operations but will not execute anything
-                     (implicitly enables --verbose). }
-    """
+    name = "add"
+    description = "Add a new dependency to <comment>pyproject.toml</>."
+
+    arguments = [argument("name", "Packages to add.", multiple=True)]
+    options = [
+        option("dev", "D", "Add package as development dependency."),
+        option("git", None, "The url of the Git repository.", flag=False),
+        option("path", None, "The path to a dependency.", flag=False),
+        option(
+            "extras",
+            "E",
+            "Extras to activate for the dependency.",
+            flag=False,
+            multiple=True,
+        ),
+        option("optional", None, "Add as an optional dependency."),
+        option(
+            "python",
+            None,
+            "Python version for which the dependencies must be installed.",
+            flag=False,
+        ),
+        option(
+            "platform",
+            None,
+            "Platforms for which the dependencies must be installed.",
+            flag=False,
+        ),
+        option("allow-prereleases", None, "Accept prereleases."),
+        option(
+            "dry-run",
+            None,
+            "Outputs the operations but will not execute anything (implicitly enables --verbose).",
+        ),
+    ]
 
     help = """The add command adds required packages to your <comment>pyproject.toml</> and installs them.
 

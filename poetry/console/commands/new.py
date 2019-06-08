@@ -1,15 +1,19 @@
+from cleo import argument
+from cleo import option
+
 from .command import Command
 
 
 class NewCommand(Command):
-    """
-    Creates a new Python project at <path>
 
-    new
-        { path : The path to create the project at. }
-        { --name= : Set the resulting package name. }
-        { --src : Use the src layout for the project. }
-    """
+    name = "new"
+    description = "Creates a new Python project at <path>"
+
+    arguments = [argument("path", "The path to create the project at.")]
+    options = [
+        option("name", None, "Set the resulting package name.", flag=False),
+        option("src", None, "Use the src layout for the project."),
+    ]
 
     def handle(self):
         from poetry.layouts import layout

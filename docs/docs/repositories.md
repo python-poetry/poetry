@@ -64,7 +64,36 @@ url = "https://foo.bar/simple/"
 
 From now on, Poetry will also look for packages in your private repository.
 
+!!!note
+
+    Any custom repository will have precedence over PyPI.
+    
+    If you still want PyPI to be your primary source for your packages
+    you can declare custom repositories as secondary.
+    
+    ```toml
+    [[tool.poetry.source]]
+    name = "foo"
+    url = "https://foo.bar/simple/"
+    secondary = true
+    ```
+
 If your private repository requires HTTP Basic Auth be sure to add the username and
-password to your `http-basic` config using the example above (be sure to use the
+password to your `http-basic` configuration using the example above (be sure to use the
 same name that is in the `tool.poetry.source` section). Poetry will use these values
 to authenticate to your private repository when downloading or looking for packages.
+
+
+### Disabling the PyPI repository
+
+If you want your packages to be exclusively looked up from a private
+repository, you can set it as the default one by using the `default` keyword
+
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+default = true
+```
+
+A default source will also be the fallback source if you add other sources.

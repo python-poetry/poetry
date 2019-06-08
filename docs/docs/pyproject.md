@@ -98,7 +98,7 @@ you can specify the packages you want to include in the final distribution.
 [tool.poetry]
 # ...
 packages = [
-    { include = "mypackage" },
+    { include = "my_package" },
     { include = "extra_package/**/*.py" },
 ]
 ```
@@ -109,9 +109,23 @@ If your package is stored inside a "source" directory, you must specify it:
 [tool.poetry]
 # ...
 packages = [
-    { include = "mypackage", from = "lib" },
+    { include = "my_package", from = "lib" },
 ]
 ```
+
+If you want to restrict a package to a specific [build](#build) format you can specify
+it by using `format`:
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package" },
+    { include = "tests", format = "sdist" },
+]
+```
+
+From now on, only the `sdist` build archive will include the `tests` package.
 
 !!!note
 
@@ -123,7 +137,7 @@ packages = [
 
     ```toml
     packages = [
-        { include = "mypackage" },
+        { include = "my_package" },
         { include = "extra_package" },
     ]
     ```
@@ -236,6 +250,18 @@ To match the example in the setuptools documentation, you would use the followin
 [tool.poetry.plugins."blogtool.parsers"]
 ".rst" = "some_module:SomeClass"
 ```
+
+## `urls`
+
+In addition to the basic urls (`homepage`, `repository` and `documentation`), you can specify
+any custom url in the `urls` section.
+
+```toml
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/sdispater/poetry/issues"
+```
+
+If you publish you package on PyPI, they will appear in the `Project Links` section.
 
 ## Poetry and PEP-517
 

@@ -103,6 +103,7 @@ def test_get_metadata_content():
     urls = parsed.get_all("Project-URL")
     assert urls == [
         "Documentation, https://poetry.eustace.io/docs",
+        "Issue Tracker, https://github.com/sdispater/poetry/issues",
         "Repository, https://github.com/sdispater/poetry",
     ]
 

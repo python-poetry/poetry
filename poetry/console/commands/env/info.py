@@ -1,13 +1,14 @@
+from cleo import option
+
 from ..command import Command
 
 
 class EnvInfoCommand(Command):
-    """
-    Display information about the current environment.
 
-    info
-        {--p|path : Only display the environment's path}
-    """
+    name = "info"
+    description = "Display information about the current environment."
+
+    options = [option("path", "p", "Only display the environment's path.")]
 
     def handle(self):
         from poetry.utils.env import EnvManager

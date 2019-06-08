@@ -1,13 +1,16 @@
+from cleo import option
+
 from .env_command import EnvCommand
 
 
 class BuildCommand(EnvCommand):
-    """
-    Builds a package, as a tarball and a wheel by default.
 
-    build
-        { --f|format= : Limit the format to either wheel or sdist. }
-    """
+    name = "build"
+    description = "Builds a package, as a tarball and a wheel by default."
+
+    options = [
+        option("format", "f", "Limit the format to either wheel or sdist.", flag=True)
+    ]
 
     def handle(self):
         from poetry.masonry import Builder

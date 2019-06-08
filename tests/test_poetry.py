@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import pytest
+
 from poetry.poetry import Poetry
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
@@ -113,6 +115,8 @@ def test_poetry_with_packages_and_includes():
         {"include": "extra_dir/**/*.py"},
         {"include": "my_module.py"},
         {"include": "package_with_include"},
+        {"include": "tests", "format": "sdist"},
+        {"include": "for_wheel_only", "format": ["wheel"]},
     ]
 
     assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
@@ -126,6 +130,19 @@ def test_poetry_with_multi_constraints_dependency():
     package = poetry.package
 
     assert len(package.requires) == 2
+
+
+def test_poetry_with_default_source():
+    poetry = Poetry.create(fixtures_dir / "with_default_source")
+
+    assert 1 == len(poetry.pool.repositories)
+
+
+def test_poetry_with_two_default_sources():
+    with pytest.raises(ValueError) as e:
+        Poetry.create(fixtures_dir / "with_two_default_sources")
+
+    assert "Only one repository can be the default" == str(e.value)
 
 
 def test_check():
@@ -152,3 +169,22 @@ def test_check_fails():
         )
 
     assert Poetry.check(content) == {"errors": [expected], "warnings": []}
+
+
+def test_create_fails_on_invalid_configuration():
+    with pytest.raises(RuntimeError) as e:
+        Poetry.create(
+            Path(__file__).parent / "fixtures" / "invalid_pyproject" / "pyproject.toml"
+        )
+
+    if PY2:
+        expected = """\
+The Poetry configuration is invalid:
+  - u'description' is a required property
+"""
+    else:
+        expected = """\
+The Poetry configuration is invalid:
+  - 'description' is a required property
+"""
+    assert expected == str(e.value)

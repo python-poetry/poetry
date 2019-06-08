@@ -207,11 +207,10 @@ class Installer:
             ".".join([str(i) for i in self._env.version_info[:3]])
         ):
             # We resolve again by only using the lock file
-            pool = Pool()
+            pool = Pool(ignore_repository_names=True)
 
             # Making a new repo containing the packages
             # newly resolved and the ones from the current lock file
-            locked_repository = self._locker.locked_repository(True)
             repo = Repository()
             for package in local_repo.packages + locked_repository.packages:
                 if not repo.has_package(package):
@@ -513,7 +512,7 @@ class Installer:
         return _extra_packages(extra_packages)
 
     def _get_installer(self):  # type: () -> BaseInstaller
-        return PipInstaller(self._env, self._io)
+        return PipInstaller(self._env, self._io, self._pool)
 
     def _get_installed(self):  # type: () -> InstalledRepository
         return InstalledRepository.load(self._env)

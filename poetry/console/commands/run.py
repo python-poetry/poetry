@@ -1,13 +1,16 @@
+from cleo import argument
+
 from .env_command import EnvCommand
 
 
 class RunCommand(EnvCommand):
-    """
-    Runs a command in the appropriate environment.
 
-    run
-        { args* : The command and arguments/options to run. }
-    """
+    name = "run"
+    description = "Runs a command in the appropriate environment."
+
+    arguments = [
+        argument("args", "The command and arguments/options to run.", multiple=True)
+    ]
 
     def __init__(self):  # type: () -> None
         from poetry.console.args.run_args_parser import RunArgsParser

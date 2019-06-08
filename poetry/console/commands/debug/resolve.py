@@ -2,20 +2,32 @@ import re
 
 from typing import List
 
+from cleo import argument
+from cleo import option
+
 from ..command import Command
 
 
 class DebugResolveCommand(Command):
-    """
-    Debugs dependency resolution.
 
-    resolve
-        { package?* : packages to resolve. }
-        { --E|extras=* : Extras to activate for the dependency. }
-        { --python= : Python version(s) to use for resolution. }
-        { --tree : Displays the dependency tree. }
-        { --install : Show what would be installed for the current system. }
-    """
+    name = "resolve"
+    description = "Debugs dependency resolution."
+
+    arguments = [
+        argument("package", "Packages to resolve.", optional=True, multiple=True)
+    ]
+    options = [
+        option(
+            "extras",
+            "E",
+            "Extras to activate for the dependency.",
+            flag=False,
+            multiple=True,
+        ),
+        option("python", None, "Python version(s) to use for resolution.", flag=False),
+        option("tree", None, "Displays the dependency tree."),
+        option("install", None, "Show what would be installed for the current system."),
+    ]
 
     loggers = ["poetry.repositories.pypi_repository"]
 
