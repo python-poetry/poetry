@@ -134,7 +134,7 @@ class Locker(object):
 
         return packages
 
-    def set_lock_data(self, root, packages):  # type: () -> bool
+    def set_lock_data(self, root, packages):  # type: (...) -> bool
         hashes = {}
         packages = self._lock_packages(packages)
         # Retrieving hashes

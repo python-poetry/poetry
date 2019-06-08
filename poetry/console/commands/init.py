@@ -181,8 +181,8 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             f.write(content)
 
     def _determine_requirements(
-        self, requires, allow_prereleases=False  # type: List[str]  # type: bool
-    ):  # type: (...) -> List[str]
+        self, requires, allow_prereleases=False
+    ):  # type: (List[str], bool) -> List[str]
         if not requires:
             requires = []
 

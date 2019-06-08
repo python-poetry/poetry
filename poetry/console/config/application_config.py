@@ -28,8 +28,11 @@ class ApplicationConfig(BaseApplicationConfig):
         self.add_event_listener(ConsoleEvents.PRE_HANDLE.value, self.set_env)
 
     def register_command_loggers(
-        self, event, event_name, _
-    ):  # type: (PreHandleEvent, str, ...) -> None
+        self,
+        event,  # type: PreHandleEvent
+        event_name,  # type: str
+        _,
+    ):  # type: (...) -> None
         command = event.command.config.handler
         if not isinstance(command, Command):
             return
@@ -56,7 +59,7 @@ class ApplicationConfig(BaseApplicationConfig):
 
             logger.setLevel(level)
 
-    def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, ...) -> None
+    def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, _) -> None
         from poetry.semver import parse_constraint
         from poetry.utils.env import EnvManager
 

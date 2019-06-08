@@ -22,7 +22,12 @@ from .base_installer import BaseInstaller
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env, io, pool):  # type: (Env, ...) -> None
+    def __init__(
+        self,
+        env,  # type: Env
+        io,
+        pool,
+    ):  # type: (...) -> None
         self._env = env
         self._io = io
         self._pool = pool
