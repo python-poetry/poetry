@@ -1,8 +1,14 @@
 import os
+import sys
+
 import pytest
 import shutil
 
+from poetry.config import Config
+from poetry.locations import CACHE_DIR
 from poetry.utils._compat import Path
+from poetry.utils._compat import WINDOWS
+from poetry.utils.env import get_virtualenvs_path
 from poetry.utils.env import Env
 from poetry.utils.env import VirtualEnv
 from poetry.utils.env import EnvCommandError
@@ -82,3 +88,27 @@ def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
         result = tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
 
     assert processError.value.e.returncode == 1
+
+
+def home_dir():
+    return os.getenv("USERPROFILE") if WINDOWS else os.getenv("HOME")
+
+
+@pytest.mark.parametrize(
+    "path_config,expected",
+    [
+        (None, Path(CACHE_DIR) / "virtualenvs"),
+        ("~/.venvs", Path(home_dir()) / ".venvs"),
+        ("venv", Path("venv")),
+    ],
+    ids=[
+        "Uses default CACHE_DIR when no config specified",
+        "Correctly expands ~ to the user home directory",
+        "Correctly resolves relative directory",
+    ],
+)
+def test_resolves_virtualenvs_path_config(path_config, expected, config):
+    if path_config is not None:
+        config.add_property("settings.virtualenvs.path", path_config)
+
+    assert get_virtualenvs_path(config) == expected

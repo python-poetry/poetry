@@ -103,6 +103,18 @@ class EnvCommandError(EnvError):
         super(EnvCommandError, self).__init__(message)
 
 
+def get_virtualenvs_path(config):  # type: (Config) -> Path
+    """
+    Path to the directory where virtualenvs are stored
+    """
+    venvs_path = config.setting("settings.virtualenvs.path")
+    if venvs_path is None:
+        venvs_path = Path(CACHE_DIR) / "virtualenvs"
+    else:
+        venvs_path = Path(venvs_path).expanduser()
+    return venvs_path
+
+
 class Env(object):
     """
     An abstract Python environment.
@@ -199,11 +211,7 @@ class Env(object):
             if not create_venv:
                 return SystemEnv(Path(sys.prefix))
 
-            venv_path = config.setting("settings.virtualenvs.path")
-            if venv_path is None:
-                venv_path = Path(CACHE_DIR) / "virtualenvs"
-            else:
-                venv_path = Path(venv_path)
+            venv_path = get_virtualenvs_path(config)
 
             name = cwd.name
             name = "{}-py{}".format(
@@ -241,13 +249,10 @@ class Env(object):
         create_venv = config.setting("settings.virtualenvs.create")
         root_venv = config.setting("settings.virtualenvs.in-project")
 
-        venv_path = config.setting("settings.virtualenvs.path")
         if root_venv:
             venv_path = cwd / ".venv"
-        elif venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
-            venv_path = Path(venv_path)
+            venv_path = get_virtualenvs_path(config)
 
         if not name:
             name = cwd.name
