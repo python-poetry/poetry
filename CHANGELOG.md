@@ -12,6 +12,9 @@
 - Added support for declaring a specific source for dependencies.
 - Added support for disabling PyPI and making another repository the default one.
 - Added support for declaring private repositories as secondary.
+- Added the ability to specify packages on a per-format basis.
+- Added support for custom urls in metadata.
+- Full environment markers are now supported for dependencies via the `markers` property.
 
 ### Changed
 
@@ -25,6 +28,7 @@
 ### Fixed
 
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
+- The `pyproject.toml` configuration is now properly validated.
 
 
 ## [0.12.16] - 2019-05-17
