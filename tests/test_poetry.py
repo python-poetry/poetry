@@ -82,6 +82,14 @@ def test_poetry():
     assert simple_project.name == "simple-project"
     assert simple_project.pretty_constraint == "*"
 
+    functools32 = dependencies["functools32"]
+    assert functools32.name == "functools32"
+    assert functools32.pretty_constraint == "^3.2.3"
+    assert (
+        str(functools32.marker)
+        == 'python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5"'
+    )
+
     assert "db" in package.extras
 
     classifiers = package.classifiers
