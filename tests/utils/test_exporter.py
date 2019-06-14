@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from poetry.packages import Locker as BaseLocker
@@ -435,7 +437,7 @@ def test_exporter_exports_requirements_txt_to_standard_output(tmp_dir, locker, c
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir))
+    exporter.export("requirements.txt", Path(tmp_dir), sys.stdout)
 
     out, err = capsys.readouterr()
     expected = """\
