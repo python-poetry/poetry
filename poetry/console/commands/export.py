@@ -49,7 +49,7 @@ class ExportCommand(Command):
         exporter.export(
             fmt,
             self.poetry.file.parent,
-            output,
+            output or self.io,
             with_hashes=not self.option("without-hashes"),
             dev=self.option("dev"),
         )

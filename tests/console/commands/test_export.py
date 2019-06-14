@@ -133,7 +133,7 @@ def test_export_fails_on_invalid_format(app, repo):
         tester.execute("--format invalid")
 
 
-def test_export_prints_to_stdout_by_default(app, repo, capsys):
+def test_export_prints_to_stdout_by_default(app, repo):
     repo.add_package(get_package("foo", "1.0.0"))
 
     command = app.find("lock")
@@ -151,5 +151,4 @@ def test_export_prints_to_stdout_by_default(app, repo, capsys):
 foo==1.0.0
 """
 
-    out, err = capsys.readouterr()
-    assert out == expected
+    assert expected == tester.io.fetch_output()
