@@ -1,7 +1,9 @@
 import os
 
+import pytest
+
 from poetry.utils._compat import Path
-from poetry.utils.env import Env
+from poetry.utils.env import Env, SystemEnv
 from poetry.utils.env import VirtualEnv
 
 
@@ -43,3 +45,23 @@ def test_env_has_symlinks_on_nix(tmp_dir):
 
     if os.name != "nt" and venv_available:
         assert os.path.islink(venv.python)
+
+
+@pytest.mark.parametrize(
+    "create_venv, env_class", ((True, VirtualEnv), (False, SystemEnv))
+)
+def test_existing_venv_with_no_create_option(
+    tmp_dir, environ, config, create_venv, env_class
+):
+    if "VIRTUAL_ENV" in environ:
+        del environ["VIRTUAL_ENV"]
+
+    parent_path = Path(tmp_dir)
+    venv_path = parent_path / ".venv"
+
+    Env.build_venv(str(venv_path))
+
+    config.add_property("settings.virtualenvs.create", create_venv)
+
+    env = Env.get(cwd=parent_path)
+    assert isinstance(env, env_class)

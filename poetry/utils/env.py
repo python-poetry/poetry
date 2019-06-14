@@ -183,17 +183,18 @@ class Env(object):
         in_venv = os.environ.get("VIRTUAL_ENV") is not None
 
         if not in_venv:
+            config = Config.create("config.toml")
+            # Check if we need to handle virtual env
+            create_venv = config.setting("settings.virtualenvs.create", True)
+
+            if not create_venv:
+                return SystemEnv(Path(sys.prefix))
+
             # Checking if a local virtualenv exists
             if (cwd / ".venv").exists():
                 venv = cwd / ".venv"
 
                 return VirtualEnv(venv)
-
-            config = Config.create("config.toml")
-            create_venv = config.setting("settings.virtualenvs.create", True)
-
-            if not create_venv:
-                return SystemEnv(Path(sys.prefix))
 
             venv_path = config.setting("settings.virtualenvs.path")
             if venv_path is None:
