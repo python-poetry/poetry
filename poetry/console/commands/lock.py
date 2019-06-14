@@ -2,11 +2,9 @@ from .env_command import EnvCommand
 
 
 class LockCommand(EnvCommand):
-    """
-    Locks the project dependencies.
 
-    lock
-    """
+    name = "lock"
+    description = "Locks the project dependencies."
 
     help = """The <info>lock</info> command reads the <comment>pyproject.toml</> file from
 the current directory, processes it, and locks the depdencies in the <comment>poetry.lock</> file.
@@ -23,7 +21,6 @@ the current directory, processes it, and locks the depdencies in the <comment>po
             self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
 
-        installer.update(True)
-        installer.execute_operations(False)
+        installer.lock()
 
         return installer.run()

@@ -1,18 +1,20 @@
 from poetry.utils.exporter import Exporter
 
+from cleo import option
 from .command import Command
 
 
 class ExportCommand(Command):
-    """
-    Exports the lock file to alternative formats.
 
-    export
-        {--f|format= : Format to export to.}
-        {--o|output= : The name of the output file.}
-        {--without-hashes : Exclude hashes from the exported file.}
-        {--dev : Include development dependencies.}
-    """
+    name = "export"
+    description = "Exports the lock file to alternative formats."
+
+    options = [
+        option("format", "f", "Format to export to.", flag=False),
+        option("output", "o", "The name of the output file.", flag=False),
+        option("without-hashes", None, "Exclude hashes from the exported file."),
+        option("dev", None, "Include development dependencies."),
+    ]
 
     def handle(self):
         fmt = self.option("format")

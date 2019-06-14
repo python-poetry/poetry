@@ -4,11 +4,9 @@ from .clear import CacheClearCommand
 
 
 class CacheCommand(Command):
-    """
-    Interact with Poetry's cache.
 
-    cache
-    """
+    name = "cache"
+    description = "Interact with Poetry's cache"
 
     commands = [CacheClearCommand()]
 

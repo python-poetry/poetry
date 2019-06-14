@@ -131,6 +131,7 @@ class Provider:
                 constraint,
                 extras=dependency.extras,
                 allow_prereleases=dependency.allows_prereleases(),
+                repository=dependency.source_name,
             )
 
             packages.sort(
@@ -450,7 +451,10 @@ class Provider:
             package = DependencyPackage(
                 package.dependency,
                 self._pool.package(
-                    package.name, package.version.text, extras=package.requires_extras
+                    package.name,
+                    package.version.text,
+                    extras=package.requires_extras,
+                    repository=package.dependency.source_name,
                 ),
             )
 

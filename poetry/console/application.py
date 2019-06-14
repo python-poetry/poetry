@@ -9,7 +9,6 @@ from .commands import AddCommand
 from .commands import BuildCommand
 from .commands import CheckCommand
 from .commands import ConfigCommand
-from .commands import DevelopCommand
 from .commands import ExportCommand
 from .commands import InitCommand
 from .commands import InstallCommand
@@ -18,7 +17,6 @@ from .commands import NewCommand
 from .commands import PublishCommand
 from .commands import RemoveCommand
 from .commands import RunCommand
-from .commands import ScriptCommand
 from .commands import SearchCommand
 from .commands import ShellCommand
 from .commands import ShowCommand
@@ -68,7 +66,6 @@ class Application(BaseApplication):
             BuildCommand(),
             CheckCommand(),
             ConfigCommand(),
-            DevelopCommand(),
             ExportCommand(),
             InitCommand(),
             InstallCommand(),
@@ -77,7 +74,6 @@ class Application(BaseApplication):
             PublishCommand(),
             RemoveCommand(),
             RunCommand(),
-            ScriptCommand(),
             SearchCommand(),
             ShellCommand(),
             ShowCommand(),

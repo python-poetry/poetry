@@ -450,3 +450,22 @@ def test_remove_also_deactivates(tmp_dir, config, mocker):
 
     envs = envs_file.read()
     assert venv_name not in envs
+
+
+def test_env_has_symlinks_on_nix(tmp_dir, config):
+    venv_path = Path(tmp_dir)
+
+    EnvManager(config).build_venv(str(venv_path))
+
+    venv = VirtualEnv(venv_path)
+
+    venv_available = False
+    try:
+        from venv import EnvBuilder
+
+        venv_available = True
+    except ImportError:
+        pass
+
+    if os.name != "nt" and venv_available:
+        assert os.path.islink(venv.python)

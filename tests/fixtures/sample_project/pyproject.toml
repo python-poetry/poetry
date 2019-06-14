@@ -39,6 +39,9 @@ my-package = { path = "../project_with_setup/" }
 # Dir dependency with pyproject.toml
 simple-project = { path = "../simple_project/" }
 
+# Dependency with markers
+functools32 = { version = "^3.2.3", markers = "python_version ~= '2.7' and sys_platform == 'win32' or python_version in '3.4 3.5'" }
+
 
 [tool.poetry.extras]
 db = [ "orator" ]

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import poetry.packages
 
 from poetry.semver import parse_constraint
@@ -23,6 +25,7 @@ class Dependency(object):
         optional=False,  # type: bool
         category="main",  # type: str
         allows_prereleases=False,  # type: bool
+        source_name=None,  # type: Optional[str]
     ):
         self._name = canonicalize_name(name)
         self._pretty_name = name
@@ -45,6 +48,7 @@ class Dependency(object):
             )
 
         self._allows_prereleases = allows_prereleases
+        self._source_name = source_name
 
         self._python_versions = "*"
         self._python_constraint = parse_constraint("*")
@@ -78,6 +82,10 @@ class Dependency(object):
     @property
     def category(self):
         return self._category
+
+    @property
+    def source_name(self):
+        return self._source_name
 
     @property
     def python_versions(self):
@@ -127,6 +135,24 @@ class Dependency(object):
     def in_extras(self):  # type: () -> list
         return self._in_extras
 
+    @property
+    def base_pep_508_name(self):  # type: () -> str
+        requirement = self.pretty_name
+
+        if self.extras:
+            requirement += "[{}]".format(",".join(self.extras))
+
+        if isinstance(self.constraint, VersionUnion):
+            requirement += " ({})".format(
+                ",".join([str(c).replace(" ", "") for c in self.constraint.ranges])
+            )
+        elif isinstance(self.constraint, Version):
+            requirement += " (=={})".format(self.constraint.text)
+        elif not self.constraint.is_any():
+            requirement += " ({})".format(str(self.constraint).replace(" ", ""))
+
+        return requirement
+
     def allows_prereleases(self):
         return self._allows_prereleases
 
@@ -156,19 +182,7 @@ class Dependency(object):
         )
 
     def to_pep_508(self, with_extras=True):  # type: (bool) -> str
-        requirement = self.pretty_name
-
-        if self.extras:
-            requirement += "[{}]".format(",".join(self.extras))
-
-        if isinstance(self.constraint, VersionUnion):
-            requirement += " ({})".format(
-                ",".join([str(c).replace(" ", "") for c in self.constraint.ranges])
-            )
-        elif isinstance(self.constraint, Version):
-            requirement += " (=={})".format(self.constraint.text)
-        elif not self.constraint.is_any():
-            requirement += " ({})".format(str(self.constraint).replace(" ", ""))
+        requirement = self.base_pep_508_name
 
         markers = []
         if not self.marker.is_any():

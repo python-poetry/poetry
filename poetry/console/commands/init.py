@@ -6,24 +6,41 @@ import re
 from typing import List
 from typing import Tuple
 
+from cleo import option
+
 from .command import Command
 from .env_command import EnvCommand
 
 
 class InitCommand(Command):
-    """
-    Creates a basic <comment>pyproject.toml</> file in the current directory.
 
-    init
-        {--name= : Name of the package}
-        {--description= : Description of the package}
-        {--author= : Author name of the package}
-        {--dependency=* : Package to require with an optional version constraint,
-                          e.g. requests:^2.10.0 or requests=2.11.1}
-        {--dev-dependency=* : Package to require for development with an optional version constraint,
-                              e.g. requests:^2.10.0 or requests=2.11.1}
-        {--l|license= : License of the package}
-    """
+    name = "init"
+    description = (
+        "Creates a basic <comment>pyproject.toml</> file in the current directory."
+    )
+
+    options = [
+        option("name", None, "Name of the package.", flag=False),
+        option("description", None, "Description of the package.", flag=False),
+        option("author", None, "Author name of the package.", flag=False),
+        option(
+            "dependency",
+            None,
+            "Package to require with an optional version constraint, "
+            "e.g. requests:^2.10.0 or requests=2.11.1.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "dev-dependency",
+            None,
+            "Package to require for development with an optional version constraint, "
+            "e.g. requests:^2.10.0 or requests=2.11.1.",
+            flag=False,
+            multiple=True,
+        ),
+        option("license", "l", "License of the package.", flag=False),
+    ]
 
     help = """\
 The <info>init</info> command creates a basic <comment>pyproject.toml</> file in the current directory.

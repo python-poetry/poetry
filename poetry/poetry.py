@@ -44,10 +44,17 @@ class Poetry:
         # Configure sources
         self._pool = Pool()
         for source in self._local_config.get("source", []):
-            self._pool.add_repository(self.create_legacy_repository(source))
+            repository = self.create_legacy_repository(source)
+            self._pool.add_repository(
+                repository,
+                source.get("default", False),
+                secondary=source.get("secondary", False),
+            )
 
         # Always put PyPI last to prefer private repositories
-        self._pool.add_repository(PyPiRepository())
+        # but only if we have no other default source
+        if not self._pool.has_default():
+            self._pool.add_repository(PyPiRepository(), True)
 
     @property
     def file(self):
@@ -79,21 +86,7 @@ class Poetry:
 
     @classmethod
     def create(cls, cwd):  # type: (Path) -> Poetry
-        candidates = [Path(cwd)]
-        candidates.extend(Path(cwd).parents)
-
-        for path in candidates:
-            poetry_file = path / "pyproject.toml"
-
-            if poetry_file.exists():
-                break
-
-        else:
-            raise RuntimeError(
-                "Poetry could not find a pyproject.toml file in {} or its parents".format(
-                    cwd
-                )
-            )
+        poetry_file = cls.locate(cwd)
 
         local_config = TomlFile(poetry_file.as_posix()).read()
         if "tool" not in local_config or "poetry" not in local_config["tool"]:
@@ -103,7 +96,13 @@ class Poetry:
         local_config = local_config["tool"]["poetry"]
 
         # Checking validity
-        cls.check(local_config)
+        check_result = cls.check(local_config)
+        if check_result["errors"]:
+            message = ""
+            for error in check_result["errors"]:
+                message += "  - {}\n".format(error)
+
+            raise RuntimeError("The Poetry configuration is invalid:\n" + message)
 
         # Load package
         name = local_config["name"]
@@ -151,7 +150,7 @@ class Poetry:
             for name, constraint in local_config["dev-dependencies"].items():
                 if isinstance(constraint, list):
                     for _constraint in constraint:
-                        package.add_dependency(name, _constraint)
+                        package.add_dependency(name, _constraint, category="dev")
 
                     continue
 
@@ -184,6 +183,10 @@ class Poetry:
         if "packages" in local_config:
             package.packages = local_config["packages"]
 
+        # Custom urls
+        if "urls" in local_config:
+            package.custom_urls = local_config["urls"]
+
         # Moving lock if necessary (pyproject.lock -> poetry.lock)
         lock = poetry_file.parent / "poetry.lock"
         if not lock.exists():
@@ -215,6 +218,24 @@ class Poetry:
         auth = Auth(url, credentials[0], credentials[1])
 
         return LegacyRepository(name, url, auth=auth)
+
+    @classmethod
+    def locate(cls, cwd):  # type: (Path) -> Poetry
+        candidates = [Path(cwd)]
+        candidates.extend(Path(cwd).parents)
+
+        for path in candidates:
+            poetry_file = path / "pyproject.toml"
+
+            if poetry_file.exists():
+                return poetry_file
+
+        else:
+            raise RuntimeError(
+                "Poetry could not find a pyproject.toml file in {} or its parents".format(
+                    cwd
+                )
+            )
 
     @classmethod
     def check(cls, config, strict=False):  # type: (dict, bool) -> Dict[str, List[str]]

@@ -129,6 +129,17 @@ pathlib2 = { version = "^2.2", python = "~2.7" }
 pathlib2 = { version = "^2.2", python = ["~2.7", "^3.2"] }
 ```
 
+### Using environment markers
+
+If you need more complex install conditions for your dependencies,
+Poetry supports [environment markers](https://www.python.org/dev/peps/pep-0508/#environment-markers)
+via the `markers` property:
+
+```toml
+[tool.poetry.dependencies]
+pathlib2 = { version = "^2.2", markers = "python_version ~= '2.7' or sys_platform == 'win32'" }
+```
+
 
 ### Multiple constraints dependencies
 

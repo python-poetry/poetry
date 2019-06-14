@@ -2,11 +2,10 @@ from .command import Command
 
 
 class AboutCommand(Command):
-    """
-    Short information about Poetry.
 
-    about
-    """
+    name = "about"
+
+    description = "Short information about Poetry."
 
     def handle(self):
         self.line(

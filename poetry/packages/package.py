@@ -54,6 +54,7 @@ class Package(object):
         self._license = None
         self.readme = None
 
+        self.source_name = ""
         self.source_type = ""
         self.source_reference = ""
         self.source_url = ""
@@ -244,6 +245,7 @@ class Package(object):
             optional = constraint.get("optional", False)
             python_versions = constraint.get("python")
             platform = constraint.get("platform")
+            markers = constraint.get("markers")
             allows_prereleases = constraint.get("allows-prereleases", False)
 
             if "git" in constraint:
@@ -297,27 +299,31 @@ class Package(object):
                     optional=optional,
                     category=category,
                     allows_prereleases=allows_prereleases,
+                    source_name=constraint.get("source"),
                 )
 
-            marker = AnyMarker()
-            if python_versions:
-                dependency.python_versions = python_versions
-                marker = marker.intersect(
-                    parse_marker(
-                        create_nested_marker(
-                            "python_version", dependency.python_constraint
+            if not markers:
+                marker = AnyMarker()
+                if python_versions:
+                    dependency.python_versions = python_versions
+                    marker = marker.intersect(
+                        parse_marker(
+                            create_nested_marker(
+                                "python_version", dependency.python_constraint
+                            )
                         )
                     )
-                )
 
-            if platform:
-                marker = marker.intersect(
-                    parse_marker(
-                        create_nested_marker(
-                            "sys_platform", parse_generic_constraint(platform)
+                if platform:
+                    marker = marker.intersect(
+                        parse_marker(
+                            create_nested_marker(
+                                "sys_platform", parse_generic_constraint(platform)
+                            )
                         )
                     )
-                )
+            else:
+                marker = parse_marker(markers)
 
             if not marker.is_any():
                 dependency.marker = marker
