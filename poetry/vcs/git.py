@@ -45,52 +45,19 @@ class Git:
         return self.run("clone", repository, str(dest))
 
     def checkout(self, rev, folder=None):  # type: (...) -> str
-        args = []
-        if folder is None and self._work_dir:
-            folder = self._work_dir
-
-        if folder:
-            args += [
-                "--git-dir",
-                (folder / ".git").as_posix(),
-                "--work-tree",
-                folder.as_posix(),
-            ]
-
+        args = self._folder_args(folder)
         args += ["checkout", rev]
 
         return self.run(*args)
 
     def rev_parse(self, rev, folder=None):  # type: (...) -> str
-        args = []
-        if folder is None and self._work_dir:
-            folder = self._work_dir
-
-        if folder:
-            args += [
-                "--git-dir",
-                (folder / ".git").as_posix(),
-                "--work-tree",
-                folder.as_posix(),
-            ]
-
+        args = self._folder_args(folder)
         args += ["rev-parse", rev]
 
         return self.run(*args)
 
     def get_ignored_files(self, folder=None):  # type: (...) -> list
-        args = []
-        if folder is None and self._work_dir:
-            folder = self._work_dir
-
-        if folder:
-            args += [
-                "--git-dir",
-                (folder / ".git").as_posix(),
-                "--work-tree",
-                folder.as_posix(),
-            ]
-
+        args = self._folder_args(folder)
         args += ["ls-files", "--others", "-i", "--exclude-standard"]
         output = self.run(*args)
 
@@ -100,3 +67,17 @@ class Git:
         return decode(
             subprocess.check_output(["git"] + list(args), stderr=subprocess.STDOUT)
         )
+
+    def _folder_args(self, folder):  # type: (...) -> list
+        args = []
+        if folder is None and self._work_dir:
+            folder = self._work_dir
+
+        if folder:
+            args += [
+                "--git-dir",
+                (folder / ".git").as_posix(),
+                "--work-tree",
+                folder.as_posix(),
+            ]
+        return args
