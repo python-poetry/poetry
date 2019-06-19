@@ -46,6 +46,7 @@ class Package(object):
         self.description = ""
 
         self._authors = []
+        self._maintainers = []
 
         self.homepage = None
         self.repository_url = None
@@ -135,6 +136,18 @@ class Package(object):
         return self._get_author()["email"]
 
     @property
+    def maintainers(self):  # type: () -> list
+        return self._maintainers
+
+    @property
+    def maintainer_name(self):  # type: () -> str
+        return self._get_maintainer()["name"]
+
+    @property
+    def maintainer_email(self):  # type: () -> str
+        return self._get_maintainer()["email"]
+
+    @property
     def all_requires(self):
         return self.requires + self.dev_requires
 
@@ -143,6 +156,17 @@ class Package(object):
             return {"name": None, "email": None}
 
         m = AUTHOR_REGEX.match(self._authors[0])
+
+        name = m.group("name")
+        email = m.group("email")
+
+        return {"name": name, "email": email}
+
+    def _get_maintainer(self):  # type: () -> dict
+        if not self._maintainers:
+            return {"name": None, "email": None}
+
+        m = AUTHOR_REGEX.match(self._maintainers[0])
 
         name = m.group("name")
         email = m.group("email")
