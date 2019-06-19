@@ -3,6 +3,7 @@ import re
 import subprocess
 from typing import List
 
+from poetry.semver import sem_ver_sorted
 from poetry.utils._compat import decode
 
 
@@ -62,6 +63,11 @@ class Git:
         output = self.run(*args)
 
         return output.split("\n")
+
+    def sem_ver_tags(self, folder=None):  # type: (...) -> List[str]
+        tags = self.tags(folder)
+
+        return sem_ver_sorted(tags)
 
     def get_ignored_files(self, folder=None):  # type: (...) -> list
         args = self._folder_args(folder)
