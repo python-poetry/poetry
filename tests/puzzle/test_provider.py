@@ -1,3 +1,16 @@
+"""
+Test Provider
+-------------
+
+Notes:
+- git demo repo data is actually in:
+  - tests/fixtures/git/github.com/demo/demo
+- the git demo project has a package version 0.1.2 defined in:
+  - tests/fixtures/git/github.com/demo/demo/setup.py
+- git operation mocks are in:
+  - tests.conftest.git_mock
+"""
+
 import pytest
 
 from clikit.io import NullIO
@@ -94,6 +107,63 @@ def test_search_for_vcs_read_setup(provider, mocker):
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
+
+
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_search_for_vcs_read_setup_with_single_tag(provider, mocker):
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
+
+    dependency = VCSDependency(
+        "demo", "git", "https://github.com/demo/demo.git", tag="0.1.2"
+    )
+    assert dependency.branch is None
+    assert dependency.rev is None
+    assert dependency.tag == "0.1.2"
+
+    packages = provider.search_for_vcs(dependency)
+    assert len(packages) == 1
+    package = packages[0]
+    assert package.name == "demo"
+    assert package.version.text == dependency.tag
+
+
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_search_for_vcs_read_setup_with_missing_tag(provider, mocker):
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
+
+    dependency = VCSDependency(
+        "demo", "git", "https://github.com/demo/demo.git", tag="0.20.0"
+    )
+    assert dependency.branch is None
+    assert dependency.rev is None
+    assert dependency.tag == "0.20.0"
+
+    packages = provider.search_for_vcs(dependency)
+    assert len(packages) == 1
+    package = packages[0]
+    assert package.name == "demo"
+    assert package.version.text != dependency.tag
+    assert package.version.text == "0.1.2"  # defaults to latest available
+
+
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_search_for_vcs_read_setup_with_sem_ver_tag(provider, mocker):
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
+
+    dependency = VCSDependency(
+        "demo", "git", "https://github.com/demo/demo.git", tag="~0.1.0"
+    )
+    assert dependency.branch is None
+    assert dependency.rev is None
+    assert dependency.tag == "~0.1.0"
+
+    packages = provider.search_for_vcs(dependency)
+    assert len(packages) == 1
+    # package 0.1.2 is fixed in tests/fixtures/git/github.com/demo/demo/setup.py
+    package = packages[0]
+    assert package.name == "demo"
+    assert package.version.text != dependency.tag
+    assert package.version.text == "0.1.2"
 
 
 @pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")

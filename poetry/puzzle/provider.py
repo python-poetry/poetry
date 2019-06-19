@@ -11,6 +11,7 @@ from tempfile import mkdtemp
 from typing import List
 from typing import Optional
 
+from poetry import semver
 from poetry.packages import Dependency
 from poetry.packages import DependencyPackage
 from poetry.packages import DirectoryDependency
@@ -198,17 +199,36 @@ class Provider:
             git = Git()
             git.clone(url, tmp_dir)
             if reference is not None:
+                tags = git.tags(tmp_dir)
+                if reference in tags:
+                    pass  # it's good, as is
+                elif semver.is_sem_ver_constraint(reference):
+                    # find the latest matching sem-ver tag and update reference
+                    sem_ver_tags = git.sem_ver_tags(tmp_dir)
+                    constraint = semver.parse_single_constraint(reference)
+                    match = None
+                    for tag in reversed(sem_ver_tags):
+                        ver = semver.parse_single_constraint(tag)
+                        if constraint.allows(ver):
+                            match = str(ver)
+                            break
+                        if ver < constraint:
+                            break
+                    if match:
+                        dependency = VCSDependency(name, vcs, url, tag=match)
+                        reference = dependency.tag
                 git.checkout(reference, tmp_dir)
+
             else:
                 reference = "HEAD"
 
-            revision = git.rev_parse(reference, tmp_dir).strip()
-
             package = cls.get_package_from_directory(tmp_dir, name=name)
-
             package.source_type = "git"
             package.source_url = url
+
+            revision = git.rev_parse(reference, tmp_dir).strip()
             package.source_reference = revision
+
         except Exception:
             raise
         finally:

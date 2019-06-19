@@ -761,6 +761,16 @@ Here's an example of specifying that you want to use the latest commit on a bran
 requests = { git = "https://github.com/kennethreitz/requests.git", branch = "next" }
 ```
 
+To use sem-ver git dependencies, specify a sem-ver constraint for the `tag`.
+This assumes that the git repository is using sem-ver tags to release
+sem-ver packages.  This example will pull the latest requests 2.x
+release given the `~2.0` sem-ver tag:
+
+```toml
+[tool.poetry.dependencies]
+requests = { git = "https://github.com/kennethreitz/requests.git", tag = "~2.0" }
+```
+
 #### Python restricted dependencies
 
 You can also specify that a dependency should be installed only for specific Python versions:
