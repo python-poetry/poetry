@@ -3,6 +3,7 @@ import re
 from .empty_constraint import EmptyConstraint
 from .patterns import BASIC_CONSTRAINT
 from .patterns import CARET_CONSTRAINT
+from .patterns import COMPLETE_VERSION
 from .patterns import TILDE_CONSTRAINT
 from .patterns import TILDE_PEP440_CONSTRAINT
 from .patterns import X_CONSTRAINT
