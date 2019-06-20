@@ -78,7 +78,7 @@ To remove a repository (repo is a short alias for repositories):
 
         return unique_config_values
 
-    def initialize(self, i, o):
+    def initialize(self):
         from poetry.utils._compat import decode
 
         # Create config file if it does not exist
@@ -93,6 +93,9 @@ To remove a repository (repo is a short alias for repositories):
                 f.write(decode(AUTH_TEMPLATE))
 
     def handle(self):
+
+        self.initialize()
+
         if self.option("list"):
             self._list_configuration(self._settings_config.content)
 

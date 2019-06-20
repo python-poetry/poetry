@@ -1,3 +1,4 @@
+import os
 import pytest
 import tempfile
 
@@ -22,6 +23,16 @@ def setup(config):
     yield
 
     config.remove_property("settings.virtualenvs.path")
+
+
+@pytest.fixture()
+def nonexistent_config_path():
+    config_file_path = os.path.join(tempfile.gettempdir(), 'pypoetry', 'config.toml')
+    if os.path.exists(config_file_path):
+        os.unlink(config_file_path)
+    if os.path.exists(os.path.basename(config_file_path)):
+        os.rmdir(os.path.basename(config_file_path))
+    return config_file_path
 
 
 def test_list_displays_default_value_if_not_set(app, config):
@@ -69,4 +80,22 @@ def test_display_single_setting(app, config):
     expected = """true
 """
 
+    assert expected == tester.io.fetch_output()
+
+
+def test_autocreate_config_directory(app, nonexistent_config_path):
+    command = app.find("config")
+
+    command._settings_config = Config(TomlFile(nonexistent_config_path))
+
+    tester = CommandTester(command)
+    tester.execute("settings.virtualenvs.create false")
+
+    assert '' == tester.io.fetch_output()
+
+    tester = CommandTester(command)
+    tester.execute("settings.virtualenvs.create")
+
+    expected = """false
+"""
     assert expected == tester.io.fetch_output()
