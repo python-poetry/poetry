@@ -27,7 +27,7 @@ def setup(config):
 
 @pytest.fixture()
 def nonexistent_config_path():
-    config_file_path = os.path.join(tempfile.gettempdir(), 'pypoetry', 'config.toml')
+    config_file_path = os.path.join(tempfile.gettempdir(), "pypoetry", "config.toml")
     if os.path.exists(config_file_path):
         os.unlink(config_file_path)
     if os.path.exists(os.path.basename(config_file_path)):
@@ -91,7 +91,7 @@ def test_autocreate_config_directory(app, nonexistent_config_path):
     tester = CommandTester(command)
     tester.execute("settings.virtualenvs.create false")
 
-    assert '' == tester.io.fetch_output()
+    assert "" == tester.io.fetch_output()
 
     tester = CommandTester(command)
     tester.execute("settings.virtualenvs.create")
