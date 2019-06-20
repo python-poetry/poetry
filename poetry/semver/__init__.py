@@ -1,6 +1,8 @@
 import re
+from typing import List
 
 from .empty_constraint import EmptyConstraint
+from .patterns import COMPLETE_VERSION
 from .patterns import BASIC_CONSTRAINT
 from .patterns import CARET_CONSTRAINT
 from .patterns import TILDE_CONSTRAINT
@@ -10,6 +12,31 @@ from .version import Version
 from .version_constraint import VersionConstraint
 from .version_range import VersionRange
 from .version_union import VersionUnion
+
+
+def is_sem_ver_constraint(sem_ver):  # type: (str) -> bool
+    """Check that a string is a single SEM-VER constraint
+
+    :param sem_ver: a single SEM-VER constraint
+    :return: True if sem_ver is a single SEM-VER constraint
+    """
+    try:
+        parse_single_constraint(sem_ver)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def sem_ver_sorted(values):  # type: (List[str]) -> List[str]
+    """Sort a list of single SEM-VER constraints (string) in
+    ascending order; discards any string that is not a SEM-VER
+
+    :param values: a list of single SEM-VER constraints (strings)
+    :return: sorted values based on SEM-VER sort criteria
+    """
+    versions = [t for t in values if COMPLETE_VERSION.match(t)]
+    versions = sorted(versions, key=lambda t: parse_single_constraint(t))
+    return versions
 
 
 def parse_constraint(constraints):  # type: (str) -> VersionConstraint
