@@ -68,6 +68,8 @@ class Package(object):
         self.hashes = []
         self.optional = False
 
+        self.files = []
+
         self.classifiers = []
 
         self._python_versions = "*"

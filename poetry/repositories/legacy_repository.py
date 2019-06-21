@@ -329,6 +329,9 @@ class LegacyRepository(PyPiRepository):
             # Adding hashes information
             package.hashes = release_info["digests"]
 
+            # Adding file metadata
+            package.files = release_info["files"]
+
             # Activate extra dependencies
             for extra in extras:
                 if extra in package.extras:
@@ -364,22 +367,33 @@ class LegacyRepository(PyPiRepository):
                 )
             )
         urls = defaultdict(list)
+        files = []
         hashes = []
         for link in links:
             if link.is_wheel:
                 urls["bdist_wheel"].append(link.url)
+                packagetype = "bdist_wheel"
             elif link.filename.endswith(
                 (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")
             ):
                 urls["sdist"].append(link.url)
+                packagetype = "sdist"
 
             hash = link.hash
+            h = None
             if link.hash_name == "sha256":
-                hashes.append(hash)
+                h = hash
             elif hash:
-                hashes.append(link.hash_name + ":" + hash)
+                h = link.hash_name + ":" + hash
+
+            file = {"name": link.filename, "packagetype": packagetype}
+            if h:
+                hashes.append(h)
+                file["hash"] = h
+            files.append(file)
 
         data["digests"] = hashes
+        data["files"] = files
 
         info = self._get_info_from_urls(urls)
 

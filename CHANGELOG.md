@@ -24,6 +24,7 @@
 - The `debug:resolve` command has been renamed to `debug resolve`.
 - The `self:update` command has been renamed to `self update`.
 - Changed the way virtualenvs are stored (names now depend on the project's path).
+- Added files metadata including hash. This deprecates metadata.hashes in `poetry.lock`.
 
 ### Fixed
 

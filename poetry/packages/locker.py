@@ -244,6 +244,9 @@ class Locker(object):
             "python-versions": package.python_versions,
             "hashes": sorted(package.hashes),
         }
+        if package.files:
+            data["files"] = sorted(package.files, key=lambda f: f["name"])
+
         if not package.marker.is_any():
             data["marker"] = str(package.marker)
 

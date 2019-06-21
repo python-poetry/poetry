@@ -173,6 +173,7 @@ class PyPiRepository(Repository):
             extras = []
 
         release_info = self.get_release_info(name, version)
+
         package = Package(name, version, version)
         requires_dist = release_info["requires_dist"] or []
         for req in requires_dist:
@@ -214,6 +215,7 @@ class PyPiRepository(Repository):
 
         # Adding hashes information
         package.hashes = release_info["digests"]
+        package.files = release_info["files"]
 
         # Activate extra dependencies
         for extra in extras:
@@ -298,6 +300,7 @@ class PyPiRepository(Repository):
         if json_data is None:
             raise PackageNotFound("Package [{}] not found.".format(name))
 
+        files = []
         info = json_data["info"]
         data = {
             "name": info["name"],
@@ -307,6 +310,7 @@ class PyPiRepository(Repository):
             "requires_dist": info["requires_dist"],
             "requires_python": info["requires_python"],
             "digests": [],
+            "files": files,
             "_cache_version": str(self.CACHE_VERSION),
         }
 
@@ -316,7 +320,15 @@ class PyPiRepository(Repository):
             version_info = []
 
         for file_info in version_info:
-            data["digests"].append(file_info["digests"]["sha256"])
+            hash = file_info["digests"]["sha256"]
+            data["digests"].append(hash)
+            files.append(
+                {
+                    "name": file_info["filename"],
+                    "hash": hash,
+                    "packagetype": file_info["packagetype"],
+                }
+            )
 
         if self._fallback and data["requires_dist"] is None:
             self._log("No dependencies found, downloading archives", level="debug")

@@ -255,3 +255,29 @@ def test_get_package_retrieves_packages_with_no_hashes():
     package = repo.package("jupyter", "1.0.0")
 
     assert [] == package.hashes
+
+
+def test_get_package_retrieves_non_sha256_hashes_in_files():
+    repo = MockRepository()
+
+    package = repo.package("ipython", "7.5.0")
+
+    expected = {
+        "ipython-7.5.0.tar.gz": "e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+        "ipython-7.5.0-py3-none-any.whl": "md5:dbdc53e3918f28fa335a173432402a00",
+    }
+
+    assert len(package.files) == 2
+
+    for file in package.files:
+        assert file["hash"] == expected[file["name"]]
+
+
+def test_get_package_retrieves_packages_with_no_hashes_in_files():
+    repo = MockRepository()
+
+    package = repo.package("jupyter", "1.0.0")
+
+    file = package.files[0]
+    assert "hash" not in file
+    assert file["name"] == "jupyter-1.0.0.tar.gz"
