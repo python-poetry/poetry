@@ -95,14 +95,13 @@ class PyPiRepository(Repository):
         """
         Return dictionary describing the OS and Python configuration.
         """
-        if self._sys_info:
-            return self._sys_info
-        self._sys_info = {
-            "plat": platform.system().lower(),
-            "is32bit": sys.maxsize <= 2 ** 32,
-            "imp_name": sys.implementation.name,
-            "pyver": platform.python_version_tuple(),
-        }
+        if not hasattr(self, "_sys_info"):
+            self._sys_info = {
+                "plat": platform.system().lower(),
+                "is32bit": sys.maxsize <= 2 ** 32,
+                "imp_name": sys.implementation.name,
+                "pyver": platform.python_version_tuple(),
+            }
         return self._sys_info
 
     def find_packages(
