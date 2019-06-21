@@ -44,6 +44,7 @@ from poetry.utils.patterns import wheel_file_re
 from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
 from poetry.version.markers import parse_marker
+from poetry import __version__
 
 from .exceptions import PackageNotFound
 from .repository import Repository
@@ -54,7 +55,7 @@ logger = logging.getLogger(__name__)
 
 class PyPiRepository(Repository):
 
-    CACHE_VERSION = parse_constraint("0.12.0")
+    CACHE_VERSION = parse_constraint(__version__)
 
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
         self._url = url
