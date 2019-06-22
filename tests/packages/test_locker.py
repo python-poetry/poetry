@@ -6,6 +6,7 @@ import tomlkit
 from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage
 
+from ..helpers import assert_deepequals_toml
 from ..helpers import get_package
 
 
@@ -62,7 +63,8 @@ A = ["123", "456"]
 B = []
 """
 
-    assert expected == content
+
+    assert_deepequals_toml(expected, content)
 
 
 def test_locker_properly_loads_extras(locker):
@@ -134,4 +136,4 @@ python-versions = "*"
 A = []
 """
 
-    assert expected == content
+    assert_deepequals_toml(expected, content)
