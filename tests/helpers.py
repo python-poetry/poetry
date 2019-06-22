@@ -1,6 +1,10 @@
 import os
 import shutil
 
+from functools import wraps
+
+import tomlkit
+
 from poetry.packages import Dependency
 from poetry.packages import Package
 from poetry.utils._compat import PY2
@@ -88,3 +92,63 @@ def mock_download(self, url, dest):
     fixture = fixtures / parts.path.lstrip("/")
 
     copy_or_symlink(fixture, dest)
+
+
+def assert_deepequals(a, b, ignore_paths=None, _path=None):
+    """Compare objects a and b keeping track of object path for error reporting.
+
+    Keyword arguments:
+    a -- Object a
+    b -- Object b
+    ignore_paths -- List of object paths (delimited by .)
+
+    Example:
+    assert_deepequals({
+        "poetry-version": "1.0.0a3",
+        "content-hash": "example",
+    }, {
+      "metadata": {
+        "poetry-version": "1.0.0a4",
+        "content-hash": "example",
+      }
+    }, ignore_paths=set(["metadata.poetry-version"]))
+    """
+
+    _path = _path if _path else tuple()
+    ignore_paths = ignore_paths if ignore_paths else set()
+    path = ".".join(_path)
+    err = ValueError("{}: {} != {}".format(path, a, b))
+
+    def make_path(entry):
+        return _path + (str(entry),)
+
+    if isinstance(a, list):
+        if not isinstance(b, list) or len(a) != len(b):
+            raise err
+
+        for vals in zip(a, b):
+            p = make_path("[]")
+            if ".".join(p) not in ignore_paths:
+                assert_deepequals(*vals, _path=p, ignore_paths=ignore_paths)
+
+    elif isinstance(a, dict):
+        if not isinstance(b, dict):
+            raise err
+
+        for key in set(a.keys()) | set(b.keys()):
+            p = make_path(key)
+            if ".".join(p) not in ignore_paths:
+                assert_deepequals(a[key], b[key], _path=p, ignore_paths=ignore_paths)
+
+    elif a == b:
+        return
+
+    else:
+        raise err
+
+
+@wraps(assert_deepequals)
+def assert_deepequals_toml(a, b, **kwargs):
+    a = dict(tomlkit.parse(a))
+    b = dict(tomlkit.parse(b))
+    return assert_deepequals(a, b, **kwargs)

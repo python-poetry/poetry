@@ -17,6 +17,7 @@ from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
 from poetry.utils.toml_file import TomlFile
+from tests.helpers import assert_deepequals
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -128,14 +129,14 @@ def installer(package, pool, locker, env, installed):
 def fixture(name):
     file = TomlFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
 
-    return file.read()
+    return dict(file.read())
 
 
 def test_run_no_dependencies(installer, locker):
     installer.run()
     expected = fixture("no-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_with_dependencies(installer, locker, repo, package):
@@ -150,7 +151,7 @@ def test_run_with_dependencies(installer, locker, repo, package):
     installer.run()
     expected = fixture("with-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_update_after_removing_dependencies(
@@ -214,7 +215,7 @@ def test_run_update_after_removing_dependencies(
     installer.run()
     expected = fixture("with-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     installs = installer.installer.installs
     assert len(installs) == 0
@@ -334,7 +335,7 @@ def test_run_whitelist_add(installer, locker, repo, package):
     installer.run()
     expected = fixture("with-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_whitelist_remove(installer, locker, repo, package, installed):
@@ -383,7 +384,7 @@ def test_run_whitelist_remove(installer, locker, repo, package, installed):
     installer.run()
     expected = fixture("remove")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
     assert len(installer.installer.installs) == 1
     assert len(installer.installer.updates) == 0
     assert len(installer.installer.removals) == 1
@@ -408,7 +409,7 @@ def test_add_with_sub_dependencies(installer, locker, repo, package):
     installer.run()
     expected = fixture("with-sub-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_with_python_versions(installer, locker, repo, package):
@@ -433,7 +434,7 @@ def test_run_with_python_versions(installer, locker, repo, package):
     installer.run()
     expected = fixture("with-python-versions")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_with_optional_and_python_restricted_dependencies(
@@ -462,7 +463,7 @@ def test_run_with_optional_and_python_restricted_dependencies(
     installer.run()
     expected = fixture("with-optional-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     installer = installer.installer
     # We should only have 2 installs:
@@ -499,7 +500,7 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     installer.run()
     expected = fixture("with-platform-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     installer = installer.installer
     # We should only have 2 installs:
@@ -528,7 +529,7 @@ def test_run_with_dependencies_extras(installer, locker, repo, package):
     installer.run()
     expected = fixture("with-dependencies-extras")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_does_not_install_extras_if_not_requested(installer, locker, repo, package):
@@ -552,7 +553,7 @@ def test_run_does_not_install_extras_if_not_requested(installer, locker, repo, p
     expected = fixture("extras")
 
     # Extras are pinned in lock
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     # But should not be installed
     installer = installer.installer
@@ -581,7 +582,7 @@ def test_run_installs_extras_if_requested(installer, locker, repo, package):
     expected = fixture("extras")
 
     # Extras are pinned in lock
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     # But should not be installed
     installer = installer.installer
@@ -611,7 +612,7 @@ def test_run_installs_extras_with_deps_if_requested(installer, locker, repo, pac
     expected = fixture("extras-with-dependencies")
 
     # Extras are pinned in lock
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     # But should not be installed
     installer = installer.installer
@@ -661,7 +662,9 @@ def test_installer_with_pypi_repository(package, locker, installed):
 
     expected = fixture("with-pypi-repository")
 
-    assert locker.written_data == expected
+    assert_deepequals(
+        dict(locker.written_data), expected, ignore_paths=set(["package.[].license"])
+    )
 
 
 def test_run_installs_with_local_file(installer, locker, repo, package):
@@ -674,7 +677,7 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
 
     expected = fixture("with-file-dependency")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     assert len(installer.installer.installs) == 2
 
@@ -689,7 +692,7 @@ def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, packa
 
     expected = fixture("with-wheel-dependency-no-requires-dist")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     assert len(installer.installer.installs) == 1
 
@@ -708,7 +711,7 @@ def test_run_installs_with_local_poetry_directory_and_extras(
 
     expected = fixture("with-directory-dependency-poetry")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     assert len(installer.installer.installs) == 2
 
@@ -730,7 +733,7 @@ def test_run_installs_with_local_poetry_directory_transitive(
 
     expected = fixture("with-directory-dependency-poetry-transitive")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     assert len(installer.installer.installs) == 2
 
@@ -750,7 +753,7 @@ def test_run_installs_with_local_poetry_file_transitive(
 
     expected = fixture("with-file-dependency-transitive")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     assert len(installer.installer.installs) == 3
 
@@ -768,7 +771,7 @@ def test_run_installs_with_local_setuptools_directory(
 
     expected = fixture("with-directory-dependency-setuptools")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     assert len(installer.installer.installs) == 3
 
@@ -810,7 +813,7 @@ def test_run_with_prereleases(installer, locker, repo, package):
     installer.run()
     expected = fixture("with-prereleases")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_changes_category_if_needed(installer, locker, repo, package):
@@ -851,7 +854,7 @@ def test_run_changes_category_if_needed(installer, locker, repo, package):
     installer.run()
     expected = fixture("with-category-change")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_update_all_with_lock(installer, locker, repo, package):
@@ -888,7 +891,7 @@ def test_run_update_all_with_lock(installer, locker, repo, package):
     installer.run()
     expected = fixture("update-with-lock")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_update_with_locked_extras(installer, locker, repo, package):
@@ -957,7 +960,7 @@ def test_run_update_with_locked_extras(installer, locker, repo, package):
     installer.run()
     expected = fixture("update-with-locked-extras")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
 
 def test_run_install_duplicate_dependencies_different_constraints(
@@ -987,7 +990,7 @@ def test_run_install_duplicate_dependencies_different_constraints(
 
     expected = fixture("with-duplicate-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     installs = installer.installer.installs
     assert len(installs) == 3
@@ -1097,7 +1100,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
 
     expected = fixture("with-duplicate-dependencies")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     installs = installer.installer.installs
     assert len(installs) == 3
@@ -1264,7 +1267,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
 
     expected = fixture("with-duplicate-dependencies-update")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     installs = installer.installer.installs
     assert len(installs) == 2
@@ -1295,7 +1298,7 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
     installer.run()
 
     expected = fixture("with-conditional-dependency")
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     installs = installer.installer.installs
 
@@ -1526,7 +1529,7 @@ def test_run_installs_with_url_file(installer, locker, repo, package):
 
     expected = fixture("with-url-dependency")
 
-    assert locker.written_data == expected
+    assert_deepequals(dict(locker.written_data), expected)
 
     assert len(installer.installer.installs) == 2
 

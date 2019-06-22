@@ -6,6 +6,7 @@ import tomlkit
 from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage
 
+from ..helpers import assert_deepequals_toml
 from ..helpers import get_dependency
 from ..helpers import get_package
 
@@ -66,7 +67,7 @@ A = [
 B = []
 """
 
-    assert expected == content
+    assert_deepequals_toml(expected, content)
 
 
 def test_locker_properly_loads_extras(locker):
@@ -138,7 +139,7 @@ python-versions = "*"
 A = []
 """
 
-    assert expected == content
+    assert_deepequals_toml(expected, content)
 
 
 def test_lock_file_should_not_have_mixed_types(locker, root):
@@ -180,7 +181,7 @@ A = []
     with locker.lock.open(encoding="utf-8") as f:
         content = f.read()
 
-    assert expected == content
+    assert_deepequals_toml(expected, content)
 
 
 def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
@@ -245,4 +246,4 @@ python-versions = "*"
 A = []
 """
 
-    assert expected == content
+    assert_deepequals_toml(expected, content)
