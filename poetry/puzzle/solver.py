@@ -72,9 +72,11 @@ class Solver:
                                 pkg.source_reference = locked.source_reference
                                 break
 
-                        if (
-                            pkg.source_url != package.source_url
-                            or pkg.source_reference != package.source_reference
+                        if pkg.source_url != package.source_url or (
+                            pkg.source_reference != package.source_reference
+                            and not pkg.source_reference.startswith(
+                                package.source_reference
+                            )
                         ):
                             operations.append(Update(pkg, package))
                         else:
