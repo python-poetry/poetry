@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from functools import partial
 import sys
 
 import pytest
@@ -122,6 +123,12 @@ def env():
 @pytest.fixture()
 def installer(package, pool, locker, env, installed):
     return Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+
+# Apply default path ignores (dynamic things like versions)
+assert_deepequals = partial(
+    assert_deepequals, ignore_paths=set(["metadata.poetry-version"])
+)
 
 
 def fixture(name):

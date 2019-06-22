@@ -11,6 +11,7 @@ from typing import List
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import parse_marker
+from poetry import __version__
 
 
 class Locker(object):
@@ -155,6 +156,7 @@ class Locker(object):
             }
 
         lock["metadata"] = {
+            "poetry-version": __version__,
             "python-versions": root.python_versions,
             "content-hash": self._content_hash,
             "hashes": hashes,

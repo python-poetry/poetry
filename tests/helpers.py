@@ -56,7 +56,7 @@ def assert_deepequals(a, b, ignore_paths=None, _path=None):
     _path = _path if _path else tuple()
     ignore_paths = ignore_paths if ignore_paths else set()
     path = ".".join(_path)
-    err = ValueError(f"{path}: {a} != {b}")
+    err = ValueError("{path}: {a} != {b}".format(path=path, a=a, b=b))
 
     def make_path(entry):
         return _path + (str(entry),)

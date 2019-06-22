@@ -972,6 +972,7 @@ testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
 content-hash = "f3163ab56506c745d9250f9c04ea512d4996068c85770092590ffb079b465db0"
+poetry-version = "1.0.0a4"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.hashes]

@@ -5,9 +5,18 @@ import tomlkit
 
 from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage
+from poetry import __version__
 
 from ..helpers import assert_deepequals_toml
 from ..helpers import get_package
+
+
+# Apply default path ignores (dynamic things like versions)
+from functools import partial
+
+assert_deepequals_toml = partial(
+    assert_deepequals_toml, ignore_paths=set(["metadata.poetry-version"])
+)
 
 
 @pytest.fixture
@@ -62,7 +71,6 @@ python-versions = "*"
 A = ["123", "456"]
 B = []
 """
-
 
     assert_deepequals_toml(expected, content)
 
@@ -137,3 +145,14 @@ A = []
 """
 
     assert_deepequals_toml(expected, content)
+
+
+def test_lock_metadata_poetry_version(locker, root):
+    packages = []
+    locker.set_lock_data(root, packages)
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = tomlkit.parse(f.read())
+
+    metadata = content["metadata"]
+    assert metadata["poetry-version"] == __version__
