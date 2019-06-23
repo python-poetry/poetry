@@ -25,7 +25,7 @@ except ImportError:
     sys.exit(1)
 
 sys.path.insert(0, os.path.abspath("lib"))
-from ansible.release import __author__, __version__
+from ansible.release import __version__, __author__
 
 
 SYMLINK_CACHE = "SYMLINK_CACHE.json"
