@@ -46,7 +46,6 @@ class Metadata:
         meta.version = normalize_version(package.version.text)
         meta.summary = package.description
         if package.readme:
-            # explicit utf-8 for readme
             with package.readme.open(encoding="utf-8") as f:
                 meta.description = f.read()
 

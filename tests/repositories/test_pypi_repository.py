@@ -33,7 +33,6 @@ class MockRepository(PyPiRepository):
             if not fixture.exists():
                 fixture = self.JSON_FIXTURES / (name + ".json")
 
-        # explicit utf-8 for JSON
         with fixture.open(encoding="utf-8") as f:
             return json.loads(f.read())
 

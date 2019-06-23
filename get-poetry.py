@@ -392,7 +392,6 @@ class Installer:
 
         current_version = None
         if os.path.exists(POETRY_LIB):
-            # explicit utf-8 for python source file
             with open(
                 os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
             ) as f:

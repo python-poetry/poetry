@@ -6,7 +6,6 @@ from setuptools import setup
 
 
 def read_version():
-    # explicit utf-8 for python source
     with open(
         os.path.join(os.path.dirname(__file__), "demo", "__init__.py"), encoding="utf-8"
     ) as f:

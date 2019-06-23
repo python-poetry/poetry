@@ -29,7 +29,6 @@ class MockRepository(LegacyRepository):
 
         fixture = self.FIXTURES / (name + ".html")
 
-        # explicit utf-8 for HTML
         with fixture.open(encoding="utf-8") as f:
             return Page(self._url + endpoint, f.read(), {})
 

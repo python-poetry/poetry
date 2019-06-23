@@ -158,7 +158,6 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
             return 1
 
-        # explicit utf-8 for pyproject.toml
         with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
             f.write(content)
 

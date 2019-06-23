@@ -176,7 +176,6 @@ def repo():
 def poetry(repo):
     p = Poetry.create(Path(__file__).parent.parent / "fixtures" / "simple_project")
 
-    # explicit utf-8 for poetry file
     with p.file.path.open(encoding="utf-8") as f:
         content = f.read()
 
@@ -185,7 +184,6 @@ def poetry(repo):
 
     yield p
 
-    # explicit utf-8 for poetry file
     with p.file.path.open("w", encoding="utf-8") as f:
         f.write(content)
 
