@@ -27,7 +27,7 @@ release: build linux_release osx_release
 
 build:
 	@poetry build
-	@python sonnet make:release
+	@python sonnet make release
 
 publish:
 	@poetry publish
