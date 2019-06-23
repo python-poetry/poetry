@@ -10,8 +10,6 @@ from collections import defaultdict
 from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
 
-from ansible.release import __author__, __version__
-
 try:
     from setuptools import setup, find_packages
     from setuptools.command.build_py import build_py as BuildPy
@@ -27,6 +25,7 @@ except ImportError:
     sys.exit(1)
 
 sys.path.insert(0, os.path.abspath("lib"))
+from ansible.release import __author__, __version__
 
 
 SYMLINK_CACHE = "SYMLINK_CACHE.json"
