@@ -50,6 +50,9 @@
         "authors": {
             "$ref": "#/definitions/authors"
         },
+        "maintainers": {
+            "$ref": "#/definitions/maintainers"
+        },
         "readme": {
             "type": "string",
             "description": "The path to the README file"
@@ -176,6 +179,13 @@
         "authors": {
             "type": "array",
             "description": "List of authors that contributed to the package. This is typically the main maintainers, not the full list.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "maintainers": {
+            "type": "array",
+            "description": "List of maintainers, other than the original author(s), that upkeep the package.",
             "items": {
                 "type": "string"
             }

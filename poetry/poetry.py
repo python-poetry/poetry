@@ -113,6 +113,9 @@ class Poetry:
         for author in local_config["authors"]:
             package.authors.append(author)
 
+        for maintainer in local_config.get("maintainers", []):
+            package.maintainers.append(maintainer)
+
         package.description = local_config.get("description", "")
         package.homepage = local_config.get("homepage")
         package.repository_url = local_config.get("repository")

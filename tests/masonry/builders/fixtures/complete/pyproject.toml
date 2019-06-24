@@ -5,6 +5,9 @@ description = "Some description."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
+maintainers = [
+    "People Everywhere <people@everywhere.com>"
+]
 license = "MIT"
 
 readme = "README.rst"

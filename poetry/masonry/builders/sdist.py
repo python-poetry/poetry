@@ -32,6 +32,8 @@ setup_kwargs = {{
     'long_description': {long_description!r},
     'author': {author!r},
     'author_email': {author_email!r},
+    'maintainer': {maintainer!r},
+    'maintainer_email': {maintainer_email!r},
     'url': {url!r},
     {extra}
 }}
@@ -180,6 +182,8 @@ class SdistBuilder(Builder):
                 long_description=to_str(self._meta.description),
                 author=to_str(self._meta.author),
                 author_email=to_str(self._meta.author_email),
+                maintainer=to_str(self._meta.maintainer),
+                maintainer_email=to_str(self._meta.maintainer_email),
                 url=to_str(self._meta.home_page),
                 extra="\n    ".join(extra),
                 after="\n".join(after),

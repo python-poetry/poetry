@@ -178,6 +178,14 @@ class Builder(object):
         if self._meta.author_email:
             content += "Author-email: {}\n".format(to_str(self._meta.author_email))
 
+        if self._meta.maintainer:
+            content += "Maintainer: {}\n".format(to_str(self._meta.maintainer))
+
+        if self._meta.maintainer_email:
+            content += "Maintainer-email: {}\n".format(
+                to_str(self._meta.maintainer_email)
+            )
+
         if self._meta.requires_python:
             content += "Requires-Python: {}\n".format(self._meta.requires_python)
 
