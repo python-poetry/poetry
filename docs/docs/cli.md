@@ -384,8 +384,9 @@ poetry lock
 
 ## version
 
-This command bumps the version of the project
-and writes the new version back to `pyproject.toml`
+This command shows the current version of the project or bumps the version of 
+the project and writes the new version back to `pyproject.toml` if a valid
+bump rule is provided.
 
 The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
