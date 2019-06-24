@@ -47,6 +47,10 @@ glob2 = { version = "^0.6", python = "~2.7 || ~3.4" }
 virtualenv = { version = "^16.0", python = "~2.7" }
 # functools32 is needed for Python 2.7
 functools32 = { version = "^3.2.3", python = "~2.7" }
+keyring = [
+    { version = "^18.0", python = "~2.7 || ~3.4" },
+    { version = "^19.0", python = "^3.5" }
+]
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"

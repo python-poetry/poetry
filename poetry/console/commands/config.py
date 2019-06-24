@@ -4,8 +4,11 @@ import re
 from cleo import argument
 from cleo import option
 
+from poetry.utils.helpers import (
+    keyring_repository_password_del,
+    keyring_repository_password_set,
+)
 from .command import Command
-
 
 TEMPLATE = """[settings]
 
@@ -198,6 +201,7 @@ To remove a repository (repo is a short alias for repositories):
                         "There is no {} {} defined".format(m.group(2), m.group(1))
                     )
 
+                keyring_repository_password_del(self._auth_config, m.group(2))
                 self._auth_config.remove_property(
                     "{}.{}".format(m.group(1), m.group(2))
                 )
@@ -218,9 +222,14 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     password = values[1]
 
+                property_value = dict(username=username)
+                try:
+                    keyring_repository_password_set(m.group(2), username, password)
+                except RuntimeError:
+                    property_value.update(password=password)
+
                 self._auth_config.add_property(
-                    "{}.{}".format(m.group(1), m.group(2)),
-                    {"username": username, "password": password},
+                    "{}.{}".format(m.group(1), m.group(2)), property_value
                 )
 
             return 0
