@@ -69,3 +69,15 @@ def test_repository_with_normal_default_and_secondary_repositories():
     assert pool.repository("foo") is repo1
     assert pool.repository("bar") is repo2
     assert pool.has_default()
+
+
+def test_default_property():
+    pool = Pool()
+
+    with pytest.raises(ValueError):
+        pool.default
+
+    default = LegacyRepository("default", "https://default.com")
+    pool.add_repository(default, default=True)
+
+    assert pool.default == default

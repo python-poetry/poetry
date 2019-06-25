@@ -27,6 +27,12 @@ class Pool(BaseRepository):
         super(Pool, self).__init__()
 
     @property
+    def default(self):  # type: () -> Repository
+        if not self.has_default():
+            raise ValueError("Default repository does not exist.")
+        return self._repositories[0]
+
+    @property
     def repositories(self):  # type: () -> List[Repository]
         return self._repositories
 
