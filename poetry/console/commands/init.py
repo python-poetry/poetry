@@ -217,7 +217,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 if package is not False:
                     requires.append(package)
 
-                package = self.ask("\nSearch for a package:")
+                package = self.ask("\nSearch for a package (Press Enter to skip):")
 
             return requires
 
