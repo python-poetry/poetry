@@ -348,6 +348,9 @@ The `shell` command spawns a shell,
 according to the `$SHELL` environment variable,
 within the virtual environment.
 If one doesn't exist yet, it will be created.
+The `$POETRY_ACTIVE` environment variable is set to `1`
+and the `$POETRY_PYTHON_PATH` is set to the
+`bin/` directory in the virtual environment.
 
 ```bash
 poetry shell
