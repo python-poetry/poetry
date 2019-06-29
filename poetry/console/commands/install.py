@@ -33,6 +33,13 @@ class InstallCommand(EnvCommand):
             flag=False,
             multiple=True,
         ),
+        option(
+            "target",
+            "t",
+            "Install managed packages in the specified target directory.",
+            flag=False,
+            value_required=True,
+        ),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -67,6 +74,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         installer.develop(self.option("develop"))
         installer.dry_run(self.option("dry-run"))
         installer.verbose(self.option("verbose"))
+        installer.target(self.option("target"))
 
         return_code = installer.run()
 

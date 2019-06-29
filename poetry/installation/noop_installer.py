@@ -19,7 +19,7 @@ class NoopInstaller(BaseInstaller):
     def removals(self):
         return self._removals
 
-    def install(self, package):
+    def install(self, package, target=None):
         self._installs.append(package)
 
     def update(self, source, target):

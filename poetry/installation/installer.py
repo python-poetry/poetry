@@ -44,6 +44,7 @@ class Installer:
         self._write_lock = True
         self._dev_mode = True
         self._develop = []
+        self._target = None
         self._execute_operations = True
         self._lock = False
 
@@ -102,6 +103,11 @@ class Installer:
 
     def develop(self, packages):  # type: (dict) -> Installer
         self._develop = [canonicalize_name(p) for p in packages]
+
+        return self
+
+    def target(self, directory):  # type: (str) -> Installer
+        self._target = directory
 
         return self
 
@@ -330,7 +336,7 @@ class Installer:
         if not self._execute_operations:
             return
 
-        self._installer.install(operation.package)
+        self._installer.install(operation.package, target=self._target)
 
     def _execute_update(self, operation):  # type: (Update) -> None
         source = operation.initial_package
