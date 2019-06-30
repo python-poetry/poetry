@@ -267,7 +267,9 @@ class SdistBuilder(Builder):
 
     @classmethod
     def convert_dependencies(
-        cls, package, dependencies  # type: Package  # type: List[Dependency]
+        cls,
+        package,  # type: Package
+        dependencies,  # type: List[Dependency]
     ):
         main = []
         extras = defaultdict(list)

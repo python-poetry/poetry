@@ -235,7 +235,7 @@ class Builder(object):
         return dict(result)
 
     @classmethod
-    def convert_author(cls, author):  # type: () -> dict
+    def convert_author(cls, author):  # type: (...) -> dict
         m = AUTHOR_REGEX.match(author)
 
         name = m.group("name")

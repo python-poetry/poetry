@@ -33,7 +33,11 @@ class Config:
     def content(self):
         return self._content
 
-    def setting(self, setting_name, default=None):  # type: (str) -> Any
+    def setting(
+        self,
+        setting_name,  # type: str
+        default=None,
+    ):
         """
         Retrieve a setting value.
         """
