@@ -188,7 +188,7 @@ class Env(object):
 
         if not in_venv:
             # Checking if a local virtualenv exists
-            if (cwd / ".venv").exists():
+            if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
                 venv = cwd / ".venv"
 
                 return VirtualEnv(venv)
