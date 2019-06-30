@@ -23,7 +23,7 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
-cleo = "^0.7.4"
+cleo = "^0.7.5"
 requests = "^2.18"
 cachy = "^0.2"
 requests-toolbelt = "^0.8.0"
@@ -34,7 +34,7 @@ cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
-tomlkit = "^0.5.1"
+tomlkit = "^0.5.4"
 
 # The typing module is not in the stdlib in Python 2.7 and 3.4
 typing = { version = "^3.6", python = "~2.7 || ~3.4" }
