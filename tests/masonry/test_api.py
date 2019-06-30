@@ -117,11 +117,11 @@ My Package
         assert (dist_info / "WHEEL").exists()
         assert (dist_info / "METADATA").exists()
 
-        with (dist_info / "entry_points.txt").open() as f:
+        with (dist_info / "entry_points.txt").open(encoding="utf-8") as f:
             assert entry_points == decode(f.read())
 
-        with (dist_info / "WHEEL").open() as f:
+        with (dist_info / "WHEEL").open(encoding="utf-8") as f:
             assert wheel_data == decode(f.read())
 
-        with (dist_info / "METADATA").open() as f:
+        with (dist_info / "METADATA").open(encoding="utf-8") as f:
             assert metadata == decode(f.read())

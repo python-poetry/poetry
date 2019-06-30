@@ -176,7 +176,7 @@ def repo():
 def poetry(repo):
     p = Poetry.create(Path(__file__).parent.parent / "fixtures" / "simple_project")
 
-    with p.file.path.open() as f:
+    with p.file.path.open(encoding="utf-8") as f:
         content = f.read()
 
     p.pool.remove_repository("pypi")
@@ -184,7 +184,7 @@ def poetry(repo):
 
     yield p
 
-    with p.file.path.open("w") as f:
+    with p.file.path.open("w", encoding="utf-8") as f:
         f.write(content)
 
 
