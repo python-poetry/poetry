@@ -169,3 +169,10 @@ def test_dependency_from_pep_508_with_not_in_op_marker():
     assert (
         str(dep.marker) == 'python_version not in "3.0,3.1,3.2" and extra == "export"'
     )
+
+
+def test_dependency_from_pep_508_with_python_version_wildcard():
+    name = 'requests; python_version == "2.7.*"'
+    dep = dependency_from_pep_508(name)
+    assert dep.name == "requests"
+    assert str(dep.python_versions) == "==2.7.*"

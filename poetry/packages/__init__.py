@@ -102,7 +102,10 @@ def dependency_from_pep_508(name):
             for op, version in or_:
                 # Expand python version
                 if op == "==":
-                    version = "~" + version
+                    if "*" in version:
+                        version = "==" + version
+                    else:
+                        version = "~" + version
                     op = ""
                 elif op == "!=":
                     version += ".*"
