@@ -161,4 +161,7 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
         else:
             return version
 
+    if constraint == "<empty>":
+        return VersionRange()
+
     raise ValueError("Could not parse version constraint: {}".format(constraint))
