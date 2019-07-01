@@ -340,7 +340,7 @@ class Package(object):
 
         name = "{} (=={})".format(self._name, self._version)
 
-        if not self.marker.is_any():
+        if not self.marker.is_any() and not self.marker.is_empty():
             name += " ; {}".format(str(self.marker))
 
         return dependency_from_pep_508(name)
