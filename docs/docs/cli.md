@@ -195,9 +195,9 @@ my-package = {path = "../my/path", develop = false}
 * `--extras (-E)`: Extras to activate for the dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--platform` : Platforms for which the dependencies must be installed.
+* `--platform` : Platforms for which the dependencies must be installed, it matches the output of `sys.platform`
   * `--platform=darwin` : Only install the dependency on Mac installations.
-  * `--platform=windows` : Only install the dependency on Windows installations.
+  * `--platform=win32` : Only install the dependency on Windows installations.
 
 
 ## remove
