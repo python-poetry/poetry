@@ -5,6 +5,9 @@
 ### Fixed
 
 - Fixed dependency resolution with circular dependencies.
+- Fixed encoding errors when reading files on Windows. (Thanks to [@vlcinsky](https://github.com/vlcinsky))
+- Fixed unclear errors when executing commands in virtual environments. (Thanks to [@Imaclean74](https://github.com/Imaclean74))
+- Fixed handling of `.venv` when it's not a directory. (Thanks to [@mpanarin](https://github.com/mpanarin))
 
 
 ## [0.12.16] - 2019-05-17
