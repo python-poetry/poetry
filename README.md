@@ -381,9 +381,15 @@ poetry add requests pendulum
 
 #### Options
 
-* `--D|dev`: Add package as development dependency.
+* `--dev (-D)`: Add package as development dependency.
+* `--git`: The url of the Git repository.
+* `--path`: The path to a dependency.
+* `--extras (-E)`: Extras to activate for the dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--platform` : Platforms for which the dependencies must be installed, it matches the output of `sys.platform`
+  * `--platform=darwin` : Only install the dependency on Mac installations.
+  * `--platform=win32` : Only install the dependency on Windows installations.
 
 
 ### remove
