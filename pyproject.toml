@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "0.12.11"
+version = "0.12.16"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -47,6 +47,8 @@ glob2 = { version = "^0.6", python = "~2.7 || ~3.4" }
 virtualenv = { version = "^16.0", python = "~2.7" }
 # functools32 is needed for Python 2.7
 functools32 = { version = "^3.2.3", python = "~2.7" }
+# Use subprocess32 for Python 2.7 and 3.4
+subprocess32 = { version = "^3.5", python = "~2.7 || ~3.4" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"
@@ -56,10 +58,11 @@ pymdown-extensions = "^6.0"
 pygments = "^2.2"
 pytest-mock = "^1.9"
 pygments-github-lexers = "^0.0.5"
-black = { version = "^18.3-alpha.0", python = "^3.6" }
+black = { version = "^19.3b0", python = "^3.6" }
 pre-commit = "^1.10"
 tox = "^3.0"
 pytest-sugar = "^0.9.2"
+httpretty = "^0.9.6"
 
 
 [tool.poetry.scripts]

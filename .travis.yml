@@ -11,7 +11,7 @@ cache:
     - "$HOME/.cache/pre-commit"
 
 install:
-  - pip install pip -U
+  - pip install pip==18.1
   - python get-poetry.py --preview -y
   - source $HOME/.poetry/env
   - poetry install -v

@@ -3,6 +3,7 @@ import os
 
 import jsonschema
 
+from io import open
 from typing import List
 
 SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schemas")
@@ -19,7 +20,7 @@ def validate_object(obj, schema_name):  # type: (dict, str) -> List[str]
     if not os.path.exists(schema):
         raise ValueError("Schema {} does not exist.".format(schema_name))
 
-    with open(schema) as f:
+    with open(schema, encoding="utf-8") as f:
         schema = json.loads(f.read())
 
     validator = jsonschema.Draft7Validator(schema)

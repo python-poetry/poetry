@@ -1,5 +1,6 @@
 import hashlib
 import io
+import math
 import re
 
 from typing import List
@@ -20,6 +21,15 @@ from ..metadata import Metadata
 
 
 _has_blake2 = hasattr(hashlib, "blake2b")
+
+
+class UploadError(Exception):
+    def __init__(self, error):  # type: (HTTPError) -> None
+        super(UploadError, self).__init__(
+            "HTTP Error {}: {}".format(
+                error.response.status_code, error.response.reason
+            )
+        )
 
 
 class Uploader:
@@ -175,18 +185,15 @@ class Uploader:
             self._do_upload(session, url)
         except HTTPError as e:
             if (
-                e.response.status_code not in (403, 400)
-                or e.response.status_code == 400
-                and "was ever registered" not in e.response.text
+                e.response.status_code == 400
+                and "was ever registered" in e.response.text
             ):
-                raise
+                try:
+                    self._register(session, url)
+                except HTTPError as e:
+                    raise UploadError(e)
 
-            # It may be the first time we publish the package
-            # We'll try to register it and go from there
-            try:
-                self._register(session, url)
-            except HTTPError:
-                raise
+            raise UploadError(e)
 
     def _do_upload(self, session, url):
         for file in self.files:
@@ -235,7 +242,14 @@ class Uploader:
 
                 self._io.writeln("")
             else:
-                self._io.overwrite("")
+                if self._io.output.is_decorated():
+                    self._io.overwrite(
+                        " - Uploading <info>{0}</> <error>{1}%</>".format(
+                            file.name, int(math.floor(bar._percent * 100))
+                        )
+                    )
+                else:
+                    self._io.writeln("")
 
         return resp
 
@@ -262,6 +276,8 @@ class Uploader:
             allow_redirects=False,
             headers={"Content-Type": encoder.content_type},
         )
+
+        resp.raise_for_status()
 
         return resp
 

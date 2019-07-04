@@ -336,6 +336,7 @@ class LegacyRepository(PyPiRepository):
             "requires_dist": [],
             "requires_python": None,
             "digests": [],
+            "_cache_version": str(self.CACHE_VERSION),
         }
 
         links = list(page.links_for_version(Version.parse(version)))
@@ -358,6 +359,8 @@ class LegacyRepository(PyPiRepository):
             hash = link.hash
             if link.hash_name == "sha256":
                 hashes.append(hash)
+            elif hash:
+                hashes.append(link.hash_name + ":" + hash)
 
         data["digests"] = hashes
 
