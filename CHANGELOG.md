@@ -1,5 +1,67 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed dependency resolution with circular dependencies.
+- Fixed encoding errors when reading files on Windows. (Thanks to [@vlcinsky](https://github.com/vlcinsky))
+- Fixed unclear errors when executing commands in virtual environments. (Thanks to [@Imaclean74](https://github.com/Imaclean74))
+- Fixed handling of `.venv` when it's not a directory. (Thanks to [@mpanarin](https://github.com/mpanarin))
+
+
+## [0.12.16] - 2019-05-17
+
+### Fixed
+
+- Fixed packages with no hashes retrieval for legacy repositories.
+- Fixed multiple constraints for dev dependencies.
+- Fixed dependency resolution failing on badly formed package versions instead of skipping.
+- Fixed permissions of built wheels.
+
+
+## [0.12.15] - 2019-05-03
+
+### Fixed
+
+- Fixed an `AttributeError` in the editable builder.
+- Fixed resolution of packages with only Python 3 wheels and sdist when resolving for legacy repositories.
+- Fixed non-sha256 hashes retrieval for legacy repositories.
+
+
+## [0.12.14] - 2019-04-26
+
+### Fixed
+
+- Fixed root package installation for pure Python packages.
+
+
+## [0.12.13] - 2019-04-26
+
+### Fixed
+
+- Fixed root package installation with `pip>=19.0`.
+- Fixed packages not being removed after using the `remove` command.
+
+
+## [0.12.12] - 2019-04-11
+
+### Fixed
+
+- Fix lock idempotency.
+- Fix markers evaluation for `python_version` with precision < 3.
+- Fix permissions of the `dist-info` files.
+- Fix `prepare_metadata_for_build_wheel()` missing in the build backend.
+- Fix metadata inconsistency between wheels and sdists.
+- Fix parsing of `platform_release` markers.
+- Fix metadata information when the project has git dependencies.
+- Fix error reporting when publishing fails.
+- Fix retrieval of `extras_require` in some `setup.py` files. (Thanks to [@asodeur](https://github.com/asodeur))
+- Fix wheel compression when building. (Thanks to [@ccosby](https://github.com/ccosby))
+- Improve retrieval of information for packages with two python specific wheels.
+- Fix request authentication when credentials are included in URLs. (Thanks to [@connorbrinton](https://github.com/connorbrinton))
+
+
 ## [0.12.11] - 2019-01-13
 
 ### Fixed
@@ -619,7 +681,12 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.11...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.16...master
+[0.12.16]: https://github.com/sdispater/poetry/releases/tag/0.12.16
+[0.12.15]: https://github.com/sdispater/poetry/releases/tag/0.12.15
+[0.12.14]: https://github.com/sdispater/poetry/releases/tag/0.12.14
+[0.12.13]: https://github.com/sdispater/poetry/releases/tag/0.12.13
+[0.12.12]: https://github.com/sdispater/poetry/releases/tag/0.12.12
 [0.12.11]: https://github.com/sdispater/poetry/releases/tag/0.12.11
 [0.12.10]: https://github.com/sdispater/poetry/releases/tag/0.12.10
 [0.12.9]: https://github.com/sdispater/poetry/releases/tag/0.12.9

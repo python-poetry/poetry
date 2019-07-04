@@ -1,10 +1,10 @@
 # Contributing to Poetry
 
-First off, thank for taking the time to contribute!
+First off, thanks for taking the time to contribute!
 
-The following is a set of guidelines for contributing to Poetry on GitHub. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
+The following is a set of guidelines for contributing to Poetry on GitHub. These are mostly guidelines, not rules. Use your best judgement, and feel free to propose changes to this document in a pull request.
 
-#### Table of Contents
+#### Table of contents
 
 [How to contribute](#how-to-contribute)
 
@@ -29,7 +29,7 @@ Before creating bug reports, please check [this list](#before-submitting-a-bug-r
 * **Check the [FAQs on the official website](https://poetry.eustace.io)** for a list of common questions and problems.
 * **Check that your issue does not already exist in the [issue tracker](https://github.com/sdispater/poetry/issues)**.
 
-#### How do I submit a bug report
+#### How do I submit a bug report?
 
 Bugs are tracked on the [official issue tracker](https://github.com/sdispater/poetry/issues) where you can create a new one and provide the following information by filling in [the template](https://github.com/sdispater/poetry/blob/master/.github/ISSUE_TEMPLATE/1_Bug_report.md).
 
@@ -38,7 +38,7 @@ Explain the problem and include additional details to help maintainers reproduce
 * **Use a clear and descriptive title** for the issue to identify the problem.
 * **Describe the exact steps which reproduce the problem** in as many details as possible.
 * **Provide your pyproject.toml file** in a [Gist](https://gist.github.com) after removing potential private information (like private package repositories).
-* **Provide specific examples to demonstrate the steps to reproduce the issue**. Include links to files or GitHub projects, or copy/pasteable snippets, which you use in those examples.
+* **Provide specific examples to demonstrate the steps to reproduce the issue**. Include links to files or GitHub projects, or copy-paste-able snippets, which you use in those examples.
 * **Describe the behavior you observed after following the steps** and point out what exactly is the problem with that behavior.
 * **Explain which behavior you expected to see instead and why.**
 * **If the problem is an unexpected error being raised**, execute the corresponding command in **debug** mode (the `-vvv` option).
@@ -115,5 +115,5 @@ will not be merged.
 #### Pull requests
 
 * Fill in [the required template](https://github.com/sdispater/poetry/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
-* Be sure that you pull request contains tests that cover the changed or added code.
-* If you changes warrant a documentation change, the pull request must also update the documentation.
+* Be sure that your pull request contains tests that cover the changed or added code.
+* If your changes warrant a documentation change, the pull request must also update the documentation.

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
 import pytest
-import re
 import shutil
 import tarfile
 
@@ -11,6 +10,7 @@ from poetry.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.masonry.utils.package_include import PackageInclude
 from poetry.packages import Package
+from poetry.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
@@ -49,9 +49,15 @@ def test_convert_dependencies():
             get_dependency("A", "^1.0"),
             get_dependency("B", "~1.0"),
             get_dependency("C", "1.2.3"),
+            VCSDependency("D", "git", "https://github.com/sdispater/d.git"),
         ],
     )
-    main = ["A>=1.0,<2.0", "B>=1.0,<1.1", "C==1.2.3"]
+    main = [
+        "A>=1.0,<2.0",
+        "B>=1.0,<1.1",
+        "C==1.2.3",
+        "D @ git+https://github.com/sdispater/d.git@master",
+    ]
     extras = {}
 
     assert result == (main, extras)
@@ -129,48 +135,16 @@ def test_make_setup():
     assert ns["extras_require"] == {"time": ["pendulum>=1.4,<2.0"]}
 
 
-def test_make_pkg_info():
+def test_make_pkg_info(mocker):
+    get_metadata_content = mocker.patch(
+        "poetry.masonry.builders.builder.Builder.get_metadata_content"
+    )
     poetry = Poetry.create(project("complete"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
-    pkg_info = builder.build_pkg_info()
-    p = Parser()
-    parsed = p.parsestr(to_str(pkg_info))
+    builder.build_pkg_info()
 
-    assert parsed["Metadata-Version"] == "2.1"
-    assert parsed["Name"] == "my-package"
-    assert parsed["Version"] == "1.2.3"
-    assert parsed["Summary"] == "Some description."
-    assert parsed["Author"] == "Sébastien Eustace"
-    assert parsed["Author-email"] == "sebastien@eustace.io"
-    assert parsed["Keywords"] == "packaging,dependency,poetry"
-    assert parsed["Requires-Python"] == ">=3.6,<4.0"
-
-    classifiers = parsed.get_all("Classifier")
-    assert classifiers == [
-        "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Topic :: Software Development :: Build Tools",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-    ]
-
-    extras = parsed.get_all("Provides-Extra")
-    assert extras == ["time"]
-
-    requires = parsed.get_all("Requires-Dist")
-    assert requires == [
-        "cachy[msgpack] (>=0.2.0,<0.3.0)",
-        "cleo (>=0.6,<0.7)",
-        'pendulum (>=1.4,<2.0); extra == "time"',
-    ]
-
-    urls = parsed.get_all("Project-URL")
-    assert urls == [
-        "Documentation, https://poetry.eustace.io/docs",
-        "Repository, https://github.com/sdispater/poetry",
-    ]
+    assert get_metadata_content.called
 
 
 def test_make_pkg_info_any_python():
