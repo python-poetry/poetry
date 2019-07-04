@@ -28,10 +28,8 @@ exist it will look for <comment>pyproject.toml</> and do the same.
     def handle(self):
         from poetry.installation import Installer
         from poetry.io import NullIO
-        from poetry.masonry.builders import SdistBuilder
+        from poetry.masonry.builders import EditableBuilder
         from poetry.masonry.utils.module import ModuleOrPackageNotFound
-        from poetry.utils._compat import decode
-        from poetry.utils.env import NullEnv
 
         installer = Installer(
             self.output,
@@ -60,7 +58,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             return return_code
 
         try:
-            builder = SdistBuilder(self.poetry, NullEnv(), NullIO())
+            builder = EditableBuilder(self.poetry, self._env, NullIO())
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
@@ -76,17 +74,6 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         if self.option("dry-run"):
             return 0
 
-        setup = self.poetry.file.parent / "setup.py"
-        has_setup = setup.exists()
+        builder.build()
 
-        if has_setup:
-            self.line("<warning>A setup.py file already exists. Using it.</warning>")
-        else:
-            with setup.open("w", encoding="utf-8") as f:
-                f.write(decode(builder.build_setup()))
-
-        try:
-            self.env.run("pip", "install", "-e", str(setup.parent), "--no-deps")
-        finally:
-            if not has_setup:
-                os.remove(str(setup))
+        return 0

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from email.parser import Parser
+
 from poetry.io import NullIO
 from poetry.masonry.builders.builder import Builder
 from poetry.poetry import Poetry
@@ -52,3 +55,79 @@ def test_builder_find_invalid_case_sensitive_excluded_files(mocker):
     )
 
     assert {"my_package/Bar/foo/bar/Foo.py"} == builder.find_excluded_files()
+
+
+def test_get_metadata_content():
+    builder = Builder(
+        Poetry.create(Path(__file__).parent / "fixtures" / "complete"),
+        NullEnv(),
+        NullIO(),
+    )
+
+    metadata = builder.get_metadata_content()
+
+    p = Parser()
+    parsed = p.parsestr(metadata)
+
+    assert parsed["Metadata-Version"] == "2.1"
+    assert parsed["Name"] == "my-package"
+    assert parsed["Version"] == "1.2.3"
+    assert parsed["Summary"] == "Some description."
+    assert parsed["Author"] == "Sébastien Eustace"
+    assert parsed["Author-email"] == "sebastien@eustace.io"
+    assert parsed["Keywords"] == "packaging,dependency,poetry"
+    assert parsed["Requires-Python"] == ">=3.6,<4.0"
+    assert parsed["License"] == "MIT"
+    assert parsed["Home-page"] == "https://poetry.eustace.io/"
+
+    classifiers = parsed.get_all("Classifier")
+    assert classifiers == [
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Software Development :: Build Tools",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ]
+
+    extras = parsed.get_all("Provides-Extra")
+    assert extras == ["time"]
+
+    requires = parsed.get_all("Requires-Dist")
+    assert requires == [
+        "cachy[msgpack] (>=0.2.0,<0.3.0)",
+        "cleo (>=0.6,<0.7)",
+        'pendulum (>=1.4,<2.0); extra == "time"',
+    ]
+
+    urls = parsed.get_all("Project-URL")
+    assert urls == [
+        "Documentation, https://poetry.eustace.io/docs",
+        "Repository, https://github.com/sdispater/poetry",
+    ]
+
+
+def test_metadata_homepage_default():
+    builder = Builder(
+        Poetry.create(Path(__file__).parent / "fixtures" / "simple_version"),
+        NullEnv(),
+        NullIO(),
+    )
+
+    metadata = Parser().parsestr(builder.get_metadata_content())
+
+    assert metadata["Home-page"] is None
+
+
+def test_metadata_with_vcs_dependencies():
+    builder = Builder(
+        Poetry.create(Path(__file__).parent / "fixtures" / "with_vcs_dependency"),
+        NullEnv(),
+        NullIO(),
+    )
+
+    metadata = Parser().parsestr(builder.get_metadata_content())
+
+    requires_dist = metadata["Requires-Dist"]
+
+    assert "cleo @ git+https://github.com/sdispater/cleo.git@master" == requires_dist

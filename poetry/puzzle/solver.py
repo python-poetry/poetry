@@ -248,7 +248,10 @@ class Solver:
                         break
 
             if previous and previous["name"] == dependency.name:
-                break
+                # We have a circular dependency.
+                # Since the dependencies are resolved we can
+                # simply skip it because we already have it
+                continue
 
             for pkg in packages:
                 if pkg.name == dependency.name and dependency.constraint.allows(

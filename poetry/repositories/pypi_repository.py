@@ -420,6 +420,13 @@ class PyPiRepository(Repository):
             if info:
                 return info
 
+            # Prefer non platform specific wheels
+            if universal_python3_wheel:
+                return self._get_info_from_wheel(universal_python3_wheel)
+
+            if universal_python2_wheel:
+                return self._get_info_from_wheel(universal_python2_wheel)
+
             if platform_specific_wheels and "sdist" not in urls:
                 # Pick the first wheel available and hope for the best
                 return self._get_info_from_wheel(platform_specific_wheels[0])
@@ -526,7 +533,7 @@ class PyPiRepository(Repository):
 
                 requires = egg_info / "requires.txt"
                 if requires.exists():
-                    with requires.open() as f:
+                    with requires.open(encoding="utf-8") as f:
                         info["requires_dist"] = parse_requires(f.read())
 
                         return info
@@ -538,7 +545,7 @@ class PyPiRepository(Repository):
 
                 requires = egg_info / "requires.txt"
                 if requires.exists():
-                    with requires.open() as f:
+                    with requires.open(encoding="utf-8") as f:
                         info["requires_dist"] = parse_requires(f.read())
 
                         return info

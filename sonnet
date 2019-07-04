@@ -68,6 +68,7 @@ class MakeReleaseCommand(Command):
         else:
             vcs_excluded = []
 
+        created_files = []
         with temporary_directory() as tmp_dir:
             # Copy poetry to tmp dir
             poetry_dir = os.path.join(tmp_dir, "poetry")
@@ -78,6 +79,13 @@ class MakeReleaseCommand(Command):
                     set([os.path.join(dir_, name) for name in names])
                 ),
             )
+            created_files += [
+                p.relative_to(Path(tmp_dir))
+                for p in Path(poetry_dir).glob("**/*")
+                if p.is_file()
+                and p.suffix != ".pyc"
+                and str(p.relative_to(Path(tmp_dir))) not in vcs_excluded
+            ]
             for version, python in sorted(pythons.items()):
                 self.line(
                     "<info>Preparing files for Python <comment>{}</comment></info>".format(
@@ -93,6 +101,16 @@ class MakeReleaseCommand(Command):
                 self.vendorize_for_python(
                     python, [op.package for op in ops], poetry_dir, version
                 )
+                vendor_dir = Path(
+                    os.path.join(poetry_dir, "_vendor", "py{}".format(python))
+                )
+                created_files += [
+                    p.relative_to(Path(tmp_dir))
+                    for p in vendor_dir.glob("**/*")
+                    if p.is_file()
+                    and p.suffix != ".pyc"
+                    and str(p.relative_to(Path(tmp_dir))) not in vcs_excluded
+                ]
 
                 self.line("")
 
@@ -131,6 +149,22 @@ class MakeReleaseCommand(Command):
                                     tar.addfile(tar_info)  # Symlinks & ?
                 finally:
                     gz.close()
+
+                self.line("<info>Checking release file</info>")
+                missing_files = []
+                with tarfile.open(os.path.join(tmp_dir2, name), "r") as tar:
+                    names = tar.getnames()
+
+                    for created_file in created_files:
+                        if created_file.as_posix() not in names:
+                            missing_files.append(created_file.as_posix())
+
+                if missing_files:
+                    self.line("<error>Some files are missing:</error>")
+                    for missing_file in missing_files:
+                        self.line("<error>  - {}</error>".format(missing_file))
+
+                    return 1
 
                 releases_dir = os.path.join(os.path.dirname(__file__), "releases")
                 if not os.path.exists(releases_dir):

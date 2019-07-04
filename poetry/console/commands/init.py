@@ -158,7 +158,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
             return 1
 
-        with (Path.cwd() / "pyproject.toml").open("w") as f:
+        with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
             f.write(content)
 
     def _determine_requirements(

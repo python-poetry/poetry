@@ -15,7 +15,7 @@ install:
 
   # Upgrade to the latest version of pip to avoid it displaying warnings
   # about it being out of date.
-  - "python -m pip install --disable-pip-version-check --user --upgrade pip"
+  - "python -m pip install --disable-pip-version-check --user pip==18.1"
 
   # Installing Poetry
   - "python get-poetry.py --preview -y"

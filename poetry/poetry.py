@@ -151,7 +151,7 @@ class Poetry:
             for name, constraint in local_config["dev-dependencies"].items():
                 if isinstance(constraint, list):
                     for _constraint in constraint:
-                        package.add_dependency(name, _constraint)
+                        package.add_dependency(name, _constraint, category="dev")
 
                     continue
 

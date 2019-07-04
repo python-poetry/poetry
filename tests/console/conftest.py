@@ -1,3 +1,4 @@
+import io
 import os
 import pytest
 import shutil
@@ -7,6 +8,9 @@ try:
 except ImportError:
     import urlparse
 
+from cleo import ApplicationTester as BaseApplicationTester
+from cleo.inputs import ListInput
+from cleo.outputs import StreamOutput
 from tomlkit import document
 
 from poetry.config import Config as BaseConfig
@@ -17,9 +21,31 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.utils._compat import Path
-from poetry.utils.env import Env
 from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
+
+
+class ApplicationTester(BaseApplicationTester):
+    def run(self, input_, options=None):
+        options = options or {}
+
+        self._input = ListInput(input_)
+        if self._inputs:
+            self._input.set_stream(self._create_stream(self._inputs))
+
+        if "interactive" in options:
+            self._input.set_interactive(options["interactive"])
+
+        self._output = StreamOutput(io.BytesIO())
+        if "decorated" in options:
+            self._output.set_decorated(options["decorated"])
+        else:
+            self._output.set_decorated(False)
+
+        if "verbosity" in options:
+            self._output.set_verbosity(options["verbosity"])
+
+        return self._application.run(self._input, self._output)
 
 
 @pytest.fixture()
@@ -135,6 +161,7 @@ class Poetry(BasePoetry):
         self._local_config = local_config
         self._locker = Locker(locker.lock.path, locker._local_config)
         self._config = Config.create("config.toml")
+        self._auth_config = Config.create("auth.toml")
 
         # Configure sources
         self._pool = Pool()
@@ -149,7 +176,7 @@ def repo():
 def poetry(repo):
     p = Poetry.create(Path(__file__).parent.parent / "fixtures" / "simple_project")
 
-    with p.file.path.open() as f:
+    with p.file.path.open(encoding="utf-8") as f:
         content = f.read()
 
     p.pool.remove_repository("pypi")
@@ -157,10 +184,18 @@ def poetry(repo):
 
     yield p
 
-    with p.file.path.open("w") as f:
+    with p.file.path.open("w", encoding="utf-8") as f:
         f.write(content)
 
 
 @pytest.fixture
 def app(poetry):
-    return Application(poetry)
+    app_ = Application(poetry)
+    app_.set_auto_exit(False)
+
+    return app_
+
+
+@pytest.fixture
+def app_tester(app):
+    return ApplicationTester(app)

@@ -9,7 +9,7 @@ class CacheClearCommand(Command):
 
     cache:clear
         { cache : The name of the cache to clear. }
-        { --all : Clear all caches. }
+        { --all : Clear all entries in cache. }
     """
 
     def handle(self):
