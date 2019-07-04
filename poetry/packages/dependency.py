@@ -127,6 +127,24 @@ class Dependency(object):
     def in_extras(self):  # type: () -> list
         return self._in_extras
 
+    @property
+    def base_pep_508_name(self):  # type: () -> str
+        requirement = self.pretty_name
+
+        if self.extras:
+            requirement += "[{}]".format(",".join(self.extras))
+
+        if isinstance(self.constraint, VersionUnion):
+            requirement += " ({})".format(
+                ",".join([str(c).replace(" ", "") for c in self.constraint.ranges])
+            )
+        elif isinstance(self.constraint, Version):
+            requirement += " (=={})".format(self.constraint.text)
+        elif not self.constraint.is_any():
+            requirement += " ({})".format(str(self.constraint).replace(" ", ""))
+
+        return requirement
+
     def allows_prereleases(self):
         return self._allows_prereleases
 
@@ -156,19 +174,7 @@ class Dependency(object):
         )
 
     def to_pep_508(self, with_extras=True):  # type: (bool) -> str
-        requirement = self.pretty_name
-
-        if self.extras:
-            requirement += "[{}]".format(",".join(self.extras))
-
-        if isinstance(self.constraint, VersionUnion):
-            requirement += " ({})".format(
-                ",".join([str(c).replace(" ", "") for c in self.constraint.ranges])
-            )
-        elif isinstance(self.constraint, Version):
-            requirement += " (=={})".format(self.constraint.text)
-        elif not self.constraint.is_any():
-            requirement += " ({})".format(str(self.constraint).replace(" ", ""))
+        requirement = self.base_pep_508_name
 
         markers = []
         if not self.marker.is_any():

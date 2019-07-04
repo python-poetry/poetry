@@ -3,6 +3,7 @@ import pytest
 from poetry.semver import EmptyConstraint
 from poetry.semver import Version
 from poetry.semver import VersionRange
+from poetry.semver.exceptions import ParseVersionError
 
 
 @pytest.mark.parametrize(
@@ -30,6 +31,12 @@ def test_parse_valid(input, version):
 
     assert parsed == version
     assert parsed.text == input
+
+
+@pytest.mark.parametrize("input", [(None, "example")])
+def test_parse_invalid(input):
+    with pytest.raises(ParseVersionError):
+        Version.parse(input)
 
 
 def test_comparison():

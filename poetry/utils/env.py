@@ -1,13 +1,13 @@
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 import sysconfig
 import warnings
 
 from contextlib import contextmanager
-from subprocess import CalledProcessError
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -15,10 +15,13 @@ from typing import Tuple
 
 from poetry.config import Config
 from poetry.locations import CACHE_DIR
+from poetry.semver.version import Version
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
+from poetry.utils._compat import subprocess
+from poetry.utils._compat import CalledProcessError
 from poetry.version.markers import BaseMarker
 
 
@@ -89,11 +92,14 @@ class EnvError(Exception):
 
 
 class EnvCommandError(EnvError):
-    def __init__(self, e):  # type: (CalledProcessError) -> None
-        message = "Command {} errored with the following output: \n{}".format(
-            e.cmd, decode(e.output)
-        )
+    def __init__(self, e, input=None):  # type: (CalledProcessError) -> None
+        self.e = e
 
+        message = "Command {} errored with the following return code {}, and output: \n{}".format(
+            e.cmd, e.returncode, decode(e.output)
+        )
+        if input:
+            message += "input was : {}".format(input)
         super(EnvCommandError, self).__init__(message)
 
 
@@ -114,6 +120,7 @@ class Env(object):
         self._base = base or path
 
         self._marker_env = None
+        self._pip_version = None
 
     @property
     def path(self):  # type: () -> Path
@@ -152,6 +159,25 @@ class Env(object):
         """
         return self._bin("pip")
 
+    @property
+    def pip_version(self):
+        if self._pip_version is None:
+            self._pip_version = self.get_pip_version()
+
+        return self._pip_version
+
+    @property
+    def site_packages(self):  # type: () -> Path
+        if self._is_windows:
+            return self._path / "Lib" / "site-packages"
+
+        return (
+            self._path
+            / "lib"
+            / "python{}.{}".format(*self.version_info[:2])
+            / "site-packages"
+        )
+
     @classmethod
     def get(cls, cwd, reload=False):  # type: (Path, bool) -> Env
         if cls._env is not None and not reload:
@@ -162,7 +188,7 @@ class Env(object):
 
         if not in_venv:
             # Checking if a local virtualenv exists
-            if (cwd / ".venv").exists():
+            if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
                 venv = cwd / ".venv"
 
                 return VirtualEnv(venv)
@@ -276,7 +302,13 @@ class Env(object):
         try:
             from venv import EnvBuilder
 
-            builder = EnvBuilder(with_pip=True)
+            # use the same defaults as python -m venv
+            if os.name == "nt":
+                use_symlinks = False
+            else:
+                use_symlinks = True
+
+            builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
             build = builder.create
         except ImportError:
             # We fallback on virtualenv for Python 2.7
@@ -325,6 +357,9 @@ class Env(object):
     def config_var(self, var):  # type: (str) -> Any
         raise NotImplementedError()
 
+    def get_pip_version(self):  # type: () -> Version
+        raise NotImplementedError()
+
     def is_valid_for_marker(self, marker):  # type: (BaseMarker) -> bool
         return marker.validate(self.marker_env)
 
@@ -347,20 +382,19 @@ class Env(object):
 
         if shell:
             cmd = list_to_shell_command(cmd)
-
         try:
             if self._is_windows:
                 kwargs["shell"] = True
 
             if input_:
-                p = subprocess.Popen(
+                output = subprocess.run(
                     cmd,
-                    stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
+                    input=encode(input_),
+                    check=True,
                     **kwargs
-                )
-                output = p.communicate(encode(input_))[0]
+                ).stdout
             elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
             else:
@@ -368,7 +402,7 @@ class Env(object):
                     cmd, stderr=subprocess.STDOUT, **kwargs
                 )
         except CalledProcessError as e:
-            raise EnvCommandError(e)
+            raise EnvCommandError(e, input=input_)
 
         return decode(output)
 
@@ -441,6 +475,11 @@ class SystemEnv(Env):
 
             return
 
+    def get_pip_version(self):  # type: () -> Version
+        from pip import __version__
+
+        return Version.parse(__version__)
+
     def is_venv(self):  # type: () -> bool
         return self._path != self._base
 
@@ -490,6 +529,14 @@ class VirtualEnv(Env):
             value = 0
 
         return value
+
+    def get_pip_version(self):  # type: () -> Version
+        output = self.run("python", "-m", "pip", "--version").strip()
+        m = re.match("pip (.+?)(?: from .+)?$", output)
+        if not m:
+            return Version.parse("0.0")
+
+        return Version.parse(m.group(1))
 
     def is_venv(self):  # type: () -> bool
         return True
@@ -563,6 +610,7 @@ class MockEnv(NullEnv):
         platform="darwin",
         os_name="posix",
         is_venv=False,
+        pip_version="19.1",
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -572,6 +620,7 @@ class MockEnv(NullEnv):
         self._platform = platform
         self._os_name = os_name
         self._is_venv = is_venv
+        self._pip_version = Version.parse(pip_version)
 
     @property
     def version_info(self):  # type: () -> Tuple[int]
@@ -588,6 +637,10 @@ class MockEnv(NullEnv):
     @property
     def os(self):  # type: () -> str
         return self._os_name
+
+    @property
+    def pip_version(self):
+        return self._pip_version
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv

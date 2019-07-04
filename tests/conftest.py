@@ -1,3 +1,4 @@
+import httpretty
 import os
 import pytest
 import shutil
@@ -62,3 +63,12 @@ def git_mock(mocker):
     mocker.patch("poetry.vcs.git.Git.checkout", new=lambda *_: None)
     p = mocker.patch("poetry.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
+
+@pytest.fixture
+def http():
+    httpretty.enable()
+
+    yield httpretty
+
+    httpretty.disable()
