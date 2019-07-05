@@ -3,10 +3,9 @@ import tempfile
 
 from subprocess import CalledProcessError
 
+from clikit.api.io import IO
 from clikit.io import NullIO
 
-from poetry.config import Config
-from poetry.utils.helpers import get_http_basic_auth
 from poetry.utils.helpers import safe_rmtree
 
 
@@ -15,6 +14,7 @@ try:
 except ImportError:
     import urlparse
 
+from poetry.repositories.pool import Pool
 from poetry.utils._compat import encode
 from poetry.utils.env import Env
 
@@ -22,12 +22,7 @@ from .base_installer import BaseInstaller
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(
-        self,
-        env,  # type: Env
-        io,
-        pool,
-    ):  # type: (...) -> None
+    def __init__(self, env, io, pool):  # type: (Env, IO, Pool) -> None
         self._env = env
         self._io = io
         self._pool = pool
@@ -60,8 +55,11 @@ class PipInstaller(BaseInstaller):
 
             args += ["--index-url", index_url]
             if self._pool.has_default():
-                if repository.name != self._pool.default.name:
-                    args += ["--extra-index-url", self._pool.default.authenticated_url]
+                if repository.name != self._pool.repositories[0].name:
+                    args += [
+                        "--extra-index-url",
+                        self._pool.repositories[0].authenticated_url,
+                    ]
 
         if update:
             args.append("-U")
