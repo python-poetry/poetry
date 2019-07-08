@@ -1,16 +1,24 @@
+from cleo import argument
+from cleo import option
+
 from .env_command import EnvCommand
 
 
 class RemoveCommand(EnvCommand):
-    """
-    Removes a package from the project dependencies.
 
-    remove
-        { packages* : Packages that should be removed. }
-        {--D|dev : Removes a package from the development dependencies. }
-        {--dry-run : Outputs the operations but will not execute anything
-                     (implicitly enables --verbose). }
-    """
+    name = "remove"
+    description = "Removes a package from the project dependencies."
+
+    arguments = [argument("packages", "Packages that should be removed", multiple=True)]
+    options = [
+        option("dev", "D", "Removes a package from the development dependencies."),
+        option(
+            "dry-run",
+            None,
+            "Outputs the operations but will not execute anything "
+            "(implicitly enables --verbose).",
+        ),
+    ]
 
     help = """The <info>remove</info> command removes a package from the current
 list of installed packages

@@ -1,13 +1,14 @@
+from cleo import argument
+
 from ..command import Command
 
 
 class EnvUseCommand(Command):
-    """
-    Activate or create a new virtualenv for the current project.
 
-    use
-        {python : The python executable to use.}
-    """
+    name = "use"
+    description = "Activate or create a new virtualenv for the current project."
+
+    arguments = [argument("python", "The python executable to use.")]
 
     def handle(self):
         from poetry.utils.env import EnvManager

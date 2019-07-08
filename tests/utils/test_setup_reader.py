@@ -149,3 +149,20 @@ def test_setup_reader_read_setup_call_in_main(setup):
     assert expected_install_requires == result["install_requires"]
     assert expected_extras_require == result["extras_require"]
     assert expected_python_requires == result["python_requires"]
+
+
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_setup_reader_read_extras_require_with_variables(setup):
+    result = SetupReader.read_from_directory(setup("extras_require_with_vars"))
+
+    expected_name = "extras_require_with_vars"
+    expected_version = "0.0.1"
+    expected_install_requires = []
+    expected_extras_require = {"test": ["pytest"]}
+    expected_python_requires = None
+
+    assert expected_name == result["name"]
+    assert expected_version == result["version"]
+    assert expected_install_requires == result["install_requires"]
+    assert expected_extras_require == result["extras_require"]
+    assert expected_python_requires == result["python_requires"]

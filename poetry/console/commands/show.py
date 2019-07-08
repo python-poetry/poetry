@@ -1,25 +1,36 @@
 # -*- coding: utf-8 -*-
+from cleo import argument
+from cleo import option
+
 from .env_command import EnvCommand
 
 
 class ShowCommand(EnvCommand):
-    """
-    Shows information about packages.
 
-    show
-        { package? : Package to inspect. }
-        { --no-dev : Do not list the dev dependencies. }
-        { --t|tree : List the dependencies as a tree. }
-        { --l|latest : Show the latest version. }
-        { --o|outdated : Show the latest version
-                         but only for packages that are outdated. }
-        { --a|all : Show all packages (even those not compatible with current system). }
-    """
+    name = "show"
+    description = "Shows information about packages."
+
+    arguments = [argument("package", "Package to inspect", optional=True)]
+    options = [
+        option("no-dev", None, "Do not list the dev dependencies."),
+        option("tree", "t", "List the dependencies as a tree."),
+        option("latest", "l", "Show the latest version."),
+        option(
+            "outdated",
+            "o",
+            "Show the latest version but only for packages that are outdated.",
+        ),
+        option(
+            "all",
+            "a",
+            "Show all packages (even those not compatible with current system).",
+        ),
+    ]
 
     help = """The show command displays detailed information about a package, or
 lists all packages available."""
 
-    colors = ["green", "yellow", "cyan", "magenta", "blue"]
+    colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
     def handle(self):
         from clikit.utils.terminal import Terminal
@@ -69,7 +80,7 @@ lists all packages available."""
                 return 0
 
             rows = [
-                ["<info>name</>", " : <fg=cyan>{}</>".format(pkg.pretty_name)],
+                ["<info>name</>", " : <info>{}</>".format(pkg.pretty_name)],
                 ["<info>version</>", " : <comment>{}</>".format(pkg.pretty_version)],
                 ["<info>description</>", " : {}".format(pkg.description)],
             ]
@@ -144,7 +155,7 @@ lists all packages available."""
         write_description = name_length + version_length + latest_length + 24 <= width
 
         for locked in locked_packages:
-            color = "green"
+            color = "cyan"
             name = locked.pretty_name
             install_marker = ""
             if locked in skipped:
@@ -165,7 +176,7 @@ lists all packages available."""
                 color, name, name_length - len(install_marker), install_marker
             )
             if write_version:
-                line += " <comment>{:{}}</comment>".format(
+                line += " <b>{:{}}</b>".format(
                     locked.full_pretty_version, version_length
                 )
             if show_latest:
@@ -205,7 +216,7 @@ lists all packages available."""
         if package.description:
             description = " " + package.description
 
-        io.write_line(" {}{}".format(package.pretty_version, description))
+        io.write_line(" <b>{}</b>{}".format(package.pretty_version, description))
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)

@@ -1,8 +1,14 @@
 import json
 import re
 
-from .command import Command
+from cleo import argument
+from cleo import option
 
+from poetry.utils.helpers import (
+    keyring_repository_password_del,
+    keyring_repository_password_set,
+)
+from .command import Command
 
 TEMPLATE = """[settings]
 
@@ -14,15 +20,19 @@ AUTH_TEMPLATE = """[http-basic]
 
 
 class ConfigCommand(Command):
-    """
-    Sets/Gets config options.
 
-    config
-        { key? : Setting key. }
-        { value?* : Setting value. }
-        { --list : List configuration settings }
-        { --unset : Unset configuration setting }
-    """
+    name = "config"
+    description = "Sets/Gets config options."
+
+    arguments = [
+        argument("key", "Setting key.", optional=True),
+        argument("value", "Setting value.", optional=True, multiple=True),
+    ]
+
+    options = [
+        option("list", None, "List configuration settings."),
+        option("unset", None, "Unset configuration setting."),
+    ]
 
     help = """This command allows you to edit the poetry config settings and repositories.
 
@@ -195,6 +205,7 @@ To remove a repository (repo is a short alias for repositories):
                         "There is no {} {} defined".format(m.group(2), m.group(1))
                     )
 
+                keyring_repository_password_del(self._auth_config, m.group(2))
                 self._auth_config.remove_property(
                     "{}.{}".format(m.group(1), m.group(2))
                 )
@@ -215,9 +226,14 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     password = values[1]
 
+                property_value = dict(username=username)
+                try:
+                    keyring_repository_password_set(m.group(2), username, password)
+                except RuntimeError:
+                    property_value.update(password=password)
+
                 self._auth_config.add_property(
-                    "{}.{}".format(m.group(1), m.group(2)),
-                    {"username": username, "password": password},
+                    "{}.{}".format(m.group(1), m.group(2)), property_value
                 )
 
             return 0

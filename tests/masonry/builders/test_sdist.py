@@ -11,6 +11,7 @@ from clikit.io import NullIO
 from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.masonry.utils.package_include import PackageInclude
 from poetry.packages import Package
+from poetry.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
@@ -49,9 +50,15 @@ def test_convert_dependencies():
             get_dependency("A", "^1.0"),
             get_dependency("B", "~1.0"),
             get_dependency("C", "1.2.3"),
+            VCSDependency("D", "git", "https://github.com/sdispater/d.git"),
         ],
     )
-    main = ["A>=1.0,<2.0", "B>=1.0,<1.1", "C==1.2.3"]
+    main = [
+        "A>=1.0,<2.0",
+        "B>=1.0,<1.1",
+        "C==1.2.3",
+        "D @ git+https://github.com/sdispater/d.git@master",
+    ]
     extras = {}
 
     assert result == (main, extras)
@@ -126,51 +133,23 @@ def test_make_setup():
             "my-script = my_package:main",
         ]
     }
-    assert ns["extras_require"] == {"time": ["pendulum>=1.4,<2.0"]}
+    assert ns["extras_require"] == {
+        'time:python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5"': [
+            "pendulum>=1.4,<2.0"
+        ]
+    }
 
 
-def test_make_pkg_info():
+def test_make_pkg_info(mocker):
+    get_metadata_content = mocker.patch(
+        "poetry.masonry.builders.builder.Builder.get_metadata_content"
+    )
     poetry = Poetry.create(project("complete"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
-    pkg_info = builder.build_pkg_info()
-    p = Parser()
-    parsed = p.parsestr(to_str(pkg_info))
+    builder.build_pkg_info()
 
-    assert parsed["Metadata-Version"] == "2.1"
-    assert parsed["Name"] == "my-package"
-    assert parsed["Version"] == "1.2.3"
-    assert parsed["Summary"] == "Some description."
-    assert parsed["Author"] == "Sébastien Eustace"
-    assert parsed["Author-email"] == "sebastien@eustace.io"
-    assert parsed["Keywords"] == "packaging,dependency,poetry"
-    assert parsed["Requires-Python"] == ">=3.6,<4.0"
-
-    classifiers = parsed.get_all("Classifier")
-    assert classifiers == [
-        "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Topic :: Software Development :: Build Tools",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-    ]
-
-    extras = parsed.get_all("Provides-Extra")
-    assert extras == ["time"]
-
-    requires = parsed.get_all("Requires-Dist")
-    assert requires == [
-        "cachy[msgpack] (>=0.2.0,<0.3.0)",
-        "cleo (>=0.6,<0.7)",
-        'pendulum (>=1.4,<2.0); extra == "time"',
-    ]
-
-    urls = parsed.get_all("Project-URL")
-    assert urls == [
-        "Documentation, https://poetry.eustace.io/docs",
-        "Repository, https://github.com/sdispater/poetry",
-    ]
+    assert get_metadata_content.called
 
 
 def test_make_pkg_info_any_python():
@@ -246,7 +225,7 @@ def test_find_packages():
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
     base = project("source_package")
-    include = PackageInclude(base, "package_src", "src")
+    include = PackageInclude(base, "package_src", source="src")
 
     pkg_dir, packages, pkg_data = builder.find_packages(include)
 
@@ -373,65 +352,6 @@ def test_with_src_module_dir():
     with tarfile.open(str(sdist), "r") as tar:
         assert "package-src-0.1/src/package_src/__init__.py" in tar.getnames()
         assert "package-src-0.1/src/package_src/module.py" in tar.getnames()
-
-
-def test_package_with_include(mocker):
-    # Patch git module to return specific excluded files
-    p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
-    p.return_value = [
-        str(
-            Path(__file__).parent
-            / "fixtures"
-            / "with-include"
-            / "extra_dir"
-            / "vcs_excluded.txt"
-        ),
-        str(
-            Path(__file__).parent
-            / "fixtures"
-            / "with-include"
-            / "extra_dir"
-            / "sub_pkg"
-            / "vcs_excluded.txt"
-        ),
-    ]
-    poetry = Poetry.create(project("with-include"))
-
-    builder = SdistBuilder(poetry, NullEnv(), NullIO())
-
-    # Check setup.py
-    setup = builder.build_setup()
-    setup_ast = ast.parse(setup)
-
-    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
-    ns = {}
-    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
-    assert "package_dir" not in ns
-    assert ns["packages"] == ["extra_dir", "extra_dir.sub_pkg", "package_with_include"]
-    assert ns["package_data"] == {"": ["*"]}
-    assert ns["modules"] == ["my_module"]
-
-    builder.build()
-
-    sdist = fixtures_dir / "with-include" / "dist" / "with-include-1.2.3.tar.gz"
-
-    assert sdist.exists()
-
-    with tarfile.open(str(sdist), "r") as tar:
-        names = tar.getnames()
-        assert len(names) == len(set(names))
-        assert "with-include-1.2.3/LICENSE" in names
-        assert "with-include-1.2.3/README.rst" in names
-        assert "with-include-1.2.3/extra_dir/__init__.py" in names
-        assert "with-include-1.2.3/extra_dir/vcs_excluded.txt" in names
-        assert "with-include-1.2.3/extra_dir/sub_pkg/__init__.py" in names
-        assert "with-include-1.2.3/extra_dir/sub_pkg/vcs_excluded.txt" not in names
-        assert "with-include-1.2.3/my_module.py" in names
-        assert "with-include-1.2.3/notes.txt" in names
-        assert "with-include-1.2.3/package_with_include/__init__.py" in names
-        assert "with-include-1.2.3/pyproject.toml" in names
-        assert "with-include-1.2.3/setup.py" in names
-        assert "with-include-1.2.3/PKG-INFO" in names
 
 
 def test_default_with_excluded_data(mocker):

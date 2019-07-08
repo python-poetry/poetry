@@ -1,19 +1,39 @@
-import os
+from cleo import option
 
 from .env_command import EnvCommand
 
 
 class InstallCommand(EnvCommand):
-    """
-    Installs the project dependencies.
 
-    install
-        { --no-dev : Do not install dev dependencies. }
-        { --dry-run : Outputs the operations but will not execute anything
-                      (implicitly enables --verbose). }
-        { --E|extras=* : Extra sets of dependencies to install. }
-        { --develop=* : Install given packages in development mode. }
-    """
+    name = "install"
+    description = "Installs the project dependencies."
+
+    options = [
+        option("no-dev", None, "Do not install dev dependencies."),
+        option(
+            "no-root", None, "Do not install the root package (the current project)."
+        ),
+        option(
+            "dry-run",
+            None,
+            "Outputs the operations but will not execute anything "
+            "(implicitly enables --verbose).",
+        ),
+        option(
+            "extras",
+            "E",
+            "Extra sets of dependencies to install.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "develop",
+            None,
+            "Install given packages in development mode.",
+            flag=False,
+            multiple=True,
+        ),
+    ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
 the current directory, processes it, and downloads and installs all the
@@ -28,10 +48,8 @@ exist it will look for <comment>pyproject.toml</> and do the same.
     def handle(self):
         from clikit.io import NullIO
         from poetry.installation import Installer
-        from poetry.masonry.builders import SdistBuilder
+        from poetry.masonry.builders import EditableBuilder
         from poetry.masonry.utils.module import ModuleOrPackageNotFound
-        from poetry.utils._compat import decode
-        from poetry.utils.env import NullEnv
 
         installer = Installer(
             self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
@@ -55,8 +73,11 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         if return_code != 0:
             return return_code
 
+        if self.option("no-root"):
+            return 0
+
         try:
-            builder = SdistBuilder(self.poetry, NullEnv(), NullIO())
+            builder = EditableBuilder(self.poetry, self._env, NullIO())
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
@@ -72,17 +93,6 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         if self.option("dry-run"):
             return 0
 
-        setup = self.poetry.file.parent / "setup.py"
-        has_setup = setup.exists()
+        builder.build()
 
-        if has_setup:
-            self.line("<warning>A setup.py file already exists. Using it.</warning>")
-        else:
-            with setup.open("w", encoding="utf-8") as f:
-                f.write(decode(builder.build_setup()))
-
-        try:
-            self.env.run("pip", "install", "-e", str(setup.parent), "--no-deps")
-        finally:
-            if not has_setup:
-                os.remove(str(setup))
+        return 0

@@ -20,6 +20,9 @@ from poetry.utils.env import NullEnv
 
 from tests.helpers import get_dependency
 from tests.helpers import get_package
+from tests.repositories.test_legacy_repository import (
+    MockRepository as MockLegacyRepository,
+)
 from tests.repositories.test_pypi_repository import MockRepository
 
 
@@ -76,6 +79,7 @@ class Locker(BaseLocker):
             package["python-versions"] = python_versions
 
         self._written_data = data
+        self._lock_data = data
 
 
 @pytest.fixture()
@@ -331,7 +335,7 @@ def test_run_whitelist_add(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_whitelist_remove(installer, locker, repo, package):
+def test_run_whitelist_remove(installer, locker, repo, package, installed):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -367,6 +371,7 @@ def test_run_whitelist_remove(installer, locker, repo, package):
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
     repo.add_package(package_b)
+    installed.add_package(package_b)
 
     package.add_dependency("A", "~1.0")
 
@@ -377,6 +382,9 @@ def test_run_whitelist_remove(installer, locker, repo, package):
     expected = fixture("remove")
 
     assert locker.written_data == expected
+    assert len(installer.installer.installs) == 1
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 1
 
 
 def test_add_with_sub_dependencies(installer, locker, repo, package):
@@ -1394,5 +1402,100 @@ def test_installer_required_extras_should_be_installed(
     installer.run()
 
     assert len(installer.installer.installs) == 2
+    assert len(installer.installer.updates) == 0
+    assert len(installer.installer.removals) == 0
+
+
+def test_update_multiple_times_with_split_dependencies_is_idempotent(
+    installer, locker, repo, package
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"B": ">=1.0"},
+                },
+                {
+                    "name": "B",
+                    "version": "1.0.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
+                    "checksum": [],
+                    "dependencies": {},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": []},
+            },
+        }
+    )
+
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency("A", "^1.0")
+
+    a = get_package("A", "1.0")
+    a.add_dependency("B", ">=1.0.1")
+    a.add_dependency("C", {"version": "^1.0", "python": "~2.7"})
+    a.add_dependency("C", {"version": "^2.0", "python": "^3.4"})
+    b101 = get_package("B", "1.0.1")
+    b101.python_versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+    b110 = get_package("B", "1.1.0")
+    b110.python_versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
+    repo.add_package(a)
+    repo.add_package(b101)
+    repo.add_package(b110)
+    repo.add_package(get_package("C", "1.0"))
+    repo.add_package(get_package("C", "2.0"))
+    expected = fixture("with-multiple-updates")
+
+    installer.update(True)
+    installer.run()
+
+    assert expected == locker.written_data
+
+    locker.mock_lock_data(locker.written_data)
+
+    installer.update(True)
+    installer.run()
+
+    assert expected == locker.written_data
+
+    locker.mock_lock_data(locker.written_data)
+
+    installer.update(True)
+    installer.run()
+
+    assert expected == locker.written_data
+
+
+def test_installer_can_install_dependencies_from_forced_source(
+    locker, package, installed, env
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
+
+    pool = Pool()
+    pool.add_repository(MockLegacyRepository())
+    pool.add_repository(MockRepository())
+
+    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 1
     assert len(installer.installer.updates) == 0
     assert len(installer.installer.removals) == 0

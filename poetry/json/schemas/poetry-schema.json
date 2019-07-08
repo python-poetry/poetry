@@ -50,6 +50,9 @@
         "authors": {
             "$ref": "#/definitions/authors"
         },
+        "maintainers": {
+            "$ref": "#/definitions/maintainers"
+        },
         "readme": {
             "type": "string",
             "description": "The path to the README file"
@@ -76,6 +79,13 @@
                     "from": {
                         "type": "string",
                         "description": "Where the source directory of the package resides."
+                    },
+                    "format": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {"type":  "array", "items": {"type":  "string"}}
+                        ],
+                        "description": "The format(s) for which the package must be included."
                     }
                 }
             }
@@ -154,12 +164,28 @@
                     }
                 }
             }
+        },
+        "urls": {
+            "type": "object",
+            "patternProperties": {
+                "^.+$": {
+                    "type": "string",
+                    "description": "The full url of the custom url."
+                }
+            }
         }
     },
     "definitions": {
         "authors": {
             "type": "array",
             "description": "List of authors that contributed to the package. This is typically the main maintainers, not the full list.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "maintainers": {
+            "type": "array",
+            "description": "List of maintainers, other than the original author(s), that upkeep the package.",
             "items": {
                 "type": "string"
             }
@@ -214,6 +240,10 @@
                     "type": "string",
                     "description": "The platform(s) for which the dependency should be installed."
                 },
+                "markers": {
+                    "type": "string",
+                    "description": "The PEP 508 compliant environment markers for which the dependency should be installed."
+                },
                 "allows-prereleases": {
                     "type": "boolean",
                     "description": "Whether the dependency allows prereleases or not."
@@ -228,6 +258,10 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "source": {
+                    "type": "string",
+                    "description": "The exclusive source used to search for this dependency."
                 }
             }
         },
@@ -262,6 +296,10 @@
                 "platform": {
                     "type": "string",
                     "description": "The platform(s) for which the dependency should be installed."
+                },
+                "markers": {
+                    "type": "string",
+                    "description": "The PEP 508 compliant environment markers for which the dependency should be installed."
                 },
                 "allows-prereleases": {
                     "type": "boolean",
@@ -299,6 +337,10 @@
                     "type": "string",
                     "description": "The platform(s) for which the dependency should be installed."
                 },
+                "markers": {
+                    "type": "string",
+                    "description": "The PEP 508 compliant environment markers for which the dependency should be installed."
+                },
                 "optional": {
                     "type": "boolean",
                     "description": "Whether the dependency is optional or not."
@@ -330,6 +372,10 @@
                 "platform": {
                     "type": "string",
                     "description": "The platform(s) for which the dependency should be installed."
+                },
+                "markers": {
+                    "type": "string",
+                    "description": "The PEP 508 compliant environment markers for which the dependency should be installed."
                 },
                 "optional": {
                     "type": "boolean",
@@ -393,6 +439,7 @@
         "extra-script": {
             "type": "object",
             "description": "A script that should be installed only if extras are activated.",
+            "additionalProperties": false,
             "properties": {
                 "callable": {
                     "$ref": "#/definitions/script"
@@ -408,6 +455,7 @@
         },
         "repository": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                 "name": {
                     "type": "string",
@@ -417,6 +465,14 @@
                     "type": "string",
                     "description": "The url of the repository",
                     "format": "uri"
+                },
+                "default": {
+                    "type": "boolean",
+                    "description": "Make this repository the default (disable PyPI)"
+                },
+                "secondary": {
+                    "type": "boolean",
+                    "description": "Declare this repository as secondary, i.e. it will only be looked up last for packages."
                 }
             }
         }

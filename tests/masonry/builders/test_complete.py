@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import ast
+import os
 import pytest
 import re
 import shutil
@@ -160,6 +162,8 @@ def test_complete():
     whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
 
     assert whl.exists()
+    if sys.platform != "win32":
+        assert (os.stat(str(whl)).st_mode & 0o777) == 0o644
 
     zip = zipfile.ZipFile(str(whl))
 
@@ -205,6 +209,8 @@ License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
+Maintainer: People Everywhere
+Maintainer-email: people@everywhere.com
 Requires-Python: >=3.6,<4.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
@@ -215,8 +221,9 @@ Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
-Requires-Dist: pendulum (>=1.4,<2.0); extra == "time"
+Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
 Project-URL: Documentation, https://poetry.eustace.io/docs
+Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
 Project-URL: Repository, https://github.com/sdispater/poetry
 Description-Content-Type: text/x-rst
 
@@ -304,6 +311,8 @@ License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
+Maintainer: People Everywhere
+Maintainer-email: people@everywhere.com
 Requires-Python: >=3.6,<4.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
@@ -314,8 +323,9 @@ Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
-Requires-Dist: pendulum (>=1.4,<2.0); extra == "time"
+Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
 Project-URL: Documentation, https://poetry.eustace.io/docs
+Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
 Project-URL: Repository, https://github.com/sdispater/poetry
 Description-Content-Type: text/x-rst
 
@@ -379,3 +389,85 @@ def test_package_src():
         assert "package_src/module.py" in zip.namelist()
     finally:
         zip.close()
+
+
+def test_package_with_include(mocker):
+    module_path = fixtures_dir / "with-include"
+
+    # Patch git module to return specific excluded files
+    p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
+    p.return_value = [
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "with-include"
+            / "extra_dir"
+            / "vcs_excluded.txt"
+        ),
+        str(
+            Path(__file__).parent
+            / "fixtures"
+            / "with-include"
+            / "extra_dir"
+            / "sub_pkg"
+            / "vcs_excluded.txt"
+        ),
+    ]
+    builder = CompleteBuilder(Poetry.create(module_path), NullEnv(), NullIO())
+    builder.build()
+
+    sdist = fixtures_dir / "with-include" / "dist" / "with-include-1.2.3.tar.gz"
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert len(names) == len(set(names))
+        assert "with-include-1.2.3/LICENSE" in names
+        assert "with-include-1.2.3/README.rst" in names
+        assert "with-include-1.2.3/extra_dir/__init__.py" in names
+        assert "with-include-1.2.3/extra_dir/vcs_excluded.txt" in names
+        assert "with-include-1.2.3/extra_dir/sub_pkg/__init__.py" in names
+        assert "with-include-1.2.3/extra_dir/sub_pkg/vcs_excluded.txt" not in names
+        assert "with-include-1.2.3/my_module.py" in names
+        assert "with-include-1.2.3/notes.txt" in names
+        assert "with-include-1.2.3/package_with_include/__init__.py" in names
+        assert "with-include-1.2.3/tests/__init__.py" in names
+        assert "with-include-1.2.3/pyproject.toml" in names
+        assert "with-include-1.2.3/setup.py" in names
+        assert "with-include-1.2.3/PKG-INFO" in names
+        assert "for_wheel_only/__init__" not in names
+
+        setup = tar.extractfile("with-include-1.2.3/setup.py").read()
+        setup_ast = ast.parse(setup)
+
+        setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+        ns = {}
+        exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+        assert "package_dir" not in ns
+        assert ns["packages"] == [
+            "extra_dir",
+            "extra_dir.sub_pkg",
+            "package_with_include",
+            "tests",
+        ]
+        assert ns["package_data"] == {"": ["*"]}
+        assert ns["modules"] == ["my_module"]
+
+    whl = module_path / "dist" / "with_include-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        names = z.namelist()
+        assert len(names) == len(set(names))
+        assert "with_include-1.2.3.dist-info/LICENSE" in names
+        assert "extra_dir/__init__.py" in names
+        assert "extra_dir/vcs_excluded.txt" in names
+        assert "extra_dir/sub_pkg/__init__.py" in names
+        assert "extra_dir/sub_pkg/vcs_excluded.txt" not in names
+        assert "for_wheel_only/__init__.py" in names
+        assert "my_module.py" in names
+        assert "notes.txt" in names
+        assert "package_with_include/__init__.py" in names
+        assert "with-include-1.2.3/tests/__init__.py" not in names

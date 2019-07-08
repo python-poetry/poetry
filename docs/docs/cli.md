@@ -124,9 +124,28 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
+By default `poetry` will install your project's package everytime you run `install`:
+
+```bash
+$ poetry install
+Installing dependencies from lock file
+
+Nothing to install or update
+
+  - Installing <your-package-name> (x.x.x)
+
+```
+
+If you want to skip this installation, use the `--no-root` option.
+
+```bash
+poetry install --no-root
+```
+
 ### Options
 
 * `--no-dev`: Do not install dev dependencies.
+* `--no-root`: Do not install the root package (your project).
 * `--extras (-E)`: Features to install (multiple values allowed).
 
 ## update
@@ -175,6 +194,16 @@ or make them point to a local directory or file:
 poetry add my-package --path ../my-package/
 poetry add my-package --path ../my-package/dist/my-package-0.1.0.tar.gz
 poetry add my-package --path ../my-package/dist/my_package-0.1.0.whl
+```
+
+Path dependencies pointing to a local directory will be installed in editable mode (i.e. setuptools "develop mode"). 
+It means that changes in the local directory will be reflected directly in environment.
+
+If you don't want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file:
+
+```
+[tool.poetry.dependencies]
+my-package = {path = "../my/path", develop = false}
 ```
 
 ### Options
@@ -355,8 +384,9 @@ poetry lock
 
 ## version
 
-This command bumps the version of the project
-and writes the new version back to `pyproject.toml`
+This command shows the current version of the project or bumps the version of 
+the project and writes the new version back to `pyproject.toml` if a valid
+bump rule is provided.
 
 The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.

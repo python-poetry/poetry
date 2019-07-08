@@ -7,11 +7,9 @@ from .env_command import EnvCommand
 
 
 class ShellCommand(EnvCommand):
-    """
-    Spawns a shell within the virtual environment.
 
-    shell [options]
-    """
+    name = "shell"
+    description = "Spawns a shell within the virtual environment."
 
     help = """The <info>shell</> command spawns a shell, according to the
 <comment>$SHELL</> environment variable, within the virtual environment.

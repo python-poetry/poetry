@@ -1,7 +1,7 @@
 import re
 
 from typing import List
-from typing import Union
+from typing import Optional
 
 from .empty_constraint import EmptyConstraint
 from .exceptions import ParseVersionError
@@ -19,14 +19,14 @@ class Version(VersionRange):
     def __init__(
         self,
         major,  # type: int
-        minor=None,  # type: Union[int, None]
-        patch=None,  # type: Union[int, None]
-        rest=None,  # type: Union[int, None]
-        pre=None,  # type: Union[str, None]
-        build=None,  # type: Union[str, None]
-        text=None,  # type: Union[str, None]
-        precision=None,  # type: Union[int, None]
-    ):  # type: () -> None
+        minor=None,  # type: Optional[int]
+        patch=None,  # type: Optional[int]
+        rest=None,  # type: Optional[int]
+        pre=None,  # type: Optional[str]
+        build=None,  # type: Optional[str]
+        text=None,  # type: Optional[str]
+        precision=None,  # type: Optional[int]
+    ):  # type: (...) -> None
         self._major = int(major)
         self._precision = None
         if precision is None:
@@ -196,7 +196,11 @@ class Version(VersionRange):
 
     @classmethod
     def parse(cls, text):  # type: (str) -> Version
-        match = COMPLETE_VERSION.match(text)
+        try:
+            match = COMPLETE_VERSION.match(text)
+        except TypeError:
+            match = None
+
         if match is None:
             raise ParseVersionError('Unable to parse "{}".'.format(text))
 

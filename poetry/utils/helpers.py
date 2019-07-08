@@ -6,8 +6,11 @@ import tempfile
 
 from contextlib import contextmanager
 from typing import List
+from typing import NoReturn
 from typing import Optional
-from typing import Union
+
+from keyring import delete_password, set_password, get_password
+from keyring.errors import KeyringError
 
 from poetry.config import Config
 from poetry.version import Version
@@ -83,13 +86,50 @@ def parse_requires(requires):  # type: (str) -> List[str]
     return requires_dist
 
 
+def keyring_service_name(repository_name):  # type: (str) -> str
+    return "{}-{}".format("poetry-repository", repository_name)
+
+
+def keyring_repository_password_get(
+    repository_name, username
+):  # type: (str, str) -> Optional[str]
+    try:
+        return get_password(keyring_service_name(repository_name), username)
+    except (RuntimeError, KeyringError):
+        return None
+
+
+def keyring_repository_password_set(
+    repository_name, username, password
+):  # type: (str, str, str) -> NoReturn
+    try:
+        set_password(keyring_service_name(repository_name), username, password)
+    except (RuntimeError, KeyringError):
+        raise RuntimeError("Failed to store password in keyring")
+
+
+def keyring_repository_password_del(
+    config, repository_name
+):  # type: (Config, str) -> NoReturn
+    try:
+        repo_auth = config.setting("http-basic.{}".format(repository_name))
+        if repo_auth and "username" in repo_auth:
+            delete_password(
+                keyring_service_name(repository_name), repo_auth["username"]
+            )
+    except (RuntimeError, KeyringError):
+        pass
+
+
 def get_http_basic_auth(
     config, repository_name
 ):  # type: (Config, str) -> Optional[tuple]
     repo_auth = config.setting("http-basic.{}".format(repository_name))
     if repo_auth:
-        return repo_auth["username"], repo_auth.get("password")
-
+        username, password = repo_auth["username"], repo_auth.get("password")
+        if password is None:
+            password = keyring_repository_password_get(repository_name, username)
+        return username, password
     return None
 
 

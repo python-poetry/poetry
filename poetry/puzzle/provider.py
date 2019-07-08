@@ -35,6 +35,7 @@ from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
 from poetry.utils.setup_reader import SetupReader
 
+from poetry.version.markers import MarkerUnion
 from poetry.vcs.git import Git
 
 from .exceptions import CompatibilityError
@@ -54,7 +55,12 @@ class Provider:
 
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(self, package, pool, io):  # type: (Package, Pool, ...) -> None
+    def __init__(
+        self,
+        package,  # type: Package
+        pool,  # type: Pool
+        io,
+    ):  # type: (...) -> None
         self._package = package
         self._pool = pool
         self._io = io
@@ -130,6 +136,7 @@ class Provider:
                 constraint,
                 extras=dependency.extras,
                 allow_prereleases=dependency.allows_prereleases(),
+                repository=dependency.source_name,
             )
 
             packages.sort(
@@ -449,7 +456,10 @@ class Provider:
             package = DependencyPackage(
                 package.dependency,
                 self._pool.package(
-                    package.name, package.version.text, extras=package.requires_extras
+                    package.name,
+                    package.version.text,
+                    extras=package.requires_extras,
+                    repository=package.dependency.source_name,
                 ),
             )
 
@@ -504,34 +514,19 @@ class Provider:
             for constraint, _deps in by_constraint.items():
                 new_markers = []
                 for dep in _deps:
-                    pep_508_dep = dep.to_pep_508(False)
-                    if ";" not in pep_508_dep:
+                    marker = dep.marker.without_extras()
+                    if marker.is_empty():
+                        # No marker or only extras
                         continue
 
-                    markers = pep_508_dep.split(";")[1].strip()
-                    if not markers:
-                        # One of the constraint has no markers
-                        # so this means we don't actually need to merge
-                        new_markers = []
-                        break
-
-                    new_markers.append("({})".format(markers))
+                    new_markers.append(marker)
 
                 if not new_markers:
-                    dependencies += _deps
                     continue
 
                 dep = _deps[0]
-                new_requirement = "{}; {}".format(
-                    dep.to_pep_508(False).split(";")[0], " or ".join(new_markers)
-                )
-                new_dep = dependency_from_pep_508(new_requirement)
-                if dep.is_optional() and not dep.is_activated():
-                    new_dep.deactivate()
-                else:
-                    new_dep.activate()
-
-                by_constraint[constraint] = [new_dep]
+                dep.marker = dep.marker.union(MarkerUnion(*new_markers))
+                by_constraint[constraint] = [dep]
 
                 continue
 

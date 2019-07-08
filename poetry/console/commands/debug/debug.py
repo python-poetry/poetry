@@ -4,10 +4,8 @@ from .resolve import DebugResolveCommand
 
 
 class DebugCommand(Command):
-    """
-    Debug various elements of Poetry.
 
-    debug
-    """
+    name = "debug"
+    description = "Debug various elements of Poetry."
 
     commands = [DebugInfoCommand().default(), DebugResolveCommand()]

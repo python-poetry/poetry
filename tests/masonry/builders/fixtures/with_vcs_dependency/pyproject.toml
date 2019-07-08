@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "with-vcs-dependency"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+homepage = "https://poetry.eustace.io/"
+repository = "https://github.com/sdispater/poetry"
+documentation = "https://poetry.eustace.io/docs"
+
+keywords = ["packaging", "dependency", "poetry"]
+
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+# Requirements
+[tool.poetry.dependencies]
+python = "^3.6"
+cleo = { git = "https://github.com/sdispater/cleo.git", branch = "master" }

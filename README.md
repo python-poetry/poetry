@@ -82,13 +82,16 @@ poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
+
+# Zsh (macOS/Homebrew)
+poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
 ```
 
 *Note:* you may need to restart your shell in order for the changes to take
 effect.
 
 For `zsh`, you must then add the following line in your `~/.zshrc` before
-`compinit`:
+`compinit` (not for homebrew setup):
 
 ```zsh
 fpath+=~/.zfunc
@@ -340,9 +343,28 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
+By default `poetry` will install your project's package everytime you run `install`:
+
+```bash
+$ poetry install
+Installing dependencies from lock file
+
+Nothing to install or update
+
+  - Installing <your-package-name> (x.x.x)
+
+```
+
+If you want to skip this installation, use the `--no-root` option.
+
+```bash
+poetry install --no-root
+```
+
 #### Options
 
 * `--no-dev`: Do not install dev dependencies.
+* `--no-root`: Do not install the root package (your project).
 * `-E|--extras`: Features to install (multiple values allowed).
 
 ### update
@@ -569,9 +591,9 @@ More identifiers are listed at the [SPDX Open Source License Registry](https://w
 
 #### authors
 
-The authors of the package. This is a list of authors and should contain at least one author.
+The authors of the package. **Required**
 
-Authors must be in the form `name <email>`.
+This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
 #### readme
 

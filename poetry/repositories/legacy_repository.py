@@ -16,11 +16,11 @@ except ImportError:
 
     unescape = HTMLParser().unescape
 
+from collections import defaultdict
 from typing import Generator
 from typing import Optional
 from typing import Union
 
-import html5lib
 import requests
 
 from cachecontrol import CacheControl
@@ -45,6 +45,12 @@ from poetry.version.markers import InvalidMarker
 from .auth import Auth
 from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
+
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import html5lib
 
 
 class Page:
@@ -156,6 +162,7 @@ class LegacyRepository(PyPiRepository):
         self._packages = []
         self._name = name
         self._url = url.rstrip("/")
+        self._auth = auth
         self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
 
         self._cache = CacheManager(
@@ -175,14 +182,25 @@ class LegacyRepository(PyPiRepository):
         )
 
         url_parts = urlparse.urlparse(self._url)
-        if not url_parts.username and auth:
-            self._session.auth = auth
+        if not url_parts.username and self._auth:
+            self._session.auth = self._auth
 
         self._disable_cache = disable_cache
 
     @property
-    def name(self):
-        return self._name
+    def authenticated_url(self):  # type: () -> str
+        if not self._auth:
+            return self.url
+
+        parsed = urlparse.urlparse(self.url)
+
+        return "{scheme}://{username}:{password}@{netloc}{path}".format(
+            scheme=parsed.scheme,
+            username=self._auth.auth.username,
+            password=self._auth.auth.password,
+            netloc=parsed.netloc,
+            path=parsed.path,
+        )
 
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False
@@ -335,6 +353,7 @@ class LegacyRepository(PyPiRepository):
             "requires_dist": [],
             "requires_python": None,
             "digests": [],
+            "_cache_version": str(self.CACHE_VERSION),
         }
 
         links = list(page.links_for_version(Version.parse(version)))
@@ -344,41 +363,23 @@ class LegacyRepository(PyPiRepository):
                     name, version
                 )
             )
-        urls = {}
+        urls = defaultdict(list)
         hashes = []
-        default_link = links[0]
         for link in links:
             if link.is_wheel:
-                m = wheel_file_re.match(link.filename)
-                python = m.group("pyver")
-                platform = m.group("plat")
-                if python == "py2.py3" and platform == "any":
-                    urls["bdist_wheel"] = link.url
-            elif link.filename.endswith(".tar.gz"):
-                urls["sdist"] = link.url
-            elif (
-                link.filename.endswith((".zip", ".bz2", ".xz", ".Z", ".tar"))
-                and "sdist" not in urls
+                urls["bdist_wheel"].append(link.url)
+            elif link.filename.endswith(
+                (".tar.gz", ".zip", ".bz2", ".xz", ".Z", ".tar")
             ):
-                urls["sdist"] = link.url
+                urls["sdist"].append(link.url)
 
             hash = link.hash
             if link.hash_name == "sha256":
                 hashes.append(hash)
+            elif hash:
+                hashes.append(link.hash_name + ":" + hash)
 
         data["digests"] = hashes
-
-        if not urls:
-            if default_link.is_wheel:
-                urls["bdist_wheel"] = default_link.url
-            elif default_link.filename.endswith(".tar.gz"):
-                urls["sdist"] = default_link.url
-            elif (
-                default_link.filename.endswith((".zip", ".bz2")) and "sdist" not in urls
-            ):
-                urls["sdist"] = default_link.url
-            else:
-                return data
 
         info = self._get_info_from_urls(urls)
 

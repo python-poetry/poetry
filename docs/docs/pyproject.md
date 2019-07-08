@@ -42,9 +42,15 @@ More identifiers are listed at the [SPDX Open Source License Registry](https://w
 
 ## authors
 
-The authors of the package. This is a list of authors and should contain at least one author.
+The authors of the package. **Required**
 
-Authors must be in the form `name <email>`.
+This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
+
+## maintainers
+
+The maintainers of the package. **Optional**
+
+This is a list of maintainers and should be distinct from authors. Maintainers may contain an email and be in the form `name <email>`.
 
 ## readme
 
@@ -98,7 +104,7 @@ you can specify the packages you want to include in the final distribution.
 [tool.poetry]
 # ...
 packages = [
-    { include = "mypackage" },
+    { include = "my_package" },
     { include = "extra_package/**/*.py" },
 ]
 ```
@@ -109,9 +115,23 @@ If your package is stored inside a "source" directory, you must specify it:
 [tool.poetry]
 # ...
 packages = [
-    { include = "mypackage", from = "lib" },
+    { include = "my_package", from = "lib" },
 ]
 ```
+
+If you want to restrict a package to a specific [build](#build) format you can specify
+it by using `format`:
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package" },
+    { include = "tests", format = "sdist" },
+]
+```
+
+From now on, only the `sdist` build archive will include the `tests` package.
 
 !!!note
 
@@ -123,7 +143,7 @@ packages = [
 
     ```toml
     packages = [
-        { include = "mypackage" },
+        { include = "my_package" },
         { include = "extra_package" },
     ]
     ```
@@ -236,6 +256,18 @@ To match the example in the setuptools documentation, you would use the followin
 [tool.poetry.plugins."blogtool.parsers"]
 ".rst" = "some_module:SomeClass"
 ```
+
+## `urls`
+
+In addition to the basic urls (`homepage`, `repository` and `documentation`), you can specify
+any custom url in the `urls` section.
+
+```toml
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/sdispater/poetry/issues"
+```
+
+If you publish you package on PyPI, they will appear in the `Project Links` section.
 
 ## Poetry and PEP-517
 

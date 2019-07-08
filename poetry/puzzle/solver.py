@@ -72,9 +72,11 @@ class Solver:
                                 pkg.source_reference = locked.source_reference
                                 break
 
-                        if (
-                            pkg.source_url != package.source_url
-                            or pkg.source_reference != package.source_reference
+                        if pkg.source_url != package.source_url or (
+                            pkg.source_reference != package.source_reference
+                            and not pkg.source_reference.startswith(
+                                package.source_reference
+                            )
                         ):
                             operations.append(Update(pkg, package))
                         else:
@@ -213,12 +215,13 @@ class Solver:
 
             marker = intersection
 
+        childrens = []  # type: List[Dict[str, Any]]
         graph = {
             "name": package.name,
             "category": category,
             "optional": optional,
             "marker": marker,
-            "children": [],  # type: List[Dict[str, Any]]
+            "children": childrens,
         }
 
         if previous_dep and previous_dep is not dep and previous_dep.name == dep.name:
@@ -257,7 +260,7 @@ class Solver:
                     # If there is already a child with this name
                     # we merge the requirements
                     existing = None
-                    for child in graph["children"]:
+                    for child in childrens:
                         if (
                             child["name"] == pkg.name
                             and child["category"] == dependency.category
@@ -278,7 +281,7 @@ class Solver:
                         )
                         continue
 
-                    graph["children"].append(child_graph)
+                    childrens.append(child_graph)
 
         return graph
 

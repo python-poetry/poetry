@@ -14,6 +14,7 @@ class ProjectPackage(Package):
         self.packages = []
         self.include = []
         self.exclude = []
+        self.custom_urls = {}
 
         if self._python_versions == "*":
             self._python_constraint = parse_constraint("~2.7 || >=3.4")
@@ -43,6 +44,14 @@ class ProjectPackage(Package):
         self._python_marker = parse_marker(
             create_nested_marker("python_version", self._python_constraint)
         )
+
+    @property
+    def urls(self):
+        urls = super(ProjectPackage, self).urls
+
+        urls.update(self.custom_urls)
+
+        return urls
 
     def clone(self):  # type: () -> ProjectPackage
         package = super(ProjectPackage, self).clone()

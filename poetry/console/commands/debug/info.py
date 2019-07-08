@@ -1,4 +1,3 @@
-import os
 import sys
 
 from clikit.args import StringArgs
@@ -7,11 +6,9 @@ from ..command import Command
 
 
 class DebugInfoCommand(Command):
-    """
-    Shows debug information.
 
-    info
-    """
+    name = "info"
+    description = "Shows debug information."
 
     def handle(self):
         poetry_python_version = ".".join(str(s) for s in sys.version_info[:3])

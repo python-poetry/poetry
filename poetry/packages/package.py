@@ -46,6 +46,7 @@ class Package(object):
         self.description = ""
 
         self._authors = []
+        self._maintainers = []
 
         self.homepage = None
         self.repository_url = None
@@ -54,6 +55,7 @@ class Package(object):
         self._license = None
         self.readme = None
 
+        self.source_name = ""
         self.source_type = ""
         self.source_reference = ""
         self.source_url = ""
@@ -134,6 +136,18 @@ class Package(object):
         return self._get_author()["email"]
 
     @property
+    def maintainers(self):  # type: () -> list
+        return self._maintainers
+
+    @property
+    def maintainer_name(self):  # type: () -> str
+        return self._get_maintainer()["name"]
+
+    @property
+    def maintainer_email(self):  # type: () -> str
+        return self._get_maintainer()["email"]
+
+    @property
     def all_requires(self):
         return self.requires + self.dev_requires
 
@@ -142,6 +156,17 @@ class Package(object):
             return {"name": None, "email": None}
 
         m = AUTHOR_REGEX.match(self._authors[0])
+
+        name = m.group("name")
+        email = m.group("email")
+
+        return {"name": name, "email": email}
+
+    def _get_maintainer(self):  # type: () -> dict
+        if not self._maintainers:
+            return {"name": None, "email": None}
+
+        m = AUTHOR_REGEX.match(self._maintainers[0])
 
         name = m.group("name")
         email = m.group("email")
@@ -244,6 +269,7 @@ class Package(object):
             optional = constraint.get("optional", False)
             python_versions = constraint.get("python")
             platform = constraint.get("platform")
+            markers = constraint.get("markers")
             allows_prereleases = constraint.get("allows-prereleases", False)
 
             if "git" in constraint:
@@ -297,27 +323,31 @@ class Package(object):
                     optional=optional,
                     category=category,
                     allows_prereleases=allows_prereleases,
+                    source_name=constraint.get("source"),
                 )
 
-            marker = AnyMarker()
-            if python_versions:
-                dependency.python_versions = python_versions
-                marker = marker.intersect(
-                    parse_marker(
-                        create_nested_marker(
-                            "python_version", dependency.python_constraint
+            if not markers:
+                marker = AnyMarker()
+                if python_versions:
+                    dependency.python_versions = python_versions
+                    marker = marker.intersect(
+                        parse_marker(
+                            create_nested_marker(
+                                "python_version", dependency.python_constraint
+                            )
                         )
                     )
-                )
 
-            if platform:
-                marker = marker.intersect(
-                    parse_marker(
-                        create_nested_marker(
-                            "sys_platform", parse_generic_constraint(platform)
+                if platform:
+                    marker = marker.intersect(
+                        parse_marker(
+                            create_nested_marker(
+                                "sys_platform", parse_generic_constraint(platform)
+                            )
                         )
                     )
-                )
+            else:
+                marker = parse_marker(markers)
 
             if not marker.is_any():
                 dependency.marker = marker
