@@ -1,3 +1,4 @@
+import io
 import os
 import shutil
 import tempfile
@@ -193,7 +194,7 @@ class PipInstaller(BaseInstaller):
             # We also need it for non-PEP-517 packages
             builder = SdistBuilder(Poetry.create(pyproject.parent), NullEnv(), NullIO())
 
-            with open(setup, "w", encoding="utf-8") as f:
+            with io.open(setup, "w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
 
         if package.develop:
