@@ -263,7 +263,8 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         if not package:
             # TODO: find similar
             raise ValueError(
-                "Could not find a matching version of package {}".format(name)
+                "Could not find a matching stable version of package {}. "
+                "Use --allow-prereleases to remove restrictions.".format(name)
             )
 
         return (package.pretty_name, selector.find_recommended_require_version(package))
