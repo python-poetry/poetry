@@ -17,6 +17,7 @@
 - Full environment markers are now supported for dependencies via the `markers` property.
 - Added the ability to specify git dependencies directly in `add`, it no longer requires the `--git` option.
 - Added the ability to specify path dependencies directly in `add`, it no longer requires the `--path` option.
+- Added the ability to add git and path dependencies via the `init` command.
 
 ### Changed
 

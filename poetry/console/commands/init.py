@@ -9,6 +9,8 @@ from typing import Tuple
 from typing import Union
 
 from cleo import option
+from tomlkit import inline_table
+from tomlkit import table
 
 from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
@@ -138,10 +140,20 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         requirements = {}
 
-        question = (
-            "Would you like to define your dependencies" " (require) interactively?"
+        question = "Would you like to define your main dependencies interactively?"
+        help_message = (
+            "You can specify a package in the following forms:\n"
+            "  - A single name (<b>requests</b>)\n"
+            "  - A name and a constraint (<b>requests ^2.23.0</b>)\n"
+            "  - A git url (<b>https://github.com/sdispater/poetry.git</b>)\n"
+            "  - A git url with a revision (<b>https://github.com/sdispater/poetry.git@develop</b>)\n"
+            "  - A file path (<b>../my-package/my-package.whl</b>)\n"
+            "  - A directory (<b>../my-package/</b>)\n"
         )
+        help_displayed = False
         if self.confirm(question, True):
+            self.line(help_message)
+            help_displayed = True
             requirements = self._format_requirements(
                 self._determine_requirements(self.option("dependency"))
             )
@@ -154,6 +166,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             " (require-dev) interactively"
         )
         if self.confirm(question, True):
+            if not help_displayed:
+                self.line(help_message)
+
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
             )
@@ -191,9 +206,20 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         if not requires:
             requires = []
 
-            package = self.ask("Search for package:")
+            package = self.ask("Add a package:")
             while package is not None:
-                matches = self._get_pool().search(package)
+                constraint = self._parse_requirements([package])[0]
+                if (
+                    "git" in constraint
+                    or "path" in constraint
+                    or "version" in constraint
+                ):
+                    self.line("Adding <info>{}</info>".format(package))
+                    requires.append(constraint)
+                    package = self.ask("\nAdd a package:")
+                    continue
+
+                matches = self._get_pool().search(constraint["name"])
 
                 if not matches:
                     self.line("<error>Unable to find package</error>")
@@ -217,7 +243,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                     )
 
                 # no constraint yet, determine the best version automatically
-                if package is not False and " " not in package:
+                if package is not False and "version" not in constraint:
                     question = self.create_question(
                         "Enter the version constraint to require "
                         "(or leave blank to use the latest version):"
@@ -225,23 +251,25 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                     question.attempts = 3
                     question.validator = lambda x: (x or "").strip() or False
 
-                    constraint = self.ask(question)
+                    package_constraint = self.ask(question)
 
-                    if constraint is None:
-                        _, constraint = self._find_best_version_for_package(package)
+                    if package_constraint is None:
+                        _, package_constraint = self._find_best_version_for_package(
+                            package
+                        )
 
                         self.line(
                             "Using version <info>{}</info> for <info>{}</info>".format(
-                                constraint, package
+                                package_constraint, package
                             )
                         )
 
-                    package += " {}".format(constraint)
+                    constraint["version"] = package_constraint
 
                 if package is not False:
-                    requires.append(package)
+                    requires.append(constraint)
 
-                package = self.ask("\nSearch for a package:")
+                package = self.ask("\nAdd a package:")
 
             return requires
 
@@ -356,47 +384,20 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         return result
 
-    def _parse_name_version_pairs(self, pairs):  # type: (list) -> list
-        result = []
-
-        for i in range(len(pairs)):
-            if pairs[i].startswith(("git+https://", "git+ssh://")):
-                url = pairs[i].lstrip("git+")
-                rev = None
-                if "@" in url:
-                    url, rev = url.split("@")
-
-                pair = {"name": url.split("/")[-1].rstrip(".git"), "git": url}
-                if rev:
-                    pair["rev"] = rev
-
-                result.append(pair)
-
-                continue
-
-            pair = re.sub("^([^=: ]+)[@=: ](.*)$", "\\1 \\2", pairs[i].strip())
-            pair = pair.strip()
-
-            if " " in pair:
-                name, version = pair.split(" ", 2)
-                result.append({"name": name, "version": version})
-            else:
-                result.append({"name": pair})
-
-        return result
-
     def _format_requirements(
         self, requirements
-    ):  # type: (List[str]) -> Dict[str, Union[str, Dict[str, str]]]
+    ):  # type: (List[Dict[str, str]]) -> Dict[str, Union[str, Dict[str, str]]]
         requires = {}
-        requirements = self._parse_name_version_pairs(requirements)
         for requirement in requirements:
-            if "version" not in requirement:
-                name = requirement.pop("name")
-                requires[name] = requirement
-                continue
+            name = requirement.pop("name")
+            if "version" in requirement and len(requirement) == 1:
+                constraint = requirement["version"]
+            else:
+                constraint = inline_table()
+                constraint.trivia.trail = "\n"
+                constraint.update(requirement)
 
-            requires[requirement["name"]] = requirement["version"]
+            requires[name] = constraint
 
         return requires
 
