@@ -192,6 +192,10 @@ class PipInstaller(BaseInstaller):
             with open(setup, "w") as f:
                 f.write(decode(builder.build_setup()))
 
+        if has_poetry:
+            for source in pyproject_content["tool"]["poetry"].get("source", []):
+                args += ["--extra-index-url", source["url"]]
+
         if package.develop:
             args.append("-e")
 
