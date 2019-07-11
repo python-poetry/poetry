@@ -3,10 +3,15 @@ from __future__ import unicode_literals
 
 import re
 
+from typing import Dict
 from typing import List
 from typing import Tuple
+from typing import Union
 
 from cleo import option
+
+from poetry.utils._compat import Path
+from poetry.utils._compat import OrderedDict
 
 from .command import Command
 from .env_command import EnvCommand
@@ -182,7 +187,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
     def _determine_requirements(
         self, requires, allow_prereleases=False
-    ):  # type: (List[str], bool) -> List[str]
+    ):  # type: (List[str], bool) -> List[Dict[str, str]]
         if not requires:
             requires = []
 
@@ -240,10 +245,13 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
             return requires
 
-        requires = self._parse_name_version_pairs(requires)
+        requires = self._parse_requirements(requires)
         result = []
         for requirement in requires:
-            if "version" not in requirement:
+            if "git" in requirement or "path" in requirement:
+                result.append(requirement)
+                continue
+            elif "version" not in requirement:
                 # determine the best version automatically
                 name, version = self._find_best_version_for_package(
                     requirement["name"], allow_prereleases=allow_prereleases
@@ -265,7 +273,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
                 requirement["name"] = name
 
-            result.append("{} {}".format(requirement["name"], requirement["version"]))
+            result.append(requirement)
 
         return result
 
@@ -287,11 +295,57 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         return (package.pretty_name, selector.find_recommended_require_version(package))
 
-    def _parse_name_version_pairs(self, pairs):  # type: (list) -> list
+    def _parse_requirements(
+        self, requirements
+    ):  # type: (List[str]) -> List[Dict[str, str]]
+        from poetry.puzzle.provider import Provider
+
         result = []
 
-        for i in range(len(pairs)):
-            pair = re.sub("^([^=: ]+)[=: ](.*)$", "\\1 \\2", pairs[i].strip())
+        try:
+            cwd = self.poetry.file.parent
+        except RuntimeError:
+            cwd = Path.cwd()
+
+        for requirement in requirements:
+            if requirement.startswith(("git+https://", "git+ssh://")):
+                url = requirement.lstrip("git+")
+                rev = None
+                if "@" in url:
+                    url, rev = url.split("@")
+
+                pair = OrderedDict(
+                    [("name", url.split("/")[-1].rstrip(".git")), ("git", url)]
+                )
+                if rev:
+                    pair["rev"] = rev
+
+                package = Provider.get_package_from_vcs(
+                    "git", url, reference=pair.get("rev")
+                )
+                pair["name"] = package.name
+                result.append(pair)
+
+                continue
+            elif cwd.joinpath(requirement).exists():
+                path = cwd.joinpath(requirement)
+                if path.is_file():
+                    package = Provider.get_package_from_file(path.resolve())
+                else:
+                    package = Provider.get_package_from_directory(path)
+
+                result.append(
+                    OrderedDict(
+                        [
+                            ("name", package.name),
+                            ("path", path.relative_to(cwd).as_posix()),
+                        ]
+                    )
+                )
+
+                continue
+
+            pair = re.sub("^([^=: ]+)[@=: ](.*)$", "\\1 \\2", requirement.strip())
             pair = pair.strip()
 
             if " " in pair:
@@ -302,10 +356,46 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         return result
 
-    def _format_requirements(self, requirements):  # type: (List[str]) -> dict
+    def _parse_name_version_pairs(self, pairs):  # type: (list) -> list
+        result = []
+
+        for i in range(len(pairs)):
+            if pairs[i].startswith(("git+https://", "git+ssh://")):
+                url = pairs[i].lstrip("git+")
+                rev = None
+                if "@" in url:
+                    url, rev = url.split("@")
+
+                pair = {"name": url.split("/")[-1].rstrip(".git"), "git": url}
+                if rev:
+                    pair["rev"] = rev
+
+                result.append(pair)
+
+                continue
+
+            pair = re.sub("^([^=: ]+)[@=: ](.*)$", "\\1 \\2", pairs[i].strip())
+            pair = pair.strip()
+
+            if " " in pair:
+                name, version = pair.split(" ", 2)
+                result.append({"name": name, "version": version})
+            else:
+                result.append({"name": pair})
+
+        return result
+
+    def _format_requirements(
+        self, requirements
+    ):  # type: (List[str]) -> Dict[str, Union[str, Dict[str, str]]]
         requires = {}
         requirements = self._parse_name_version_pairs(requirements)
         for requirement in requirements:
+            if "version" not in requirement:
+                name = requirement.pop("name")
+                requires[name] = requirement
+                continue
+
             requires[requirement["name"]] = requirement["version"]
 
         return requires
