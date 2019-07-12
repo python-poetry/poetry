@@ -186,6 +186,7 @@ You also can specify a constraint when adding a package, like so:
 
 ```bash
 poetry add pendulum@^2.0.5
+poetry add "pendulum>=2.0.5"
 ```
 
 If you try to add a package that is already present, you will get an error.
@@ -224,9 +225,18 @@ It means that changes in the local directory will be reflected directly in envir
 
 If you don't want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file:
 
-```
+```toml
 [tool.poetry.dependencies]
 my-package = {path = "../my/path", develop = false}
+```
+
+If the package(s) you want to install provide extras, you can specify them
+when adding the package:
+
+```bash
+poetry add requests[security,socks]
+poetry add "requests[security,socks]~=2.22.0"
+poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
 
 ### Options

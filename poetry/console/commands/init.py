@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
 import re
 
 from typing import Dict
@@ -10,7 +11,6 @@ from typing import Union
 
 from cleo import option
 from tomlkit import inline_table
-from tomlkit import table
 
 from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
@@ -336,6 +336,13 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             cwd = Path.cwd()
 
         for requirement in requirements:
+            requirement = requirement.strip()
+            extras = []
+            extras_m = re.search(r"\[([\w\d,-_]+)\]$", requirement)
+            if extras_m:
+                extras = [e.strip() for e in extras_m.group(1).split(",")]
+                requirement, _ = requirement.split("[")
+
             if requirement.startswith(("git+https://", "git+ssh://")):
                 url = requirement.lstrip("git+")
                 rev = None
@@ -348,6 +355,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 if rev:
                     pair["rev"] = rev
 
+                if extras:
+                    pair["extras"] = extras
+
                 package = Provider.get_package_from_vcs(
                     "git", url, reference=pair.get("rev")
                 )
@@ -355,7 +365,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 result.append(pair)
 
                 continue
-            elif cwd.joinpath(requirement).exists():
+            elif (os.path.sep in requirement or "/" in requirement) and cwd.joinpath(
+                requirement
+            ).exists():
                 path = cwd.joinpath(requirement)
                 if path.is_file():
                     package = Provider.get_package_from_file(path.resolve())
@@ -368,19 +380,47 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                             ("name", package.name),
                             ("path", path.relative_to(cwd).as_posix()),
                         ]
+                        + ([("extras", extras)] if extras else [])
                     )
                 )
 
                 continue
 
-            pair = re.sub("^([^=: ]+)[@=: ](.*)$", "\\1 \\2", requirement.strip())
+            pair = re.sub(
+                "^([^@=: ]+)(?:@|==|(?<![<>~!])=|:| )(.*)$", "\\1 \\2", requirement
+            )
             pair = pair.strip()
 
+            require = OrderedDict()
             if " " in pair:
                 name, version = pair.split(" ", 2)
-                result.append({"name": name, "version": version})
+                require["name"] = name
+                require["version"] = version
             else:
-                result.append({"name": pair})
+                m = re.match(
+                    "^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
+                )
+                if m:
+                    name, constraint = m.group(1), m.group(2)
+                    extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
+                    if extras_m:
+                        extras = [e.strip() for e in extras_m.group(1).split(",")]
+                        name, _ = name.split("[")
+
+                    require["name"] = name
+                    require["version"] = constraint
+                else:
+                    extras_m = re.search(r"\[([\w\d,-_]+)\]$", pair)
+                    if extras_m:
+                        extras = [e.strip() for e in extras_m.group(1).split(",")]
+                        pair, _ = pair.split("[")
+
+                    require["name"] = pair
+
+            if extras:
+                require["extras"] = extras
+
+            result.append(require)
 
         return result
 

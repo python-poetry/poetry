@@ -42,14 +42,14 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["cachy"] == "^0.2.0"
 
 
-def test_add_constraint(app, repo, installer):
+def test_add_equal_constraint(app, repo, installer):
     command = app.find("add")
     tester = CommandTester(command)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    tester.execute("cachy=0.1.0")
+    tester.execute("cachy==0.1.0")
 
     expected = """\
 
@@ -67,6 +67,67 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 1
+
+
+def test_add_greater_constraint(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy>=0.1.0")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing cachy (0.2.0)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 1
+
+
+def test_add_constraint_with_extras(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    cachy1 = get_package("cachy", "0.1.0")
+    cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
+    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
+    cachy1.requires = [msgpack_dep]
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(cachy1)
+    repo.add_package(get_package("msgpack-python", "0.5.3"))
+
+    tester.execute("cachy[msgpack]^0.1.0")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing msgpack-python (0.5.3)
+  - Installing cachy (0.1.0)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 2
 
 
 def test_add_constraint_dependencies(app, repo, installer):
@@ -162,6 +223,45 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 2
+
+
+def test_add_git_constraint_with_extras(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+    repo.add_package(get_package("tomlkit", "0.5.5"))
+
+    tester.execute("git+https://github.com/demo/demo.git[foo,bar]")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 4 installs, 0 updates, 0 removals
+
+  - Installing cleo (0.6.5)
+  - Installing pendulum (1.4.4)
+  - Installing tomlkit (0.5.5)
+  - Installing demo (0.1.2 9cf87a2)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 4
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "git": "https://github.com/demo/demo.git",
+        "extras": ["foo", "bar"],
+    }
 
 
 def test_add_directory_constraint(app, repo, installer, mocker):
@@ -304,7 +404,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
-def test_add_constraint_with_extras(app, repo, installer):
+def test_add_constraint_with_extras_option(app, repo, installer):
     command = app.find("add")
     tester = CommandTester(command)
 
