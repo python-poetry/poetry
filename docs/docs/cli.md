@@ -182,10 +182,33 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
+You also can specify a constraint when adding a package, like so:
+
+```bash
+poetry add pendulum@^2.0.5
+```
+
+If you try to add a package that is already present, you will get an error.
+However, if you specify a constraint, like above, the dependency will be updated
+by using the specified constraint. If you want to get the latest version of an already
+present dependency you can use the special `latest` constraint:
+
+```bash
+poetry add pendulum@latest
+```
+
 You can also add `git` dependencies:
 
 ```bash
 poetry add git+https://github.com/sdispater/pendulum.git
+```
+
+If you need to checkout a specific branch, tag or revision,
+you can specify it when using `add`:
+
+```bash
+poetry add git+https://github.com/sdispater/pendulum.git@develop
+poetry add git+https://github.com/sdispater/pendulum.git@2.0.5
 ```
 
 or make them point to a local directory or file:
