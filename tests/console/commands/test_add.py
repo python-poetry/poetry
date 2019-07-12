@@ -499,3 +499,55 @@ def test_add_should_display_an_error_when_adding_existing_package_with_no_constr
         tester.execute("foo")
 
     assert "Package foo is already present" == str(e.value)
+
+
+def test_add_chooses_prerelease_if_only_prereleases_are_available(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("foo", "1.2.3b0"))
+    repo.add_package(get_package("foo", "1.2.3b1"))
+
+    tester.execute("foo")
+
+    expected = """\
+Using version ^1.2.3-beta.1 for foo
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing foo (1.2.3b1)
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
+def test_add_preferes_stable_releases(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("foo", "1.2.3"))
+    repo.add_package(get_package("foo", "1.2.4b1"))
+
+    tester.execute("foo")
+
+    expected = """\
+Using version ^1.2.3 for foo
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing foo (1.2.3)
+"""
+
+    assert expected in tester.io.fetch_output()

@@ -321,7 +321,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 "Could not find a matching version of package {}".format(name)
             )
 
-        return (package.pretty_name, selector.find_recommended_require_version(package))
+        return package.pretty_name, selector.find_recommended_require_version(package)
 
     def _parse_requirements(
         self, requirements

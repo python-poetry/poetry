@@ -88,10 +88,10 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-pendulum = "^2.0"
+pendulum = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.6"
+pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
@@ -181,7 +181,7 @@ python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/demo.git"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.6"
+pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
@@ -231,7 +231,7 @@ python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/demo.git", rev = "develop"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.6"
+pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
@@ -281,7 +281,7 @@ python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/pyproject-demo.git"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.6"
+pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
@@ -331,7 +331,7 @@ python = "~2.7 || ^3.6"
 demo = {path = "../../fixtures/git/github.com/demo/demo"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.6"
+pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
@@ -383,7 +383,7 @@ python = "~2.7 || ^3.6"
 demo = {path = "../../fixtures/git/github.com/demo/pyproject-demo"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.6"
+pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
@@ -433,7 +433,7 @@ python = "~2.7 || ^3.6"
 demo = {path = "../../fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.6"
+pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()

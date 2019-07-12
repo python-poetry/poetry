@@ -29,6 +29,7 @@
 - Changed the way virtualenvs are stored (names now depend on the project's path).
 - The `--git` option of the `add` command has been removed.
 - The `--path` option of the `add` command has been removed.
+- The `add` command will now automatically select the latest prerelease if only prereleases are available.
 
 ### Fixed
 
