@@ -15,6 +15,9 @@
 - Added the ability to specify packages on a per-format basis.
 - Added support for custom urls in metadata.
 - Full environment markers are now supported for dependencies via the `markers` property.
+- Added the ability to specify git dependencies directly in `add`, it no longer requires the `--git` option.
+- Added the ability to specify path dependencies directly in `add`, it no longer requires the `--path` option.
+- Added the ability to add git and path dependencies via the `init` command.
 
 ### Changed
 
@@ -24,6 +27,9 @@
 - The `debug:resolve` command has been renamed to `debug resolve`.
 - The `self:update` command has been renamed to `self update`.
 - Changed the way virtualenvs are stored (names now depend on the project's path).
+- The `--git` option of the `add` command has been removed.
+- The `--path` option of the `add` command has been removed.
+- The `add` command will now automatically select the latest prerelease if only prereleases are available.
 
 ### Fixed
 

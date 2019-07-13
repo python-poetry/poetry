@@ -13,8 +13,6 @@ class AddCommand(EnvCommand, InitCommand):
     arguments = [argument("name", "Packages to add.", multiple=True)]
     options = [
         option("dev", "D", "Add package as development dependency."),
-        option("git", None, "The url of the Git repository.", flag=False),
-        option("path", None, "The path to a dependency.", flag=False),
         option(
             "extras",
             "E",
@@ -58,16 +56,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         packages = self.argument("name")
         is_dev = self.option("dev")
 
-        if (self.option("git") or self.option("path") or self.option("extras")) and len(
-            packages
-        ) > 1:
+        if self.option("extras") and len(packages) > 1:
             raise ValueError(
-                "You can only specify one package "
-                "when using the --git or --path options"
+                "You can only specify one package " "when using the --extras option"
             )
-
-        if self.option("git") and self.option("path"):
-            raise RuntimeError("--git and --path cannot be used at the same time")
 
         section = "dependencies"
         if is_dev:
@@ -83,32 +75,27 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         for name in packages:
             for key in poetry_content[section]:
                 if key.lower() == name.lower():
+                    pair = self._parse_requirements([name])[0]
+                    if "git" in pair or pair.get("version") == "latest":
+                        continue
+
                     raise ValueError("Package {} is already present".format(name))
 
-        if self.option("git") or self.option("path"):
-            requirements = {packages[0]: ""}
-        else:
-            requirements = self._determine_requirements(
-                packages, allow_prereleases=self.option("allow-prereleases")
-            )
-            requirements = self._format_requirements(requirements)
+        requirements = self._determine_requirements(
+            packages, allow_prereleases=self.option("allow-prereleases")
+        )
 
-            # validate requirements format
-            for constraint in requirements.values():
-                parse_constraint(constraint)
+        for _constraint in requirements:
+            if "version" in _constraint:
+                # Validate version constraint
+                parse_constraint(_constraint["version"])
 
-        for name, _constraint in requirements.items():
             constraint = inline_table()
-            constraint["version"] = _constraint
+            for name, value in _constraint.items():
+                if name == "name":
+                    continue
 
-            if self.option("git"):
-                del constraint["version"]
-
-                constraint["git"] = self.option("git")
-            elif self.option("path"):
-                del constraint["version"]
-
-                constraint["path"] = self.option("path")
+                constraint[name] = value
 
             if self.option("optional"):
                 constraint["optional"] = True
@@ -135,7 +122,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
 
-            poetry_content[section][name] = constraint
+            poetry_content[section][_constraint["name"]] = constraint
 
         # Write new content
         self.poetry.file.write(content)
@@ -152,7 +139,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
         installer.dry_run(self.option("dry-run"))
         installer.update(True)
-        installer.whitelist(requirements)
+        installer.whitelist([r["name"] for r in requirements])
 
         try:
             status = installer.run()
