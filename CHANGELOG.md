@@ -37,6 +37,16 @@
 - The `pyproject.toml` configuration is now properly validated.
 
 
+## [0.12.17] - 2019-07-03
+
+### Fixed
+
+- Fixed dependency resolution with circular dependencies.
+- Fixed encoding errors when reading files on Windows. (Thanks to [@vlcinsky](https://github.com/vlcinsky))
+- Fixed unclear errors when executing commands in virtual environments. (Thanks to [@Imaclean74](https://github.com/Imaclean74))
+- Fixed handling of `.venv` when it's not a directory. (Thanks to [@mpanarin](https://github.com/mpanarin))
+
+
 ## [0.12.16] - 2019-05-17
 
 ### Fixed
@@ -708,7 +718,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.16...develop
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.17...develop
+[0.12.17]: https://github.com/sdispater/poetry/releases/tag/0.12.17
 [0.12.16]: https://github.com/sdispater/poetry/releases/tag/0.12.16
 [0.12.15]: https://github.com/sdispater/poetry/releases/tag/0.12.15
 [0.12.14]: https://github.com/sdispater/poetry/releases/tag/0.12.14

@@ -549,7 +549,7 @@ class PyPiRepository(Repository):
 
                 requires = egg_info / "requires.txt"
                 if requires.exists():
-                    with requires.open() as f:
+                    with requires.open(encoding="utf-8") as f:
                         info["requires_dist"] = parse_requires(f.read())
 
                         return info
@@ -561,7 +561,7 @@ class PyPiRepository(Repository):
 
                 requires = egg_info / "requires.txt"
                 if requires.exists():
-                    with requires.open() as f:
+                    with requires.open(encoding="utf-8") as f:
                         info["requires_dist"] = parse_requires(f.read())
 
                         return info
