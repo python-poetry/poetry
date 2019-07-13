@@ -47,6 +47,7 @@ def test_env_get_in_project_venv(tmp_dir, config):
 
     shutil.rmtree(str(venv.path))
 
+
 CWD = Path(__file__).parent.parent / "fixtures" / "simple_project"
 
 
