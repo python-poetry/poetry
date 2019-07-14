@@ -448,22 +448,19 @@ def test_longform_license(app, mocker, poetry):
     p.return_value = Path(__file__)
 
     tester = CommandTester(command)
-    tester.set_inputs(
-        [
-            "my-package",  # Package name
-            "1.2.3",  # Version
-            "",  # Description
-            "n",  # Author
-            "Apache License 2.0",  # License
-            "",  # Python
-            "n",  # Interactive packages
-            "n",  # Interactive dev packages
-            "\n",  # Generate
-        ]
-    )
-    tester.execute([("command", command.name)])
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "",  # Description
+        "n",  # Author
+        "Apache License 2.0",  # License
+        "",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
 
-    output = tester.get_display(True)
     expected = """\
 [tool.poetry]
 name = "my-package"
@@ -473,9 +470,11 @@ authors = ["Your Name <you@example.com>"]
 license = "Apache License 2.0"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^{python}"
 
 [tool.poetry.dev-dependencies]
-"""
+""".format(
+        python=".".join(str(c) for c in sys.version_info[:2])
+    )
 
-    assert expected in output
+    assert expected in tester.io.fetch_output()
