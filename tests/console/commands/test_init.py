@@ -141,3 +141,45 @@ python = "^3.7"
 """
 
     assert expected in output
+
+
+def test_longform_license(app, mocker, poetry):
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__)
+
+    tester = CommandTester(command)
+    tester.set_inputs(
+        [
+            "my-package",  # Package name
+            "1.2.3",  # Version
+            "",  # Description
+            "n",  # Author
+            "Apache License 2.0",  # License
+            "",  # Python
+            "n",  # Interactive packages
+            "n",  # Interactive dev packages
+            "\n",  # Generate
+        ]
+    )
+    tester.execute([("command", command.name)])
+
+    output = tester.get_display(True)
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "Apache License 2.0"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+"""
+
+    assert expected in output

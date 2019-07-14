@@ -42,3 +42,9 @@ def test_classifier_no_classifer():
     license = license_by_id("Leptonica")
 
     assert license.classifier == "License :: Other/Proprietary License"
+
+
+def test_lookup_by_long_name():
+    license = license_by_id("Apache License 2.0")
+
+    assert license.name == "Apache License 2.0"
