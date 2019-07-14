@@ -46,9 +46,12 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     config.add_property("settings.virtualenvs.path", str(tmp_dir))
 
-    mocker.patch("subprocess.check_output", side_effect=check_output_wrapper())
     mocker.patch(
-        "subprocess.Popen.communicate",
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    mocker.patch(
+        "poetry.utils._compat.subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
@@ -106,11 +109,11 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     envs_file.write(doc)
 
     mocker.patch(
-        "subprocess.check_output",
+        "poetry.utils._compat.subprocess.check_output",
         side_effect=check_output_wrapper(Version(*current_python)),
     )
     mocker.patch(
-        "subprocess.Popen.communicate",
+        "poetry.utils._compat.subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
 
@@ -154,11 +157,11 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     )
 
     mocker.patch(
-        "subprocess.check_output",
+        "poetry.utils._compat.subprocess.check_output",
         side_effect=check_output_wrapper(Version(*current_python)),
     )
     mocker.patch(
-        "subprocess.Popen.communicate",
+        "poetry.utils._compat.subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
     mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)

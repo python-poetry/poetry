@@ -18,8 +18,8 @@ def test_remove_by_python_version(app, tmp_dir, config, mocker):
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
 
-    mocker.patch(
-        "subprocess.check_output",
+    check_output = mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
@@ -27,6 +27,7 @@ def test_remove_by_python_version(app, tmp_dir, config, mocker):
     tester = CommandTester(command)
     tester.execute("3.6")
 
+    assert check_output.called
     assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
 
     expected = "Deleted virtualenv: {}\n".format(
@@ -46,11 +47,6 @@ def test_remove_by_name(app, tmp_dir, config, mocker):
     )
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
-
-    mocker.patch(
-        "subprocess.check_output",
-        side_effect=check_output_wrapper(Version.parse("3.6.6")),
-    )
 
     command = app.find("env remove")
     tester = CommandTester(command)
