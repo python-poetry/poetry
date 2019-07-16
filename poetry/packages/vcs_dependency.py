@@ -71,11 +71,6 @@ class VCSDependency(Dependency):
 
         requirement += " @ {}+{}@{}".format(self._vcs, self._source, self.reference)
 
-        # add trailing space if 'extra' field is specified between URL
-        # and ';' added by dependency.to_pep_508_name()
-        if self.in_extras:
-            requirement += " "
-
         return requirement
 
     def is_vcs(self):  # type: () -> bool
@@ -88,6 +83,7 @@ class VCSDependency(Dependency):
         requirement = super().to_pep_508(with_extras)
         # add trailing space if 'extra' field is specified between URL
         # and ';'
-        requirement = requirement.replace("; extra", " ; extra")
+        if self.in_extras:
+            requirement = requirement.replace("; extra", " ; extra")
 
         return requirement
