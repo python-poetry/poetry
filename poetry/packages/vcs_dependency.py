@@ -80,7 +80,7 @@ class VCSDependency(Dependency):
         return True
 
     def to_pep_508(self, with_extras=True):  # type: (bool) -> str
-        requirement = super().to_pep_508(with_extras)
+        requirement = super(VCSDependency, self).to_pep_508(with_extras)
         # add trailing space if 'extra' field is specified between URL
         # and ';'
         if self.in_extras:
