@@ -8,7 +8,6 @@ import sysconfig
 import warnings
 
 from contextlib import contextmanager
-from subprocess import CalledProcessError
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -21,6 +20,8 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
+from poetry.utils._compat import subprocess
+from poetry.utils._compat import CalledProcessError
 from poetry.version.markers import BaseMarker
 
 
@@ -91,11 +92,14 @@ class EnvError(Exception):
 
 
 class EnvCommandError(EnvError):
-    def __init__(self, e):  # type: (CalledProcessError) -> None
-        message = "Command {} errored with the following output: \n{}".format(
-            e.cmd, decode(e.output)
-        )
+    def __init__(self, e, input=None):  # type: (CalledProcessError) -> None
+        self.e = e
 
+        message = "Command {} errored with the following return code {}, and output: \n{}".format(
+            e.cmd, e.returncode, decode(e.output)
+        )
+        if input:
+            message += "input was : {}".format(input)
         super(EnvCommandError, self).__init__(message)
 
 
@@ -184,7 +188,7 @@ class Env(object):
 
         if not in_venv:
             # Checking if a local virtualenv exists
-            if (cwd / ".venv").exists():
+            if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
                 venv = cwd / ".venv"
 
                 return VirtualEnv(venv)
@@ -361,20 +365,19 @@ class Env(object):
 
         if shell:
             cmd = list_to_shell_command(cmd)
-
         try:
             if self._is_windows:
                 kwargs["shell"] = True
 
             if input_:
-                p = subprocess.Popen(
+                output = subprocess.run(
                     cmd,
-                    stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
+                    input=encode(input_),
+                    check=True,
                     **kwargs
-                )
-                output = p.communicate(encode(input_))[0]
+                ).stdout
             elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
             else:
@@ -382,7 +385,7 @@ class Env(object):
                     cmd, stderr=subprocess.STDOUT, **kwargs
                 )
         except CalledProcessError as e:
-            raise EnvCommandError(e)
+            raise EnvCommandError(e, input=input_)
 
         return decode(output)
 

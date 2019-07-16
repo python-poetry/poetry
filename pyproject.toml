@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "0.12.16"
+version = "0.12.17"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -47,6 +47,8 @@ glob2 = { version = "^0.6", python = "~2.7 || ~3.4" }
 virtualenv = { version = "^16.0", python = "~2.7" }
 # functools32 is needed for Python 2.7
 functools32 = { version = "^3.2.3", python = "~2.7" }
+# Use subprocess32 for Python 2.7 and 3.4
+subprocess32 = { version = "^3.5", python = "~2.7 || ~3.4" }
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"

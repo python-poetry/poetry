@@ -33,7 +33,7 @@ from contextlib import closing
 from contextlib import contextmanager
 from functools import cmp_to_key
 from gzip import GzipFile
-from io import UnsupportedOperation
+from io import UnsupportedOperation, open
 
 try:
     from urllib.error import HTTPError
@@ -58,6 +58,10 @@ try:
 except ImportError:
     winreg = None
 
+try:
+    u = unicode
+except NameError:
+    u = str
 
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
@@ -191,6 +195,7 @@ POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
 BIN = """#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import glob
 import sys
 import os
@@ -205,7 +210,7 @@ if __name__ == "__main__":
     main()
 """
 
-BAT = '@echo off\r\npython "{poetry_bin}" %*\r\n'
+BAT = u('@echo off\r\npython "{poetry_bin}" %*\r\n')
 
 
 PRE_MESSAGE = """# Welcome to {poetry}!
@@ -387,7 +392,9 @@ class Installer:
 
         current_version = None
         if os.path.exists(POETRY_LIB):
-            with open(os.path.join(POETRY_LIB, "poetry", "__version__.py")) as f:
+            with open(
+                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
+            ) as f:
                 version_content = f.read()
 
             current_version_re = re.match(
@@ -563,15 +570,17 @@ class Installer:
         if WINDOWS:
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
                 f.write(
-                    BAT.format(
-                        poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
-                            os.environ["USERPROFILE"], "%USERPROFILE%"
+                    u(
+                        BAT.format(
+                            poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
+                                os.environ["USERPROFILE"], "%USERPROFILE%"
+                            )
                         )
                     )
                 )
 
-        with open(os.path.join(POETRY_BIN, "poetry"), "w") as f:
-            f.write(BIN)
+        with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
+            f.write(u(BIN))
 
         if not WINDOWS:
             # Making the file executable
@@ -583,7 +592,7 @@ class Installer:
             return
 
         with open(os.path.join(POETRY_HOME, "env"), "w") as f:
-            f.write(self.get_export_string())
+            f.write(u(self.get_export_string()))
 
     def update_path(self):
         """
@@ -608,7 +617,7 @@ class Installer:
 
             if addition not in content:
                 with open(profile, "a") as f:
-                    f.write(addition)
+                    f.write(u(addition))
 
                 updated.append(os.path.relpath(profile, HOME))
 
