@@ -12,6 +12,11 @@ class ExportCommand(Command):
     options = [
         option("format", "f", "Format to export to.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
+        option(
+            "without-markers",
+            None,
+            "Exclude package environment marker from the exported file.",
+        ),
         option("dev", None, "Include development dependencies."),
     ]
 
@@ -49,5 +54,6 @@ class ExportCommand(Command):
             fmt,
             self.poetry.file.parent,
             with_hashes=not self.option("without-hashes"),
+            with_markers=not self.option("without-markers"),
             dev=self.option("dev"),
         )

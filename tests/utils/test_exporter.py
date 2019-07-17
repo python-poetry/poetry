@@ -403,3 +403,81 @@ foo==1.2.3 \\
 """
 
     assert expected == content
+
+
+def test_exporter_can_export_requirements_txt_with_package_marker(tmp_dir, locker):
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": 'sys_platform == "darwin"',
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": []},
+            },
+        }
+    )
+    exporter = Exporter(locker)
+
+    exporter.export("requirements.txt", Path(tmp_dir), with_markers=True)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar==4.5.6
+foo==1.2.3;sys_platform == "darwin"
+"""
+
+    assert expected == content
+
+
+def test_exporter_can_export_requirements_txt_with_empty_package_marker(
+    tmp_dir, locker
+):
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": "",
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": []},
+            },
+        }
+    )
+    exporter = Exporter(locker)
+
+    exporter.export("requirements.txt", Path(tmp_dir), with_markers=True)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+foo==1.2.3
+"""
+
+    assert expected == content

@@ -14,18 +14,18 @@ class Exporter(object):
         self._lock = lock
 
     def export(
-        self, fmt, cwd, with_hashes=True, dev=False
-    ):  # type: (str, Path, bool, bool) -> None
+        self, fmt, cwd, with_hashes=True, with_markers=True, dev=False
+    ):  # type: (str, Path, bool, bool, bool) -> None
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
 
         getattr(self, "_export_{}".format(fmt.replace(".", "_")))(
-            cwd, with_hashes=with_hashes, dev=dev
+            cwd, with_hashes=with_hashes, with_markers=with_markers, dev=dev
         )
 
     def _export_requirements_txt(
-        self, cwd, with_hashes=True, dev=False
-    ):  # type: (Path, bool, bool) -> None
+        self, cwd, with_hashes=True, with_markers=True, dev=False
+    ):  # type: (Path, bool, bool, bool) -> None
         filepath = cwd / "requirements.txt"
         content = ""
 
@@ -44,6 +44,12 @@ class Exporter(object):
                 line += package.source_url
             else:
                 line = "{}=={}".format(package.name, package.version.text)
+                if with_markers:
+                    marker_str = str(package.marker)
+                    # need to test generated marker string for emptiness because there
+                    # is multiple types of empty marker
+                    if len(marker_str) > 0:
+                        line += ";" + marker_str
 
                 if package.source_type == "legacy" and package.source_url:
                     line += " \\\n"
