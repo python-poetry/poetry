@@ -712,7 +712,7 @@ class Env(object):
     def execute(self, bin, *args, **kwargs):
         bin = self._bin(bin)
 
-        return subprocess.call([bin] + list(args), **kwargs)
+        return os.execvp(bin, [bin] + list(args), **kwargs)
 
     def is_venv(self):  # type: () -> bool
         raise NotImplementedError()
