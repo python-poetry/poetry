@@ -84,6 +84,13 @@ class Solver:
                     elif package.version != pkg.version:
                         # Checking version
                         operations.append(Update(pkg, package))
+                    elif (
+                        package.source_type == "directory"
+                        and pkg.source_type != "directory"
+                    ):
+                        # If we are changing to installing from a local directory, force
+                        # the install to take place.
+                        operations.append(Update(pkg, package))
                     else:
                         operations.append(Install(package).skip("Already installed"))
 
