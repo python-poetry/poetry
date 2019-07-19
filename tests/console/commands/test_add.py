@@ -601,6 +601,41 @@ def test_add_should_display_an_error_when_adding_existing_package_with_no_constr
     assert "Package foo is already present" == str(e.value)
 
 
+def test_add_should_work_when_adding_existing_package_with_latest_constraint(
+    app, repo, installer
+):
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
+    app.poetry.file.write(content)
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("foo", "1.1.2"))
+
+    tester.execute("foo@latest")
+
+    expected = """\
+Using version ^1.1.2 for foo
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing foo (1.1.2)
+"""
+
+    assert expected in tester.io.fetch_output()
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "foo" in content["dependencies"]
+    assert content["dependencies"]["foo"] == "^1.1.2"
+
+
 def test_add_chooses_prerelease_if_only_prereleases_are_available(app, repo, installer):
     command = app.find("add")
     tester = CommandTester(command)

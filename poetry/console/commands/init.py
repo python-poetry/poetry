@@ -395,7 +395,8 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             if " " in pair:
                 name, version = pair.split(" ", 2)
                 require["name"] = name
-                require["version"] = version
+                if version != "latest":
+                    require["version"] = version
             else:
                 m = re.match(
                     "^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
