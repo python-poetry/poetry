@@ -31,5 +31,25 @@ def test_to_pep_508_in_extras():
     expected = (
         'poetry @ git+https://github.com/sdispater/poetry.git@master ; extra == "foo"'
     )
+    assert expected == dependency.to_pep_508()
+
+    dependency = VCSDependency(
+        "poetry", "git", "https://github.com/sdispater/poetry.git"
+    )
+    dependency.in_extras.append("foo")
+    dependency.extras.append("bar")
+
+    expected = 'poetry[bar] @ git+https://github.com/sdispater/poetry.git@master ; extra == "foo"'
+
+    assert expected == dependency.to_pep_508()
+
+    dependency = VCSDependency(
+        "poetry", "git", "https://github.com/sdispater/poetry.git", "b;ar;"
+    )
+    dependency.in_extras.append("foo;")
+
+    expected = (
+        'poetry @ git+https://github.com/sdispater/poetry.git@b;ar; ; extra == "foo;"'
+    )
 
     assert expected == dependency.to_pep_508()
