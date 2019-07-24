@@ -100,6 +100,8 @@ class Config:
         if self._file.exists():
             fd = str(self._file)
         else:
+            if not self._file.parent.exists():
+                os.mkdir(self._file.parent)
             umask_original = os.umask(umask)
             try:
                 fd = os.open(str(self._file), os.O_WRONLY | os.O_CREAT, mode)
