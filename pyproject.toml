@@ -67,3 +67,7 @@ httpretty = "^0.9.6"
 
 [tool.poetry.scripts]
 poetry = "poetry.console:main"
+
+[tool.dephell.main]
+from = {format = "poetry", path = "pyproject.toml"}
+to = {format = "setuppy", path = "setup.py"}
