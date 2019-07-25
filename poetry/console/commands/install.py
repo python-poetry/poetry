@@ -37,6 +37,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             self.poetry.package,
             self.poetry.locker,
             self.poetry.pool,
+            local_config=self.poetry.local_config
         )
 
         extras = []
@@ -64,7 +65,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             # not following the structure expected by Poetry
             # If this is a true error it will be picked up later by build anyway.
             return 0
-
+        
         self.line(
             "  - Installing <info>{}</info> (<comment>{}</comment>)".format(
                 self.poetry.package.pretty_name, self.poetry.package.pretty_version

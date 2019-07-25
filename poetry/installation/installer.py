@@ -29,12 +29,14 @@ class Installer:
         locker,  # type: Locker
         pool,  # type: Pool
         installed=None,  # type: (Union[InstalledRepository, None])
+        local_config=None
     ):
         self._io = io
         self._env = env
         self._package = package
         self._locker = locker
         self._pool = pool
+        self._local_config = local_config
 
         self._dry_run = False
         self._update = False
@@ -510,7 +512,7 @@ class Installer:
         return _extra_packages(extra_packages)
 
     def _get_installer(self):  # type: () -> BaseInstaller
-        return PipInstaller(self._env, self._io)
+        return PipInstaller(self._env, self._io, vendor_path=self._local_config.get('vendor_path'))
 
     def _get_installed(self):  # type: () -> InstalledRepository
         return InstalledRepository.load(self._env)
