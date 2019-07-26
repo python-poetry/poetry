@@ -1,13 +1,8 @@
 import logging
 import os
-import tarfile
-import zipfile
 
-import pkginfo
 
-from bz2 import BZ2File
 from collections import defaultdict
-from gzip import GzipFile
 from typing import Dict
 from typing import List
 from typing import Union
@@ -40,6 +35,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
+from poetry.utils.inspector import Inspector
 from poetry.utils.patterns import wheel_file_re
 from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
@@ -76,6 +72,7 @@ class PyPiRepository(Repository):
         self._session = CacheControl(
             session(), cache=FileCache(str(release_cache_dir / "_http"))
         )
+        self._inspector = Inspector()
 
         super(PyPiRepository, self).__init__()
 
@@ -456,30 +453,14 @@ class PyPiRepository(Repository):
             "Downloading wheel: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
             level="debug",
         )
-        info = {"summary": "", "requires_python": None, "requires_dist": None}
 
         filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
 
         with temporary_directory() as temp_dir:
-            filepath = os.path.join(temp_dir, filename)
-            self._download(url, filepath)
+            filepath = Path(temp_dir) / filename
+            self._download(url, str(filepath))
 
-            try:
-                meta = pkginfo.Wheel(filepath)
-            except ValueError:
-                # Unable to determine dependencies
-                # Assume none
-                return info
-
-        if meta.summary:
-            info["summary"] = meta.summary or ""
-
-        info["requires_python"] = meta.requires_python
-
-        if meta.requires_dist:
-            info["requires_dist"] = meta.requires_dist
-
-        return info
+            return self._inspector.inspect_wheel(filepath)
 
     def _get_info_from_sdist(
         self, url
@@ -488,7 +469,6 @@ class PyPiRepository(Repository):
             "Downloading sdist: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
             level="debug",
         )
-        info = {"summary": "", "requires_python": None, "requires_dist": None}
 
         filename = os.path.basename(urlparse.urlparse(url).path)
 
@@ -496,120 +476,7 @@ class PyPiRepository(Repository):
             filepath = Path(temp_dir) / filename
             self._download(url, str(filepath))
 
-            try:
-                meta = pkginfo.SDist(str(filepath))
-                if meta.summary:
-                    info["summary"] = meta.summary
-
-                if meta.requires_python:
-                    info["requires_python"] = meta.requires_python
-
-                if meta.requires_dist:
-                    info["requires_dist"] = list(meta.requires_dist)
-
-                    return info
-            except ValueError:
-                # Unable to determine dependencies
-                # We pass and go deeper
-                pass
-
-            # Still not dependencies found
-            # So, we unpack and introspect
-            suffix = filepath.suffix
-            gz = None
-            if suffix == ".zip":
-                tar = zipfile.ZipFile(str(filepath))
-            else:
-                if suffix == ".bz2":
-                    gz = BZ2File(str(filepath))
-                    suffixes = filepath.suffixes
-                    if len(suffixes) > 1 and suffixes[-2] == ".tar":
-                        suffix = ".tar.bz2"
-                else:
-                    gz = GzipFile(str(filepath))
-                    suffix = ".tar.gz"
-
-                tar = tarfile.TarFile(str(filepath), fileobj=gz)
-
-            try:
-                tar.extractall(os.path.join(temp_dir, "unpacked"))
-            finally:
-                if gz:
-                    gz.close()
-
-                tar.close()
-
-            unpacked = Path(temp_dir) / "unpacked"
-            sdist_dir = unpacked / Path(filename).name.rstrip(suffix)
-
-            # Checking for .egg-info at root
-            eggs = list(sdist_dir.glob("*.egg-info"))
-            if eggs:
-                egg_info = eggs[0]
-
-                requires = egg_info / "requires.txt"
-                if requires.exists():
-                    with requires.open(encoding="utf-8") as f:
-                        info["requires_dist"] = parse_requires(f.read())
-
-                        return info
-
-            # Searching for .egg-info in sub directories
-            eggs = list(sdist_dir.glob("**/*.egg-info"))
-            if eggs:
-                egg_info = eggs[0]
-
-                requires = egg_info / "requires.txt"
-                if requires.exists():
-                    with requires.open(encoding="utf-8") as f:
-                        info["requires_dist"] = parse_requires(f.read())
-
-                        return info
-
-            # Still nothing, try reading (without executing it)
-            # the setup.py file.
-            try:
-                setup_info = self._inspect_sdist_with_setup(sdist_dir)
-
-                for key, value in info.items():
-                    if value:
-                        continue
-
-                    info[key] = setup_info[key]
-
-                return info
-            except Exception as e:
-                self._log(
-                    "An error occurred when reading setup.py or setup.cfg: {}".format(
-                        str(e)
-                    ),
-                    "warning",
-                )
-                return info
-
-    def _inspect_sdist_with_setup(self, sdist_dir):
-        info = {"requires_python": None, "requires_dist": None}
-
-        result = SetupReader.read_from_directory(sdist_dir)
-        requires = ""
-        for dep in result["install_requires"]:
-            requires += dep + "\n"
-
-        if result["extras_require"]:
-            requires += "\n"
-
-        for extra_name, deps in result["extras_require"].items():
-            requires += "[{}]\n".format(extra_name)
-
-            for dep in deps:
-                requires += dep + "\n"
-
-            requires += "\n"
-
-        info["requires_dist"] = parse_requires(requires)
-        info["requires_python"] = result["python_requires"]
-
-        return info
+            return self._inspector.inspect_sdist(filepath)
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = get(url, stream=True)

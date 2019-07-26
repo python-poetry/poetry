@@ -18,8 +18,8 @@ from .constraints import parse_constraint as parse_generic_constraint
 from .dependency import Dependency
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
+from .url_dependency import URLDependency
 from .vcs_dependency import VCSDependency
-from .utils.utils import convert_markers
 from .utils.utils import create_nested_marker
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
@@ -111,7 +111,7 @@ class Package(object):
 
     @property
     def full_pretty_version(self):
-        if self.source_type in ["file", "directory"]:
+        if self.source_type in ["file", "directory", "url"]:
             return "{} {}".format(self._pretty_version, self.source_url)
 
         if self.source_type not in ["hg", "git"]:
@@ -314,6 +314,8 @@ class Package(object):
                         base=self.root_dir,
                         develop=constraint.get("develop", True),
                     )
+            elif "url" in constraint:
+                dependency = URLDependency(name, constraint["url"], category=category)
             else:
                 version = constraint["version"]
 

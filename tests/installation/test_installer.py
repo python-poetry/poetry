@@ -1499,3 +1499,18 @@ def test_installer_can_install_dependencies_from_forced_source(
     assert len(installer.installer.installs) == 1
     assert len(installer.installer.updates) == 0
     assert len(installer.installer.removals) == 0
+
+
+def test_run_installs_with_url_file(installer, locker, repo, package):
+    url = "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    package.add_dependency("demo", {"url": url})
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    installer.run()
+
+    expected = fixture("with-url-dependency")
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 2

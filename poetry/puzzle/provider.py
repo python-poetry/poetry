@@ -17,6 +17,7 @@ from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
 from poetry.packages import Package
 from poetry.packages import PackageCollection
+from poetry.packages import URLDependency
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
 
@@ -30,10 +31,13 @@ from poetry.repositories import Pool
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
+from poetry.utils._compat import urlparse
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import temporary_directory
 from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
+from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
 from poetry.utils.toml_file import TomlFile
 
@@ -63,6 +67,7 @@ class Provider:
         self._package = package
         self._pool = pool
         self._io = io
+        self._inspector = Inspector()
         self._python_constraint = package.python_constraint
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
@@ -127,6 +132,8 @@ class Provider:
             packages = self.search_for_file(dependency)
         elif dependency.is_directory():
             packages = self.search_for_directory(dependency)
+        elif dependency.is_url():
+            packages = self.search_for_url(dependency)
         else:
             constraint = dependency.constraint
 
@@ -234,18 +241,18 @@ class Provider:
 
     @classmethod
     def get_package_from_file(cls, file_path):  # type: (Path) -> Package
-        if file_path.suffix == ".whl":
-            meta = pkginfo.Wheel(str(file_path))
-        else:
-            # Assume sdist
-            meta = pkginfo.SDist(str(file_path))
+        info = Inspector().inspect(file_path)
+        if not info["name"]:
+            raise RuntimeError(
+                "Unable to determine the package name of {}".format(file_path)
+            )
 
-        package = Package(meta.name, meta.version)
+        package = Package(info["name"], info["version"])
         package.source_type = "file"
         package.source_url = file_path.as_posix()
 
-        package.description = meta.summary
-        for req in meta.requires_dist:
+        package.description = info["summary"]
+        for req in info["requires_dist"]:
             dep = dependency_from_pep_508(req)
             for extra in dep.in_extras:
                 if extra not in package.extras:
@@ -256,8 +263,8 @@ class Provider:
             if not dep.is_optional():
                 package.requires.append(dep)
 
-        if meta.requires_python:
-            package.python_versions = meta.requires_python
+        if info["requires_python"]:
+            package.python_versions = info["requires_python"]
 
         return package
 
@@ -428,6 +435,40 @@ class Provider:
 
         return package
 
+    def search_for_url(self, dependency):  # type: (URLDependency) -> List[Package]
+        package = self.get_package_from_url(dependency.url)
+
+        if dependency.name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                "The dependency name for {} does not match the actual package's name: {}".format(
+                    dependency.name, package.name
+                )
+            )
+
+        for extra in dependency.extras:
+            if extra in package.extras:
+                for dep in package.extras[extra]:
+                    dep.activate()
+
+                package.requires += package.extras[extra]
+
+        return [package]
+
+    @classmethod
+    def get_package_from_url(cls, url):  # type: (str) -> Package
+        with temporary_directory() as temp_dir:
+            temp_dir = Path(temp_dir)
+            file_name = os.path.basename(urlparse.urlparse(url).path)
+            Inspector().download(url, temp_dir / file_name)
+
+            package = cls.get_package_from_file(temp_dir / file_name)
+
+        package.source_type = "url"
+        package.source_url = url
+
+        return package
+
     def incompatibilities_for(
         self, package
     ):  # type: (DependencyPackage) -> List[Incompatibility]
@@ -495,6 +536,7 @@ class Provider:
         if not package.is_root() and package.source_type not in {
             "directory",
             "file",
+            "url",
             "git",
         }:
             package = DependencyPackage(

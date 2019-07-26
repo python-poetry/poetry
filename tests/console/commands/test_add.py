@@ -446,6 +446,86 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
+def test_add_url_constraint_wheel(app, repo, installer, mocker):
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__) / ".."
+
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    tester.execute(
+        "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    )
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.0 https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 2
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "url": "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    }
+
+
+def test_add_url_constraint_wheel_with_extras(app, repo, installer, mocker):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+    repo.add_package(get_package("tomlkit", "0.5.5"))
+
+    tester.execute(
+        "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
+    )
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 4 installs, 0 updates, 0 removals
+
+  - Installing cleo (0.6.5)
+  - Installing pendulum (1.4.4)
+  - Installing tomlkit (0.5.5)
+  - Installing demo (0.1.0 https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 4
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "url": "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl",
+        "extras": ["foo", "bar"],
+    }
+
+
 def test_add_constraint_with_python(app, repo, installer):
     command = app.find("add")
     tester = CommandTester(command)

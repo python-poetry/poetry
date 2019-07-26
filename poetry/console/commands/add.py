@@ -76,7 +76,11 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             for key in poetry_content[section]:
                 if key.lower() == name.lower():
                     pair = self._parse_requirements([name])[0]
-                    if "git" in pair or pair.get("version") == "latest":
+                    if (
+                        "git" in pair
+                        or "url" in pair
+                        or pair.get("version") == "latest"
+                    ):
                         continue
 
                     raise ValueError("Package {} is already present".format(name))

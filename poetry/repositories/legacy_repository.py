@@ -39,6 +39,7 @@ from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.inspector import Inspector
 from poetry.utils.patterns import wheel_file_re
 from poetry.version.markers import InvalidMarker
 
@@ -163,8 +164,8 @@ class LegacyRepository(PyPiRepository):
         self._name = name
         self._url = url.rstrip("/")
         self._auth = auth
+        self._inspector = Inspector()
         self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
-
         self._cache = CacheManager(
             {
                 "default": "releases",
