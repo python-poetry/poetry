@@ -153,6 +153,7 @@ class PipInstaller(BaseInstaller):
         return name
 
     def install_directory(self, package):
+        import shutil
         from poetry.masonry.builder import SdistBuilder
         from poetry.poetry import Poetry
         from poetry.utils._compat import decode
@@ -166,7 +167,8 @@ class PipInstaller(BaseInstaller):
 
         args = ["install", "--no-deps", "-U"]
 
-        pyproject = TomlFile(os.path.join(req, "pyproject.toml"))
+        pyproject_path = os.path.join(req, "pyproject.toml")
+        pyproject = TomlFile(pyproject_path)
 
         has_poetry = False
         has_build_system = False
@@ -189,8 +191,12 @@ class PipInstaller(BaseInstaller):
             # We also need it for non-PEP-517 packages
             builder = SdistBuilder(Poetry.create(pyproject.parent), NullEnv(), NullIO())
 
+            # Generate a temporary setup.py file
             with open(setup, "w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
+
+            # Rename pyproject.toml so it is not picked up by pip
+            shutil.move(pyproject_path, pyproject_path + ".tmp")
 
         if package.develop:
             args.append("-e")
@@ -201,7 +207,11 @@ class PipInstaller(BaseInstaller):
             return self.run(*args)
         finally:
             if not has_setup and os.path.exists(setup):
+                # Remove the temporary setup.py file
                 os.remove(setup)
+
+                # Restore pyproject.toml
+                shutil.move(pyproject_path + ".tmp", pyproject_path)
 
     def install_git(self, package):
         from poetry.packages import Package
