@@ -1,3 +1,4 @@
+import collections
 import os
 import re
 import shutil
@@ -12,7 +13,7 @@ from typing import Optional
 from keyring import delete_password, set_password, get_password
 from keyring.errors import KeyringError
 
-from poetry.config import Config
+from poetry.config.config import Config
 from poetry.version import Version
 
 _canonicalize_regex = re.compile("[-_]+")
@@ -112,7 +113,7 @@ def keyring_repository_password_del(
     config, repository_name
 ):  # type: (Config, str) -> NoReturn
     try:
-        repo_auth = config.setting("http-basic.{}".format(repository_name))
+        repo_auth = config.get("http-basic.{}".format(repository_name))
         if repo_auth and "username" in repo_auth:
             delete_password(
                 keyring_service_name(repository_name), repo_auth["username"]
@@ -124,7 +125,7 @@ def keyring_repository_password_del(
 def get_http_basic_auth(
     config, repository_name
 ):  # type: (Config, str) -> Optional[tuple]
-    repo_auth = config.setting("http-basic.{}".format(repository_name))
+    repo_auth = config.get("http-basic.{}".format(repository_name))
     if repo_auth:
         username, password = repo_auth["username"], repo_auth.get("password")
         if password is None:
@@ -140,3 +141,15 @@ def _on_rm_error(func, path, exc_info):
 
 def safe_rmtree(path):
     shutil.rmtree(path, onerror=_on_rm_error)
+
+
+def merge_dicts(d1, d2):
+    for k, v in d2.items():
+        if (
+            k in d1
+            and isinstance(d1[k], dict)
+            and isinstance(d2[k], collections.Mapping)
+        ):
+            merge_dicts(d1[k], d2[k])
+        else:
+            d1[k] = d2[k]
