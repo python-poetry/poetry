@@ -39,8 +39,18 @@ If you do not specify the password you will be prompted to write it.
 
 !!!note
 
-    To publish to PyPI, you can set your credentials for the repository
-    named `pypi`:
+    To publish to PyPI, you can set your credentials for the repository named `pypi`.
+
+    Note that it is recommended to use [API tokens](https://pypi.org/help/#apitoken)
+    when uploading packages to PyPI.
+    Once you have created a new token, you can tell Poetry to use it:
+
+    ```bash
+    poetry config pypi-token.pypi my-token
+    ```
+
+    If you still want to use you username and password, you can do so with the following
+    call to `config`.
 
     ```bash
     poetry config http-basic.pypi username password
@@ -56,6 +66,7 @@ Keyring support is enabled using the [keyring library](https://pypi.org/project/
 Alternatively, you can use environment variables to provide the credentials:
 
 ```bash
+export POETRY_PYPI_TOKEN_PYPI=my-token
 export POETRY_HTTP_BASIC_PYPI_USERNAME=username
 export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
 ```
