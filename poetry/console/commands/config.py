@@ -24,6 +24,7 @@ class ConfigCommand(Command):
     options = [
         option("list", None, "List configuration settings."),
         option("unset", None, "Unset configuration setting."),
+        option("local", None, "Set/Get from the project's local configuration."),
     ]
 
     help = """This command allows you to edit the poetry config settings and repositories.
@@ -34,8 +35,7 @@ To add a repository:
 
 To remove a repository (repo is a short alias for repositories):
 
-    <comment>poetry config --unset repo.foo</comment>
-"""
+    <comment>poetry config --unset repo.foo</comment>"""
 
     @property
     def unique_config_values(self):
@@ -70,20 +70,24 @@ To remove a repository (repo is a short alias for repositories):
         from poetry.utils._compat import basestring
         from poetry.utils.toml_file import TomlFile
 
-        config_file = Path(CONFIG_DIR) / "config.toml"
-
-        config_file = TomlFile(config_file)
+        config = Config()
+        config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
         config_source = ConfigSource(config_file)
+        config.merge(config_source.file.read())
 
         auth_config_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
         auth_config_source = ConfigSource(auth_config_file, auth_config=True)
 
+        local_config_file = TomlFile(self.poetry.file.parent / "poetry.toml")
+        if local_config_file.exists():
+            config.merge(local_config_file.read())
+
+        if self.option("local"):
+            config_source = ConfigSource(local_config_file)
+
         if not config_file.exists():
             config_file.path.parent.mkdir(parents=True, exist_ok=True)
             config_file.touch(mode=0o0600)
-
-        config = Config()
-        config.merge(config_source.file.read())
 
         if self.option("list"):
             self._list_configuration(config.all(), config.raw())

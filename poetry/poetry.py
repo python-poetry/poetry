@@ -203,6 +203,10 @@ class Poetry:
         if config_file.exists():
             config.merge(config_file.read())
 
+        local_config_file = TomlFile(poetry_file.parent / "poetry.toml")
+        if local_config_file.exists():
+            config.merge(local_config_file.read())
+
         # Load global auth config
         auth_config_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
         if auth_config_file.exists():

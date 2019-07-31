@@ -196,3 +196,10 @@ The Poetry configuration is invalid:
   - 'description' is a required property
 """
     assert expected == str(e.value)
+
+
+def test_poetry_with_local_config(fixture_dir):
+    poetry = Poetry.create(fixture_dir("with_local_config"))
+
+    assert not poetry.config.get("virtualenvs.in-project")
+    assert not poetry.config.get("virtualenvs.create")
