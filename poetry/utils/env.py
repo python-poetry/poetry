@@ -713,7 +713,11 @@ class Env(object):
         bin = self._bin(bin)
 
         if not self._is_windows:
-            return os.execvp(bin, [bin] + list(args))
+            args = [bin] + list(args)
+            if "env" in kwargs:
+                return os.execvpe(bin, args, kwargs["env"])
+            else:
+                return os.execvp(bin, args)
         else:
             exe = subprocess.Popen([bin] + list(args), **kwargs)
             exe.communicate()
