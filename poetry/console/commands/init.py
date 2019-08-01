@@ -14,6 +14,8 @@ from tomlkit import inline_table
 
 from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
+from poetry.utils._compat import urlparse
+from poetry.utils.helpers import temporary_directory
 
 from .command import Command
 from .env_command import EnvCommand
@@ -149,6 +151,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             "  - A git url with a revision (<b>https://github.com/sdispater/poetry.git@develop</b>)\n"
             "  - A file path (<b>../my-package/my-package.whl</b>)\n"
             "  - A directory (<b>../my-package/</b>)\n"
+            "  - An url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
         )
         help_displayed = False
         if self.confirm(question, True):
@@ -211,6 +214,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 constraint = self._parse_requirements([package])[0]
                 if (
                     "git" in constraint
+                    or "url" in constraint
                     or "path" in constraint
                     or "version" in constraint
                 ):
@@ -276,7 +280,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         requires = self._parse_requirements(requires)
         result = []
         for requirement in requires:
-            if "git" in requirement or "path" in requirement:
+            if "git" in requirement or "url" in requirement or "path" in requirement:
                 result.append(requirement)
                 continue
             elif "version" not in requirement:
@@ -343,28 +347,42 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 extras = [e.strip() for e in extras_m.group(1).split(",")]
                 requirement, _ = requirement.split("[")
 
-            if requirement.startswith(("git+https://", "git+ssh://")):
-                url = requirement.lstrip("git+")
-                rev = None
-                if "@" in url:
-                    url, rev = url.split("@")
+            url_parsed = urlparse.urlparse(requirement)
+            if url_parsed.scheme and url_parsed.netloc:
+                # Url
+                if url_parsed.scheme in ["git+https", "git+ssh"]:
+                    url = requirement.lstrip("git+")
+                    rev = None
+                    if "@" in url:
+                        url, rev = url.split("@")
 
-                pair = OrderedDict(
-                    [("name", url.split("/")[-1].rstrip(".git")), ("git", url)]
-                )
-                if rev:
-                    pair["rev"] = rev
+                    pair = OrderedDict(
+                        [("name", url.split("/")[-1].rstrip(".git")), ("git", url)]
+                    )
+                    if rev:
+                        pair["rev"] = rev
 
-                if extras:
-                    pair["extras"] = extras
+                    if extras:
+                        pair["extras"] = extras
 
-                package = Provider.get_package_from_vcs(
-                    "git", url, reference=pair.get("rev")
-                )
-                pair["name"] = package.name
-                result.append(pair)
+                    package = Provider.get_package_from_vcs(
+                        "git", url, reference=pair.get("rev")
+                    )
+                    pair["name"] = package.name
+                    result.append(pair)
 
-                continue
+                    continue
+                elif url_parsed.scheme in ["http", "https"]:
+                    package = Provider.get_package_from_url(requirement)
+
+                    pair = OrderedDict(
+                        [("name", package.name), ("url", package.source_url)]
+                    )
+                    if extras:
+                        pair["extras"] = extras
+
+                    result.append(pair)
+                    continue
             elif (os.path.sep in requirement or "/" in requirement) and cwd.joinpath(
                 requirement
             ).exists():

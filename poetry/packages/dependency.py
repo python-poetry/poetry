@@ -171,6 +171,9 @@ class Dependency(object):
     def is_directory(self):
         return False
 
+    def is_url(self):
+        return False
+
     def accepts(self, package):  # type: (poetry.packages.Package) -> bool
         """
         Determines if the given package matches this dependency.

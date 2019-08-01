@@ -20,6 +20,7 @@ from .utils.utils import is_installable_dir
 from .utils.utils import is_url
 from .utils.utils import path_to_url
 from .utils.utils import strip_extras
+from .url_dependency import URLDependency
 from .vcs_dependency import VCSDependency
 
 
