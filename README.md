@@ -546,6 +546,21 @@ This command locks (without installing) the dependencies specified in `pyproject
 poetry lock
 ```
 
+### export
+
+This command exports the lock file to other formats.
+
+```bash
+poetry export -f requirements.txt > requirements.txt
+```
+
+#### Options
+
+* `--format (-f)`: the format to export to.  Currently, only
+  `requirements.txt` is supported.
+* `--output (-o)`: the name of the output file.  If omitted, print to standard
+  output.
+
 
 ## The `pyproject.toml` file
 

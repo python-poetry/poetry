@@ -1,3 +1,7 @@
+from typing import Optional
+
+from clikit.api.io import IO
+
 from poetry.packages.locker import Locker
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
@@ -14,19 +18,18 @@ class Exporter(object):
         self._lock = lock
 
     def export(
-        self, fmt, cwd, with_hashes=True, dev=False
-    ):  # type: (str, Path, bool, bool) -> None
+        self, fmt, cwd, output, with_hashes=True, dev=False
+    ):  # type: (str, Path, Union[IO, str], bool, bool) -> None
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
 
         getattr(self, "_export_{}".format(fmt.replace(".", "_")))(
-            cwd, with_hashes=with_hashes, dev=dev
+            cwd, output, with_hashes=with_hashes, dev=dev
         )
 
     def _export_requirements_txt(
-        self, cwd, with_hashes=True, dev=False
-    ):  # type: (Path, bool, bool) -> None
-        filepath = cwd / "requirements.txt"
+        self, cwd, output, with_hashes=True, dev=False
+    ):  # type: (Path, Union[IO, str], bool, bool) -> None
         content = ""
 
         for package in sorted(
@@ -59,5 +62,15 @@ class Exporter(object):
             line += "\n"
             content += line
 
-        with filepath.open("w", encoding="utf-8") as f:
-            f.write(decode(content))
+        self._output(content, cwd, output)
+
+    def _output(
+        self, content, cwd, output
+    ):  # type: (str, Path, Union[IO, str]) -> None
+        decoded = decode(content)
+        try:
+            output.write(decoded)
+        except AttributeError:
+            filepath = cwd / output
+            with filepath.open("w", encoding="utf-8") as f:
+                f.write(decoded)

@@ -427,15 +427,20 @@ The new version should ideally be a valid semver string or a valid bump rule:
 
 This command exports the lock file to other formats.
 
-If the lock file does not exist, it will be created automatically.
-
 ```bash
-poetry export -f requirements.txt
+poetry export -f requirements.txt > requirements.txt
 ```
 
 !!!note
 
     Only the `requirements.txt` format is currently supported.
+
+### Options
+
+* `--format (-f)`: the format to export to.  Currently, only
+  `requirements.txt` is supported.
+* `--output (-o)`: the name of the output file.  If omitted, print to standard
+  output.
 
 ## env
 

@@ -69,7 +69,7 @@ def test_export_exports_requirements_txt_file_locks_if_no_lock_file(app, repo):
 
     repo.add_package(get_package("foo", "1.0.0"))
 
-    tester.execute("--format requirements.txt")
+    tester.execute("--format requirements.txt --output requirements.txt")
 
     requirements = app.poetry.file.parent / "requirements.txt"
     assert requirements.exists()
@@ -99,7 +99,7 @@ def test_export_exports_requirements_txt_uses_lock_file(app, repo):
     command = app.find("export")
     tester = CommandTester(command)
 
-    tester.execute("--format requirements.txt")
+    tester.execute("--format requirements.txt --output requirements.txt")
 
     requirements = app.poetry.file.parent / "requirements.txt"
     assert requirements.exists()
@@ -131,3 +131,24 @@ def test_export_fails_on_invalid_format(app, repo):
 
     with pytest.raises(ValueError):
         tester.execute("--format invalid")
+
+
+def test_export_prints_to_stdout_by_default(app, repo):
+    repo.add_package(get_package("foo", "1.0.0"))
+
+    command = app.find("lock")
+    tester = CommandTester(command)
+    tester.execute()
+
+    assert app.poetry.locker.lock.exists()
+
+    command = app.find("export")
+    tester = CommandTester(command)
+
+    tester.execute("--format requirements.txt")
+
+    expected = """\
+foo==1.0.0
+"""
+
+    assert expected == tester.io.fetch_output()

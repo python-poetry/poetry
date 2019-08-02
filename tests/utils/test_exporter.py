@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from poetry.packages import Locker as BaseLocker
@@ -61,7 +63,7 @@ def test_exporter_can_export_requirements_txt_with_standard_packages(tmp_dir, lo
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir))
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -104,7 +106,7 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir))
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -149,7 +151,9 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir), with_hashes=False)
+    exporter.export(
+        "requirements.txt", Path(tmp_dir), "requirements.txt", with_hashes=False
+    )
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -192,7 +196,7 @@ def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir))
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -235,7 +239,7 @@ def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir), dev=True)
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -276,7 +280,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, locker)
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir))
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -310,7 +314,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, l
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir))
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -344,7 +348,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, locker
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir))
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -389,7 +393,7 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, locker)
     )
     exporter = Exporter(locker)
 
-    exporter.export("requirements.txt", Path(tmp_dir), dev=True)
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -403,3 +407,42 @@ foo==1.2.3 \\
 """
 
     assert expected == content
+
+
+def test_exporter_exports_requirements_txt_to_standard_output(tmp_dir, locker, capsys):
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": []},
+            },
+        }
+    )
+    exporter = Exporter(locker)
+
+    exporter.export("requirements.txt", Path(tmp_dir), sys.stdout)
+
+    out, err = capsys.readouterr()
+    expected = """\
+bar==4.5.6
+foo==1.2.3
+"""
+
+    assert out == expected

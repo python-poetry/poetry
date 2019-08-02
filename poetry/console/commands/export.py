@@ -11,6 +11,7 @@ class ExportCommand(Command):
 
     options = [
         option("format", "f", "Format to export to.", flag=False),
+        option("output", "o", "The name of the output file.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
         option("dev", None, "Include development dependencies."),
     ]
@@ -20,6 +21,8 @@ class ExportCommand(Command):
 
         if fmt not in Exporter.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
+
+        output = self.option("output")
 
         locker = self.poetry.locker
         if not locker.is_locked():
@@ -48,6 +51,7 @@ class ExportCommand(Command):
         exporter.export(
             fmt,
             self.poetry.file.parent,
+            output or self.io,
             with_hashes=not self.option("without-hashes"),
             dev=self.option("dev"),
         )
