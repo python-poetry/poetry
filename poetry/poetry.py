@@ -7,8 +7,9 @@ from typing import Dict
 from typing import List
 
 from .__version__ import __version__
-from .config import Config
+from .config.config import Config
 from .json import validate_object
+from .locations import CONFIG_DIR
 from .packages import Dependency
 from .packages import Locker
 from .packages import Package
@@ -33,13 +34,13 @@ class Poetry:
         local_config,  # type: dict
         package,  # type: Package
         locker,  # type: Locker
+        config,  # type: Config
     ):
         self._file = TomlFile(file)
         self._package = package
         self._local_config = local_config
         self._locker = locker
-        self._config = Config.create("config.toml")
-        self._auth_config = Config.create("auth.toml")
+        self._config = config
 
         # Configure sources
         self._pool = Pool()
@@ -79,10 +80,6 @@ class Poetry:
     @property
     def config(self):  # type: () -> Config
         return self._config
-
-    @property
-    def auth_config(self):  # type: () -> Config
-        return self._auth_config
 
     @classmethod
     def create(cls, cwd):  # type: (Path) -> Poetry
@@ -200,7 +197,22 @@ class Poetry:
 
         locker = Locker(poetry_file.parent / "poetry.lock", local_config)
 
-        return cls(poetry_file, local_config, package, locker)
+        config = Config()
+        # Load global config
+        config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
+        if config_file.exists():
+            config.merge(config_file.read())
+
+        local_config_file = TomlFile(poetry_file.parent / "poetry.toml")
+        if local_config_file.exists():
+            config.merge(local_config_file.read())
+
+        # Load global auth config
+        auth_config_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
+        if auth_config_file.exists():
+            config.merge(auth_config_file.read())
+
+        return cls(poetry_file, local_config, package, locker, config)
 
     def create_legacy_repository(
         self, source
@@ -214,7 +226,7 @@ class Poetry:
 
         name = source["name"]
         url = source["url"]
-        credentials = get_http_basic_auth(self._auth_config, name)
+        credentials = get_http_basic_auth(self._config, name)
         if not credentials:
             return LegacyRepository(name, url)
 

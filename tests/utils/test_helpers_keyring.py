@@ -109,13 +109,13 @@ def test_keyring_repository_password_del(
     keyring, config, repository, username, password
 ):
     keyring.set_password(keyring_service_name(repository), username, password)
-    config.add_property("http-basic.{}.username".format(repository), username)
+    config.merge({"http-basic": {repository: {"username": username}}})
     keyring_repository_password_del(config, repository)
     assert keyring.get_password(keyring_service_name(repository), username) is None
 
 
 def test_keyring_repository_password_del_not_set(keyring, config, repository, username):
-    config.add_property("http-basic.{}.username".format(repository), username)
+    config.merge({"http-basic": {repository: {"username": username}}})
     keyring_repository_password_del(config, repository)
     assert keyring.get_password(keyring_service_name(repository), username) is None
 

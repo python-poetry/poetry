@@ -36,15 +36,11 @@ def check_output_wrapper(version=Version.parse("3.7.1")):
     return check_output
 
 
-def test_activate_activates_non_existing_virtualenv_no_envs_file(
-    app, tmp_dir, config, mocker
-):
-    app.poetry._config = config
-
+def test_activate_activates_non_existing_virtualenv_no_envs_file(app, tmp_dir, mocker):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
         "poetry.utils._compat.subprocess.check_output",
@@ -87,10 +83,8 @@ Using virtualenv: {}
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
-    app, tmp_dir, config, mocker
+    app, tmp_dir, mocker
 ):
-    app.poetry._config = config
-
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     venv_name = EnvManager.generate_env_name(
@@ -100,7 +94,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     python_minor = ".".join(str(v) for v in current_python[:2])
     python_patch = ".".join(str(v) for v in current_python)
 
-    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
     (Path(tmp_dir) / "{}-py{}".format(venv_name, python_minor)).mkdir()
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
@@ -131,10 +125,8 @@ Using virtualenv: {}
 
 
 def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
-    app, tmp_dir, config, mocker
+    app, tmp_dir, mocker
 ):
-    app.poetry._config = config
-
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     venv_name = EnvManager.generate_env_name(
@@ -143,7 +135,7 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     current_python = sys.version_info[:3]
     python_minor = ".".join(str(v) for v in current_python[:2])
 
-    config.add_property("settings.virtualenvs.path", str(tmp_dir))
+    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
         "poetry.utils.env.EnvManager._env",

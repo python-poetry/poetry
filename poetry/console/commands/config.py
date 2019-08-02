@@ -10,14 +10,6 @@ from poetry.utils.helpers import (
 )
 from .command import Command
 
-TEMPLATE = """[settings]
-
-[repositories]
-"""
-
-AUTH_TEMPLATE = """[http-basic]
-"""
-
 
 class ConfigCommand(Command):
 
@@ -32,6 +24,7 @@ class ConfigCommand(Command):
     options = [
         option("list", None, "List configuration settings."),
         option("unset", None, "Unset configuration setting."),
+        option("local", None, "Set/Get from the project's local configuration."),
     ]
 
     help = """This command allows you to edit the poetry config settings and repositories.
@@ -42,16 +35,7 @@ To add a repository:
 
 To remove a repository (repo is a short alias for repositories):
 
-    <comment>poetry config --unset repo.foo</comment>
-"""
-
-    def __init__(self):
-        from poetry.config import Config
-
-        super(ConfigCommand, self).__init__()
-
-        self._settings_config = Config.create("config.toml")
-        self._auth_config = Config.create("auth.toml")
+    <comment>poetry config --unset repo.foo</comment>"""
 
     @property
     def unique_config_values(self):
@@ -59,20 +43,17 @@ To remove a repository (repo is a short alias for repositories):
         from poetry.utils._compat import Path
 
         boolean_validator = lambda val: val in {"true", "false", "1", "0"}
-        boolean_normalizer = lambda val: True if val in ["true", "1"] else False
+        boolean_normalizer = lambda val: val in ["true", "1"]
 
         unique_config_values = {
-            "settings.virtualenvs.create": (
-                boolean_validator,
-                boolean_normalizer,
-                True,
+            "cache-dir": (
+                str,
+                lambda val: str(Path(val)),
+                str(Path(CACHE_DIR) / "virtualenvs"),
             ),
-            "settings.virtualenvs.in-project": (
-                boolean_validator,
-                boolean_normalizer,
-                False,
-            ),
-            "settings.virtualenvs.path": (
+            "virtualenvs.create": (boolean_validator, boolean_normalizer, True),
+            "virtualenvs.in-project": (boolean_validator, boolean_normalizer, False),
+            "virtualenvs.path": (
                 str,
                 lambda val: str(Path(val)),
                 str(Path(CACHE_DIR) / "virtualenvs"),
@@ -81,23 +62,35 @@ To remove a repository (repo is a short alias for repositories):
 
         return unique_config_values
 
-    def initialize(self, i, o):
-        from poetry.utils._compat import decode
-
-        # Create config file if it does not exist
-        if not self._settings_config.file.exists():
-            self._settings_config.file.parent.mkdir(parents=True, exist_ok=True)
-            with self._settings_config.file.open("w", encoding="utf-8") as f:
-                f.write(decode(TEMPLATE))
-
-        if not self._auth_config.file.exists():
-            self._auth_config.file.parent.mkdir(parents=True, exist_ok=True)
-            with self._auth_config.file.open("w", encoding="utf-8") as f:
-                f.write(decode(AUTH_TEMPLATE))
-
     def handle(self):
+        from poetry.config.config import Config
+        from poetry.config.config_source import ConfigSource
+        from poetry.locations import CONFIG_DIR
+        from poetry.utils._compat import Path
+        from poetry.utils._compat import basestring
+        from poetry.utils.toml_file import TomlFile
+
+        config = Config()
+        config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
+        config_source = ConfigSource(config_file)
+        config.merge(config_source.file.read())
+
+        auth_config_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
+        auth_config_source = ConfigSource(auth_config_file, auth_config=True)
+
+        local_config_file = TomlFile(self.poetry.file.parent / "poetry.toml")
+        if local_config_file.exists():
+            config.merge(local_config_file.read())
+
+        if self.option("local"):
+            config_source = ConfigSource(local_config_file)
+
+        if not config_file.exists():
+            config_file.path.parent.mkdir(parents=True, exist_ok=True)
+            config_file.touch(mode=0o0600)
+
         if self.option("list"):
-            self._list_configuration(self._settings_config.content)
+            self._list_configuration(config.all(), config.raw())
 
             return 0
 
@@ -114,12 +107,10 @@ To remove a repository (repo is a short alias for repositories):
             if m:
                 if not m.group(1):
                     value = {}
-                    if self._settings_config.setting("repositories") is not None:
-                        value = self._settings_config.setting("repositories")
+                    if config.get("repositories") is not None:
+                        value = config.get("repositories")
                 else:
-                    repo = self._settings_config.setting(
-                        "repositories.{}".format(m.group(1))
-                    )
+                    repo = config.get("repositories.{}".format(m.group(1)))
                     if repo is None:
                         raise ValueError(
                             "There is no {} repository defined".format(m.group(1))
@@ -133,14 +124,12 @@ To remove a repository (repo is a short alias for repositories):
                 if setting_key not in values:
                     raise ValueError("There is no {} setting.".format(setting_key))
 
-                values = self._get_setting(
-                    self._settings_config.content,
-                    setting_key,
-                    default=values[setting_key][-1],
-                )
+                value = config.get(setting_key)
 
-                for value in values:
-                    self.line(value[1])
+                if not isinstance(value, basestring):
+                    value = json.dumps(value)
+
+                self.line(value)
 
             return 0
 
@@ -149,10 +138,10 @@ To remove a repository (repo is a short alias for repositories):
         unique_config_values = self.unique_config_values
         if setting_key in unique_config_values:
             if self.option("unset"):
-                return self._remove_single_value(setting_key)
+                return config_source.remove_property(setting_key)
 
             return self._handle_single_value(
-                setting_key, unique_config_values[setting_key], values
+                config_source, setting_key, unique_config_values[setting_key], values
             )
 
         # handle repositories
@@ -162,24 +151,20 @@ To remove a repository (repo is a short alias for repositories):
                 raise ValueError("You cannot remove the [repositories] section")
 
             if self.option("unset"):
-                repo = self._settings_config.setting(
-                    "repositories.{}".format(m.group(1))
-                )
+                repo = config.get("repositories.{}".format(m.group(1)))
                 if repo is None:
                     raise ValueError(
                         "There is no {} repository defined".format(m.group(1))
                     )
 
-                self._settings_config.remove_property(
-                    "repositories.{}".format(m.group(1))
-                )
+                config_source.remove_property("repositories.{}".format(m.group(1)))
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                self._settings_config.add_property(
+                config_source.add_property(
                     "repositories.{}.url".format(m.group(1)), url
                 )
 
@@ -194,15 +179,8 @@ To remove a repository (repo is a short alias for repositories):
         m = re.match(r"^(http-basic)\.(.+)", self.argument("key"))
         if m:
             if self.option("unset"):
-                if not self._auth_config.setting(
-                    "{}.{}".format(m.group(1), m.group(2))
-                ):
-                    raise ValueError(
-                        "There is no {} {} defined".format(m.group(2), m.group(1))
-                    )
-
-                keyring_repository_password_del(self._auth_config, m.group(2))
-                self._auth_config.remove_property(
+                keyring_repository_password_del(config, m.group(2))
+                auth_config_source.remove_property(
                     "{}.{}".format(m.group(1), m.group(2))
                 )
 
@@ -228,7 +206,7 @@ To remove a repository (repo is a short alias for repositories):
                 except RuntimeError:
                     property_value.update(password=password)
 
-                self._auth_config.add_property(
+                auth_config_source.add_property(
                     "{}.{}".format(m.group(1), m.group(2)), property_value
                 )
 
@@ -236,7 +214,7 @@ To remove a repository (repo is a short alias for repositories):
 
         raise ValueError("Setting {} does not exist".format(self.argument("key")))
 
-    def _handle_single_value(self, key, callbacks, values):
+    def _handle_single_value(self, source, key, callbacks, values):
         validator, normalizer, _ = callbacks
 
         if len(values) > 1:
@@ -246,33 +224,42 @@ To remove a repository (repo is a short alias for repositories):
         if not validator(value):
             raise RuntimeError('"{}" is an invalid value for {}'.format(value, key))
 
-        self._settings_config.add_property(key, normalizer(value))
+        source.add_property(key, normalizer(value))
 
         return 0
 
-    def _remove_single_value(self, key):
-        self._settings_config.remove_property(key)
+    def _list_configuration(self, config, raw, k=""):
+        from poetry.utils._compat import basestring
 
-        return 0
+        orig_k = k
+        for key, value in sorted(config.items()):
+            raw_val = raw.get(key)
 
-    def _list_configuration(self, contents):
-        if "settings" not in contents:
-            settings = {}
-        else:
-            settings = contents["settings"]
-        for setting_key, value in sorted(self.unique_config_values.items()):
-            self._list_setting(
-                settings,
-                setting_key.replace("settings.", ""),
-                "settings.",
-                default=value[-1],
-            )
+            if isinstance(value, dict):
+                k += "{}.".format(key)
+                self._list_configuration(value, raw_val, k=k)
+                k = orig_k
 
-        repositories = contents.get("repositories")
-        if not repositories:
-            self.line("<comment>repositories</comment> = <info>{}</info>")
-        else:
-            self._list_setting(repositories, k="repositories.")
+                continue
+            elif isinstance(value, list):
+                value = [
+                    json.dumps(val) if isinstance(val, list) else val for val in value
+                ]
+
+                value = "[{}]".format(", ".join(value))
+
+            if k.startswith("repositories."):
+                message = "<c1>{}</c1> = <c2>{}</c2>".format(
+                    k + key, json.dumps(raw_val)
+                )
+            elif isinstance(raw_val, basestring) and raw_val != value:
+                message = "<c1>{}</c1> = <c2>{}</c2>  # {}".format(
+                    k + key, json.dumps(raw_val), value
+                )
+            else:
+                message = "<c1>{}</c1> = <c2>{}</c2>".format(k + key, json.dumps(value))
+
+            self.line(message)
 
     def _list_setting(self, contents, setting=None, k=None, default=None):
         values = self._get_setting(contents, setting, k, default)
@@ -292,9 +279,6 @@ To remove a repository (repo is a short alias for repositories):
         else:
             values = []
             for key, value in contents.items():
-                if k is None and key not in ["config", "repositories", "settings"]:
-                    continue
-
                 if setting and key != setting.split(".")[0]:
                     continue
 

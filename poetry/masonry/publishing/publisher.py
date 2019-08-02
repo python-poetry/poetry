@@ -44,28 +44,18 @@ class Publisher:
             repository_name = "pypi"
         else:
             # Retrieving config information
-            config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
-
-            if not config_file.exists():
-                raise RuntimeError(
-                    "Config file does not exist. "
-                    "Unable to get repository information"
-                )
-
-            config = config_file.read()
-
-            if (
-                "repositories" not in config
-                or repository_name not in config["repositories"]
-            ):
+            repository = self._poetry.config.get(
+                "repositories.{}".format(repository_name)
+            )
+            if repository is None:
                 raise RuntimeError(
                     "Repository {} is not defined".format(repository_name)
                 )
 
-            url = config["repositories"][repository_name]["url"]
+            url = repository["url"]
 
         if not (username and password):
-            auth = get_http_basic_auth(self._poetry.auth_config, repository_name)
+            auth = get_http_basic_auth(self._poetry.config, repository_name)
             if auth:
                 username = auth[0]
                 password = auth[1]

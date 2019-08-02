@@ -20,7 +20,7 @@ from typing import Tuple
 
 from clikit.api.io import IO
 
-from poetry.config import Config
+from poetry.config.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.semver.version import Version
 from poetry.utils._compat import CalledProcessError
@@ -138,12 +138,12 @@ class EnvManager(object):
 
     def __init__(self, config=None):  # type: (Config) -> None
         if config is None:
-            config = Config.create("config.toml")
+            config = Config()
 
         self._config = config
 
     def activate(self, python, cwd, io):  # type: (str, Optional[Path], IO) -> Env
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -220,7 +220,7 @@ class EnvManager(object):
         return self.get(cwd, reload=True)
 
     def deactivate(self, cwd, io):  # type: (Optional[Path], IO) -> None
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -249,7 +249,7 @@ class EnvManager(object):
 
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
 
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -274,12 +274,12 @@ class EnvManager(object):
 
                 return VirtualEnv(venv)
 
-            create_venv = self._config.setting("settings.virtualenvs.create", True)
+            create_venv = self._config.get("virtualenvs.create", True)
 
             if not create_venv:
                 return SystemEnv(Path(sys.prefix))
 
-            venv_path = self._config.setting("settings.virtualenvs.path")
+            venv_path = self._config.get("virtualenvs.path")
             if venv_path is None:
                 venv_path = Path(CACHE_DIR) / "virtualenvs"
             else:
@@ -309,7 +309,7 @@ class EnvManager(object):
 
         venv_name = self.generate_env_name(name, str(cwd))
 
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -321,7 +321,7 @@ class EnvManager(object):
         ]
 
     def remove(self, python, cwd):  # type: (str, Optional[Path]) -> Env
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -423,10 +423,10 @@ class EnvManager(object):
             # Already inside a virtualenv.
             return env
 
-        create_venv = self._config.setting("settings.virtualenvs.create")
-        root_venv = self._config.setting("settings.virtualenvs.in-project")
+        create_venv = self._config.get("virtualenvs.create")
+        root_venv = self._config.get("virtualenvs.in-project")
 
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if root_venv:
             venv_path = cwd / ".venv"
         elif venv_path is None:
