@@ -14,6 +14,7 @@ class ExportCommand(Command):
         option("output", "o", "The name of the output file.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
         option("dev", None, "Include development dependencies."),
+        option("with-credentials", None, "Include credentials for extra indices."),
     ]
 
     def handle(self):
@@ -47,11 +48,12 @@ class ExportCommand(Command):
                 "</warning>"
             )
 
-        exporter = Exporter(self.poetry.locker)
+        exporter = Exporter(self.poetry)
         exporter.export(
             fmt,
             self.poetry.file.parent,
             output or self.io,
             with_hashes=not self.option("without-hashes"),
             dev=self.option("dev"),
+            with_credentials=self.option("with-credentials"),
         )
