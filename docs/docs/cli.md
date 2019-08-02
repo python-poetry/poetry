@@ -437,10 +437,13 @@ poetry export -f requirements.txt > requirements.txt
 
 ### Options
 
-* `--format (-f)`: the format to export to.  Currently, only
+* `--format (-f)`: The format to export to.  Currently, only
   `requirements.txt` is supported.
-* `--output (-o)`: the name of the output file.  If omitted, print to standard
+* `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
+* `--dev`: Include development dependencies.
+* `--without-hashes`: Exclude hashes from the exported file.
+* `--with-credentials`: Include credentials for extra indices.
 
 ## env
 
