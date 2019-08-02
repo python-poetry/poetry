@@ -26,6 +26,8 @@ The --repository option should match the name of a configured repository using
 the config command.
 """
 
+    loggers = ["poetry.masonry.publishing.publisher"]
+
     def handle(self):
         from poetry.masonry.publishing.publisher import Publisher
 

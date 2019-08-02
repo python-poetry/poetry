@@ -176,7 +176,7 @@ To remove a repository (repo is a short alias for repositories):
             )
 
         # handle auth
-        m = re.match(r"^(http-basic)\.(.+)", self.argument("key"))
+        m = re.match(r"^(http-basic|pypi-token)\.(.+)", self.argument("key"))
         if m:
             if self.option("unset"):
                 keyring_repository_password_del(config, m.group(2))
@@ -208,6 +208,17 @@ To remove a repository (repo is a short alias for repositories):
 
                 auth_config_source.add_property(
                     "{}.{}".format(m.group(1), m.group(2)), property_value
+                )
+            elif m.group(1) == "pypi-token":
+                if len(values) != 1:
+                    raise ValueError(
+                        "Expected only one argument (token), got {}".format(len(values))
+                    )
+
+                token = values[0]
+
+                auth_config_source.add_property(
+                    "{}.{}".format(m.group(1), m.group(2)), token
                 )
 
             return 0

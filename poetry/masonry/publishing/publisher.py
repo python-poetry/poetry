@@ -1,9 +1,11 @@
-from poetry.locations import CONFIG_DIR
-from poetry.utils._compat import Path
+import logging
+
 from poetry.utils.helpers import get_http_basic_auth
-from poetry.utils.toml_file import TomlFile
 
 from .uploader import Uploader
+
+
+logger = logging.getLogger(__name__)
 
 
 class Publisher:
@@ -55,10 +57,22 @@ class Publisher:
             url = repository["url"]
 
         if not (username and password):
-            auth = get_http_basic_auth(self._poetry.config, repository_name)
-            if auth:
-                username = auth[0]
-                password = auth[1]
+            # Check if we have a token first
+            token = self._poetry.config.get("pypi-token.{}".format(repository_name))
+            if token:
+                logger.debug("Found an API token for {}.".format(repository_name))
+                username = "@token"
+                password = token
+            else:
+                auth = get_http_basic_auth(self._poetry.config, repository_name)
+                if auth:
+                    logger.debug(
+                        "Found authentication information for {}.".format(
+                            repository_name
+                        )
+                    )
+                    username = auth[0]
+                    password = auth[1]
 
         # Requesting missing credentials
         if not username:

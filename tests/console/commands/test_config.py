@@ -92,3 +92,16 @@ virtualenvs.path = {path}  # /foo{sep}virtualenvs
     assert expected == tester.io.fetch_output()
 
     assert "poetry.toml" == init.call_args_list[2][0][1].path.name
+    assert expected == tester.io.fetch_output()
+
+
+def test_set_pypi_token(app, config_source, config_document, mocker):
+    init = mocker.spy(ConfigSource, "__init__")
+    command = app.find("config")
+    tester = CommandTester(command)
+
+    tester.execute("pypi-token.pypi mytoken")
+
+    tester.execute("--list")
+
+    assert "mytoken" == config_document["pypi-token"]["pypi"]
