@@ -26,13 +26,6 @@ class InstallCommand(EnvCommand):
             flag=False,
             multiple=True,
         ),
-        option(
-            "develop",
-            None,
-            "Install given packages in development mode.",
-            flag=False,
-            multiple=True,
-        ),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
