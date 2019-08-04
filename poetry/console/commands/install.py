@@ -57,7 +57,6 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 
         installer.extras(extras)
         installer.dev_mode(not self.option("no-dev"))
-        installer.develop(self.option("develop"))
         installer.dry_run(self.option("dry-run"))
         installer.verbose(self.option("verbose"))
 

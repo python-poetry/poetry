@@ -43,7 +43,6 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
-        self._develop = []
         self._execute_operations = True
         self._lock = False
 
@@ -99,11 +98,6 @@ class Installer:
 
     def is_dev_mode(self):  # type: () -> bool
         return self._dev_mode
-
-    def develop(self, packages):  # type: (dict) -> Installer
-        self._develop = [canonicalize_name(p) for p in packages]
-
-        return self
 
     def update(self, update=True):  # type: (bool) -> Installer
         self._update = update
@@ -444,11 +438,6 @@ class Installer:
 
             if op.job_type == "uninstall":
                 continue
-
-            if package.name in self._develop and package.source_type == "directory":
-                package.develop = True
-                if op.skipped:
-                    op.unskip()
 
             current_python = parse_constraint(
                 ".".join(str(v) for v in self._env.version_info[:3])
