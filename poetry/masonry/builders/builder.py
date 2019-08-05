@@ -37,16 +37,37 @@ class Builder(object):
 
     AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
 
-    def __init__(self, poetry, env, io):  # type: (Poetry, Env, IO) -> None
+    format = None
+
+    def __init__(
+        self, poetry, env, io, ignore_packages_formats=False
+    ):  # type: (Poetry, Env, IO) -> None
         self._poetry = poetry
         self._env = env
         self._io = io
         self._package = poetry.package
         self._path = poetry.file.parent
+
+        packages = []
+        for p in self._package.packages:
+            formats = p.get("format", [])
+            if not isinstance(formats, list):
+                formats = [formats]
+
+            if (
+                formats
+                and self.format
+                and self.format not in formats
+                and not ignore_packages_formats
+            ):
+                continue
+
+            packages.append(p)
+
         self._module = Module(
             self._package.name,
             self._path.as_posix(),
-            packages=self._package.packages,
+            packages=packages,
             includes=self._package.include,
         )
         self._meta = Metadata.from_package(self._package)

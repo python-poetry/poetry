@@ -44,6 +44,9 @@ setup(**setup_kwargs)
 
 
 class SdistBuilder(Builder):
+
+    format = "sdist"
+
     def build(self, target_dir=None):  # type: (Path) -> Path
         self._io.write_line(" - Building <info>sdist</info>")
         if target_dir is None:
@@ -119,15 +122,16 @@ class SdistBuilder(Builder):
                     pkg_dir, _packages, _package_data = self.find_packages(include)
 
                     if pkg_dir is not None:
-                        package_dir[""] = os.path.relpath(pkg_dir, str(self._path))
+                        for p in _packages:
+                            package_dir[p] = os.path.relpath(pkg_dir, str(self._path))
 
                     packages += [p for p in _packages if p not in packages]
                     package_data.update(_package_data)
                 else:
-                    if include.source is not None:
-                        package_dir[""] = str(include.base.relative_to(self._path))
-
                     module = include.elements[0].relative_to(include.base).stem
+
+                    if include.source is not None:
+                        package_dir[module] = str(include.base.relative_to(self._path))
 
                     if module not in modules:
                         modules.append(module)
@@ -224,7 +228,6 @@ class SdistBuilder(Builder):
             # Relative to the top-level package
             return pkg_name, Path(rel_path).as_posix()
 
-        excluded_files = self.find_excluded_files()
         for path, dirnames, filenames in os.walk(str(base), topdown=True):
             if os.path.basename(path) == "__pycache__":
                 continue
@@ -267,9 +270,7 @@ class SdistBuilder(Builder):
 
     @classmethod
     def convert_dependencies(
-        cls,
-        package,  # type: Package
-        dependencies,  # type: List[Dependency]
+        cls, package, dependencies  # type: Package  # type: List[Dependency]
     ):
         main = []
         extras = defaultdict(list)

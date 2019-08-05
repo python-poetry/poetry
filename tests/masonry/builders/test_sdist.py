@@ -315,7 +315,7 @@ def test_with_src_module_file():
     setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
     ns = {}
     exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
-    assert ns["package_dir"] == {"": "src"}
+    assert ns["package_dir"] == {"module_src": "src"}
     assert ns["modules"] == ["module_src"]
 
     builder.build()
@@ -340,7 +340,7 @@ def test_with_src_module_dir():
     setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
     ns = {}
     exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
-    assert ns["package_dir"] == {"": "src"}
+    assert ns["package_dir"] == {"package_src": "src"}
     assert ns["packages"] == ["package_src"]
 
     builder.build()

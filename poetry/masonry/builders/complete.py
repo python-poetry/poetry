@@ -2,6 +2,9 @@ import os
 import tarfile
 
 import poetry.poetry
+from poetry.io.null_io import NullIO
+from poetry.utils._compat import Path
+from poetry.utils.helpers import temporary_directory
 
 from contextlib import contextmanager
 
@@ -15,19 +18,46 @@ class CompleteBuilder(Builder):
         # We start by building the tarball
         # We will use it to build the wheel
         sdist_builder = SdistBuilder(self._poetry, self._env, self._io)
+        build_for_all_formats = False
+        for p in self._package.packages:
+            formats = p.get("format", [])
+            if not isinstance(formats, list):
+                formats = [formats]
+
+            if formats and sdist_builder.format not in formats:
+                build_for_all_formats = True
+                break
+
         sdist_file = sdist_builder.build()
 
         self._io.write_line("")
 
         dist_dir = self._path / "dist"
-        with self.unpacked_tarball(sdist_file) as tmpdir:
-            WheelBuilder.make_in(
-                poetry.poetry.Poetry.create(tmpdir),
-                self._env,
-                self._io,
-                dist_dir,
-                original=self._poetry,
+
+        if build_for_all_formats:
+            sdist_builder = SdistBuilder(
+                self._poetry, self._env, NullIO(), ignore_packages_formats=True
             )
+            with temporary_directory() as tmp_dir:
+                sdist_file = sdist_builder.build(Path(tmp_dir))
+
+                with self.unpacked_tarball(sdist_file) as tmpdir:
+                    WheelBuilder.make_in(
+                        poetry.poetry.Poetry.create(tmpdir),
+                        self._env,
+                        self._io,
+                        dist_dir,
+                        original=self._poetry,
+                    )
+        else:
+            with self.unpacked_tarball(sdist_file) as tmpdir:
+                WheelBuilder.make_in(
+                    poetry.poetry.Poetry.create(tmpdir),
+                    self._env,
+                    self._io,
+                    dist_dir,
+                    original=self._poetry,
+                )
 
     @classmethod
     @contextmanager

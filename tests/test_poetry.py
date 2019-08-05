@@ -125,6 +125,7 @@ def test_poetry_with_packages_and_includes():
         {"include": "package_with_include"},
         {"include": "tests", "format": "sdist"},
         {"include": "for_wheel_only", "format": ["wheel"]},
+        {"include": "src_package", "from": "src"},
     ]
 
     assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
