@@ -61,7 +61,7 @@ class Publisher:
             token = self._poetry.config.get("pypi-token.{}".format(repository_name))
             if token:
                 logger.debug("Found an API token for {}.".format(repository_name))
-                username = "@token"
+                username = "__token__"
                 password = token
             else:
                 auth = get_http_basic_auth(self._poetry.config, repository_name)
