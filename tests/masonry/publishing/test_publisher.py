@@ -62,5 +62,5 @@ def test_publish_uses_token_if_it_exists(fixture_dir, mocker, config):
 
     publisher.publish(None, None, None)
 
-    assert [("@token", "my-token")] == uploader_auth.call_args
+    assert [("__token__", "my-token")] == uploader_auth.call_args
     assert [("https://upload.pypi.org/legacy/",)] == uploader_upload.call_args
