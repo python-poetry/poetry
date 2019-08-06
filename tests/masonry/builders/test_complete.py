@@ -445,7 +445,7 @@ def test_package_with_include(mocker):
         setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
         ns = {}
         exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
-        assert ns["package_dir"] == {"src_package": "src"}
+        assert ns["package_dir"] == {"": "src"}
         assert ns["packages"] == [
             "extra_dir",
             "extra_dir.sub_pkg",
