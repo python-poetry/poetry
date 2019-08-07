@@ -1,6 +1,7 @@
+from cleo import option
+
 from poetry.utils.exporter import Exporter
 
-from cleo import option
 from .command import Command
 
 
@@ -14,6 +15,13 @@ class ExportCommand(Command):
         option("output", "o", "The name of the output file.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
         option("dev", None, "Include development dependencies."),
+        option(
+            "extras",
+            "E",
+            "Extra sets of dependencies to include.",
+            flag=False,
+            multiple=True,
+        ),
         option("with-credentials", None, "Include credentials for extra indices."),
     ]
 
@@ -55,5 +63,6 @@ class ExportCommand(Command):
             output or self.io,
             with_hashes=not self.option("without-hashes"),
             dev=self.option("dev"),
+            extras=self.option("extras"),
             with_credentials=self.option("with-credentials"),
         )
