@@ -1,0 +1,49 @@
+name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
+resources:
+  repositories:
+  - repository: tox
+    type: github
+    endpoint: github
+    name: tox-dev/azure-pipelines-template
+    ref: master
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - develop
+pr:
+  branches:
+    include:
+    - master
+    - develop
+
+variables:
+  PYTEST_ADDOPTS: "-v -v -ra --showlocals"
+  CI_RUN: 'yes'
+
+jobs:
+- template: run-tox-env.yml@tox
+  parameters:
+    jobs:
+      lint: null
+      py37:
+        image: [linux, windows, macOs]
+      py36:
+        image: [linux, windows, macOs]
+      py35:
+        image: [linux, windows, macOs]
+      py34:
+        image: [linux, windows, macOs]
+      py27:
+        image: [linux, windows, macOs]
+    before:
+      - script: 'python get-poetry.py --preview -y'
+        displayName: Install Poetry
+      - bash: echo "##vso[task.prependpath]$HOME/.poetry/bin"
+        condition: and(succeeded(), in(variables['image_name'], 'linux', 'macOs'), in(variables['TOXENV'], 'py37', 'py36', 'py35', 'py34', 'py27'))
+        displayName: Add Poetry to path for Unix
+      - script: 'echo ##vso[task.prependpath]%USERPROFILE%\.poetry\bin'
+        condition: and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'py37', 'py36', 'py35', 'py34', 'py27'))
+        displayName: Add Poetry to path for Windows
