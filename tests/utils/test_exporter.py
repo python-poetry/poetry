@@ -310,6 +310,99 @@ foo==1.2.3 \\
     assert expected == content
 
 
+def test_exporter_exports_requirements_txt_without_optional_packages(tmp_dir, poetry):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": True,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": ["12345"], "bar": ["67890"]},
+            },
+        }
+    )
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+foo==1.2.3 \\
+    --hash=sha256:12345
+"""
+
+    assert expected == content
+
+
+def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": True,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": ["12345"], "bar": ["67890"]},
+            },
+            "extras": {"feature_bar": ["bar"]},
+        }
+    )
+    exporter = Exporter(poetry)
+
+    exporter.export(
+        "requirements.txt",
+        Path(tmp_dir),
+        "requirements.txt",
+        dev=True,
+        extras=["feature_bar"],
+    )
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar==4.5.6 \\
+    --hash=sha256:67890
+foo==1.2.3 \\
+    --hash=sha256:12345
+"""
+
+    assert expected == content
+
+
 def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry):
     poetry.locker.mock_lock_data(
         {

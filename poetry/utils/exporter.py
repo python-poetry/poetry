@@ -23,7 +23,14 @@ class Exporter(object):
         self._poetry = poetry
 
     def export(
-        self, fmt, cwd, output, with_hashes=True, dev=False, with_credentials=False
+        self,
+        fmt,
+        cwd,
+        output,
+        with_hashes=True,
+        dev=False,
+        extras=None,
+        with_credentials=False,
     ):  # type: (str, Path, Union[IO, str], bool, bool, bool) -> None
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
@@ -33,18 +40,39 @@ class Exporter(object):
             output,
             with_hashes=with_hashes,
             dev=dev,
+            extras=extras,
             with_credentials=with_credentials,
         )
 
     def _export_requirements_txt(
-        self, cwd, output, with_hashes=True, dev=False, with_credentials=False
+        self,
+        cwd,
+        output,
+        with_hashes=True,
+        dev=False,
+        extras=None,
+        with_credentials=False,
     ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
         indexes = []
         content = ""
 
+        # Generate a list of package names we have opted into via `extras`
+        extras_set = frozenset(extras or ())
+        extra_package_names = set()
+        if extras:
+            for extra_name, extra_packages in self._poetry.locker.lock_data.get(
+                "extras", {}
+            ).items():
+                if extra_name in extras_set:
+                    extra_package_names.update(extra_packages)
+
         for package in sorted(
             self._poetry.locker.locked_repository(dev).packages, key=lambda p: p.name
         ):
+            # If a package is optional and we haven't opted in to it, continue
+            if package.optional and package.name not in extra_package_names:
+                continue
+
             if package.source_type == "git":
                 dependency = VCSDependency(
                     package.name,

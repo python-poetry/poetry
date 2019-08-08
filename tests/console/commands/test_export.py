@@ -39,6 +39,10 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
 foo = "^1.0"
+bar = { version = "^1.1", optional = true }
+
+[tool.poetry.extras]
+feature_bar = ["bar"]
 """
 
 
@@ -68,6 +72,7 @@ def test_export_exports_requirements_txt_file_locks_if_no_lock_file(app, repo):
     assert not app.poetry.locker.lock.exists()
 
     repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
 
     tester.execute("--format requirements.txt --output requirements.txt")
 
@@ -89,6 +94,7 @@ foo==1.0.0
 
 def test_export_exports_requirements_txt_uses_lock_file(app, repo):
     repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
 
     command = app.find("lock")
     tester = CommandTester(command)
@@ -119,6 +125,7 @@ foo==1.0.0
 
 def test_export_fails_on_invalid_format(app, repo):
     repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
 
     command = app.find("lock")
     tester = CommandTester(command)
@@ -135,6 +142,7 @@ def test_export_fails_on_invalid_format(app, repo):
 
 def test_export_prints_to_stdout_by_default(app, repo):
     repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
 
     command = app.find("lock")
     tester = CommandTester(command)
@@ -148,6 +156,29 @@ def test_export_prints_to_stdout_by_default(app, repo):
     tester.execute("--format requirements.txt")
 
     expected = """\
+foo==1.0.0
+"""
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_export_includes_extras_by_flag(app, repo):
+    repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
+
+    command = app.find("lock")
+    tester = CommandTester(command)
+    tester.execute()
+
+    assert app.poetry.locker.lock.exists()
+
+    command = app.find("export")
+    tester = CommandTester(command)
+
+    tester.execute("--format requirements.txt --extras feature_bar")
+
+    expected = """\
+bar==1.1.0
 foo==1.0.0
 """
 
