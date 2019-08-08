@@ -16,7 +16,7 @@ class InstalledRepository(Repository):
         """
         repo = cls()
 
-        freeze_output = env.run("pip", "freeze")
+        freeze_output = env.run("python", "-m", "pip", "freeze")
         for line in freeze_output.split("\n"):
             if "==" in line:
                 name, version = re.split("={2,3}", line)
