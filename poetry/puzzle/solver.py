@@ -184,6 +184,7 @@ class Solver:
         graph = self._build_graph(self._package, packages)
 
         depths = []
+        final_packages = []
         for package in packages:
             category, optional, marker, depth = self._get_tags_for_package(
                 package, graph
@@ -191,14 +192,17 @@ class Solver:
 
             if marker is None:
                 marker = AnyMarker()
+            if marker.is_empty():
+                continue
 
             package.category = category
             package.optional = optional
             package.marker = marker
 
             depths.append(depth)
+            final_packages.append(package)
 
-        return packages, depths
+        return final_packages, depths
 
     def _build_graph(
         self, package, packages, previous=None, previous_dep=None, dep=None

@@ -1743,3 +1743,35 @@ def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, i
     assert "" == ops[1].package.source_url
     assert "" == ops[2].package.source_type
     assert "" == ops[2].package.source_url
+
+
+def test_solver_discards_packages_with_empty_markers(
+    package, installed, locked, io, pool, repo
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency(
+        "a", {"version": "^0.1.0", "markers": "python_version >= '3.4'"}
+    )
+
+    package_a = get_package("a", "0.1.0")
+    package_a.add_dependency(
+        "b", {"version": "^0.1.0", "markers": "python_version < '3.2'"}
+    )
+    package_a.add_dependency("c", "^0.2.0")
+    package_b = get_package("b", "0.1.0")
+    package_c = get_package("c", "0.2.0")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_a},
+        ],
+    )
