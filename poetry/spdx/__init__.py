@@ -33,6 +33,10 @@ def load_licenses():
 
     for name, license in data.items():
         _licenses[name.lower()] = License(name, license[0], license[1], license[2])
+        _licenses[license[0].lower()] = _licenses[name.lower()]
+
+    # Add a Proprietary license for non-standard licenses
+    _licenses["proprietary"] = License("Proprietary", "Proprietary", False, False)
 
 
 if __name__ == "__main__":

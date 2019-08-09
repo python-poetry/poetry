@@ -29,6 +29,15 @@ def test_license_by_id_is_case_insensitive():
     assert license.id == "MIT"
 
 
+def test_license_by_id_with_full_name():
+    license = license_by_id("GNU Lesser General Public License v3.0 or later")
+
+    assert license.id == "LGPL-3.0-or-later"
+    assert license.name == "GNU Lesser General Public License v3.0 or later"
+    assert license.is_osi_approved
+    assert not license.is_deprecated
+
+
 def test_license_by_id_invalid():
     with pytest.raises(ValueError):
         license_by_id("invalid")

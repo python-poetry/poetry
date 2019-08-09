@@ -42,3 +42,9 @@ def test_classifier_no_classifer():
     license = license_by_id("Leptonica")
 
     assert license.classifier == "License :: Other/Proprietary License"
+
+
+def test_proprietary_license():
+    license = license_by_id("Proprietary")
+
+    assert "License :: Other/Proprietary License" == license.classifier
