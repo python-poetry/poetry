@@ -17,7 +17,9 @@
 - Full environment markers are now supported for dependencies via the `markers` property.
 - Added the ability to specify git dependencies directly in `add`, it no longer requires the `--git` option.
 - Added the ability to specify path dependencies directly in `add`, it no longer requires the `--path` option.
-- Added the ability to add git and path dependencies via the `init` command.
+- Added support for url dependencies ([#1260](https://github.com/sdispater/poetry/pull/1260)).
+- Publishing to PyPI using [API tokens](https://pypi.org/help/#apitoken) is now supported ([#1275](https://github.com/sdispater/poetry/pull/1275)).
+- Licenses can now be identified by their full name.
 
 ### Changed
 
@@ -30,11 +32,15 @@
 - The `--git` option of the `add` command has been removed.
 - The `--path` option of the `add` command has been removed.
 - The `add` command will now automatically select the latest prerelease if only prereleases are available.
+- The `add` command can now update a dependencies if an explicit constraint is given ([#1221](https://github.com/sdispater/poetry/pull/1221)).
+- Removed the `--develop` option from the `install` command.
 
 ### Fixed
 
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
 - The `pyproject.toml` configuration is now properly validated.
+- Fixed installing Poetry-based packages breaking with `pip`.
+- Fixed packages with empty markers being added to the lock file.
 
 
 ## [0.12.17] - 2019-07-03
