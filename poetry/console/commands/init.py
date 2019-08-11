@@ -167,7 +167,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         if not requires:
             requires = []
 
-            package = self.ask("Search for package:")
+            package = self.ask(
+                "Search for package to add (or leave blank to continue):"
+            )
             while package is not None:
                 matches = self._get_pool().search(package)
 
