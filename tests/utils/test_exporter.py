@@ -367,7 +367,15 @@ def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
                 {
                     "name": "bar",
                     "version": "4.5.6",
-                    "category": "dev",
+                    "category": "main",
+                    "optional": True,
+                    "python-versions": "*",
+                    "dependencies": {"spam": ">=0.1"},
+                },
+                {
+                    "name": "spam",
+                    "version": "0.1.0",
+                    "category": "main",
                     "optional": True,
                     "python-versions": "*",
                 },
@@ -375,7 +383,7 @@ def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
             "metadata": {
                 "python-versions": "*",
                 "content-hash": "123456789",
-                "hashes": {"foo": ["12345"], "bar": ["67890"]},
+                "hashes": {"foo": ["12345"], "bar": ["67890"], "spam": ["abcde"]},
             },
             "extras": {"feature_bar": ["bar"]},
         }
@@ -398,6 +406,8 @@ bar==4.5.6 \\
     --hash=sha256:67890
 foo==1.2.3 \\
     --hash=sha256:12345
+spam==0.1.0 \\
+    --hash=sha256:abcde
 """
 
     assert expected == content

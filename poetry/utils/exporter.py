@@ -9,6 +9,7 @@ from poetry.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from poetry.utils.extras import get_extra_package_names
 
 
 class Exporter(object):
@@ -55,20 +56,16 @@ class Exporter(object):
     ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
         indexes = []
         content = ""
+        packages = self._poetry.locker.locked_repository(dev).packages
 
-        # Generate a list of package names we have opted into via `extras`
-        extras_set = frozenset(extras or ())
-        extra_package_names = set()
-        if extras:
-            for extra_name, extra_packages in self._poetry.locker.lock_data.get(
-                "extras", {}
-            ).items():
-                if extra_name in extras_set:
-                    extra_package_names.update(extra_packages)
+        # Build a set of all packages required by our selected extras
+        extra_package_names = set(
+            get_extra_package_names(
+                packages, self._poetry.locker.lock_data.get("extras", {}), extras or ()
+            )
+        )
 
-        for package in sorted(
-            self._poetry.locker.locked_repository(dev).packages, key=lambda p: p.name
-        ):
+        for package in sorted(packages, key=lambda p: p.name):
             # If a package is optional and we haven't opted in to it, continue
             if package.optional and package.name not in extra_package_names:
                 continue
