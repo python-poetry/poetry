@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from poetry.poetry import Poetry
+from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
@@ -63,25 +64,21 @@ def test_poetry():
     assert demo.is_file()
     assert not demo.is_vcs()
     assert demo.name == "demo"
-    assert demo.pretty_constraint == "0.1.0"
+    assert demo.pretty_constraint == "*"
 
     demo = dependencies["my-package"]
     assert not demo.is_file()
     assert demo.is_directory()
     assert not demo.is_vcs()
     assert demo.name == "my-package"
-    assert demo.pretty_constraint == "0.1.2"
-    assert demo.package.requires[0].name == "pendulum"
-    assert demo.package.requires[1].name == "cachy"
-    assert demo.package.requires[1].extras == ["msgpack"]
+    assert demo.pretty_constraint == "*"
 
     simple_project = dependencies["simple-project"]
     assert not simple_project.is_file()
     assert simple_project.is_directory()
     assert not simple_project.is_vcs()
     assert simple_project.name == "simple-project"
-    assert simple_project.pretty_constraint == "1.2.3"
-    assert simple_project.package.requires == []
+    assert simple_project.pretty_constraint == "*"
 
     assert "db" in package.extras
 
@@ -113,6 +110,7 @@ def test_poetry_with_packages_and_includes():
 
     assert package.packages == [
         {"include": "extra_dir/**/*.py"},
+        {"include": "extra_dir/**/*.py"},
         {"include": "my_module.py"},
         {"include": "package_with_include"},
     ]
@@ -120,8 +118,37 @@ def test_poetry_with_packages_and_includes():
     assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
 
 
+def test_poetry_with_multi_constraints_dependency():
+    poetry = Poetry.create(
+        str(fixtures_dir / "project_with_multi_constraints_dependency")
+    )
+
+    package = poetry.package
+
+    assert len(package.requires) == 2
+
+
 def test_check():
     complete = TomlFile(fixtures_dir / "complete.toml")
-    content = complete.read(raw=True)["tool"]["poetry"]
+    content = complete.read()["tool"]["poetry"]
 
-    assert Poetry.check(content)
+    assert Poetry.check(content) == {"errors": [], "warnings": []}
+
+
+def test_check_fails():
+    complete = TomlFile(fixtures_dir / "complete.toml")
+    content = complete.read()["tool"]["poetry"]
+    content["this key is not in the schema"] = ""
+
+    if PY2:
+        expected = (
+            "Additional properties are not allowed "
+            "(u'this key is not in the schema' was unexpected)"
+        )
+    else:
+        expected = (
+            "Additional properties are not allowed "
+            "('this key is not in the schema' was unexpected)"
+        )
+
+    assert Poetry.check(content) == {"errors": [expected], "warnings": []}

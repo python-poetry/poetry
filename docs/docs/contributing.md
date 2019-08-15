@@ -97,7 +97,7 @@ Now, you will need to install the required dependency for Poetry and be sure tha
 tests are passing on your machine:
 
 ```bash
-$ poetry develop
+$ poetry install
 $ poetry run pytest tests/
 ```
 

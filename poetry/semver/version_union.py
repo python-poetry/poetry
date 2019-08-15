@@ -168,6 +168,9 @@ class VersionUnion(VersionConstraint):
             return True
 
         while True:
+            if state["their_range"] is None:
+                break
+
             if state["their_range"].is_strictly_lower(state["current"]):
                 if not their_next_range():
                     break

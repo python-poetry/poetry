@@ -1,11 +1,19 @@
+import hashlib
 import os
 import shutil
 import subprocess
 import sys
-
-from email.parser import Parser
+import tarfile
 
 from functools import cmp_to_key
+from gzip import GzipFile
+
+try:
+    from urllib.error import HTTPError
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import HTTPError
+    from urllib2 import urlopen
 
 from ..command import Command
 
@@ -19,11 +27,40 @@ class SelfUpdateCommand(Command):
         { --preview : Install prereleases. }
     """
 
+    BASE_URL = "https://github.com/sdispater/poetry/releases/download"
+
+    @property
+    def home(self):
+        from poetry.utils._compat import Path
+        from poetry.utils.appdirs import expanduser
+
+        home = Path(expanduser("~"))
+
+        return home / ".poetry"
+
+    @property
+    def lib(self):
+        return self.home / "lib"
+
+    @property
+    def lib_backup(self):
+        return self.home / "lib-backup"
+
     def handle(self):
         from poetry.__version__ import __version__
         from poetry.repositories.pypi_repository import PyPiRepository
         from poetry.semver import Version
+        from poetry.utils._compat import Path
         from poetry.utils._compat import decode
+
+        current = Path(__file__)
+        try:
+            current.relative_to(self.home)
+        except ValueError:
+            raise RuntimeError(
+                "Poetry was not installed with the recommended installer. "
+                "Cannot update automatically."
+            )
 
         version = self.argument("version")
         if not version:
@@ -83,98 +120,108 @@ class SelfUpdateCommand(Command):
             return e.returncode
 
     def update(self, release):
-        from poetry.utils._compat import Path
-        from poetry.utils.helpers import temporary_directory
-
         version = release.version
         self.line("Updating to <info>{}</info>".format(version))
 
-        prefix = sys.prefix
-        base_prefix = getattr(sys, "base_prefix", None)
-        real_prefix = getattr(sys, "real_prefix", None)
+        if self.lib_backup.exists():
+            shutil.rmtree(str(self.lib_backup))
 
-        prefix_poetry = self._bin_path(Path(prefix), "poetry")
-        if prefix_poetry.exists():
-            pip = self._bin_path(prefix_poetry.parent.parent, "pip").resolve()
-        elif (
-            base_prefix
-            and base_prefix != prefix
-            and self._bin_path(Path(base_prefix), "poetry").exists()
-        ):
-            pip = self._bin_path(Path(base_prefix), "pip")
-        elif real_prefix:
-            pip = self._bin_path(Path(real_prefix), "pip")
-        else:
-            pip = self._bin_path(Path(prefix), "pip")
+        # Backup the current installation
+        if self.lib.exists():
+            shutil.copytree(str(self.lib), str(self.lib_backup))
+            shutil.rmtree(str(self.lib))
 
-            if not pip.exists():
-                raise RuntimeError("Unable to determine poetry's path")
+        try:
+            self._update(version)
+        except Exception:
+            if not self.lib_backup.exists():
+                raise
 
-        with temporary_directory(prefix="poetry-update-") as temp_dir:
-            temp_dir = Path(temp_dir)
-            dist = temp_dir / "dist"
-            self.line("  - Getting dependencies")
-            self.process(
-                str(pip),
-                "install",
-                "-U",
-                "poetry=={}".format(release.version),
-                "--target",
-                str(dist),
+            shutil.copytree(str(self.lib_backup), str(self.lib))
+            shutil.rmtree(str(self.lib_backup))
+
+            raise
+        finally:
+            if self.lib_backup.exists():
+                shutil.rmtree(str(self.lib_backup))
+
+        self.line("")
+        self.line("")
+        self.line(
+            "<info>Poetry</info> (<comment>{}</comment>) is installed now. Great!".format(
+                version
             )
+        )
 
-            self.line("  - Vendorizing dependencies")
+    def _update(self, version):
+        from poetry.utils.helpers import temporary_directory
 
-            poetry_dir = dist / "poetry"
-            vendor_dir = poetry_dir / "_vendor"
+        platform = sys.platform
+        if platform == "linux2":
+            platform = "linux"
 
-            # Everything, except poetry itself, should
-            # be put in the _vendor directory
-            for file in dist.glob("*"):
-                if file.name.startswith("poetry"):
-                    continue
+        checksum = "poetry-{}-{}.sha256sum".format(version, platform)
 
-                dest = vendor_dir / file.name
-                if file.is_dir():
-                    shutil.copytree(str(file), str(dest))
-                    shutil.rmtree(str(file))
-                else:
-                    shutil.copy(str(file), str(dest))
-                    os.unlink(str(file))
+        try:
+            r = urlopen(self.BASE_URL + "/{}/{}".format(version, checksum))
+        except HTTPError as e:
+            if e.code == 404:
+                raise RuntimeError("Could not find {} file".format(checksum))
 
-            wheel_data = dist / "poetry-{}.dist-info".format(version) / "WHEEL"
-            with wheel_data.open() as f:
-                wheel_data = Parser().parsestr(f.read())
+            raise
 
-            tag = wheel_data["Tag"]
+        checksum = r.read().decode()
 
-            # Repack everything and install
-            self.line("  - Updating <info>poetry</info>")
+        # We get the payload from the remote host
+        name = "poetry-{}-{}.tar.gz".format(version, platform)
+        try:
+            r = urlopen(self.BASE_URL + "/{}/{}".format(version, name))
+        except HTTPError as e:
+            if e.code == 404:
+                raise RuntimeError("Could not find {} file".format(name))
 
-            shutil.make_archive(
-                str(temp_dir / "poetry-{}-{}".format(version, tag)),
-                format="zip",
-                root_dir=str(dist),
-            )
+            raise
 
-            os.rename(
-                str(temp_dir / "poetry-{}-{}.zip".format(version, tag)),
-                str(temp_dir / "poetry-{}-{}.whl".format(version, tag)),
-            )
+        meta = r.info()
+        size = int(meta["Content-Length"])
+        current = 0
+        block_size = 8192
 
-            self.process(
-                str(pip),
-                "install",
-                "--upgrade",
-                "--no-deps",
-                str(temp_dir / "poetry-{}-{}.whl".format(version, tag)),
-            )
+        bar = self.progress_bar(max=size)
+        bar.set_format(" - Downloading <info>{}</> <comment>%percent%%</>".format(name))
+        bar.start()
 
-            self.line("")
-            self.line(
-                "<info>poetry</> (<comment>{}</>) "
-                "successfully installed!".format(version)
-            )
+        sha = hashlib.sha256()
+        with temporary_directory(prefix="poetry-updater-") as dir_:
+            tar = os.path.join(dir_, name)
+            with open(tar, "wb") as f:
+                while True:
+                    buffer = r.read(block_size)
+                    if not buffer:
+                        break
+
+                    current += len(buffer)
+                    f.write(buffer)
+                    sha.update(buffer)
+
+                    bar.set_progress(current)
+
+            bar.finish()
+
+            # Checking hashes
+            if checksum != sha.hexdigest():
+                raise RuntimeError(
+                    "Hashes for {} do not match: {} != {}".format(
+                        name, checksum, sha.hexdigest()
+                    )
+                )
+
+            gz = GzipFile(tar, mode="rb")
+            try:
+                with tarfile.TarFile(tar, fileobj=gz, format=tarfile.PAX_FORMAT) as f:
+                    f.extractall(str(self.lib))
+            finally:
+                gz.close()
 
     def process(self, *args):
         return subprocess.check_output(list(args), stderr=subprocess.STDOUT)

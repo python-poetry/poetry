@@ -4,6 +4,7 @@ from typing import List
 from typing import Union
 
 from .empty_constraint import EmptyConstraint
+from .exceptions import ParseVersionError
 from .patterns import COMPLETE_VERSION
 from .version_constraint import VersionConstraint
 from .version_range import VersionRange
@@ -20,10 +21,11 @@ class Version(VersionRange):
         major,  # type: int
         minor=None,  # type: Union[int, None]
         patch=None,  # type: Union[int, None]
+        rest=None,  # type: Union[int, None]
         pre=None,  # type: Union[str, None]
         build=None,  # type: Union[str, None]
         text=None,  # type: Union[str, None]
-        precision=None,  # type: Union[str, None]
+        precision=None,  # type: Union[int, None]
     ):  # type: () -> None
         self._major = int(major)
         self._precision = None
@@ -44,10 +46,17 @@ class Version(VersionRange):
             if self._precision is not None:
                 self._precision += 1
 
+        if rest is None:
+            rest = 0
+        else:
+            if self._precision is not None:
+                self._precision += 1
+
         if precision is not None:
             self._precision = precision
 
         self._patch = int(patch)
+        self._rest = int(rest)
 
         if text is None:
             parts = [str(major)]
@@ -56,6 +65,9 @@ class Version(VersionRange):
 
                 if self._precision >= 3 or patch != 0:
                     parts.append(str(patch))
+
+                if self._precision >= 4 or rest != 0:
+                    parts.append(str(rest))
 
             text = ".".join(parts)
             if pre:
@@ -94,6 +106,10 @@ class Version(VersionRange):
         return self._patch
 
     @property
+    def rest(self):  # type: () -> int
+        return self._rest
+
+    @property
     def prerelease(self):  # type: () -> List[str]
         return self._prerelease
 
@@ -104,6 +120,10 @@ class Version(VersionRange):
     @property
     def text(self):
         return self._text
+
+    @property
+    def precision(self):  # type: () -> int
+        return self._precision
 
     @property
     def stable(self):
@@ -163,6 +183,10 @@ class Version(VersionRange):
         return self
 
     @property
+    def full_max(self):
+        return self
+
+    @property
     def include_min(self):
         return True
 
@@ -172,23 +196,28 @@ class Version(VersionRange):
 
     @classmethod
     def parse(cls, text):  # type: (str) -> Version
-        match = COMPLETE_VERSION.match(text)
+        try:
+            match = COMPLETE_VERSION.match(text)
+        except TypeError:
+            match = None
+
         if match is None:
-            raise ValueError('Unable to parse "{}".'.format(text))
+            raise ParseVersionError('Unable to parse "{}".'.format(text))
 
         text = text.rstrip(".")
 
         major = int(match.group(1))
         minor = int(match.group(2)) if match.group(2) else None
         patch = int(match.group(3)) if match.group(3) else None
+        rest = int(match.group(4)) if match.group(4) else None
 
-        pre = match.group(4)
-        build = match.group(5)
+        pre = match.group(5)
+        build = match.group(6)
 
         if build:
             build = build.lstrip("+")
 
-        return Version(major, minor, patch, pre, build, text)
+        return Version(major, minor, patch, rest, pre, build, text)
 
     def is_any(self):
         return False
@@ -245,6 +274,13 @@ class Version(VersionRange):
 
         return self
 
+    def equals_without_prerelease(self, other):  # type: (Version) -> bool
+        return (
+            self.major == other.major
+            and self.minor == other.minor
+            and self.patch == other.patch
+        )
+
     def _increment_major(self):  # type: () -> Version
         return Version(self.major + 1, 0, 0, precision=self._precision)
 
@@ -260,7 +296,7 @@ class Version(VersionRange):
         if not pre:
             return
 
-        m = re.match("(?i)^(a|alpha|b|beta|c|pre|rc|dev)[-.]?(\d+)?$", pre)
+        m = re.match(r"(?i)^(a|alpha|b|beta|c|pre|rc|dev)[-.]?(\d+)?$", pre)
         if not m:
             return
 
@@ -283,9 +319,6 @@ class Version(VersionRange):
 
     def _normalize_build(self, build):  # type: (str) -> str
         if not build:
-            return
-
-        if build == "0":
             return
 
         if build.startswith("post"):
@@ -335,6 +368,9 @@ class Version(VersionRange):
         if self.patch != other.patch:
             return self._cmp_parts(self.patch, other.patch)
 
+        if self.rest != other.rest:
+            return self._cmp_parts(self.rest, other.rest)
+
         # Pre-releases always come before no pre-release string.
         if not self.is_prerelease() and other.is_prerelease():
             return 1
@@ -376,7 +412,7 @@ class Version(VersionRange):
             if a_part == b_part:
                 continue
 
-            # Missing parts come before present ones.
+            # Missing parts come after present ones.
             if a_part is None:
                 return -1
 
@@ -404,6 +440,7 @@ class Version(VersionRange):
             self._major == other.major
             and self._minor == other.minor
             and self._patch == other.patch
+            and self._rest == other.rest
             and self._prerelease == other.prerelease
             and self._build == other.build
         )

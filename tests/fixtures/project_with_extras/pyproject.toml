@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "project-with-extras"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "*"
+pendulum = { version = ">=1.4.4", optional = true }
+cachy = { version = ">=0.2.0", optional = true }
+
+[tool.poetry.extras]
+extras_a = [ "pendulum" ]
+extras_b = [ "cachy" ]
+
+[tool.poetry.dev-dependencies]

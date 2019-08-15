@@ -1,8 +1,6 @@
 import hashlib
 import io
 
-import pkginfo
-
 from pkginfo.distribution import HEADER_ATTRS
 from pkginfo.distribution import HEADER_ATTRS_2_0
 
@@ -19,6 +17,7 @@ HEADER_ATTRS.update(
 class FileDependency(Dependency):
     def __init__(
         self,
+        name,
         path,  # type: Path
         category="main",  # type: str
         optional=False,  # type: bool
@@ -37,18 +36,8 @@ class FileDependency(Dependency):
         if self._full_path.is_dir():
             raise ValueError("{} is a directory, expected a file".format(self._path))
 
-        if self._path.suffix == ".whl":
-            self._meta = pkginfo.Wheel(str(self._full_path))
-        else:
-            # Assume sdist
-            self._meta = pkginfo.SDist(str(self._full_path))
-
         super(FileDependency, self).__init__(
-            self._meta.name,
-            self._meta.version,
-            category=category,
-            optional=optional,
-            allows_prereleases=True,
+            name, "*", category=category, optional=optional, allows_prereleases=True
         )
 
     @property
@@ -58,10 +47,6 @@ class FileDependency(Dependency):
     @property
     def full_path(self):
         return self._full_path.resolve()
-
-    @property
-    def metadata(self):
-        return self._meta
 
     def is_file(self):
         return True

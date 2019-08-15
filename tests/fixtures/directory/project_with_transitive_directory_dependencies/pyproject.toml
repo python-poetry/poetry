@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "project-with-transitive-directory-dependencies"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "*"
+project-with-extras = {path = "../../project_with_extras/"}
+
+[tool.poetry.dev-dependencies]

@@ -1,0 +1,48 @@
+[[package]]
+category = "main"
+description = ""
+name = "demo"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "0.1.0"
+
+[package.dependencies]
+pendulum = ">=1.4.4"
+
+[package.source]
+reference = ""
+type = "file"
+url = "tests/fixtures/directory/project_with_transitive_file_dependencies/../../distributions/demo-0.1.0-py2.py3-none-any.whl"
+
+[[package]]
+category = "main"
+description = ""
+name = "pendulum"
+optional = false
+python-versions = "*"
+version = "1.4.4"
+
+[[package]]
+category = "main"
+description = ""
+name = "project-with-transitive-file-dependencies"
+optional = false
+python-versions = "*"
+version = "1.2.3"
+
+[package.dependencies]
+demo = "*"
+
+[package.source]
+reference = ""
+type = "directory"
+url = "tests/fixtures/directory/project_with_transitive_file_dependencies"
+
+[metadata]
+content-hash = "123456789"
+python-versions = "*"
+
+[metadata.hashes]
+demo = ["70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"]
+pendulum = []
+project-with-transitive-file-dependencies = []

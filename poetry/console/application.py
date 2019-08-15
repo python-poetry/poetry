@@ -148,12 +148,12 @@ class Application(BaseApplication):
 
         formatter = o.get_formatter()
         lines = []
-        for line in re.split("\r?\n", str(e)):
+        for line in re.split(r"\r?\n", str(e)):
             for splitline in [
                 line[x : x + (width - 4)] for x in range(0, len(line), width - 4)
             ]:
                 line_length = (
-                    len(re.sub("\[[^m]*m", "", formatter.format(splitline))) + 4
+                    len(re.sub(r"\[[^m]*m", "", formatter.format(splitline))) + 4
                 )
                 lines.append((splitline, line_length))
 

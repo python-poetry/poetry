@@ -1,11 +1,10 @@
 [[package]]
 name = "demo"
 version = "0.1.0"
-description = "Description"
+description = ""
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-platform = "*"
 
 [package.source]
 type = "file"
@@ -13,7 +12,7 @@ reference = ""
 url = "tests/fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
 
 [package.dependencies]
-pendulum = ">=1.4.0.0,<2.0.0.0"
+pendulum = ">=1.4.4"
 
 [[package]]
 name = "pendulum"
@@ -22,13 +21,11 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
-platform = "*"
 
 [metadata]
 python-versions = "*"
-platform = "*"
 content-hash = "123456789"
 
 [metadata.hashes]
-demo = ["373a7e4bb99653541f35e52738f1b8a8e889c12e5f8b93a88c757d948b0cbe89"]
+demo = ["70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"]
 pendulum = []

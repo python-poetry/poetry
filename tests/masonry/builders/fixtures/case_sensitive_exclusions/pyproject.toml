@@ -1,0 +1,49 @@
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+readme = "README.rst"
+
+homepage = "https://poetry.eustace.io/"
+repository = "https://github.com/sdispater/poetry"
+documentation = "https://poetry.eustace.io/docs"
+
+keywords = ["packaging", "dependency", "poetry"]
+
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+exclude = [
+    "**/SecondBar.py",
+    "my_package/FooBar/*",
+    "my_package/Foo/Bar.py",
+    "my_package/Foo/lowercasebar.py",
+    "my_package/bar/foo.py",
+    "my_package/bar/CapitalFoo.py"
+]
+
+# Requirements
+[tool.poetry.dependencies]
+python = "^3.6"
+cleo = "^0.6"
+cachy = { version = "^0.2.0", extras = ["msgpack"] }
+
+pendulum = { version = "^1.4", optional = true }
+
+[tool.poetry.dev-dependencies]
+pytest = "~3.4"
+
+[tool.poetry.extras]
+time = ["pendulum"]
+
+[tool.poetry.scripts]
+my-script = "my_package:main"
+my-2nd-script = "my_package:main2"
+extra-script = {callable = "my_package.extra:main", extras = ["time"]}

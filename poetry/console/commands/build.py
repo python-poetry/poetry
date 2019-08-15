@@ -1,7 +1,7 @@
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
-class BuildCommand(VenvCommand):
+class BuildCommand(EnvCommand):
     """
     Builds a package, as a tarball and a wheel by default.
 
@@ -23,5 +23,5 @@ class BuildCommand(VenvCommand):
             )
         )
 
-        builder = Builder(self.poetry, self.venv, self.output)
+        builder = Builder(self.poetry, self.env, self.output)
         builder.build(fmt)

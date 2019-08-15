@@ -23,5 +23,3 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-
-[tool.poetry.dev-dependencies]

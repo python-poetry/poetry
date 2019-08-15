@@ -5,11 +5,9 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
-platform = "*"
 
 [metadata]
 python-versions = "*"
-platform = "*"
 content-hash = "123456789"
 
 [metadata.hashes]

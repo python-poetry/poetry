@@ -4,7 +4,6 @@ import tempfile
 from cleo.testers import CommandTester
 
 from poetry.config import Config
-from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
 
@@ -61,6 +60,21 @@ def test_list_displays_set_get_setting(app, config):
 settings.virtualenvs.in-project = false
 settings.virtualenvs.path = "."
 repositories = {}
+"""
+
+    assert tester.get_display(True) == expected
+
+
+def test_display_single_setting(app, config):
+    command = app.find("config")
+    command._config = Config(config.file)
+    tester = CommandTester(command)
+
+    tester.execute(
+        [("command", command.get_name()), ("key", "settings.virtualenvs.create")]
+    )
+
+    expected = """true
 """
 
     assert tester.get_display(True) == expected

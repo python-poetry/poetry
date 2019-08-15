@@ -103,11 +103,11 @@ resolves the dependencies, and installs them.
 poetry install
 ```
 
-If there is a `pyproject.lock` file in the current directory,
+If there is a `poetry.lock` file in the current directory,
 it will use the exact versions from there instead of resolving them.
 This ensures that everyone using the library will get the same versions of the dependencies.
 
-If there is no `pyproject.lock` file, Poetry will create one after dependency resolution.
+If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
 You can specify to the command that you do not want the development dependencies installed by passing
 the `--no-dev` option.
@@ -131,14 +131,14 @@ poetry install -E mysql -E pgsql
 
 ## update
 
-In order to get the latest versions of the dependencies and to update the `pyproject.lock` file,
+In order to get the latest versions of the dependencies and to update the `poetry.lock` file,
 you should use the `update` command.
 
 ```bash
 poetry update
 ```
 
-This will resolve all dependencies of the project and write the exact versions into `pyproject.lock`.
+This will resolve all dependencies of the project and write the exact versions into `poetry.lock`.
 
 If you just want to update a few packages and not all, you can list them as such:
 
@@ -149,6 +149,8 @@ poetry update requests toml
 ### Options
 
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--no-dev` : Do not install dev dependencies.
+* `--lock` : Do not perform install (only update the lockfile).
 
 ## add
 
@@ -175,6 +177,16 @@ poetry add my-package --path ../my-package/dist/my-package-0.1.0.tar.gz
 poetry add my-package --path ../my-package/dist/my_package-0.1.0.whl
 ```
 
+Path dependencies pointing to a local directory will be installed in editable mode (i.e. setuptools "develop mode"). 
+It means that changes in the local directory will be reflected directly in environment.
+
+If you don't want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file:
+
+```
+[tool.poetry.dependencies]
+my-package = {path = "../my/path", develop = false}
+```
+
 ### Options
 
 * `--dev (-D)`: Add package as development dependency.
@@ -188,7 +200,7 @@ poetry add my-package --path ../my-package/dist/my_package-0.1.0.whl
 ## remove
 
 The `remove` command removes a package from the current
-list of installed packages
+list of installed packages.
 
 ```bash
 poetry remove pendulum
@@ -225,6 +237,7 @@ dependencies:
 
 ### Options
 
+* `--no-dev`: Do not list the dev dependencies.
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
@@ -278,7 +291,7 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 ````
 
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
-See [Configuration](/configuration/) for all available settings.
+See [Configuration](/docs/configuration/) for all available settings.
 
 ### Options
 
@@ -293,7 +306,7 @@ The `run` command executes the given command inside the project's virtualenv.
 poetry run python -V
 ```
 
-It can also executes one of the scripts defined in `pyproject.toml`.
+It can also execute one of the scripts defined in `pyproject.toml`.
 
 So, if you have a script defined like this:
 
@@ -310,10 +323,21 @@ poetry run my-script
 
 Note that this command has no option.
 
+## shell
+
+The `shell` command spawns a shell,
+according to the `$SHELL` environment variable,
+within the virtual environment.
+If one doesn't exist yet, it will be created.
+
+```bash
+poetry shell
+```
+
 ## check
 
-The `check` command validate the structure of the `pyproject.toml` file
-and returns a detailed report is there are any errors.
+The `check` command validates the structure of the `pyproject.toml` file
+and returns a detailed report if there are any errors.
 
 ```bash
 poetry check

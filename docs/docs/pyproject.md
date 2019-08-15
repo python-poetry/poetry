@@ -42,13 +42,13 @@ More identifiers are listed at the [SPDX Open Source License Registry](https://w
 
 ## authors
 
-The authors of the package. This is a list of authors and should contain at least one author.
+The authors of the package. **Required**
 
-Authors must be in the form `name <email>`.
+This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
 ## readme
 
-The readme file of the package. **Required**
+The readme file of the package. **Optional**
 
 The file can be either `README.rst` or `README.md`.
 
@@ -68,6 +68,25 @@ An URL to the documentation of the project. **Optional**
 
 A list of keywords (max: 5) that the package is related to. **Optional**
 
+## classifiers
+
+A list of PyPI [trove classifiers](https://pypi.org/classifiers/) that describe the project. **Optional**
+
+```toml
+[tool.poetry]
+# ...
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+```
+
+!!!note
+
+    Note that Python classifiers are still automatically added for you and are determined by your `python` requirement.
+
+    The `license` property will also set the License classifier automatically.
+
 ## packages
 
 A list of packages and modules to include in the final distribution.
@@ -79,7 +98,7 @@ you can specify the packages you want to include in the final distribution.
 [tool.poetry]
 # ...
 packages = [
-    { include = "mypackage" },
+    { include = "my_package" },
     { include = "extra_package/**/*.py" },
 ]
 ```
@@ -90,7 +109,7 @@ If your package is stored inside a "source" directory, you must specify it:
 [tool.poetry]
 # ...
 packages = [
-    { include = "mypackage", from = "lib" },
+    { include = "my_package", from = "lib" },
 ]
 ```
 
@@ -100,11 +119,11 @@ packages = [
     **explicitly** specify the "default" package.
 
     For instance, if you have a package named `my_package` and you want to also include
-    another package named `extra_package`, you will need to specify `my_package` explicitely:
+    another package named `extra_package`, you will need to specify `my_package` explicitly:
 
     ```toml
     packages = [
-        { include = "mypackage" },
+        { include = "my_package" },
         { include = "extra_package" },
     ]
     ```
@@ -113,7 +132,7 @@ packages = [
 
     Poetry is clever enough to detect Python subpackages.
 
-    So, if you only have to specify the directory where you root package resides.
+    Thus, you only have to specify the directory where your root package resides.
 
 ## include and exclude
 
@@ -207,7 +226,7 @@ poetry install -E mysql -E pgsql
 
 ## `plugins`
 
-Poetry supports arbitrary plugins wich work similarly to
+Poetry supports arbitrary plugins which work similarly to
 [setuptools entry points](http://setuptools.readthedocs.io/en/latest/setuptools.html).
 To match the example in the setuptools documentation, you would use the following:
 
@@ -215,5 +234,24 @@ To match the example in the setuptools documentation, you would use the followin
 [tool.poetry.plugins] # Optional super table
 
 [tool.poetry.plugins."blogtool.parsers"]
-".rst" = "some_module::SomeClass"
+".rst" = "some_module:SomeClass"
 ```
+
+## Poetry and PEP-517
+
+[PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way
+to define alternative build systems to build a Python project.
+
+Poetry is compliant with PEP-517 so if you use Poetry to manage your Python
+project you should reference it in the `build-system` section of the `pyproject.toml`
+file like so:
+
+```toml
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+```
+
+!!!note
+
+    When using the `new` or `init` command this section will be automatically added.
