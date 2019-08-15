@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "single-python"
+version = "0.1"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+readme = "README.rst"
+
+homepage = "https://poetry.eustace.io/"
+
+
+[tool.poetry.dependencies]
+python = "2.7.15"

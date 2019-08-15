@@ -6,8 +6,14 @@ import tempfile
 
 from collections import defaultdict
 from contextlib import contextmanager
+from typing import Set
+from typing import Union
 
 from poetry.utils._compat import Path
+from poetry.utils._compat import basestring
+from poetry.utils._compat import glob
+from poetry.utils._compat import lru_cache
+from poetry.utils._compat import to_str
 from poetry.vcs import get_vcs
 
 from ..metadata import Metadata
@@ -15,16 +21,23 @@ from ..utils.module import Module
 from ..utils.package_include import PackageInclude
 
 
-AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
+
+METADATA_BASE = """\
+Metadata-Version: 2.1
+Name: {name}
+Version: {version}
+Summary: {summary}
+"""
 
 
 class Builder(object):
 
     AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
 
-    def __init__(self, poetry, venv, io):
+    def __init__(self, poetry, env, io):  # type: (Poetry, Env, IO) -> None
         self._poetry = poetry
-        self._venv = venv
+        self._env = env
         self._io = io
         self._package = poetry.package
         self._path = poetry.file.parent
@@ -39,36 +52,44 @@ class Builder(object):
     def build(self):
         raise NotImplementedError()
 
-    def find_excluded_files(self):  # type: () -> list
+    @lru_cache(maxsize=None)
+    def find_excluded_files(self):  # type: () -> Set[str]
         # Checking VCS
         vcs = get_vcs(self._path)
         if not vcs:
-            return []
+            vcs_ignored_files = set()
+        else:
+            vcs_ignored_files = set(vcs.get_ignored_files())
 
-        explicitely_excluded = []
+        explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
-            for excluded in self._path.glob(excluded_glob):
-                explicitely_excluded.append(excluded)
+            for excluded in glob(
+                os.path.join(self._path.as_posix(), str(excluded_glob)), recursive=True
+            ):
+                explicitely_excluded.add(
+                    Path(excluded).relative_to(self._path).as_posix()
+                )
 
-        ignored = vcs.get_ignored_files() + explicitely_excluded
-        result = []
+        ignored = vcs_ignored_files | explicitely_excluded
+        result = set()
         for file in ignored:
-            try:
-                file = Path(file).absolute().relative_to(self._path)
-            except ValueError:
-                # Should only happen in tests
-                continue
+            result.add(file)
 
-            result.append(file)
-
+        # The list of excluded files might be big and we will do a lot
+        # containment check (x in excluded).
+        # Returning a set make those tests much much faster.
         return result
 
-    def find_files_to_add(self, exclude_build=True):  # type: () -> list
+    def is_excluded(self, filepath):  # type: (Union[str, Path]) -> bool
+        if not isinstance(filepath, basestring):
+            filepath = filepath.as_posix()
+
+        return filepath in self.find_excluded_files()
+
+    def find_files_to_add(self, exclude_build=True):  # type: (bool) -> list
         """
         Finds all files to add to the tarball
         """
-        excluded = self.find_excluded_files()
-        src = self._module.path
         to_add = []
 
         for include in self._module.includes:
@@ -81,10 +102,14 @@ class Builder(object):
 
                 file = file.relative_to(self._path)
 
-                if file in excluded and isinstance(include, PackageInclude):
+                if self.is_excluded(file) and isinstance(include, PackageInclude):
                     continue
 
                 if file.suffix == ".pyc":
+                    continue
+
+                if file in to_add:
+                    # Skip duplicates
                     continue
 
                 self._io.writeln(
@@ -130,12 +155,65 @@ class Builder(object):
 
         return sorted(to_add)
 
+    def get_metadata_content(self):  # type: () -> bytes
+        content = METADATA_BASE.format(
+            name=self._meta.name,
+            version=self._meta.version,
+            summary=to_str(self._meta.summary),
+        )
+
+        # Optional fields
+        if self._meta.home_page:
+            content += "Home-page: {}\n".format(self._meta.home_page)
+
+        if self._meta.license:
+            content += "License: {}\n".format(self._meta.license)
+
+        if self._meta.keywords:
+            content += "Keywords: {}\n".format(self._meta.keywords)
+
+        if self._meta.author:
+            content += "Author: {}\n".format(to_str(self._meta.author))
+
+        if self._meta.author_email:
+            content += "Author-email: {}\n".format(to_str(self._meta.author_email))
+
+        if self._meta.requires_python:
+            content += "Requires-Python: {}\n".format(self._meta.requires_python)
+
+        for classifier in self._meta.classifiers:
+            content += "Classifier: {}\n".format(classifier)
+
+        for extra in sorted(self._meta.provides_extra):
+            content += "Provides-Extra: {}\n".format(extra)
+
+        for dep in sorted(self._meta.requires_dist):
+            content += "Requires-Dist: {}\n".format(dep)
+
+        for url in sorted(self._meta.project_urls, key=lambda u: u[0]):
+            content += "Project-URL: {}\n".format(to_str(url))
+
+        if self._meta.description_content_type:
+            content += "Description-Content-Type: {}\n".format(
+                self._meta.description_content_type
+            )
+
+        if self._meta.description is not None:
+            content += "\n" + to_str(self._meta.description) + "\n"
+
+        return content
+
     def convert_entry_points(self):  # type: () -> dict
         result = defaultdict(list)
 
         # Scripts -> Entry points
         for name, ep in self._poetry.local_config.get("scripts", {}).items():
-            result["console_scripts"].append("{} = {}".format(name, ep))
+            extras = ""
+            if isinstance(ep, dict):
+                extras = "[{}]".format(", ".join(ep["extras"]))
+                ep = ep["callable"]
+
+            result["console_scripts"].append("{} = {}{}".format(name, ep, extras))
 
         # Plugins -> entry points
         plugins = self._poetry.local_config.get("plugins", {})

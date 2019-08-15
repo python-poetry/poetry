@@ -11,15 +11,18 @@ from poetry.spdx import license_by_id
 from poetry.spdx import License
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
+from poetry.version.markers import AnyMarker
+from poetry.version.markers import parse_marker
 
-from .constraints.empty_constraint import EmptyConstraint
-from .constraints.generic_constraint import GenericConstraint
+from .constraints import parse_constraint as parse_generic_constraint
 from .dependency import Dependency
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .vcs_dependency import VCSDependency
+from .utils.utils import convert_markers
+from .utils.utils import create_nested_marker
 
-AUTHOR_REGEX = re.compile("(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 
 
 class Package(object):
@@ -46,6 +49,7 @@ class Package(object):
 
         self.homepage = None
         self.repository_url = None
+        self.documentation_url = None
         self.keywords = []
         self._license = None
         self.readme = None
@@ -63,19 +67,18 @@ class Package(object):
         self.hashes = []
         self.optional = False
 
-        # Requirements for making it mandatory
-        self.requirements = {}
-
         self.classifiers = []
 
         self._python_versions = "*"
         self._python_constraint = parse_constraint("*")
-        self._platform = "*"
-        self._platform_constraint = EmptyConstraint()
+        self._python_marker = AnyMarker()
+
+        self.platform = None
+        self.marker = AnyMarker()
 
         self.root_dir = None
 
-        self.develop = False
+        self.develop = True
 
     @property
     def name(self):
@@ -106,6 +109,9 @@ class Package(object):
 
     @property
     def full_pretty_version(self):
+        if self.source_type in ["file", "directory"]:
+            return "{} {}".format(self._pretty_version, self.source_url)
+
         if self.source_type not in ["hg", "git"]:
             return self._pretty_version
 
@@ -150,23 +156,17 @@ class Package(object):
     def python_versions(self, value):
         self._python_versions = value
         self._python_constraint = parse_constraint(value)
+        self._python_marker = parse_marker(
+            create_nested_marker("python_version", self._python_constraint)
+        )
 
     @property
     def python_constraint(self):
         return self._python_constraint
 
     @property
-    def platform(self):  # type: () -> str
-        return self._platform
-
-    @platform.setter
-    def platform(self, value):  # type: (str) -> None
-        self._platform = value
-        self._platform_constraint = GenericConstraint.parse(value)
-
-    @property
-    def platform_constraint(self):
-        return self._platform_constraint
+    def python_marker(self):
+        return self._python_marker
 
     @property
     def license(self):
@@ -210,6 +210,21 @@ class Package(object):
 
         return sorted(classifiers)
 
+    @property
+    def urls(self):
+        urls = {}
+
+        if self.homepage:
+            urls["Homepage"] = self.homepage
+
+        if self.repository_url:
+            urls["Repository"] = self.repository_url
+
+        if self.documentation_url:
+            urls["Documentation"] = self.documentation_url
+
+        return urls
+
     def is_prerelease(self):
         return self._version.is_prerelease()
 
@@ -246,7 +261,7 @@ class Package(object):
                 file_path = Path(constraint["file"])
 
                 dependency = FileDependency(
-                    file_path, category=category, base=self.root_dir
+                    name, file_path, category=category, base=self.root_dir
                 )
             elif "path" in constraint:
                 path = Path(constraint["path"])
@@ -258,15 +273,20 @@ class Package(object):
 
                 if is_file:
                     dependency = FileDependency(
-                        path, category=category, optional=optional, base=self.root_dir
-                    )
-                else:
-                    dependency = DirectoryDependency(
+                        name,
                         path,
                         category=category,
                         optional=optional,
                         base=self.root_dir,
-                        develop=constraint.get("develop", False),
+                    )
+                else:
+                    dependency = DirectoryDependency(
+                        name,
+                        path,
+                        category=category,
+                        optional=optional,
+                        base=self.root_dir,
+                        develop=constraint.get("develop", True),
                     )
             else:
                 version = constraint["version"]
@@ -279,11 +299,28 @@ class Package(object):
                     allows_prereleases=allows_prereleases,
                 )
 
+            marker = AnyMarker()
             if python_versions:
                 dependency.python_versions = python_versions
+                marker = marker.intersect(
+                    parse_marker(
+                        create_nested_marker(
+                            "python_version", dependency.python_constraint
+                        )
+                    )
+                )
 
             if platform:
-                dependency.platform = platform
+                marker = marker.intersect(
+                    parse_marker(
+                        create_nested_marker(
+                            "sys_platform", parse_generic_constraint(platform)
+                        )
+                    )
+                )
+
+            if not marker.is_any():
+                dependency.marker = marker
 
             if "extras" in constraint:
                 for extra in constraint["extras"]:
@@ -299,7 +336,14 @@ class Package(object):
         return dependency
 
     def to_dependency(self):
-        return Dependency(self.name, self._version)
+        from . import dependency_from_pep_508
+
+        name = "{} (=={})".format(self._name, self._version)
+
+        if not self.marker.is_any():
+            name += " ; {}".format(str(self.marker))
+
+        return dependency_from_pep_508(name)
 
     @contextmanager
     def with_python_versions(self, python_versions):
@@ -312,11 +356,11 @@ class Package(object):
         self.python_versions = original_python_versions
 
     def clone(self):  # type: () -> Package
-        clone = Package(self.pretty_name, self.version)
+        clone = self.__class__(self.pretty_name, self.version)
         clone.category = self.category
         clone.optional = self.optional
         clone.python_versions = self.python_versions
-        clone.platform = self.platform
+        clone.marker = self.marker
         clone.extras = self.extras
         clone.source_type = self.source_type
         clone.source_url = self.source_url
@@ -324,6 +368,9 @@ class Package(object):
 
         for dep in self.requires:
             clone.requires.append(dep)
+
+        for dep in self.dev_requires:
+            clone.dev_requires.append(dep)
 
         return clone
 

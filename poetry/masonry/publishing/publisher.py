@@ -1,5 +1,6 @@
 from poetry.locations import CONFIG_DIR
 from poetry.utils._compat import Path
+from poetry.utils.helpers import get_http_basic_auth
 from poetry.utils.toml_file import TomlFile
 
 from .uploader import Uploader
@@ -51,7 +52,7 @@ class Publisher:
                     "Unable to get repository information"
                 )
 
-            config = config_file.read(raw=True)
+            config = config_file.read()
 
             if (
                 "repositories" not in config
@@ -64,24 +65,16 @@ class Publisher:
             url = config["repositories"][repository_name]["url"]
 
         if not (username and password):
-            auth_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
-            if auth_file.exists():
-                auth_config = auth_file.read(raw=True)
-
-                if (
-                    "http-basic" in auth_config
-                    and repository_name in auth_config["http-basic"]
-                ):
-                    config = auth_config["http-basic"][repository_name]
-
-                    username = config.get("username")
-                    password = config.get("password")
+            auth = get_http_basic_auth(self._poetry.auth_config, repository_name)
+            if auth:
+                username = auth[0]
+                password = auth[1]
 
         # Requesting missing credentials
         if not username:
             username = self._io.ask("Username:")
 
-        if not password:
+        if password is None:
             password = self._io.ask_hidden("Password:")
 
         # TODO: handle certificates

@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "project-with-multi-constraints-dependency"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+packages = [
+    {include = "project"}
+]
+
+[tool.poetry.dependencies]
+python = "*"
+pendulum = [
+    { version = "^1.5", python = "<3.4" },
+    { version = "^2.0", python = "^3.4" }
+]
+
+[tool.poetry.dev-dependencies]

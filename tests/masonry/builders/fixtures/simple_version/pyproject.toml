@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "simple-version"
+version = "0.1"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+
+readme = "README.rst"
+
+
+[tool.poetry.dependencies]
+python = "3.6"

@@ -1,5 +1,7 @@
-from poetry.toml import dumps
-from poetry.toml import loads
+from tomlkit import dumps
+from tomlkit import loads
+from tomlkit import table
+
 from poetry.utils.helpers import module_name
 
 
@@ -35,6 +37,9 @@ license = ""
 
 [tool.poetry.dev-dependencies]
 """
+
+BUILD_SYSTEM_MIN_VERSION = "0.12"
+BUILD_SYSTEM_MAX_VERSION = None
 
 
 class Layout(object):
@@ -107,6 +112,17 @@ class Layout(object):
         for dep_name, dep_constraint in self._dev_dependencies.items():
             poetry_content["dev-dependencies"][dep_name] = dep_constraint
 
+        # Add build system
+        build_system = table()
+        build_system_version = ">=" + BUILD_SYSTEM_MIN_VERSION
+        if BUILD_SYSTEM_MAX_VERSION is not None:
+            build_system_version += ",<" + BUILD_SYSTEM_MAX_VERSION
+
+        build_system.add("requires", ["poetry" + build_system_version])
+        build_system.add("build-backend", "poetry.masonry.api")
+
+        content.add("build-system", build_system)
+
         return dumps(content)
 
     def _create_default(self, path, src=True):
@@ -135,7 +151,7 @@ class Layout(object):
         tests.mkdir()
         tests_init.touch(exist_ok=False)
 
-        with tests_default.open("w") as f:
+        with tests_default.open("w", encoding="utf-8") as f:
             f.write(
                 TESTS_DEFAULT.format(
                     package_name=self._package_name, version=self._version
@@ -147,5 +163,5 @@ class Layout(object):
 
         poetry = path / "pyproject.toml"
 
-        with poetry.open("w") as f:
+        with poetry.open("w", encoding="utf-8") as f:
             f.write(content)

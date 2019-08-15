@@ -1,5 +1,6 @@
 import hashlib
 import io
+import math
 import re
 
 from typing import List
@@ -14,18 +15,21 @@ from requests_toolbelt.multipart import MultipartEncoder, MultipartEncoderMonito
 
 from poetry.__version__ import __version__
 from poetry.utils.helpers import normalize_version
+from poetry.utils.patterns import wheel_file_re
 
 from ..metadata import Metadata
 
 
-wheel_file_re = re.compile(
-    r"""^(?P<namever>(?P<name>.+?)(-(?P<ver>\d.+?))?)
-        ((-(?P<build>\d.*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)
-        \.whl|\.dist-info)$""",
-    re.VERBOSE,
-)
-
 _has_blake2 = hasattr(hashlib, "blake2b")
+
+
+class UploadError(Exception):
+    def __init__(self, error):  # type: (HTTPError) -> None
+        super(UploadError, self).__init__(
+            "HTTP Error {}: {}".format(
+                error.response.status_code, error.response.reason
+            )
+        )
 
 
 class Uploader:
@@ -60,9 +64,9 @@ class Uploader:
             dist.glob(
                 "{}-{}-*.whl".format(
                     re.sub(
-                        "[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
+                        r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
                     ),
-                    re.sub("[^\w\d.]+", "_", version, flags=re.UNICODE),
+                    re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE),
                 )
             )
         )
@@ -181,18 +185,15 @@ class Uploader:
             self._do_upload(session, url)
         except HTTPError as e:
             if (
-                e.response.status_code not in (403, 400)
-                or e.response.status_code == 400
-                and "was ever registered" not in e.response.text
+                e.response.status_code == 400
+                and "was ever registered" in e.response.text
             ):
-                raise
+                try:
+                    self._register(session, url)
+                except HTTPError as e:
+                    raise UploadError(e)
 
-            # It may be the first time we publish the package
-            # We'll try to register it and go from there
-            try:
-                self._register(session, url)
-            except HTTPError:
-                raise
+            raise UploadError(e)
 
     def _do_upload(self, session, url):
         for file in self.files:
@@ -241,7 +242,14 @@ class Uploader:
 
                 self._io.writeln("")
             else:
-                self._io.overwrite("")
+                if self._io.output.is_decorated():
+                    self._io.overwrite(
+                        " - Uploading <info>{0}</> <error>{1}%</>".format(
+                            file.name, int(math.floor(bar._percent * 100))
+                        )
+                    )
+                else:
+                    self._io.writeln("")
 
         return resp
 
@@ -250,7 +258,9 @@ class Uploader:
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / "dist"
-        file = dist / "{}-{}.tar.gz".format(self._package.name, self._package.version)
+        file = dist / "{}-{}.tar.gz".format(
+            self._package.name, normalize_version(self._package.version.text)
+        )
 
         if not file.exists():
             raise RuntimeError('"{0}" does not exist.'.format(file.name))
@@ -266,6 +276,8 @@ class Uploader:
             allow_redirects=False,
             headers={"Content-Type": encoder.content_type},
         )
+
+        resp.raise_for_status()
 
         return resp
 

@@ -7,7 +7,7 @@ from typing import List
 from typing import Tuple
 
 from .command import Command
-from .venv_command import VenvCommand
+from .env_command import EnvCommand
 
 
 class InitCommand(Command):
@@ -38,6 +38,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
     def handle(self):
         from poetry.layouts import layout
         from poetry.utils._compat import Path
+        from poetry.utils.env import Env
         from poetry.vcs.git import GitConfig
 
         if (Path.cwd() / "pyproject.toml").exists():
@@ -108,14 +109,25 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         question.validator = self._validate_license
         license = self.ask(question)
 
-        question = self.create_question("Compatible Python versions [*]: ", default="*")
+        current_env = Env.get(Path.cwd())
+        default_python = "^{}".format(
+            ".".join(str(v) for v in current_env.version_info[:2])
+        )
+        question = self.create_question(
+            "Compatible Python versions [<comment>{}</comment>]: ".format(
+                default_python
+            ),
+            default=default_python,
+        )
         python = self.ask(question)
 
         self.line("")
 
         requirements = {}
 
-        question = "Would you like to define your dependencies" " (require) interactively?"
+        question = (
+            "Would you like to define your dependencies" " (require) interactively?"
+        )
         if self.confirm(question, True):
             requirements = self._format_requirements(
                 self._determine_requirements(self.option("dependency"))
@@ -123,7 +135,10 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
         dev_requirements = {}
 
-        question = "Would you like to define your dev dependencies" " (require-dev) interactively"
+        question = (
+            "Would you like to define your dev dependencies"
+            " (require-dev) interactively"
+        )
         if self.confirm(question, True):
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
@@ -151,7 +166,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
 
             return 1
 
-        with (Path.cwd() / "pyproject.toml").open("w") as f:
+        with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
             f.write(content)
 
     def _determine_requirements(
@@ -304,7 +319,8 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
     def _validate_license(self, license):
         from poetry.spdx import license_by_id
 
-        license_by_id(license)
+        if license:
+            license_by_id(license)
 
         return license
 
@@ -312,7 +328,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 
-        if isinstance(self, VenvCommand):
+        if isinstance(self, EnvCommand):
             return self.poetry.pool
 
         if self._pool is None:

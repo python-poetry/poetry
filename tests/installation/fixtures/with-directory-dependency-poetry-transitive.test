@@ -1,0 +1,36 @@
+[[package]]
+category = "main"
+description = ""
+name = "project-with-extras"
+optional = false
+python-versions = "*"
+version = "1.2.3"
+
+[package.source]
+reference = ""
+type = "directory"
+url = "tests/fixtures/directory/project_with_transitive_directory_dependencies/../../project_with_extras"
+
+[[package]]
+category = "main"
+description = ""
+name = "project-with-transitive-directory-dependencies"
+optional = false
+python-versions = "*"
+version = "1.2.3"
+
+[package.dependencies]
+project-with-extras = "*"
+
+[package.source]
+reference = ""
+type = "directory"
+url = "tests/fixtures/directory/project_with_transitive_directory_dependencies"
+
+[metadata]
+content-hash = "123456789"
+python-versions = "*"
+
+[metadata.hashes]
+project-with-extras = []
+project-with-transitive-directory-dependencies = []

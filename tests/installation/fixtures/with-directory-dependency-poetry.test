@@ -1,0 +1,31 @@
+[[package]]
+description = ""
+category = "main"
+name = "pendulum"
+optional = false
+python-versions = "*"
+version = "1.4.4"
+
+[[package]]
+category = "main"
+description = ""
+name = "project-with-extras"
+optional = false
+python-versions = "*"
+version = "1.2.3"
+
+[package.dependencies]
+pendulum = ">=1.4.4"
+
+[package.source]
+reference = ""
+type = "directory"
+url = "tests/fixtures/project_with_extras"
+
+[metadata]
+content-hash = "123456789"
+python-versions = "*"
+
+[metadata.hashes]
+project-with-extras = []
+pendulum = []

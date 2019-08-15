@@ -9,9 +9,7 @@ from gzip import GzipFile
 from io import BytesIO
 from posixpath import join as pjoin
 from pprint import pformat
-from typing import List
 
-from poetry.packages import Dependency
 from poetry.utils._compat import Path
 from poetry.utils._compat import encode
 from poetry.utils._compat import to_str
@@ -40,17 +38,6 @@ setup_kwargs = {{
 {after}
 
 setup(**setup_kwargs)
-"""
-
-
-PKG_INFO = """\
-Metadata-Version: 2.1
-Name: {name}
-Version: {version}
-Summary: {summary}
-Home-page: {home_page}
-Author: {author}
-Author-email: {author_email}
 """
 
 
@@ -129,13 +116,16 @@ class SdistBuilder(Builder):
                     if pkg_dir is not None:
                         package_dir[""] = os.path.relpath(pkg_dir, str(self._path))
 
-                    packages += _packages
+                    packages += [p for p in _packages if p not in packages]
                     package_data.update(_package_data)
                 else:
                     if include.source is not None:
                         package_dir[""] = str(include.base.relative_to(self._path))
 
-                    modules.append(include.elements[0].relative_to(include.base).stem)
+                    module = include.elements[0].relative_to(include.base).stem
+
+                    if module not in modules:
+                        modules.append(module)
             else:
                 pass
 
@@ -194,34 +184,9 @@ class SdistBuilder(Builder):
         )
 
     def build_pkg_info(self):
-        pkg_info = PKG_INFO.format(
-            name=self._meta.name,
-            version=self._meta.version,
-            summary=self._meta.summary,
-            home_page=self._meta.home_page,
-            author=to_str(self._meta.author),
-            author_email=to_str(self._meta.author_email),
-        )
+        return encode(self.get_metadata_content())
 
-        if self._meta.keywords:
-            pkg_info += "Keywords: {}\n".format(self._meta.keywords)
-
-        if self._meta.requires_python:
-            pkg_info += "Requires-Python: {}\n".format(self._meta.requires_python)
-
-        for classifier in self._meta.classifiers:
-            pkg_info += "Classifier: {}\n".format(classifier)
-
-        for extra in sorted(self._meta.provides_extra):
-            pkg_info += "Provides-Extra: {}\n".format(extra)
-
-        for dep in sorted(self._meta.requires_dist):
-            pkg_info += "Requires-Dist: {}\n".format(dep)
-
-        return encode(pkg_info)
-
-    @classmethod
-    def find_packages(cls, include):
+    def find_packages(self, include):
         """
         Discover subpackages and data.
 
@@ -250,8 +215,9 @@ class SdistBuilder(Builder):
                     return pkg, "/".join(parts[i:])
 
             # Relative to the top-level package
-            return pkg_name, rel_path
+            return pkg_name, Path(rel_path).as_posix()
 
+        excluded_files = self.find_excluded_files()
         for path, dirnames, filenames in os.walk(str(base), topdown=True):
             if os.path.basename(path) == "__pycache__":
                 continue
@@ -267,10 +233,28 @@ class SdistBuilder(Builder):
                 packages.append(".".join([pkg_name] + parts))
             else:
                 pkg, from_nearest_pkg = find_nearest_pkg(from_top_level)
-                pkg_data[pkg].append(pjoin(from_nearest_pkg, "*"))
+
+                data_elements = [
+                    f.relative_to(self._path)
+                    for f in Path(path).glob("*")
+                    if not f.is_dir()
+                ]
+
+                data = [e for e in data_elements if not self.is_excluded(e)]
+                if not data:
+                    continue
+
+                if len(data) == len(data_elements):
+                    pkg_data[pkg].append(pjoin(from_nearest_pkg, "*"))
+                else:
+                    for d in data:
+                        if d.is_dir():
+                            continue
+
+                        pkg_data[pkg] += [pjoin(from_nearest_pkg, d.name) for d in data]
 
         # Sort values in pkg_data
-        pkg_data = {k: sorted(v) for (k, v) in pkg_data.items()}
+        pkg_data = {k: sorted(v) for (k, v) in pkg_data.items() if v}
 
         return pkgdir, sorted(packages), pkg_data
 
@@ -280,7 +264,7 @@ class SdistBuilder(Builder):
     ):
         main = []
         extras = defaultdict(list)
-        req_regex = re.compile("^(.+) \((.+)\)$")
+        req_regex = re.compile(r"^(.+) \((.+)\)$")
 
         for dependency in dependencies:
             if dependency.is_optional():

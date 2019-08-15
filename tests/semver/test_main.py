@@ -22,7 +22,7 @@ from poetry.semver import VersionUnion
         ("=1.2.3", Version(1, 2, 3)),
         ("1.2.3", Version(1, 2, 3)),
         ("=1.0", Version(1, 0, 0)),
-        ("1.2.3b5", Version(1, 2, 3, "b5")),
+        ("1.2.3b5", Version(1, 2, 3, pre="b5")),
         (">= 1.2.3", VersionRange(min=Version(1, 2, 3), include_min=True)),
         (">dev", VersionRange(min=Version(0, 0, pre="dev"))),  # Issue 206
     ],
@@ -59,8 +59,11 @@ def test_parse_constraint_wildcard(input, constraint):
         ("~1.0.0", VersionRange(Version(1, 0, 0), Version(1, 1, 0), True)),
         ("~1.2", VersionRange(Version(1, 2, 0), Version(1, 3, 0), True)),
         ("~1.2.3", VersionRange(Version(1, 2, 3), Version(1, 3, 0), True)),
-        ("~1.2-beta", VersionRange(Version(1, 2, 0, "beta"), Version(1, 3, 0), True)),
-        ("~1.2-b2", VersionRange(Version(1, 2, 0, "b2"), Version(1, 3, 0), True)),
+        (
+            "~1.2-beta",
+            VersionRange(Version(1, 2, 0, pre="beta"), Version(1, 3, 0), True),
+        ),
+        ("~1.2-b2", VersionRange(Version(1, 2, 0, pre="b2"), Version(1, 3, 0), True)),
         ("~0.3", VersionRange(Version(0, 3, 0), Version(0, 4, 0), True)),
         ("~3.5", VersionRange(Version(3, 5, 0), Version(3, 6, 0), True)),
         ("~=3.5", VersionRange(Version(3, 5, 0), Version(4, 0, 0), True)),  # PEP 440
@@ -80,7 +83,7 @@ def test_parse_constraint_tilde(input, constraint):
         ("^1.2", VersionRange(Version(1, 2, 0), Version(2, 0, 0), True)),
         (
             "^1.2.3-beta.2",
-            VersionRange(Version(1, 2, 3, "beta.2"), Version(2, 0, 0), True),
+            VersionRange(Version(1, 2, 3, pre="beta.2"), Version(2, 0, 0), True),
         ),
         ("^1.2.3", VersionRange(Version(1, 2, 3), Version(2, 0, 0), True)),
         ("^0.2.3", VersionRange(Version(0, 2, 3), Version(0, 3, 0), True)),
@@ -173,3 +176,21 @@ def test_parse_constraints_negative_wildcard(input, constraint):
 )
 def test_constraints_keep_version_precision(input, expected):
     assert str(parse_constraint(input)) == expected
+
+
+@pytest.mark.parametrize(
+    "unsorted, sorted_",
+    [
+        (["1.0.3", "1.0.2", "1.0.1"], ["1.0.1", "1.0.2", "1.0.3"]),
+        (["1.0.0.2", "1.0.0.0rc2"], ["1.0.0.0rc2", "1.0.0.2"]),
+        (["1.0.0.0", "1.0.0.0rc2"], ["1.0.0.0rc2", "1.0.0.0"]),
+        (["1.0.0.0.0", "1.0.0.0rc2"], ["1.0.0.0rc2", "1.0.0.0.0"]),
+        (["1.0.0rc2", "1.0.0rc1"], ["1.0.0rc1", "1.0.0rc2"]),
+        (["1.0.0rc2", "1.0.0b1"], ["1.0.0b1", "1.0.0rc2"]),
+    ],
+)
+def test_versions_are_sortable(unsorted, sorted_):
+    unsorted = [parse_constraint(u) for u in unsorted]
+    sorted_ = [parse_constraint(s) for s in sorted_]
+
+    assert sorted(unsorted) == sorted_

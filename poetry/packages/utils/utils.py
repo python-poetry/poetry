@@ -2,6 +2,15 @@ import os
 import posixpath
 import re
 
+from poetry.packages.constraints.constraint import Constraint
+from poetry.packages.constraints.multi_constraint import MultiConstraint
+from poetry.packages.constraints.union_constraint import UnionConstraint
+from poetry.semver import Version
+from poetry.semver import VersionUnion
+from poetry.version.markers import MarkerUnion
+from poetry.version.markers import MultiMarker
+from poetry.version.markers import SingleMarker
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -105,47 +114,124 @@ def splitext(path):
     return base, ext
 
 
-def group_markers(markers):
+def group_markers(markers, or_=False):
     groups = [[]]
 
     for marker in markers:
-        assert isinstance(marker, (list, tuple, str))
+        if or_:
+            groups.append([])
 
-        if isinstance(marker, list):
-            groups[-1].append(group_markers(marker))
-        elif isinstance(marker, tuple):
-            lhs, op, rhs = marker
+        if isinstance(marker, (MultiMarker, MarkerUnion)):
+            groups[-1].append(
+                group_markers(marker.markers, isinstance(marker, MarkerUnion))
+            )
+        elif isinstance(marker, SingleMarker):
+            lhs, op, rhs = marker.name, marker.operator, marker.value
 
-            groups[-1].append((lhs.value, op, rhs.value))
-        else:
-            assert marker in ["and", "or"]
-            if marker == "or":
-                groups.append([])
+            groups[-1].append((lhs, op, rhs))
 
     return groups
 
 
-def convert_markers(markers):
-    groups = group_markers(markers)
+def convert_markers(marker):
+    groups = group_markers([marker])
 
     requirements = {}
 
     def _group(_groups, or_=False):
+        ors = {}
         for group in _groups:
-            if isinstance(group, tuple):
+            if isinstance(group, list):
+                _group(group, or_=True)
+            else:
                 variable, op, value = group
                 group_name = str(variable)
+
+                # python_full_version is equivalent to python_version
+                # for Poetry so we merge them
+                if group_name == "python_full_version":
+                    group_name = "python_version"
+
                 if group_name not in requirements:
-                    requirements[group_name] = [[]]
-                elif or_:
+                    requirements[group_name] = []
+
+                if group_name not in ors:
+                    ors[group_name] = or_
+
+                if ors[group_name] or not requirements[group_name]:
                     requirements[group_name].append([])
 
-                or_ = False
-
                 requirements[group_name][-1].append((str(op), str(value)))
-            else:
-                _group(group, or_=True)
 
-    _group(groups)
+                ors[group_name] = False
+
+    _group(groups, or_=True)
 
     return requirements
+
+
+def create_nested_marker(name, constraint):
+    if constraint.is_any():
+        return ""
+
+    if isinstance(constraint, (MultiConstraint, UnionConstraint)):
+        parts = []
+        for c in constraint.constraints:
+            multi = False
+            if isinstance(c, (MultiConstraint, UnionConstraint)):
+                multi = True
+
+            parts.append((multi, create_nested_marker(name, c)))
+
+        glue = " and "
+        if isinstance(constraint, UnionConstraint):
+            parts = ["({})".format(part[1]) if part[0] else part[1] for part in parts]
+            glue = " or "
+        else:
+            parts = [part[1] for part in parts]
+
+        marker = glue.join(parts)
+    elif isinstance(constraint, Constraint):
+        marker = '{} {} "{}"'.format(name, constraint.operator, constraint.version)
+    elif isinstance(constraint, VersionUnion):
+        parts = []
+        for c in constraint.ranges:
+            parts.append(create_nested_marker(name, c))
+
+        glue = " or "
+        parts = ["({})".format(part) for part in parts]
+
+        marker = glue.join(parts)
+    elif isinstance(constraint, Version):
+        marker = '{} == "{}"'.format(name, constraint.text)
+    else:
+        if constraint.min is not None:
+            op = ">="
+            if not constraint.include_min:
+                op = ">"
+
+            version = constraint.min.text
+            if constraint.max is not None:
+                text = '{} {} "{}"'.format(name, op, version)
+
+                op = "<="
+                if not constraint.include_max:
+                    op = "<"
+
+                version = constraint.max
+
+                text += ' and {} {} "{}"'.format(name, op, version)
+
+                return text
+        elif constraint.max is not None:
+            op = "<="
+            if not constraint.include_max:
+                op = "<"
+
+            version = constraint.max
+        else:
+            return ""
+
+        marker = '{} {} "{}"'.format(name, op, version)
+
+    return marker

@@ -1,13 +1,16 @@
 import os
 import re
 
+from poetry.semver import Version
 from poetry.version.requirements import Requirement
 
 from .dependency import Dependency
+from .dependency_package import DependencyPackage
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .locker import Locker
 from .package import Package
+from .package_collection import PackageCollection
 from .project_package import ProjectPackage
 from .utils.link import Link
 from .utils.utils import convert_markers
@@ -32,7 +35,7 @@ def dependency_from_pep_508(name):
     req = Requirement(name)
 
     if req.marker:
-        markers = convert_markers(req.marker.markers)
+        markers = convert_markers(req.marker)
     else:
         markers = {}
 
@@ -62,7 +65,7 @@ def dependency_from_pep_508(name):
             link = Link(path_to_url(os.path.normpath(os.path.abspath(link.path))))
         # wheel file
         if link.is_wheel:
-            m = re.match("^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))", link.filename)
+            m = re.match(r"^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))", link.filename)
             if not m:
                 raise ValueError("Invalid wheel name: {}".format(link.filename))
 
@@ -90,7 +93,7 @@ def dependency_from_pep_508(name):
 
         for or_ in markers["extra"]:
             for _, extra in or_:
-                dep.extras.append(extra)
+                dep.in_extras.append(extra)
 
     if "python_version" in markers:
         ors = []
@@ -103,20 +106,37 @@ def dependency_from_pep_508(name):
                     op = ""
                 elif op == "!=":
                     version += ".*"
-                elif op == "in":
+                elif op in ("<=", ">"):
+                    parsed_version = Version.parse(version)
+                    if parsed_version.precision == 1:
+                        if op == "<=":
+                            op = "<"
+                            version = parsed_version.next_major.text
+                        elif op == ">":
+                            op = ">="
+                            version = parsed_version.next_major.text
+                    elif parsed_version.precision == 2:
+                        if op == "<=":
+                            op = "<"
+                            version = parsed_version.next_minor.text
+                        elif op == ">":
+                            op = ">="
+                            version = parsed_version.next_minor.text
+                elif op in ("in", "not in"):
                     versions = []
                     for v in re.split("[ ,]+", version):
                         split = v.split(".")
                         if len(split) in [1, 2]:
                             split.append("*")
-                            op = ""
+                            op_ = "" if op == "in" else "!="
                         else:
-                            op = "=="
+                            op_ = "==" if op == "in" else "!="
 
-                        versions.append(op + ".".join(split))
+                        versions.append(op_ + ".".join(split))
 
+                    glue = " || " if op == "in" else ", "
                     if versions:
-                        ands.append(" || ".join(versions))
+                        ands.append(glue.join(versions))
 
                     continue
 
@@ -126,28 +146,8 @@ def dependency_from_pep_508(name):
 
         dep.python_versions = " || ".join(ors)
 
-    if "sys_platform" in markers:
-        ors = []
-        for or_ in markers["sys_platform"]:
-            ands = []
-            for op, platform in or_:
-                if op == "==":
-                    op = ""
-                elif op == "in":
-                    platforms = []
-                    for v in re.split("[ ,]+", platform):
-                        platforms.append(v)
-
-                    if platforms:
-                        ands.append(" || ".join(platforms))
-
-                    continue
-
-                ands.append("{}{}".format(op, platform))
-
-            ors.append(" ".join(ands))
-
-        dep.platform = " || ".join(ors)
+    if req.marker:
+        dep.marker = req.marker
 
     # Extras
     for extra in req.extras:

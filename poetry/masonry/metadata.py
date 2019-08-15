@@ -46,7 +46,7 @@ class Metadata:
         meta.version = normalize_version(package.version.text)
         meta.summary = package.description
         if package.readme:
-            with package.readme.open() as f:
+            with package.readme.open(encoding="utf-8") as f:
                 meta.description = f.read()
 
         meta.keywords = ",".join(package.keywords)
@@ -64,7 +64,7 @@ class Metadata:
         meta.maintainer_email = meta.author_email
 
         # Requires python
-        if not package.python_constraint.is_any():
+        if package.python_versions != "*":
             meta.requires_python = format_python_constraint(package.python_constraint)
 
         meta.requires_dist = [d.to_pep_508() for d in package.requires]
@@ -79,5 +79,12 @@ class Metadata:
                 meta.description_content_type = "text/plain"
 
         meta.provides_extra = [e for e in package.extras]
+
+        if package.urls:
+            for name, url in package.urls.items():
+                if name == "Homepage" and meta.home_page == url:
+                    continue
+
+                meta.project_urls += ("{}, {}".format(name, url),)
 
         return meta

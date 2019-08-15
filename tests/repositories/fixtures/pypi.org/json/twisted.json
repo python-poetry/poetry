@@ -1,0 +1,82 @@
+{
+  "info": {
+    "author": "Twisted Matrix Laboratories",
+    "author_email": "twisted-python@twistedmatrix.com",
+    "bugtrack_url": null,
+    "classifiers": [
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.7"
+    ],
+    "description": "description",
+    "description_content_type": "",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "http://twistedmatrix.com/",
+    "keywords": "",
+    "license": "MIT",
+    "maintainer": "Glyph Lefkowitz",
+    "maintainer_email": "glyph@twistedmatrix.com",
+    "name": "Twisted",
+    "package_url": "https://pypi.org/project/Twisted/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/Twisted/",
+    "project_urls": {
+      "Homepage": "http://twistedmatrix.com/"
+    },
+    "release_url": "https://pypi.org/project/Twisted/18.9.0/",
+    "requires_dist": null,
+    "requires_python": "",
+    "summary": "An asynchronous networking framework written in Python",
+    "version": "18.9.0"
+  },
+  "last_serial": 4376865,
+  "releases": {
+    "18.9.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "20fe2ec156e6e45b0b0d2ff06d9e828f",
+          "sha256": "294be2c6bf84ae776df2fc98e7af7d6537e1c5e60a46d33c3ce2a197677da395"
+        },
+        "downloads": -1,
+        "filename": "Twisted-18.9.0.tar.bz2",
+        "has_sig": false,
+        "md5_digest": "20fe2ec156e6e45b0b0d2ff06d9e828f",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": null,
+        "size": 3088398,
+        "upload_time": "2018-10-15T09:11:22",
+        "url": "https://files.pythonhosted.org/packages/5d/0e/a72d85a55761c2c3ff1cb968143a2fd5f360220779ed90e0fadf4106d4f2/Twisted-18.9.0.tar.bz2"
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "20fe2ec156e6e45b0b0d2ff06d9e828f",
+        "sha256": "294be2c6bf84ae776df2fc98e7af7d6537e1c5e60a46d33c3ce2a197677da395"
+      },
+      "downloads": -1,
+      "filename": "Twisted-18.9.0.tar.bz2",
+      "has_sig": false,
+      "md5_digest": "20fe2ec156e6e45b0b0d2ff06d9e828f",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": null,
+      "size": 3088398,
+      "upload_time": "2018-10-15T09:11:22",
+      "url": "https://files.pythonhosted.org/packages/5d/0e/a72d85a55761c2c3ff1cb968143a2fd5f360220779ed90e0fadf4106d4f2/Twisted-18.9.0.tar.bz2"
+    }
+  ]
+}

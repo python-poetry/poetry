@@ -1,6 +1,275 @@
 # Change Log
 
-## [Unreleased]
+## [0.12.17] - 2019-07-03
+
+### Fixed
+
+- Fixed dependency resolution with circular dependencies.
+- Fixed encoding errors when reading files on Windows. (Thanks to [@vlcinsky](https://github.com/vlcinsky))
+- Fixed unclear errors when executing commands in virtual environments. (Thanks to [@Imaclean74](https://github.com/Imaclean74))
+- Fixed handling of `.venv` when it's not a directory. (Thanks to [@mpanarin](https://github.com/mpanarin))
+
+
+## [0.12.16] - 2019-05-17
+
+### Fixed
+
+- Fixed packages with no hashes retrieval for legacy repositories.
+- Fixed multiple constraints for dev dependencies.
+- Fixed dependency resolution failing on badly formed package versions instead of skipping.
+- Fixed permissions of built wheels.
+
+
+## [0.12.15] - 2019-05-03
+
+### Fixed
+
+- Fixed an `AttributeError` in the editable builder.
+- Fixed resolution of packages with only Python 3 wheels and sdist when resolving for legacy repositories.
+- Fixed non-sha256 hashes retrieval for legacy repositories.
+
+
+## [0.12.14] - 2019-04-26
+
+### Fixed
+
+- Fixed root package installation for pure Python packages.
+
+
+## [0.12.13] - 2019-04-26
+
+### Fixed
+
+- Fixed root package installation with `pip>=19.0`.
+- Fixed packages not being removed after using the `remove` command.
+
+
+## [0.12.12] - 2019-04-11
+
+### Fixed
+
+- Fix lock idempotency.
+- Fix markers evaluation for `python_version` with precision < 3.
+- Fix permissions of the `dist-info` files.
+- Fix `prepare_metadata_for_build_wheel()` missing in the build backend.
+- Fix metadata inconsistency between wheels and sdists.
+- Fix parsing of `platform_release` markers.
+- Fix metadata information when the project has git dependencies.
+- Fix error reporting when publishing fails.
+- Fix retrieval of `extras_require` in some `setup.py` files. (Thanks to [@asodeur](https://github.com/asodeur))
+- Fix wheel compression when building. (Thanks to [@ccosby](https://github.com/ccosby))
+- Improve retrieval of information for packages with two python specific wheels.
+- Fix request authentication when credentials are included in URLs. (Thanks to [@connorbrinton](https://github.com/connorbrinton))
+
+
+## [0.12.11] - 2019-01-13
+
+### Fixed
+
+- Fixed the way packages information are retrieved for legacy repositories.
+- Fixed an error when adding packages with invalid versions.
+- Fixed an error when resolving directory dependencies with no sub dependencies.
+- Fixed an error when locking packages with no description.
+- Fixed path resolution for transitive file dependencies.
+- Fixed multiple constraints handling for the root package.
+- Fixed exclude functionality on case sensitive systems.
+
+
+## [0.12.10] - 2018-11-22
+
+### Fixed
+
+- Fixed `run` not executing scripts.
+- Fixed environment detection.
+- Fixed handling of authentication for legacy repositories.
+
+
+## [0.12.9] - 2018-11-19
+
+### Fixed
+
+- Fixed executables from outside the virtualenv not being accessible.
+- Fixed a possible error when building distributions with the `exclude` option.
+- Fixed the `run` command for namespaced packages.
+- Fixed errors for virtualenvs with spaces in their path.
+- Fixed prerelease versions being selected with the `add` command.
+
+
+## [0.12.8] - 2018-11-13
+
+### Fixed
+
+- Fixed permission errors when adding/removing git dependencies on Windows.
+- Fixed `Pool` not raising an exception when no package could be found.
+- Fixed reading `bz2` source distribution.
+- Fixed handling of arbitrary equals in `InstalledRepository`.
+
+
+## [0.12.7] - 2018-11-08
+
+### Fixed
+
+- Fixed reading of some `setup.py` files.
+- Fixed a `KeyError` when getting information for packages which require reading setup files.
+- Fixed the building of wheels with C extensions and an `src` layout.
+- Fixed extras being selected when resolving dependencies even when not required.
+- Fixed performance issues when packaging projects if a lot of files were excluded.
+- Fixed installation of files.
+- Fixed extras not being retrieved for legacy repositories.
+- Fixed invalid transitive constraints raising an error for legacy repositories.
+
+
+## [0.12.6] - 2018-11-05
+
+### Changed
+
+- Poetry will now try to read, without executing, setup files (`setup.py` and/or `setup.cfg`) if the `egg_info` command fails when resolving dependencies.
+
+### Fixed
+
+- Fixed installation of directory dependencies.
+- Fixed handling of dependencies with a `not in` marker operator.
+- Fixed support for VCS dependencies.
+- Fixed the `exclude` property not being respected if no VCS was available.
+
+
+## [0.12.5] - 2018-10-26
+
+### Fixed
+
+- Fixed installation of Poetry git dependencies with a build system.
+- Fixed possible errors when resolving dependencies for specific packages.
+- Fixed handling of Python versions compatibility.
+- Fixed the dependency resolver picking up unnecessary dependencies due to not using the `python_full_version` marker.
+- Fixed the `Python-Requires` metadata being invalid for single Python versions.
+
+
+## [0.12.4] - 2018-10-21
+
+### Fixed
+
+- Fixed possible error on some combinations of markers.
+- Fixed venv detection so that it only uses `VIRTUAL_ENV` to detect activated virtualenvs.
+
+
+## [0.12.3] - 2018-10-18
+
+### Fixed
+
+- Fixed the `--no-dev` option in `install` not working properly.
+- Fixed prereleases being selected even if another constraint conflicted with them.
+- Fixed an error when installing current package in development mode if the generated `setup.py` had special characters.
+- Fixed an error in `install` for applications not following a known structure.
+- Fixed an error when trying to retrieve the current environment.
+- Fixed `debug:info` not showing the current project's virtualenv.
+
+
+## [0.12.2] - 2018-10-17
+
+### Fixed
+
+- Fixed an error when installing from private repositories.
+- Fixed an error when trying to move the lock file on Python 2.7.
+
+
+## [0.12.1] - 2018-10-17
+
+### Fixed
+
+- Fixed an error when license is unspecified.
+
+
+## [0.12.0] - 2018-10-17
+
+### Added
+
+- Added a brand new installer.
+- Added support for multi-constraints dependencies.
+- Added a cache version system.
+- Added a `--lock` option to `update` to only update the lock file without executing operations. (Thanks to [@greysteil](https://github.com/greysteil))
+- Added support for the `Project-URL` metadata.
+- Added support for optional scripts.
+- Added a `--no-dev` option to `show`. (Thanks to [@rodcloutier](https://github.com/rodcloutier))
+
+### Changed
+
+- Improved virtualenv detection and management.
+- Wildcard `python` dependencies are now equivalent to `~2.7 || ^3.4`.
+- Changed behavior of the resolver for conditional dependencies.
+- The `install` command will now install the current project in editable mode.
+- The `develop` command is now deprecated in favor of `install`.
+- Improved the `check` command.
+- Empty passwords are now supported when publishing.
+
+### Fixed
+
+- Fixed a memory leak in the resolver.
+- Fixed a recursion error on duplicate dependencies with only different extras.
+- Fixed handling of extras.
+- Fixed duplicate entries in both sdist and wheel.
+- Fixed excluded files appearing in the `package_data` of the generated `setup.py`.
+- Fixed transitive directory dependencies installation.
+- Fixed file permissions for configuration and authentication files.
+- Fixed an error in `cache:clear` for Python 2.7.
+- Fixed publishing for the first time with a prerelease.
+
+
+## [0.11.5] - 2018-09-04
+
+### Fixed
+
+- Fixed a recursion error with circular dependencies.
+- Fixed the `config` command setting incorrect values for paths.
+- Fixed an `OSError` on Python >= 3.5 for `git` dependencies with recursive symlinks.
+- Fixed the possible deletion of system paths by `cache:clear`.
+- Fixed a performance issue when parsing the lock file by upgrading `tomlkit`.
+
+
+## [0.11.4] - 2018-07-30
+
+### Fixed
+
+- Fixed wrong wheel being selected when resolving dependencies.
+- Fixed an error when publishing.
+- Fixed an error when building wheels with the `packages` property set.
+- Fixed single value display in `config` command.
+
+
+## [0.11.3] - 2018-07-26
+
+### Changed
+
+- Poetry now only uses [TOML Kit](https://github.com/sdispater/tomlkit) for TOML files manipulation.
+- Improved dependency resolution debug information.
+
+### Fixed
+
+- Fixed missing dependency information for some packages.
+- Fixed handling of single versions when packaging.
+- Fixed dependency information retrieval from `.zip` and `.bz2` archives.
+- Fixed searching for and installing packages from private repositories with authentication. (Thanks to [@MarcDufresne](https://github.com/MarcDufresne))
+- Fixed a potential error when checking the `pyproject.toml` validity. (Thanks to [@ojii](https://github.com/ojii))
+- Fixed the lock file not tracking the `extras` information from `pyproject.toml`. (Thanks to [@cauebs](https://github.com/cauebs))
+- Fixed missing trailing slash in the Simple API urls for private repositories. (Thanks to [@bradsbrown](https://github.com/bradsbrown))
+
+
+## [0.11.2] - 2018-07-03
+
+### Fixed
+
+- Fixed missing dependencies when resolving in some cases.
+- Fixed path dependencies not working in `dev-dependencies`.
+- Fixed license validation in `init`. (Thanks to [@cauebs](https://github.com/cauebs))
+
+
+## [0.11.1] - 2018-06-29
+
+### Fixed
+
+- Fixed an error when locking dependencies on Python 2.7.
+
+
+## [0.11.0] - 2018-06-28
 
 ### Added
 
@@ -412,7 +681,31 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.10.3...master
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.17...master
+[0.12.17]: https://github.com/sdispater/poetry/releases/tag/0.12.17
+[0.12.16]: https://github.com/sdispater/poetry/releases/tag/0.12.16
+[0.12.15]: https://github.com/sdispater/poetry/releases/tag/0.12.15
+[0.12.14]: https://github.com/sdispater/poetry/releases/tag/0.12.14
+[0.12.13]: https://github.com/sdispater/poetry/releases/tag/0.12.13
+[0.12.12]: https://github.com/sdispater/poetry/releases/tag/0.12.12
+[0.12.11]: https://github.com/sdispater/poetry/releases/tag/0.12.11
+[0.12.10]: https://github.com/sdispater/poetry/releases/tag/0.12.10
+[0.12.9]: https://github.com/sdispater/poetry/releases/tag/0.12.9
+[0.12.8]: https://github.com/sdispater/poetry/releases/tag/0.12.8
+[0.12.7]: https://github.com/sdispater/poetry/releases/tag/0.12.7
+[0.12.6]: https://github.com/sdispater/poetry/releases/tag/0.12.6
+[0.12.5]: https://github.com/sdispater/poetry/releases/tag/0.12.5
+[0.12.4]: https://github.com/sdispater/poetry/releases/tag/0.12.4
+[0.12.3]: https://github.com/sdispater/poetry/releases/tag/0.12.3
+[0.12.2]: https://github.com/sdispater/poetry/releases/tag/0.12.2
+[0.12.1]: https://github.com/sdispater/poetry/releases/tag/0.12.1
+[0.12.0]: https://github.com/sdispater/poetry/releases/tag/0.12.0
+[0.11.5]: https://github.com/sdispater/poetry/releases/tag/0.11.5
+[0.11.4]: https://github.com/sdispater/poetry/releases/tag/0.11.4
+[0.11.3]: https://github.com/sdispater/poetry/releases/tag/0.11.3
+[0.11.2]: https://github.com/sdispater/poetry/releases/tag/0.11.2
+[0.11.1]: https://github.com/sdispater/poetry/releases/tag/0.11.1
+[0.11.0]: https://github.com/sdispater/poetry/releases/tag/0.11.0
 [0.10.3]: https://github.com/sdispater/poetry/releases/tag/0.10.3
 [0.10.2]: https://github.com/sdispater/poetry/releases/tag/0.10.2
 [0.10.1]: https://github.com/sdispater/poetry/releases/tag/0.10.1

@@ -1,6 +1,8 @@
 import json
 import os
 
+from io import open
+
 try:
     from urllib.request import urlopen
 except ImportError:
@@ -20,7 +22,7 @@ class Updater:
 
         licenses_url = self._base_url + "licenses.json"
 
-        with open(file, "w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(self.get_licenses(licenses_url), indent=2, sort_keys=True)
             )

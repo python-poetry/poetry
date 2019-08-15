@@ -39,7 +39,7 @@ class _Writer:
 
         if required_python_version is not None:
             buffer.append(
-                "The current supported Python versions are {}".format(
+                "The current project must support the following Python versions: {}".format(
                     required_python_version
                 )
             )
