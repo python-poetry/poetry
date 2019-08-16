@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-import pytest
 import shutil
 import zipfile
+
+import pytest
 
 from poetry.io import NullIO
 from poetry.masonry.builders import WheelBuilder
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
-
 
 fixtures_dir = Path(__file__).parent / "fixtures"
 
@@ -59,6 +59,19 @@ def test_wheel_prerelease():
     whl = module_path / "dist" / "prerelease-0.1b1-py2.py3-none-any.whl"
 
     assert whl.exists()
+
+
+def test_wheel_local_version():
+    module_path = fixtures_dir / "local_version"
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "local_version-1.2.3+build.1-py2.py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        names = z.namelist()
+        assert "local_version-1.2.3+build.1.dist-info/METADATA" in names
 
 
 def test_wheel_package_src():
