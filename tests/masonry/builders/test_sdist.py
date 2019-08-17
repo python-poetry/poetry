@@ -138,6 +138,7 @@ def test_make_setup():
             "pendulum>=1.4,<2.0"
         ]
     }
+    assert ns["setup_kwargs"]["long_description_content_type"] == "text/x-rst"
 
 
 def test_make_pkg_info(mocker):

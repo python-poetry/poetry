@@ -176,6 +176,13 @@ class SdistBuilder(Builder):
 
             extra.append("'python_requires': {!r},".format(python_requires))
 
+        if self._meta.description_content_type:
+            extra.append(
+                "'long_description_content_type': {!r},".format(
+                    self._meta.description_content_type
+                )
+            )
+
         return encode(
             SETUP.format(
                 before="\n".join(before),
