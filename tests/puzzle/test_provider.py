@@ -126,7 +126,8 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
         provider.search_for_vcs(dependency)
 
 
-def test_search_for_directory_setup_egg_info(provider):
+@pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
+def test_search_for_directory_setup_egg_info(provider, directory):
     dependency = DirectoryDependency(
         "demo",
         Path(__file__).parent.parent
@@ -134,7 +135,7 @@ def test_search_for_directory_setup_egg_info(provider):
         / "git"
         / "github.com"
         / "demo"
-        / "demo",
+        / directory,
     )
 
     package = provider.search_for_directory(dependency)[0]
