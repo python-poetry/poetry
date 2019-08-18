@@ -13,16 +13,22 @@ class ExportCommand(Command):
     options = [
         option("format", "f", "Format to export to.", flag=False),
         option("output", "o", "The name of the output file.", flag=False),
-        option("without-hashes", None, "Exclude hashes from the exported file."),
-        option("dev", None, "Include development dependencies."),
+        option(
+            "without-hashes", None, "Exclude hashes from the exported file if used."
+        ),
+        option("dev", None, "Include development dependencies if configurable."),
         option(
             "extras",
             "E",
-            "Extra sets of dependencies to include.",
+            "Extra sets of dependencies to include if configurable.",
             flag=False,
             multiple=True,
         ),
-        option("with-credentials", None, "Include credentials for extra indices."),
+        option(
+            "with-credentials",
+            None,
+            "Include credentials for extra indices if format supports indices.",
+        ),
     ]
 
     def handle(self):

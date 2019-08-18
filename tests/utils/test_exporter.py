@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 
 import pytest
@@ -6,7 +7,7 @@ from poetry.packages import Locker as BaseLocker
 from poetry.poetry import Poetry
 from poetry.repositories.auth import Auth
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.utils._compat import Path
+from poetry.utils._compat import Path, encode, decode
 from poetry.utils.exporter import Exporter
 
 
@@ -40,7 +41,7 @@ def locker():
 
 @pytest.fixture
 def poetry(fixture_dir, locker):
-    p = Poetry.create(fixture_dir("sample_project"))
+    p = Poetry.create(fixture_dir("simple_project"))
     p._locker = locker
 
     return p
@@ -799,3 +800,45 @@ foo==1.2.3
 """
 
     assert out == expected
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 4), reason="python2.7 fails due to unicode issues"
+)
+def test_exporter_can_export_setup_py_with_standard_packages(tmp_dir, poetry):
+    exporter = Exporter(poetry)
+
+    exporter.export("setup.py", Path(tmp_dir), "setup.py")
+
+    with (Path(tmp_dir) / "setup.py").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """# -*- coding: utf-8 -*-
+from distutils.core import setup
+
+packages = \\
+['simple_project']
+
+package_data = \\
+{'': ['*']}
+
+setup_kwargs = {
+    'name': 'simple-project',
+    'version': '1.2.3',
+    'description': 'Some description.',
+    'long_description': 'My Package\\n==========\\n',
+    'author': 'Sébastien Eustace',
+    'author_email': 'sebastien@eustace.io',
+    'maintainer': None,
+    'maintainer_email': None,
+    'url': 'https://poetry.eustace.io',
+    'packages': packages,
+    'package_data': package_data,
+    'python_requires': '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
+}
+
+
+setup(**setup_kwargs)
+"""
+
+    assert expected == content

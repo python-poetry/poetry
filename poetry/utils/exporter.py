@@ -1,7 +1,10 @@
+from typing import Any
 from typing import Union
 
 from clikit.api.io import IO
 
+from poetry.io.null_io import NullIO
+from poetry.masonry.builders import SdistBuilder
 from poetry.packages.directory_dependency import DirectoryDependency
 from poetry.packages.file_dependency import FileDependency
 from poetry.packages.url_dependency import URLDependency
@@ -9,6 +12,7 @@ from poetry.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from poetry.utils.env import NullEnv
 
 
 class Exporter(object):
@@ -16,7 +20,7 @@ class Exporter(object):
     Exporter class to export a lock file to alternative formats.
     """
 
-    ACCEPTED_FORMATS = ("requirements.txt",)
+    ACCEPTED_FORMATS = ("requirements.txt", "setup.py")
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
     def __init__(self, poetry):  # type: (Poetry) -> None
@@ -161,6 +165,13 @@ class Exporter(object):
 
             content = indexes_header + "\n" + content
 
+        self._output(content, cwd, output)
+
+    def _export_setup_py(
+        self, cwd, output, *_, **__
+    ):  # type: (Path, Union[IO, str], Any, Any) -> None
+        builder = SdistBuilder(self._poetry, NullEnv(), NullIO())
+        content = decode(builder.build_setup())
         self._output(content, cwd, output)
 
     def _output(

@@ -433,7 +433,7 @@ poetry export -f requirements.txt > requirements.txt
 
 !!!note
 
-    Only the `requirements.txt` format is currently supported.
+    Only the `requirements.txt` and `setup.py` format is currently supported.
 
 ### Options
 
