@@ -214,7 +214,7 @@ class WheelBuilder(Builder):
 
     def dist_info_name(self, distribution, version):  # type: (...) -> str
         escaped_name = re.sub(r"[^\w\d.]+", "_", distribution, flags=re.UNICODE)
-        escaped_version = re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE)
+        escaped_version = re.sub(r"[^\w\d.+]+", "_", version, flags=re.UNICODE)
 
         return "{}-{}.dist-info".format(escaped_name, escaped_version)
 
