@@ -1,2 +1,0 @@
-Local version label
-===================

@@ -1,3 +1,1 @@
-"""Example module"""
-
-__version__ = "0.1"
+"""Test fixture for https://github.com/sdispater/poetry/issues/756"""
