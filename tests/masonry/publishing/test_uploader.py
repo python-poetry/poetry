@@ -16,6 +16,7 @@ def project(name):
 
 def test_uploader_properly_handles_400_errors(http):
     http.register_uri(http.POST, "https://foo.com", status=400, body="Bad request")
+    http.register_uri(http.HEAD, "https://foo.com")
     uploader = Uploader(Poetry.create(project("simple_project")), NullIO())
 
     with pytest.raises(UploadError) as e:
@@ -26,6 +27,7 @@ def test_uploader_properly_handles_400_errors(http):
 
 def test_uploader_properly_handles_403_errors(http):
     http.register_uri(http.POST, "https://foo.com", status=403, body="Unauthorized")
+    http.register_uri(http.HEAD, "https://foo.com")
     uploader = Uploader(Poetry.create(project("simple_project")), NullIO())
 
     with pytest.raises(UploadError) as e:
@@ -39,9 +41,21 @@ def test_uploader_registers_for_appropriate_400_errors(mocker, http):
     http.register_uri(
         http.POST, "https://foo.com", status=400, body="No package was ever registered"
     )
+    http.register_uri(http.HEAD, "https://foo.com")
     uploader = Uploader(Poetry.create(project("simple_project")), NullIO())
 
     with pytest.raises(UploadError):
         uploader.upload("https://foo.com")
 
     assert 1 == register.call_count
+
+
+def test_uploader_follows_redirect(http):
+    repo_url = "https://foopi.org/legacy"
+    redirect_url = repo_url + "/"
+    http.register_uri(http.POST, redirect_url, status=200)
+    http.register_uri(
+        http.HEAD, repo_url, status=301, adding_headers={"location": redirect_url}
+    )
+    uploader = Uploader(Poetry.create(project("simple_project")), NullIO())
+    uploader.upload(repo_url)

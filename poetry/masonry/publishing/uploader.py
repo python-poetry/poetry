@@ -6,6 +6,7 @@ import re
 from typing import List
 
 import requests
+import requests.status_codes as status_codes
 
 from requests import adapters
 from requests.exceptions import HTTPError
@@ -228,6 +229,11 @@ class Uploader:
                 encoder, lambda monitor: bar.set_progress(monitor.bytes_read)
             )
 
+            # Check for a redirect first
+            resp = session.head(url)
+            if resp.status_code == status_codes.codes.moved:
+                url = resp.headers["Location"]
+
             bar.start()
 
             resp = session.post(
@@ -237,7 +243,7 @@ class Uploader:
                 headers={"Content-Type": monitor.content_type},
             )
 
-            if resp.ok:
+            if resp.status_code == status_codes.codes.ok:
                 bar.finish()
 
                 self._io.writeln("")
