@@ -194,7 +194,7 @@ POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
-BIN = """#!/usr/bin/env python
+BIN_TEMPLATE = """#!/usr/bin/env {python_executable_name}
 # -*- coding: utf-8 -*-
 import glob
 import sys
@@ -580,8 +580,10 @@ class Installer:
                 )
 
         with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
-            f.write(u(BIN))
-
+            python_executable_name = os.path.basename(Installer.CURRENT_PYTHON)
+            f.write(
+                u(BIN_TEMPLATE.format(python_executable_name=python_executable_name))
+            )
         if not WINDOWS:
             # Making the file executable
             st = os.stat(os.path.join(POETRY_BIN, "poetry"))
