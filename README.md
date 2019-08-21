@@ -14,7 +14,7 @@ It supports Python 2.7 and 3.4+.
 
 Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system by vendorizing its dependencies. This is the
-recommended way of installing `poetry`.
+recommended way of installing `poetry`. The installer installs a script to run Poetry, which will use the version of Python used to install Poetry.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
