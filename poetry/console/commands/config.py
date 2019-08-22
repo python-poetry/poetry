@@ -4,6 +4,7 @@ import re
 from cleo import argument
 from cleo import option
 
+from poetry.factory import Factory
 from poetry.utils.helpers import (
     keyring_repository_password_del,
     keyring_repository_password_set,
@@ -37,6 +38,8 @@ To remove a repository (repo is a short alias for repositories):
 
     <comment>poetry config --unset repo.foo</comment>"""
 
+    LIST_PROHIBITED_SETTINGS = {"http-basic", "pypi-token"}
+
     @property
     def unique_config_values(self):
         from poetry.locations import CACHE_DIR
@@ -63,28 +66,24 @@ To remove a repository (repo is a short alias for repositories):
         return unique_config_values
 
     def handle(self):
-        from poetry.config.config import Config
-        from poetry.config.config_source import ConfigSource
+        from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
         from poetry.utils._compat import Path
         from poetry.utils._compat import basestring
         from poetry.utils.toml_file import TomlFile
 
-        config = Config()
+        config = Factory.create_config(self.io)
         config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
-        config_source = ConfigSource(config_file)
-        if config_source.file.exists():
-            config.merge(config_source.file.read())
 
-        auth_config_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
-        auth_config_source = ConfigSource(auth_config_file, auth_config=True)
-
-        local_config_file = TomlFile(self.poetry.file.parent / "poetry.toml")
-        if local_config_file.exists():
-            config.merge(local_config_file.read())
+        try:
+            local_config_file = TomlFile(self.poetry.file.parent / "poetry.toml")
+            if local_config_file.exists():
+                config.merge(local_config_file.read())
+        except RuntimeError:
+            local_config_file = TomlFile(Path.cwd() / "poetry.toml")
 
         if self.option("local"):
-            config_source = ConfigSource(local_config_file)
+            config.set_config_source(FileConfigSource(local_config_file))
 
         if not config_file.exists():
             config_file.path.parent.mkdir(parents=True, exist_ok=True)
@@ -139,10 +138,13 @@ To remove a repository (repo is a short alias for repositories):
         unique_config_values = self.unique_config_values
         if setting_key in unique_config_values:
             if self.option("unset"):
-                return config_source.remove_property(setting_key)
+                return config.config_source.remove_property(setting_key)
 
             return self._handle_single_value(
-                config_source, setting_key, unique_config_values[setting_key], values
+                config.config_source,
+                setting_key,
+                unique_config_values[setting_key],
+                values,
             )
 
         # handle repositories
@@ -158,14 +160,16 @@ To remove a repository (repo is a short alias for repositories):
                         "There is no {} repository defined".format(m.group(1))
                     )
 
-                config_source.remove_property("repositories.{}".format(m.group(1)))
+                config.config_source.remove_property(
+                    "repositories.{}".format(m.group(1))
+                )
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                config_source.add_property(
+                config.config_source.add_property(
                     "repositories.{}.url".format(m.group(1)), url
                 )
 
@@ -181,7 +185,7 @@ To remove a repository (repo is a short alias for repositories):
         if m:
             if self.option("unset"):
                 keyring_repository_password_del(config, m.group(2))
-                auth_config_source.remove_property(
+                config.auth_config_source.remove_property(
                     "{}.{}".format(m.group(1), m.group(2))
                 )
 
@@ -207,7 +211,7 @@ To remove a repository (repo is a short alias for repositories):
                 except RuntimeError:
                     property_value.update(password=password)
 
-                auth_config_source.add_property(
+                config.auth_config_source.add_property(
                     "{}.{}".format(m.group(1), m.group(2)), property_value
                 )
             elif m.group(1) == "pypi-token":
@@ -218,7 +222,7 @@ To remove a repository (repo is a short alias for repositories):
 
                 token = values[0]
 
-                auth_config_source.add_property(
+                config.auth_config_source.add_property(
                     "{}.{}".format(m.group(1), m.group(2)), token
                 )
 
@@ -245,6 +249,9 @@ To remove a repository (repo is a short alias for repositories):
 
         orig_k = k
         for key, value in sorted(config.items()):
+            if k + key in self.LIST_PROHIBITED_SETTINGS:
+                continue
+
             raw_val = raw.get(key)
 
             if isinstance(value, dict):

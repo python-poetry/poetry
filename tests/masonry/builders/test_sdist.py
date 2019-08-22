@@ -8,11 +8,11 @@ from email.parser import Parser
 
 from clikit.io import NullIO
 
+from poetry.factory import Factory
 from poetry.masonry.builders.sdist import SdistBuilder
 from poetry.masonry.utils.package_include import PackageInclude
 from poetry.packages import Package
 from poetry.packages.vcs_dependency import VCSDependency
-from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.env import NullEnv
@@ -111,7 +111,7 @@ def test_convert_dependencies():
 
 
 def test_make_setup():
-    poetry = Poetry.create(project("complete"))
+    poetry = Factory().create_poetry(project("complete"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     setup = builder.build_setup()
@@ -144,7 +144,7 @@ def test_make_pkg_info(mocker):
     get_metadata_content = mocker.patch(
         "poetry.masonry.builders.builder.Builder.get_metadata_content"
     )
-    poetry = Poetry.create(project("complete"))
+    poetry = Factory().create_poetry(project("complete"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build_pkg_info()
@@ -153,7 +153,7 @@ def test_make_pkg_info(mocker):
 
 
 def test_make_pkg_info_any_python():
-    poetry = Poetry.create(project("module1"))
+    poetry = Factory().create_poetry(project("module1"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     pkg_info = builder.build_pkg_info()
@@ -164,7 +164,7 @@ def test_make_pkg_info_any_python():
 
 
 def test_find_files_to_add():
-    poetry = Poetry.create(project("complete"))
+    poetry = Factory().create_poetry(project("complete"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     result = builder.find_files_to_add()
@@ -184,7 +184,7 @@ def test_find_files_to_add():
 
 
 def test_make_pkg_info_multi_constraints_dependency():
-    poetry = Poetry.create(
+    poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent
         / "fixtures"
         / "project_with_multi_constraints_dependency"
@@ -203,7 +203,7 @@ def test_make_pkg_info_multi_constraints_dependency():
 
 
 def test_find_packages():
-    poetry = Poetry.create(project("complete"))
+    poetry = Factory().create_poetry(project("complete"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
@@ -220,7 +220,7 @@ def test_find_packages():
         "my_package.sub_pkg2": ["data2/*"],
     }
 
-    poetry = Poetry.create(project("source_package"))
+    poetry = Factory().create_poetry(project("source_package"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
@@ -235,7 +235,7 @@ def test_find_packages():
 
 
 def test_package():
-    poetry = Poetry.create(project("complete"))
+    poetry = Factory().create_poetry(project("complete"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
@@ -249,7 +249,7 @@ def test_package():
 
 
 def test_module():
-    poetry = Poetry.create(project("module1"))
+    poetry = Factory().create_poetry(project("module1"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
@@ -263,7 +263,7 @@ def test_module():
 
 
 def test_prelease():
-    poetry = Poetry.create(project("prerelease"))
+    poetry = Factory().create_poetry(project("prerelease"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
@@ -274,7 +274,7 @@ def test_prelease():
 
 
 def test_with_c_extensions():
-    poetry = Poetry.create(project("extended"))
+    poetry = Factory().create_poetry(project("extended"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
@@ -289,7 +289,7 @@ def test_with_c_extensions():
 
 
 def test_with_c_extensions_src_layout():
-    poetry = Poetry.create(project("src_extended"))
+    poetry = Factory().create_poetry(project("src_extended"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     builder.build()
@@ -304,7 +304,7 @@ def test_with_c_extensions_src_layout():
 
 
 def test_with_src_module_file():
-    poetry = Poetry.create(project("source_file"))
+    poetry = Factory().create_poetry(project("source_file"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
@@ -329,7 +329,7 @@ def test_with_src_module_file():
 
 
 def test_with_src_module_dir():
-    poetry = Poetry.create(project("source_package"))
+    poetry = Factory().create_poetry(project("source_package"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
@@ -372,7 +372,7 @@ def test_default_with_excluded_data(mocker):
             .as_posix()
         )
     ]
-    poetry = Poetry.create(project("default_with_excluded_data"))
+    poetry = Factory().create_poetry(project("default_with_excluded_data"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
 
@@ -411,7 +411,7 @@ def test_default_with_excluded_data(mocker):
 
 
 def test_proper_python_requires_if_two_digits_precision_version_specified():
-    poetry = Poetry.create(project("simple_version"))
+    poetry = Factory().create_poetry(project("simple_version"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     pkg_info = builder.build_pkg_info()
@@ -422,7 +422,7 @@ def test_proper_python_requires_if_two_digits_precision_version_specified():
 
 
 def test_proper_python_requires_if_three_digits_precision_version_specified():
-    poetry = Poetry.create(project("single_python"))
+    poetry = Factory().create_poetry(project("single_python"))
 
     builder = SdistBuilder(poetry, NullEnv(), NullIO())
     pkg_info = builder.build_pkg_info()
