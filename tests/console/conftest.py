@@ -8,15 +8,15 @@ except ImportError:
     import urlparse
 
 from cleo import ApplicationTester
-from tomlkit import document
 
-from poetry.config import Config as BaseConfig
 from poetry.console import Application as BaseApplication
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.poetry import Poetry as BasePoetry
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository as BaseRepository
+from poetry.utils._compat import PY2
+from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 from poetry.repositories.exceptions import PackageNotFound
@@ -41,6 +41,21 @@ def mock_clone(self, source, dest):
 
     shutil.rmtree(str(dest))
     shutil.copytree(str(folder), str(dest))
+
+
+def mock_download(self, url, dest):
+    parts = urlparse.urlparse(url)
+
+    fixtures = Path(__file__).parent.parent / "fixtures"
+    fixture = fixtures / parts.path.lstrip("/")
+
+    if dest.exists():
+        shutil.rmtree(str(dest))
+
+    if PY2 and WINDOWS:
+        shutil.copyfile(str(fixture), str(dest))
+    else:
+        os.symlink(str(fixture), str(dest))
 
 
 @pytest.fixture
@@ -68,6 +83,9 @@ def setup(mocker, installer, installed, config):
     p = mocker.patch("poetry.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
+    # Patch download to not download anything but to just copy from fixtures
+    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
+
     # Setting terminal width
     environ = dict(os.environ)
     os.environ["COLUMNS"] = "80"
@@ -88,11 +106,6 @@ class Application(BaseApplication):
         poetry = self._poetry
         self._poetry = Poetry.create(self._poetry.file.path.parent)
         self._poetry._pool = poetry.pool
-
-
-class Config(BaseConfig):
-    def __init__(self, _):
-        self._content = document()
 
 
 class Locker(BaseLocker):
@@ -134,13 +147,12 @@ class Locker(BaseLocker):
 
 
 class Poetry(BasePoetry):
-    def __init__(self, file, local_config, package, locker):
+    def __init__(self, file, local_config, package, locker, config):
         self._file = TomlFile(file)
         self._package = package
         self._local_config = local_config
         self._locker = Locker(locker.lock.path, locker._local_config)
-        self._config = Config.create("config.toml")
-        self._auth_config = Config.create("auth.toml")
+        self._config = config
 
         # Configure sources
         self._pool = Pool()
@@ -169,10 +181,10 @@ def project_directory():
 
 
 @pytest.fixture
-def poetry(repo, project_directory):
+def poetry(repo, project_directory, config_source):
     p = Poetry.create(Path(__file__).parent.parent / "fixtures" / project_directory)
 
-    with p.file.path.open() as f:
+    with p.file.path.open(encoding="utf-8") as f:
         content = f.read()
 
     p.pool.remove_repository("pypi")
@@ -180,7 +192,7 @@ def poetry(repo, project_directory):
 
     yield p
 
-    with p.file.path.open("w") as f:
+    with p.file.path.open("w", encoding="utf-8") as f:
         f.write(content)
 
 

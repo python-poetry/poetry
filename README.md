@@ -82,13 +82,16 @@ poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
+
+# Zsh (macOS/Homebrew)
+poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
 ```
 
 *Note:* you may need to restart your shell in order for the changes to take
 effect.
 
 For `zsh`, you must then add the following line in your `~/.zshrc` before
-`compinit`:
+`compinit` (not for homebrew setup):
 
 ```zsh
 fpath+=~/.zfunc
@@ -542,6 +545,21 @@ This command locks (without installing) the dependencies specified in `pyproject
 ```bash
 poetry lock
 ```
+
+### export
+
+This command exports the lock file to other formats.
+
+```bash
+poetry export -f requirements.txt > requirements.txt
+```
+
+#### Options
+
+* `--format (-f)`: the format to export to.  Currently, only
+  `requirements.txt` is supported.
+* `--output (-o)`: the name of the output file.  If omitted, print to standard
+  output.
 
 
 ## The `pyproject.toml` file

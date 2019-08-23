@@ -26,7 +26,8 @@ _trans_op = {
 
 
 def parse(
-    version, strict=False  # type: str  # type: bool
+    version,  # type: str
+    strict=False,  # type: bool
 ):  # type:(...) -> Union[Version, LegacyVersion]
     """
     Parse the given version string and return either a :class:`Version` object

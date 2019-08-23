@@ -76,5 +76,5 @@ class VCSDependency(Dependency):
     def is_vcs(self):  # type: () -> bool
         return True
 
-    def accepts_prereleases(self):
+    def accepts_prereleases(self):  # type: () -> bool
         return True

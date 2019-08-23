@@ -1,4 +1,5 @@
 import pytest
+from cleo import CommandTester
 
 from poetry.console.commands import VersionCommand
 
@@ -36,3 +37,10 @@ def command():
 )
 def test_increment_version(version, rule, expected, command):
     assert expected == command.increment_version(version, rule).text
+
+
+def test_version_show(app):
+    command = app.find("version")
+    tester = CommandTester(command)
+    tester.execute()
+    assert "Project (simple-project) version is 1.2.3\n" == tester.io.fetch_output()

@@ -32,6 +32,8 @@ setup_kwargs = {{
     'long_description': {long_description!r},
     'author': {author!r},
     'author_email': {author_email!r},
+    'maintainer': {maintainer!r},
+    'maintainer_email': {maintainer_email!r},
     'url': {url!r},
     {extra}
 }}
@@ -42,6 +44,9 @@ setup(**setup_kwargs)
 
 
 class SdistBuilder(Builder):
+
+    format = "sdist"
+
     def build(self, target_dir=None):  # type: (Path) -> Path
         self._io.write_line(" - Building <info>sdist</info>")
         if target_dir is None:
@@ -122,10 +127,10 @@ class SdistBuilder(Builder):
                     packages += [p for p in _packages if p not in packages]
                     package_data.update(_package_data)
                 else:
+                    module = include.elements[0].relative_to(include.base).stem
+
                     if include.source is not None:
                         package_dir[""] = str(include.base.relative_to(self._path))
-
-                    module = include.elements[0].relative_to(include.base).stem
 
                     if module not in modules:
                         modules.append(module)
@@ -180,6 +185,8 @@ class SdistBuilder(Builder):
                 long_description=to_str(self._meta.description),
                 author=to_str(self._meta.author),
                 author_email=to_str(self._meta.author_email),
+                maintainer=to_str(self._meta.maintainer),
+                maintainer_email=to_str(self._meta.maintainer_email),
                 url=to_str(self._meta.home_page),
                 extra="\n    ".join(extra),
                 after="\n".join(after),
@@ -220,7 +227,6 @@ class SdistBuilder(Builder):
             # Relative to the top-level package
             return pkg_name, Path(rel_path).as_posix()
 
-        excluded_files = self.find_excluded_files()
         for path, dirnames, filenames in os.walk(str(base), topdown=True):
             if os.path.basename(path) == "__pycache__":
                 continue

@@ -15,6 +15,7 @@ from .constraints import parse_constraint as parse_generic_constraint
 from .constraints.constraint import Constraint
 from .constraints.multi_constraint import MultiConstraint
 from .constraints.union_constraint import UnionConstraint
+from .utils.utils import convert_markers
 
 
 class Dependency(object):
@@ -171,6 +172,9 @@ class Dependency(object):
     def is_directory(self):
         return False
 
+    def is_url(self):
+        return False
+
     def accepts(self, package):  # type: (poetry.packages.Package) -> bool
         """
         Determines if the given package matches this dependency.
@@ -185,6 +189,7 @@ class Dependency(object):
         requirement = self.base_pep_508_name
 
         markers = []
+        has_extras = False
         if not self.marker.is_any():
             marker = self.marker
             if not with_extras:
@@ -192,6 +197,8 @@ class Dependency(object):
 
             if not marker.is_empty():
                 markers.append(str(marker))
+
+            has_extras = "extra" in convert_markers(marker)
         else:
             # Python marker
             if self.python_versions != "*":
@@ -202,7 +209,7 @@ class Dependency(object):
                 )
 
         in_extras = " || ".join(self._in_extras)
-        if in_extras and with_extras:
+        if in_extras and with_extras and not has_extras:
             markers.append(
                 self._create_nested_marker("extra", parse_generic_constraint(in_extras))
             )

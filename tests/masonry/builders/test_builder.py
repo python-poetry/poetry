@@ -97,7 +97,7 @@ def test_get_metadata_content():
     assert requires == [
         "cachy[msgpack] (>=0.2.0,<0.3.0)",
         "cleo (>=0.6,<0.7)",
-        'pendulum (>=1.4,<2.0); extra == "time"',
+        'pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")',
     ]
 
     urls = parsed.get_all("Project-URL")
@@ -132,3 +132,20 @@ def test_metadata_with_vcs_dependencies():
     requires_dist = metadata["Requires-Dist"]
 
     assert "cleo @ git+https://github.com/sdispater/cleo.git@master" == requires_dist
+
+
+def test_metadata_with_url_dependencies():
+    builder = Builder(
+        Poetry.create(Path(__file__).parent / "fixtures" / "with_url_dependency"),
+        NullEnv(),
+        NullIO(),
+    )
+
+    metadata = Parser().parsestr(builder.get_metadata_content())
+
+    requires_dist = metadata["Requires-Dist"]
+
+    assert (
+        "demo @ https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        == requires_dist
+    )

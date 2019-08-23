@@ -31,7 +31,7 @@ class MockRepository(LegacyRepository):
         if not fixture.exists():
             return
 
-        with fixture.open() as f:
+        with fixture.open(encoding="utf-8") as f:
             return Page(self._url + endpoint, f.read(), {})
 
     def _download(self, url, dest):

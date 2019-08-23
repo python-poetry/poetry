@@ -27,7 +27,7 @@ class Infinity(object):
         return NegativeInfinity
 
 
-Infinity = Infinity()
+Infinity = Infinity()  # type: ignore
 
 
 class NegativeInfinity(object):
@@ -59,4 +59,4 @@ class NegativeInfinity(object):
         return Infinity
 
 
-NegativeInfinity = NegativeInfinity()
+NegativeInfinity = NegativeInfinity()  # type: ignore

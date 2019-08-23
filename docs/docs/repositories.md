@@ -39,8 +39,18 @@ If you do not specify the password you will be prompted to write it.
 
 !!!note
 
-    To publish to PyPI, you can set your credentials for the repository
-    named `pypi`:
+    To publish to PyPI, you can set your credentials for the repository named `pypi`.
+
+    Note that it is recommended to use [API tokens](https://pypi.org/help/#apitoken)
+    when uploading packages to PyPI.
+    Once you have created a new token, you can tell Poetry to use it:
+
+    ```bash
+    poetry config pypi-token.pypi my-token
+    ```
+
+    If you still want to use you username and password, you can do so with the following
+    call to `config`.
 
     ```bash
     poetry config http-basic.pypi username password
@@ -48,6 +58,21 @@ If you do not specify the password you will be prompted to write it.
 
 You can also specify the username and password when using the `publish` command
 with the `--username` and `--password` options.
+
+If a system keyring is available and supported, the password is stored to and retrieved from the keyring. In the above example, the credential will be stored using the name `poetry-repository-pypi`. If access to keyring fails or is unsupported, this will fall back to writing the password to the `auth.toml` file along with the username.
+
+Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
+
+Alternatively, you can use environment variables to provide the credentials:
+
+```bash
+export POETRY_PYPI_TOKEN_PYPI=my-token
+export POETRY_HTTP_BASIC_PYPI_USERNAME=username
+export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
+```
+
+See [Using environment variables](/configuration#using-environment-variables) for more information
+on how to configure Poetry with environment variables.
 
 ### Install dependencies from a private repository
 
@@ -67,10 +92,10 @@ From now on, Poetry will also look for packages in your private repository.
 !!!note
 
     Any custom repository will have precedence over PyPI.
-    
+
     If you still want PyPI to be your primary source for your packages
     you can declare custom repositories as secondary.
-    
+
     ```toml
     [[tool.poetry.source]]
     name = "foo"

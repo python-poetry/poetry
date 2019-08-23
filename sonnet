@@ -51,6 +51,11 @@ class MakeReleaseCommand(Command):
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
         from poetry.utils._compat import Path
+        from poetry.utils._compat import decode
+        from poetry.utils._compat import encode
+        from poetry.utils._compat import subprocess
+        from poetry.utils.env import GET_BASE_PREFIX
+        from poetry.utils.env import VirtualEnv
         from poetry.utils.helpers import temporary_directory
         from poetry.vcs import get_vcs
 
@@ -92,12 +97,29 @@ class MakeReleaseCommand(Command):
                         version
                     )
                 )
-                with package.with_python_versions("^{}".format(version)):
+                prefix = decode(
+                    subprocess.run(
+                        [python],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        input=encode(GET_BASE_PREFIX),
+                        check=True,
+                        shell=WINDOWS,
+                    ).stdout
+                )
+                env = VirtualEnv(Path(prefix.strip()), base=Path(prefix.strip()))
+                with package.with_python_versions("~{}".format(version)):
                     solver = Solver(package, pool, Repository(), Repository(), self.io)
                     ops = solver.solve()
+                    for op in ops:
+                        if not env.is_valid_for_marker(op.package.marker):
+                            op.skip("Not needed for the current environment")
 
                 self.vendorize_for_python(
-                    python, [op.package for op in ops], poetry_dir, version
+                    python,
+                    [op.package for op in ops if not op.skipped],
+                    poetry_dir,
+                    version,
                 )
                 vendor_dir = Path(
                     os.path.join(poetry_dir, "_vendor", "py{}".format(python))

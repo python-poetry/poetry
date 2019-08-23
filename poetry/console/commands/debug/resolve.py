@@ -94,6 +94,8 @@ class DebugResolveCommand(Command):
         current_python_version = parse_constraint(
             ".".join(str(v) for v in env.version_info)
         )
+        table = self.table([], style="borderless")
+        rows = []
         for op in ops:
             pkg = op.package
             if self.option("install"):
@@ -101,17 +103,19 @@ class DebugResolveCommand(Command):
                     current_python_version
                 ) or not env.is_valid_for_marker(pkg.marker):
                     continue
-
-            self.line(
-                "  - <info>{}</info> (<comment>{}</comment>)".format(
-                    pkg.name, pkg.version
-                )
-            )
-            if not pkg.python_constraint.is_any():
-                self.line("    - python: {}".format(pkg.python_versions))
+            row = [
+                "<info>{}</info>".format(pkg.name),
+                "<b>{}</b>".format(pkg.version),
+                "",
+            ]
 
             if not pkg.marker.is_any():
-                self.line("    - marker: {}".format(pkg.marker))
+                row[2] = str(pkg.marker)
+
+            rows.append(row)
+
+        table.set_rows(rows)
+        table.render(self.io)
 
     def _determine_requirements(self, requires):  # type: (List[str]) -> List[str]
         from poetry.semver import parse_constraint

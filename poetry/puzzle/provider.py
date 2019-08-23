@@ -9,6 +9,7 @@ from clikit.ui.components import ProgressIndicator
 from contextlib import contextmanager
 from tempfile import mkdtemp
 from typing import List
+from typing import Optional
 
 from poetry.packages import Dependency
 from poetry.packages import DependencyPackage
@@ -16,6 +17,7 @@ from poetry.packages import DirectoryDependency
 from poetry.packages import FileDependency
 from poetry.packages import Package
 from poetry.packages import PackageCollection
+from poetry.packages import URLDependency
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
 
@@ -29,11 +31,15 @@ from poetry.repositories import Pool
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
+from poetry.utils._compat import urlparse
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import safe_rmtree
+from poetry.utils.helpers import temporary_directory
 from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
+from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
+from poetry.utils.toml_file import TomlFile
 
 from poetry.version.markers import MarkerUnion
 from poetry.vcs.git import Git
@@ -55,10 +61,13 @@ class Provider:
 
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(self, package, pool, io):  # type: (Package, Pool, ...) -> None
+    def __init__(
+        self, package, pool, io  # type: Package  # type: Pool
+    ):  # type: (...) -> None
         self._package = package
         self._pool = pool
         self._io = io
+        self._inspector = Inspector()
         self._python_constraint = package.python_constraint
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
@@ -123,6 +132,8 @@ class Provider:
             packages = self.search_for_file(dependency)
         elif dependency.is_directory():
             packages = self.search_for_directory(dependency)
+        elif dependency.is_url():
+            packages = self.search_for_url(dependency)
         else:
             constraint = dependency.constraint
 
@@ -153,75 +164,70 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
-        if dependency.vcs != "git":
-            raise ValueError("Unsupported VCS dependency {}".format(dependency.vcs))
+        package = self.get_package_from_vcs(
+            dependency.vcs,
+            dependency.source,
+            dependency.reference,
+            name=dependency.name,
+        )
 
-        tmp_dir = Path(mkdtemp(prefix="pypoetry-git-{}".format(dependency.name)))
+        if dependency.tag or dependency.rev:
+            package.source_reference = dependency.reference
+
+        for extra in dependency.extras:
+            if extra in package.extras:
+                for dep in package.extras[extra]:
+                    dep.activate()
+
+                package.requires += package.extras[extra]
+
+        return [package]
+
+    @classmethod
+    def get_package_from_vcs(
+        cls, vcs, url, reference=None, name=None
+    ):  # type: (str, str, Optional[str], Optional[str]) -> Package
+        if vcs != "git":
+            raise ValueError("Unsupported VCS dependency {}".format(vcs))
+
+        tmp_dir = Path(
+            mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
+        )
 
         try:
             git = Git()
-            git.clone(dependency.source, tmp_dir)
-            git.checkout(dependency.reference, tmp_dir)
-            revision = git.rev_parse(dependency.reference, tmp_dir).strip()
+            git.clone(url, tmp_dir)
+            if reference is not None:
+                git.checkout(reference, tmp_dir)
+            else:
+                reference = "HEAD"
 
-            if dependency.tag or dependency.rev:
-                revision = dependency.reference
+            revision = git.rev_parse(reference, tmp_dir).strip()
 
-            directory_dependency = DirectoryDependency(
-                dependency.name,
-                tmp_dir,
-                category=dependency.category,
-                optional=dependency.is_optional(),
-            )
-            for extra in dependency.extras:
-                directory_dependency.extras.append(extra)
-
-            package = self.search_for_directory(directory_dependency)[0]
+            package = cls.get_package_from_directory(tmp_dir, name=name)
 
             package.source_type = "git"
-            package.source_url = dependency.source
+            package.source_url = url
             package.source_reference = revision
         except Exception:
             raise
         finally:
             safe_rmtree(str(tmp_dir))
 
-        return [package]
+        return package
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
-        if dependency.path.suffix == ".whl":
-            meta = pkginfo.Wheel(str(dependency.full_path))
-        else:
-            # Assume sdist
-            meta = pkginfo.SDist(str(dependency.full_path))
+        package = self.get_package_from_file(dependency.full_path)
 
-        if dependency.name != meta.name:
+        if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(
                 "The dependency name for {} does not match the actual package's name: {}".format(
-                    dependency.name, meta.name
+                    dependency.name, package.name
                 )
             )
 
-        package = Package(meta.name, meta.version)
-        package.source_type = "file"
         package.source_url = dependency.path.as_posix()
-
-        package.description = meta.summary
-        for req in meta.requires_dist:
-            dep = dependency_from_pep_508(req)
-            for extra in dep.in_extras:
-                if extra not in package.extras:
-                    package.extras[extra] = []
-
-                package.extras[extra].append(dep)
-
-            if not dep.is_optional():
-                package.requires.append(dep)
-
-        if meta.requires_python:
-            package.python_versions = meta.requires_python
-
         package.hashes = [dependency.hash()]
 
         for extra in dependency.extras:
@@ -233,13 +239,70 @@ class Provider:
 
         return [package]
 
+    @classmethod
+    def get_package_from_file(cls, file_path):  # type: (Path) -> Package
+        info = Inspector().inspect(file_path)
+        if not info["name"]:
+            raise RuntimeError(
+                "Unable to determine the package name of {}".format(file_path)
+            )
+
+        package = Package(info["name"], info["version"])
+        package.source_type = "file"
+        package.source_url = file_path.as_posix()
+
+        package.description = info["summary"]
+        for req in info["requires_dist"]:
+            dep = dependency_from_pep_508(req)
+            for extra in dep.in_extras:
+                if extra not in package.extras:
+                    package.extras[extra] = []
+
+                package.extras[extra].append(dep)
+
+            if not dep.is_optional():
+                package.requires.append(dep)
+
+        if info["requires_python"]:
+            package.python_versions = info["requires_python"]
+
+        return package
+
     def search_for_directory(
         self, dependency
     ):  # type: (DirectoryDependency) -> List[Package]
-        if dependency.supports_poetry():
+        package = self.get_package_from_directory(
+            dependency.full_path, name=dependency.name
+        )
+
+        package.source_url = dependency.path.as_posix()
+
+        for extra in dependency.extras:
+            if extra in package.extras:
+                for dep in package.extras[extra]:
+                    dep.activate()
+
+                package.requires += package.extras[extra]
+
+        return [package]
+
+    @classmethod
+    def get_package_from_directory(
+        cls, directory, name=None
+    ):  # type: (Path, Optional[str]) -> Package
+        supports_poetry = False
+        pyproject = directory.joinpath("pyproject.toml")
+        if pyproject.exists():
+            pyproject = TomlFile(pyproject)
+            pyproject_content = pyproject.read()
+            supports_poetry = (
+                "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
+            )
+
+        if supports_poetry:
             from poetry.poetry import Poetry
 
-            poetry = Poetry.create(dependency.full_path)
+            poetry = Poetry.create(directory)
 
             pkg = poetry.package
             package = Package(pkg.name, pkg.version)
@@ -259,25 +322,25 @@ class Provider:
         else:
             # Execute egg_info
             current_dir = os.getcwd()
-            os.chdir(str(dependency.full_path))
+            os.chdir(str(directory))
 
             try:
-                cwd = dependency.full_path
+                cwd = directory
                 venv = EnvManager().get(cwd)
                 venv.run("python", "setup.py", "egg_info")
             except EnvCommandError:
-                result = SetupReader.read_from_directory(dependency.full_path)
+                result = SetupReader.read_from_directory(directory)
                 if not result["name"]:
                     # The name could not be determined
                     # We use the dependency name
-                    result["name"] = dependency.name
+                    result["name"] = name
 
                 if not result["version"]:
                     # The version could not be determined
                     # so we raise an error since it is mandatory
                     raise RuntimeError(
                         "Unable to retrieve the package version for {}".format(
-                            dependency.path
+                            directory
                         )
                     )
 
@@ -316,12 +379,12 @@ class Provider:
                     egg_info = next(
                         Path(p)
                         for p in glob.glob(
-                            os.path.join(str(dependency.full_path), "**", "*.egg-info"),
+                            os.path.join(str(directory), "**", "*.egg-info"),
                             recursive=True,
                         )
                     )
                 else:
-                    egg_info = next(dependency.full_path.glob("**/*.egg-info"))
+                    egg_info = next(directory.glob("**/*.egg-info"))
 
                 meta = pkginfo.UnpackedSDist(str(egg_info))
                 package_name = meta.name
@@ -335,20 +398,20 @@ class Provider:
                     reqs = []
                     requires = egg_info / "requires.txt"
                     if requires.exists():
-                        with requires.open() as f:
+                        with requires.open(encoding="utf-8") as f:
                             reqs = parse_requires(f.read())
             finally:
                 os.chdir(current_dir)
 
-            package = Package(package_name, package_version)
-
-            if dependency.name != package.name:
+            if name and name != package_name:
                 # For now, the dependency's name must match the actual package's name
                 raise RuntimeError(
                     "The dependency name for {} does not match the actual package's name: {}".format(
-                        dependency.name, package.name
+                        name, package_name
                     )
                 )
+
+            package = Package(package_name, package_version)
 
             package.description = package_summary
 
@@ -368,7 +431,20 @@ class Provider:
                 package.python_versions = python_requires
 
         package.source_type = "directory"
-        package.source_url = dependency.path.as_posix()
+        package.source_url = directory.as_posix()
+
+        return package
+
+    def search_for_url(self, dependency):  # type: (URLDependency) -> List[Package]
+        package = self.get_package_from_url(dependency.url)
+
+        if dependency.name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                "The dependency name for {} does not match the actual package's name: {}".format(
+                    dependency.name, package.name
+                )
+            )
 
         for extra in dependency.extras:
             if extra in package.extras:
@@ -378,6 +454,20 @@ class Provider:
                 package.requires += package.extras[extra]
 
         return [package]
+
+    @classmethod
+    def get_package_from_url(cls, url):  # type: (str) -> Package
+        with temporary_directory() as temp_dir:
+            temp_dir = Path(temp_dir)
+            file_name = os.path.basename(urlparse.urlparse(url).path)
+            Inspector().download(url, temp_dir / file_name)
+
+            package = cls.get_package_from_file(temp_dir / file_name)
+
+        package.source_type = "url"
+        package.source_url = url
+
+        return package
 
     def incompatibilities_for(
         self, package
@@ -446,6 +536,7 @@ class Provider:
         if not package.is_root() and package.source_type not in {
             "directory",
             "file",
+            "url",
             "git",
         }:
             package = DependencyPackage(

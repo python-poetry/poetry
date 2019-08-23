@@ -37,6 +37,9 @@ Tag: {tag}
 
 
 class WheelBuilder(Builder):
+
+    format = "wheel"
+
     def __init__(self, poetry, env, io, target_dir=None, original=None):
         super(WheelBuilder, self).__init__(poetry, env, io)
 

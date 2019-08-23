@@ -27,6 +27,7 @@ packages = [
     { include = "package_with_include" },
     { include = "tests", format = "sdist" },
     { include = "for_wheel_only", format = ["wheel"] },
+    { include = "src_package", from = "src"},
 ]
 
 include = [

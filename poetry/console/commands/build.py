@@ -9,7 +9,7 @@ class BuildCommand(EnvCommand):
     description = "Builds a package, as a tarball and a wheel by default."
 
     options = [
-        option("format", "f", "Limit the format to either wheel or sdist.", flag=True)
+        option("format", "f", "Limit the format to either wheel or sdist.", flag=False)
     ]
 
     def handle(self):

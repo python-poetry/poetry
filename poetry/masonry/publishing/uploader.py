@@ -248,8 +248,8 @@ class Uploader:
                             file.name, int(math.floor(bar._percent * 100))
                         )
                     )
-                else:
-                    self._io.write_line("")
+
+                self._io.write_line("")
 
         return resp
 

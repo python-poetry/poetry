@@ -12,6 +12,14 @@
 - Added support for declaring a specific source for dependencies.
 - Added support for disabling PyPI and making another repository the default one.
 - Added support for declaring private repositories as secondary.
+- Added the ability to specify packages on a per-format basis.
+- Added support for custom urls in metadata.
+- Full environment markers are now supported for dependencies via the `markers` property.
+- Added the ability to specify git dependencies directly in `add`, it no longer requires the `--git` option.
+- Added the ability to specify path dependencies directly in `add`, it no longer requires the `--path` option.
+- Added support for url dependencies ([#1260](https://github.com/sdispater/poetry/pull/1260)).
+- Publishing to PyPI using [API tokens](https://pypi.org/help/#apitoken) is now supported ([#1275](https://github.com/sdispater/poetry/pull/1275)).
+- Licenses can now be identified by their full name.
 
 ### Changed
 
@@ -21,10 +29,28 @@
 - The `debug:resolve` command has been renamed to `debug resolve`.
 - The `self:update` command has been renamed to `self update`.
 - Changed the way virtualenvs are stored (names now depend on the project's path).
+- The `--git` option of the `add` command has been removed.
+- The `--path` option of the `add` command has been removed.
+- The `add` command will now automatically select the latest prerelease if only prereleases are available.
+- The `add` command can now update a dependencies if an explicit constraint is given ([#1221](https://github.com/sdispater/poetry/pull/1221)).
+- Removed the `--develop` option from the `install` command.
 
 ### Fixed
 
 - Fixed transitive extra dependencies being removed when updating a specific dependency.
+- The `pyproject.toml` configuration is now properly validated.
+- Fixed installing Poetry-based packages breaking with `pip`.
+- Fixed packages with empty markers being added to the lock file.
+
+
+## [0.12.17] - 2019-07-03
+
+### Fixed
+
+- Fixed dependency resolution with circular dependencies.
+- Fixed encoding errors when reading files on Windows. (Thanks to [@vlcinsky](https://github.com/vlcinsky))
+- Fixed unclear errors when executing commands in virtual environments. (Thanks to [@Imaclean74](https://github.com/Imaclean74))
+- Fixed handling of `.venv` when it's not a directory. (Thanks to [@mpanarin](https://github.com/mpanarin))
 
 
 ## [0.12.16] - 2019-05-17
@@ -35,7 +61,6 @@
 - Fixed multiple constraints for dev dependencies.
 - Fixed dependency resolution failing on badly formed package versions instead of skipping.
 - Fixed permissions of built wheels.
->>>>>>> master
 
 
 ## [0.12.15] - 2019-05-03
@@ -699,7 +724,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.16...develop
+[Unreleased]: https://github.com/sdispater/poetry/compare/0.12.17...develop
+[0.12.17]: https://github.com/sdispater/poetry/releases/tag/0.12.17
 [0.12.16]: https://github.com/sdispater/poetry/releases/tag/0.12.16
 [0.12.15]: https://github.com/sdispater/poetry/releases/tag/0.12.15
 [0.12.14]: https://github.com/sdispater/poetry/releases/tag/0.12.14

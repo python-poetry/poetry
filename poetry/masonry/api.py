@@ -37,16 +37,16 @@ def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
     builder = WheelBuilder(poetry, SystemEnv(Path(sys.prefix)), NullIO())
 
     dist_info = Path(metadata_directory, builder.dist_info)
-    dist_info.mkdir()
+    dist_info.mkdir(parents=True, exist_ok=True)
 
     if "scripts" in poetry.local_config or "plugins" in poetry.local_config:
-        with (dist_info / "entry_points.txt").open("w") as f:
+        with (dist_info / "entry_points.txt").open("w", encoding="utf-8") as f:
             builder._write_entry_points(f)
 
-    with (dist_info / "WHEEL").open("w") as f:
+    with (dist_info / "WHEEL").open("w", encoding="utf-8") as f:
         builder._write_wheel_file(f)
 
-    with (dist_info / "METADATA").open("w") as f:
+    with (dist_info / "METADATA").open("w", encoding="utf-8") as f:
         builder._write_metadata_file(f)
 
     return dist_info.name

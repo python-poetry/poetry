@@ -209,6 +209,8 @@ License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
+Maintainer: People Everywhere
+Maintainer-email: people@everywhere.com
 Requires-Python: >=3.6,<4.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
@@ -219,7 +221,7 @@ Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
-Requires-Dist: pendulum (>=1.4,<2.0); extra == "time"
+Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
 Project-URL: Documentation, https://poetry.eustace.io/docs
 Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
 Project-URL: Repository, https://github.com/sdispater/poetry
@@ -309,6 +311,8 @@ License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
+Maintainer: People Everywhere
+Maintainer-email: people@everywhere.com
 Requires-Python: >=3.6,<4.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
@@ -319,7 +323,7 @@ Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
-Requires-Dist: pendulum (>=1.4,<2.0); extra == "time"
+Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
 Project-URL: Documentation, https://poetry.eustace.io/docs
 Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
 Project-URL: Repository, https://github.com/sdispater/poetry
@@ -432,7 +436,8 @@ def test_package_with_include(mocker):
         assert "with-include-1.2.3/pyproject.toml" in names
         assert "with-include-1.2.3/setup.py" in names
         assert "with-include-1.2.3/PKG-INFO" in names
-        assert "for_wheel_only/__init__" not in names
+        assert "with-include-1.2.3/for_wheel_only/__init__.py" not in names
+        assert "with-include-1.2.3/src/src_package/__init__.py" in names
 
         setup = tar.extractfile("with-include-1.2.3/setup.py").read()
         setup_ast = ast.parse(setup)
@@ -440,11 +445,12 @@ def test_package_with_include(mocker):
         setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
         ns = {}
         exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
-        assert "package_dir" not in ns
+        assert ns["package_dir"] == {"": "src"}
         assert ns["packages"] == [
             "extra_dir",
             "extra_dir.sub_pkg",
             "package_with_include",
+            "src_package",
             "tests",
         ]
         assert ns["package_data"] == {"": ["*"]}
@@ -466,4 +472,5 @@ def test_package_with_include(mocker):
         assert "my_module.py" in names
         assert "notes.txt" in names
         assert "package_with_include/__init__.py" in names
-        assert "with-include-1.2.3/tests/__init__.py" not in names
+        assert "tests/__init__.py" not in names
+        assert "src_package/__init__.py" in names

@@ -46,6 +46,12 @@ The authors of the package. **Required**
 
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
+## maintainers
+
+The maintainers of the package. **Optional**
+
+This is a list of maintainers and should be distinct from authors. Maintainers may contain an email and be in the form `name <email>`.
+
 ## readme
 
 The readme file of the package. **Optional**

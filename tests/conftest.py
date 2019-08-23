@@ -9,8 +9,13 @@ try:
 except ImportError:
     import urlparse
 
-from poetry.config import Config
+from tomlkit import parse
+
+from poetry.config.config import Config
+from poetry.utils._compat import PY2
+from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
+from poetry.utils.helpers import merge_dicts
 from poetry.utils.toml_file import TomlFile
 
 
@@ -24,11 +29,34 @@ def tmp_dir():
 
 
 @pytest.fixture
-def config():  # type: () -> Config
-    with tempfile.NamedTemporaryFile() as f:
-        f.close()
+def config_document():
+    content = """cache-dir = "/foo"
+"""
+    doc = parse(content)
 
-        return Config(TomlFile(f.name))
+    return doc
+
+
+@pytest.fixture
+def config_source(config_document, mocker):
+    file = TomlFile(Path(tempfile.mktemp()))
+    mocker.patch.object(file, "exists", return_value=True)
+    mocker.patch.object(file, "read", return_value=config_document)
+    mocker.patch.object(
+        file, "write", return_value=lambda new: merge_dicts(config_document, new)
+    )
+    mocker.patch(
+        "poetry.config.config_source.ConfigSource.file",
+        new_callable=mocker.PropertyMock,
+        return_value=file,
+    )
+
+
+@pytest.fixture
+def config(config_source):
+    c = Config()
+
+    return c
 
 
 def mock_clone(_, source, dest):
@@ -43,8 +71,26 @@ def mock_clone(_, source, dest):
         / parts.path.lstrip("/").rstrip(".git")
     )
 
+    if dest.exists():
+        shutil.rmtree(str(dest))
+
     shutil.rmtree(str(dest))
     shutil.copytree(str(folder), str(dest))
+
+
+def mock_download(self, url, dest):
+    parts = urlparse.urlparse(url)
+
+    fixtures = Path(__file__).parent / "fixtures"
+    fixture = fixtures / parts.path.lstrip("/")
+
+    if dest.exists():
+        os.unlink(str(dest))
+
+    if PY2 and WINDOWS:
+        shutil.copyfile(str(fixture), str(dest))
+    else:
+        os.symlink(str(fixture), str(dest))
 
 
 @pytest.fixture
@@ -75,6 +121,12 @@ def git_mock(mocker):
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
 
+@pytest.fixture(autouse=True)
+def download_mock(mocker):
+    # Patch download to not download anything but to just copy from fixtures
+    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
+
+
 @pytest.fixture
 def http():
     httpretty.enable()
@@ -82,3 +134,11 @@ def http():
     yield httpretty
 
     httpretty.disable()
+
+
+@pytest.fixture
+def fixture_dir():
+    def _fixture_dir(name):
+        return Path(__file__).parent / "fixtures" / name
+
+    return _fixture_dir

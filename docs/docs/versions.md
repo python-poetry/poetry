@@ -113,6 +113,24 @@ my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
     You can install path dependencies in editable/development mode.
     Just pass `--develop my-package` (repeatable as much as you want) to
     the `install` command.
+    
+    
+### `url` dependencies
+
+To depend on a library located on a remote archive,
+you can use the `url` property:
+
+```toml
+[tool.poetry.dependencies]
+# directory
+my-package = { url = "https://example.com/my-package-0.1.0.tar.gz" }
+```
+
+with the corresponding `add` call:
+
+```bash
+poetry add https://example.com/my-package-0.1.0.tar.gz
+```
 
 
 ### Python restricted dependencies
@@ -127,6 +145,17 @@ pathlib2 = { version = "^2.2", python = "~2.7" }
 ```toml
 [tool.poetry.dependencies]
 pathlib2 = { version = "^2.2", python = ["~2.7", "^3.2"] }
+```
+
+### Using environment markers
+
+If you need more complex install conditions for your dependencies,
+Poetry supports [environment markers](https://www.python.org/dev/peps/pep-0508/#environment-markers)
+via the `markers` property:
+
+```toml
+[tool.poetry.dependencies]
+pathlib2 = { version = "^2.2", markers = "python_version ~= '2.7' or sys_platform == 'win32'" }
 ```
 
 

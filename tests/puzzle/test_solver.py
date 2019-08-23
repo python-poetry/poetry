@@ -725,19 +725,26 @@ def test_solver_circular_dependency(solver, repo, package):
 
     package_b = get_package("B", "1.0")
     package_b.add_dependency("A", "^1.0")
+    package_b.add_dependency("C", "^1.0")
+
+    package_c = get_package("C", "1.0")
 
     repo.add_package(package_a)
     repo.add_package(package_b)
+    repo.add_package(package_c)
 
     ops = solver.solve()
 
     check_solver_result(
         ops,
         [
+            {"job": "install", "package": package_c},
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_a},
         ],
     )
+
+    assert "main" == ops[0].package.category
 
 
 def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
@@ -1294,6 +1301,39 @@ def test_solver_git_dependencies_update_skipped(solver, repo, package, installed
     )
 
 
+def test_solver_git_dependencies_short_hash_update_skipped(
+    solver, repo, package, installed
+):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    installed.add_package(demo)
+
+    package.add_dependency(
+        "demo", {"git": "https://github.com/demo/demo.git", "rev": "9cf87a2"}
+    )
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {
+                "job": "install",
+                "package": get_package("demo", "0.1.2"),
+                "skipped": True,
+            },
+        ],
+    )
+
+
 def test_solver_can_resolve_directory_dependencies(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
@@ -1703,3 +1743,35 @@ def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, i
     assert "" == ops[1].package.source_url
     assert "" == ops[2].package.source_type
     assert "" == ops[2].package.source_url
+
+
+def test_solver_discards_packages_with_empty_markers(
+    package, installed, locked, io, pool, repo
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency(
+        "a", {"version": "^0.1.0", "markers": "python_version >= '3.4'"}
+    )
+
+    package_a = get_package("a", "0.1.0")
+    package_a.add_dependency(
+        "b", {"version": "^0.1.0", "markers": "python_version < '3.2'"}
+    )
+    package_a.add_dependency("c", "^0.2.0")
+    package_b = get_package("b", "0.1.0")
+    package_c = get_package("c", "0.2.0")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_a},
+        ],
+    )

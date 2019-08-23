@@ -5,7 +5,6 @@ import os
 import platform
 import re
 import shutil
-import subprocess
 import sys
 import sysconfig
 import warnings
@@ -13,7 +12,6 @@ import warnings
 import tomlkit
 
 from contextlib import contextmanager
-from subprocess import CalledProcessError
 from typing import Any
 from typing import Dict
 from typing import List
@@ -22,13 +20,15 @@ from typing import Tuple
 
 from clikit.api.io import IO
 
-from poetry.config import Config
+from poetry.config.config import Config
 from poetry.locations import CACHE_DIR
 from poetry.semver.version import Version
+from poetry.utils._compat import CalledProcessError
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
+from poetry.utils._compat import subprocess
 from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import BaseMarker
 
@@ -116,11 +116,14 @@ class EnvError(Exception):
 
 
 class EnvCommandError(EnvError):
-    def __init__(self, e):  # type: (CalledProcessError) -> None
-        message = "Command {} errored with the following output: \n{}".format(
-            e.cmd, decode(e.output)
-        )
+    def __init__(self, e, input=None):  # type: (CalledProcessError) -> None
+        self.e = e
 
+        message = "Command {} errored with the following return code {}, and output: \n{}".format(
+            e.cmd, e.returncode, decode(e.output)
+        )
+        if input:
+            message += "input was : {}".format(input)
         super(EnvCommandError, self).__init__(message)
 
 
@@ -135,12 +138,12 @@ class EnvManager(object):
 
     def __init__(self, config=None):  # type: (Config) -> None
         if config is None:
-            config = Config.create("config.toml")
+            config = Config()
 
         self._config = config
 
     def activate(self, python, cwd, io):  # type: (str, Optional[Path], IO) -> Env
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -217,7 +220,7 @@ class EnvManager(object):
         return self.get(cwd, reload=True)
 
     def deactivate(self, cwd, io):  # type: (Optional[Path], IO) -> None
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -246,7 +249,7 @@ class EnvManager(object):
 
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
 
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -266,17 +269,17 @@ class EnvManager(object):
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
-            if (cwd / ".venv").exists():
+            if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
                 venv = cwd / ".venv"
 
                 return VirtualEnv(venv)
 
-            create_venv = self._config.setting("settings.virtualenvs.create", True)
+            create_venv = self._config.get("virtualenvs.create", True)
 
             if not create_venv:
                 return SystemEnv(Path(sys.prefix))
 
-            venv_path = self._config.setting("settings.virtualenvs.path")
+            venv_path = self._config.get("virtualenvs.path")
             if venv_path is None:
                 venv_path = Path(CACHE_DIR) / "virtualenvs"
             else:
@@ -306,7 +309,7 @@ class EnvManager(object):
 
         venv_name = self.generate_env_name(name, str(cwd))
 
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -318,7 +321,7 @@ class EnvManager(object):
         ]
 
     def remove(self, python, cwd):  # type: (str, Optional[Path]) -> Env
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -420,10 +423,10 @@ class EnvManager(object):
             # Already inside a virtualenv.
             return env
 
-        create_venv = self._config.setting("settings.virtualenvs.create")
-        root_venv = self._config.setting("settings.virtualenvs.in-project")
+        create_venv = self._config.get("virtualenvs.create")
+        root_venv = self._config.get("virtualenvs.in-project")
 
-        venv_path = self._config.setting("settings.virtualenvs.path")
+        venv_path = self._config.get("virtualenvs.path")
         if root_venv:
             venv_path = cwd / ".venv"
         elif venv_path is None:
@@ -682,20 +685,19 @@ class Env(object):
 
         if shell:
             cmd = list_to_shell_command(cmd)
-
         try:
             if self._is_windows:
                 kwargs["shell"] = True
 
             if input_:
-                p = subprocess.Popen(
+                output = subprocess.run(
                     cmd,
-                    stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
+                    input=encode(input_),
+                    check=True,
                     **kwargs
-                )
-                output = p.communicate(encode(input_))[0]
+                ).stdout
             elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
             else:
@@ -703,7 +705,7 @@ class Env(object):
                     cmd, stderr=subprocess.STDOUT, **kwargs
                 )
         except CalledProcessError as e:
-            raise EnvCommandError(e)
+            raise EnvCommandError(e, input=input_)
 
         return decode(output)
 
@@ -721,6 +723,19 @@ class Env(object):
         """
         bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._is_windows else "")
         if not bin_path.exists():
+            # On Windows, some executables can be in the base path
+            # This is especially true when installing Python with
+            # the official installer, where python.exe will be at
+            # the root of the env path.
+            # This is an edge case and should not be encountered
+            # in normal uses but this happens in the sonnet script
+            # that creates a fake virtual environment pointing to
+            # a base Python install.
+            if self._is_windows:
+                bin_path = (self._path / bin).with_suffix(".exe")
+                if bin_path.exists():
+                    return str(bin_path)
+
             return bin
 
         return str(bin_path)

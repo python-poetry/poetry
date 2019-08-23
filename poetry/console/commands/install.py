@@ -26,13 +26,6 @@ class InstallCommand(EnvCommand):
             flag=False,
             multiple=True,
         ),
-        option(
-            "develop",
-            None,
-            "Install given packages in development mode.",
-            flag=False,
-            multiple=True,
-        ),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -64,7 +57,6 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 
         installer.extras(extras)
         installer.dev_mode(not self.option("no-dev"))
-        installer.develop(self.option("develop"))
         installer.dry_run(self.option("dry-run"))
         installer.verbose(self.option("verbose"))
 
