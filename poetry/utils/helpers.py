@@ -7,7 +7,6 @@ import tempfile
 
 from contextlib import contextmanager
 from typing import List
-from typing import NoReturn
 from typing import Optional
 
 from keyring import delete_password, set_password, get_password
@@ -102,7 +101,7 @@ def keyring_repository_password_get(
 
 def keyring_repository_password_set(
     repository_name, username, password
-):  # type: (str, str, str) -> NoReturn
+):  # type: (str, str, str) -> None
     try:
         set_password(keyring_service_name(repository_name), username, password)
     except (RuntimeError, KeyringError):
@@ -111,7 +110,7 @@ def keyring_repository_password_set(
 
 def keyring_repository_password_del(
     config, repository_name
-):  # type: (Config, str) -> NoReturn
+):  # type: (Config, str) -> None
     try:
         repo_auth = config.get("http-basic.{}".format(repository_name))
         if repo_auth and "username" in repo_auth:
