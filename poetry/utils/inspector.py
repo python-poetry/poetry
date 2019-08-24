@@ -49,7 +49,7 @@ class Inspector:
             "version": "",
             "summary": "",
             "requires_python": None,
-            "requires_dist": None,
+            "requires_dist": [],
         }
 
         try:
