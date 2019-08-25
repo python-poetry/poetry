@@ -23,7 +23,9 @@ class Publisher:
     def files(self):
         return self._uploader.files
 
-    def publish(self, repository_name, username, password):
+    def publish(
+        self, repository_name, username, password, custom_ca=None, client_cert=None
+    ):
         if repository_name:
             self._io.write_line(
                 "Publishing <info>{}</info> (<comment>{}</comment>) "
@@ -74,17 +76,21 @@ class Publisher:
                     username = auth[0]
                     password = auth[1]
 
-        # Requesting missing credentials
-        if username is None:
-            username = self._io.ask("Username:")
+        resolved_client_cert = client_cert or get_client_cert(
+            self._poetry.config, repository_name
+        )
+        # Requesting missing credentials but only if there is not a client cert defined.
+        if not resolved_client_cert:
+            if username is None:
+                username = self._io.ask("Username:")
 
-        if password is None:
-            password = self._io.ask_hidden("Password:")
+            if password is None:
+                password = self._io.ask_hidden("Password:")
 
         self._uploader.auth(username, password)
 
         return self._uploader.upload(
             url,
-            custom_ca=get_custom_ca(self._poetry.config, repository_name),
-            client_cert=get_client_cert(self._poetry.config, repository_name),
+            custom_ca=custom_ca or get_custom_ca(self._poetry.config, repository_name),
+            client_cert=resolved_client_cert,
         )

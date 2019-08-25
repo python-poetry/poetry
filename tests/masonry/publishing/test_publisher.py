@@ -82,12 +82,10 @@ def test_publish_uses_custom_ca(fixture_dir, mocker, config):
     uploader_upload = mocker.patch("poetry.masonry.publishing.uploader.Uploader.upload")
     poetry = Poetry.create(fixture_dir("sample_project"))
     poetry._config = config
-    # Adding the empty string for username/password is a bit of a hack but otherwise it will prompt for them
-    # username and password are optional but there is no good way of specifying a lack of them other than empty string
     poetry.config.merge(
         {
             "repositories": {"foo": {"url": "https://foo.bar"}},
-            "http-basic": {"foo": {"username": "", "password": ""}},
+            "http-basic": {"foo": {"username": "foo", "password": "bar"}},
             "certificates": {"foo": {"custom-ca": custom_ca}},
         }
     )
@@ -95,7 +93,7 @@ def test_publish_uses_custom_ca(fixture_dir, mocker, config):
 
     publisher.publish("foo", None, None)
 
-    assert [("", "")] == uploader_auth.call_args
+    assert [("foo", "bar")] == uploader_auth.call_args
     assert [
         ("https://foo.bar",),
         {"custom_ca": Path(custom_ca), "client_cert": None},
@@ -104,16 +102,12 @@ def test_publish_uses_custom_ca(fixture_dir, mocker, config):
 
 def test_publish_uses_client_cert(fixture_dir, mocker, config):
     client_cert = "path/to/client.pem"
-    uploader_auth = mocker.patch("poetry.masonry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.masonry.publishing.uploader.Uploader.upload")
     poetry = Poetry.create(fixture_dir("sample_project"))
     poetry._config = config
-    # Adding the empty string for username/password is a bit of a hack but otherwise it will prompt for them
-    # username and password are optional but there is no good way of specifying a lack of them other than empty string
     poetry.config.merge(
         {
             "repositories": {"foo": {"url": "https://foo.bar"}},
-            "http-basic": {"foo": {"username": "", "password": ""}},
             "certificates": {"foo": {"client-cert": client_cert}},
         }
     )
@@ -121,7 +115,6 @@ def test_publish_uses_client_cert(fixture_dir, mocker, config):
 
     publisher.publish("foo", None, None)
 
-    assert [("", "")] == uploader_auth.call_args
     assert [
         ("https://foo.bar",),
         {"custom_ca": None, "client_cert": Path(client_cert)},
