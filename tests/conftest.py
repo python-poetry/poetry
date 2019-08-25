@@ -87,8 +87,14 @@ def mock_download(self, url, dest):
     if dest.exists():
         os.unlink(str(dest))
 
-    if PY2 and WINDOWS:
-        shutil.copyfile(str(fixture), str(dest))
+    if WINDOWS:
+        if PY2:
+            shutil.copyfile(str(fixture), str(dest))
+        else:
+            try:
+                os.symlink(str(fixture), str(dest))
+            except OSError:
+                shutil.copyfile(str(fixture), str(dest))
     else:
         os.symlink(str(fixture), str(dest))
 
