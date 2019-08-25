@@ -20,7 +20,7 @@ from .repositories.legacy_repository import LegacyRepository
 from .repositories.pypi_repository import PyPiRepository
 from .spdx import license_by_id
 from .utils._compat import Path
-from .utils.helpers import get_http_basic_auth
+from .utils.helpers import get_client_cert, get_custom_ca, get_http_basic_auth
 from .utils.toml_file import TomlFile
 
 
@@ -232,7 +232,13 @@ class Poetry:
 
         auth = Auth(url, credentials[0], credentials[1])
 
-        return LegacyRepository(name, url, auth=auth)
+        return LegacyRepository(
+            name,
+            url,
+            auth=auth,
+            custom_ca=get_custom_ca(self._config, name),
+            client_cert=get_client_cert(self._config, name),
+        )
 
     @classmethod
     def locate(cls, cwd):  # type: (Path) -> Poetry

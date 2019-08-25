@@ -1,6 +1,6 @@
 import logging
 
-from poetry.utils.helpers import get_http_basic_auth
+from poetry.utils.helpers import get_client_cert, get_custom_ca, get_http_basic_auth
 
 from .uploader import Uploader
 
@@ -75,14 +75,16 @@ class Publisher:
                     password = auth[1]
 
         # Requesting missing credentials
-        if not username:
+        if username is None:
             username = self._io.ask("Username:")
 
         if password is None:
             password = self._io.ask_hidden("Password:")
 
-        # TODO: handle certificates
-
         self._uploader.auth(username, password)
 
-        return self._uploader.upload(url)
+        return self._uploader.upload(
+            url,
+            custom_ca=get_custom_ca(self._poetry.config, repository_name),
+            client_cert=get_client_cert(self._poetry.config, repository_name),
+        )

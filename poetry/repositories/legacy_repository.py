@@ -155,8 +155,14 @@ class Page:
 
 class LegacyRepository(PyPiRepository):
     def __init__(
-        self, name, url, auth=None, disable_cache=False
-    ):  # type: (str, str, Optional[Auth], bool) -> None
+        self,
+        name,
+        url,
+        auth=None,
+        disable_cache=False,
+        custom_ca=None,
+        client_cert=None,
+    ):  # type: (str, str, Optional[Auth], bool, Optional[Path], Optional[Path]) -> None
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
@@ -164,6 +170,8 @@ class LegacyRepository(PyPiRepository):
         self._name = name
         self._url = url.rstrip("/")
         self._auth = auth
+        self._client_cert = client_cert
+        self._custom_ca = custom_ca
         self._inspector = Inspector()
         self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
         self._cache = CacheManager(
@@ -186,7 +194,21 @@ class LegacyRepository(PyPiRepository):
         if not url_parts.username and self._auth:
             self._session.auth = self._auth
 
+        if self._custom_ca:
+            self._session.verify = self._custom_ca
+
+        if self._client_cert:
+            self._session.cert = self._client_cert
+
         self._disable_cache = disable_cache
+
+    @property
+    def custom_ca(self):  # type: () -> Optional[Path]
+        return self._custom_ca
+
+    @property
+    def client_cert(self):  # type: () -> Optional[Path]
+        return self._client_cert
 
     @property
     def authenticated_url(self):  # type: () -> str

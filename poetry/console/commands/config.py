@@ -223,6 +223,27 @@ To remove a repository (repo is a short alias for repositories):
 
             return 0
 
+        # handle certs
+        m = re.match(
+            r"(?:certificates)\.([^.]+)\.(custom-ca|client-cert)", self.argument("key")
+        )
+        if m:
+            if self.option("unset"):
+                auth_config_source.remove_property(
+                    "certificates.{}.{}".format(m.group(1), m.group(2))
+                )
+
+                return 0
+
+            if len(values) == 1:
+                auth_config_source.add_property(
+                    "certificates.{}.{}".format(m.group(1), m.group(2)), values[0]
+                )
+            else:
+                raise ValueError("You must pass exactly 1 value")
+
+            return 0
+
         raise ValueError("Setting {} does not exist".format(self.argument("key")))
 
     def _handle_single_value(self, source, key, callbacks, values):
