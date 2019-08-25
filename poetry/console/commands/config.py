@@ -73,7 +73,7 @@ To remove a repository (repo is a short alias for repositories):
         config = Config()
         config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
         config_source = ConfigSource(config_file)
-        if config_file.exists():
+        if config_source.file.exists():
             config.merge(config_source.file.read())
 
         auth_config_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
