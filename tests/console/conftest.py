@@ -52,8 +52,16 @@ def mock_download(self, url, dest):
     if dest.exists():
         shutil.rmtree(str(dest))
 
-    if PY2 and WINDOWS:
-        shutil.copyfile(str(fixture), str(dest))
+    # Python2 does not support os.symlink on Windows whereas Python3 does.  os.symlink requires either administrative
+    # privileges or developer mode on Win10, throwing an OSError is neither is active.
+    if WINDOWS:
+        if PY2:
+            shutil.copyfile(str(fixture), str(dest))
+        else:
+            try:
+                os.symlink(str(fixture), str(dest))
+            except OSError:
+                shutil.copyfile(str(fixture), str(dest))
     else:
         os.symlink(str(fixture), str(dest))
 
