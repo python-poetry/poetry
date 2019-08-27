@@ -227,10 +227,10 @@ class Poetry:
         name = source["name"]
         url = source["url"]
         credentials = get_http_basic_auth(self._config, name)
-        if not credentials:
-            return LegacyRepository(name, url)
-
-        auth = Auth(url, credentials[0], credentials[1])
+        if credentials:
+            auth = Auth(url, credentials[0], credentials[1])
+        else:
+            auth = None
 
         return LegacyRepository(
             name,

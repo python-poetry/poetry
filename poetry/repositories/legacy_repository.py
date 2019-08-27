@@ -195,10 +195,10 @@ class LegacyRepository(PyPiRepository):
             self._session.auth = self._auth
 
         if self._custom_ca:
-            self._session.verify = self._custom_ca
+            self._session.verify = str(self._custom_ca)
 
         if self._client_cert:
-            self._session.cert = self._client_cert
+            self._session.cert = str(self._client_cert)
 
         self._disable_cache = disable_cache
 
