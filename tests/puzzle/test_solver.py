@@ -928,6 +928,11 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
         ],
     )
 
+    op = ops[1]
+
+    assert op.package.source_type == "git"
+    assert op.package.source_reference.startswith("9cf87a2")
+
 
 def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
