@@ -7,6 +7,7 @@ except ImportError:
     import urlparse
 
 from poetry.packages import Dependency
+from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
@@ -18,9 +19,9 @@ class MockRepository(LegacyRepository):
 
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
-    def __init__(self):
+    def __init__(self, auth=None):
         super(MockRepository, self).__init__(
-            "legacy", url="http://foo.bar", disable_cache=True
+            "legacy", url="http://foo.bar", auth=auth, disable_cache=True
         )
 
     def _get(self, endpoint):
@@ -255,3 +256,10 @@ def test_get_package_retrieves_packages_with_no_hashes():
     package = repo.package("jupyter", "1.0.0")
 
     assert [] == package.hashes
+
+
+def test_username_password_special_chars():
+    auth = Auth("http://foo.bar", "user:", "p@ssword")
+    repo = MockRepository(auth=auth)
+
+    assert "http://user%3A:p%40ssword@foo.bar" == repo.authenticated_url

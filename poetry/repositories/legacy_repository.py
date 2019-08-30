@@ -21,6 +21,11 @@ from typing import Generator
 from typing import Optional
 from typing import Union
 
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
+
 import requests
 
 from cachecontrol import CacheControl
@@ -197,8 +202,8 @@ class LegacyRepository(PyPiRepository):
 
         return "{scheme}://{username}:{password}@{netloc}{path}".format(
             scheme=parsed.scheme,
-            username=self._auth.auth.username,
-            password=self._auth.auth.password,
+            username=quote(self._auth.auth.username),
+            password=quote(self._auth.auth.password),
             netloc=parsed.netloc,
             path=parsed.path,
         )
