@@ -7,6 +7,7 @@ from cleo import option
 from poetry.utils.helpers import (
     keyring_repository_password_del,
     keyring_repository_password_set,
+    normalize_url,
 )
 from .command import Command
 
@@ -163,7 +164,7 @@ To remove a repository (repo is a short alias for repositories):
                 return 0
 
             if len(values) == 1:
-                url = values[0]
+                url = normalize_url(values[0])
 
                 config_source.add_property(
                     "repositories.{}.url".format(m.group(1)), url

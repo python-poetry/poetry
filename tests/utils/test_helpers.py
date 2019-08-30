@@ -1,5 +1,4 @@
-from poetry.utils.helpers import get_http_basic_auth
-from poetry.utils.helpers import parse_requires
+from poetry.utils.helpers import get_http_basic_auth, parse_requires, normalize_url
 
 
 def test_parse_requires():
@@ -26,7 +25,7 @@ virtualenv>=15.2.0.0,<16.0.0.0
 pathlib2>=2.3.0.0,<3.0.0.0
 
 [:python_version >= "3.4.0.0" and python_version < "3.6.0.0"]
-zipfile36>=0.1.0.0,<0.2.0.0    
+zipfile36>=0.1.0.0,<0.2.0.0
 """
     result = parse_requires(requires)
     expected = [
@@ -65,3 +64,18 @@ def test_get_http_basic_auth_without_password(config):
 
 def test_get_http_basic_auth_missing(config):
     assert get_http_basic_auth(config, "foo") is None
+
+
+def test_normalize_url_when_redirect(http):
+    repo_url = "https://foopi.org/legacy"
+    redirect_url = repo_url + "/"
+    http.register_uri(
+        http.HEAD, repo_url, status=301, adding_headers={"location": redirect_url}
+    )
+    assert redirect_url == normalize_url(repo_url)
+
+
+def test_normalize_url_when_no_redirect(http):
+    repo_url = "https://foopi.org/legacy/"
+    http.register_uri(http.HEAD, repo_url, status=200)
+    assert repo_url == normalize_url(repo_url)

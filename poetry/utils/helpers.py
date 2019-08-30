@@ -152,3 +152,24 @@ def merge_dicts(d1, d2):
             merge_dicts(d1[k], d2[k])
         else:
             d1[k] = d2[k]
+
+
+def normalize_url(url):  # type: (str) -> str
+    """ Checks a URL for a permanent redirect and returns the redirect location
+        if there is one. If there is no redirect, it returns the same.
+    """
+    import requests
+
+    status_codes = requests.status_codes.codes
+    response = requests.head(url)
+    # The two status codes below are similar, but moved_permanently allows the
+    # agent to change a POST request to a GET (that's what requests does BTW
+    # when it is told to follow redirects).
+    # For poetry, as an agent, the only thing that matters is that both of these
+    # are permanent and cacheable.
+    if response.status_code in (
+        status_codes.moved_permanently,
+        status_codes.permanent_redirect,
+    ):
+        return response.headers["Location"]
+    return url
