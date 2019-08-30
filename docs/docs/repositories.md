@@ -22,10 +22,13 @@ repository.
 Adding a new repository is easy with the `config` command.
 
 ```bash
-poetry config repositories.foo https://foo.bar/simple/
+poetry config repositories.testpypi https://test.pypi.org/legacy/
 ```
 
-This will set the url for repository `foo` to `https://foo.bar/simple/`.
+This will set the url for repository `testpypi` to `https://test.pypi.org/legacy/`.
+
+If the URL provided returns a permanent redirect, the redirect location will
+be saved instead. Most commonly, PyPI returns a redirect from `/legacy` to `/legacy/`.
 
 ### Configuring credentials
 
