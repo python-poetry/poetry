@@ -12,6 +12,9 @@ from gzip import GzipFile
 import pkginfo
 from requests import get
 
+from poetry.version.markers import parse_marker
+from poetry.utils.patterns import wheel_file_re
+
 from ._compat import Path
 from .helpers import parse_requires
 from .setup_reader import SetupReader
@@ -72,6 +75,25 @@ class Inspector:
 
         if meta.requires_dist:
             info["requires_dist"] = meta.requires_dist
+
+        basename = os.path.basename(str(file_path))
+        m = wheel_file_re.match(basename)
+        if m:
+            os_name = m.group("plat")
+            plat_map = {"windows": "win", "macosx": "darwin", "none": "any"}
+            for plat in ["none", "linux", "macosx", "windows", "cygwin"]:
+                if plat in os_name:
+                    break
+            else:
+                plat = os_name
+            plat = plat_map.get(plat, plat)
+            if plat != "any":
+                logger.debug(
+                    "Added the platform marker `{}` for wheel file `{}`".format(
+                        basename, plat
+                    )
+                )
+                info["platform"] = plat
 
         return info
 

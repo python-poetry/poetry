@@ -2,14 +2,8 @@ import logging
 import sys
 import os
 import platform
-import tarfile
-import zipfile
 
-import pkginfo
-
-from bz2 import BZ2File
 from collections import defaultdict
-from gzip import GzipFile
 from typing import Dict
 from typing import List
 from typing import Union
@@ -366,6 +360,15 @@ class PyPiRepository(Repository):
             info = self._get_info_from_urls(urls)
 
             data["requires_dist"] = info["requires_dist"]
+
+            if "platform" in info and data["platform"] == "":
+                self._log(
+                    "Overwriting platform: `{}` with `{}`".format(
+                        data["platform"], info["platform"]
+                    ),
+                    level="debug",
+                )
+                data["platform"] = info["platform"]
 
             if not data["requires_python"]:
                 data["requires_python"] = info["requires_python"]
