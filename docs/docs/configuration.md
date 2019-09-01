@@ -28,7 +28,7 @@ Directory where virtualenvs will be created.
 Defaults to one of the following directories:
 
 - macOS:   `~/Library/Caches/pypoetry/virtualenvs`
-- Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache/virtualenvs`
+- Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache\virtualenvs`
 - Unix:    `~/.cache/pypoetry/virtualenvs`
 
 ### `repositories.<name>`: string
