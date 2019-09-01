@@ -70,7 +70,7 @@ Before creating enhancement suggestions, please check [this list](#before-submit
 * **Check that your issue does not already exist in the [issue tracker](https://github.com/sdispater/poetry/issues)**.
 
 
-#### How do I submit an Enhancement suggestion?
+#### How do I submit an enhancement suggestion?
 
 Enhancement suggestions are tracked on the [official issue tracker](https://github.com/sdispater/poetry/issues) where you can create a new one and provide the following information:
 
