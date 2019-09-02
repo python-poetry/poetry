@@ -1,0 +1,96 @@
+name: Tests
+
+on: [push]
+
+jobs:
+  Linting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Linting
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
+
+  Linux:
+    needs: Linting
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Poetry
+      run: |
+        python get-poetry.py --preview -y
+        source $HOME/.poetry/env
+    - name: Install dependencies
+      run: |
+        source $HOME/.poetry/env
+        poetry install
+    - name: Test
+      run: |
+        source $HOME/.poetry/env
+        poetry run pytest -q tests
+
+  MacOS:
+    needs: Linting
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Poetry
+      run: |
+        python get-poetry.py --preview -y
+        source $HOME/.poetry/env
+    - name: Install dependencies
+      run: |
+        source $HOME/.poetry/env
+        poetry install
+    - name: Test
+      run: |
+        source $HOME/.poetry/env
+        poetry run pytest -q tests
+
+  Windows:
+    needs: Linting
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Poetry
+      run: |
+        python get-poetry.py --preview -y
+        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+    - name: Install dependencies
+      run: |
+        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+        poetry install
+    - name: Test
+      run: |
+        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+        poetry run pytest -q tests

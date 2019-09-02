@@ -1,5 +1,6 @@
 import os
 import tempfile
+from io import open
 
 from subprocess import CalledProcessError
 
