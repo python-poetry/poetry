@@ -78,20 +78,3 @@ class VCSDependency(Dependency):
 
     def accepts_prereleases(self):
         return True
-
-    def to_pep_508(self, with_extras=True):  # type: (bool) -> str
-        requirement = super(VCSDependency, self).to_pep_508(with_extras)
-
-        # According to pep508, this string is composed by:
-        # - name (that cannot contain semicolons)
-        # - extras (optional, cannot contain semicolons)
-        # - url (may contain semicolons but cannot contain spaces)
-        # - markers (optional, may contain semicolons and spaces).
-        #
-        # The first occurrence of "; ", if present, is at the end of the url,
-        # added by super().to_pep_508() and it should be replaced by " ; "
-        # for correct parsing of the url
-
-        requirement = requirement.replace("; ", " ; ", 1)
-
-        return requirement
