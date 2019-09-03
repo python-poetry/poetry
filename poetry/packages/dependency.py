@@ -200,6 +200,9 @@ class Dependency(object):
             )
 
         if markers:
+            if self.is_vcs():
+                requirement += " "
+
             if len(markers) > 1:
                 markers = ["({})".format(m) for m in markers]
                 requirement += "; {}".format(" and ".join(markers))
