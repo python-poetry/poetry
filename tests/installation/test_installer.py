@@ -677,6 +677,21 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
     assert len(installer.installer.installs) == 2
 
 
+def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, package):
+    file_path = Path(
+        "tests/fixtures/wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
+    )
+    package.add_dependency("demo", {"file": str(file_path)})
+
+    installer.run()
+
+    expected = fixture("with-wheel-dependency-no-requires-dist")
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 1
+
+
 def test_run_installs_with_local_poetry_directory_and_extras(
     installer, locker, repo, package, tmpdir
 ):
