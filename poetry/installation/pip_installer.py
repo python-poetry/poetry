@@ -139,6 +139,9 @@ class PipInstaller(BaseInstaller):
                 package.source_url, package.source_reference, package.name
             )
 
+        if package.source_type == "url":
+            return "{}#egg={}".format(package.source_url, package.name)
+
         return "{}=={}".format(package.name, package.version)
 
     def create_temporary_requirement(self, package):

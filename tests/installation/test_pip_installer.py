@@ -26,6 +26,19 @@ def test_requirement():
     assert expected == result
 
 
+def test_requirement_source_type_url():
+    installer = PipInstaller(NullEnv(), NullIO(), Pool())
+
+    foo = Package("foo", "0.0.0")
+    foo.source_type = "url"
+    foo.source_url = "https://somehwere.com/releases/foo-1.0.0.tar.gz"
+
+    result = installer.requirement(foo, formatted=True)
+    expected = "{}#egg={}".format(foo.source_url, foo.name)
+
+    assert expected == result
+
+
 def test_install_with_non_pypi_default_repository():
     pool = Pool()
 
