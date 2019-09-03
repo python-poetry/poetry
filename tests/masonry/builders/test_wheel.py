@@ -61,6 +61,18 @@ def test_wheel_prerelease():
     assert whl.exists()
 
 
+def test_wheel_localversionlabel():
+    module_path = fixtures_dir / "localversionlabel"
+    WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())
+    local_version_string = "localversionlabel-0.1b1+gitbranch.buildno.1"
+    whl = module_path / "dist" / (local_version_string + "-py2.py3-none-any.whl")
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert local_version_string + ".dist-info/METADATA" in z.namelist()
+
+
 def test_wheel_package_src():
     module_path = fixtures_dir / "source_package"
     WheelBuilder.make(Poetry.create(str(module_path)), NullEnv(), NullIO())

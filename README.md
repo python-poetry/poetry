@@ -245,9 +245,9 @@ can lead to compatibility issues.
 Also, you have to explicitly tell it to not update the locked packages when you
 install new ones. This should be the default.
 
-#### Remove command
+#### Uninstall command
 
-The `remove` command will only remove the package specified but not its dependencies
+The `uninstall` command will only remove the package specified but not its dependencies
 if they are no longer needed.
 
 You either have to use `sync` or `clean` to fix that.
@@ -333,7 +333,7 @@ poetry install --no-dev
 ```
 
 You can also specify the extras you want installed
-by passing the `--E|--extras` option (See [Extras](#extras) for more info)
+by passing the `-E|--extras` option (See [Extras](#extras) for more info)
 
 ```bash
 poetry install --extras "mysql pgsql"
