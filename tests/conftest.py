@@ -1,8 +1,9 @@
-import httpretty
 import os
-import pytest
 import shutil
 import tempfile
+
+import httpretty
+import pytest
 
 try:
     import urllib.parse as urlparse
@@ -17,15 +18,6 @@ from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils.helpers import merge_dicts
 from poetry.utils.toml_file import TomlFile
-
-
-@pytest.fixture
-def tmp_dir():
-    dir_ = tempfile.mkdtemp(prefix="poetry_")
-
-    yield dir_
-
-    shutil.rmtree(dir_)
 
 
 @pytest.fixture
@@ -101,13 +93,10 @@ def mock_download(self, url, dest):
         os.symlink(str(fixture), str(dest))
 
 
-@pytest.fixture
-def tmp_dir():
-    dir_ = tempfile.mkdtemp(prefix="poetry_")
-
-    yield dir_
-
-    shutil.rmtree(dir_)
+@pytest.fixture(autouse=True)
+def download_mock(mocker):
+    # Patch download to not download anything but to just copy from fixtures
+    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
 
 
 @pytest.fixture
@@ -129,12 +118,6 @@ def git_mock(mocker):
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
 
-@pytest.fixture(autouse=True)
-def download_mock(mocker):
-    # Patch download to not download anything but to just copy from fixtures
-    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
-
-
 @pytest.fixture
 def http():
     httpretty.enable()
@@ -150,3 +133,12 @@ def fixture_dir():
         return Path(__file__).parent / "fixtures" / name
 
     return _fixture_dir
+
+
+@pytest.fixture
+def tmp_dir():
+    dir_ = tempfile.mkdtemp(prefix="poetry_")
+
+    yield dir_
+
+    shutil.rmtree(dir_)
