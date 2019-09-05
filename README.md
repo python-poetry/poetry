@@ -264,7 +264,6 @@ So, in the end, you will still need to manage a few configuration files to prope
 
 ## Commands
 
-
 ### new
 
 This command will help you kickstart your new Python project by creating
@@ -560,6 +559,55 @@ poetry export -f requirements.txt > requirements.txt
   `requirements.txt` is supported.
 * `--output (-o)`: the name of the output file.  If omitted, print to standard
   output.
+
+### version
+
+This command will show or update semantic version strings in your
+project, keeping them in sync with version in pyproject.toml.
+
+```bash
+poetry version
+```
+
+Incrementing the version of the project is achieved by supplying one
+of: `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, or
+`prerelease`.
+
+The command will look for the current version string in the following types of files:
+
+* Python source whose suffix matches `/.py/`
+* Markdown files whose suffix matches `/.m*d*/i`
+* ReStructured Text files whose suffix matches `/.rst/i`
+* Plain Text files whose suffix matches `/.t*xt/i`
+
+For python source, the version string is only replaced in certain contexts:
+
+* Assignment expressions where the string is the value being assigned.
+* Comparison expressions where the string is on either or both sides.
+
+The version string is ignored in all other python contexts.
+
+All instances of version strings in text files are replaced with the
+next version string.
+
+#### Usage
+
+```bash
+poetry version <rule> [--dry-run]
+```
+
+#### Arguments
+* `patch`
+* `minor`
+* `major`
+* `prepatch`
+* `preminor`
+* `premajor`
+* `prerelease`
+
+#### Options
+* `--dry-run`: List files that would be updated without making modifications.
+
 
 
 ## The `pyproject.toml` file
