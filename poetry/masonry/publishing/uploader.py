@@ -66,7 +66,7 @@ class Uploader:
                     re.sub(
                         r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
                     ),
-                    re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE),
+                    re.sub(r"[^\w\d.+]+", "_", version, flags=re.UNICODE),
                 )
             )
         )
