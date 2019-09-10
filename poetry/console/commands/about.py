@@ -3,7 +3,7 @@ from .command import Command
 
 class AboutCommand(Command):
     """
-    Short information about Poetry.
+    Shows information about Poetry.
 
     about
     """
