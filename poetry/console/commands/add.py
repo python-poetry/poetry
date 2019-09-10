@@ -4,7 +4,7 @@ from .env_command import EnvCommand
 
 class AddCommand(EnvCommand, InitCommand):
     """
-    Add a new dependency to <comment>pyproject.toml</>.
+    Adds a new dependency to <comment>pyproject.toml</>.
 
     add
         { name* : Packages to add. }
