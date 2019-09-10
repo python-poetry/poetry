@@ -3,7 +3,7 @@ from .env_command import EnvCommand
 
 class UpdateCommand(EnvCommand):
     """
-    Update dependencies as according to the <comment>pyproject.toml</> file.
+    Updates dependencies as according to the <comment>pyproject.toml</> file.
 
     update
         { packages?* : The packages to update. }
