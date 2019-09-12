@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import subprocess
-
+from typing import List
 
 from poetry.utils._compat import decode
 
@@ -55,6 +55,13 @@ class Git:
         args += ["rev-parse", rev]
 
         return self.run(*args)
+
+    def tags(self, folder=None):  # type: (...) -> List[str]
+        args = self._folder_args(folder)
+        args += ["tag", "-l"]
+        output = self.run(*args)
+
+        return output.split("\n")
 
     def get_ignored_files(self, folder=None):  # type: (...) -> list
         args = self._folder_args(folder)

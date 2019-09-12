@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+from typing import List
 
 import httpretty
 import pytest
@@ -109,13 +110,22 @@ def environ():
     os.environ.update(original_environ)
 
 
+@pytest.fixture
+def git_tags():  # type: (...) -> List[str]
+    """git tags with some un-ordered sem-ver tags and other tags"""
+    return ["0.1.1", "v0.0.1", "0.1.0", "0.1.2", "n.a.n", "hot-fix-666"]
+
+
 @pytest.fixture(autouse=True)
-def git_mock(mocker):
+def git_mock(git_tags, mocker):
     # Patch git module to not actually clone projects
     mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
     mocker.patch("poetry.vcs.git.Git.checkout", new=lambda *_: None)
     p = mocker.patch("poetry.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    # mock tags with some un-ordered sem-ver tags and other tags
+    tags = mocker.patch("poetry.vcs.git.Git.tags")
+    tags.return_value = git_tags
 
 
 @pytest.fixture
