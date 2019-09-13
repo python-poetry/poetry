@@ -47,12 +47,13 @@ class Application(BaseApplication):
 
     @property
     def poetry(self):
-        from poetry.poetry import Poetry
+        from poetry.factory import Factory
+        from poetry.utils._compat import Path
 
         if self._poetry is not None:
             return self._poetry
 
-        self._poetry = Poetry.create(os.getcwd())
+        self._poetry = Factory().create_poetry(Path.cwd())
 
         return self._poetry
 

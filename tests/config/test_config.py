@@ -8,7 +8,7 @@ def test_config_get_default_value(config):
 
 
 def test_config_get_processes_depended_on_values(config):
-    assert os.path.join(str(CACHE_DIR), "virtualenvs") == config.get("virtualenvs.path")
+    assert os.path.join("/foo", "virtualenvs") == config.get("virtualenvs.path")
 
 
 def test_config_get_from_environment_variable(config, environ):

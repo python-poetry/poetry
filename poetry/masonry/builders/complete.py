@@ -1,7 +1,7 @@
 import os
 import tarfile
 
-import poetry.poetry
+from poetry.factory import Factory
 from poetry.io.null_io import NullIO
 from poetry.utils._compat import Path
 from poetry.utils.helpers import temporary_directory
@@ -43,7 +43,7 @@ class CompleteBuilder(Builder):
 
                 with self.unpacked_tarball(sdist_file) as tmpdir:
                     WheelBuilder.make_in(
-                        poetry.poetry.Poetry.create(tmpdir),
+                        Factory().create_poetry(tmpdir),
                         self._env,
                         self._io,
                         dist_dir,
@@ -52,7 +52,7 @@ class CompleteBuilder(Builder):
         else:
             with self.unpacked_tarball(sdist_file) as tmpdir:
                 WheelBuilder.make_in(
-                    poetry.poetry.Poetry.create(tmpdir),
+                    Factory().create_poetry(tmpdir),
                     self._env,
                     self._io,
                     dist_dir,
@@ -70,4 +70,4 @@ class CompleteBuilder(Builder):
 
             assert len(files) == 1, files
 
-            yield os.path.join(tmpdir, files[0])
+            yield Path(tmpdir) / files[0]

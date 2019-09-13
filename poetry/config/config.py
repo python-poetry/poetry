@@ -11,13 +11,16 @@ from poetry.locations import CACHE_DIR
 from poetry.utils._compat import Path
 from poetry.utils._compat import basestring
 
+from .config_source import ConfigSource
+from .dict_config_source import DictConfigSource
+
 _NOT_SET = object()
 
 boolean_validator = lambda val: val in {"true", "false", "1", "0"}
 boolean_normalizer = lambda val: val in ["true", "1"]
 
 
-class Config:
+class Config(object):
 
     default_config = {
         "cache-dir": str(CACHE_DIR),
@@ -34,6 +37,8 @@ class Config:
         self._config = deepcopy(self.default_config)
         self._use_environment = use_environment
         self._base_dir = base_dir
+        self._config_source = DictConfigSource()
+        self._auth_config_source = DictConfigSource()
 
     @property
     def name(self):
@@ -42,6 +47,24 @@ class Config:
     @property
     def config(self):
         return self._config
+
+    @property
+    def config_source(self):  # type: () -> ConfigSource
+        return self._config_source
+
+    @property
+    def auth_config_source(self):  # type: () -> ConfigSource
+        return self._auth_config_source
+
+    def set_config_source(self, config_source):  # type: (ConfigSource) -> Config
+        self._config_source = config_source
+
+        return self
+
+    def set_auth_config_source(self, config_source):  # type: (ConfigSource) -> Config
+        self._auth_config_source = config_source
+
+        return self
 
     def merge(self, config):  # type: (Dict[str, Any]) -> None
         from poetry.utils.helpers import merge_dicts

@@ -10,43 +10,68 @@ try:
 except ImportError:
     import urlparse
 
-from tomlkit import parse
+from typing import Any
+from typing import Dict
 
-from poetry.config.config import Config
+from poetry.config.config import Config as BaseConfig
+from poetry.config.dict_config_source import DictConfigSource
 from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
-from poetry.utils.helpers import merge_dicts
-from poetry.utils.toml_file import TomlFile
+
+
+class Config(BaseConfig):
+    def get(self, setting_name, default=None):  # type: (str, Any) -> Any
+        self.merge(self._config_source.config)
+        self.merge(self._auth_config_source.config)
+
+        return super(Config, self).get(setting_name, default=default)
+
+    def raw(self):  # type: () -> Dict[str, Any]
+        self.merge(self._config_source.config)
+        self.merge(self._auth_config_source.config)
+
+        return super(Config, self).raw()
+
+    def all(self):  # type: () -> Dict[str, Any]
+        self.merge(self._config_source.config)
+        self.merge(self._auth_config_source.config)
+
+        return super(Config, self).all()
+
+
+def tmp_dir():
+    dir_ = tempfile.mkdtemp(prefix="poetry_")
+
+    yield dir_
+
+    shutil.rmtree(dir_)
 
 
 @pytest.fixture
-def config_document():
-    content = """cache-dir = "/foo"
-"""
-    doc = parse(content)
+def config_source():
+    source = DictConfigSource()
+    source.add_property("cache-dir", "/foo")
 
-    return doc
-
-
-@pytest.fixture
-def config_source(config_document, mocker):
-    file = TomlFile(Path(tempfile.mktemp()))
-    mocker.patch.object(file, "exists", return_value=True)
-    mocker.patch.object(file, "read", return_value=config_document)
-    mocker.patch.object(
-        file, "write", return_value=lambda new: merge_dicts(config_document, new)
-    )
-    mocker.patch(
-        "poetry.config.config_source.ConfigSource.file",
-        new_callable=mocker.PropertyMock,
-        return_value=file,
-    )
+    return source
 
 
 @pytest.fixture
-def config(config_source):
+def auth_config_source():
+    source = DictConfigSource()
+
+    return source
+
+
+@pytest.fixture
+def config(config_source, auth_config_source, mocker):
     c = Config()
+    c.merge(config_source.config)
+    c.set_config_source(config_source)
+    c.set_auth_config_source(auth_config_source)
+
+    mocker.patch("poetry.factory.Factory.create_config", return_value=c)
+    mocker.patch("poetry.config.config.Config.set_config_source")
 
     return c
 
