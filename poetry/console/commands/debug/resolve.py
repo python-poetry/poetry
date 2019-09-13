@@ -10,10 +10,10 @@ class DebugResolveCommand(Command):
     Debugs dependency resolution.
 
     debug:resolve
-        { package?* : packages to resolve. }
+        { package?* : The packages to resolve. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --python= : Python version(s) to use for resolution. }
-        { --tree : Displays the dependency tree. }
+        { --tree : Display the dependency tree. }
         { --install : Show what would be installed for the current system. }
     """
 

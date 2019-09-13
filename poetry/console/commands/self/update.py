@@ -20,7 +20,7 @@ from ..command import Command
 
 class SelfUpdateCommand(Command):
     """
-    Updates poetry to the latest version.
+    Updates Poetry to the latest version.
 
     self:update
         { version? : The version to update to. }

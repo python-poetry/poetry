@@ -3,14 +3,14 @@ from .env_command import EnvCommand
 
 class UpdateCommand(EnvCommand):
     """
-    Updates dependencies as according to the <comment>pyproject.toml</> file.
+    Updates the project dependencies according to the <comment>pyproject.toml</> file.
 
     update
         { packages?* : The packages to update. }
-        { --no-dev : Do not install dev dependencies. }
-        { --dry-run : Outputs the operations but will not execute anything
+        { --no-dev : Do not install the development dependencies. }
+        { --dry-run : Output the operations but do not execute anything
                       (implicitly enables --verbose). }
-        { --lock : Do not perform install (only update the lockfile). }
+        { --lock : Do not perform install (only update the lock file). }
     """
 
     _loggers = ["poetry.repositories.pypi_repository"]

@@ -15,14 +15,16 @@ class InitCommand(Command):
     Creates a basic <comment>pyproject.toml</> file in the current directory.
 
     init
-        {--name= : Name of the package}
-        {--description= : Description of the package}
-        {--author= : Author name of the package}
-        {--dependency=* : Package to require with an optional version constraint,
-                          e.g. requests:^2.10.0 or requests=2.11.1}
-        {--dev-dependency=* : Package to require for development with an optional version constraint,
-                              e.g. requests:^2.10.0 or requests=2.11.1}
-        {--l|license= : License of the package}
+        { --name= : Name of the package. }
+        { --description= : Description of the package. }
+        { --author= : Author name of the package. }
+        { --dependency=* : Dependency to require,
+                           with an optional version constraint,
+                           (e.g., requests:^2.10.0 or requests=2.11.1). }
+        { --dev-dependency=* : Development dependency to require,
+                               with an optional version constraint,
+                               (e.g., requests:^2.10.0 or requests=2.11.1). }
+        { --l|license= : License of the package. }
     """
 
     help = """\

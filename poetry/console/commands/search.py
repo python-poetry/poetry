@@ -7,7 +7,7 @@ class SearchCommand(Command):
 
     search
         { tokens* : The tokens to search for. }
-        { --N|only-name : Search only in name. }
+        { --N|only-name : Search only by name. }
     """
 
     def handle(self):

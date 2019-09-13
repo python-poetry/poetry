@@ -15,13 +15,13 @@ AUTH_TEMPLATE = """[http-basic]
 
 class ConfigCommand(Command):
     """
-    Sets/Gets config options.
+    Manages configuration settings.
 
     config
         { key : Setting key. }
         { value?* : Setting value. }
-        { --list : List configuration settings }
-        { --unset : Unset configuration setting }
+        { --list : List configuration settings. }
+        { --unset : Unset configuration setting. }
     """
 
     help = """This command allows you to edit the poetry config settings and repositories.

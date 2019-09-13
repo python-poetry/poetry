@@ -9,13 +9,14 @@ class ShowCommand(EnvCommand):
     Shows information about packages.
 
     show
-        { package? : Package to inspect. }
-        { --no-dev : Do not list the dev dependencies. }
-        { --t|tree : List the dependencies as a tree. }
+        { package? : The package to inspect. }
+        { --no-dev : Do not list the development dependencies. }
+        { --t|tree : List the project dependencies as a tree. }
         { --l|latest : Show the latest version. }
         { --o|outdated : Show the latest version
                          but only for packages that are outdated. }
-        { --a|all : Show all packages (even those not compatible with current system). }
+        { --a|all : Show all packages
+                    (even those not compatible with the current system). }
     """
 
     help = """The show command displays detailed information about a package, or
