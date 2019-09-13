@@ -32,7 +32,7 @@ setup: setup-python
 
 # test your application (tests in the tests/ directory)
 test:
-	@py.test --cov=poetry --cov-config .coveragerc tests/ -sq
+	@poetry run pytest --cov=poetry --cov-config .coveragerc tests/ -sq
 
 release: build linux_release osx_release
 
