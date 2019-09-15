@@ -31,6 +31,7 @@ jsonschema = "^3.0a3"
 pyrsistent = "^0.14.2"
 pyparsing = "^2.2"
 cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
+packaging = "^19.1"
 pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
