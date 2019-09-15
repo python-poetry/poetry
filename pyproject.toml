@@ -35,6 +35,7 @@ pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
 tomlkit = "^0.5.5"
+pexpect = "^4.7.0"
 
 # The typing module is not in the stdlib in Python 2.7 and 3.4
 typing = { version = "^3.6", python = "~2.7 || ~3.4" }
