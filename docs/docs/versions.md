@@ -126,7 +126,7 @@ pathlib2 = { version = "^2.2", python = "~2.7" }
 
 ```toml
 [tool.poetry.dependencies]
-pathlib2 = { version = "^2.2", python = ["~2.7", "^3.2"] }
+pathlib2 = { version = "^2.2", python = "~2.7 || ^3.2" }
 ```
 
 
