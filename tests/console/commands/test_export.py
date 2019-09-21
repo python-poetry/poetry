@@ -5,11 +5,13 @@ import pytest
 
 from cleo.testers import CommandTester
 
+from poetry.factory import Factory
+from poetry.repositories.pool import Pool
 from tests.helpers import get_package
 
 from ..conftest import Application
+from ..conftest import Locker
 from ..conftest import Path
-from ..conftest import Poetry
 
 
 PYPROJECT_CONTENT = """\
@@ -51,11 +53,15 @@ def poetry(repo, tmp_dir):
     with (Path(tmp_dir) / "pyproject.toml").open("w", encoding="utf-8") as f:
         f.write(PYPROJECT_CONTENT)
 
-    p = Poetry.create(Path(tmp_dir))
+    p = Factory().create_poetry(Path(tmp_dir))
 
-    p.pool.remove_repository("pypi")
-    p.pool.add_repository(repo)
-    p._locker.write()
+    locker = Locker(p.locker.lock.path, p.locker._local_config)
+    locker.write()
+    p.set_locker(locker)
+
+    pool = Pool()
+    pool.add_repository(repo)
+    p.set_pool(pool)
 
     yield p
 

@@ -11,6 +11,7 @@ from tempfile import mkdtemp
 from typing import List
 from typing import Optional
 
+from poetry.factory import Factory
 from poetry.packages import Dependency
 from poetry.packages import DependencyPackage
 from poetry.packages import DirectoryDependency
@@ -300,9 +301,7 @@ class Provider:
             )
 
         if supports_poetry:
-            from poetry.poetry import Poetry
-
-            poetry = Poetry.create(directory)
+            poetry = Factory().create_poetry(directory)
 
             pkg = poetry.package
             package = Package(pkg.name, pkg.version)

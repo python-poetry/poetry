@@ -115,7 +115,7 @@ Defaults to `false`.
 ### `virtualenvs.path`: string
 
 Directory where virtualenvs will be created.
-Defaults to `{cache-dir}/virtualenvs`
+Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 
 ### `repositories.<name>`: string
 

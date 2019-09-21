@@ -1,5 +1,6 @@
 import os
 import tempfile
+from io import open
 
 from subprocess import CalledProcessError
 
@@ -143,6 +144,9 @@ class PipInstaller(BaseInstaller):
             return "git+{}@{}#egg={}".format(
                 package.source_url, package.source_reference, package.name
             )
+
+        if package.source_type == "url":
+            return "{}#egg={}".format(package.source_url, package.name)
 
         return "{}=={}".format(package.name, package.version)
 

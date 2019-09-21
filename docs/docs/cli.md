@@ -44,7 +44,7 @@ my-package
 │   └── __init__.py
 └── tests
     ├── __init__.py
-    └── test_my_package
+    └── test_my_package.py
 ```
 
 If you want to name your project differently than the folder, you can pass
@@ -71,7 +71,7 @@ my-package
 │       └── __init__.py
 └── tests
     ├── __init__.py
-    └── test_my_package
+    └── test_my_package.py
 ```
 
 ## init

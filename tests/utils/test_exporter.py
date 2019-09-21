@@ -2,8 +2,8 @@ import sys
 
 import pytest
 
+from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
-from poetry.poetry import Poetry
 from poetry.repositories.auth import Auth
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
@@ -40,7 +40,7 @@ def locker():
 
 @pytest.fixture
 def poetry(fixture_dir, locker):
-    p = Poetry.create(fixture_dir("sample_project"))
+    p = Factory().create_poetry(fixture_dir("sample_project"))
     p._locker = locker
 
     return p

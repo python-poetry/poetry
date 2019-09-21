@@ -3,4 +3,3 @@ repos:
     rev: stable
     hooks:
     - id: black
-      python_version: python3.6

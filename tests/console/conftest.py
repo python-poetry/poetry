@@ -10,6 +10,7 @@ except ImportError:
 from cleo import ApplicationTester
 
 from poetry.console import Application as BaseApplication
+from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.poetry import Poetry as BasePoetry
 from poetry.packages import Locker as BaseLocker
@@ -112,8 +113,10 @@ class Application(BaseApplication):
 
     def reset_poetry(self):
         poetry = self._poetry
-        self._poetry = Poetry.create(self._poetry.file.path.parent)
-        self._poetry._pool = poetry.pool
+        self._poetry = Factory().create_poetry(self._poetry.file.path.parent)
+        self._poetry.set_pool(poetry.pool)
+        self._poetry.set_config(poetry.config)
+        self._poetry.set_locker(poetry.locker)
 
 
 class Locker(BaseLocker):
@@ -189,14 +192,20 @@ def project_directory():
 
 
 @pytest.fixture
-def poetry(repo, project_directory, config_source):
-    p = Poetry.create(Path(__file__).parent.parent / "fixtures" / project_directory)
+def poetry(repo, project_directory, config):
+    p = Factory().create_poetry(
+        Path(__file__).parent.parent / "fixtures" / project_directory
+    )
+    p.set_locker(Locker(p.locker.lock.path, p.locker._local_config))
 
     with p.file.path.open(encoding="utf-8") as f:
         content = f.read()
 
-    p.pool.remove_repository("pypi")
-    p.pool.add_repository(repo)
+    p.set_config(config)
+
+    pool = Pool()
+    pool.add_repository(repo)
+    p.set_pool(pool)
 
     yield p
 
