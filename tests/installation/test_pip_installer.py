@@ -51,11 +51,11 @@ def test_install_with_non_pypi_default_repository():
     installer.install(bar)
 
 
-def test_install_with_custom_ca():
-    ca_path = "path/to/custom_ca.pem"
+def test_install_with_cert():
+    ca_path = "path/to/cert.pem"
     pool = Pool()
 
-    default = LegacyRepository("default", "https://foo.bar", custom_ca=Path(ca_path))
+    default = LegacyRepository("default", "https://foo.bar", cert=Path(ca_path))
 
     pool.add_repository(default, default=True)
 

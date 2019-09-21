@@ -17,10 +17,7 @@ class PublishCommand(Command):
         option("username", "u", "The username to access the repository.", flag=False),
         option("password", "p", "The password to access the repository.", flag=False),
         option(
-            "custom-ca",
-            None,
-            "Certificate authority to access the repository.",
-            flag=False,
+            "cert", None, "Certificate authority to access the repository.", flag=False
         ),
         option(
             "client-cert",
@@ -71,7 +68,7 @@ the config command.
 
         self.line("")
 
-        custom_ca = Path(self.option("custom-ca")) if self.option("custom-ca") else None
+        cert = Path(self.option("cert")) if self.option("cert") else None
         client_cert = (
             Path(self.option("client-cert")) if self.option("client-cert") else None
         )
@@ -80,6 +77,6 @@ the config command.
             self.option("repository"),
             self.option("username"),
             self.option("password"),
-            custom_ca,
+            cert,
             client_cert,
         )

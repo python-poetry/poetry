@@ -80,7 +80,7 @@ certificate-based client authentication.  The following will configure the "foo"
 certificate using a custom certificate authority and use a client certificate (note that these config variables do not
 both need to be set):
 ```bash
-    poetry config certificates.foo.custom-ca /path/to/ca.pem
+    poetry config certificates.foo.cert /path/to/ca.pem
     poetry config certificates.foo.client-cert /path/to/client.pem
 ```
 

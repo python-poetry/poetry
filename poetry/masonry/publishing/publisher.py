@@ -1,6 +1,6 @@
 import logging
 
-from poetry.utils.helpers import get_client_cert, get_custom_ca, get_http_basic_auth
+from poetry.utils.helpers import get_client_cert, get_cert, get_http_basic_auth
 
 from .uploader import Uploader
 
@@ -23,9 +23,7 @@ class Publisher:
     def files(self):
         return self._uploader.files
 
-    def publish(
-        self, repository_name, username, password, custom_ca=None, client_cert=None
-    ):
+    def publish(self, repository_name, username, password, cert=None, client_cert=None):
         if repository_name:
             self._io.write_line(
                 "Publishing <info>{}</info> (<comment>{}</comment>) "
@@ -91,6 +89,6 @@ class Publisher:
 
         return self._uploader.upload(
             url,
-            custom_ca=custom_ca or get_custom_ca(self._poetry.config, repository_name),
+            cert=cert or get_cert(self._poetry.config, repository_name),
             client_cert=resolved_client_cert,
         )

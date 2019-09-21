@@ -21,7 +21,7 @@ def test_publish_publishes_to_pypi_by_default(fixture_dir, mocker, config):
     assert [("foo", "bar")] == uploader_auth.call_args
     assert [
         ("https://upload.pypi.org/legacy/",),
-        {"custom_ca": None, "client_cert": None},
+        {"cert": None, "client_cert": None},
     ] == uploader_upload.call_args
 
 
@@ -43,7 +43,7 @@ def test_publish_can_publish_to_given_repository(fixture_dir, mocker, config):
     assert [("foo", "bar")] == uploader_auth.call_args
     assert [
         ("http://foo.bar",),
-        {"custom_ca": None, "client_cert": None},
+        {"cert": None, "client_cert": None},
     ] == uploader_upload.call_args
 
 
@@ -72,12 +72,12 @@ def test_publish_uses_token_if_it_exists(fixture_dir, mocker, config):
     assert [("__token__", "my-token")] == uploader_auth.call_args
     assert [
         ("https://upload.pypi.org/legacy/",),
-        {"custom_ca": None, "client_cert": None},
+        {"cert": None, "client_cert": None},
     ] == uploader_upload.call_args
 
 
-def test_publish_uses_custom_ca(fixture_dir, mocker, config):
-    custom_ca = "path/to/ca.pem"
+def test_publish_uses_cert(fixture_dir, mocker, config):
+    cert = "path/to/ca.pem"
     uploader_auth = mocker.patch("poetry.masonry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.masonry.publishing.uploader.Uploader.upload")
     poetry = Poetry.create(fixture_dir("sample_project"))
@@ -86,7 +86,7 @@ def test_publish_uses_custom_ca(fixture_dir, mocker, config):
         {
             "repositories": {"foo": {"url": "https://foo.bar"}},
             "http-basic": {"foo": {"username": "foo", "password": "bar"}},
-            "certificates": {"foo": {"custom-ca": custom_ca}},
+            "certificates": {"foo": {"cert": cert}},
         }
     )
     publisher = Publisher(poetry, NullIO())
@@ -96,7 +96,7 @@ def test_publish_uses_custom_ca(fixture_dir, mocker, config):
     assert [("foo", "bar")] == uploader_auth.call_args
     assert [
         ("https://foo.bar",),
-        {"custom_ca": Path(custom_ca), "client_cert": None},
+        {"cert": Path(cert), "client_cert": None},
     ] == uploader_upload.call_args
 
 
@@ -117,5 +117,5 @@ def test_publish_uses_client_cert(fixture_dir, mocker, config):
 
     assert [
         ("https://foo.bar",),
-        {"custom_ca": None, "client_cert": Path(client_cert)},
+        {"cert": None, "client_cert": Path(client_cert)},
     ] == uploader_upload.call_args

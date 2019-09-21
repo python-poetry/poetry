@@ -21,10 +21,10 @@ HTTP Error 400: Bad Request
     assert app_tester.io.fetch_output() == expected
 
 
-def test_publish_with_custom_ca(app_tester, mocker):
+def test_publish_with_cert(app_tester, mocker):
     publisher_publish = mocker.patch("poetry.masonry.publishing.Publisher.publish")
 
-    app_tester.execute("publish --custom-ca path/to/ca.pem")
+    app_tester.execute("publish --cert path/to/ca.pem")
 
     assert [
         (None, None, None, Path("path/to/ca.pem"), None)

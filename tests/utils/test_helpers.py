@@ -1,5 +1,5 @@
 from poetry.utils._compat import Path
-from poetry.utils.helpers import get_client_cert, get_custom_ca, get_http_basic_auth
+from poetry.utils.helpers import get_client_cert, get_cert, get_http_basic_auth
 from poetry.utils.helpers import parse_requires
 
 
@@ -68,11 +68,11 @@ def test_get_http_basic_auth_missing(config):
     assert get_http_basic_auth(config, "foo") is None
 
 
-def test_get_custom_ca(config):
+def test_get_cert(config):
     ca_cert = "path/to/ca.pem"
-    config.merge({"certificates": {"foo": {"custom-ca": ca_cert}}})
+    config.merge({"certificates": {"foo": {"cert": ca_cert}}})
 
-    assert get_custom_ca(config, "foo") == Path(ca_cert)
+    assert get_cert(config, "foo") == Path(ca_cert)
 
 
 def test_get_client_cert(config):

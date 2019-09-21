@@ -134,10 +134,10 @@ def get_http_basic_auth(
     return None
 
 
-def get_custom_ca(config, repository_name):  # type: (Config, str) -> Optional[Path]
-    custom_ca = config.get("certificates.{}.custom-ca".format(repository_name))
-    if custom_ca:
-        return Path(custom_ca)
+def get_cert(config, repository_name):  # type: (Config, str) -> Optional[Path]
+    cert = config.get("certificates.{}.cert".format(repository_name))
+    if cert:
+        return Path(cert)
     else:
         return None
 

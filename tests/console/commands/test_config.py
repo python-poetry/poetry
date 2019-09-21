@@ -117,11 +117,11 @@ def test_set_client_cert(app, config_source, config_document, mocker):
     assert "path/to/cert.pem" == config_document["certificates"]["foo"]["client-cert"]
 
 
-def test_set_custom_ca(app, config_source, config_document, mocker):
+def test_set_cert(app, config_source, config_document, mocker):
     init = mocker.spy(ConfigSource, "__init__")
     command = app.find("config")
     tester = CommandTester(command)
 
-    tester.execute("certificates.foo.custom-ca path/to/ca.pem")
+    tester.execute("certificates.foo.cert path/to/ca.pem")
 
-    assert "path/to/ca.pem" == config_document["certificates"]["foo"]["custom-ca"]
+    assert "path/to/ca.pem" == config_document["certificates"]["foo"]["cert"]

@@ -226,7 +226,7 @@ To remove a repository (repo is a short alias for repositories):
 
         # handle certs
         m = re.match(
-            r"(?:certificates)\.([^.]+)\.(custom-ca|client-cert)", self.argument("key")
+            r"(?:certificates)\.([^.]+)\.(cert|client-cert)", self.argument("key")
         )
         if m:
             if self.option("unset"):

@@ -96,12 +96,12 @@ class Uploader:
         return self._username is not None and self._password is not None
 
     def upload(
-        self, url, custom_ca=None, client_cert=None
+        self, url, cert=None, client_cert=None
     ):  # type: (str, Optional[Path], Optional[Path]) -> None
         session = self.make_session()
 
-        if custom_ca:
-            session.verify = str(custom_ca)
+        if cert:
+            session.verify = str(cert)
 
         if client_cert:
             session.cert = str(client_cert)
