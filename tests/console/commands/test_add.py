@@ -1,5 +1,6 @@
 import sys
 
+import pytest
 from cleo.testers import CommandTester
 
 from tests.helpers import get_dependency
@@ -171,6 +172,27 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert tester.get_display(True) == expected
 
     assert len(installer.installs) == 2
+
+
+def test_add_git_constraint_with_poetry_bad_name(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    with pytest.raises(RuntimeError) as e:
+        tester.execute(
+            [
+                ("command", command.get_name()),
+                ("name", ["demox"]),
+                ("--git", "https://github.com/demo/pyproject-demo.git"),
+            ]
+        )
+    expected = (
+        "The dependency name for demox does not match the actual package's name: demo"
+    )
+    assert str(e.value) == expected
+    assert len(installer.installs) == 0
 
 
 def test_add_file_constraint_wheel(app, repo, installer):

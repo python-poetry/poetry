@@ -353,14 +353,6 @@ class Provider:
 
             package = Package(package_name, package_version)
 
-            if dependency.name != package.name:
-                # For now, the dependency's name must match the actual package's name
-                raise RuntimeError(
-                    "The dependency name for {} does not match the actual package's name: {}".format(
-                        dependency.name, package.name
-                    )
-                )
-
             package.description = package_summary
 
             for req in reqs:
@@ -377,6 +369,14 @@ class Provider:
 
             if python_requires:
                 package.python_versions = python_requires
+
+        if dependency.name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                "The dependency name for {} does not match the actual package's name: {}".format(
+                    dependency.name, package.name
+                )
+            )
 
         package.source_type = "directory"
         package.source_url = dependency.path.as_posix()
