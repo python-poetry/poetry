@@ -1,6 +1,9 @@
 ---
 name: Documentation issue
 about: Report errors and problems with the documentation (https://poetry.eustace.io/docs/)
+title: 
+labels: 
+assignees: 
 
 ---
 

@@ -1,6 +1,9 @@
 ---
-name: Support question
-about: Questions about Poetry that are not covered in the documentation (https://poetry.eustace.io/docs/)
+name: "\U0001F381 Feature Request"
+about: Do you have ideas for new features and improvements?
+title: ''
+labels: ''
+assignees: ''
 
 ---
 
@@ -16,5 +19,5 @@ about: Questions about Poetry that are not covered in the documentation (https:/
 - [ ] I have searched the [issues](https://github.com/sdispater/poetry/issues) of this repo and believe that this is not a duplicate.
 - [ ] I have searched the [documentation](https://poetry.eustace.io/docs/) and believe that my question is not covered.
 
-## Question
-<!-- Now feel free to write your question. Thanks again 🙌 ❤️ -->
+## Feature Request
+<!-- Now feel free to write your idea for improvement. Thanks again 🙌 ❤️ -->
