@@ -1,8 +1,8 @@
 ---
 name: "\U0001F4DA Documentation"
 about: Did you find errors, problems, or anything unintelligible in the docs?
-title: ''
-labels: ''
+title: 'https://poetry.eustace.io/docs'
+labels: 'Documentation'
 assignees: ''
 
 ---
