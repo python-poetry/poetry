@@ -344,7 +344,8 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)".format(
+                "  - {} <info>{}</> (<comment>{}</> -> <comment>{}</>)".format(
+                    "Updating" if source.version < target.version else "Downgrading",
                     target.pretty_name,
                     source.full_pretty_version,
                     target.full_pretty_version,
