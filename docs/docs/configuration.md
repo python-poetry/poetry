@@ -112,6 +112,12 @@ Defaults to `true`.
 Create the virtualenv inside the project's root directory.
 Defaults to `false`.
 
+### `virtualenvs.include-system-packages`: boolean
+
+Give the virtual environment access to the system site-packages dir.
+Defaults to `false`.
+
+
 ### `virtualenvs.path`: string
 
 Directory where virtualenvs will be created.

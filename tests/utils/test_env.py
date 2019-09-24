@@ -51,7 +51,7 @@ def test_env_get_in_project_venv(tmp_dir, config):
 CWD = Path(__file__).parent.parent / "fixtures" / "simple_project"
 
 
-def build_venv(path, executable=None):
+def build_venv(path, executable=None, include_system_packages=False):
     os.mkdir(path)
 
 
@@ -93,7 +93,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)),
+        executable="python3.7",
+        include_system_packages=False,
     )
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
@@ -207,7 +209,9 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = EnvManager(config).activate("python3.6", CWD, NullIO())
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.6".format(venv_name)), executable="python3.6"
+        os.path.join(tmp_dir, "{}-py3.6".format(venv_name)),
+        executable="python3.6",
+        include_system_packages=False,
     )
 
     assert envs_file.exists()
@@ -257,7 +261,9 @@ def test_activate_activates_recreates_for_different_patch(tmp_dir, config, mocke
     env = EnvManager(config).activate("python3.7", CWD, NullIO())
 
     build_venv_m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)),
+        executable="python3.7",
+        include_system_packages=False,
     )
     remove_venv_m.assert_called_with(
         os.path.join(tmp_dir, "{}-py3.7".format(venv_name))
@@ -497,6 +503,18 @@ def test_remove_also_deactivates(tmp_dir, config, mocker):
 
     envs = envs_file.read()
     assert venv_name not in envs
+
+
+def test_env_system_packages(tmp_dir, config):
+    venv_path = Path(tmp_dir) / "venv"
+    EnvManager(config).build_venv(str(venv_path), include_system_packages=True)
+    pyvenv_cfg = venv_path / "pyvenv.cfg"
+    if sys.version_info >= (3, 3):
+        assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
+    elif (2, 6) < sys.version_info < (3, 0):
+        assert not venv_path.joinpath(
+            "lib", "python2.7", "no-global-site-packages.txt"
+        ).exists()
 
 
 @pytest.fixture

@@ -15,6 +15,7 @@ def test_list_displays_default_value_if_not_set(app, config):
     expected = """cache-dir = "/foo"
 virtualenvs.create = true
 virtualenvs.in-project = false
+virtualenvs.include-system-packages = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
 """.format(
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
@@ -34,6 +35,7 @@ def test_list_displays_set_get_setting(app, config):
     expected = """cache-dir = "/foo"
 virtualenvs.create = false
 virtualenvs.in-project = false
+virtualenvs.include-system-packages = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
 """.format(
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
@@ -81,6 +83,7 @@ def test_list_displays_set_get_local_setting(app, config):
     expected = """cache-dir = "/foo"
 virtualenvs.create = false
 virtualenvs.in-project = false
+virtualenvs.include-system-packages = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
 """.format(
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep

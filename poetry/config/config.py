@@ -27,9 +27,16 @@ class Config(object):
         "virtualenvs": {
             "create": True,
             "in-project": False,
+            "include-system-packages": False,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
         },
     }
+
+    _boolean_settings = (
+        "virtualenvs.create",
+        "virtualenvs.in-project",
+        "virtualenvs.include-system-packages",
+    )
 
     def __init__(
         self, use_environment=True, base_dir=None
@@ -122,14 +129,14 @@ class Config(object):
         return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)
 
     def _get_validator(self, name):  # type: (str) -> Callable
-        if name in {"virtualenvs.create", "virtualenvs.in-project"}:
+        if name in self._boolean_settings:
             return boolean_validator
 
         if name == "virtualenvs.path":
             return str
 
     def _get_normalizer(self, name):  # type: (str) -> Callable
-        if name in {"virtualenvs.create", "virtualenvs.in-project"}:
+        if name in self._boolean_settings:
             return boolean_normalizer
 
         if name == "virtualenvs.path":

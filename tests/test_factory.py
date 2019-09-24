@@ -203,5 +203,6 @@ The Poetry configuration is invalid:
 def test_create_poetry_with_local_config(fixture_dir):
     poetry = Factory().create_poetry(fixture_dir("with_local_config"))
 
-    assert not poetry.config.get("virtualenvs.in-project")
-    assert not poetry.config.get("virtualenvs.create")
+    assert poetry.config.get("virtualenvs.in-project") is False
+    assert poetry.config.get("virtualenvs.create") is False
+    assert poetry.config.get("virtualenvs.include-system-packages") is False

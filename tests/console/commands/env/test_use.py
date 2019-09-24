@@ -16,7 +16,7 @@ from poetry.utils.toml_file import TomlFile
 CWD = Path(__file__).parent.parent / "fixtures" / "simple_project"
 
 
-def build_venv(path, executable=None):
+def build_venv(path, executable=None, include_system_packages=False):
     os.mkdir(path)
 
 
@@ -61,7 +61,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(app, tmp_dir, m
     )
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)),
+        executable="python3.7",
+        include_system_packages=False,
     )
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
