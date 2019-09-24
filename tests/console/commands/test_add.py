@@ -716,6 +716,36 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["foo"] == "^1.1.2"
 
 
+def test_add_existing_package_with_lower_exact_version_displays_as_downgrade(
+    app, repo, installer, installed
+):
+    content = app.poetry.file.read()
+    content["tool"]["poetry"]["dependencies"]["foo"] = "^1.2.0"
+    app.poetry.file.write(content)
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    installed.add_package(get_package("foo", "1.2.0"))
+    repo.add_package(get_package("foo", "1.1.2"))
+
+    tester.execute("foo==1.1.2")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 0 installs, 1 update, 0 removals
+
+  - Downgrading foo (1.2.0 -> 1.1.2)
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_add_chooses_prerelease_if_only_prereleases_are_available(app, repo, installer):
     command = app.find("add")
     tester = CommandTester(command)
