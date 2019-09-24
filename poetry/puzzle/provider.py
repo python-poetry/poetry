@@ -402,15 +402,15 @@ class Provider:
             finally:
                 os.chdir(current_dir)
 
-            if name and name != package_name:
+            package = Package(package_name, package_version)
+
+            if name and name != package.name:
                 # For now, the dependency's name must match the actual package's name
                 raise RuntimeError(
                     "The dependency name for {} does not match the actual package's name: {}".format(
                         name, package_name
                     )
                 )
-
-            package = Package(package_name, package_version)
 
             package.description = package_summary
 
