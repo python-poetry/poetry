@@ -55,8 +55,8 @@ class PipInstaller(BaseInstaller):
             if auth:
                 index_url = "{scheme}://{username}:{password}@{netloc}{path}".format(
                     scheme=parsed.scheme,
-                    username=auth[0],
-                    password=auth[1],
+                    username=urlparse.quote(auth[0]),
+                    password=urlparse.quote(auth[1]),
                     netloc=parsed.netloc,
                     path=parsed.path,
                 )
