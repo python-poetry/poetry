@@ -3,10 +3,10 @@ from .env_command import EnvCommand
 
 class ScriptCommand(EnvCommand):
     """
-    Executes a script defined in <comment>pyproject.toml</comment>. (<error>Deprecated</error>)
+    Executes a script defined in the <comment>pyproject.toml</comment> file. (<error>Deprecated</error>)
 
     script
-        { script-name : The name of the script to execute }
+        { script-name : The name of the script to execute. }
         { args?* : The command and arguments/options to pass to the script. }
     """
 

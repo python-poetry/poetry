@@ -5,11 +5,11 @@ from ..command import Command
 
 class CacheClearCommand(Command):
     """
-    Clears poetry's cache.
+    Clears Poetry's cache.
 
     cache:clear
         { cache : The name of the cache to clear. }
-        { --all : Clear all entries in cache. }
+        { --all : Clear all entries in the cache. }
     """
 
     def handle(self):

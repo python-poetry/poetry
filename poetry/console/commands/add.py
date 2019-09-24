@@ -4,20 +4,20 @@ from .env_command import EnvCommand
 
 class AddCommand(EnvCommand, InitCommand):
     """
-    Adds a new dependency to <comment>pyproject.toml</>.
+    Adds a new dependency to the <comment>pyproject.toml</> file.
 
     add
-        { name* : Packages to add. }
-        { --D|dev : Add package as development dependency. }
+        { name* : The packages to add. }
+        { --D|dev : Add as a development dependency. }
         { --git= : The url of the Git repository. }
         { --path= : The path to a dependency. }
         { --E|extras=* : Extras to activate for the dependency. }
         { --optional : Add as an optional dependency. }
-        { --python= : Python version( for which the dependencies must be installed. }
-        { --platform= : Platforms for which the dependencies must be installed. }
+        { --python= : Python version for which the dependency must be installed. }
+        { --platform= : Platforms for which the dependency must be installed. }
         { --allow-prereleases : Accept prereleases. }
-        { --dry-run : Outputs the operations but will not execute anything
-                     (implicitly enables --verbose). }
+        { --dry-run : Output the operations but do not execute anything
+                      (implicitly enables --verbose). }
     """
 
     help = """The add command adds required packages to your <comment>pyproject.toml</> and installs them.

@@ -6,7 +6,7 @@ class BuildCommand(EnvCommand):
     Builds a package, as a tarball and a wheel by default.
 
     build
-        { --f|format= : Limit the format to either wheel or sdist. }
+        { --f|format= : Limit the format to either sdist or wheel. }
     """
 
     def handle(self):

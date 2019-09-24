@@ -6,10 +6,10 @@ class RemoveCommand(EnvCommand):
     Removes a package from the project dependencies.
 
     remove
-        { packages* : Packages that should be removed. }
-        {--D|dev : Removes a package from the development dependencies. }
-        {--dry-run : Outputs the operations but will not execute anything
-                     (implicitly enables --verbose). }
+        { packages* : The packages to remove. }
+        { --D|dev : Remove a package from the development dependencies. }
+        { --dry-run : Output the operations but do not execute anything
+                      (implicitly enables --verbose). }
     """
 
     help = """The <info>remove</info> command removes a package from the current

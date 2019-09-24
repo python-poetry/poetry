@@ -3,7 +3,7 @@ from .command import Command
 
 class NewCommand(Command):
     """
-    Creates a new Python project at <path>
+    Creates a new Python project at <path>.
 
     new
         { path : The path to create the project at. }

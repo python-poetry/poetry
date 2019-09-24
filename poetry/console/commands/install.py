@@ -8,11 +8,11 @@ class InstallCommand(EnvCommand):
     Installs the project dependencies.
 
     install
-        { --no-dev : Do not install dev dependencies. }
-        { --dry-run : Outputs the operations but will not execute anything
+        { --no-dev : Do not install the development dependencies. }
+        { --dry-run : Output the operations but do not execute anything
                       (implicitly enables --verbose). }
-        { --E|extras=* : Extra sets of dependencies to install. }
-        { --develop=* : Install given packages in development mode. }
+        { --E|extras=* : Extra sets of project dependencies to install. }
+        { --develop=* : Install the given project dependencies in development mode. }
     """
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
