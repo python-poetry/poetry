@@ -158,7 +158,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / "{}-py3.7".format(venv_name),
         executable="python3.7",
-        flags={"always-copy": False},
+        flags={"always-copy": False, "system-site-packages": False},
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -274,7 +274,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / "{}-py3.6".format(venv_name),
         executable="python3.6",
-        flags={"always-copy": False},
+        flags={"always-copy": False, "system-site-packages": False},
     )
 
     assert envs_file.exists()
@@ -327,7 +327,7 @@ def test_activate_activates_recreates_for_different_patch(
     build_venv_m.assert_called_with(
         Path(tmp_dir) / "{}-py3.7".format(venv_name),
         executable="python3.7",
-        flags={"always-copy": False},
+        flags={"always-copy": False, "system-site-packages": False},
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / "{}-py3.7".format(venv_name))
 
@@ -608,6 +608,27 @@ def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mo
     m.side_effect = original_rmtree  # Avoid teardown using `err_on_rm_venv_only`
 
 
+@pytest.mark.parametrize("system_site_packages", [True, False])
+def test_env_system_packages(tmp_dir, config, system_site_packages):
+    venv_path = Path(tmp_dir) / "venv"
+    EnvManager(config).build_venv(
+        str(venv_path), flags={"system-site-packages": system_site_packages}
+    )
+    pyvenv_cfg = venv_path / "pyvenv.cfg"
+    if sys.version_info >= (3, 3):
+        expected = "include-system-site-packages = {}".format(
+            "true" if system_site_packages else "false"
+        )
+        assert expected in pyvenv_cfg.read_text()
+    elif (2, 6) < sys.version_info < (3, 0):
+        assert (
+            system_site_packages
+            == venv_path.joinpath(
+                "lib", "python2.7", "no-global-site-packages.txt"
+            ).exists()
+        )
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
 def test_env_has_symlinks_on_nix(tmp_dir, tmp_venv):
     assert os.path.islink(tmp_venv.python)
@@ -651,7 +672,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     m.assert_called_with(
         config_virtualenvs_path / "{}-py3.7".format(venv_name),
         executable="python3",
-        flags={"always-copy": False},
+        flags={"always-copy": False, "system-site-packages": False},
     )
 
 
@@ -675,7 +696,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     m.assert_called_with(
         config_virtualenvs_path / "{}-py3.9".format(venv_name),
         executable="python3.9",
-        flags={"always-copy": False},
+        flags={"always-copy": False, "system-site-packages": False},
     )
 
 
@@ -759,7 +780,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
         config_virtualenvs_path
         / "{}-py{}.{}".format(venv_name, version.major, version.minor),
         executable=None,
-        flags={"always-copy": False},
+        flags={"always-copy": False, "system-site-packages": False},
     )
 
 
@@ -794,7 +815,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         config_virtualenvs_path
         / "{}-py{}.{}".format(venv_name, version.major, version.minor - 1),
         executable="python{}.{}".format(version.major, version.minor - 1),
-        flags={"always-copy": False},
+        flags={"always-copy": False, "system-site-packages": False},
     )
 
 
@@ -827,7 +848,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     m.assert_called_with(
         poetry.file.parent / ".venv",
         executable="python3.7",
-        flags={"always-copy": False},
+        flags={"always-copy": False, "system-site-packages": False},
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")

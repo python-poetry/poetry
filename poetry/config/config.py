@@ -35,10 +35,18 @@ class Config(object):
             "create": True,
             "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
-            "options": {"always-copy": False},
+            "options": {"always-copy": False, "system-site-packages": False},
         },
         "experimental": {"new-installer": True},
         "installer": {"parallel": True},
+    }
+
+    _boolean_settings = {
+        "virtualenvs.create",
+        "virtualenvs.in-project",
+        "virtualenvs.options.always-copy",
+        "virtualenvs.options.system-site-packages",
+        "installer.parallel",
     }
 
     def __init__(
@@ -136,12 +144,7 @@ class Config(object):
         return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)
 
     def _get_normalizer(self, name):  # type: (str) -> Callable
-        if name in {
-            "virtualenvs.create",
-            "virtualenvs.in-project",
-            "virtualenvs.options.always-copy",
-            "installer.parallel",
-        }:
+        if name in self._boolean_settings:
             return boolean_normalizer
 
         if name == "virtualenvs.path":
