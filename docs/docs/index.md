@@ -22,7 +22,7 @@ curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.p
 ```
 ### windows powershell install instructions
 ```powershell
-$(Invoke-WebRequest -Uri https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py).Content | python
+(Invoke-WebRequest -Uri https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py -UseBasicParsing).Content | python
 ```
 
 !!! note
