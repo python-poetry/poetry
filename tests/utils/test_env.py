@@ -678,6 +678,17 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
     assert 0 == m.call_count
 
 
+def test_venv_name_canonicalisation():
+    """Ensure that name canonicalisation does not cause venv name collisions
+    """
+    project_name_underscore = "simple_project"
+    project_name_dash = "simple-project"
+
+    assert EnvManager.generate_env_name(
+        project_name_underscore, str(project_name_underscore)
+    ) != EnvManager.generate_env_name(project_name_dash, str(project_name_dash))
+
+
 def test_create_venv_uses_patch_version_to_detect_compatibility(
     manager, poetry, config, mocker
 ):

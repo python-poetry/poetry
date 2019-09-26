@@ -29,6 +29,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
+from poetry.utils.helpers import canonicalize_name
 from poetry.utils._compat import subprocess
 from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import BaseMarker
@@ -691,7 +692,7 @@ class EnvManager(object):
 
     @classmethod
     def generate_env_name(cls, name, cwd):  # type: (str, str) -> str
-        name = name.lower()
+        name = canonicalize_name(name.lower())
         sanitized_name = re.sub(r'[ $`!*@"\\\r\n\t]', "_", name)[:42]
         h = hashlib.sha256(encode(cwd)).digest()
         h = base64.urlsafe_b64encode(h).decode()[:8]
