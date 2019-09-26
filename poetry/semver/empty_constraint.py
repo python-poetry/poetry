@@ -28,3 +28,6 @@ class EmptyConstraint(VersionConstraint):
 
     def __str__(self):
         return "<empty>"
+
+    def __eq__(self, other):
+        return other.is_empty()

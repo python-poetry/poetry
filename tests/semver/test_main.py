@@ -1,6 +1,7 @@
 import pytest
 
 from poetry.semver import parse_constraint
+from poetry.semver import EmptyConstraint
 from poetry.semver import Version
 from poetry.semver import VersionRange
 from poetry.semver import VersionUnion
@@ -25,7 +26,7 @@ from poetry.semver import VersionUnion
         ("1.2.3b5", Version(1, 2, 3, pre="b5")),
         (">= 1.2.3", VersionRange(min=Version(1, 2, 3), include_min=True)),
         (">dev", VersionRange(min=Version(0, 0, pre="dev"))),  # Issue 206
-        ("<empty>", VersionRange()),
+        ("<empty>", EmptyConstraint()),
     ],
 )
 def test_parse_constraint(input, constraint):
