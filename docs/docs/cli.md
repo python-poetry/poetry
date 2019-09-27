@@ -423,6 +423,9 @@ bump rule is provided.
 The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
 
+## Options
+
+* `--short (-s)`: Output the version number only.
 
 ## export
 
