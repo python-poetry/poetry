@@ -44,3 +44,10 @@ def test_version_show(app):
     tester = CommandTester(command)
     tester.execute()
     assert "Project (simple-project) version is 1.2.3\n" == tester.io.fetch_output()
+
+
+def test_short_version_show(app):
+    command = app.find("version")
+    tester = CommandTester(command)
+    tester.execute("--short")
+    assert "1.2.3\n" == tester.io.fetch_output()

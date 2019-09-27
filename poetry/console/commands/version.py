@@ -1,4 +1,4 @@
-from cleo import argument
+from cleo import argument, option
 
 from .command import Command
 
@@ -18,6 +18,7 @@ class VersionCommand(Command):
             optional=True,
         )
     ]
+    options = [option("short", "s", "Output the version number only")]
 
     help = """\
 The version command shows the current version of the project or bumps the version of 
@@ -58,11 +59,14 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
             self.poetry.file.write(content)
         else:
-            self.line(
-                "Project (<comment>{}</>) version is <info>{}</>".format(
-                    self.poetry.package.name, self.poetry.package.pretty_version
+            if self.option("short"):
+                self.line("{}".format(self.poetry.package.pretty_version))
+            else:
+                self.line(
+                    "Project (<comment>{}</>) version is <info>{}</>".format(
+                        self.poetry.package.name, self.poetry.package.pretty_version
+                    )
                 )
-            )
 
     def increment_version(self, version, rule):
         from poetry.semver import Version
