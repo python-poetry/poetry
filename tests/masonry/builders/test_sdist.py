@@ -430,3 +430,19 @@ def test_proper_python_requires_if_three_digits_precision_version_specified():
     parsed = p.parsestr(to_str(pkg_info))
 
     assert parsed["Requires-Python"] == "==2.7.15"
+
+
+def test_with_distribution():
+    poetry = Factory().create_poetry(project("with_distribution"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    builder.build()
+
+    sdist = (
+        fixtures_dir / "with_distribution" / "dist" / "module-distribution-0.1.tar.gz"
+    )
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        assert "module-distribution-0.1/module.py" in tar.getnames()

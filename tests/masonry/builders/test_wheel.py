@@ -120,3 +120,15 @@ def test_dist_info_file_permissions():
             z.getinfo("my_package-1.2.3.dist-info/entry_points.txt").external_attr
             == 0o644 << 16
         )
+
+
+def test_wheel_module_with_distribution():
+    module_path = fixtures_dir / "with_distribution"
+    WheelBuilder.make(Factory().create_poetry(module_path), NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "module_distribution-0.1-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "module.py" in z.namelist()
