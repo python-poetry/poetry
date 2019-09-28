@@ -13,6 +13,12 @@ The version of the package. **Required**
 This should follow [semantic versioning](http://semver.org/). However it will not be enforced and you remain
 free to follow another specification.
 
+## distribution
+
+The distribution name of the package. **Optional**
+
+In the eventuality where the name of the package is already taken by a distribution on PyPi, this gives an opportunity to keep the package name and any version control urls unchanged while adopting a different distribution name on PyPi, e.g. a package named *bar*, located at the *https://github.com/foo/bar* url and distributed as *foo-bar* on Pypi.
+
 ## description
 
 A short description of the package. **Required**

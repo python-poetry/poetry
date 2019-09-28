@@ -59,6 +59,8 @@ class Factory:
         package = ProjectPackage(name, version, version)
         package.root_dir = poetry_file.parent
 
+        package.distribution = local_config.get("distribution")
+
         for author in local_config["authors"]:
             package.authors.append(author)
 

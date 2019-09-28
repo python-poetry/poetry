@@ -43,6 +43,8 @@ class Package(object):
             self._version = version
             self._pretty_version = pretty_version or self._version.text
 
+        self.distribution = None
+
         self.description = ""
 
         self._authors = []

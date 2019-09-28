@@ -55,16 +55,19 @@ class SdistBuilder(Builder):
         if not target_dir.exists():
             target_dir.mkdir(parents=True)
 
-        target = target_dir / "{}-{}.tar.gz".format(
-            self._package.pretty_name, self._meta.version
+        basename = (
+            self._package.pretty_name
+            if self._package.distribution is None
+            else self._package.distribution
         )
+        target = target_dir / "{}-{}.tar.gz".format(basename, self._meta.version)
         gz = GzipFile(target.as_posix(), mode="wb")
         tar = tarfile.TarFile(
             target.as_posix(), mode="w", fileobj=gz, format=tarfile.PAX_FORMAT
         )
 
         try:
-            tar_dir = "{}-{}".format(self._package.pretty_name, self._meta.version)
+            tar_dir = "{}-{}".format(basename, self._meta.version)
 
             files_to_add = self.find_files_to_add(exclude_build=False)
 

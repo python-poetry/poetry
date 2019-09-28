@@ -209,8 +209,13 @@ class WheelBuilder(Builder):
 
     @property
     def wheel_filename(self):  # type: () -> str
+        basename = (
+            self._package.pretty_name
+            if self._package.distribution is None
+            else self._package.distribution
+        )
         return "{}-{}-{}.whl".format(
-            re.sub(r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
+            re.sub(r"[^\w\d.]+", "_", basename, flags=re.UNICODE),
             re.sub(r"[^\w\d.\+]+", "_", self._meta.version, flags=re.UNICODE),
             self.tag,
         )

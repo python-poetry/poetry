@@ -17,6 +17,10 @@
             "type": "string",
             "description": "Package version."
         },
+        "distribution": {
+            "type": "string",
+            "description": "Package distribution, e.g. PyPi package name."
+        },
         "description": {
             "type": "string",
             "description": "Short package description."

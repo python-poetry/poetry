@@ -42,7 +42,11 @@ class Metadata:
     def from_package(cls, package):  # type: (...) -> Metadata
         meta = cls()
 
-        meta.name = canonicalize_name(package.name)
+        meta.name = (
+            canonicalize_name(package.name)
+            if package.distribution is None
+            else package.distribution
+        )
         meta.version = normalize_version(package.version.text)
         meta.summary = package.description
         if package.readme:
