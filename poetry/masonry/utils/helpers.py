@@ -1,3 +1,6 @@
+import re
+
+
 def normalize_file_permissions(st_mode):
     """
     Normalizes the permission bits in the st_mode field from stat to 644/755
@@ -12,3 +15,17 @@ def normalize_file_permissions(st_mode):
         new_mode |= 0o111  # Executable: 644 -> 755
 
     return new_mode
+
+
+def escape_version(version):
+    """
+    Escaped version in wheel filename. Doesn't exactly follow
+    the escaping specification in :pep:`427#escaping-and-unicode`
+    because this conflicts with :pep:`440#local-version-identifiers`.
+    """
+    return re.sub(r"[^\w\d.+]+", "_", version, flags=re.UNICODE)
+
+
+def escape_name(name):
+    """Escaped wheel name as specified in :pep:`427#escaping-and-unicode`."""
+    return re.sub(r"[^\w\d.]+", "_", name, flags=re.UNICODE)
