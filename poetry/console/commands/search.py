@@ -10,7 +10,7 @@ class SearchCommand(Command):
     description = "Searches for packages on remote repositories."
 
     arguments = [argument("tokens", "The tokens to search for.", multiple=True)]
-    options = [option("only-name", "N", "Search only in name.")]
+    options = [option("only-name", "N", "Search only by name.")]
 
     def handle(self):
         from poetry.repositories.pypi_repository import PyPiRepository

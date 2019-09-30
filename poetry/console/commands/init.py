@@ -35,7 +35,7 @@ class InitCommand(Command):
         option(
             "dependency",
             None,
-            "Package to require with an optional version constraint, "
+            "Package to require, with an optional version constraint, "
             "e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
@@ -43,7 +43,7 @@ class InitCommand(Command):
         option(
             "dev-dependency",
             None,
-            "Package to require for development with an optional version constraint, "
+            "Package to require for development, with an optional version constraint, "
             "e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,

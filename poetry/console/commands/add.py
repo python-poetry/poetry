@@ -8,11 +8,11 @@ from .env_command import EnvCommand
 class AddCommand(EnvCommand, InitCommand):
 
     name = "add"
-    description = "Add a new dependency to <comment>pyproject.toml</>."
+    description = "Adds a new dependency to <comment>pyproject.toml</>."
 
-    arguments = [argument("name", "Packages to add.", multiple=True)]
+    arguments = [argument("name", "The packages to add.", multiple=True)]
     options = [
-        option("dev", "D", "Add package as development dependency."),
+        option("dev", "D", "Add as a development dependency."),
         option(
             "extras",
             "E",
@@ -24,20 +24,20 @@ class AddCommand(EnvCommand, InitCommand):
         option(
             "python",
             None,
-            "Python version for which the dependencies must be installed.",
+            "Python version for which the dependency must be installed.",
             flag=False,
         ),
         option(
             "platform",
             None,
-            "Platforms for which the dependencies must be installed.",
+            "Platforms for which the dependency must be installed.",
             flag=False,
         ),
         option("allow-prereleases", None, "Accept prereleases."),
         option(
             "dry-run",
             None,
-            "Outputs the operations but will not execute anything (implicitly enables --verbose).",
+            "Output the operations but do not execute anything (implicitly enables --verbose).",
         ),
     ]
 

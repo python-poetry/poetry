@@ -253,7 +253,8 @@ def test_search_for_directory_setup_read_setup_with_no_dependencies(provider, mo
 
 def test_search_for_directory_poetry(provider):
     dependency = DirectoryDependency(
-        "demo", Path(__file__).parent.parent / "fixtures" / "project_with_extras"
+        "project-with-extras",
+        Path(__file__).parent.parent / "fixtures" / "project_with_extras",
     )
 
     package = provider.search_for_directory(dependency)[0]
@@ -269,7 +270,8 @@ def test_search_for_directory_poetry(provider):
 
 def test_search_for_directory_poetry_with_extras(provider):
     dependency = DirectoryDependency(
-        "demo", Path(__file__).parent.parent / "fixtures" / "project_with_extras"
+        "project-with-extras",
+        Path(__file__).parent.parent / "fixtures" / "project_with_extras",
     )
     dependency.extras.append("extras_a")
 

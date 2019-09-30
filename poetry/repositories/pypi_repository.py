@@ -234,9 +234,17 @@ class PyPiRepository(Repository):
         hits = client.search(search, "or")
 
         for hit in hits:
-            result = Package(hit["name"], hit["version"], hit["version"])
-            result.description = to_str(hit["summary"])
-            results.append(result)
+            try:
+                result = Package(hit["name"], hit["version"], hit["version"])
+                result.description = to_str(hit["summary"])
+                results.append(result)
+            except ParseVersionError:
+                self._log(
+                    'Unable to parse version "{}" for the {} package, skipping'.format(
+                        hit["version"], hit["name"]
+                    ),
+                    level="debug",
+                )
 
         return results
 

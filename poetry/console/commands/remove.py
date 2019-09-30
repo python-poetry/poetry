@@ -9,13 +9,13 @@ class RemoveCommand(EnvCommand):
     name = "remove"
     description = "Removes a package from the project dependencies."
 
-    arguments = [argument("packages", "Packages that should be removed", multiple=True)]
+    arguments = [argument("packages", "The packages to remove.", multiple=True)]
     options = [
-        option("dev", "D", "Removes a package from the development dependencies."),
+        option("dev", "D", "Remove a package from the development dependencies."),
         option(
             "dry-run",
             None,
-            "Outputs the operations but will not execute anything "
+            "Output the operations but do not execute anything "
             "(implicitly enables --verbose).",
         ),
     ]

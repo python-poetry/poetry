@@ -24,7 +24,7 @@ from ..command import Command
 class SelfUpdateCommand(Command):
 
     name = "update"
-    description = "Updates poetry to the latest version."
+    description = "Updates Poetry to the latest version."
 
     arguments = [argument("version", "The version to update to.", optional=True)]
     options = [option("preview", None, "Install prereleases.")]

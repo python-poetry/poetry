@@ -8,14 +8,14 @@ class UpdateCommand(EnvCommand):
 
     name = "update"
     description = (
-        "Update dependencies as according to the <comment>pyproject.toml</> file."
+        "Update the dependencies as according to the <comment>pyproject.toml</> file."
     )
 
     arguments = [
         argument("packages", "The packages to update", optional=True, multiple=True)
     ]
     options = [
-        option("no-dev", None, "Do not update dev dependencies."),
+        option("no-dev", None, "Do not update the development dependencies."),
         option(
             "dry-run",
             None,

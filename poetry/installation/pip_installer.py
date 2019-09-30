@@ -135,9 +135,14 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "git":
-            return "git+{}@{}#egg={}".format(
+            req = "git+{}@{}#egg={}".format(
                 package.source_url, package.source_reference, package.name
             )
+
+            if package.develop:
+                req = ["-e", req]
+
+            return req
 
         if package.source_type == "url":
             return "{}#egg={}".format(package.source_url, package.name)
@@ -225,6 +230,6 @@ class PipInstaller(BaseInstaller):
         pkg = Package(package.name, package.version)
         pkg.source_type = "directory"
         pkg.source_url = str(src_dir)
-        pkg.develop = True
+        pkg.develop = package.develop
 
         self.install_directory(pkg)

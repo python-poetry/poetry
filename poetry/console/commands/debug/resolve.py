@@ -14,7 +14,7 @@ class DebugResolveCommand(Command):
     description = "Debugs dependency resolution."
 
     arguments = [
-        argument("package", "Packages to resolve.", optional=True, multiple=True)
+        argument("package", "The packages to resolve.", optional=True, multiple=True)
     ]
     options = [
         option(
@@ -25,7 +25,7 @@ class DebugResolveCommand(Command):
             multiple=True,
         ),
         option("python", None, "Python version(s) to use for resolution.", flag=False),
-        option("tree", None, "Displays the dependency tree."),
+        option("tree", None, "Display the dependency tree."),
         option("install", None, "Show what would be installed for the current system."),
     ]
 

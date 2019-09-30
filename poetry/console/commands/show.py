@@ -10,9 +10,9 @@ class ShowCommand(EnvCommand):
     name = "show"
     description = "Shows information about packages."
 
-    arguments = [argument("package", "Package to inspect", optional=True)]
+    arguments = [argument("package", "The package to inspect", optional=True)]
     options = [
-        option("no-dev", None, "Do not list the dev dependencies."),
+        option("no-dev", None, "Do not list the development dependencies."),
         option("tree", "t", "List the dependencies as a tree."),
         option("latest", "l", "Show the latest version."),
         option(

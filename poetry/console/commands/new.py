@@ -7,7 +7,7 @@ from .command import Command
 class NewCommand(Command):
 
     name = "new"
-    description = "Creates a new Python project at <path>"
+    description = "Creates a new Python project at <path>."
 
     arguments = [argument("path", "The path to create the project at.")]
     options = [

@@ -15,7 +15,7 @@ from .command import Command
 class ConfigCommand(Command):
 
     name = "config"
-    description = "Sets/Gets config options."
+    description = "Manages configuration settings."
 
     arguments = [
         argument("key", "Setting key.", optional=True),
