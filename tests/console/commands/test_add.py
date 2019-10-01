@@ -766,3 +766,15 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected in tester.io.fetch_output()
+
+def test_trailing_newline_in_inline_dict(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+
+    tester.execute("git+https://github.com/demo/demo.git")
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+    assert content["dependencies"]["demo"].trivia.trail == "\n"

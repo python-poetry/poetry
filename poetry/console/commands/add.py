@@ -51,7 +51,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
     def handle(self):
         from poetry.installation import Installer
         from poetry.semver import parse_constraint
-        from tomlkit import inline_table
+        from tomlkit.items import InlineTable, Trivia
+        from tomlkit.container import Container
 
         packages = self.argument("name")
         is_dev = self.option("dev")
@@ -94,7 +95,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 # Validate version constraint
                 parse_constraint(_constraint["version"])
 
-            constraint = inline_table()
+            constraint = InlineTable(Container(), Trivia(), new=True)
             for name, value in _constraint.items():
                 if name == "name":
                     continue
