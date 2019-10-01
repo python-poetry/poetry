@@ -389,10 +389,12 @@ class Env(object):
 
         return decode(output)
 
-    def execute(self, bin, *args, **kwargs):
+    def execute(self, bin, *args):
         bin = self._bin(bin)
-
-        return subprocess.call([bin] + list(args), **kwargs)
+        if os.name == "nt":
+            return subprocess.call([bin] + list(args))
+        else:
+            os.execvp(bin, [bin] + list(args))
 
     def is_venv(self):  # type: () -> bool
         raise NotImplementedError()
@@ -538,7 +540,7 @@ class VirtualEnv(Env):
 
             return super(VirtualEnv, self).run(bin, *args, **kwargs)
 
-    def execute(self, bin, *args, **kwargs):
+    def execute(self, bin, *args):
         with self.temp_environ():
             os.environ["PATH"] = self._updated_path()
             os.environ["VIRTUAL_ENV"] = str(self._path)
@@ -546,7 +548,7 @@ class VirtualEnv(Env):
             self.unset_env("PYTHONHOME")
             self.unset_env("__PYVENV_LAUNCHER__")
 
-            return super(VirtualEnv, self).execute(bin, *args, **kwargs)
+            return super(VirtualEnv, self).execute(bin, *args)
 
     @contextmanager
     def temp_environ(self):
