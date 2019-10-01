@@ -767,6 +767,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert expected in tester.io.fetch_output()
 
+
 def test_trailing_newline_in_inline_dict(app, repo, installer):
     command = app.find("add")
     tester = CommandTester(command)
