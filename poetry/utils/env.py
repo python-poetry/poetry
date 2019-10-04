@@ -712,7 +712,16 @@ class Env(object):
     def execute(self, bin, *args, **kwargs):
         bin = self._bin(bin)
 
-        return subprocess.call([bin] + list(args), **kwargs)
+        if not self._is_windows:
+            args = [bin] + list(args)
+            if "env" in kwargs:
+                return os.execvpe(bin, args, kwargs["env"])
+            else:
+                return os.execvp(bin, args)
+        else:
+            exe = subprocess.Popen([bin] + list(args), **kwargs)
+            exe.communicate()
+            return exe.returncode
 
     def is_venv(self):  # type: () -> bool
         raise NotImplementedError()
