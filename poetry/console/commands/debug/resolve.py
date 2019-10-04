@@ -5,10 +5,10 @@ from typing import List
 from cleo import argument
 from cleo import option
 
-from ..command import Command
+from ..init import InitCommand
 
 
-class DebugResolveCommand(Command):
+class DebugResolveCommand(InitCommand):
 
     name = "resolve"
     description = "Debugs dependency resolution."
@@ -43,12 +43,25 @@ class DebugResolveCommand(Command):
         if not packages:
             package = self.poetry.package
         else:
+            # Using current pool for determine_requirements()
+            self._pool = self.poetry.pool
+
             package = ProjectPackage(
                 self.poetry.package.name, self.poetry.package.version
             )
-            requirements = self._format_requirements(packages)
 
-            for name, constraint in requirements.items():
+            # Silencing output
+            is_quiet = self.io.output.is_quiet()
+            if not is_quiet:
+                self.io.output.set_quiet(True)
+
+            requirements = self._determine_requirements(packages)
+
+            if not is_quiet:
+                self.io.output.set_quiet(False)
+
+            for constraint in requirements:
+                name = constraint.pop("name")
                 dep = package.add_dependency(name, constraint)
                 extras = []
                 for extra in self.option("extras"):
@@ -116,55 +129,3 @@ class DebugResolveCommand(Command):
 
         table.set_rows(rows)
         table.render(self.io)
-
-    def _determine_requirements(self, requires):  # type: (List[str]) -> List[str]
-        from poetry.semver import parse_constraint
-
-        if not requires:
-            return []
-
-        requires = self._parse_name_version_pairs(requires)
-        for requirement in requires:
-            if "version" in requirement:
-                parse_constraint(requirement["version"])
-
-        return requires
-
-    def _parse_name_version_pairs(self, pairs):  # type: (list) -> list
-        result = []
-
-        for i in range(len(pairs)):
-            if pairs[i].startswith("git+https://"):
-                url = pairs[i].lstrip("git+")
-                rev = None
-                if "@" in url:
-                    url, rev = url.split("@")
-
-                pair = {"name": url.split("/")[-1].rstrip(".git"), "git": url}
-                if rev:
-                    pair["rev"] = rev
-
-                result.append(pair)
-
-                continue
-
-            pair = re.sub("^([^=: ]+)[=: ](.*)$", "\\1 \\2", pairs[i].strip())
-            pair = pair.strip()
-
-            if " " in pair:
-                name, version = pair.split(" ", 2)
-                result.append({"name": name, "version": version})
-            else:
-                result.append({"name": pair, "version": "*"})
-
-        return result
-
-    def _format_requirements(self, requirements):  # type: (List[str]) -> dict
-        requires = {}
-        requirements = self._determine_requirements(requirements)
-
-        for requirement in requirements:
-            name = requirement.pop("name")
-            requires[name] = requirement
-
-        return requires
