@@ -41,6 +41,7 @@
 - The `pyproject.toml` configuration is now properly validated.
 - Fixed installing Poetry-based packages breaking with `pip`.
 - Fixed packages with empty markers being added to the lock file.
+- Fixed invalid lock file generation in some cases.
 
 
 ## [0.12.17] - 2019-07-03

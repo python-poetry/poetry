@@ -218,6 +218,11 @@ class Locker(object):
 
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
+            else:
+                # Ensure we don't have mixed types in the lock file
+                for i, spec in enumerate(dependencies[dependency.pretty_name]):
+                    if not isinstance(spec, dict):
+                        dependencies[dependency.pretty_name][i] = {"version": spec}
 
             constraint = {"version": str(dependency.pretty_constraint)}
 
