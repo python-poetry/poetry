@@ -187,7 +187,7 @@ def expanduser(path):
 
 
 HOME = expanduser("~")
-POETRY_HOME = os.path.join(HOME, ".poetry")
+POETRY_HOME = os.environ.get("POETRY_HOME") or os.path.join(HOME, ".poetry")
 POETRY_BIN = os.path.join(POETRY_HOME, "bin")
 POETRY_ENV = os.path.join(POETRY_HOME, "env")
 POETRY_LIB = os.path.join(POETRY_HOME, "lib")

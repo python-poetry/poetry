@@ -9,6 +9,7 @@
 - Added a `env use` command to control the Python version used by the project.
 - Added a `env list` command to list the virtualenvs associated with the current project.
 - Added a `env remove` command to delete virtualenvs associated with the current project.
+- Added support for `POETRY_HOME` declaration within `get-poetry.py`.
 - Added support for declaring a specific source for dependencies.
 - Added support for disabling PyPI and making another repository the default one.
 - Added support for declaring private repositories as secondary.
