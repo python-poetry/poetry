@@ -134,7 +134,7 @@ class Locker(object):
 
         return packages
 
-    def set_lock_data(self, root, packages):  # type: () -> bool
+    def set_lock_data(self, root, packages):  # type: (...) -> bool
         hashes = {}
         packages = self._lock_packages(packages)
         # Retrieving hashes
@@ -238,7 +238,7 @@ class Locker(object):
         data = {
             "name": package.pretty_name,
             "version": package.pretty_version,
-            "description": package.description,
+            "description": package.description or "",
             "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,

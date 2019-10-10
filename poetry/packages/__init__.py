@@ -1,6 +1,7 @@
 import os
 import re
 
+from poetry.semver import Version
 from poetry.version.requirements import Requirement
 
 from .dependency import Dependency
@@ -19,6 +20,7 @@ from .utils.utils import is_installable_dir
 from .utils.utils import is_url
 from .utils.utils import path_to_url
 from .utils.utils import strip_extras
+from .url_dependency import URLDependency
 from .vcs_dependency import VCSDependency
 
 
@@ -105,6 +107,22 @@ def dependency_from_pep_508(name):
                     op = ""
                 elif op == "!=":
                     version += ".*"
+                elif op in ("<=", ">"):
+                    parsed_version = Version.parse(version)
+                    if parsed_version.precision == 1:
+                        if op == "<=":
+                            op = "<"
+                            version = parsed_version.next_major.text
+                        elif op == ">":
+                            op = ">="
+                            version = parsed_version.next_major.text
+                    elif parsed_version.precision == 2:
+                        if op == "<=":
+                            op = "<"
+                            version = parsed_version.next_minor.text
+                        elif op == ">":
+                            op = ">="
+                            version = parsed_version.next_minor.text
                 elif op in ("in", "not in"):
                     versions = []
                     for v in re.split("[ ,]+", version):

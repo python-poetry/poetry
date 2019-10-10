@@ -61,7 +61,7 @@ Also, instead of modifying the `pyproject.toml` file by hand, you can use the `a
 $ poetry add pendulum
 ```
 
-It will automatically find a suitable version constraint.
+It will automatically find a suitable version constraint **and install** the package and subdependencies.
 
 
 ### Version constraints

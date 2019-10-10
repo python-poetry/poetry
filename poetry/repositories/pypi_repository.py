@@ -1,13 +1,8 @@
 import logging
 import os
-import re
-import tarfile
-import zipfile
 
-import pkginfo
 
-from bz2 import BZ2File
-from gzip import GzipFile
+from collections import defaultdict
 from typing import Dict
 from typing import List
 from typing import Union
@@ -31,15 +26,20 @@ from requests import session
 from poetry.locations import CACHE_DIR
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
+from poetry.packages.utils.link import Link
 from poetry.semver import parse_constraint
 from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
+from poetry.semver.exceptions import ParseVersionError
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
+from poetry.utils.inspector import Inspector
+from poetry.utils.patterns import wheel_file_re
 from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
+from poetry.version.markers import parse_marker
 
 from .exceptions import PackageNotFound
 from .repository import Repository
@@ -53,7 +53,6 @@ class PyPiRepository(Repository):
     CACHE_VERSION = parse_constraint("0.12.0")
 
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
-        self._name = "PyPI"
         self._url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
@@ -73,8 +72,19 @@ class PyPiRepository(Repository):
         self._session = CacheControl(
             session(), cache=FileCache(str(release_cache_dir / "_http"))
         )
+        self._inspector = Inspector()
 
         super(PyPiRepository, self).__init__()
+
+        self._name = "PyPI"
+
+    @property
+    def url(self):  # type: () -> str
+        return self._url
+
+    @property
+    def authenticated_url(self):  # type: () -> str
+        return self._url
 
     def find_packages(
         self,
@@ -101,7 +111,14 @@ class PyPiRepository(Repository):
             ):
                 allow_prereleases = True
 
-        info = self.get_package_info(name)
+        try:
+            info = self.get_package_info(name)
+        except PackageNotFound:
+            self._log(
+                "No packages found for {} {}".format(name, str(constraint)),
+                level="debug",
+            )
+            return []
 
         packages = []
 
@@ -116,7 +133,16 @@ class PyPiRepository(Repository):
                 )
                 continue
 
-            package = Package(name, version)
+            try:
+                package = Package(name, version)
+            except ParseVersionError:
+                self._log(
+                    'Unable to parse version "{}" for the {} package, skipping'.format(
+                        version, name
+                    ),
+                    level="debug",
+                )
+                continue
 
             if package.is_prerelease() and not allow_prereleases:
                 continue
@@ -208,9 +234,17 @@ class PyPiRepository(Repository):
         hits = client.search(search, "or")
 
         for hit in hits:
-            result = Package(hit["name"], hit["version"], hit["version"])
-            result.description = to_str(hit["summary"])
-            results.append(result)
+            try:
+                result = Package(hit["name"], hit["version"], hit["version"])
+                result.description = to_str(hit["summary"])
+                results.append(result)
+            except ParseVersionError:
+                self._log(
+                    'Unable to parse version "{}" for the {} package, skipping'.format(
+                        hit["version"], hit["name"]
+                    ),
+                    level="debug",
+                )
 
         return results
 
@@ -296,74 +330,14 @@ class PyPiRepository(Repository):
             # or badly set metadata when uploading
             # So, we need to make sure there is actually no
             # dependencies by introspecting packages
-            urls = {}
+            urls = defaultdict(list)
             for url in json_data["urls"]:
-                # Only get sdist and universal wheels if they exist
+                # Only get sdist and wheels if they exist
                 dist_type = url["packagetype"]
                 if dist_type not in ["sdist", "bdist_wheel"]:
                     continue
 
-                if dist_type == "sdist" and "sdist" not in urls:
-                    urls[url["packagetype"]] = url["url"]
-                    continue
-
-                if "bdist_wheel" in urls:
-                    continue
-
-                # If bdist_wheel, check if it's universal
-                filename = url["filename"]
-                if not re.search(r"-py2\.py3-none-any.whl", filename):
-                    continue
-
-                urls[dist_type] = url["url"]
-
-            if "sdist" in urls and "bdist_wheel" not in urls:
-                # If can't found a universal wheel
-                # but we found an sdist, inspect the sdist first
-                info = self._get_info_from_urls(urls)
-                if info["requires_dist"]:
-                    data["requires_dist"] = info["requires_dist"]
-
-                    if not data["requires_python"]:
-                        data["requires_python"] = info["requires_python"]
-
-                    return data
-                else:
-                    del urls["sdist"]
-
-            if not urls:
-                # If we don't have urls, we try to take the first one
-                # we find and go from there
-                if not json_data["urls"]:
-                    return data
-
-                for url in json_data["urls"]:
-                    # Only get sdist and universal wheels if they exist
-                    dist_type = url["packagetype"]
-
-                    if dist_type != "bdist_wheel":
-                        continue
-
-                    urls[url["packagetype"]] = url["url"]
-
-                    break
-
-            if not urls or "bdist_wheel" not in urls:
-                # If we don't have urls, we try to take the first one
-                # we find and go from there
-                if not json_data["urls"]:
-                    return data
-
-                for url in json_data["urls"]:
-                    # Only get sdist and universal wheels if they exist
-                    dist_type = url["packagetype"]
-
-                    if dist_type != "bdist_wheel":
-                        continue
-
-                    urls[url["packagetype"]] = url["url"]
-
-                    break
+                urls[dist_type].append(url["url"])
 
             if not urls:
                 return data
@@ -388,56 +362,121 @@ class PyPiRepository(Repository):
 
     def _get_info_from_urls(
         self, urls
-    ):  # type: (Dict[str, str]) -> Dict[str, Union[str, List, None]]
+    ):  # type: (Dict[str, List[str]]) -> Dict[str, Union[str, List, None]]
+        # Checking wheels first as they are more likely to hold
+        # the necessary information
         if "bdist_wheel" in urls:
-            self._log(
-                "Downloading wheel: {}".format(
-                    urlparse.urlparse(urls["bdist_wheel"]).path.rsplit("/")[-1]
-                ),
-                level="debug",
-            )
-            return self._get_info_from_wheel(urls["bdist_wheel"])
+            # Check fo a universal wheel
+            wheels = urls["bdist_wheel"]
 
-        self._log(
-            "Downloading sdist: {}".format(
-                urlparse.urlparse(urls["sdist"]).path.rsplit("/")[-1]
-            ),
-            level="debug",
-        )
-        return self._get_info_from_sdist(urls["sdist"])
+            universal_wheel = None
+            universal_python2_wheel = None
+            universal_python3_wheel = None
+            platform_specific_wheels = []
+            for wheel in wheels:
+                link = Link(wheel)
+                m = wheel_file_re.match(link.filename)
+                if not m:
+                    continue
+
+                pyver = m.group("pyver")
+                abi = m.group("abi")
+                plat = m.group("plat")
+                if abi == "none" and plat == "any":
+                    # Universal wheel
+                    if pyver == "py2.py3":
+                        # Any Python
+                        universal_wheel = wheel
+                    elif pyver == "py2":
+                        universal_python2_wheel = wheel
+                    else:
+                        universal_python3_wheel = wheel
+                else:
+                    platform_specific_wheels.append(wheel)
+
+            if universal_wheel is not None:
+                return self._get_info_from_wheel(universal_wheel)
+
+            info = {}
+            if universal_python2_wheel and universal_python3_wheel:
+                info = self._get_info_from_wheel(universal_python2_wheel)
+
+                py3_info = self._get_info_from_wheel(universal_python3_wheel)
+                if py3_info["requires_dist"]:
+                    if not info["requires_dist"]:
+                        info["requires_dist"] = py3_info["requires_dist"]
+
+                        return info
+
+                    py2_requires_dist = set(
+                        dependency_from_pep_508(r).to_pep_508()
+                        for r in info["requires_dist"]
+                    )
+                    py3_requires_dist = set(
+                        dependency_from_pep_508(r).to_pep_508()
+                        for r in py3_info["requires_dist"]
+                    )
+                    base_requires_dist = py2_requires_dist & py3_requires_dist
+                    py2_only_requires_dist = py2_requires_dist - py3_requires_dist
+                    py3_only_requires_dist = py3_requires_dist - py2_requires_dist
+
+                    # Normalizing requires_dist
+                    requires_dist = list(base_requires_dist)
+                    for requirement in py2_only_requires_dist:
+                        dep = dependency_from_pep_508(requirement)
+                        dep.marker = dep.marker.intersect(
+                            parse_marker("python_version == '2.7'")
+                        )
+                        requires_dist.append(dep.to_pep_508())
+
+                    for requirement in py3_only_requires_dist:
+                        dep = dependency_from_pep_508(requirement)
+                        dep.marker = dep.marker.intersect(
+                            parse_marker("python_version >= '3'")
+                        )
+                        requires_dist.append(dep.to_pep_508())
+
+                    info["requires_dist"] = sorted(list(set(requires_dist)))
+
+            if info:
+                return info
+
+            # Prefer non platform specific wheels
+            if universal_python3_wheel:
+                return self._get_info_from_wheel(universal_python3_wheel)
+
+            if universal_python2_wheel:
+                return self._get_info_from_wheel(universal_python2_wheel)
+
+            if platform_specific_wheels and "sdist" not in urls:
+                # Pick the first wheel available and hope for the best
+                return self._get_info_from_wheel(platform_specific_wheels[0])
+
+        return self._get_info_from_sdist(urls["sdist"][0])
 
     def _get_info_from_wheel(
         self, url
     ):  # type: (str) -> Dict[str, Union[str, List, None]]
-        info = {"summary": "", "requires_python": None, "requires_dist": None}
+        self._log(
+            "Downloading wheel: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
+            level="debug",
+        )
 
         filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
 
         with temporary_directory() as temp_dir:
-            filepath = os.path.join(temp_dir, filename)
-            self._download(url, filepath)
+            filepath = Path(temp_dir) / filename
+            self._download(url, str(filepath))
 
-            try:
-                meta = pkginfo.Wheel(filepath)
-            except ValueError:
-                # Unable to determine dependencies
-                # Assume none
-                return info
-
-        if meta.summary:
-            info["summary"] = meta.summary or ""
-
-        info["requires_python"] = meta.requires_python
-
-        if meta.requires_dist:
-            info["requires_dist"] = meta.requires_dist
-
-        return info
+            return self._inspector.inspect_wheel(filepath)
 
     def _get_info_from_sdist(
         self, url
     ):  # type: (str) -> Dict[str, Union[str, List, None]]
-        info = {"summary": "", "requires_python": None, "requires_dist": None}
+        self._log(
+            "Downloading sdist: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
+            level="debug",
+        )
 
         filename = os.path.basename(urlparse.urlparse(url).path)
 
@@ -445,120 +484,7 @@ class PyPiRepository(Repository):
             filepath = Path(temp_dir) / filename
             self._download(url, str(filepath))
 
-            try:
-                meta = pkginfo.SDist(str(filepath))
-                if meta.summary:
-                    info["summary"] = meta.summary
-
-                if meta.requires_python:
-                    info["requires_python"] = meta.requires_python
-
-                if meta.requires_dist:
-                    info["requires_dist"] = list(meta.requires_dist)
-
-                    return info
-            except ValueError:
-                # Unable to determine dependencies
-                # We pass and go deeper
-                pass
-
-            # Still not dependencies found
-            # So, we unpack and introspect
-            suffix = filepath.suffix
-            gz = None
-            if suffix == ".zip":
-                tar = zipfile.ZipFile(str(filepath))
-            else:
-                if suffix == ".bz2":
-                    gz = BZ2File(str(filepath))
-                    suffixes = filepath.suffixes
-                    if len(suffixes) > 1 and suffixes[-2] == ".tar":
-                        suffix = ".tar.bz2"
-                else:
-                    gz = GzipFile(str(filepath))
-                    suffix = ".tar.gz"
-
-                tar = tarfile.TarFile(str(filepath), fileobj=gz)
-
-            try:
-                tar.extractall(os.path.join(temp_dir, "unpacked"))
-            finally:
-                if gz:
-                    gz.close()
-
-                tar.close()
-
-            unpacked = Path(temp_dir) / "unpacked"
-            sdist_dir = unpacked / Path(filename).name.rstrip(suffix)
-
-            # Checking for .egg-info at root
-            eggs = list(sdist_dir.glob("*.egg-info"))
-            if eggs:
-                egg_info = eggs[0]
-
-                requires = egg_info / "requires.txt"
-                if requires.exists():
-                    with requires.open() as f:
-                        info["requires_dist"] = parse_requires(f.read())
-
-                        return info
-
-            # Searching for .egg-info in sub directories
-            eggs = list(sdist_dir.glob("**/*.egg-info"))
-            if eggs:
-                egg_info = eggs[0]
-
-                requires = egg_info / "requires.txt"
-                if requires.exists():
-                    with requires.open() as f:
-                        info["requires_dist"] = parse_requires(f.read())
-
-                        return info
-
-            # Still nothing, try reading (without executing it)
-            # the setup.py file.
-            try:
-                setup_info = self._inspect_sdist_with_setup(sdist_dir)
-
-                for key, value in info.items():
-                    if value:
-                        continue
-
-                    info[key] = setup_info[key]
-
-                return info
-            except Exception as e:
-                self._log(
-                    "An error occurred when reading setup.py or setup.cfg: {}".format(
-                        str(e)
-                    ),
-                    "warning",
-                )
-                return info
-
-    def _inspect_sdist_with_setup(self, sdist_dir):
-        info = {"requires_python": None, "requires_dist": None}
-
-        result = SetupReader.read_from_directory(sdist_dir)
-        requires = ""
-        for dep in result["install_requires"]:
-            requires += dep + "\n"
-
-        if result["extras_require"]:
-            requires += "\n"
-
-        for extra_name, deps in result["extras_require"].items():
-            requires += "[{}]\n".format(extra_name)
-
-            for dep in deps:
-                requires += dep + "\n"
-
-            requires += "\n"
-
-        info["requires_dist"] = parse_requires(requires)
-        info["requires_python"] = result["python_requires"]
-
-        return info
+            return self._inspector.inspect_sdist(filepath)
 
     def _download(self, url, dest):  # type: (str, str) -> None
         r = get(url, stream=True)

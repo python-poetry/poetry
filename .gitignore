@@ -3,7 +3,7 @@
 # Packages
 *.egg
 *.egg-info
-dist
+/dist/*
 build
 _build
 .cache
@@ -35,3 +35,5 @@ MANIFEST.in
 
 .venv
 /releases/*
+pip-wheel-metadata
+/poetry.toml

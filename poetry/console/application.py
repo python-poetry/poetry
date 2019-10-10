@@ -9,7 +9,6 @@ from .commands import AddCommand
 from .commands import BuildCommand
 from .commands import CheckCommand
 from .commands import ConfigCommand
-from .commands import DevelopCommand
 from .commands import ExportCommand
 from .commands import InitCommand
 from .commands import InstallCommand
@@ -18,7 +17,6 @@ from .commands import NewCommand
 from .commands import PublishCommand
 from .commands import RemoveCommand
 from .commands import RunCommand
-from .commands import ScriptCommand
 from .commands import SearchCommand
 from .commands import ShellCommand
 from .commands import ShowCommand
@@ -49,12 +47,13 @@ class Application(BaseApplication):
 
     @property
     def poetry(self):
-        from poetry.poetry import Poetry
+        from poetry.factory import Factory
+        from poetry.utils._compat import Path
 
         if self._poetry is not None:
             return self._poetry
 
-        self._poetry = Poetry.create(os.getcwd())
+        self._poetry = Factory().create_poetry(Path.cwd())
 
         return self._poetry
 
@@ -68,7 +67,6 @@ class Application(BaseApplication):
             BuildCommand(),
             CheckCommand(),
             ConfigCommand(),
-            DevelopCommand(),
             ExportCommand(),
             InitCommand(),
             InstallCommand(),
@@ -77,7 +75,6 @@ class Application(BaseApplication):
             PublishCommand(),
             RemoveCommand(),
             RunCommand(),
-            ScriptCommand(),
             SearchCommand(),
             ShellCommand(),
             ShowCommand(),

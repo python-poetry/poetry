@@ -46,7 +46,7 @@ class Metadata:
         meta.version = normalize_version(package.version.text)
         meta.summary = package.description
         if package.readme:
-            with package.readme.open() as f:
+            with package.readme.open(encoding="utf-8") as f:
                 meta.description = f.read()
 
         meta.keywords = ",".join(package.keywords)
@@ -60,8 +60,8 @@ class Metadata:
         meta.classifiers = package.all_classifiers
 
         # Version 1.2
-        meta.maintainer = meta.author
-        meta.maintainer_email = meta.author_email
+        meta.maintainer = package.maintainer_name
+        meta.maintainer_email = package.maintainer_email
 
         # Requires python
         if package.python_versions != "*":

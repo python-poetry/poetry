@@ -52,14 +52,13 @@ zipfile36>=0.1.0.0,<0.2.0.0
 
 
 def test_get_http_basic_auth(config):
-    config.add_property("http-basic.foo.username", "foo")
-    config.add_property("http-basic.foo.password", "bar")
+    config.merge({"http-basic": {"foo": {"username": "foo", "password": "bar"}}})
 
     assert get_http_basic_auth(config, "foo") == ("foo", "bar")
 
 
 def test_get_http_basic_auth_without_password(config):
-    config.add_property("http-basic.foo.username", "foo")
+    config.merge({"http-basic": {"foo": {"username": "foo"}}})
 
     assert get_http_basic_auth(config, "foo") == ("foo", None)
 

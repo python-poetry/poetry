@@ -33,7 +33,10 @@ class MockRepository(PyPiRepository):
             if not fixture.exists():
                 fixture = self.JSON_FIXTURES / (name + ".json")
 
-        with fixture.open() as f:
+        if not fixture.exists():
+            return
+
+        with fixture.open(encoding="utf-8") as f:
             return json.loads(f.read())
 
     def _download(self, url, dest):
@@ -173,3 +176,12 @@ def test_pypi_repository_supports_reading_bz2_files():
         assert expected_extras[name] == sorted(
             package.extras[name], key=lambda r: r.name
         )
+
+
+def test_invalid_versions_ignored():
+    repo = MockRepository()
+
+    # the json metadata for this package contains one malformed version
+    # and a correct one.
+    packages = repo.find_packages("pygame-music-grid")
+    assert len(packages) == 1

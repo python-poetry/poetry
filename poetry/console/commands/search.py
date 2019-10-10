@@ -1,21 +1,23 @@
+from cleo import argument
+from cleo import option
+
 from .command import Command
 
 
 class SearchCommand(Command):
-    """
-    Searches for packages on remote repositories.
 
-    search
-        { tokens* : The tokens to search for. }
-        { --N|only-name : Search only in name. }
-    """
+    name = "search"
+    description = "Searches for packages on remote repositories."
+
+    arguments = [argument("tokens", "The tokens to search for.", multiple=True)]
+    options = [option("only-name", "N", "Search only by name.")]
 
     def handle(self):
         from poetry.repositories.pypi_repository import PyPiRepository
 
         flags = PyPiRepository.SEARCH_FULLTEXT
         if self.option("only-name"):
-            flags = PyPiRepository.SEARCH_FULLTEXT
+            flags = PyPiRepository.SEARCH_NAME
 
         results = PyPiRepository().search(self.argument("tokens"), flags)
 

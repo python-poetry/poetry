@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import re
 import shutil
 import tempfile
@@ -12,7 +13,9 @@ from clikit.api.io.flags import VERY_VERBOSE
 
 from poetry.utils._compat import Path
 from poetry.utils._compat import basestring
+from poetry.utils._compat import glob
 from poetry.utils._compat import lru_cache
+from poetry.utils._compat import to_str
 from poetry.vcs import get_vcs
 
 from ..metadata import Metadata
@@ -22,21 +25,49 @@ from ..utils.package_include import PackageInclude
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
 
+METADATA_BASE = """\
+Metadata-Version: 2.1
+Name: {name}
+Version: {version}
+Summary: {summary}
+"""
+
 
 class Builder(object):
 
     AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
 
-    def __init__(self, poetry, env, io):
+    format = None
+
+    def __init__(
+        self, poetry, env, io, ignore_packages_formats=False
+    ):  # type: (Poetry, Env, IO) -> None
         self._poetry = poetry
         self._env = env
         self._io = io
         self._package = poetry.package
         self._path = poetry.file.parent
+
+        packages = []
+        for p in self._package.packages:
+            formats = p.get("format", [])
+            if not isinstance(formats, list):
+                formats = [formats]
+
+            if (
+                formats
+                and self.format
+                and self.format not in formats
+                and not ignore_packages_formats
+            ):
+                continue
+
+            packages.append(p)
+
         self._module = Module(
             self._package.name,
             self._path.as_posix(),
-            packages=self._package.packages,
+            packages=packages,
             includes=self._package.include,
         )
         self._meta = Metadata.from_package(self._package)
@@ -55,8 +86,12 @@ class Builder(object):
 
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
-            for excluded in self._path.glob(str(excluded_glob)):
-                explicitely_excluded.add(excluded.relative_to(self._path).as_posix())
+            for excluded in glob(
+                os.path.join(self._path.as_posix(), str(excluded_glob)), recursive=True
+            ):
+                explicitely_excluded.add(
+                    Path(excluded).relative_to(self._path).as_posix()
+                )
 
         ignored = vcs_ignored_files | explicitely_excluded
         result = set()
@@ -141,6 +176,62 @@ class Builder(object):
 
         return sorted(to_add)
 
+    def get_metadata_content(self):  # type: () -> bytes
+        content = METADATA_BASE.format(
+            name=self._meta.name,
+            version=self._meta.version,
+            summary=to_str(self._meta.summary),
+        )
+
+        # Optional fields
+        if self._meta.home_page:
+            content += "Home-page: {}\n".format(self._meta.home_page)
+
+        if self._meta.license:
+            content += "License: {}\n".format(self._meta.license)
+
+        if self._meta.keywords:
+            content += "Keywords: {}\n".format(self._meta.keywords)
+
+        if self._meta.author:
+            content += "Author: {}\n".format(to_str(self._meta.author))
+
+        if self._meta.author_email:
+            content += "Author-email: {}\n".format(to_str(self._meta.author_email))
+
+        if self._meta.maintainer:
+            content += "Maintainer: {}\n".format(to_str(self._meta.maintainer))
+
+        if self._meta.maintainer_email:
+            content += "Maintainer-email: {}\n".format(
+                to_str(self._meta.maintainer_email)
+            )
+
+        if self._meta.requires_python:
+            content += "Requires-Python: {}\n".format(self._meta.requires_python)
+
+        for classifier in self._meta.classifiers:
+            content += "Classifier: {}\n".format(classifier)
+
+        for extra in sorted(self._meta.provides_extra):
+            content += "Provides-Extra: {}\n".format(extra)
+
+        for dep in sorted(self._meta.requires_dist):
+            content += "Requires-Dist: {}\n".format(dep)
+
+        for url in sorted(self._meta.project_urls, key=lambda u: u[0]):
+            content += "Project-URL: {}\n".format(to_str(url))
+
+        if self._meta.description_content_type:
+            content += "Description-Content-Type: {}\n".format(
+                self._meta.description_content_type
+            )
+
+        if self._meta.description is not None:
+            content += "\n" + to_str(self._meta.description) + "\n"
+
+        return content
+
     def convert_entry_points(self):  # type: () -> dict
         result = defaultdict(list)
 
@@ -165,7 +256,7 @@ class Builder(object):
         return dict(result)
 
     @classmethod
-    def convert_author(cls, author):  # type: () -> dict
+    def convert_author(cls, author):  # type: (...) -> dict
         m = AUTHOR_REGEX.match(author)
 
         name = m.group("name")

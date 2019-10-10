@@ -7,15 +7,17 @@ try:
 except ImportError:
     import urlparse
 
-from tomlkit import document
+from cleo import ApplicationTester
 
-from poetry.config import Config as BaseConfig
 from poetry.console import Application as BaseApplication
+from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.poetry import Poetry as BasePoetry
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository as BaseRepository
+from poetry.utils._compat import PY2
+from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 from poetry.repositories.exceptions import PackageNotFound
@@ -40,6 +42,29 @@ def mock_clone(self, source, dest):
 
     shutil.rmtree(str(dest))
     shutil.copytree(str(folder), str(dest))
+
+
+def mock_download(self, url, dest):
+    parts = urlparse.urlparse(url)
+
+    fixtures = Path(__file__).parent.parent / "fixtures"
+    fixture = fixtures / parts.path.lstrip("/")
+
+    if dest.exists():
+        shutil.rmtree(str(dest))
+
+    # Python2 does not support os.symlink on Windows whereas Python3 does.  os.symlink requires either administrative
+    # privileges or developer mode on Win10, throwing an OSError is neither is active.
+    if WINDOWS:
+        if PY2:
+            shutil.copyfile(str(fixture), str(dest))
+        else:
+            try:
+                os.symlink(str(fixture), str(dest))
+            except OSError:
+                shutil.copyfile(str(fixture), str(dest))
+    else:
+        os.symlink(str(fixture), str(dest))
 
 
 @pytest.fixture
@@ -67,6 +92,9 @@ def setup(mocker, installer, installed, config):
     p = mocker.patch("poetry.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
+    # Patch download to not download anything but to just copy from fixtures
+    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
+
     # Setting terminal width
     environ = dict(os.environ)
     os.environ["COLUMNS"] = "80"
@@ -85,13 +113,10 @@ class Application(BaseApplication):
 
     def reset_poetry(self):
         poetry = self._poetry
-        self._poetry = Poetry.create(self._poetry.file.path.parent)
-        self._poetry._pool = poetry.pool
-
-
-class Config(BaseConfig):
-    def __init__(self, _):
-        self._content = document()
+        self._poetry = Factory().create_poetry(self._poetry.file.path.parent)
+        self._poetry.set_pool(poetry.pool)
+        self._poetry.set_config(poetry.config)
+        self._poetry.set_locker(poetry.locker)
 
 
 class Locker(BaseLocker):
@@ -133,12 +158,12 @@ class Locker(BaseLocker):
 
 
 class Poetry(BasePoetry):
-    def __init__(self, file, local_config, package, locker):
+    def __init__(self, file, local_config, package, locker, config):
         self._file = TomlFile(file)
         self._package = package
         self._local_config = local_config
         self._locker = Locker(locker.lock.path, locker._local_config)
-        self._config = Config.create("config.toml")
+        self._config = config
 
         # Configure sources
         self._pool = Pool()
@@ -167,21 +192,35 @@ def project_directory():
 
 
 @pytest.fixture
-def poetry(repo, project_directory):
-    p = Poetry.create(Path(__file__).parent.parent / "fixtures" / project_directory)
+def poetry(repo, project_directory, config):
+    p = Factory().create_poetry(
+        Path(__file__).parent.parent / "fixtures" / project_directory
+    )
+    p.set_locker(Locker(p.locker.lock.path, p.locker._local_config))
 
-    with p.file.path.open() as f:
+    with p.file.path.open(encoding="utf-8") as f:
         content = f.read()
 
-    p.pool.remove_repository("pypi")
-    p.pool.add_repository(repo)
+    p.set_config(config)
+
+    pool = Pool()
+    pool.add_repository(repo)
+    p.set_pool(pool)
 
     yield p
 
-    with p.file.path.open("w") as f:
+    with p.file.path.open("w", encoding="utf-8") as f:
         f.write(content)
 
 
 @pytest.fixture
 def app(poetry):
-    return Application(poetry)
+    app_ = Application(poetry)
+    app_.config.set_terminate_after_run(False)
+
+    return app_
+
+
+@pytest.fixture
+def app_tester(app):
+    return ApplicationTester(app)

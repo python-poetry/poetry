@@ -1,16 +1,21 @@
+from cleo import option
+
 from .command import Command
 
 
 class PublishCommand(Command):
-    """
-    Publishes a package to a remote repository.
 
-    publish
-        { --r|repository= : The repository to publish the package to. }
-        { --u|username= : The username to access the repository. }
-        { --p|password= : The password to access the repository. }
-        { --build : Build the package before publishing. }
-    """
+    name = "publish"
+    description = "Publishes a package to a remote repository."
+
+    options = [
+        option(
+            "repository", "r", "The repository to publish the package to.", flag=False
+        ),
+        option("username", "u", "The username to access the repository.", flag=False),
+        option("password", "p", "The password to access the repository.", flag=False),
+        option("build", None, "Build the package before publishing."),
+    ]
 
     help = """The publish command builds and uploads the package to a remote repository.
 
@@ -20,6 +25,8 @@ upload to it instead.
 The --repository option should match the name of a configured repository using
 the config command.
 """
+
+    loggers = ["poetry.masonry.publishing.publisher"]
 
     def handle(self):
         from poetry.masonry.publishing.publisher import Publisher

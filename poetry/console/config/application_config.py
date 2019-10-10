@@ -15,8 +15,9 @@ class ApplicationConfig(BaseApplicationConfig):
     def configure(self):
         super(ApplicationConfig, self).configure()
 
-        self.add_style(Style("c1").fg("green"))
-        self.add_style(Style("comment").fg("cyan"))
+        self.add_style(Style("c1").fg("cyan"))
+        self.add_style(Style("info").fg("cyan"))
+        self.add_style(Style("comment").fg("green"))
         self.add_style(Style("error").fg("red").bold())
         self.add_style(Style("warning").fg("yellow"))
         self.add_style(Style("debug").fg("black").bold())
@@ -27,8 +28,11 @@ class ApplicationConfig(BaseApplicationConfig):
         self.add_event_listener(ConsoleEvents.PRE_HANDLE.value, self.set_env)
 
     def register_command_loggers(
-        self, event, event_name, _
-    ):  # type: (PreHandleEvent, str, ...) -> None
+        self,
+        event,  # type: PreHandleEvent
+        event_name,  # type: str
+        _,
+    ):  # type: (...) -> None
         command = event.command.config.handler
         if not isinstance(command, Command):
             return
@@ -55,7 +59,7 @@ class ApplicationConfig(BaseApplicationConfig):
 
             logger.setLevel(level)
 
-    def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, ...) -> None
+    def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, _) -> None
         from poetry.semver import parse_constraint
         from poetry.utils.env import EnvManager
 

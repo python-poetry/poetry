@@ -37,9 +37,10 @@ class MakeReleaseCommand(Command):
             for python in self.option("python"):
                 parts = python.split(":", 1)
                 if len(parts) == 1:
-                    pythons[parts[0]] = self.PYTHON[parts[0]]
-
-                version, python = parts
+                    python = self.PYTHON[parts[0]]
+                    version = parts[0]
+                else:
+                    version, python = parts
                 pythons[version] = python
 
         self.check_system(pythons)
@@ -50,6 +51,11 @@ class MakeReleaseCommand(Command):
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
         from poetry.utils._compat import Path
+        from poetry.utils._compat import decode
+        from poetry.utils._compat import encode
+        from poetry.utils._compat import subprocess
+        from poetry.utils.env import GET_BASE_PREFIX
+        from poetry.utils.env import VirtualEnv
         from poetry.utils.helpers import temporary_directory
         from poetry.vcs import get_vcs
 
@@ -67,6 +73,7 @@ class MakeReleaseCommand(Command):
         else:
             vcs_excluded = []
 
+        created_files = []
         with temporary_directory() as tmp_dir:
             # Copy poetry to tmp dir
             poetry_dir = os.path.join(tmp_dir, "poetry")
@@ -77,21 +84,53 @@ class MakeReleaseCommand(Command):
                     set([os.path.join(dir_, name) for name in names])
                 ),
             )
+            created_files += [
+                p.relative_to(Path(tmp_dir))
+                for p in Path(poetry_dir).glob("**/*")
+                if p.is_file()
+                and p.suffix != ".pyc"
+                and str(p.relative_to(Path(tmp_dir))) not in vcs_excluded
+            ]
             for version, python in sorted(pythons.items()):
                 self.line(
                     "<info>Preparing files for Python <comment>{}</comment></info>".format(
                         version
                     )
                 )
-                with package.with_python_versions("^{}".format(version)):
-                    solver = Solver(
-                        package, pool, Repository(), Repository(), self.output
-                    )
+                prefix = decode(
+                    subprocess.run(
+                        [python],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        input=encode(GET_BASE_PREFIX),
+                        check=True,
+                        shell=WINDOWS,
+                    ).stdout
+                )
+                env = VirtualEnv(Path(prefix.strip()), base=Path(prefix.strip()))
+                with package.with_python_versions("~{}".format(version)):
+                    solver = Solver(package, pool, Repository(), Repository(), self.io)
                     ops = solver.solve()
+                    for op in ops:
+                        if not env.is_valid_for_marker(op.package.marker):
+                            op.skip("Not needed for the current environment")
 
                 self.vendorize_for_python(
-                    python, [op.package for op in ops], poetry_dir, version
+                    python,
+                    [op.package for op in ops if not op.skipped],
+                    poetry_dir,
+                    version,
                 )
+                vendor_dir = Path(
+                    os.path.join(poetry_dir, "_vendor", "py{}".format(python))
+                )
+                created_files += [
+                    p.relative_to(Path(tmp_dir))
+                    for p in vendor_dir.glob("**/*")
+                    if p.is_file()
+                    and p.suffix != ".pyc"
+                    and str(p.relative_to(Path(tmp_dir))) not in vcs_excluded
+                ]
 
                 self.line("")
 
@@ -130,6 +169,22 @@ class MakeReleaseCommand(Command):
                                     tar.addfile(tar_info)  # Symlinks & ?
                 finally:
                     gz.close()
+
+                self.line("<info>Checking release file</info>")
+                missing_files = []
+                with tarfile.open(os.path.join(tmp_dir2, name), "r") as tar:
+                    names = tar.getnames()
+
+                    for created_file in created_files:
+                        if created_file.as_posix() not in names:
+                            missing_files.append(created_file.as_posix())
+
+                if missing_files:
+                    self.line("<error>Some files are missing:</error>")
+                    for missing_file in missing_files:
+                        self.line("<error>  - {}</error>".format(missing_file))
+
+                    return 1
 
                 releases_dir = os.path.join(os.path.dirname(__file__), "releases")
                 if not os.path.exists(releases_dir):

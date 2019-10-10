@@ -1,7 +1,15 @@
 import os
+import signal
+import sys
 
+import pexpect
+
+from clikit.utils.terminal import Terminal
 from shellingham import detect_shell
 from shellingham import ShellDetectionFailure
+
+from ._compat import WINDOWS
+from .env import VirtualEnv
 
 
 class Shell:
@@ -39,6 +47,52 @@ class Shell:
         cls._shell = cls(name, path)
 
         return cls._shell
+
+    def activate(self, env):  # type: (VirtualEnv) -> None
+        if WINDOWS:
+            return env.execute(self.path)
+
+        terminal = Terminal()
+        with env.temp_environ():
+            c = pexpect.spawn(
+                self._path, ["-i"], dimensions=(terminal.height, terminal.width)
+            )
+
+        c.setecho(False)
+        activate_script = self._get_activate_script()
+        bin_dir = "Scripts" if WINDOWS else "bin"
+        activate_path = env.path / bin_dir / activate_script
+        c.sendline("{} {}".format(self._get_source_command(), activate_path))
+
+        def resize(sig, data):
+            terminal = Terminal()
+            c.setwinsize(terminal.height, terminal.width)
+
+        signal.signal(signal.SIGWINCH, resize)
+
+        # Interact with the new shell.
+        c.interact(escape_character=None)
+        c.close()
+
+        sys.exit(c.exitstatus)
+
+    def _get_activate_script(self):
+        if "fish" == self._name:
+            suffix = ".fish"
+        elif "csh" == self._name:
+            suffix = ".csh"
+        else:
+            suffix = ""
+
+        return "activate" + suffix
+
+    def _get_source_command(self):
+        if "fish" == self._name:
+            return "source"
+        elif "csh" == self._name:
+            return "source"
+
+        return "."
 
     def __repr__(self):  # type: () -> str
         return '{}("{}", "{}")'.format(self.__class__.__name__, self._name, self._path)

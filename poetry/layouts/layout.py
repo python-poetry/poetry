@@ -140,7 +140,7 @@ class Layout(object):
         tests.mkdir()
         tests_init.touch(exist_ok=False)
 
-        with tests_default.open("w") as f:
+        with tests_default.open("w", encoding="utf-8") as f:
             f.write(
                 TESTS_DEFAULT.format(
                     package_name=self._package_name, version=self._version
@@ -152,5 +152,5 @@ class Layout(object):
 
         poetry = path / "pyproject.toml"
 
-        with poetry.open("w") as f:
+        with poetry.open("w", encoding="utf-8") as f:
             f.write(content)

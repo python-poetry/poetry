@@ -1,3 +1,4 @@
+import collections
 import os
 import re
 import shutil
@@ -5,10 +6,13 @@ import stat
 import tempfile
 
 from contextlib import contextmanager
+from typing import List
 from typing import Optional
-from typing import Union
 
-from poetry.config import Config
+from keyring import delete_password, set_password, get_password
+from keyring.errors import KeyringError
+
+from poetry.config.config import Config
 from poetry.version import Version
 
 _canonicalize_regex = re.compile("[-_]+")
@@ -41,7 +45,7 @@ def temporary_directory(*args, **kwargs):
         shutil.rmtree(name)
 
 
-def parse_requires(requires):  # type: (str) -> Union[list, None]
+def parse_requires(requires):  # type: (str) -> List[str]
     lines = requires.split("\n")
 
     requires_dist = []
@@ -79,17 +83,53 @@ def parse_requires(requires):  # type: (str) -> Union[list, None]
 
         requires_dist.append(line)
 
-    if requires_dist:
-        return requires_dist
+    return requires_dist
+
+
+def keyring_service_name(repository_name):  # type: (str) -> str
+    return "{}-{}".format("poetry-repository", repository_name)
+
+
+def keyring_repository_password_get(
+    repository_name, username
+):  # type: (str, str) -> Optional[str]
+    try:
+        return get_password(keyring_service_name(repository_name), username)
+    except (RuntimeError, KeyringError):
+        return None
+
+
+def keyring_repository_password_set(
+    repository_name, username, password
+):  # type: (str, str, str) -> None
+    try:
+        set_password(keyring_service_name(repository_name), username, password)
+    except (RuntimeError, KeyringError):
+        raise RuntimeError("Failed to store password in keyring")
+
+
+def keyring_repository_password_del(
+    config, repository_name
+):  # type: (Config, str) -> None
+    try:
+        repo_auth = config.get("http-basic.{}".format(repository_name))
+        if repo_auth and "username" in repo_auth:
+            delete_password(
+                keyring_service_name(repository_name), repo_auth["username"]
+            )
+    except (RuntimeError, KeyringError):
+        pass
 
 
 def get_http_basic_auth(
     config, repository_name
 ):  # type: (Config, str) -> Optional[tuple]
-    repo_auth = config.setting("http-basic.{}".format(repository_name))
+    repo_auth = config.get("http-basic.{}".format(repository_name))
     if repo_auth:
-        return repo_auth["username"], repo_auth.get("password")
-
+        username, password = repo_auth["username"], repo_auth.get("password")
+        if password is None:
+            password = keyring_repository_password_get(repository_name, username)
+        return username, password
     return None
 
 
@@ -100,3 +140,15 @@ def _on_rm_error(func, path, exc_info):
 
 def safe_rmtree(path):
     shutil.rmtree(path, onerror=_on_rm_error)
+
+
+def merge_dicts(d1, d2):
+    for k, v in d2.items():
+        if (
+            k in d1
+            and isinstance(d1[k], dict)
+            and isinstance(d2[k], collections.Mapping)
+        ):
+            merge_dicts(d1[k], d2[k])
+        else:
+            d1[k] = d2[k]

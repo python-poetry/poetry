@@ -126,7 +126,8 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
         provider.search_for_vcs(dependency)
 
 
-def test_search_for_directory_setup_egg_info(provider):
+@pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
+def test_search_for_directory_setup_egg_info(provider, directory):
     dependency = DirectoryDependency(
         "demo",
         Path(__file__).parent.parent
@@ -134,7 +135,7 @@ def test_search_for_directory_setup_egg_info(provider):
         / "git"
         / "github.com"
         / "demo"
-        / "demo",
+        / directory,
     )
 
     package = provider.search_for_directory(dependency)[0]
@@ -228,9 +229,32 @@ def test_search_for_directory_setup_read_setup_with_extras(provider, mocker):
     }
 
 
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_search_for_directory_setup_read_setup_with_no_dependencies(provider, mocker):
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
+
+    dependency = DirectoryDependency(
+        "demo",
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "no-dependencies",
+    )
+
+    package = provider.search_for_directory(dependency)[0]
+
+    assert package.name == "demo"
+    assert package.version.text == "0.1.2"
+    assert package.requires == []
+    assert package.extras == {}
+
+
 def test_search_for_directory_poetry(provider):
     dependency = DirectoryDependency(
-        "demo", Path(__file__).parent.parent / "fixtures" / "project_with_extras"
+        "project-with-extras",
+        Path(__file__).parent.parent / "fixtures" / "project_with_extras",
     )
 
     package = provider.search_for_directory(dependency)[0]
@@ -246,7 +270,8 @@ def test_search_for_directory_poetry(provider):
 
 def test_search_for_directory_poetry_with_extras(provider):
     dependency = DirectoryDependency(
-        "demo", Path(__file__).parent.parent / "fixtures" / "project_with_extras"
+        "project-with-extras",
+        Path(__file__).parent.parent / "fixtures" / "project_with_extras",
     )
     dependency.extras.append("extras_a")
 

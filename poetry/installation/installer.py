@@ -17,6 +17,7 @@ from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.semver import parse_constraint
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.extras import get_extra_package_names
 
 from .base_installer import BaseInstaller
 from .pip_installer import PipInstaller
@@ -43,8 +44,8 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
-        self._develop = []
         self._execute_operations = True
+        self._lock = False
 
         self._whitelist = []
 
@@ -99,13 +100,18 @@ class Installer:
     def is_dev_mode(self):  # type: () -> bool
         return self._dev_mode
 
-    def develop(self, packages):  # type: (dict) -> Installer
-        self._develop = [canonicalize_name(p) for p in packages]
+    def update(self, update=True):  # type: (bool) -> Installer
+        self._update = update
 
         return self
 
-    def update(self, update=True):  # type: (bool) -> Installer
-        self._update = update
+    def lock(self):  # type: () -> Installer
+        """
+        Prepare the installer for locking only.
+        """
+        self.update()
+        self.execute_operations(False)
+        self._lock = True
 
         return self
 
@@ -130,7 +136,7 @@ class Installer:
     def _do_install(self, local_repo):
         locked_repository = Repository()
         if self._update:
-            if self._locker.is_locked():
+            if self._locker.is_locked() and not self._lock:
                 locked_repository = self._locker.locked_repository(True)
 
                 # If no packages have been whitelisted (The ones we want to update),
@@ -178,7 +184,14 @@ class Installer:
             # currently installed
             ops = self._get_operations_from_lock(locked_repository)
 
-        self._populate_local_repo(local_repo, ops, locked_repository)
+        self._populate_local_repo(local_repo, ops)
+
+        if self._update:
+            self._write_lock_file(local_repo)
+
+            if self._lock:
+                # If we are only in lock mode, no need to go any further
+                return 0
 
         root = self._package
         if not self.is_dev_mode():
@@ -189,11 +202,10 @@ class Installer:
             ".".join([str(i) for i in self._env.version_info[:3]])
         ):
             # We resolve again by only using the lock file
-            pool = Pool()
+            pool = Pool(ignore_repository_names=True)
 
             # Making a new repo containing the packages
             # newly resolved and the ones from the current lock file
-            locked_repository = self._locker.locked_repository(True)
             repo = Repository()
             for package in local_repo.packages + locked_repository.packages:
                 if not repo.has_package(package):
@@ -270,19 +282,17 @@ class Installer:
                 )
             )
 
-        # Writing lock before installing
+        self._io.write_line("")
+        for op in ops:
+            self._execute(op)
+
+    def _write_lock_file(self, repo):  # type: (Repository) -> None
         if self._update and self._write_lock:
-            updated_lock = self._locker.set_lock_data(
-                self._package, local_repo.packages
-            )
+            updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
             if updated_lock:
                 self._io.write_line("")
                 self._io.write_line("<info>Writing lock file</>")
-
-        self._io.write_line("")
-        for op in ops:
-            self._execute(op)
 
     def _execute(self, operation):  # type: (Operation) -> None
         """
@@ -372,38 +382,17 @@ class Installer:
 
         self._installer.remove(operation.package)
 
-    def _populate_local_repo(self, local_repo, ops, locked_repository):
-        # We walk through all operations and add/remove/update accordingly
+    def _populate_local_repo(self, local_repo, ops):
         for op in ops:
-            if isinstance(op, Update):
+            if isinstance(op, Uninstall):
+                continue
+            elif isinstance(op, Update):
                 package = op.target_package
             else:
                 package = op.package
 
-            acted_on = False
-            for pkg in locked_repository.packages:
-                if pkg.name == package.name:
-                    # The package we operate on is in the local repo
-                    if op.job_type == "update":
-                        if pkg.version == package.version:
-                            break
-
-                        local_repo.remove_package(pkg)
-                        local_repo.add_package(op.target_package)
-                    elif op.job_type == "uninstall":
-                        local_repo.remove_package(op.package)
-                    else:
-                        # Even though the package already exists
-                        # in the lock file we will prefer the new one
-                        # to force updates
-                        local_repo.remove_package(pkg)
-                        local_repo.add_package(package)
-
-                    acted_on = True
-
-            if not acted_on:
-                if not local_repo.has_package(package):
-                    local_repo.add_package(package)
+            if not local_repo.has_package(package):
+                local_repo.add_package(package)
 
     def _get_operations_from_lock(
         self, locked_repository  # type: Repository
@@ -411,7 +400,7 @@ class Installer:
         installed_repo = self._installed_repository
         ops = []
 
-        extra_packages = [p.name for p in self._get_extra_packages(locked_repository)]
+        extra_packages = self._get_extra_packages(locked_repository)
         for locked in locked_repository.packages:
             is_installed = False
             for installed in installed_repo.packages:
@@ -441,7 +430,7 @@ class Installer:
     def _filter_operations(
         self, ops, repo
     ):  # type: (List[Operation], Repository) -> None
-        extra_packages = [p.name for p in self._get_extra_packages(repo)]
+        extra_packages = self._get_extra_packages(repo)
         for op in ops:
             if isinstance(op, Update):
                 package = op.target_package
@@ -450,11 +439,6 @@ class Installer:
 
             if op.job_type == "uninstall":
                 continue
-
-            if package.name in self._develop and package.source_type == "directory":
-                package.develop = True
-                if op.skipped:
-                    op.unskip()
 
             current_python = parse_constraint(
                 ".".join(str(v) for v in self._env.version_info[:3])
@@ -485,9 +469,9 @@ class Installer:
             if package.category == "dev" and not self.is_dev_mode():
                 op.skip("Dev dependencies not requested")
 
-    def _get_extra_packages(self, repo):
+    def _get_extra_packages(self, repo):  # type: (Repository) -> List[str]
         """
-        Returns all packages required by extras.
+        Returns all package names required by extras.
 
         Maybe we just let the solver handle it?
         """
@@ -496,29 +480,10 @@ class Installer:
         else:
             extras = self._locker.lock_data.get("extras", {})
 
-        extra_packages = []
-        for extra_name, packages in extras.items():
-            if extra_name not in self._extras:
-                continue
-
-            extra_packages += [Dependency(p, "*") for p in packages]
-
-        def _extra_packages(packages):
-            pkgs = []
-            for package in packages:
-                for pkg in repo.packages:
-                    if pkg.name == package.name:
-                        pkgs.append(package)
-                        pkgs += _extra_packages(pkg.requires)
-
-                        break
-
-            return pkgs
-
-        return _extra_packages(extra_packages)
+        return list(get_extra_package_names(repo.packages, extras, self._extras))
 
     def _get_installer(self):  # type: () -> BaseInstaller
-        return PipInstaller(self._env, self._io)
+        return PipInstaller(self._env, self._io, self._pool)
 
     def _get_installed(self):  # type: () -> InstalledRepository
         return InstalledRepository.load(self._env)
