@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "prerelease"
+version = "1.0.0.dev0"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+# Requirements
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.4"
+
+[tool.poetry.dev-dependencies]
