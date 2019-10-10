@@ -172,9 +172,6 @@ class Provider:
             name=dependency.name,
         )
 
-        if dependency.tag or dependency.rev:
-            package.source_reference = dependency.reference
-
         for extra in dependency.extras:
             if extra in package.extras:
                 for dep in package.extras[extra]:
