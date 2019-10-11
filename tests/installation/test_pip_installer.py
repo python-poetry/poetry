@@ -29,9 +29,12 @@ def installer(pool):
 
 def test_requirement(installer):
     package = Package("ipython", "7.5.0")
-    package.hashes = [
-        "md5:dbdc53e3918f28fa335a173432402a00",
-        "e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+    package.files = [
+        {"file": "foo-0.1.0.tar.gz", "hash": "md5:dbdc53e3918f28fa335a173432402a00"},
+        {
+            "file": "foo.0.1.0.whl",
+            "hash": "e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+        },
     ]
 
     result = installer.requirement(package, formatted=True)

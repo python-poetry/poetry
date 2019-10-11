@@ -65,7 +65,7 @@ class PipInstaller(BaseInstaller):
         if update:
             args.append("-U")
 
-        if package.hashes and not package.source_type:
+        if package.files and not package.source_type:
             # Format as a requirements.txt
             # We need to create a requirements.txt file
             # for each package in order to check hashes.
@@ -112,8 +112,9 @@ class PipInstaller(BaseInstaller):
     def requirement(self, package, formatted=False):
         if formatted and not package.source_type:
             req = "{}=={}".format(package.name, package.version)
-            for h in package.hashes:
+            for f in package.files:
                 hash_type = "sha256"
+                h = f["hash"]
                 if ":" in h:
                     hash_type, h = h.split(":")
 

@@ -15,5 +15,7 @@ url = "tests/fixtures/wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.wh
 python-versions = "*"
 content-hash = "123456789"
 
-[metadata.hashes]
-demo = ["c25eb81459126848a1788eb3520d1a32014eb51ce3d3bae88c56bfdde4ce02db"]
+[metadata.files]
+demo = [
+    {file = "demo-0.1.0-py2.py3-none-any.whl", hash = "sha256:c25eb81459126848a1788eb3520d1a32014eb51ce3d3bae88c56bfdde4ce02db"},
+]

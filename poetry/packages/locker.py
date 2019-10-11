@@ -6,6 +6,9 @@ import poetry.repositories
 
 from hashlib import sha256
 from tomlkit import document
+from tomlkit import inline_table
+from tomlkit import item
+from tomlkit import table
 from typing import List
 
 from poetry.utils._compat import Path
@@ -84,7 +87,15 @@ class Locker(object):
             package.description = info.get("description", "")
             package.category = info["category"]
             package.optional = info["optional"]
-            package.hashes = lock_data["metadata"]["hashes"][info["name"]]
+            if "hashes" in lock_data["metadata"]:
+                # Old lock so we create dummy files from the hashes
+                package.files = [
+                    {"name": h, "hash": h}
+                    for h in lock_data["metadata"]["hashes"][info["name"]]
+                ]
+            else:
+                package.files = lock_data["metadata"]["files"][info["name"]]
+
             package.python_versions = info["python-versions"]
             extras = info.get("extras", {})
             if extras:
@@ -135,15 +146,24 @@ class Locker(object):
         return packages
 
     def set_lock_data(self, root, packages):  # type: (...) -> bool
-        hashes = {}
+        files = table()
         packages = self._lock_packages(packages)
         # Retrieving hashes
         for package in packages:
-            if package["name"] not in hashes:
-                hashes[package["name"]] = []
+            if package["name"] not in files:
+                files[package["name"]] = []
 
-            hashes[package["name"]] += package["hashes"]
-            del package["hashes"]
+            for f in package["files"]:
+                file_metadata = inline_table()
+                for k, v in sorted(f.items()):
+                    file_metadata[k] = v
+
+                files[package["name"]].append(file_metadata)
+
+            if files[package["name"]]:
+                files[package["name"]] = item(files[package["name"]]).multiline(True)
+
+            del package["files"]
 
         lock = document()
         lock["package"] = packages
@@ -157,7 +177,7 @@ class Locker(object):
         lock["metadata"] = {
             "python-versions": root.python_versions,
             "content-hash": self._content_hash,
-            "hashes": hashes,
+            "files": files,
         }
 
         if not self.is_locked() or lock != self.lock_data:
@@ -247,7 +267,7 @@ class Locker(object):
             "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,
-            "hashes": sorted(package.hashes),
+            "files": sorted(package.files, key=lambda x: x["file"]),
         }
         if not package.marker.is_any():
             data["marker"] = str(package.marker)

@@ -226,7 +226,9 @@ class Provider:
             )
 
         package.source_url = dependency.path.as_posix()
-        package.hashes = [dependency.hash()]
+        package.files = [
+            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+        ]
 
         for extra in dependency.extras:
             if extra in package.extras:
