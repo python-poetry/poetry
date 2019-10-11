@@ -63,7 +63,7 @@ def test_wheel_prerelease():
 
 
 def test_wheel_excluded_data():
-    module_path = fixtures_dir / "default_with_excluded_data"
+    module_path = fixtures_dir / "default_with_excluded_data_toml"
     WheelBuilder.make(Factory().create_poetry(module_path), NullEnv(), NullIO())
 
     whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
