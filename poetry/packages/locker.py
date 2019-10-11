@@ -218,11 +218,6 @@ class Locker(object):
 
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
-            else:
-                # Ensure we don't have mixed types in the lock file
-                for i, spec in enumerate(dependencies[dependency.pretty_name]):
-                    if not isinstance(spec, dict):
-                        dependencies[dependency.pretty_name][i] = {"version": spec}
 
             constraint = {"version": str(dependency.pretty_constraint)}
 
@@ -235,10 +230,15 @@ class Locker(object):
             if not dependency.python_constraint.is_any():
                 constraint["python"] = str(dependency.python_constraint)
 
-            if len(constraint) == 1:
-                dependencies[dependency.pretty_name].append(constraint["version"])
-            else:
-                dependencies[dependency.pretty_name].append(constraint)
+            dependencies[dependency.pretty_name].append(constraint)
+
+        # All the constraints should have the same type,
+        # but we want to simplify them if it's possible
+        for dependency, constraints in tuple(dependencies.items()):
+            if all(len(constraint) == 1 for constraint in constraints):
+                dependencies[dependency] = [
+                    constraint["version"] for constraint in constraints
+                ]
 
         data = {
             "name": package.pretty_name,
