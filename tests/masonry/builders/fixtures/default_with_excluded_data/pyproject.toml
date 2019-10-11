@@ -9,6 +9,8 @@ license = "MIT"
 
 readme = "README.rst"
 
+exclude = ["my_package/data/data1.txt"]
+
 homepage = "https://poetry.eustace.io/"
 repository = "https://github.com/sdispater/poetry"
 documentation = "https://poetry.eustace.io/docs"
