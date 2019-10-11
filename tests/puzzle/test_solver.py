@@ -928,6 +928,11 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
         ],
     )
 
+    op = ops[1]
+
+    assert op.package.source_type == "git"
+    assert op.package.source_reference.startswith("9cf87a2")
+
 
 def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
@@ -949,6 +954,37 @@ def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
             {"job": "install", "package": get_package("demo", "0.1.2")},
         ],
     )
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [{"branch": "a-branch"}, {"tag": "a-tag"}, {"rev": "9cf8"}],
+    ids=["branch", "tag", "rev"],
+)
+def test_solver_can_resolve_git_dependencies_with_ref(solver, repo, package, ref):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    git_config = {"git": "https://github.com/demo/demo.git"}
+    git_config.update(ref)
+    package.add_dependency("demo", git_config)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.2")},
+        ],
+    )
+
+    op = ops[1]
+
+    assert op.package.source_type == "git"
+    assert op.package.source_reference.startswith("9cf87a2")
 
 
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(
