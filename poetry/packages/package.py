@@ -66,7 +66,7 @@ class Package(object):
         self.requires_extras = []
 
         self.category = "main"
-        self.hashes = []
+        self.files = []
         self.optional = False
 
         self.classifiers = []

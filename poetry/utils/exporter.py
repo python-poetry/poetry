@@ -110,9 +110,10 @@ class Exporter(object):
             if package.source_type == "legacy" and package.source_url:
                 indexes.append(package.source_url)
 
-            if package.hashes and with_hashes:
+            if package.files and with_hashes:
                 hashes = []
-                for h in package.hashes:
+                for f in package.files:
+                    h = f["hash"]
                     algorithm = "sha256"
                     if ":" in h:
                         algorithm, h = h.split(":")
@@ -126,7 +127,7 @@ class Exporter(object):
                     line += " \\\n"
                     for i, h in enumerate(hashes):
                         line += "    --hash={}{}".format(
-                            h, " \\\n" if i < len(package.hashes) - 1 else ""
+                            h, " \\\n" if i < len(hashes) - 1 else ""
                         )
 
             line += "\n"

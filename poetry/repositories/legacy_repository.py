@@ -333,7 +333,7 @@ class LegacyRepository(PyPiRepository):
             package.description = release_info.get("summary", "")
 
             # Adding hashes information
-            package.hashes = release_info["digests"]
+            package.files = release_info["files"]
 
             # Activate extra dependencies
             for extra in extras:
@@ -358,7 +358,7 @@ class LegacyRepository(PyPiRepository):
             "summary": "",
             "requires_dist": [],
             "requires_python": None,
-            "digests": [],
+            "files": [],
             "_cache_version": str(self.CACHE_VERSION),
         }
 
@@ -370,7 +370,7 @@ class LegacyRepository(PyPiRepository):
                 )
             )
         urls = defaultdict(list)
-        hashes = []
+        files = []
         for link in links:
             if link.is_wheel:
                 urls["bdist_wheel"].append(link.url)
@@ -379,13 +379,12 @@ class LegacyRepository(PyPiRepository):
             ):
                 urls["sdist"].append(link.url)
 
-            hash = link.hash
-            if link.hash_name == "sha256":
-                hashes.append(hash)
-            elif hash:
-                hashes.append(link.hash_name + ":" + hash)
+            h = link.hash
+            if h:
+                h = link.hash_name + ":" + link.hash
+                files.append({"file": link.filename, "hash": h})
 
-        data["digests"] = hashes
+        data["files"] = files
 
         info = self._get_info_from_urls(urls)
 

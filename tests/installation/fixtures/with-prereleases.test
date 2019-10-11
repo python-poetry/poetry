@@ -18,6 +18,6 @@ python-versions = "*"
 python-versions = "*"
 content-hash = "123456789"
 
-[metadata.hashes]
+[metadata.files]
 "A" = []
 "B" = []
