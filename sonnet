@@ -218,6 +218,7 @@ class MakeReleaseCommand(Command):
                 subprocess.check_output(
                     [python, "-V"], stderr=subprocess.STDOUT, shell=WINDOWS
                 )
+                subprocess.check_output([python, "-m", "pip", "install", "pip", "-U"])
             except subprocess.CalledProcessError:
                 raise RuntimeError("Python {} is not available".format(version))
 
