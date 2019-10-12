@@ -277,6 +277,9 @@ class Provider:
 
         package.source_url = dependency.path.as_posix()
 
+        if dependency.base != None:
+            package.root_dir = dependency.base.as_posix()
+
         for extra in dependency.extras:
             if extra in package.extras:
                 for dep in package.extras[extra]:
