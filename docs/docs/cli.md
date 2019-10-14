@@ -17,7 +17,7 @@ calls `poetry update`.
 
 ## Global options
 
-* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug.
+* `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
 * `--help (-h)` : Display help information.
 * `--quiet (-q)` : Do not output any message.
 * `--ansi`: Force ANSI output.
@@ -44,7 +44,7 @@ my-package
 │   └── __init__.py
 └── tests
     ├── __init__.py
-    └── test_my_package
+    └── test_my_package.py
 ```
 
 If you want to name your project differently than the folder, you can pass
@@ -71,7 +71,7 @@ my-package
 │       └── __init__.py
 └── tests
     ├── __init__.py
-    └── test_my_package
+    └── test_my_package.py
 ```
 
 ## init
@@ -124,9 +124,28 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
+By default `poetry` will install your project's package everytime you run `install`:
+
+```bash
+$ poetry install
+Installing dependencies from lock file
+
+Nothing to install or update
+
+  - Installing <your-package-name> (x.x.x)
+
+```
+
+If you want to skip this installation, use the `--no-root` option.
+
+```bash
+poetry install --no-root
+```
+
 ### Options
 
 * `--no-dev`: Do not install dev dependencies.
+* `--no-root`: Do not install the root package (your project).
 * `--extras (-E)`: Features to install (multiple values allowed).
 
 ## update
@@ -163,18 +182,42 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
+You also can specify a constraint when adding a package, like so:
+
+```bash
+poetry add pendulum@^2.0.5
+poetry add "pendulum>=2.0.5"
+```
+
+If you try to add a package that is already present, you will get an error.
+However, if you specify a constraint, like above, the dependency will be updated
+by using the specified constraint. If you want to get the latest version of an already
+present dependency you can use the special `latest` constraint:
+
+```bash
+poetry add pendulum@latest
+```
+
 You can also add `git` dependencies:
 
 ```bash
-poetry add pendulum --git https://github.com/sdispater/pendulum.git
+poetry add git+https://github.com/sdispater/pendulum.git
+```
+
+If you need to checkout a specific branch, tag or revision,
+you can specify it when using `add`:
+
+```bash
+poetry add git+https://github.com/sdispater/pendulum.git@develop
+poetry add git+https://github.com/sdispater/pendulum.git@2.0.5
 ```
 
 or make them point to a local directory or file:
 
 ```bash
-poetry add my-package --path ../my-package/
-poetry add my-package --path ../my-package/dist/my-package-0.1.0.tar.gz
-poetry add my-package --path ../my-package/dist/my_package-0.1.0.whl
+poetry add ./my-package/
+poetry add ../my-package/dist/my-package-0.1.0.tar.gz
+poetry add ../my-package/dist/my_package-0.1.0.whl
 ```
 
 Path dependencies pointing to a local directory will be installed in editable mode (i.e. setuptools "develop mode"). 
@@ -182,17 +225,24 @@ It means that changes in the local directory will be reflected directly in envir
 
 If you don't want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file:
 
-```
+```toml
 [tool.poetry.dependencies]
 my-package = {path = "../my/path", develop = false}
+```
+
+If the package(s) you want to install provide extras, you can specify them
+when adding the package:
+
+```bash
+poetry add requests[security,socks]
+poetry add "requests[security,socks]~=2.22.0"
+poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
 
 ### Options
 
 * `--dev (-D)`: Add package as development dependency.
-* `--git`: The url of the Git repository.
 * `--path`: The path to a dependency.
-* `--extras (-E)`: Extras to activate for the dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
@@ -365,8 +415,142 @@ poetry lock
 
 ## version
 
-This command bumps the version of the project
-and writes the new version back to `pyproject.toml`
+This command shows the current version of the project or bumps the version of 
+the project and writes the new version back to `pyproject.toml` if a valid
+bump rule is provided.
 
 The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
+
+
+## export
+
+This command exports the lock file to other formats.
+
+```bash
+poetry export -f requirements.txt > requirements.txt
+```
+
+!!!note
+
+    Only the `requirements.txt` format is currently supported.
+
+### Options
+
+* `--format (-f)`: The format to export to.  Currently, only
+  `requirements.txt` is supported.
+* `--output (-o)`: The name of the output file.  If omitted, print to standard
+  output.
+* `--dev`: Include development dependencies.
+* `--extras (-E)`: Extra sets of dependencies to include.
+* `--without-hashes`: Exclude hashes from the exported file.
+* `--with-credentials`: Include credentials for extra indices.
+
+## env
+
+The `env` command regroups sub commands to interact with the virtualenvs
+associated with a specific project.
+
+### env use
+
+The `env use` command tells Poetry which Python version
+to use for the current project.
+
+```bash
+poetry env use /full/path/to/python
+```
+
+If you have the python executable in your `PATH` you can use it:
+
+```bash
+poetry env use python3.7
+```
+
+You can even just use the minor Python version in this case:
+
+```bash
+poetry env use 3.7
+```
+
+If you want to disable the explicitly activated virtualenv, you can use the
+special `system` Python version to retrieve the default behavior:
+
+```bash
+poetry env use system
+```
+
+### env info
+
+The `env info` command displays basic information about the currently activated virtualenv:
+
+```bash
+poetry env info
+```
+
+will output something similar to this:
+
+```text
+Virtualenv
+Python:         3.7.1
+Implementation: CPython
+Path:           /path/to/poetry/cache/virtualenvs/test-O3eWbxRl-py3.7
+Valid:          True
+
+System
+Platform: darwin
+OS:       posix
+Python:   /path/to/main/python
+```
+
+If you only want to know the path to the virtualenv, you can pass the `--path` option
+to `env info`:
+
+```bash
+poetry env info --path
+```
+
+#### Options
+
+* `--path`: Only display the path of the virtualenv.
+
+
+### env list
+
+The `env list` command lists all the virtualenvs associated with the current virtualenv.
+
+```bash
+poetry env list
+```
+
+will output something like the following:
+
+```text
+test-O3eWbxRl-py2.7
+test-O3eWbxRl-py3.6
+test-O3eWbxRl-py3.7 (Activated)
+```
+
+#### Options
+
+* `--full-path`: Display the full path of the virtualenvs.
+
+### env remove
+
+The `env remove` command deletes virtualenvs associated with the current project:
+
+```bash
+poetry env remove /full/path/to/python
+```
+
+Similarly to `env use`, you can either pass `python3.7`, `3.7` or the name of
+the virtualenv (as returned by `env list`):
+
+```bash
+poetry env remove python3.7
+poetry env remove 3.7
+poetry env remove test-O3eWbxRl-py3.7
+```
+
+!!!note
+
+    If your remove the currently activated virtualenv, it will be automatically deactivated.

@@ -21,7 +21,11 @@ from typing import Generator
 from typing import Optional
 from typing import Union
 
-import html5lib
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
+
 import requests
 
 from cachecontrol import CacheControl
@@ -40,12 +44,19 @@ from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.inspector import Inspector
 from poetry.utils.patterns import wheel_file_re
 from poetry.version.markers import InvalidMarker
 
 from .auth import Auth
 from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
+
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import html5lib
 
 
 class Page:
@@ -157,8 +168,9 @@ class LegacyRepository(PyPiRepository):
         self._packages = []
         self._name = name
         self._url = url.rstrip("/")
+        self._auth = auth
+        self._inspector = Inspector()
         self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
-
         self._cache = CacheManager(
             {
                 "default": "releases",
@@ -176,14 +188,25 @@ class LegacyRepository(PyPiRepository):
         )
 
         url_parts = urlparse.urlparse(self._url)
-        if not url_parts.username and auth:
-            self._session.auth = auth
+        if not url_parts.username and self._auth:
+            self._session.auth = self._auth
 
         self._disable_cache = disable_cache
 
     @property
-    def name(self):
-        return self._name
+    def authenticated_url(self):  # type: () -> str
+        if not self._auth:
+            return self.url
+
+        parsed = urlparse.urlparse(self.url)
+
+        return "{scheme}://{username}:{password}@{netloc}{path}".format(
+            scheme=parsed.scheme,
+            username=quote(self._auth.auth.username),
+            password=quote(self._auth.auth.password),
+            netloc=parsed.netloc,
+            path=parsed.path,
+        )
 
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False
@@ -310,7 +333,7 @@ class LegacyRepository(PyPiRepository):
             package.description = release_info.get("summary", "")
 
             # Adding hashes information
-            package.hashes = release_info["digests"]
+            package.files = release_info["files"]
 
             # Activate extra dependencies
             for extra in extras:
@@ -335,7 +358,7 @@ class LegacyRepository(PyPiRepository):
             "summary": "",
             "requires_dist": [],
             "requires_python": None,
-            "digests": [],
+            "files": [],
             "_cache_version": str(self.CACHE_VERSION),
         }
 
@@ -347,7 +370,7 @@ class LegacyRepository(PyPiRepository):
                 )
             )
         urls = defaultdict(list)
-        hashes = []
+        files = []
         for link in links:
             if link.is_wheel:
                 urls["bdist_wheel"].append(link.url)
@@ -356,13 +379,12 @@ class LegacyRepository(PyPiRepository):
             ):
                 urls["sdist"].append(link.url)
 
-            hash = link.hash
-            if link.hash_name == "sha256":
-                hashes.append(hash)
-            elif hash:
-                hashes.append(link.hash_name + ":" + hash)
+            h = link.hash
+            if h:
+                h = link.hash_name + ":" + link.hash
+                files.append({"file": link.filename, "hash": h})
 
-        data["digests"] = hashes
+        data["files"] = files
 
         info = self._get_info_from_urls(urls)
 

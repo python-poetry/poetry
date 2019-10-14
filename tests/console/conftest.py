@@ -1,4 +1,3 @@
-import io
 import os
 import pytest
 import shutil
@@ -8,44 +7,20 @@ try:
 except ImportError:
     import urlparse
 
-from cleo import ApplicationTester as BaseApplicationTester
-from cleo.inputs import ListInput
-from cleo.outputs import StreamOutput
-from tomlkit import document
+from cleo import ApplicationTester
 
-from poetry.config import Config as BaseConfig
 from poetry.console import Application as BaseApplication
+from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.poetry import Poetry as BasePoetry
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
-from poetry.repositories import Repository
+from poetry.repositories import Repository as BaseRepository
+from poetry.utils._compat import PY2
+from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
-from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
-
-
-class ApplicationTester(BaseApplicationTester):
-    def run(self, input_, options=None):
-        options = options or {}
-
-        self._input = ListInput(input_)
-        if self._inputs:
-            self._input.set_stream(self._create_stream(self._inputs))
-
-        if "interactive" in options:
-            self._input.set_interactive(options["interactive"])
-
-        self._output = StreamOutput(io.BytesIO())
-        if "decorated" in options:
-            self._output.set_decorated(options["decorated"])
-        else:
-            self._output.set_decorated(False)
-
-        if "verbosity" in options:
-            self._output.set_verbosity(options["verbosity"])
-
-        return self._application.run(self._input, self._output)
+from poetry.repositories.exceptions import PackageNotFound
 
 
 @pytest.fixture()
@@ -69,17 +44,36 @@ def mock_clone(self, source, dest):
     shutil.copytree(str(folder), str(dest))
 
 
+def mock_download(self, url, dest):
+    parts = urlparse.urlparse(url)
+
+    fixtures = Path(__file__).parent.parent / "fixtures"
+    fixture = fixtures / parts.path.lstrip("/")
+
+    if dest.exists():
+        shutil.rmtree(str(dest))
+
+    # Python2 does not support os.symlink on Windows whereas Python3 does.  os.symlink requires either administrative
+    # privileges or developer mode on Win10, throwing an OSError is neither is active.
+    if WINDOWS:
+        if PY2:
+            shutil.copyfile(str(fixture), str(dest))
+        else:
+            try:
+                os.symlink(str(fixture), str(dest))
+            except OSError:
+                shutil.copyfile(str(fixture), str(dest))
+    else:
+        os.symlink(str(fixture), str(dest))
+
+
 @pytest.fixture
 def installed():
-    return Repository()
+    return BaseRepository()
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed):
-    mocker.patch(
-        "poetry.utils.env.Env.get", return_value=MockEnv(is_venv=True, execute=True)
-    )
-
+def setup(mocker, installer, installed, config):
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
@@ -97,6 +91,9 @@ def setup(mocker, installer, installed):
     mocker.patch("poetry.vcs.git.Git.checkout", new=lambda *_: None)
     p = mocker.patch("poetry.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
+    # Patch download to not download anything but to just copy from fixtures
+    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
 
     # Setting terminal width
     environ = dict(os.environ)
@@ -116,13 +113,10 @@ class Application(BaseApplication):
 
     def reset_poetry(self):
         poetry = self._poetry
-        self._poetry = Poetry.create(self._poetry.file.path.parent)
-        self._poetry._pool = poetry.pool
-
-
-class Config(BaseConfig):
-    def __init__(self, _):
-        self._content = document()
+        self._poetry = Factory().create_poetry(self._poetry.file.path.parent)
+        self._poetry.set_pool(poetry.pool)
+        self._poetry.set_config(poetry.config)
+        self._poetry.set_locker(poetry.locker)
 
 
 class Locker(BaseLocker):
@@ -133,6 +127,10 @@ class Locker(BaseLocker):
         self._content_hash = self._get_content_hash()
         self._locked = False
         self._lock_data = None
+        self._write = False
+
+    def write(self, write=True):
+        self._write = write
 
     def is_locked(self):
         return self._locked
@@ -151,20 +149,36 @@ class Locker(BaseLocker):
         return True
 
     def _write_lock_data(self, data):
+        if self._write:
+            super(Locker, self)._write_lock_data(data)
+            self._locked = True
+            return
+
         self._lock_data = None
 
 
 class Poetry(BasePoetry):
-    def __init__(self, file, local_config, package, locker):
+    def __init__(self, file, local_config, package, locker, config):
         self._file = TomlFile(file)
         self._package = package
         self._local_config = local_config
         self._locker = Locker(locker.lock.path, locker._local_config)
-        self._config = Config.create("config.toml")
-        self._auth_config = Config.create("auth.toml")
+        self._config = config
 
         # Configure sources
         self._pool = Pool()
+
+
+class Repository(BaseRepository):
+    def find_packages(
+        self, name, constraint=None, extras=None, allow_prereleases=False
+    ):
+        packages = super(Repository, self).find_packages(
+            name, constraint, extras, allow_prereleases
+        )
+        if len(packages) == 0:
+            raise PackageNotFound("Package [{}] not found.".format(name))
+        return packages
 
 
 @pytest.fixture
@@ -173,14 +187,25 @@ def repo():
 
 
 @pytest.fixture
-def poetry(repo):
-    p = Poetry.create(Path(__file__).parent.parent / "fixtures" / "simple_project")
+def project_directory():
+    return "simple_project"
+
+
+@pytest.fixture
+def poetry(repo, project_directory, config):
+    p = Factory().create_poetry(
+        Path(__file__).parent.parent / "fixtures" / project_directory
+    )
+    p.set_locker(Locker(p.locker.lock.path, p.locker._local_config))
 
     with p.file.path.open(encoding="utf-8") as f:
         content = f.read()
 
-    p.pool.remove_repository("pypi")
-    p.pool.add_repository(repo)
+    p.set_config(config)
+
+    pool = Pool()
+    pool.add_repository(repo)
+    p.set_pool(pool)
 
     yield p
 
@@ -191,7 +216,7 @@ def poetry(repo):
 @pytest.fixture
 def app(poetry):
     app_ = Application(poetry)
-    app_.set_auto_exit(False)
+    app_.config.set_terminate_after_run(False)
 
     return app_
 

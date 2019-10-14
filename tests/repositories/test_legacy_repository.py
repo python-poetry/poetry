@@ -7,6 +7,7 @@ except ImportError:
     import urlparse
 
 from poetry.packages import Dependency
+from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
@@ -18,9 +19,9 @@ class MockRepository(LegacyRepository):
 
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
-    def __init__(self):
+    def __init__(self, auth=None):
         super(MockRepository, self).__init__(
-            "legacy", url="http://foo.bar", disable_cache=True
+            "legacy", url="http://foo.bar", auth=auth, disable_cache=True
         )
 
     def _get(self, endpoint):
@@ -28,6 +29,8 @@ class MockRepository(LegacyRepository):
         name = parts[1]
 
         fixture = self.FIXTURES / (name + ".html")
+        if not fixture.exists():
+            return
 
         with fixture.open(encoding="utf-8") as f:
             return Page(self._url + endpoint, f.read(), {})
@@ -240,11 +243,17 @@ def test_get_package_retrieves_non_sha256_hashes():
     package = repo.package("ipython", "7.5.0")
 
     expected = [
-        "md5:dbdc53e3918f28fa335a173432402a00",
-        "e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+        {
+            "file": "ipython-7.5.0-py3-none-any.whl",
+            "hash": "md5:dbdc53e3918f28fa335a173432402a00",
+        },
+        {
+            "file": "ipython-7.5.0.tar.gz",
+            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+        },
     ]
 
-    assert expected == package.hashes
+    assert expected == package.files
 
 
 def test_get_package_retrieves_packages_with_no_hashes():
@@ -252,4 +261,11 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
     package = repo.package("jupyter", "1.0.0")
 
-    assert [] == package.hashes
+    assert [] == package.files
+
+
+def test_username_password_special_chars():
+    auth = Auth("http://foo.bar", "user:", "p@ssword")
+    repo = MockRepository(auth=auth)
+
+    assert "http://user%3A:p%40ssword@foo.bar" == repo.authenticated_url

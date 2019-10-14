@@ -15,7 +15,11 @@ python-versions = "*"
 version = "1.2.3"
 
 [package.dependencies]
-pendulum = ">=1.4.4"
+pendulum = {version = ">=1.4.4", optional = true}
+
+[package.extras]
+extras_a = ["pendulum (>=1.4.4)"]
+extras_b = ["cachy (>=0.2.0)"]
 
 [package.source]
 reference = ""
@@ -26,6 +30,6 @@ url = "tests/fixtures/project_with_extras"
 content-hash = "123456789"
 python-versions = "*"
 
-[metadata.hashes]
+[metadata.files]
 project-with-extras = []
 pendulum = []

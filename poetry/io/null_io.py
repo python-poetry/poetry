@@ -1,30 +1,11 @@
-from cleo.inputs import ListInput
-from cleo.outputs import NullOutput
-
-from poetry.console.styles.poetry import PoetryStyle
+from cleo.io.io_mixin import IOMixin
+from clikit.io import NullIO as BaseNullIO
 
 
-class NullIO(PoetryStyle):
-    def __init__(self):
-        super(NullIO, self).__init__(ListInput([]), NullOutput())
+class NullIO(IOMixin, BaseNullIO):
+    """
+    A wrapper around CliKit's NullIO.
+    """
 
-    def is_quiet(self):  # type: () -> bool
-        return False
-
-    def is_verbose(self):  # type: () -> bool
-        return False
-
-    def is_very_verbose(self):  # type: () -> bool
-        return False
-
-    def is_debug(self):  # type: () -> bool
-        return False
-
-    def writeln(self, *args, **kwargs):
-        pass
-
-    def write(self, *args, **kwargs):
-        pass
-
-    def new_line(self, *args, **kwargs):
-        pass
+    def __init__(self, *args, **kwargs):
+        super(NullIO, self).__init__(*args, **kwargs)

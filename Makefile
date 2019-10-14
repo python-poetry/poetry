@@ -16,18 +16,29 @@ list:
 # required for list
 no_targets__:
 
+clean:
+	@rm -rf build dist .eggs *.egg-info
+	@rm -rf .benchmarks .coverage coverage.xml htmlcov report.xml .tox
+	@find . -type d -name '.mypy_cache' -exec rm -rf {} +
+	@find . -type d -name '__pycache__' -exec rm -rf {} +
+	@find . -type d -name '*pytest_cache*' -exec rm -rf {} +
+	@find . -type f -name "*.py[co]" -exec rm -rf {} +
+
+format: clean
+	@poetry run black poetry/ tests/
+
 # install all dependencies
 setup: setup-python
 
 # test your application (tests in the tests/ directory)
 test:
-	@py.test --cov=poetry --cov-config .coveragerc tests/ -sq
+	@poetry run pytest --cov=poetry --cov-config .coveragerc tests/ -sq
 
 release: build linux_release osx_release
 
 build:
 	@poetry build
-	@python sonnet make:release
+	@python sonnet make release
 
 publish:
 	@poetry publish
@@ -36,8 +47,8 @@ wheel:
 	@poetry build -v
 
 linux_release:
-	docker pull quay.io/pypa/manylinux1_x86_64
-	docker run --rm -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/make-linux-release.sh
+	docker pull quay.io/pypa/manylinux2010_x86_64
+	docker run --rm -t -i -v `pwd`:/io quay.io/pypa/manylinux2010_x86_64 /io/make-linux-release.sh
 
 # run tests against all supported python versions
 tox:

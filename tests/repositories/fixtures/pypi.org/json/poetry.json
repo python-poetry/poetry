@@ -1,0 +1,282 @@
+{
+  "info": {
+    "author": "Sébastien Eustace",
+    "author_email": "sebastien@eustace.io",
+    "bugtrack_url": null,
+    "classifiers": [
+      "License :: OSI Approved :: MIT License",
+      "Programming Language :: Python :: 2",
+      "Programming Language :: Python :: 2.7",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.7",
+      "Topic :: Software Development :: Build Tools",
+      "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
+    "description": "",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": "",
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "home_page": "https://poetry.eustace.io/",
+    "keywords": "packaging,dependency,poetry",
+    "license": "MIT",
+    "maintainer": "Sébastien Eustace",
+    "maintainer_email": "sebastien@eustace.io",
+    "name": "poetry",
+    "package_url": "https://pypi.org/project/poetry/",
+    "platform": "",
+    "project_url": "https://pypi.org/project/poetry/",
+    "project_urls": {
+      "Documentation": "https://poetry.eustace.io/docs",
+      "Homepage": "https://poetry.eustace.io/",
+      "Repository": "https://github.com/sdispater/poetry"
+    },
+    "release_url": "https://pypi.org/project/poetry/0.12.4/",
+    "requires_dist": [
+      "virtualenv (>=16.0,<17.0); python_version >= \"2.7\" and python_version < \"2.8\"",
+      "pathlib2 (>=2.3,<3.0); python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\"",
+      "typing (>=3.6,<4.0); python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\"",
+      "tomlkit (>=0.4.4,<0.5.0)",
+      "shellingham (>=1.1,<2.0)",
+      "html5lib (>=1.0,<2.0)",
+      "pkginfo (>=1.4,<2.0)",
+      "cachecontrol[filecache] (>=0.12.4,<0.13.0)",
+      "pyparsing (>=2.2,<3.0)",
+      "pyrsistent (>=0.14.2,<0.15.0)",
+      "jsonschema (>=3.0a3,<4.0)",
+      "requests-toolbelt (>=0.8.0,<0.9.0)",
+      "cachy (>=0.2,<0.3)",
+      "requests (>=2.18,<3.0)",
+      "cleo (>=0.6.7,<0.7.0)"
+    ],
+    "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+    "summary": "Python dependency management and packaging made easy.",
+    "version": "0.12.4"
+  },
+  "last_serial": 4399781,
+  "releases": {
+    "0.12.0": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "e41b413e4ee8d551cc867adb968843a5",
+          "sha256": "1c818dcca72a9dc5cd13a30e29654986e3e288f6b158673e3d5b2cc51dec2309"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.0-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "e41b413e4ee8d551cc867adb968843a5",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 627048,
+        "upload_time": "2018-10-17T20:31:41",
+        "url": "https://files.pythonhosted.org/packages/9f/34/cb438970b165513f66f681082092871aa3b88be60218f74ca933a8af4009/poetry-0.12.0-py2.py3-none-any.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "18c57cdba5fc86cb74b36e766114959b",
+          "sha256": "f8565669c5b7679fb5a560a1f93d367f7729f5f2ad1ed06e835549196e764fdb"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.0.tar.gz",
+        "has_sig": false,
+        "md5_digest": "18c57cdba5fc86cb74b36e766114959b",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 145585,
+        "upload_time": "2018-10-17T20:31:43",
+        "url": "https://files.pythonhosted.org/packages/c6/68/471e26c5d04474aa51b4eb3173645b0e8987e4fb632a035488278d626438/poetry-0.12.0.tar.gz"
+      }
+    ],
+    "0.12.1": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "01da4d43121437cd730160b803d4fe48",
+          "sha256": "2f1c3f3545ff0b192f543a35523ece22824bdee0954627960a7562ec0e377113"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.1-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "01da4d43121437cd730160b803d4fe48",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 627051,
+        "upload_time": "2018-10-17T21:24:48",
+        "url": "https://files.pythonhosted.org/packages/de/b4/087632dcc5d0d54bbc2c66a91d23ab6550c26e0849eab0ce713c638cbcb9/poetry-0.12.1-py2.py3-none-any.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "9dd2e98a85a36bde43d0f10b991d6982",
+          "sha256": "adefe0e70c91bc98b272a2c0dd7ac67882de62972eafac7625606b14cc49c8a9"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.1.tar.gz",
+        "has_sig": false,
+        "md5_digest": "9dd2e98a85a36bde43d0f10b991d6982",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 145596,
+        "upload_time": "2018-10-17T21:24:51",
+        "url": "https://files.pythonhosted.org/packages/89/90/1698d2d1f7c3d25b62c701995cce4f0432308c9899614e34489e8d5c364a/poetry-0.12.1.tar.gz"
+      }
+    ],
+    "0.12.2": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "8d52945ff3e6d057f0a5c8d43dbdd1be",
+          "sha256": "07bb0d57798b54564526a83b3b6ee31450e3ff9c91580deff7970402e8cf9648"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.2-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "8d52945ff3e6d057f0a5c8d43dbdd1be",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 627151,
+        "upload_time": "2018-10-17T21:55:08",
+        "url": "https://files.pythonhosted.org/packages/a5/62/4f4c9a0c49145e5368829806baa202f760403299d3a6a4d8d9e2dd277f85/poetry-0.12.2-py2.py3-none-any.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "03a09bf2b231701bc698e9fe2e237bd0",
+          "sha256": "1b9c7a70ac71a416c2b4ec69b89e37fa39afd965a1d0fe58a01e3121d89e98ef"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.2.tar.gz",
+        "has_sig": false,
+        "md5_digest": "03a09bf2b231701bc698e9fe2e237bd0",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 145641,
+        "upload_time": "2018-10-17T21:55:09",
+        "url": "https://files.pythonhosted.org/packages/72/9d/30c6c7b2823bda75a568827fe518bc6fc7d59a199336767afb7ac888da4c/poetry-0.12.2.tar.gz"
+      }
+    ],
+    "0.12.3": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "541da5e58318b5b5804ee068c9c98468",
+          "sha256": "936365627f5a29921886c5d2f9aef688899e691af706d136bf17d291a4f33d9b"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.3-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "541da5e58318b5b5804ee068c9c98468",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 630173,
+        "upload_time": "2018-10-18T23:53:33",
+        "url": "https://files.pythonhosted.org/packages/91/5c/fd1507d5950bf31050650b0ea973c3aa98cd231ed0a18ab36eefde7db9c3/poetry-0.12.3-py2.py3-none-any.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "48e88e9ae840e2f0c5da5cd00c8b5b1e",
+          "sha256": "dbc6f7269f8015d2f2408471f2b2eec2365b5bfd20cff8d9824664b67505aaae"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.3.tar.gz",
+        "has_sig": false,
+        "md5_digest": "48e88e9ae840e2f0c5da5cd00c8b5b1e",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 146247,
+        "upload_time": "2018-10-18T23:53:35",
+        "url": "https://files.pythonhosted.org/packages/23/86/9166b68a9b9084eca5a3a53ef6131b3318a0b9c48ee8593623330e164c85/poetry-0.12.3.tar.gz"
+      }
+    ],
+    "0.12.4": [
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "a7975e8b090eb3e006814d5e7c2c986f",
+          "sha256": "9d3759bf7f3d8107262cda917b615c185da57e96785a696dd1f117526917f850"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.4-py2.py3-none-any.whl",
+        "has_sig": false,
+        "md5_digest": "a7975e8b090eb3e006814d5e7c2c986f",
+        "packagetype": "bdist_wheel",
+        "python_version": "py2.py3",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 630184,
+        "upload_time": "2018-10-21T16:33:56",
+        "url": "https://files.pythonhosted.org/packages/1b/af/013cdcc6f9d4c0bf025b3924981991a8b034db7818fd324c525b7e8a2b6c/poetry-0.12.4-py2.py3-none-any.whl"
+      },
+      {
+        "comment_text": "",
+        "digests": {
+          "md5": "c3d1d7576d2ee6663b59e12236a163e9",
+          "sha256": "fc924ef535c9229aac4f7cfda948e64e890417242d808c0880febb0ea333b9f6"
+        },
+        "downloads": -1,
+        "filename": "poetry-0.12.4.tar.gz",
+        "has_sig": false,
+        "md5_digest": "c3d1d7576d2ee6663b59e12236a163e9",
+        "packagetype": "sdist",
+        "python_version": "source",
+        "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+        "size": 146262,
+        "upload_time": "2018-10-21T16:33:58",
+        "url": "https://files.pythonhosted.org/packages/b5/4f/8a864e12a4a03f13467d5ac3d0cc67e75130ae966e3528e9ecbe3df980d6/poetry-0.12.4.tar.gz"
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "a7975e8b090eb3e006814d5e7c2c986f",
+        "sha256": "9d3759bf7f3d8107262cda917b615c185da57e96785a696dd1f117526917f850"
+      },
+      "downloads": -1,
+      "filename": "poetry-0.12.4-py2.py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "a7975e8b090eb3e006814d5e7c2c986f",
+      "packagetype": "bdist_wheel",
+      "python_version": "py2.py3",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 630184,
+      "upload_time": "2018-10-21T16:33:56",
+      "url": "https://files.pythonhosted.org/packages/1b/af/013cdcc6f9d4c0bf025b3924981991a8b034db7818fd324c525b7e8a2b6c/poetry-0.12.4-py2.py3-none-any.whl"
+    },
+    {
+      "comment_text": "",
+      "digests": {
+        "md5": "c3d1d7576d2ee6663b59e12236a163e9",
+        "sha256": "fc924ef535c9229aac4f7cfda948e64e890417242d808c0880febb0ea333b9f6"
+      },
+      "downloads": -1,
+      "filename": "poetry-0.12.4.tar.gz",
+      "has_sig": false,
+      "md5_digest": "c3d1d7576d2ee6663b59e12236a163e9",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "size": 146262,
+      "upload_time": "2018-10-21T16:33:58",
+      "url": "https://files.pythonhosted.org/packages/b5/4f/8a864e12a4a03f13467d5ac3d0cc67e75130ae966e3528e9ecbe3df980d6/poetry-0.12.4.tar.gz"
+    }
+  ]
+}

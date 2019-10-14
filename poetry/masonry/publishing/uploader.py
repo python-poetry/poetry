@@ -220,7 +220,7 @@ class Uploader:
                 ("content", (file.name, fp, "application/octet-stream"))
             )
             encoder = MultipartEncoder(data_to_send)
-            bar = self._io.create_progress_bar(encoder.len)
+            bar = self._io.progress_bar(encoder.len)
             bar.set_format(
                 " - Uploading <info>{0}</> <comment>%percent%%</>".format(file.name)
             )
@@ -240,16 +240,16 @@ class Uploader:
             if resp.ok:
                 bar.finish()
 
-                self._io.writeln("")
+                self._io.write_line("")
             else:
-                if self._io.output.is_decorated():
+                if self._io.output.supports_ansi():
                     self._io.overwrite(
                         " - Uploading <info>{0}</> <error>{1}%</>".format(
                             file.name, int(math.floor(bar._percent * 100))
                         )
                     )
-                else:
-                    self._io.writeln("")
+
+                self._io.write_line("")
 
         return resp
 

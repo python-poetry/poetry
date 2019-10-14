@@ -87,6 +87,8 @@ License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
 Author-email: sebastien@eustace.io
+Maintainer: People Everywhere
+Maintainer-email: people@everywhere.com
 Requires-Python: >=3.6,<4.0
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
@@ -97,8 +99,9 @@ Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
-Requires-Dist: pendulum (>=1.4,<2.0); extra == "time"
+Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
 Project-URL: Documentation, https://poetry.eustace.io/docs
+Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
 Project-URL: Repository, https://github.com/sdispater/poetry
 Description-Content-Type: text/x-rst
 

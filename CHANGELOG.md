@@ -1,5 +1,56 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+
+- Added an `export` command to export the lock file to other formats (only `requirements.txt` is currently supported).
+- Added a `env info` command to get basic information about the current environment.
+- Added a `env use` command to control the Python version used by the project.
+- Added a `env list` command to list the virtualenvs associated with the current project.
+- Added a `env remove` command to delete virtualenvs associated with the current project.
+- Added support for declaring a specific source for dependencies.
+- Added support for disabling PyPI and making another repository the default one.
+- Added support for declaring private repositories as secondary.
+- Added the ability to specify packages on a per-format basis.
+- Added support for custom urls in metadata.
+- Full environment markers are now supported for dependencies via the `markers` property.
+- Added the ability to specify git dependencies directly in `add`, it no longer requires the `--git` option.
+- Added the ability to specify path dependencies directly in `add`, it no longer requires the `--path` option.
+- Added support for url dependencies ([#1260](https://github.com/sdispater/poetry/pull/1260)).
+- Publishing to PyPI using [API tokens](https://pypi.org/help/#apitoken) is now supported ([#1275](https://github.com/sdispater/poetry/pull/1275)).
+- Licenses can now be identified by their full name.
+
+### Changed
+
+- Slightly changed the lock file, making it potentially incompatible with previous Poetry versions.
+- The `cache:clear` command has been renamed to `cache clear`.
+- The `debug:info` command has been renamed to `debug info`.
+- The `debug:resolve` command has been renamed to `debug resolve`.
+- The `self:update` command has been renamed to `self update`.
+- Changed the way virtualenvs are stored (names now depend on the project's path).
+- The `--git` option of the `add` command has been removed.
+- The `--path` option of the `add` command has been removed.
+- The `add` command will now automatically select the latest prerelease if only prereleases are available.
+- The `add` command can now update a dependencies if an explicit constraint is given ([#1221](https://github.com/sdispater/poetry/pull/1221)).
+- Removed the `--develop` option from the `install` command.
+- Improved UX when searching for packages in the `init` command.
+- The `shell` has been improved.
+- The `poetry run` command now uses `os.execvp()` rather than spawning a new subprocess.
+
+### Fixed
+
+- Fixed transitive extra dependencies being removed when updating a specific dependency.
+- The `pyproject.toml` configuration is now properly validated.
+- Fixed installing Poetry-based packages breaking with `pip`.
+- Fixed packages with empty markers being added to the lock file.
+- Fixed invalid lock file generation in some cases.
+- Fixed local version identifier handling in wheel file names.
+- Fixed packages with invalid metadata triggering an error instead of being skipped.
+- Fixed the generation of invalid lock files in some cases.
+- Git dependencies are now properly locked to a specific revision when specifying a branch or a tag.
+
+
 ## [0.12.17] - 2019-07-03
 
 ### Fixed

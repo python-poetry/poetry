@@ -4,8 +4,9 @@ PEP-517 compliant buildsystem API
 import logging
 import sys
 
-from poetry.poetry import Poetry
-from poetry.io import NullIO
+from clikit.io import NullIO
+
+from poetry.factory import Factory
 from poetry.utils._compat import Path
 from poetry.utils._compat import unicode
 from poetry.utils.env import SystemEnv
@@ -20,7 +21,7 @@ def get_requires_for_build_wheel(config_settings=None):
     """
     Returns a list of requirements for building, as strings
     """
-    poetry = Poetry.create(".")
+    poetry = Factory().create_poetry(Path("."))
 
     main, _ = SdistBuilder.convert_dependencies(poetry.package, poetry.package.requires)
 
@@ -32,11 +33,11 @@ get_requires_for_build_sdist = get_requires_for_build_wheel
 
 
 def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
-    poetry = Poetry.create(".")
+    poetry = Factory().create_poetry(Path("."))
     builder = WheelBuilder(poetry, SystemEnv(Path(sys.prefix)), NullIO())
 
     dist_info = Path(metadata_directory, builder.dist_info)
-    dist_info.mkdir()
+    dist_info.mkdir(parents=True, exist_ok=True)
 
     if "scripts" in poetry.local_config or "plugins" in poetry.local_config:
         with (dist_info / "entry_points.txt").open("w", encoding="utf-8") as f:
@@ -53,7 +54,7 @@ def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds a wheel, places it in wheel_directory"""
-    poetry = Poetry.create(".")
+    poetry = Factory().create_poetry(Path("."))
 
     return unicode(
         WheelBuilder.make_in(
@@ -64,7 +65,7 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
 
 def build_sdist(sdist_directory, config_settings=None):
     """Builds an sdist, places it in sdist_directory"""
-    poetry = Poetry.create(".")
+    poetry = Factory().create_poetry(Path("."))
 
     path = SdistBuilder(poetry, SystemEnv(Path(sys.prefix)), NullIO()).build(
         Path(sdist_directory)

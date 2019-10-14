@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+from clikit.io import NullIO
 from email.parser import Parser
 
-from poetry.io import NullIO
+from poetry.factory import Factory
 from poetry.masonry.builders.builder import Builder
-from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
 
@@ -13,7 +13,7 @@ def test_builder_find_excluded_files(mocker):
     p.return_value = []
 
     builder = Builder(
-        Poetry.create(Path(__file__).parent / "fixtures" / "complete"),
+        Factory().create_poetry(Path(__file__).parent / "fixtures" / "complete"),
         NullEnv(),
         NullIO(),
     )
@@ -26,7 +26,9 @@ def test_builder_find_case_sensitive_excluded_files(mocker):
     p.return_value = []
 
     builder = Builder(
-        Poetry.create(Path(__file__).parent / "fixtures" / "case_sensitive_exclusions"),
+        Factory().create_poetry(
+            Path(__file__).parent / "fixtures" / "case_sensitive_exclusions"
+        ),
         NullEnv(),
         NullIO(),
     )
@@ -47,7 +49,7 @@ def test_builder_find_invalid_case_sensitive_excluded_files(mocker):
     p.return_value = []
 
     builder = Builder(
-        Poetry.create(
+        Factory().create_poetry(
             Path(__file__).parent / "fixtures" / "invalid_case_sensitive_exclusions"
         ),
         NullEnv(),
@@ -59,7 +61,7 @@ def test_builder_find_invalid_case_sensitive_excluded_files(mocker):
 
 def test_get_metadata_content():
     builder = Builder(
-        Poetry.create(Path(__file__).parent / "fixtures" / "complete"),
+        Factory().create_poetry(Path(__file__).parent / "fixtures" / "complete"),
         NullEnv(),
         NullIO(),
     )
@@ -97,19 +99,20 @@ def test_get_metadata_content():
     assert requires == [
         "cachy[msgpack] (>=0.2.0,<0.3.0)",
         "cleo (>=0.6,<0.7)",
-        'pendulum (>=1.4,<2.0); extra == "time"',
+        'pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")',
     ]
 
     urls = parsed.get_all("Project-URL")
     assert urls == [
         "Documentation, https://poetry.eustace.io/docs",
+        "Issue Tracker, https://github.com/sdispater/poetry/issues",
         "Repository, https://github.com/sdispater/poetry",
     ]
 
 
 def test_metadata_homepage_default():
     builder = Builder(
-        Poetry.create(Path(__file__).parent / "fixtures" / "simple_version"),
+        Factory().create_poetry(Path(__file__).parent / "fixtures" / "simple_version"),
         NullEnv(),
         NullIO(),
     )
@@ -121,7 +124,9 @@ def test_metadata_homepage_default():
 
 def test_metadata_with_vcs_dependencies():
     builder = Builder(
-        Poetry.create(Path(__file__).parent / "fixtures" / "with_vcs_dependency"),
+        Factory().create_poetry(
+            Path(__file__).parent / "fixtures" / "with_vcs_dependency"
+        ),
         NullEnv(),
         NullIO(),
     )
@@ -131,3 +136,22 @@ def test_metadata_with_vcs_dependencies():
     requires_dist = metadata["Requires-Dist"]
 
     assert "cleo @ git+https://github.com/sdispater/cleo.git@master" == requires_dist
+
+
+def test_metadata_with_url_dependencies():
+    builder = Builder(
+        Factory().create_poetry(
+            Path(__file__).parent / "fixtures" / "with_url_dependency"
+        ),
+        NullEnv(),
+        NullIO(),
+    )
+
+    metadata = Parser().parsestr(builder.get_metadata_content())
+
+    requires_dist = metadata["Requires-Dist"]
+
+    assert (
+        "demo @ https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        == requires_dist
+    )

@@ -1,23 +1,31 @@
+from cleo import argument
+from cleo import option
+
 from .env_command import EnvCommand
 
 
 class RemoveCommand(EnvCommand):
-    """
-    Removes a package from the project dependencies.
 
-    remove
-        { packages* : Packages that should be removed. }
-        {--D|dev : Removes a package from the development dependencies. }
-        {--dry-run : Outputs the operations but will not execute anything
-                     (implicitly enables --verbose). }
-    """
+    name = "remove"
+    description = "Removes a package from the project dependencies."
+
+    arguments = [argument("packages", "The packages to remove.", multiple=True)]
+    options = [
+        option("dev", "D", "Remove a package from the development dependencies."),
+        option(
+            "dry-run",
+            None,
+            "Output the operations but do not execute anything "
+            "(implicitly enables --verbose).",
+        ),
+    ]
 
     help = """The <info>remove</info> command removes a package from the current
 list of installed packages
 
 <info>poetry remove</info>"""
 
-    _loggers = ["poetry.repositories.pypi_repository"]
+    loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.installation import Installer
@@ -55,11 +63,7 @@ list of installed packages
         self.reset_poetry()
 
         installer = Installer(
-            self.output,
-            self.env,
-            self.poetry.package,
-            self.poetry.locker,
-            self.poetry.pool,
+            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
 
         installer.dry_run(self.option("dry-run"))

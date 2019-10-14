@@ -60,8 +60,8 @@ class Metadata:
         meta.classifiers = package.all_classifiers
 
         # Version 1.2
-        meta.maintainer = meta.author
-        meta.maintainer_email = meta.author_email
+        meta.maintainer = package.maintainer_name
+        meta.maintainer_email = package.maintainer_email
 
         # Requires python
         if package.python_versions != "*":

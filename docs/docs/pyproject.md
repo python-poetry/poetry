@@ -46,6 +46,12 @@ The authors of the package. **Required**
 
 This is a list of authors and should contain at least one author. Authors must be in the form `name <email>`.
 
+## maintainers
+
+The maintainers of the package. **Optional**
+
+This is a list of maintainers and should be distinct from authors. Maintainers may contain an email and be in the form `name <email>`.
+
 ## readme
 
 The readme file of the package. **Optional**
@@ -112,6 +118,20 @@ packages = [
     { include = "my_package", from = "lib" },
 ]
 ```
+
+If you want to restrict a package to a specific [build](#build) format you can specify
+it by using `format`:
+
+```toml
+[tool.poetry]
+# ...
+packages = [
+    { include = "my_package" },
+    { include = "tests", format = "sdist" },
+]
+```
+
+From now on, only the `sdist` build archive will include the `tests` package.
 
 !!!note
 
@@ -187,7 +207,7 @@ This section describe the scripts or executable that will be installed when inst
 
 ```toml
 [tool.poetry.scripts]
-poetry = 'poetry:console.run'
+poetry = 'poetry.console:run'
 ```
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
@@ -236,6 +256,18 @@ To match the example in the setuptools documentation, you would use the followin
 [tool.poetry.plugins."blogtool.parsers"]
 ".rst" = "some_module:SomeClass"
 ```
+
+## `urls`
+
+In addition to the basic urls (`homepage`, `repository` and `documentation`), you can specify
+any custom url in the `urls` section.
+
+```toml
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/sdispater/poetry/issues"
+```
+
+If you publish you package on PyPI, they will appear in the `Project Links` section.
 
 ## Poetry and PEP-517
 

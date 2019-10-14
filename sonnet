@@ -18,7 +18,7 @@ class MakeReleaseCommand(Command):
     """
     Makes a self-contained package of Poetry.
 
-    make:release
+    release
         {--P|python=?* : Python version to use}
     """
 
@@ -28,6 +28,7 @@ class MakeReleaseCommand(Command):
         "3.5": "python3.5",
         "3.6": "python3.6",
         "3.7": "python3.7",
+        "3.8": "python3.8",
     }
 
     def handle(self):
@@ -46,15 +47,20 @@ class MakeReleaseCommand(Command):
         self.check_system(pythons)
 
         from poetry import __version__
-        from poetry.poetry import Poetry
+        from poetry.factory import Factory
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
         from poetry.utils._compat import Path
+        from poetry.utils._compat import decode
+        from poetry.utils._compat import encode
+        from poetry.utils._compat import subprocess
+        from poetry.utils.env import GET_BASE_PREFIX
+        from poetry.utils.env import VirtualEnv
         from poetry.utils.helpers import temporary_directory
         from poetry.vcs import get_vcs
 
-        project = Poetry.create(Path.cwd())
+        project = Factory().create_poetry(Path.cwd())
         package = project.package
         del package.dev_requires[:]
 
@@ -92,14 +98,29 @@ class MakeReleaseCommand(Command):
                         version
                     )
                 )
-                with package.with_python_versions("^{}".format(version)):
-                    solver = Solver(
-                        package, pool, Repository(), Repository(), self.output
-                    )
+                prefix = decode(
+                    subprocess.run(
+                        [python],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        input=encode(GET_BASE_PREFIX),
+                        check=True,
+                        shell=WINDOWS,
+                    ).stdout
+                )
+                env = VirtualEnv(Path(prefix.strip()), base=Path(prefix.strip()))
+                with package.with_python_versions("~{}".format(version)):
+                    solver = Solver(package, pool, Repository(), Repository(), self.io)
                     ops = solver.solve()
+                    for op in ops:
+                        if not env.is_valid_for_marker(op.package.marker):
+                            op.skip("Not needed for the current environment")
 
                 self.vendorize_for_python(
-                    python, [op.package for op in ops], poetry_dir, version
+                    python,
+                    [op.package for op in ops if not op.skipped],
+                    poetry_dir,
+                    version,
                 )
                 vendor_dir = Path(
                     os.path.join(poetry_dir, "_vendor", "py{}".format(python))
@@ -197,6 +218,7 @@ class MakeReleaseCommand(Command):
                 subprocess.check_output(
                     [python, "-V"], stderr=subprocess.STDOUT, shell=WINDOWS
                 )
+                subprocess.check_output([python, "-m", "pip", "install", "pip", "-U"])
             except subprocess.CalledProcessError:
                 raise RuntimeError("Python {} is not available".format(version))
 
@@ -233,9 +255,22 @@ class MakeReleaseCommand(Command):
         self.line("")
 
 
-app = Application("Sonnet")
+class MakeCommand(Command):
+    """
+    Build poetry releases.
 
-app.add(MakeReleaseCommand())
+    make
+    """
+
+    commands = [MakeReleaseCommand()]
+
+    def handle(self):
+        return self.call("help", self.config.name)
+
+
+app = Application("sonnet")
+
+app.add(MakeCommand())
 
 if __name__ == "__main__":
     app.run()

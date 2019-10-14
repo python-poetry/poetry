@@ -9,6 +9,10 @@ version = "0.1.0"
 [package.dependencies]
 pendulum = ">=1.4.4"
 
+[package.extras]
+bar = ["tomlkit"]
+foo = ["cleo"]
+
 [package.source]
 reference = ""
 type = "file"
@@ -42,7 +46,9 @@ url = "tests/fixtures/directory/project_with_transitive_file_dependencies"
 content-hash = "123456789"
 python-versions = "*"
 
-[metadata.hashes]
-demo = ["70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"]
+[metadata.files]
+demo = [
+    {file = "demo-0.1.0-py2.py3-none-any.whl", hash = "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"},
+]
 pendulum = []
 project-with-transitive-file-dependencies = []

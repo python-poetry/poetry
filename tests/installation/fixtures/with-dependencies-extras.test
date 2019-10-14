@@ -15,7 +15,10 @@ optional = false
 python-versions = "*"
 
 [package.dependencies]
-C = "^1.0"
+C = {version = "^1.0", optional = true}
+
+[package.extras]
+foo = ["C (^1.0)"]
 
 [[package]]
 name = "C"
@@ -29,7 +32,7 @@ python-versions = "*"
 python-versions = "*"
 content-hash = "123456789"
 
-[metadata.hashes]
+[metadata.files]
 "A" = []
 "B" = []
 "C" = []

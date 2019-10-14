@@ -13,6 +13,8 @@ from base64 import urlsafe_b64encode
 from io import StringIO
 from typing import Set
 
+from clikit.api.io.flags import VERY_VERBOSE
+
 from poetry.__version__ import __version__
 from poetry.semver import parse_constraint
 from poetry.utils._compat import decode
@@ -35,6 +37,9 @@ Tag: {tag}
 
 
 class WheelBuilder(Builder):
+
+    format = "wheel"
+
     def __init__(self, poetry, env, io, target_dir=None, original=None):
         super(WheelBuilder, self).__init__(poetry, env, io)
 
@@ -57,7 +62,7 @@ class WheelBuilder(Builder):
         cls.make_in(poetry, env, io)
 
     def build(self):
-        self._io.writeln(" - Building <info>wheel</info>")
+        self._io.write_line(" - Building <info>wheel</info>")
 
         dist_dir = self._target_dir
         if not dist_dir.exists():
@@ -82,7 +87,9 @@ class WheelBuilder(Builder):
             wheel_path.unlink()
         shutil.move(temp_path, str(wheel_path))
 
-        self._io.writeln(" - Built <fg=cyan>{}</>".format(self.wheel_filename))
+        self._io.write_line(
+            " - Built <comment>{}</comment>".format(self.wheel_filename)
+        )
 
     def _build(self, wheel):
         if self._package.build:
@@ -118,9 +125,8 @@ class WheelBuilder(Builder):
                 if rel_path in wheel.namelist():
                     continue
 
-                self._io.writeln(
-                    " - Adding: <comment>{}</comment>".format(rel_path),
-                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                self._io.write_line(
+                    " - Adding: <comment>{}</comment>".format(rel_path), VERY_VERBOSE
                 )
 
                 self._add_file(wheel, pkg, rel_path)
@@ -130,6 +136,9 @@ class WheelBuilder(Builder):
         to_add = []
 
         for include in self._module.includes:
+            if include.formats and "wheel" not in include.formats:
+                continue
+
             include.refresh()
 
             for file in include.elements:
@@ -154,9 +163,8 @@ class WheelBuilder(Builder):
                     # Skip duplicates
                     continue
 
-                self._io.writeln(
-                    " - Adding: <comment>{}</comment>".format(str(file)),
-                    verbosity=self._io.VERBOSITY_VERY_VERBOSE,
+                self._io.write_line(
+                    " - Adding: <comment>{}</comment>".format(str(file)), VERY_VERBOSE
                 )
                 to_add.append((file, rel_file))
 
@@ -203,7 +211,7 @@ class WheelBuilder(Builder):
     def wheel_filename(self):  # type: () -> str
         return "{}-{}-{}.whl".format(
             re.sub(r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
-            re.sub(r"[^\w\d.]+", "_", self._meta.version, flags=re.UNICODE),
+            re.sub(r"[^\w\d.\+]+", "_", self._meta.version, flags=re.UNICODE),
             self.tag,
         )
 
@@ -214,7 +222,7 @@ class WheelBuilder(Builder):
 
     def dist_info_name(self, distribution, version):  # type: (...) -> str
         escaped_name = re.sub(r"[^\w\d.]+", "_", distribution, flags=re.UNICODE)
-        escaped_version = re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE)
+        escaped_version = re.sub(r"[^\w\d.+]+", "_", version, flags=re.UNICODE)
 
         return "{}-{}.dist-info".format(escaped_name, escaped_version)
 

@@ -20,7 +20,7 @@ reference = ""
 url = "tests/fixtures/project_with_setup"
 
 [package.dependencies]
-cachy = ">=0.2.0"
+cachy = {version = ">=0.2.0", extras = ["msgpack"]}
 pendulum = ">=1.4.4"
 
 [[package]]
@@ -35,7 +35,7 @@ python-versions = "*"
 python-versions = "*"
 content-hash = "123456789"
 
-[metadata.hashes]
+[metadata.files]
 cachy = []
 my-package = []
 pendulum = []

@@ -1,19 +1,31 @@
+from cleo import argument
+from cleo import option
+
 from .env_command import EnvCommand
 
 
 class UpdateCommand(EnvCommand):
-    """
-    Update dependencies as according to the <comment>pyproject.toml</> file.
 
-    update
-        { packages?* : The packages to update. }
-        { --no-dev : Do not install dev dependencies. }
-        { --dry-run : Outputs the operations but will not execute anything
-                      (implicitly enables --verbose). }
-        { --lock : Do not perform install (only update the lockfile). }
-    """
+    name = "update"
+    description = (
+        "Update the dependencies as according to the <comment>pyproject.toml</> file."
+    )
 
-    _loggers = ["poetry.repositories.pypi_repository"]
+    arguments = [
+        argument("packages", "The packages to update", optional=True, multiple=True)
+    ]
+    options = [
+        option("no-dev", None, "Do not update the development dependencies."),
+        option(
+            "dry-run",
+            None,
+            "Output the operations but do not execute anything "
+            "(implicitly enables --verbose).",
+        ),
+        option("lock", None, "Do not perform operations (only update the lockfile)."),
+    ]
+
+    loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.installation import Installer
@@ -21,11 +33,7 @@ class UpdateCommand(EnvCommand):
         packages = self.argument("packages")
 
         installer = Installer(
-            self.output,
-            self.env,
-            self.poetry.package,
-            self.poetry.locker,
-            self.poetry.pool,
+            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
 
         if packages:

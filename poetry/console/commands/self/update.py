@@ -15,17 +15,19 @@ except ImportError:
     from urllib2 import HTTPError
     from urllib2 import urlopen
 
+from cleo import argument
+from cleo import option
+
 from ..command import Command
 
 
 class SelfUpdateCommand(Command):
-    """
-    Updates poetry to the latest version.
 
-    self:update
-        { version? : The version to update to. }
-        { --preview : Install prereleases. }
-    """
+    name = "update"
+    description = "Updates Poetry to the latest version."
+
+    arguments = [argument("version", "The version to update to.", optional=True)]
+    options = [option("preview", None, "Install prereleases.")]
 
     BASE_URL = "https://github.com/sdispater/poetry/releases/download"
 
@@ -51,7 +53,6 @@ class SelfUpdateCommand(Command):
         from poetry.repositories.pypi_repository import PyPiRepository
         from poetry.semver import Version
         from poetry.utils._compat import Path
-        from poetry.utils._compat import decode
 
         current = Path(__file__)
         try:
@@ -104,20 +105,7 @@ class SelfUpdateCommand(Command):
             self.line("You are using the latest version")
             return
 
-        try:
-            self.update(release)
-        except subprocess.CalledProcessError as e:
-            self.line("")
-            self.output.block(
-                [
-                    "[CalledProcessError]",
-                    "An error has occured: {}".format(str(e)),
-                    decode(e.output),
-                ],
-                style="error",
-            )
-
-            return e.returncode
+        self.update(release)
 
     def update(self, release):
         version = release.version

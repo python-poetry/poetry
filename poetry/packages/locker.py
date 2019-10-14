@@ -1,10 +1,14 @@
 import json
+import re
 
 import poetry.packages
 import poetry.repositories
 
 from hashlib import sha256
 from tomlkit import document
+from tomlkit import inline_table
+from tomlkit import item
+from tomlkit import table
 from typing import List
 
 from poetry.utils._compat import Path
@@ -12,7 +16,7 @@ from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import parse_marker
 
 
-class Locker:
+class Locker(object):
 
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
@@ -83,8 +87,29 @@ class Locker:
             package.description = info.get("description", "")
             package.category = info["category"]
             package.optional = info["optional"]
-            package.hashes = lock_data["metadata"]["hashes"][info["name"]]
+            if "hashes" in lock_data["metadata"]:
+                # Old lock so we create dummy files from the hashes
+                package.files = [
+                    {"name": h, "hash": h}
+                    for h in lock_data["metadata"]["hashes"][info["name"]]
+                ]
+            else:
+                package.files = lock_data["metadata"]["files"][info["name"]]
+
             package.python_versions = info["python-versions"]
+            extras = info.get("extras", {})
+            if extras:
+                for name, deps in extras.items():
+                    package.extras[name] = []
+
+                    for dep in deps:
+                        m = re.match(r"^(.+?)(?:\s+\((.+)\))?$", dep)
+                        dep_name = m.group(1)
+                        constraint = m.group(2) or "*"
+
+                        package.extras[name].append(
+                            poetry.packages.Dependency(dep_name, constraint)
+                        )
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
@@ -120,16 +145,25 @@ class Locker:
 
         return packages
 
-    def set_lock_data(self, root, packages):  # type: () -> bool
-        hashes = {}
+    def set_lock_data(self, root, packages):  # type: (...) -> bool
+        files = table()
         packages = self._lock_packages(packages)
         # Retrieving hashes
         for package in packages:
-            if package["name"] not in hashes:
-                hashes[package["name"]] = []
+            if package["name"] not in files:
+                files[package["name"]] = []
 
-            hashes[package["name"]] += package["hashes"]
-            del package["hashes"]
+            for f in package["files"]:
+                file_metadata = inline_table()
+                for k, v in sorted(f.items()):
+                    file_metadata[k] = v
+
+                files[package["name"]].append(file_metadata)
+
+            if files[package["name"]]:
+                files[package["name"]] = item(files[package["name"]]).multiline(True)
+
+            del package["files"]
 
         lock = document()
         lock["package"] = packages
@@ -143,7 +177,7 @@ class Locker:
         lock["metadata"] = {
             "python-versions": root.python_versions,
             "content-hash": self._content_hash,
-            "hashes": hashes,
+            "files": files,
         }
 
         if not self.is_locked() or lock != self.lock_data:
@@ -207,13 +241,24 @@ class Locker:
 
             constraint = {"version": str(dependency.pretty_constraint)}
 
+            if dependency.extras:
+                constraint["extras"] = dependency.extras
+
+            if dependency.is_optional():
+                constraint["optional"] = True
+
             if not dependency.python_constraint.is_any():
                 constraint["python"] = str(dependency.python_constraint)
 
-            if len(constraint) == 1:
-                dependencies[dependency.pretty_name].append(constraint["version"])
-            else:
-                dependencies[dependency.pretty_name].append(constraint)
+            dependencies[dependency.pretty_name].append(constraint)
+
+        # All the constraints should have the same type,
+        # but we want to simplify them if it's possible
+        for dependency, constraints in tuple(dependencies.items()):
+            if all(len(constraint) == 1 for constraint in constraints):
+                dependencies[dependency] = [
+                    constraint["version"] for constraint in constraints
+                ]
 
         data = {
             "name": package.pretty_name,
@@ -222,10 +267,20 @@ class Locker:
             "category": package.category,
             "optional": package.optional,
             "python-versions": package.python_versions,
-            "hashes": sorted(package.hashes),
+            "files": sorted(package.files, key=lambda x: x["file"]),
         }
         if not package.marker.is_any():
             data["marker"] = str(package.marker)
+
+        if package.extras:
+            extras = {}
+            for name, deps in package.extras.items():
+                extras[name] = [
+                    str(dep) if not dep.constraint.is_any() else dep.name
+                    for dep in deps
+                ]
+
+            data["extras"] = extras
 
         if dependencies:
             for k, constraints in dependencies.items():

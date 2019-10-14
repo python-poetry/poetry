@@ -1,31 +1,52 @@
+from cleo import argument
+from cleo import option
+
 from .init import InitCommand
 from .env_command import EnvCommand
 
 
 class AddCommand(EnvCommand, InitCommand):
-    """
-    Add a new dependency to <comment>pyproject.toml</>.
 
-    add
-        { name* : Packages to add. }
-        { --D|dev : Add package as development dependency. }
-        { --git= : The url of the Git repository. }
-        { --path= : The path to a dependency. }
-        { --E|extras=* : Extras to activate for the dependency. }
-        { --optional : Add as an optional dependency. }
-        { --python= : Python version( for which the dependencies must be installed. }
-        { --platform= : Platforms for which the dependencies must be installed. }
-        { --allow-prereleases : Accept prereleases. }
-        { --dry-run : Outputs the operations but will not execute anything
-                     (implicitly enables --verbose). }
-    """
+    name = "add"
+    description = "Adds a new dependency to <comment>pyproject.toml</>."
+
+    arguments = [argument("name", "The packages to add.", multiple=True)]
+    options = [
+        option("dev", "D", "Add as a development dependency."),
+        option(
+            "extras",
+            "E",
+            "Extras to activate for the dependency.",
+            flag=False,
+            multiple=True,
+        ),
+        option("optional", None, "Add as an optional dependency."),
+        option(
+            "python",
+            None,
+            "Python version for which the dependency must be installed.",
+            flag=False,
+        ),
+        option(
+            "platform",
+            None,
+            "Platforms for which the dependency must be installed.",
+            flag=False,
+        ),
+        option("allow-prereleases", None, "Accept prereleases."),
+        option(
+            "dry-run",
+            None,
+            "Output the operations but do not execute anything (implicitly enables --verbose).",
+        ),
+    ]
 
     help = """The add command adds required packages to your <comment>pyproject.toml</> and installs them.
 
 If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.
 """
 
-    _loggers = ["poetry.repositories.pypi_repository"]
+    loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
         from poetry.installation import Installer
@@ -35,16 +56,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         packages = self.argument("name")
         is_dev = self.option("dev")
 
-        if (self.option("git") or self.option("path") or self.option("extras")) and len(
-            packages
-        ) > 1:
+        if self.option("extras") and len(packages) > 1:
             raise ValueError(
-                "You can only specify one package "
-                "when using the --git or --path options"
+                "You can only specify one package " "when using the --extras option"
             )
-
-        if self.option("git") and self.option("path"):
-            raise RuntimeError("--git and --path cannot be used at the same time")
 
         section = "dependencies"
         if is_dev:
@@ -60,32 +75,31 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         for name in packages:
             for key in poetry_content[section]:
                 if key.lower() == name.lower():
+                    pair = self._parse_requirements([name])[0]
+                    if (
+                        "git" in pair
+                        or "url" in pair
+                        or pair.get("version") == "latest"
+                    ):
+                        continue
+
                     raise ValueError("Package {} is already present".format(name))
 
-        if self.option("git") or self.option("path"):
-            requirements = {packages[0]: ""}
-        else:
-            requirements = self._determine_requirements(
-                packages, allow_prereleases=self.option("allow-prereleases")
-            )
-            requirements = self._format_requirements(requirements)
+        requirements = self._determine_requirements(
+            packages, allow_prereleases=self.option("allow-prereleases")
+        )
 
-            # validate requirements format
-            for constraint in requirements.values():
-                parse_constraint(constraint)
+        for _constraint in requirements:
+            if "version" in _constraint:
+                # Validate version constraint
+                parse_constraint(_constraint["version"])
 
-        for name, _constraint in requirements.items():
             constraint = inline_table()
-            constraint["version"] = _constraint
+            for name, value in _constraint.items():
+                if name == "name":
+                    continue
 
-            if self.option("git"):
-                del constraint["version"]
-
-                constraint["git"] = self.option("git")
-            elif self.option("path"):
-                del constraint["version"]
-
-                constraint["path"] = self.option("path")
+                constraint[name] = value
 
             if self.option("optional"):
                 constraint["optional"] = True
@@ -112,7 +126,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
 
-            poetry_content[section][name] = constraint
+            poetry_content[section][_constraint["name"]] = constraint
 
         # Write new content
         self.poetry.file.write(content)
@@ -124,16 +138,12 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         self.reset_poetry()
 
         installer = Installer(
-            self.output,
-            self.env,
-            self.poetry.package,
-            self.poetry.locker,
-            self.poetry.pool,
+            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
 
         installer.dry_run(self.option("dry-run"))
         installer.update(True)
-        installer.whitelist(requirements)
+        installer.whitelist([r["name"] for r in requirements])
 
         try:
             status = installer.run()

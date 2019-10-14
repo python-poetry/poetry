@@ -22,7 +22,7 @@ class EditableBuilder(Builder):
         has_setup = setup.exists()
 
         if has_setup:
-            self._io.writeln(
+            self._io.write_line(
                 "<warning>A setup.py file already exists. Using it.</warning>"
             )
         else:

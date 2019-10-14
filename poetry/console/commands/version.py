@@ -1,19 +1,28 @@
-import re
+from cleo import argument
 
 from .command import Command
 
 
 class VersionCommand(Command):
-    """
-    Bumps the version of the project.
 
-    version
-        { version=patch }
-    """
+    name = "version"
+    description = (
+        "Shows the version of the project or bumps it when a valid"
+        "bump rule is provided."
+    )
+
+    arguments = [
+        argument(
+            "version",
+            "The version number or the rule to update the version.",
+            optional=True,
+        )
+    ]
 
     help = """\
-The version command bumps the version of the project
-and writes the new version back to <comment>pyproject.toml</>.
+The version command shows the current version of the project or bumps the version of 
+the project and writes the new version back to <comment>pyproject.toml</> if a valid
+bump rule is provided.
 
 The new version should ideally be a valid semver string or a valid bump rule:
 patch, minor, major, prepatch, preminor, premajor, prerelease.
@@ -32,19 +41,28 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
     def handle(self):
         version = self.argument("version")
 
-        version = self.increment_version(self.poetry.package.pretty_version, version)
-
-        self.line(
-            "Bumping version from <comment>{}</> to <info>{}</>".format(
+        if version:
+            version = self.increment_version(
                 self.poetry.package.pretty_version, version
             )
-        )
 
-        content = self.poetry.file.read()
-        poetry_content = content["tool"]["poetry"]
-        poetry_content["version"] = version.text
+            self.line(
+                "Bumping version from <comment>{}</> to <info>{}</>".format(
+                    self.poetry.package.pretty_version, version
+                )
+            )
 
-        self.poetry.file.write(content)
+            content = self.poetry.file.read()
+            poetry_content = content["tool"]["poetry"]
+            poetry_content["version"] = version.text
+
+            self.poetry.file.write(content)
+        else:
+            self.line(
+                "Project (<comment>{}</>) version is <info>{}</>".format(
+                    self.poetry.package.name, self.poetry.package.pretty_version
+                )
+            )
 
     def increment_version(self, version, rule):
         from poetry.semver import Version

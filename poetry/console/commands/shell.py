@@ -7,11 +7,9 @@ from .env_command import EnvCommand
 
 
 class ShellCommand(EnvCommand):
-    """
-    Spawns a shell within the virtual environment.
 
-    shell [options]
-    """
+    name = "shell"
+    description = "Spawns a shell within the virtual environment."
 
     help = """The <info>shell</> command spawns a shell, according to the
 <comment>$SHELL</> environment variable, within the virtual environment.
@@ -38,5 +36,5 @@ If one doesn't exist yet, it will be created.
         # Setting this to avoid spawning unnecessary nested shells
         environ["POETRY_ACTIVE"] = "1"
         shell = Shell.get()
-        self.env.execute(shell.path)
+        shell.activate(self.env)
         environ.pop("POETRY_ACTIVE")

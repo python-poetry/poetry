@@ -1,19 +1,32 @@
-import os
+from cleo import option
 
 from .env_command import EnvCommand
 
 
 class InstallCommand(EnvCommand):
-    """
-    Installs the project dependencies.
 
-    install
-        { --no-dev : Do not install dev dependencies. }
-        { --dry-run : Outputs the operations but will not execute anything
-                      (implicitly enables --verbose). }
-        { --E|extras=* : Extra sets of dependencies to install. }
-        { --develop=* : Install given packages in development mode. }
-    """
+    name = "install"
+    description = "Installs the project dependencies."
+
+    options = [
+        option("no-dev", None, "Do not install the development dependencies."),
+        option(
+            "no-root", None, "Do not install the root package (the current project)."
+        ),
+        option(
+            "dry-run",
+            None,
+            "Output the operations but do not execute anything "
+            "(implicitly enables --verbose).",
+        ),
+        option(
+            "extras",
+            "E",
+            "Extra sets of dependencies to install.",
+            flag=False,
+            multiple=True,
+        ),
+    ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
 the current directory, processes it, and downloads and installs all the
@@ -26,17 +39,13 @@ exist it will look for <comment>pyproject.toml</> and do the same.
     _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
+        from clikit.io import NullIO
         from poetry.installation import Installer
-        from poetry.io import NullIO
         from poetry.masonry.builders import EditableBuilder
         from poetry.masonry.utils.module import ModuleOrPackageNotFound
 
         installer = Installer(
-            self.output,
-            self.env,
-            self.poetry.package,
-            self.poetry.locker,
-            self.poetry.pool,
+            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
 
         extras = []
@@ -48,7 +57,6 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 
         installer.extras(extras)
         installer.dev_mode(not self.option("no-dev"))
-        installer.develop(self.option("develop"))
         installer.dry_run(self.option("dry-run"))
         installer.verbose(self.option("verbose"))
 
@@ -56,6 +64,9 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 
         if return_code != 0:
             return return_code
+
+        if self.option("no-root"):
+            return 0
 
         try:
             builder = EditableBuilder(self.poetry, self._env, NullIO())

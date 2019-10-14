@@ -1,7 +1,6 @@
 import pytest
 
-from cleo.outputs.null_output import NullOutput
-from cleo.styles import OutputStyle
+from clikit.io import NullIO
 
 from poetry.packages import dependency_from_pep_508
 from poetry.packages import ProjectPackage
@@ -23,7 +22,7 @@ from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRe
 
 @pytest.fixture()
 def io():
-    return OutputStyle(NullOutput())
+    return NullIO()
 
 
 @pytest.fixture()
@@ -929,6 +928,11 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
         ],
     )
 
+    op = ops[1]
+
+    assert op.package.source_type == "git"
+    assert op.package.source_reference.startswith("9cf87a2")
+
 
 def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
@@ -950,6 +954,37 @@ def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
             {"job": "install", "package": get_package("demo", "0.1.2")},
         ],
     )
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [{"branch": "a-branch"}, {"tag": "a-tag"}, {"rev": "9cf8"}],
+    ids=["branch", "tag", "rev"],
+)
+def test_solver_can_resolve_git_dependencies_with_ref(solver, repo, package, ref):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    git_config = {"git": "https://github.com/demo/demo.git"}
+    git_config.update(ref)
+    package.add_dependency("demo", git_config)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.2")},
+        ],
+    )
+
+    op = ops[1]
+
+    assert op.package.source_type == "git"
+    assert op.package.source_reference.startswith("9cf87a2")
 
 
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(
@@ -1302,6 +1337,39 @@ def test_solver_git_dependencies_update_skipped(solver, repo, package, installed
     )
 
 
+def test_solver_git_dependencies_short_hash_update_skipped(
+    solver, repo, package, installed
+):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+    installed.add_package(demo)
+
+    package.add_dependency(
+        "demo", {"git": "https://github.com/demo/demo.git", "rev": "9cf87a2"}
+    )
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {
+                "job": "install",
+                "package": get_package("demo", "0.1.2"),
+                "skipped": True,
+            },
+        ],
+    )
+
+
 def test_solver_can_resolve_directory_dependencies(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
@@ -1576,4 +1644,170 @@ def test_multiple_constraints_on_root(package, solver, repo):
     check_solver_result(
         ops,
         [{"job": "install", "package": foo15}, {"job": "install", "package": foo25}],
+    )
+
+
+def test_solver_chooses_most_recent_version_amongst_repositories(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("tomlkit", {"version": "^0.5"})
+
+    repo = MockLegacyRepository()
+    pool = Pool([repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("tomlkit", "0.5.3")}]
+    )
+
+    assert "" == ops[0].package.source_type
+    assert "" == ops[0].package.source_url
+
+
+def test_solver_chooses_from_correct_repository_if_forced(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
+
+    repo = MockLegacyRepository()
+    pool = Pool([repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": get_package("tomlkit", "0.5.2")}]
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+
+
+def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("foo", "^1.0")
+    package.add_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
+
+    repo = Repository()
+    foo = get_package("foo", "1.0.0")
+    foo.add_dependency("tomlkit", "^0.5.0")
+    repo.add_package(foo)
+    pool = Pool([MockLegacyRepository(), repo, MockPyPIRepository()])
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("tomlkit", "0.5.2")},
+            {"job": "install", "package": foo},
+        ],
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+
+    assert "" == ops[1].package.source_type
+    assert "" == ops[1].package.source_url
+
+
+def test_solver_does_not_choose_from_secondary_repository_by_default(
+    package, installed, locked, io
+):
+    package.python_versions = "^3.7"
+    package.add_dependency("clikit", {"version": "^0.2.0"})
+
+    pool = Pool()
+    pool.add_repository(MockPyPIRepository(), secondary=True)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("pastel", "0.1.0")},
+            {"job": "install", "package": get_package("pylev", "1.3.0")},
+            {"job": "install", "package": get_package("clikit", "0.2.4")},
+        ],
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+    assert "" == ops[1].package.source_type
+    assert "" == ops[1].package.source_url
+    assert "legacy" == ops[2].package.source_type
+    assert "http://foo.bar" == ops[2].package.source_url
+
+
+def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, io):
+    package.python_versions = "^3.7"
+    package.add_dependency("clikit", {"version": "^0.2.0", "source": "PyPI"})
+
+    pool = Pool()
+    pool.add_repository(MockPyPIRepository(), secondary=True)
+    pool.add_repository(MockLegacyRepository())
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("pastel", "0.1.0")},
+            {"job": "install", "package": get_package("pylev", "1.3.0")},
+            {"job": "install", "package": get_package("clikit", "0.2.4")},
+        ],
+    )
+
+    assert "legacy" == ops[0].package.source_type
+    assert "http://foo.bar" == ops[0].package.source_url
+    assert "" == ops[1].package.source_type
+    assert "" == ops[1].package.source_url
+    assert "" == ops[2].package.source_type
+    assert "" == ops[2].package.source_url
+
+
+def test_solver_discards_packages_with_empty_markers(
+    package, installed, locked, io, pool, repo
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency(
+        "a", {"version": "^0.1.0", "markers": "python_version >= '3.4'"}
+    )
+
+    package_a = get_package("a", "0.1.0")
+    package_a.add_dependency(
+        "b", {"version": "^0.1.0", "markers": "python_version < '3.2'"}
+    )
+    package_a.add_dependency("c", "^0.2.0")
+    package_b = get_package("b", "0.1.0")
+    package_c = get_package("c", "0.2.0")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_a},
+        ],
     )

@@ -5,6 +5,9 @@ description = "Some description."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
 ]
+maintainers = [
+    "People Everywhere <people@everywhere.com>"
+]
 license = "MIT"
 
 readme = "README.rst"
@@ -30,7 +33,10 @@ python = "^3.6"
 cleo = "^0.6"
 cachy = { version = "^0.2.0", extras = ["msgpack"] }
 
-pendulum = { version = "^1.4", optional = true }
+[tool.poetry.dependencies.pendulum]
+version = "^1.4"
+markers= 'python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5"'
+optional = true
 
 [tool.poetry.dev-dependencies]
 pytest = "~3.4"
@@ -42,3 +48,6 @@ time = ["pendulum"]
 my-script = "my_package:main"
 my-2nd-script = "my_package:main2"
 extra-script = {callable = "my_package.extra:main", extras = ["time"]}
+
+[tool.poetry.urls]
+"Issue Tracker" = "https://github.com/sdispater/poetry/issues"

@@ -1,16 +1,18 @@
 import os
 
+from cleo import argument
+from cleo import option
+
 from ..command import Command
 
 
 class CacheClearCommand(Command):
-    """
-    Clears poetry's cache.
 
-    cache:clear
-        { cache : The name of the cache to clear. }
-        { --all : Clear all entries in cache. }
-    """
+    name = "clear"
+    description = "Clears Poetry's cache."
+
+    arguments = [argument("cache", description="The name of the cache to clear.")]
+    options = [option("all", description="Clear all entries in the cache.")]
 
     def handle(self):
         from cachy import CacheManager
