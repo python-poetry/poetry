@@ -28,10 +28,7 @@ class ApplicationConfig(BaseApplicationConfig):
         self.add_event_listener(ConsoleEvents.PRE_HANDLE.value, self.set_env)
 
     def register_command_loggers(
-        self,
-        event,  # type: PreHandleEvent
-        event_name,  # type: str
-        _,
+        self, event, event_name, _  # type: PreHandleEvent  # type: str
     ):  # type: (...) -> None
         command = event.command.config.handler
         if not isinstance(command, Command):
@@ -70,11 +67,11 @@ class ApplicationConfig(BaseApplicationConfig):
         io = event.io
         poetry = command.poetry
 
-        env_manager = EnvManager(poetry.config)
+        env_manager = EnvManager(poetry)
 
         # Checking compatibility of the current environment with
         # the python dependency specified in pyproject.toml
-        current_env = env_manager.get(poetry.file.parent)
+        current_env = env_manager.get()
         supported_python = poetry.package.python_constraint
         current_python = parse_constraint(
             ".".join(str(v) for v in current_env.version_info[:3])
@@ -88,7 +85,7 @@ class ApplicationConfig(BaseApplicationConfig):
                 )
             )
 
-        env = env_manager.create_venv(poetry.file.parent, io, poetry.package.name)
+        env = env_manager.create_venv(io)
 
         if env.is_venv() and io.is_verbose():
             io.write_line("Using virtualenv: <comment>{}</>".format(env.path))
