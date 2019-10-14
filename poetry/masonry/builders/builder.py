@@ -87,10 +87,9 @@ class Builder(object):
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
             if Path(self._path.as_posix(), str(excluded_glob)).is_dir():
-                excluded_glob = Path(str(excluded_glob), "**/*").as_posix()
+                excluded_glob = str(excluded_glob) + "/**/*"
             for excluded in glob(
-                Path(self._path.as_posix(), str(excluded_glob)).as_posix(),
-                recursive=True,
+                os.path.join(self._path.as_posix(), str(excluded_glob)), recursive=True
             ):
                 explicitely_excluded.add(
                     Path(excluded).relative_to(self._path).as_posix()
