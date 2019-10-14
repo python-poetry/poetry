@@ -209,7 +209,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         if not requires:
             requires = []
 
-            package = self.ask("Add a package:")
+            package = self.ask(
+                "Search for package to add (or leave blank to continue):"
+            )
             while package is not None:
                 constraint = self._parse_requirements([package])[0]
                 if (
