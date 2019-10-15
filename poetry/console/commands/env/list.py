@@ -15,9 +15,11 @@ class EnvListCommand(Command):
 
         poetry = self.poetry
         manager = EnvManager(poetry.config)
-        current_env = manager.get(self.poetry.file.parent)
+        current_env = manager.get(
+            self.poetry.file.parent, name=self.poetry.package.name
+        )
 
-        for venv in manager.list(self.poetry.file.parent):
+        for venv in manager.list(self.poetry.file.parent, self.poetry.package.name):
             name = venv.path.name
             if self.option("full-path"):
                 name = str(venv.path)

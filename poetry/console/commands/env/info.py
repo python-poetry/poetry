@@ -14,7 +14,9 @@ class EnvInfoCommand(Command):
         from poetry.utils.env import EnvManager
 
         poetry = self.poetry
-        env = EnvManager(poetry.config).get(cwd=poetry.file.parent)
+        env = EnvManager(poetry.config).get(
+            cwd=poetry.file.parent, name=poetry.package.name
+        )
 
         if self.option("path"):
             if not env.is_venv():

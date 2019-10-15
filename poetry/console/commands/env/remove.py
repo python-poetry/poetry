@@ -17,6 +17,8 @@ class EnvRemoveCommand(Command):
 
         poetry = self.poetry
         manager = EnvManager(poetry.config)
-        venv = manager.remove(self.argument("python"), poetry.file.parent)
+        venv = manager.remove(
+            self.argument("python"), poetry.file.parent, poetry.package.name
+        )
 
         self.line("Deleted virtualenv: <comment>{}</comment>".format(venv.path))

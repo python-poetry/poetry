@@ -142,7 +142,9 @@ class EnvManager(object):
 
         self._config = config
 
-    def activate(self, python, cwd, io):  # type: (str, Optional[Path], IO) -> Env
+    def activate(
+        self, python, cwd, io, name=None
+    ):  # type: (str, Optional[Path], IO, Optional[str]) -> Env
         venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
@@ -179,10 +181,12 @@ class EnvManager(object):
         python_version = Version.parse(python_version.strip())
         minor = "{}.{}".format(python_version.major, python_version.minor)
         patch = python_version.text
+        if not name:
+            name = cwd.name
 
         create = False
         envs = tomlkit.document()
-        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+        base_env_name = self.generate_env_name(name, str(cwd))
         if envs_file.exists():
             envs = envs_file.read()
             current_env = envs.get(base_env_name)
@@ -194,8 +198,8 @@ class EnvManager(object):
                     # We need to recreate
                     create = True
 
-        name = "{}-py{}".format(base_env_name, minor)
-        venv = venv_path / name
+        full_name = "{}-py{}".format(base_env_name, minor)
+        venv = venv_path / full_name
 
         # Create if needed
         if not venv.exists() or venv.exists() and create:
@@ -211,22 +215,25 @@ class EnvManager(object):
                 if patch != current_patch:
                     create = True
 
-            self.create_venv(cwd, io, executable=python, force=create)
+            self.create_venv(cwd, io, name=name, executable=python, force=create)
 
         # Activate
         envs[base_env_name] = {"minor": minor, "patch": patch}
         envs_file.write(envs)
 
-        return self.get(cwd, reload=True)
+        return self.get(cwd, reload=True, name=name)
 
-    def deactivate(self, cwd, io):  # type: (Optional[Path], IO) -> None
+    def deactivate(
+        self, cwd, io, name=None
+    ):  # type: (Optional[Path], IO, Optional[str]) -> None
         venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
-        name = cwd.name
+        if not name:
+            name = cwd.name
         name = self.generate_env_name(name, str(cwd))
 
         envs_file = TomlFile(venv_path / self.ENVS_FILE)
@@ -243,7 +250,9 @@ class EnvManager(object):
 
                 envs_file.write(envs)
 
-    def get(self, cwd, reload=False):  # type: (Path, bool) -> Env
+    def get(
+        self, cwd, reload=False, name=None
+    ):  # type: (Path, bool, Optional[str]) -> Env
         if self._env is not None and not reload:
             return self._env
 
@@ -257,7 +266,10 @@ class EnvManager(object):
 
         envs_file = TomlFile(venv_path / self.ENVS_FILE)
         env = None
-        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+        if not name:
+            name = cwd.name
+
+        base_env_name = self.generate_env_name(name, str(cwd))
         if envs_file.exists():
             envs = envs_file.read()
             env = envs.get(base_env_name)
@@ -320,7 +332,9 @@ class EnvManager(object):
             for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
         ]
 
-    def remove(self, python, cwd):  # type: (str, Optional[Path]) -> Env
+    def remove(
+        self, python, cwd, name=None
+    ):  # type: (str, Optional[Path], Optional[str]) -> Env
         venv_path = self._config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
@@ -328,10 +342,12 @@ class EnvManager(object):
             venv_path = Path(venv_path)
 
         envs_file = TomlFile(venv_path / self.ENVS_FILE)
-        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+        if not name:
+            name = cwd.name
 
+        base_env_name = self.generate_env_name(name, str(cwd))
         if python.startswith(base_env_name):
-            venvs = self.list(cwd)
+            venvs = self.list(cwd, name)
             for venv in venvs:
                 if venv.path.name == python:
                     # Exact virtualenv name
@@ -341,7 +357,7 @@ class EnvManager(object):
                         return venv
 
                     venv_minor = ".".join(str(v) for v in venv.version_info[:2])
-                    base_env_name = self.generate_env_name(cwd.name, str(cwd))
+                    base_env_name = self.generate_env_name(name, str(cwd))
                     envs = envs_file.read()
 
                     current_env = envs.get(base_env_name)
@@ -418,7 +434,7 @@ class EnvManager(object):
         if self._env is not None and not force:
             return self._env
 
-        env = self.get(cwd, reload=True)
+        env = self.get(cwd, reload=True, name=name)
         if env.is_venv() and not force:
             # Already inside a virtualenv.
             return env
