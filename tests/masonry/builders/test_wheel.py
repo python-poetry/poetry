@@ -78,9 +78,8 @@ def test_wheel_excluded_data():
 
 
 def test_wheel_excluded_nested_data():
-    module_path = fixtures_dir / "default_with_excluded_data_toml"
+    module_path = fixtures_dir / "exclude_nested_data_toml"
     poetry = Factory().create_poetry(module_path)
-    poetry._package.exclude = ["my_package/data"]
     WheelBuilder.make(poetry, NullEnv(), NullIO())
 
     whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
@@ -92,6 +91,10 @@ def test_wheel_excluded_nested_data():
         assert "my_package/data/sub_data/data2.txt" not in z.namelist()
         assert "my_package/data/sub_data/data3.txt" not in z.namelist()
         assert "my_package/data/data1.txt" not in z.namelist()
+        assert "my_package/puplic/publicdata.txt" in z.namelist()
+        assert "my_package/public/item1/itemdata1.txt" not in z.namelist()
+        assert "my_package/public/item1/subitem/subitemdata.txt" not in z.namelist()
+        assert "my_package/public/item2/itemdata2.txt" not in z.namelist()
 
 
 def test_wheel_localversionlabel():
