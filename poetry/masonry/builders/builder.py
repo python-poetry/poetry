@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import itertools
 import os
 import re
 import shutil
@@ -85,12 +86,17 @@ class Builder(object):
             vcs_ignored_files = set(vcs.get_ignored_files())
 
         explicitely_excluded = set()
-        for excluded_glob in self._package.exclude:
-            if os.path.isdir(os.path.join(self._path.as_posix(), str(excluded_glob))):
-                excluded_glob = Path(str(excluded_glob), "**/*")
-            for excluded in glob(
-                os.path.join(self._path.as_posix(), str(excluded_glob)), recursive=True
-            ):
+        for excluded_glob in itertools.chain.from_iterable(
+            map(
+                lambda excluded_path: glob(
+                    Path(self._path, excluded_path).as_posix(), recursive=True
+                ),
+                self._package.exclude,
+            )
+        ):
+            if Path(excluded_glob).is_dir():
+                excluded_glob = Path(excluded_glob, "**/*")
+            for excluded in glob(str(excluded_glob), recursive=True):
                 explicitely_excluded.add(
                     Path(excluded).relative_to(self._path).as_posix()
                 )
