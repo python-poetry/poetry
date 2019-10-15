@@ -68,23 +68,6 @@ class ApplicationConfig(BaseApplicationConfig):
         poetry = command.poetry
 
         env_manager = EnvManager(poetry)
-
-        # Checking compatibility of the current environment with
-        # the python dependency specified in pyproject.toml
-        current_env = env_manager.get()
-        supported_python = poetry.package.python_constraint
-        current_python = parse_constraint(
-            ".".join(str(v) for v in current_env.version_info[:3])
-        )
-
-        if not supported_python.allows(current_python):
-            raise RuntimeError(
-                "The current Python version ({}) is not supported by the project ({})\n"
-                "Please activate a compatible Python version.".format(
-                    current_python, poetry.package.python_versions
-                )
-            )
-
         env = env_manager.create_venv(io)
 
         if env.is_venv() and io.is_verbose():

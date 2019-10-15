@@ -10,6 +10,7 @@ from poetry.factory import Factory
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
+from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import VirtualEnv
 from poetry.utils.toml_file import TomlFile
 
@@ -554,3 +555,106 @@ def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
         tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
 
     assert processError.value.e.returncode == 1
+
+
+def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^3.6"
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.7.5")),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    m.assert_called_with(
+        str(Path("/foo/virtualenvs/{}-py3.7".format(venv_name))), executable="python3"
+    )
+
+
+def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific_ones(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^3.6"
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output", side_effect=["3.5.3", "3.8.0"]
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    m.assert_called_with(
+        str(Path("/foo/virtualenvs/{}-py3.8".format(venv_name))), executable="python3.8"
+    )
+
+
+def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^4.8"
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output", side_effect=["", "", "", ""]
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    with pytest.raises(NoCompatiblePythonVersionFound) as e:
+        manager.create_venv(NullIO())
+
+    expected_message = (
+        "Poetry was unable to find a compatible version. "
+        "If you have one, you can explicitly use it "
+        'via the "env use" command.'
+    )
+
+    assert expected_message == str(e.value)
+    assert 0 == m.call_count
+
+
+def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^4.8"
+
+    mocker.patch("poetry.utils._compat.subprocess.check_output", side_effect=["3.8.0"])
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    with pytest.raises(NoCompatiblePythonVersionFound) as e:
+        manager.create_venv(NullIO(), executable="3.8")
+
+    expected_message = (
+        "The specified Python version (3.8.0) is not supported by the project (^4.8).\n"
+        "Please choose a compatible version or loosen the python constraint "
+        "specified in the pyproject.toml file."
+    )
+
+    assert expected_message == str(e.value)
+    assert 0 == m.call_count

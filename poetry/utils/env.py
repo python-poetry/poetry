@@ -22,6 +22,7 @@ from clikit.api.io import IO
 
 from poetry.locations import CACHE_DIR
 from poetry.poetry import Poetry
+from poetry.semver import parse_constraint
 from poetry.semver.version import Version
 from poetry.utils._compat import CalledProcessError
 from poetry.utils._compat import Path
@@ -125,6 +126,26 @@ class EnvCommandError(EnvError):
         if input:
             message += "input was : {}".format(input)
         super(EnvCommandError, self).__init__(message)
+
+
+class NoCompatiblePythonVersionFound(EnvError):
+    def __init__(self, expected, given=None):
+        if given:
+            message = (
+                "The specified Python version ({}) "
+                "is not supported by the project ({}).\n"
+                "Please choose a compatible version "
+                "or loosen the python constraint specified "
+                "in the pyproject.toml file.".format(given, expected)
+            )
+        else:
+            message = (
+                "Poetry was unable to find a compatible version. "
+                "If you have one, you can explicitly use it "
+                'via the "env use" command.'
+            )
+
+        super(NoCompatiblePythonVersionFound, self).__init__(message)
 
 
 class EnvManager(object):
@@ -439,6 +460,7 @@ class EnvManager(object):
         if not name:
             name = self._poetry.package.name
 
+        python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
             python_minor = decode(
@@ -451,8 +473,83 @@ class EnvManager(object):
                         ]
                     ),
                     shell=True,
+                ).strip()
+            )
+
+        supported_python = self._poetry.package.python_constraint
+        if not supported_python.allows(Version.parse(python_minor)):
+            # The currently activated or chosen Python version
+            # is not compatible with the Python constraint specified
+            # for the project.
+            # If an executable has been specified, we stop there
+            # and notify the user of the incompatibility.
+            # Otherwise, we try to find a compatible Python version.
+            if executable:
+                raise NoCompatiblePythonVersionFound(
+                    self._poetry.package.python_versions, python_minor
+                )
+
+            io.write_line(
+                "<warning>The currently activated Python version {} "
+                "is not supported by the project ({}).\n"
+                "Trying to find and use a compatible version.</warning> ".format(
+                    python_patch, self._poetry.package.python_versions
                 )
             )
+
+            for python_to_try in reversed(
+                sorted(
+                    self._poetry.package.AVAILABLE_PYTHONS,
+                    key=lambda v: (v.startswith("3"), -len(v), v),
+                )
+            ):
+                if len(python_to_try) == 1:
+                    if not parse_constraint("^{}.0".format(python_to_try)).allows_any(
+                        supported_python
+                    ):
+                        continue
+                elif not supported_python.allows_all(
+                    parse_constraint(python_to_try + ".*")
+                ):
+                    continue
+
+                python = "python" + python_to_try
+
+                if io.is_debug():
+                    io.write_line("<debug>Trying {}</debug>".format(python))
+
+                try:
+                    python_patch = decode(
+                        subprocess.check_output(
+                            " ".join(
+                                [
+                                    python,
+                                    "-c",
+                                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                                ]
+                            ),
+                            stderr=subprocess.STDOUT,
+                            shell=True,
+                        ).strip()
+                    )
+                except CalledProcessError:
+                    continue
+
+                if not python_patch:
+                    continue
+
+                if supported_python.allows(Version.parse(python_patch)):
+                    io.write_line(
+                        "Using <info>{}</info> ({})".format(python, python_patch)
+                    )
+                    executable = python
+                    python_minor = ".".join(python_patch.split(".")[:2])
+                    break
+
+            if not executable:
+                raise NoCompatiblePythonVersionFound(
+                    self._poetry.package.python_versions
+                )
 
         if root_venv:
             venv = venv_path

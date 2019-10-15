@@ -27,7 +27,7 @@ AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?
 
 class Package(object):
 
-    AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
+    AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7", "3.8"}
 
     def __init__(self, name, version, pretty_version=None):
         """
