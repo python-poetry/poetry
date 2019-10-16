@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import os
 import re
-
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -12,17 +11,14 @@ from typing import Union
 from cleo import option
 from tomlkit import inline_table
 
-from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
+from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
-from poetry.utils.helpers import temporary_directory
-
 from .command import Command
 from .env_command import EnvCommand
 
 
 class InitCommand(Command):
-
     name = "init"
     description = (
         "Creates a basic <comment>pyproject.toml</> file in the current directory."
@@ -212,6 +208,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
             package = self.ask(
                 "Search for package to add (or leave blank to continue):"
             )
+            pool = self._get_pool()
             while package is not None:
                 constraint = self._parse_requirements([package])[0]
                 if (
@@ -225,43 +222,48 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                     package = self.ask("\nAdd a package:")
                     continue
 
-                matches = self._get_pool().search(constraint["name"])
+                package_exist = pool.package_exists(package)
+                if not package_exist:
+                    matches = pool.search(constraint["name"])
 
-                if not matches:
-                    self.line("<error>Unable to find package</error>")
-                    package = False
-                else:
-                    choices = []
-                    matches_names = [p.name for p in matches]
-                    exact_match = constraint["name"] in matches_names
-                    if exact_match:
-                        choices.append(
-                            matches[matches_names.index(constraint["name"])].pretty_name
+                    if not matches:
+                        self.line("<error>Unable to find package</error>")
+                        package = False
+                    else:
+                        choices = []
+                        matches_names = [p.name for p in matches]
+                        exact_match = constraint["name"] in matches_names
+                        if exact_match:
+                            choices.append(
+                                matches[
+                                    matches_names.index(constraint["name"])
+                                ].pretty_name
+                            )
+
+                        for found_package in matches:
+                            if len(choices) >= 10:
+                                break
+
+                            if found_package.name.lower() == constraint["name"].lower():
+                                continue
+
+                            choices.append(found_package.pretty_name)
+
+                        self.line(
+                            "Found <info>{}</info> packages matching <info>{}</info>".format(
+                                len(matches), package
+                            )
                         )
 
-                    for found_package in matches:
-                        if len(choices) >= 10:
-                            break
-
-                        if found_package.name.lower() == constraint["name"].lower():
-                            continue
-
-                        choices.append(found_package.pretty_name)
-
-                    self.line(
-                        "Found <info>{}</info> packages matching <info>{}</info>".format(
-                            len(matches), package
+                        package = self.choice(
+                            "\nEnter package # to add, or the complete package name if it is not listed",
+                            choices,
+                            attempts=3,
                         )
-                    )
-
-                    package = self.choice(
-                        "\nEnter package # to add, or the complete package name if it is not listed",
-                        choices,
-                        attempts=3,
-                    )
 
                 # no constraint yet, determine the best version automatically
                 if package is not False and "version" not in constraint:
+                    constraint["name"] = package
                     question = self.create_question(
                         "Enter the version constraint to require "
                         "(or leave blank to use the latest version):"

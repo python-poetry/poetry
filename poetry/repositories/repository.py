@@ -100,6 +100,13 @@ class Repository(BaseRepository):
 
         return False
 
+    def package_exists(self, package):
+        for repo_package in self.packages:
+            if package == repo_package.name:
+                return True
+
+        return False
+
     def add_package(self, package):
         self._packages.append(package)
 

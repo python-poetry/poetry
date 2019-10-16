@@ -13,6 +13,9 @@ class BaseRepository(object):
     def has_package(self, package):
         raise NotImplementedError()
 
+    def package_exists(self, package):
+        raise NotImplementedError()
+
     def package(self, name, version, extras=None):
         raise NotImplementedError()
 

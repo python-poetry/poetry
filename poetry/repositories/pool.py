@@ -92,6 +92,13 @@ class Pool(BaseRepository):
     def has_package(self, package):
         raise NotImplementedError()
 
+    def package_exists(self, package):
+        for repository in self._repositories:
+            if repository is not self and repository.package_exists(package):
+                return True
+
+        return False
+
     def package(
         self, name, version, extras=None, repository=None
     ):  # type: (str, str, List[str], str) -> Package

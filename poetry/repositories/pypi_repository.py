@@ -296,6 +296,13 @@ class PyPiRepository(Repository):
 
         return cached
 
+    def package_exists(self, package):
+        try:
+            self.get_package_info(package)
+            return True
+        except PackageNotFound:
+            return False
+
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         self._log("Getting info for {} ({}) from PyPI".format(name, version), "debug")
 
