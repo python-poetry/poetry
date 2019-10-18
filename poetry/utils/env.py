@@ -286,7 +286,13 @@ class EnvManager(object):
                 python_minor = env["minor"]
 
         # Check if we are inside a virtualenv or not
-        in_venv = os.environ.get("VIRTUAL_ENV") is not None
+        # Conda sets CONDA_PREFIX in its envs, see
+        # https://github.com/conda/conda/issues/2764
+        env_prefix = os.environ.get("VIRTUAL_ENV", os.environ.get("CONDA_PREFIX"))
+        conda_env_name = os.environ.get("CONDA_DEFAULT_ENV")
+        # It's probably not a good idea to pollute Conda's global "base" env, since
+        # most users have it activated all the time.
+        in_venv = env_prefix is not None and conda_env_name != "base"
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
@@ -315,8 +321,8 @@ class EnvManager(object):
 
             return VirtualEnv(venv)
 
-        if os.environ.get("VIRTUAL_ENV") is not None:
-            prefix = Path(os.environ["VIRTUAL_ENV"])
+        if env_prefix is not None:
+            prefix = Path(env_prefix)
             base_prefix = None
         else:
             prefix = Path(sys.prefix)
