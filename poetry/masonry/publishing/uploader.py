@@ -18,6 +18,7 @@ from poetry.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 
 from ..metadata import Metadata
+from ..utils.helpers import escape_name, escape_version
 
 
 _has_blake2 = hasattr(hashlib, "blake2b")
@@ -63,10 +64,7 @@ class Uploader:
         wheels = list(
             dist.glob(
                 "{}-{}-*.whl".format(
-                    re.sub(
-                        r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
-                    ),
-                    re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE),
+                    escape_name(self._package.pretty_name), escape_version(version)
                 )
             )
         )
