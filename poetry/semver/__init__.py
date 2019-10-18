@@ -79,7 +79,7 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
             low = version
             high = version.stable.next_major
         else:
-            low = Version(version.major, version.minor, 0)
+            low = Version(version.major, version.minor, version.patch)
             high = version.stable.next_minor
 
         return VersionRange(
