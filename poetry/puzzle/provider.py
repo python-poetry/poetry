@@ -585,8 +585,6 @@ class Provider:
 
             duplicates[dep.name].append(dep)
 
-        print(package)
-        print(duplicates)
         dependencies = []
         for dep_name, deps in duplicates.items():
             if len(deps) == 1:
