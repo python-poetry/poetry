@@ -86,23 +86,13 @@ class Builder(object):
             vcs_ignored_files = set(vcs.get_ignored_files())
 
         explicitely_excluded = set()
-        for excluded_glob in itertools.chain.from_iterable(
-            map(
-                lambda excluded_path: glob(
-                    str(Path(self._path, excluded_path)), recursive=True
-                ),
-                self._package.exclude,
-            )
-        ):
-            if Path(excluded_glob).is_dir():
-                for excluded in glob(str(Path(excluded_glob, "**/*")), recursive=True):
-                    explicitely_excluded.add(
-                        Path(excluded).relative_to(self._path).as_posix()
-                    )
-            else:
-                explicitely_excluded.add(
-                    Path(excluded_glob).relative_to(self._path).as_posix()
-                )
+        for excluded_glob in self._package.exclude:
+            excluded_path = Path(self._path, excluded_glob)
+            if excluded_path.is_dir():
+                excluded_glob = Path(excluded_glob, "**/*").as_posix()
+
+            for excluded in self._path.glob(excluded_glob):
+                explicitely_excluded.add(excluded.relative_to(self._path).as_posix())
 
         ignored = vcs_ignored_files | explicitely_excluded
         result = set()
