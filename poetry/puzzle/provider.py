@@ -38,6 +38,7 @@ from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
+from poetry.utils.env import VirtualEnv
 from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
 from poetry.utils.toml_file import TomlFile
@@ -326,9 +327,10 @@ class Provider:
             os.chdir(str(directory))
 
             try:
-                cwd = directory
-                venv = EnvManager().get(cwd)
-                venv.run("python", "setup.py", "egg_info")
+                with temporary_directory() as tmp_dir:
+                    EnvManager.build_venv(tmp_dir)
+                    venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+                    venv.run("python", "setup.py", "egg_info")
             except EnvCommandError:
                 result = SetupReader.read_from_directory(directory)
                 if not result["name"]:

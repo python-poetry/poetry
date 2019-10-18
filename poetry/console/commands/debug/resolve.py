@@ -103,7 +103,7 @@ class DebugResolveCommand(InitCommand):
 
             return 0
 
-        env = EnvManager(self.poetry.config).get(self.poetry.file.parent)
+        env = EnvManager(self.poetry).get()
         current_python_version = parse_constraint(
             ".".join(str(v) for v in env.version_info)
         )

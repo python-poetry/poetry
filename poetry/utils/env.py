@@ -20,8 +20,9 @@ from typing import Tuple
 
 from clikit.api.io import IO
 
-from poetry.config.config import Config
 from poetry.locations import CACHE_DIR
+from poetry.poetry import Poetry
+from poetry.semver import parse_constraint
 from poetry.semver.version import Version
 from poetry.utils._compat import CalledProcessError
 from poetry.utils._compat import Path
@@ -127,6 +128,26 @@ class EnvCommandError(EnvError):
         super(EnvCommandError, self).__init__(message)
 
 
+class NoCompatiblePythonVersionFound(EnvError):
+    def __init__(self, expected, given=None):
+        if given:
+            message = (
+                "The specified Python version ({}) "
+                "is not supported by the project ({}).\n"
+                "Please choose a compatible version "
+                "or loosen the python constraint specified "
+                "in the pyproject.toml file.".format(given, expected)
+            )
+        else:
+            message = (
+                "Poetry was unable to find a compatible version. "
+                "If you have one, you can explicitly use it "
+                'via the "env use" command.'
+            )
+
+        super(NoCompatiblePythonVersionFound, self).__init__(message)
+
+
 class EnvManager(object):
     """
     Environments manager
@@ -136,18 +157,17 @@ class EnvManager(object):
 
     ENVS_FILE = "envs.toml"
 
-    def __init__(self, config=None):  # type: (Config) -> None
-        if config is None:
-            config = Config()
+    def __init__(self, poetry):  # type: (Poetry) -> None
+        self._poetry = poetry
 
-        self._config = config
-
-    def activate(self, python, cwd, io):  # type: (str, Optional[Path], IO) -> Env
-        venv_path = self._config.get("virtualenvs.path")
+    def activate(self, python, io):  # type: (str, IO) -> Env
+        venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
             venv_path = Path(venv_path)
+
+        cwd = self._poetry.file.parent
 
         envs_file = TomlFile(venv_path / self.ENVS_FILE)
 
@@ -182,7 +202,7 @@ class EnvManager(object):
 
         create = False
         envs = tomlkit.document()
-        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
         if envs_file.exists():
             envs = envs_file.read()
             current_env = envs.get(base_env_name)
@@ -211,23 +231,23 @@ class EnvManager(object):
                 if patch != current_patch:
                     create = True
 
-            self.create_venv(cwd, io, executable=python, force=create)
+            self.create_venv(io, executable=python, force=create)
 
         # Activate
         envs[base_env_name] = {"minor": minor, "patch": patch}
         envs_file.write(envs)
 
-        return self.get(cwd, reload=True)
+        return self.get(reload=True)
 
-    def deactivate(self, cwd, io):  # type: (Optional[Path], IO) -> None
-        venv_path = self._config.get("virtualenvs.path")
+    def deactivate(self, io):  # type: (IO) -> None
+        venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
-        name = cwd.name
-        name = self.generate_env_name(name, str(cwd))
+        name = self._poetry.package.name
+        name = self.generate_env_name(name, str(self._poetry.file.parent))
 
         envs_file = TomlFile(venv_path / self.ENVS_FILE)
         if envs_file.exists():
@@ -243,21 +263,22 @@ class EnvManager(object):
 
                 envs_file.write(envs)
 
-    def get(self, cwd, reload=False):  # type: (Path, bool) -> Env
+    def get(self, reload=False):  # type: (bool) -> Env
         if self._env is not None and not reload:
             return self._env
 
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
 
-        venv_path = self._config.get("virtualenvs.path")
+        venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
+        cwd = self._poetry.file.parent
         envs_file = TomlFile(venv_path / self.ENVS_FILE)
         env = None
-        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
         if envs_file.exists():
             envs = envs_file.read()
             env = envs.get(base_env_name)
@@ -274,12 +295,12 @@ class EnvManager(object):
 
                 return VirtualEnv(venv)
 
-            create_venv = self._config.get("virtualenvs.create", True)
+            create_venv = self._poetry.config.get("virtualenvs.create", True)
 
             if not create_venv:
                 return SystemEnv(Path(sys.prefix))
 
-            venv_path = self._config.get("virtualenvs.path")
+            venv_path = self._poetry.config.get("virtualenvs.path")
             if venv_path is None:
                 venv_path = Path(CACHE_DIR) / "virtualenvs"
             else:
@@ -303,13 +324,13 @@ class EnvManager(object):
 
         return VirtualEnv(prefix, base_prefix)
 
-    def list(self, cwd, name=None):  # type: (Path, Optional[str]) -> List[VirtualEnv]
+    def list(self, name=None):  # type: (Optional[str]) -> List[VirtualEnv]
         if name is None:
-            name = cwd.name
+            name = self._poetry.package.name
 
-        venv_name = self.generate_env_name(name, str(cwd))
+        venv_name = self.generate_env_name(name, str(self._poetry.file.parent))
 
-        venv_path = self._config.get("virtualenvs.path")
+        venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
@@ -320,18 +341,19 @@ class EnvManager(object):
             for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
         ]
 
-    def remove(self, python, cwd):  # type: (str, Optional[Path]) -> Env
-        venv_path = self._config.get("virtualenvs.path")
+    def remove(self, python):  # type: (str) -> Env
+        venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:
             venv_path = Path(venv_path)
 
+        cwd = self._poetry.file.parent
         envs_file = TomlFile(venv_path / self.ENVS_FILE)
-        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
         if python.startswith(base_env_name):
-            venvs = self.list(cwd)
+            venvs = self.list()
             for venv in venvs:
                 if venv.path.name == python:
                     # Exact virtualenv name
@@ -413,20 +435,21 @@ class EnvManager(object):
         return VirtualEnv(venv)
 
     def create_venv(
-        self, cwd, io, name=None, executable=None, force=False
-    ):  # type: (Path, IO, Optional[str], Optional[str], bool) -> Env
+        self, io, name=None, executable=None, force=False
+    ):  # type: (IO, Optional[str], Optional[str], bool) -> Env
         if self._env is not None and not force:
             return self._env
 
-        env = self.get(cwd, reload=True)
+        cwd = self._poetry.file.parent
+        env = self.get(reload=True)
         if env.is_venv() and not force:
             # Already inside a virtualenv.
             return env
 
-        create_venv = self._config.get("virtualenvs.create")
-        root_venv = self._config.get("virtualenvs.in-project")
+        create_venv = self._poetry.config.get("virtualenvs.create")
+        root_venv = self._poetry.config.get("virtualenvs.in-project")
 
-        venv_path = self._config.get("virtualenvs.path")
+        venv_path = self._poetry.config.get("virtualenvs.path")
         if root_venv:
             venv_path = cwd / ".venv"
         elif venv_path is None:
@@ -435,8 +458,9 @@ class EnvManager(object):
             venv_path = Path(venv_path)
 
         if not name:
-            name = cwd.name
+            name = self._poetry.package.name
 
+        python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
             python_minor = decode(
@@ -449,8 +473,83 @@ class EnvManager(object):
                         ]
                     ),
                     shell=True,
+                ).strip()
+            )
+
+        supported_python = self._poetry.package.python_constraint
+        if not supported_python.allows(Version.parse(python_minor)):
+            # The currently activated or chosen Python version
+            # is not compatible with the Python constraint specified
+            # for the project.
+            # If an executable has been specified, we stop there
+            # and notify the user of the incompatibility.
+            # Otherwise, we try to find a compatible Python version.
+            if executable:
+                raise NoCompatiblePythonVersionFound(
+                    self._poetry.package.python_versions, python_minor
+                )
+
+            io.write_line(
+                "<warning>The currently activated Python version {} "
+                "is not supported by the project ({}).\n"
+                "Trying to find and use a compatible version.</warning> ".format(
+                    python_patch, self._poetry.package.python_versions
                 )
             )
+
+            for python_to_try in reversed(
+                sorted(
+                    self._poetry.package.AVAILABLE_PYTHONS,
+                    key=lambda v: (v.startswith("3"), -len(v), v),
+                )
+            ):
+                if len(python_to_try) == 1:
+                    if not parse_constraint("^{}.0".format(python_to_try)).allows_any(
+                        supported_python
+                    ):
+                        continue
+                elif not supported_python.allows_all(
+                    parse_constraint(python_to_try + ".*")
+                ):
+                    continue
+
+                python = "python" + python_to_try
+
+                if io.is_debug():
+                    io.write_line("<debug>Trying {}</debug>".format(python))
+
+                try:
+                    python_patch = decode(
+                        subprocess.check_output(
+                            " ".join(
+                                [
+                                    python,
+                                    "-c",
+                                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                                ]
+                            ),
+                            stderr=subprocess.STDOUT,
+                            shell=True,
+                        ).strip()
+                    )
+                except CalledProcessError:
+                    continue
+
+                if not python_patch:
+                    continue
+
+                if supported_python.allows(Version.parse(python_patch)):
+                    io.write_line(
+                        "Using <info>{}</info> ({})".format(python, python_patch)
+                    )
+                    executable = python
+                    python_minor = ".".join(python_patch.split(".")[:2])
+                    break
+
+            if not executable:
+                raise NoCompatiblePythonVersionFound(
+                    self._poetry.package.python_versions
+                )
 
         if root_venv:
             venv = venv_path
@@ -503,7 +602,8 @@ class EnvManager(object):
 
         return VirtualEnv(venv)
 
-    def build_venv(self, path, executable=None):
+    @classmethod
+    def build_venv(cls, path, executable=None):
         if executable is not None:
             # Create virtualenv by using an external executable
             try:

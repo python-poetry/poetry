@@ -1,9 +1,13 @@
-import collections
 import os
 import re
 import shutil
 import stat
 import tempfile
+
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 from contextlib import contextmanager
 from typing import List
@@ -144,11 +148,7 @@ def safe_rmtree(path):
 
 def merge_dicts(d1, d2):
     for k, v in d2.items():
-        if (
-            k in d1
-            and isinstance(d1[k], dict)
-            and isinstance(d2[k], collections.Mapping)
-        ):
+        if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])
         else:
             d1[k] = d2[k]
