@@ -1811,3 +1811,27 @@ def test_solver_discards_packages_with_empty_markers(
             {"job": "install", "package": package_a},
         ],
     )
+
+
+def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.5"
+    package.add_dependency("A", {"version": "^1.0", "python": "~2.7"}, category="dev")
+    package.add_dependency("A", {"version": "^2.0", "python": "^3.5"}, category="dev")
+
+    package_a100 = get_package("A", "1.0.0")
+    package_a200 = get_package("A", "2.0.0")
+
+    repo.add_package(package_a100)
+    repo.add_package(package_a200)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_a100},
+            {"job": "install", "package": package_a200},
+        ],
+    )

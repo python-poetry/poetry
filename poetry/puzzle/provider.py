@@ -534,8 +534,8 @@ class Provider:
     ):  # type: (DependencyPackage) -> DependencyPackage
         if package.is_root():
             package = package.clone()
-
-        if not package.is_root() and package.source_type not in {
+            requires = package.all_requires
+        elif not package.is_root() and package.source_type not in {
             "directory",
             "file",
             "url",
@@ -550,10 +550,13 @@ class Provider:
                     repository=package.dependency.source_name,
                 ),
             )
+            requires = package.requires
+        else:
+            requires = package.requires
 
         dependencies = [
             r
-            for r in package.requires
+            for r in requires
             if self._package.python_constraint.allows_any(r.python_constraint)
         ]
 
@@ -582,6 +585,8 @@ class Provider:
 
             duplicates[dep.name].append(dep)
 
+        print(package)
+        print(duplicates)
         dependencies = []
         for dep_name, deps in duplicates.items():
             if len(deps) == 1:
