@@ -88,8 +88,14 @@ class Builder(object):
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
             excluded_path = Path(self._path, excluded_glob)
-            if excluded_path.is_dir():
-                excluded_glob = str(Path(excluded_glob, "**/*"))
+
+            try:
+                is_dir = excluded_path.is_dir()
+            except OSError:
+                # On Windows, testing if a path with a glob is a directory will raise an OSError
+                is_dir = False
+            if is_dir:
+                excluded_glob = Path(excluded_glob, "**/*").as_posix()
 
             for excluded in self._path.glob(excluded_glob):
                 explicitely_excluded.add(excluded.relative_to(self._path).as_posix())
