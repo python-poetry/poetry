@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
 import re
 import shutil
 import tempfile
-
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import Set
@@ -17,11 +15,9 @@ from poetry.utils._compat import glob
 from poetry.utils._compat import lru_cache
 from poetry.utils._compat import to_str
 from poetry.vcs import get_vcs
-
 from ..metadata import Metadata
 from ..utils.module import Module
 from ..utils.package_include import PackageInclude
-
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
 
@@ -34,7 +30,6 @@ Summary: {summary}
 
 
 class Builder(object):
-
     AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
 
     format = None
@@ -86,8 +81,18 @@ class Builder(object):
 
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
+            excluded_path = Path(self._path, excluded_glob)
+
+            try:
+                is_dir = excluded_path.is_dir()
+            except OSError:
+                # On Windows, testing if a path with a glob is a directory will raise an OSError
+                is_dir = False
+            if is_dir:
+                excluded_glob = Path(excluded_glob, "**/*")
+
             for excluded in glob(
-                os.path.join(self._path.as_posix(), str(excluded_glob)), recursive=True
+                Path(self._path, excluded_glob).as_posix(), recursive=True
             ):
                 explicitely_excluded.add(
                     Path(excluded).relative_to(self._path).as_posix()

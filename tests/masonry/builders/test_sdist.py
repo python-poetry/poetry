@@ -410,6 +410,38 @@ def test_default_with_excluded_data(mocker):
         assert "my-package-1.2.3/PKG-INFO" in names
 
 
+def test_src_excluded_nested_data():
+    module_path = fixtures_dir / "exclude_nested_data_toml"
+    poetry = Factory().create_poetry(module_path)
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    builder.build()
+
+    sdist = module_path / "dist" / "my-package-1.2.3.tar.gz"
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert len(names) == len(set(names))
+        assert "my-package-1.2.3/LICENSE" in names
+        assert "my-package-1.2.3/README.rst" in names
+        assert "my-package-1.2.3/pyproject.toml" in names
+        assert "my-package-1.2.3/setup.py" in names
+        assert "my-package-1.2.3/PKG-INFO" in names
+        assert "my-package-1.2.3/my_package/__init__.py" in names
+        assert "my-package-1.2.3/my_package/data/sub_data/data2.txt" not in names
+        assert "my-package-1.2.3/my_package/data/sub_data/data3.txt" not in names
+        assert "my-package-1.2.3/my_package/data/data1.txt" not in names
+        assert "my-package-1.2.3/my_package/puplic/publicdata.txt" in names
+        assert "my-package-1.2.3/my_package/public/item1/itemdata1.txt" not in names
+        assert (
+            "my-package-1.2.3/my_package/public/item1/subitem/subitemdata.txt"
+            not in names
+        )
+        assert "my-package-1.2.3/my_package/public/item2/itemdata2.txt" not in names
+
+
 def test_proper_python_requires_if_two_digits_precision_version_specified():
     poetry = Factory().create_poetry(project("simple_version"))
 
