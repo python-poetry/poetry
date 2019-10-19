@@ -95,10 +95,14 @@ class Builder(object):
                 # On Windows, testing if a path with a glob is a directory will raise an OSError
                 is_dir = False
             if is_dir:
-                excluded_glob = Path(excluded_glob, "**/*").as_posix()
+                excluded_glob = Path(excluded_glob, "**/*")
 
-            for excluded in self._path.glob(excluded_glob):
-                explicitely_excluded.add(excluded.relative_to(self._path).as_posix())
+            for excluded in glob(
+                Path(self._path, excluded_glob).as_posix(), recursive=True
+            ):
+                explicitely_excluded.add(
+                    Path(excluded).relative_to(self._path).as_posix()
+                )
 
         ignored = vcs_ignored_files | explicitely_excluded
         result = set()
