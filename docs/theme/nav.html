@@ -1,4 +1,4 @@
-<a class="{% if nav_item.active%}current{%endif%}" href="{{ nav_item.url }}">{{ nav_item.title }}</a>
+<a class="{% if nav_item.active%}current{%endif%}" href="{{ base_url }}/{{ nav_item.url }}">{{ nav_item.title }}</a>
 
 {%- if nav_item == page or nav_item.children %}
 <ul class="subnav">
