@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os
 import re
+import sys
 
 from typing import Dict
 from typing import List
@@ -15,7 +16,6 @@ from tomlkit import inline_table
 from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import urlparse
-from poetry.utils.helpers import temporary_directory
 
 from .command import Command
 from .env_command import EnvCommand
@@ -35,7 +35,7 @@ class InitCommand(Command):
         option(
             "dependency",
             None,
-            "Package to require with an optional version constraint, "
+            "Package to require, with an optional version constraint, "
             "e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
@@ -43,7 +43,7 @@ class InitCommand(Command):
         option(
             "dev-dependency",
             None,
-            "Package to require for development with an optional version constraint, "
+            "Package to require for development, with an optional version constraint, "
             "e.g. requests:^2.10.0 or requests=2.11.1.",
             flag=False,
             multiple=True,
@@ -63,7 +63,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
     def handle(self):
         from poetry.layouts import layout
         from poetry.utils._compat import Path
-        from poetry.utils.env import EnvManager
+        from poetry.utils.env import SystemEnv
         from poetry.vcs.git import GitConfig
 
         if (Path.cwd() / "pyproject.toml").exists():
@@ -126,7 +126,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         question.set_validator(self._validate_license)
         license = self.ask(question)
 
-        current_env = EnvManager().get(Path.cwd())
+        current_env = SystemEnv(Path(sys.executable))
         default_python = "^{}".format(
             ".".join(str(v) for v in current_env.version_info[:2])
         )
@@ -209,7 +209,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         if not requires:
             requires = []
 
-            package = self.ask("Add a package:")
+            package = self.ask(
+                "Search for package to add (or leave blank to continue):"
+            )
             while package is not None:
                 constraint = self._parse_requirements([package])[0]
                 if (

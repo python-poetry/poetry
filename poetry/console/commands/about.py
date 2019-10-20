@@ -5,7 +5,7 @@ class AboutCommand(Command):
 
     name = "about"
 
-    description = "Short information about Poetry."
+    description = "Shows information about Poetry."
 
     def handle(self):
         self.line(

@@ -11,7 +11,7 @@ def test_remove_by_python_version(app, tmp_dir, mocker):
     app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     venv_name = EnvManager.generate_env_name(
-        "simple_project", str(app.poetry.file.parent)
+        "simple-project", str(app.poetry.file.parent)
     )
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
@@ -39,7 +39,7 @@ def test_remove_by_name(app, tmp_dir):
     app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     venv_name = EnvManager.generate_env_name(
-        "simple_project", str(app.poetry.file.parent)
+        "simple-project", str(app.poetry.file.parent)
     )
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()

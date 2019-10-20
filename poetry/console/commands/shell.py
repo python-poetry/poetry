@@ -36,5 +36,5 @@ If one doesn't exist yet, it will be created.
         # Setting this to avoid spawning unnecessary nested shells
         environ["POETRY_ACTIVE"] = "1"
         shell = Shell.get()
-        self.env.execute(shell.path)
+        shell.activate(self.env)
         environ.pop("POETRY_ACTIVE")

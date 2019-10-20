@@ -28,6 +28,7 @@ class MakeReleaseCommand(Command):
         "3.5": "python3.5",
         "3.6": "python3.6",
         "3.7": "python3.7",
+        "3.8": "python3.8",
     }
 
     def handle(self):
@@ -46,7 +47,7 @@ class MakeReleaseCommand(Command):
         self.check_system(pythons)
 
         from poetry import __version__
-        from poetry.poetry import Poetry
+        from poetry.factory import Factory
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
@@ -59,7 +60,7 @@ class MakeReleaseCommand(Command):
         from poetry.utils.helpers import temporary_directory
         from poetry.vcs import get_vcs
 
-        project = Poetry.create(Path.cwd())
+        project = Factory().create_poetry(Path.cwd())
         package = project.package
         del package.dev_requires[:]
 
@@ -217,6 +218,7 @@ class MakeReleaseCommand(Command):
                 subprocess.check_output(
                     [python, "-V"], stderr=subprocess.STDOUT, shell=WINDOWS
                 )
+                subprocess.check_output([python, "-m", "pip", "install", "pip", "-U"])
             except subprocess.CalledProcessError:
                 raise RuntimeError("Python {} is not available".format(version))
 

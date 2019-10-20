@@ -38,6 +38,7 @@ from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
+from poetry.utils.env import VirtualEnv
 from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
 from poetry.utils.toml_file import TomlFile
@@ -172,9 +173,6 @@ class Provider:
             name=dependency.name,
         )
 
-        if dependency.tag or dependency.rev:
-            package.source_reference = dependency.reference
-
         for extra in dependency.extras:
             if extra in package.extras:
                 for dep in package.extras[extra]:
@@ -229,7 +227,9 @@ class Provider:
             )
 
         package.source_url = dependency.path.as_posix()
-        package.hashes = [dependency.hash()]
+        package.files = [
+            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+        ]
 
         for extra in dependency.extras:
             if extra in package.extras:
@@ -278,6 +278,9 @@ class Provider:
 
         package.source_url = dependency.path.as_posix()
 
+        if dependency.base != None:
+            package.root_dir = dependency.base.as_posix()
+
         for extra in dependency.extras:
             if extra in package.extras:
                 for dep in package.extras[extra]:
@@ -324,9 +327,10 @@ class Provider:
             os.chdir(str(directory))
 
             try:
-                cwd = directory
-                venv = EnvManager().get(cwd)
-                venv.run("python", "setup.py", "egg_info")
+                with temporary_directory() as tmp_dir:
+                    EnvManager.build_venv(tmp_dir)
+                    venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+                    venv.run("python", "setup.py", "egg_info")
             except EnvCommandError:
                 result = SetupReader.read_from_directory(directory)
                 if not result["name"]:
@@ -402,16 +406,7 @@ class Provider:
             finally:
                 os.chdir(current_dir)
 
-            if name and name != package_name:
-                # For now, the dependency's name must match the actual package's name
-                raise RuntimeError(
-                    "The dependency name for {} does not match the actual package's name: {}".format(
-                        name, package_name
-                    )
-                )
-
             package = Package(package_name, package_version)
-
             package.description = package_summary
 
             for req in reqs:
@@ -428,6 +423,14 @@ class Provider:
 
             if python_requires:
                 package.python_versions = python_requires
+
+        if name and name != package.name:
+            # For now, the dependency's name must match the actual package's name
+            raise RuntimeError(
+                "The dependency name for {} does not match the actual package's name: {}".format(
+                    name, package.name
+                )
+            )
 
         package.source_type = "directory"
         package.source_url = directory.as_posix()
@@ -531,8 +534,8 @@ class Provider:
     ):  # type: (DependencyPackage) -> DependencyPackage
         if package.is_root():
             package = package.clone()
-
-        if not package.is_root() and package.source_type not in {
+            requires = package.all_requires
+        elif not package.is_root() and package.source_type not in {
             "directory",
             "file",
             "url",
@@ -547,10 +550,13 @@ class Provider:
                     repository=package.dependency.source_name,
                 ),
             )
+            requires = package.requires
+        else:
+            requires = package.requires
 
         dependencies = [
             r
-            for r in package.requires
+            for r in requires
             if self._package.python_constraint.allows_any(r.python_constraint)
         ]
 

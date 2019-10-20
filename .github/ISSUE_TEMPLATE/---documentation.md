@@ -1,6 +1,9 @@
 ---
-name: Documentation issue
-about: Report errors and problems with the documentation (https://poetry.eustace.io/docs/)
+name: "\U0001F4DA Documentation"
+about: Did you find errors, problems, or anything unintelligible in the docs (https://poetry.eustace.io/docs)?
+title: ''
+labels: 'Documentation'
+assignees: ''
 
 ---
 

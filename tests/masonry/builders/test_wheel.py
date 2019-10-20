@@ -7,6 +7,7 @@ from clikit.io import NullIO
 
 from poetry.factory import Factory
 from poetry.masonry.builders import WheelBuilder
+from poetry.masonry.publishing.uploader import Uploader
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
 
@@ -64,7 +65,8 @@ def test_wheel_prerelease():
 
 def test_wheel_localversionlabel():
     module_path = fixtures_dir / "localversionlabel"
-    WheelBuilder.make(Factory().create_poetry(module_path), NullEnv(), NullIO())
+    project = Factory().create_poetry(module_path)
+    WheelBuilder.make(project, NullEnv(), NullIO())
     local_version_string = "localversionlabel-0.1b1+gitbranch.buildno.1"
     whl = module_path / "dist" / (local_version_string + "-py2.py3-none-any.whl")
 
@@ -72,6 +74,9 @@ def test_wheel_localversionlabel():
 
     with zipfile.ZipFile(str(whl)) as z:
         assert local_version_string + ".dist-info/METADATA" in z.namelist()
+
+    uploader = Uploader(project, NullIO())
+    assert whl in uploader.files
 
 
 def test_wheel_package_src():

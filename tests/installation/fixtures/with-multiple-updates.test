@@ -51,7 +51,7 @@ python-versions = "*"
 python-versions = "~2.7 || ^3.4"
 content-hash = "123456789"
 
-[metadata.hashes]
+[metadata.files]
 A = []
 B = []
 C = []

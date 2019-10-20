@@ -176,3 +176,12 @@ def test_pypi_repository_supports_reading_bz2_files():
         assert expected_extras[name] == sorted(
             package.extras[name], key=lambda r: r.name
         )
+
+
+def test_invalid_versions_ignored():
+    repo = MockRepository()
+
+    # the json metadata for this package contains one malformed version
+    # and a correct one.
+    packages = repo.find_packages("pygame-music-grid")
+    assert len(packages) == 1

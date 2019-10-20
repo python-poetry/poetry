@@ -6,21 +6,20 @@ from ..command import Command
 class EnvUseCommand(Command):
 
     name = "use"
-    description = "Activate or create a new virtualenv for the current project."
+    description = "Activates or creates a new virtualenv for the current project."
 
     arguments = [argument("python", "The python executable to use.")]
 
     def handle(self):
         from poetry.utils.env import EnvManager
 
-        poetry = self.poetry
-        manager = EnvManager(poetry.config)
+        manager = EnvManager(self.poetry)
 
         if self.argument("python") == "system":
-            manager.deactivate(poetry.file.parent, self._io)
+            manager.deactivate(self._io)
 
             return
 
-        env = manager.activate(self.argument("python"), poetry.file.parent, self._io)
+        env = manager.activate(self.argument("python"), self._io)
 
         self.line("Using virtualenv: <comment>{}</>".format(env.path))

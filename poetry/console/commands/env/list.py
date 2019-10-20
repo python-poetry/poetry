@@ -6,18 +6,17 @@ from ..command import Command
 class EnvListCommand(Command):
 
     name = "list"
-    description = "List all virtualenvs associated with the current project."
+    description = "Lists all virtualenvs associated with the current project."
 
     options = [option("full-path", None, "Output the full paths of the virtualenvs.")]
 
     def handle(self):
         from poetry.utils.env import EnvManager
 
-        poetry = self.poetry
-        manager = EnvManager(poetry.config)
-        current_env = manager.get(self.poetry.file.parent)
+        manager = EnvManager(self.poetry)
+        current_env = manager.get()
 
-        for venv in manager.list(self.poetry.file.parent):
+        for venv in manager.list():
             name = venv.path.name
             if self.option("full-path"):
                 name = str(venv.path)

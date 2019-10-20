@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 class PyPiRepository(Repository):
 
-    CACHE_VERSION = parse_constraint("0.12.0")
+    CACHE_VERSION = parse_constraint("1.0.0b2")
 
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
         self._url = url
@@ -210,7 +210,7 @@ class PyPiRepository(Repository):
             package.platform = release_info["platform"]
 
         # Adding hashes information
-        package.hashes = release_info["digests"]
+        package.files = release_info["files"]
 
         # Activate extra dependencies
         for extra in extras:
@@ -234,9 +234,17 @@ class PyPiRepository(Repository):
         hits = client.search(search, "or")
 
         for hit in hits:
-            result = Package(hit["name"], hit["version"], hit["version"])
-            result.description = to_str(hit["summary"])
-            results.append(result)
+            try:
+                result = Package(hit["name"], hit["version"], hit["version"])
+                result.description = to_str(hit["summary"])
+                results.append(result)
+            except ParseVersionError:
+                self._log(
+                    'Unable to parse version "{}" for the {} package, skipping'.format(
+                        hit["version"], hit["name"]
+                    ),
+                    level="debug",
+                )
 
         return results
 
@@ -303,7 +311,7 @@ class PyPiRepository(Repository):
             "platform": info["platform"],
             "requires_dist": info["requires_dist"],
             "requires_python": info["requires_python"],
-            "digests": [],
+            "files": [],
             "_cache_version": str(self.CACHE_VERSION),
         }
 
@@ -313,7 +321,12 @@ class PyPiRepository(Repository):
             version_info = []
 
         for file_info in version_info:
-            data["digests"].append(file_info["digests"]["sha256"])
+            data["files"].append(
+                {
+                    "file": file_info["filename"],
+                    "hash": "sha256:" + file_info["digests"]["sha256"],
+                }
+            )
 
         if self._fallback and data["requires_dist"] is None:
             self._log("No dependencies found, downloading archives", level="debug")

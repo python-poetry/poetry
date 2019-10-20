@@ -71,7 +71,7 @@ class PipInstaller(BaseInstaller):
         if update:
             args.append("-U")
 
-        if package.hashes and not package.source_type:
+        if package.files and not package.source_type:
             # Format as a requirements.txt
             # We need to create a requirements.txt file
             # for each package in order to check hashes.
@@ -118,8 +118,9 @@ class PipInstaller(BaseInstaller):
     def requirement(self, package, formatted=False):
         if formatted and not package.source_type:
             req = "{}=={}".format(package.name, package.version)
-            for h in package.hashes:
+            for f in package.files:
                 hash_type = "sha256"
+                h = f["hash"]
                 if ":" in h:
                     hash_type, h = h.split(":")
 
@@ -141,9 +142,14 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "git":
-            return "git+{}@{}#egg={}".format(
+            req = "git+{}@{}#egg={}".format(
                 package.source_url, package.source_reference, package.name
             )
+
+            if package.develop:
+                req = ["-e", req]
+
+            return req
 
         if package.source_type == "url":
             return "{}#egg={}".format(package.source_url, package.name)
@@ -164,7 +170,7 @@ class PipInstaller(BaseInstaller):
 
     def install_directory(self, package):
         from poetry.masonry.builder import SdistBuilder
-        from poetry.poetry import Poetry
+        from poetry.factory import Factory
         from poetry.utils._compat import decode
         from poetry.utils.env import NullEnv
         from poetry.utils.toml_file import TomlFile
@@ -197,7 +203,9 @@ class PipInstaller(BaseInstaller):
             # file since pip, as of this comment, does not support
             # build-system for editable packages
             # We also need it for non-PEP-517 packages
-            builder = SdistBuilder(Poetry.create(pyproject.parent), NullEnv(), NullIO())
+            builder = SdistBuilder(
+                Factory().create_poetry(pyproject.parent), NullEnv(), NullIO()
+            )
 
             with open(setup, "w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
@@ -231,6 +239,6 @@ class PipInstaller(BaseInstaller):
         pkg = Package(package.name, package.version)
         pkg.source_type = "directory"
         pkg.source_url = str(src_dir)
-        pkg.develop = True
+        pkg.develop = package.develop
 
         self.install_directory(pkg)

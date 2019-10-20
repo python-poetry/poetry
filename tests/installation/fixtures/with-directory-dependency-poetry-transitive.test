@@ -35,6 +35,6 @@ url = "tests/fixtures/directory/project_with_transitive_directory_dependencies"
 content-hash = "123456789"
 python-versions = "*"
 
-[metadata.hashes]
+[metadata.files]
 project-with-extras = []
 project-with-transitive-directory-dependencies = []

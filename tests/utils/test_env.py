@@ -6,9 +6,11 @@ import tomlkit
 from clikit.io import NullIO
 from poetry.semver import Version
 
+from poetry.factory import Factory
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
+from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import VirtualEnv
 from poetry.utils.toml_file import TomlFile
 
@@ -25,30 +27,54 @@ print("nullpackage loaded"),
 """
 
 
-def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, config):
+@pytest.fixture()
+def poetry(config):
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent / "fixtures" / "simple_project"
+    )
+    poetry.set_config(config)
+
+    return poetry
+
+
+@pytest.fixture()
+def manager(poetry):
+    return EnvManager(poetry)
+
+
+@pytest.fixture
+def tmp_venv(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "venv"
+
+    manager.build_venv(str(venv_path))
+
+    venv = VirtualEnv(venv_path)
+    yield venv
+
+    shutil.rmtree(str(venv.path))
+
+
+def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, manager):
     venv_path = Path(tmp_dir) / "Virtual Env"
 
-    EnvManager(config).build_venv(str(venv_path))
+    manager.build_venv(str(venv_path))
 
     venv = VirtualEnv(venv_path)
 
     assert venv.run("python", "-V", shell=True).startswith("Python")
 
 
-def test_env_get_in_project_venv(tmp_dir, config):
+def test_env_get_in_project_venv(manager, poetry):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    (Path(tmp_dir) / ".venv").mkdir()
+    (poetry.file.parent / ".venv").mkdir()
 
-    venv = EnvManager(config).get(Path(tmp_dir))
+    venv = manager.get()
 
-    assert venv.path == Path(tmp_dir) / ".venv"
+    assert venv.path == poetry.file.parent / ".venv"
 
     shutil.rmtree(str(venv.path))
-
-
-CWD = Path(__file__).parent.parent / "fixtures" / "simple_project"
 
 
 def build_venv(path, executable=None):
@@ -72,7 +98,7 @@ def check_output_wrapper(version=Version.parse("3.7.1")):
 
 
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
-    tmp_dir, config, mocker
+    tmp_dir, manager, poetry, config, mocker
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -89,8 +115,8 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
-    env = EnvManager(config).activate("python3.7", CWD, NullIO())
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    env = manager.activate("python3.7", NullIO())
+    venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
 
     m.assert_called_with(
         os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
@@ -106,11 +132,13 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     assert env.base == Path("/prefix")
 
 
-def test_activate_activates_existing_virtualenv_no_envs_file(tmp_dir, config, mocker):
+def test_activate_activates_existing_virtualenv_no_envs_file(
+    tmp_dir, manager, poetry, config, mocker
+):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
 
@@ -126,7 +154,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(tmp_dir, config, mo
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
-    env = EnvManager(config).activate("python3.7", CWD, NullIO())
+    env = manager.activate("python3.7", NullIO())
 
     m.assert_not_called()
 
@@ -140,11 +168,13 @@ def test_activate_activates_existing_virtualenv_no_envs_file(tmp_dir, config, mo
     assert env.base == Path("/prefix")
 
 
-def test_activate_activates_same_virtualenv_with_envs_file(tmp_dir, config, mocker):
+def test_activate_activates_same_virtualenv_with_envs_file(
+    tmp_dir, manager, poetry, config, mocker
+):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
@@ -165,7 +195,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(tmp_dir, config, mock
     )
     m = mocker.patch("poetry.utils.env.EnvManager.create_venv")
 
-    env = EnvManager(config).activate("python3.7", CWD, NullIO())
+    env = manager.activate("python3.7", NullIO())
 
     m.assert_not_called()
 
@@ -179,12 +209,12 @@ def test_activate_activates_same_virtualenv_with_envs_file(tmp_dir, config, mock
 
 
 def test_activate_activates_different_virtualenv_with_envs_file(
-    tmp_dir, config, mocker
+    tmp_dir, manager, poetry, config, mocker
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
@@ -204,7 +234,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
-    env = EnvManager(config).activate("python3.6", CWD, NullIO())
+    env = manager.activate("python3.6", NullIO())
 
     m.assert_called_with(
         os.path.join(tmp_dir, "{}-py3.6".format(venv_name)), executable="python3.6"
@@ -219,11 +249,13 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     assert env.base == Path("/prefix")
 
 
-def test_activate_activates_recreates_for_different_patch(tmp_dir, config, mocker):
+def test_activate_activates_recreates_for_different_patch(
+    tmp_dir, manager, poetry, config, mocker
+):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
@@ -254,7 +286,7 @@ def test_activate_activates_recreates_for_different_patch(tmp_dir, config, mocke
         "poetry.utils.env.EnvManager.remove_venv", side_effect=remove_venv
     )
 
-    env = EnvManager(config).activate("python3.7", CWD, NullIO())
+    env = manager.activate("python3.7", NullIO())
 
     build_venv_m.assert_called_with(
         os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
@@ -273,11 +305,13 @@ def test_activate_activates_recreates_for_different_patch(tmp_dir, config, mocke
     assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)).exists()
 
 
-def test_activate_does_not_recreate_when_switching_minor(tmp_dir, config, mocker):
+def test_activate_does_not_recreate_when_switching_minor(
+    tmp_dir, manager, poetry, config, mocker
+):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
@@ -303,7 +337,7 @@ def test_activate_does_not_recreate_when_switching_minor(tmp_dir, config, mocker
         "poetry.utils.env.EnvManager.remove_venv", side_effect=remove_venv
     )
 
-    env = EnvManager(config).activate("python3.6", CWD, NullIO())
+    env = manager.activate("python3.6", NullIO())
 
     build_venv_m.assert_not_called()
     remove_venv_m.assert_not_called()
@@ -318,11 +352,13 @@ def test_activate_does_not_recreate_when_switching_minor(tmp_dir, config, mocker
     assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
 
 
-def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker):
+def test_deactivate_non_activated_but_existing(
+    tmp_dir, manager, poetry, config, mocker
+):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     (
         Path(tmp_dir)
@@ -336,8 +372,8 @@ def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker):
         side_effect=check_output_wrapper(),
     )
 
-    EnvManager(config).deactivate(CWD, NullIO())
-    env = EnvManager(config).get(CWD)
+    manager.deactivate(NullIO())
+    env = manager.get()
 
     assert env.path == Path(tmp_dir) / "{}-py{}".format(
         venv_name, ".".join(str(c) for c in sys.version_info[:2])
@@ -345,11 +381,11 @@ def test_deactivate_non_activated_but_existing(tmp_dir, config, mocker):
     assert Path("/prefix")
 
 
-def test_deactivate_activated(tmp_dir, config, mocker):
+def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
     other_version = Version.parse("3.4") if version.major == 2 else version.next_minor
     (
@@ -375,8 +411,8 @@ def test_deactivate_activated(tmp_dir, config, mocker):
         side_effect=check_output_wrapper(),
     )
 
-    EnvManager(config).deactivate(CWD, NullIO())
-    env = EnvManager(config).get(CWD)
+    manager.deactivate(NullIO())
+    env = manager.get()
 
     assert env.path == Path(tmp_dir) / "{}-py{}.{}".format(
         venv_name, version.major, version.minor
@@ -388,11 +424,11 @@ def test_deactivate_activated(tmp_dir, config, mocker):
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
-    tmp_dir, config, mocker
+    tmp_dir, manager, poetry, config, mocker
 ):
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
@@ -411,30 +447,30 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
         side_effect=[("/prefix", None)],
     )
 
-    env = EnvManager(config).get(CWD)
+    env = manager.get()
 
     assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
     assert env.base == Path("/prefix")
 
 
-def test_list(tmp_dir, config):
+def test_list(tmp_dir, manager, poetry, config):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
 
-    venvs = EnvManager(config).list(CWD)
+    venvs = manager.list()
 
     assert 2 == len(venvs)
     assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venvs[0].path
     assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == venvs[1].path
 
 
-def test_remove_by_python_version(tmp_dir, config, mocker):
+def test_remove_by_python_version(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
 
@@ -443,18 +479,16 @@ def test_remove_by_python_version(tmp_dir, config, mocker):
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    manager = EnvManager(config)
-
-    venv = manager.remove("3.6", CWD)
+    venv = manager.remove("3.6")
 
     assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
     assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
 
 
-def test_remove_by_name(tmp_dir, config, mocker):
+def test_remove_by_name(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
 
@@ -463,18 +497,16 @@ def test_remove_by_name(tmp_dir, config, mocker):
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    manager = EnvManager(config)
-
-    venv = manager.remove("{}-py3.6".format(venv_name), CWD)
+    venv = manager.remove("{}-py3.6".format(venv_name))
 
     assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
     assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
 
 
-def test_remove_also_deactivates(tmp_dir, config, mocker):
+def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
-    venv_name = EnvManager.generate_env_name("simple_project", str(CWD))
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
 
@@ -488,27 +520,13 @@ def test_remove_also_deactivates(tmp_dir, config, mocker):
     doc[venv_name] = {"minor": "3.6", "patch": "3.6.6"}
     envs_file.write(doc)
 
-    manager = EnvManager(config)
-
-    venv = manager.remove("python3.6", CWD)
+    venv = manager.remove("python3.6")
 
     assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
     assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
 
     envs = envs_file.read()
     assert venv_name not in envs
-
-
-@pytest.fixture
-def tmp_venv(tmp_dir, config, request):
-    venv_path = Path(tmp_dir) / "venv"
-
-    EnvManager(config).build_venv(str(venv_path))
-
-    venv = VirtualEnv(venv_path)
-    yield venv
-
-    shutil.rmtree(str(venv.path))
 
 
 def test_env_has_symlinks_on_nix(tmp_dir, tmp_venv):
@@ -533,8 +551,110 @@ def test_run_with_input(tmp_dir, tmp_venv):
 def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
 
     with pytest.raises(EnvCommandError) as processError:
-
         # Test command that will return non-zero returncode.
-        result = tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
+        tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
 
     assert processError.value.e.returncode == 1
+
+
+def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^3.6"
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.7.5")),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    m.assert_called_with(
+        str(Path("/foo/virtualenvs/{}-py3.7".format(venv_name))), executable="python3"
+    )
+
+
+def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific_ones(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^3.6"
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output", side_effect=["3.5.3", "3.8.0"]
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    m.assert_called_with(
+        str(Path("/foo/virtualenvs/{}-py3.8".format(venv_name))), executable="python3.8"
+    )
+
+
+def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^4.8"
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output", side_effect=["", "", "", ""]
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    with pytest.raises(NoCompatiblePythonVersionFound) as e:
+        manager.create_venv(NullIO())
+
+    expected_message = (
+        "Poetry was unable to find a compatible version. "
+        "If you have one, you can explicitly use it "
+        'via the "env use" command.'
+    )
+
+    assert expected_message == str(e.value)
+    assert 0 == m.call_count
+
+
+def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^4.8"
+
+    mocker.patch("poetry.utils._compat.subprocess.check_output", side_effect=["3.8.0"])
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    with pytest.raises(NoCompatiblePythonVersionFound) as e:
+        manager.create_venv(NullIO(), executable="3.8")
+
+    expected_message = (
+        "The specified Python version (3.8.0) is not supported by the project (^4.8).\n"
+        "Please choose a compatible version or loosen the python constraint "
+        "specified in the pyproject.toml file."
+    )
+
+    assert expected_message == str(e.value)
+    assert 0 == m.call_count

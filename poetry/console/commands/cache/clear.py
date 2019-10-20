@@ -12,7 +12,7 @@ class CacheClearCommand(Command):
     description = "Clears Poetry's cache."
 
     arguments = [argument("cache", description="The name of the cache to clear.")]
-    options = [option("all", description="Clear all entries in cache.")]
+    options = [option("all", description="Clear all entries in the cache.")]
 
     def handle(self):
         from cachy import CacheManager

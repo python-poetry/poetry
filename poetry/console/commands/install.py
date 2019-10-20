@@ -9,14 +9,14 @@ class InstallCommand(EnvCommand):
     description = "Installs the project dependencies."
 
     options = [
-        option("no-dev", None, "Do not install dev dependencies."),
+        option("no-dev", None, "Do not install the development dependencies."),
         option(
             "no-root", None, "Do not install the root package (the current project)."
         ),
         option(
             "dry-run",
             None,
-            "Outputs the operations but will not execute anything "
+            "Output the operations but do not execute anything "
             "(implicitly enables --verbose).",
         ),
         option(
