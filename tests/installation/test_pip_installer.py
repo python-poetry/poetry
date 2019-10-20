@@ -145,10 +145,10 @@ def test_install_with_client_cert():
     # Need to do the str(Path()) bit because Windows paths get modified by Path
     assert cmd[cert_index + 1] == str(Path(client_path))
 
+
 def test_requirement_git_develop_true(installer, package_git):
     package_git.develop = True
     result = installer.requirement(package_git)
     expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
 
     assert expected == result
-
