@@ -5,6 +5,7 @@ from poetry.io.null_io import NullIO
 from poetry.packages.package import Package
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
+from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
 
 
@@ -87,6 +88,62 @@ def test_install_with_non_pypi_default_repository(pool, installer):
 
     installer.install(foo)
     installer.install(bar)
+
+
+def test_install_with_cert():
+    ca_path = "path/to/cert.pem"
+    pool = Pool()
+
+    default = LegacyRepository("default", "https://foo.bar", cert=Path(ca_path))
+
+    pool.add_repository(default, default=True)
+
+    null_env = NullEnv()
+
+    installer = PipInstaller(null_env, NullIO(), pool)
+
+    foo = Package("foo", "0.0.0")
+    foo.source_type = "legacy"
+    foo.source_reference = default._name
+    foo.source_url = default._url
+
+    installer.install(foo)
+
+    assert len(null_env.executed) == 1
+    cmd = null_env.executed[0]
+    assert "--cert" in cmd
+    cert_index = cmd.index("--cert")
+    # Need to do the str(Path()) bit because Windows paths get modified by Path
+    assert cmd[cert_index + 1] == str(Path(ca_path))
+
+
+def test_install_with_client_cert():
+    client_path = "path/to/client.pem"
+    pool = Pool()
+
+    default = LegacyRepository(
+        "default", "https://foo.bar", client_cert=Path(client_path)
+    )
+
+    pool.add_repository(default, default=True)
+
+    null_env = NullEnv()
+
+    installer = PipInstaller(null_env, NullIO(), pool)
+
+    foo = Package("foo", "0.0.0")
+    foo.source_type = "legacy"
+    foo.source_reference = default._name
+    foo.source_url = default._url
+
+    installer.install(foo)
+
+    assert len(null_env.executed) == 1
+    cmd = null_env.executed[0]
+    assert "--client-cert" in cmd
+    cert_index = cmd.index("--client-cert")
+    # Need to do the str(Path()) bit because Windows paths get modified by Path
+    assert cmd[cert_index + 1] == str(Path(client_path))
 
 
 def test_requirement_git_develop_true(installer, package_git):

@@ -52,6 +52,12 @@ class PipInstaller(BaseInstaller):
                 )
                 args += ["--trusted-host", parsed.hostname]
 
+            if repository.cert:
+                args += ["--cert", str(repository.cert)]
+
+            if repository.client_cert:
+                args += ["--client-cert", str(repository.client_cert)]
+
             index_url = repository.authenticated_url
 
             args += ["--index-url", index_url]

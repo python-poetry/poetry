@@ -18,6 +18,7 @@ from keyring.errors import KeyringError
 
 from poetry.config.config import Config
 from poetry.version import Version
+from poetry.utils._compat import Path
 
 _canonicalize_regex = re.compile("[-_]+")
 
@@ -135,6 +136,22 @@ def get_http_basic_auth(
             password = keyring_repository_password_get(repository_name, username)
         return username, password
     return None
+
+
+def get_cert(config, repository_name):  # type: (Config, str) -> Optional[Path]
+    cert = config.get("certificates.{}.cert".format(repository_name))
+    if cert:
+        return Path(cert)
+    else:
+        return None
+
+
+def get_client_cert(config, repository_name):  # type: (Config, str) -> Optional[Path]
+    client_cert = config.get("certificates.{}.client-cert".format(repository_name))
+    if client_cert:
+        return Path(client_cert)
+    else:
+        return None
 
 
 def _on_rm_error(func, path, exc_info):

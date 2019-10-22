@@ -3,7 +3,7 @@ import io
 import math
 import re
 
-from typing import List
+from typing import List, Optional
 
 import requests
 
@@ -14,6 +14,7 @@ from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder, MultipartEncoderMonitor
 
 from poetry.__version__ import __version__
+from poetry.utils._compat import Path
 from poetry.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 
@@ -92,8 +93,16 @@ class Uploader:
     def is_authenticated(self):
         return self._username is not None and self._password is not None
 
-    def upload(self, url):
+    def upload(
+        self, url, cert=None, client_cert=None
+    ):  # type: (str, Optional[Path], Optional[Path]) -> None
         session = self.make_session()
+
+        if cert:
+            session.verify = str(cert)
+
+        if client_cert:
+            session.cert = str(client_cert)
 
         try:
             self._upload(session, url)
