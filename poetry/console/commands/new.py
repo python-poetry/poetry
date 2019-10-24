@@ -1,3 +1,5 @@
+import sys
+
 from cleo import argument
 from cleo import option
 
@@ -18,7 +20,7 @@ class NewCommand(Command):
     def handle(self):
         from poetry.layouts import layout
         from poetry.utils._compat import Path
-        from poetry.utils.env import EnvManager
+        from poetry.utils.env import SystemEnv
         from poetry.vcs.git import GitConfig
 
         if self.option("src"):
@@ -49,7 +51,7 @@ class NewCommand(Command):
             if author_email:
                 author += " <{}>".format(author_email)
 
-        current_env = EnvManager().get(Path.cwd())
+        current_env = SystemEnv(Path(sys.executable))
         default_python = "^{}".format(
             ".".join(str(v) for v in current_env.version_info[:2])
         )
