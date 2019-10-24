@@ -7,7 +7,7 @@ class LockCommand(EnvCommand):
     description = "Locks the project dependencies."
 
     help = """The <info>lock</info> command reads the <comment>pyproject.toml</> file from
-the current directory, processes it, and locks the depdencies in the <comment>poetry.lock</> file.
+the current directory, processes it, and locks the dependencies in the <comment>poetry.lock</> file.
 
 <info>poetry lock</info>
 """
