@@ -209,7 +209,9 @@ if __name__ == "__main__":
     from poetry.console import main
 
     main()
-""".format(python_exe=basename(sys.executable))
+""".format(
+    python_exe=basename(sys.executable)
+)
 
 BAT = u('@echo off\r\npython "{poetry_bin}" %*\r\n')
 
