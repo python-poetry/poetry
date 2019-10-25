@@ -20,6 +20,8 @@
 - Added support for url dependencies ([#1260](https://github.com/sdispater/poetry/pull/1260)).
 - Publishing to PyPI using [API tokens](https://pypi.org/help/#apitoken) is now supported ([#1275](https://github.com/sdispater/poetry/pull/1275)).
 - Licenses can now be identified by their full name.
+- Added support for support for custom certificate authority and client certificates for private repositories.
+- Poetry can now detect and use Conda environments.
 
 ### Changed
 
@@ -49,6 +51,10 @@
 - Fixed packages with invalid metadata triggering an error instead of being skipped.
 - Fixed the generation of invalid lock files in some cases.
 - Git dependencies are now properly locked to a specific revision when specifying a branch or a tag.
+- Fixed the behavior of the `~=` operator.
+- Fixed dependency resolution for conditional development dependencies.
+- Fixed generated dependency constraints when they contain inequality operators.
+- The `run` command now properly handles the `--` separator.
 
 
 ## [0.12.17] - 2019-07-03
