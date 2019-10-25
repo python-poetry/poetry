@@ -1,7 +1,7 @@
 import logging
 
 from cleo.config import ApplicationConfig as BaseApplicationConfig
-from clikit.api.event import ConsoleEvents
+from clikit.api.event import PRE_HANDLE
 from clikit.api.event import PreHandleEvent
 from clikit.api.formatter import Style
 
@@ -22,10 +22,8 @@ class ApplicationConfig(BaseApplicationConfig):
         self.add_style(Style("warning").fg("yellow"))
         self.add_style(Style("debug").fg("black").bold())
 
-        self.add_event_listener(
-            ConsoleEvents.PRE_HANDLE.value, self.register_command_loggers
-        )
-        self.add_event_listener(ConsoleEvents.PRE_HANDLE.value, self.set_env)
+        self.add_event_listener(PRE_HANDLE, self.register_command_loggers)
+        self.add_event_listener(PRE_HANDLE, self.set_env)
 
     def register_command_loggers(
         self, event, event_name, _  # type: PreHandleEvent  # type: str

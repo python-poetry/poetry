@@ -145,10 +145,10 @@ description = "Cleo allows you to create beautiful and testable command-line int
 name = "cleo"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.7.5"
+version = "0.7.6"
 
 [package.dependencies]
-clikit = ">=0.3.1,<0.4.0"
+clikit = ">=0.4.0,<0.5.0"
 
 [[package]]
 category = "dev"
@@ -165,7 +165,7 @@ description = "CliKit is a group of utilities to build beautiful and testable co
 name = "clikit"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.3.2"
+version = "0.4.0"
 
 [package.dependencies]
 pastel = ">=0.1.0,<0.2.0"
@@ -1206,7 +1206,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "5b26d9cb46a5e825534c15d22ae1be3579d51be03653a474b17054b9f2485734"
+content-hash = "217a3a1a7edea0cbedd6e5dfffe1aface3e96d17b947e86d7138a1b233ae3bd7"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.files]
@@ -1284,16 +1284,16 @@ chardet = [
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
 ]
 cleo = [
-    {file = "cleo-0.7.5-py2.py3-none-any.whl", hash = "sha256:2f1cfd55a4b30c002ef86d740ededc9c11d6f89ea0dc56a14abe5aaf32c2015c"},
-    {file = "cleo-0.7.5.tar.gz", hash = "sha256:6c28adbb0815b99e530bb4f783602459ab916c76c4db26c7b934223014eb1a34"},
+    {file = "cleo-0.7.6-py2.py3-none-any.whl", hash = "sha256:9443d67e5b2da79b32d820ae41758dd6a25618345cb10b9a022a695e26b291b9"},
+    {file = "cleo-0.7.6.tar.gz", hash = "sha256:99cf342406f3499cec43270fcfaf93c126c5164092eca201dfef0f623360b409"},
 ]
 click = [
     {file = "Click-7.0-py2.py3-none-any.whl", hash = "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13"},
     {file = "Click-7.0.tar.gz", hash = "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"},
 ]
 clikit = [
-    {file = "clikit-0.3.2-py2.py3-none-any.whl", hash = "sha256:229d259b9ec7adb6ce668aed70059ff79058b22794b958c178c50ece6ade5871"},
-    {file = "clikit-0.3.2.tar.gz", hash = "sha256:b5034efd4dadb65e71544f978c70628dc56df4b0b47b0e6a7e521347dfc07fdf"},
+    {file = "clikit-0.4.0-py2.py3-none-any.whl", hash = "sha256:9f07b56216bc1068f8ed441a5e67a3881fe503cfd6a3a7874f59f72be417cdda"},
+    {file = "clikit-0.4.0.tar.gz", hash = "sha256:6819a5b2a78523be485ea9e1ef380ae8d02da4bffed540f7881fdaafbff41390"},
 ]
 colorama = [
     {file = "colorama-0.4.1-py2.py3-none-any.whl", hash = "sha256:f8ac84de7840f5b9c4e3347b3c1eaa50f7e49c2b07596221daec5edaabbd7c48"},
