@@ -23,6 +23,7 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
+clikit = "^0.4.0"
 cleo = "^0.7.6"
 requests = "^2.18"
 cachy = "^0.3.0"
@@ -54,7 +55,6 @@ keyring = [
 ]
 # Use subprocess32 for Python 2.7 and 3.4
 subprocess32 = { version = "^3.5", python = "~2.7 || ~3.4" }
-clikit = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"
