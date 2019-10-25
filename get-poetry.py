@@ -29,6 +29,7 @@ import sys
 import tarfile
 import tempfile
 
+from os.path import basename
 from contextlib import closing
 from contextlib import contextmanager
 from functools import cmp_to_key
@@ -194,7 +195,7 @@ POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
-BIN = """#!/usr/bin/env python
+BIN = """#!/usr/bin/env {python_exe}
 # -*- coding: utf-8 -*-
 import glob
 import sys
@@ -208,7 +209,7 @@ if __name__ == "__main__":
     from poetry.console import main
 
     main()
-"""
+""".format(python_exe=basename(sys.executable))
 
 BAT = u('@echo off\r\npython "{poetry_bin}" %*\r\n')
 
