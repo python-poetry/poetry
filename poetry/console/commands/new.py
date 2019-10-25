@@ -19,6 +19,7 @@ class NewCommand(Command):
 
     def handle(self):
         from poetry.layouts import layout
+        from poetry.semver import parse_constraint
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
         from poetry.vcs.git import GitConfig
@@ -55,12 +56,21 @@ class NewCommand(Command):
         default_python = "^{}".format(
             ".".join(str(v) for v in current_env.version_info[:2])
         )
+
+        dev_dependencies = {}
+        python_constraint = parse_constraint(default_python)
+        if parse_constraint("<3.5").allows_any(python_constraint):
+            dev_dependencies["pytest"] = "^4.6"
+        if parse_constraint(">=3.5").allows_all(python_constraint):
+            dev_dependencies["pytest"] = "^5.2"
+
         layout_ = layout_(
             name,
             "0.1.0",
             author=author,
             readme_format=readme_format,
             python=default_python,
+            dev_dependencies=dev_dependencies,
         )
         layout_.create(path)
 
