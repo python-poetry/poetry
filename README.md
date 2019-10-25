@@ -334,7 +334,7 @@ the `--no-dev` option.
 poetry install --no-dev
 ```
 
-You can also specify the extras you want installed
+You can also specify the extras you want to be installed
 by passing the `-E|--extras` option (See [Extras](#extras) for more info)
 
 ```bash
@@ -368,8 +368,7 @@ poetry install --no-root
 
 ### update
 
-In order to get the latest versions of the dependencies and to update the `poetry.lock` file,
-you should use the `update` command.
+In order to get the latest versions of the dependencies and to update the `poetry.lock` file, use the `update` command.
 
 ```bash
 poetry update
