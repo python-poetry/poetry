@@ -545,9 +545,7 @@ class EnvManager(object):
                     continue
 
                 if supported_python.allows(Version.parse(python_patch)):
-                    io.write_line(
-                        "Using <info>{}</info> ({})".format(python, python_patch)
-                    )
+                    io.write_line("Using <c1>{}</c1> ({})".format(python, python_patch))
                     executable = python
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
@@ -576,19 +574,19 @@ class EnvManager(object):
                 return SystemEnv(Path(sys.prefix))
 
             io.write_line(
-                "Creating virtualenv <info>{}</> in {}".format(name, str(venv_path))
+                "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
             )
 
             self.build_venv(str(venv), executable=executable)
         else:
             if force:
                 io.write_line(
-                    "Recreating virtualenv <info>{}</> in {}".format(name, str(venv))
+                    "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
                 self.remove_venv(str(venv))
                 self.build_venv(str(venv), executable=executable)
             elif io.is_very_verbose():
-                io.write_line("Virtualenv <info>{}</> already exists.".format(name))
+                io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
 
         # venv detection:
         # stdlib venv may symlink sys.executable, so we can't use realpath.

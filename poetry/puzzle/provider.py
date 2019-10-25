@@ -708,44 +708,42 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<comment>{}</comment>)".format(m2.group(2))
+                    version = " (<b>{}</b>)".format(m2.group(2))
                 else:
                     name = m.group(1)
                     version = ""
 
                 message = (
-                    "<fg=blue>fact</>: <info>{}</info>{} "
-                    "depends on <info>{}</info> (<comment>{}</comment>)".format(
+                    "<fg=blue>fact</>: <c1>{}</c1>{} "
+                    "depends on <c1>{}</c1> (<b>{}</b>)".format(
                         name, version, m.group(2), m.group(3)
                     )
                 )
             elif " is " in message:
                 message = re.sub(
                     "fact: (.+) is (.+)",
-                    "<fg=blue>fact</>: <info>\\1</info> is <comment>\\2</comment>",
+                    "<fg=blue>fact</>: <c1>\\1</c1> is <b>\\2</b>",
                     message,
                 )
             else:
                 message = re.sub(
-                    r"(?<=: )(.+?) \((.+?)\)",
-                    "<info>\\1</info> (<comment>\\2</comment>)",
-                    message,
+                    r"(?<=: )(.+?) \((.+?)\)", "<c1>\\1</c1> (<b>\\2</b>)", message
                 )
                 message = "<fg=blue>fact</>: {}".format(message.split("fact: ")[1])
         elif message.startswith("selecting "):
             message = re.sub(
                 r"selecting (.+?) \((.+?)\)",
-                "<fg=blue>selecting</> <info>\\1</info> (<comment>\\2</comment>)",
+                "<fg=blue>selecting</> <c1>\\1</c1> (<b>\\2</b>)",
                 message,
             )
         elif message.startswith("derived:"):
             m = re.match(r"derived: (.+?) \((.+?)\)$", message)
             if m:
-                message = "<fg=blue>derived</>: <info>{}</info> (<comment>{}</comment>)".format(
+                message = "<fg=blue>derived</>: <c1>{}</c1> (<b>{}</b>)".format(
                     m.group(1), m.group(2)
                 )
             else:
-                message = "<fg=blue>derived</>: <info>{}</info>".format(
+                message = "<fg=blue>derived</>: <c1>{}</c1>".format(
                     message.split("derived: ")[1]
                 )
         elif message.startswith("conflict:"):
@@ -754,14 +752,14 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<comment>{}</comment>)".format(m2.group(2))
+                    version = " (<b>{}</b>)".format(m2.group(2))
                 else:
                     name = m.group(1)
                     version = ""
 
                 message = (
-                    "<fg=red;options=bold>conflict</>: <info>{}</info>{} "
-                    "depends on <info>{}</info> (<comment>{}</comment>)".format(
+                    "<fg=red;options=bold>conflict</>: <c1>{}</c1>{} "
+                    "depends on <c1>{}</c1> (<b>{}</b>)".format(
                         name, version, m.group(2), m.group(3)
                     )
                 )

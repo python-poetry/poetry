@@ -116,11 +116,7 @@ class DebugResolveCommand(InitCommand):
                     current_python_version
                 ) or not env.is_valid_for_marker(pkg.marker):
                     continue
-            row = [
-                "<info>{}</info>".format(pkg.name),
-                "<b>{}</b>".format(pkg.version),
-                "",
-            ]
+            row = ["<c1>{}</c1>".format(pkg.name), "<b>{}</b>".format(pkg.version), ""]
 
             if not pkg.marker.is_any():
                 row[2] = str(pkg.marker)

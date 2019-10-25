@@ -52,7 +52,7 @@ class InitCommand(Command):
     ]
 
     help = """\
-The <info>init</info> command creates a basic <comment>pyproject.toml</> file in the current directory.
+The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the current directory.
 """
 
     def __init__(self):
@@ -249,7 +249,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                         choices.append(found_package.pretty_name)
 
                     self.line(
-                        "Found <info>{}</info> packages matching <info>{}</info>".format(
+                        "Found <info>{}</info> packages matching <c1>{}</c1>".format(
                             len(matches), package
                         )
                     )
@@ -277,7 +277,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                         )
 
                         self.line(
-                            "Using version <info>{}</info> for <info>{}</info>".format(
+                            "Using version <b>{}</b> for <c1>{}</c1>".format(
                                 package_constraint, package
                             )
                         )

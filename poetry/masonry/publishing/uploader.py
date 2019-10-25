@@ -229,7 +229,7 @@ class Uploader:
             encoder = MultipartEncoder(data_to_send)
             bar = self._io.progress_bar(encoder.len)
             bar.set_format(
-                " - Uploading <info>{0}</> <comment>%percent%%</>".format(file.name)
+                " - Uploading <c1>{0}</c1> <b>%percent%%</b>".format(file.name)
             )
             monitor = MultipartEncoderMonitor(
                 encoder, lambda monitor: bar.set_progress(monitor.bytes_read)
@@ -245,13 +245,18 @@ class Uploader:
             )
 
             if resp.ok:
+                bar.set_format(
+                    " - Uploading <c1>{0}</c1> <fg=green>%percent%%</>".format(
+                        file.name
+                    )
+                )
                 bar.finish()
 
                 self._io.write_line("")
             else:
                 if self._io.output.supports_ansi():
                     self._io.overwrite(
-                        " - Uploading <info>{0}</> <error>{1}%</>".format(
+                        " - Uploading <c1>{0}</c1> <error>{1}%</>".format(
                             file.name, int(math.floor(bar._percent * 100))
                         )
                     )

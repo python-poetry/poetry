@@ -77,7 +77,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             return 0
 
         self.line(
-            "  - Installing <info>{}</info> (<comment>{}</comment>)".format(
+            "  - Installing <c1>{}</c1> (<b>{}</b>)".format(
                 self.poetry.package.pretty_name, self.poetry.package.pretty_version
             )
         )
