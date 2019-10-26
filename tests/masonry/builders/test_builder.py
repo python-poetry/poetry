@@ -7,6 +7,8 @@ from poetry.masonry.builders.builder import Builder
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
 
+import pytest
+
 
 def test_builder_find_excluded_files(mocker):
     p = mocker.patch("poetry.vcs.git.Git.get_ignored_files")
@@ -155,3 +157,18 @@ def test_metadata_with_url_dependencies():
         "demo @ https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
         == requires_dist
     )
+
+
+def test_missing_script_files_throws_error():
+    builder = Builder(
+        Factory().create_poetry(
+            Path(__file__).parent / "fixtures" / "missing_script_files"
+        ),
+        NullEnv(),
+        NullIO(),
+    )
+
+    with pytest.raises(RuntimeError) as err:
+        builder.convert_script_files()
+
+    assert "file-script is not found." in err.value.args[0]

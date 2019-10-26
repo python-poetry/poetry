@@ -17,6 +17,7 @@ repository = "https://github.com/sdispater/poetry"
 documentation = "https://poetry.eustace.io/docs"
 
 keywords = ["packaging", "dependency", "poetry"]
+script-files = ["bin/script1.sh", "bin/script2.py"]
 
 classifiers = [
     "Topic :: Software Development :: Build Tools",

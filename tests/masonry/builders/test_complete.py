@@ -168,8 +168,22 @@ def test_complete():
     zip = zipfile.ZipFile(str(whl))
 
     try:
+        # Assert extra file
         assert "my_package/sub_pgk1/extra_file.xml" not in zip.namelist()
 
+        # Assert script files
+        assert "my-package-1.2.3.data/scripts/script1.sh" in zip.namelist()
+        assert "my-package-1.2.3.data/scripts/script2.py" in zip.namelist()
+        assert (
+            "Hello World"
+            in zip.read("my-package-1.2.3.data/scripts/script1.sh").decode()
+        )
+        assert (
+            "Hello World"
+            in zip.read("my-package-1.2.3.data/scripts/script2.py").decode()
+        )
+
+        # Assert entry points
         entry_points = zip.read("my_package-1.2.3.dist-info/entry_points.txt")
 
         assert (
@@ -182,6 +196,8 @@ my-script=my_package:main
 
 """
         )
+
+        # Assert wheel data
         wheel_data = decode(zip.read("my_package-1.2.3.dist-info/WHEEL"))
 
         assert (
@@ -262,6 +278,8 @@ def test_complete_no_vcs():
         "my_package/sub_pkg1/__init__.py",
         "my_package/sub_pkg2/__init__.py",
         "my_package/sub_pkg2/data2/data.json",
+        "my-package-1.2.3.data/scripts/script1.sh",
+        "my-package-1.2.3.data/scripts/script2.py",
         "my_package-1.2.3.dist-info/entry_points.txt",
         "my_package-1.2.3.dist-info/LICENSE",
         "my_package-1.2.3.dist-info/WHEEL",

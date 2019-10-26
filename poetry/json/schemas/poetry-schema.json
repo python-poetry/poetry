@@ -82,8 +82,15 @@
                     },
                     "format": {
                         "oneOf": [
-                            {"type": "string"},
-                            {"type":  "array", "items": {"type":  "string"}}
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
                         ],
                         "description": "The format(s) for which the package must be included."
                     }
@@ -97,6 +104,13 @@
         "exclude": {
             "type": "array",
             "description": "A list of files and folders to exclude."
+        },
+        "script-files": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "description": "A script file that should be included in distribution package."
+            }
         },
         "dependencies": {
             "type": "object",

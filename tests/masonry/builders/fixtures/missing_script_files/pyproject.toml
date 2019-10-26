@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "missing-script-files"
+version = "0.1"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+
+readme = "README.rst"
+script-files = ["not_existing_folder/not_existing_file.sh"]
+
+
+[tool.poetry.dependencies]
+python = "3.6"

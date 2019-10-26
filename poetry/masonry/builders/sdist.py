@@ -171,6 +171,14 @@ class SdistBuilder(Builder):
             before.append("entry_points = \\\n{}\n".format(pformat(entry_points)))
             extra.append("'entry_points': entry_points,")
 
+        file_scripts_full_paths = self.convert_script_files()
+        if len(file_scripts_full_paths) > 0:
+            relative_paths = [
+                str(p.relative_to(self._path)) for p in file_scripts_full_paths
+            ]
+            before.append('scripts = ["{}"]'.format('", "'.join(relative_paths)))
+            extra.append("'scripts': scripts,")
+
         if self._package.python_versions != "*":
             python_requires = self._meta.requires_python
 

@@ -83,14 +83,17 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Poetry
+      shell: cmd
       run: |
         python get-poetry.py --preview -y
         SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
     - name: Install dependencies
+      shell: cmd
       run: |
         SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
         poetry install
     - name: Test
+      shell: cmd
       run: |
         SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
         poetry run pytest -q tests

@@ -3,6 +3,7 @@ import ast
 import pytest
 import shutil
 import tarfile
+import os
 
 from email.parser import Parser
 
@@ -125,6 +126,10 @@ def test_make_setup():
         "my_package.sub_pkg1",
         "my_package.sub_pkg2",
     ]
+    assert ns["scripts"] == [
+        os.path.sep.join(["bin", "script1.sh"]),
+        os.path.sep.join(["bin", "script2.py"]),
+    ]
     assert ns["install_requires"] == ["cachy[msgpack]>=0.2.0,<0.3.0", "cleo>=0.6,<0.7"]
     assert ns["entry_points"] == {
         "console_scripts": [
@@ -173,6 +178,8 @@ def test_find_files_to_add():
         [
             Path("LICENSE"),
             Path("README.rst"),
+            Path("bin/script1.sh"),
+            Path("bin/script2.py"),
             Path("my_package/__init__.py"),
             Path("my_package/data1/test.json"),
             Path("my_package/sub_pkg1/__init__.py"),
@@ -245,7 +252,12 @@ def test_package():
     assert sdist.exists()
 
     with tarfile.open(str(sdist), "r") as tar:
-        assert "my-package-1.2.3/LICENSE" in tar.getnames()
+        tar_file_tree = tar.getnames()
+        assert "my-package-1.2.3/setup.py" in tar_file_tree
+        assert "my-package-1.2.3/pyproject.toml" in tar_file_tree
+        assert "my-package-1.2.3/LICENSE" in tar_file_tree
+        assert "my-package-1.2.3/bin/script1.sh" in tar_file_tree
+        assert "my-package-1.2.3/bin/script2.py" in tar_file_tree
 
 
 def test_module():

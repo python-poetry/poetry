@@ -79,6 +79,7 @@ class WheelBuilder(Builder):
         ) as zip_file:
             self._copy_module(zip_file)
             self._build(zip_file)
+            self._copy_script_files(zip_file)
             self._write_metadata(zip_file)
             self._write_record(zip_file)
 
@@ -173,6 +174,16 @@ class WheelBuilder(Builder):
         for full_path, rel_path in sorted(to_add, key=lambda x: x[1]):
             self._add_file(wheel, full_path, rel_path)
 
+    def _copy_script_files(self, wheel):
+        script_files = self.convert_script_files(self._original_path)
+
+        for script_path in script_files:
+            self._add_file(
+                wheel,
+                script_path,
+                "{}/{}/{}".format(self.wheel_data_folder, "scripts", script_path.name),
+            )
+
     def _write_metadata(self, wheel):
         if (
             "scripts" in self._poetry.local_config
@@ -202,6 +213,11 @@ class WheelBuilder(Builder):
     @property
     def dist_info(self):  # type: () -> str
         return self.dist_info_name(self._package.name, self._meta.version)
+
+    @property
+    def wheel_data_folder(self):  # type: () -> str
+        wheel_data_path = "{}-{}.data".format(self._package.name, self._meta.version)
+        return wheel_data_path
 
     @property
     def wheel_filename(self):  # type: () -> str

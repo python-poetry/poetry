@@ -4,6 +4,8 @@ import shutil
 import tempfile
 from collections import defaultdict
 from contextlib import contextmanager
+
+from typing import Optional
 from typing import Set
 from typing import Union
 
@@ -161,6 +163,16 @@ class Builder(object):
             )
             to_add.append(license_file.relative_to(self._path))
 
+        # If script files exist, add them
+        for script_full_path in self.convert_script_files():
+            self._io.write_line(
+                " - Adding: <comment>{}</comment>".format(
+                    script_full_path.relative_to(self._path)
+                ),
+                VERY_VERBOSE,
+            )
+            to_add.append(script_full_path.relative_to(self._path))
+
         # If a README is specificed we need to include it
         # to avoid errors
         if "readme" in self._poetry.local_config:
@@ -259,6 +271,23 @@ class Builder(object):
             result[groupname] = sorted(result[groupname])
 
         return dict(result)
+
+    def convert_script_files(
+        self, base_path=None
+    ):  # type: (Optional[str]) -> list[Path]
+        script_files = []
+
+        for script_path in self._poetry.local_config.get("script-files", []):
+            full_path = Path.joinpath(base_path or self._path, script_path)
+
+            if not full_path.exists():
+                raise RuntimeError("{} file-script is not found.".format(script_path))
+            if not full_path.is_file():
+                raise RuntimeError("{} file-script is not a file.".format(script_path))
+
+            script_files.append(full_path)
+
+        return script_files
 
     @classmethod
     def convert_author(cls, author):  # type: (...) -> dict

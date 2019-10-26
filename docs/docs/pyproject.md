@@ -203,7 +203,7 @@ url = 'http://example.com/simple'
 
 ## `scripts`
 
-This section describe the scripts or executable that will be installed when installing the package
+This section describe the scripts or executable that will be installed when installing the package.
 
 ```toml
 [tool.poetry.scripts]
@@ -211,6 +211,22 @@ poetry = 'poetry.console:run'
 ```
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+
+### `script-files`
+
+You can include non-Python scripts as well in distribution package.
+
+```toml
+[tool.poetry]
+script-files = ["contrib/run_db_migration.sh", "bin/healthcheck.py"]
+```
+
+It behaves the same way as `setup.py`'s [scripts keyword](https://python-packaging.readthedocs.io/en/latest/command-line-scripts.html#the-scripts-keyword-argument): when you install the package, setuptools will copy the script to the PATH and make it available for general use.
+
+```bash
+poetry install
+poetry run sh run_db_migration.sh
+```
 
 ## `extras`
 
