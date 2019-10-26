@@ -19,7 +19,7 @@ recommended way of installing `poetry`.
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
 ```
 
-or, to install Poetry with Python3:
+or, to install Poetry with Python 3:
 
 ```bash
 wget -qO- https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python3
