@@ -2,6 +2,7 @@ from typing import List
 from typing import Optional
 
 from poetry.utils._compat import Path
+from poetry.utils._compat import glob
 
 
 class Include(object):
@@ -25,7 +26,7 @@ class Include(object):
         self._include = str(include)
         self._formats = formats
 
-        self._elements = sorted(list(self._base.glob(str(self._include))))
+        self._elements = sorted(list(self._glob_include()))
 
     @property
     def base(self):  # type: () -> Path
@@ -43,6 +44,12 @@ class Include(object):
         return len(self._elements) == 0
 
     def refresh(self):  # type: () -> Include
-        self._elements = sorted(list(self._base.glob(self._include)))
+        self._elements = sorted(list(self._glob_include()))
 
         return self
+
+    def _glob_include(self):
+        element_paths_string = list(
+            glob(str(self._base) + "/" + self._include, recursive=True)
+        )
+        return map(lambda path_string: Path(path_string), element_paths_string)
