@@ -101,7 +101,7 @@ def test_install_with_non_pypi_default_repository(pool, installer):
 
     find_links_execution = installer._env.executed[-1]
     assert "--find-links" in find_links_execution
-    assert find_links.index_url in find_links_execution
+    assert find_links.full_url in find_links_execution
 
 
 def test_install_with_cert():

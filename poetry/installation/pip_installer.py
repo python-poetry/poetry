@@ -69,7 +69,7 @@ class PipInstaller(BaseInstaller):
                             self._pool.repositories[0].authenticated_url,
                         ]
             else:
-                args += ["--find-links", repository.url + "/" + repository.index_page]
+                args += ["--find-links", repository.url + "/" + repository.file_path]
 
         if update:
             args.append("-U")

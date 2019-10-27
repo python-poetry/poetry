@@ -6,8 +6,10 @@ try:
 except ImportError:
     import urlparse
 
+from poetry.packages.utils.link import Link
 from poetry.repositories.find_links_repository import FindLinksRepository
 from poetry.repositories.find_links_repository import FilteredPage
+from poetry.repositories.find_links_repository import SingleLink
 
 from .test_legacy_repository import MockRepository as LegacyMockRepository
 
@@ -25,12 +27,15 @@ class MockRepository(FindLinksRepository):
         )
 
     def _get(self, name):
-        fixture = self.FIXTURES / "index.html"
-        if not fixture.exists():
-            return
+        if self.single_link:
+            return SingleLink(self.full_url, name)
+        else:
+            fixture = self.FIXTURES / "index.html"
+            if not fixture.exists():
+                return
 
-        with fixture.open(encoding="utf-8") as f:
-            return FilteredPage(self.index_url, name, f.read(), {})
+            with fixture.open(encoding="utf-8") as f:
+                return FilteredPage(self.full_url, name, f.read(), {})
 
     def _download(self, url, dest):
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
@@ -43,25 +48,30 @@ def test_url_parsing():
     test_data = {
         "http://foo.com/bar/index.html": {
             "url": "http://foo.com/bar",
-            "index_page": "index.html",
-            "index_url": "http://foo.com/bar/index.html",
+            "file_path": "index.html",
+            "full_url": "http://foo.com/bar/index.html",
         },
         "http://foo.com/bar/": {
             "url": "http://foo.com/bar",
-            "index_page": "",
-            "index_url": "http://foo.com/bar/",
+            "file_path": "",
+            "full_url": "http://foo.com/bar/",
         },
         "http://foo.com/bar": {
             "url": "http://foo.com/bar",
-            "index_page": "",
-            "index_url": "http://foo.com/bar/",
+            "file_path": "",
+            "full_url": "http://foo.com/bar/",
+        },
+        "http://foo.com/bar/poetry-0.1.0-py3-none-any.whl": {
+            "url": "http://foo.com/bar",
+            "file_path": "poetry-0.1.0-py3-none-any.whl",
+            "full_url": "http://foo.com/bar/poetry-0.1.0-py3-none-any.whl",
         },
     }
     for url, target_data in test_data.items():
         repo = MockRepository(url)
         assert repo.url == target_data["url"]
-        assert repo.index_page == target_data["index_page"]
-        assert repo.index_url == repo.index_url
+        assert repo.file_path == target_data["file_path"]
+        assert repo.full_url == target_data["full_url"]
 
 
 def test_page():
@@ -90,6 +100,22 @@ def test_find_packages():
         package = repo.find_packages(package_name)[0]
         assert package == legacy_repo.find_packages(package_name)[0]
         assert package.source_type == "find_links"
+
+
+def test_single_link():
+    repo = MockRepository("http://foo.com/bar/relative/poetry-0.1.0-py3-none-any.whl")
+
+    assert repo.single_link
+    single_link = repo._get("poetry")
+    assert isinstance(single_link, SingleLink)
+    assert next(single_link.links) == Link(repo.full_url, single_link, None)
+
+    pkg = repo.find_packages("poetry")[0]
+    assert pkg.name == "poetry"
+    assert pkg.version.text == "0.1.0"
+
+    # make sure we don't find other packages
+    assert repo.find_packages("isort") == []
 
 
 def test_package():
