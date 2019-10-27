@@ -523,6 +523,10 @@
                 "secondary": {
                     "type": "boolean",
                     "description": "Declare this repository as secondary, i.e. it will only be looked up last for packages."
+                },
+                "find_links": {
+                    "type": "boolean",
+                    "description": "This repository is defined by an url pointing to a webpage hosting links to archives. Equivalent to the pip --find-links flag."
                 }
             }
         }
