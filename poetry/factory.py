@@ -126,6 +126,7 @@ class Factory(BaseFactory):
     ):  # type: (Dict[str, str], Config) -> LegacyRepository
         from .repositories.auth import Auth
         from .repositories.legacy_repository import LegacyRepository
+        from .repositories.find_links_repository import FindLinksRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert
         from .utils.password_manager import PasswordManager
@@ -134,6 +135,10 @@ class Factory(BaseFactory):
             # PyPI-like repository
             if "name" not in source:
                 raise RuntimeError("Missing [name] in source.")
+            if "find_links" in source and source["find_links"]:
+                repository_class = FindLinksRepository
+            else:
+                repository_class = LegacyRepository
         else:
             raise RuntimeError("Unsupported source specified")
 
@@ -146,7 +151,7 @@ class Factory(BaseFactory):
         else:
             auth = None
 
-        return LegacyRepository(
+        return repository_class(
             name,
             url,
             auth=auth,
