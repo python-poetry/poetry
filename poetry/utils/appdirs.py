@@ -20,6 +20,34 @@ def expanduser(path):
     return expanded
 
 
+def poetry_home_dir():
+    r"""
+    Return full path to the Poetry's installation dir.
+
+    Typical user cache directories are:
+        macOS:      In $POETRY_HOME, in $XDG_PACKAGE_HOME, or in
+                    ~/.poetry. Whichever is found first.
+        Unix:       In $POETRY_HOME, in $XDG_PACKAGE_HOME, or in
+                    ~/.poetry. Whichever is found first.
+        Windows:    C:\Users\<username>\AppData\Local\<AppName>\Cache
+
+    Unfortunately, XDG does not define a variable for system unbound packages.
+    Due to this, we use the variable $XDG_PACKAGE_HOME to find the best place
+    to install Poetry (this is usually set to ~/.local/opt).
+
+    The fallback place to install Poetry is "~/.poetry" (on Windows this is
+    equivalent to "%USERPROFILE%/.poetry".)
+    """
+    home = os.getenv("POETRY_HOME")
+    if not home:
+        home = os.getenv("XDG_PACKAGE_HOME")
+        if home:
+            home = os.path.join(home, "poetry")
+        else:
+            home = os.path.join(expanduser("~"), ".poetry")
+    return home
+
+
 def user_cache_dir(appname):
     r"""
     Return full path to the user-specific cache dir for this application.
@@ -27,7 +55,8 @@ def user_cache_dir(appname):
         "appname" is the name of application.
 
     Typical user cache directories are:
-        macOS:      ~/Library/Caches/<AppName>
+        macOS:      in $XDG_CACHE_HOME, or in ~/Library/Caches/<AppName>.
+                    Whichever is found first in this order.
         Unix:       ~/.cache/<AppName> (XDG default)
         Windows:    C:\Users\<username>\AppData\Local\<AppName>\Cache
 
@@ -43,19 +72,16 @@ def user_cache_dir(appname):
     """
     if WINDOWS:
         # Get the base path
-        path = os.path.normpath(_get_win_folder("CSIDL_LOCAL_APPDATA"))
+        path = os.path.join(os.path.normpath(_get_win_folder(const)), appname)
 
         # Add our app name and Cache directory to it
         path = os.path.join(path, appname, "Cache")
-    elif sys.platform == "darwin":
-        # Get the base path
-        path = expanduser("~/Library/Caches")
-
-        # Add our app name to it
-        path = os.path.join(path, appname)
     else:
         # Get the base path
-        path = os.getenv("XDG_CACHE_HOME", expanduser("~/.cache"))
+        path = os.getenv(
+            "XDG_CACHE_HOME",
+            expanduser("~/Library/Caches" if sys.platform == "darwin" else "~/.cache"),
+        )
 
         # Add our app name to it
         path = os.path.join(path, appname)
@@ -77,7 +103,8 @@ def user_data_dir(appname, roaming=False):
             for a discussion of issues.
 
     Typical user data directories are:
-        macOS:                  ~/Library/Application Support/<AppName>
+        macOS:                  ~/Library/Application Support/<AppName>  # or
+                                in $XDG_DATA_HOME, if defined
         Unix:                   ~/.local/share/<AppName>    # or in
                                 $XDG_DATA_HOME, if defined
         Win XP (not roaming):   C:\Documents and Settings\<username>\ ...
@@ -92,15 +119,18 @@ def user_data_dir(appname, roaming=False):
     """
     if WINDOWS:
         const = roaming and "CSIDL_APPDATA" or "CSIDL_LOCAL_APPDATA"
-        path = os.path.join(os.path.normpath(_get_win_folder(const)), appname)
-    elif sys.platform == "darwin":
-        path = os.path.join(expanduser("~/Library/Application Support/"), appname)
+        path = os.path.normpath(_get_win_folder(const))
     else:
-        path = os.path.join(
-            os.getenv("XDG_DATA_HOME", expanduser("~/.local/share")), appname
+        path = os.getenv(
+            "XDG_DATA_HOME",
+            expanduser(
+                "~/Library/Application Support"
+                if sys.platform == "darwin"
+                else "~/.local/share"
+            ),
         )
 
-    return path
+    return path if not appname else os.path.join(path, appname)
 
 
 def user_config_dir(appname, roaming=True):
@@ -116,8 +146,9 @@ def user_config_dir(appname, roaming=True):
             for a discussion of issues.
 
     Typical user data directories are:
-        macOS:                  same as user_data_dir
-        Unix:                   ~/.config/<AppName>
+        macOS:                  same as user_data_dir or in
+                                $XDG_DATA_HOME, if defined
+        Unix:                   ~/.config/<AppName> (XDG default)
         Win *:                  same as user_data_dir
 
     For Unix, we follow the XDG spec and support $XDG_CONFIG_HOME.
@@ -125,11 +156,16 @@ def user_config_dir(appname, roaming=True):
     """
     if WINDOWS:
         path = user_data_dir(appname, roaming=roaming)
-    elif sys.platform == "darwin":
-        path = user_data_dir(appname)
     else:
-        path = os.getenv("XDG_CONFIG_HOME", expanduser("~/.config"))
-        path = os.path.join(path, appname)
+        path = os.path.join(
+            os.getenv(
+                "XDG_CONFIG_HOME",
+                user_data_dir(None)
+                if sys.platform == "darwin"
+                else expanduser("~/.config"),
+            ),
+            appname,
+        )
 
     return path
 
@@ -142,9 +178,11 @@ def site_config_dirs(appname):
         "appname" is the name of application.
 
     Typical user config directories are:
-        macOS:      /Library/Application Support/<AppName>/
-        Unix:       /etc or $XDG_CONFIG_DIRS[i]/<AppName>/ for each value in
+        macOS:      /Library/Application Support/<AppName>/ or
+                    $XDG_CONFIG_DIRS[i]/<AppName>/ for each value in
                     $XDG_CONFIG_DIRS
+        Unix:       $XDG_CONFIG_DIRS[i]/<AppName>/ for each value in
+                    $XDG_CONFIG_DIRS + /etc
         Win XP:     C:\Documents and Settings\All Users\Application ...
                     ...Data\<AppName>\
         Vista:      (Fail! "C:\ProgramData" is a hidden *system* directory
@@ -155,21 +193,20 @@ def site_config_dirs(appname):
     if WINDOWS:
         path = os.path.normpath(_get_win_folder("CSIDL_COMMON_APPDATA"))
         pathlist = [os.path.join(path, appname)]
-    elif sys.platform == "darwin":
-        pathlist = [os.path.join("/Library/Application Support", appname)]
     else:
         # try looking in $XDG_CONFIG_DIRS
-        xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS", "/etc/xdg")
-        if xdg_config_dirs:
-            pathlist = [
-                os.path.join(expanduser(x), appname)
-                for x in xdg_config_dirs.split(os.pathsep)
-            ]
-        else:
-            pathlist = []
+        xdg_config_dirs = os.getenv(
+            "XDG_CONFIG_DIRS",
+            "~/Library/Application Support" if sys.platform == "darwin" else "/etc/xdg",
+        )
 
-        # always look in /etc directly as well
-        pathlist.append("/etc")
+        if sys.platform != "darwin":
+            xdg_config_dirs += os.pathsep + "/etc"
+
+        pathlist = [
+            os.path.join(expanduser(x), appname)
+            for x in xdg_config_dirs.split(os.pathsep)
+        ]
 
     return pathlist
 
