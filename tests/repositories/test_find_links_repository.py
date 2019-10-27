@@ -70,6 +70,10 @@ def test_page():
         for l1, l2 in zip(page.links, legacy_page.links):
             assert l1 == l2
 
+    page = repo._get("poetry")
+    link = list(page.links)[0]
+    assert link.url == "http://foo.com/bar/relative/poetry-0.1.0-py3-none-any.whl"
+
 
 def test_find_packages():
     repo = MockRepository()
