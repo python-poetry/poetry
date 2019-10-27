@@ -30,7 +30,7 @@ class MockRepository(FindLinksRepository):
             return
 
         with fixture.open(encoding="utf-8") as f:
-            return FilteredPage(self._url + "/" + self.index_page, name, f.read(), {})
+            return FilteredPage(self.index_url, name, f.read(), {})
 
     def _download(self, url, dest):
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
@@ -40,20 +40,28 @@ class MockRepository(FindLinksRepository):
 
 
 def test_url_parsing():
-    # TODO: extend to other URL types
     test_data = {
         "http://foo.com/bar/index.html": {
             "url": "http://foo.com/bar",
             "index_page": "index.html",
+            "index_url": "http://foo.com/bar/index.html",
         },
-        # "http://foo.com/bar/": {"url": "http://foo.com/bar", "index_page": ""},
-        # "http://foo.com/bar": {"url": "http://foo.com/bar", "index_page": ""}
+        "http://foo.com/bar/": {
+            "url": "http://foo.com/bar",
+            "index_page": "",
+            "index_url": "http://foo.com/bar/",
+        },
+        "http://foo.com/bar": {
+            "url": "http://foo.com/bar",
+            "index_page": "",
+            "index_url": "http://foo.com/bar/",
+        },
     }
     for url, target_data in test_data.items():
         repo = MockRepository(url)
-        print(repo.url, repo.index_page)
         assert repo.url == target_data["url"]
         assert repo.index_page == target_data["index_page"]
+        assert repo.index_url == repo.index_url
 
 
 def test_page():

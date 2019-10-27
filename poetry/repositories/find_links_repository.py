@@ -34,6 +34,8 @@ def parse_url(url):  # type: (str) -> Tuple[str, str]
     if "." in path[-1]:
         index_page = path[-1]
         return url_parts._replace(path="/".join(path[:-1])).geturl(), index_page
+    else:
+        return url_parts.geturl().rstrip("/"), ""
 
 
 class FilteredPage(Page):
