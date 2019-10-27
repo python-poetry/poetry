@@ -72,10 +72,7 @@ class Page:
     ]
 
     def __init__(self, url, content, headers):
-        if not url.endswith("/"):
-            url += "/"
-
-        self._url = url
+        self._url = self._parse_url(url)
         encoding = None
         if headers and "Content-Type" in headers:
             content_type, params = cgi.parse_header(headers["Content-Type"])
@@ -156,8 +153,15 @@ class Page:
         % or other characters)."""
         return self._clean_re.sub(lambda match: "%%%2x" % ord(match.group(0)), url)
 
+    def _parse_url(self, url):  # type: (str) -> str
+        if not url.endswith("/"):
+            url += "/"
+        return url
+
 
 class LegacyRepository(PyPiRepository):
+    repository_type = "legacy"
+
     def __init__(
         self, name, url, auth=None, disable_cache=False, cert=None, client_cert=None
     ):  # type: (str, str, Optional[Auth], bool, Optional[Path], Optional[Path]) -> None
@@ -166,7 +170,7 @@ class LegacyRepository(PyPiRepository):
 
         self._packages = []
         self._name = name
-        self._url = url.rstrip("/")
+        self._url = self._parse_url(url)
         self._auth = auth
         self._client_cert = client_cert
         self._cert = cert
@@ -198,6 +202,9 @@ class LegacyRepository(PyPiRepository):
             self._session.cert = str(self._client_cert)
 
         self._disable_cache = disable_cache
+
+    def _parse_url(self, url):  # type: (str) -> str
+        return url.rstrip("/")
 
     @property
     def cert(self):  # type: () -> Optional[Path]
@@ -251,7 +258,7 @@ class LegacyRepository(PyPiRepository):
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
+            page = self._get(name)
             if page is None:
                 return []
 
@@ -310,7 +317,12 @@ class LegacyRepository(PyPiRepository):
 
             return self._packages[index]
         except ValueError:
+            release_info = self.get_release_info(name, version)
+
             package = super(LegacyRepository, self).package(name, version, extras)
+            if release_info["requires_python"]:
+                package.python_versions = release_info["requires_python"]
+
             package.source_type = "legacy"
             package.source_url = self._url
             package.source_reference = self.name
@@ -325,7 +337,7 @@ class LegacyRepository(PyPiRepository):
         return list(page.links_for_version(package.version))
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
-        page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
+        page = self._get(name)
         if page is None:
             raise PackageNotFound('No package named "{}"'.format(name))
 
