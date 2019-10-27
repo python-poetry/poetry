@@ -82,9 +82,13 @@ class FindLinksRepository(LegacyRepository):
         return parsed_url
 
     def _get(self, name):  # type: (str) -> Union[Page, None]
-        url = self._url + "/" + self.index_page
+        url = self.index_url
         response = self._session.get(url)
         if response.status_code == 404:
             return
 
         return FilteredPage(url, name, response.content, response.headers)
+
+    @property
+    def index_url(self):  # type: () -> str
+        return self._url + "/" + self.index_page

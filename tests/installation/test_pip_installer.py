@@ -6,6 +6,7 @@ from poetry.core.packages.package import Package
 from poetry.installation.pip_installer import PipInstaller
 from poetry.io.null_io import NullIO
 from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.repositories.find_links_repository import FindLinksRepository
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
@@ -75,9 +76,11 @@ def test_requirement_git_develop_false(installer, package_git):
 def test_install_with_non_pypi_default_repository(pool, installer):
     default = LegacyRepository("default", "https://default.com")
     another = LegacyRepository("another", "https://another.com")
+    find_links = FindLinksRepository("find_links", "https://find_links.com/index.html")
 
     pool.add_repository(default, default=True)
     pool.add_repository(another)
+    pool.add_repository(find_links)
 
     foo = Package("foo", "0.0.0")
     foo.source_type = "legacy"
@@ -87,9 +90,18 @@ def test_install_with_non_pypi_default_repository(pool, installer):
     bar.source_type = "legacy"
     bar.source_reference = another._name
     bar.source_url = another._url
+    baz = Package("baz", "0.1.0")
+    baz.source_type = "find_links"
+    baz.source_reference = find_links._name
+    baz.source_url = find_links._url
 
     installer.install(foo)
     installer.install(bar)
+    installer.install(baz)
+
+    find_links_execution = installer._env.executed[-1]
+    assert "--find-links" in find_links_execution
+    assert find_links.index_url in find_links_execution
 
 
 def test_install_with_cert():
