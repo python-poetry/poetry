@@ -14,7 +14,8 @@ This represents most cases and will likely be enough for most users.
 ## Using a private repository
 
 However, at times, you may need to keep your package private while still being
-able to share it with your teammates. In this case, you will need to use a private
+able to share it with your teammates. Some public projects also maintain alternative
+package repositories for specialised uses. In either case, you will need to use a private
 repository.
 
 ### Adding a repository
@@ -120,6 +121,24 @@ a custom certificate authority or client certificates, similarly refer to the ex
 `certificates` section. Poetry will use these values to authenticate to your private repository when downloading or
 looking for packages.
 
+### Non-Pep 503 Repositories 
+
+A private repository may not follow the structure described in Pep 503. In this case you
+can use the `find_links` keyword. The below provides the equivalent behaviour to `pip 
+install --find-links https://foo.bar/index.html`.
+
+
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/index.html"
+find_links = true
+```
+
+If `find_links` is used the url may return a html page containing links to python
+archives, or may point directly to an installable artifact e.g. 
+https://foo.bar/poetry-0.1.0-py3-none-any.whl. The use of `find_links` with local
+paths or file:// urls is not yet supported.
 
 ### Disabling the PyPI repository
 
