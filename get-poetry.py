@@ -17,6 +17,7 @@ What this means is that one Poetry installation can serve for multiple
 Python versions.
 """
 import argparse
+import distutils.spawn
 import hashlib
 import json
 import os
@@ -196,7 +197,7 @@ POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
-BIN = """#!/usr/bin/env python
+BIN = """#!{python_binary}
 # -*- coding: utf-8 -*-
 import glob
 import sys
@@ -312,6 +313,7 @@ class Installer:
         force=False,
         accept_all=False,
         base_url=BASE_URL,
+        binary=None,
     ):
         self._version = version
         self._preview = preview
@@ -319,6 +321,7 @@ class Installer:
         self._modify_path = True
         self._accept_all = accept_all
         self._base_url = base_url
+        self._binary = binary
 
     def allows_prereleases(self):
         return self._preview
@@ -584,12 +587,24 @@ class Installer:
                 )
 
         with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
-            f.write(u(BIN))
+            f.write(u(self.format_bin_with_python_binary(BIN)))
 
         if not WINDOWS:
             # Making the file executable
             st = os.stat(os.path.join(POETRY_BIN, "poetry"))
             os.chmod(os.path.join(POETRY_BIN, "poetry"), st.st_mode | stat.S_IEXEC)
+
+    def format_bin_with_python_binary(self, bin_format):
+        return bin_format.format(python_binary=self.find_compatible_python_binary())
+
+    def find_compatible_python_binary(self):
+        if self._binary is not None:
+            return self._binary
+
+        if distutils.spawn.find_executable("python3") is not None:
+            return "/usr/bin/env python3"
+
+        return "/usr/bin/env python"
 
     def make_env(self):
         if WINDOWS:
@@ -850,6 +865,7 @@ def main():
     parser.add_argument(
         "--uninstall", dest="uninstall", action="store_true", default=False
     )
+    parser.add_argument("--python-binary", dest="binary")
 
     args = parser.parse_args()
 
@@ -870,6 +886,7 @@ def main():
         or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
         or not is_interactive(),
         base_url=base_url,
+        binary=args.binary,
     )
 
     if args.uninstall or string_to_bool(os.getenv("POETRY_UNINSTALL", "0")):
