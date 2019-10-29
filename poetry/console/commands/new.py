@@ -13,6 +13,12 @@ class NewCommand(Command):
     options = [
         option("name", None, "Set the resulting package name.", flag=False),
         option("src", None, "Use the src layout for the project."),
+        option(
+            "readme",
+            None,
+            "Specify the README format. One of: md (default), rst",
+            flag=False,
+        ),
     ]
 
     def handle(self):
@@ -39,7 +45,10 @@ class NewCommand(Command):
                     "exists and is not empty".format(path)
                 )
 
-        readme_format = "rst"
+        if self.option("readme"):
+            readme_format = self.option("readme")
+        else:
+            readme_format = "md"
 
         config = GitConfig()
         author = None

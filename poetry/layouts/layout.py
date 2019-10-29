@@ -38,6 +38,8 @@ license = ""
 [tool.poetry.dev-dependencies]
 """
 
+ACCEPTED_README_FORMATS = ["md", "rst"]
+
 BUILD_SYSTEM_MIN_VERSION = "0.12"
 BUILD_SYSTEM_MAX_VERSION = None
 
@@ -97,6 +99,14 @@ class Layout(object):
         poetry_content["authors"].append(self._author)
         if self._license:
             poetry_content["license"] = self._license
+
+        if self._readme_format not in ACCEPTED_README_FORMATS:
+            raise ValueError("Invalid readme format: {}".format(self._readme_format))
+
+        if self._readme_format == "rst":
+            poetry_content["readme"] = "README.rst"
+        elif self._readme_format == "md":
+            poetry_content["readme"] = "README.md"
 
         poetry_content["dependencies"]["python"] = self._python
 
