@@ -11,6 +11,6 @@ def test_run_passes_all_args(app, mocker):
     command = app.find("run")
     tester = CommandTester(command)
 
-    tester.execute("python -- -V")
+    tester.execute("python -V")
 
     assert [["python", "-V"]] == env.executed
