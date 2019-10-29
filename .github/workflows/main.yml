@@ -32,7 +32,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Poetry
       run: |
-        python get-poetry.py --preview -y
+        python get-poetry.py --preview -y --python-binary $(which python)
         source $HOME/.poetry/env
     - name: Install dependencies
       run: |
