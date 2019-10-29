@@ -306,7 +306,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 requirement["name"] = name
 
                 self.line(
-                    "Using version <info>{}</> for <info>{}</>".format(version, name)
+                    "Using version <b>{}</b> for <c1>{}</c1>".format(version, name)
                 )
             else:
                 # check that the specified version/constraint exists

@@ -333,7 +333,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<comment>{}</>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
                         target.pretty_name,
                         target.full_pretty_version,
                         operation.skip_reason,
@@ -344,7 +344,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)".format(
+                "  - Updating <c1>{}</c1> (<b>{}</b> -> <b>{}</b>)".format(
                     target.pretty_name,
                     source.full_pretty_version,
                     target.full_pretty_version,
