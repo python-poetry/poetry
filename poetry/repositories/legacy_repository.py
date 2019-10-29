@@ -58,7 +58,7 @@ with warnings.catch_warnings():
     import html5lib
 
 
-class Page:
+class Page(object):
 
     VERSION_REGEX = re.compile(r"(?i)([a-z0-9_\-.]+?)-(?=\d)([a-z0-9_.!+-]+)")
     SUPPORTED_FORMATS = [
