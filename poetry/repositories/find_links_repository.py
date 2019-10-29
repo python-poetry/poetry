@@ -59,7 +59,7 @@ class FilteredPage(Page):
 
     def __init__(self, url, name, content, headers):
         self.name = name
-        super().__init__(url, content, headers)
+        super(FilteredPage, self).__init__(url, content, headers)
 
     def _parse_url(self, url):  # type: (str) -> str
         parsed_url, self.index_page, self.single_link = parse_url(url)
