@@ -117,3 +117,6 @@ will not be merged.
 * Fill in [the required template](https://github.com/sdispater/poetry/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
 * Be sure that your pull request contains tests that cover the changed or added code.
 * If your changes warrant a documentation change, the pull request must also update the documentation.
+* Ensure that you are on the correct branch for the type of changes
+  * `develop` - If your PR introduces a new feature or changes the current behavior
+  * `master` - If your PR only includes a bug fix or documentation update
