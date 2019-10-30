@@ -1,11 +1,11 @@
 import shutil
-from glob import glob
 
 import pytest
 import tomlkit
 from cleo.testers import CommandTester
 
 from poetry.utils._compat import Path
+from poetry.utils._compat import glob
 
 fixtures_dir = Path(__file__).parent / "fixtures"
 
