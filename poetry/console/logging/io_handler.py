@@ -19,7 +19,7 @@ class IOHandler(logging.Handler):
             level = record.levelname.lower()
             err = level in ("warning", "error", "exception", "critical")
             if err:
-                self._io.error(msg, newline=True)
+                self._io.error_line(msg)
             else:
                 self._io.write_line(msg)
         except Exception:

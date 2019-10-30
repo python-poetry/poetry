@@ -105,7 +105,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 constraint["optional"] = True
 
             if self.option("allow-prereleases"):
-                constraint["allows-prereleases"] = True
+                constraint["allow-prereleases"] = True
 
             if self.option("extras"):
                 extras = []
