@@ -20,7 +20,7 @@ def setup():
 
 
 def clear_new_project():
-    shutil.rmtree(fixtures_dir / "new", ignore_errors=True)
+    shutil.rmtree(str(fixtures_dir / "new"), ignore_errors=True)
 
 
 @pytest.mark.parametrize(
