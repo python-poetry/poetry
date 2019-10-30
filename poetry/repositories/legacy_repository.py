@@ -21,6 +21,11 @@ from typing import Generator
 from typing import Optional
 from typing import Union
 
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
+
 import requests
 
 from cachecontrol import CacheControl
@@ -155,8 +160,8 @@ class Page:
 
 class LegacyRepository(PyPiRepository):
     def __init__(
-        self, name, url, auth=None, disable_cache=False
-    ):  # type: (str, str, Optional[Auth], bool) -> None
+        self, name, url, auth=None, disable_cache=False, cert=None, client_cert=None
+    ):  # type: (str, str, Optional[Auth], bool, Optional[Path], Optional[Path]) -> None
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
@@ -164,6 +169,8 @@ class LegacyRepository(PyPiRepository):
         self._name = name
         self._url = url.rstrip("/")
         self._auth = auth
+        self._client_cert = client_cert
+        self._cert = cert
         self._inspector = Inspector()
         self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
         self._cache = CacheManager(
@@ -186,7 +193,21 @@ class LegacyRepository(PyPiRepository):
         if not url_parts.username and self._auth:
             self._session.auth = self._auth
 
+        if self._cert:
+            self._session.verify = str(self._cert)
+
+        if self._client_cert:
+            self._session.cert = str(self._client_cert)
+
         self._disable_cache = disable_cache
+
+    @property
+    def cert(self):  # type: () -> Optional[Path]
+        return self._cert
+
+    @property
+    def client_cert(self):  # type: () -> Optional[Path]
+        return self._client_cert
 
     @property
     def authenticated_url(self):  # type: () -> str
@@ -197,8 +218,8 @@ class LegacyRepository(PyPiRepository):
 
         return "{scheme}://{username}:{password}@{netloc}{path}".format(
             scheme=parsed.scheme,
-            username=self._auth.auth.username,
-            password=self._auth.auth.password,
+            username=quote(self._auth.auth.username),
+            password=quote(self._auth.auth.password),
             netloc=parsed.netloc,
             path=parsed.path,
         )
@@ -328,7 +349,7 @@ class LegacyRepository(PyPiRepository):
             package.description = release_info.get("summary", "")
 
             # Adding hashes information
-            package.hashes = release_info["digests"]
+            package.files = release_info["files"]
 
             # Activate extra dependencies
             for extra in extras:
@@ -353,7 +374,7 @@ class LegacyRepository(PyPiRepository):
             "summary": "",
             "requires_dist": [],
             "requires_python": None,
-            "digests": [],
+            "files": [],
             "_cache_version": str(self.CACHE_VERSION),
         }
 
@@ -365,7 +386,7 @@ class LegacyRepository(PyPiRepository):
                 )
             )
         urls = defaultdict(list)
-        hashes = []
+        files = []
         for link in links:
             if link.is_wheel:
                 urls["bdist_wheel"].append(link.url)
@@ -374,13 +395,12 @@ class LegacyRepository(PyPiRepository):
             ):
                 urls["sdist"].append(link.url)
 
-            hash = link.hash
-            if link.hash_name == "sha256":
-                hashes.append(hash)
-            elif hash:
-                hashes.append(link.hash_name + ":" + hash)
+            h = link.hash
+            if h:
+                h = link.hash_name + ":" + link.hash
+                files.append({"file": link.filename, "hash": h})
 
-        data["digests"] = hashes
+        data["files"] = files
 
         info = self._get_info_from_urls(urls)
 

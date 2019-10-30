@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os
 import re
+import sys
 
 from typing import Dict
 from typing import List
@@ -15,7 +16,6 @@ from tomlkit import inline_table
 from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import urlparse
-from poetry.utils.helpers import temporary_directory
 
 from .command import Command
 from .env_command import EnvCommand
@@ -52,7 +52,7 @@ class InitCommand(Command):
     ]
 
     help = """\
-The <info>init</info> command creates a basic <comment>pyproject.toml</> file in the current directory.
+The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the current directory.
 """
 
     def __init__(self):
@@ -63,7 +63,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
     def handle(self):
         from poetry.layouts import layout
         from poetry.utils._compat import Path
-        from poetry.utils.env import EnvManager
+        from poetry.utils.env import SystemEnv
         from poetry.vcs.git import GitConfig
 
         if (Path.cwd() / "pyproject.toml").exists():
@@ -126,7 +126,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         question.set_validator(self._validate_license)
         license = self.ask(question)
 
-        current_env = EnvManager().get(Path.cwd())
+        current_env = SystemEnv(Path(sys.executable))
         default_python = "^{}".format(
             ".".join(str(v) for v in current_env.version_info[:2])
         )
@@ -209,7 +209,9 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
         if not requires:
             requires = []
 
-            package = self.ask("Add a package:")
+            package = self.ask(
+                "Search for package to add (or leave blank to continue):"
+            )
             while package is not None:
                 constraint = self._parse_requirements([package])[0]
                 if (
@@ -247,7 +249,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                         choices.append(found_package.pretty_name)
 
                     self.line(
-                        "Found <info>{}</info> packages matching <info>{}</info>".format(
+                        "Found <info>{}</info> packages matching <c1>{}</c1>".format(
                             len(matches), package
                         )
                     )
@@ -275,7 +277,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                         )
 
                         self.line(
-                            "Using version <info>{}</info> for <info>{}</info>".format(
+                            "Using version <b>{}</b> for <c1>{}</c1>".format(
                                 package_constraint, package
                             )
                         )
@@ -304,7 +306,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                 requirement["name"] = name
 
                 self.line(
-                    "Using version <info>{}</> for <info>{}</>".format(version, name)
+                    "Using version <b>{}</b> for <c1>{}</c1>".format(version, name)
                 )
             else:
                 # check that the specified version/constraint exists

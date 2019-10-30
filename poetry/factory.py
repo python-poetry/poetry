@@ -233,7 +233,7 @@ class Factory:
     ):  # type: (Dict[str, str], Config) -> LegacyRepository
         from .repositories.auth import Auth
         from .repositories.legacy_repository import LegacyRepository
-        from .utils.helpers import get_http_basic_auth
+        from .utils.helpers import get_client_cert, get_cert, get_http_basic_auth
 
         if "url" in source:
             # PyPI-like repository
@@ -245,12 +245,18 @@ class Factory:
         name = source["name"]
         url = source["url"]
         credentials = get_http_basic_auth(auth_config, name)
-        if not credentials:
-            return LegacyRepository(name, url)
+        if credentials:
+            auth = Auth(url, credentials[0], credentials[1])
+        else:
+            auth = None
 
-        auth = Auth(url, credentials[0], credentials[1])
-
-        return LegacyRepository(name, url, auth=auth)
+        return LegacyRepository(
+            name,
+            url,
+            auth=auth,
+            cert=get_cert(auth_config, name),
+            client_cert=get_client_cert(auth_config, name),
+        )
 
     @classmethod
     def validate(

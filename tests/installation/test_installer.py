@@ -1529,3 +1529,31 @@ def test_run_installs_with_url_file(installer, locker, repo, package):
     assert locker.written_data == expected
 
     assert len(installer.installer.installs) == 2
+
+
+def test_installer_uses_prereleases_if_they_are_compatible(
+    installer, locker, package, repo
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency(
+        "prerelease", {"git": "https://github.com/demo/prerelease.git"}
+    )
+
+    package_b = get_package("b", "2.0.0")
+    package_b.add_dependency("prerelease", ">=0.19")
+
+    repo.add_package(package_b)
+
+    installer.run()
+
+    del installer.installer.installs[:]
+    locker.locked(True)
+    locker.mock_lock_data(locker.written_data)
+
+    package.add_dependency("b", "^2.0.0")
+
+    installer.whitelist(["b"])
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 2

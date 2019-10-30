@@ -30,6 +30,6 @@ url = "tests/fixtures/project_with_extras"
 content-hash = "123456789"
 python-versions = "*"
 
-[metadata.hashes]
+[metadata.files]
 project-with-extras = []
 pendulum = []

@@ -47,7 +47,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             )
 
             self.line(
-                "Bumping version from <comment>{}</> to <info>{}</>".format(
+                "Bumping version from <b>{}</> to <fg=green>{}</>".format(
                     self.poetry.package.pretty_version, version
                 )
             )

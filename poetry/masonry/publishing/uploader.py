@@ -3,7 +3,7 @@ import io
 import math
 import re
 
-from typing import List
+from typing import List, Optional
 
 import requests
 
@@ -14,10 +14,12 @@ from requests_toolbelt import user_agent
 from requests_toolbelt.multipart import MultipartEncoder, MultipartEncoderMonitor
 
 from poetry.__version__ import __version__
+from poetry.utils._compat import Path
 from poetry.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 
 from ..metadata import Metadata
+from ..utils.helpers import escape_name, escape_version
 
 
 _has_blake2 = hasattr(hashlib, "blake2b")
@@ -63,10 +65,7 @@ class Uploader:
         wheels = list(
             dist.glob(
                 "{}-{}-*.whl".format(
-                    re.sub(
-                        r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE
-                    ),
-                    re.sub(r"[^\w\d.]+", "_", version, flags=re.UNICODE),
+                    escape_name(self._package.pretty_name), escape_version(version)
                 )
             )
         )
@@ -94,8 +93,16 @@ class Uploader:
     def is_authenticated(self):
         return self._username is not None and self._password is not None
 
-    def upload(self, url):
+    def upload(
+        self, url, cert=None, client_cert=None
+    ):  # type: (str, Optional[Path], Optional[Path]) -> None
         session = self.make_session()
+
+        if cert:
+            session.verify = str(cert)
+
+        if client_cert:
+            session.cert = str(client_cert)
 
         try:
             self._upload(session, url)
@@ -222,7 +229,7 @@ class Uploader:
             encoder = MultipartEncoder(data_to_send)
             bar = self._io.progress_bar(encoder.len)
             bar.set_format(
-                " - Uploading <info>{0}</> <comment>%percent%%</>".format(file.name)
+                " - Uploading <c1>{0}</c1> <b>%percent%%</b>".format(file.name)
             )
             monitor = MultipartEncoderMonitor(
                 encoder, lambda monitor: bar.set_progress(monitor.bytes_read)
@@ -238,13 +245,18 @@ class Uploader:
             )
 
             if resp.ok:
+                bar.set_format(
+                    " - Uploading <c1>{0}</c1> <fg=green>%percent%%</>".format(
+                        file.name
+                    )
+                )
                 bar.finish()
 
                 self._io.write_line("")
             else:
                 if self._io.output.supports_ansi():
                     self._io.overwrite(
-                        " - Uploading <info>{0}</> <error>{1}%</>".format(
+                        " - Uploading <c1>{0}</c1> <error>{1}%</>".format(
                             file.name, int(math.floor(bar._percent * 100))
                         )
                     )

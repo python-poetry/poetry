@@ -299,7 +299,9 @@ class Installer:
         r"(?:\+[^\s]+)?"
     )
 
-    BASE_URL = "https://github.com/sdispater/poetry/releases/download/"
+    REPOSITORY_URL = "https://github.com/python-poetry/poetry"
+    BASE_URL = REPOSITORY_URL + "/releases/download/"
+    FALLBACK_BASE_URL = "https://github.com/sdispater/poetry/releases/download/"
 
     def __init__(
         self,
@@ -598,6 +600,9 @@ class Installer:
         """
         Tries to update the $PATH automatically.
         """
+        if not self._modify_path:
+            return
+
         if WINDOWS:
             return self.add_to_windows_path()
 
@@ -606,7 +611,6 @@ class Installer:
 
         addition = "\n{}\n".format(export_string)
 
-        updated = []
         profiles = self.get_unix_profiles()
         for profile in profiles:
             if not os.path.exists(profile):
@@ -618,8 +622,6 @@ class Installer:
             if addition not in content:
                 with open(profile, "a") as f:
                     f.write(u(addition))
-
-                updated.append(os.path.relpath(profile, HOME))
 
     def add_to_windows_path(self):
         try:
@@ -849,6 +851,15 @@ def main():
 
     args = parser.parse_args()
 
+    base_url = Installer.BASE_URL
+    try:
+        r = urlopen(Installer.REPOSITORY_URL)
+    except HTTPError as e:
+        if e.code == 404:
+            base_url = Installer.FALLBACK_BASE_URL
+        else:
+            raise
+
     installer = Installer(
         version=args.version or os.getenv("POETRY_VERSION"),
         preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
@@ -856,6 +867,7 @@ def main():
         accept_all=args.accept_all
         or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
         or not is_interactive(),
+        base_url=base_url,
     )
 
     if args.uninstall or string_to_bool(os.getenv("POETRY_UNINSTALL", "0")):

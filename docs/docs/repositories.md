@@ -74,6 +74,16 @@ export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
 See [Using environment variables](/configuration#using-environment-variables) for more information
 on how to configure Poetry with environment variables.
 
+#### Custom certificate authority and mutual TLS authentication
+Poetry supports repositories that are secured by a custom certificate authority as well as those that require
+certificate-based client authentication.  The following will configure the "foo" repository to validate the repository's
+certificate using a custom certificate authority and use a client certificate (note that these config variables do not
+both need to be set):
+```bash
+    poetry config certificates.foo.cert /path/to/ca.pem
+    poetry config certificates.foo.client-cert /path/to/client.pem
+```
+
 ### Install dependencies from a private repository
 
 Now that you can publish to your private repository, you need to be able to
@@ -105,8 +115,10 @@ From now on, Poetry will also look for packages in your private repository.
 
 If your private repository requires HTTP Basic Auth be sure to add the username and
 password to your `http-basic` configuration using the example above (be sure to use the
-same name that is in the `tool.poetry.source` section). Poetry will use these values
-to authenticate to your private repository when downloading or looking for packages.
+same name that is in the `tool.poetry.source` section). If your repository requires either
+a custom certificate authority or client certificates, similarly refer to the example above to configure the
+`certificates` section. Poetry will use these values to authenticate to your private repository when downloading or
+looking for packages.
 
 
 ### Disabling the PyPI repository

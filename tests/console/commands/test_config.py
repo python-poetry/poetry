@@ -99,3 +99,26 @@ def test_set_pypi_token(app, config, config_source, auth_config_source):
     tester.execute("--list")
 
     assert "mytoken" == auth_config_source.config["pypi-token"]["pypi"]
+
+
+def test_set_client_cert(app, config_source, auth_config_source, mocker):
+    init = mocker.spy(ConfigSource, "__init__")
+    command = app.find("config")
+    tester = CommandTester(command)
+
+    tester.execute("certificates.foo.client-cert path/to/cert.pem")
+
+    assert (
+        "path/to/cert.pem"
+        == auth_config_source.config["certificates"]["foo"]["client-cert"]
+    )
+
+
+def test_set_cert(app, config_source, auth_config_source, mocker):
+    init = mocker.spy(ConfigSource, "__init__")
+    command = app.find("config")
+    tester = CommandTester(command)
+
+    tester.execute("certificates.foo.cert path/to/ca.pem")
+
+    assert "path/to/ca.pem" == auth_config_source.config["certificates"]["foo"]["cert"]

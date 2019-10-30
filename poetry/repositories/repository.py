@@ -64,7 +64,13 @@ class Repository(BaseRepository):
 
         for package in self.packages:
             if name == package.name:
-                if package.is_prerelease() and not allow_prereleases:
+                if (
+                    package.is_prerelease()
+                    and not allow_prereleases
+                    and not package.source_type
+                ):
+                    # If prereleases are not allowed and the package is a prerelease
+                    # and is a standard package then we skip it
                     continue
 
                 if constraint.allows(package.version):

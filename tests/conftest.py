@@ -81,7 +81,7 @@ def mock_clone(_, source, dest):
     parts = urlparse.urlparse(source)
 
     folder = (
-        Path(__file__).parent.parent
+        Path(__file__).parent
         / "fixtures"
         / "git"
         / parts.netloc
@@ -91,7 +91,6 @@ def mock_clone(_, source, dest):
     if dest.exists():
         shutil.rmtree(str(dest))
 
-    shutil.rmtree(str(dest))
     shutil.copytree(str(folder), str(dest))
 
 

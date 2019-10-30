@@ -228,7 +228,7 @@ class VersionUnion(VersionConstraint):
 
         raise ValueError("Unknown VersionConstraint type {}".format(constraint))
 
-    def _excludes_single_version(self):  # type: () -> bool
+    def excludes_single_version(self):  # type: () -> bool
         from .version import Version
         from .version_range import VersionRange
 
@@ -243,7 +243,7 @@ class VersionUnion(VersionConstraint):
     def __str__(self):
         from .version_range import VersionRange
 
-        if self._excludes_single_version():
+        if self.excludes_single_version():
             return "!={}".format(VersionRange().difference(self))
 
         return " || ".join([str(r) for r in self._ranges])

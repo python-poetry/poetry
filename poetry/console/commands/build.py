@@ -21,7 +21,7 @@ class BuildCommand(EnvCommand):
 
         package = self.poetry.package
         self.line(
-            "Building <info>{}</> (<comment>{}</>)".format(
+            "Building <c1>{}</c1> (<b>{}</b>)".format(
                 package.pretty_name, package.version
             )
         )

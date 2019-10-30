@@ -1,5 +1,7 @@
 from cleo import option
 
+from poetry.utils._compat import Path
+
 from .command import Command
 
 
@@ -14,6 +16,15 @@ class PublishCommand(Command):
         ),
         option("username", "u", "The username to access the repository.", flag=False),
         option("password", "p", "The password to access the repository.", flag=False),
+        option(
+            "cert", None, "Certificate authority to access the repository.", flag=False
+        ),
+        option(
+            "client-cert",
+            None,
+            "Client certificate to access the repository.",
+            flag=False,
+        ),
         option("build", None, "Build the package before publishing."),
     ]
 
@@ -57,6 +68,15 @@ the config command.
 
         self.line("")
 
+        cert = Path(self.option("cert")) if self.option("cert") else None
+        client_cert = (
+            Path(self.option("client-cert")) if self.option("client-cert") else None
+        )
+
         publisher.publish(
-            self.option("repository"), self.option("username"), self.option("password")
+            self.option("repository"),
+            self.option("username"),
+            self.option("password"),
+            cert,
+            client_cert,
         )

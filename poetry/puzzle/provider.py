@@ -38,6 +38,7 @@ from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
+from poetry.utils.env import VirtualEnv
 from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
 from poetry.utils.toml_file import TomlFile
@@ -172,9 +173,6 @@ class Provider:
             name=dependency.name,
         )
 
-        if dependency.tag or dependency.rev:
-            package.source_reference = dependency.reference
-
         for extra in dependency.extras:
             if extra in package.extras:
                 for dep in package.extras[extra]:
@@ -229,7 +227,9 @@ class Provider:
             )
 
         package.source_url = dependency.path.as_posix()
-        package.hashes = [dependency.hash()]
+        package.files = [
+            {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
+        ]
 
         for extra in dependency.extras:
             if extra in package.extras:
@@ -278,6 +278,9 @@ class Provider:
 
         package.source_url = dependency.path.as_posix()
 
+        if dependency.base != None:
+            package.root_dir = dependency.base.as_posix()
+
         for extra in dependency.extras:
             if extra in package.extras:
                 for dep in package.extras[extra]:
@@ -324,9 +327,10 @@ class Provider:
             os.chdir(str(directory))
 
             try:
-                cwd = directory
-                venv = EnvManager().get(cwd)
-                venv.run("python", "setup.py", "egg_info")
+                with temporary_directory() as tmp_dir:
+                    EnvManager.build_venv(tmp_dir)
+                    venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+                    venv.run("python", "setup.py", "egg_info")
             except EnvCommandError:
                 result = SetupReader.read_from_directory(directory)
                 if not result["name"]:
@@ -530,8 +534,8 @@ class Provider:
     ):  # type: (DependencyPackage) -> DependencyPackage
         if package.is_root():
             package = package.clone()
-
-        if not package.is_root() and package.source_type not in {
+            requires = package.all_requires
+        elif not package.is_root() and package.source_type not in {
             "directory",
             "file",
             "url",
@@ -546,10 +550,13 @@ class Provider:
                     repository=package.dependency.source_name,
                 ),
             )
+            requires = package.requires
+        else:
+            requires = package.requires
 
         dependencies = [
             r
-            for r in package.requires
+            for r in requires
             if self._package.python_constraint.allows_any(r.python_constraint)
         ]
 
@@ -701,44 +708,42 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<comment>{}</comment>)".format(m2.group(2))
+                    version = " (<b>{}</b>)".format(m2.group(2))
                 else:
                     name = m.group(1)
                     version = ""
 
                 message = (
-                    "<fg=blue>fact</>: <info>{}</info>{} "
-                    "depends on <info>{}</info> (<comment>{}</comment>)".format(
+                    "<fg=blue>fact</>: <c1>{}</c1>{} "
+                    "depends on <c1>{}</c1> (<b>{}</b>)".format(
                         name, version, m.group(2), m.group(3)
                     )
                 )
             elif " is " in message:
                 message = re.sub(
                     "fact: (.+) is (.+)",
-                    "<fg=blue>fact</>: <info>\\1</info> is <comment>\\2</comment>",
+                    "<fg=blue>fact</>: <c1>\\1</c1> is <b>\\2</b>",
                     message,
                 )
             else:
                 message = re.sub(
-                    r"(?<=: )(.+?) \((.+?)\)",
-                    "<info>\\1</info> (<comment>\\2</comment>)",
-                    message,
+                    r"(?<=: )(.+?) \((.+?)\)", "<c1>\\1</c1> (<b>\\2</b>)", message
                 )
                 message = "<fg=blue>fact</>: {}".format(message.split("fact: ")[1])
         elif message.startswith("selecting "):
             message = re.sub(
                 r"selecting (.+?) \((.+?)\)",
-                "<fg=blue>selecting</> <info>\\1</info> (<comment>\\2</comment>)",
+                "<fg=blue>selecting</> <c1>\\1</c1> (<b>\\2</b>)",
                 message,
             )
         elif message.startswith("derived:"):
             m = re.match(r"derived: (.+?) \((.+?)\)$", message)
             if m:
-                message = "<fg=blue>derived</>: <info>{}</info> (<comment>{}</comment>)".format(
+                message = "<fg=blue>derived</>: <c1>{}</c1> (<b>{}</b>)".format(
                     m.group(1), m.group(2)
                 )
             else:
-                message = "<fg=blue>derived</>: <info>{}</info>".format(
+                message = "<fg=blue>derived</>: <c1>{}</c1>".format(
                     message.split("derived: ")[1]
                 )
         elif message.startswith("conflict:"):
@@ -747,14 +752,14 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<comment>{}</comment>)".format(m2.group(2))
+                    version = " (<b>{}</b>)".format(m2.group(2))
                 else:
                     name = m.group(1)
                     version = ""
 
                 message = (
-                    "<fg=red;options=bold>conflict</>: <info>{}</info>{} "
-                    "depends on <info>{}</info> (<comment>{}</comment>)".format(
+                    "<fg=red;options=bold>conflict</>: <c1>{}</c1>{} "
+                    "depends on <c1>{}</c1> (<b>{}</b>)".format(
                         name, version, m.group(2), m.group(3)
                     )
                 )

@@ -7,8 +7,7 @@ ensuring you have the right stack everywhere.
 
 It supports Python 2.7 and 3.4+.
 
-[![Unix Build Status](https://img.shields.io/travis/sdispater/poetry.svg?label=Unix)](https://travis-ci.org/sdispater/poetry)
-[![Windows Build Status](https://img.shields.io/appveyor/ci/sdispater/poetry.svg?label=Windows)](https://ci.appveyor.com/project/sdispater/poetry)
+![Tests Status](https://github.com/sdispater/poetry/workflows/Tests/badge.svg)
 
 ## Installation
 

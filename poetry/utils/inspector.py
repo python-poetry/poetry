@@ -144,11 +144,11 @@ class Inspector:
 
         pyproject = TomlFile(sdist_dir / "pyproject.toml")
         if pyproject.exists():
-            from poetry.poetry import Poetry
+            from poetry.factory import Factory
 
             pyproject_content = pyproject.read()
             if "tool" in pyproject_content and "poetry" in pyproject_content["tool"]:
-                package = Poetry.create(sdist_dir).package
+                package = Factory().create_poetry(sdist_dir).package
                 return {
                     "name": package.name,
                     "version": package.version.text,

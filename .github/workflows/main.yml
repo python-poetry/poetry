@@ -1,4 +1,4 @@
-name: Main
+name: Tests
 
 on: [push, pull_request]
 
@@ -85,12 +85,12 @@ jobs:
     - name: Install Poetry
       run: |
         python get-poetry.py --preview -y
-        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+        $env:Path += ";$env:Userprofile\.poetry\bin"
     - name: Install dependencies
       run: |
-        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+        $env:Path += ";$env:Userprofile\.poetry\bin"
         poetry install
     - name: Test
       run: |
-        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+        $env:Path += ";$env:Userprofile\.poetry\bin"
         poetry run pytest -q tests

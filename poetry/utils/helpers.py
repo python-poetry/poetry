@@ -1,9 +1,13 @@
-import collections
 import os
 import re
 import shutil
 import stat
 import tempfile
+
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 from contextlib import contextmanager
 from typing import List
@@ -14,6 +18,7 @@ from keyring.errors import KeyringError
 
 from poetry.config.config import Config
 from poetry.version import Version
+from poetry.utils._compat import Path
 
 _canonicalize_regex = re.compile("[-_]+")
 
@@ -133,6 +138,22 @@ def get_http_basic_auth(
     return None
 
 
+def get_cert(config, repository_name):  # type: (Config, str) -> Optional[Path]
+    cert = config.get("certificates.{}.cert".format(repository_name))
+    if cert:
+        return Path(cert)
+    else:
+        return None
+
+
+def get_client_cert(config, repository_name):  # type: (Config, str) -> Optional[Path]
+    client_cert = config.get("certificates.{}.client-cert".format(repository_name))
+    if client_cert:
+        return Path(client_cert)
+    else:
+        return None
+
+
 def _on_rm_error(func, path, exc_info):
     os.chmod(path, stat.S_IWRITE)
     func(path)
@@ -144,11 +165,7 @@ def safe_rmtree(path):
 
 def merge_dicts(d1, d2):
     for k, v in d2.items():
-        if (
-            k in d1
-            and isinstance(d1[k], dict)
-            and isinstance(d2[k], collections.Mapping)
-        ):
+        if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])
         else:
             d1[k] = d2[k]
