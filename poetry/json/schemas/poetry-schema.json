@@ -247,6 +247,10 @@
                     "type": "string",
                     "description": "The PEP 508 compliant environment markers for which the dependency should be installed."
                 },
+                "allow-prereleases": {
+                    "type": "boolean",
+                    "description": "Whether the dependency allows prereleases or not."
+                },
                 "allows-prereleases": {
                     "type": "boolean",
                     "description": "Whether the dependency allows prereleases or not."
@@ -303,6 +307,10 @@
                 "markers": {
                     "type": "string",
                     "description": "The PEP 508 compliant environment markers for which the dependency should be installed."
+                },
+                "allow-prereleases": {
+                    "type": "boolean",
+                    "description": "Whether the dependency allows prereleases or not."
                 },
                 "allows-prereleases": {
                     "type": "boolean",

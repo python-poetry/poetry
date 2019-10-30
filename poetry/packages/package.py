@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import copy
+import logging
 import re
 
 from contextlib import contextmanager
 from typing import Union
+from warnings import warn
 
 from poetry.semver import Version
 from poetry.semver import parse_constraint
@@ -23,6 +25,8 @@ from .vcs_dependency import VCSDependency
 from .utils.utils import create_nested_marker
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+
+logger = logging.getLogger(__name__)
 
 
 class Package(object):
@@ -270,7 +274,18 @@ class Package(object):
             python_versions = constraint.get("python")
             platform = constraint.get("platform")
             markers = constraint.get("markers")
-            allows_prereleases = constraint.get("allows-prereleases", False)
+            if "allows-prereleases" in constraint:
+                message = (
+                    'The "{}" dependency specifies '
+                    'the "allows-prereleases" property, which is deprecated. '
+                    'Use "allow-preleases" instead.'.format(name)
+                )
+                warn(message, DeprecationWarning)
+                logger.warning(message)
+
+            allows_prereleases = constraint.get(
+                "allow-prereleases", constraint.get("allows-prereleases", False)
+            )
 
             if "git" in constraint:
                 # VCS dependency

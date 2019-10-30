@@ -290,6 +290,17 @@ class Factory:
                         "Consider specifying a more explicit one."
                     )
 
+                for name, constraint in config["dependencies"].items():
+                    if not isinstance(constraint, dict):
+                        continue
+
+                    if "allows-prereleases" in constraint:
+                        result["warnings"].append(
+                            'The "{}" dependency specifies '
+                            'the "allows-prereleases" property, which is deprecated. '
+                            'Use "allow-preleases" instead.'.format(name)
+                        )
+
             # Checking for scripts with extras
             if "scripts" in config:
                 scripts = config["scripts"]

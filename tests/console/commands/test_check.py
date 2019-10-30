@@ -42,6 +42,7 @@ Warning: A wildcard Python dependency is ambiguous. Consider specifying a more e
 Error: 'description' is a required property
 Error: INVALID is not a valid license
 Warning: A wildcard Python dependency is ambiguous. Consider specifying a more explicit one.
+Warning: The "pendulum" dependency specifies the "allows-prereleases" property, which is deprecated. Use "allow-preleases" instead.
 """
 
     assert expected == tester.io.fetch_output()

@@ -46,13 +46,14 @@ class ApplicationConfig(BaseApplicationConfig):
 
         io = event.io
 
-        if not command.loggers:
-            return
+        loggers = ["poetry.packages.package"]
+
+        loggers += command.loggers
 
         handler = IOHandler(io)
         handler.setFormatter(IOFormatter())
 
-        for logger in command.loggers:
+        for logger in loggers:
             logger = logging.getLogger(logger)
 
             logger.handlers = [handler]

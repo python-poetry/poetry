@@ -430,7 +430,7 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
 def test_solver_returns_prereleases_if_requested(solver, repo, package):
     package.add_dependency("A")
     package.add_dependency("B")
-    package.add_dependency("C", {"version": "*", "allows-prereleases": True})
+    package.add_dependency("C", {"version": "*", "allow-prereleases": True})
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
