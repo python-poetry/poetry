@@ -4,7 +4,7 @@ First off, thanks for taking the time to contribute!
 
 The following is a set of guidelines for contributing to Poetry on GitHub. These are mostly guidelines, not rules. Use your best judgement, and feel free to propose changes to this document in a pull request.
 
-#### Table of contents
+#### Table of Contents
 
 [How to contribute](#how-to-contribute)
 
@@ -38,7 +38,7 @@ Explain the problem and include additional details to help maintainers reproduce
 * **Use a clear and descriptive title** for the issue to identify the problem.
 * **Describe the exact steps which reproduce the problem** in as many details as possible.
 * **Provide your pyproject.toml file** in a [Gist](https://gist.github.com) after removing potential private information (like private package repositories).
-* **Provide specific examples to demonstrate the steps to reproduce the issue**. Include links to files or GitHub projects, or copy-paste-able snippets, which you use in those examples.
+* **Provide specific examples to demonstrate the steps to reproduce the issue**. Include links to files or GitHub projects, or copy/pasteable snippets, which you use in those examples.
 * **Describe the behavior you observed after following the steps** and point out what exactly is the problem with that behavior.
 * **Explain which behavior you expected to see instead and why.**
 * **If the problem is an unexpected error being raised**, execute the corresponding command in **debug** mode (the `-vvv` option).
@@ -64,11 +64,11 @@ Before creating enhancement suggestions, please check [this list](#before-submit
 
 #### Before submitting an enhancement suggestion
 
-* **Check the [FAQs on the official website](https://poetry.eustace.io) for a list of common questions and problems.
-* **Check that your issue does not already exist in the [issue tracker](https://github.com/sdispater/poetry/issues).
+* **Check the [FAQs on the official website](https://poetry.eustace.io)** for a list of common questions and problems.
+* **Check that your issue does not already exist in the [issue tracker](https://github.com/sdispater/poetry/issues)**.
 
 
-#### How do I submit an Enhancement suggestion?
+#### How do I submit an enhancement suggestion?
 
 Enhancement suggestions are tracked on the [official issue tracker](https://github.com/sdispater/poetry/issues) where you can create a new one and provide the following information:
 

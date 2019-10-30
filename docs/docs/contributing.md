@@ -1,8 +1,8 @@
 # Contributing to Poetry
 
-First off, thank for taking the time to contribute!
+First off, thanks for taking the time to contribute!
 
-The following is a set of guidelines for contributing to Poetry on GitHub. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
+The following is a set of guidelines for contributing to Poetry on GitHub. These are mostly guidelines, not rules. Use your best judgement, and feel free to propose changes to this document in a pull request.
 
 #### Table of Contents
 
@@ -31,7 +31,7 @@ Before creating bug reports, please check [this list](#before-submitting-a-bug-r
 * **Check the [FAQs on the official website](https://poetry.eustace.io)** for a list of common questions and problems.
 * **Check that your issue does not already exist in the [issue tracker](https://github.com/sdispater/poetry/issues)**.
 
-#### How do I submit a bug report
+#### How do I submit a bug report?
 
 Bugs are tracked on the [official issue tracker](https://github.com/sdispater/poetry/issues) where you can create a new one and provide the following information by filling in [the template](https://github.com/sdispater/poetry/blob/master/.github/ISSUE_TEMPLATE/1_Bug_report.md).
 
@@ -104,7 +104,7 @@ $ poetry run pytest tests/
 Poetry uses the [black](https://github.com/ambv/black) coding style and you must ensure that your
 code follows it. If not, the CI will fail and your Pull Request will not be merged.
 
-To make sure that you don't accidently commit code that does not follow the coding style, you can
+To make sure that you don't accidentally commit code that does not follow the coding style, you can
 install a pre-commit hook that will check that everything is in order:
 
 ```bash
@@ -117,5 +117,5 @@ will not be merged.
 #### Pull requests
 
 * Fill in [the required template](https://github.com/sdispater/poetry/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
-* Be sure that you pull request contains tests that cover the changed or added code.
-* If you changes warrant a documentation change, the pull request must also update the documentation.
+* Be sure that your pull request contains tests that cover the changed or added code.
+* If your changes warrant a documentation change, the pull request must also update the documentation.
