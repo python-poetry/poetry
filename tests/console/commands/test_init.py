@@ -35,6 +35,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -85,6 +86,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -125,6 +127,7 @@ name = "my-package"
 version = "1.2.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^{python}"
@@ -175,6 +178,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -225,6 +229,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -275,6 +280,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -325,6 +331,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -377,6 +384,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -427,6 +435,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
