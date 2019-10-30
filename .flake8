@@ -1,3 +1,4 @@
 [flake8]
 max-line-length = 88
 ignore = E501, E203, W503
+exclude = .venv/
