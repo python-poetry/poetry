@@ -75,7 +75,6 @@ my-package
 ```
 
 If you want to use `rst` instead of `md` as the `README` format, you can use the `--readme` option:
-
 ```bash
 poetry new my-package --readme rst
 ```
