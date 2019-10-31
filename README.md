@@ -348,7 +348,7 @@ By default `poetry` will install your project's package everytime you run `insta
 $ poetry install
 Installing dependencies from lock file
 
-Nothing to install or update
+No dependencies to install or update
 
   - Installing <your-package-name> (x.x.x)
 
