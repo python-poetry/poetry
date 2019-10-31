@@ -1,3 +1,5 @@
+from typing import List
+
 from .empty_constraint import EmptyConstraint
 from .version_constraint import VersionConstraint
 from .version_union import VersionUnion

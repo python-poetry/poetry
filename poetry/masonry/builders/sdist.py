@@ -10,6 +10,7 @@ from io import BytesIO
 from posixpath import join as pjoin
 from pprint import pformat
 
+from poetry.packages import Package
 from poetry.utils._compat import Path
 from poetry.utils._compat import encode
 from poetry.utils._compat import to_str

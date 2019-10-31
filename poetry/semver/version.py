@@ -2,6 +2,7 @@ import re
 
 from typing import List
 from typing import Optional
+from typing import Union
 
 from .empty_constraint import EmptyConstraint
 from .exceptions import ParseVersionError

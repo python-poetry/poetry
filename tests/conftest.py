@@ -40,14 +40,6 @@ class Config(BaseConfig):
         return super(Config, self).all()
 
 
-def tmp_dir():
-    dir_ = tempfile.mkdtemp(prefix="poetry_")
-
-    yield dir_
-
-    shutil.rmtree(dir_)
-
-
 @pytest.fixture
 def config_source():
     source = DictConfigSource()

@@ -1,5 +1,3 @@
-import os
-
 from cleo import Application as BaseApplication
 
 from poetry import __version__

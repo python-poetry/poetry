@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 import pytest
 
-from poetry.io.null_io import NullIO
 from poetry.factory import Factory
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path

@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from typing import Optional
-
 from .__version__ import __version__
 from .config.config import Config
 from .packages import Locker

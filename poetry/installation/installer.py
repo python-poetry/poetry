@@ -4,7 +4,6 @@ from typing import Union
 from clikit.api.io import IO
 from clikit.io import NullIO
 
-from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
 from poetry.puzzle import Solver

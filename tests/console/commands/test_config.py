@@ -3,7 +3,6 @@ import os
 
 from cleo.testers import CommandTester
 
-from poetry.config.config_source import ConfigSource
 from poetry.factory import Factory
 
 

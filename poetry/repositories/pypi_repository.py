@@ -33,11 +33,9 @@ from poetry.semver import VersionRange
 from poetry.semver.exceptions import ParseVersionError
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
-from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.inspector import Inspector
 from poetry.utils.patterns import wheel_file_re
-from poetry.utils.setup_reader import SetupReader
 from poetry.version.markers import InvalidMarker
 from poetry.version.markers import parse_marker
 

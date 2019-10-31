@@ -7,13 +7,16 @@ from contextlib import contextmanager
 from typing import Set
 from typing import Union
 
+from clikit.api.io import IO
 from clikit.api.io.flags import VERY_VERBOSE
 
+from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import basestring
 from poetry.utils._compat import glob
 from poetry.utils._compat import lru_cache
 from poetry.utils._compat import to_str
+from poetry.utils.env import Env
 from poetry.vcs import get_vcs
 from ..metadata import Metadata
 from ..utils.module import Module

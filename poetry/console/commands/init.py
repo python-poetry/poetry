@@ -15,7 +15,6 @@ from tomlkit import inline_table
 from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import urlparse
-from poetry.utils.helpers import temporary_directory
 
 from .command import Command
 from .env_command import EnvCommand
@@ -429,7 +428,7 @@ The <info>init</info> command creates a basic <comment>pyproject.toml</> file in
                     require["version"] = version
             else:
                 m = re.match(
-                    "^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
+                    r"^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
                 )
                 if m:
                     name, constraint = m.group(1), m.group(2)

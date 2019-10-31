@@ -1,6 +1,6 @@
 import re
 
-from pyparsing import ParseException, ParseResults, stringStart, stringEnd
+from pyparsing import ParseResults, stringStart, stringEnd
 
 from pyparsing import ZeroOrMore, Group, Forward, QuotedString
 from pyparsing import Literal as L  # noqa
