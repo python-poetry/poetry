@@ -115,7 +115,7 @@ class Repository(BaseRepository):
         if index is not None:
             del self._packages[index]
 
-    def search(self, query, mode=0):
+    def search(self, query):
         results = []
 
         for package in self.packages:
