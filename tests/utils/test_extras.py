@@ -1,8 +1,8 @@
 import pytest
 
+from poetry.packages import Package
 from poetry.utils.extras import get_extra_package_names
 
-from poetry.packages import Package
 
 _PACKAGE_FOO = Package("foo", "0.1.0")
 _PACKAGE_SPAM = Package("spam", "0.2.0")

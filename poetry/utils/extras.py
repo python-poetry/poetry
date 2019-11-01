@@ -1,4 +1,7 @@
-from typing import Iterator, Mapping, Sequence
+from typing import Collection
+from typing import Iterator
+from typing import Mapping
+from typing import Sequence
 
 from poetry.packages import Package
 from poetry.utils.helpers import canonicalize_name

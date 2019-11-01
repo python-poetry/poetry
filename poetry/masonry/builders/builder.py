@@ -2,6 +2,7 @@
 import re
 import shutil
 import tempfile
+
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import Set
@@ -15,9 +16,11 @@ from poetry.utils._compat import glob
 from poetry.utils._compat import lru_cache
 from poetry.utils._compat import to_str
 from poetry.vcs import get_vcs
+
 from ..metadata import Metadata
 from ..utils.module import Module
 from ..utils.package_include import PackageInclude
+
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
 

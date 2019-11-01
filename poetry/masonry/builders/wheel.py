@@ -10,7 +10,6 @@ import zipfile
 
 from base64 import urlsafe_b64encode
 from io import StringIO
-from typing import Set
 
 from clikit.api.io.flags import VERY_VERBOSE
 
