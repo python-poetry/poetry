@@ -3,13 +3,14 @@ from __future__ import unicode_literals
 
 import ast
 import os
-import pytest
 import re
 import shutil
 import sys
 import tarfile
-import zipfile
 import tempfile
+import zipfile
+
+import pytest
 
 from clikit.io import NullIO
 
@@ -19,6 +20,7 @@ from poetry.masonry.builders import CompleteBuilder
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils.env import NullEnv
+
 
 fixtures_dir = Path(__file__).parent / "fixtures"
 

@@ -1,7 +1,3 @@
-import re
-
-from typing import List
-
 from cleo import argument
 from cleo import option
 

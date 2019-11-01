@@ -1,16 +1,16 @@
 from uuid import uuid4
 
 import pytest
-from keyring import set_keyring, get_keyring
+
+from keyring import get_keyring
+from keyring import set_keyring
 from keyring.backend import KeyringBackend
 from keyring.errors import KeyringError
 
-from poetry.utils.helpers import (
-    keyring_service_name,
-    keyring_repository_password_get,
-    keyring_repository_password_set,
-    keyring_repository_password_del,
-)
+from poetry.utils.helpers import keyring_repository_password_del
+from poetry.utils.helpers import keyring_repository_password_get
+from poetry.utils.helpers import keyring_repository_password_set
+from poetry.utils.helpers import keyring_service_name
 
 
 class DictKeyring(KeyringBackend):

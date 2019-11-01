@@ -28,7 +28,7 @@ class UpdateCommand(EnvCommand):
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation import Installer
+        from poetry.installation.installer import Installer
 
         packages = self.argument("packages")
 

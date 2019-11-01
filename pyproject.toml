@@ -70,6 +70,39 @@ tox = "^3.0"
 pytest-sugar = "^0.9.2"
 httpretty = "^0.9.6"
 
-
 [tool.poetry.scripts]
 poetry = "poetry.console:main"
+
+
+[tool.isort]
+line_length = 88
+force_single_line = true
+atomic = true
+include_trailing_comma = true
+lines_after_imports = 2
+lines_between_types = 1
+multi_line_output = 3
+use_parentheses = true
+not_skip = "__init__.py"
+skip_glob = ["*/setup.py"]
+filter_files = true
+
+known_first_party = "poetry"
+known_third_party = [
+    "cachecontrol",
+    "cachy",
+    "cleo",
+    "clikit",
+    "html5lib",
+    "httpretty",
+    "jsonschema",
+    "keyring",
+    "pexpect",
+    "pkginfo",
+    "pyparsing",
+    "pytest",
+    "requests",
+    "requests_toolbelt",
+    "shellingham",
+    "tomlkit",
+]

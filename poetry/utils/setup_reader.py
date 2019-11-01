@@ -1,10 +1,5 @@
 import ast
 
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
-
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -14,8 +9,14 @@ from typing import Tuple
 from typing import Union
 
 from ._compat import PY35
-from ._compat import basestring
 from ._compat import Path
+from ._compat import basestring
+
+
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser
 
 
 class SetupReader(object):

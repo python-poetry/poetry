@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from clikit.io import NullIO
 from email.parser import Parser
+
+from clikit.io import NullIO
 
 from poetry.factory import Factory
 from poetry.masonry.builders.builder import Builder

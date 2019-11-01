@@ -5,8 +5,8 @@ import sys
 import pexpect
 
 from clikit.utils.terminal import Terminal
-from shellingham import detect_shell
 from shellingham import ShellDetectionFailure
+from shellingham import detect_shell
 
 from ._compat import WINDOWS
 from .env import VirtualEnv

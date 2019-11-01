@@ -11,6 +11,7 @@ from gzip import GzipFile
 from cleo import Application
 from cleo import Command
 
+
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
 

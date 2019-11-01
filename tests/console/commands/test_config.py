@@ -102,7 +102,7 @@ def test_set_pypi_token(app, config, config_source, auth_config_source):
 
 
 def test_set_client_cert(app, config_source, auth_config_source, mocker):
-    init = mocker.spy(ConfigSource, "__init__")
+    mocker.spy(ConfigSource, "__init__")
     command = app.find("config")
     tester = CommandTester(command)
 
@@ -115,7 +115,7 @@ def test_set_client_cert(app, config_source, auth_config_source, mocker):
 
 
 def test_set_cert(app, config_source, auth_config_source, mocker):
-    init = mocker.spy(ConfigSource, "__init__")
+    mocker.spy(ConfigSource, "__init__")
     command = app.find("config")
     tester = CommandTester(command)
 

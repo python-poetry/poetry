@@ -16,7 +16,6 @@ from poetry.utils._compat import to_str
 
 from ..utils.helpers import normalize_file_permissions
 from ..utils.package_include import PackageInclude
-
 from .builder import Builder
 
 
@@ -268,9 +267,7 @@ class SdistBuilder(Builder):
         return pkgdir, sorted(packages), pkg_data
 
     @classmethod
-    def convert_dependencies(
-        cls, package, dependencies  # type: Package  # type: List[Dependency]
-    ):
+    def convert_dependencies(cls, package, dependencies):
         main = []
         extras = defaultdict(list)
         req_regex = re.compile(r"^(.+) \((.+)\)$")

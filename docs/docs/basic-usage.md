@@ -157,13 +157,13 @@ or create a brand new one for you to always work isolated from your global Pytho
 
 By default, Poetry will use the currently activated Python version
 to create the virtualenv for the current project.
-    
+
 To easily switch between Python versions, it is recommended to
 use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
-    
+
 For instance, if your project is Python 2.7 only, a standard workflow
 would be:
-    
+
 ```bash
 pyenv install 2.7.15
 pyenv local 2.7.15  # Activate Python 2.7 for the current project

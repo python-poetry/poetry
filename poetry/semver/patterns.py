@@ -1,5 +1,6 @@
 import re
 
+
 MODIFIERS = (
     "[._-]?"
     r"((?!post)(?:beta|b|c|pre|RC|alpha|a|patch|pl|p|dev)(?:(?:[.-]?\d+)*)?)?"

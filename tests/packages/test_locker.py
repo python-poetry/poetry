@@ -1,6 +1,6 @@
-import pytest
 import tempfile
 
+import pytest
 import tomlkit
 
 from poetry.packages.locker import Locker

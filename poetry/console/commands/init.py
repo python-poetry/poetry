@@ -13,8 +13,8 @@ from typing import Union
 from cleo import option
 from tomlkit import inline_table
 
-from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
+from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
 
 from .command import Command
@@ -431,7 +431,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     require["version"] = version
             else:
                 m = re.match(
-                    "^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
+                    r"^([^><=!: ]+)((?:>=|<=|>|<|!=|~=|~|\^).*)$", requirement.strip()
                 )
                 if m:
                     name, constraint = m.group(1), m.group(2)

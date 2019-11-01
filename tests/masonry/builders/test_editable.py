@@ -8,6 +8,7 @@ from poetry.masonry.builders import EditableBuilder
 from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 
+
 fixtures_dir = Path(__file__).parent / "fixtures"
 
 

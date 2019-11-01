@@ -41,7 +41,7 @@ class Builder(object):
 
     def __init__(
         self, poetry, env, io, ignore_packages_formats=False
-    ):  # type: (Poetry, Env, IO) -> None
+    ):  # type: ("Poetry", "Env", "IO", bool) -> None
         self._poetry = poetry
         self._env = env
         self._io = io

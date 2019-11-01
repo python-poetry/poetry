@@ -1,6 +1,7 @@
 import json
-import pytest
 import shutil
+
+import pytest
 
 from poetry.packages import Dependency
 from poetry.repositories.pypi_repository import PyPiRepository

@@ -4,21 +4,25 @@ import shutil
 import stat
 import tempfile
 
+from contextlib import contextmanager
+from typing import List
+from typing import Optional
+
+from keyring import delete_password
+from keyring import get_password
+from keyring import set_password
+from keyring.errors import KeyringError
+
+from poetry.config.config import Config
+from poetry.utils._compat import Path
+from poetry.version import Version
+
+
 try:
     from collections.abc import Mapping
 except ImportError:
     from collections import Mapping
 
-from contextlib import contextmanager
-from typing import List
-from typing import Optional
-
-from keyring import delete_password, set_password, get_password
-from keyring.errors import KeyringError
-
-from poetry.config.config import Config
-from poetry.version import Version
-from poetry.utils._compat import Path
 
 _canonicalize_regex = re.compile("[-_]+")
 

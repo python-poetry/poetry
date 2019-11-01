@@ -1,5 +1,23 @@
 repos:
--   repo: https://github.com/ambv/black
+  - repo: https://github.com/psf/black
     rev: stable
     hooks:
-    - id: black
+      - id: black
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.8
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v4.3.21
+    hooks:
+      - id: isort
+        additional_dependencies: [toml]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: debug-statements

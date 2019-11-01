@@ -3,10 +3,9 @@ from __future__ import unicode_literals
 import contextlib
 import hashlib
 import os
-import re
-import tempfile
 import shutil
 import stat
+import tempfile
 import zipfile
 
 from base64 import urlsafe_b64encode
@@ -19,7 +18,9 @@ from poetry.__version__ import __version__
 from poetry.semver import parse_constraint
 from poetry.utils._compat import decode
 
-from ..utils.helpers import normalize_file_permissions, escape_name, escape_version
+from ..utils.helpers import escape_name
+from ..utils.helpers import escape_version
+from ..utils.helpers import normalize_file_permissions
 from ..utils.package_include import PackageInclude
 from ..utils.tags import get_abbr_impl
 from ..utils.tags import get_abi_tag

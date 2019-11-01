@@ -1,5 +1,7 @@
 from poetry.utils._compat import Path
-from poetry.utils.helpers import get_client_cert, get_cert, get_http_basic_auth
+from poetry.utils.helpers import get_cert
+from poetry.utils.helpers import get_client_cert
+from poetry.utils.helpers import get_http_basic_auth
 from poetry.utils.helpers import parse_requires
 
 
@@ -27,7 +29,7 @@ virtualenv>=15.2.0.0,<16.0.0.0
 pathlib2>=2.3.0.0,<3.0.0.0
 
 [:python_version >= "3.4.0.0" and python_version < "3.6.0.0"]
-zipfile36>=0.1.0.0,<0.2.0.0    
+zipfile36>=0.1.0.0,<0.2.0.0
 """
     result = parse_requires(requires)
     expected = [

@@ -6,11 +6,6 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
-
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
@@ -19,12 +14,12 @@ from requests import get
 from requests import session
 
 from poetry.locations import CACHE_DIR
-from poetry.packages import dependency_from_pep_508
 from poetry.packages import Package
+from poetry.packages import dependency_from_pep_508
 from poetry.packages.utils.link import Link
-from poetry.semver import parse_constraint
 from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
+from poetry.semver import parse_constraint
 from poetry.semver.exceptions import ParseVersionError
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
@@ -36,6 +31,12 @@ from poetry.version.markers import parse_marker
 
 from .exceptions import PackageNotFound
 from .repository import Repository
+
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from tomlkit.toml_file import TOMLFile as BaseTOMLFile
 from typing import Union
+
+from tomlkit.toml_file import TOMLFile as BaseTOMLFile
 
 from ._compat import Path
 

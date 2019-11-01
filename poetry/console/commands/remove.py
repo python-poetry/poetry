@@ -28,7 +28,7 @@ list of installed packages
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation import Installer
+        from poetry.installation.installer import Installer
 
         packages = self.argument("packages")
         is_dev = self.option("dev")

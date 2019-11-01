@@ -1,17 +1,23 @@
 import glob
 import logging
 import os
-import pkginfo
 import re
 import time
 
-from clikit.ui.components import ProgressIndicator
 from contextlib import contextmanager
 from tempfile import mkdtemp
 from typing import List
 from typing import Optional
 
+import pkginfo
+
+from clikit.ui.components import ProgressIndicator
+
 from poetry.factory import Factory
+from poetry.mixology.incompatibility import Incompatibility
+from poetry.mixology.incompatibility_cause import DependencyCause
+from poetry.mixology.incompatibility_cause import PythonCause
+from poetry.mixology.term import Term
 from poetry.packages import Dependency
 from poetry.packages import DependencyPackage
 from poetry.packages import DirectoryDependency
@@ -21,30 +27,22 @@ from poetry.packages import PackageCollection
 from poetry.packages import URLDependency
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
-
-from poetry.mixology.incompatibility import Incompatibility
-from poetry.mixology.incompatibility_cause import DependencyCause
-from poetry.mixology.incompatibility_cause import PythonCause
-from poetry.mixology.term import Term
-
 from poetry.repositories import Pool
-
 from poetry.utils._compat import PY35
-from poetry.utils._compat import Path
 from poetry.utils._compat import OrderedDict
+from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
+from poetry.utils.env import EnvCommandError
+from poetry.utils.env import EnvManager
+from poetry.utils.env import VirtualEnv
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.env import EnvManager
-from poetry.utils.env import EnvCommandError
-from poetry.utils.env import VirtualEnv
 from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
 from poetry.utils.toml_file import TomlFile
-
-from poetry.version.markers import MarkerUnion
 from poetry.vcs.git import Git
+from poetry.version.markers import MarkerUnion
 
 from .exceptions import CompatibilityError
 
@@ -278,7 +276,7 @@ class Provider:
 
         package.source_url = dependency.path.as_posix()
 
-        if dependency.base != None:
+        if dependency.base is not None:
             package.root_dir = dependency.base.as_posix()
 
         for extra in dependency.extras:

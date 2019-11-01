@@ -65,7 +65,11 @@ class MultiConstraint(BaseConstraint):
 
     def intersect(self, other):
         if isinstance(other, Constraint):
-            constraints = [c for c in self._constraints if c == other]
+            constraints = self._constraints
+            if other not in constraints:
+                constraints += (other,)
+            else:
+                constraints = (other,)
 
             if len(constraints) == 1:
                 return constraints[0]

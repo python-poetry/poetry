@@ -33,7 +33,9 @@ from contextlib import closing
 from contextlib import contextmanager
 from functools import cmp_to_key
 from gzip import GzipFile
-from io import UnsupportedOperation, open
+from io import UnsupportedOperation
+from io import open
+
 
 try:
     from urllib.error import HTTPError
@@ -853,7 +855,7 @@ def main():
 
     base_url = Installer.BASE_URL
     try:
-        r = urlopen(Installer.REPOSITORY_URL)
+        urlopen(Installer.REPOSITORY_URL)
     except HTTPError as e:
         if e.code == 404:
             base_url = Installer.FALLBACK_BASE_URL
