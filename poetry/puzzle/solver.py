@@ -13,12 +13,10 @@ from poetry.version.markers import AnyMarker
 
 from .exceptions import CompatibilityError
 from .exceptions import SolverProblemError
-
 from .operations import Install
 from .operations import Uninstall
 from .operations import Update
 from .operations.operation import Operation
-
 from .provider import Provider
 
 

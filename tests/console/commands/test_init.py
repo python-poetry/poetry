@@ -1,8 +1,8 @@
 import sys
+
 from cleo.testers import CommandTester
 
 from poetry.utils._compat import Path
-
 from tests.helpers import get_package
 
 

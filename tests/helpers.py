@@ -1,6 +1,5 @@
 from poetry.packages import Dependency
 from poetry.packages import Package
-
 from poetry.utils._compat import Path
 
 

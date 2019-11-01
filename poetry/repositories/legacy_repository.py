@@ -1,5 +1,38 @@
 import cgi
 import re
+import warnings
+
+from collections import defaultdict
+from typing import Generator
+from typing import Optional
+from typing import Union
+
+import requests
+
+from cachecontrol import CacheControl
+from cachecontrol.caches.file_cache import FileCache
+from cachy import CacheManager
+
+import poetry.packages
+
+from poetry.locations import CACHE_DIR
+from poetry.packages import Package
+from poetry.packages import dependency_from_pep_508
+from poetry.packages.utils.link import Link
+from poetry.semver import Version
+from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
+from poetry.semver import parse_constraint
+from poetry.utils._compat import Path
+from poetry.utils.helpers import canonicalize_name
+from poetry.utils.inspector import Inspector
+from poetry.utils.patterns import wheel_file_re
+from poetry.version.markers import InvalidMarker
+
+from .auth import Auth
+from .exceptions import PackageNotFound
+from .pypi_repository import PyPiRepository
+
 
 try:
     import urllib.parse as urlparse
@@ -16,43 +49,12 @@ except ImportError:
 
     unescape = HTMLParser().unescape
 
-from collections import defaultdict
-from typing import Generator
-from typing import Optional
-from typing import Union
 
 try:
     from urllib.parse import quote
 except ImportError:
     from urllib import quote
 
-import requests
-
-from cachecontrol import CacheControl
-from cachecontrol.caches.file_cache import FileCache
-from cachy import CacheManager
-
-import poetry.packages
-
-from poetry.locations import CACHE_DIR
-from poetry.packages import Package
-from poetry.packages import dependency_from_pep_508
-from poetry.packages.utils.link import Link
-from poetry.semver import parse_constraint
-from poetry.semver import Version
-from poetry.semver import VersionConstraint
-from poetry.semver import VersionRange
-from poetry.utils._compat import Path
-from poetry.utils.helpers import canonicalize_name
-from poetry.utils.inspector import Inspector
-from poetry.utils.patterns import wheel_file_re
-from poetry.version.markers import InvalidMarker
-
-from .auth import Auth
-from .exceptions import PackageNotFound
-from .pypi_repository import PyPiRepository
-
-import warnings
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")

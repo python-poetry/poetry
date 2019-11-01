@@ -2,11 +2,11 @@ from typing import Optional
 
 import poetry.packages
 
-from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionConstraint
 from poetry.semver import VersionRange
 from poetry.semver import VersionUnion
+from poetry.semver import parse_constraint
 from poetry.utils.helpers import canonicalize_name
 from poetry.version.markers import AnyMarker
 from poetry.version.markers import parse_marker

@@ -1,25 +1,24 @@
 import os
 import tempfile
-from io import open
 
+from io import open
 from subprocess import CalledProcessError
 
 from clikit.api.io import IO
 from clikit.io import NullIO
 
+from poetry.repositories.pool import Pool
+from poetry.utils._compat import encode
+from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
+
+from .base_installer import BaseInstaller
 
 
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
-
-from poetry.repositories.pool import Pool
-from poetry.utils._compat import encode
-from poetry.utils.env import Env
-
-from .base_installer import BaseInstaller
 
 
 class PipInstaller(BaseInstaller):

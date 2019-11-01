@@ -11,6 +11,7 @@ from poetry.version.markers import MarkerUnion
 from poetry.version.markers import MultiMarker
 from poetry.version.markers import SingleMarker
 
+
 try:
     import urllib.parse as urlparse
 except ImportError:

@@ -1,21 +1,23 @@
-from typing import Dict
-from typing import List
-from typing import Union
-
 import logging
 import os
 import tarfile
 import zipfile
+
 from bz2 import BZ2File
 from gzip import GzipFile
+from typing import Dict
+from typing import List
+from typing import Union
 
 import pkginfo
+
 from requests import get
 
 from ._compat import Path
 from .helpers import parse_requires
 from .setup_reader import SetupReader
 from .toml_file import TomlFile
+
 
 logger = logging.getLogger(__name__)
 

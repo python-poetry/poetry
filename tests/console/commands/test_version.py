@@ -1,4 +1,5 @@
 import pytest
+
 from cleo import CommandTester
 
 from poetry.console.commands import VersionCommand

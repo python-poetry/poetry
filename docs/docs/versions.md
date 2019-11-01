@@ -108,13 +108,7 @@ my-package = { path = "../my-package/" }
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
-!!!note
 
-    You can install path dependencies in editable/development mode.
-    Just pass `--develop my-package` (repeatable as much as you want) to
-    the `install` command.
-    
-    
 ### `url` dependencies
 
 To depend on a library located on a remote archive,

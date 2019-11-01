@@ -20,7 +20,7 @@ class VersionCommand(Command):
     ]
 
     help = """\
-The version command shows the current version of the project or bumps the version of 
+The version command shows the current version of the project or bumps the version of
 the project and writes the new version back to <comment>pyproject.toml</> if a valid
 bump rule is provided.
 

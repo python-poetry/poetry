@@ -1,3 +1,5 @@
+from subprocess import CalledProcessError
+
 import pytest
 
 from clikit.io import NullIO
@@ -13,10 +15,7 @@ from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import MockEnv as BaseMockEnv
-
 from tests.helpers import get_dependency
-
-from subprocess import CalledProcessError
 
 
 class MockEnv(BaseMockEnv):

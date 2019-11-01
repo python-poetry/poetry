@@ -1,37 +1,30 @@
-import os
-
 from cleo import Application as BaseApplication
 
 from poetry import __version__
 
-from .commands import AboutCommand
-from .commands import AddCommand
-from .commands import BuildCommand
-from .commands import CheckCommand
-from .commands import ConfigCommand
-from .commands import ExportCommand
-from .commands import InitCommand
-from .commands import InstallCommand
-from .commands import LockCommand
-from .commands import NewCommand
-from .commands import PublishCommand
-from .commands import RemoveCommand
-from .commands import RunCommand
-from .commands import SearchCommand
-from .commands import ShellCommand
-from .commands import ShowCommand
-from .commands import UpdateCommand
-from .commands import VersionCommand
-
-from .commands.debug import DebugCommand
-
-from .commands.cache import CacheCommand
-
-from .commands.self import SelfCommand
-
+from .commands.about import AboutCommand
+from .commands.add import AddCommand
+from .commands.build import BuildCommand
+from .commands.cache.cache import CacheCommand
+from .commands.check import CheckCommand
+from .commands.config import ConfigCommand
+from .commands.debug.debug import DebugCommand
+from .commands.env.env import EnvCommand
+from .commands.export import ExportCommand
+from .commands.init import InitCommand
+from .commands.install import InstallCommand
+from .commands.lock import LockCommand
+from .commands.new import NewCommand
+from .commands.publish import PublishCommand
+from .commands.remove import RemoveCommand
+from .commands.run import RunCommand
+from .commands.search import SearchCommand
+from .commands.self.self import SelfCommand
+from .commands.shell import ShellCommand
+from .commands.show import ShowCommand
+from .commands.update import UpdateCommand
+from .commands.version import VersionCommand
 from .config import ApplicationConfig
-
-from .commands.env import EnvCommand
 
 
 class Application(BaseApplication):

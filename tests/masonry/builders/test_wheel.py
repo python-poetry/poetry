@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import pytest
 import shutil
 import zipfile
+
+import pytest
 
 from clikit.io import NullIO
 
 from poetry.factory import Factory
-from poetry.masonry.builders import WheelBuilder
+from poetry.masonry.builders.wheel import WheelBuilder
 from poetry.masonry.publishing.uploader import Uploader
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv

@@ -3,6 +3,7 @@ import os
 
 from io import open
 
+
 try:
     from urllib.request import urlopen
 except ImportError:

@@ -1,26 +1,28 @@
 import os
-import pytest
 import shutil
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+import pytest
 
 from cleo import ApplicationTester
 
 from poetry.console import Application as BaseApplication
 from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
-from poetry.poetry import Poetry as BasePoetry
 from poetry.packages import Locker as BaseLocker
+from poetry.poetry import Poetry as BasePoetry
 from poetry.repositories import Pool
 from poetry.repositories import Repository as BaseRepository
+from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
-from poetry.repositories.exceptions import PackageNotFound
+
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 
 @pytest.fixture()

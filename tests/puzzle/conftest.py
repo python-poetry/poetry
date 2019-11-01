@@ -1,12 +1,14 @@
-import pytest
 import shutil
+
+import pytest
+
+from poetry.utils._compat import Path
+
 
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
-
-from poetry.utils._compat import Path
 
 
 def mock_clone(self, source, dest):

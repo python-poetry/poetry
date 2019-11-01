@@ -9,14 +9,14 @@ import sys
 import sysconfig
 import warnings
 
-import tomlkit
-
 from contextlib import contextmanager
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+
+import tomlkit
 
 from clikit.api.io import IO
 
