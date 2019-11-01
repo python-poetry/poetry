@@ -1,12 +1,12 @@
 import os
 import tarfile
 
+from contextlib import contextmanager
+
 from poetry.factory import Factory
 from poetry.io.null_io import NullIO
 from poetry.utils._compat import Path
 from poetry.utils.helpers import temporary_directory
-
-from contextlib import contextmanager
 
 from .builder import Builder
 from .sdist import SdistBuilder

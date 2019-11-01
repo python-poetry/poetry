@@ -1,6 +1,7 @@
 import re
 
 from .any_constraint import AnyConstraint
+from .base_constraint import BaseConstraint
 from .constraint import Constraint
 from .union_constraint import UnionConstraint
 

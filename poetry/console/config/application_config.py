@@ -1,8 +1,12 @@
 import logging
 
 from cleo.config import ApplicationConfig as BaseApplicationConfig
+from clikit.api.application.application import Application
+from clikit.api.args.raw_args import RawArgs
 from clikit.api.event import PRE_HANDLE
 from clikit.api.event import PreHandleEvent
+from clikit.api.event import PreResolveEvent
+from clikit.api.event.event_dispatcher import EventDispatcher
 from clikit.api.formatter import Style
 from clikit.api.io import Input
 from clikit.api.io import InputStream
@@ -11,6 +15,7 @@ from clikit.api.io import OutputStream
 from clikit.api.io.flags import DEBUG
 from clikit.api.io.flags import VERBOSE
 from clikit.api.io.flags import VERY_VERBOSE
+from clikit.api.io.io import IO
 from clikit.formatter import AnsiFormatter
 from clikit.formatter import PlainFormatter
 from clikit.io.input_stream import StandardInputStream
@@ -19,8 +24,8 @@ from clikit.io.output_stream import StandardOutputStream
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
-from poetry.console.logging import IOFormatter
-from poetry.console.logging import IOHandler
+from poetry.console.logging.io_formatter import IOFormatter
+from poetry.console.logging.io_handler import IOHandler
 
 
 class ApplicationConfig(BaseApplicationConfig):
@@ -68,7 +73,6 @@ class ApplicationConfig(BaseApplicationConfig):
             logger.setLevel(level)
 
     def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, _) -> None
-        from poetry.semver import parse_constraint
         from poetry.utils.env import EnvManager
 
         command = event.command.config.handler  # type: EnvCommand

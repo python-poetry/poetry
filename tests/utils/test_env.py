@@ -1,18 +1,21 @@
 import os
-import pytest
 import shutil
 import sys
+
+import pytest
 import tomlkit
+
 from clikit.io import NullIO
-from poetry.semver import Version
 
 from poetry.factory import Factory
+from poetry.semver import Version
 from poetry.utils._compat import Path
-from poetry.utils.env import EnvManager
 from poetry.utils.env import EnvCommandError
+from poetry.utils.env import EnvManager
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import VirtualEnv
 from poetry.utils.toml_file import TomlFile
+
 
 MINIMAL_SCRIPT = """\
 
@@ -532,7 +535,7 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
 def test_env_has_symlinks_on_nix(tmp_dir, tmp_venv):
     venv_available = False
     try:
-        from venv import EnvBuilder
+        from venv import EnvBuilder  # noqa
 
         venv_available = True
     except ImportError:

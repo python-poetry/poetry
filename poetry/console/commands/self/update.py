@@ -8,17 +8,18 @@ import tarfile
 from functools import cmp_to_key
 from gzip import GzipFile
 
+from cleo import argument
+from cleo import option
+
+from ..command import Command
+
+
 try:
     from urllib.error import HTTPError
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import HTTPError
     from urllib2 import urlopen
-
-from cleo import argument
-from cleo import option
-
-from ..command import Command
 
 
 class SelfUpdateCommand(Command):

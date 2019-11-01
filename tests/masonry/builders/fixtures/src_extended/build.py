@@ -1,6 +1,5 @@
 from distutils.core import Extension
 
-
 extensions = [Extension("extended.extended", ["src/extended/extended.c"])]
 
 

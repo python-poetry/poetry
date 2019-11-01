@@ -220,7 +220,7 @@ poetry add ../my-package/dist/my-package-0.1.0.tar.gz
 poetry add ../my-package/dist/my_package-0.1.0.whl
 ```
 
-Path dependencies pointing to a local directory will be installed in editable mode (i.e. setuptools "develop mode"). 
+Path dependencies pointing to a local directory will be installed in editable mode (i.e. setuptools "develop mode").
 It means that changes in the local directory will be reflected directly in environment.
 
 If you don't want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file:
@@ -415,7 +415,7 @@ poetry lock
 
 ## version
 
-This command shows the current version of the project or bumps the version of 
+This command shows the current version of the project or bumps the version of
 the project and writes the new version back to `pyproject.toml` if a valid
 bump rule is provided.
 

@@ -1,6 +1,8 @@
 import logging
 
-from poetry.utils.helpers import get_client_cert, get_cert, get_http_basic_auth
+from poetry.utils.helpers import get_cert
+from poetry.utils.helpers import get_client_cert
+from poetry.utils.helpers import get_http_basic_auth
 
 from .uploader import Uploader
 

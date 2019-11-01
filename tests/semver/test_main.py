@@ -1,9 +1,9 @@
 import pytest
 
-from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionRange
 from poetry.semver import VersionUnion
+from poetry.semver import parse_constraint
 
 
 @pytest.mark.parametrize(

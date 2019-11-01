@@ -5,7 +5,7 @@ class VersionConstraint:
     def is_any(self):  # type: () -> bool
         raise NotImplementedError()
 
-    def allows(self, version):  # type: (Version) -> bool
+    def allows(self, version):  # type: ("Version") -> bool
         raise NotImplementedError()
 
     def allows_all(self, other):  # type: (VersionConstraint) -> bool

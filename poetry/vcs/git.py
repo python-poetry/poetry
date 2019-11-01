@@ -2,7 +2,6 @@
 import re
 import subprocess
 
-
 from poetry.utils._compat import decode
 
 

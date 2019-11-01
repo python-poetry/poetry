@@ -2,22 +2,23 @@ import os
 import shutil
 import tempfile
 
-import httpretty
-import pytest
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
-
 from typing import Any
 from typing import Dict
+
+import httpretty
+import pytest
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
+
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 
 class Config(BaseConfig):
@@ -38,14 +39,6 @@ class Config(BaseConfig):
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).all()
-
-
-def tmp_dir():
-    dir_ = tempfile.mkdtemp(prefix="poetry_")
-
-    yield dir_
-
-    shutil.rmtree(dir_)
 
 
 @pytest.fixture

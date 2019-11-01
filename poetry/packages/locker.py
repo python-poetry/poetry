@@ -1,15 +1,16 @@
 import json
 import re
 
-import poetry.packages
-import poetry.repositories
-
 from hashlib import sha256
+from typing import List
+
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
 from tomlkit import table
-from typing import List
+
+import poetry.packages
+import poetry.repositories
 
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile

@@ -2,6 +2,7 @@
 
 from .layout import Layout
 
+
 DEFAULT = u"""__version__ = '{version}'
 """
 

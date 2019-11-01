@@ -1,8 +1,8 @@
 from cleo import argument
 from cleo import option
 
-from .init import InitCommand
 from .env_command import EnvCommand
+from .init import InitCommand
 
 
 class AddCommand(EnvCommand, InitCommand):
@@ -49,7 +49,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation import Installer
+        from poetry.installation.installer import Installer
         from poetry.semver import parse_constraint
         from tomlkit import inline_table
 

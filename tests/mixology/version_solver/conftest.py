@@ -1,11 +1,11 @@
 import pytest
 
 from clikit.io import NullIO
+
 from poetry.packages.project_package import ProjectPackage
+from poetry.puzzle.provider import Provider
 from poetry.repositories import Pool
 from poetry.repositories import Repository
-
-from poetry.puzzle.provider import Provider
 
 
 @pytest.fixture

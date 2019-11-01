@@ -1,14 +1,18 @@
 import re
 
-from pyparsing import ParseException, ParseResults, stringStart, stringEnd
-
-from pyparsing import ZeroOrMore, Group, Forward, QuotedString
-from pyparsing import Literal as L  # noqa
-
 from typing import Any
 from typing import Dict
 from typing import Iterator
 from typing import List
+
+from pyparsing import Forward
+from pyparsing import Group
+from pyparsing import Literal as L  # noqa
+from pyparsing import ParseResults
+from pyparsing import QuotedString
+from pyparsing import ZeroOrMore
+from pyparsing import stringEnd
+from pyparsing import stringStart
 
 
 class InvalidMarker(ValueError):

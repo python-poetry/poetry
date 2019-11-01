@@ -1,5 +1,5 @@
-from poetry.version.helpers import format_python_constraint
 from poetry.semver import parse_constraint
+from poetry.version.helpers import format_python_constraint
 
 
 def test_format_python_constraint():

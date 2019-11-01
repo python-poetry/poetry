@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import ast
-import pytest
 import shutil
 import tarfile
 
 from email.parser import Parser
+
+import pytest
 
 from clikit.io import NullIO
 
@@ -16,7 +17,6 @@ from poetry.packages.vcs_dependency import VCSDependency
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.env import NullEnv
-
 from tests.helpers import get_dependency
 
 

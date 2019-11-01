@@ -5,6 +5,7 @@ to suit our purposes.
 import os
 import sys
 
+
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
 

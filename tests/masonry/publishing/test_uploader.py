@@ -2,8 +2,8 @@ import pytest
 
 from poetry.factory import Factory
 from poetry.io.null_io import NullIO
-from poetry.masonry.publishing.uploader import UploadError
 from poetry.masonry.publishing.uploader import Uploader
+from poetry.masonry.publishing.uploader import UploadError
 from poetry.utils._compat import Path
 
 

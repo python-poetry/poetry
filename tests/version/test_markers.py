@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 from poetry.version.markers import MarkerUnion

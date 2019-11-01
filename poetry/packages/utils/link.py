@@ -1,14 +1,14 @@
 import posixpath
+import re
+
+from .utils import path_to_url
+from .utils import splitext
+
 
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
-
-import re
-
-from .utils import path_to_url
-from .utils import splitext
 
 
 class Link:

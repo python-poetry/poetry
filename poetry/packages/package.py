@@ -9,8 +9,8 @@ from warnings import warn
 
 from poetry.semver import Version
 from poetry.semver import parse_constraint
-from poetry.spdx import license_by_id
 from poetry.spdx import License
+from poetry.spdx import license_by_id
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 from poetry.version.markers import AnyMarker
@@ -21,8 +21,9 @@ from .dependency import Dependency
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .url_dependency import URLDependency
-from .vcs_dependency import VCSDependency
 from .utils.utils import create_nested_marker
+from .vcs_dependency import VCSDependency
+
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 

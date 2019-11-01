@@ -40,7 +40,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
 
     def handle(self):
         from clikit.io import NullIO
-        from poetry.installation import Installer
+        from poetry.installation.installer import Installer
         from poetry.masonry.builders import EditableBuilder
         from poetry.masonry.utils.module import ModuleOrPackageNotFound
 

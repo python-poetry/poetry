@@ -6,6 +6,7 @@ from io import open
 from .license import License
 from .updater import Updater
 
+
 _licenses = None
 
 

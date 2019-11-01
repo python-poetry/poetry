@@ -1,4 +1,5 @@
 from typing import Dict
+from typing import Generator
 from typing import List
 
 from .incompatibility_cause import ConflictCause

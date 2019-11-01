@@ -1,9 +1,9 @@
 import hashlib
 import io
 import math
-import re
 
-from typing import List, Optional
+from typing import List
+from typing import Optional
 
 import requests
 
@@ -11,7 +11,8 @@ from requests import adapters
 from requests.exceptions import HTTPError
 from requests.packages.urllib3 import util
 from requests_toolbelt import user_agent
-from requests_toolbelt.multipart import MultipartEncoder, MultipartEncoderMonitor
+from requests_toolbelt.multipart import MultipartEncoder
+from requests_toolbelt.multipart import MultipartEncoderMonitor
 
 from poetry.__version__ import __version__
 from poetry.utils._compat import Path
@@ -19,7 +20,8 @@ from poetry.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 
 from ..metadata import Metadata
-from ..utils.helpers import escape_name, escape_version
+from ..utils.helpers import escape_name
+from ..utils.helpers import escape_version
 
 
 _has_blake2 = hasattr(hashlib, "blake2b")

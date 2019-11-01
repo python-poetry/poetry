@@ -538,10 +538,12 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
     tester.execute("--outdated")
 
     expected = """\
-cachy      0.1.0                       0.2.0                      
+cachy      0.1.0                       0.2.0
 my-package 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 """
-    assert expected == tester.io.fetch_output()
+    assert expected.rstrip() == "\n".join(
+        l.rstrip() for l in tester.io.fetch_output().splitlines()
+    )
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])

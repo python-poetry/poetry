@@ -13,11 +13,10 @@ from poetry.packages import ProjectPackage
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import Path
 from poetry.utils._compat import PY2
-from poetry.utils.toml_file import TomlFile
+from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
-
+from poetry.utils.toml_file import TomlFile
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (

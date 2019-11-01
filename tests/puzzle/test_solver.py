@@ -2,16 +2,15 @@ import pytest
 
 from clikit.io import NullIO
 
-from poetry.packages import dependency_from_pep_508
 from poetry.packages import ProjectPackage
+from poetry.packages import dependency_from_pep_508
+from poetry.puzzle import Solver
+from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
-from poetry.puzzle import Solver
-from poetry.puzzle.exceptions import SolverProblemError
 from poetry.utils._compat import Path
 from poetry.version.markers import parse_marker
-
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (

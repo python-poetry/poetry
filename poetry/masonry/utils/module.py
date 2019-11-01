@@ -1,3 +1,5 @@
+from typing import List
+
 from poetry.utils._compat import Path
 from poetry.utils.helpers import module_name
 
