@@ -1,8 +1,4 @@
 class BaseRepository(object):
-
-    SEARCH_FULLTEXT = 0
-    SEARCH_NAME = 1
-
     def __init__(self):
         self._packages = []
 
@@ -21,5 +17,5 @@ class BaseRepository(object):
     ):
         raise NotImplementedError()
 
-    def search(self, query, mode=SEARCH_FULLTEXT):
+    def search(self, query):
         raise NotImplementedError()
