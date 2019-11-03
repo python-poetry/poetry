@@ -65,6 +65,7 @@ try:
 except NameError:
     u = str
 
+SHELL = os.getenv("SHELL", "")
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
 
@@ -741,8 +742,7 @@ class Installer:
     def get_unix_profiles(self):
         profiles = [os.path.join(HOME, ".profile")]
 
-        shell = os.getenv("SHELL", "")
-        if "zsh" in shell:
+        if "zsh" in SHELL:
             zdotdir = os.getenv("ZDOTDIR", HOME)
             profiles.append(os.path.join(zdotdir, ".zprofile"))
 
