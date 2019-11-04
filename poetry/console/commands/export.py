@@ -11,7 +11,13 @@ class ExportCommand(Command):
     description = "Exports the lock file to alternative formats."
 
     options = [
-        option("format", "f", "Format to export to.", flag=False),
+        option(
+            "format",
+            "f",
+            "Format to export to. Currently, only requirements.txt is supported.",
+            flag=False,
+            default=Exporter.FORMAT_REQUIREMENTS_TXT,
+        ),
         option("output", "o", "The name of the output file.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
         option("dev", None, "Include development dependencies."),

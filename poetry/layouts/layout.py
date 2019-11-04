@@ -40,7 +40,7 @@ license = ""
 
 ACCEPTED_README_FORMATS = ["md", "rst"]
 
-BUILD_SYSTEM_MIN_VERSION = "0.12"
+BUILD_SYSTEM_MIN_VERSION = "1.0.0a5"
 BUILD_SYSTEM_MAX_VERSION = None
 
 
@@ -65,10 +65,7 @@ class Layout(object):
         self._license = license
         self._python = python
         self._dependencies = dependencies or {}
-        if dev_dependencies is None:
-            dev_dependencies = {"pytest": "^3.5"}
-
-        self._dev_dependencies = dev_dependencies
+        self._dev_dependencies = dev_dependencies or {}
 
         if not author:
             author = "Your Name <you@example.com>"
@@ -118,8 +115,8 @@ class Layout(object):
         if BUILD_SYSTEM_MAX_VERSION is not None:
             build_system_version += ",<" + BUILD_SYSTEM_MAX_VERSION
 
-        build_system.add("requires", ["poetry" + build_system_version])
-        build_system.add("build-backend", "poetry.masonry.api")
+        build_system.add("requires", ["poetry-core" + build_system_version])
+        build_system.add("build-backend", "poetry.core.masonry.api")
 
         content.add("build-system", build_system)
 
@@ -137,8 +134,6 @@ class Layout(object):
         readme_file.touch()
 
     def _create_tests(self, path):
-        self._dev_dependencies["pytest"] = "^3.0"
-
         tests = path / "tests"
         tests_init = tests / "__init__.py"
         tests_default = tests / "test_{}.py".format(self._package_name)

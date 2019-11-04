@@ -20,18 +20,18 @@ The following is a set of guidelines for contributing to Poetry on GitHub. These
 This section guides you through submitting a bug report for Poetry.
 Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find related reports.
 
-Before creating bug reports, please check [this list](#before-submitting-a-bug-report) to be sure that you need to create one. When you are creating a bug report, please include as many details as possible. Fill out the [required template](https://github.com/sdispater/poetry/blob/master/.github/ISSUE_TEMPLATE/1_Bug_report.md), the information it asks helps the maintainers resolve the issue faster.
+Before creating bug reports, please check [this list](#before-submitting-a-bug-report) to be sure that you need to create one. When you are creating a bug report, please include as many details as possible. Fill out the [required template](https://github.com/python-poetry/poetry/blob/master/.github/ISSUE_TEMPLATE/---bug-report.md), the information it asks helps the maintainers resolve the issue faster.
 
 > **Note:** If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and include a link to the original issue in the body of your new one.
 
 #### Before submitting a bug report
 
-* **Check the [FAQs on the official website](https://poetry.eustace.io)** for a list of common questions and problems.
-* **Check that your issue does not already exist in the [issue tracker](https://github.com/sdispater/poetry/issues)**.
+* **Check the [FAQs on the official website](https://python-poetry.org/docs/faq)** for a list of common questions and problems.
+* **Check that your issue does not already exist in the [issue tracker](https://github.com/python-poetry/poetry/issues)**.
 
 #### How do I submit a bug report?
 
-Bugs are tracked on the [official issue tracker](https://github.com/sdispater/poetry/issues) where you can create a new one and provide the following information by filling in [the template](https://github.com/sdispater/poetry/blob/master/.github/ISSUE_TEMPLATE/1_Bug_report.md).
+Bugs are tracked on the [official issue tracker](https://github.com/python-poetry/poetry/issues) where you can create a new one and provide the following information by filling in [the template](https://github.com/python-poetry/poetry/blob/master/.github/ISSUE_TEMPLATE/---bug-report.md).
 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
@@ -60,17 +60,16 @@ Include details about your configuration and environment:
 
 This section guides you through submitting an enhancement suggestion for Poetry, including completely new features and minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand your suggestion and find related suggestions.
 
-Before creating enhancement suggestions, please check [this list](#before-submitting-an-enhancement-suggestion) as you might find out that you don't need to create one. When you are creating an enhancement suggestion, please [include as many details as possible](#how-do-i-submit-an-enhancement-suggestion). Fill in [the template](https://github.com/sdispater/poetry/blob/master/.github/ISSUE_TEMPLATE/2_Feature_request.md), including the steps that you imagine you would take if the feature you're requesting existed.
+Before creating enhancement suggestions, please check [this list](#before-submitting-an-enhancement-suggestion) as you might find out that you don't need to create one. When you are creating an enhancement suggestion, please [include as many details as possible](#how-do-i-submit-an-enhancement-suggestion). Fill in [the template](https://github.com/python-poetry/poetry/blob/master/.github/ISSUE_TEMPLATE/---feature-request.md), including the steps that you imagine you would take if the feature you're requesting existed.
 
 #### Before submitting an enhancement suggestion
 
-* **Check the [FAQs on the official website](https://poetry.eustace.io) for a list of common questions and problems.
-* **Check that your issue does not already exist in the [issue tracker](https://github.com/sdispater/poetry/issues).
-
+* **Check the [FAQs on the official website](https://python-poetry.org/docs/faq)** for a list of common questions and problems.
+* **Check that your issue does not already exist in the [issue tracker](https://github.com/python-poetry/poetry/issues)**.
 
 #### How do I submit an Enhancement suggestion?
 
-Enhancement suggestions are tracked on the [official issue tracker](https://github.com/sdispater/poetry/issues) where you can create a new one and provide the following information:
+Enhancement suggestions are tracked on the [official issue tracker](https://github.com/python-poetry/poetry/issues) where you can create a new one and provide the following information:
 
 * **Use a clear and descriptive title** for the issue to identify the suggestion.
 * **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
@@ -82,12 +81,12 @@ Enhancement suggestions are tracked on the [official issue tracker](https://gith
 
 #### Local development
 
-You will need Poetry to start contributing on the Poetry codebase. Refer to the [documentation](https://poetry.eustace.io/docs/#introduction) to start using Poetry.
+You will need Poetry to start contributing on the Poetry codebase. Refer to the [documentation](https://python-poetry.org/docs/#introduction) to start using Poetry.
 
 You will first need to clone the repository using `git` and place yourself in its directory:
 
 ```bash
-$ git clone git@github.com:sdispater/poetry.git
+$ git clone git@github.com:python-poetry/poetry.git
 $ cd poetry
 ```
 
@@ -99,8 +98,11 @@ $ poetry install
 $ poetry run pytest tests/
 ```
 
-Poetry uses the [black](https://github.com/ambv/black) coding style and you must ensure that your
+Poetry uses the [black](https://github.com/psf/black) coding style and you must ensure that your
 code follows it. If not, the CI will fail and your Pull Request will not be merged.
+
+Similarly, the import statements are sorted with [isort](https://github.com/timothycrosley/isort)
+and special care must be taken to respect it. If you don't, the CI will fail as well.
 
 To make sure that you don't accidentally commit code that does not follow the coding style, you can
 install a pre-commit hook that will check that everything is in order:
@@ -109,11 +111,17 @@ install a pre-commit hook that will check that everything is in order:
 $ poetry run pre-commit install
 ```
 
+You can also run it anytime using:
+
+```bash
+$ poetry run pre-commit run --all-files
+```
+
 Your code must always be accompanied by corresponding tests, if tests are not present your code
 will not be merged.
 
 #### Pull requests
 
-* Fill in [the required template](https://github.com/sdispater/poetry/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
+* Fill in [the required template](https://github.com/python-poetry/poetry/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
 * Be sure that your pull request contains tests that cover the changed or added code.
 * If your changes warrant a documentation change, the pull request must also update the documentation.

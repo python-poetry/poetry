@@ -26,9 +26,9 @@ license = "MIT"
 
 readme = "README.rst"
 
-homepage = "https://poetry.eustace.io"
-repository = "https://github.com/sdispater/poetry"
-documentation = "https://poetry.eustace.io/docs"
+homepage = "https://python-poetry.org"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
 
 keywords = ["packaging", "dependency", "poetry"]
 
@@ -160,6 +160,28 @@ def test_export_prints_to_stdout_by_default(app, repo):
     tester = CommandTester(command)
 
     tester.execute("--format requirements.txt")
+
+    expected = """\
+foo==1.0.0
+"""
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_export_uses_requirements_txt_format_by_default(app, repo):
+    repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
+
+    command = app.find("lock")
+    tester = CommandTester(command)
+    tester.execute()
+
+    assert app.poetry.locker.lock.exists()
+
+    command = app.find("export")
+    tester = CommandTester(command)
+
+    tester.execute()
 
     expected = """\
 foo==1.0.0

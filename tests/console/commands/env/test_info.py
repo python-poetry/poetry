@@ -48,4 +48,4 @@ def test_env_info_displays_path_only(app):
 
     expected = str(Path("/prefix"))
 
-    assert expected == tester.io.fetch_output()
+    assert expected + "\n" == tester.io.fetch_output()

@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "pep-561-stubs"
+version = "0.1"
+description = "PEP 561 stub package example with the py.typed marker file"
+authors = [
+    "Oleg Höfling <oleg.hoefling@gmail.com>"
+]
+license = "MIT"
+packages = [
+    {include = "pkg-stubs"}
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"

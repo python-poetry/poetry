@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "with-include"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+readme = "README.rst"
+
+homepage = "https://python-poetry.org/"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
+
+keywords = ["packaging", "dependency", "poetry"]
+
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+packages = [
+    { include = "extra_dir/**/*.py" },
+    { include = "extra_dir/**/*.py" },
+    { include = "my_module.py" },
+    { include = "package_with_include" },
+    { include = "tests", format = "sdist" },
+    { include = "for_wheel_only", format = ["wheel"] },
+    { include = "src_package", from = "src"},
+]
+
+include = [
+    "extra_dir/vcs_excluded.txt",
+    "notes.txt"
+]
+
+
+# Requirements
+[tool.poetry.dependencies]
+python = "^3.6"
+cleo = "^0.6"
+cachy = { version = "^0.2.0", extras = ["msgpack"] }
+
+pendulum = { version = "^1.4", optional = true }
+
+[tool.poetry.dev-dependencies]
+pytest = "~3.4"
+
+[tool.poetry.extras]
+time = ["pendulum"]
+
+[tool.poetry.scripts]
+my-script = "my_package:main"
+my-2nd-script = "my_package:main2"

@@ -1,0 +1,5 @@
+python-dateutil<3.0,>=2.6
+pytzdata>=2018.3
+
+[:python_version < "3.5"]
+typing<4.0,>=3.6

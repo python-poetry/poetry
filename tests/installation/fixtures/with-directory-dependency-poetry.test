@@ -8,14 +8,15 @@ version = "1.4.4"
 
 [[package]]
 category = "main"
-description = ""
+description = "This is a description"
+develop = true
 name = "project-with-extras"
 optional = false
 python-versions = "*"
 version = "1.2.3"
 
 [package.dependencies]
-pendulum = {version = ">=1.4.4", optional = true}
+pendulum = {version = ">=1.4.4", optional = true, markers = "extra == \"extras_a\""}
 
 [package.extras]
 extras_a = ["pendulum (>=1.4.4)"]
@@ -30,6 +31,6 @@ url = "tests/fixtures/project_with_extras"
 content-hash = "123456789"
 python-versions = "*"
 
-[metadata.hashes]
+[metadata.files]
 project-with-extras = []
 pendulum = []

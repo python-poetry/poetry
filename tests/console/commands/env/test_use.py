@@ -6,7 +6,7 @@ import tomlkit
 
 from cleo.testers import CommandTester
 
-from poetry.semver import Version
+from poetry.core.semver import Version
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
@@ -37,6 +37,7 @@ def check_output_wrapper(version=Version.parse("3.7.1")):
 
 
 def test_activate_activates_non_existing_virtualenv_no_envs_file(app, tmp_dir, mocker):
+    mocker.stopall()
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
@@ -57,7 +58,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(app, tmp_dir, m
     tester.execute("3.7")
 
     venv_name = EnvManager.generate_env_name(
-        "simple_project", str(app.poetry.file.parent)
+        "simple-project", str(app.poetry.file.parent)
     )
 
     m.assert_called_with(
@@ -85,10 +86,11 @@ Using virtualenv: {}
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     app, tmp_dir, mocker
 ):
+    mocker.stopall()
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     venv_name = EnvManager.generate_env_name(
-        "simple_project", str(app.poetry.file.parent)
+        "simple-project", str(app.poetry.file.parent)
     )
     current_python = sys.version_info[:3]
     python_minor = ".".join(str(v) for v in current_python[:2])
@@ -127,10 +129,11 @@ Using virtualenv: {}
 def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     app, tmp_dir, mocker
 ):
+    mocker.stopall()
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     venv_name = EnvManager.generate_env_name(
-        "simple_project", str(app.poetry.file.parent)
+        "simple-project", str(app.poetry.file.parent)
     )
     current_python = sys.version_info[:3]
     python_minor = ".".join(str(v) for v in current_python[:2])

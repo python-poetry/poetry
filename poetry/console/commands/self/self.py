@@ -1,5 +1,4 @@
 from ..command import Command
-
 from .update import SelfUpdateCommand
 
 

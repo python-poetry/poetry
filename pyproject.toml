@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.0.0b1"
+version = "1.1.0a1"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -9,9 +9,9 @@ license = "MIT"
 
 readme = "README.md"
 
-homepage = "https://poetry.eustace.io/"
-repository = "https://github.com/sdispater/poetry"
-documentation = "https://poetry.eustace.io/docs"
+homepage = "https://python-poetry.org/"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
 
 keywords = ["packaging", "dependency", "poetry"]
 
@@ -22,53 +22,118 @@ classifiers = [
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.4"
-cleo = "^0.7.5"
+python = "~2.7 || ^3.5"
+
+poetry-core = "^1.0.0a6"
+cleo = "^0.8.1"
+clikit = "^0.6.2"
 requests = "^2.18"
 cachy = "^0.3.0"
 requests-toolbelt = "^0.8.0"
-jsonschema = "^3.0a3"
-pyrsistent = "^0.14.2"
-pyparsing = "^2.2"
 cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
-tomlkit = "^0.5.5"
+tomlkit = "^0.5.11"
 pexpect = "^4.7.0"
 
-# The typing module is not in the stdlib in Python 2.7 and 3.4
-typing = { version = "^3.6", python = "~2.7 || ~3.4" }
+# The typing module is not in the stdlib in Python 2.7
+typing = { version = "^3.6", python = "~2.7" }
 
-# Use pathlib2 for Python 2.7 and 3.4
-pathlib2 = { version = "^2.3", python = "~2.7 || ~3.4" }
+# Use pathlib2 for Python 2.7
+pathlib2 = { version = "^2.3", python = "~2.7" }
 # Use glob2 for Python 2.7 and 3.4
-glob2 = { version = "^0.6", python = "~2.7 || ~3.4" }
+glob2 = { version = "^0.6", python = "~2.7" }
 # Use virtualenv for Python 2.7 since venv does not exist
-virtualenv = { version = "^16.0", python = "~2.7" }
+virtualenv = { version = "^20.0.18", python = "~2.7" }
 # functools32 is needed for Python 2.7
 functools32 = { version = "^3.2.3", python = "~2.7" }
 keyring = [
-    { version = "^18.0", python = "~2.7 || ~3.4" },
-    { version = "^19.0", python = "^3.5" }
+    { version = "^18.0.1", python = "~2.7" },
+    { version = "^20.0.1", python = "~3.5" },
+    { version = "^21.2.0", python = "^3.6" }
 ]
-# Use subprocess32 for Python 2.7 and 3.4
-subprocess32 = { version = "^3.5", python = "~2.7 || ~3.4" }
+# Use subprocess32 for Python 2.7
+subprocess32 = { version = "^3.5", python = "~2.7" }
+importlib-metadata = {version = "^1.6.0", python = "<3.8"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^4.1"
+pytest = [
+    {version = "^4.1", python = "<3.5"},
+    {version = "^5.4.3", python = ">=3.5"}
+]
 pytest-cov = "^2.5"
 mkdocs = { version = "^1.0", python = "~2.7.9 || ^3.4" }
 pymdown-extensions = "^6.0"
 pygments = "^2.2"
 pytest-mock = "^1.9"
 pygments-github-lexers = "^0.0.5"
-black = { version = "^19.3b0", python = "^3.6" }
+black = { version = "^19.10b0", python = "^3.6" }
 pre-commit = "^1.10"
 tox = "^3.0"
 pytest-sugar = "^0.9.2"
 httpretty = "^0.9.6"
-
+markdown-include = "^0.5.1"
 
 [tool.poetry.scripts]
 poetry = "poetry.console:main"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0a3"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.isort]
+line_length = 88
+force_single_line = true
+atomic = true
+include_trailing_comma = true
+lines_after_imports = 2
+lines_between_types = 1
+multi_line_output = 3
+use_parentheses = true
+not_skip = "__init__.py"
+skip_glob = ["*/setup.py"]
+filter_files = true
+
+known_first_party = "poetry"
+known_third_party = [
+    "cachecontrol",
+    "cachy",
+    "cleo",
+    "clikit",
+    "html5lib",
+    "httpretty",
+    "jsonschema",
+    "keyring",
+    "pexpect",
+    "pkginfo",
+    "poetry_core",
+    "pyparsing",
+    "pytest",
+    "requests",
+    "requests_toolbelt",
+    "shellingham",
+    "tomlkit",
+]
+
+
+[tool.black]
+line-length = 88
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | tests/.*/setup.py
+)/
+'''

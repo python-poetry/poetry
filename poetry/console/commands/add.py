@@ -1,8 +1,8 @@
 from cleo import argument
 from cleo import option
 
-from .init import InitCommand
 from .env_command import EnvCommand
+from .init import InitCommand
 
 
 class AddCommand(EnvCommand, InitCommand):
@@ -33,12 +33,19 @@ class AddCommand(EnvCommand, InitCommand):
             "Platforms for which the dependency must be installed.",
             flag=False,
         ),
+        option(
+            "source",
+            None,
+            "Name of the source to use to install the package.",
+            flag=False,
+        ),
         option("allow-prereleases", None, "Accept prereleases."),
         option(
             "dry-run",
             None,
             "Output the operations but do not execute anything (implicitly enables --verbose).",
         ),
+        option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
 
     help = """The add command adds required packages to your <comment>pyproject.toml</> and installs them.
@@ -49,8 +56,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation import Installer
-        from poetry.semver import parse_constraint
+        from poetry.installation.installer import Installer
+        from poetry.core.semver import parse_constraint
         from tomlkit import inline_table
 
         packages = self.argument("name")
@@ -86,7 +93,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                     raise ValueError("Package {} is already present".format(name))
 
         requirements = self._determine_requirements(
-            packages, allow_prereleases=self.option("allow-prereleases")
+            packages,
+            allow_prereleases=self.option("allow-prereleases"),
+            source=self.option("source"),
         )
 
         for _constraint in requirements:
@@ -105,7 +114,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 constraint["optional"] = True
 
             if self.option("allow-prereleases"):
-                constraint["allows-prereleases"] = True
+                constraint["allow-prereleases"] = True
 
             if self.option("extras"):
                 extras = []
@@ -122,6 +131,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
             if self.option("platform"):
                 constraint["platform"] = self.option("platform")
+
+            if self.option("source"):
+                constraint["source"] = self.option("source")
 
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
@@ -143,6 +155,8 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
         installer.dry_run(self.option("dry-run"))
         installer.update(True)
+        if self.option("lock"):
+            installer.lock()
         installer.whitelist([r["name"] for r in requirements])
 
         try:

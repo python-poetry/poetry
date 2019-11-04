@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Union
 
-from poetry.packages import Dependency
+from poetry.core.packages import Dependency
 
 from .set_relation import SetRelation
 

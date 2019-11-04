@@ -34,14 +34,14 @@ def test_check_invalid(app, mocker):
     if PY2:
         expected = """\
 Error: u'description' is a required property
-Error: INVALID is not a valid license
 Warning: A wildcard Python dependency is ambiguous. Consider specifying a more explicit one.
+Warning: The "pendulum" dependency specifies the "allows-prereleases" property, which is deprecated. Use "allow-prereleases" instead.
 """
     else:
         expected = """\
 Error: 'description' is a required property
-Error: INVALID is not a valid license
 Warning: A wildcard Python dependency is ambiguous. Consider specifying a more explicit one.
+Warning: The "pendulum" dependency specifies the "allows-prereleases" property, which is deprecated. Use "allow-prereleases" instead.
 """
 
     assert expected == tester.io.fetch_output()

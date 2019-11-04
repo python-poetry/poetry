@@ -2,8 +2,8 @@ import pytest
 
 from poetry.repositories import Pool
 from poetry.repositories import Repository
-from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.legacy_repository import LegacyRepository
 
 
 def test_pool_raises_package_not_found_when_no_package_is_found():

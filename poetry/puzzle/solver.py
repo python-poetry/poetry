@@ -1,36 +1,57 @@
 import time
 
+from contextlib import contextmanager
 from typing import Any
 from typing import Dict
 from typing import List
 
+from clikit.io import ConsoleIO
+
+from poetry.core.packages import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
-from poetry.packages import Package
-from poetry.semver import parse_constraint
-from poetry.version.markers import AnyMarker
+from poetry.repositories import Pool
+from poetry.repositories import Repository
+from poetry.utils.env import Env
 
-from .exceptions import CompatibilityError
+from .exceptions import OverrideNeeded
 from .exceptions import SolverProblemError
-
 from .operations import Install
 from .operations import Uninstall
 from .operations import Update
 from .operations.operation import Operation
-
 from .provider import Provider
 
 
 class Solver:
-    def __init__(self, package, pool, installed, locked, io):
+    def __init__(
+        self,
+        package,  # type: ProjectPackage
+        pool,  # type: Pool
+        installed,  # type: Repository
+        locked,  # type: Repository
+        io,  # type: ConsoleIO
+        remove_untracked=False,  # type: bool
+    ):
         self._package = package
         self._pool = pool
         self._installed = installed
         self._locked = locked
         self._io = io
         self._provider = Provider(self._package, self._pool, self._io)
-        self._branches = []
+        self._overrides = []
+        self._remove_untracked = remove_untracked
+
+    @property
+    def provider(self):  # type: () -> Provider
+        return self._provider
+
+    @contextmanager
+    def use_environment(self, env):  # type: (Env) -> None
+        with self.provider.use_environment(env):
+            yield
 
     def solve(self, use_latest=None):  # type: (...) -> List[Operation]
         with self._provider.progress():
@@ -38,15 +59,15 @@ class Solver:
             packages, depths = self._solve(use_latest=use_latest)
             end = time.time()
 
-            if len(self._branches) > 1:
+            if len(self._overrides) > 1:
                 self._provider.debug(
-                    "Complete version solving took {:.3f} seconds for {} branches".format(
-                        end - start, len(self._branches[1:])
+                    "Complete version solving took {:.3f} seconds with {} overrides".format(
+                        end - start, len(self._overrides)
                     )
                 )
                 self._provider.debug(
-                    "Resolved for branches: {}".format(
-                        ", ".join("({})".format(b) for b in self._branches[1:])
+                    "Resolved with overrides: {}".format(
+                        ", ".join("({})".format(b) for b in self._overrides)
                     )
                 )
 
@@ -58,12 +79,20 @@ class Solver:
                     installed = True
 
                     if pkg.source_type == "git" and package.source_type == "git":
+                        from poetry.core.vcs.git import Git
+
                         # Trying to find the currently installed version
+                        pkg_source_url = Git.normalize_url(pkg.source_url)
+                        package_source_url = Git.normalize_url(package.source_url)
                         for locked in self._locked.packages:
+                            if locked.name != pkg.name or locked.source_type != "git":
+                                continue
+
+                            locked_source_url = Git.normalize_url(locked.source_url)
                             if (
                                 locked.name == pkg.name
                                 and locked.source_type == pkg.source_type
-                                and locked.source_url == pkg.source_url
+                                and locked_source_url == pkg_source_url
                                 and locked.source_reference == pkg.source_reference
                             ):
                                 pkg = Package(pkg.name, locked.version)
@@ -72,7 +101,7 @@ class Solver:
                                 pkg.source_reference = locked.source_reference
                                 break
 
-                        if pkg.source_url != package.source_url or (
+                        if pkg_source_url != package_source_url or (
                             pkg.source_reference != package.source_reference
                             and not pkg.source_reference.startswith(
                                 package.source_reference
@@ -85,6 +114,8 @@ class Solver:
                             )
                     elif package.version != pkg.version:
                         # Checking version
+                        operations.append(Update(pkg, package))
+                    elif pkg.source_type and package.source_type != pkg.source_type:
                         operations.append(Update(pkg, package))
                     else:
                         operations.append(Install(package).skip("Already installed"))
@@ -115,6 +146,18 @@ class Solver:
 
                 operations.append(op)
 
+        if self._remove_untracked:
+            locked_names = {locked.name for locked in self._locked.packages}
+
+            for installed in self._installed.packages:
+                if installed.name == self._package.name:
+                    continue
+                if installed.name in Provider.UNSAFE_PACKAGES:
+                    # Never remove pip, setuptools etc.
+                    continue
+                if installed.name not in locked_names:
+                    operations.append(Uninstall(installed))
+
         return sorted(
             operations,
             key=lambda o: (
@@ -127,42 +170,39 @@ class Solver:
             ),
         )
 
-    def solve_in_compatibility_mode(self, constraints, use_latest=None):
+    def solve_in_compatibility_mode(self, overrides, use_latest=None):
         locked = {}
         for package in self._locked.packages:
             locked[package.name] = DependencyPackage(package.to_dependency(), package)
 
         packages = []
         depths = []
-        for constraint in constraints:
-            constraint = parse_constraint(constraint)
-            intersection = constraint.intersect(self._package.python_constraint)
-
+        for override in overrides:
             self._provider.debug(
                 "<comment>Retrying dependency resolution "
-                "for Python ({}).</comment>".format(intersection)
+                "with the following overrides ({}).</comment>".format(override)
             )
-            with self._package.with_python_versions(str(intersection)):
-                _packages, _depths = self._solve(use_latest=use_latest)
-                for index, package in enumerate(_packages):
-                    if package not in packages:
-                        packages.append(package)
-                        depths.append(_depths[index])
-                        continue
-                    else:
-                        idx = packages.index(package)
-                        pkg = packages[idx]
-                        depths[idx] = max(depths[idx], _depths[index])
-                        pkg.marker = pkg.marker.union(package.marker)
+            self._provider.set_overrides(override)
+            _packages, _depths = self._solve(use_latest=use_latest)
+            for index, package in enumerate(_packages):
+                if package not in packages:
+                    packages.append(package)
+                    depths.append(_depths[index])
+                    continue
+                else:
+                    idx = packages.index(package)
+                    pkg = packages[idx]
+                    depths[idx] = max(depths[idx], _depths[index])
 
-                        for dep in package.requires:
-                            if dep not in pkg.requires:
-                                pkg.requires.append(dep)
+                    for dep in package.requires:
+                        if dep not in pkg.requires:
+                            pkg.requires.append(dep)
 
         return packages, depths
 
     def _solve(self, use_latest=None):
-        self._branches.append(self._package.python_versions)
+        if self._provider._overrides:
+            self._overrides.append(self._provider._overrides)
 
         locked = {}
         for package in self._locked.packages:
@@ -174,10 +214,8 @@ class Solver:
             )
 
             packages = result.packages
-        except CompatibilityError as e:
-            return self.solve_in_compatibility_mode(
-                e.constraints, use_latest=use_latest
-            )
+        except OverrideNeeded as e:
+            return self.solve_in_compatibility_mode(e.overrides, use_latest=use_latest)
         except SolveFailure as e:
             raise SolverProblemError(e)
 
@@ -186,18 +224,10 @@ class Solver:
         depths = []
         final_packages = []
         for package in packages:
-            category, optional, marker, depth = self._get_tags_for_package(
-                package, graph
-            )
-
-            if marker is None:
-                marker = AnyMarker()
-            if marker.is_empty():
-                continue
+            category, optional, depth = self._get_tags_for_package(package, graph)
 
             package.category = category
             package.optional = optional
-            package.marker = marker
 
             depths.append(depth)
             final_packages.append(package)
@@ -210,21 +240,15 @@ class Solver:
         if not previous:
             category = "dev"
             optional = True
-            marker = package.marker
         else:
             category = dep.category
             optional = dep.is_optional() and not dep.is_activated()
-            intersection = previous["marker"].intersect(previous_dep.marker)
-            intersection = intersection.intersect(package.marker)
-
-            marker = intersection
 
         childrens = []  # type: List[Dict[str, Any]]
         graph = {
             "name": package.name,
             "category": category,
             "optional": optional,
-            "marker": marker,
             "children": childrens,
         }
 
@@ -283,9 +307,6 @@ class Solver:
                         child_graph["optional"] = True
 
                     if existing:
-                        existing["marker"] = existing["marker"].union(
-                            child_graph["marker"]
-                        )
                         continue
 
                     childrens.append(child_graph)
@@ -295,7 +316,6 @@ class Solver:
     def _get_tags_for_package(self, package, graph, depth=0):
         categories = ["dev"]
         optionals = [True]
-        markers = []
         _depths = [0]
 
         children = graph["children"]
@@ -303,10 +323,9 @@ class Solver:
             if child["name"] == package.name:
                 category = child["category"]
                 optional = child["optional"]
-                marker = child["marker"]
                 _depths.append(depth)
             else:
-                (category, optional, marker, _depth) = self._get_tags_for_package(
+                (category, optional, _depth) = self._get_tags_for_package(
                     package, child, depth=depth + 1
                 )
 
@@ -314,8 +333,6 @@ class Solver:
 
             categories.append(category)
             optionals.append(optional)
-            if marker is not None:
-                markers.append(marker)
 
         if "main" in categories:
             category = "main"
@@ -326,11 +343,4 @@ class Solver:
 
         depth = max(*(_depths + [0]))
 
-        if not markers:
-            marker = None
-        else:
-            marker = markers[0]
-            for m in markers[1:]:
-                marker = marker.union(m)
-
-        return category, optional, marker, depth
+        return category, optional, depth

@@ -1,5 +1,5 @@
 # This file is part of Poetry
-# https://github.com/sdispater/poetry
+# https://github.com/python-poetry/poetry
 
 # Licensed under the MIT license:
 # http://www.opensource.org/licenses/MIT-license
@@ -47,8 +47,15 @@ wheel:
 	@poetry build -v
 
 linux_release:
-	docker pull quay.io/pypa/manylinux1_x86_64
-	docker run --rm -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/make-linux-release.sh
+	docker pull quay.io/pypa/manylinux2010_x86_64
+	docker run --rm -i -v `pwd`:/io \
+		-e PYTHON=/opt/python/cp37-cp37m/bin/python \
+		-e PYTHON27=/opt/python/cp27-cp27m/bin/python \
+		-e PYTHON35=/opt/python/cp35-cp35m/bin/python \
+		-e PYTHON36=/opt/python/cp36-cp36m/bin/python \
+		-e PYTHON37=/opt/python/cp37-cp37m/bin/python \
+		-e PYTHON38=/opt/python/cp38-cp38/bin/python \
+		quay.io/pypa/manylinux2010_x86_64 sh -c "cd /io && ./make-nix-release.sh"
 
 # run tests against all supported python versions
 tox:

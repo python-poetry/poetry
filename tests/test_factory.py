@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 import pytest
 
-from poetry.io.null_io import NullIO
 from poetry.factory import Factory
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
@@ -28,8 +27,8 @@ def test_create_poetry():
         package.readme.relative_to(fixtures_dir).as_posix()
         == "sample_project/README.rst"
     )
-    assert package.homepage == "https://poetry.eustace.io"
-    assert package.repository_url == "https://github.com/sdispater/poetry"
+    assert package.homepage == "https://python-poetry.org"
+    assert package.repository_url == "https://github.com/python-poetry/poetry"
     assert package.keywords == ["packaging", "dependency", "poetry"]
 
     assert package.python_versions == "~2.7 || ^3.6"
@@ -107,15 +106,14 @@ def test_create_poetry():
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Software Development :: Build Tools",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ]
 
 
 def test_create_poetry_with_packages_and_includes():
-    poetry = Factory().create_poetry(
-        fixtures_dir.parent / "masonry" / "builders" / "fixtures" / "with-include"
-    )
+    poetry = Factory().create_poetry(fixtures_dir / "with-include")
 
     package = poetry.package
 
@@ -129,7 +127,10 @@ def test_create_poetry_with_packages_and_includes():
         {"include": "src_package", "from": "src"},
     ]
 
-    assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
+    assert package.include == [
+        {"path": "extra_dir/vcs_excluded.txt", "format": []},
+        {"path": "notes.txt", "format": []},
+    ]
 
 
 def test_create_poetry_with_multi_constraints_dependency():

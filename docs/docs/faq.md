@@ -42,8 +42,8 @@ So, in your `pyproject.toml` file, add this section if it does not already exist
 
 ```toml
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 ```
 
 And use a `tox.ini` configuration file similar to this:
@@ -60,14 +60,14 @@ commands =
     poetry run pytest tests/
 ```
 
-## I don't want Poetry to manage my virtualenvs. Can I disable it?
+## I don't want Poetry to manage my virtual environments. Can I disable it?
 
-While Poetry automatically creates virtualenvs to always work isolated
+While Poetry automatically creates virtual environments to always work isolated
 from the global Python installation, there are valid reasons why it's not necessary
 and is an overhead, like when working with containers.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
 
 ```bash
-poetry config settings.virtualenvs.create false
+poetry config virtualenvs.create false
 ```

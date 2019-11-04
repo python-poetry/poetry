@@ -603,7 +603,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, poetry
         content = f.read()
 
     expected = """\
--e tests/fixtures/distributions/demo-0.1.0.tar.gz
+tests/fixtures/distributions/demo-0.1.0.tar.gz
 """
 
     assert expected == content
@@ -644,7 +644,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
         content = f.read()
 
     expected = """\
--e tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
+tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 """
 
     assert expected == content
@@ -700,6 +700,86 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry)
 
 bar==4.5.6 \\
     --hash=sha256:67890
+foo==1.2.3 \\
+    --hash=sha256:12345
+"""
+
+    assert expected == content
+
+
+def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(
+    tmp_dir, poetry
+):
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "https://example.com/simple",
+            auth=Auth("https://example.com/simple", "foo", "bar"),
+        )
+    )
+    poetry.pool.add_repository(LegacyRepository("custom", "https://foobaz.com/simple",))
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/simple",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/simple",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "baz",
+                    "version": "7.8.9",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://foobaz.com/simple",
+                        "reference": "",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": ["12345"], "bar": ["67890"], "baz": ["24680"]},
+            },
+        }
+    )
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+--extra-index-url https://example.com/simple
+--extra-index-url https://foobaz.com/simple
+
+bar==4.5.6 \\
+    --hash=sha256:67890
+baz==7.8.9 \\
+    --hash=sha256:24680
 foo==1.2.3 \\
     --hash=sha256:12345
 """

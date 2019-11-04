@@ -1,10 +1,11 @@
 import json
 import os
 
-import jsonschema
-
 from io import open
 from typing import List
+
+import jsonschema
+
 
 SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schemas")
 
@@ -31,7 +32,9 @@ def validate_object(obj, schema_name):  # type: (dict, str) -> List[str]
     for error in validation_errors:
         message = error.message
         if error.path:
-            message = "[{}] {}".format(".".join(error.path), message)
+            message = "[{}] {}".format(
+                ".".join(str(x) for x in error.absolute_path), message
+            )
 
         errors.append(message)
 

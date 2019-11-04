@@ -1,12 +1,9 @@
-import pytest
 import shutil
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+import pytest
 
-from poetry.packages import Dependency
+from poetry.core.packages import Dependency
+from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
@@ -14,13 +11,19 @@ from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 
 
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
+
+
 class MockRepository(LegacyRepository):
 
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
-    def __init__(self):
+    def __init__(self, auth=None):
         super(MockRepository, self).__init__(
-            "legacy", url="http://foo.bar", disable_cache=True
+            "legacy", url="http://legacy.foo.bar", auth=auth, disable_cache=True
         )
 
     def _get(self, endpoint):
@@ -47,7 +50,7 @@ def test_page_relative_links_path_are_correct():
     page = repo._get("/relative")
 
     for link in page.links:
-        assert link.netloc == "foo.bar"
+        assert link.netloc == "legacy.foo.bar"
         assert link.path.startswith("/relative/poetry")
 
 
@@ -81,6 +84,9 @@ def test_get_package_information_fallback_read_setup():
 
     package = repo.package("jupyter", "1.0.0")
 
+    assert package.source_type == "legacy"
+    assert package.source_reference == repo.name
+    assert package.source_url == repo.url
     assert package.name == "jupyter"
     assert package.version.text == "1.0.0"
     assert (
@@ -138,6 +144,10 @@ def test_find_packages_no_prereleases():
     packages = repo.find_packages("pyyaml")
 
     assert len(packages) == 1
+
+    assert packages[0].source_type == "legacy"
+    assert packages[0].source_reference == repo.name
+    assert packages[0].source_url == repo.url
 
 
 def test_get_package_information_chooses_correct_distribution():
@@ -242,11 +252,17 @@ def test_get_package_retrieves_non_sha256_hashes():
     package = repo.package("ipython", "7.5.0")
 
     expected = [
-        "md5:dbdc53e3918f28fa335a173432402a00",
-        "e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+        {
+            "file": "ipython-7.5.0-py3-none-any.whl",
+            "hash": "md5:dbdc53e3918f28fa335a173432402a00",
+        },
+        {
+            "file": "ipython-7.5.0.tar.gz",
+            "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+        },
     ]
 
-    assert expected == package.hashes
+    assert expected == package.files
 
 
 def test_get_package_retrieves_packages_with_no_hashes():
@@ -254,4 +270,11 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
     package = repo.package("jupyter", "1.0.0")
 
-    assert [] == package.hashes
+    assert [] == package.files
+
+
+def test_username_password_special_chars():
+    auth = Auth("http://legacy.foo.bar", "user:", "/%2Fp@ssword")
+    repo = MockRepository(auth=auth)
+
+    assert "http://user%3A:%2F%252Fp%40ssword@legacy.foo.bar" == repo.authenticated_url

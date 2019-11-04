@@ -6,24 +6,27 @@ import pytest
 
 from clikit.io import NullIO
 
+from poetry.core.packages import ProjectPackage
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
-from poetry.packages import ProjectPackage
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import Path
 from poetry.utils._compat import PY2
-from poetry.utils.toml_file import TomlFile
+from poetry.utils._compat import Path
+from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
-
+from poetry.utils.toml_file import TomlFile
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
     MockRepository as MockLegacyRepository,
 )
 from tests.repositories.test_pypi_repository import MockRepository
+
+
+fixtures_dir = Path("tests/fixtures")
 
 
 class Installer(BaseInstaller):
@@ -291,6 +294,59 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
 
     removals = installer.installer.removals
     assert len(removals) == 1
+
+
+def test_run_install_remove_untracked(installer, locker, repo, package, installed):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"a": []},
+            },
+        }
+    )
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+    package_pip = get_package("pip", "20.0.0")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_pip)
+
+    installed.add_package(package_a)
+    installed.add_package(package_b)
+    installed.add_package(package_c)
+    installed.add_package(package_pip)  # Always required and never removed.
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency("A", "~1.0")
+
+    installer.dev_mode(True).remove_untracked(True)
+    installer.run()
+
+    installs = installer.installer.installs
+    assert len(installs) == 0
+
+    updates = installer.installer.updates
+    assert len(updates) == 0
+
+    removals = installer.installer.removals
+    assert set(r.name for r in removals) == {"b", "c"}
 
 
 def test_run_whitelist_add(installer, locker, repo, package):
@@ -663,7 +719,7 @@ def test_installer_with_pypi_repository(package, locker, installed):
 
 
 def test_run_installs_with_local_file(installer, locker, repo, package):
-    file_path = Path("tests/fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl")
+    file_path = fixtures_dir / "distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency("demo", {"file": str(file_path)})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -678,8 +734,8 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
 
 
 def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, package):
-    file_path = Path(
-        "tests/fixtures/wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
+    file_path = (
+        fixtures_dir / "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
     )
     package.add_dependency("demo", {"file": str(file_path)})
 
@@ -695,7 +751,7 @@ def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, packa
 def test_run_installs_with_local_poetry_directory_and_extras(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path("tests/fixtures/project_with_extras")
+    file_path = fixtures_dir / "project_with_extras"
     package.add_dependency(
         "project-with-extras", {"path": str(file_path), "extras": ["extras_a"]}
     )
@@ -714,11 +770,13 @@ def test_run_installs_with_local_poetry_directory_and_extras(
 def test_run_installs_with_local_poetry_directory_transitive(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path(
-        "tests/fixtures/directory/project_with_transitive_directory_dependencies/"
+    package.root_dir = fixtures_dir.joinpath("directory")
+    directory = fixtures_dir.joinpath("directory").joinpath(
+        "project_with_transitive_directory_dependencies"
     )
     package.add_dependency(
-        "project-with-transitive-directory-dependencies", {"path": str(file_path)}
+        "project-with-transitive-directory-dependencies",
+        {"path": str(directory.relative_to(fixtures_dir.joinpath("directory")))},
     )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -730,17 +788,19 @@ def test_run_installs_with_local_poetry_directory_transitive(
 
     assert locker.written_data == expected
 
-    assert len(installer.installer.installs) == 2
+    assert len(installer.installer.installs) == 6
 
 
 def test_run_installs_with_local_poetry_file_transitive(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path(
-        "tests/fixtures/directory/project_with_transitive_file_dependencies/"
+    package.root_dir = fixtures_dir.joinpath("directory")
+    directory = fixtures_dir.joinpath("directory").joinpath(
+        "project_with_transitive_file_dependencies"
     )
     package.add_dependency(
-        "project-with-transitive-file-dependencies", {"path": str(file_path)}
+        "project-with-transitive-file-dependencies",
+        {"path": str(directory.relative_to(fixtures_dir.joinpath("directory")))},
     )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -752,13 +812,13 @@ def test_run_installs_with_local_poetry_file_transitive(
 
     assert locker.written_data == expected
 
-    assert len(installer.installer.installs) == 3
+    assert len(installer.installer.installs) == 4
 
 
 def test_run_installs_with_local_setuptools_directory(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path("tests/fixtures/project_with_setup/")
+    file_path = fixtures_dir / "project_with_setup/"
     package.add_dependency("my-package", {"path": str(file_path)})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1183,8 +1243,8 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "checksum": [],
                     "dependencies": {
                         "B": [
-                            {"version": "^1.0", "python": "<4.0"},
-                            {"version": "^2.0", "python": ">=4.0"},
+                            {"version": "^1.0", "python": "<2.7"},
+                            {"version": "^2.0", "python": ">=2.7"},
                         ]
                     },
                 },
@@ -1197,7 +1257,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {"C": "1.2"},
-                    "requirements": {"python": "<4.0"},
+                    "requirements": {"python": "<2.7"},
                 },
                 {
                     "name": "B",
@@ -1208,7 +1268,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {"C": "1.5"},
-                    "requirements": {"python": ">=4.0"},
+                    "requirements": {"python": ">=2.7"},
                 },
                 {
                     "name": "C",
@@ -1461,15 +1521,15 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency("A", "^1.0")
 
-    a = get_package("A", "1.0")
-    a.add_dependency("B", ">=1.0.1")
-    a.add_dependency("C", {"version": "^1.0", "python": "~2.7"})
-    a.add_dependency("C", {"version": "^2.0", "python": "^3.4"})
+    a10 = get_package("A", "1.0")
+    a11 = get_package("A", "1.1")
+    a11.add_dependency("B", ">=1.0.1")
+    a11.add_dependency("C", {"version": "^1.0", "python": "~2.7"})
+    a11.add_dependency("C", {"version": "^2.0", "python": "^3.4"})
     b101 = get_package("B", "1.0.1")
-    b101.python_versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
     b110 = get_package("B", "1.1.0")
-    b110.python_versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
-    repo.add_package(a)
+    repo.add_package(a10)
+    repo.add_package(a11)
     repo.add_package(b101)
     repo.add_package(b110)
     repo.add_package(get_package("C", "1.0"))
@@ -1517,7 +1577,7 @@ def test_installer_can_install_dependencies_from_forced_source(
 
 
 def test_run_installs_with_url_file(installer, locker, repo, package):
-    url = "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency("demo", {"url": url})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1529,3 +1589,78 @@ def test_run_installs_with_url_file(installer, locker, repo, package):
     assert locker.written_data == expected
 
     assert len(installer.installer.installs) == 2
+
+
+def test_installer_uses_prereleases_if_they_are_compatible(
+    installer, locker, package, repo
+):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency(
+        "prerelease", {"git": "https://github.com/demo/prerelease.git"}
+    )
+
+    package_b = get_package("b", "2.0.0")
+    package_b.add_dependency("prerelease", ">=0.19")
+
+    repo.add_package(package_b)
+
+    installer.run()
+
+    del installer.installer.installs[:]
+    locker.locked(True)
+    locker.mock_lock_data(locker.written_data)
+
+    package.add_dependency("b", "^2.0.0")
+
+    installer.whitelist(["b"])
+    installer.update(True)
+    installer.run()
+
+    assert len(installer.installer.installs) == 2
+
+
+def test_installer_can_handle_old_lock_files(
+    installer, locker, package, repo, installed
+):
+    pool = Pool()
+    pool.add_repository(MockRepository())
+
+    package.add_dependency("pytest", "^3.5", category="dev")
+
+    locker.mock_lock_data(fixture("with-pypi-repository"))
+
+    installer = Installer(
+        NullIO(), MockEnv(), package, locker, pool, installed=installed
+    )
+
+    installer.run()
+
+    assert 6 == len(installer.installer.installs)
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(version_info=(2, 7, 18)),
+        package,
+        locker,
+        pool,
+        installed=installed,
+    )
+
+    installer.run()
+
+    # funcsigs will be added
+    assert 7 == len(installer.installer.installs)
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(version_info=(2, 7, 18), platform="win32"),
+        package,
+        locker,
+        pool,
+        installed=installed,
+    )
+
+    installer.run()
+
+    # colorama will be added
+    assert 8 == len(installer.installer.installs)

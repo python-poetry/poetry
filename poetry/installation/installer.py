@@ -2,11 +2,10 @@ from typing import List
 from typing import Union
 
 from clikit.api.io import IO
-from clikit.io import NullIO
 
-from poetry.packages import Dependency
+from poetry.core.packages.project_package import ProjectPackage
+from poetry.io.null_io import NullIO
 from poetry.packages import Locker
-from poetry.packages import Package
 from poetry.puzzle import Solver
 from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
@@ -15,9 +14,8 @@ from poetry.puzzle.operations.operation import Operation
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.semver import parse_constraint
-from poetry.utils.helpers import canonicalize_name
 from poetry.utils.extras import get_extra_package_names
+from poetry.utils.helpers import canonicalize_name
 
 from .base_installer import BaseInstaller
 from .pip_installer import PipInstaller
@@ -28,7 +26,7 @@ class Installer:
         self,
         io,  # type: IO
         env,
-        package,  # type: Package
+        package,  # type: ProjectPackage
         locker,  # type: Locker
         pool,  # type: Pool
         installed=None,  # type: (Union[InstalledRepository, None])
@@ -40,6 +38,7 @@ class Installer:
         self._pool = pool
 
         self._dry_run = False
+        self._remove_untracked = False
         self._update = False
         self._verbose = False
         self._write_lock = True
@@ -83,6 +82,14 @@ class Installer:
 
     def is_dry_run(self):  # type: () -> bool
         return self._dry_run
+
+    def remove_untracked(self, remove_untracked=True):  # type: (bool) -> Installer
+        self._remove_untracked = remove_untracked
+
+        return self
+
+    def is_remove_untracked(self):  # type: () -> bool
+        return self._remove_untracked
 
     def verbose(self, verbose=True):  # type: (bool) -> Installer
         self._verbose = verbose
@@ -157,6 +164,7 @@ class Installer:
                 self._installed_repository,
                 locked_repository,
                 self._io,
+                remove_untracked=self._remove_untracked,
             )
 
             ops = solver.solve(use_latest=self._whitelist)
@@ -198,31 +206,40 @@ class Installer:
             root = root.clone()
             del root.dev_requires[:]
 
-        with root.with_python_versions(
-            ".".join([str(i) for i in self._env.version_info[:3]])
-        ):
-            # We resolve again by only using the lock file
-            pool = Pool(ignore_repository_names=True)
-
-            # Making a new repo containing the packages
-            # newly resolved and the ones from the current lock file
-            repo = Repository()
-            for package in local_repo.packages + locked_repository.packages:
-                if not repo.has_package(package):
-                    repo.add_package(package)
-
-            pool.add_repository(repo)
-
-            # We whitelist all packages to be sure
-            # that the latest ones are picked up
-            whitelist = []
-            for pkg in locked_repository.packages:
-                whitelist.append(pkg.name)
-
-            solver = Solver(
-                root, pool, self._installed_repository, locked_repository, NullIO()
+        if self._io.is_verbose():
+            self._io.write_line("")
+            self._io.write_line(
+                "<info>Finding the necessary packages for the current system</>"
             )
 
+        # We resolve again by only using the lock file
+        pool = Pool(ignore_repository_names=True)
+
+        # Making a new repo containing the packages
+        # newly resolved and the ones from the current lock file
+        repo = Repository()
+        for package in local_repo.packages + locked_repository.packages:
+            if not repo.has_package(package):
+                repo.add_package(package)
+
+        pool.add_repository(repo)
+
+        # We whitelist all packages to be sure
+        # that the latest ones are picked up
+        whitelist = []
+        for pkg in locked_repository.packages:
+            whitelist.append(pkg.name)
+
+        solver = Solver(
+            root,
+            pool,
+            self._installed_repository,
+            locked_repository,
+            NullIO(),
+            remove_untracked=self._remove_untracked,
+        )
+
+        with solver.use_environment(self._env):
             ops = solver.solve(use_latest=whitelist)
 
         # We need to filter operations so that packages
@@ -235,33 +252,22 @@ class Installer:
         # Execute operations
         actual_ops = [op for op in ops if not op.skipped]
         if not actual_ops and (self._execute_operations or self._dry_run):
-            self._io.write_line("Nothing to install or update")
+            self._io.write_line("No dependencies to install or update")
 
         if actual_ops and (self._execute_operations or self._dry_run):
-            installs = []
-            updates = []
-            uninstalls = []
-            skipped = []
+            installs = 0
+            updates = 0
+            uninstalls = 0
+            skipped = 0
             for op in ops:
                 if op.skipped:
-                    skipped.append(op)
-                    continue
-
-                if op.job_type == "install":
-                    installs.append(
-                        "{}:{}".format(
-                            op.package.pretty_name, op.package.full_pretty_version
-                        )
-                    )
+                    skipped += 1
+                elif op.job_type == "install":
+                    installs += 1
                 elif op.job_type == "update":
-                    updates.append(
-                        "{}:{}".format(
-                            op.target_package.pretty_name,
-                            op.target_package.full_pretty_version,
-                        )
-                    )
+                    updates += 1
                 elif op.job_type == "uninstall":
-                    uninstalls.append(op.package.pretty_name)
+                    uninstalls += 1
 
             self._io.write_line("")
             self._io.write_line(
@@ -270,13 +276,13 @@ class Installer:
                 "<info>{}</> update{}, "
                 "<info>{}</> removal{}"
                 "{}".format(
-                    len(installs),
-                    "" if len(installs) == 1 else "s",
-                    len(updates),
-                    "" if len(updates) == 1 else "s",
-                    len(uninstalls),
-                    "" if len(uninstalls) == 1 else "s",
-                    ", <info>{}</> skipped".format(len(skipped))
+                    installs,
+                    "" if installs == 1 else "s",
+                    updates,
+                    "" if updates == 1 else "s",
+                    uninstalls,
+                    "" if uninstalls == 1 else "s",
+                    ", <info>{}</> skipped".format(skipped)
                     if skipped and self.is_verbose()
                     else "",
                 )
@@ -306,7 +312,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -317,7 +323,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Installing <info>{}</> (<comment>{}</>)".format(
+                "  - Installing <c1>{}</c1> (<c2>{}</c2>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
@@ -334,7 +340,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         target.pretty_name,
                         target.full_pretty_version,
                         operation.skip_reason,
@@ -345,7 +351,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)".format(
+                "  - Updating <c1>{}</c1> (<c2>{}</c2> -> <c2>{}</c2>)".format(
                     target.pretty_name,
                     source.full_pretty_version,
                     target.full_pretty_version,
@@ -361,7 +367,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Not removing <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Not removing <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -372,7 +378,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Removing <info>{}</> (<comment>{}</>)".format(
+                "  - Removing <c1>{}</c1> (<c2>{}</c2>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
@@ -438,15 +444,6 @@ class Installer:
                 package = op.package
 
             if op.job_type == "uninstall":
-                continue
-
-            current_python = parse_constraint(
-                ".".join(str(v) for v in self._env.version_info[:3])
-            )
-            if not package.python_constraint.allows(
-                current_python
-            ) or not self._env.is_valid_for_marker(package.marker):
-                op.skip("Not needed for the current environment")
                 continue
 
             if self._update:

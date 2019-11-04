@@ -20,6 +20,9 @@ class InstallCommand(EnvCommand):
             "(implicitly enables --verbose).",
         ),
         option(
+            "remove-untracked", None, "Removes packages not present in the lock file.",
+        ),
+        option(
             "extras",
             "E",
             "Extra sets of dependencies to install.",
@@ -34,15 +37,20 @@ libraries and dependencies outlined in that file. If the file does not
 exist it will look for <comment>pyproject.toml</> and do the same.
 
 <info>poetry install</info>
+
+By default, the above command will also install the current project. To install only the
+dependencies and not including the current project, run the command with the
+<info>--no-root</info> option like below:
+
+<info> poetry install --no-root</info>
 """
 
     _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from clikit.io import NullIO
-        from poetry.installation import Installer
+        from poetry.installation.installer import Installer
         from poetry.masonry.builders import EditableBuilder
-        from poetry.masonry.utils.module import ModuleOrPackageNotFound
+        from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
         installer = Installer(
             self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
@@ -58,6 +66,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         installer.extras(extras)
         installer.dev_mode(not self.option("no-dev"))
         installer.dry_run(self.option("dry-run"))
+        installer.remove_untracked(self.option("remove-untracked"))
         installer.verbose(self.option("verbose"))
 
         return_code = installer.run()
@@ -69,7 +78,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             return 0
 
         try:
-            builder = EditableBuilder(self.poetry, self._env, NullIO())
+            builder = EditableBuilder(self.poetry, self._env, self._io)
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
@@ -77,7 +86,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             return 0
 
         self.line(
-            "  - Installing <info>{}</info> (<comment>{}</comment>)".format(
+            "  - Installing <c1>{}</c1> (<c2>{}</c2>)".format(
                 self.poetry.package.pretty_name, self.poetry.package.pretty_version
             )
         )

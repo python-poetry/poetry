@@ -2,10 +2,10 @@ from typing import Union
 
 from clikit.api.io import IO
 
-from poetry.packages.directory_dependency import DirectoryDependency
-from poetry.packages.file_dependency import FileDependency
-from poetry.packages.url_dependency import URLDependency
-from poetry.packages.vcs_dependency import VCSDependency
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.url_dependency import URLDependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
@@ -17,7 +17,9 @@ class Exporter(object):
     Exporter class to export a lock file to alternative formats.
     """
 
-    ACCEPTED_FORMATS = ("requirements.txt",)
+    FORMAT_REQUIREMENTS_TXT = "requirements.txt"
+    #: The names of the supported export formats.
+    ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
     def __init__(self, poetry):  # type: (Poetry) -> None
@@ -54,7 +56,7 @@ class Exporter(object):
         extras=None,
         with_credentials=False,
     ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
-        indexes = []
+        indexes = set()
         content = ""
         packages = self._poetry.locker.locked_repository(dev).packages
 
@@ -94,7 +96,7 @@ class Exporter(object):
                 dependency.marker = package.marker
 
                 line = "{}".format(package.source_url)
-                if package.develop:
+                if package.develop and package.source_type == "directory":
                     line = "-e " + line
             else:
                 dependency = package.to_dependency()
@@ -104,12 +106,16 @@ class Exporter(object):
             if ";" in requirement:
                 line += "; {}".format(requirement.split(";")[1].strip())
 
-            if package.source_type == "legacy" and package.source_url:
-                indexes.append(package.source_url)
+            if (
+                package.source_type not in {"git", "directory", "file", "url"}
+                and package.source_url
+            ):
+                indexes.add(package.source_url)
 
-            if package.hashes and with_hashes:
+            if package.files and with_hashes:
                 hashes = []
-                for h in package.hashes:
+                for f in package.files:
+                    h = f["hash"]
                     algorithm = "sha256"
                     if ":" in h:
                         algorithm, h = h.split(":")
@@ -123,17 +129,16 @@ class Exporter(object):
                     line += " \\\n"
                     for i, h in enumerate(hashes):
                         line += "    --hash={}{}".format(
-                            h, " \\\n" if i < len(package.hashes) - 1 else ""
+                            h, " \\\n" if i < len(hashes) - 1 else ""
                         )
 
             line += "\n"
             content += line
 
         if indexes:
-            # If we have extra indexes, we add them to the begin
-            # of the output
+            # If we have extra indexes, we add them to the beginning of the output
             indexes_header = ""
-            for index in indexes:
+            for index in sorted(indexes):
                 repository = [
                     r
                     for r in self._poetry.pool.repositories

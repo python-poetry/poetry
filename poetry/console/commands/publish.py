@@ -1,5 +1,7 @@
 from cleo import option
 
+from poetry.utils._compat import Path
+
 from .command import Command
 
 
@@ -14,7 +16,17 @@ class PublishCommand(Command):
         ),
         option("username", "u", "The username to access the repository.", flag=False),
         option("password", "p", "The password to access the repository.", flag=False),
+        option(
+            "cert", None, "Certificate authority to access the repository.", flag=False
+        ),
+        option(
+            "client-cert",
+            None,
+            "Client certificate to access the repository.",
+            flag=False,
+        ),
         option("build", None, "Build the package before publishing."),
+        option("dry-run", None, "Perform all actions except upload the package."),
     ]
 
     help = """The publish command builds and uploads the package to a remote repository.
@@ -29,7 +41,7 @@ the config command.
     loggers = ["poetry.masonry.publishing.publisher"]
 
     def handle(self):
-        from poetry.masonry.publishing.publisher import Publisher
+        from poetry.publishing.publisher import Publisher
 
         publisher = Publisher(self.poetry, self.io)
 
@@ -57,6 +69,16 @@ the config command.
 
         self.line("")
 
+        cert = Path(self.option("cert")) if self.option("cert") else None
+        client_cert = (
+            Path(self.option("client-cert")) if self.option("client-cert") else None
+        )
+
         publisher.publish(
-            self.option("repository"), self.option("username"), self.option("password")
+            self.option("repository"),
+            self.option("username"),
+            self.option("password"),
+            cert,
+            client_cert,
+            self.option("dry-run"),
         )
