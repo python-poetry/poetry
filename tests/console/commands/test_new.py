@@ -4,8 +4,7 @@ import pytest
 import tomlkit
 from cleo.testers import CommandTester
 
-from poetry.utils._compat import Path
-from poetry.utils._compat import glob
+from poetry.utils._compat import Path, glob
 
 fixtures_dir = Path(__file__).parent / "fixtures"
 
