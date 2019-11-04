@@ -103,11 +103,7 @@ class Layout(object):
         if self._readme_format not in ACCEPTED_README_FORMATS:
             raise ValueError("Invalid readme format: {}".format(self._readme_format))
 
-        if self._readme_format == "rst":
-            poetry_content["readme"] = "README.rst"
-        elif self._readme_format == "md":
-            poetry_content["readme"] = "README.md"
-
+        poetry_content["readme"] = "README.{}".format(self._readme_format)
         poetry_content["dependencies"]["python"] = self._python
 
         for dep_name, dep_constraint in self._dependencies.items():

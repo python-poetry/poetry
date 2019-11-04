@@ -79,19 +79,6 @@ If you want to use `rst` instead of `md` as the `README` format, you can use the
 poetry new my-package --readme rst
 ```
 
-That will create a folder structure as follows:
-
-```text
-my-package
-├── pyproject.toml
-├── README.rst
-├── my_package
-│   └── __init__.py
-└── tests
-    ├── __init__.py
-    └── test_my_package.py
-```
-
 ## init
 
 This command will help you create a `pyproject.toml` file interactively
