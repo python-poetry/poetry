@@ -95,7 +95,33 @@ class Git:
 
         return output.split("\n")
 
-    def run(self, *args):  # type: (...) -> str
+    def remote_urls(self, folder=None):  # type: (...) -> dict
+        output = self.run(
+            "config", "--get-regexp", r"remote\..*\.url", folder=folder
+        ).strip()
+
+        urls = {}
+        for url in output.splitlines():
+            name, url = url.split(" ", 1)
+            urls[name.strip()] = url.strip()
+
+        return urls
+
+    def remote_url(self, folder=None):  # type: (...) -> str
+        urls = self.remote_urls(folder=folder)
+
+        return urls.get("remote.origin.url", urls[list(urls.keys())[0]])
+
+    def run(self, *args, **kwargs):  # type: (...) -> str
+        folder = kwargs.pop("folder", None)
+        if folder:
+            args = (
+                "--git-dir",
+                (folder / ".git").as_posix(),
+                "--work-tree",
+                folder.as_posix(),
+            ) + args
+
         return decode(
             subprocess.check_output(["git"] + list(args), stderr=subprocess.STDOUT)
         )
