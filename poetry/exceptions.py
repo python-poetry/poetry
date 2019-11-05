@@ -6,3 +6,8 @@ class PoetryException(Exception):
 class InvalidProjectFile(PoetryException):
 
     pass
+
+
+class ValidationError(PoetryException):
+
+    pass

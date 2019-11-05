@@ -6,11 +6,13 @@ import shutil
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Union
 
 from clikit.api.io.io import IO
 
 from .config.config import Config
 from .config.file_config_source import FileConfigSource
+from .exceptions import ValidationError
 from .io.null_io import NullIO
 from .json import validate_object
 from .locations import CONFIG_DIR
@@ -21,6 +23,8 @@ from .poetry import Poetry
 from .repositories.pypi_repository import PyPiRepository
 from .spdx import license_by_id
 from .utils._compat import Path
+from .utils._compat import to_str
+from .utils._compat import unicode
 from .utils.toml_file import TomlFile
 
 
@@ -55,7 +59,7 @@ class Factory:
 
         # Load package
         name = local_config["name"]
-        version = local_config["version"]
+        version = self._read_version(local_config.get("version"))
         package = ProjectPackage(name, version, version)
         package.root_dir = poetry_file.parent
 
@@ -259,6 +263,38 @@ class Factory:
         )
 
     @classmethod
+    def _read_version(cls, version):  # type: (Union[unicode, dict]) -> unicode
+        """
+        Read version from string or dict.
+
+        :param version:
+        :return: original version if it was string or extracted version
+        :raises ValueError: validation error
+        :raises Exception: error related to toml parsing
+        """
+        if isinstance(version, unicode):
+            return version
+        # at this point `version` object should have structure
+        # like this: { 'attr': 'module.submodule.__version__' }
+        path_to_version = version.get("attr")
+        module, variable = path_to_version.split(":")
+        try:
+            module = __import__(module)
+        except ImportError:
+            raise ValidationError(
+                "Unable to read version: module {} doesn't exist.".format(module)
+            )
+        if not hasattr(module, variable):
+            raise ValidationError(
+                "Unable to read version: variable {} doesn't exist in module {}.".format(
+                    variable, module
+                )
+            )
+        version = getattr(module, variable)
+        version = to_str(version)
+        return version
+
+    @classmethod
     def validate(
         cls, config, strict=False
     ):  # type: (dict, bool) -> Dict[str, List[str]]
@@ -268,8 +304,15 @@ class Factory:
         result = {"errors": [], "warnings": []}
         # Schema validation errors
         validation_errors = validate_object(config, "poetry-schema")
-
         result["errors"] += validation_errors
+
+        try:
+            cls._read_version(config.get("version"))
+        except ValidationError as e:
+            result["errors"].append(str(e))
+        except Exception:
+            # parsing errors are already in result["errors"]
+            pass
 
         if strict:
             # If strict, check the file more thoroughly

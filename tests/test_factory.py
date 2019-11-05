@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import sys
+
 import pytest
 
 from poetry.factory import Factory
@@ -205,3 +207,10 @@ def test_create_poetry_with_local_config(fixture_dir):
 
     assert not poetry.config.get("virtualenvs.in-project")
     assert not poetry.config.get("virtualenvs.create")
+
+
+def test_create_poetry_with_version_from_path(fixture_dir, mocker):
+    project_path = fixture_dir("with_version_from_path")
+    mocker.patch("sys.path", sys.path + [str(project_path)])
+    poetry = Factory().create_poetry(project_path)
+    assert poetry.package.version.text == "1.2.3"
