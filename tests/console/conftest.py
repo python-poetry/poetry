@@ -17,6 +17,7 @@ from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
+from poetry.vcs.git import ParsedUrl
 
 
 try:
@@ -32,14 +33,14 @@ def installer():
 
 def mock_clone(self, source, dest):
     # Checking source to determine which folder we need to copy
-    parts = urlparse.urlparse(source)
+    parsed = ParsedUrl.parse(source)
 
     folder = (
         Path(__file__).parent.parent
         / "fixtures"
         / "git"
-        / parts.netloc
-        / parts.path.lstrip("/").rstrip(".git")
+        / parsed.resource
+        / parsed.pathname.lstrip("/").rstrip(".git")
     )
 
     shutil.rmtree(str(dest))
