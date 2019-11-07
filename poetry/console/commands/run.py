@@ -35,8 +35,7 @@ class RunCommand(EnvCommand):
 
         module, callable_ = script.split(":")
 
-        src_in_sys_path = "sys.path.append('src'); " if self._module.is_in_src(
-        ) else ""
+        src_in_sys_path = "sys.path.append('src'); " if self._module.is_in_src() else ""
         fixed_args = self.__fix_args_quotation_mark(args)
 
         cmd = ["python", "-c"]
