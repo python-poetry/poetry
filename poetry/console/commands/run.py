@@ -44,7 +44,9 @@ class RunCommand(EnvCommand):
             "import sys; "
             "from importlib import import_module; "
             "sys.argv = {!r}; {}"
-            "import_module('{}').{}()".format(fixed_args, src_in_sys_path, module, callable_)
+            "import_module('{}').{}()".format(
+                fixed_args, src_in_sys_path, module, callable_
+            )
         ]
 
         return self.env.execute(*cmd)
@@ -61,4 +63,4 @@ class RunCommand(EnvCommand):
         return module
 
     def __fix_args_quotation_mark(self, args):
-        return str(args).replace('"', '\\"').replace("'", "\'")
+        return str(args).replace('"', '\\"').replace("'", "'")
