@@ -264,6 +264,42 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
+def test_add_git_ssh_constraint(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+
+    tester.execute("git+ssh://git@github.com/demo/demo.git@develop")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 9cf87a2)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 2
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "git": "ssh://git@github.com/demo/demo.git",
+        "rev": "develop",
+    }
+
+
 def test_add_directory_constraint(app, repo, installer, mocker):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."

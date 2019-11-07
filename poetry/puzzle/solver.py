@@ -56,12 +56,17 @@ class Solver:
                     installed = True
 
                     if pkg.source_type == "git" and package.source_type == "git":
+                        from poetry.vcs.git import Git
+
                         # Trying to find the currently installed version
+                        pkg_source_url = Git.normalize_url(pkg.source_url)
+                        package_source_url = Git.normalize_url(package.source_url)
                         for locked in self._locked.packages:
+                            locked_source_url = Git.normalize_url(locked.source_url)
                             if (
                                 locked.name == pkg.name
                                 and locked.source_type == pkg.source_type
-                                and locked.source_url == pkg.source_url
+                                and locked_source_url == pkg_source_url
                                 and locked.source_reference == pkg.source_reference
                             ):
                                 pkg = Package(pkg.name, locked.version)
@@ -70,7 +75,7 @@ class Solver:
                                 pkg.source_reference = locked.source_reference
                                 break
 
-                        if pkg.source_url != package.source_url or (
+                        if pkg_source_url != package_source_url or (
                             pkg.source_reference != package.source_reference
                             and not pkg.source_reference.startswith(
                                 package.source_reference
@@ -83,6 +88,8 @@ class Solver:
                             )
                     elif package.version != pkg.version:
                         # Checking version
+                        operations.append(Update(pkg, package))
+                    elif package.source_type != pkg.source_type:
                         operations.append(Update(pkg, package))
                     else:
                         operations.append(Install(package).skip("Already installed"))

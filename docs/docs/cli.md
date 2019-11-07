@@ -208,8 +208,8 @@ If you need to checkout a specific branch, tag or revision,
 you can specify it when using `add`:
 
 ```bash
-poetry add git+https://github.com/sdispater/pendulum.git@develop
-poetry add git+https://github.com/sdispater/pendulum.git@2.0.5
+poetry add git+https://github.com/sdispater/pendulum.git#develop
+poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
 ```
 
 or make them point to a local directory or file:

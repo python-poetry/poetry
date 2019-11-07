@@ -94,6 +94,13 @@ import sys
 print('.'.join([str(s) for s in sys.version_info[:3]]))
 """
 
+GET_SYS_PATH = """\
+import json
+import sys
+
+print(json.dumps(sys.path))
+"""
+
 CREATE_VENV_COMMAND = """\
 path = {!r}
 
@@ -742,6 +749,10 @@ class Env(object):
             / "site-packages"
         )
 
+    @property
+    def sys_path(self):  # type: () -> List[str]
+        raise NotImplementedError()
+
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
@@ -865,6 +876,10 @@ class SystemEnv(Env):
     A system (i.e. not a virtualenv) Python environment.
     """
 
+    @property
+    def sys_path(self):  # type: () -> List[str]
+        return sys.path
+
     def get_version_info(self):  # type: () -> Tuple[int]
         return sys.version_info
 
@@ -930,6 +945,13 @@ class VirtualEnv(Env):
         # from inside the virtualenv.
         if base is None:
             self._base = Path(self.run("python", "-", input_=GET_BASE_PREFIX).strip())
+
+    @property
+    def sys_path(self):  # type: () -> List[str]
+        output = self.run("python", "-", input_=GET_SYS_PATH)
+        print(output)
+
+        return json.loads(output)
 
     def get_version_info(self):  # type: () -> Tuple[int]
         output = self.run("python", "-", input_=GET_PYTHON_VERSION)
