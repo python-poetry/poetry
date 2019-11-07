@@ -949,7 +949,6 @@ class VirtualEnv(Env):
     @property
     def sys_path(self):  # type: () -> List[str]
         output = self.run("python", "-", input_=GET_SYS_PATH)
-        print(output)
 
         return json.loads(output)
 
