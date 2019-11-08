@@ -425,6 +425,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             require = OrderedDict()
             if " " in pair:
                 name, version = pair.split(" ", 2)
+                extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
+                if extras_m:
+                    extras = [e.strip() for e in extras_m.group(1).split(",")]
+                    name, _ = name.split("[")
+
                 require["name"] = name
                 if version != "latest":
                     require["version"] = version

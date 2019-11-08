@@ -109,7 +109,7 @@ def test_add_constraint_with_extras(app, repo, installer):
     repo.add_package(cachy1)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    tester.execute("cachy[msgpack]^0.1.0")
+    tester.execute("cachy[msgpack]>=0.1.0,<0.2.0")
 
     expected = """\
 
