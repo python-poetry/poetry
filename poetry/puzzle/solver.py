@@ -219,8 +219,12 @@ class Solver:
         else:
             category = dep.category
             optional = dep.is_optional() and not dep.is_activated()
-            intersection = previous["marker"].intersect(previous_dep.marker)
-            intersection = intersection.intersect(package.marker)
+            intersection = (
+                previous["marker"]
+                .without_extras()
+                .intersect(previous_dep.marker.without_extras())
+            )
+            intersection = intersection.intersect(package.marker.without_extras())
 
             marker = intersection
 
