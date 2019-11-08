@@ -39,6 +39,7 @@
 - Improved UX when searching for packages in the `init` command.
 - The `shell` has been improved.
 - The `poetry run` command now uses `os.execvp()` rather than spawning a new subprocess.
+- Specifying dependencies with `allows-prereleases` in the `pyproject.toml` file is deprecated for consistency with the `add` command. Use `allow-prereleases` instead.
 
 ### Fixed
 
@@ -55,6 +56,9 @@
 - Fixed dependency resolution for conditional development dependencies.
 - Fixed generated dependency constraints when they contain inequality operators.
 - The `run` command now properly handles the `--` separator.
+- Fixed some issues with `path` dependencies being seen as `git` dependencies.
+- Fixed various issues with the way `extra` markers in dependencies were handled.
+- Fixed the option conflicts in the `run` command.
 
 
 ## [0.12.17] - 2019-07-03
