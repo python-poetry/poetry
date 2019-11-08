@@ -8,10 +8,12 @@ from typing import Union
 
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
+from cachecontrol.controller import logger as cache_control_logger
 from cachy import CacheManager
 from html5lib.html5parser import parse
 from requests import get
 from requests import session
+from requests.exceptions import TooManyRedirects
 
 from poetry.locations import CACHE_DIR
 from poetry.packages import Package
@@ -39,6 +41,8 @@ except ImportError:
     import urlparse
 
 
+cache_control_logger.setLevel(logging.ERROR)
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,9 +67,8 @@ class PyPiRepository(Repository):
             }
         )
 
-        self._session = CacheControl(
-            session(), cache=FileCache(str(release_cache_dir / "_http"))
-        )
+        self._cache_control_cache = FileCache(str(release_cache_dir / "_http"))
+        self._session = CacheControl(session(), cache=self._cache_control_cache)
         self._inspector = Inspector()
 
         super(PyPiRepository, self).__init__()
@@ -357,7 +360,14 @@ class PyPiRepository(Repository):
         return data
 
     def _get(self, endpoint):  # type: (str) -> Union[dict, None]
-        json_response = self._session.get(self._url + endpoint)
+        try:
+            json_response = self._session.get(self._url + endpoint)
+        except TooManyRedirects:
+            # Cache control redirect loop.
+            # We try to remove the cache and try again
+            self._cache_control_cache.delete(self._url + endpoint)
+            json_response = self._session.get(self._url + endpoint)
+
         if json_response.status_code == 404:
             return None
 
