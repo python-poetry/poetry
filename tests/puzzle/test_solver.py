@@ -407,8 +407,10 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
 
-    package_b.extras = {"foo": [get_dependency("C", "^1.0")]}
-    package_b.add_dependency("C", {"version": "^1.0", "optional": True})
+    dep = get_dependency("C", "^1.0", optional=True)
+    dep.marker = parse_marker("extra == 'foo'")
+    package_b.extras = {"foo": [dep]}
+    package_b.requires.append(dep)
 
     repo.add_package(package_a)
     repo.add_package(package_b)
@@ -424,6 +426,9 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
             {"job": "install", "package": package_b},
         ],
     )
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
 
 
 def test_solver_returns_prereleases_if_requested(solver, repo, package):
@@ -1148,10 +1153,7 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
         ],
     )
 
-    assert str(ops[0].package.marker) in [
-        'extra == "foo" or extra == "bar"',
-        'extra == "bar" or extra == "foo"',
-    ]
+    assert str(ops[0].package.marker) == ""
     assert str(ops[1].package.marker) == ""
 
 

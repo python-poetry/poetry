@@ -204,6 +204,15 @@ class AnyMarker(BaseMarker):
     def __repr__(self):
         return "<AnyMarker>"
 
+    def __hash__(self):
+        return hash(("<any>", "<any>"))
+
+    def __eq__(self, other):
+        if not isinstance(other, BaseMarker):
+            return NotImplemented
+
+        return isinstance(other, AnyMarker)
+
 
 class EmptyMarker(BaseMarker):
     def intersect(self, other):
@@ -229,6 +238,15 @@ class EmptyMarker(BaseMarker):
 
     def __repr__(self):
         return "<EmptyMarker>"
+
+    def __hash__(self):
+        return hash(("<empty>", "<empty>"))
+
+    def __eq__(self, other):
+        if not isinstance(other, BaseMarker):
+            return NotImplemented
+
+        return isinstance(other, EmptyMarker)
 
 
 class SingleMarker(BaseMarker):
@@ -329,7 +347,7 @@ class SingleMarker(BaseMarker):
             if self == other:
                 return self
 
-            return MarkerUnion(self, other)
+            return MarkerUnion.of(self, other)
 
         return other.union(self)
 
@@ -344,7 +362,7 @@ class SingleMarker(BaseMarker):
 
     def without_extras(self):
         if self.name == "extra":
-            return EmptyMarker()
+            return AnyMarker()
 
         return self
 
@@ -443,7 +461,7 @@ class MultiMarker(BaseMarker):
 
     def union(self, other):
         if isinstance(other, (SingleMarker, MultiMarker)):
-            return MarkerUnion(self, other)
+            return MarkerUnion.of(self, other)
 
         return other.union(self)
 
@@ -493,17 +511,24 @@ class MultiMarker(BaseMarker):
 
 class MarkerUnion(BaseMarker):
     def __init__(self, *markers):
-        self._markers = []
+        self._markers = list(markers)
 
-        markers = _flatten_markers(markers, MarkerUnion)
+    @property
+    def markers(self):
+        return self._markers
 
-        for marker in markers:
-            if marker in self._markers:
+    @classmethod
+    def of(cls, *markers):  # type: (tuple) -> MarkerUnion
+        flattened_markers = _flatten_markers(markers, MarkerUnion)
+
+        markers = []
+        for marker in flattened_markers:
+            if marker in markers:
                 continue
 
             if isinstance(marker, SingleMarker) and marker.name == "python_version":
                 intersected = False
-                for i, mark in enumerate(self._markers):
+                for i, mark in enumerate(markers):
                     if (
                         not isinstance(mark, SingleMarker)
                         or isinstance(mark, SingleMarker)
@@ -516,18 +541,19 @@ class MarkerUnion(BaseMarker):
                         intersected = True
                         break
                     elif intersection == marker.constraint:
-                        self._markers[i] = marker
+                        markers[i] = marker
                         intersected = True
                         break
 
                 if intersected:
                     continue
 
-            self._markers.append(marker)
+            markers.append(marker)
 
-    @property
-    def markers(self):
-        return self._markers
+        if len(markers) == 1 and markers[0].is_any():
+            return AnyMarker()
+
+        return MarkerUnion(*markers)
 
     def append(self, marker):
         if marker in self._markers:
@@ -557,7 +583,7 @@ class MarkerUnion(BaseMarker):
                     if not intersection.is_empty():
                         new_markers.append(intersection)
 
-        return MarkerUnion(*new_markers)
+        return MarkerUnion.of(*new_markers)
 
     def union(self, other):
         if other.is_any():
@@ -568,7 +594,7 @@ class MarkerUnion(BaseMarker):
 
         new_markers = self._markers + [other]
 
-        return MarkerUnion(*new_markers)
+        return MarkerUnion.of(*new_markers)
 
     def validate(self, environment):
         for m in self._markers:
@@ -654,4 +680,4 @@ def _compact_markers(markers):
     if len(groups) == 1:
         return groups[0]
 
-    return MarkerUnion(*groups)
+    return MarkerUnion.of(*groups)
