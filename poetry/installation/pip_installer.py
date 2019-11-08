@@ -40,7 +40,10 @@ class PipInstaller(BaseInstaller):
 
         args = ["install", "--no-deps"]
 
-        if package.source_type == "legacy" and package.source_url:
+        if (
+            package.source_type not in {"git", "directory", "file", "url"}
+            and package.source_url
+        ):
             repository = self._pool.repository(package.source_reference)
             parsed = urlparse.urlparse(package.source_url)
             if parsed.scheme == "http":
@@ -70,7 +73,7 @@ class PipInstaller(BaseInstaller):
         if update:
             args.append("-U")
 
-        if package.files and not package.source_type:
+        if package.files and not package.source_url:
             # Format as a requirements.txt
             # We need to create a requirements.txt file
             # for each package in order to check hashes.

@@ -107,7 +107,10 @@ class Exporter(object):
             if ";" in requirement:
                 line += "; {}".format(requirement.split(";")[1].strip())
 
-            if package.source_type == "legacy" and package.source_url:
+            if (
+                package.source_type not in {"git", "directory", "file", "url"}
+                and package.source_url
+            ):
                 indexes.append(package.source_url)
 
             if package.files and with_hashes:
