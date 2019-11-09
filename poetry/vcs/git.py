@@ -13,7 +13,7 @@ PATTERNS = [
         r"(?P<protocol>https?|git|ssh|rsync|file)://"
         r"(?:(?P<user>.+)@)*"
         r"(?P<resource>[a-z0-9_.-]*)"
-        r"(:?P<port>[\d]+)?"
+        r"(:(?P<port>[\d]+))?"
         r"(?P<pathname>[:/]((?P<owner>[\w\-]+)/)?"
         r"((?P<name>[\w\-.]+?)(\.git|/)?)?)"
         r"([@#](?P<rev>[^@#]+))?"
