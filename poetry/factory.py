@@ -298,7 +298,7 @@ class Factory:
                         result["warnings"].append(
                             'The "{}" dependency specifies '
                             'the "allows-prereleases" property, which is deprecated. '
-                            'Use "allow-preleases" instead.'.format(name)
+                            'Use "allow-prereleases" instead.'.format(name)
                         )
 
             # Checking for scripts with extras
