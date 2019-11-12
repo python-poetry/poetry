@@ -279,7 +279,7 @@ class Package(object):
                 message = (
                     'The "{}" dependency specifies '
                     'the "allows-prereleases" property, which is deprecated. '
-                    'Use "allow-preleases" instead.'.format(name)
+                    'Use "allow-prereleases" instead.'.format(name)
                 )
                 warn(message, DeprecationWarning)
                 logger.warning(message)
