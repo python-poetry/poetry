@@ -604,7 +604,7 @@ class Provider:
                 new_markers = []
                 for dep in _deps:
                     marker = dep.marker.without_extras()
-                    if marker.is_empty():
+                    if marker.is_any():
                         # No marker or only extras
                         continue
 

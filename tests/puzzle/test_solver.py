@@ -1831,3 +1831,28 @@ def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
             {"job": "install", "package": package_a200},
         ],
     )
+
+
+def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.5"
+    package.add_dependency("requests", {"version": "^2.22.0", "extras": ["security"]})
+
+    requests = get_package("requests", "2.22.0")
+    requests.add_dependency("idna", ">=2.5,<2.9")
+    requests.add_dependency(
+        "idna", {"version": ">=2.0.0", "markers": "extra == 'security'"}
+    )
+    requests.extras["security"] = [get_dependency("idna", ">=2.0.0")]
+    idna = get_package("idna", "2.8")
+
+    repo.add_package(requests)
+    repo.add_package(idna)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [{"job": "install", "package": idna}, {"job": "install", "package": requests}],
+    )
