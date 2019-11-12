@@ -62,6 +62,9 @@ class Solver:
                         pkg_source_url = Git.normalize_url(pkg.source_url)
                         package_source_url = Git.normalize_url(package.source_url)
                         for locked in self._locked.packages:
+                            if locked.name != pkg.name or locked.source_type != "git":
+                                continue
+
                             locked_source_url = Git.normalize_url(locked.source_url)
                             if (
                                 locked.name == pkg.name
