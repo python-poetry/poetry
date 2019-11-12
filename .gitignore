@@ -2,6 +2,7 @@
 
 # Packages
 *.egg
+!/tests/**/*.egg
 /*.egg-info
 /tests/fixtures/**/*.egg-info
 /dist/*
