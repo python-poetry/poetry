@@ -1,3 +1,5 @@
+import zipp
+
 from importlib_metadata import PathDistribution
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import Path
@@ -11,6 +13,7 @@ SRC = ENV_DIR / "src"
 INSTALLED_RESULTS = [
     PathDistribution(SITE_PACKAGES / "cleo-0.7.6.dist-info"),
     PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
+    PathDistribution(zipp.Path(str(SITE_PACKAGES / "foo-0.1.0-py3.8.egg"), "EGG-INFO")),
 ]
 
 
@@ -37,7 +40,7 @@ def test_load(mocker):
     )
     repository = InstalledRepository.load(MockEnv(path=ENV_DIR))
 
-    assert len(repository.packages) == 2
+    assert len(repository.packages) == 3
 
     cleo = repository.packages[0]
     assert cleo.name == "cleo"
@@ -47,7 +50,11 @@ def test_load(mocker):
         == "Cleo allows you to create beautiful and testable command-line interfaces."
     )
 
-    pendulum = repository.packages[1]
+    foo = repository.packages[1]
+    assert foo.name == "foo"
+    assert foo.version.text == "0.1.0"
+
+    pendulum = repository.packages[2]
     assert pendulum.name == "pendulum"
     assert pendulum.version.text == "2.0.5"
     assert pendulum.description == "Python datetimes made easy"

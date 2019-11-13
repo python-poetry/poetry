@@ -27,7 +27,7 @@ class InstalledRepository(Repository):
 
             repo.add_package(package)
 
-            path = Path(distribution._path)
+            path = Path(str(distribution._path))
             is_standard_package = True
             try:
                 path.relative_to(env.site_packages)
