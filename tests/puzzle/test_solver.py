@@ -1856,3 +1856,34 @@ def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
         ops,
         [{"job": "install", "package": idna}, {"job": "install", "package": requests}],
     )
+
+
+def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
+    solver, repo, package, locked, pool, installed, io
+):
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+    package.add_dependency("a", "^1.2.3")
+
+    git_package = get_package("demo", "0.1.2")
+    git_package.source_type = "git"
+    git_package.source_url = "https://github.com/demo/demo.git"
+    git_package.source_reference = "commit"
+
+    installed.add_package(git_package)
+
+    locked.add_package(get_package("a", "1.2.3"))
+    locked.add_package(git_package)
+
+    repo.add_package(get_package("a", "1.2.3"))
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("a", "1.2.3")},
+            {"job": "install", "package": git_package, "skipped": True},
+        ],
+    )
