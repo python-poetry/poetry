@@ -1,6 +1,11 @@
 exemptProjects: true
 exemptMilestones: true
 
+markComment: >
+  This issue has been automatically marked as stale because it has not had
+  recent activity. It will be closed if no further activity occurs. Thank you
+  for your contributions.
+
 closeComment: >
   Closing this issue automatically because it has not had any activity since
   it has been marked as stale. If you think it is still relevant and should
