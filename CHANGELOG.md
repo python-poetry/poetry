@@ -59,6 +59,10 @@
 - Fixed some issues with `path` dependencies being seen as `git` dependencies.
 - Fixed various issues with the way `extra` markers in dependencies were handled.
 - Fixed the option conflicts in the `run` command.
+- Fixed wrong latest version being displayed when executing `show -l`.
+- Fixed `TooManyRedirects` errors being raised when resolving dependencies.
+- Fixed custom indices dependencies being constantly updated.
+- Fix the behavior of the `--install` option of the debug resolve command.
 
 
 ## [0.12.17] - 2019-07-03
