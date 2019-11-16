@@ -986,6 +986,30 @@ def test_solver_can_resolve_git_dependencies_with_ref(solver, repo, package, ref
     assert op.package.source_reference.startswith("9cf87a2")
 
 
+def test_solver_marks_git_dev_dependencies_as_dev(solver, repo, package):
+    pendulum = get_package("pendulum", "2.0.3")
+    cleo = get_package("cleo", "1.0.0")
+    repo.add_package(pendulum)
+    repo.add_package(cleo)
+
+    package.add_dependency(
+        "demo", {"git": "https://github.com/demo/demo.git"}, category="dev"
+    )
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": pendulum},
+            {"job": "install", "package": get_package("demo", "0.1.2")},
+        ],
+    )
+
+    assert ops[0].package.category == "dev"
+    assert ops[1].package.category == "dev"
+
+
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(
     solver, repo, package
 ):
