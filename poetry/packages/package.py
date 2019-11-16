@@ -298,6 +298,7 @@ class Package(object):
                     tag=constraint.get("tag", None),
                     rev=constraint.get("rev", None),
                     optional=optional,
+                    category=category,
                 )
             elif "file" in constraint:
                 file_path = Path(constraint["file"])
