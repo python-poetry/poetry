@@ -173,6 +173,26 @@ include = ["CHANGELOG.md"]
 exclude = ["my_package/excluded.py"]
 ```
 
+## dev-only
+
+If set to `true`, this option entirely disables installing runtime dependencies in the development environment.
+This is useful when you do not care about whether it's possible to install the package under development in the development environment, and you don't want to mandate command-line flags to avoid attempting to do so.
+Use cases for this include running tests with `tox` (in which case the packages are unnecessary) or minimizing `pip` installs when building the project from a fresh checkout.
+
+When this option is set to `true`, the `install` command will always act as if it was passed `no-root`.
+
+```toml
+[tool.poetry]
+# ...
+dev-only = false  # No-op
+```
+
+```toml
+[tool.poetry]
+# ...
+dev-only = true  # Disable installation of runtime components
+```
+
 ## `dependencies` and `dev-dependencies`
 
 Poetry is configured to look for dependencies on [PyPi](https://pypi.org) by default.
