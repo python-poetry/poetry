@@ -65,7 +65,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         if return_code != 0:
             return return_code
 
-        if self.option("no-root"):
+        if self.option("no-root") or self.poetry.package.dev_only:
             return 0
 
         try:

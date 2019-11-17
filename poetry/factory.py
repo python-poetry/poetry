@@ -77,6 +77,7 @@ class Factory:
         package.license = license_
         package.keywords = local_config.get("keywords", [])
         package.classifiers = local_config.get("classifiers", [])
+        package.dev_only = local_config.get("dev-only", False)
 
         if "readme" in local_config:
             package.readme = Path(poetry_file.parent) / local_config["readme"]

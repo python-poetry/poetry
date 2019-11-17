@@ -60,6 +60,8 @@ class Package(object):
         self._license = None
         self.readme = None
 
+        self._dev_only = False
+
         self.source_name = ""
         self.source_type = ""
         self.source_reference = ""
@@ -69,6 +71,8 @@ class Package(object):
         self.dev_requires = []
         self.extras = {}
         self.requires_extras = []
+
+        self._shadowed_requires = self.requires
 
         self.category = "main"
         self.files = []
@@ -127,6 +131,18 @@ class Package(object):
             return "{} {}".format(self._pretty_version, self.source_reference[0:7])
 
         return "{} {}".format(self._pretty_version, self.source_reference)
+
+    @property
+    def dev_only(self) -> bool:
+        return self._dev_only
+
+    @dev_only.setter
+    def dev_only(self, value: bool) -> None:
+        self._dev_only = value
+        if value:
+            self.requires = []
+        else:
+            self.requires = self._shadowed_requires
 
     @property
     def authors(self):  # type: () -> list

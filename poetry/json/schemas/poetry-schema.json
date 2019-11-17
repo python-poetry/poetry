@@ -47,6 +47,10 @@
             "type": "string",
             "description": "License name."
         },
+        "dev-only": {
+            "type": "boolean",
+            "description": "Whether to avoid installing runtime dependencies."
+        },
         "authors": {
             "$ref": "#/definitions/authors"
         },
