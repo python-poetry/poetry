@@ -195,8 +195,8 @@ dependency management, packaging and publishing.
 
 It takes inspiration in tools that exist in other languages, like `composer` (PHP) or `cargo` (Rust).
 
-And, finally, there is no reliable tool to properly resolve dependencies in Python, so I started `poetry`
-to bring an exhaustive dependency resolver to the Python community.
+And, finally, I started `poetry` to bring another exhaustive dependency resolver to the Python community apart from
+[Conda's](https://conda.io).
 
 ### What about Pipenv?
 
