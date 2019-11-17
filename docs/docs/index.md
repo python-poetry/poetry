@@ -117,28 +117,28 @@ pipx uninstall poetry
 
 ## Updating `poetry`
 
-Updating poetry to the latest stable version is as simple as calling the `self:update` command.
+Updating Poetry to the latest stable version is as simple as calling the `self update` command.
 
 ```bash
-poetry self:update
+poetry self update
 ```
 
-If you want to install prerelease versions, you can use the `--preview` option.
+If you want to install pre-release versions, you can use the `--preview` option.
 
 ```bash
-poetry self:update --preview
+poetry self update --preview
 ```
 
-And finally, if you want to install a specific version you can pass it as an argument
-to `self:update`.
+And finally, if you want to install a specific version, you can pass it as an argument
+to `self update`.
 
 ```bash
-poetry self:update 0.8.0
+poetry self update 0.8.0
 ```
 
 !!!note
 
-    The `self:update` command will only work if you used the recommended
+    The `self update` command will only work if you used the recommended
     installer to install Poetry.
 
 
