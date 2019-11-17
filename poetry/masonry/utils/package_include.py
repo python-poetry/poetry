@@ -44,10 +44,10 @@ class PackageInclude(Include):
             # Probably glob
             self._is_package = True
 
-            # The __init__.py file should be first
+            # Packages no longer need an __init__.py in python3
             root = self._elements[0]
-            if root.name != "__init__.py":
-                raise ValueError("{} is not a package.".format(root))
+            if root.name == "__init__.py":
+                pass
 
             self._package = root.parent.name
         else:
