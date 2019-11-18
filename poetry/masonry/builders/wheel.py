@@ -10,7 +10,6 @@ import zipfile
 
 from base64 import urlsafe_b64encode
 from io import StringIO
-from typing import Set
 
 from clikit.api.io.flags import VERY_VERBOSE
 
@@ -154,7 +153,7 @@ class WheelBuilder(Builder):
                 else:
                     rel_file = file.relative_to(self._path)
 
-                if file in excluded:
+                if rel_file.as_posix() in excluded:
                     continue
 
                 if file.suffix == ".pyc":
@@ -199,10 +198,6 @@ class WheelBuilder(Builder):
                 f.write("{},sha256={},{}\n".format(path, hash, size))
             # RECORD itself is recorded with no hash or size
             f.write(self.dist_info + "/RECORD,,\n")
-
-    def find_excluded_files(self):  # type: () -> Set
-        # Checking VCS
-        return set()
 
     @property
     def dist_info(self):  # type: () -> str
