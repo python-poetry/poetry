@@ -20,7 +20,7 @@
 - Added support for url dependencies ([#1260](https://github.com/sdispater/poetry/pull/1260)).
 - Publishing to PyPI using [API tokens](https://pypi.org/help/#apitoken) is now supported ([#1275](https://github.com/sdispater/poetry/pull/1275)).
 - Licenses can now be identified by their full name.
-- Added support for support for custom certificate authority and client certificates for private repositories.
+- Added support for custom certificate authority and client certificates for private repositories.
 - Poetry can now detect and use Conda environments.
 
 ### Changed
