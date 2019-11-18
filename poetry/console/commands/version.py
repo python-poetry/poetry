@@ -32,10 +32,10 @@ class VersionCommand(Command):
         option(
             "sync",
             description=(
-                "Synchronize version from pyproject.toml and __version__. "
+                "Synchronize version from pyproject.toml with __version__. "
                 "If no value is passed to this option then file with __version__ "
-                "will be guessed based on package name. Otherwise __version__ will be "
-                "changed in specified file."
+                "will be guessed based on package name. If value is specified then it "
+                "will be treated as path to the file with __version__."
             ),
             flag=False,
             value_required=False,
@@ -160,8 +160,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         new_file_content = finder.version_var_re.sub(
             r"\g<1>{}\g<3>".format(version), file_content, count=1,
         )
-        with version_file.open("w") as file:
-            file.write(new_file_content)
+        version_file.write_text(new_file_content)
         self.line(
             "Changing <b>__version__</> (<info>{}</>) to <fg=green>{}</>".format(
                 version_file, version
@@ -176,7 +175,9 @@ class VersionFinder(object):
         self.version_var_re = re.compile(
             r"""
             ([\s\S]*  # left part of file
-            __version__.*=\s*  # version variable
+            ^\s*  # start of line with possible indent
+            __version__  # variable name
+            .*=\s*  # other variables and assign sign
             [urf]?[\"'])(.+)([\"']  # string literal with version
             [\s\S]*)  # right part of file
             """,

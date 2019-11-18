@@ -422,6 +422,13 @@ bump rule is provided.
 The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
 
+### Options
+
+* `--sync`: synchronize version from `pyproject.toml` with `__version__`.
+  If no value is passed to this option then file with `__version__` will be guessed
+  based on package name. If value is specified then it will be treated as path to
+  the file with `__version__`.
+
 
 ## export
 
