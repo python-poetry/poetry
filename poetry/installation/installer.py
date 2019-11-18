@@ -234,7 +234,7 @@ class Installer:
         # Execute operations
         actual_ops = [op for op in ops if not op.skipped]
         if not actual_ops and (self._execute_operations or self._dry_run):
-            self._io.write_line("Nothing to install or update")
+            self._io.write_line("No dependencies to install or update")
 
         if actual_ops and (self._execute_operations or self._dry_run):
             installs = []
