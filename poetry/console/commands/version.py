@@ -59,7 +59,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             self.poetry.file.write(content)
         else:
             self.line(
-                "Project (<comment>{}</>) version is <info>{}</>".format(
+                "<comment>{}</> <info>{}</>".format(
                     self.poetry.package.name, self.poetry.package.pretty_version
                 )
             )
