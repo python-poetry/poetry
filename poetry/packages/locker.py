@@ -8,6 +8,7 @@ from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
 from tomlkit import table
+from tomlkit.exceptions import TOMLKitError
 
 import poetry.packages
 import poetry.repositories
@@ -217,7 +218,10 @@ class Locker(object):
         if not self._lock.exists():
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
-        return self._lock.read()
+        try:
+            return self._lock.read()
+        except TOMLKitError as e:
+            raise RuntimeError("Unable to read the lock file ({}).".format(e))
 
     def _lock_packages(
         self, packages

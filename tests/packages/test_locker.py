@@ -181,3 +181,34 @@ A = []
         content = f.read()
 
     assert expected == content
+
+
+def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
+    content = u"""[[package]]
+category = "main"
+description = ""
+name = "A"
+optional = false
+python-versions = "*"
+version = "1.0.0"
+
+[package.extras]
+foo = ["bar"]
+
+[package.extras]
+foo = ["bar"]
+
+[metadata]
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+python-versions = "*"
+
+[metadata.files]
+A = []
+"""
+    with locker.lock.open("w", encoding="utf-8") as f:
+        f.write(content)
+
+    with pytest.raises(RuntimeError) as e:
+        _ = locker.lock_data
+
+    assert "Unable to read the lock file" in str(e.value)
