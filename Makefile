@@ -48,7 +48,7 @@ wheel:
 
 linux_release:
 	docker pull quay.io/pypa/manylinux2010_x86_64
-	docker run --rm -t -i -v `pwd`:/io quay.io/pypa/manylinux2010_x86_64 /io/make-linux-release.sh
+	docker run --rm -i -v `pwd`:/io quay.io/pypa/manylinux2010_x86_64 /io/make-linux-release.sh
 
 # run tests against all supported python versions
 tox:
