@@ -1,6 +1,6 @@
-from importlib_metadata import distributions
 from poetry.packages import Package
 from poetry.utils._compat import Path
+from poetry.utils._compat import metadata
 from poetry.utils.env import Env
 
 from .repository import Repository
@@ -17,13 +17,12 @@ class InstalledRepository(Repository):
         repo = cls()
 
         for distribution in sorted(
-            distributions(path=env.sys_path), key=lambda d: str(d._path),
+            metadata.distributions(path=env.sys_path), key=lambda d: str(d._path),
         ):
-            metadata = distribution.metadata
-            name = metadata["name"]
-            version = metadata["version"]
+            name = distribution.metadata["name"]
+            version = distribution.metadata["version"]
             package = Package(name, version, version)
-            package.description = metadata.get("summary", "")
+            package.description = distribution.metadata.get("summary", "")
 
             repo.add_package(package)
 
