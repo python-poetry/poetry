@@ -1,5 +1,4 @@
 from importlib_metadata import distributions
-
 from poetry.packages import Package
 from poetry.utils._compat import Path
 from poetry.utils.env import Env
