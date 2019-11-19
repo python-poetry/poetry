@@ -104,11 +104,14 @@ class Builder(object):
     def is_excluded(self, filepath):  # type: (Union[str, Path]) -> bool
         exclude_path = Path(filepath)
 
-        while exclude_path.as_posix() not in (".", "/"):
+        while True:
             if exclude_path.as_posix() in self.find_excluded_files():
                 return True
-            else:
+
+            if len(exclude_path.parts) > 1:
                 exclude_path = exclude_path.parent
+            else:
+                break
 
         return False
 
