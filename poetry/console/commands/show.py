@@ -172,6 +172,13 @@ lists all packages available."""
                         # Non installed in non decorated mode
                         install_marker = " (!)"
 
+            if (
+                show_latest
+                and self.option("outdated")
+                and latest_statuses[locked.pretty_name] == "up-to-date"
+            ):
+                continue
+
             line = "<fg={}>{:{}}{}</>".format(
                 color, name, name_length - len(install_marker), install_marker
             )
@@ -182,9 +189,6 @@ lists all packages available."""
             if show_latest:
                 latest = latest_packages[locked.pretty_name]
                 update_status = latest_statuses[locked.pretty_name]
-
-                if self.option("outdated") and update_status == "up-to-date":
-                    continue
 
                 if write_latest:
                     color = "green"

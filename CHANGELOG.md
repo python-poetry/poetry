@@ -41,6 +41,8 @@
 - The `shell` has been improved.
 - The `poetry run` command now uses `os.execvp()` rather than spawning a new subprocess.
 - Specifying dependencies with `allows-prereleases` in the `pyproject.toml` file is deprecated for consistency with the `add` command. Use `allow-prereleases` instead.
+- Improved the error message when the lock file is invalid.
+- Whenever Poetry needs to use the "system" Python, it will now call `sys.executable` instead of the `python` command.
 
 ### Fixed
 
@@ -63,7 +65,8 @@
 - Fixed wrong latest version being displayed when executing `show -l`.
 - Fixed `TooManyRedirects` errors being raised when resolving dependencies.
 - Fixed custom indices dependencies being constantly updated.
-- Fix the behavior of the `--install` option of the debug resolve command.
+- Fixed the behavior of the `--install` option of the debug resolve command.
+- Fixed an error in `show` when using the `-o/--outdated` option.
 
 
 ## [0.12.17] - 2019-07-03
