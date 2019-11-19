@@ -1,6 +1,7 @@
 import zipp
 
 from importlib_metadata import PathDistribution
+
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv as BaseMockEnv
