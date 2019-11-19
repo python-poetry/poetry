@@ -70,7 +70,6 @@ pre-commit = "^1.10"
 tox = "^3.0"
 pytest-sugar = "^0.9.2"
 httpretty = "^0.9.6"
-isort = "^4.3.21"
 
 [tool.poetry.scripts]
 poetry = "poetry.console:main"
