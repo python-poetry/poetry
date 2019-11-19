@@ -1,8 +1,7 @@
-import zipp
-
-from importlib_metadata import PathDistribution
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import Path
+from poetry.utils._compat import metadata
+from poetry.utils._compat import zipp
 from poetry.utils.env import MockEnv as BaseMockEnv
 
 
@@ -11,9 +10,11 @@ ENV_DIR = (FIXTURES_DIR / "installed").resolve()
 SITE_PACKAGES = ENV_DIR / "lib" / "python3.7" / "site-packages"
 SRC = ENV_DIR / "src"
 INSTALLED_RESULTS = [
-    PathDistribution(SITE_PACKAGES / "cleo-0.7.6.dist-info"),
-    PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
-    PathDistribution(zipp.Path(str(SITE_PACKAGES / "foo-0.1.0-py3.8.egg"), "EGG-INFO")),
+    metadata.PathDistribution(SITE_PACKAGES / "cleo-0.7.6.dist-info"),
+    metadata.PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
+    metadata.PathDistribution(
+        zipp.Path(str(SITE_PACKAGES / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
+    ),
 ]
 
 
@@ -25,7 +26,8 @@ class MockEnv(BaseMockEnv):
 
 def test_load(mocker):
     mocker.patch(
-        "importlib_metadata.Distribution.discover", return_value=INSTALLED_RESULTS
+        "poetry.utils._compat.metadata.Distribution.discover",
+        return_value=INSTALLED_RESULTS,
     )
     mocker.patch(
         "poetry.vcs.git.Git.rev_parse",
