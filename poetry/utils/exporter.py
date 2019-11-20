@@ -54,7 +54,7 @@ class Exporter(object):
         extras=None,
         with_credentials=False,
     ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
-        indexes = []
+        indexes = set()
         content = ""
         packages = self._poetry.locker.locked_repository(dev).packages
 
@@ -108,7 +108,7 @@ class Exporter(object):
                 package.source_type not in {"git", "directory", "file", "url"}
                 and package.source_url
             ):
-                indexes.append(package.source_url)
+                indexes.add(package.source_url)
 
             if package.files and with_hashes:
                 hashes = []
