@@ -60,7 +60,7 @@ class Package(object):
         self._license = None
         self.readme = None
 
-        self._dev_only = False
+        self.dev_only = False
 
         self.source_name = ""
         self.source_type = ""
@@ -129,14 +129,6 @@ class Package(object):
             return "{} {}".format(self._pretty_version, self.source_reference[0:7])
 
         return "{} {}".format(self._pretty_version, self.source_reference)
-
-    @property
-    def dev_only(self) -> bool:
-        return self._dev_only
-
-    @dev_only.setter
-    def dev_only(self, value: bool) -> None:
-        self._dev_only = value
 
     @property
     def authors(self):  # type: () -> list
