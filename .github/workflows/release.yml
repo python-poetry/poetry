@@ -188,6 +188,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
           asset_name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
           asset_content_type: application/gzip
       - name: Upload Linux checksum file asset
@@ -196,6 +197,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
           asset_content_type: text/pain
       - name: Upload MacOS release file asset
@@ -204,6 +206,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
           asset_name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
           asset_content_type: application/gzip
       - name: Upload MacOS checksum file asset
@@ -212,6 +215,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
           asset_content_type: text/pain
       - name: Upload Windows release file asset
@@ -220,6 +224,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
           asset_name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
           asset_content_type: application/gzip
       - name: Upload Windows checksum file asset
@@ -228,6 +233,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
           asset_content_type: text/pain
       - name: Install Poetry
