@@ -122,7 +122,7 @@ jobs:
         name: poetry-${{ github.ref }}-win32.sha256sum
         path: releases/poetry-${{ github.ref }}-win32.sha256sum
 
-  Create Release:
+  Release:
     needs: [Linux, MacOS, Windows]
     runs-on: ubuntu-latest
 
