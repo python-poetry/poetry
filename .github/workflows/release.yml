@@ -164,7 +164,6 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload Linux release file asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -173,7 +172,6 @@ jobs:
           asset_name: poetry-${{ github.ref }}-linux.tar.gz
           asset_content_type: application/gzip
       - name: Upload Linux checksum file asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -182,7 +180,6 @@ jobs:
           asset_name: poetry-${{ github.ref }}-linux.sha256sum
           asset_content_type: text/pain
       - name: Upload MacOS release file asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -191,7 +188,6 @@ jobs:
           asset_name: poetry-${{ github.ref }}-darwin.tar.gz
           asset_content_type: application/gzip
       - name: Upload MacOS checksum file asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -200,7 +196,6 @@ jobs:
           asset_name: poetry-${{ github.ref }}-darwin.sha256sum
           asset_content_type: text/pain
       - name: Upload Windows release file asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -209,7 +204,6 @@ jobs:
           asset_name: poetry-${{ github.ref }}-win32.tar.gz
           asset_content_type: application/gzip
       - name: Upload Windows checksum file asset
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
