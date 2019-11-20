@@ -67,7 +67,7 @@ class Package(object):
         self.source_reference = ""
         self.source_url = ""
 
-        self.requires = []
+        self._requires = []
         self.dev_requires = []
         self.extras = {}
         self.requires_extras = []
@@ -104,6 +104,16 @@ class Package(object):
     @property
     def pretty_version(self):
         return self._pretty_version
+
+    @property
+    def requires(self):
+        if self.dev_only:
+            return []
+        return self._requires
+
+    @requires.setter
+    def requires(self, value):
+        self._requires = value
 
     @property
     def unique_name(self):
@@ -415,6 +425,7 @@ class Package(object):
         clone.source_type = self.source_type
         clone.source_url = self.source_url
         clone.source_reference = self.source_reference
+        clone.dev_only = self.dev_only
 
         for dep in self.requires:
             clone.requires.append(dep)
