@@ -144,6 +144,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@master
+      - name: Get tag
+        id: tag
+        run: |
+          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
       - name: Download Linux release file
         uses: actions/download-artifact@master
         with:
@@ -229,7 +233,6 @@ jobs:
       - name: Install Poetry
         run: |
           python get-poetry.py --preview -y
-          $env:Path += ";$env:Userprofile\.poetry\bin"
       - name: Install dependencies
         run: |
           source $HOME/.poetry/env
