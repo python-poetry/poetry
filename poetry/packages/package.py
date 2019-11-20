@@ -72,8 +72,6 @@ class Package(object):
         self.extras = {}
         self.requires_extras = []
 
-        self._shadowed_requires = self.requires
-
         self.category = "main"
         self.files = []
         self.optional = False
@@ -139,10 +137,6 @@ class Package(object):
     @dev_only.setter
     def dev_only(self, value: bool) -> None:
         self._dev_only = value
-        if value:
-            self.requires = []
-        else:
-            self.requires = self._shadowed_requires
 
     @property
     def authors(self):  # type: () -> list
