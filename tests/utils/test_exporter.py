@@ -707,7 +707,9 @@ foo==1.2.3 \\
     assert expected == content
 
 
-def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(tmp_dir, poetry):
+def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(
+    tmp_dir, poetry
+):
     poetry.pool.add_repository(
         LegacyRepository(
             "custom",
