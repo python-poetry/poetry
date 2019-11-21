@@ -34,7 +34,11 @@ class Installer:
     ):
         self._io = io
         self._env = env
-        self._package = package
+        if package.dev_only:
+            self._package = package.clone()
+            del self._package.requires[:]
+        else:
+            self._package = package
         self._locker = locker
         self._pool = pool
 
