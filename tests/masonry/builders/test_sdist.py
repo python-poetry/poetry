@@ -408,6 +408,9 @@ def test_default_with_excluded_data(mocker):
         assert "my-package-1.2.3/pyproject.toml" in names
         assert "my-package-1.2.3/setup.py" in names
         assert "my-package-1.2.3/PKG-INFO" in names
+        # all last modified times should be set to a valid timestamp
+        for tarinfo in tar.getmembers():
+            assert 0 < tarinfo.mtime
 
 
 def test_src_excluded_nested_data():
