@@ -717,6 +717,7 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
             auth=Auth("https://example.com/simple", "foo", "bar"),
         )
     )
+    poetry.pool.add_repository(LegacyRepository("custom", "https://foobaz.com/simple",))
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -744,11 +745,23 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
                         "reference": "",
                     },
                 },
+                {
+                    "name": "baz",
+                    "version": "7.8.9",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://foobaz.com/simple",
+                        "reference": "",
+                    },
+                },
             ],
             "metadata": {
                 "python-versions": "*",
                 "content-hash": "123456789",
-                "hashes": {"foo": ["12345"], "bar": ["67890"]},
+                "hashes": {"foo": ["12345"], "bar": ["67890"], "baz": ["24680"]},
             },
         }
     )
@@ -761,9 +774,12 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
 
     expected = """\
 --extra-index-url https://example.com/simple
+--extra-index-url https://foobaz.com/simple
 
 bar==4.5.6 \\
     --hash=sha256:67890
+baz==7.8.9 \\
+    --hash=sha256:24680
 foo==1.2.3 \\
     --hash=sha256:12345
 """

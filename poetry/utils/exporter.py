@@ -134,10 +134,9 @@ class Exporter(object):
             content += line
 
         if indexes:
-            # If we have extra indexes, we add them to the begin
-            # of the output
+            # If we have extra indexes, we add them to the beginning of the output
             indexes_header = ""
-            for index in indexes:
+            for index in sorted(indexes):
                 repository = [
                     r
                     for r in self._poetry.pool.repositories
