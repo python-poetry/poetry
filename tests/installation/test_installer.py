@@ -122,6 +122,15 @@ def installer(package, pool, locker, env, installed):
     return Installer(NullIO(), env, package, locker, pool, installed=installed)
 
 
+# Having a separate fixture is probably the wrong way to do this, but the current
+# implementation can't inject the dev_only property after the fact and have it be
+# respected.
+@pytest.fixture()
+def dev_only_installer(package, pool, locker, env, installed):
+    package.dev_only = True
+    return Installer(NullIO(), env, package, locker, pool, installed=installed)
+
+
 def fixture(name):
     file = TomlFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
 
@@ -130,6 +139,21 @@ def fixture(name):
 
 def test_run_no_dependencies(installer, locker):
     installer.run()
+    expected = fixture("no-dependencies")
+
+    assert locker.written_data == expected
+
+
+def test_run_no_dev_dependencies(dev_only_installer, locker, repo, package):
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    package.add_dependency("A", "~1.0")
+    package.add_dependency("B", "^1.0")
+
+    dev_only_installer.run()
     expected = fixture("no-dependencies")
 
     assert locker.written_data == expected
