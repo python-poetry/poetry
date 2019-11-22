@@ -78,15 +78,18 @@ class ParsedUrl:
 
         raise ValueError('Invalid git url "{}"'.format(url))
 
-    def format(self):
+    @property
+    def url(self):  # type: () -> str
         return "{}{}{}{}{}".format(
             "{}://".format(self.protocol) if self.protocol else "",
             "{}@".format(self.user) if self.user else "",
             self.resource,
             ":{}".format(self.port) if self.port else "",
             "/" + self.pathname if self.pathname.startswith(":") else self.pathname,
-            "#{}".format(self.rev) if self.rev else "",
         )
+
+    def format(self):
+        return "{}".format(self.url, "#{}".format(self.rev) if self.rev else "",)
 
     def __str__(self):  # type: () -> str
         return self.format()

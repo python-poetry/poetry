@@ -28,7 +28,7 @@ from .markers import parse_marker
 try:
     import urllib.parse as urlparse
 except ImportError:
-    from urlparse import urlparse
+    import urlparse
 
 
 LEGACY_REGEX = r"""
