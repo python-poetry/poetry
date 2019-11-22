@@ -122,15 +122,6 @@ def installer(package, pool, locker, env, installed):
     return Installer(NullIO(), env, package, locker, pool, installed=installed)
 
 
-# Having a separate fixture is probably the wrong way to do this, but the current
-# implementation can't inject the dev_only property after the fact and have it be
-# respected.
-@pytest.fixture()
-def dev_only_installer(package, pool, locker, env, installed):
-    package.dev_only = True
-    return Installer(NullIO(), env, package, locker, pool, installed=installed)
-
-
 def fixture(name):
     file = TomlFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
 
@@ -144,7 +135,8 @@ def test_run_no_dependencies(installer, locker):
     assert locker.written_data == expected
 
 
-def test_run_no_dev_dependencies(dev_only_installer, locker, repo, package):
+def test_run_no_dev_dependencies(installer, locker, repo, package):
+    package.dev_only = True
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
@@ -153,7 +145,7 @@ def test_run_no_dev_dependencies(dev_only_installer, locker, repo, package):
     package.add_dependency("A", "~1.0")
     package.add_dependency("B", "^1.0")
 
-    dev_only_installer.run()
+    installer.run()
     expected = fixture("no-dependencies")
 
     assert locker.written_data == expected
@@ -247,7 +239,26 @@ def test_run_update_after_removing_dependencies(
     assert len(removals) == 1
 
 
-def test_run_install_no_dev(installer, locker, repo, package, installed):
+def test_run_install_no_dev(installer, locker, repo, package):
+    package.dev_only = True
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    package_c = get_package("C", "1.2")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    package.add_dependency("A", "~1.0")
+    package.add_dependency("B", "~1.1")
+    package.add_dependency("C", "~1.2", category="dev")
+
+    installer.run()
+    expected = fixture("install-dev-only")
+
+    assert locker.written_data == expected
+
+
+def test_run_install_dev_only(installer, locker, repo, package, installed):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -305,15 +316,6 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
 
     installer.dev_mode(False)
     installer.run()
-
-    installs = installer.installer.installs
-    assert len(installs) == 0
-
-    updates = installer.installer.updates
-    assert len(updates) == 0
-
-    removals = installer.installer.removals
-    assert len(removals) == 1
 
 
 def test_run_whitelist_add(installer, locker, repo, package):

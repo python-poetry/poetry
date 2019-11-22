@@ -34,11 +34,7 @@ class Installer:
     ):
         self._io = io
         self._env = env
-        if package.dev_only:
-            self._package = package.clone()
-            del self._package.requires[:]
-        else:
-            self._package = package
+        self._package = package
         self._locker = locker
         self._pool = pool
 
@@ -63,6 +59,14 @@ class Installer:
     @property
     def installer(self):
         return self._installer
+
+    @property
+    def package(self):
+        if not self._package.dev_only:
+            return self._package
+        package = self._package.clone()
+        del package.requires[:]
+        return package
 
     def run(self):
         # Force update if there is no lock file present
@@ -150,12 +154,12 @@ class Installer:
 
             # Checking extras
             for extra in self._extras:
-                if extra not in self._package.extras:
+                if extra not in self.package.extras:
                     raise ValueError("Extra [{}] is not specified.".format(extra))
 
             self._io.write_line("<info>Updating dependencies</>")
             solver = Solver(
-                self._package,
+                self.package,
                 self._pool,
                 self._installed_repository,
                 locked_repository,
@@ -196,7 +200,7 @@ class Installer:
                 # If we are only in lock mode, no need to go any further
                 return 0
 
-        root = self._package
+        root = self.package
         if not self.is_dev_mode():
             root = root.clone()
             del root.dev_requires[:]
@@ -291,7 +295,7 @@ class Installer:
 
     def _write_lock_file(self, repo):  # type: (Repository) -> None
         if self._update and self._write_lock:
-            updated_lock = self._locker.set_lock_data(self._package, repo.packages)
+            updated_lock = self._locker.set_lock_data(self.package, repo.packages)
 
             if updated_lock:
                 self._io.write_line("")
@@ -454,7 +458,7 @@ class Installer:
 
             if self._update:
                 extras = {}
-                for extra, deps in self._package.extras.items():
+                for extra, deps in self.package.extras.items():
                     extras[extra] = [dep.name for dep in deps]
             else:
                 extras = {}
@@ -479,7 +483,7 @@ class Installer:
         Maybe we just let the solver handle it?
         """
         if self._update:
-            extras = {k: [d.name for d in v] for k, v in self._package.extras.items()}
+            extras = {k: [d.name for d in v] for k, v in self.package.extras.items()}
         else:
             extras = self._locker.lock_data.get("extras", {})
 
