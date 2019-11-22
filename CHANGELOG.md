@@ -38,7 +38,7 @@
 - The `add` command can now update a dependencies if an explicit constraint is given ([#1221](https://github.com/sdispater/poetry/pull/1221)).
 - Removed the `--develop` option from the `install` command.
 - Improved UX when searching for packages in the `init` command.
-- The `shell` has been improved.
+- The `shell` command has been improved.
 - The `poetry run` command now uses `os.execvp()` rather than spawning a new subprocess.
 - Specifying dependencies with `allows-prereleases` in the `pyproject.toml` file is deprecated for consistency with the `add` command. Use `allow-prereleases` instead.
 - Improved the error message when the lock file is invalid.
@@ -67,6 +67,8 @@
 - Fixed custom indices dependencies being constantly updated.
 - Fixed the behavior of the `--install` option of the debug resolve command.
 - Fixed an error in `show` when using the `-o/--outdated` option.
+- Fixed PEP 508 url dependency handling.
+- Fixed excluded files via the `exclude` being included in distributions.
 
 
 ## [0.12.17] - 2019-07-03
