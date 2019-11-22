@@ -271,3 +271,10 @@ def test_username_password_special_chars():
     repo = MockRepository(auth=auth)
 
     assert "http://user%3A:p%40ssword@foo.bar" == repo.authenticated_url
+
+
+def test_username_without_password():
+    auth = Auth("http://foo.bar", "user:", None)
+    repo = MockRepository(auth=auth)
+
+    assert "http://user%3A:@foo.bar" == repo.authenticated_url
