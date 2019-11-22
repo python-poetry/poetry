@@ -115,9 +115,9 @@ class WheelBuilder(Builder):
                 return
 
             lib = lib[0]
-            excluded = self.find_excluded_files()
+
             for pkg in lib.glob("**/*"):
-                if pkg.is_dir() or pkg in excluded:
+                if pkg.is_dir() or self.is_excluded(pkg):
                     continue
 
                 rel_path = str(pkg.relative_to(lib))
@@ -132,7 +132,7 @@ class WheelBuilder(Builder):
                 self._add_file(wheel, pkg, rel_path)
 
     def _copy_module(self, wheel):
-        excluded = self.find_excluded_files()
+
         to_add = []
 
         for include in self._module.includes:
@@ -153,7 +153,7 @@ class WheelBuilder(Builder):
                 else:
                     rel_file = file.relative_to(self._path)
 
-                if rel_file.as_posix() in excluded:
+                if self.is_excluded(rel_file.as_posix()):
                     continue
 
                 if file.suffix == ".pyc":
