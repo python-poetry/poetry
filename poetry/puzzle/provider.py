@@ -62,9 +62,7 @@ class Provider:
 
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(
-        self, package, pool, io
-    ):  # type: (Package, Pool, Any) -> None
+    def __init__(self, package, pool, io):  # type: (Package, Pool, Any) -> None
         self._package = package
         self._pool = pool
         self._io = io
