@@ -239,7 +239,7 @@ def test_run_update_after_removing_dependencies(
     assert len(removals) == 1
 
 
-def test_run_install_no_dev(installer, locker, repo, package):
+def test_run_install_dev_only(installer, locker, repo, package):
     package.dev_only = True
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
@@ -258,7 +258,7 @@ def test_run_install_no_dev(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
-def test_run_install_dev_only(installer, locker, repo, package, installed):
+def test_run_install_no_dev(installer, locker, repo, package, installed):
     locker.locked(True)
     locker.mock_lock_data(
         {
