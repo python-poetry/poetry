@@ -258,6 +258,22 @@ def test_run_install_dev_only(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
+def test_run_install_dev_only_incompatible(installer, locker, repo, package):
+    package.dev_only = True
+    package_c = get_package("C", "1.2")
+    package_c2 = get_package("C", "2.2")
+    repo.add_package(package_c)
+    repo.add_package(package_c2)
+
+    package.add_dependency("C", "~2.2")
+    package.add_dependency("C", "~1.2", category="dev")
+
+    installer.run()
+    expected = fixture("install-dev-only")
+
+    assert locker.written_data == expected
+
+
 def test_run_install_no_dev(installer, locker, repo, package, installed):
     locker.locked(True)
     locker.mock_lock_data(
