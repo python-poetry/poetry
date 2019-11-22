@@ -58,7 +58,9 @@ class Shell:
                 self._path, ["-i"], dimensions=(terminal.height, terminal.width)
             )
 
-        c.setecho(False)
+        if not self._name == "bash":
+            c.setecho(False)
+
         activate_script = self._get_activate_script()
         bin_dir = "Scripts" if WINDOWS else "bin"
         activate_path = env.path / bin_dir / activate_script
