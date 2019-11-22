@@ -207,7 +207,7 @@ class Git:
         args += ["ls-files", "--others", "-i", "--exclude-standard"]
         output = self.run(*args)
 
-        return output.split("\n")
+        return output.strip().split("\n")
 
     def remote_urls(self, folder=None):  # type: (...) -> dict
         output = self.run(
