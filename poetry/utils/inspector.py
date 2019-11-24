@@ -127,7 +127,7 @@ class Inspector:
                 gz = GzipFile(str(file_path))
                 suffix = ".tar.gz"
 
-            tar = tarfile.TarFile(str(file_path), fileobj=gz)
+            tar = tarfile.open(str(file_path))
 
         try:
             tar.extractall(os.path.join(str(file_path.parent), "unpacked"))
