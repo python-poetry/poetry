@@ -63,6 +63,7 @@ class Dependency(object):
 
         self.is_root = False
         self.marker = AnyMarker()
+        self._develop = False
 
     @property
     def name(self):
@@ -154,6 +155,10 @@ class Dependency(object):
             requirement += " ({})".format(str(self.constraint).replace(" ", ""))
 
         return requirement
+
+    @property
+    def develop(self):  # type: () -> bool
+        return self._develop
 
     def allows_prereleases(self):
         return self._allows_prereleases
