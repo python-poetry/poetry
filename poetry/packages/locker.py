@@ -139,7 +139,7 @@ class Locker(object):
                 package.add_dependency(dep_name, constraint)
 
             if "source" in info:
-                package.source_type = info["source"]["type"]
+                package.source_type = info["source"].get("type", "")
                 package.source_url = info["source"]["url"]
                 package.source_reference = info["source"]["reference"]
 
@@ -294,11 +294,12 @@ class Locker(object):
 
             data["dependencies"] = dependencies
 
-        if package.source_type:
+        if package.source_url:
             data["source"] = {
-                "type": package.source_type,
                 "url": package.source_url,
                 "reference": package.source_reference,
             }
+            if package.source_type:
+                data["source"]["type"] = package.source_type
 
         return data
