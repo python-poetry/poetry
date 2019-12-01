@@ -11,6 +11,7 @@ extras_a = ["pendulum (>=1.4.4)"]
 extras_b = ["cachy (>=0.2.0)"]
 
 [package.source]
+develop = true
 reference = ""
 type = "directory"
 url = "tests/fixtures/directory/project_with_transitive_directory_dependencies/../../project_with_extras"
@@ -27,6 +28,7 @@ version = "1.2.3"
 project-with-extras = "*"
 
 [package.source]
+develop = true
 reference = ""
 type = "directory"
 url = "tests/fixtures/directory/project_with_transitive_directory_dependencies"

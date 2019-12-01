@@ -22,6 +22,7 @@ extras_a = ["pendulum (>=1.4.4)"]
 extras_b = ["cachy (>=0.2.0)"]
 
 [package.source]
+develop = true
 reference = ""
 type = "directory"
 url = "tests/fixtures/project_with_extras"

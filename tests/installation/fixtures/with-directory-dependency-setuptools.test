@@ -15,6 +15,7 @@ optional = false
 python-versions = "*"
 
 [package.source]
+develop = true
 type = "directory"
 reference = ""
 url = "tests/fixtures/project_with_setup"
