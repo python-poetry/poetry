@@ -143,6 +143,9 @@ class Locker(object):
                 package.source_url = info["source"]["url"]
                 package.source_reference = info["source"]["reference"]
 
+                if "develop" in info["source"]:
+                    package.develop = info["source"]["develop"]
+
             packages.add_package(package)
 
         return packages
@@ -301,5 +304,7 @@ class Locker(object):
             }
             if package.source_type:
                 data["source"]["type"] = package.source_type
+            if package.source_type == "directory":
+                data["source"]["develop"] = package.develop
 
         return data
