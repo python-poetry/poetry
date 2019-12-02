@@ -29,8 +29,8 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
-from poetry.utils.helpers import canonicalize_name
 from poetry.utils._compat import subprocess
+from poetry.utils.helpers import canonicalize_name
 from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import BaseMarker
 
