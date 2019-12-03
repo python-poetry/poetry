@@ -614,6 +614,12 @@ class MarkerUnion(BaseMarker):
 
         return MarkerUnion(*new_markers)
 
+    def is_any(self):  # type: () -> bool
+        for marker in self.markers:
+            if not marker.is_any():
+                return False
+        return True
+
     def __eq__(self, other):
         if not isinstance(other, MarkerUnion):
             return False
