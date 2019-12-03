@@ -1,17 +1,18 @@
 import shutil
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
-
 from poetry.packages.utils.link import Link
-from poetry.repositories.find_links_repository import FindLinksRepository
 from poetry.repositories.find_links_repository import FilteredPage
+from poetry.repositories.find_links_repository import FindLinksRepository
 from poetry.repositories.find_links_repository import SingleLink
 from poetry.utils._compat import Path
 
 from .test_legacy_repository import MockRepository as LegacyMockRepository
+
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 
 TEST_PACKAGES = ["isort", "futures"]

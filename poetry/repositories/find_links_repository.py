@@ -1,5 +1,15 @@
 import re
 
+from typing import Generator
+from typing import Tuple
+from typing import Union
+
+from poetry.packages.utils.link import Link
+
+from .legacy_repository import LegacyRepository
+from .legacy_repository import Page
+
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -14,15 +24,6 @@ except ImportError:
         from HTMLParser import HTMLParser
 
     unescape = HTMLParser().unescape
-
-from typing import Generator
-from typing import Tuple
-from typing import Union
-
-
-from poetry.packages.utils.link import Link
-
-from .legacy_repository import LegacyRepository, Page
 
 
 def parse_url(url):  # type: (str) -> Tuple[str, str]
