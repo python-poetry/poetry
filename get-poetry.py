@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 This script will install Poetry and its dependencies
 in isolation from the rest of the system.
