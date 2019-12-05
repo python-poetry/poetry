@@ -117,6 +117,27 @@ def test_install_with_cert():
     assert cmd[cert_index + 1] == str(Path(ca_path))
 
 
+def test_install_with_extra_pip_args(pool):
+    default = LegacyRepository("default", "https://default.com")
+
+    pool.add_repository(default, default=True)
+
+    null_env = NullEnv(pip_args=("--user",))
+
+    installer = PipInstaller(null_env, NullIO(), pool)
+
+    foo = Package("foo", "0.0.0")
+    foo.source_type = "legacy"
+    foo.source_reference = default._name
+    foo.source_url = default._url
+
+    installer.install(foo)
+
+    assert len(null_env.executed) == 1
+    cmd = null_env.executed[0]
+    assert "--user" in cmd
+
+
 def test_install_with_client_cert():
     client_path = "path/to/client.pem"
     pool = Pool()
