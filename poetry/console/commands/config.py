@@ -53,16 +53,6 @@ To remove a repository (repo is a short alias for repositories):
                 str(Path(CACHE_DIR) / "virtualenvs"),
             ),
             "user-installs": (boolean_validator, boolean_normalizer, False),
-            "settings.virtualenvs.create": (
-                boolean_validator,
-                boolean_normalizer,
-                True,
-            ),
-            "settings.virtualenvs.in-project": (
-                boolean_validator,
-                boolean_normalizer,
-                False,
-            ),
             "virtualenvs.create": (boolean_validator, boolean_normalizer, True),
             "virtualenvs.in-project": (boolean_validator, boolean_normalizer, False),
             "virtualenvs.path": (
