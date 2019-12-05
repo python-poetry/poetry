@@ -38,7 +38,7 @@ class PipInstaller(BaseInstaller):
 
             return
 
-        args = ["install", "--no-deps"]
+        args = ["install", "--no-deps", *self._env.pip_args]
 
         if package.source_type == "legacy" and package.source_url:
             repository = self._pool.repository(package.source_reference)
