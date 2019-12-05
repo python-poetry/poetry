@@ -571,6 +571,10 @@ class EnvManager(object):
                     "</>"
                 )
 
+                user_installs = self._config.setting("settings.user-installs", False)
+                if user_installs:
+                    return UserEnv(Path(sys.prefix))
+
                 return SystemEnv(Path(sys.prefix))
 
             io.write_line(
@@ -677,6 +681,7 @@ class Env(object):
 
         self._marker_env = None
         self._pip_version = None
+        self._pip_args = ()
 
     @property
     def path(self):  # type: () -> Path
@@ -741,6 +746,10 @@ class Env(object):
             / "python{}.{}".format(*self.version_info[:2])
             / "site-packages"
         )
+
+    @property
+    def pip_args(self):  # type: () -> Tuple[str, ...]
+        return self._pip_args
 
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
@@ -914,6 +923,16 @@ class SystemEnv(Env):
 
     def is_venv(self):  # type: () -> bool
         return self._path != self._base
+
+
+class UserEnv(SystemEnv):
+    """
+    A user (i.e. not a virtualenv) Python environment.
+    """
+
+    def __init__(self, path, base=None):  # type: (Path, Optional[Path]) -> None
+        super(UserEnv, self).__init__(path, base)
+        self._pip_args = ("--user",)
 
 
 class VirtualEnv(Env):
