@@ -208,6 +208,24 @@ class EnvManager(object):
         patch = python_version.text
 
         create = False
+        is_root_venv = self._poetry.config.get("virtualenvs.in-project")
+        # If we are required to create the virtual environment in the root folder,
+        # create or recreate it if needed
+        if is_root_venv:
+            create = False
+            venv = self._poetry.file.parent / ".venv"
+            if venv.exists():
+                # We need to check if the patch version is correct
+                _venv = VirtualEnv(venv)
+                current_patch = ".".join(str(v) for v in _venv.version_info[:3])
+
+                if patch != current_patch:
+                    create = True
+
+            self.create_venv(io, executable=python, force=create)
+
+            return self.get(reload=True)
+
         envs = tomlkit.document()
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
         if envs_file.exists():
