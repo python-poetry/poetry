@@ -75,6 +75,14 @@ httpretty = "^0.9.6"
 poetry = "poetry.console:main"
 
 
+[build-system]
+requires = ["intreehooks"]
+build-backend = "intreehooks:loader"
+
+[tool.intreehooks]
+build-backend = "poetry.masonry.api"
+
+
 [tool.isort]
 line_length = 88
 force_single_line = true
