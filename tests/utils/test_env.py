@@ -9,6 +9,7 @@ from clikit.io import NullIO
 
 from poetry.factory import Factory
 from poetry.semver import Version
+from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
@@ -696,3 +697,29 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
 
     envs_file = TomlFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
     assert not envs_file.exists()
+
+
+def test_env_site_packages_should_find_the_site_packages_directory_if_standard(tmp_dir):
+    if WINDOWS:
+        site_packages = Path(tmp_dir).joinpath("Lib/site-packages")
+    else:
+        site_packages = Path(tmp_dir).joinpath(
+            "lib/python{}/site-packages".format(
+                ".".join(str(v) for v in sys.version_info[:2])
+            )
+        )
+
+    site_packages.mkdir(parents=True)
+
+    env = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+
+    assert site_packages == env.site_packages
+
+
+def test_env_site_packages_should_find_the_site_packages_directory_if_root(tmp_dir):
+    site_packages = Path(tmp_dir).joinpath("site-packages")
+    site_packages.mkdir(parents=True)
+
+    env = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+
+    assert site_packages == env.site_packages
