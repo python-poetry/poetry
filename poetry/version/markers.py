@@ -633,7 +633,7 @@ class MarkerUnion(BaseMarker):
         )
 
     def is_any(self):
-        return all(m.is_any() for m in self._markers)
+        return any(m.is_any() for m in self._markers)
 
     def is_empty(self):
         return all(m.is_empty() for m in self._markers)
