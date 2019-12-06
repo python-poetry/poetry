@@ -757,6 +757,11 @@ class Env(object):
 
     @property
     def site_packages(self):  # type: () -> Path
+        # It seems that PyPy3 virtual environments
+        # have their site-packages directory at the root
+        if self._path.joinpath("site-packages").exists():
+            return self._path.joinpath("site-packages")
+
         if self._is_windows:
             return self._path / "Lib" / "site-packages"
 
