@@ -661,3 +661,38 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
 
     assert expected_message == str(e.value)
     assert 0 == m.call_count
+
+
+def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
+    manager, poetry, config, tmp_dir, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    config.merge(
+        {
+            "virtualenvs": {
+                "path": str(Path(tmp_dir) / "virtualenvs"),
+                "in-project": True,
+            }
+        }
+    )
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    mocker.patch(
+        "poetry.utils._compat.subprocess.Popen.communicate",
+        side_effect=[("/prefix", None), ("/prefix", None)],
+    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
+
+    manager.activate("python3.7", NullIO())
+
+    m.assert_called_with(
+        os.path.join(str(poetry.file.parent), ".venv"), executable="python3.7"
+    )
+
+    envs_file = TomlFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
+    assert not envs_file.exists()
