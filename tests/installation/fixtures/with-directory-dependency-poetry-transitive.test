@@ -1,6 +1,7 @@
 [[package]]
 category = "main"
 description = ""
+develop = true
 name = "project-with-extras"
 optional = false
 python-versions = "*"
@@ -11,7 +12,6 @@ extras_a = ["pendulum (>=1.4.4)"]
 extras_b = ["cachy (>=0.2.0)"]
 
 [package.source]
-develop = true
 reference = ""
 type = "directory"
 url = "tests/fixtures/directory/project_with_transitive_directory_dependencies/../../project_with_extras"
@@ -19,6 +19,7 @@ url = "tests/fixtures/directory/project_with_transitive_directory_dependencies/.
 [[package]]
 category = "main"
 description = ""
+develop = true
 name = "project-with-transitive-directory-dependencies"
 optional = false
 python-versions = "*"
@@ -28,7 +29,6 @@ version = "1.2.3"
 project-with-extras = "*"
 
 [package.source]
-develop = true
 reference = ""
 type = "directory"
 url = "tests/fixtures/directory/project_with_transitive_directory_dependencies"

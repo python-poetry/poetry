@@ -29,6 +29,7 @@ version = "1.4.4"
 [[package]]
 category = "main"
 description = ""
+develop = true
 name = "project-with-transitive-file-dependencies"
 optional = false
 python-versions = "*"
@@ -38,7 +39,6 @@ version = "1.2.3"
 demo = "*"
 
 [package.source]
-develop = true
 reference = ""
 type = "directory"
 url = "tests/fixtures/directory/project_with_transitive_file_dependencies"
