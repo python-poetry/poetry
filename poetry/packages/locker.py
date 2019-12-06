@@ -146,7 +146,6 @@ class Locker(object):
                 package.source_url = info["source"]["url"]
                 package.source_reference = info["source"]["reference"]
 
-
             packages.add_package(package)
 
         return packages
