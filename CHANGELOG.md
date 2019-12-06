@@ -43,6 +43,8 @@
 - Specifying dependencies with `allows-prereleases` in the `pyproject.toml` file is deprecated for consistency with the `add` command. Use `allow-prereleases` instead.
 - Improved the error message when the lock file is invalid.
 - Whenever Poetry needs to use the "system" Python, it will now call `sys.executable` instead of the `python` command.
+- Improved the error message displayed on conflicting Python requirements ([#1681](https://github.com/sdispater/poetry/pull/1681)).
+- Improved the `site-packages` directory detection ([#1683](https://github.com/sdispater/poetry/pull/1683)).
 
 ### Fixed
 
@@ -69,6 +71,8 @@
 - Fixed an error in `show` when using the `-o/--outdated` option.
 - Fixed PEP 508 url dependency handling.
 - Fixed excluded files via the `exclude` being included in distributions.
+- Fixed  an error in `env use` if the `virtualenvs.in-project` setting is activated ([#1682](https://github.com/sdispater/poetry/pull/1682))
+- Fixed handling of `empty` and `any` markers in unions of markers ([#1650](https://github.com/sdispater/poetry/pull/1650)).
 
 
 ## [0.12.17] - 2019-07-03
