@@ -363,7 +363,7 @@ def test_marker_union_all_any():
 def test_marker_union_not_all_any():
     union = MarkerUnion(parse_marker(""), parse_marker(""), parse_marker("<empty>"))
 
-    assert not union.is_any()
+    assert union.is_any()
 
 
 def test_marker_union_all_empty():
