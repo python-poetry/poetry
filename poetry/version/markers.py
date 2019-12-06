@@ -628,7 +628,15 @@ class MarkerUnion(BaseMarker):
         return h
 
     def __str__(self):
-        return " or ".join(str(m) for m in self._markers)
+        return " or ".join(
+            str(m) for m in self._markers if not m.is_any() and not m.is_empty()
+        )
+
+    def is_any(self):
+        return any(m.is_any() for m in self._markers)
+
+    def is_empty(self):
+        return all(m.is_empty() for m in self._markers)
 
 
 def parse_marker(marker):
