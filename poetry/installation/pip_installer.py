@@ -176,12 +176,13 @@ class PipInstaller(BaseInstaller):
         return name
 
     def install_directory(self, package):
+        from uuid import uuid4
+
         from poetry.masonry.builder import SdistBuilder
         from poetry.factory import Factory
         from poetry.utils._compat import decode
         from poetry.utils.env import NullEnv
         from poetry.utils.toml_file import TomlFile
-        from uuid import uuid4
 
         if package.root_dir:
             req = os.path.join(package.root_dir, package.source_url)
