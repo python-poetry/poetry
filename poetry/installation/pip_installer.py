@@ -181,6 +181,7 @@ class PipInstaller(BaseInstaller):
         from poetry.utils._compat import decode
         from poetry.utils.env import NullEnv
         from poetry.utils.toml_file import TomlFile
+        from uuid import uuid4
 
         if package.root_dir:
             req = os.path.join(package.root_dir, package.source_url)
@@ -223,8 +224,13 @@ class PipInstaller(BaseInstaller):
         args.append(req)
 
         try:
+            random_path = os.path.join(req, str(uuid4()))
+            if pyproject.exists():
+                os.rename(os.path.join(req, "pyproject.toml"), random_path)
             return self.run(*args)
         finally:
+            if os.path.exists(random_path):
+                os.rename(random_path, os.path.join(req, "pyproject.toml"))
             if not has_setup and os.path.exists(setup):
                 os.remove(setup)
 
