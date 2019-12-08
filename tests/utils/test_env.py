@@ -80,7 +80,7 @@ def test_env_get_in_project_venv(manager, poetry):
     shutil.rmtree(str(venv.path))
 
 
-def build_venv(path, executable=None):
+def build_venv(path, executable=None, prompt=None):
     os.mkdir(path)
 
 
@@ -122,7 +122,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)),
+        executable="python3.7",
+        prompt="{}-py3.7".format(venv_name),
     )
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
@@ -240,7 +242,9 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = manager.activate("python3.6", NullIO())
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.6".format(venv_name)), executable="python3.6"
+        os.path.join(tmp_dir, "{}-py3.6".format(venv_name)),
+        executable="python3.6",
+        prompt="{}-py3.6".format(venv_name),
     )
 
     assert envs_file.exists()
@@ -292,7 +296,9 @@ def test_activate_activates_recreates_for_different_patch(
     env = manager.activate("python3.7", NullIO())
 
     build_venv_m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)),
+        executable="python3.7",
+        prompt="{}-py3.7".format(venv_name),
     )
     remove_venv_m.assert_called_with(
         os.path.join(tmp_dir, "{}-py3.7".format(venv_name))
@@ -581,7 +587,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        str(Path("/foo/virtualenvs/{}-py3.7".format(venv_name))), executable="python3"
+        str(Path("/foo/virtualenvs/{}-py3.7".format(venv_name))),
+        executable="python3",
+        prompt="{}-py3.7".format(venv_name),
     )
 
 
@@ -605,7 +613,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        str(Path("/foo/virtualenvs/{}-py3.8".format(venv_name))), executable="python3.8"
+        str(Path("/foo/virtualenvs/{}-py3.8".format(venv_name))),
+        executable="python3.8",
+        prompt="{}-py3.8".format(venv_name),
     )
 
 
