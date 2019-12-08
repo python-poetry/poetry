@@ -96,11 +96,16 @@ print('.'.join([str(s) for s in sys.version_info[:3]]))
 
 CREATE_VENV_COMMAND = """\
 path = {!r}
+prompt = {!r}
 
 try:
     from venv import EnvBuilder
+    from inspect import signature
 
-    builder = EnvBuilder(with_pip=True)
+    if "prompt" in signature(EnvBuilder).parameters:
+        builder = EnvBuilder(with_pip=True, prompt=prompt)
+    else:
+        builder = EnvBuilder(with_pip=True)
     build = builder.create
 except ImportError:
     # We fallback on virtualenv for Python 2.7
@@ -577,14 +582,14 @@ class EnvManager(object):
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
             )
 
-            self.build_venv(str(venv), executable=executable)
+            self.build_venv(str(venv), executable=executable, prompt=name)
         else:
             if force:
                 io.write_line(
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
                 self.remove_venv(str(venv))
-                self.build_venv(str(venv), executable=executable)
+                self.build_venv(str(venv), executable=executable, prompt=name)
             elif io.is_very_verbose():
                 io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
 
@@ -607,7 +612,7 @@ class EnvManager(object):
         return VirtualEnv(venv)
 
     @classmethod
-    def build_venv(cls, path, executable=None):
+    def build_venv(cls, path, executable=None, prompt=None):
         if executable is not None:
             # Create virtualenv by using an external executable
             try:
@@ -622,6 +627,7 @@ class EnvManager(object):
 
         try:
             from venv import EnvBuilder
+            from inspect import signature
 
             # use the same defaults as python -m venv
             if os.name == "nt":
@@ -629,7 +635,12 @@ class EnvManager(object):
             else:
                 use_symlinks = True
 
-            builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
+            if "prompt" in signature(EnvBuilder).parameters:
+                builder = EnvBuilder(
+                    with_pip=True, symlinks=use_symlinks, prompt=prompt
+                )
+            else:
+                builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
             build = builder.create
         except ImportError:
             # We fallback on virtualenv for Python 2.7
