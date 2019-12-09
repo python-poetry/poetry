@@ -81,6 +81,7 @@ def test_list_displays_set_get_local_setting(app, config):
     tester.execute("--list")
 
     expected = """cache-dir = "/foo"
+user-installs = false
 virtualenvs.create = false
 virtualenvs.in-project = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
