@@ -1034,7 +1034,7 @@ class VirtualEnv(Env):
 
 
 class NullEnv(SystemEnv):
-    def __init__(self, path=None, base=None, execute=False):
+    def __init__(self, path=None, base=None, execute=False, pip_args=None):
         if path is None:
             path = Path(sys.prefix)
 
@@ -1042,6 +1042,11 @@ class NullEnv(SystemEnv):
 
         self._execute = execute
         self.executed = []
+
+        if not pip_args:
+            pip_args = ()
+
+        self._pip_args = pip_args
 
     def run(self, bin, *args, **kwargs):
         self.executed.append([bin] + list(args))
