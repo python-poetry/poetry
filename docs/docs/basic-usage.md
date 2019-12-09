@@ -58,7 +58,7 @@ in the `tool.poetry.repositories` section, or on [PyPI](https://pypi.org) by def
 Also, instead of modifying the `pyproject.toml` file by hand, you can use the `add` command.
 
 ```bash
-$ poetry add pendulum
+$ poetry add 'pendulum=^1.4'
 ```
 
 It will automatically find a suitable version constraint **and install** the package and subdependencies.
