@@ -32,6 +32,7 @@ class Config(object):
 
     default_config = {
         "cache-dir": str(CACHE_DIR),
+        "user-installs": False,
         "virtualenvs": {
             "create": True,
             "in-project": False,
