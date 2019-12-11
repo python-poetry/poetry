@@ -1,1 +1,1 @@
-"""Test fixture for https://github.com/sdispater/poetry/issues/756"""
+"""Test fixture for https://github.com/python-poetry/poetry/issues/756"""

@@ -264,7 +264,7 @@ any custom url in the `urls` section.
 
 ```toml
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/sdispater/poetry/issues"
+"Bug Tracker" = "https://github.com/python-poetry/poetry/issues"
 ```
 
 If you publish you package on PyPI, they will appear in the `Project Links` section.

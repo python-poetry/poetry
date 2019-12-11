@@ -206,7 +206,7 @@ Metadata-Version: 2.1
 Name: my-package
 Version: 1.2.3
 Summary: Some description.
-Home-page: https://poetry.eustace.io/
+Home-page: https://python-poetry.org/
 License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
@@ -225,9 +225,9 @@ Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
 Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
-Project-URL: Documentation, https://poetry.eustace.io/docs
-Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
-Project-URL: Repository, https://github.com/sdispater/poetry
+Project-URL: Documentation, https://python-poetry.org/docs
+Project-URL: Issue Tracker, https://github.com/python-poetry/poetry/issues
+Project-URL: Repository, https://github.com/python-poetry/poetry
 Description-Content-Type: text/x-rst
 
 My Package
@@ -309,7 +309,7 @@ Metadata-Version: 2.1
 Name: my-package
 Version: 1.2.3
 Summary: Some description.
-Home-page: https://poetry.eustace.io/
+Home-page: https://python-poetry.org/
 License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
@@ -328,9 +328,9 @@ Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
 Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
-Project-URL: Documentation, https://poetry.eustace.io/docs
-Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
-Project-URL: Repository, https://github.com/sdispater/poetry
+Project-URL: Documentation, https://python-poetry.org/docs
+Project-URL: Issue Tracker, https://github.com/python-poetry/poetry/issues
+Project-URL: Repository, https://github.com/python-poetry/poetry
 Description-Content-Type: text/x-rst
 
 My Package
