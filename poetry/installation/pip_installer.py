@@ -134,7 +134,9 @@ class PipInstaller(BaseInstaller):
 
         if package.source_type in ["file", "directory"]:
             if package.root_dir:
-                req = os.path.join(package.root_dir, package.source_url)
+                req = os.path.realpath(
+                    os.path.join(package.root_dir, package.source_url)
+                )
             else:
                 req = os.path.realpath(package.source_url)
 
