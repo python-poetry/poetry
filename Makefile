@@ -1,5 +1,5 @@
 # This file is part of Poetry
-# https://github.com/sdispater/poetry
+# https://github.com/python-poetry/poetry
 
 # Licensed under the MIT license:
 # http://www.opensource.org/licenses/MIT-license

@@ -3,11 +3,11 @@
 Poetry helps you declare, manage and install dependencies of Python projects,
 ensuring you have the right stack everywhere.
 
-![Poetry Install](https://raw.githubusercontent.com/sdispater/poetry/master/assets/install.gif)
+![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
 It supports Python 2.7 and 3.4+.
 
-![Tests Status](https://github.com/sdispater/poetry/workflows/Tests/badge.svg)
+![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg)
 
 ## Installation
 
@@ -16,7 +16,7 @@ from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 ```
 
 Alternatively, you can download the `get-poetry.py` file and execute it separately.
@@ -118,8 +118,8 @@ authors = [
 
 readme = 'README.md'  # Markdown files are supported
 
-repository = "https://github.com/sdispater/poetry"
-homepage = "https://github.com/sdispater/poetry"
+repository = "https://github.com/python-poetry/poetry"
+homepage = "https://github.com/python-poetry/poetry"
 
 keywords = ['packaging', 'poetry']
 
@@ -831,5 +831,5 @@ To match the example in the setuptools documentation, you would use the followin
 
 ## Resources
 
-* [Official Website](https://poetry.eustace.io)
-* [Issue Tracker](https://github.com/sdispater/poetry/issues)
+* [Official Website](https://python-poetry.org)
+* [Issue Tracker](https://github.com/python-poetry/poetry/issues)

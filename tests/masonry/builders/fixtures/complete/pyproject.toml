@@ -12,9 +12,9 @@ license = "MIT"
 
 readme = "README.rst"
 
-homepage = "https://poetry.eustace.io/"
-repository = "https://github.com/sdispater/poetry"
-documentation = "https://poetry.eustace.io/docs"
+homepage = "https://python-poetry.org/"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
 
 keywords = ["packaging", "dependency", "poetry"]
 
@@ -50,4 +50,4 @@ my-2nd-script = "my_package:main2"
 extra-script = {callable = "my_package.extra:main", extras = ["time"]}
 
 [tool.poetry.urls]
-"Issue Tracker" = "https://github.com/sdispater/poetry/issues"
+"Issue Tracker" = "https://github.com/python-poetry/poetry/issues"
