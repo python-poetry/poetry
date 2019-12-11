@@ -275,6 +275,7 @@ class Provider:
         )
 
         package.source_url = dependency.path.as_posix()
+        package.develop = dependency.develop
 
         if dependency.base is not None:
             package.root_dir = dependency.base.as_posix()

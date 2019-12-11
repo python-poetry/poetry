@@ -138,6 +138,9 @@ class Locker(object):
 
                 package.add_dependency(dep_name, constraint)
 
+            if "develop" in info:
+                package.develop = info["develop"]
+
             if "source" in info:
                 package.source_type = info["source"].get("type", "")
                 package.source_url = info["source"]["url"]
@@ -301,5 +304,7 @@ class Locker(object):
             }
             if package.source_type:
                 data["source"]["type"] = package.source_type
+            if package.source_type == "directory":
+                data["develop"] = package.develop
 
         return data
