@@ -508,7 +508,7 @@ class EnvManager(object):
             )
 
         supported_python = self._poetry.package.python_constraint
-        if not supported_python.allows(Version.parse(python_minor)):
+        if not supported_python.allows(Version.parse(python_patch)):
             # The currently activated or chosen Python version
             # is not compatible with the Python constraint specified
             # for the project.

@@ -664,6 +664,42 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
     assert 0 == m.call_count
 
 
+def test_create_venv_uses_patch_version_to_detect_compatibility(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
+    poetry.package.python_versions = "^{}".format(
+        ".".join(str(c) for c in sys.version_info[:3])
+    )
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    mocker.patch("sys.version_info", (version.major, version.minor, version.patch + 1))
+    check_output = mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.9")),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    assert not check_output.called
+    m.assert_called_with(
+        str(
+            Path(
+                "/foo/virtualenvs/{}-py{}.{}".format(
+                    venv_name, version.major, version.minor
+                )
+            )
+        ),
+        executable=None,
+    )
+
+
 def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     manager, poetry, config, tmp_dir, mocker
 ):
