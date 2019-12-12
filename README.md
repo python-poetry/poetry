@@ -44,24 +44,28 @@ which might cause conflicts.
 
 ## Updating `poetry`
 
-Updating poetry to the latest stable version is as simple as calling the `self:update` command.
+Updating poetry to the latest stable version is as simple as calling the `self update` command.
 
 ```bash
-poetry self:update
+poetry self update
 ```
 
 If you want to install prerelease versions, you can use the `--preview` option.
 
 ```bash
-poetry self:update --preview
+poetry self update --preview
 ```
 
 And finally, if you want to install a specific version you can pass it as an argument
-to `self:update`.
+to `self update`.
 
 ```bash
-poetry self:update 0.8.0
+poetry self update 0.8.0
 ```
+
+!!!note
+
+    If you are still on poetry version < 1.0 use `poetry self:update` instead.
 
 
 ## Enable tab completion for Bash, Fish, or Zsh
