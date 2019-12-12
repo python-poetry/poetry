@@ -833,3 +833,4 @@ To match the example in the setuptools documentation, you would use the followin
 
 * [Official Website](https://python-poetry.org)
 * [Issue Tracker](https://github.com/python-poetry/poetry/issues)
+* [Discord](https://discordapp.com/invite/awxPgve)
