@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [1.0.0] - 2019-12-12
 
 ### Added
 
@@ -756,7 +756,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/0.12.17...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.0...master
+[1.0.0]: https://github.com/python-poetry/poetry/releases/tag/1.0.0
 [0.12.17]: https://github.com/python-poetry/poetry/releases/tag/0.12.17
 [0.12.16]: https://github.com/python-poetry/poetry/releases/tag/0.12.16
 [0.12.15]: https://github.com/python-poetry/poetry/releases/tag/0.12.15
