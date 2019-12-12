@@ -225,7 +225,7 @@ class PipInstaller(BaseInstaller):
         args.append(req)
 
         try:
-            random_path = os.path.join(req, "pyproject.toml", str(uuid4()))
+            random_path = os.path.join(req, "pyproject.toml" + str(uuid4()))
             if pyproject.exists():
                 os.rename(os.path.join(req, "pyproject.toml"), random_path)
             return self.run(*args)
