@@ -175,9 +175,8 @@ exclude = ["my_package/excluded.py"]
 
 ## dev-only
 
-If set to `true`, this option entirely disables installing runtime dependencies in the development environment.
-This is useful when you do not care about whether it's possible to install the package under development in the development environment, and you don't want to mandate command-line flags to avoid attempting to do so.
-Use cases for this include running tests with `tox` (in which case the packages are unnecessary) or minimizing `pip` installs when building the project from a fresh checkout.
+If set to true, no production dependencies will be installed when running poetry install.
+Use cases for this include running tests with `tox` (in which case the runtime dependencies are unnecessary in the development environment) or minimizing `pip` installs when building the project from a fresh checkout.
 
 When this option is set to `true`, the `install` command will always act as if it was passed `no-root`.
 
