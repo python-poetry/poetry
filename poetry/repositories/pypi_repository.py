@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 class PyPiRepository(Repository):
 
-    CACHE_VERSION = parse_constraint("1.0.0b2")
+    CACHE_VERSION = parse_constraint("1.0.0")
 
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
         self._url = url
