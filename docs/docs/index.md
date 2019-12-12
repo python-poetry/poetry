@@ -146,6 +146,10 @@ poetry self update 0.8.0
     The `self update` command will only work if you used the recommended
     installer to install Poetry.
 
+!!!note
+
+    If you are still on poetry version < 1.0 use `poetry self:update` instead.
+
 
 ## Enable tab completion for Bash, Fish, or Zsh
 

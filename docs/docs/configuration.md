@@ -104,7 +104,7 @@ Defaults to one of the following directories:
 
 ### `virtualenvs.create`: boolean
 
-Create a new virtualenv if one doesn't already exist.
+Create a new virtual environment if one doesn't already exist.
 Defaults to `true`.
 
 ### `virtualenvs.in-project`: boolean
@@ -114,7 +114,7 @@ Defaults to `false`.
 
 ### `virtualenvs.path`: string
 
-Directory where virtualenvs will be created.
+Directory where virtual environments will be created.
 Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 
 ### `repositories.<name>`: string

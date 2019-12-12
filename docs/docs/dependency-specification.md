@@ -1,6 +1,7 @@
-# Versions and constraints
+# Dependency specification
 
-Poetry recommends following [semantic versioning](https://semver.org) but will not enforce it.
+Dependencies for a project can be specified in various forms, which depend on the type
+of the dependency and on the optional constraints that might be needed for it to be installed.
 
 ## Version constraints
 
@@ -74,7 +75,7 @@ If other dependencies require a different version, the solver will ultimately fa
 
 Multiple version requirements can also be separated with a comma, e.g. `>= 1.2, < 1.5`.
 
-### `git` dependencies
+## `git` dependencies
 
 To depend on a library located in a `git` repository,
 the minimum information you need to specify is the location of the repository with the git key:
@@ -94,7 +95,7 @@ Here's an example of specifying that you want to use the latest commit on a bran
 requests = { git = "https://github.com/kennethreitz/requests.git", branch = "next" }
 ```
 
-### `path` dependencies
+## `path` dependencies
 
 To depend on a library located in a local directory or file,
 you can use the `path` property:
@@ -109,7 +110,7 @@ my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
 
-### `url` dependencies
+## `url` dependencies
 
 To depend on a library located on a remote archive,
 you can use the `url` property:
@@ -127,7 +128,7 @@ poetry add https://example.com/my-package-0.1.0.tar.gz
 ```
 
 
-### Python restricted dependencies
+## Python restricted dependencies
 
 You can also specify that a dependency should be installed only for specific Python versions:
 
@@ -141,7 +142,7 @@ pathlib2 = { version = "^2.2", python = "~2.7" }
 pathlib2 = { version = "^2.2", python = "~2.7 || ^3.2" }
 ```
 
-### Using environment markers
+## Using environment markers
 
 If you need more complex install conditions for your dependencies,
 Poetry supports [environment markers](https://www.python.org/dev/peps/pep-0508/#environment-markers)
@@ -153,7 +154,7 @@ pathlib2 = { version = "^2.2", markers = "python_version ~= '2.7' or sys_platfor
 ```
 
 
-### Multiple constraints dependencies
+## Multiple constraints dependencies
 
 Sometimes, one of your dependency may have different version ranges depending
 on the target Python versions.
