@@ -226,10 +226,6 @@ It will add the `poetry` command to {poetry}'s bin directory, located at:
 {poetry_home_bin}
 
 {platform_msg}
-
-You can uninstall at any time with `poetry self uninstall`,
-or by executing this script with the --uninstall option,
-and these changes will be reverted.
 """
 
 PRE_UNINSTALL_MESSAGE = """# We are sorry to see you go!
