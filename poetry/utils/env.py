@@ -494,18 +494,19 @@ class EnvManager(object):
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
-            python_minor = decode(
+            python_patch = decode(
                 subprocess.check_output(
                     " ".join(
                         [
                             executable,
                             "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:2]]))\"",
+                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
                         ]
                     ),
                     shell=True,
                 ).strip()
             )
+            python_minor = ".".join(python_patch.split(".")[:2])
 
         supported_python = self._poetry.package.python_constraint
         if not supported_python.allows(Version.parse(python_patch)):
@@ -517,7 +518,7 @@ class EnvManager(object):
             # Otherwise, we try to find a compatible Python version.
             if executable:
                 raise NoCompatiblePythonVersionFound(
-                    self._poetry.package.python_versions, python_minor
+                    self._poetry.package.python_versions, python_patch
                 )
 
             io.write_line(
