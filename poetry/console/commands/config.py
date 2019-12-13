@@ -29,6 +29,14 @@ class ConfigCommand(Command):
 
     help = """This command allows you to edit the poetry config settings and repositories.
 
+Available settings:
+
+    <comment>cache-dir</comment>: str
+    <comment>virtualenvs</comment>.<comment>create</comment>: bool
+    <comment>virtualenvs</comment>.<comment>in-project</comment>: bool
+    <comment>virtualenvs</comment>.<comment>path</comment>: str
+    <comment>repositories</comment>.<comment><NAME></comment>: str
+
 To add a repository:
 
     <comment>poetry config repositories.foo https://bar.com/simple/</comment>

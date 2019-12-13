@@ -55,6 +55,11 @@ def test_display_single_setting(app, config):
     assert expected == tester.io.fetch_output()
 
 
+def test_poetry_config_help_message_has_available_settings(app, config):
+    command = app.find("config")
+    assert "available settings" in command.help.lower()
+
+
 def test_display_single_local_setting(app, config, fixture_dir):
     poetry = Factory().create_poetry(fixture_dir("with_local_config"))
     app._poetry = poetry
