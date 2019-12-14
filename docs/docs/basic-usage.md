@@ -35,10 +35,14 @@ description = ""
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
 
 [tool.poetry.dependencies]
-python = "*"
+python = "^2.7"
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.4"
+pytest = "^4.6"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
 ```
 
 ### Specifying dependencies
