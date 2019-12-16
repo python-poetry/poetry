@@ -153,7 +153,9 @@ class WheelBuilder(Builder):
                 else:
                     rel_file = file.relative_to(self._path)
 
-                if self.is_excluded(rel_file.as_posix()):
+                if self.is_excluded(rel_file.as_posix()) and isinstance(
+                    include, PackageInclude
+                ):
                     continue
 
                 if file.suffix == ".pyc":
