@@ -162,7 +162,7 @@ class Builder(object):
             )
             to_add.append(license_file.relative_to(self._path))
 
-        # If a README is specificed we need to include it
+        # If a README is specified we need to include it
         # to avoid errors
         if "readme" in self._poetry.local_config:
             readme = self._path / self._poetry.local_config["readme"]
