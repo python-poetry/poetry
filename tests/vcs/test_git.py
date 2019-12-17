@@ -62,6 +62,14 @@ from poetry.vcs.git import GitUrl
             "git+file://C:\\Users\\hello\\testing.git#zkat/windows-files",
             GitUrl("file://C:\\Users\\hello\\testing.git", "zkat/windows-files"),
         ),
+        (
+            "git+https://git.example.com/sdispater/project/my_repo.git",
+            GitUrl("https://git.example.com/sdispater/project/my_repo.git", None),
+        ),
+        (
+            "git+ssh://git@git.example.com:sdispater/project/my_repo.git",
+            GitUrl("git@git.example.com:sdispater/project/my_repo.git", None),
+        ),
     ],
 )
 def test_normalize_url(url, normalized):
