@@ -166,3 +166,13 @@ def test_setup_reader_read_extras_require_with_variables(setup):
     assert expected_install_requires == result["install_requires"]
     assert expected_extras_require == result["extras_require"]
     assert expected_python_requires == result["python_requires"]
+
+
+def test_setup_reader_setuptools(setup):
+    result = SetupReader.read_from_directory(setup("setuptools_setup"))
+
+    expected_name = "my_package"
+    expected_version = "0.1.2"
+
+    assert expected_name == result["name"]
+    assert expected_version == result["version"]
