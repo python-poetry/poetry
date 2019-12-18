@@ -51,6 +51,8 @@ def test_convert_dependencies():
             get_dependency("B", "~1.0"),
             get_dependency("C", "1.2.3"),
             VCSDependency("D", "git", "https://github.com/sdispater/d.git"),
+            get_dependency("E", "^1.0"),
+            get_dependency("F", "^1.0,!=1.3"),
         ],
     )
     main = [
@@ -58,6 +60,8 @@ def test_convert_dependencies():
         "B>=1.0,<1.1",
         "C==1.2.3",
         "D @ git+https://github.com/sdispater/d.git@master",
+        "E>=1.0,<2.0",
+        "F>=1.0,<2.0,!=1.3",
     ]
     extras = {}
 

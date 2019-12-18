@@ -147,7 +147,10 @@ class Dependency(object):
             if self.constraint.excludes_single_version():
                 requirement += " ({})".format(str(self.constraint))
             else:
-                requirement += " ({})".format(self.pretty_constraint)
+                constraints = self.pretty_constraint.split(",")
+                constraints = [parse_constraint(c) for c in constraints]
+                constraints = [str(c) for c in constraints]
+                requirement += " ({})".format(",".join(constraints))
         elif isinstance(self.constraint, Version):
             requirement += " (=={})".format(self.constraint.text)
         elif not self.constraint.is_any():
