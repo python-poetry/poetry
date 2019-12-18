@@ -72,3 +72,4 @@ def test_in_project_venv(app, tmpdir):
     expected = ".venv (Activated)\n"
 
     assert expected == tester.io.fetch_output()
+    (app.poetry.file.parent / ".venv").rmdir()
