@@ -1,3 +1,5 @@
+import os
+
 import tomlkit
 
 from cleo.testers import CommandTester
@@ -54,5 +56,19 @@ def test_activated(app, tmp_dir):
 """.format(
         venv_name, venv_name
     )
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_in_project_venv(app, tmpdir):
+    os.environ.pop("VIRTUAL_ENV", None)
+
+    (app.poetry.file.parent / ".venv").mkdir(exist_ok=True)
+
+    command = app.find("env list")
+    tester = CommandTester(command)
+    tester.execute()
+
+    expected = ".venv (Activated)\n"
 
     assert expected == tester.io.fetch_output()
