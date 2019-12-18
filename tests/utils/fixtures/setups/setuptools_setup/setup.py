@@ -8,5 +8,4 @@ setuptools.setup(
     description="Just a description",
     url="https://example.org",
     packages=setuptools.find_packages(),
-
 )
