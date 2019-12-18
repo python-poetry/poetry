@@ -168,6 +168,7 @@ def test_setup_reader_read_extras_require_with_variables(setup):
     assert expected_python_requires == result["python_requires"]
 
 
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_setup_reader_setuptools(setup):
     result = SetupReader.read_from_directory(setup("setuptools_setup"))
 
