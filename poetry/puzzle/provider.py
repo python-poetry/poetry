@@ -6,6 +6,7 @@ import time
 
 from contextlib import contextmanager
 from tempfile import mkdtemp
+from typing import Any
 from typing import List
 from typing import Optional
 
@@ -61,9 +62,7 @@ class Provider:
 
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(
-        self, package, pool, io  # type: Package  # type: Pool
-    ):  # type: (...) -> None
+    def __init__(self, package, pool, io):  # type: (Package, Pool, Any) -> None
         self._package = package
         self._pool = pool
         self._io = io
