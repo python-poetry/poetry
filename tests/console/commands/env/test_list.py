@@ -62,6 +62,7 @@ def test_activated(app, tmp_dir):
 
 def test_in_project_venv(app, tmpdir):
     os.environ.pop("VIRTUAL_ENV", None)
+    app.poetry.config.merge({"virtualenvs": {"in-project": True}})
 
     (app.poetry.file.parent / ".venv").mkdir(exist_ok=True)
 
