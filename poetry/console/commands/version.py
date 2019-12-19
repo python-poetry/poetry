@@ -7,7 +7,7 @@ class VersionCommand(Command):
 
     name = "version"
     description = (
-        "Shows the version of the project or bumps it when a valid"
+        "Shows the version of the project or bumps it when a valid "
         "bump rule is provided."
     )
 
