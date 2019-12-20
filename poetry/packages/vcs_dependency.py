@@ -7,7 +7,15 @@ class VCSDependency(Dependency):
     """
 
     def __init__(
-        self, name, vcs, source, branch=None, tag=None, rev=None, optional=False
+        self,
+        name,
+        vcs,
+        source,
+        branch=None,
+        tag=None,
+        rev=None,
+        category="main",
+        optional=False,
     ):
         self._vcs = vcs
         self._source = source
@@ -21,7 +29,7 @@ class VCSDependency(Dependency):
         self._rev = rev
 
         super(VCSDependency, self).__init__(
-            name, "*", optional=optional, allows_prereleases=True
+            name, "*", category=category, optional=optional, allows_prereleases=True
         )
 
     @property
