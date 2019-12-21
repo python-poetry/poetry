@@ -2,7 +2,7 @@ import logging
 
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
-from poetry.utils.helpers import get_http_basic_auth
+from poetry.utils.password_manager import PasswordManager
 
 from .uploader import Uploader
 
@@ -20,6 +20,7 @@ class Publisher:
         self._package = poetry.package
         self._io = io
         self._uploader = Uploader(poetry, io)
+        self._password_manager = PasswordManager(poetry.config)
 
     @property
     def files(self):
@@ -60,21 +61,21 @@ class Publisher:
 
         if not (username and password):
             # Check if we have a token first
-            token = self._poetry.config.get("pypi-token.{}".format(repository_name))
+            token = self._password_manager.get_pypi_token(repository_name)
             if token:
                 logger.debug("Found an API token for {}.".format(repository_name))
                 username = "__token__"
                 password = token
             else:
-                auth = get_http_basic_auth(self._poetry.config, repository_name)
+                auth = self._password_manager.get_http_auth(repository_name)
                 if auth:
                     logger.debug(
                         "Found authentication information for {}.".format(
                             repository_name
                         )
                     )
-                    username = auth[0]
-                    password = auth[1]
+                    username = auth["username"]
+                    password = auth["password"]
 
         resolved_client_cert = client_cert or get_client_cert(
             self._poetry.config, repository_name

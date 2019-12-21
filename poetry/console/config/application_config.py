@@ -53,7 +53,7 @@ class ApplicationConfig(BaseApplicationConfig):
 
         io = event.io
 
-        loggers = ["poetry.packages.package"]
+        loggers = ["poetry.packages.package", "poetry.utils.password_manager"]
 
         loggers += command.loggers
 

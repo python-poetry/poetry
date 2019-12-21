@@ -233,7 +233,8 @@ class Factory:
     ):  # type: (Dict[str, str], Config) -> LegacyRepository
         from .repositories.auth import Auth
         from .repositories.legacy_repository import LegacyRepository
-        from .utils.helpers import get_client_cert, get_cert, get_http_basic_auth
+        from .utils.helpers import get_client_cert, get_cert
+        from .utils.password_manager import PasswordManager
 
         if "url" in source:
             # PyPI-like repository
@@ -242,11 +243,12 @@ class Factory:
         else:
             raise RuntimeError("Unsupported source specified")
 
+        password_manager = PasswordManager(auth_config)
         name = source["name"]
         url = source["url"]
-        credentials = get_http_basic_auth(auth_config, name)
+        credentials = password_manager.get_http_auth(name)
         if credentials:
-            auth = Auth(url, credentials[0], credentials[1])
+            auth = Auth(url, credentials["username"], credentials["password"])
         else:
             auth = None
 
