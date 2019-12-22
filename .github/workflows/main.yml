@@ -30,10 +30,16 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
+    - name: Install and set up Poetry
       run: |
         python get-poetry.py --preview -y
         source $HOME/.poetry/env
+        poetry config virtualenvs.in-project true
+    - name: Set up cache
+      uses: actions/cache@v1
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
       run: |
         source $HOME/.poetry/env
@@ -56,10 +62,16 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
+    - name: Install and set up Poetry
       run: |
         python get-poetry.py --preview -y
         source $HOME/.poetry/env
+        poetry config virtualenvs.in-project true
+    - name: Set up cache
+      uses: actions/cache@v1
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
       run: |
         source $HOME/.poetry/env
@@ -82,10 +94,16 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
+    - name: Install and setup Poetry
       run: |
         python get-poetry.py --preview -y
         $env:Path += ";$env:Userprofile\.poetry\bin"
+        poetry config virtualenvs.in-project true
+    - name: Set up cache
+      uses: actions/cache@v1
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
       run: |
         $env:Path += ";$env:Userprofile\.poetry\bin"

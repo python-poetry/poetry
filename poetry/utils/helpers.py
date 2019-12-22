@@ -159,11 +159,17 @@ def get_client_cert(config, repository_name):  # type: (Config, str) -> Optional
 
 
 def _on_rm_error(func, path, exc_info):
+    if not os.path.exists(path):
+        return
+
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
 
 def safe_rmtree(path):
+    if Path(path).is_symlink():
+        return os.unlink(str(path))
+
     shutil.rmtree(path, onerror=_on_rm_error)
 
 
