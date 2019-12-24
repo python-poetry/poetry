@@ -10,6 +10,7 @@ license = "MIT"
 readme = "README.rst"
 
 exclude = ["**/data/", "**/*/item*"]
+include = ["my_package/data/data2.txt"]
 
 homepage = "https://python-poetry.org/"
 repository = "https://github.com/python-poetry/poetry"

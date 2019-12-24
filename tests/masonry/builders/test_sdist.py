@@ -436,6 +436,7 @@ def test_src_excluded_nested_data():
         assert "my-package-1.2.3/my_package/data/sub_data/data2.txt" not in names
         assert "my-package-1.2.3/my_package/data/sub_data/data3.txt" not in names
         assert "my-package-1.2.3/my_package/data/data1.txt" not in names
+        assert "my-package-1.2.3/my_package/data/data2.txt" in names
         assert "my-package-1.2.3/my_package/puplic/publicdata.txt" in names
         assert "my-package-1.2.3/my_package/public/item1/itemdata1.txt" not in names
         assert (
