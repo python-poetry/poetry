@@ -58,7 +58,7 @@ class Shell:
                 self._path, ["-i"], dimensions=(terminal.height, terminal.width)
             )
 
-        if not self._name == "bash":
+        if self._name == "zsh":
             c.setecho(False)
 
         activate_script = self._get_activate_script()
