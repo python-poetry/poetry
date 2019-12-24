@@ -4,11 +4,11 @@ Poetry can be configured via the `config` command ([see more about its usage her
 or directly in the `config.toml` file that will be automatically be created when you first run that command.
 This file can typically be found in one of the following directories:
 
-- macOS:   `~/Library/Application Support/pypoetry`
-- Windows: `C:\Users\<username>\AppData\Roaming\pypoetry`
-
-For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
-That means, by default `~/.config/pypoetry`.
+- Windows: `C:\Users\<username>\AppData\Roaming\pypoetry`;
+- macOS:   If you have the `$XDG_CONFIG_HOME` set, Poetry will follow the XDG
+           spec, otherwise `~/Library/Application Support/pypoetry` is used;
+- Unix:    Follow the XDG spec and support `$XDG_CONFIG_HOME`. That means, by
+           default `~/.config/pypoetry`;
 
 ## Local configuration
 
@@ -98,9 +98,11 @@ The path to the cache directory used by Poetry.
 
 Defaults to one of the following directories:
 
-- macOS:   `~/Library/Caches/pypoetry`
-- Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
-- Unix:    `~/.cache/pypoetry`
+- Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`;
+- macOS:   If you have the `$XDG_CACHE_HOME` set, Poetry will follow the XDG
+           spec, otherwise `~/Library/Caches/pypoetry` is used;
+- Unix:    Follow the XDG spec and support `$XDG_CACHE_HOME`. That means, by
+           default `~/.cache/pypoetry`;
 
 ### `virtualenvs.create`: boolean
 

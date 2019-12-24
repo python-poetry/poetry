@@ -31,7 +31,9 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
     Python version and use it to [create virtualenvs](/docs/basic-usage/#poetry-and-virtualenvs) accordingly.
 
 The installer installs the `poetry` tool to Poetry's `bin` directory.
-On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
+On Unix based systems (including macOS) it is located at `$POETRY_HOME/bin`,
+at `$XDG_OPT_HOME/poetry/bin`, or at `$HOME/.poetry/bin` (if `$POETRY_HOME`
+nor `$XDG_OPT_HOME` are defined), and on Windows at `%USERPROFILE%\.poetry\bin`.
 
 This directory will be in your `$PATH` environment variable,
 which means you can run them from the shell without further configuration.
