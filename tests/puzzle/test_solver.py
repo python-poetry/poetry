@@ -1887,3 +1887,19 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
             {"job": "install", "package": git_package, "skipped": True},
         ],
     )
+
+
+def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package):
+    pytest = get_package("demo", "1.0.0")
+    pytest.add_dependency("configparser", {"version": "^1.2.3", "python": "<3.2"})
+
+    package.add_dependency("demo", {"version": "^1.0.0", "python": "^3.6"})
+
+    repo.add_package(pytest)
+    repo.add_package(get_package("configparser", "1.2.3"))
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": pytest}],
+    )
