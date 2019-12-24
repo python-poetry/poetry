@@ -190,7 +190,7 @@ class EnvManager(object):
         try:
             python_version = decode(
                 subprocess.check_output(
-                    " ".join(
+                    list_to_shell_command(
                         [
                             python,
                             "-c",
@@ -427,7 +427,7 @@ class EnvManager(object):
         try:
             python_version = decode(
                 subprocess.check_output(
-                    " ".join(
+                    list_to_shell_command(
                         [
                             python,
                             "-c",
@@ -496,7 +496,7 @@ class EnvManager(object):
         if executable:
             python_patch = decode(
                 subprocess.check_output(
-                    " ".join(
+                    list_to_shell_command(
                         [
                             executable,
                             "-c",
@@ -553,7 +553,7 @@ class EnvManager(object):
                 try:
                     python_patch = decode(
                         subprocess.check_output(
-                            " ".join(
+                            list_to_shell_command(
                                 [
                                     python,
                                     "-c",
@@ -638,7 +638,9 @@ class EnvManager(object):
             # Create virtualenv by using an external executable
             try:
                 p = subprocess.Popen(
-                    " ".join([executable, "-"]), stdin=subprocess.PIPE, shell=True
+                    list_to_shell_command([executable, "-"]),
+                    stdin=subprocess.PIPE,
+                    shell=True,
                 )
                 p.communicate(encode(CREATE_VENV_COMMAND.format(path)))
             except CalledProcessError as e:
