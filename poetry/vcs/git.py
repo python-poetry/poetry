@@ -9,24 +9,24 @@ from poetry.utils._compat import decode
 
 PATTERNS = [
     re.compile(
-        r"^(git\+)?"
-        r"(?P<protocol>https?|git|ssh|rsync|file)://"
-        r"(?:(?P<user>.+)@)*"
-        r"(?P<resource>[a-z0-9_.-]*)"
-        r"(:?P<port>[\d]+)?"
-        r"(?P<pathname>[:/]((?P<owner>[\w\-]+)/)?"
-        r"((?P<name>[\w\-.]+?)(\.git|/)?)?)"
-        r"([@#](?P<rev>[^@#]+))?"
-        r"$"
-    ),
-    re.compile(
         r"(git\+)?"
         r"((?P<protocol>\w+)://)"
         r"((?P<user>\w+)@)?"
         r"(?P<resource>[\w.\-]+)"
         r"(:(?P<port>\d+))?"
         r"(?P<pathname>(/(?P<owner>\w+)/)"
-        r"(/?(?P<name>[\w\-]+)(\.git|/)?)?)"
+        r"((?P<projects>([\w\-/]+)/)?(?P<name>[\w\-]+)(\.git|/)?)?)"
+        r"([@#](?P<rev>[^@#]+))?"
+        r"$"
+    ),
+    re.compile(
+        r"^(git\+)?"
+        r"(?P<protocol>https?|git|ssh|rsync|file)://"
+        r"(?:(?P<user>.+)@)*"
+        r"(?P<resource>[a-z0-9_.-]*)"
+        r"(:?P<port>[\d]+)?"
+        r"(?P<pathname>[:/]((?P<owner>[\w\-]+)/(?P<projects>([\w\-/]+)/)?)?"
+        r"((?P<name>[\w\-.]+?)(\.git|/)?)?)"
         r"([@#](?P<rev>[^@#]+))?"
         r"$"
     ),
@@ -34,7 +34,7 @@ PATTERNS = [
         r"^(?:(?P<user>.+)@)*"
         r"(?P<resource>[a-z0-9_.-]*)[:]*"
         r"(?P<port>[\d]+)?"
-        r"(?P<pathname>/?(?P<owner>.+)/(?P<name>.+).git)"
+        r"(?P<pathname>/?(?P<owner>.+)/(?P<projects>([\w\-/]+)/)?(?P<name>.+).git)"
         r"([@#](?P<rev>[^@#]+))?"
         r"$"
     ),
@@ -43,6 +43,7 @@ PATTERNS = [
         r"(?P<resource>[\w.\-]+)"
         r"[:/]{1,2}"
         r"(?P<pathname>((?P<owner>\w+)/)?"
+        r"(?P<projects>([\w\-/]+)/)?"
         r"((?P<name>[\w\-]+)(\.git|/)?)?)"
         r"([@#](?P<rev>[^@#]+))?"
         r"$"
