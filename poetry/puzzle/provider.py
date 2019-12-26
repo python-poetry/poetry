@@ -671,13 +671,16 @@ class Provider:
             raise CompatibilityError(*python_constraints)
 
         # Modifying dependencies as needed
+        clean_dependencies = []
         for dep in dependencies:
             if not package.dependency.python_constraint.is_any():
-                dep.transitive_python_versions = str(
-                    dep.python_constraint.intersect(
-                        package.dependency.python_constraint
-                    )
+                python_constraint_intersection = dep.python_constraint.intersect(
+                    package.dependency.python_constraint
                 )
+                if python_constraint_intersection.is_empty():
+                    # This depencency is not needed under current python constraint.
+                    continue
+                dep.transitive_python_versions = str(python_constraint_intersection)
 
             if (package.dependency.is_directory() or package.dependency.is_file()) and (
                 dep.is_directory() or dep.is_file()
@@ -691,8 +694,9 @@ class Provider:
 
                 # TODO: Improve the way we set the correct relative path for dependencies
                 dep._path = relative
+            clean_dependencies.append(dep)
 
-        package.requires = dependencies
+        package.requires = clean_dependencies
 
         return package
 
