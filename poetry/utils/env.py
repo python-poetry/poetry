@@ -473,6 +473,10 @@ class EnvManager(object):
 
         cwd = self._poetry.file.parent
         env = self.get(reload=True)
+
+        if not env.is_sane():
+            force = True
+
         if env.is_venv() and not force:
             # Already inside a virtualenv.
             return env
