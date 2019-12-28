@@ -86,7 +86,7 @@ class ParsedUrl:
             "{}@".format(self.user) if self.user else "",
             self.resource,
             ":{}".format(self.port) if self.port else "",
-            "/" + self.pathname if self.pathname.startswith(":") else self.pathname,
+            "/" + self.pathname.lstrip(":/"),
         )
 
     def format(self):
