@@ -3,7 +3,7 @@
 You've already learned how to use the command-line interface to do some things.
 This chapter documents all the available commands.
 
-To get help from the command-line, simply call `poetry` or `poetry list` to see the complete list of commands,
+To get help from the command-line, simply call `poetry` to see the complete list of commands,
 then `--help` combined with any of those can give you more information.
 
 As `Poetry` uses [cleo](https://github.com/sdispater/cleo) you can call commands by short name if it's not ambiguous.
