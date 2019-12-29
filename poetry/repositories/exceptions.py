@@ -6,3 +6,7 @@ class RepositoryError(Exception):
 class PackageNotFound(Exception):
 
     pass
+
+
+class WrongFile(Exception):
+    pass

@@ -22,6 +22,14 @@ from .toml_file import TomlFile
 logger = logging.getLogger(__name__)
 
 
+class RawMetadataFile(pkginfo.Distribution):
+    def __init__(self, metadata_bytes):  # type: (bytes)
+        self.metadata_bytes = metadata_bytes
+
+    def read(self):
+        return self.metadata_bytes
+
+
 class Inspector:
     """
     A class to download and inspect remote packages.
@@ -46,6 +54,22 @@ class Inspector:
     def inspect_wheel(
         self, file_path
     ):  # type: (Path) -> Dict[str, Union[str, List[str]]]
+        try:
+            distribution = pkginfo.Wheel(str(file_path))
+        except ValueError:
+            # Unable to determine dependencies
+            # Assume none
+            distribution = None
+
+        return self._inspect_pkginfo_distribution(meta=distribution)
+
+    def inspect_metadata_file(
+        self, metadata_bytes
+    ):  # type: (bytes) -> Dict[str, Union[str, List[str]]]
+        distribution = RawMetadataFile(metadata_bytes=metadata_bytes)
+        return self._inspect_pkginfo_distribution(meta=distribution)
+
+    def _inspect_pkginfo_distribution(self, meta):
         info = {
             "name": "",
             "version": "",
@@ -53,12 +77,7 @@ class Inspector:
             "requires_python": None,
             "requires_dist": [],
         }
-
-        try:
-            meta = pkginfo.Wheel(str(file_path))
-        except ValueError:
-            # Unable to determine dependencies
-            # Assume none
+        if not meta:
             return info
 
         if meta.name:
