@@ -86,13 +86,21 @@ requests = { git = "https://github.com/requests/requests.git" }
 ```
 
 Since we haven’t specified any other information,
-Poetry assumes that we intend to use the latest commit on the `master` branch to build our project.
-You can combine the `git` key with the `rev`, `tag`, or `branch` keys to specify something else.
-Here's an example of specifying that you want to use the latest commit on a branch named `next`:
+Poetry assumes that we intend to use the latest commit on the `master` branch
+to build our project.
+
+You can combine the `git` key with the `branch` key to use another branch.
+Alternatively, use `rev` or `tag` to pin a dependency to a specific commit hash
+or tagged ref, respectively. For example:
 
 ```toml
 [tool.poetry.dependencies]
+# Get the latest revision on the branch named "next"
 requests = { git = "https://github.com/kennethreitz/requests.git", branch = "next" }
+# Get a revision by its commit hash
+flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
+# Get a revision by its tag
+numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
 ```
 
 ## `path` dependencies
