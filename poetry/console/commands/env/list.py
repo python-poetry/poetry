@@ -15,14 +15,8 @@ class EnvListCommand(Command):
 
         manager = EnvManager(self.poetry)
         current_env = manager.get()
-        env_list = manager.list()
-        if (
-            self.poetry.config.get("virtualenvs.in-project")
-            and current_env not in env_list
-        ):
-            env_list.insert(0, current_env)
 
-        for venv in env_list:
+        for venv in manager.list():
             name = venv.path.name
             if self.option("full-path"):
                 name = str(venv.path)

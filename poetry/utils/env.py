@@ -367,10 +367,18 @@ class EnvManager(object):
         else:
             venv_path = Path(venv_path)
 
-        return [
+        env_list = [
             VirtualEnv(Path(p))
             for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
         ]
+
+        current_env = self.get()
+        if (
+            self._poetry.config.get("virtualenvs.in-project")
+            and current_env not in env_list
+        ):
+            env_list.insert(0, current_env)
+        return env_list
 
     def remove(self, python):  # type: (str) -> Env
         venv_path = self._poetry.config.get("virtualenvs.path")
