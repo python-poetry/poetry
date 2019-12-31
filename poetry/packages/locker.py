@@ -89,6 +89,7 @@ class Locker(object):
             package.description = info.get("description", "")
             package.category = info["category"]
             package.optional = info["optional"]
+            package.develop = info.get("develop", package.develop)
             if "hashes" in lock_data["metadata"]:
                 # Old lock so we create dummy files from the hashes
                 package.files = [

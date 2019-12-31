@@ -492,6 +492,47 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
     assert expected == content
 
 
+def test_exporter_can_export_requirements_txt_with_git_packages_develop_false(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "develop": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "git",
+                        "url": "https://github.com/foo/foo.git",
+                        "reference": "123456",
+                    },
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": []},
+            },
+        }
+    )
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+git+https://github.com/foo/foo.git@123456#egg=foo
+"""
+
+    assert expected == content
+
+
 def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, poetry):
     poetry.locker.mock_lock_data(
         {
