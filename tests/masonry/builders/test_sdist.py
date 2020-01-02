@@ -202,6 +202,21 @@ def test_make_pkg_info_multi_constraints_dependency():
     ]
 
 
+def test_make_pkg_info_multi_constraint_types_dependency():
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "project_with_multi_constraint_types_dependency"
+    )
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    pkg_info = builder.build_pkg_info()
+    p = Parser()
+    parsed = p.parsestr(to_str(pkg_info))
+
+    assert "Requires-Dist" in parsed
+
+
 def test_find_packages():
     poetry = Factory().create_poetry(project("complete"))
 

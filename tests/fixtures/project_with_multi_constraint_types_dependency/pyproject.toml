@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "project-with-multi-constraint-types-dependency"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+packages = [
+    {include = "project"}
+]
+
+[tool.poetry.dependencies]
+python = "*"
+demo = [
+    { git = "https://github.com/demo/demo.git", rev = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24", python = "<3.4" },
+    { path = "../distributions/demo-0.1.0-py2.py3-none-any.whl", python = "~3.5" },
+    { url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl", python = "^3.6" },
+]
+
+[tool.poetry.dev-dependencies]

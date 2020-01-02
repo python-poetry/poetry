@@ -142,6 +142,16 @@ def test_create_poetry_with_multi_constraints_dependency():
     assert len(package.requires) == 2
 
 
+def test_create_poetry_with_multi_constraint_types_dependency():
+    poetry = Factory().create_poetry(
+        fixtures_dir / "project_with_multi_constraint_types_dependency"
+    )
+
+    package = poetry.package
+
+    assert len(package.requires) == 3
+
+
 def test_poetry_with_default_source():
     poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
 
