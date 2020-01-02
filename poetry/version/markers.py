@@ -499,7 +499,9 @@ class MultiMarker(BaseMarker):
     def __str__(self):
         elements = []
         for m in self._markers:
-            if isinstance(m, SingleMarker):
+            if m.is_any() or m.is_empty():
+                pass
+            elif isinstance(m, SingleMarker):
                 elements.append(str(m))
             elif isinstance(m, MultiMarker):
                 elements.append(str(m))

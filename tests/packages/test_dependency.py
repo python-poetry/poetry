@@ -1,5 +1,7 @@
 from poetry.packages import Dependency
 from poetry.packages import Package
+from poetry.version.markers import MultiMarker
+from poetry.version.markers import SingleMarker
 
 
 def test_accepts():
@@ -101,6 +103,21 @@ def test_to_pep_508_in_extras():
         'or python_version >= "3.6" and python_version < "4.0"'
         ") "
         'and (extra == "foo" or extra == "bar")'
+    )
+
+
+def test_to_pep_508_without_extras():
+    dependency = Dependency("unicodedata2", ">=12.1.0")
+    dependency.marker = MultiMarker.of(
+        SingleMarker("python_version", "< 3.8"),
+        SingleMarker("platform_python_implementation", "!= PyPy"),
+        SingleMarker("extra", "== 'unicode'"),
+    )
+
+    result = dependency.to_pep_508(with_extras=False)
+    assert (
+        result
+        == 'unicodedata2 (>=12.1.0); python_version < "3.8" and platform_python_implementation != "PyPy"'
     )
 
 
