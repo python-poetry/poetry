@@ -308,4 +308,7 @@ class Locker(object):
             if package.source_type == "directory":
                 data["develop"] = package.develop
 
+        if package.source_type == "git":
+            data["develop"] = package.develop
+
         return data

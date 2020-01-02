@@ -18,6 +18,7 @@ class VCSDependency(Dependency):
         rev=None,
         category="main",
         optional=False,
+        develop=True,  # type: bool
     ):
         self._vcs = vcs
         self._source = source
@@ -29,6 +30,7 @@ class VCSDependency(Dependency):
         self._branch = branch
         self._tag = tag
         self._rev = rev
+        self._develop = develop
 
         super(VCSDependency, self).__init__(
             name, "*", category=category, optional=optional, allows_prereleases=True
@@ -94,3 +96,7 @@ class VCSDependency(Dependency):
 
     def accepts_prereleases(self):  # type: () -> bool
         return True
+
+    @property
+    def develop(self):  # type: () -> bool
+        return self._develop

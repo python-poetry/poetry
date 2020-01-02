@@ -103,6 +103,15 @@ flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
 ```
 
+In some cases you may also want to install the dependency in non-editable mode.
+This can be achieved by setting `develop` key to `false`.
+
+```toml
+[tool.poetry.dependencies]
+requests = { git = "https://github.com/kennethreitz/requests.git", tag = "v2.22.0", develop = false }
+```
+
+
 ## `path` dependencies
 
 To depend on a library located in a local directory or file,

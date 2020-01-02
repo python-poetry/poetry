@@ -169,6 +169,7 @@ class Provider:
             dependency.source,
             dependency.reference,
             name=dependency.name,
+            develop=dependency.develop,
         )
 
         for extra in dependency.extras:
@@ -182,7 +183,7 @@ class Provider:
 
     @classmethod
     def get_package_from_vcs(
-        cls, vcs, url, reference=None, name=None
+        cls, vcs, url, reference=None, name=None, develop=True
     ):  # type: (str, str, Optional[str], Optional[str]) -> Package
         if vcs != "git":
             raise ValueError("Unsupported VCS dependency {}".format(vcs))
@@ -206,6 +207,7 @@ class Provider:
             package.source_type = "git"
             package.source_url = url
             package.source_reference = revision
+            package.develop = develop
         except Exception:
             raise
         finally:
