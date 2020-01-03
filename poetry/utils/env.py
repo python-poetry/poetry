@@ -475,11 +475,6 @@ class EnvManager(object):
         env = self.get(reload=True)
 
         if not env.is_sane():
-            io.write_line(
-                "<warning>Environment found in {} seems to be broken. Forcing recreation.</warning>".format(
-                    env.path
-                )
-            )
             force = True
 
         if env.is_venv() and not force:
@@ -615,6 +610,12 @@ class EnvManager(object):
             self.build_venv(str(venv), executable=executable)
         else:
             if force:
+                if not env.is_sane():
+                    io.write_line(
+                        "<warning>virtualenv found in {} seems to be broken. </warning>".format(
+                            env.path
+                        )
+                    )
                 io.write_line(
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
