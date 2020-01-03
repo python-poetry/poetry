@@ -64,6 +64,7 @@ class Package(object):
         self.source_type = ""
         self.source_reference = ""
         self.source_url = ""
+        self.source_subdirectory = ""
 
         self.requires = []
         self.dev_requires = []
@@ -299,6 +300,7 @@ class Package(object):
                     rev=constraint.get("rev", None),
                     category=category,
                     optional=optional,
+                    subdirectory=constraint.get("subdirectory", None),
                 )
             elif "file" in constraint:
                 file_path = Path(constraint["file"])

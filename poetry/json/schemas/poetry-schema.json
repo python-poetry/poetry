@@ -296,6 +296,10 @@
                     "type": "string",
                     "description": "The revision to checkout."
                 },
+                "subdirectory": {
+                    "type": "string",
+                    "description": "path relative to repositories root, where package is located"
+                },
                 "python": {
                     "type": "string",
                     "description": "The python versions for which the dependency should be installed."
