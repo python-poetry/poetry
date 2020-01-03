@@ -475,6 +475,11 @@ class EnvManager(object):
         env = self.get(reload=True)
 
         if not env.is_sane():
+            io.write_line(
+                "<warning>Environment found in {} seems to be broken. Forcing recreation.</warning>".format(
+                    env.path
+                )
+            )
             force = True
 
         if env.is_venv() and not force:
