@@ -81,7 +81,11 @@ def user_cache_dir(appname):
         # Get the base path
         path = os.getenv(
             "XDG_CACHE_HOME",
-            expanduser("~/Library/Caches" if sys.platform == "darwin" else expanduser("~/.cache")),
+            expanduser(
+                "~/Library/Caches"
+                if sys.platform == "darwin"
+                else expanduser("~/.cache")
+            ),
         )
 
         # Add our app name to it
