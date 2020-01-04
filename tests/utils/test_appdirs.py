@@ -164,6 +164,7 @@ def test_site_config_dirs_macos_default():
 
 @unix
 def test_site_config_dirs_xdg_set_unix():
+    unix_extra_dir = "/etc"
     site_config_dirs = [
         appdirs.expanduser("~/.local/config.d"),
         appdirs.expanduser("~/.config/others.d"),
@@ -172,7 +173,10 @@ def test_site_config_dirs_xdg_set_unix():
     site_config_dirs.append("/etc")
 
     for expected, actual in zip(
-        [path.join(x, "poetry") for x in site_config_dirs],
+        [
+            path.join(x, "poetry") if x != unix_extra_dir else x
+            for x in site_config_dirs
+        ],
         appdirs.site_config_dirs("poetry"),
     ):
         assert expected == actual
@@ -182,7 +186,7 @@ def test_site_config_dirs_xdg_set_unix():
 
 @unix
 def test_site_config_dirs_unix_default():
-    site_config_dirs = ["/etc/xdg/poetry", "/etc/poetry"]
+    site_config_dirs = ["/etc/xdg/poetry", "/etc"]
     if "XDG_CONFIG_DIRS" in os.environ:
         del os.environ["XDG_CONFIG_DIRS"]
     for expected, actual in zip(site_config_dirs, appdirs.site_config_dirs("poetry")):
