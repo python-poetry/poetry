@@ -28,6 +28,7 @@ from poetry.packages import PackageCollection
 from poetry.packages import URLDependency
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
+from poetry.packages.utils.utils import get_python_constraint_from_marker
 from poetry.repositories import Pool
 from poetry.utils._compat import PY35
 from poetry.utils._compat import OrderedDict
@@ -489,14 +490,15 @@ class Provider:
             if not package.python_constraint.allows_all(
                 self._package.python_constraint
             ):
+                transitive_python_constraint = get_python_constraint_from_marker(
+                    package.dependency.transitive_marker
+                )
                 intersection = package.python_constraint.intersect(
-                    package.dependency.transitive_python_constraint
+                    transitive_python_constraint
                 )
-                difference = package.dependency.transitive_python_constraint.difference(
-                    intersection
-                )
+                difference = transitive_python_constraint.difference(intersection)
                 if (
-                    package.dependency.transitive_python_constraint.is_any()
+                    transitive_python_constraint.is_any()
                     or self._package.python_constraint.intersect(
                         package.dependency.python_constraint
                     ).is_empty()
@@ -673,12 +675,24 @@ class Provider:
         # Modifying dependencies as needed
         clean_dependencies = []
         for dep in dependencies:
+            if not package.dependency.transitive_marker.without_extras().is_any():
+                marker_intersection = package.dependency.transitive_marker.without_extras().intersect(
+                    dep.marker.without_extras()
+                )
+                if marker_intersection.is_empty():
+                    # The dependency is not needed, since the markers specified
+                    # for the current package selection are not compatible with
+                    # the markers for the current dependency, so we skip it
+                    continue
+
+                dep.transitive_marker = marker_intersection
+
             if not package.dependency.python_constraint.is_any():
                 python_constraint_intersection = dep.python_constraint.intersect(
                     package.dependency.python_constraint
                 )
                 if python_constraint_intersection.is_empty():
-                    # This depencency is not needed under current python constraint.
+                    # This dependency is not needed under current python constraint.
                     continue
                 dep.transitive_python_versions = str(python_constraint_intersection)
 
