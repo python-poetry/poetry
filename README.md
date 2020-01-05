@@ -44,6 +44,12 @@ pip install --user poetry
 Be aware, however, that it will also install poetry's dependencies
 which might cause conflicts.
 
+### Installation via Homevrew
+
+```bash
+brew install poetry
+```
+
 ## Updating `poetry`
 
 Updating poetry to the latest stable version is as simple as calling the `self update` command.

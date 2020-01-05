@@ -16,6 +16,12 @@ Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
+### Installation via Homebrew
+
+```bash
+brew install poetry
+```
+
 ### osx / linux / bashonwindows install instructions
 ```bash
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
