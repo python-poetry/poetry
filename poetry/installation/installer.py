@@ -45,6 +45,7 @@ class Installer:
         self._dev_mode = True
         self._execute_operations = True
         self._lock = False
+        self._no_install = False
 
         self._whitelist = []
 
@@ -70,6 +71,10 @@ class Installer:
             self._write_lock = False
             self._execute_operations = False
 
+        if self.is_no_install():
+            self._write_lock = True
+            self._execute_operations = False
+
         local_repo = Repository()
         self._do_install(local_repo)
 
@@ -80,8 +85,16 @@ class Installer:
 
         return self
 
+    def no_install(self, no_install=True):  # type: (bool) -> Installer
+        self._no_install = no_install
+
+        return self
+
     def is_dry_run(self):  # type: () -> bool
         return self._dry_run
+
+    def is_no_install(self):  # type: () -> bool
+        return self._no_install
 
     def verbose(self, verbose=True):  # type: (bool) -> Installer
         self._verbose = verbose

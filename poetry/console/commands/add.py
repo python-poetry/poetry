@@ -39,6 +39,11 @@ class AddCommand(EnvCommand, InitCommand):
             None,
             "Output the operations but do not execute anything (implicitly enables --verbose).",
         ),
+        option(
+            "no-install",
+            None,
+            "Add dependency without installing it in the virtual env.",
+        ),
     ]
 
     help = """The add command adds required packages to your <comment>pyproject.toml</> and installs them.
@@ -142,6 +147,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         )
 
         installer.dry_run(self.option("dry-run"))
+        installer.no_install(self.option("no-install"))
         installer.update(True)
         installer.whitelist([r["name"] for r in requirements])
 
