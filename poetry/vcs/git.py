@@ -159,7 +159,7 @@ class Git:
         return self._config
 
     def clone(self, repository, dest):  # type: (...) -> str
-        return self.run("clone", repository, str(dest))
+        return self.run("clone", "--recurse-submodules", repository, str(dest))
 
     def checkout(self, rev, folder=None):  # type: (...) -> str
         args = []
