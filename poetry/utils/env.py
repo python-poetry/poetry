@@ -705,6 +705,7 @@ class Env(object):
 
         self._marker_env = None
         self._pip_version = None
+        self._site_packages = None
 
     @property
     def path(self):  # type: () -> Path
@@ -760,20 +761,25 @@ class Env(object):
 
     @property
     def site_packages(self):  # type: () -> Path
-        # It seems that PyPy3 virtual environments
-        # have their site-packages directory at the root
-        if self._path.joinpath("site-packages").exists():
-            return self._path.joinpath("site-packages")
+        if self._site_packages is None:
+            site_packages = []
+            dist_packages = []
+            for entry in self.sys_path:
+                entry = Path(entry)
+                if entry.name == "site-packages":
+                    site_packages.append(entry)
+                elif entry.name == "dist-packages":
+                    dist_packages.append(entry)
 
-        if self._is_windows:
-            return self._path / "Lib" / "site-packages"
+            if not site_packages and not dist_packages:
+                raise RuntimeError("Unable to find the site-packages directory")
 
-        return (
-            self._path
-            / "lib"
-            / "python{}.{}".format(*self.version_info[:2])
-            / "site-packages"
-        )
+            if site_packages:
+                self._site_packages = site_packages[0]
+            else:
+                self._site_packages = dist_packages[0]
+
+        return self._site_packages
 
     @property
     def sys_path(self):  # type: () -> List[str]
@@ -1116,6 +1122,7 @@ class MockEnv(NullEnv):
         os_name="posix",
         is_venv=False,
         pip_version="19.1",
+        sys_path=None,
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -1126,6 +1133,7 @@ class MockEnv(NullEnv):
         self._os_name = os_name
         self._is_venv = is_venv
         self._pip_version = Version.parse(pip_version)
+        self._sys_path = sys_path
 
     @property
     def version_info(self):  # type: () -> Tuple[int]
@@ -1146,6 +1154,13 @@ class MockEnv(NullEnv):
     @property
     def pip_version(self):
         return self._pip_version
+
+    @property
+    def sys_path(self):
+        if self._sys_path is None:
+            return super(MockEnv, self).sys_path
+
+        return self._sys_path
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv
