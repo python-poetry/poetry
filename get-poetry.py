@@ -227,8 +227,7 @@ It will add the `poetry` command to {poetry}'s bin directory, located at:
 
 {platform_msg}
 
-You can uninstall at any time with `poetry self uninstall`,
-or by executing this script with the --uninstall option,
+You can uninstall at any time by executing this script with the --uninstall option,
 and these changes will be reverted.
 """
 
