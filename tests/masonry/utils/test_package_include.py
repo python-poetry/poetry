@@ -1,3 +1,5 @@
+import pytest
+
 from poetry.masonry.utils.package_include import PackageInclude
 from poetry.utils._compat import Path
 
@@ -16,6 +18,8 @@ def test_package_include_with_multiple_dirs():
         with_includes / "extra_package/some_dir",
         with_includes / "extra_package/some_dir/foo.py",
         with_includes / "extra_package/some_dir/quux.py",
+        with_includes / "not_a_python_pkg",
+        with_includes / "not_a_python_pkg/baz.txt",
     ]
 
 
@@ -30,3 +34,10 @@ def test_package_include_with_nested_dir():
         with_includes / "extra_package/some_dir/foo.py",
         with_includes / "extra_package/some_dir/quux.py",
     ]
+
+
+def test_package_include_with_no_python_files_in_dir():
+    with pytest.raises(ValueError) as e:
+        PackageInclude(base=with_includes, include="not_a_python_pkg")
+
+    assert str(e.value) == "not_a_python_pkg is not a package."
