@@ -47,6 +47,9 @@
             "type": "string",
             "description": "License name."
         },
+        "license-files": {
+            "$ref": "#/definitions/license-files"
+        },
         "authors": {
             "$ref": "#/definitions/authors"
         },
@@ -179,6 +182,13 @@
         "authors": {
             "type": "array",
             "description": "List of authors that contributed to the package. This is typically the main maintainers, not the full list.",
+            "items": {
+                "type": "string"
+            }
+        },
+        "license-files": {
+            "type": "array",
+            "description": "A list of license files applicable to this packages. This accepts multiple files for situations involving more complicated licensing situations.",
             "items": {
                 "type": "string"
             }

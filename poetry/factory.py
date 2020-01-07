@@ -81,6 +81,16 @@ class Factory:
         if "readme" in local_config:
             package.readme = Path(poetry_file.parent) / local_config["readme"]
 
+        # Add any manually defined or automatically discovered license files.
+        if "license-files" in local_config:
+            for license_file in local_config["license-files"]:
+                package.license_files.add(Path(poetry_file.parent) / license_file)
+        else:
+            for license_file in poetry_file.parent.glob("LICENSE*"):
+                package.license_files.add(license_file.relative_to(poetry_file.parent))
+            for license_file in poetry_file.parent.glob("COPYING*"):
+                package.license_files.add(license_file.relative_to(poetry_file.parent))
+
         if "platform" in local_config:
             package.platform = local_config["platform"]
 

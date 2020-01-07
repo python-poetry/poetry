@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "the-package"
+version = "4.5.6"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license-files = [
+    "the-license.txt"
+]
+
+readme = "README.rst"
+
+
+[tool.poetry.dependencies]
+python = "3.6"

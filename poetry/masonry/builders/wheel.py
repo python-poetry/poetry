@@ -181,9 +181,11 @@ class WheelBuilder(Builder):
             with self._write_to_zip(wheel, self.dist_info + "/entry_points.txt") as f:
                 self._write_entry_points(f)
 
-        for base in ("COPYING", "LICENSE"):
-            for path in sorted(self._path.glob(base + "*")):
-                self._add_file(wheel, path, "%s/%s" % (self.dist_info, path.name))
+        for relative_license_path in self._package.license_files:
+            license_path = self._path / relative_license_path
+            self._add_file(
+                wheel, license_path, "%s/%s" % (self.dist_info, license_path.name)
+            )
 
         with self._write_to_zip(wheel, self.dist_info + "/WHEEL") as f:
             self._write_wheel_file(f)

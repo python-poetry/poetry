@@ -136,6 +136,11 @@ class SdistBuilder(Builder):
             else:
                 pass
 
+        license_files = list(map(str, self._package.license_files))
+        if license_files:
+            before.append("license_files = \\\n{}\n".format(pformat(license_files)))
+            extra.append("'license_files': license_files,")
+
         if package_dir:
             before.append("package_dir = \\\n{}\n".format(pformat(package_dir)))
             extra.append("'package_dir': package_dir,")

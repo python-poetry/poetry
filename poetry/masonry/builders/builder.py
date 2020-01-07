@@ -154,8 +154,9 @@ class Builder(object):
         )
         to_add.append(Path("pyproject.toml"))
 
-        # If a license file exists, add it
-        for license_file in self._path.glob("LICENSE*"):
+        # If any license files exist, add them.
+        for license_filename in self._package.license_files:
+            license_file = self._path / license_filename
             self._io.write_line(
                 " - Adding: <comment>{}</comment>".format(
                     license_file.relative_to(self._path)

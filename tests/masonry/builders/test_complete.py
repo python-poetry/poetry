@@ -395,6 +395,79 @@ def test_package_src():
         zip.close()
 
 
+def test_multiple_licenses():
+    module_path = fixtures_dir / "multiple-licenses"
+    builder = CompleteBuilder(
+        Factory().create_poetry(module_path), NullEnv(execute=True), NullIO()
+    )
+    builder.build()
+
+    sdist = module_path / "dist" / "the-package-4.5.6.tar.gz"
+    wheel = module_path / "dist" / "the_package-4.5.6-py3-none-any.whl"
+
+    assert sdist.exists()
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert len(names) == len(set(names))
+        assert "the-package-4.5.6/LICENSE.txt" in names
+        assert "the-package-4.5.6/COPYING.txt" in names
+
+    assert wheel.exists()
+    with zipfile.ZipFile(str(wheel)) as z:
+        names = z.namelist()
+        assert len(names) == len(set(names))
+        assert "the_package-4.5.6.dist-info/LICENSE.txt" in names
+        assert "the_package-4.5.6.dist-info/COPYING.txt" in names
+
+
+def test_explicit_license_config_single_license():
+    module_path = fixtures_dir / "explicit-license-config-single-license"
+    builder = CompleteBuilder(
+        Factory().create_poetry(module_path), NullEnv(execute=True), NullIO()
+    )
+    builder.build()
+
+    sdist = module_path / "dist" / "the-package-4.5.6.tar.gz"
+    wheel = module_path / "dist" / "the_package-4.5.6-py3-none-any.whl"
+
+    assert sdist.exists()
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert len(names) == len(set(names))
+        assert "the-package-4.5.6/the-license.txt" in names
+
+    assert wheel.exists()
+    with zipfile.ZipFile(str(wheel)) as z:
+        names = z.namelist()
+        assert len(names) == len(set(names))
+        assert "the_package-4.5.6.dist-info/the-license.txt" in names
+
+
+def test_explicit_license_config_multiple_licenses():
+    module_path = fixtures_dir / "explicit-license-config-multiple-licenses"
+    builder = CompleteBuilder(
+        Factory().create_poetry(module_path), NullEnv(execute=True), NullIO()
+    )
+    builder.build()
+
+    sdist = module_path / "dist" / "the-package-4.5.6.tar.gz"
+    wheel = module_path / "dist" / "the_package-4.5.6-py3-none-any.whl"
+
+    assert sdist.exists()
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert len(names) == len(set(names))
+        assert "the-package-4.5.6/the-first-license.txt" in names
+        assert "the-package-4.5.6/the-second-license.txt" in names
+
+    assert wheel.exists()
+    with zipfile.ZipFile(str(wheel)) as z:
+        names = z.namelist()
+        assert len(names) == len(set(names))
+        assert "the_package-4.5.6.dist-info/the-first-license.txt" in names
+        assert "the_package-4.5.6.dist-info/the-second-license.txt" in names
+
+
 def test_package_with_include(mocker):
     module_path = fixtures_dir / "with-include"
 

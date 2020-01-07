@@ -40,6 +40,15 @@ The recommended notation for the most common licenses is (alphabetical):
 Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://www.spdx.org/licenses/).
 
+## license-files
+
+The license file(s) belonging to this package. **optional**
+
+Poetry will automatically include files matching `LICENSE*` and `COPYING*`,
+but if you have licenses files that do not fit these patterns,
+you can configure `poetry` to include one or more files as the license files.
+These paths should be relative to the project root directory, where the `pyproject.toml` lives.
+
 ## authors
 
 The authors of the package. **Required**

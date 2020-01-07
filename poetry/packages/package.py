@@ -58,6 +58,7 @@ class Package(object):
         self.documentation_url = None
         self.keywords = []
         self._license = None
+        self.license_files = set()
         self.readme = None
 
         self.source_name = ""
