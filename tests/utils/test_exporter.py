@@ -603,7 +603,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, poetry
         content = f.read()
 
     expected = """\
--e tests/fixtures/distributions/demo-0.1.0.tar.gz
+tests/fixtures/distributions/demo-0.1.0.tar.gz
 """
 
     assert expected == content
@@ -644,7 +644,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
         content = f.read()
 
     expected = """\
--e tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
+tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 """
 
     assert expected == content
