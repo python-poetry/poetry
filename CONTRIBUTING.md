@@ -87,7 +87,7 @@ You will need Poetry to start contributing on the Poetry codebase. Refer to the 
 You will first need to clone the repository using `git` and place yourself in its directory:
 
 ```bash
-$ git clone git@github.com:sdispater/poetry.git
+$ git clone git@github.com:python-poetry/poetry.git
 $ cd poetry
 ```
 
