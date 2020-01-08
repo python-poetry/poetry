@@ -612,7 +612,7 @@ class EnvManager(object):
             if force:
                 if not env.is_sane():
                     io.write_line(
-                        "<warning>virtualenv found in {} seems to be broken. </warning>".format(
+                        "<warning>The virtual environment found in {} seems to be broken.</warning>".format(
                             env.path
                         )
                     )
