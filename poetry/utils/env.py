@@ -473,6 +473,10 @@ class EnvManager(object):
 
         cwd = self._poetry.file.parent
         env = self.get(reload=True)
+
+        if not env.is_sane():
+            force = True
+
         if env.is_venv() and not force:
             # Already inside a virtualenv.
             return env
@@ -606,6 +610,12 @@ class EnvManager(object):
             self.build_venv(str(venv), executable=executable)
         else:
             if force:
+                if not env.is_sane():
+                    io.write_line(
+                        "<warning>The virtual environment found in {} seems to be broken.</warning>".format(
+                            env.path
+                        )
+                    )
                 io.write_line(
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
