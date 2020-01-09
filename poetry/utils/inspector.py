@@ -3,8 +3,6 @@ import os
 import tarfile
 import zipfile
 
-from bz2 import BZ2File
-from gzip import GzipFile
 from typing import Dict
 from typing import List
 from typing import Union
