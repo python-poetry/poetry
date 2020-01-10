@@ -60,14 +60,14 @@ commands =
     poetry run pytest tests/
 ```
 
-## I don't want Poetry to manage my virtualenvs. Can I disable it?
+## I don't want Poetry to manage my virtual environments. Can I disable it?
 
-While Poetry automatically creates virtualenvs to always work isolated
+While Poetry automatically creates virtual environments to always work isolated
 from the global Python installation, there are valid reasons why it's not necessary
 and is an overhead, like when working with containers.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
 
 ```bash
-poetry config settings.virtualenvs.create false
+poetry config virtualenvs.create false
 ```

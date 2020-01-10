@@ -10,15 +10,9 @@ import pytest
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
-from poetry.utils._compat import PY2
-from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
-
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+from tests.helpers import mock_clone
+from tests.helpers import mock_download
 
 
 class Config(BaseConfig):
@@ -58,6 +52,11 @@ def auth_config_source():
 
 @pytest.fixture
 def config(config_source, auth_config_source, mocker):
+    import keyring
+    from keyring.backends.fail import Keyring
+
+    keyring.set_keyring(Keyring())
+
     c = Config()
     c.merge(config_source.config)
     c.set_config_source(config_source)
@@ -67,47 +66,6 @@ def config(config_source, auth_config_source, mocker):
     mocker.patch("poetry.config.config.Config.set_config_source")
 
     return c
-
-
-def mock_clone(_, source, dest):
-    # Checking source to determine which folder we need to copy
-    parts = urlparse.urlparse(source)
-
-    folder = (
-        Path(__file__).parent
-        / "fixtures"
-        / "git"
-        / parts.netloc
-        / parts.path.lstrip("/").rstrip(".git")
-    )
-
-    if dest.exists():
-        shutil.rmtree(str(dest))
-
-    shutil.copytree(str(folder), str(dest))
-
-
-def mock_download(self, url, dest):
-    parts = urlparse.urlparse(url)
-
-    fixtures = Path(__file__).parent / "fixtures"
-    fixture = fixtures / parts.path.lstrip("/")
-
-    if dest.exists():
-        os.unlink(str(dest))
-
-    # Python2 does not support os.symlink on Windows whereas Python3 does.  os.symlink requires either administrative
-    # privileges or developer mode on Win10, throwing an OSError is neither is active.
-    if WINDOWS:
-        if PY2:
-            shutil.copyfile(str(fixture), str(dest))
-        else:
-            try:
-                os.symlink(str(fixture), str(dest))
-            except OSError:
-                shutil.copyfile(str(fixture), str(dest))
-    else:
-        os.symlink(str(fixture), str(dest))
 
 
 @pytest.fixture(autouse=True)

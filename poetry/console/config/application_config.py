@@ -1,5 +1,7 @@
 import logging
 
+from typing import Any
+
 from cleo.config import ApplicationConfig as BaseApplicationConfig
 from clikit.api.application.application import Application
 from clikit.api.args.raw_args import RawArgs
@@ -43,15 +45,15 @@ class ApplicationConfig(BaseApplicationConfig):
         self.add_event_listener(PRE_HANDLE, self.set_env)
 
     def register_command_loggers(
-        self, event, event_name, _  # type: PreHandleEvent  # type: str
-    ):  # type: (...) -> None
+        self, event, event_name, _
+    ):  # type: (PreHandleEvent, str, Any) -> None
         command = event.command.config.handler
         if not isinstance(command, Command):
             return
 
         io = event.io
 
-        loggers = ["poetry.packages.package"]
+        loggers = ["poetry.packages.package", "poetry.utils.password_manager"]
 
         loggers += command.loggers
 
@@ -72,7 +74,7 @@ class ApplicationConfig(BaseApplicationConfig):
 
             logger.setLevel(level)
 
-    def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, _) -> None
+    def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, Any) -> None
         from poetry.utils.env import EnvManager
 
         command = event.command.config.handler  # type: EnvCommand

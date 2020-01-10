@@ -310,6 +310,24 @@ def test_marker_union_intersect_marker_union():
     )
 
 
+def test_marker_union_intersect_marker_union_drops_unnecessary_markers():
+    m = parse_marker(
+        'python_version >= "2.7" and python_version < "2.8" '
+        'or python_version >= "3.4" and python_version < "4.0"'
+    )
+    m2 = parse_marker(
+        'python_version >= "2.7" and python_version < "2.8" '
+        'or python_version >= "3.4" and python_version < "4.0"'
+    )
+
+    intersection = m.intersect(m2)
+    expected = (
+        'python_version >= "2.7" and python_version < "2.8" '
+        'or python_version >= "3.4" and python_version < "4.0"'
+    )
+    assert expected == str(intersection)
+
+
 def test_marker_union_intersect_multi_marker():
     m = parse_marker('sys_platform == "darwin" or python_version < "3.4"')
 
@@ -349,6 +367,46 @@ def test_marker_union_union_duplicates():
             'sys_platform == "darwin" or os_name == "Windows" or python_version <= "3.6"'
         )
     )
+    assert str(union) == (
+        'sys_platform == "darwin" or python_version <= "3.6" or os_name == "Windows"'
+    )
+
+
+def test_marker_union_all_any():
+    union = MarkerUnion(parse_marker(""), parse_marker(""))
+
+    assert union.is_any()
+
+
+def test_marker_union_not_all_any():
+    union = MarkerUnion(parse_marker(""), parse_marker(""), parse_marker("<empty>"))
+
+    assert union.is_any()
+
+
+def test_marker_union_all_empty():
+    union = MarkerUnion(parse_marker("<empty>"), parse_marker("<empty>"))
+
+    assert union.is_empty()
+
+
+def test_marker_union_not_all_empty():
+    union = MarkerUnion(
+        parse_marker("<empty>"), parse_marker("<empty>"), parse_marker("")
+    )
+
+    assert not union.is_empty()
+
+
+def test_marker_str_conversion_skips_empty_and_any():
+    union = MarkerUnion(
+        parse_marker("<empty>"),
+        parse_marker(
+            'sys_platform == "darwin" or python_version <= "3.6" or os_name == "Windows"'
+        ),
+        parse_marker(""),
+    )
+
     assert str(union) == (
         'sys_platform == "darwin" or python_version <= "3.6" or os_name == "Windows"'
     )
@@ -439,3 +497,110 @@ def test_parse_version_like_markers(marker, env):
     m = parse_marker(marker)
 
     assert m.validate(env)
+
+
+@pytest.mark.parametrize(
+    "marker, expected",
+    [
+        ('python_version >= "3.6"', 'python_version >= "3.6"'),
+        ('python_version >= "3.6" and extra == "foo"', 'python_version >= "3.6"'),
+        (
+            'python_version >= "3.6" and (extra == "foo" or extra == "bar")',
+            'python_version >= "3.6"',
+        ),
+        (
+            'python_version >= "3.6" and (extra == "foo" or extra == "bar") or implementation_name == "pypy"',
+            'python_version >= "3.6" or implementation_name == "pypy"',
+        ),
+        (
+            'python_version >= "3.6" and extra == "foo" or implementation_name == "pypy" and extra == "bar"',
+            'python_version >= "3.6" or implementation_name == "pypy"',
+        ),
+        (
+            'python_version >= "3.6" or extra == "foo" and implementation_name == "pypy" or extra == "bar"',
+            'python_version >= "3.6" or implementation_name == "pypy"',
+        ),
+    ],
+)
+def test_without_extras(marker, expected):
+    m = parse_marker(marker)
+
+    assert expected == str(m.without_extras())
+
+
+@pytest.mark.parametrize(
+    "marker, excluded, expected",
+    [
+        ('python_version >= "3.6"', "implementation_name", 'python_version >= "3.6"'),
+        ('python_version >= "3.6"', "python_version", "*"),
+        (
+            'python_version >= "3.6" and extra == "foo"',
+            "extra",
+            'python_version >= "3.6"',
+        ),
+        (
+            'python_version >= "3.6" and (extra == "foo" or extra == "bar")',
+            "python_version",
+            '(extra == "foo" or extra == "bar")',
+        ),
+        (
+            'python_version >= "3.6" and (extra == "foo" or extra == "bar") or implementation_name == "pypy"',
+            "python_version",
+            '(extra == "foo" or extra == "bar") or implementation_name == "pypy"',
+        ),
+        (
+            'python_version >= "3.6" and extra == "foo" or implementation_name == "pypy" and extra == "bar"',
+            "implementation_name",
+            'python_version >= "3.6" and extra == "foo" or extra == "bar"',
+        ),
+        (
+            'python_version >= "3.6" or extra == "foo" and implementation_name == "pypy" or extra == "bar"',
+            "implementation_name",
+            'python_version >= "3.6" or extra == "foo" or extra == "bar"',
+        ),
+    ],
+)
+def test_exclude(marker, excluded, expected):
+    m = parse_marker(marker)
+
+    if expected == "*":
+        assert m.exclude(excluded).is_any()
+    else:
+        assert expected == str(m.exclude(excluded))
+
+
+@pytest.mark.parametrize(
+    "marker, only, expected",
+    [
+        ('python_version >= "3.6"', "python_version", 'python_version >= "3.6"'),
+        (
+            'python_version >= "3.6" and extra == "foo"',
+            "python_version",
+            'python_version >= "3.6"',
+        ),
+        (
+            'python_version >= "3.6" and (extra == "foo" or extra == "bar")',
+            "extra",
+            '(extra == "foo" or extra == "bar")',
+        ),
+        (
+            'python_version >= "3.6" and (extra == "foo" or extra == "bar") or implementation_name == "pypy"',
+            "implementation_name",
+            'implementation_name == "pypy"',
+        ),
+        (
+            'python_version >= "3.6" and extra == "foo" or implementation_name == "pypy" and extra == "bar"',
+            "implementation_name",
+            'implementation_name == "pypy"',
+        ),
+        (
+            'python_version >= "3.6" or extra == "foo" and implementation_name == "pypy" or extra == "bar"',
+            "implementation_name",
+            'implementation_name == "pypy"',
+        ),
+    ],
+)
+def test_only(marker, only, expected):
+    m = parse_marker(marker)
+
+    assert expected == str(m.only(only))

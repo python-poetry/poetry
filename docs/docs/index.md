@@ -16,8 +16,13 @@ Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
+### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+```
+### windows powershell install instructions
+```powershell
+(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
 ```
 
 !!! note
@@ -140,6 +145,10 @@ poetry self update 0.8.0
 
     The `self update` command will only work if you used the recommended
     installer to install Poetry.
+
+!!!note
+
+    If you are still on poetry version < 1.0 use `poetry self:update` instead.
 
 
 ## Enable tab completion for Bash, Fish, or Zsh

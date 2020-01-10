@@ -379,6 +379,178 @@ cachy 0.1.0 0.2.0 Cachy package
     assert expected == tester.io.fetch_output()
 
 
+def test_show_outdated_with_only_up_to_date_packages(app, poetry, installed, repo):
+    command = app.find("show")
+    tester = CommandTester(command)
+
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+
+    installed.add_package(cachy_020)
+    repo.add_package(cachy_020)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": []},
+            },
+        }
+    )
+
+    tester.execute("--outdated")
+
+    expected = ""
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_show_outdated_has_prerelease_but_not_allowed(app, poetry, installed, repo):
+    command = app.find("show")
+    tester = CommandTester(command)
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+    cachy_030dev = get_package("cachy", "0.3.0.dev123")
+    cachy_030dev.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+
+    # sorting isn't used, so this has to be the first element to
+    # replicate the issue in PR #1548
+    repo.add_package(cachy_030dev)
+    repo.add_package(cachy_010)
+    repo.add_package(cachy_020)
+    repo.add_package(pendulum_200)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": []},
+            },
+        }
+    )
+
+    tester.execute("--outdated")
+
+    expected = """\
+cachy 0.1.0 0.2.0 Cachy package
+"""
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_show_outdated_has_prerelease_and_allowed(app, poetry, installed, repo):
+    command = app.find("show")
+    tester = CommandTester(command)
+
+    cachy_010dev = get_package("cachy", "0.1.0.dev1")
+    cachy_010dev.description = "Cachy package"
+    cachy_020 = get_package("cachy", "0.2.0")
+    cachy_020.description = "Cachy package"
+    cachy_030dev = get_package("cachy", "0.3.0.dev123")
+    cachy_030dev.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+
+    installed.add_package(cachy_010dev)
+    installed.add_package(pendulum_200)
+
+    # sorting isn't used, so this has to be the first element to
+    # replicate the issue in PR #1548
+    repo.add_package(cachy_030dev)
+    repo.add_package(cachy_010dev)
+    repo.add_package(cachy_020)
+    repo.add_package(pendulum_200)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0.dev1",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": []},
+            },
+        }
+    )
+
+    tester.execute("--outdated")
+
+    expected = """\
+cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
+"""
+
+    assert expected == tester.io.fetch_output()
+
+
 def test_show_outdated_formatting(app, poetry, installed, repo):
     command = app.find("show")
     tester = CommandTester(command)

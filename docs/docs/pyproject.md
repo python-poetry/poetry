@@ -27,14 +27,14 @@ The recommended notation for the most common licenses is (alphabetical):
 * BSD-2-Clause
 * BSD-3-Clause
 * BSD-4-Clause
-* GPL-2.0
-* GPL-2.0+
-* GPL-3.0
-* GPL-3.0+
-* LGPL-2.1
-* LGPL-2.1+
-* LGPL-3.0
-* LGPL-3.0+
+* GPL-2.0-only
+* GPL-2.0-or-later
+* GPL-3.0-only
+* GPL-3.0-or-later
+* LGPL-2.1-only
+* LGPL-2.1-or-later
+* LGPL-3.0-only
+* LGPL-3.0-or-later
 * MIT
 
 Optional, but it is highly recommended to supply this.
@@ -264,7 +264,7 @@ any custom url in the `urls` section.
 
 ```toml
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/sdispater/poetry/issues"
+"Bug Tracker" = "https://github.com/python-poetry/poetry/issues"
 ```
 
 If you publish you package on PyPI, they will appear in the `Project Links` section.
