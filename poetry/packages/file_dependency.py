@@ -49,17 +49,6 @@ class FileDependency(Dependency):
     def full_path(self):
         return self._full_path.resolve()
 
-    @property
-    def base_pep_508_name(self):  # type: () -> str
-        requirement = self.pretty_name
-
-        if self.extras:
-            requirement += "[{}]".format(",".join(self.extras))
-
-        requirement += " @ {}".format(self._path)
-
-        return requirement
-
     def is_file(self):
         return True
 
