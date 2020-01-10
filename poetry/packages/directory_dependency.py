@@ -74,17 +74,6 @@ class DirectoryDependency(Dependency):
     def develop(self):
         return self._develop
 
-    @property
-    def base_pep_508_name(self):  # type: () -> str
-        requirement = self.pretty_name
-
-        if self.extras:
-            requirement += "[{}]".format(",".join(self.extras))
-
-        requirement += " @ {}".format(self._path)
-
-        return requirement
-
     def supports_poetry(self):
         return self._supports_poetry
 
