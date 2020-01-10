@@ -564,8 +564,10 @@ class Installer:
                 while True:
                     buffer = r.read(block_size)
                     if not buffer:
+                        print("")
                         break
 
+                    sys.stdout.write("\r    {:.1f}%")
                     current += len(buffer)
                     f.write(buffer)
                     sha.update(buffer)
