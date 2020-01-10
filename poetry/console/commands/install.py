@@ -34,6 +34,12 @@ libraries and dependencies outlined in that file. If the file does not
 exist it will look for <comment>pyproject.toml</> and do the same.
 
 <info>poetry install</info>
+
+By default, the above command will also install the current project. To install only the
+dependencies and not including the current project, run the command with the
+<info>--no-root</info> option like below:
+
+<info> poetry install --no-root</info>
 """
 
     _loggers = ["poetry.repositories.pypi_repository"]
