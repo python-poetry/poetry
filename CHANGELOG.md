@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.2] - 2020-01-10
+
+### Fixed
+
+- Reverted a previous fix ([#1796](https://github.com/python-poetry/poetry/pull/1796)) which was causing errors for projects with file and/or directory dependencies ([#1865](https://github.com/python-poetry/poetry/pull/1865)).
+
+
 ## [1.0.1] - 2020-01-10
 
 ### Fixed
@@ -776,7 +783,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.1...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.2...master
+[1.0.2]: https://github.com/python-poetry/poetry/releases/tag/1.0.2
 [1.0.1]: https://github.com/python-poetry/poetry/releases/tag/1.0.1
 [1.0.0]: https://github.com/python-poetry/poetry/releases/tag/1.0.0
 [0.12.17]: https://github.com/python-poetry/poetry/releases/tag/0.12.17
