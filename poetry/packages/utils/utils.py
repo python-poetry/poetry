@@ -5,8 +5,13 @@ import re
 from poetry.packages.constraints.constraint import Constraint
 from poetry.packages.constraints.multi_constraint import MultiConstraint
 from poetry.packages.constraints.union_constraint import UnionConstraint
+from poetry.semver import EmptyConstraint
 from poetry.semver import Version
+from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
 from poetry.semver import VersionUnion
+from poetry.semver import parse_constraint
+from poetry.version.markers import BaseMarker
 from poetry.version.markers import MarkerUnion
 from poetry.version.markers import MultiMarker
 from poetry.version.markers import SingleMarker
@@ -236,3 +241,66 @@ def create_nested_marker(name, constraint):
         marker = '{} {} "{}"'.format(name, op, version)
 
     return marker
+
+
+def get_python_constraint_from_marker(
+    marker,
+):  # type: (BaseMarker) -> VersionConstraint
+    python_marker = marker.only("python_version")
+    if python_marker.is_any():
+        return VersionRange()
+
+    if python_marker.is_empty():
+        return EmptyConstraint()
+
+    markers = convert_markers(marker)
+
+    ors = []
+    for or_ in markers["python_version"]:
+        ands = []
+        for op, version in or_:
+            # Expand python version
+            if op == "==":
+                version = "~" + version
+                op = ""
+            elif op == "!=":
+                version += ".*"
+            elif op in ("<=", ">"):
+                parsed_version = Version.parse(version)
+                if parsed_version.precision == 1:
+                    if op == "<=":
+                        op = "<"
+                        version = parsed_version.next_major.text
+                    elif op == ">":
+                        op = ">="
+                        version = parsed_version.next_major.text
+                elif parsed_version.precision == 2:
+                    if op == "<=":
+                        op = "<"
+                        version = parsed_version.next_minor.text
+                    elif op == ">":
+                        op = ">="
+                        version = parsed_version.next_minor.text
+            elif op in ("in", "not in"):
+                versions = []
+                for v in re.split("[ ,]+", version):
+                    split = v.split(".")
+                    if len(split) in [1, 2]:
+                        split.append("*")
+                        op_ = "" if op == "in" else "!="
+                    else:
+                        op_ = "==" if op == "in" else "!="
+
+                    versions.append(op_ + ".".join(split))
+
+                glue = " || " if op == "in" else ", "
+                if versions:
+                    ands.append(glue.join(versions))
+
+                continue
+
+            ands.append("{}{}".format(op, version))
+
+        ors.append(" ".join(ands))
+
+    return parse_constraint(" || ".join(ors))
