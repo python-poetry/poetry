@@ -562,12 +562,12 @@ class Installer:
             tar = os.path.join(dir_, name)
             with open(tar, "wb") as f:
                 while True:
+                    sys.stdout.write("\r    {:.1f}%".format(100 * current / size))
                     buffer = r.read(block_size)
                     if not buffer:
                         print("")
                         break
 
-                    sys.stdout.write("\r    {:.1f}%")
                     current += len(buffer)
                     f.write(buffer)
                     sha.update(buffer)
