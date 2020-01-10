@@ -1,7 +1,6 @@
 from poetry.utils._compat import Path
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
-from poetry.utils.helpers import get_http_basic_auth
 from poetry.utils.helpers import parse_requires
 
 
@@ -52,22 +51,6 @@ zipfile36>=0.1.0.0,<0.2.0.0
         'zipfile36>=0.1.0.0,<0.2.0.0; python_version >= "3.4.0.0" and python_version < "3.6.0.0"',
     ]
     assert result == expected
-
-
-def test_get_http_basic_auth(config):
-    config.merge({"http-basic": {"foo": {"username": "foo", "password": "bar"}}})
-
-    assert get_http_basic_auth(config, "foo") == ("foo", "bar")
-
-
-def test_get_http_basic_auth_without_password(config):
-    config.merge({"http-basic": {"foo": {"username": "foo"}}})
-
-    assert get_http_basic_auth(config, "foo") == ("foo", None)
-
-
-def test_get_http_basic_auth_missing(config):
-    assert get_http_basic_auth(config, "foo") is None
 
 
 def test_get_cert(config):

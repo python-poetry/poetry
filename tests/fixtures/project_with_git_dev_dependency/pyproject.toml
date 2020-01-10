@@ -7,9 +7,9 @@ authors = [
 ]
 license = "MIT"
 
-homepage = "https://poetry.eustace.io"
-repository = "https://github.com/sdispater/poetry"
-documentation = "https://poetry.eustace.io/docs"
+homepage = "https://python-poetry.org"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
 
 keywords = ["packaging", "dependency", "poetry"]
 

@@ -147,8 +147,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             "You can specify a package in the following forms:\n"
             "  - A single name (<b>requests</b>)\n"
             "  - A name and a constraint (<b>requests ^2.23.0</b>)\n"
-            "  - A git url (<b>https://github.com/sdispater/poetry.git</b>)\n"
-            "  - A git url with a revision (<b>https://github.com/sdispater/poetry.git@develop</b>)\n"
+            "  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)\n"
+            "  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n"
             "  - A file path (<b>../my-package/my-package.whl</b>)\n"
             "  - A directory (<b>../my-package/</b>)\n"
             "  - An url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
@@ -365,22 +365,21 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if url_parsed.scheme and url_parsed.netloc:
                 # Url
                 if url_parsed.scheme in ["git+https", "git+ssh"]:
-                    url = requirement.lstrip("git+")
-                    rev = None
-                    if "@" in url:
-                        url, rev = url.split("@")
+                    from poetry.vcs.git import Git
+                    from poetry.vcs.git import ParsedUrl
 
-                    pair = OrderedDict(
-                        [("name", url.split("/")[-1].rstrip(".git")), ("git", url)]
-                    )
-                    if rev:
-                        pair["rev"] = rev
+                    parsed = ParsedUrl.parse(requirement)
+                    url = Git.normalize_url(requirement)
+
+                    pair = OrderedDict([("name", parsed.name), ("git", url.url)])
+                    if parsed.rev:
+                        pair["rev"] = url.revision
 
                     if extras:
                         pair["extras"] = extras
 
                     package = Provider.get_package_from_vcs(
-                        "git", url, reference=pair.get("rev")
+                        "git", url.url, reference=pair.get("rev")
                     )
                     pair["name"] = package.name
                     result.append(pair)
@@ -426,6 +425,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             require = OrderedDict()
             if " " in pair:
                 name, version = pair.split(" ", 2)
+                extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
+                if extras_m:
+                    extras = [e.strip() for e in extras_m.group(1).split(",")]
+                    name, _ = name.split("[")
+
                 require["name"] = name
                 if version != "latest":
                     require["version"] = version

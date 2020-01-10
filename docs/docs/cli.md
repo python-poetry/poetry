@@ -3,7 +3,7 @@
 You've already learned how to use the command-line interface to do some things.
 This chapter documents all the available commands.
 
-To get help from the command-line, simply call `poetry` or `poetry list` to see the complete list of commands,
+To get help from the command-line, simply call `poetry` to see the complete list of commands,
 then `--help` combined with any of those can give you more information.
 
 As `Poetry` uses [cleo](https://github.com/sdispater/cleo) you can call commands by short name if it's not ambiguous.
@@ -130,7 +130,7 @@ By default `poetry` will install your project's package everytime you run `insta
 $ poetry install
 Installing dependencies from lock file
 
-Nothing to install or update
+No dependencies to install or update
 
   - Installing <your-package-name> (x.x.x)
 
@@ -208,8 +208,8 @@ If you need to checkout a specific branch, tag or revision,
 you can specify it when using `add`:
 
 ```bash
-poetry add git+https://github.com/sdispater/pendulum.git@develop
-poetry add git+https://github.com/sdispater/pendulum.git@2.0.5
+poetry add git+https://github.com/sdispater/pendulum.git#develop
+poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
 ```
 
 or make them point to a local directory or file:
@@ -451,106 +451,4 @@ poetry export -f requirements.txt > requirements.txt
 The `env` command regroups sub commands to interact with the virtualenvs
 associated with a specific project.
 
-### env use
-
-The `env use` command tells Poetry which Python version
-to use for the current project.
-
-```bash
-poetry env use /full/path/to/python
-```
-
-If you have the python executable in your `PATH` you can use it:
-
-```bash
-poetry env use python3.7
-```
-
-You can even just use the minor Python version in this case:
-
-```bash
-poetry env use 3.7
-```
-
-If you want to disable the explicitly activated virtualenv, you can use the
-special `system` Python version to retrieve the default behavior:
-
-```bash
-poetry env use system
-```
-
-### env info
-
-The `env info` command displays basic information about the currently activated virtualenv:
-
-```bash
-poetry env info
-```
-
-will output something similar to this:
-
-```text
-Virtualenv
-Python:         3.7.1
-Implementation: CPython
-Path:           /path/to/poetry/cache/virtualenvs/test-O3eWbxRl-py3.7
-Valid:          True
-
-System
-Platform: darwin
-OS:       posix
-Python:   /path/to/main/python
-```
-
-If you only want to know the path to the virtualenv, you can pass the `--path` option
-to `env info`:
-
-```bash
-poetry env info --path
-```
-
-#### Options
-
-* `--path`: Only display the path of the virtualenv.
-
-
-### env list
-
-The `env list` command lists all the virtualenvs associated with the current virtualenv.
-
-```bash
-poetry env list
-```
-
-will output something like the following:
-
-```text
-test-O3eWbxRl-py2.7
-test-O3eWbxRl-py3.6
-test-O3eWbxRl-py3.7 (Activated)
-```
-
-#### Options
-
-* `--full-path`: Display the full path of the virtualenvs.
-
-### env remove
-
-The `env remove` command deletes virtualenvs associated with the current project:
-
-```bash
-poetry env remove /full/path/to/python
-```
-
-Similarly to `env use`, you can either pass `python3.7`, `3.7` or the name of
-the virtualenv (as returned by `env list`):
-
-```bash
-poetry env remove python3.7
-poetry env remove 3.7
-poetry env remove test-O3eWbxRl-py3.7
-```
-
-!!!note
-
-    If your remove the currently activated virtualenv, it will be automatically deactivated.
+See [Managing environments](./managing-environments.md) for more information about these commands.

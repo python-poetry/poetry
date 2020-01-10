@@ -5,8 +5,6 @@ from cleo import argument
 from cleo import option
 
 from poetry.factory import Factory
-from poetry.utils.helpers import keyring_repository_password_del
-from poetry.utils.helpers import keyring_repository_password_set
 
 from .command import Command
 
@@ -181,11 +179,14 @@ To remove a repository (repo is a short alias for repositories):
         # handle auth
         m = re.match(r"^(http-basic|pypi-token)\.(.+)", self.argument("key"))
         if m:
+            from poetry.utils.password_manager import PasswordManager
+
+            password_manager = PasswordManager(config)
             if self.option("unset"):
-                keyring_repository_password_del(config, m.group(2))
-                config.auth_config_source.remove_property(
-                    "{}.{}".format(m.group(1), m.group(2))
-                )
+                if m.group(1) == "http-basic":
+                    password_manager.delete_http_password(m.group(2))
+                elif m.group(1) == "pypi-token":
+                    password_manager.delete_pypi_token(m.group(2))
 
                 return 0
 
@@ -203,15 +204,7 @@ To remove a repository (repo is a short alias for repositories):
                     username = values[0]
                     password = values[1]
 
-                property_value = dict(username=username)
-                try:
-                    keyring_repository_password_set(m.group(2), username, password)
-                except RuntimeError:
-                    property_value.update(password=password)
-
-                config.auth_config_source.add_property(
-                    "{}.{}".format(m.group(1), m.group(2)), property_value
-                )
+                password_manager.set_http_password(m.group(2), username, password)
             elif m.group(1) == "pypi-token":
                 if len(values) != 1:
                     raise ValueError(
@@ -220,9 +213,7 @@ To remove a repository (repo is a short alias for repositories):
 
                 token = values[0]
 
-                config.auth_config_source.add_property(
-                    "{}.{}".format(m.group(1), m.group(2)), token
-                )
+                password_manager.set_pypi_token(m.group(2), token)
 
             return 0
 

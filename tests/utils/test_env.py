@@ -9,6 +9,7 @@ from clikit.io import NullIO
 
 from poetry.factory import Factory
 from poetry.semver import Version
+from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
@@ -28,6 +29,20 @@ import nullpackage
 
 print("nullpackage loaded"),
 """
+
+
+class MockVirtualEnv(VirtualEnv):
+    def __init__(self, path, base=None, sys_path=None):
+        super(MockVirtualEnv, self).__init__(path, base=base)
+
+        self._sys_path = sys_path
+
+    @property
+    def sys_path(self):
+        if self._sys_path is not None:
+            return self._sys_path
+
+        return super(MockVirtualEnv, self).sys_path
 
 
 @pytest.fixture()
@@ -661,3 +676,170 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
 
     assert expected_message == str(e.value)
     assert 0 == m.call_count
+
+
+def test_create_venv_uses_patch_version_to_detect_compatibility(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
+    poetry.package.python_versions = "^{}".format(
+        ".".join(str(c) for c in sys.version_info[:3])
+    )
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    mocker.patch("sys.version_info", (version.major, version.minor, version.patch + 1))
+    check_output = mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.9")),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    assert not check_output.called
+    m.assert_called_with(
+        str(
+            Path(
+                "/foo/virtualenvs/{}-py{}.{}".format(
+                    venv_name, version.major, version.minor
+                )
+            )
+        ),
+        executable=None,
+    )
+
+
+def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
+    manager, poetry, config, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
+    poetry.package.python_versions = "~{}".format(
+        ".".join(str(c) for c in (version.major, version.minor - 1, 0))
+    )
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    check_output = mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(
+            Version.parse("{}.{}.0".format(version.major, version.minor - 1))
+        ),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(
+        NullIO(), executable="python{}.{}".format(version.major, version.minor - 1)
+    )
+
+    assert check_output.called
+    m.assert_called_with(
+        str(
+            Path(
+                "/foo/virtualenvs/{}-py{}.{}".format(
+                    venv_name, version.major, version.minor - 1
+                )
+            )
+        ),
+        executable="python{}.{}".format(version.major, version.minor - 1),
+    )
+
+
+def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
+    manager, poetry, config, tmp_dir, mocker
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    config.merge(
+        {
+            "virtualenvs": {
+                "path": str(Path(tmp_dir) / "virtualenvs"),
+                "in-project": True,
+            }
+        }
+    )
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    mocker.patch(
+        "poetry.utils._compat.subprocess.Popen.communicate",
+        side_effect=[("/prefix", None), ("/prefix", None)],
+    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
+
+    manager.activate("python3.7", NullIO())
+
+    m.assert_called_with(
+        os.path.join(str(poetry.file.parent), ".venv"), executable="python3.7"
+    )
+
+    envs_file = TomlFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
+    assert not envs_file.exists()
+
+
+def test_env_site_packages_should_find_the_site_packages_directory_if_standard(tmp_dir):
+    if WINDOWS:
+        site_packages = Path(tmp_dir).joinpath("Lib/site-packages")
+    else:
+        site_packages = Path(tmp_dir).joinpath(
+            "lib/python{}/site-packages".format(
+                ".".join(str(v) for v in sys.version_info[:2])
+            )
+        )
+
+    site_packages.mkdir(parents=True)
+
+    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
+
+    assert site_packages == env.site_packages
+
+
+def test_env_site_packages_should_find_the_site_packages_directory_if_root(tmp_dir):
+    site_packages = Path(tmp_dir).joinpath("site-packages")
+    site_packages.mkdir(parents=True)
+
+    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
+
+    assert site_packages == env.site_packages
+
+
+def test_env_site_packages_should_find_the_dist_packages_directory_if_necessary(
+    tmp_dir,
+):
+    site_packages = Path(tmp_dir).joinpath("dist-packages")
+    site_packages.mkdir(parents=True)
+
+    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
+
+    assert site_packages == env.site_packages
+
+
+def test_env_site_packages_should_prefer_site_packages_over_dist_packages(tmp_dir):
+    dist_packages = Path(tmp_dir).joinpath("dist-packages")
+    dist_packages.mkdir(parents=True)
+    site_packages = Path(tmp_dir).joinpath("site-packages")
+    site_packages.mkdir(parents=True)
+
+    env = MockVirtualEnv(
+        Path(tmp_dir), Path(tmp_dir), sys_path=[str(dist_packages), str(site_packages)]
+    )
+
+    assert site_packages == env.site_packages
+
+
+def test_env_site_packages_should_raise_an_error_if_no_site_packages(tmp_dir):
+    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[])
+
+    with pytest.raises(RuntimeError):
+        env.site_packages

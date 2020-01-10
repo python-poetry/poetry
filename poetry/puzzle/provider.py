@@ -6,6 +6,7 @@ import time
 
 from contextlib import contextmanager
 from tempfile import mkdtemp
+from typing import Any
 from typing import List
 from typing import Optional
 
@@ -27,6 +28,7 @@ from poetry.packages import PackageCollection
 from poetry.packages import URLDependency
 from poetry.packages import VCSDependency
 from poetry.packages import dependency_from_pep_508
+from poetry.packages.utils.utils import get_python_constraint_from_marker
 from poetry.repositories import Pool
 from poetry.utils._compat import PY35
 from poetry.utils._compat import OrderedDict
@@ -61,9 +63,7 @@ class Provider:
 
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(
-        self, package, pool, io  # type: Package  # type: Pool
-    ):  # type: (...) -> None
+    def __init__(self, package, pool, io):  # type: (Package, Pool, Any) -> None
         self._package = package
         self._pool = pool
         self._io = io
@@ -275,6 +275,7 @@ class Provider:
         )
 
         package.source_url = dependency.path.as_posix()
+        package.develop = dependency.develop
 
         if dependency.base is not None:
             package.root_dir = dependency.base.as_posix()
@@ -489,14 +490,15 @@ class Provider:
             if not package.python_constraint.allows_all(
                 self._package.python_constraint
             ):
+                transitive_python_constraint = get_python_constraint_from_marker(
+                    package.dependency.transitive_marker
+                )
                 intersection = package.python_constraint.intersect(
-                    package.dependency.transitive_python_constraint
+                    transitive_python_constraint
                 )
-                difference = package.dependency.transitive_python_constraint.difference(
-                    intersection
-                )
+                difference = transitive_python_constraint.difference(intersection)
                 if (
-                    package.dependency.transitive_python_constraint.is_any()
+                    transitive_python_constraint.is_any()
                     or self._package.python_constraint.intersect(
                         package.dependency.python_constraint
                     ).is_empty()
@@ -604,7 +606,7 @@ class Provider:
                 new_markers = []
                 for dep in _deps:
                     marker = dep.marker.without_extras()
-                    if marker.is_empty():
+                    if marker.is_any():
                         # No marker or only extras
                         continue
 
@@ -671,13 +673,28 @@ class Provider:
             raise CompatibilityError(*python_constraints)
 
         # Modifying dependencies as needed
+        clean_dependencies = []
         for dep in dependencies:
-            if not package.dependency.python_constraint.is_any():
-                dep.transitive_python_versions = str(
-                    dep.python_constraint.intersect(
-                        package.dependency.python_constraint
-                    )
+            if not package.dependency.transitive_marker.without_extras().is_any():
+                marker_intersection = package.dependency.transitive_marker.without_extras().intersect(
+                    dep.marker.without_extras()
                 )
+                if marker_intersection.is_empty():
+                    # The dependency is not needed, since the markers specified
+                    # for the current package selection are not compatible with
+                    # the markers for the current dependency, so we skip it
+                    continue
+
+                dep.transitive_marker = marker_intersection
+
+            if not package.dependency.python_constraint.is_any():
+                python_constraint_intersection = dep.python_constraint.intersect(
+                    package.dependency.python_constraint
+                )
+                if python_constraint_intersection.is_empty():
+                    # This dependency is not needed under current python constraint.
+                    continue
+                dep.transitive_python_versions = str(python_constraint_intersection)
 
             if (package.dependency.is_directory() or package.dependency.is_file()) and (
                 dep.is_directory() or dep.is_file()
@@ -691,8 +708,9 @@ class Provider:
 
                 # TODO: Improve the way we set the correct relative path for dependencies
                 dep._path = relative
+            clean_dependencies.append(dep)
 
-        package.requires = dependencies
+        package.requires = clean_dependencies
 
         return package
 

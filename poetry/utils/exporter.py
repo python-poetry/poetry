@@ -54,7 +54,7 @@ class Exporter(object):
         extras=None,
         with_credentials=False,
     ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
-        indexes = []
+        indexes = set()
         content = ""
         packages = self._poetry.locker.locked_repository(dev).packages
 
@@ -94,7 +94,7 @@ class Exporter(object):
                 dependency.marker = package.marker
 
                 line = "{}".format(package.source_url)
-                if package.develop:
+                if package.develop and package.source_type == "directory":
                     line = "-e " + line
             else:
                 dependency = package.to_dependency()
@@ -104,8 +104,11 @@ class Exporter(object):
             if ";" in requirement:
                 line += "; {}".format(requirement.split(";")[1].strip())
 
-            if package.source_type == "legacy" and package.source_url:
-                indexes.append(package.source_url)
+            if (
+                package.source_type not in {"git", "directory", "file", "url"}
+                and package.source_url
+            ):
+                indexes.add(package.source_url)
 
             if package.files and with_hashes:
                 hashes = []
@@ -131,10 +134,9 @@ class Exporter(object):
             content += line
 
         if indexes:
-            # If we have extra indexes, we add them to the begin
-            # of the output
+            # If we have extra indexes, we add them to the beginning of the output
             indexes_header = ""
-            for index in indexes:
+            for index in sorted(indexes):
                 repository = [
                     r
                     for r in self._poetry.pool.repositories

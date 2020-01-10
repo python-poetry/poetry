@@ -407,8 +407,10 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
 
-    package_b.extras = {"foo": [get_dependency("C", "^1.0")]}
-    package_b.add_dependency("C", {"version": "^1.0", "optional": True})
+    dep = get_dependency("C", "^1.0", optional=True)
+    dep.marker = parse_marker("extra == 'foo'")
+    package_b.extras = {"foo": [dep]}
+    package_b.requires.append(dep)
 
     repo.add_package(package_a)
     repo.add_package(package_b)
@@ -424,6 +426,9 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
             {"job": "install", "package": package_b},
         ],
     )
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
 
 
 def test_solver_returns_prereleases_if_requested(solver, repo, package):
@@ -1148,10 +1153,7 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
         ],
     )
 
-    assert str(ops[0].package.marker) in [
-        'extra == "foo" or extra == "bar"',
-        'extra == "bar" or extra == "foo"',
-    ]
+    assert str(ops[0].package.marker) == ""
     assert str(ops[1].package.marker) == ""
 
 
@@ -1684,7 +1686,6 @@ def test_solver_chooses_from_correct_repository_if_forced(
         ops, [{"job": "install", "package": get_package("tomlkit", "0.5.2")}]
     )
 
-    assert "legacy" == ops[0].package.source_type
     assert "http://foo.bar" == ops[0].package.source_url
 
 
@@ -1713,7 +1714,6 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         ],
     )
 
-    assert "legacy" == ops[0].package.source_type
     assert "http://foo.bar" == ops[0].package.source_url
 
     assert "" == ops[1].package.source_type
@@ -1743,11 +1743,9 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
         ],
     )
 
-    assert "legacy" == ops[0].package.source_type
     assert "http://foo.bar" == ops[0].package.source_url
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
-    assert "legacy" == ops[2].package.source_type
     assert "http://foo.bar" == ops[2].package.source_url
 
 
@@ -1772,7 +1770,6 @@ def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, i
         ],
     )
 
-    assert "legacy" == ops[0].package.source_type
     assert "http://foo.bar" == ops[0].package.source_url
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
@@ -1833,4 +1830,101 @@ def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
             {"job": "install", "package": package_a100},
             {"job": "install", "package": package_a200},
         ],
+    )
+
+
+def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.5"
+    package.add_dependency("requests", {"version": "^2.22.0", "extras": ["security"]})
+
+    requests = get_package("requests", "2.22.0")
+    requests.add_dependency("idna", ">=2.5,<2.9")
+    requests.add_dependency(
+        "idna", {"version": ">=2.0.0", "markers": "extra == 'security'"}
+    )
+    requests.extras["security"] = [get_dependency("idna", ">=2.0.0")]
+    idna = get_package("idna", "2.8")
+
+    repo.add_package(requests)
+    repo.add_package(idna)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [{"job": "install", "package": idna}, {"job": "install", "package": requests}],
+    )
+
+
+def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
+    solver, repo, package, locked, pool, installed, io
+):
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+    package.add_dependency("a", "^1.2.3")
+
+    git_package = get_package("demo", "0.1.2")
+    git_package.source_type = "git"
+    git_package.source_url = "https://github.com/demo/demo.git"
+    git_package.source_reference = "commit"
+
+    installed.add_package(git_package)
+
+    locked.add_package(get_package("a", "1.2.3"))
+    locked.add_package(git_package)
+
+    repo.add_package(get_package("a", "1.2.3"))
+
+    solver = Solver(package, pool, installed, locked, io)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": get_package("a", "1.2.3")},
+            {"job": "install", "package": git_package, "skipped": True},
+        ],
+    )
+
+
+def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package):
+    pytest = get_package("demo", "1.0.0")
+    pytest.add_dependency("configparser", {"version": "^1.2.3", "python": "<3.2"})
+
+    package.add_dependency("demo", {"version": "^1.0.0", "python": "^3.6"})
+
+    repo.add_package(pytest)
+    repo.add_package(get_package("configparser", "1.2.3"))
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": pytest}],
+    )
+
+
+def test_solver_properly_propagates_markers(solver, repo, package):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency(
+        "A",
+        {
+            "version": "^1.0",
+            "markers": "python_version >= '3.6' and implementation_name != 'pypy'",
+        },
+    )
+
+    package_a = get_package("A", "1.0.0")
+    package_a.python_versions = ">=3.6"
+
+    repo.add_package(package_a)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [{"job": "install", "package": package_a}])
+
+    assert (
+        str(ops[0].package.marker)
+        == 'python_version >= "3.6" and implementation_name != "pypy"'
     )

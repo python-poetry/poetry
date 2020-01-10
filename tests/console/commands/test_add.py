@@ -109,7 +109,7 @@ def test_add_constraint_with_extras(app, repo, installer):
     repo.add_package(cachy1)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
-    tester.execute("cachy[msgpack]^0.1.0")
+    tester.execute("cachy[msgpack]>=0.1.0,<0.2.0")
 
     expected = """\
 
@@ -261,6 +261,42 @@ Package operations: 4 installs, 0 updates, 0 removals
     assert content["dependencies"]["demo"] == {
         "git": "https://github.com/demo/demo.git",
         "extras": ["foo", "bar"],
+    }
+
+
+def test_add_git_ssh_constraint(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+
+    tester.execute("git+ssh://git@github.com/demo/demo.git@develop")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 9cf87a2)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 2
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "git": "ssh://git@github.com/demo/demo.git",
+        "rev": "develop",
     }
 
 
@@ -456,7 +492,7 @@ def test_add_url_constraint_wheel(app, repo, installer, mocker):
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     tester.execute(
-        "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     )
 
     expected = """\
@@ -470,7 +506,7 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0 https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl)
+  - Installing demo (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
     assert expected == tester.io.fetch_output()
@@ -481,7 +517,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "url": "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     }
 
 
@@ -494,7 +530,7 @@ def test_add_url_constraint_wheel_with_extras(app, repo, installer, mocker):
     repo.add_package(get_package("tomlkit", "0.5.5"))
 
     tester.execute(
-        "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
+        "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
     )
 
     expected = """\
@@ -510,7 +546,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   - Installing cleo (0.6.5)
   - Installing pendulum (1.4.4)
   - Installing tomlkit (0.5.5)
-  - Installing demo (0.1.0 https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl)
+  - Installing demo (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
 
     assert expected == tester.io.fetch_output()
@@ -521,7 +557,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "url": "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl",
+        "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl",
         "extras": ["foo", "bar"],
     }
 

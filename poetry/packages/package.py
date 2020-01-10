@@ -279,7 +279,7 @@ class Package(object):
                 message = (
                     'The "{}" dependency specifies '
                     'the "allows-prereleases" property, which is deprecated. '
-                    'Use "allow-preleases" instead.'.format(name)
+                    'Use "allow-prereleases" instead.'.format(name)
                 )
                 warn(message, DeprecationWarning)
                 logger.warning(message)
@@ -297,6 +297,7 @@ class Package(object):
                     branch=constraint.get("branch", None),
                     tag=constraint.get("tag", None),
                     rev=constraint.get("rev", None),
+                    category=category,
                     optional=optional,
                 )
             elif "file" in constraint:
