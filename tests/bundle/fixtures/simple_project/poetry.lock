@@ -1,0 +1,14 @@
+[[package]]
+category = "main"
+description = ""
+name = "foo"
+optional = false
+python-versions = "*"
+version = "1.0.0"
+
+[metadata]
+content-hash = "e97e6b0e10d38d2bbc2549ae152a31c81e1d2ed5e65a2cdf395d4ade26e9bf41"
+python-versions = "~2.7 || ^3.4"
+
+[metadata.files]
+foo = []

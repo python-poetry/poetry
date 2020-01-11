@@ -507,6 +507,48 @@ associated with a specific project.
 
 See [Managing environments](/docs/managing-environments/) for more information about these commands.
 
+## bundle
+
+The `bundle` namespace regroups commands to bundle the current project
+and its dependencies into various formats. These commands are particularly useful to deploy
+Poetry-managed applications.
+
+### bundle venv
+
+The `bundle venv` command bundles the project and its dependencies into a virtual environment.
+
+The following command
+
+```bash
+poetry bundle venv /path/to/environment
+```
+
+will bundle the project in the `/path/to/environment` directory by creating the virtual environment,
+installing the dependencies and the current project inside it. If the directory does not exist,
+it will be created automatically.
+
+By default, the command uses the current Python executable to build the virtual environment.
+If you want to use a different one, you can specify it with the `--python/-p` option:
+
+```bash
+poetry bundle venv /path/to/environment --python /full/path/to/python
+poetry bundle venv /path/to/environment -p python3.8
+poetry bundle venv /path/to/environment -p 3.8
+```
+
+!!!note
+
+    If the virtual environment already exists, two things can happen:
+
+    - **The python version of the virtual environment is the same as the main one**: the dependencies will be synced (updated or removed).
+    - **The python version of the virtual environment is different**: the virtual environment will be recreated from scratch.
+
+    You can also ensure that the virtual environment is recreated by using the `--clear` option:
+
+    ```bash
+    poetry bundle venv /path/to/environment --clear
+    ```
+
 ## cache
 
 The `cache` command regroups sub commands to interact with Poetry's cache.

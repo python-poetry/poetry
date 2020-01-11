@@ -59,6 +59,8 @@ COMMANDS = [
     "show",
     "update",
     "version",
+    # Bundle commands
+    "bundle venv",
     # Cache commands
     "cache clear",
     "cache list",
@@ -89,6 +91,7 @@ class Application(BaseApplication):
         dispatcher.add_listener(COMMAND, self.register_command_loggers)
         dispatcher.add_listener(COMMAND, self.set_env)
         dispatcher.add_listener(COMMAND, self.set_installer)
+        dispatcher.add_listener(COMMAND, self.configure_bundle_commands)
         self.set_event_dispatcher(dispatcher)
 
         command_loader = FactoryCommandLoader(
@@ -271,6 +274,23 @@ class Application(BaseApplication):
         )
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
+
+    def configure_bundle_commands(
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
+    ) -> None:
+        from .commands.bundle.bundle_command import BundleCommand
+
+        command: BundleCommand = cast(BundleCommand, event.command)
+        if not isinstance(command, BundleCommand):
+            return
+
+        # If the command already has a bundler manager, do nothing
+        if command.bundler_manager is not None:
+            return
+
+        from poetry.bundle.bundler_manager import BundlerManager
+
+        command.set_bundler_manager(BundlerManager())
 
 
 def main() -> int:

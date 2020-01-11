@@ -1,0 +1,3 @@
+class BundlerManagerError(Exception):
+
+    pass

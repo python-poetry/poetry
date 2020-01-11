@@ -318,32 +318,7 @@ class EnvManager(object):
 
         envs_file = TOMLFile(venv_path / self.ENVS_FILE)
 
-        try:
-            python_version = Version.parse(python)
-            python = "python{}".format(python_version.major)
-            if python_version.precision > 1:
-                python += ".{}".format(python_version.minor)
-        except ValueError:
-            # Executable in PATH or full executable path
-            pass
-
-        try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
-        except CalledProcessError as e:
-            raise EnvCommandError(e)
-
-        python_version = Version.parse(python_version.strip())
+        python, python_version = self.get_executable_info(python)
         minor = "{}.{}".format(python_version.major, python_version.minor)
         patch = python_version.text
 
@@ -565,32 +540,7 @@ class EnvManager(object):
                 '<warning>Environment "{}" does not exist.</warning>'.format(python)
             )
 
-        try:
-            python_version = Version.parse(python)
-            python = "python{}".format(python_version.major)
-            if python_version.precision > 1:
-                python += ".{}".format(python_version.minor)
-        except ValueError:
-            # Executable in PATH or full executable path
-            pass
-
-        try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
-        except CalledProcessError as e:
-            raise EnvCommandError(e)
-
-        python_version = Version.parse(python_version.strip())
+        python, python_version = self.get_executable_info(python)
         minor = "{}.{}".format(python_version.major, python_version.minor)
 
         name = "{}-py{}".format(base_env_name, minor)
@@ -870,6 +820,37 @@ class EnvManager(object):
         h = base64.urlsafe_b64encode(h).decode()[:8]
 
         return "{}-{}".format(sanitized_name, h)
+
+    @classmethod
+    def get_executable_info(cls, executable: str) -> Tuple[str, Version]:
+        try:
+            python_version = Version.parse(executable)
+            executable = "python{}".format(python_version.major)
+            if python_version.precision > 1:
+                executable += ".{}".format(python_version.minor)
+        except ValueError:
+            # Executable in PATH or full executable path
+            pass
+
+        try:
+            python_version = decode(
+                subprocess.check_output(
+                    list_to_shell_command(
+                        [
+                            executable,
+                            "-c",
+                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                        ]
+                    ),
+                    shell=True,
+                )
+            )
+        except CalledProcessError as e:
+            raise EnvCommandError(e)
+
+        python_version = Version.parse(python_version.strip())
+
+        return executable, python_version
 
 
 class Env(object):
