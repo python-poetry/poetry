@@ -37,6 +37,7 @@ class Config(object):
             "in-project": False,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
         },
+        "experimental": {"new-installer": False},
     }
 
     def __init__(

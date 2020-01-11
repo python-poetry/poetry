@@ -152,6 +152,9 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         installer = Installer(
             self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
+        installer.use_executor(
+            self.poetry.config.get("experimental.new-installer", False)
+        )
 
         installer.dry_run(self.option("dry-run"))
         installer.update(True)

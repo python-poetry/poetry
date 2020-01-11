@@ -33,6 +33,8 @@ from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
 from poetry.utils.toml_file import TomlFile
 
+from .env_scripts.tags import get_supported
+
 
 GET_ENVIRONMENT_INFO = """\
 import json
@@ -742,6 +744,7 @@ class Env(object):
         self._pip_version = None
         self._site_packages = None
         self._paths = None
+        self._supported_tags = None
 
     @property
     def path(self):  # type: () -> Path
@@ -813,6 +816,13 @@ class Env(object):
 
         return self._paths
 
+    @property
+    def supported_tags(self):  # type: () -> List[Tuple[str, str, str]]
+        if self._supported_tags is None:
+            self._supported_tags = self.get_supported_tags()
+
+        return self._supported_tags
+
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
@@ -833,6 +843,9 @@ class Env(object):
         raise NotImplementedError()
 
     def get_pip_command(self):  # type: () -> List[str]
+        raise NotImplementedError()
+
+    def get_supported_tags(self):  # type: () -> List[Tuple[str, str, str]]
         raise NotImplementedError()
 
     def config_var(self, var):  # type: (str) -> Any
@@ -987,6 +1000,9 @@ class SystemEnv(Env):
 
         return paths
 
+    def get_supported_tags(self):  # type: () -> List[Tuple[str, str, str]]
+        return get_supported()
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
@@ -1067,6 +1083,14 @@ class VirtualEnv(Env):
         # We're in a virtualenv that is known to be sane,
         # so assume that we have a functional pip
         return [self._bin("pip")]
+
+    def get_supported_tags(self):  # type: () -> List[Tuple[str, str, str]]
+        with (Path(__file__).parent / "env_scripts" / "tags.py").open(
+            encoding="utf-8"
+        ) as f:
+            output = self.run("python", "-", input_=f.read())
+
+        return [tuple(tag) for tag in json.loads(output)]
 
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)

@@ -50,6 +50,14 @@ else:
     shell_quote = shlex.quote
 
 
+if PY34:
+    from importlib.machinery import EXTENSION_SUFFIXES
+else:
+    from imp import get_suffixes
+
+    EXTENSION_SUFFIXES = [suffix[0] for suffix in get_suffixes()]
+
+
 if PY35:
     from pathlib import Path
 else:

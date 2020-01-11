@@ -55,6 +55,9 @@ dependencies and not including the current project, run the command with the
         installer = Installer(
             self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
         )
+        installer.use_executor(
+            self.poetry.config.get("experimental.new-installer", False)
+        )
 
         extras = []
         for extra in self.option("extras"):
