@@ -591,7 +591,7 @@ class Installer:
 
         for executable in allowed_executables:
             try:
-                subprocess.check_call(executable + "--version", shell=True)
+                subprocess.check_call(executable + " --version", shell=True)
             except subprocess.CalledProcessError:
                 continue
 
