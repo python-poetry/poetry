@@ -1,3 +1,5 @@
+from poetry.vcs import git
+
 from .dependency import Dependency
 
 
@@ -17,7 +19,6 @@ class VCSDependency(Dependency):
         optional=False,
         category="main",
         subdirectory=None,
-        optional=False,
     ):
         self._vcs = vcs
         self._source = source
