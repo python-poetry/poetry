@@ -61,6 +61,19 @@ def test_to_pep_508_in_extras():
     assert expected == dependency.to_pep_508()
 
 
+def test_to_pep_508_with_subdirectory():
+    dependency = VCSDependency(
+        "poetry",
+        "git",
+        "https://github.com/python-poetry/poetry.git",
+        subdirectory="mypackage",
+    )
+
+    expected = "poetry @ git+https://github.com/python-poetry/poetry.git@master#subdirectory=mypackage"
+
+    assert expected == dependency.to_pep_508()
+
+
 @pytest.mark.parametrize("category", ["main", "dev"])
 def test_category(category):
     dependency = VCSDependency(

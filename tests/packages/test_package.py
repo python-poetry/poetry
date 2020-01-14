@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import pytest
 
 from poetry.packages import Package
+from poetry.packages import VCSDependency
 
 
 def test_package_authors():
@@ -37,3 +38,18 @@ def test_package_add_dependency_vcs_category_default_main():
         "poetry", constraint={"git": "https://github.com/python-poetry/poetry.git"}
     )
     assert dependency.category == "main"
+
+
+def test_package_add_dependency_vcs__with_subdirectory():
+    package = Package("foo", "0.1.0")
+
+    dependency = package.add_dependency(
+        "poetry",
+        constraint={
+            "git": "https://github.com/demo/project_in_subdirectory.git",
+            "subdirectory": "mypackage",
+        },
+    )
+    assert dependency.source == "https://github.com/demo/project_in_subdirectory.git"
+    assert dependency.subdirectory == "mypackage"
+    assert isinstance(dependency, VCSDependency)

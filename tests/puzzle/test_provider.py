@@ -128,6 +128,19 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
         provider.search_for_vcs(dependency)
 
 
+def test_search_for_vcs_with_subdirectory(provider):
+    dependency = VCSDependency(
+        "demo",
+        "git",
+        "https://github.com/demo/project_in_subdirectory.git",
+        subdirectory="pyproject-demo",
+    )
+    package = provider.search_for_vcs(dependency)[0]
+
+    assert package.name == "demo"
+    assert package.version.text == "0.1.2"
+
+
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
 def test_search_for_directory_setup_egg_info(provider, directory):
     dependency = DirectoryDependency(
