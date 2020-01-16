@@ -81,6 +81,9 @@ class Exporter(object):
                 line = "-e git+{}@{}#egg={}".format(
                     package.source_url, package.source_reference, package.name
                 )
+                if package.source_subdirectory:
+                    line += "?subdirectory={}".format(package.source_subdirectory)
+
             elif package.source_type in ["directory", "file", "url"]:
                 if package.source_type == "file":
                     dependency = FileDependency(package.name, Path(package.source_url))
