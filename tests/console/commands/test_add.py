@@ -4,6 +4,8 @@ import pytest
 
 from cleo.testers import CommandTester
 
+from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.semver import Version
 from poetry.utils._compat import Path
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -632,6 +634,72 @@ Package operations: 1 install, 0 updates, 0 removals
         "version": "0.2.0",
         "platform": platform,
     }
+
+
+def test_add_constraint_with_source(app, poetry, installer):
+    repo = LegacyRepository(name="my-index", url="https://my-index.fake")
+    repo.add_package(get_package("cachy", "0.2.0"))
+    repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
+
+    poetry.pool.add_repository(repo)
+
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    tester.execute("cachy=0.2.0 --source my-index")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  - Installing cachy (0.2.0)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 1
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "cachy" in content["dependencies"]
+    assert content["dependencies"]["cachy"] == {
+        "version": "0.2.0",
+        "source": "my-index",
+    }
+
+
+def test_add_constraint_with_source_that_does_not_exist(app):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    with pytest.raises(ValueError) as e:
+        tester.execute("foo --source i-dont-exist")
+
+    assert 'Repository "i-dont-exist" does not exist.' == str(e.value)
+
+
+def test_add_constraint_not_found_with_source(app, poetry, mocker):
+    repo = LegacyRepository(name="my-index", url="https://my-index.fake")
+    mocker.patch.object(repo, "find_packages", return_value=[])
+
+    poetry.pool.add_repository(repo)
+
+    pypi = poetry.pool.repositories[0]
+    pypi.add_package(get_package("cachy", "0.2.0"))
+
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    with pytest.raises(ValueError) as e:
+        tester.execute("cachy --source my-index")
+
+    assert "Could not find a matching version of package cachy" == str(e.value)
 
 
 def test_add_to_section_that_does_no_exist_yet(app, repo, installer):
