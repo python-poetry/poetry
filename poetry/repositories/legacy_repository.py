@@ -52,7 +52,6 @@ except ImportError:
 
 try:
     from urllib.parse import quote, unquote
-
 except ImportError:
     from urllib import quote, unquote
 
