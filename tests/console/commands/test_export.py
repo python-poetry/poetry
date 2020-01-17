@@ -14,6 +14,8 @@ from ..conftest import Locker
 from ..conftest import Path
 
 
+fixtures_dir = Path(__file__).parent.parent.parent / "fixtures"
+
 PYPROJECT_CONTENT = """\
 [tool.poetry]
 name = "simple-project"
@@ -69,6 +71,35 @@ def poetry(repo, tmp_dir):
 @pytest.fixture
 def app(poetry):
     return Application(poetry)
+
+
+def test_export_with_vcs_subdirectory(app_project):
+    project = fixtures_dir / "project_with_git_subdirectory_dependency"
+    app = app_project(project)
+
+    command = app.find("lock")
+    tester = CommandTester(command)
+    tester.execute()
+
+    assert app.poetry.locker.lock.exists()
+
+    command = app.find("export")
+    tester = CommandTester(command)
+    tester.execute("--format requirements.txt --output requirements.txt")
+
+    requirements = app.poetry.file.parent / "requirements.txt"
+    assert requirements.exists()
+
+    with requirements.open(encoding="utf-8") as f:
+        content = f.read().strip()
+
+    expected = (
+        "-e "
+        "git+https://github.com/demo/project_in_subdirectory.git"
+        "@9cf87a285a2d3fbb0b9fa621997b3acc3631ed24#egg=demo?subdirectory=pyproject-demo"
+    )
+
+    assert expected == content
 
 
 def test_export_exports_requirements_txt_file_locks_if_no_lock_file(app, repo):
