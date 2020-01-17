@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+homepage = "https://python-poetry.org"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
+
+keywords = ["packaging", "dependency", "poetry"]
+
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+# Requirements
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.4"
+demo = { git = "https://github.com/demo/project_in_subdirectory.git", rev = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24", subdirectory="pyproject-demo" }
+
+
+[tool.poetry.dev-dependencies]
+
+
+[tool.poetry.scripts]
+my-script = "my_package:main"
+
+
+[tool.poetry.plugins."blogtool.parsers"]
+".rst" = "some_module::SomeClass"
