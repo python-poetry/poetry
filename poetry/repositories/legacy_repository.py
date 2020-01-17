@@ -51,9 +51,10 @@ except ImportError:
 
 
 try:
-    from urllib.parse import quote
+    from urllib.parse import quote, unquote
+
 except ImportError:
-    from urllib import quote
+    from urllib import quote, unquote
 
 
 with warnings.catch_warnings():
@@ -220,8 +221,8 @@ class LegacyRepository(PyPiRepository):
 
         return "{scheme}://{username}:{password}@{netloc}{path}".format(
             scheme=parsed.scheme,
-            username=quote(self._auth.auth.username),
-            password=quote(self._auth.auth.password),
+            username=quote(unquote(self._auth.auth.username), safe=""),
+            password=quote(unquote(self._auth.auth.password), safe=""),
             netloc=parsed.netloc,
             path=parsed.path,
         )
