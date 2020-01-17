@@ -22,7 +22,7 @@ PATTERNS = [
     re.compile(
         r"^(git\+)?"
         r"(?P<protocol>https?|git|ssh|rsync|file)://"
-        r"(?:(?P<user>.+)@)*"
+        r"(?:(?P<user>\w+)@)*"
         r"(?P<resource>[a-z0-9_.-]*)"
         r"(:?P<port>[\d]+)?"
         r"(?P<pathname>[:/]((?P<owner>[\w\-]+)/(?P<projects>([\w\-/]+)/)?)?"
@@ -31,7 +31,7 @@ PATTERNS = [
         r"$"
     ),
     re.compile(
-        r"^(?:(?P<user>.+)@)*"
+        r"^(?:(?P<user>\w+)@)*"
         r"(?P<resource>[a-z0-9_.-]*)[:]*"
         r"(?P<port>[\d]+)?"
         r"(?P<pathname>/?(?P<owner>.+)/(?P<projects>([\w\-/]+)/)?(?P<name>.+).git)"
