@@ -13,6 +13,7 @@ import zipfile
 import pytest
 
 from clikit.io import NullIO
+from packaging.tags import sys_tags
 
 from poetry import __version__
 from poetry.factory import Factory
@@ -23,6 +24,8 @@ from poetry.utils.env import NullEnv
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
+# Regexp matching any of the supported wheel tags.
+tag_pattern = "(?:{})".format("|".join(re.escape(str(tag)) for tag in sys_tags()))
 
 
 @pytest.fixture(autouse=True)
@@ -38,6 +41,21 @@ def clear_samples_dist():
     for dist in fixtures_dir.glob("**/dist"):
         if dist.is_dir():
             shutil.rmtree(str(dist))
+
+
+def get_wheel(dist_path, prefix):
+    """Return a wheel Path matching {prefix}-{tag}.whl for a supported wheel tag."""
+    for candidate in dist_path.glob(prefix + "-*.whl"):
+        for tag in sys_tags():
+            if candidate.name == "{}-{}.whl".format(prefix, tag):
+                assert candidate.exists()
+                return candidate
+        raise AssertionError(
+            "Built wheel {} which is not supported by our Python interpreter".format(
+                candidate
+            )
+        )
+    raise AssertionError("No wheel is built")
 
 
 @pytest.mark.skipif(
@@ -59,10 +77,7 @@ def test_wheel_c_extension():
         assert "extended-0.1/build.py" in tar.getnames()
         assert "extended-0.1/extended/extended.c" in tar.getnames()
 
-    whl = list((module_path / "dist").glob("extended-0.1-cp*-cp*-*.whl"))[0]
-
-    assert whl.exists()
-
+    whl = get_wheel(module_path / "dist", "extended-0.1")
     zip = zipfile.ZipFile(str(whl))
 
     has_compiled_extension = False
@@ -81,9 +96,9 @@ def test_wheel_c_extension():
 Wheel-Version: 1.0
 Generator: poetry {}
 Root-Is-Purelib: false
-Tag: cp[23]\\d-cp[23]\\dm?u?-.+
+Tag: {}
 $""".format(
-                    __version__
+                    __version__, tag_pattern,
                 ),
                 wheel_data,
             )
@@ -116,9 +131,7 @@ def test_wheel_c_extension_src_layout():
         assert "extended-0.1/build.py" in tar.getnames()
         assert "extended-0.1/src/extended/extended.c" in tar.getnames()
 
-    whl = list((module_path / "dist").glob("extended-0.1-cp*-cp*-*.whl"))[0]
-
-    assert whl.exists()
+    whl = get_wheel(module_path / "dist", "extended-0.1")
 
     zip = zipfile.ZipFile(str(whl))
 
@@ -138,9 +151,9 @@ def test_wheel_c_extension_src_layout():
 Wheel-Version: 1.0
 Generator: poetry {}
 Root-Is-Purelib: false
-Tag: cp[23]\\d-cp[23]\\dm?u?-.+
+Tag: {}
 $""".format(
-                    __version__
+                    __version__, tag_pattern,
                 ),
                 wheel_data,
             )

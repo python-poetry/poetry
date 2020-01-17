@@ -40,11 +40,7 @@ def get_impl_ver(env):
 def get_impl_version_info(env):
     """Return sys.version_info-like tuple for use in decrementing the minor
     version."""
-    if get_abbr_impl(env) == "pp":
-        # as per https://github.com/pypa/pip/issues/2882
-        return env.version_info[:3]
-    else:
-        return env.version_info[:2]
+    return env.version_info[:2]
 
 
 def get_flag(env, var, fallback, expected=True, warn=True):

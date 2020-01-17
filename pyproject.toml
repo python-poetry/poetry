@@ -65,12 +65,14 @@ pymdown-extensions = "^6.0"
 pygments = "^2.2"
 pytest-mock = "^1.9"
 pygments-github-lexers = "^0.0.5"
-black = { version = "^19.10b0", python = "^3.6" }
+# Black depends on typed-ast which requires internal CPython-specific APIs and is not installable on PyPy.
+black = { version = "^19.10b0", markers = "python_version >= \"3.6\" and python_version < \"4.0\" and platform_python_implementation == 'CPython'" }
 pre-commit = "^1.10"
 tox = "^3.0"
 pytest-sugar = "^0.9.2"
 httpretty = "^0.9.6"
 markdown-include = "^0.5.1"
+packaging = "^20.0.0"
 
 [tool.poetry.scripts]
 poetry = "poetry.console:main"
@@ -107,6 +109,7 @@ known_third_party = [
     "httpretty",
     "jsonschema",
     "keyring",
+    "packaging",
     "pexpect",
     "pkginfo",
     "pyparsing",
