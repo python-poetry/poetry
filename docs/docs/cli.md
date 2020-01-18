@@ -305,7 +305,7 @@ Note that, at the moment, only pure python wheels are supported.
 
 ### Options
 
-* `--format (-f)`: Limit the format to either wheel or sdist.
+* `--format (-f)`: Limit the format to either `wheel` or `sdist`.
 
 ## publish
 
