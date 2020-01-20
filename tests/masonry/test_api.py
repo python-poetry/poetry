@@ -28,15 +28,15 @@ fixtures = os.path.join(os.path.dirname(__file__), "builders", "fixtures")
 
 
 def test_get_requires_for_build_wheel():
-    expected = ["cleo>=0.6.0,<0.7.0", "cachy[msgpack]>=0.2.0,<0.3.0"]
+    expected = []
     with cwd(os.path.join(fixtures, "complete")):
-        api.get_requires_for_build_wheel() == expected
+        assert api.get_requires_for_build_wheel() == expected
 
 
 def test_get_requires_for_build_sdist():
-    expected = ["cleo>=0.6.0,<0.7.0", "cachy[msgpack]>=0.2.0,<0.3.0"]
+    expected = []
     with cwd(os.path.join(fixtures, "complete")):
-        api.get_requires_for_build_sdist() == expected
+        assert api.get_requires_for_build_sdist() == expected
 
 
 def test_build_wheel():
