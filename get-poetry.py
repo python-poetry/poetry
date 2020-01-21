@@ -585,22 +585,35 @@ class Installer:
                 gz.close()
 
     def _which_python(self):
+        """Decides which python executable we'll embed in the launcher script."""
         allowed_executables = ["python", "python3"]
         if WINDOWS:
             allowed_executables += ["py.exe -3", "py.exe -2"]
 
+        version_matcher = re.compile(r"^Python (?P<major>\d+)\.(?P<minor>\d+)\..+$")
+        fallback = None
         for executable in allowed_executables:
             try:
-                subprocess.check_call(executable + " --version", shell=True)
+                raw_version = subprocess.check_output(
+                    executable + " --version", stderr=subprocess.STDOUT, shell=True
+                ).decode("utf-8")
             except subprocess.CalledProcessError:
                 continue
 
-            return executable
+            match = version_matcher.match(raw_version.strip())
+            if match and int(match.groupdict()["major"]) >= 3:
+                return executable
+            if fallback is None:
+                # keep this one as the fallback; it was the first valid exec we found.
+                fallback = executable
 
-        raise RuntimeError(
-            "No python executable found in shell environment. Tried: "
-            + str(allowed_executables)
-        )
+        if fallback is None:
+            raise RuntimeError(
+                "No python executable found in shell environment. Tried: "
+                + str(allowed_executables)
+            )
+
+        return fallback
 
     def make_bin(self):
         if not os.path.exists(POETRY_BIN):
