@@ -10,21 +10,39 @@ from poetry.utils._compat import decode
 pattern_formats = {
     "protocol": r"\w+",
     "user": r"[a-zA-Z0-9_.-]+",
-    "resource": r"[a-z0-9_.-]+",
+    "resource": r"[a-zA-Z0-9_.-]+",
     "port": r"\d+",
-    "path": r"[\w\-/]+",
+    "path": r"[\w\-/\\]+",
     "name": r"[\w\-]+",
     "rev": r"[^@#]+",
 }
 
 PATTERNS = [
     re.compile(
+        r"^(git\+)?"
+        r"(?P<protocol>https?|git|ssh|rsync|file)://"
+        r"(?:(?P<user>{user})@)?"
+        r"(?P<resource>{resource})?"
+        r"(:(?P<port>{port}))?"
+        r"(?P<pathname>[:/\\]({path}[/\\])?"
+        r"((?P<name>{name}?)(\.git|[/\\])?)?)"
+        r"([@#](?P<rev>{rev}))?"
+        r"$".format(
+            user=pattern_formats["user"],
+            resource=pattern_formats["resource"],
+            port=pattern_formats["port"],
+            path=pattern_formats["path"],
+            name=pattern_formats["name"],
+            rev=pattern_formats["rev"],
+        )
+    ),
+    re.compile(
         r"(git\+)?"
         r"((?P<protocol>{protocol})://)"
-        r"(?:(?P<user>{user})@)*"
-        r"(?P<resource>{resource})"
+        r"(?:(?P<user>{user})@)?"
+        r"(?P<resource>{resource}:?)"
         r"(:(?P<port>{port}))?"
-        r"(?P<pathname>(/{path}/)"
+        r"(?P<pathname>({path})"
         r"(?P<name>{name})(\.git|/)?)"
         r"([@#](?P<rev>{rev}))?"
         r"$".format(
@@ -38,13 +56,11 @@ PATTERNS = [
         )
     ),
     re.compile(
-        r"^(git\+)?"
-        r"(?P<protocol>https?|git|ssh|rsync|file)://"
-        r"(?:(?P<user>{user})@)*"
+        r"^(?:(?P<user>{user})@)?"
         r"(?P<resource>{resource})"
-        r"(:?P<port>{port})?"
-        r"(?P<pathname>[:/]({path})?"
-        r"((?P<name>{name}?)(\.git|/)?)?)"
+        r"(:(?P<port>{port}))?"
+        r"(?P<pathname>([:/]{path}/)"
+        r"(?P<name>{name})(\.git|/)?)"
         r"([@#](?P<rev>{rev}))?"
         r"$".format(
             user=pattern_formats["user"],
@@ -56,25 +72,11 @@ PATTERNS = [
         )
     ),
     re.compile(
-        r"^(?:(?P<user>{user})@)*"
-        r"(?P<resource>{resource})[:]*"
-        r"(?P<port>{port})?"
-        r"(?P<pathname>({path})?(?P<name>.+).git)"
-        r"([@#](?P<rev>{rev}))?"
-        r"$".format(
-            user=pattern_formats["user"],
-            resource=pattern_formats["resource"],
-            port=pattern_formats["port"],
-            path=pattern_formats["path"],
-            rev=pattern_formats["rev"],
-        )
-    ),
-    re.compile(
         r"((?P<user>{user})@)?"
         r"(?P<resource>{resource})"
         r"[:/]{{1,2}}"
-        r"(?P<pathname>({path}))?"
-        r"((?P<name>{name})(\.git|/)?)"
+        r"(?P<pathname>({path})"
+        r"(?P<name>{name})(\.git|/)?)"
         r"([@#](?P<rev>{rev}))?"
         r"$".format(
             user=pattern_formats["user"],
