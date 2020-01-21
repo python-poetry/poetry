@@ -197,8 +197,23 @@ POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
-BIN = """#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+BIN = """#!/bin/sh
+# This script is bilingual.
+# The first part is POSIX shell, and the second part Python.
+""\":"
+check_version() {
+    version=$( ($1 --version  2>&1 | cut -d ' ' -f2) || echo '0.0.0')
+    maj=$(echo $version | cut -d '.' -f1)
+    min=$(echo $version | cut -d '.' -f2)
+    [ $maj -ge 3 ] && [ $min -ge 5 ] && return 0
+    return 1
+}
+
+check_version python && exec python $0 "$@"
+check_version python3 && exec python3 $0 "$@"
+exec python $0 "$@"
+":""\"
+
 import glob
 import sys
 import os
