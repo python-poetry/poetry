@@ -242,4 +242,4 @@ def test_parse_url_should_fail():
     url = "https://" + "@" * 64 + "!"
 
     with pytest.raises(ValueError):
-        result = ParsedUrl.parse(url)
+        ParsedUrl.parse(url)
