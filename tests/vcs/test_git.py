@@ -236,3 +236,10 @@ def test_parse_url(url, parsed):
     assert parsed.rev == result.rev
     assert parsed.url == result.url
     assert parsed.user == result.user
+
+
+def test_parse_url_should_fail():
+    url = "https://" + "@" * 64 + "!"
+
+    with pytest.raises(ValueError):
+        result = ParsedUrl.parse(url)
