@@ -329,7 +329,11 @@ class Provider:
                 with temporary_directory() as tmp_dir:
                     EnvManager.build_venv(tmp_dir)
                     venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
-                    venv.run("python", "setup.py", "egg_info")
+                    try:
+                        venv.run("python", "setup.py", "egg_info")
+                    except EnvCommandError:
+                        # Try a backup for old distutils based packages
+                        venv.run("python", "setup.py", "install_egg_info", "-d", ".")
             except EnvCommandError:
                 result = SetupReader.read_from_directory(directory)
                 if not result["name"]:
