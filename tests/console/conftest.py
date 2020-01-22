@@ -195,7 +195,7 @@ def app_tester(app):
 @pytest.fixture
 def app_project(repo, tmp_dir):
     def create_app(project):
-        shutil.copy(project / "pyproject.toml", Path(tmp_dir))
+        shutil.copy(str(project / "pyproject.toml"), tmp_dir)
         p = Factory().create_poetry(Path(tmp_dir))
 
         locker = Locker(p.locker.lock.path, p.locker._local_config)
