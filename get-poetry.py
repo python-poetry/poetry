@@ -590,6 +590,7 @@ class Installer:
         if WINDOWS:
             allowed_executables += ["py.exe -3", "py.exe -2"]
 
+        # \d in regex ensures we can convert to int later
         version_matcher = re.compile(r"^Python (?P<major>\d+)\.(?P<minor>\d+)\..+$")
         fallback = None
         for executable in allowed_executables:
@@ -601,10 +602,11 @@ class Installer:
                 continue
 
             match = version_matcher.match(raw_version.strip())
-            if match and int(match.groupdict()["major"]) >= 3:
+            if match and tuple(map(int, match.groups())) >= (3, 5):
+                # favor the first py3.5+ executable we can find.
                 return executable
             if fallback is None:
-                # keep this one as the fallback; it was the first valid exec we found.
+                # keep this one as the fallback; it was the first valid executable we found.
                 fallback = executable
 
         if fallback is None:
