@@ -162,6 +162,9 @@ class Package(object):
 
         m = AUTHOR_REGEX.match(self._authors[0])
 
+        if m is None:
+            return {"name": None, "email": None}
+
         name = m.group("name")
         email = m.group("email")
 
@@ -172,6 +175,9 @@ class Package(object):
             return {"name": None, "email": None}
 
         m = AUTHOR_REGEX.match(self._maintainers[0])
+
+        if m is None:
+            return {"name": None, "email": None}
 
         name = m.group("name")
         email = m.group("email")

@@ -17,6 +17,10 @@ def test_package_authors():
     assert package.author_name == "John Doe"
     assert package.author_email is None
 
+    package.authors.insert(0, "<John Doe")
+    assert package.author_name is None
+    assert package.author_email is None
+
 
 @pytest.mark.parametrize("category", ["main", "dev"])
 def test_package_add_dependency_vcs_category(category):
