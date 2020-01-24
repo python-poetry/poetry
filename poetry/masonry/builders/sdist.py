@@ -242,7 +242,8 @@ class SdistBuilder(Builder):
             ) and not all(
                 [
                     self.is_excluded(Path(path, filename).relative_to(self._path))
-                    for filename in filenames if filename.endswith(".py")
+                    for filename in filenames
+                    if filename.endswith(".py")
                 ]
             )
             if is_subpkg:
