@@ -1,5 +1,6 @@
 import sys
 
+
 try:
     from functools32 import lru_cache
 except ImportError:
@@ -9,6 +10,13 @@ try:
     from glob2 import glob
 except ImportError:
     from glob import glob
+
+try:
+    from importlib import metadata
+    import zipfile as zipp
+except ImportError:
+    import importlib_metadata as metadata
+    import zipp
 
 try:
     import urllib.parse as urlparse

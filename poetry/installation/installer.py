@@ -4,7 +4,6 @@ from typing import Union
 from clikit.api.io import IO
 from clikit.io import NullIO
 
-from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
 from poetry.puzzle import Solver
@@ -16,8 +15,8 @@ from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.semver import parse_constraint
-from poetry.utils.helpers import canonicalize_name
 from poetry.utils.extras import get_extra_package_names
+from poetry.utils.helpers import canonicalize_name
 
 from .base_installer import BaseInstaller
 from .pip_installer import PipInstaller
@@ -235,7 +234,7 @@ class Installer:
         # Execute operations
         actual_ops = [op for op in ops if not op.skipped]
         if not actual_ops and (self._execute_operations or self._dry_run):
-            self._io.write_line("Nothing to install or update")
+            self._io.write_line("No dependencies to install or update")
 
         if actual_ops and (self._execute_operations or self._dry_run):
             installs = []
@@ -306,7 +305,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -317,7 +316,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Installing <info>{}</> (<comment>{}</>)".format(
+                "  - Installing <c1>{}</c1> (<b>{}</b>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
@@ -334,7 +333,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
                         target.pretty_name,
                         target.full_pretty_version,
                         operation.skip_reason,
@@ -345,7 +344,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)".format(
+                "  - Updating <c1>{}</c1> (<b>{}</b> -> <b>{}</b>)".format(
                     target.pretty_name,
                     source.full_pretty_version,
                     target.full_pretty_version,
@@ -361,7 +360,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Not removing <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Not removing <c1>{}</c1> (<b>{}</b>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -372,7 +371,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Removing <info>{}</> (<comment>{}</>)".format(
+                "  - Removing <c1>{}</c1> (<b>{}</b>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )

@@ -1,24 +1,34 @@
 # This file is dual licensed under the terms of the Apache License, Version
 # 2.0, and the BSD License. See the LICENSE file in the root of this repository
 # for complete details.
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-import string
 import re
+import string
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    from urlparse import urlparse
-
-from pyparsing import stringStart, stringEnd, originalTextFor, ParseException
-from pyparsing import ZeroOrMore, Word, Optional, Regex, Combine
+from pyparsing import Combine
 from pyparsing import Literal as L  # noqa
+from pyparsing import Optional
+from pyparsing import ParseException
+from pyparsing import Regex
+from pyparsing import Word
+from pyparsing import ZeroOrMore
+from pyparsing import originalTextFor
+from pyparsing import stringEnd
+from pyparsing import stringStart
 
 from poetry.semver import parse_constraint
 
 from .markers import MARKER_EXPR
 from .markers import parse_marker
+
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 
 LEGACY_REGEX = r"""

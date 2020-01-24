@@ -3,13 +3,14 @@ from __future__ import unicode_literals
 
 import ast
 import os
-import pytest
 import re
 import shutil
 import sys
 import tarfile
-import zipfile
 import tempfile
+import zipfile
+
+import pytest
 
 from clikit.io import NullIO
 
@@ -19,6 +20,7 @@ from poetry.masonry.builders import CompleteBuilder
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils.env import NullEnv
+
 
 fixtures_dir = Path(__file__).parent / "fixtures"
 
@@ -79,7 +81,7 @@ def test_wheel_c_extension():
 Wheel-Version: 1.0
 Generator: poetry {}
 Root-Is-Purelib: false
-Tag: cp[23]\\d-cp[23]\\dmu?-.+
+Tag: cp[23]\\d-cp[23]\\dm?u?-.+
 $""".format(
                     __version__
                 ),
@@ -136,7 +138,7 @@ def test_wheel_c_extension_src_layout():
 Wheel-Version: 1.0
 Generator: poetry {}
 Root-Is-Purelib: false
-Tag: cp[23]\\d-cp[23]\\dmu?-.+
+Tag: cp[23]\\d-cp[23]\\dm?u?-.+
 $""".format(
                     __version__
                 ),
@@ -220,7 +222,7 @@ Metadata-Version: 2.1
 Name: my-package
 Version: 1.2.3
 Summary: Some description.
-Home-page: https://poetry.eustace.io/
+Home-page: https://python-poetry.org/
 License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
@@ -232,15 +234,16 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
 Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
-Project-URL: Documentation, https://poetry.eustace.io/docs
-Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
-Project-URL: Repository, https://github.com/sdispater/poetry
+Project-URL: Documentation, https://python-poetry.org/docs
+Project-URL: Issue Tracker, https://github.com/python-poetry/poetry/issues
+Project-URL: Repository, https://github.com/python-poetry/poetry
 Description-Content-Type: text/x-rst
 
 My Package
@@ -280,6 +283,7 @@ def test_complete_no_vcs():
         "my_package/sub_pkg2/data2/data.json",
         "my-package-1.2.3.data/scripts/script1.sh",
         "my-package-1.2.3.data/scripts/script2.py",
+        "my_package/sub_pkg3/foo.py",
         "my_package-1.2.3.dist-info/entry_points.txt",
         "my_package-1.2.3.dist-info/LICENSE",
         "my_package-1.2.3.dist-info/WHEEL",
@@ -324,7 +328,7 @@ Metadata-Version: 2.1
 Name: my-package
 Version: 1.2.3
 Summary: Some description.
-Home-page: https://poetry.eustace.io/
+Home-page: https://python-poetry.org/
 License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
@@ -336,15 +340,16 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
 Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
-Project-URL: Documentation, https://poetry.eustace.io/docs
-Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
-Project-URL: Repository, https://github.com/sdispater/poetry
+Project-URL: Documentation, https://python-poetry.org/docs
+Project-URL: Issue Tracker, https://github.com/python-poetry/poetry/issues
+Project-URL: Repository, https://github.com/python-poetry/poetry
 Description-Content-Type: text/x-rst
 
 My Package

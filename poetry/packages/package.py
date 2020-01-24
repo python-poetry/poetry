@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 import copy
+import logging
 import re
 
 from contextlib import contextmanager
 from typing import Union
+from warnings import warn
 
 from poetry.semver import Version
 from poetry.semver import parse_constraint
-from poetry.spdx import license_by_id
 from poetry.spdx import License
+from poetry.spdx import license_by_id
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 from poetry.version.markers import AnyMarker
@@ -19,15 +21,18 @@ from .dependency import Dependency
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .url_dependency import URLDependency
-from .vcs_dependency import VCSDependency
 from .utils.utils import create_nested_marker
+from .vcs_dependency import VCSDependency
+
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+
+logger = logging.getLogger(__name__)
 
 
 class Package(object):
 
-    AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7"}
+    AVAILABLE_PYTHONS = {"2", "2.7", "3", "3.4", "3.5", "3.6", "3.7", "3.8"}
 
     def __init__(self, name, version, pretty_version=None):
         """
@@ -66,7 +71,7 @@ class Package(object):
         self.requires_extras = []
 
         self.category = "main"
-        self.hashes = []
+        self.files = []
         self.optional = False
 
         self.classifiers = []
@@ -270,7 +275,18 @@ class Package(object):
             python_versions = constraint.get("python")
             platform = constraint.get("platform")
             markers = constraint.get("markers")
-            allows_prereleases = constraint.get("allows-prereleases", False)
+            if "allows-prereleases" in constraint:
+                message = (
+                    'The "{}" dependency specifies '
+                    'the "allows-prereleases" property, which is deprecated. '
+                    'Use "allow-prereleases" instead.'.format(name)
+                )
+                warn(message, DeprecationWarning)
+                logger.warning(message)
+
+            allows_prereleases = constraint.get(
+                "allow-prereleases", constraint.get("allows-prereleases", False)
+            )
 
             if "git" in constraint:
                 # VCS dependency
@@ -281,6 +297,7 @@ class Package(object):
                     branch=constraint.get("branch", None),
                     tag=constraint.get("tag", None),
                     rev=constraint.get("rev", None),
+                    category=category,
                     optional=optional,
                 )
             elif "file" in constraint:

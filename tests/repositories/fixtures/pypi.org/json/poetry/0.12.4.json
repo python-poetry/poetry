@@ -24,7 +24,7 @@
       "last_month": -1,
       "last_week": -1
     },
-    "home_page": "https://poetry.eustace.io/",
+    "home_page": "https://python-poetry.org/",
     "keywords": "packaging,dependency,poetry",
     "license": "MIT",
     "maintainer": "Sébastien Eustace",
@@ -34,9 +34,9 @@
     "platform": "",
     "project_url": "https://pypi.org/project/poetry/",
     "project_urls": {
-      "Documentation": "https://poetry.eustace.io/docs",
-      "Homepage": "https://poetry.eustace.io/",
-      "Repository": "https://github.com/sdispater/poetry"
+      "Documentation": "https://python-poetry.org/docs",
+      "Homepage": "https://python-poetry.org/",
+      "Repository": "https://github.com/python-poetry/poetry"
     },
     "release_url": "https://pypi.org/project/poetry/0.12.4/",
     "requires_dist": [

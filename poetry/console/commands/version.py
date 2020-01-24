@@ -7,7 +7,7 @@ class VersionCommand(Command):
 
     name = "version"
     description = (
-        "Shows the version of the project or bumps it when a valid"
+        "Shows the version of the project or bumps it when a valid "
         "bump rule is provided."
     )
 
@@ -20,7 +20,7 @@ class VersionCommand(Command):
     ]
 
     help = """\
-The version command shows the current version of the project or bumps the version of 
+The version command shows the current version of the project or bumps the version of
 the project and writes the new version back to <comment>pyproject.toml</> if a valid
 bump rule is provided.
 
@@ -47,7 +47,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             )
 
             self.line(
-                "Bumping version from <comment>{}</> to <info>{}</>".format(
+                "Bumping version from <b>{}</> to <fg=green>{}</>".format(
                     self.poetry.package.pretty_version, version
                 )
             )
@@ -59,7 +59,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             self.poetry.file.write(content)
         else:
             self.line(
-                "Project (<comment>{}</>) version is <info>{}</>".format(
+                "<comment>{}</> <info>{}</>".format(
                     self.poetry.package.name, self.poetry.package.pretty_version
                 )
             )

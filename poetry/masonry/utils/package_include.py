@@ -12,7 +12,6 @@ class PackageInclude(Include):
             base = base / source
 
         super(PackageInclude, self).__init__(base, include, formats=formats)
-
         self.check_elements()
 
     @property
@@ -35,6 +34,8 @@ class PackageInclude(Include):
         return self.check_elements()
 
     def check_elements(self):  # type: () -> PackageInclude
+        root = self._elements[0]
+
         if not self._elements:
             raise ValueError(
                 "{} does not contain any element".format(self._base / self._include)
@@ -44,20 +45,24 @@ class PackageInclude(Include):
             # Probably glob
             self._is_package = True
 
-            # The __init__.py file should be first
-            root = self._elements[0]
-            if root.name != "__init__.py":
-                raise ValueError("{} is not a package.".format(root))
+            # Packages no longer need an __init__.py in python3, but there must
+            # at least be one .py file for it to be considered a package
+            if not any([element.suffix == ".py" for element in self._elements]):
+                raise ValueError("{} is not a package.".format(root.name))
 
             self._package = root.parent.name
         else:
-            if self._elements[0].is_dir():
+            if root.is_dir():
                 # If it's a directory, we include everything inside it
-                self._package = self._elements[0].name
-                self._elements = sorted(list(self._elements[0].glob("**/*")))
+                self._package = root.name
+                self._elements = sorted(list(root.glob("**/*")))
+
+                if not any([element.suffix == ".py" for element in self._elements]):
+                    raise ValueError("{} is not a package.".format(root.name))
+
                 self._is_package = True
             else:
-                self._package = self._elements[0].stem
+                self._package = root.stem
                 self._is_module = True
 
         return self

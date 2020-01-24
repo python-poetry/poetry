@@ -1,7 +1,5 @@
 import os
 
-from poetry.locations import CACHE_DIR
-
 
 def test_config_get_default_value(config):
     assert config.get("virtualenvs.create") is True

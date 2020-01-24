@@ -233,7 +233,8 @@ class Factory:
     ):  # type: (Dict[str, str], Config) -> LegacyRepository
         from .repositories.auth import Auth
         from .repositories.legacy_repository import LegacyRepository
-        from .utils.helpers import get_http_basic_auth
+        from .utils.helpers import get_client_cert, get_cert
+        from .utils.password_manager import PasswordManager
 
         if "url" in source:
             # PyPI-like repository
@@ -242,15 +243,22 @@ class Factory:
         else:
             raise RuntimeError("Unsupported source specified")
 
+        password_manager = PasswordManager(auth_config)
         name = source["name"]
         url = source["url"]
-        credentials = get_http_basic_auth(auth_config, name)
-        if not credentials:
-            return LegacyRepository(name, url)
+        credentials = password_manager.get_http_auth(name)
+        if credentials:
+            auth = Auth(url, credentials["username"], credentials["password"])
+        else:
+            auth = None
 
-        auth = Auth(url, credentials[0], credentials[1])
-
-        return LegacyRepository(name, url, auth=auth)
+        return LegacyRepository(
+            name,
+            url,
+            auth=auth,
+            cert=get_cert(auth_config, name),
+            client_cert=get_client_cert(auth_config, name),
+        )
 
     @classmethod
     def validate(
@@ -283,6 +291,17 @@ class Factory:
                         "A wildcard Python dependency is ambiguous. "
                         "Consider specifying a more explicit one."
                     )
+
+                for name, constraint in config["dependencies"].items():
+                    if not isinstance(constraint, dict):
+                        continue
+
+                    if "allows-prereleases" in constraint:
+                        result["warnings"].append(
+                            'The "{}" dependency specifies '
+                            'the "allows-prereleases" property, which is deprecated. '
+                            'Use "allow-prereleases" instead.'.format(name)
+                        )
 
             # Checking for scripts with extras
             if "scripts" in config:

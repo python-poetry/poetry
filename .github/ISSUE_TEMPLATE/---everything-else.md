@@ -13,8 +13,8 @@ assignees: ''
 
 
 <!-- Checked checkbox should look like this: [x] -->
-- [ ] I have searched the [issues](https://github.com/sdispater/poetry/issues) of this repo and believe that this is not a duplicate.
-- [ ] I have searched the [documentation](https://poetry.eustace.io/docs/) and believe that my question is not covered.
+- [ ] I have searched the [issues](https://github.com/python-poetry/poetry/issues) of this repo and believe that this is not a duplicate.
+- [ ] I have searched the [documentation](https://python-poetry.org/docs/) and believe that my question is not covered.
 
 ## Issue
 <!-- Now feel free to write your issue, but please be descriptive! Thanks again 🙌 ❤️ -->

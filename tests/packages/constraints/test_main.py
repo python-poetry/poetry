@@ -53,5 +53,5 @@ def test_parse_constraint_multi(input, constraint):
         ),
     ],
 )
-def test_parse_constraint_multi(input, constraint):
+def test_parse_constraint_union(input, constraint):
     assert parse_constraint(input) == constraint

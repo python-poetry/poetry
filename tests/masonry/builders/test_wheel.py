@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-import pytest
 import shutil
 import zipfile
+
+import pytest
 
 from clikit.io import NullIO
 
 from poetry.factory import Factory
-from poetry.masonry.builders import WheelBuilder
+from poetry.masonry.builders.wheel import WheelBuilder
+from poetry.masonry.publishing.uploader import Uploader
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
 
@@ -91,6 +93,7 @@ def test_wheel_excluded_nested_data():
         assert "my_package/data/sub_data/data2.txt" not in z.namelist()
         assert "my_package/data/sub_data/data3.txt" not in z.namelist()
         assert "my_package/data/data1.txt" not in z.namelist()
+        assert "my_package/data/data2.txt" in z.namelist()
         assert "my_package/puplic/publicdata.txt" in z.namelist()
         assert "my_package/public/item1/itemdata1.txt" not in z.namelist()
         assert "my_package/public/item1/subitem/subitemdata.txt" not in z.namelist()
@@ -99,7 +102,8 @@ def test_wheel_excluded_nested_data():
 
 def test_wheel_localversionlabel():
     module_path = fixtures_dir / "localversionlabel"
-    WheelBuilder.make(Factory().create_poetry(module_path), NullEnv(), NullIO())
+    project = Factory().create_poetry(module_path)
+    WheelBuilder.make(project, NullEnv(), NullIO())
     local_version_string = "localversionlabel-0.1b1+gitbranch.buildno.1"
     whl = module_path / "dist" / (local_version_string + "-py2.py3-none-any.whl")
 
@@ -107,6 +111,9 @@ def test_wheel_localversionlabel():
 
     with zipfile.ZipFile(str(whl)) as z:
         assert local_version_string + ".dist-info/METADATA" in z.namelist()
+
+    uploader = Uploader(project, NullIO())
+    assert whl in uploader.files
 
 
 def test_wheel_package_src():

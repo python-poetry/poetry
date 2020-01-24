@@ -7,9 +7,9 @@ authors = [
 ]
 license = "MIT"
 
-homepage = "https://poetry.eustace.io/"
-repository = "https://github.com/sdispater/poetry"
-documentation = "https://poetry.eustace.io/docs"
+homepage = "https://python-poetry.org/"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
 
 keywords = ["packaging", "dependency", "poetry"]
 
@@ -21,4 +21,4 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "^3.6"
-demo = { url = "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl" }
+demo = { url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl" }

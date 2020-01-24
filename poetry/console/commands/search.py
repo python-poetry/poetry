@@ -1,5 +1,4 @@
 from cleo import argument
-from cleo import option
 
 from .command import Command
 
@@ -10,16 +9,11 @@ class SearchCommand(Command):
     description = "Searches for packages on remote repositories."
 
     arguments = [argument("tokens", "The tokens to search for.", multiple=True)]
-    options = [option("only-name", "N", "Search only by name.")]
 
     def handle(self):
         from poetry.repositories.pypi_repository import PyPiRepository
 
-        flags = PyPiRepository.SEARCH_FULLTEXT
-        if self.option("only-name"):
-            flags = PyPiRepository.SEARCH_NAME
-
-        results = PyPiRepository().search(self.argument("tokens"), flags)
+        results = PyPiRepository().search(self.argument("tokens"))
 
         for result in results:
             self.line("")

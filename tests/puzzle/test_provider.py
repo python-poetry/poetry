@@ -1,3 +1,5 @@
+from subprocess import CalledProcessError
+
 import pytest
 
 from clikit.io import NullIO
@@ -13,10 +15,7 @@ from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import MockEnv as BaseMockEnv
-
 from tests.helpers import get_dependency
-
-from subprocess import CalledProcessError
 
 
 class MockEnv(BaseMockEnv):
@@ -118,7 +117,10 @@ def test_search_for_vcs_read_setup_with_extras(provider, mocker):
 
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
+    mocker.patch(
+        "poetry.utils.env.VirtualEnv.run",
+        side_effect=EnvCommandError(CalledProcessError(1, "python", output="")),
+    )
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/no-version.git")
 
@@ -173,6 +175,46 @@ def test_search_for_directory_setup_egg_info_with_extras(provider):
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
+
+
+@pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
+def test_search_for_directory_setup_with_base(provider, directory):
+    dependency = DirectoryDependency(
+        "demo",
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / directory,
+        base=Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / directory,
+    )
+
+    package = provider.search_for_directory(dependency)[0]
+
+    assert package.name == "demo"
+    assert package.version.text == "0.1.2"
+    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+    assert package.extras == {
+        "foo": [get_dependency("cleo")],
+        "bar": [get_dependency("tomlkit")],
+    }
+    assert (
+        package.root_dir
+        == (
+            Path(__file__).parent.parent
+            / "fixtures"
+            / "git"
+            / "github.com"
+            / "demo"
+            / directory
+        ).as_posix()
+    )
 
 
 @pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")

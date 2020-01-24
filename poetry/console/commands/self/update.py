@@ -8,17 +8,18 @@ import tarfile
 from functools import cmp_to_key
 from gzip import GzipFile
 
+from cleo import argument
+from cleo import option
+
+from ..command import Command
+
+
 try:
     from urllib.error import HTTPError
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import HTTPError
     from urllib2 import urlopen
-
-from cleo import argument
-from cleo import option
-
-from ..command import Command
 
 
 class SelfUpdateCommand(Command):
@@ -29,7 +30,9 @@ class SelfUpdateCommand(Command):
     arguments = [argument("version", "The version to update to.", optional=True)]
     options = [option("preview", None, "Install prereleases.")]
 
-    BASE_URL = "https://github.com/sdispater/poetry/releases/download"
+    REPOSITORY_URL = "https://github.com/python-poetry/poetry"
+    BASE_URL = REPOSITORY_URL + "/releases/download"
+    FALLBACK_BASE_URL = "https://github.com/sdispater/poetry/releases/download"
 
     @property
     def home(self):
@@ -150,8 +153,17 @@ class SelfUpdateCommand(Command):
 
         checksum = "poetry-{}-{}.sha256sum".format(version, platform)
 
+        base_url = self.BASE_URL
         try:
-            r = urlopen(self.BASE_URL + "/{}/{}".format(version, checksum))
+            urlopen(self.REPOSITORY_URL)
+        except HTTPError as e:
+            if e.code == 404:
+                base_url = self.FALLBACK_BASE_URL
+            else:
+                raise
+
+        try:
+            r = urlopen(base_url + "/{}/{}".format(version, checksum))
         except HTTPError as e:
             if e.code == 404:
                 raise RuntimeError("Could not find {} file".format(checksum))
@@ -163,7 +175,7 @@ class SelfUpdateCommand(Command):
         # We get the payload from the remote host
         name = "poetry-{}-{}.tar.gz".format(version, platform)
         try:
-            r = urlopen(self.BASE_URL + "/{}/{}".format(version, name))
+            r = urlopen(base_url + "/{}/{}".format(version, name))
         except HTTPError as e:
             if e.code == 404:
                 raise RuntimeError("Could not find {} file".format(name))

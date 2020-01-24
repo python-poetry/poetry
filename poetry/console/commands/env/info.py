@@ -13,8 +13,7 @@ class EnvInfoCommand(Command):
     def handle(self):
         from poetry.utils.env import EnvManager
 
-        poetry = self.poetry
-        env = EnvManager(poetry.config).get(cwd=poetry.file.parent)
+        env = EnvManager(self.poetry).get()
 
         if self.option("path"):
             if not env.is_venv():

@@ -3,15 +3,13 @@ from __future__ import unicode_literals
 import contextlib
 import hashlib
 import os
-import re
-import tempfile
 import shutil
 import stat
+import tempfile
 import zipfile
 
 from base64 import urlsafe_b64encode
 from io import StringIO
-from typing import Set
 
 from clikit.api.io.flags import VERY_VERBOSE
 
@@ -19,6 +17,8 @@ from poetry.__version__ import __version__
 from poetry.semver import parse_constraint
 from poetry.utils._compat import decode
 
+from ..utils.helpers import escape_name
+from ..utils.helpers import escape_version
 from ..utils.helpers import normalize_file_permissions
 from ..utils.package_include import PackageInclude
 from ..utils.tags import get_abbr_impl
@@ -116,9 +116,9 @@ class WheelBuilder(Builder):
                 return
 
             lib = lib[0]
-            excluded = self.find_excluded_files()
+
             for pkg in lib.glob("**/*"):
-                if pkg.is_dir() or pkg in excluded:
+                if pkg.is_dir() or self.is_excluded(pkg):
                     continue
 
                 rel_path = str(pkg.relative_to(lib))
@@ -133,7 +133,7 @@ class WheelBuilder(Builder):
                 self._add_file(wheel, pkg, rel_path)
 
     def _copy_module(self, wheel):
-        excluded = self.find_excluded_files()
+
         to_add = []
 
         for include in self._module.includes:
@@ -154,7 +154,9 @@ class WheelBuilder(Builder):
                 else:
                     rel_file = file.relative_to(self._path)
 
-                if rel_file.as_posix() in excluded:
+                if self.is_excluded(rel_file.as_posix()) and isinstance(
+                    include, PackageInclude
+                ):
                     continue
 
                 if file.suffix == ".pyc":
@@ -222,8 +224,8 @@ class WheelBuilder(Builder):
     @property
     def wheel_filename(self):  # type: () -> str
         return "{}-{}-{}.whl".format(
-            re.sub(r"[^\w\d.]+", "_", self._package.pretty_name, flags=re.UNICODE),
-            re.sub(r"[^\w\d.\+]+", "_", self._meta.version, flags=re.UNICODE),
+            escape_name(self._package.pretty_name),
+            escape_version(self._meta.version),
             self.tag,
         )
 
@@ -233,8 +235,8 @@ class WheelBuilder(Builder):
         )
 
     def dist_info_name(self, distribution, version):  # type: (...) -> str
-        escaped_name = re.sub(r"[^\w\d.]+", "_", distribution, flags=re.UNICODE)
-        escaped_version = re.sub(r"[^\w\d.+]+", "_", version, flags=re.UNICODE)
+        escaped_name = escape_name(distribution)
+        escaped_version = escape_version(version)
 
         return "{}-{}.dist-info".format(escaped_name, escaped_version)
 

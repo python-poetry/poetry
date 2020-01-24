@@ -1,6 +1,6 @@
-from .builders import CompleteBuilder
-from .builders import SdistBuilder
-from .builders import WheelBuilder
+from .builders.complete import CompleteBuilder
+from .builders.sdist import SdistBuilder
+from .builders.wheel import WheelBuilder
 
 
 class Builder:

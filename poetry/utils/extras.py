@@ -1,4 +1,7 @@
-from typing import Iterator, Mapping, Sequence
+from typing import Iterator
+from typing import List
+from typing import Mapping
+from typing import Sequence
 
 from poetry.packages import Package
 from poetry.utils.helpers import canonicalize_name
@@ -6,7 +9,7 @@ from poetry.utils.helpers import canonicalize_name
 
 def get_extra_package_names(
     packages,  # type: Sequence[Package]
-    extras,  # type: Mapping[str, Collection[str]]
+    extras,  # type: Mapping[str, List[str]]
     extra_names,  # type: Sequence[str]
 ):  # type: (...) -> Iterator[str]
     """

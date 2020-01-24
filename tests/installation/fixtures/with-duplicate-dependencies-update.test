@@ -23,6 +23,7 @@ C = "1.5"
 [[package]]
 name = "C"
 version = "1.5"
+marker = "python_version >= \"2.7\""
 description = ""
 category = "main"
 optional = false
@@ -32,7 +33,7 @@ python-versions = "*"
 python-versions = "*"
 content-hash = "123456789"
 
-[metadata.hashes]
+[metadata.files]
 A = []
 B = []
 C = []

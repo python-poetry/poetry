@@ -94,7 +94,7 @@ class Pool(BaseRepository):
 
     def package(
         self, name, version, extras=None, repository=None
-    ):  # type: (str, str, List[str], str) -> Package
+    ):  # type: (str, str, List[str], str) -> "Package"
         if (
             repository is not None
             and repository not in self._lookup
@@ -151,7 +151,7 @@ class Pool(BaseRepository):
 
         return packages
 
-    def search(self, query, mode=BaseRepository.SEARCH_FULLTEXT):
+    def search(self, query):
         from .legacy_repository import LegacyRepository
 
         results = []
@@ -159,6 +159,6 @@ class Pool(BaseRepository):
             if isinstance(repository, LegacyRepository):
                 continue
 
-            results += repository.search(query, mode=mode)
+            results += repository.search(query)
 
         return results

@@ -2,9 +2,9 @@
 import re
 import shutil
 import tempfile
+
 from collections import defaultdict
 from contextlib import contextmanager
-
 from typing import Optional
 from typing import Set
 from typing import Union
@@ -12,14 +12,15 @@ from typing import Union
 from clikit.api.io.flags import VERY_VERBOSE
 
 from poetry.utils._compat import Path
-from poetry.utils._compat import basestring
 from poetry.utils._compat import glob
 from poetry.utils._compat import lru_cache
 from poetry.utils._compat import to_str
 from poetry.vcs import get_vcs
+
 from ..metadata import Metadata
 from ..utils.module import Module
 from ..utils.package_include import PackageInclude
+
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
 
@@ -38,7 +39,7 @@ class Builder(object):
 
     def __init__(
         self, poetry, env, io, ignore_packages_formats=False
-    ):  # type: (Poetry, Env, IO) -> None
+    ):  # type: ("Poetry", "Env", "IO", bool) -> None
         self._poetry = poetry
         self._env = env
         self._io = io
@@ -83,15 +84,6 @@ class Builder(object):
 
         explicitely_excluded = set()
         for excluded_glob in self._package.exclude:
-            excluded_path = Path(self._path, excluded_glob)
-
-            try:
-                is_dir = excluded_path.is_dir()
-            except OSError:
-                # On Windows, testing if a path with a glob is a directory will raise an OSError
-                is_dir = False
-            if is_dir:
-                excluded_glob = Path(excluded_glob, "**/*")
 
             for excluded in glob(
                 Path(self._path, excluded_glob).as_posix(), recursive=True
@@ -111,10 +103,18 @@ class Builder(object):
         return result
 
     def is_excluded(self, filepath):  # type: (Union[str, Path]) -> bool
-        if not isinstance(filepath, basestring):
-            filepath = filepath.as_posix()
+        exclude_path = Path(filepath)
 
-        return filepath in self.find_excluded_files()
+        while True:
+            if exclude_path.as_posix() in self.find_excluded_files():
+                return True
+
+            if len(exclude_path.parts) > 1:
+                exclude_path = exclude_path.parent
+            else:
+                break
+
+        return False
 
     def find_files_to_add(self, exclude_build=True):  # type: (bool) -> list
         """
@@ -173,7 +173,7 @@ class Builder(object):
             )
             to_add.append(script_full_path.relative_to(self._path))
 
-        # If a README is specificed we need to include it
+        # If a README is specified we need to include it
         # to avoid errors
         if "readme" in self._poetry.local_config:
             readme = self._path / self._poetry.local_config["readme"]

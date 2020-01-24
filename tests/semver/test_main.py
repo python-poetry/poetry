@@ -1,9 +1,9 @@
 import pytest
 
-from poetry.semver import parse_constraint
 from poetry.semver import Version
 from poetry.semver import VersionRange
 from poetry.semver import VersionUnion
+from poetry.semver import parse_constraint
 
 
 @pytest.mark.parametrize(
@@ -67,7 +67,11 @@ def test_parse_constraint_wildcard(input, constraint):
         ("~0.3", VersionRange(Version(0, 3, 0), Version(0, 4, 0), True)),
         ("~3.5", VersionRange(Version(3, 5, 0), Version(3, 6, 0), True)),
         ("~=3.5", VersionRange(Version(3, 5, 0), Version(4, 0, 0), True)),  # PEP 440
-        ("~=3.5.3", VersionRange(Version(3, 5, 0), Version(3, 6, 0), True)),  # PEP 440
+        ("~=3.5.3", VersionRange(Version(3, 5, 3), Version(3, 6, 0), True)),  # PEP 440
+        (
+            "~=3.5.3rc1",
+            VersionRange(Version(3, 5, 3, pre="rc1"), Version(3, 6, 0), True),
+        ),  # PEP 440
     ],
 )
 def test_parse_constraint_tilde(input, constraint):

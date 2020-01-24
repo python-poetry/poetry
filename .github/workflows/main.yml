@@ -1,4 +1,4 @@
-name: Main
+name: Tests
 
 on: [push, pull_request]
 
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v1
@@ -30,10 +30,20 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
+    - name: Get full python version
+      id: full-python-version
+      run: |
+        echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info[:3]))")
+    - name: Install and set up Poetry
       run: |
         python get-poetry.py --preview -y
         source $HOME/.poetry/env
+        poetry config virtualenvs.in-project true
+    - name: Set up cache
+      uses: actions/cache@v1
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
       run: |
         source $HOME/.poetry/env
@@ -48,7 +58,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v1
@@ -56,10 +66,20 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
+    - name: Get full python version
+      id: full-python-version
+      run: |
+        echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info[:3]))")
+    - name: Install and set up Poetry
       run: |
         python get-poetry.py --preview -y
         source $HOME/.poetry/env
+        poetry config virtualenvs.in-project true
+    - name: Set up cache
+      uses: actions/cache@v1
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
       run: |
         source $HOME/.poetry/env
@@ -74,7 +94,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v1
@@ -82,18 +102,26 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
-      shell: cmd
+    - name: Get full python version
+      id: full-python-version
+      shell: bash
+      run: |
+        echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info[:3]))")
+    - name: Install and setup Poetry
       run: |
         python get-poetry.py --preview -y
-        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+        $env:Path += ";$env:Userprofile\.poetry\bin"
+        poetry config virtualenvs.in-project true
+    - name: Set up cache
+      uses: actions/cache@v1
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
-      shell: cmd
       run: |
-        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+        $env:Path += ";$env:Userprofile\.poetry\bin"
         poetry install
     - name: Test
-      shell: cmd
       run: |
-        SET PATH=%USERPROFILE%\\.poetry\\bin;%PATH%
+        $env:Path += ";$env:Userprofile\.poetry\bin"
         poetry run pytest -q tests

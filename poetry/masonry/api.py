@@ -11,8 +11,9 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import unicode
 from poetry.utils.env import SystemEnv
 
-from .builders import SdistBuilder
-from .builders import WheelBuilder
+from .builders.sdist import SdistBuilder
+from .builders.wheel import WheelBuilder
+
 
 log = logging.getLogger(__name__)
 
