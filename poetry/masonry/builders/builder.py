@@ -75,7 +75,9 @@ class Builder(object):
     @lru_cache(maxsize=None)
     def find_excluded_files(self):  # type: () -> Set[str]
         # Checking VCS
-        vcs = get_vcs(self._path)
+        vcs = get_vcs(
+            self._original_path if hasattr(self, "_original_path") else self._path
+        )
         if not vcs:
             vcs_ignored_files = set()
         else:
