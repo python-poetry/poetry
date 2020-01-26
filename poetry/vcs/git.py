@@ -231,7 +231,7 @@ class Git:
 
         # git rev-list TAG --max-count=1 works with annotated and
         # non-annotated tags.
-        args += ["rev-list", rev, '--max-count=1']
+        args += ["rev-list", rev, "--max-count=1"]
 
         return self.run(*args)
 
