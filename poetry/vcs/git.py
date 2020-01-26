@@ -229,7 +229,9 @@ class Git:
                 folder.as_posix(),
             ]
 
-        args += ["rev-parse", rev]
+        # git rev-list TAG --max-count=1 works with annotated and
+        # non-annotated tags.
+        args += ["rev-list", rev, '--max-count=1']
 
         return self.run(*args)
 
