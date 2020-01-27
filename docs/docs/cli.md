@@ -245,7 +245,7 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 * `--path`: The path to a dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-
+* `--allow-prereleases`: Install a pre-release version if present for the library. Example: poetry add --allow-prereleases=true
 
 ## remove
 
@@ -445,7 +445,6 @@ poetry export -f requirements.txt > requirements.txt
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
-* `--allow-prereleases`: Install a pre-release version if present for the library. Example: poetry add --allow-prereleases=true
 ## env
 
 The `env` command regroups sub commands to interact with the virtualenvs
