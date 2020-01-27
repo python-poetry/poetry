@@ -445,7 +445,7 @@ poetry export -f requirements.txt > requirements.txt
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
-
+* `--allow-prereleases`: Install a pre-release version if present for the library. Example: poetry add --allow-prereleases=true
 ## env
 
 The `env` command regroups sub commands to interact with the virtualenvs
