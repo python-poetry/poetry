@@ -98,6 +98,37 @@ def test_setup_reader_read_sub_level_setup_call_with_direct_types(setup):
     assert result["python_requires"] is None
 
 
+@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_setup_reader_allow_nested_calls(setup):
+    result = SetupReader.read_from_directory(setup("graphene"))
+
+    expected_name = "graphene"
+    expected_version = "3.0.2"
+    expected_install_requires = ["graphql-core>=3.0.0a0,<4", "aniso8601>=6,<8"]
+    expected_extras_require = {
+        "test": [
+            "pytest",
+            "pytest-benchmark",
+            "pytest-cov",
+            "pytest-mock",
+            "pytest-asyncio",
+            "snapshottest",
+            "coveralls",
+            "promise",
+            "six",
+            "mock",
+            "pytz",
+            "iso8601",
+        ]
+    }
+
+    assert expected_name == result["name"]
+    assert expected_version == result["version"]
+    assert expected_install_requires == result["install_requires"]
+    assert expected_extras_require == result["extras_require"]
+    assert result["python_requires"] is None
+
+
 def test_setup_reader_read_setup_cfg(setup):
     result = SetupReader.read_from_directory(setup("with-setup-cfg"))
 
