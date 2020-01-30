@@ -70,6 +70,7 @@ def test_set_http_password(config, mock_available_backend, backend):
     assert "password" not in auth
 
 
+@pytest.paramaterize
 def test_get_http_auth(config, mock_available_backend, backend):
     backend.set_password("poetry-repository-foo", "bar", "baz")
     config.auth_config_source.add_property("http-basic.foo", {"username": "bar"})
@@ -80,6 +81,23 @@ def test_get_http_auth(config, mock_available_backend, backend):
 
     assert "bar" == auth["username"]
     assert "baz" == auth["password"]
+
+
+@pytest.mark.parametrize("user_env,password_env,combined", (
+        ("bar", "baz", {}, {"username": "bar", "password": "baz"}),
+        ("bar", None, {"username": "notbar", "password": "baz"}),
+        (None, "baz", {"username": "bar", "password": "notbaz"}),
+        (None, None, {"username": "bar", "password": "baz"}),
+))
+def test_get_http_auth_specific_variables(config, mock_available_backend, backend, user_env, password_env, combined):
+    if user_env:
+        config.auth_config_source.add_property("http-basic.foo.username", user_env)
+    if password_env:
+        config.auth_config_source.add_property("http-basic.foo.password", password_env)
+    manager = PasswordManager(config)
+
+    auth = manager.get_http_auth("foo")
+    assert auth == {"username": "bar", "password": "baz"}
 
 
 def test_delete_http_password(config, mock_available_backend, backend):

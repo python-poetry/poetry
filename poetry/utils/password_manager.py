@@ -148,11 +148,19 @@ class PasswordManager:
         self._keyring.delete_password(name, "__token__")
 
     def get_http_auth(self, name):
+        username = self._config.get("http-basic.{}.username".format(name))
+        password = self._config.get("http-basic.{}.password".format(name))
         auth = self._config.get("http-basic.{}".format(name))
-        if not auth:
+
+        if not auth and not (username or password):
             return None
 
-        username, password = auth["username"], auth.get("password")
+        if not username:
+            username = auth['username']
+
+        if not password:
+            password = auth.get('password')
+
         if password is None:
             password = self._keyring.get_password(name, username)
 
