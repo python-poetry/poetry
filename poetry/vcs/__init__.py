@@ -8,6 +8,7 @@ from .git import Git
 
 
 def get_vcs(directory):  # type: (Path) -> Git
+    working_dir = Path.cwd()
     os.chdir(str(directory))
 
     try:
@@ -17,8 +18,11 @@ def get_vcs(directory):  # type: (Path) -> Git
             )
         ).strip()
 
-        return Git(Path(git_dir))
+        vcs = Git(Path(git_dir))
 
     except subprocess.CalledProcessError:
+        vcs = None
+    finally:
+        os.chdir(str(working_dir))
 
-        return
+    return vcs
