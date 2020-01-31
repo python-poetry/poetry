@@ -15,6 +15,7 @@ class VersionSelector(object):
         package_name,  # type: str
         target_package_version=None,  # type:  Union[str, None]
         allow_prereleases=False,  # type: bool
+        source=None,  # type: str
     ):  # type: (...) -> Union[Package, bool]
         """
         Given a package name and optional version,
@@ -26,7 +27,7 @@ class VersionSelector(object):
             constraint = parse_constraint("*")
 
         candidates = self._pool.find_packages(
-            package_name, constraint, allow_prereleases=True
+            package_name, constraint, allow_prereleases=True, repository=source
         )
         only_prereleases = all([c.version.is_prerelease() for c in candidates])
 
