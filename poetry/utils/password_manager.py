@@ -155,11 +155,14 @@ class PasswordManager:
     def get_http_auth(self, name):
         auth = self._config.get("http-basic.{}".format(name))
         if not auth:
-            return None
-
-        username, password = auth["username"], auth.get("password")
-        if password is None:
-            password = self.keyring.get_password(name, username)
+            username = self._config.get("http-basic.{}.username".format(name))
+            password = self._config.get("http-basic.{}.password".format(name))
+            if not username and not password:
+                return None
+        else:
+            username, password = auth["username"], auth.get("password")
+            if password is None:
+                password = self.keyring.get_password(name, username)
 
         return {
             "username": username,
