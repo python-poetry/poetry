@@ -229,9 +229,9 @@ class Git:
                 folder.as_posix(),
             ]
 
-        # git rev-list TAG --max-count=1 works with annotated and
-        # non-annotated tags.
-        args += ["rev-list", rev, "--max-count=1"]
+        # We need "^{commit}" to ensure that the commit SHA of the commit the
+        # tag points to is returned, even in the case of annotated tags.
+        args += ["rev-parse", rev + "^{commit}"]
 
         return self.run(*args)
 
