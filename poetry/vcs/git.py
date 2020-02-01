@@ -15,6 +15,7 @@ pattern_formats = {
     "path": r"[\w~.\-/\\]+",
     "name": r"[\w~.\-]+",
     "rev": r"[^@#]+",
+    "subdir": r"[\w\-/\\]+",
 }
 
 PATTERNS = [
@@ -27,6 +28,7 @@ PATTERNS = [
         r"(?P<pathname>[:/\\]({path}[/\\])?"
         r"((?P<name>{name}?)(\.git|[/\\])?)?)"
         r"([@#](?P<rev>{rev}))?"
+        r"(\?subdirectory=(?P<subdirectory>{subdir}))?"
         r"$".format(
             user=pattern_formats["user"],
             resource=pattern_formats["resource"],
@@ -34,6 +36,7 @@ PATTERNS = [
             path=pattern_formats["path"],
             name=pattern_formats["name"],
             rev=pattern_formats["rev"],
+            subdir=pattern_formats["subdir"],
         )
     ),
     re.compile(
@@ -45,6 +48,7 @@ PATTERNS = [
         r"(?P<pathname>({path})"
         r"(?P<name>{name})(\.git|/)?)"
         r"([@#](?P<rev>{rev}))?"
+        r"(\?subdirectory=(?P<subdirectory>{subdir}))?"
         r"$".format(
             protocol=pattern_formats["protocol"],
             user=pattern_formats["user"],
@@ -53,6 +57,7 @@ PATTERNS = [
             path=pattern_formats["path"],
             name=pattern_formats["name"],
             rev=pattern_formats["rev"],
+            subdir=pattern_formats["subdir"],
         )
     ),
     re.compile(
@@ -62,6 +67,7 @@ PATTERNS = [
         r"(?P<pathname>([:/]{path}/)"
         r"(?P<name>{name})(\.git|/)?)"
         r"([@#](?P<rev>{rev}))?"
+        r"(\?subdirectory=(?P<subdirectory>{subdir}))?"
         r"$".format(
             user=pattern_formats["user"],
             resource=pattern_formats["resource"],
@@ -69,6 +75,7 @@ PATTERNS = [
             path=pattern_formats["path"],
             name=pattern_formats["name"],
             rev=pattern_formats["rev"],
+            subdir=pattern_formats["subdir"],
         )
     ),
     re.compile(
@@ -78,19 +85,23 @@ PATTERNS = [
         r"(?P<pathname>({path})"
         r"(?P<name>{name})(\.git|/)?)"
         r"([@#](?P<rev>{rev}))?"
+        r"(\?subdirectory=(?P<subdirectory>{subdir}))?"
         r"$".format(
             user=pattern_formats["user"],
             resource=pattern_formats["resource"],
             path=pattern_formats["path"],
             name=pattern_formats["name"],
             rev=pattern_formats["rev"],
+            subdir=pattern_formats["subdir"],
         )
     ),
 ]
 
 
 class ParsedUrl:
-    def __init__(self, protocol, resource, pathname, user, port, name, rev):
+    def __init__(
+        self, protocol, resource, pathname, user, port, name, rev, subdirectory
+    ):
         self.protocol = protocol
         self.resource = resource
         self.pathname = pathname
@@ -98,6 +109,7 @@ class ParsedUrl:
         self.port = port
         self.name = name
         self.rev = rev
+        self.subdirectory = subdirectory
 
     @classmethod
     def parse(cls, url):  # type: () -> ParsedUrl
@@ -113,6 +125,7 @@ class ParsedUrl:
                     groups.get("port"),
                     groups.get("name"),
                     groups.get("rev"),
+                    groups.get("subdirectory"),
                 )
 
         raise ValueError('Invalid git url "{}"'.format(url))
@@ -128,13 +141,17 @@ class ParsedUrl:
         )
 
     def format(self):
-        return "{}".format(self.url, "#{}".format(self.rev) if self.rev else "",)
+        return "{}".format(
+            self.url,
+            "#{}".format(self.rev) if self.rev else "",
+            "?subdirectory={}".format(self.subdirectory) if self.subdirectory else "",
+        )
 
     def __str__(self):  # type: () -> str
         return self.format()
 
 
-GitUrl = namedtuple("GitUrl", ["url", "revision"])
+GitUrl = namedtuple("GitUrl", ["url", "revision", "subdirectory"])
 
 
 class GitConfig:
@@ -174,7 +191,11 @@ class Git:
 
         formatted = re.sub(r"^git\+", "", url)
         if parsed.rev:
-            formatted = re.sub(r"[#@]{}$".format(parsed.rev), "", formatted)
+            formatted = re.sub(r"[#@]{}(\?.*)?$".format(parsed.rev), "", formatted)
+        if parsed.subdirectory:
+            formatted = re.sub(
+                r"\?subdirectory={}$".format(parsed.subdirectory), "", formatted
+            )
 
         altered = parsed.format() != formatted
 
@@ -186,11 +207,13 @@ class Git:
             elif re.match(r"^git\+file", url):
                 normalized = re.sub(r"git\+", "", url)
             else:
-                normalized = re.sub(r"^(?:git\+)?ssh://", "", url)
+                normalized = re.sub(r"^(?:git\+)?ssh://", "", formatted)
         else:
             normalized = parsed.format()
 
-        return GitUrl(re.sub(r"#[^#]*$", "", normalized), parsed.rev)
+        return GitUrl(
+            re.sub(r"#[^#]*$", "", normalized), parsed.rev, parsed.subdirectory
+        )
 
     @property
     def config(self):  # type: () -> GitConfig
