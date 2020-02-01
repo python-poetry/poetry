@@ -172,8 +172,10 @@ def test_add_git_constraint(app, repo, installer):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    tester.execute("git+https://github.com/demo/demo.git")
-
+    tester.execute(
+        "git+https://github.com/demo/project_in_subdirectory.git?subdirectory=pyproject-demo"
+    )
+    pass
     expected = """\
 
 Updating dependencies
@@ -197,6 +199,25 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
         "git": "https://github.com/demo/demo.git"
+    }
+
+
+def test_add_git_constraint_with_subdir(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    tester.execute(
+        "git+https://github.com/demo/project_in_subdirectory.git?subdirectory=pyproject-demo"
+    )
+
+    assert len(installer.installs) == 1
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "git": "https://github.com/demo/project_in_subdirectory.git",
+        "subdirectory": "pyproject-demo",
     }
 
 
