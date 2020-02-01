@@ -172,10 +172,8 @@ def test_add_git_constraint(app, repo, installer):
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    tester.execute(
-        "git+https://github.com/demo/project_in_subdirectory.git?subdirectory=pyproject-demo"
-    )
-    pass
+    tester.execute("git+https://github.com/demo/demo.git")
+
     expected = """\
 
 Updating dependencies
