@@ -95,6 +95,22 @@ from poetry.vcs.git import ParsedUrl
                 "path/to/package",
             ),
         ),
+        (
+            "git+https://git.example.com/sdispater/project/my_repo.git#dev?subdirectory=path/to/package",
+            GitUrl(
+                "https://git.example.com/sdispater/project/my_repo.git",
+                "dev",
+                "path/to/package",
+            ),
+        ),
+        (
+            "git+ssh://git@git.example.com:sdispater/project/my_repo.git#dev?subdirectory=path/to/package",
+            GitUrl(
+                "git@git.example.com:sdispater/project/my_repo.git",
+                "dev",
+                "path/to/package",
+            ),
+        ),
     ],
 )
 def test_normalize_url(url, normalized):
@@ -325,6 +341,32 @@ def test_normalize_url(url, normalized):
                 None,
                 "my_repo",
                 None,
+                "path/to/package",
+            ),
+        ),
+        (
+            "git+https://git.example.com/sdispater/project/my_repo.git#dev?subdirectory=path/to/package",
+            ParsedUrl(
+                "https",
+                "git.example.com",
+                "/sdispater/project/my_repo.git",
+                None,
+                None,
+                "my_repo",
+                "dev",
+                "path/to/package",
+            ),
+        ),
+        (
+            "git+ssh://git@git.example.com:sdispater/project/my_repo.git#dev?subdirectory=path/to/package",
+            ParsedUrl(
+                "ssh",
+                "git.example.com",
+                ":sdispater/project/my_repo.git",
+                "git",
+                None,
+                "my_repo",
+                "dev",
                 "path/to/package",
             ),
         ),

@@ -14,7 +14,7 @@ pattern_formats = {
     "port": r"\d+",
     "path": r"[\w~.\-/\\]+",
     "name": r"[\w~.\-]+",
-    "rev": r"[^@#]+",
+    "rev": r"[^@#?]+",
     "subdir": r"[\w\-/\\]+",
 }
 
