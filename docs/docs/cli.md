@@ -212,7 +212,14 @@ poetry add git+https://github.com/sdispater/pendulum.git#develop
 poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
 ```
 
-or make them point to a local directory or file:
+If the package is located within a subdirectory of a git dependency use:
+
+```bash
+poetry add "git+https://github.com/demo/project_in_subdirectory.git?subdirectory=pyproject-demo"
+poetry add "git+https://github.com/demo/project_in_subdirectory.git#develop?subdirectory=pyproject-demo"
+```
+
+You can also point to a local directory or file:
 
 ```bash
 poetry add ./my-package/
