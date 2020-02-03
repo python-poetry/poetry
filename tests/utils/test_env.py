@@ -11,6 +11,7 @@ from poetry.factory import Factory
 from poetry.semver import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
+from poetry.utils.env import PIP_VERSION_MAX
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import NoCompatiblePythonVersionFound
@@ -573,6 +574,11 @@ def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
         tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
 
     assert processError.value.e.returncode == 1
+
+
+def test_env_pip_version(tmp_dir, tmp_venv):
+    venv_pip_version = tmp_venv.run("pip", "-V", shell=True)
+    assert venv_pip_version.split()[:2] == ["pip", PIP_VERSION_MAX]
 
 
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(

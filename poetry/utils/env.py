@@ -34,6 +34,20 @@ from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import BaseMarker
 
 
+# pip version requirements when creating venvs are specified here.
+# The maximal version is chosen to be the last version in the 19.3 branch, as
+# it seems to be relatively bug free, and to work well with poetry (poetry
+# uses pip internally, and pip API might change in ways that can break stuff).
+# Note that pip 19.3 is required to find and install manylinux2014 packages.
+# This version should be updated from time to time.
+PIP_VERSION_MAX = "19.3.1"
+# We use a different minimal version to allow fallback in case of older python
+# versions. This version was chosen to be 19.1.1, as it is the most recent
+# version that supports python 3.4.
+# When poetry will drop support for EOL python versions, it might be possible
+# to update this version, or to use a pinned version instead.
+PIP_VERSION_MIN = "19.1.1"
+
 GET_ENVIRONMENT_INFO = """\
 import json
 import os
@@ -656,26 +670,36 @@ class EnvManager(object):
             except CalledProcessError as e:
                 raise EnvCommandError(e)
 
-            return
+        else:
+            try:
+                from venv import EnvBuilder
 
-        try:
-            from venv import EnvBuilder
+                # use the same defaults as python -m venv
+                if os.name == "nt":
+                    use_symlinks = False
+                else:
+                    use_symlinks = True
 
-            # use the same defaults as python -m venv
-            if os.name == "nt":
-                use_symlinks = False
-            else:
-                use_symlinks = True
+                builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
+                build = builder.create
+            except ImportError:
+                # We fallback on virtualenv for Python 2.7
+                from virtualenv import create_environment
 
-            builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
-            build = builder.create
-        except ImportError:
-            # We fallback on virtualenv for Python 2.7
-            from virtualenv import create_environment
+                build = create_environment
 
-            build = create_environment
+            build(path)
 
-        build(path)
+        # update pip version
+        the_venv = VirtualEnv(Path(path))
+        the_venv.run(
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            "pip>={},<={}".format(PIP_VERSION_MIN, PIP_VERSION_MAX),
+        )
 
     def remove_venv(self, path):  # type: (str) -> None
         shutil.rmtree(path)
