@@ -214,7 +214,7 @@ Here, we will have the `poetry` script installed which will execute `console.run
 
 ### `script-files`
 
-You can include non-Python scripts as well in distribution package.
+You can also include non-Python scripts in the distribution package.
 
 ```toml
 [tool.poetry]
