@@ -1,3 +1,5 @@
+import poetry
+
 from poetry.packages import Package
 from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
@@ -35,12 +37,20 @@ class InstalledRepository(Repository):
 
                 path = Path(str(distribution._path))
                 is_standard_package = True
+                is_vendor = True
+
                 try:
                     path.relative_to(env.site_packages)
                 except ValueError:
                     is_standard_package = False
+                try:
+                    path.relative_to(poetry._CURRENT_VENDOR)
+                except ValueError:
+                    is_vendor = False
 
                 if is_standard_package:
+                    continue
+                elif is_vendor:
                     continue
 
                 src_path = env.path / "src"
