@@ -1,4 +1,5 @@
 import base64
+import functools
 import hashlib
 import json
 import os
@@ -483,6 +484,7 @@ class EnvManager(object):
 
         create_venv = self._poetry.config.get("virtualenvs.create")
         root_venv = self._poetry.config.get("virtualenvs.in-project")
+        system_packages = self._poetry.config.get("virtualenvs.system-packages")
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if root_venv:
@@ -607,7 +609,9 @@ class EnvManager(object):
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
             )
 
-            self.build_venv(str(venv), executable=executable)
+            self.build_venv(
+                str(venv), executable=executable, system_packages=system_packages
+            )
         else:
             if force:
                 if not env.is_sane():
@@ -620,7 +624,9 @@ class EnvManager(object):
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
                 self.remove_venv(str(venv))
-                self.build_venv(str(venv), executable=executable)
+                self.build_venv(
+                    str(venv), executable=executable, system_packages=system_packages
+                )
             elif io.is_very_verbose():
                 io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
 
@@ -643,7 +649,7 @@ class EnvManager(object):
         return VirtualEnv(venv)
 
     @classmethod
-    def build_venv(cls, path, executable=None):
+    def build_venv(cls, path, executable=None, system_packages=False):
         if executable is not None:
             # Create virtualenv by using an external executable
             try:
@@ -667,13 +673,17 @@ class EnvManager(object):
             else:
                 use_symlinks = True
 
-            builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
+            builder = EnvBuilder(
+                system_site_packages=system_packages,
+                with_pip=True,
+                symlinks=use_symlinks,
+            )
             build = builder.create
         except ImportError:
             # We fallback on virtualenv for Python 2.7
             from virtualenv import create_environment
 
-            build = create_environment
+            build = functools.partial(create_environment, site_packages=system_packages)
 
         build(path)
 

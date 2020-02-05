@@ -95,7 +95,7 @@ def test_env_get_in_project_venv(manager, poetry):
     shutil.rmtree(str(venv.path))
 
 
-def build_venv(path, executable=None):
+def build_venv(path, executable=None, system_packages=False):
     os.mkdir(path)
 
 
@@ -137,7 +137,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)),
+        executable="python3.7",
+        system_packages=False,
     )
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
@@ -255,7 +257,9 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = manager.activate("python3.6", NullIO())
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.6".format(venv_name)), executable="python3.6"
+        os.path.join(tmp_dir, "{}-py3.6".format(venv_name)),
+        executable="python3.6",
+        system_packages=False,
     )
 
     assert envs_file.exists()
@@ -307,7 +311,9 @@ def test_activate_activates_recreates_for_different_patch(
     env = manager.activate("python3.7", NullIO())
 
     build_venv_m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)),
+        executable="python3.7",
+        system_packages=False,
     )
     remove_venv_m.assert_called_with(
         os.path.join(tmp_dir, "{}-py3.7".format(venv_name))
@@ -596,7 +602,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        str(Path("/foo/virtualenvs/{}-py3.7".format(venv_name))), executable="python3"
+        str(Path("/foo/virtualenvs/{}-py3.7".format(venv_name))),
+        executable="python3",
+        system_packages=False,
     )
 
 
@@ -620,7 +628,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        str(Path("/foo/virtualenvs/{}-py3.8".format(venv_name))), executable="python3.8"
+        str(Path("/foo/virtualenvs/{}-py3.8".format(venv_name))),
+        executable="python3.8",
+        system_packages=False,
     )
 
 
@@ -711,6 +721,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
             )
         ),
         executable=None,
+        system_packages=False,
     )
 
 
@@ -750,6 +761,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
             )
         ),
         executable="python{}.{}".format(version.major, version.minor - 1),
+        system_packages=False,
     )
 
 
@@ -781,7 +793,9 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     manager.activate("python3.7", NullIO())
 
     m.assert_called_with(
-        os.path.join(str(poetry.file.parent), ".venv"), executable="python3.7"
+        os.path.join(str(poetry.file.parent), ".venv"),
+        executable="python3.7",
+        system_packages=False,
     )
 
     envs_file = TomlFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
@@ -843,3 +857,15 @@ def test_env_site_packages_should_raise_an_error_if_no_site_packages(tmp_dir):
 
     with pytest.raises(RuntimeError):
         env.site_packages
+
+
+def test_env_system_packages(tmp_path, config):
+    venv_path = tmp_path / "venv"
+    EnvManager(config).build_venv(str(venv_path), system_packages=True)
+    pyvenv_cfg = venv_path / "pyvenv.cfg"
+    if sys.version_info >= (3, 3):
+        assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
+    elif (2, 6) < sys.version_info < (3, 0):
+        assert not venv_path.joinpath(
+            "lib", "python2.7", "no-global-site-packages.txt"
+        ).exists()
