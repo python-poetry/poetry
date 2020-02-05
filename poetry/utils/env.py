@@ -698,7 +698,8 @@ class EnvManager(object):
             "pip",
             "install",
             "--upgrade",
-            "pip>={},<={}".format(PIP_VERSION_MIN, PIP_VERSION_MAX),
+            '"pip>={},<={}"'.format(PIP_VERSION_MIN, PIP_VERSION_MAX),
+            shell=True,
         )
 
     def remove_venv(self, path):  # type: (str) -> None
