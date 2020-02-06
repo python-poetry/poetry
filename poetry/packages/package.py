@@ -297,6 +297,7 @@ class Package(object):
                     branch=constraint.get("branch", None),
                     tag=constraint.get("tag", None),
                     rev=constraint.get("rev", None),
+                    develop=constraint.get("develop", True),
                     category=category,
                     optional=optional,
                 )

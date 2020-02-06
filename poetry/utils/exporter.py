@@ -78,9 +78,11 @@ class Exporter(object):
                     package.source_reference,
                 )
                 dependency.marker = package.marker
-                line = "-e git+{}@{}#egg={}".format(
+                line = "git+{}@{}#egg={}".format(
                     package.source_url, package.source_reference, package.name
                 )
+                if package.develop:
+                    line = "-e " + line
             elif package.source_type in ["directory", "file", "url"]:
                 if package.source_type == "file":
                     dependency = FileDependency(package.name, Path(package.source_url))

@@ -413,7 +413,10 @@ spam==0.1.0 \\
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry):
+@pytest.mark.parametrize("develop", [True, False])
+def test_exporter_can_export_requirements_txt_with_git_packages(
+    tmp_dir, poetry, develop
+):
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -423,6 +426,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
                     "category": "main",
                     "optional": False,
                     "python-versions": "*",
+                    "develop": develop,
                     "source": {
                         "type": "git",
                         "url": "https://github.com/foo/foo.git",
@@ -444,8 +448,13 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
+    if develop:
+        expected = """\
 -e git+https://github.com/foo/foo.git@123456#egg=foo
+"""
+    else:
+        expected = """\
+git+https://github.com/foo/foo.git@123456#egg=foo
 """
 
     assert expected == content
@@ -492,7 +501,10 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, poetry):
+@pytest.mark.parametrize("develop", [True, False])
+def test_exporter_can_export_requirements_txt_with_directory_packages(
+    tmp_dir, poetry, develop
+):
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -502,6 +514,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, p
                     "category": "main",
                     "optional": False,
                     "python-versions": "*",
+                    "develop": develop,
                     "source": {
                         "type": "directory",
                         "url": "tests/fixtures/sample_project",
@@ -523,8 +536,13 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, p
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
+    if develop:
+        expected = """\
 -e tests/fixtures/sample_project
+"""
+    else:
+        expected = """\
+tests/fixtures/sample_project
 """
 
     assert expected == content

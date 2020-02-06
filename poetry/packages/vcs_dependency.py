@@ -18,6 +18,7 @@ class VCSDependency(Dependency):
         rev=None,
         category="main",
         optional=False,
+        develop=True,
     ):
         self._vcs = vcs
         self._source = source
@@ -29,6 +30,7 @@ class VCSDependency(Dependency):
         self._branch = branch
         self._tag = tag
         self._rev = rev
+        self._develop = develop
 
         super(VCSDependency, self).__init__(
             name, "*", category=category, optional=optional, allows_prereleases=True
@@ -57,6 +59,10 @@ class VCSDependency(Dependency):
     @property
     def reference(self):  # type: () -> str
         return self._branch or self._tag or self._rev
+
+    @property
+    def develop(self):
+        return self._develop
 
     @property
     def pretty_constraint(self):  # type: () -> str

@@ -1,0 +1,37 @@
+[[package]]
+category = "main"
+description = "Demo project."
+develop = false
+name = "demo"
+optional = false
+python-versions = "*"
+version = "0.1.2"
+
+[package.dependencies]
+pendulum = ">=1.4.4"
+
+[package.extras]
+bar = ["tomlkit"]
+foo = ["cleo"]
+
+[package.source]
+reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+type = "git"
+url = "https://github.com/demo/demo.git"
+
+[[package]]
+description = ""
+category = "main"
+name = "pendulum"
+optional = false
+python-versions = "*"
+version = "1.4.4"
+
+[metadata]
+python-versions = "*"
+content-hash = "123456789"
+
+[metadata.files]
+demo = []
+pendulum = []
+

@@ -713,6 +713,23 @@ def test_run_installs_with_local_poetry_directory_and_extras(
     assert len(installer.installer.installs) == 2
 
 
+def test_run_installs_with_git_and_develop_false(
+    installer, locker, repo, package, tmpdir
+):
+    package.add_dependency(
+        "demo", {"git": "https://github.com/demo/demo.git", "develop": False}
+    )
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    installer.run()
+
+    expected = fixture("with-vcs-dependency-poetry")
+
+    assert locker.written_data == expected
+
+    assert len(installer.installer.installs) == 2
+
+
 def test_run_installs_with_local_poetry_directory_transitive(
     installer, locker, repo, package, tmpdir
 ):
