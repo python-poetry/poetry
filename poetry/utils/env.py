@@ -486,6 +486,9 @@ class EnvManager(object):
         root_venv = self._poetry.config.get("virtualenvs.in-project")
         system_packages = self._poetry.config.get("virtualenvs.system-packages")
 
+        if system_packages and io.is_debug():
+            io.write_line("<debug>Including system site-packages</>")
+
         venv_path = self._poetry.config.get("virtualenvs.path")
         if root_venv:
             venv_path = cwd / ".venv"
