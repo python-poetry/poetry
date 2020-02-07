@@ -126,6 +126,7 @@ def test_make_setup():
         "my_package.sub_pkg2",
         "my_package.sub_pkg3",
     ]
+    assert ns["setup_kwargs"]["long_description_content_type"] == "text/x-rst"
     assert ns["install_requires"] == ["cachy[msgpack]>=0.2.0,<0.3.0", "cleo>=0.6,<0.7"]
     assert ns["entry_points"] == {
         "console_scripts": [

@@ -30,6 +30,7 @@ setup_kwargs = {{
     'version': {version!r},
     'description': {description!r},
     'long_description': {long_description!r},
+    'long_description_content_type': {long_description_content_type!r},
     'author': {author!r},
     'author_email': {author_email!r},
     'maintainer': {maintainer!r},
@@ -185,6 +186,9 @@ class SdistBuilder(Builder):
                 version=to_str(self._meta.version),
                 description=to_str(self._meta.summary),
                 long_description=to_str(self._meta.description),
+                long_description_content_type=to_str(
+                    self._meta.description_content_type
+                ),
                 author=to_str(self._meta.author),
                 author_email=to_str(self._meta.author_email),
                 maintainer=to_str(self._meta.maintainer),
