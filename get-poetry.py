@@ -962,8 +962,8 @@ def main():
         preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
         force=args.force,
         accept_all=args.accept_all
-                   or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
-                   or not is_interactive(),
+        or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
+        or not is_interactive(),
         modify_path=not args.no_modify_path,
         base_url=base_url,
     )
