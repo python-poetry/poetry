@@ -329,12 +329,13 @@ class Installer:
         preview=False,
         force=False,
         accept_all=False,
+        modify_path=True,
         base_url=BASE_URL,
     ):
         self._version = version
         self._preview = preview
         self._force = force
-        self._modify_path = True
+        self._modify_path = modify_path
         self._accept_all = accept_all
         self._base_url = base_url
 
@@ -349,6 +350,13 @@ class Installer:
 
         self.customize_install()
         self.display_pre_message()
+
+        if not self._accept_all:
+            should_continue = input("Continue with installation [y]/n?")
+            if should_continue not in {"y", "yes"}:
+                print("Aborting installation!")
+                return 0
+
         self.ensure_home()
 
         try:
@@ -441,10 +449,18 @@ class Installer:
     def customize_install(self):
         if not self._accept_all:
             print("Before we start, please answer the following questions.")
-            print("You may simply press the Enter key to leave unchanged.")
+            print("You may simply press the Enter key to accept the defaults.")
 
-            modify_path = input("Modify PATH variable? ([y]/n) ") or "y"
-            if modify_path.lower() in {"n", "no"}:
+            if self._modify_path:
+                default = "[y]/n"
+            else:
+                default = "[n]/y"
+
+            answer = input("Modify PATH variable? ({})".format(default))
+
+            if answer in {"y", "yes"}:
+                self._modify_path = True
+            elif answer in {"n", "no"}:
                 self._modify_path = False
 
             print("")
@@ -924,6 +940,9 @@ def main():
         "-y", "--yes", dest="accept_all", action="store_true", default=False
     )
     parser.add_argument(
+        "--no-modify-path", dest="no_modify_path", action="store_true", default=False
+    )
+    parser.add_argument(
         "--uninstall", dest="uninstall", action="store_true", default=False
     )
 
@@ -943,8 +962,9 @@ def main():
         preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
         force=args.force,
         accept_all=args.accept_all
-        or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
-        or not is_interactive(),
+                   or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
+                   or not is_interactive(),
+        modify_path=not args.no_modify_path,
         base_url=base_url,
     )
 
