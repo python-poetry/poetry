@@ -25,7 +25,7 @@ from .utils.utils import create_nested_marker
 from .vcs_dependency import VCSDependency
 
 
-AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,a-zA-ZÀ-ÖØ-öø-ÿ\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 
 logger = logging.getLogger(__name__)
 
