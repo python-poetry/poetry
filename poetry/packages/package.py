@@ -6,6 +6,7 @@ import re
 from contextlib import contextmanager
 from typing import Union
 from warnings import warn
+from unicodedata import normalize
 
 from poetry.semver import Version
 from poetry.semver import parse_constraint
@@ -25,7 +26,7 @@ from .utils.utils import create_nested_marker
 from .vcs_dependency import VCSDependency
 
 
-AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,a-zA-ZÀ-ÖØ-öø-ÿ\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ class Package(object):
         if not self._authors:
             return {"name": None, "email": None}
 
-        m = AUTHOR_REGEX.match(self._authors[0])
+        m = AUTHOR_REGEX.match(normalize("NFC", self._authors[0]))
 
         name = m.group("name")
         email = m.group("email")
@@ -171,7 +172,7 @@ class Package(object):
         if not self._maintainers:
             return {"name": None, "email": None}
 
-        m = AUTHOR_REGEX.match(self._maintainers[0])
+        m = AUTHOR_REGEX.match(normalize("NFC", self._maintainers[0]))
 
         name = m.group("name")
         email = m.group("email")
