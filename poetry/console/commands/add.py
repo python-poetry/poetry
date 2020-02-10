@@ -33,6 +33,12 @@ class AddCommand(EnvCommand, InitCommand):
             "Platforms for which the dependency must be installed.",
             flag=False,
         ),
+        option("--global-option",
+               None,
+               "Pass --global-option='<option>' to pip on install.",
+               flag=False,
+               multiple=True,
+        ),
         option("allow-prereleases", None, "Accept prereleases."),
         option(
             "dry-run",
@@ -122,6 +128,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
             if self.option("platform"):
                 constraint["platform"] = self.option("platform")
+
+            if self.option("global-option"):
+                print(self.option("global-option"))
+                constraint["global-options"] = self.option("global-option")
 
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
