@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from textwrap import dedent
+
 import pytest
 
 from cleo.testers import CommandTester
@@ -90,9 +92,11 @@ def test_export_exports_requirements_txt_file_locks_if_no_lock_file(app, repo):
 
     assert app.poetry.locker.lock.exists()
 
-    expected = """\
-foo==1.0.0
-"""
+    expected = dedent(
+        """
+        foo==1.0.0
+        """
+    ).lstrip()
 
     assert expected == content
     assert "The lock file does not exist. Locking." in tester.io.fetch_output()
@@ -121,9 +125,11 @@ def test_export_exports_requirements_txt_uses_lock_file(app, repo):
 
     assert app.poetry.locker.lock.exists()
 
-    expected = """\
-foo==1.0.0
-"""
+    expected = dedent(
+        """
+        foo==1.0.0
+        """
+    ).lstrip()
 
     assert expected == content
     assert "The lock file does not exist. Locking." not in tester.io.fetch_output()
@@ -161,9 +167,11 @@ def test_export_prints_to_stdout_by_default(app, repo):
 
     tester.execute("--format requirements.txt")
 
-    expected = """\
-foo==1.0.0
-"""
+    expected = dedent(
+        """
+        foo==1.0.0
+        """
+    ).lstrip()
 
     assert expected == tester.io.fetch_output()
 
@@ -183,9 +191,60 @@ def test_export_includes_extras_by_flag(app, repo):
 
     tester.execute("--format requirements.txt --extras feature_bar")
 
-    expected = """\
-bar==1.1.0
-foo==1.0.0
-"""
+    expected = dedent(
+        """
+        bar==1.1.0
+        foo==1.0.0
+        """
+    ).lstrip()
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_export_no_freeze(app, repo):
+    repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
+
+    command = app.find("lock")
+    tester = CommandTester(command)
+    tester.execute()
+
+    assert app.poetry.locker.lock.exists()
+
+    command = app.find("export")
+    tester = CommandTester(command)
+
+    tester.execute("--format requirements.txt --no-freeze")
+
+    expected = dedent(
+        """
+        foo
+        """
+    ).lstrip()
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_export_no_freeze_and_extra(app, repo):
+    repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
+
+    command = app.find("lock")
+    tester = CommandTester(command)
+    tester.execute()
+
+    assert app.poetry.locker.lock.exists()
+
+    command = app.find("export")
+    tester = CommandTester(command)
+
+    tester.execute("--format requirements.txt --extras feature_bar --no-freeze")
+
+    expected = dedent(
+        """
+        bar
+        foo
+        """
+    ).lstrip()
 
     assert expected == tester.io.fetch_output()

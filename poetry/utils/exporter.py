@@ -32,7 +32,8 @@ class Exporter(object):
         dev=False,
         extras=None,
         with_credentials=False,
-    ):  # type: (str, Path, Union[IO, str], bool, bool, bool) -> None
+        no_freeze=False,
+    ):  # type: (str, Path, Union[IO, str], bool, bool, bool, bool) -> None
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
 
@@ -43,6 +44,7 @@ class Exporter(object):
             dev=dev,
             extras=extras,
             with_credentials=with_credentials,
+            no_freeze=no_freeze,
         )
 
     def _export_requirements_txt(
@@ -53,6 +55,7 @@ class Exporter(object):
         dev=False,
         extras=None,
         with_credentials=False,
+        no_freeze=False,
     ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
         indexes = set()
         content = ""
@@ -96,6 +99,9 @@ class Exporter(object):
                 line = "{}".format(package.source_url)
                 if package.develop and package.source_type == "directory":
                     line = "-e " + line
+            elif no_freeze:
+                dependency = package.to_dependency()
+                line = package.name
             else:
                 dependency = package.to_dependency()
                 line = "{}=={}".format(package.name, package.version)
