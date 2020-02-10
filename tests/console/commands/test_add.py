@@ -102,7 +102,9 @@ def test_add_constraint_with_extras(app, repo, installer):
 
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
-    msgpack_dep = get_dependency("msgpack-python", None, optional=True, global_options='Include')
+    msgpack_dep = get_dependency(
+        "msgpack-python", None, optional=True, global_options="Include"
+    )
     cachy1.requires = [msgpack_dep]
 
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -162,6 +164,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert expected == tester.io.fetch_output()
 
     assert len(installer.installs) == 2
+
 
 def test_add_constraint_dependencies(app, repo, installer):
     command = app.find("add")

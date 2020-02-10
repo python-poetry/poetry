@@ -33,11 +33,12 @@ class AddCommand(EnvCommand, InitCommand):
             "Platforms for which the dependency must be installed.",
             flag=False,
         ),
-        option("--global-option",
-               None,
-               "Pass --global-option='<option>' to pip on install.",
-               flag=False,
-               multiple=True,
+        option(
+            "--global-option",
+            None,
+            "Pass --global-option='<option>' to pip on install.",
+            flag=False,
+            multiple=True,
         ),
         option("allow-prereleases", None, "Accept prereleases."),
         option(

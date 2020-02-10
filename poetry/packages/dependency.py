@@ -27,7 +27,7 @@ class Dependency(object):
         category="main",  # type: str
         allows_prereleases=False,  # type: bool
         source_name=None,  # type: Optional[str]
-        global_options=[],  # type: List[str]
+        global_options=[],  # type: list[str]
     ):
         self._name = canonicalize_name(name)
         self._pretty_name = name
