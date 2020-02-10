@@ -374,6 +374,10 @@ class Package(object):
             if "extras" in constraint:
                 for extra in constraint["extras"]:
                     dependency.extras.append(extra)
+
+            if "global-options" in constraint:
+                for global_opt in constraint["global-options"]:
+                    dependency.global_opts.append(global_opt)
         else:
             dependency = Dependency(name, constraint, category=category)
 
