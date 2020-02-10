@@ -102,7 +102,7 @@ def test_add_constraint_with_extras(app, repo, installer):
 
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
-    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
+    msgpack_dep = get_dependency("msgpack-python", None, optional=True, global_options='Include')
     cachy1.requires = [msgpack_dep]
 
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -129,6 +129,39 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert len(installer.installs) == 2
 
+
+def test_add_constraint_with_global_options(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    cachy1 = get_package("cachy", "0.1.0")
+    cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
+    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
+    cachy1.requires = [msgpack_dep]
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(cachy1)
+    repo.add_package(get_package("msgpack-python", "0.5.3"))
+
+    tester.execute("cachy[msgpack]>=0.1.0,<0.2.0")
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing msgpack-python (0.5.3)
+  - Installing cachy (0.1.0)
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    assert len(installer.installs) == 2
 
 def test_add_constraint_dependencies(app, repo, installer):
     command = app.find("add")

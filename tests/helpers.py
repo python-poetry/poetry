@@ -18,7 +18,11 @@ def get_package(name, version):
 
 
 def get_dependency(
-    name, constraint=None, category="main", optional=False, allows_prereleases=False
+    name, constraint=None, 
+    category="main", 
+    optional=False, 
+    allows_prereleases=False,
+    global_options = []
 ):
     return Dependency(
         name,
@@ -26,6 +30,7 @@ def get_dependency(
         category=category,
         optional=optional,
         allows_prereleases=allows_prereleases,
+        global_options=global_options,
     )
 
 
