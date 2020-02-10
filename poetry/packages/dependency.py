@@ -60,6 +60,8 @@ class Dependency(object):
         self._extras = []
         self._in_extras = []
 
+        self.global_opts = []
+
         self._activated = not self._optional
 
         self.is_root = False
