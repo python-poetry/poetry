@@ -27,6 +27,7 @@ class Dependency(object):
         category="main",  # type: str
         allows_prereleases=False,  # type: bool
         source_name=None,  # type: Optional[str]
+        global_options=[],  # type: List[str]
     ):
         self._name = canonicalize_name(name)
         self._pretty_name = name
@@ -60,7 +61,7 @@ class Dependency(object):
         self._extras = []
         self._in_extras = []
 
-        self.global_opts = []
+        self.global_opts = global_options
 
         self._activated = not self._optional
 
