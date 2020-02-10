@@ -245,7 +245,7 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 * `--path`: The path to a dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--global-option` : Pass the --global-option=<option> parameter to pip upon installation.
+* `--global-option` : Pass the --global-option=\<option\> parameter to pip upon installation.
 
 
 ## remove
