@@ -54,6 +54,7 @@ class Shell:
 
         terminal = Terminal()
         with env.temp_environ():
+            env.setup_pythonpath()
             c = pexpect.spawn(
                 self._path, ["-i"], dimensions=(terminal.height, terminal.width)
             )

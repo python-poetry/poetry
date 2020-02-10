@@ -21,6 +21,8 @@ import tomlkit
 from clikit.api.io import IO
 
 from poetry.locations import CACHE_DIR
+from poetry.masonry.utils.module import Module
+from poetry.masonry.utils.module import ModuleOrPackageNotFound
 from poetry.poetry import Poetry
 from poetry.semver import parse_constraint
 from poetry.semver.version import Version
@@ -216,7 +218,7 @@ class EnvManager(object):
             venv = self._poetry.file.parent / ".venv"
             if venv.exists():
                 # We need to check if the patch version is correct
-                _venv = VirtualEnv(venv)
+                _venv = VirtualEnv(venv, poetry=self._poetry)
                 current_patch = ".".join(str(v) for v in _venv.version_info[:3])
 
                 if patch != current_patch:
@@ -250,7 +252,7 @@ class EnvManager(object):
 
             if venv.exists():
                 # We need to check if the patch version is correct
-                _venv = VirtualEnv(venv)
+                _venv = VirtualEnv(venv, poetry=self._poetry)
                 current_patch = ".".join(str(v) for v in _venv.version_info[:3])
 
                 if patch != current_patch:
@@ -324,7 +326,7 @@ class EnvManager(object):
             if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
                 venv = cwd / ".venv"
 
-                return VirtualEnv(venv)
+                return VirtualEnv(venv, poetry=self._poetry)
 
             create_venv = self._poetry.config.get("virtualenvs.create", True)
 
@@ -344,7 +346,7 @@ class EnvManager(object):
             if not venv.exists():
                 return SystemEnv(Path(sys.prefix))
 
-            return VirtualEnv(venv)
+            return VirtualEnv(venv, poetry=self._poetry)
 
         if env_prefix is not None:
             prefix = Path(env_prefix)
@@ -353,7 +355,7 @@ class EnvManager(object):
             prefix = Path(sys.prefix)
             base_prefix = self.get_base_prefix()
 
-        return VirtualEnv(prefix, base_prefix)
+        return VirtualEnv(prefix, base_prefix, poetry=self._poetry)
 
     def list(self, name=None):  # type: (Optional[str]) -> List[VirtualEnv]
         if name is None:
@@ -368,7 +370,7 @@ class EnvManager(object):
             venv_path = Path(venv_path)
 
         return [
-            VirtualEnv(Path(p))
+            VirtualEnv(Path(p), poetry=self._poetry)
             for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
         ]
 
@@ -463,7 +465,7 @@ class EnvManager(object):
 
         self.remove_venv(str(venv))
 
-        return VirtualEnv(venv)
+        return VirtualEnv(venv, poetry=self._poetry)
 
     def create_venv(
         self, io, name=None, executable=None, force=False
@@ -640,7 +642,7 @@ class EnvManager(object):
             # Running properly in the virtualenv, don't need to do anything
             return SystemEnv(Path(sys.prefix), self.get_base_prefix())
 
-        return VirtualEnv(venv)
+        return VirtualEnv(venv, poetry=self._poetry)
 
     @classmethod
     def build_venv(cls, path, executable=None):
@@ -993,9 +995,11 @@ class VirtualEnv(Env):
     A virtual Python environment.
     """
 
-    def __init__(self, path, base=None):  # type: (Path, Optional[Path]) -> None
+    def __init__(
+        self, path, base=None, poetry=None
+    ):  # type: (Path, Optional[Path], Optional[Poetry]) -> None
         super(VirtualEnv, self).__init__(path, base)
-
+        self._poetry = poetry
         # If base is None, it probably means this is
         # a virtualenv created from VIRTUAL_ENV.
         # In this case we need to get sys.base_prefix
@@ -1060,10 +1064,18 @@ class VirtualEnv(Env):
         # A virtualenv is considered sane if both "python" and "pip" exist.
         return os.path.exists(self._bin("python")) and os.path.exists(self._bin("pip"))
 
+    def setup_pythonpath(self):  # type: () -> None
+        paths = self._sys_paths()
+        env_pythonpath = os.environ.get("PYTHONPATH")
+        if env_pythonpath is not None:
+            paths.append(env_pythonpath)
+        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
+
     def _run(self, cmd, **kwargs):
         with self.temp_environ():
             os.environ["PATH"] = self._updated_path()
             os.environ["VIRTUAL_ENV"] = str(self._path)
+            self.setup_pythonpath()
 
             self.unset_env("PYTHONHOME")
             self.unset_env("__PYVENV_LAUNCHER__")
@@ -1074,6 +1086,7 @@ class VirtualEnv(Env):
         with self.temp_environ():
             os.environ["PATH"] = self._updated_path()
             os.environ["VIRTUAL_ENV"] = str(self._path)
+            self.setup_pythonpath()
 
             self.unset_env("PYTHONHOME")
             self.unset_env("__PYVENV_LAUNCHER__")
@@ -1095,6 +1108,17 @@ class VirtualEnv(Env):
 
     def _updated_path(self):
         return os.pathsep.join([str(self._bin_dir), os.environ["PATH"]])
+
+    def _sys_paths(self):  # () -> List[str]
+        if self._poetry is None:
+            return []
+        try:
+            package = self._poetry.package
+            path = self._poetry.file.parent
+            module = Module(package.name, path.as_posix(), package.packages)
+            return module.sys_paths
+        except ModuleOrPackageNotFound:
+            return []
 
 
 class NullEnv(SystemEnv):

@@ -35,26 +35,13 @@ class RunCommand(EnvCommand):
 
         module, callable_ = script.split(":")
 
-        src_in_sys_path = "sys.path.append('src'); " if self._module.is_in_src() else ""
-
         cmd = ["python", "-c"]
 
         cmd += [
             "import sys; "
             "from importlib import import_module; "
-            "sys.argv = {!r}; {}"
-            "import_module('{}').{}()".format(args, src_in_sys_path, module, callable_)
+            "sys.argv = {!r}; "
+            "import_module('{}').{}()".format(args, module, callable_)
         ]
 
         return self.env.execute(*cmd)
-
-    @property
-    def _module(self):
-        from ...masonry.utils.module import Module
-
-        poetry = self.poetry
-        package = poetry.package
-        path = poetry.file.parent
-        module = Module(package.name, path.as_posix(), package.packages)
-
-        return module

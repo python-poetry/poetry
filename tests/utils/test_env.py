@@ -1,3 +1,4 @@
+import contextlib
 import os
 import shutil
 import sys
@@ -46,13 +47,20 @@ class MockVirtualEnv(VirtualEnv):
 
 
 @pytest.fixture()
-def poetry(config):
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent / "fixtures" / "simple_project"
-    )
-    poetry.set_config(config)
+def poetry_loader(config):
+    def f(filepath):
+        poetry = Factory().create_poetry(
+            Path(__file__).parent.parent / "fixtures" / filepath
+        )
+        poetry.set_config(config)
+        return poetry
 
-    return poetry
+    return f
+
+
+@pytest.fixture()
+def poetry(poetry_loader):
+    return poetry_loader(Path(__file__).parent.parent / "fixtures" / "simple_project")
 
 
 @pytest.fixture()
@@ -60,26 +68,35 @@ def manager(poetry):
     return EnvManager(poetry)
 
 
+@contextlib.contextmanager
+def with_tmp_venv(tmp_dir, manager, venv_path="venv", *args, **kwargs):
+    try:
+        venv_path = Path(tmp_dir) / "venv"
+        manager.build_venv(str(venv_path))
+        venv = VirtualEnv(venv_path, *args, **kwargs)
+        yield venv
+    finally:
+        shutil.rmtree(str(venv.path))
+
+
 @pytest.fixture
 def tmp_venv(tmp_dir, manager):
-    venv_path = Path(tmp_dir) / "venv"
-
-    manager.build_venv(str(venv_path))
-
-    venv = VirtualEnv(venv_path)
-    yield venv
-
-    shutil.rmtree(str(venv.path))
+    with with_tmp_venv(tmp_dir, manager) as venv:
+        yield venv
 
 
 def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, manager):
-    venv_path = Path(tmp_dir) / "Virtual Env"
+    with with_tmp_venv(tmp_dir, manager, venv_path="Virtual Env") as venv:
+        assert venv.run("python", "-V", shell=True).startswith("Python")
 
-    manager.build_venv(str(venv_path))
 
-    venv = VirtualEnv(venv_path)
-
-    assert venv.run("python", "-V", shell=True).startswith("Python")
+def test_virtualenvs_with_src_namespace(tmp_dir, manager, poetry_loader, monkeypatch):
+    pyproject_path = Path(__file__).parent.parent / "fixtures" / "with_src_namespace"
+    monkeypatch.chdir(str(pyproject_path))
+    poetry = poetry_loader(pyproject_path)
+    with with_tmp_venv(tmp_dir, manager, poetry=poetry) as venv:
+        assert venv._sys_paths() == ["src"]
+        assert str(pyproject_path / "src") in venv.sys_path
 
 
 def test_env_get_in_project_venv(manager, poetry):

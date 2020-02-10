@@ -15,10 +15,10 @@ class ModuleOrPackageNotFound(ValueError):
 class Module:
     def __init__(self, name, directory=".", packages=None, includes=None):
         self._name = module_name(name)
-        self._in_src = False
         self._is_package = False
         self._path = Path(directory)
-        self._includes = []
+        self._package_includes = []
+        self._base_includes = []
         packages = packages or []
         includes = includes or []
 
@@ -64,7 +64,7 @@ class Module:
             if formats and not isinstance(formats, list):
                 formats = [formats]
 
-            self._includes.append(
+            self._package_includes.append(
                 PackageInclude(
                     self._path,
                     package["include"],
@@ -74,7 +74,7 @@ class Module:
             )
 
         for include in includes:
-            self._includes.append(Include(self._path, include))
+            self._base_includes.append(Include(self._path, include))
 
     @property
     def name(self):  # type: () -> str
@@ -92,11 +92,12 @@ class Module:
             return self._path
 
     @property
-    def includes(self):  # type: () -> List
-        return self._includes
+    def includes(self):  # type: () -> List[Include]
+        return self._package_includes + self._base_includes
 
     def is_package(self):  # type: () -> bool
         return self._is_package
 
-    def is_in_src(self):  # type: () -> bool
-        return self._in_src
+    @property
+    def sys_paths(self):  # type: () -> List[str]
+        return [p.source for p in self._package_includes if p.source]
