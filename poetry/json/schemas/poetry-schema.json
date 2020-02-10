@@ -266,6 +266,13 @@
                         "type": "string"
                     }
                 },
+                "global-options": {
+                    "type": "array",
+                    "description": "--global-options directives for PIP.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "source": {
                     "type": "string",
                     "description": "The exclusive source used to search for this dependency."
