@@ -5,8 +5,8 @@ import re
 
 from contextlib import contextmanager
 from typing import Union
-from warnings import warn
 from unicodedata import normalize
+from warnings import warn
 
 from poetry.semver import Version
 from poetry.semver import parse_constraint
