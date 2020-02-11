@@ -73,9 +73,14 @@ class PipInstaller(BaseInstaller):
         if update:
             args.append("-U")
 
-        if package.dependency.global_opts:
-            for global_opt in package.dependency.global_opts:
-                args.append("--global-opt={global_opt}".format(global_opt=global_opt))
+        try:
+            if package.dependency.global_opts:
+                for global_opt in package.dependency.global_opts:
+                    args.append(
+                        "--global-opt={global_opt}".format(global_opt=global_opt)
+                    )
+        except AttributeError:  # No dependency.
+            pass
 
         if package.files and not package.source_url:
             # Format as a requirements.txt
