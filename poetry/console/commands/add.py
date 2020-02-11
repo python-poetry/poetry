@@ -131,7 +131,6 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                 constraint["platform"] = self.option("platform")
 
             if self.option("global-option"):
-                print(self.option("global-option"))
                 constraint["global-options"] = self.option("global-option")
 
             if len(constraint) == 1 and "version" in constraint:

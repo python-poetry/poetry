@@ -76,7 +76,6 @@ class PipInstaller(BaseInstaller):
         if package.dependency.global_opts:
             for global_opt in package.dependency.global_opts:
                 args.append("--global-opt={global_opt}".format(global_opt=global_opt))
-            print("here")
 
         if package.files and not package.source_url:
             # Format as a requirements.txt
