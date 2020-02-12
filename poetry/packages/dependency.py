@@ -61,7 +61,7 @@ class Dependency(object):
         self._extras = []
         self._in_extras = []
 
-        self.global_opts = global_options
+        self.global_opts = list(global_options)
 
         self._activated = not self._optional
 
