@@ -1903,3 +1903,28 @@ def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package)
     check_solver_result(
         ops, [{"job": "install", "package": pytest}],
     )
+
+
+def test_solver_properly_propagates_markers(solver, repo, package):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency(
+        "A",
+        {
+            "version": "^1.0",
+            "markers": "python_version >= '3.6' and implementation_name != 'pypy'",
+        },
+    )
+
+    package_a = get_package("A", "1.0.0")
+    package_a.python_versions = ">=3.6"
+
+    repo.add_package(package_a)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [{"job": "install", "package": package_a}])
+
+    assert (
+        str(ops[0].package.marker)
+        == 'python_version >= "3.6" and implementation_name != "pypy"'
+    )

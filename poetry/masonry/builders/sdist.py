@@ -237,7 +237,7 @@ class SdistBuilder(Builder):
             if from_top_level == ".":
                 continue
 
-            is_subpkg = "__init__.py" in filenames
+            is_subpkg = any([filename.endswith(".py") for filename in filenames])
             if is_subpkg:
                 subpkg_paths.add(from_top_level)
                 parts = from_top_level.split(os.sep)

@@ -31,6 +31,20 @@ print("nullpackage loaded"),
 """
 
 
+class MockVirtualEnv(VirtualEnv):
+    def __init__(self, path, base=None, sys_path=None):
+        super(MockVirtualEnv, self).__init__(path, base=base)
+
+        self._sys_path = sys_path
+
+    @property
+    def sys_path(self):
+        if self._sys_path is not None:
+            return self._sys_path
+
+        return super(MockVirtualEnv, self).sys_path
+
+
 @pytest.fixture()
 def poetry(config):
     poetry = Factory().create_poetry(
@@ -786,7 +800,7 @@ def test_env_site_packages_should_find_the_site_packages_directory_if_standard(t
 
     site_packages.mkdir(parents=True)
 
-    env = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
 
     assert site_packages == env.site_packages
 
@@ -795,6 +809,37 @@ def test_env_site_packages_should_find_the_site_packages_directory_if_root(tmp_d
     site_packages = Path(tmp_dir).joinpath("site-packages")
     site_packages.mkdir(parents=True)
 
-    env = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
 
     assert site_packages == env.site_packages
+
+
+def test_env_site_packages_should_find_the_dist_packages_directory_if_necessary(
+    tmp_dir,
+):
+    site_packages = Path(tmp_dir).joinpath("dist-packages")
+    site_packages.mkdir(parents=True)
+
+    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
+
+    assert site_packages == env.site_packages
+
+
+def test_env_site_packages_should_prefer_site_packages_over_dist_packages(tmp_dir):
+    dist_packages = Path(tmp_dir).joinpath("dist-packages")
+    dist_packages.mkdir(parents=True)
+    site_packages = Path(tmp_dir).joinpath("site-packages")
+    site_packages.mkdir(parents=True)
+
+    env = MockVirtualEnv(
+        Path(tmp_dir), Path(tmp_dir), sys_path=[str(dist_packages), str(site_packages)]
+    )
+
+    assert site_packages == env.site_packages
+
+
+def test_env_site_packages_should_raise_an_error_if_no_site_packages(tmp_dir):
+    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[])
+
+    with pytest.raises(RuntimeError):
+        env.site_packages

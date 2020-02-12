@@ -1183,8 +1183,8 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "checksum": [],
                     "dependencies": {
                         "B": [
-                            {"version": "^1.0", "python": "<4.0"},
-                            {"version": "^2.0", "python": ">=4.0"},
+                            {"version": "^1.0", "python": "<2.7"},
+                            {"version": "^2.0", "python": ">=2.7"},
                         ]
                     },
                 },
@@ -1197,7 +1197,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {"C": "1.2"},
-                    "requirements": {"python": "<4.0"},
+                    "requirements": {"python": "<2.7"},
                 },
                 {
                     "name": "B",
@@ -1208,7 +1208,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {"C": "1.5"},
-                    "requirements": {"python": ">=4.0"},
+                    "requirements": {"python": ">=2.7"},
                 },
                 {
                     "name": "C",

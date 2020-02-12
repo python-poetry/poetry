@@ -1,3 +1,5 @@
+from poetry.vcs import git
+
 from .dependency import Dependency
 
 
@@ -73,11 +75,17 @@ class VCSDependency(Dependency):
     @property
     def base_pep_508_name(self):  # type: () -> str
         requirement = self.pretty_name
+        parsed_url = git.ParsedUrl.parse(self._source)
 
         if self.extras:
             requirement += "[{}]".format(",".join(self.extras))
 
-        requirement += " @ {}+{}@{}".format(self._vcs, self._source, self.reference)
+        if parsed_url.protocol is not None:
+            requirement += " @ {}+{}@{}".format(self._vcs, self._source, self.reference)
+        else:
+            requirement += " @ {}+ssh://{}@{}".format(
+                self._vcs, parsed_url.format(), self.reference
+            )
 
         return requirement
 

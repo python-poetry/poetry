@@ -15,45 +15,52 @@ class InstalledRepository(Repository):
         For now, it uses the pip "freeze" command.
         """
         repo = cls()
+        seen = set()
 
-        for distribution in sorted(
-            metadata.distributions(path=env.sys_path), key=lambda d: str(d._path),
-        ):
-            name = distribution.metadata["name"]
-            version = distribution.metadata["version"]
-            package = Package(name, version, version)
-            package.description = distribution.metadata.get("summary", "")
+        for entry in env.sys_path:
+            for distribution in sorted(
+                metadata.distributions(path=[entry]), key=lambda d: str(d._path),
+            ):
+                name = distribution.metadata["name"]
+                version = distribution.metadata["version"]
+                package = Package(name, version, version)
+                package.description = distribution.metadata.get("summary", "")
 
-            repo.add_package(package)
+                if package.name in seen:
+                    continue
 
-            path = Path(str(distribution._path))
-            is_standard_package = True
-            try:
-                path.relative_to(env.site_packages)
-            except ValueError:
-                is_standard_package = False
+                seen.add(package.name)
 
-            if is_standard_package:
-                continue
+                repo.add_package(package)
 
-            src_path = env.path / "src"
+                path = Path(str(distribution._path))
+                is_standard_package = True
+                try:
+                    path.relative_to(env.site_packages)
+                except ValueError:
+                    is_standard_package = False
 
-            # A VCS dependency should have been installed
-            # in the src directory. If not, it's a path dependency
-            try:
-                path.relative_to(src_path)
+                if is_standard_package:
+                    continue
 
-                from poetry.vcs.git import Git
+                src_path = env.path / "src"
 
-                git = Git()
-                revision = git.rev_parse("HEAD", src_path / package.name).strip()
-                url = git.remote_url(src_path / package.name)
+                # A VCS dependency should have been installed
+                # in the src directory. If not, it's a path dependency
+                try:
+                    path.relative_to(src_path)
 
-                package.source_type = "git"
-                package.source_url = url
-                package.source_reference = revision
-            except ValueError:
-                package.source_type = "directory"
-                package.source_url = str(path.parent)
+                    from poetry.vcs.git import Git
+
+                    git = Git()
+                    revision = git.rev_parse("HEAD", src_path / package.name).strip()
+                    url = git.remote_url(src_path / package.name)
+
+                    package.source_type = "git"
+                    package.source_url = url
+                    package.source_reference = revision
+                except ValueError:
+                    package.source_type = "directory"
+                    package.source_url = str(path.parent)
 
         return repo

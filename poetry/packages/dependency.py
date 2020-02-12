@@ -55,6 +55,7 @@ class Dependency(object):
         self._python_constraint = parse_constraint("*")
         self._transitive_python_versions = None
         self._transitive_python_constraint = None
+        self._transitive_marker = None
 
         self._extras = []
         self._in_extras = []
@@ -116,6 +117,17 @@ class Dependency(object):
     def transitive_python_versions(self, value):
         self._transitive_python_versions = value
         self._transitive_python_constraint = parse_constraint(value)
+
+    @property
+    def transitive_marker(self):
+        if self._transitive_marker is None:
+            return self.marker
+
+        return self._transitive_marker
+
+    @transitive_marker.setter
+    def transitive_marker(self, value):
+        self._transitive_marker = value
 
     @property
     def python_constraint(self):

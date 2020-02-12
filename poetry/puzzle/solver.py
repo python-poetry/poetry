@@ -225,7 +225,7 @@ class Solver:
             intersection = (
                 previous["marker"]
                 .without_extras()
-                .intersect(previous_dep.marker.without_extras())
+                .intersect(previous_dep.transitive_marker.without_extras())
             )
             intersection = intersection.intersect(package.marker.without_extras())
 

@@ -94,7 +94,7 @@ class Exporter(object):
                 dependency.marker = package.marker
 
                 line = "{}".format(package.source_url)
-                if package.develop:
+                if package.develop and package.source_type == "directory":
                     line = "-e " + line
             else:
                 dependency = package.to_dependency()
