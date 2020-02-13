@@ -208,3 +208,8 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(mocker):
     repository._get("https://pypi.org/pypi/async-timeout/json")
 
     assert delete_cache.called
+
+
+def test_pypi_repo_url_ends_with_simple():
+    repository = PyPiRepository()
+    assert repository.url.endswith("simple")
