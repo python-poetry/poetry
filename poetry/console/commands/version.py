@@ -1,4 +1,4 @@
-from cleo import argument
+from cleo import argument, option
 
 from .command import Command
 
@@ -16,6 +16,13 @@ class VersionCommand(Command):
             "version",
             "The version number or the rule to update the version.",
             optional=True,
+        )
+    ]
+    options = [
+        option(
+            "short",
+            "s",
+            description="Only print the version without package name."
         )
     ]
 
@@ -58,11 +65,9 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
             self.poetry.file.write(content)
         else:
-            self.line(
-                "<comment>{}</> <info>{}</>".format(
-                    self.poetry.package.name, self.poetry.package.pretty_version
-                )
-            )
+            short = self.option("short")
+            msg = "" if short else "<comment>{}</> ".format(self.poetry.package.name)
+            self.line("{}<info>{}</>".format(msg, self.poetry.package.pretty_version))
 
     def increment_version(self, version, rule):
         from poetry.semver import Version

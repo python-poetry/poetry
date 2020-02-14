@@ -45,3 +45,11 @@ def test_version_show(app):
     tester = CommandTester(command)
     tester.execute()
     assert "simple-project 1.2.3\n" == tester.io.fetch_output()
+
+
+@pytest.mark.parametrize("option", ["--short", "-s"])
+def test_version_show_short(app, option):
+    command = app.find("version")
+    tester = CommandTester(command)
+    tester.execute(option)
+    assert "1.2.3\n" == tester.io.fetch_output()
