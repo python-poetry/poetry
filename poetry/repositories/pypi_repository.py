@@ -226,7 +226,13 @@ class PyPiRepository(Repository):
 
         search = {"q": query}
 
-        response = session().get(self._url + "search", params=search)
+        # Remove simple/ from the end of the url if it exists
+        try:
+            stub_url = self._url[: self._url.index("simple")]
+        except ValueError:
+            stub_url = self._url
+
+        response = session().get(stub_url + "search", params=search)
         content = parse(response.content, namespaceHTMLElements=False)
         for result in content.findall(".//*[@class='package-snippet']"):
             name = result.find("h3/*[@class='package-snippet__name']").text
