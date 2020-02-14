@@ -212,4 +212,4 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(mocker):
 
 def test_pypi_repo_url_ends_with_simple():
     repository = PyPiRepository()
-    assert repository.url.endswith("simple")
+    assert "simple" in repository.url
