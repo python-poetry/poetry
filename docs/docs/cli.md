@@ -423,6 +423,10 @@ The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
 
 
+### Options
+* `--short (-s)`: Only print the version string without package name.
+
+
 ## export
 
 This command exports the lock file to other formats.
