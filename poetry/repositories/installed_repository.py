@@ -1,5 +1,6 @@
+from poetry_core.packages import Package
+
 from poetry import _CURRENT_VENDOR
-from poetry.packages import Package
 from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
 from poetry.utils.env import Env
@@ -58,7 +59,7 @@ class InstalledRepository(Repository):
                 try:
                     path.relative_to(src_path)
 
-                    from poetry.vcs.git import Git
+                    from poetry_core.vcs.git import Git
 
                     git = Git()
                     revision = git.rev_parse("HEAD", src_path / package.name).strip()

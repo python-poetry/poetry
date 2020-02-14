@@ -32,11 +32,11 @@ def test_load(mocker):
         return_value=INSTALLED_RESULTS,
     )
     mocker.patch(
-        "poetry.vcs.git.Git.rev_parse",
+        "poetry_core.vcs.git.Git.rev_parse",
         return_value="bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6",
     )
     mocker.patch(
-        "poetry.vcs.git.Git.remote_urls",
+        "poetry_core.vcs.git.Git.remote_urls",
         side_effect=[
             {"remote.origin.url": "https://github.com/sdispater/pendulum.git"},
             {"remote.origin.url": "git@github.com:sdispater/pendulum.git"},

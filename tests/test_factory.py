@@ -113,9 +113,7 @@ def test_create_poetry():
 
 
 def test_create_poetry_with_packages_and_includes():
-    poetry = Factory().create_poetry(
-        fixtures_dir.parent / "masonry" / "builders" / "fixtures" / "with-include"
-    )
+    poetry = Factory().create_poetry(fixtures_dir / "with-include")
 
     package = poetry.package
 

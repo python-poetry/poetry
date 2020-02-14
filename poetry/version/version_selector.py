@@ -1,9 +1,9 @@
 from typing import Union
 
-from poetry.packages import Dependency
-from poetry.packages import Package
-from poetry.semver import Version
-from poetry.semver import parse_constraint
+from poetry_core.packages import Dependency
+from poetry_core.packages import Package
+from poetry_core.semver import Version
+from poetry_core.semver import parse_constraint
 
 
 class VersionSelector(object):

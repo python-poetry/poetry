@@ -3,11 +3,11 @@ from subprocess import CalledProcessError
 import pytest
 
 from clikit.io import NullIO
+from poetry_core.packages import ProjectPackage
+from poetry_core.packages.directory_dependency import DirectoryDependency
+from poetry_core.packages.file_dependency import FileDependency
+from poetry_core.packages.vcs_dependency import VCSDependency
 
-from poetry.packages import ProjectPackage
-from poetry.packages.directory_dependency import DirectoryDependency
-from poetry.packages.file_dependency import FileDependency
-from poetry.packages.vcs_dependency import VCSDependency
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository

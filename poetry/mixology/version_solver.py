@@ -6,12 +6,13 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-from poetry.packages import Dependency
-from poetry.packages import Package
-from poetry.packages import ProjectPackage
+from poetry_core.packages import Dependency
+from poetry_core.packages import Package
+from poetry_core.packages import ProjectPackage
+from poetry_core.semver import Version
+from poetry_core.semver import VersionRange
+
 from poetry.puzzle.provider import Provider
-from poetry.semver import Version
-from poetry.semver import VersionRange
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility

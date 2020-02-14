@@ -13,7 +13,7 @@ class BuildCommand(EnvCommand):
     ]
 
     def handle(self):
-        from poetry.masonry import Builder
+        from poetry_core.masonry import Builder
 
         fmt = "all"
         if self.option("format"):
@@ -26,5 +26,5 @@ class BuildCommand(EnvCommand):
             )
         )
 
-        builder = Builder(self.poetry, self.env, self.io)
+        builder = Builder(self.poetry)
         builder.build(fmt)

@@ -1,16 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from poetry_core.packages import ProjectPackage
+from poetry_core.poetry import Poetry as BasePoetry
+
 from .__version__ import __version__
 from .config.config import Config
 from .packages import Locker
-from .packages import ProjectPackage
 from .repositories.pool import Pool
 from .utils._compat import Path
-from .utils.toml_file import TomlFile
 
 
-class Poetry:
+class Poetry(BasePoetry):
 
     VERSION = __version__
 
@@ -22,24 +23,11 @@ class Poetry:
         locker,  # type: Locker
         config,  # type: Config
     ):
-        self._file = TomlFile(file)
-        self._package = package
-        self._local_config = local_config
+        super(Poetry, self).__init__(file, local_config, package)
+
         self._locker = locker
         self._config = config
         self._pool = Pool()
-
-    @property
-    def file(self):
-        return self._file
-
-    @property
-    def package(self):  # type: () -> ProjectPackage
-        return self._package
-
-    @property
-    def local_config(self):  # type: () -> dict
-        return self._local_config
 
     @property
     def locker(self):  # type: () -> Locker

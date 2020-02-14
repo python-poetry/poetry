@@ -1,8 +1,8 @@
 import pytest
 
 from clikit.io import NullIO
+from poetry_core.packages.project_package import ProjectPackage
 
-from poetry.packages.project_package import ProjectPackage
 from poetry.puzzle.provider import Provider
 from poetry.repositories import Pool
 from poetry.repositories import Repository

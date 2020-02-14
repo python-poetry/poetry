@@ -3,7 +3,8 @@ from typing import List
 from typing import Mapping
 from typing import Sequence
 
-from poetry.packages import Package
+from poetry_core.packages import Package
+
 from poetry.utils.helpers import canonicalize_name
 
 

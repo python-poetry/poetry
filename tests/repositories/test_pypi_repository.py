@@ -5,10 +5,10 @@ from io import BytesIO
 
 import pytest
 
+from poetry_core.packages import Dependency
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
-from poetry.packages import Dependency
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path

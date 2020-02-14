@@ -30,9 +30,9 @@ def mock_clone(self, source, dest):
 @pytest.fixture(autouse=True)
 def setup(mocker):
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.vcs.git.Git.rev_parse")
+    mocker.patch("poetry_core.vcs.git.Git.clone", new=mock_clone)
+    mocker.patch("poetry_core.vcs.git.Git.checkout", new=lambda *_: None)
+    p = mocker.patch("poetry_core.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
     yield

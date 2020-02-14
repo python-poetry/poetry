@@ -35,7 +35,7 @@ lists all packages available."""
     def handle(self):
         from clikit.utils.terminal import Terminal
         from poetry.repositories.installed_repository import InstalledRepository
-        from poetry.semver import Version
+        from poetry_core.semver import Version
 
         package = self.argument("package")
 
@@ -347,7 +347,7 @@ lists all packages available."""
         return selector.find_best_candidate(name, ">={}".format(package.pretty_version))
 
     def get_update_status(self, latest, package):
-        from poetry.semver import parse_constraint
+        from poetry_core.semver import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
             return "up-to-date"

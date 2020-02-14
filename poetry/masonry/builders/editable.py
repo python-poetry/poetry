@@ -5,19 +5,25 @@ import shutil
 
 from collections import defaultdict
 
-from poetry.semver.version import Version
-from poetry.utils._compat import decode
+from poetry_core.masonry.builders.builder import Builder
+from poetry_core.masonry.builders.sdist import SdistBuilder
+from poetry_core.semver.version import Version
 
-from .builder import Builder
-from .sdist import SdistBuilder
+from poetry.utils._compat import decode
 
 
 class EditableBuilder(Builder):
+    def __init__(self, poetry, env, io):
+        super(EditableBuilder, self).__init__(poetry)
+
+        self._env = env
+        self._io = io
+
     def build(self):
         return self._setup_build()
 
     def _setup_build(self):
-        builder = SdistBuilder(self._poetry, self._env, self._io)
+        builder = SdistBuilder(self._poetry)
         setup = self._path / "setup.py"
         has_setup = setup.exists()
 

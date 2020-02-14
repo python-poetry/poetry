@@ -59,7 +59,7 @@ class MakeReleaseCommand(Command):
         from poetry.utils.env import GET_BASE_PREFIX
         from poetry.utils.env import VirtualEnv
         from poetry.utils.helpers import temporary_directory
-        from poetry.vcs import get_vcs
+        from poetry_core.vcs import get_vcs
 
         project = Factory().create_poetry(Path.cwd())
         package = project.package

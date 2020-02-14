@@ -13,22 +13,24 @@ from typing import Optional
 import pkginfo
 
 from clikit.ui.components import ProgressIndicator
+from poetry_core.packages import Dependency
+from poetry_core.packages import DirectoryDependency
+from poetry_core.packages import FileDependency
+from poetry_core.packages import Package
+from poetry_core.packages import URLDependency
+from poetry_core.packages import VCSDependency
+from poetry_core.packages import dependency_from_pep_508
+from poetry_core.packages.utils.utils import get_python_constraint_from_marker
+from poetry_core.vcs.git import Git
+from poetry_core.version.markers import MarkerUnion
 
 from poetry.factory import Factory
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.term import Term
-from poetry.packages import Dependency
 from poetry.packages import DependencyPackage
-from poetry.packages import DirectoryDependency
-from poetry.packages import FileDependency
-from poetry.packages import Package
-from poetry.packages import PackageCollection
-from poetry.packages import URLDependency
-from poetry.packages import VCSDependency
-from poetry.packages import dependency_from_pep_508
-from poetry.packages.utils.utils import get_python_constraint_from_marker
+from poetry.packages.package_collection import PackageCollection
 from poetry.repositories import Pool
 from poetry.utils._compat import PY35
 from poetry.utils._compat import OrderedDict
@@ -43,8 +45,6 @@ from poetry.utils.helpers import temporary_directory
 from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
 from poetry.utils.toml_file import TomlFile
-from poetry.vcs.git import Git
-from poetry.version.markers import MarkerUnion
 
 from .exceptions import CompatibilityError
 

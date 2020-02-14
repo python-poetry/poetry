@@ -3,9 +3,10 @@ from typing import Union
 
 from clikit.api.io import IO
 from clikit.io import NullIO
+from poetry_core.packages.package import Package
+from poetry_core.semver import parse_constraint
 
 from poetry.packages import Locker
-from poetry.packages import Package
 from poetry.puzzle import Solver
 from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
@@ -14,7 +15,6 @@ from poetry.puzzle.operations.operation import Operation
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.semver import parse_constraint
 from poetry.utils.extras import get_extra_package_names
 from poetry.utils.helpers import canonicalize_name
 
