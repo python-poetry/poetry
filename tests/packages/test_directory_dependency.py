@@ -1,3 +1,5 @@
+import os
+
 from subprocess import CalledProcessError
 
 import pytest
@@ -19,3 +21,25 @@ DIST_PATH = Path(__file__).parent.parent / "fixtures" / "git" / "github.com" / "
 def test_directory_dependency_must_exist():
     with pytest.raises(ValueError):
         DirectoryDependency("demo", DIST_PATH / "invalid")
+
+
+def test_directory_relative_path():
+    assert (
+        DirectoryDependency(
+            "demo",
+            Path(
+                os.path.sep.join(
+                    [
+                        str(Path(__file__).parent),
+                        "..",
+                        "fixtures",
+                        "git",
+                        "github.com",
+                        "demo",
+                        "demo",
+                    ]
+                )
+            ),
+        ).full_path
+        == DIST_PATH / "demo"
+    )

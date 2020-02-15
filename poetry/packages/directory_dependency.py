@@ -32,6 +32,8 @@ class DirectoryDependency(Dependency):
         if self._base and not self._path.is_absolute():
             self._full_path = self._base / self._path
 
+        self._full_path = self._full_path.resolve()
+
         if not self._full_path.exists():
             raise ValueError("Directory {} does not exist".format(self._path))
 
