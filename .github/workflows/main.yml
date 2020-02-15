@@ -52,6 +52,7 @@ jobs:
       run: |
         source $HOME/.poetry/env
         poetry run pytest -q tests
+        poetry run pip check
 
   MacOS:
     needs: Linting
@@ -88,6 +89,7 @@ jobs:
       run: |
         source $HOME/.poetry/env
         poetry run pytest -q tests
+        poetry run pip check
 
   Windows:
     needs: Linting
@@ -125,3 +127,4 @@ jobs:
       run: |
         $env:Path += ";$env:Userprofile\.poetry\bin"
         poetry run pytest -q tests
+        poetry run pip check
