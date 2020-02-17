@@ -165,8 +165,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         dev_requirements = {}
 
         question = (
-            "Would you like to define your dev dependencies"
-            " (require-dev) interactively"
+            "Would you like to define your development dependencies interactively?"
         )
         if self.confirm(question, True):
             if not help_displayed:
