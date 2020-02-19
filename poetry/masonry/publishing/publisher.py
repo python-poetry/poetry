@@ -49,9 +49,7 @@ class Publisher:
             repository_name = "pypi"
         else:
             # Retrieving config information
-            url = self._poetry.config.get(
-                "repositories.{}.url".format(repository_name)
-            )
+            url = self._poetry.config.get("repositories.{}.url".format(repository_name))
             if url is None:
                 raise RuntimeError(
                     "Repository {} is not defined".format(repository_name)
