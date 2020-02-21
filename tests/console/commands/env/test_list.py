@@ -7,7 +7,9 @@ from poetry.utils.env import EnvManager
 from poetry.utils.toml_file import TomlFile
 
 
-def test_none_activated(app, tmp_dir):
+def test_none_activated(app, tmp_dir, mocker, env):
+    mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
+
     app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     venv_name = EnvManager.generate_env_name(
