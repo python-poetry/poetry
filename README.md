@@ -65,7 +65,7 @@ to `self update`.
 poetry self update 1.0.0
 ```
 
-!!!note
+*Note:*
 
     If you are still on poetry version < 1.0 use `poetry self:update` instead.
 

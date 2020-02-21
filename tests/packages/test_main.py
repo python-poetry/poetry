@@ -191,3 +191,14 @@ def test_dependency_from_pep_508_with_url():
     assert "django-utils" == dep.name
     assert dep.is_url()
     assert "https://example.com/django-utils-1.0.0.tar.gz" == dep.url
+
+
+def test_dependency_from_pep_508_with_wheel_url():
+    name = (
+        "example_wheel @ https://example.com/example_wheel-14.0.2-py2.py3-none-any.whl"
+    )
+
+    dep = dependency_from_pep_508(name)
+
+    assert "example-wheel" == dep.name
+    assert str(dep.constraint) == "14.0.2"
