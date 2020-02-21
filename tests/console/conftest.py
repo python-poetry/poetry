@@ -13,6 +13,7 @@ from poetry.repositories import Pool
 from poetry.repositories import Repository as BaseRepository
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.utils._compat import Path
+from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
@@ -28,8 +29,13 @@ def installed():
     return BaseRepository()
 
 
+@pytest.fixture
+def env():
+    return MockEnv(path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True)
+
+
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed, config):
+def setup(mocker, installer, installed, config, env):
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
@@ -50,6 +56,9 @@ def setup(mocker, installer, installed, config):
 
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
+
+    # Patch the virtual environment creation do actually do nothing
+    mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=env)
 
     # Setting terminal width
     environ = dict(os.environ)
