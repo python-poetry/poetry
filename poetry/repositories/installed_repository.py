@@ -31,12 +31,11 @@ class InstalledRepository(Repository):
                 if package.name in seen:
                     continue
 
-                is_vendor = True
                 try:
                     path.relative_to(_CURRENT_VENDOR)
                 except ValueError:
-                    is_vendor = False
-                if is_vendor:
+                    pass
+                else:
                     continue
 
                 seen.add(package.name)
