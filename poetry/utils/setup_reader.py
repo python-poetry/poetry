@@ -183,6 +183,7 @@ class SetupReader(object):
             func = value.func
             if not (isinstance(func, ast.Name) and func.id == "setup") and not (
                 isinstance(func, ast.Attribute)
+                and hasattr(func.value, "id")
                 and func.value.id == "setuptools"
                 and func.attr == "setup"
             ):
