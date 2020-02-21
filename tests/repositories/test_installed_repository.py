@@ -9,7 +9,6 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 ENV_DIR = (FIXTURES_DIR / "installed").resolve()
 SITE_PACKAGES = ENV_DIR / "lib" / "python3.7" / "site-packages"
 SRC = ENV_DIR / "src"
-
 VENDOR_DIR = ENV_DIR / "vendor" / "py3.7"
 INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PACKAGES / "cleo-0.7.6.dist-info"),
