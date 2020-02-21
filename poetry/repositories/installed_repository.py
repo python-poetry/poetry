@@ -1,4 +1,4 @@
-import poetry
+from poetry import _CURRENT_VENDOR
 
 from poetry.packages import Package
 from poetry.utils._compat import Path
