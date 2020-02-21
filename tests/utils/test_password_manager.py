@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from keyring.backend import KeyringBackend
@@ -208,3 +210,17 @@ def test_keyring_with_chainer_backend_and_not_compatible_only_should_be_unavaila
     key_ring = KeyRing("poetry")
 
     assert not key_ring.is_available()
+
+
+def test_get_http_auth_from_environment_variables(
+    environ, config, mock_available_backend
+):
+    os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+
+    manager = PasswordManager(config)
+
+    auth = manager.get_http_auth("foo")
+
+    assert "bar" == auth["username"]
+    assert "baz" == auth["password"]

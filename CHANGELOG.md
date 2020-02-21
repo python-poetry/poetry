@@ -1,5 +1,18 @@
 # Change Log
 
+## [1.0.3] - 2020-01-31
+
+### Fixed
+
+- Fixed an error which caused the configuration environment variables (like `POETRY_HTTP_BASIC_XXX_PASSWORD`) to not be used ([#1909](https://github.com/python-poetry/poetry/pull/1909)).
+- Fixed an error where the `--help` option was not working ([#1910](https://github.com/python-poetry/poetry/pull/1910)).
+- Fixed an error where packages from private indices were not decompressed properly ([#1851](https://github.com/python-poetry/poetry/pull/1851)).
+- Fixed an error where the version of some PEP-508-formatted wheel dependencies was not properly retrieved ([#1932](https://github.com/python-poetry/poetry/pull/1932)).
+- Fixed internal regexps to avoid potential catastrophic backtracking errors ([#1913](https://github.com/python-poetry/poetry/pull/1913)).
+- Fixed performance issues when custom indices were defined in the `pyproject.toml` file ([#1892](https://github.com/python-poetry/poetry/pull/1892)).
+- Fixed the `get_requires_for_build_wheel()` function of `masonry.api` which wasn't returning the proper result ([#1875](https://github.com/python-poetry/poetry/pull/1875)).
+
+
 ## [1.0.2] - 2020-01-10
 
 ### Fixed
@@ -783,7 +796,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.2...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.3...master
+[1.0.3]: https://github.com/python-poetry/poetry/releases/tag/1.0.3
 [1.0.2]: https://github.com/python-poetry/poetry/releases/tag/1.0.2
 [1.0.1]: https://github.com/python-poetry/poetry/releases/tag/1.0.1
 [1.0.0]: https://github.com/python-poetry/poetry/releases/tag/1.0.0
