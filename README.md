@@ -7,7 +7,7 @@ ensuring you have the right stack everywhere.
 
 It supports Python 2.7 and 3.4+.
 
-![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg)
+[![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
 
 The [complete documentation](https://python-poetry.org/docs/) is available on the [official website](https://python-poetry.org).
 
