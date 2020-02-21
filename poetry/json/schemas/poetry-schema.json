@@ -460,6 +460,9 @@
                     },
                     {
                         "$ref": "#/definitions/path-dependency"
+                    },
+                    {
+                        "$ref": "#/definitions/url-dependency"
                     }
                 ]
             }
