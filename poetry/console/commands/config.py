@@ -99,20 +99,40 @@ To remove a repository (repo is a short alias for repositories):
 
         # show the value if no value is provided
         if not self.argument("value") and not self.option("unset"):
-            m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
+            m = re.match(
+                r"^repos?(?:itories)?(?:\.(^[\.]+))?(?:\.(^[\.]+))?",
+                self.argument("key"),
+            )
             if m:
                 if not m.group(1):
+                    # print the whole repositories section
                     value = {}
                     if config.get("repositories") is not None:
                         value = config.get("repositories")
                 else:
-                    repo = config.get("repositories.{}".format(m.group(1)))
-                    if repo is None:
-                        raise ValueError(
-                            "There is no {} repository defined".format(m.group(1))
-                        )
+                    repository_name = m.group(1)
 
-                    value = repo
+                    if not m.group(2):
+                        repo = config.get("repositories.{}".format(repository_name))
+                        if repo is None:
+                            raise ValueError(
+                                "There is no {} repository defined".format(
+                                    repository_name
+                                )
+                            )
+                        value = repo
+                    else:
+                        property_name = m.group(2)
+                        property_value = config.get(
+                            "repositories.{}.{}".format(repository_name, property_name)
+                        )
+                        if property_value is None:
+                            raise ValueError(
+                                "Property {} for repository {} is not defined".format(
+                                    property_name, repository_name
+                                )
+                            )
+                        value = property_value
 
                 self.line(str(value))
             else:
@@ -144,37 +164,97 @@ To remove a repository (repo is a short alias for repositories):
             )
 
         # handle repositories
-        m = re.match(r"^repos?(?:itories)?(?:\.(.+))?", self.argument("key"))
+        m = re.match(
+            r"^repos?(?:itories)?(?:\.([^.]+))?(?:\.(name|url|default|secondary))?",
+            self.argument("key"),
+        )
+
         if m:
             if not m.group(1):
-                raise ValueError("You cannot remove the [repositories] section")
+                raise ValueError(
+                    "You cannot replace or remove the whole [repositories] section"
+                )
 
-            if self.option("unset"):
-                repo = config.get("repositories.{}".format(m.group(1)))
-                if repo is None:
-                    raise ValueError(
-                        "There is no {} repository defined".format(m.group(1))
+            repository_name = m.group(1)
+
+            if not m.group(2):
+                if self.option("unset"):
+                    repo = config.get("repositories.{}".format(repository_name))
+                    if repo is None:
+                        raise ValueError(
+                            "There is no {} repository defined".format(repository_name)
+                        )
+
+                    config.config_source.remove_property(
+                        "repositories.{}".format(repository_name)
                     )
 
-                config.config_source.remove_property(
-                    "repositories.{}".format(m.group(1))
+                    return 0
+
+                if len(values) == 1:
+                    url = values[0]
+
+                    config.config_source.add_property(
+                        "repositories.{}.name".format(repository_name), repository_name
+                    )
+                    config.config_source.add_property(
+                        "repositories.{}.url".format(repository_name), url
+                    )
+
+                    return 0
+
+                raise ValueError(
+                    "You must pass the url. "
+                    "Example: poetry config repositories.foo https://bar.com"
                 )
+            else:
+                property_name = m.group(2)
 
-                return 0
+                if self.option("unset"):
+                    repo = config.get("repositories.{}".format(repository_name,))
+                    if repo is None:
+                        raise ValueError(
+                            "There is no {} repository defined".format(repository_name)
+                        )
 
-            if len(values) == 1:
-                url = values[0]
+                    if property_name == "name" or property_name == "url":
+                        # repository cannot exist without name or url - delete the whole repository section
+                        raise ValueError(
+                            "Repository can't exist without name or url. Maybe you want to delete the whole repository?"
+                            "Example: poetry config repositories.foo --unset"
+                        )
+                    else:
+                        config.config_source.remove_property(
+                            "repositories.{}.{}".format(repository_name, property_name)
+                        )
 
-                config.config_source.add_property(
-                    "repositories.{}.url".format(m.group(1)), url
+                    return 0
+
+                if len(values) == 1:
+                    property_value = values[0]
+
+                    config.config_source.add_property(
+                        "repositories.{}.{}".format(repository_name, property_name),
+                        property_value,
+                    )
+
+                    if property_name == "default":
+                        # default repository cannot be secondary
+                        config.config_source.remove_property(
+                            "repositories.{}.secondary".format(repository_name)
+                        )
+                    elif property_name == "secondary":
+                        # secondary repository cannot be default
+                        config.config_source.remove_property(
+                            "repositories.{}.default".format(repository_name)
+                        )
+
+                    return 0
+
+                raise ValueError(
+                    "You must pass the value for the property. "
+                    "Example: poetry config repositories.foo.property-name value"
                 )
-
-                return 0
-
-            raise ValueError(
-                "You must pass the url. "
-                "Example: poetry config repositories.foo https://bar.com"
-            )
 
         # handle auth
         m = re.match(r"^(http-basic|pypi-token)\.(.+)", self.argument("key"))
@@ -272,7 +352,10 @@ To remove a repository (repo is a short alias for repositories):
                 continue
             elif isinstance(value, list):
                 value = [
-                    json.dumps(val) if isinstance(val, list) else val for val in value
+                    json.dumps(val)
+                    if isinstance(val, list) or isinstance(val, dict)
+                    else val
+                    for val in value
                 ]
 
                 value = "[{}]".format(", ".join(value))
@@ -285,6 +368,8 @@ To remove a repository (repo is a short alias for repositories):
                 message = "<c1>{}</c1> = <c2>{}</c2>  # {}".format(
                     k + key, json.dumps(raw_val), value
                 )
+            elif isinstance(raw_val, list):
+                message = "<c1>{}</c1> = <c2>{}</c2>".format(k + key, value)
             else:
                 message = "<c1>{}</c1> = <c2>{}</c2>".format(k + key, json.dumps(value))
 

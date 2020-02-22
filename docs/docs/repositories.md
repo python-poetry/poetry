@@ -19,13 +19,72 @@ repository.
 
 ### Adding a repository
 
-Adding a new repository is easy with the `config` command.
+#### Adding a repository globally
+
+You can add new repository either globally or for a specific project.
+The easiest way to add a new repository is with the `config` command:
 
 ```bash
 poetry config repositories.foo https://foo.bar/simple/
 ```
 
-This will set the url for repository `foo` to `https://foo.bar/simple/`.
+But you can also edit the `config.toml` directly:
+```toml
+[repositories]
+[repositories.foo]
+name = "foo"
+url = "https://foo.bar/simple/"
+```
+
+With both options you will register new repository with name `foo` and set the url for repository `foo` to `https://foo.bar/simple/`.
+From now on, Poetry will also look for packages in your private repository.
+Any custom repository will have precedence over [PyPI](https://pypi.org).
+
+You can add multiple repositories (but each repository **must** have a unique name):
+```bash
+poetry config repositories.foo https://foo.bar/simple/
+poetry config repositories.bar https://bar.bar/simple/
+```
+
+But you can also edit the `config.toml` directly:
+```toml
+[repositories]
+[repositories.foo]
+name = "foo"
+url = "https://foo.bar/simple/"
+
+[repositories.bar]
+name = "bar"
+url = "https://foo.bar/simple/"
+```
+
+#### Adding a repository only for specific project
+
+To add new repository only for a specific project you have to edit your `pyproject.toml` file and add:
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+```
+
+From now on, Poetry will also look for packages in your private repository for this specific project.
+Any custom repository project specific repository will also have precedence over [PyPI](https://pypi.org).
+
+You can add multiple repositories (but each repository **must** have a unique name):
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+
+[[tool.poetry.source]]
+name = "bar"
+url = "https://bar.bar/simple/"
+```
+
+#### How global and project specific repositories work together
+
+You can have repository with the same name in both global and project specific configs.
+Settings from project specific configs for repository with the same name will override settings from global config ([except `global` flag](#disabling-the-pypi-repository)).
 
 ### Configuring credentials
 
@@ -80,24 +139,13 @@ certificate-based client authentication.  The following will configure the "foo"
 certificate using a custom certificate authority and use a client certificate (note that these config variables do not
 both need to be set):
 ```bash
-    poetry config certificates.foo.cert /path/to/ca.pem
-    poetry config certificates.foo.client-cert /path/to/client.pem
+poetry config certificates.foo.cert /path/to/ca.pem
+poetry config certificates.foo.client-cert /path/to/client.pem
 ```
 
 ### Install dependencies from a private repository
 
-Now that you can publish to your private repository, you need to be able to
-install dependencies from it.
-
-For that, you have to edit your `pyproject.toml` file, like so
-
-```toml
-[[tool.poetry.source]]
-name = "foo"
-url = "https://foo.bar/simple/"
-```
-
-From now on, Poetry will also look for packages in your private repository.
+Once you added your private repository to the global or project specific config - Poetry will also look for packages in your private repository.
 
 !!!note
 
@@ -106,8 +154,22 @@ From now on, Poetry will also look for packages in your private repository.
     If you still want PyPI to be your primary source for your packages
     you can declare custom repositories as secondary.
 
+    **pyproject.toml**
     ```toml
     [[tool.poetry.source]]
+    name = "foo"
+    url = "https://foo.bar/simple/"
+    secondary = true
+    ```
+
+    **CLI**
+    ```bash
+    poetry config repositories.foo.secondary true
+    ```
+
+    **config.toml**
+    ```toml
+    [repositories.foo]
     name = "foo"
     url = "https://foo.bar/simple/"
     secondary = true
@@ -124,7 +186,29 @@ looking for packages.
 ### Disabling the PyPI repository
 
 If you want your packages to be exclusively looked up from a private
-repository, you can set it as the default one by using the `default` keyword
+repository, you can set it as the default:
+
+**pyproject.toml**
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+default = true
+```
+
+**CLI**
+```bash
+poetry config repositories.foo.default true
+```
+
+**config.toml**
+```toml
+[repositories.foo]
+name = "foo"
+url = "https://foo.bar/simple/"
+default = true
+```
+
 
 ```toml
 [[tool.poetry.source]]
@@ -133,4 +217,7 @@ url = "https://foo.bar/simple/"
 default = true
 ```
 
-A default source will also be the fallback source if you add other sources.
+!!!note
+    Only one default source can be marked as default.
+    If there is a repository marked as default in the global config marked as default - project specific one will be ignored.
+    This is behavior similar to PIP's `index-url` settings in `pip.conf`, see #1632 for more details.

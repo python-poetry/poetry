@@ -18,7 +18,6 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
 
 from .command import Command
-from .env_command import EnvCommand
 
 
 class InitCommand(Command):
@@ -224,7 +223,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     package = self.ask("\nAdd a package:")
                     continue
 
-                matches = self._get_pool().search(constraint["name"])
+                matches = self.poetry.pool.search(constraint["name"])
 
                 if not matches:
                     self.line("<error>Unable to find package</error>")
@@ -330,7 +329,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     ):  # type: (...) -> Tuple[str, str]
         from poetry.version.version_selector import VersionSelector
 
-        selector = VersionSelector(self._get_pool())
+        selector = VersionSelector(self.poetry.pool)
         package = selector.find_best_candidate(
             name, required_version, allow_prereleases=allow_prereleases, source=source
         )
@@ -463,8 +462,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return result
 
+    @staticmethod
     def _format_requirements(
-        self, requirements
+        requirements,
     ):  # type: (List[Dict[str, str]]) -> Dict[str, Union[str, Dict[str, str]]]
         requires = {}
         for requirement in requirements:
@@ -480,7 +480,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return requires
 
-    def _validate_author(self, author, default):
+    @staticmethod
+    def _validate_author(author, default):
         from poetry.packages.package import AUTHOR_REGEX
 
         author = author or default
@@ -497,23 +498,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return author
 
-    def _validate_license(self, license):
+    @staticmethod
+    def _validate_license(license):
         from poetry.spdx import license_by_id
 
         if license:
             license_by_id(license)
 
         return license
-
-    def _get_pool(self):
-        from poetry.repositories import Pool
-        from poetry.repositories.pypi_repository import PyPiRepository
-
-        if isinstance(self, EnvCommand):
-            return self.poetry.pool
-
-        if self._pool is None:
-            self._pool = Pool()
-            self._pool.add_repository(PyPiRepository())
-
-        return self._pool

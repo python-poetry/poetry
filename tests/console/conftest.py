@@ -8,10 +8,10 @@ from poetry.console import Application as BaseApplication
 from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
-from poetry.poetry import Poetry as BasePoetry
 from poetry.repositories import Pool
 from poetry.repositories import Repository as BaseRepository
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.pypi_repository import PyPiRepository as BasePyPiRepository
 from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
@@ -122,18 +122,6 @@ class Locker(BaseLocker):
         self._lock_data = None
 
 
-class Poetry(BasePoetry):
-    def __init__(self, file, local_config, package, locker, config):
-        self._file = TomlFile(file)
-        self._package = package
-        self._local_config = local_config
-        self._locker = Locker(locker.lock.path, locker._local_config)
-        self._config = config
-
-        # Configure sources
-        self._pool = Pool()
-
-
 class Repository(BaseRepository):
     def find_packages(
         self, name, constraint=None, extras=None, allow_prereleases=False
@@ -144,6 +132,23 @@ class Repository(BaseRepository):
         if len(packages) == 0:
             raise PackageNotFound("Package [{}] not found.".format(name))
         return packages
+
+
+class PyPiRepository(BasePyPiRepository):
+    def find_packages(
+        self, name, constraint=None, extras=None, allow_prereleases=False
+    ):
+        packages = super(BasePyPiRepository, self).find_packages(
+            name, constraint, extras, allow_prereleases
+        )
+        if len(packages) == 0:
+            raise PackageNotFound("Package [{}] not found.".format(name))
+        return packages
+
+
+@pytest.fixture
+def pypi_repo():
+    return Repository()
 
 
 @pytest.fixture
@@ -157,7 +162,7 @@ def project_directory():
 
 
 @pytest.fixture
-def poetry(repo, project_directory, config):
+def poetry(project_directory, config):
     p = Factory().create_poetry(
         Path(__file__).parent.parent / "fixtures" / project_directory
     )
@@ -167,10 +172,6 @@ def poetry(repo, project_directory, config):
         content = f.read()
 
     p.set_config(config)
-
-    pool = Pool()
-    pool.add_repository(repo)
-    p.set_pool(pool)
 
     yield p
 
@@ -184,6 +185,15 @@ def app(poetry):
     app_.config.set_terminate_after_run(False)
 
     return app_
+
+
+@pytest.fixture
+def app_with_mocked_repo(app, repo):
+    pool = Pool()
+    pool.add_repository(repo)
+    app.poetry.set_pool(pool)
+
+    return app
 
 
 @pytest.fixture

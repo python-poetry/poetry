@@ -53,7 +53,6 @@ class SelfUpdateCommand(Command):
 
     def handle(self):
         from poetry.__version__ import __version__
-        from poetry.repositories.pypi_repository import PyPiRepository
         from poetry.semver import Version
         from poetry.utils._compat import Path
 
@@ -70,8 +69,7 @@ class SelfUpdateCommand(Command):
         if not version:
             version = ">=" + __version__
 
-        repo = PyPiRepository(fallback=False)
-        packages = repo.find_packages(
+        packages = self.poetry.pool.find_packages(
             "poetry", version, allow_prereleases=self.option("preview")
         )
         if not packages:

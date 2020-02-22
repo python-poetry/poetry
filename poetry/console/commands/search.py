@@ -8,20 +8,19 @@ class SearchCommand(Command):
     name = "search"
     description = "Searches for packages on remote repositories."
 
-    arguments = [argument("tokens", "The tokens to search for.", multiple=True)]
+    arguments = [argument("name", "The package names to search for.", multiple=True)]
 
     def handle(self):
-        from poetry.repositories.pypi_repository import PyPiRepository
+        packages = self.argument("name")
+        for name in packages:
+            results = self.poetry.pool.search(name)
+            for result in results:
+                self.line("")
+                name = "<info>{}</>".format(result.name)
 
-        results = PyPiRepository().search(self.argument("tokens"))
+                name += " (<comment>{}</>)".format(result.version)
 
-        for result in results:
-            self.line("")
-            name = "<info>{}</>".format(result.name)
+                self.line(name)
 
-            name += " (<comment>{}</>)".format(result.version)
-
-            self.line(name)
-
-            if result.description:
-                self.line(" {}".format(result.description))
+                if result.description:
+                    self.line(" {}".format(result.description))

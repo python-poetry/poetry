@@ -60,15 +60,11 @@ class PipInstaller(BaseInstaller):
             if repository.client_cert:
                 args += ["--client-cert", str(repository.client_cert)]
 
-            index_url = repository.authenticated_url
-
-            args += ["--index-url", index_url]
+            # Replicating pip.conf behaviour - see issue #1632
             if self._pool.has_default():
-                if repository.name != self._pool.repositories[0].name:
-                    args += [
-                        "--extra-index-url",
-                        self._pool.repositories[0].authenticated_url,
-                    ]
+                args += ["--index-url", self._pool.repositories[0].authenticated_url]
+            else:
+                args += ["--index-url", repository.authenticated_url]
 
         if update:
             args.append("-U")
@@ -122,7 +118,8 @@ class PipInstaller(BaseInstaller):
     def run(self, *args, **kwargs):  # type: (...) -> str
         return self._env.run_pip(*args, **kwargs)
 
-    def requirement(self, package, formatted=False):
+    @staticmethod
+    def requirement(package, formatted=False):
         if formatted and not package.source_type:
             req = "{}=={}".format(package.name, package.version)
             for f in package.files:

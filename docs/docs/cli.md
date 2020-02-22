@@ -395,15 +395,11 @@ poetry check
 
 ## search
 
-This command searches for packages on a remote index.
+This command searches for package(s) in all global repositories and local repositories (if poetry is invoked inside the project folder).
 
 ```bash
 poetry search requests pendulum
 ```
-
-### Options
-
-* `--only-name (-N)`: Search only in name.
 
 ## lock
 

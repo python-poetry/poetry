@@ -7,7 +7,16 @@ from poetry.masonry.publishing.uploader import UploadError
 from poetry.utils._compat import Path
 
 
-fixtures_dir = Path(__file__).parent.parent.parent / "fixtures"
+fixtures_dir = Path("tests/fixtures")
+
+
+@pytest.fixture(
+    autouse=True
+)  # pytest will auto-run this fixture for every test in this module
+def mock_config_dir(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR", fixtures_dir / "poetry_global_config_empty"
+    )
 
 
 def project(name):

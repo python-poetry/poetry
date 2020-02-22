@@ -1,12 +1,24 @@
 # -*- coding: utf-8 -*-
 from email.parser import Parser
 
+import pytest
+
 from clikit.io import NullIO
 
 from poetry.factory import Factory
 from poetry.masonry.builders.builder import Builder
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
+
+
+@pytest.fixture(
+    autouse=True
+)  # pytest will auto-run this fixture for every test in this module
+def mock_config_dir(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        Path("tests/fixtures") / "poetry_global_config_empty",
+    )
 
 
 def test_builder_find_excluded_files(mocker):

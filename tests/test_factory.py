@@ -10,7 +10,16 @@ from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
 
-fixtures_dir = Path(__file__).parent / "fixtures"
+fixtures_dir = Path("tests/fixtures")
+
+
+@pytest.fixture(
+    autouse=True
+)  # pytest will auto-run this fixture for every test in this module
+def mock_config_dir(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR", fixtures_dir / "poetry_global_config_empty"
+    )
 
 
 def test_create_poetry():
@@ -153,6 +162,76 @@ def test_poetry_with_two_default_sources():
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
 
     assert "Only one repository can be the default" == str(e.value)
+
+
+def test_poetry_with_global_default_source(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        fixtures_dir / "with_global_default_source" / "poetry_global_config",
+    )
+    poetry_object = Factory().create_poetry(fixtures_dir / "with_global_default_source")
+
+    assert 2 == len(poetry_object.pool.repositories)
+    assert poetry_object.pool.has_default()
+    assert poetry_object.pool.repositories[0].name == "global-bar"
+
+
+def test_poetry_with_global_and_local_default_source(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        fixtures_dir / "with_global_and_local_default_source" / "poetry_global_config",
+    )
+    poetry = Factory().create_poetry(
+        fixtures_dir / "with_global_and_local_default_source"
+    )
+
+    assert 2 == len(poetry.pool.repositories)
+    assert poetry.pool.has_default()
+    assert poetry.pool.repositories[0].name == "global-bar"
+
+
+def test_poetry_with_two_local_sources_and_default():
+    poetry = Factory().create_poetry(
+        fixtures_dir / "with_two_local_sources_and_default"
+    )
+
+    assert 2 == len(poetry.pool.repositories)
+    assert poetry.pool.has_default()
+    assert poetry.pool.repositories[0].name == "local-foo"
+
+
+def test_poetry_with_non_default_global_source_and_default_local_source(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        fixtures_dir
+        / "with_non_default_global_source_and_default_local_source"
+        / "poetry_global_config",
+    )
+    poetry = Factory().create_poetry(
+        fixtures_dir / "with_non_default_global_source_and_default_local_source"
+    )
+
+    assert 3 == len(poetry.pool.repositories)
+    assert poetry.pool.has_default()
+    assert poetry.pool.repositories[0].name == "local-foo"
+
+
+def test_poetry_with_global_and_local_same_name_source(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        fixtures_dir
+        / "with_global_and_local_same_name_source"
+        / "poetry_global_config",
+    )
+    poetry = Factory().create_poetry(
+        fixtures_dir / "with_global_and_local_same_name_source"
+    )
+
+    assert 2 == len(poetry.pool.repositories)
+    assert poetry.pool.has_default()
+    assert poetry.pool.repositories[0].name == "PyPI"
+    assert poetry.pool.repositories[1].name == "foo"
+    assert poetry.pool.repositories[1].url == "https://local-foo.bar/simple"
 
 
 def test_validate():

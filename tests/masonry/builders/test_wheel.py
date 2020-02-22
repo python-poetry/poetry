@@ -16,6 +16,16 @@ from poetry.utils.env import NullEnv
 fixtures_dir = Path(__file__).parent / "fixtures"
 
 
+@pytest.fixture(
+    autouse=True
+)  # pytest will auto-run this fixture for every test in this module
+def mock_config_dir(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        Path("tests/fixtures") / "poetry_global_config_empty",
+    )
+
+
 @pytest.fixture(autouse=True)
 def setup():
     clear_samples_dist()

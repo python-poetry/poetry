@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 import sys
 
+import pytest
+
 from clikit.io import NullIO
 
 from poetry.factory import Factory
@@ -12,6 +14,16 @@ from poetry.utils.env import MockEnv
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(
+    autouse=True
+)  # pytest will auto-run this fixture for every test in this module
+def mock_config_dir(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        Path("tests/fixtures") / "poetry_global_config_empty",
+    )
 
 
 def test_build_should_delegate_to_pip_for_non_pure_python_packages(tmp_dir, mocker):

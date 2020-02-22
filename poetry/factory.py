@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import shutil
 
+from collections import OrderedDict
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -165,12 +166,24 @@ class Factory:
         poetry = Poetry(poetry_file, local_config, package, locker, config)
 
         # Configuring sources
-        for source in local_config.get("source", []):
+
+        # First add all repositories from global config
+        # Default repository from global config must have precedence over project one
+        # (to replicate behaviour of pip --index-url - see issue #1632)
+        global_default_repository_name = None
+        repositories = OrderedDict()
+        for source in config.get("repositories", {}).values():
             repository = self.create_legacy_repository(source, config)
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)
+            if is_default:
+                if global_default_repository_name:
+                    raise ValueError("Only one repository can be the default")
+                else:
+                    global_default_repository_name = repository.name
+
             if io.is_debug():
-                message = "Adding repository {} ({})".format(
+                message = "Adding repository from global config {} ({})".format(
                     repository.name, repository.url
                 )
                 if is_default:
@@ -180,7 +193,59 @@ class Factory:
 
                 io.write_line(message)
 
-            poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
+            repositories[repository.name] = {
+                "repository": repository,
+                "is_default": is_default,
+                "is_secondary": is_secondary,
+            }
+
+        # Add all repositories from project pyproject.toml (if any)
+        for source in local_config.get("source", []):
+            repository = self.create_legacy_repository(source, config)
+            is_default = source.get("default", False)
+            is_secondary = source.get("secondary", False)
+            if repository.name == global_default_repository_name:
+                if io.is_debug():
+                    message = (
+                        "Skipping repository from local config {} because it's name matches default repository "
+                        "from global config".format(repository.name)
+                    )
+                    io.write_line(message)
+                continue
+
+            if io.is_debug():
+                message = "Adding repository from local config {} ({})".format(
+                    repository.name, repository.url
+                )
+                if is_default:
+                    if global_default_repository_name:
+                        message += (
+                            "and NOT setting it as the default one because default repository is already set "
+                            "in global config "
+                        )
+                    else:
+                        message += " and setting it as the default one"
+                elif is_secondary:
+                    message += " and setting it as secondary"
+
+                io.write_line(message)
+
+            if global_default_repository_name:
+                is_default = False
+
+            repositories[repository.name] = {
+                "repository": repository,
+                "is_default": is_default,
+                "is_secondary": is_secondary,
+            }
+
+        # Add all repositories to the pool in the order they were read from config files
+        for repository_name in repositories:
+            poetry.pool.add_repository(
+                repositories[repository_name]["repository"],
+                repositories[repository_name]["is_default"],
+                secondary=repositories[repository_name]["is_secondary"],
+            )
 
         # Always put PyPI last to prefer private repositories
         # but only if we have no other default source
@@ -228,8 +293,9 @@ class Factory:
 
         return config
 
+    @staticmethod
     def create_legacy_repository(
-        self, source, auth_config
+        source, auth_config
     ):  # type: (Dict[str, str], Config) -> LegacyRepository
         from .repositories.auth import Auth
         from .repositories.legacy_repository import LegacyRepository

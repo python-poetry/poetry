@@ -7,6 +7,8 @@ import zipfile
 
 from contextlib import contextmanager
 
+import pytest
+
 from poetry import __version__
 from poetry.masonry import api
 from poetry.utils._compat import Path
@@ -25,6 +27,16 @@ def cwd(directory):
 
 
 fixtures = os.path.join(os.path.dirname(__file__), "builders", "fixtures")
+
+
+@pytest.fixture(
+    autouse=True
+)  # pytest will auto-run this fixture for every test in this module
+def mock_config_dir(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        Path("tests/fixtures") / "poetry_global_config_empty",
+    )
 
 
 def test_get_requires_for_build_wheel():

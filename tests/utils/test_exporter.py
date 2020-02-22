@@ -33,6 +33,16 @@ class Locker(BaseLocker):
         return "123456789"
 
 
+@pytest.fixture(
+    autouse=True
+)  # pytest will auto-run this fixture for every test in this module
+def mock_config_dir(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR",
+        Path("tests/fixtures") / "poetry_global_config_empty",
+    )
+
+
 @pytest.fixture()
 def locker():
     return Locker()

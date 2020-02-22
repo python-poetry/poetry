@@ -18,9 +18,21 @@ from poetry.utils.env import MockEnv as BaseMockEnv
 from tests.helpers import get_dependency
 
 
+fixtures_dir = Path("tests/fixtures")
+
+
 class MockEnv(BaseMockEnv):
     def run(self, bin, *args):
         raise EnvCommandError(CalledProcessError(1, "python", output=""))
+
+
+@pytest.fixture(
+    autouse=True
+)  # pytest will auto-run this fixture for every test in this module
+def mock_config_dir(mocker):
+    mocker.patch(
+        "poetry.factory.CONFIG_DIR", fixtures_dir / "poetry_global_config_empty"
+    )
 
 
 @pytest.fixture
@@ -131,13 +143,7 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
 def test_search_for_directory_setup_egg_info(provider, directory):
     dependency = DirectoryDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / directory,
+        "demo", fixtures_dir / "git" / "github.com" / "demo" / directory
     )
 
     package = provider.search_for_directory(dependency)[0]
@@ -153,13 +159,7 @@ def test_search_for_directory_setup_egg_info(provider, directory):
 
 def test_search_for_directory_setup_egg_info_with_extras(provider):
     dependency = DirectoryDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo",
+        "demo", fixtures_dir / "git" / "github.com" / "demo" / "demo"
     )
     dependency.extras.append("foo")
 
@@ -222,13 +222,7 @@ def test_search_for_directory_setup_read_setup(provider, mocker):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = DirectoryDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo",
+        "demo", fixtures_dir / "git" / "github.com" / "demo" / "demo"
     )
 
     package = provider.search_for_directory(dependency)[0]
@@ -247,13 +241,7 @@ def test_search_for_directory_setup_read_setup_with_extras(provider, mocker):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = DirectoryDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "demo",
+        "demo", fixtures_dir / "git" / "github.com" / "demo" / "demo"
     )
     dependency.extras.append("foo")
 
@@ -276,13 +264,7 @@ def test_search_for_directory_setup_read_setup_with_no_dependencies(provider, mo
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = DirectoryDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / "github.com"
-        / "demo"
-        / "no-dependencies",
+        "demo", fixtures_dir / "git" / "github.com" / "demo" / "no-dependencies"
     )
 
     package = provider.search_for_directory(dependency)[0]
@@ -295,8 +277,7 @@ def test_search_for_directory_setup_read_setup_with_no_dependencies(provider, mo
 
 def test_search_for_directory_poetry(provider):
     dependency = DirectoryDependency(
-        "project-with-extras",
-        Path(__file__).parent.parent / "fixtures" / "project_with_extras",
+        "project-with-extras", fixtures_dir / "project_with_extras"
     )
 
     package = provider.search_for_directory(dependency)[0]
@@ -312,8 +293,7 @@ def test_search_for_directory_poetry(provider):
 
 def test_search_for_directory_poetry_with_extras(provider):
     dependency = DirectoryDependency(
-        "project-with-extras",
-        Path(__file__).parent.parent / "fixtures" / "project_with_extras",
+        "project-with-extras", fixtures_dir / "project_with_extras"
     )
     dependency.extras.append("extras_a")
 
@@ -330,11 +310,7 @@ def test_search_for_directory_poetry_with_extras(provider):
 
 def test_search_for_file_sdist(provider):
     dependency = FileDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0.tar.gz",
+        "demo", fixtures_dir / "distributions" / "demo-0.1.0.tar.gz"
     )
 
     package = provider.search_for_file(dependency)[0]
@@ -350,11 +326,7 @@ def test_search_for_file_sdist(provider):
 
 def test_search_for_file_sdist_with_extras(provider):
     dependency = FileDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0.tar.gz",
+        "demo", fixtures_dir / "distributions" / "demo-0.1.0.tar.gz"
     )
     dependency.extras.append("foo")
 
@@ -374,11 +346,7 @@ def test_search_for_file_sdist_with_extras(provider):
 
 def test_search_for_file_wheel(provider):
     dependency = FileDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0-py2.py3-none-any.whl",
+        "demo", fixtures_dir / "distributions" / "demo-0.1.0-py2.py3-none-any.whl"
     )
 
     package = provider.search_for_file(dependency)[0]
@@ -394,11 +362,7 @@ def test_search_for_file_wheel(provider):
 
 def test_search_for_file_wheel_with_extras(provider):
     dependency = FileDependency(
-        "demo",
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "distributions"
-        / "demo-0.1.0-py2.py3-none-any.whl",
+        "demo", fixtures_dir / "distributions" / "demo-0.1.0-py2.py3-none-any.whl"
     )
     dependency.extras.append("foo")
 
