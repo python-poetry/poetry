@@ -22,7 +22,7 @@ from poetry.vcs.git import ParsedUrl
         ),
         (
             "git+https://user@hostname/project~_-.foo/blah~_-.bar.git",
-            GitUrl("https://user@hostname/project~_-.foo/blah~_-.bar.git", None),
+            GitUrl("https://user@hostname/project~_-.foo/blah~_-.bar.git", None, None),
         ),
         (
             "git+https://user@hostname:project/blah.git",
@@ -168,6 +168,7 @@ def test_normalize_url(url, normalized):
                 "user",
                 None,
                 "blah~_-.bar",
+                None,
                 None,
             ),
         ),
