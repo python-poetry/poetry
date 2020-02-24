@@ -9,7 +9,7 @@ from .git import Git
 
 def get_vcs(directory):  # type: (Path) -> Git
     working_dir = Path.cwd()
-    os.chdir(str(directory))
+    os.chdir(str(directory.resolve()))
 
     try:
         git_dir = decode(
