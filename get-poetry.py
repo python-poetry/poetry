@@ -618,7 +618,7 @@ class Installer:
 
     def update_path(self):
         """
-        Tries to update the $PATH automatically.
+        Tries to update the $PATH automatically. Creates .profile and .zprofile if absent
         """
         if not self._modify_path:
             return
@@ -636,14 +636,17 @@ class Installer:
 
         profiles = self.get_unix_profiles()
         for profile in profiles:
+            update_path = False
             if not os.path.exists(profile):
-                continue
+                update_path = True
+            else:
+                with open(profile, "r") as f:
+                    content = f.read()
+                    if addition not in content:
+                        update_path = True
 
-            with open(profile, "r") as f:
-                content = f.read()
-
-            if addition not in content:
-                with open(profile, "a") as f:
+            if update_path:
+                with open(profile, "a+") as f:
                     f.write(u(addition))
 
     def add_to_fish_path(self):
