@@ -1116,3 +1116,107 @@ cachy 0.2.0
 """
 
     assert expected == tester.io.fetch_output()
+
+
+def test_show_why(app, poetry, installed):
+    command = app.find("show")
+    tester = CommandTester(command)
+
+    poetry.package.add_dependency("cachy", "^0.2.0")
+
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.add_dependency("msgpack-python", ">=0.5 <0.6")
+    cachy2.add_dependency("requests", ">=2.20 <2.24")
+
+    requests = get_package("requests", "2.23.0")
+
+    installed.add_package(cachy2)
+    installed.add_package(requests)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "Cachy",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {
+                        "msgpack-python": ">=0.5 <0.6",
+                        "requests": ">=2.20 <2.24",
+                    },
+                },
+                {
+                    "name": "msgpack-python",
+                    "version": "0.5.1",
+                    "description": "Msgpack",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "requests",
+                    "version": "2.23.0",
+                    "description": "Requests",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "msgpack-python": [], "requests": []},
+            },
+        }
+    )
+
+    tester.execute("--tree --why msgpack-python")
+
+    expected = """\
+msgpack-python 0.5.1 Msgpack
+cachy 0.2.0 Cachy
+`-- msgpack-python >=0.5 <0.6
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    tester.io.clear_output()
+    tester.execute("--tree --why requests")
+
+    expected = """\
+requests 2.23.0 Requests
+cachy 0.2.0 Cachy
+`-- requests >=2.20 <2.24
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    tester.io.clear_output()
+    tester.execute("--why requests")
+
+    expected = """\
+requests 2.23.0 Requests
+cachy    0.2.0  Cachy
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    tester.io.clear_output()
+    tester.execute("--why msgpack-python")
+
+    expected = """\
+msgpack-python (!) 0.5.1 Msgpack
+cachy              0.2.0 Cachy
+"""
+
+    assert expected == tester.io.fetch_output()

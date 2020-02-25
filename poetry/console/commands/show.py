@@ -25,6 +25,7 @@ class ShowCommand(EnvCommand):
             "a",
             "Show all packages (even those not compatible with current system).",
         ),
+        option("why", "w", "Show why the package is required."),
     ]
 
     help = """The show command displays detailed information about a package, or
@@ -75,30 +76,36 @@ lists all packages available."""
                 raise ValueError("Package {} not found".format(package))
 
             if self.option("tree"):
-                self.display_package_tree(self.io, pkg, locked_repo)
+                if self.option("why"):
+                    self.display_package_why(self.io, pkg, locked_repo)
+                else:
+                    self.display_package_tree(self.io, pkg, locked_repo)
 
                 return 0
 
-            rows = [
-                ["<info>name</>", " : <c1>{}</>".format(pkg.pretty_name)],
-                ["<info>version</>", " : <b>{}</b>".format(pkg.pretty_version)],
-                ["<info>description</>", " : {}".format(pkg.description)],
-            ]
+            if not self.option("why"):
+                rows = [
+                    ["<info>name</>", " : <c1>{}</>".format(pkg.pretty_name)],
+                    ["<info>version</>", " : <b>{}</b>".format(pkg.pretty_version)],
+                    ["<info>description</>", " : {}".format(pkg.description)],
+                ]
 
-            table.add_rows(rows)
-            table.render(self.io)
+                table.add_rows(rows)
+                table.render(self.io)
 
-            if pkg.requires:
-                self.line("")
-                self.line("<info>dependencies</info>")
-                for dependency in pkg.requires:
-                    self.line(
-                        " - <c1>{}</c1> <b>{}</b>".format(
-                            dependency.pretty_name, dependency.pretty_constraint
+                if pkg.requires:
+                    self.line("")
+                    self.line("<info>dependencies</info>")
+                    for dependency in pkg.requires:
+                        self.line(
+                            " - <c1>{}</c1> <b>{}</b>".format(
+                                dependency.pretty_name, dependency.pretty_constraint
+                            )
                         )
-                    )
 
-            return 0
+                return 0
+            else:
+                locked_packages = self._detect_why([pkg], locked_repo)
 
         show_latest = self.option("latest")
         show_all = self.option("all")
@@ -214,7 +221,32 @@ lists all packages available."""
 
             self.line(line)
 
-    def display_package_tree(self, io, package, installed_repo):
+    def display_package_why(self, io, package, installed_repo):
+        super_packages = self._detect_why([package], installed_repo)
+        for package in super_packages:
+            self.display_package_tree(
+                io, package, installed_repo, only_packages=super_packages
+            )
+
+    def _detect_why(self, unprocessed, installed_repo):
+        result = []
+        while unprocessed:
+            child = unprocessed.pop(0)
+            for parent in installed_repo.packages:
+                for dependency in parent.requires:
+                    if dependency.accepts(child):
+                        if parent not in result:
+                            unprocessed.append(parent)
+                for dependency in parent.requires_extras:
+                    if dependency.accepts(child):
+                        if parent not in result:
+                            unprocessed.append(parent)
+
+            if child not in result:
+                result.append(child)
+        return result
+
+    def display_package_tree(self, io, package, installed_repo, only_packages=None):
         io.write("<c1>{}</c1>".format(package.pretty_name))
         description = ""
         if package.description:
@@ -224,6 +256,11 @@ lists all packages available."""
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
+        dependencies = (
+            [e for e in dependencies if any(e.accepts(p) for p in only_packages)]
+            if only_packages
+            else dependencies
+        )
         tree_bar = "├"
         j = 0
         total = len(dependencies)
@@ -246,7 +283,13 @@ lists all packages available."""
             packages_in_tree = [package.name, dependency.name]
 
             self._display_tree(
-                io, dependency, installed_repo, packages_in_tree, tree_bar, level + 1
+                io,
+                dependency,
+                installed_repo,
+                packages_in_tree,
+                tree_bar,
+                level + 1,
+                only_packages,
             )
 
     def _display_tree(
@@ -257,6 +300,7 @@ lists all packages available."""
         packages_in_tree,
         previous_tree_bar="├",
         level=1,
+        only_packages=None,
     ):
         previous_tree_bar = previous_tree_bar.replace("├", "│")
 
@@ -268,6 +312,11 @@ lists all packages available."""
                 break
 
         dependencies = sorted(dependencies, key=lambda x: x.name)
+        dependencies = (
+            [e for e in dependencies if any(e.accepts(p) for p in only_packages)]
+            if only_packages
+            else dependencies
+        )
         tree_bar = previous_tree_bar + "   ├"
         i = 0
         total = len(dependencies)
@@ -299,7 +348,13 @@ lists all packages available."""
                 current_tree.append(dependency.name)
 
                 self._display_tree(
-                    io, dependency, installed_repo, current_tree, tree_bar, level + 1
+                    io,
+                    dependency,
+                    installed_repo,
+                    current_tree,
+                    tree_bar,
+                    level + 1,
+                    only_packages,
                 )
 
     def _write_tree_line(self, io, line):

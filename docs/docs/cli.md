@@ -299,6 +299,7 @@ dependencies:
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
 * `--outdated (-o)`: Show the latest version but only for packages that are outdated.
+* `--why`: Show why the package is required.
 
 
 ## build
