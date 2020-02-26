@@ -82,6 +82,7 @@ requires = [
     # According to PEP 517 we shouldn't rely on external dependencies.
     # Until we're there, we can just list the minimum here.
     "clikit",
+    "tomlkit",
     "importlib-metadata ~= 1.1.3; python_version <= '3.8'",
 ]
 build-backend = "intreehooks:loader"
