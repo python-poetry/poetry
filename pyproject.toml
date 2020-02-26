@@ -77,7 +77,7 @@ poetry = "poetry.console:main"
 
 
 [build-system]
-requires = ["intreehooks"]
+requires = ["intreehooks", "clikit"]
 build-backend = "intreehooks:loader"
 
 [tool.intreehooks]
