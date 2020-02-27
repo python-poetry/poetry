@@ -23,6 +23,8 @@ class InstalledRepository(Repository):
             ):
                 name = distribution.metadata["name"]
                 version = distribution.metadata["version"]
+                if not name:
+                    continue
                 package = Package(name, version, version)
                 package.description = distribution.metadata.get("summary", "")
 

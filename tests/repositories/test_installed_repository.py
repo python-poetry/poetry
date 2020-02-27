@@ -10,6 +10,7 @@ ENV_DIR = (FIXTURES_DIR / "installed").resolve()
 SITE_PACKAGES = ENV_DIR / "lib" / "python3.7" / "site-packages"
 SRC = ENV_DIR / "src"
 INSTALLED_RESULTS = [
+    metadata.PathDistribution(Path(__file__)),
     metadata.PathDistribution(SITE_PACKAGES / "cleo-0.7.6.dist-info"),
     metadata.PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
     metadata.PathDistribution(
