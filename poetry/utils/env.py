@@ -666,7 +666,13 @@ class EnvManager(object):
         try:
             from venv import EnvBuilder
 
-            builder = EnvBuilder(with_pip=True)
+            # use the same defaults as python -m venv
+            if os.name == "nt":
+                use_symlinks = False
+            else:
+                use_symlinks = True
+
+            builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
             builder.create(path)
         except ImportError:
             try:
