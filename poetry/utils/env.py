@@ -108,14 +108,19 @@ try:
     from venv import EnvBuilder
 
     builder = EnvBuilder(with_pip=True)
-    build = builder.create
+    builder.create(path)
 except ImportError:
-    # We fallback on virtualenv for Python 2.7
-    from virtualenv import create_environment
+    try:
+        # We fallback on virtualenv for Python 2.7
+        from virtualenv import create_environment
 
-    build = create_environment
+        create_environment(path)
+    except ImportError:
+        # since virtualenv>20 we have to use cli_run
+        from virtualenv import cli_run
 
-build(path)"""
+        cli_run([path])
+"""
 
 
 class EnvError(Exception):
@@ -661,21 +666,19 @@ class EnvManager(object):
         try:
             from venv import EnvBuilder
 
-            # use the same defaults as python -m venv
-            if os.name == "nt":
-                use_symlinks = False
-            else:
-                use_symlinks = True
-
-            builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
-            build = builder.create
+            builder = EnvBuilder(with_pip=True)
+            builder.create(path)
         except ImportError:
-            # We fallback on virtualenv for Python 2.7
-            from virtualenv import create_environment
+            try:
+                # We fallback on virtualenv for Python 2.7
+                from virtualenv import create_environment
 
-            build = create_environment
+                create_environment(path)
+            except ImportError:
+                # since virtualenv>20 we have to use cli_run
+                from virtualenv import cli_run
 
-        build(path)
+                cli_run([path])
 
     def remove_venv(self, path):  # type: (str) -> None
         shutil.rmtree(path)
