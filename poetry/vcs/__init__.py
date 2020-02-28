@@ -20,7 +20,7 @@ def get_vcs(directory):  # type: (Path) -> Git
 
         vcs = Git(Path(git_dir))
 
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, OSError):
         vcs = None
     finally:
         os.chdir(str(working_dir))
