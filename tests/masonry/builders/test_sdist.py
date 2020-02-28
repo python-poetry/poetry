@@ -473,3 +473,18 @@ def test_proper_python_requires_if_three_digits_precision_version_specified():
     parsed = p.parsestr(to_str(pkg_info))
 
     assert parsed["Requires-Python"] == "==2.7.15"
+
+
+def test_excluded_subpackage():
+    poetry = Factory().create_poetry(project("excluded_subpackage"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    setup = builder.build_setup()
+
+    setup_ast = ast.parse(setup)
+
+    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    ns = {}
+    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+
+    assert ns["packages"] == ["example"]
