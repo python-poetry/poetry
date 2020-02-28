@@ -1302,7 +1302,7 @@ description = "Style preserving TOML library"
 name = "tomlkit"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.5.9"
+version = "0.5.10"
 
 [package.dependencies]
 [package.dependencies.enum34]
@@ -1507,7 +1507,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "0e3c11432902e899e00ef4c07ca52225152d4ce2cffdc4f7650dba205d9b18bd"
+content-hash = "804644786e073d16cd3c65f76a7da04eabd2137ae394470b946cb1c50f9ac3d9"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.files]
@@ -2071,8 +2071,8 @@ toml = [
     {file = "toml-0.10.0.tar.gz", hash = "sha256:229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c"},
 ]
 tomlkit = [
-    {file = "tomlkit-0.5.9-py2.py3-none-any.whl", hash = "sha256:ef2063736ab48a4504597c6e134d7d8e3adb604b2d34dbdb7eb7a238bbce2813"},
-    {file = "tomlkit-0.5.9.tar.gz", hash = "sha256:0c2021a0d25500399c72383fbc7896c868f8cd00b0313a7e56efbe8c9b26b5a1"},
+    {file = "tomlkit-0.5.10-py2.py3-none-any.whl", hash = "sha256:5ca7863ebd6046256147198ced158266cdb1ad6679df61ba77d2533386b8367a"},
+    {file = "tomlkit-0.5.10.tar.gz", hash = "sha256:ebb690711c5bf2300bfe06300a79cf63a2821d8abc7b0bda61517603f0589754"},
 ]
 tornado = [
     {file = "tornado-5.1.1-cp35-cp35m-win32.whl", hash = "sha256:732e836008c708de2e89a31cb2fa6c0e5a70cb60492bee6f1ea1047500feaf7f"},
