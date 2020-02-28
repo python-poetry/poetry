@@ -57,8 +57,8 @@ jobs:
         curl -L https://github.com/sdispater/python-binaries/releases/download/3.4.10/python-3.4.10.macos.tar.xz -o python-3.4.10.tar.xz
         curl -L https://github.com/sdispater/python-binaries/releases/download/3.5.9/python-3.5.9.macos.tar.xz -o python-3.5.9.tar.xz
         curl -L https://github.com/sdispater/python-binaries/releases/download/3.6.8/python-3.6.8.macos.tar.xz -o python-3.6.8.tar.xz
-        curl -L https://github.com/sdispater/python-binaries/releases/download/3.7.5/python-3.7.6.macos.tar.xz -o python-3.7.6.tar.xz
-        curl -L https://github.com/sdispater/python-binaries/releases/download/3.8.0/python-3.8.2.macos.tar.xz -o python-3.8.2.tar.xz
+        curl -L https://github.com/sdispater/python-binaries/releases/download/3.7.6/python-3.7.6.macos.tar.xz -o python-3.7.6.tar.xz
+        curl -L https://github.com/sdispater/python-binaries/releases/download/3.8.2/python-3.8.2.macos.tar.xz -o python-3.8.2.tar.xz
         tar -zxf python-2.7.17.tar.xz
         tar -zxf python-3.4.10.tar.xz
         tar -zxf python-3.5.9.tar.xz
@@ -108,8 +108,8 @@ jobs:
         Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.4.4/python-3.4.4.windows.tar.xz -O python-3.4.4.tar.xz
         Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.5.4/python-3.5.4.windows.tar.xz -O python-3.5.4.tar.xz
         Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.6.8/python-3.6.8.windows.tar.xz -O python-3.6.8.tar.xz
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.7.5/python-3.7.6.windows.tar.xz -O python-3.7.6.tar.xz
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.8.0/python-3.8.2.windows.tar.xz -O python-3.8.2.tar.xz
+        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.7.6/python-3.7.6.windows.tar.xz -O python-3.7.6.tar.xz
+        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.8.2/python-3.8.2.windows.tar.xz -O python-3.8.2.tar.xz
         7z x python-2.7.17.tar.xz
         7z x python-3.4.4.tar.xz
         7z x python-3.5.4.tar.xz
