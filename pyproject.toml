@@ -35,7 +35,7 @@ cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
-tomlkit = "^0.5.9"
+tomlkit = "^0.5.10"
 pexpect = "^4.7.0"
 
 # The typing module is not in the stdlib in Python 2.7 and 3.4
