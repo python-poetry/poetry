@@ -209,6 +209,8 @@ class PyPiRepository(Repository):
         # Adding hashes information
         package.files = release_info["files"]
 
+        package.license = release_info["license"]
+
         # Activate extra dependencies
         for extra in extras:
             if extra in package.extras:
@@ -316,6 +318,7 @@ class PyPiRepository(Repository):
             "requires_python": info["requires_python"],
             "files": [],
             "_cache_version": str(self.CACHE_VERSION),
+            "license": info["license"],
         }
 
         try:

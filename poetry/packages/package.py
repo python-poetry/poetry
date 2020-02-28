@@ -204,12 +204,15 @@ class Package(object):
 
     @license.setter
     def license(self, value):
-        if value is None:
-            self._license = value
+        if not value:
+            self._license = None
         elif isinstance(value, License):
             self._license = value
         else:
-            self._license = license_by_id(value)
+            try:
+                self._license = license_by_id(value)
+            except ValueError:
+                self._license = License("", value, False, False)
 
     @property
     def all_classifiers(self):

@@ -277,6 +277,10 @@ class Locker(object):
             "python-versions": package.python_versions,
             "files": sorted(package.files, key=lambda x: x["file"]),
         }
+
+        if package.license:
+            data["license"] = package.license.id or package.license.name
+
         if not package.marker.is_any():
             data["marker"] = str(package.marker)
 

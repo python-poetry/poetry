@@ -85,6 +85,8 @@ def test_package():
     assert len(package.extras["security"]) == 3
     assert len(package.extras["socks"]) == 2
 
+    assert package.license.name == "Apache 2.0"
+
     win_inet = package.extras["socks"][0]
     assert win_inet.name == "win-inet-pton"
     assert win_inet.python_versions == "~2.7 || ~2.6"
