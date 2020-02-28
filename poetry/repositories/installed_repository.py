@@ -1,3 +1,4 @@
+from poetry import _CURRENT_VENDOR
 from poetry.packages import Package
 from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
@@ -22,6 +23,7 @@ class InstalledRepository(Repository):
                 metadata.distributions(path=[entry]), key=lambda d: str(d._path),
             ):
                 name = distribution.metadata["name"]
+                path = Path(str(distribution._path))
                 version = distribution.metadata["version"]
                 package = Package(name, version, version)
                 package.description = distribution.metadata.get("summary", "")
@@ -29,11 +31,17 @@ class InstalledRepository(Repository):
                 if package.name in seen:
                     continue
 
+                try:
+                    path.relative_to(_CURRENT_VENDOR)
+                except ValueError:
+                    pass
+                else:
+                    continue
+
                 seen.add(package.name)
 
                 repo.add_package(package)
 
-                path = Path(str(distribution._path))
                 is_standard_package = True
                 try:
                     path.relative_to(env.site_packages)
