@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.0.5] - 2020-02-29
+
+### Fixed
+
+- Fixed an error when building distributions if the `git` executable was not found ([#2105](https://github.com/python-poetry/poetry/pull/2105)).
+- Fixed various errors when reading Poetry's TOML files by upgrading [tomlkit](https://github.com/sdispater/tomlkit).
+
+
 ## [1.0.4] - 2020-02-28
 
 ### Fixed
@@ -816,7 +824,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.4...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.5...master
+[1.0.5]: https://github.com/python-poetry/poetry/releases/tag/1.0.5
 [1.0.4]: https://github.com/python-poetry/poetry/releases/tag/1.0.4
 [1.0.3]: https://github.com/python-poetry/poetry/releases/tag/1.0.3
 [1.0.2]: https://github.com/python-poetry/poetry/releases/tag/1.0.2
