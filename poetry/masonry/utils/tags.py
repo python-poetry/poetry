@@ -75,11 +75,16 @@ def get_abi_tag(env):
         if get_flag(
             env,
             "Py_DEBUG",
-            lambda: hasattr(sys, "gettotalrefcount"),
-            warn=(impl == "cp"),
+            lambda: (hasattr(sys, "gettotalrefcount") and env.version_info < (3, 8)),
+            warn=(impl == "cp" and env.version_info < (3, 8)),
         ):
             d = "d"
-        if get_flag(env, "WITH_PYMALLOC", lambda: impl == "cp", warn=(impl == "cp")):
+        if get_flag(
+            env,
+            "WITH_PYMALLOC",
+            lambda: (impl == "cp" and env.version_info < (3, 8)),
+            warn=(impl == "cp" and env.version_info < (3, 8)),
+        ):
             m = "m"
         if get_flag(
             env,
