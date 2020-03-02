@@ -30,7 +30,7 @@ class Factory:
     """
 
     def create_poetry(
-        self, cwd=None, io=None
+        self, cwd=None, io=None, original_root=None,
     ):  # type: (Optional[Path], Optional[IO]) -> Poetry
         if io is None:
             io = NullIO()
@@ -57,7 +57,7 @@ class Factory:
         name = local_config["name"]
         version = local_config["version"]
         package = ProjectPackage(name, version, version)
-        package.root_dir = poetry_file.parent
+        package.root_dir = original_root or poetry_file.parent
 
         for author in local_config["authors"]:
             package.authors.append(author)
