@@ -121,6 +121,11 @@ a custom certificate authority or client certificates, similarly refer to the ex
 looking for packages.
 
 
+If no url is specified for a repository in your `pyproject.toml`, poetry will fall
+back to the url configured for a corresponding repository.foo given a source with
+name = foo.
+
+
 ### Disabling the PyPI repository
 
 If you want your packages to be exclusively looked up from a private

@@ -236,12 +236,18 @@ class Factory:
         from .utils.helpers import get_client_cert, get_cert
         from .utils.password_manager import PasswordManager
 
+        if "name" not in source:
+            raise RuntimeError("Missing [name] in source.")
+        name = source["name"]
+
+        url = None
         if "url" in source:
-            # PyPI-like repository
-            if "name" not in source:
-                raise RuntimeError("Missing [name] in source.")
+            url = source["url"]
         else:
-            raise RuntimeError("Unsupported source specified")
+            url = auth_config.get("repositories", {}).get(name, {}).get("url")
+
+        if url is None:
+            raise RuntimeError("Unsupported source specified: no url.")
 
         password_manager = PasswordManager(auth_config)
         name = source["name"]
