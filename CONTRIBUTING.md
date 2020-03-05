@@ -99,7 +99,7 @@ $ poetry install
 $ poetry run pytest tests/
 ```
 
-Poetry uses the [black](https://github.com/ambv/black) coding style and you must ensure that your
+Poetry uses the [black](https://github.com/psf/black) coding style and you must ensure that your
 code follows it. If not, the CI will fail and your Pull Request will not be merged.
 
 Similarly, the import statements are sorted with [isort](https://github.com/timothycrosley/isort)
