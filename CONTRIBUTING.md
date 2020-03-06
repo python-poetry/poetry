@@ -26,7 +26,7 @@ Before creating bug reports, please check [this list](#before-submitting-a-bug-r
 
 #### Before submitting a bug report
 
-* **Check the [FAQs on the official website](https://python-poetry.org)** for a list of common questions and problems.
+* **Check the [FAQs on the official website](https://python-poetry.org/docs/faq)** for a list of common questions and problems.
 * **Check that your issue does not already exist in the [issue tracker](https://github.com/python-poetry/poetry/issues)**.
 
 #### How do I submit a bug report?
@@ -64,8 +64,8 @@ Before creating enhancement suggestions, please check [this list](#before-submit
 
 #### Before submitting an enhancement suggestion
 
-* **Check the [FAQs on the official website](https://python-poetry.org) for a list of common questions and problems.
-* **Check that your issue does not already exist in the [issue tracker](https://github.com/python-poetry/poetry/issues).
+* **Check the [FAQs on the official website](https://python-poetry.org/docs/faq)** for a list of common questions and problems.
+* **Check that your issue does not already exist in the [issue tracker](https://github.com/python-poetry/poetry/issues)**.
 
 
 #### How do I submit an Enhancement suggestion?
