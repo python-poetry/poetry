@@ -25,6 +25,7 @@ from poetry.semver import parse_constraint
         ("1.2.3b5", Version(1, 2, 3, pre="b5")),
         (">= 1.2.3", VersionRange(min=Version(1, 2, 3), include_min=True)),
         (">dev", VersionRange(min=Version(0, 0, pre="dev"))),  # Issue 206
+        ('>="3.0"', VersionRange(min=Version(3, 0, 0), include_min=True)),  # Issue 2119
     ],
 )
 def test_parse_constraint(input, constraint):
