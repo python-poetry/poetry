@@ -807,7 +807,7 @@ class Provider:
             yield
         else:
             indicator = Indicator(
-                self._io, "{message} <fg=black;options=bold>({elapsed:2s})</>"
+                self._io, "{message} <fg=dark_gray;options=bold>({elapsed:2s})</>"
             )
 
             with indicator.auto(
