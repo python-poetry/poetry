@@ -40,7 +40,7 @@ class Package(object):
         Creates a new in memory package.
         """
         self._pretty_name = name
-        self._name = canonicalize_name(name)
+        self.name = canonicalize_name(name)
 
         if not isinstance(version, Version):
             self._version = Version.parse(version)
@@ -89,10 +89,6 @@ class Package(object):
         self.develop = True
 
     @property
-    def name(self):
-        return self._name
-
-    @property
     def pretty_name(self):
         return self._pretty_name
 
@@ -107,7 +103,7 @@ class Package(object):
     @property
     def unique_name(self):
         if self.is_root():
-            return self._name
+            return self.name
 
         return self.name + "-" + self._version.text
 
@@ -388,7 +384,7 @@ class Package(object):
     def to_dependency(self):
         from . import dependency_from_pep_508
 
-        name = "{} (=={})".format(self._name, self._version)
+        name = "{} (=={})".format(self.name, self._version)
 
         if not self.marker.is_any():
             name += " ; {}".format(str(self.marker))
@@ -425,13 +421,13 @@ class Package(object):
         return clone
 
     def __hash__(self):
-        return hash((self._name, self._version))
+        return hash((self.name, self._version))
 
     def __eq__(self, other):
         if not isinstance(other, Package):
             return NotImplemented
 
-        return self._name == other.name and self._version == other.version
+        return self.name == other.name and self._version == other.version
 
     def __str__(self):
         return self.unique_name
