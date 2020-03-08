@@ -9,6 +9,7 @@ from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
 from ._compat import WINDOWS
+from ._compat import Path
 from .env import VirtualEnv
 
 
@@ -41,7 +42,16 @@ class Shell:
 
         try:
             name, path = detect_shell(os.getpid())
-        except (RuntimeError, ShellDetectionFailure):
+        except ShellDetectionFailure:
+            if os.name == "posix":
+                shell = os.environ["SHELL"]
+            elif os.name == "nt":
+                shell = os.environ["COMSPEC"]
+            else:
+                raise RuntimeError
+
+            name, path = Path(shell).stem, shell
+        except RuntimeError:
             raise RuntimeError("Unable to detect the current shell.")
 
         cls._shell = cls(name, path)
