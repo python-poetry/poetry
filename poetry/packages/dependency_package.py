@@ -4,6 +4,26 @@ class DependencyPackage(object):
         self._package = package
 
     @property
+    def name(self):
+        return self._package.name
+
+    @property
+    def version(self):
+        return self._package.version
+
+    @property
+    def constraint(self):
+        return self._package.constraint
+
+    @property
+    def all_requires(self):
+        return self._package.all_requires
+
+    @property
+    def marker(self):
+        return self._package.marker
+
+    @property
     def dependency(self):
         return self._dependency
 
