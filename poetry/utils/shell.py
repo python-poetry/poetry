@@ -48,7 +48,7 @@ class Shell:
             elif os.name == "nt":
                 shell = os.environ["COMSPEC"]
             else:
-                raise RuntimeError
+                raise RuntimeError("Unable to detect the current shell.")
 
             name, path = Path(shell).stem, shell
         except RuntimeError:
