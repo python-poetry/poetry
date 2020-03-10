@@ -544,7 +544,7 @@ class Installer:
             try:
                 self.extract_lib(self._offline_file)
                 return
-            except:
+            except Exception:
                 raise RuntimeError("Could not install from offline file.")
 
         # We get the payload from the remote host
