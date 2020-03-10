@@ -75,6 +75,13 @@ from poetry.vcs.git import ParsedUrl
             "git+ssh://git@git.example.com:sdispater/project/my_repo.git",
             GitUrl("git@git.example.com:sdispater/project/my_repo.git", None),
         ),
+        (
+            "git+https://user:fafb334cb038533f851c23d0b63254223Abf72ce4f02987e7064b0c95566699a@hostname/project/blah.git",
+            GitUrl(
+                "https://user:fafb334cb038533f851c23d0b63254223Abf72ce4f02987e7064b0c95566699a@hostname/project/blah.git",
+                None,
+            ),
+        ),
     ],
 )
 def test_normalize_url(url, normalized):
@@ -237,6 +244,18 @@ def test_normalize_url(url, normalized):
                 "git",
                 None,
                 "my_repo",
+                None,
+            ),
+        ),
+        (
+            "git+https://user:fafb334cb038533f851c23d0b63254223Abf72ce4f02987e7064b0c95566699a@hostname/project/blah.git",
+            ParsedUrl(
+                "https",
+                "hostname",
+                "/project/blah.git",
+                "user:fafb334cb038533f851c23d0b63254223Abf72ce4f02987e7064b0c95566699a",
+                None,
+                "blah",
                 None,
             ),
         ),
