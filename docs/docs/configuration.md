@@ -16,7 +16,7 @@ Poetry also provides the ability to have settings that are specific to a project
 by passing the `--local` option to the `config` command.
 
 ```bash
-poetry config virtualenvs.create false --local
+poetry config settings.virtualenvs.create false --local
 ```
 
 ## Listing the current configuration
@@ -32,9 +32,9 @@ which will give you something similar to this:
 
 ```toml
 cache-dir = "/path/to/cache/directory"
-virtualenvs.create = true
-virtualenvs.in-project = false
-virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
+settings.virtualenvs.create = true
+settings.virtualenvs.in-project = false
+settings.virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 ```
 
 ## Displaying a single configuration setting
@@ -43,7 +43,7 @@ If you want to see the value of a specific setting, you can
 give its name to the `config` command
 
 ```bash
-poetry config virtualenvs.path
+poetry config settings.virtualenvs.path
 ```
 
 For a full list of the supported settings see [Available settings](#available-settings).
@@ -54,7 +54,7 @@ To change or otherwise add a new configuration setting, you can pass
 a value after the setting's name:
 
 ```bash
-poetry config virtualenvs.path /path/to/cache/directory/virtualenvs
+poetry config settings.virtualenvs.path /path/to/cache/directory/virtualenvs
 ```
 
 For a full list of the supported settings see [Available settings](#available-settings).
@@ -64,7 +64,7 @@ For a full list of the supported settings see [Available settings](#available-se
 If you want to remove a previously set setting, you can use the `--unset` option:
 
 ```bash
-poetry config virtualenvs.path --unset
+poetry config settings.virtualenvs.path --unset
 ```
 
 The setting will then retrieve its default value.
