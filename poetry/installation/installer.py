@@ -39,6 +39,7 @@ class Installer:
         self._pool = pool
 
         self._dry_run = False
+        self._keep_untracked = False
         self._update = False
         self._verbose = False
         self._write_lock = True
@@ -82,6 +83,14 @@ class Installer:
 
     def is_dry_run(self):  # type: () -> bool
         return self._dry_run
+
+    def keep_untracked(self, keep_untracked=True):  # type: (bool) -> Installer
+        self._keep_untracked = keep_untracked
+
+        return self
+
+    def is_keep_untracked(self):  # type: () -> bool
+        return self._keep_untracked
 
     def verbose(self, verbose=True):  # type: (bool) -> Installer
         self._verbose = verbose
@@ -423,6 +432,17 @@ class Installer:
                 op.skip("Already installed")
 
             ops.append(op)
+
+        if not self._keep_untracked:
+            for installed in installed_repo.packages:
+                is_in_lock_file = False
+                for locked in locked_repository.packages:
+                    if locked.name == installed.name:
+                        is_in_lock_file = True
+                        break
+
+                if not is_in_lock_file:
+                    ops.append(Uninstall(installed))
 
         return ops
 
