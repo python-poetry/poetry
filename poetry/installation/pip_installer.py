@@ -11,6 +11,7 @@ from clikit.io import NullIO
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import Path
 from poetry.utils._compat import encode
+from poetry.utils.cache import DownloadCache
 from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
 
@@ -235,33 +236,21 @@ class PipInstaller(BaseInstaller):
         from poetry.core.vcs import Git
 
         src_dir = self._env.path / "src" / package.name
-        tmp_dir = Path(
-            tempfile.mkdtemp(
-                prefix="pypoetry-git-{}".format(
-                    package.source_url.split("/")[-1].rstrip(".git")
-                )
-            )
-        )
+        tmp_dir = Path(DownloadCache.mkcache(package.source_url, prefix="pypoetry-git"))
 
         if src_dir.exists():
             safe_rmtree(str(src_dir))
 
-        if tmp_dir.exists():
-            safe_rmtree(str(tmp_dir))
-
         src_dir.parent.mkdir(exist_ok=True)
 
-        try:
-            git = Git()
+        git = Git()
+
+        if not any(tmp_dir.glob("*")):
             git.clone(package.source_url, tmp_dir)
-            git.checkout(package.source_reference, tmp_dir)
 
-            shutil.copytree(str(tmp_dir / package.source_subdirectory), str(src_dir))
+        git.checkout(package.source_reference, tmp_dir)
 
-        except Exception:
-            raise
-        finally:
-            safe_rmtree(str(tmp_dir))
+        shutil.copytree(str(tmp_dir / package.source_subdirectory), str(src_dir))
 
         # Now we just need to install from the source directory
         pkg = Package(package.name, package.version)

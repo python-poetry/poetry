@@ -36,6 +36,7 @@ from poetry.utils._compat import PY35
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
+from poetry.utils.cache import DownloadCache
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import VirtualEnv
@@ -188,35 +189,29 @@ class Provider:
         if vcs != "git":
             raise ValueError("Unsupported VCS dependency {}".format(vcs))
 
-        tmp_dir = Path(
-            mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
-        )
+        tmp_dir = Path(DownloadCache.mkcache(url, prefix="pypoetry-git"))
 
-        try:
-            git = Git()
+        git = Git()
+
+        if not any(tmp_dir.glob("*")):
             git.clone(url, tmp_dir)
-            if reference is not None:
-                git.checkout(reference, tmp_dir)
-            else:
-                reference = "HEAD"
 
-            revision = git.rev_parse(reference, tmp_dir).strip()
+        if reference is not None:
+            git.checkout(reference, tmp_dir)
+        else:
+            reference = "HEAD"
 
-            if subdirectory is None:
-                package = cls.get_package_from_directory(tmp_dir, name=name)
-            else:
-                package = cls.get_package_from_directory(
-                    tmp_dir / subdirectory, name=name
-                )
-                package.source_subdirectory = Path(subdirectory).as_posix()
+        revision = git.rev_parse(reference, tmp_dir).strip()
 
-            package.source_type = "git"
-            package.source_url = url
-            package.source_reference = revision
-        except Exception:
-            raise
-        finally:
-            safe_rmtree(str(tmp_dir))
+        if subdirectory is None:
+            package = cls.get_package_from_directory(tmp_dir, name=name)
+        else:
+            package = cls.get_package_from_directory(tmp_dir / subdirectory, name=name)
+            package.source_subdirectory = Path(subdirectory).as_posix()
+
+        package.source_type = "git"
+        package.source_url = url
+        package.source_reference = revision
 
         return package
 
