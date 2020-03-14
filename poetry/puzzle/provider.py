@@ -5,7 +5,6 @@ import re
 import time
 
 from contextlib import contextmanager
-from tempfile import mkdtemp
 from typing import Any
 from typing import List
 from typing import Optional
@@ -41,7 +40,6 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import VirtualEnv
 from poetry.utils.helpers import parse_requires
-from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
@@ -61,7 +59,6 @@ class Indicator(ProgressIndicator):
 
 
 class Provider:
-
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
     def __init__(self, package, pool, io):  # type: (Package, Pool, Any) -> None
