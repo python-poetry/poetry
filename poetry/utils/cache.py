@@ -20,7 +20,7 @@ class DownloadCache:
     cache_dirs = {}
 
     @classmethod
-    def mkcache(cls, source, suffix=None, prefix=None, dir=None):
+    def mkcache(cls, source, suffix="", prefix="", dir=""):
         if source not in cls.cache_dirs:
             cls.cache_dirs[source] = mkdtemp(suffix, prefix, dir)
 
