@@ -3,11 +3,17 @@ import shutil
 
 from tempfile import mkdtemp
 
+from poetry.utils._compat import Path
+
+
+def force_rm(action, name, exc):
+    Path(name).unlink()
+
 
 @atexit.register
 def cleanup_caches():
     for source, cache in DownloadCache.cache_dirs.items():
-        shutil.rmtree(cache)
+        shutil.rmtree(cache, onerror=force_rm)
 
 
 class DownloadCache:
