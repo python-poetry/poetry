@@ -1,12 +1,21 @@
-from tempfile import TemporaryDirectory
+import atexit
+import shutil
+
+from tempfile import mkdtemp
+
+
+@atexit.register
+def cleanup_caches():
+    for source, cache in DownloadCache.cache_dirs.items():
+        shutil.rmtree(cache)
 
 
 class DownloadCache:
     cache_dirs = {}
 
     @classmethod
-    def mkcache(cls, source=None, suffix=None, prefix=None, dir=None):
+    def mkcache(cls, source, suffix=None, prefix=None, dir=None):
         if source not in cls.cache_dirs:
-            cls.cache_dirs[source] = TemporaryDirectory(suffix, prefix, dir)
+            cls.cache_dirs[source] = mkdtemp(suffix, prefix, dir)
 
-        return cls.cache_dirs[source].name
+        return cls.cache_dirs[source]
