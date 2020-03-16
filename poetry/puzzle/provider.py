@@ -33,7 +33,6 @@ from poetry.utils._compat import PY35
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
-from poetry.utils.cache import DownloadCache
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import VirtualEnv
@@ -41,6 +40,7 @@ from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
+from poetry.utils.temp import DownloadTmpDir
 from poetry.utils.toml_file import TomlFile
 from poetry.vcs.git import Git
 from poetry.version.markers import MarkerUnion
@@ -186,7 +186,7 @@ class Provider:
         if vcs != "git":
             raise ValueError("Unsupported VCS dependency {}".format(vcs))
 
-        tmp_dir = Path(DownloadCache.mkcache(url, prefix="pypoetry-git"))
+        tmp_dir = Path(DownloadTmpDir.mkcache(url, prefix="pypoetry-git"))
 
         git = Git()
 

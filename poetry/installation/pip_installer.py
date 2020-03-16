@@ -11,9 +11,9 @@ from clikit.io import NullIO
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import Path
 from poetry.utils._compat import encode
-from poetry.utils.cache import DownloadCache
 from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
+from poetry.utils.temp import DownloadTmpDir
 
 from .base_installer import BaseInstaller
 
@@ -236,7 +236,9 @@ class PipInstaller(BaseInstaller):
         from poetry.vcs import Git
 
         src_dir = self._env.path / "src" / package.name
-        tmp_dir = Path(DownloadCache.mkcache(package.source_url, prefix="pypoetry-git"))
+        tmp_dir = Path(
+            DownloadTmpDir.mkcache(package.source_url, prefix="pypoetry-git")
+        )
 
         if src_dir.exists():
             safe_rmtree(str(src_dir))
