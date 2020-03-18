@@ -39,7 +39,7 @@ class Installer:
         self._pool = pool
 
         self._dry_run = False
-        self._keep_untracked = False
+        self._remove_untracked = False
         self._update = False
         self._verbose = False
         self._write_lock = True
@@ -84,13 +84,13 @@ class Installer:
     def is_dry_run(self):  # type: () -> bool
         return self._dry_run
 
-    def keep_untracked(self, keep_untracked=True):  # type: (bool) -> Installer
-        self._keep_untracked = keep_untracked
+    def remove_untracked(self, remove_untracked=True):  # type: (bool) -> Installer
+        self._remove_untracked = remove_untracked
 
         return self
 
-    def is_keep_untracked(self):  # type: () -> bool
-        return self._keep_untracked
+    def is_remove_untracked(self):  # type: () -> bool
+        return self._remove_untracked
 
     def verbose(self, verbose=True):  # type: (bool) -> Installer
         self._verbose = verbose
@@ -433,7 +433,7 @@ class Installer:
 
             ops.append(op)
 
-        if not self._keep_untracked:
+        if self._remove_untracked:
             for installed in installed_repo.packages:
                 is_in_lock_file = False
                 for locked in locked_repository.packages:
