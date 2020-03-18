@@ -233,6 +233,17 @@ class Installer:
 
             ops = solver.solve(use_latest=whitelist)
 
+        if self._remove_untracked:
+            for installed in self._installed_repository.packages:
+                is_in_lock_file = False
+                for locked in locked_repository.packages:
+                    if locked.name == installed.name:
+                        is_in_lock_file = True
+                        break
+
+                if not is_in_lock_file:
+                    ops.append(Uninstall(installed))
+
         # We need to filter operations so that packages
         # not compatible with the current system,
         # or optional and not requested, are dropped
@@ -432,17 +443,6 @@ class Installer:
                 op.skip("Already installed")
 
             ops.append(op)
-
-        if self._remove_untracked:
-            for installed in installed_repo.packages:
-                is_in_lock_file = False
-                for locked in locked_repository.packages:
-                    if locked.name == installed.name:
-                        is_in_lock_file = True
-                        break
-
-                if not is_in_lock_file:
-                    ops.append(Uninstall(installed))
 
         return ops
 
