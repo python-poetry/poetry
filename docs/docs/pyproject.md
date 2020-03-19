@@ -44,6 +44,8 @@ More identifiers are listed at the [SPDX Open Source License Registry](https://w
 
     If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
 
+    A custom licence name may also be used here. If used, it will appear as is in your project metadata.
+
 ## authors
 
 The authors of the package. **Required**

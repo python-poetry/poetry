@@ -40,4 +40,13 @@ def test_license_by_id_with_full_name():
 
 def test_license_by_id_invalid():
     with pytest.raises(ValueError):
-        license_by_id("invalid")
+        license_by_id("")
+
+
+def test_license_by_id_custom():
+    license = license_by_id("Custom")
+
+    assert license.id == "Custom"
+    assert license.name == "Custom"
+    assert not license.is_osi_approved
+    assert not license.is_deprecated

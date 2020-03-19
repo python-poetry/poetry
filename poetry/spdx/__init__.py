@@ -17,7 +17,9 @@ def license_by_id(identifier):
     id = identifier.lower()
 
     if id not in _licenses:
-        raise ValueError("Invalid license id: {}".format(identifier))
+        if not identifier:
+            raise ValueError("A license identifier is required")
+        return License(identifier, identifier, False, False)
 
     return _licenses[id]
 

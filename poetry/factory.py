@@ -275,15 +275,6 @@ class Factory:
 
         if strict:
             # If strict, check the file more thoroughly
-
-            # Checking license
-            license = config.get("license")
-            if license:
-                try:
-                    license_by_id(license)
-                except ValueError:
-                    result["errors"].append("{} is not a valid license".format(license))
-
             if "dependencies" in config:
                 python_versions = config["dependencies"]["python"]
                 if python_versions == "*":
