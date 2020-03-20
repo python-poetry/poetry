@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.0.3"
+version = "1.0.5"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -24,7 +24,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
 cleo = "^0.7.6"
-clikit = "^0.4.1"
+clikit = "^0.4.2"
 requests = "^2.18"
 cachy = "^0.3.0"
 requests-toolbelt = "^0.8.0"
@@ -35,7 +35,7 @@ cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
-tomlkit = "^0.5.8"
+tomlkit = "^0.5.11"
 pexpect = "^4.7.0"
 
 # The typing module is not in the stdlib in Python 2.7 and 3.4

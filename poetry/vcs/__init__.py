@@ -1,22 +1,28 @@
+import os
 import subprocess
-import warnings
 
 from poetry.utils._compat import Path
+from poetry.utils._compat import decode
 
 from .git import Git
 
 
 def get_vcs(directory):  # type: (Path) -> Git
-    directory = directory.resolve()
+    working_dir = Path.cwd()
+    os.chdir(str(directory.resolve()))
 
-    for p in [directory] + list(directory.parents):
-        if (p / ".git").is_dir():
-            try:
-                return Git(p)
-            except (subprocess.CalledProcessError, OSError):
-                # Either git could not be found or does not exist
-                warnings.warn(
-                    "git executable could not be found", category=RuntimeWarning
-                )
+    try:
+        git_dir = decode(
+            subprocess.check_output(
+                ["git", "rev-parse", "--show-toplevel"], stderr=subprocess.STDOUT
+            )
+        ).strip()
 
-                return
+        vcs = Git(Path(git_dir))
+
+    except (subprocess.CalledProcessError, OSError):
+        vcs = None
+    finally:
+        os.chdir(str(working_dir))
+
+    return vcs
