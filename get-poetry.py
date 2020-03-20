@@ -408,7 +408,7 @@ class Installer:
                 print("There is a version of Poetry already installed.")
                 return None, current_version
 
-            return "FROM_FILE", current_version
+            return "from an offline file", current_version
 
         print(colorize("info", "Retrieving Poetry metadata"))
 
@@ -962,13 +962,15 @@ def main():
     args = parser.parse_args()
 
     base_url = Installer.BASE_URL
-    try:
-        urlopen(Installer.REPOSITORY_URL)
-    except HTTPError as e:
-        if e.code == 404:
-            base_url = Installer.FALLBACK_BASE_URL
-        else:
-            raise
+
+    if args.file is None:
+        try:
+            urlopen(Installer.REPOSITORY_URL)
+        except HTTPError as e:
+            if e.code == 404:
+                base_url = Installer.FALLBACK_BASE_URL
+            else:
+                raise
 
     installer = Installer(
         version=args.version or os.getenv("POETRY_VERSION"),
