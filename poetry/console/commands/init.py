@@ -203,7 +203,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             f.write(content)
 
     def _determine_requirements(
-        self, requires, allow_prereleases=False, source=None
+        self, requires, allow_prereleases=False
     ):  # type: (List[str], bool) -> List[Dict[str, str]]
         if not requires:
             requires = []
@@ -299,9 +299,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             elif "version" not in requirement:
                 # determine the best version automatically
                 name, version = self._find_best_version_for_package(
-                    requirement["name"],
-                    allow_prereleases=allow_prereleases,
-                    source=source,
+                    requirement["name"], allow_prereleases=allow_prereleases
                 )
                 requirement["version"] = version
                 requirement["name"] = name
@@ -316,7 +314,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     requirement["name"],
                     requirement["version"],
                     allow_prereleases=allow_prereleases,
-                    source=source,
                 )
 
                 requirement["name"] = name
@@ -326,13 +323,13 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return result
 
     def _find_best_version_for_package(
-        self, name, required_version=None, allow_prereleases=False, source=None
+        self, name, required_version=None, allow_prereleases=False
     ):  # type: (...) -> Tuple[str, str]
         from poetry.version.version_selector import VersionSelector
 
         selector = VersionSelector(self._get_pool())
         package = selector.find_best_candidate(
-            name, required_version, allow_prereleases=allow_prereleases, source=source
+            name, required_version, allow_prereleases=allow_prereleases
         )
 
         if not package:
