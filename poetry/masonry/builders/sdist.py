@@ -237,7 +237,15 @@ class SdistBuilder(Builder):
             if from_top_level == ".":
                 continue
 
-            is_subpkg = any([filename.endswith(".py") for filename in filenames])
+            is_subpkg = any(
+                [filename.endswith(".py") for filename in filenames]
+            ) and not all(
+                [
+                    self.is_excluded(Path(path, filename).relative_to(self._path))
+                    for filename in filenames
+                    if filename.endswith(".py")
+                ]
+            )
             if is_subpkg:
                 subpkg_paths.add(from_top_level)
                 parts = from_top_level.split(os.sep)

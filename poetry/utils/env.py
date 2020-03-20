@@ -108,14 +108,19 @@ try:
     from venv import EnvBuilder
 
     builder = EnvBuilder(with_pip=True)
-    build = builder.create
+    builder.create(path)
 except ImportError:
-    # We fallback on virtualenv for Python 2.7
-    from virtualenv import create_environment
+    try:
+        # We fallback on virtualenv for Python 2.7
+        from virtualenv import create_environment
 
-    build = create_environment
+        create_environment(path)
+    except ImportError:
+        # since virtualenv>20 we have to use cli_run
+        from virtualenv import cli_run
 
-build(path)"""
+        cli_run([path])
+"""
 
 
 class EnvError(Exception):
@@ -367,10 +372,19 @@ class EnvManager(object):
         else:
             venv_path = Path(venv_path)
 
-        return [
+        env_list = [
             VirtualEnv(Path(p))
             for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
         ]
+
+        venv = self._poetry.file.parent / ".venv"
+        if (
+            self._poetry.config.get("virtualenvs.in-project")
+            and venv.exists()
+            and venv.is_dir()
+        ):
+            env_list.insert(0, VirtualEnv(venv))
+        return env_list
 
     def remove(self, python):  # type: (str) -> Env
         venv_path = self._poetry.config.get("virtualenvs.path")
@@ -668,14 +682,18 @@ class EnvManager(object):
                 use_symlinks = True
 
             builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
-            build = builder.create
+            builder.create(path)
         except ImportError:
-            # We fallback on virtualenv for Python 2.7
-            from virtualenv import create_environment
+            try:
+                # We fallback on virtualenv for Python 2.7
+                from virtualenv import create_environment
 
-            build = create_environment
+                create_environment(path)
+            except ImportError:
+                # since virtualenv>20 we have to use cli_run
+                from virtualenv import cli_run
 
-        build(path)
+                cli_run([path])
 
     def remove_venv(self, path):  # type: (str) -> None
         shutil.rmtree(path)

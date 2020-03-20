@@ -13,6 +13,18 @@ def test_package_authors():
     assert package.author_name == "Sébastien Eustace"
     assert package.author_email == "sebastien@eustace.io"
 
+    package.authors.insert(
+        0, "Raphaël Yancey <raphael@badfile.net>"
+    )  # With combining diacritics (ë = e + ¨ = e\u0308)
+    assert package.author_name == "Raphaël Yancey"  # Is normalized into \u00EB
+    assert package.author_email == "raphael@badfile.net"
+
+    package.authors.insert(
+        0, "Raphaël Yancey <raphael@badfile.net>"
+    )  # Without (ë = \u00EB)
+    assert package.author_name == "Raphaël Yancey"
+    assert package.author_email == "raphael@badfile.net"
+
     package.authors.insert(0, "John Doe")
     assert package.author_name == "John Doe"
     assert package.author_email is None
