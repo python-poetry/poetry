@@ -75,11 +75,8 @@ poetry = "poetry.console:main"
 
 
 [build-system]
-requires = ["intreehooks"]
-build-backend = "intreehooks:loader"
-
-[tool.intreehooks]
-build-backend = "poetry.masonry.api"
+requires = ["poetry_core>=1.0.0a3"]
+build-backend = "poetry_core.masonry.api"
 
 
 [tool.isort]
