@@ -33,12 +33,6 @@ class AddCommand(EnvCommand, InitCommand):
             "Platforms for which the dependency must be installed.",
             flag=False,
         ),
-        option(
-            "source",
-            None,
-            "Name of the source to use to install the package.",
-            flag=False,
-        ),
         option("allow-prereleases", None, "Accept prereleases."),
         option(
             "dry-run",
@@ -92,9 +86,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
                     raise ValueError("Package {} is already present".format(name))
 
         requirements = self._determine_requirements(
-            packages,
-            allow_prereleases=self.option("allow-prereleases"),
-            source=self.option("source"),
+            packages, allow_prereleases=self.option("allow-prereleases")
         )
 
         for _constraint in requirements:
@@ -130,9 +122,6 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
             if self.option("platform"):
                 constraint["platform"] = self.option("platform")
-
-            if self.option("source"):
-                constraint["source"] = self.option("source")
 
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]

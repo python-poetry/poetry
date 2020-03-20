@@ -452,15 +452,3 @@ The `env` command regroups sub commands to interact with the virtualenvs
 associated with a specific project.
 
 See [Managing environments](./managing-environments.md) for more information about these commands.
-
-## cache
-
-The `cache` command regroups sub commands to interact with Poetry's cache.
-
-### cache list
-
-The `cache list` command lists Poetry's available caches.
-
-```bash
-poetry cache list
-```
