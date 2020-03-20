@@ -27,7 +27,6 @@
 - Fixed an error when parsing some git URLs ([#2018](https://github.com/python-poetry/poetry/pull/2018)).
 
 
-
 ## [1.0.3] - 2020-01-31
 
 ### Fixed

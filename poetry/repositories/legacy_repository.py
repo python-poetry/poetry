@@ -15,7 +15,7 @@ from cachy import CacheManager
 
 import poetry.packages
 
-from poetry.locations import CACHE_DIR
+from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.packages import Package
 from poetry.packages import dependency_from_pep_508
 from poetry.packages.utils.link import Link
@@ -174,7 +174,7 @@ class LegacyRepository(PyPiRepository):
         self._client_cert = client_cert
         self._cert = cert
         self._inspector = Inspector()
-        self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
+        self._cache_dir = REPOSITORY_CACHE_DIR / name
         self._cache = CacheManager(
             {
                 "default": "releases",
