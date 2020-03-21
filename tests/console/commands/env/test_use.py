@@ -1,6 +1,8 @@
 import os
-import shutil
 import sys
+
+from typing import Optional
+from typing import Union
 
 import tomlkit
 
@@ -16,12 +18,8 @@ from poetry.utils.toml_file import TomlFile
 CWD = Path(__file__).parent.parent / "fixtures" / "simple_project"
 
 
-def build_venv(path, executable=None):
-    os.mkdir(path)
-
-
-def remove_venv(path):
-    shutil.rmtree(path)
+def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()
+    os.mkdir(str(path))
 
 
 def check_output_wrapper(version=Version.parse("3.7.1")):
@@ -62,7 +60,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(app, tmp_dir, m
     )
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
     )
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
