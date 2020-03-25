@@ -197,7 +197,7 @@ POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
-BIN = """#!/usr/bin/env python
+BIN = """#!{}
 # -*- coding: utf-8 -*-
 import glob
 import sys
@@ -211,7 +211,9 @@ if __name__ == "__main__":
     from poetry.console import main
 
     main()
-"""
+""".format(
+    sys.executable
+)
 
 BAT = u('@echo off\r\npython "{poetry_bin}" %*\r\n')
 
@@ -733,7 +735,7 @@ class Installer:
             HWND_BROADCAST,
             WM_SETTINGCHANGE,
             0,
-            u"Environment",
+            "Environment",
             SMTO_ABORTIFHUNG,
             5000,
             ctypes.byref(result),
