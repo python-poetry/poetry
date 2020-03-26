@@ -24,8 +24,8 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
 poetry-core = "^1.0.0a5"
-cleo = "^0.7.6"
-clikit = "^0.4.3"
+cleo = "^0.8.0"
+clikit = "^0.5.1"
 requests = "^2.18"
 cachy = "^0.3.0"
 requests-toolbelt = "^0.8.0"

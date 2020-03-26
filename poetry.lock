@@ -138,10 +138,10 @@ description = "Cleo allows you to create beautiful and testable command-line int
 name = "cleo"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.7.6"
+version = "0.8.0"
 
 [package.dependencies]
-clikit = ">=0.4.0,<0.5.0"
+clikit = ">=0.5.0,<0.6.0"
 
 [[package]]
 category = "dev"
@@ -158,7 +158,7 @@ description = "CliKit is a group of utilities to build beautiful and testable co
 name = "clikit"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.4.3"
+version = "0.5.1"
 
 [package.dependencies]
 pastel = ">=0.2.0,<0.3.0"
@@ -175,6 +175,10 @@ version = ">=3.6,<4.0"
 [package.dependencies.typing-extensions]
 python = ">=3.5.0,<3.5.4"
 version = ">=3.6,<4.0"
+
+[package.dependencies.woops]
+python = ">=3.6,<4.0"
+version = ">=0.2.1,<0.3.0"
 
 [[package]]
 category = "dev"
@@ -1305,6 +1309,15 @@ version = "0.5.1"
 
 [[package]]
 category = "main"
+description = "Handle and manage Python errors with ease"
+marker = "python_version >= \"3.6\" and python_version < \"4.0\""
+name = "woops"
+optional = false
+python-versions = ">=3.6,<4.0"
+version = "0.2.1"
+
+[[package]]
+category = "main"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 marker = "python_version >= \"3.5\" and python_version < \"3.8\" or python_version < \"3.8\""
 name = "zipp"
@@ -1322,7 +1335,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "35617c80a428d8f081214fcbe428540df288e67e5596531cba40415f19438d57"
+content-hash = "7ae766406ba58bc44d4b0d5876927ab0db9005d6a80efab83ddd6a2c50c2f8c8"
 python-versions = "~2.7 || ^3.5"
 
 [metadata.files]
@@ -1397,16 +1410,16 @@ chardet = [
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
 ]
 cleo = [
-    {file = "cleo-0.7.6-py2.py3-none-any.whl", hash = "sha256:9443d67e5b2da79b32d820ae41758dd6a25618345cb10b9a022a695e26b291b9"},
-    {file = "cleo-0.7.6.tar.gz", hash = "sha256:99cf342406f3499cec43270fcfaf93c126c5164092eca201dfef0f623360b409"},
+    {file = "cleo-0.8.0-py2.py3-none-any.whl", hash = "sha256:dcb791b246c02d59ea8eaf05a05d986e547dbe8ba2496ed59048e5d4ab93b537"},
+    {file = "cleo-0.8.0.tar.gz", hash = "sha256:b2d56e93b182358591d0ec46c4f787736378a6a8adf4a6512f72aeb0506de981"},
 ]
 click = [
     {file = "Click-7.0-py2.py3-none-any.whl", hash = "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13"},
     {file = "Click-7.0.tar.gz", hash = "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"},
 ]
 clikit = [
-    {file = "clikit-0.4.3-py2.py3-none-any.whl", hash = "sha256:71e321b7795a2a6c4888629f43365d52db071737e668ab16861121d7dd3ada09"},
-    {file = "clikit-0.4.3.tar.gz", hash = "sha256:6e2d7e115e7c7b35bceb0209109935ab2f9ab50910e9ff2293f7fa0b7abf973e"},
+    {file = "clikit-0.5.1-py2.py3-none-any.whl", hash = "sha256:f697b6e3125cf4bdc6394184c687f52fe3323152ca6bb99db444201f32904a64"},
+    {file = "clikit-0.5.1.tar.gz", hash = "sha256:2e9cd4c87539d9a0f0275b26e3e50d2d531d7bfbcf4f91909aaa013cfac9d0e1"},
 ]
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
@@ -1895,6 +1908,10 @@ wcwidth = [
 webencodings = [
     {file = "webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78"},
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
+]
+woops = [
+    {file = "woops-0.2.1-py3-none-any.whl", hash = "sha256:77f7179941d0a3d354d923f71428ee2c2519e0b86f465ed5882b98a6d00ec7f0"},
+    {file = "woops-0.2.1.tar.gz", hash = "sha256:f95dee22e055b61980209fdf481f33e743e02d5ef135853c9089d0061370f94a"},
 ]
 zipp = [
     {file = "zipp-1.2.0-py2.py3-none-any.whl", hash = "sha256:e0d9e63797e483a30d27e09fffd308c59a700d365ec34e93cc100844168bf921"},
