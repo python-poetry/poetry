@@ -42,7 +42,7 @@ If you only specify a major version, then minor- and patch-level changes are all
 
 ### Wildcard requirements
 
-**Wildcard requirements** allow for any version where the wildcard is positioned.
+**Wildcard requirements** allow for the latest (dependency dependent) version where the wildcard is positioned.
 
 `*`, `1.*` and `1.2.*` are examples of wildcard requirements.
 
