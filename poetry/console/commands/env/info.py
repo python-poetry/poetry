@@ -19,7 +19,7 @@ class EnvInfoCommand(Command):
             if not env.is_venv():
                 return 1
 
-            self.write(str(env.path))
+            self.line(str(env.path))
 
             return
 
