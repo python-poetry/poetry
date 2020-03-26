@@ -11,6 +11,7 @@ from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
 from poetry.puzzle.operations import Update
 from poetry.puzzle.operations.operation import Operation
+from poetry.puzzle.provider import Provider
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
@@ -234,14 +235,15 @@ class Installer:
             ops = solver.solve(use_latest=whitelist)
 
         if self._remove_untracked:
-            for installed in self._installed_repository.packages:
-                is_in_lock_file = False
-                for locked in locked_repository.packages:
-                    if locked.name == installed.name:
-                        is_in_lock_file = True
-                        break
+            locked_names = {locked.name for locked in locked_repository.packages}
 
-                if not is_in_lock_file:
+            for installed in self._installed_repository.packages:
+                if installed.name == self._package.name:
+                    continue
+                if installed.name in Provider.UNSAFE_PACKAGES:
+                    # Never remove pip, setuptools etc.
+                    continue
+                if installed.name not in locked_names:
                     ops.append(Uninstall(installed))
 
         # We need to filter operations so that packages
