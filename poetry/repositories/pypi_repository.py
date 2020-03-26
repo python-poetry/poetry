@@ -503,4 +503,4 @@ class PyPiRepository(RemoteRepository):
                     f.write(chunk)
 
     def _log(self, msg, level="info"):
-        getattr(logger, level)("<comment>{}:</comment> {}".format(self._name, msg))
+        getattr(logger, level)("<debug>{}:</debug> {}".format(self._name, msg))
