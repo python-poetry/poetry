@@ -49,9 +49,9 @@ def setup(mocker, installer, installed, config, env):
     p.return_value = installed
 
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.vcs.git.Git.rev_parse")
+    mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
+    mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
+    p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
     # Patch download to not download anything but to just copy from fixtures

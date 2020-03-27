@@ -25,7 +25,6 @@ class MakeReleaseCommand(Command):
 
     PYTHON = {
         "2.7": "python2.7",
-        "3.4": "python3.4",
         "3.5": "python3.5",
         "3.6": "python3.6",
         "3.7": "python3.7",
@@ -47,7 +46,8 @@ class MakeReleaseCommand(Command):
 
         self.check_system(pythons)
 
-        from poetry import __version__
+        from poetry.__version__ import __version__
+        from poetry.core.vcs import get_vcs
         from poetry.factory import Factory
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
@@ -59,7 +59,6 @@ class MakeReleaseCommand(Command):
         from poetry.utils.env import GET_BASE_PREFIX
         from poetry.utils.env import VirtualEnv
         from poetry.utils.helpers import temporary_directory
-        from poetry.vcs import get_vcs
 
         project = Factory().create_poetry(Path.cwd())
         package = project.package

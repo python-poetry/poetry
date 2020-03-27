@@ -29,7 +29,7 @@ class DebugResolveCommand(InitCommand):
 
     def handle(self):
         from poetry.io.null_io import NullIO
-        from poetry.packages import ProjectPackage
+        from poetry.core.packages import ProjectPackage
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository

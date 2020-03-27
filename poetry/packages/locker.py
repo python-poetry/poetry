@@ -10,12 +10,13 @@ from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
 
-import poetry.packages
 import poetry.repositories
 
+from poetry.core.packages.package import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.version.markers import parse_marker
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
-from poetry.version.markers import parse_marker
 
 
 class Locker(object):
@@ -83,9 +84,7 @@ class Locker(object):
             return packages
 
         for info in locked_packages:
-            package = poetry.packages.Package(
-                info["name"], info["version"], info["version"]
-            )
+            package = Package(info["name"], info["version"], info["version"])
             package.description = info.get("description", "")
             package.category = info["category"]
             package.optional = info["optional"]
@@ -109,16 +108,14 @@ class Locker(object):
                         dep_name = m.group(1)
                         constraint = m.group(2) or "*"
 
-                        package.extras[name].append(
-                            poetry.packages.Dependency(dep_name, constraint)
-                        )
+                        package.extras[name].append(Dependency(dep_name, constraint))
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
             else:
                 # Compatibility for old locks
                 if "requirements" in info:
-                    dep = poetry.packages.Dependency("foo", "0.0.0")
+                    dep = Dependency("foo", "0.0.0")
                     for name, value in info["requirements"].items():
                         if name == "python":
                             dep.python_versions = value
@@ -238,7 +235,7 @@ class Locker(object):
 
         return locked
 
-    def _dump_package(self, package):  # type: (poetry.packages.Package) -> dict
+    def _dump_package(self, package):  # type: (Package) -> dict
         dependencies = {}
         for dependency in sorted(package.requires, key=lambda d: d.name):
             if dependency.is_optional() and not dependency.is_activated():

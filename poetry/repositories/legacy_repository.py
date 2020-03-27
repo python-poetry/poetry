@@ -13,21 +13,19 @@ from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
 
-import poetry.packages
-
+from poetry.core.packages import Package
+from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.utils.link import Link
+from poetry.core.semver import Version
+from poetry.core.semver import VersionConstraint
+from poetry.core.semver import VersionRange
+from poetry.core.semver import parse_constraint
+from poetry.core.version.markers import InvalidMarker
 from poetry.locations import REPOSITORY_CACHE_DIR
-from poetry.packages import Package
-from poetry.packages import dependency_from_pep_508
-from poetry.packages.utils.link import Link
-from poetry.semver import Version
-from poetry.semver import VersionConstraint
-from poetry.semver import VersionRange
-from poetry.semver import parse_constraint
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.inspector import Inspector
 from poetry.utils.patterns import wheel_file_re
-from poetry.version.markers import InvalidMarker
 
 from .auth import Auth
 from .exceptions import PackageNotFound
@@ -283,9 +281,7 @@ class LegacyRepository(PyPiRepository):
 
         return packages
 
-    def package(
-        self, name, version, extras=None
-    ):  # type: (...) -> poetry.packages.Package
+    def package(self, name, version, extras=None):  # type: (...) -> Package
         """
         Retrieve the release information.
 
@@ -298,9 +294,7 @@ class LegacyRepository(PyPiRepository):
         should be much faster.
         """
         try:
-            index = self._packages.index(
-                poetry.packages.Package(name, version, version)
-            )
+            index = self._packages.index(Package(name, version, version))
 
             return self._packages[index]
         except ValueError:
@@ -309,7 +303,7 @@ class LegacyRepository(PyPiRepository):
 
             release_info = self.get_release_info(name, version)
 
-            package = poetry.packages.Package(name, version, version)
+            package = Package(name, version, version)
             if release_info["requires_python"]:
                 package.python_versions = release_info["requires_python"]
 

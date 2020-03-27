@@ -22,7 +22,7 @@ HTTP Error 400: Bad Request
 
 
 def test_publish_with_cert(app_tester, mocker):
-    publisher_publish = mocker.patch("poetry.masonry.publishing.Publisher.publish")
+    publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     app_tester.execute("publish --cert path/to/ca.pem")
 
@@ -32,7 +32,7 @@ def test_publish_with_cert(app_tester, mocker):
 
 
 def test_publish_with_client_cert(app_tester, mocker):
-    publisher_publish = mocker.patch("poetry.masonry.publishing.Publisher.publish")
+    publisher_publish = mocker.patch("poetry.publishing.Publisher.publish")
 
     app_tester.execute("publish --client-cert path/to/client.pem")
     assert [

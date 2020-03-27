@@ -40,7 +40,7 @@ the config command.
     loggers = ["poetry.masonry.publishing.publisher"]
 
     def handle(self):
-        from poetry.masonry.publishing.publisher import Publisher
+        from poetry.publishing.publisher import Publisher
 
         publisher = Publisher(self.poetry, self.io)
 

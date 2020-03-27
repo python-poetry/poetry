@@ -1,5 +1,0 @@
-[tool.poetry]
-name = "localversionlabel"
-description = "Local Version Label"
-version = "0.1-beta.1+gitbranch-buildno-1"
-authors = []

@@ -6,7 +6,7 @@ import tomlkit
 
 from cleo.testers import CommandTester
 
-from poetry.semver import Version
+from poetry.core.semver import Version
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv

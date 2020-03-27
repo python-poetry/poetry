@@ -9,8 +9,8 @@ from typing import List
 from typing import Optional
 
 from poetry.config.config import Config
+from poetry.core.version import Version
 from poetry.utils._compat import Path
-from poetry.version import Version
 
 
 try:

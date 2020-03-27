@@ -1,3 +1,0 @@
-class InvalidVersion(ValueError):
-
-    pass

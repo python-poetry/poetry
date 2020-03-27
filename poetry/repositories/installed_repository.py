@@ -1,10 +1,12 @@
-from poetry import _CURRENT_VENDOR
-from poetry.packages import Package
+from poetry.core.packages import Package
 from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
 from poetry.utils.env import Env
 
 from .repository import Repository
+
+
+_VENDORS = Path(__file__).parent.parent.joinpath("_vendor")
 
 
 class InstalledRepository(Repository):
@@ -32,7 +34,7 @@ class InstalledRepository(Repository):
                     continue
 
                 try:
-                    path.relative_to(_CURRENT_VENDOR)
+                    path.relative_to(_VENDORS)
                 except ValueError:
                     pass
                 else:
@@ -58,7 +60,7 @@ class InstalledRepository(Repository):
                 try:
                     path.relative_to(src_path)
 
-                    from poetry.vcs.git import Git
+                    from poetry.core.vcs.git import Git
 
                     git = Git()
                     revision = git.rev_parse("HEAD", src_path / package.name).strip()

@@ -176,7 +176,7 @@ class PipInstaller(BaseInstaller):
         return name
 
     def install_directory(self, package):
-        from poetry.masonry.builder import SdistBuilder
+        from poetry.core.masonry.builder import SdistBuilder
         from poetry.factory import Factory
         from poetry.utils._compat import decode
         from poetry.utils.env import NullEnv
@@ -229,8 +229,8 @@ class PipInstaller(BaseInstaller):
                 os.remove(setup)
 
     def install_git(self, package):
-        from poetry.packages import Package
-        from poetry.vcs import Git
+        from poetry.core.packages import Package
+        from poetry.core.vcs import Git
 
         src_dir = self._env.path / "src" / package.name
         if src_dir.exists():

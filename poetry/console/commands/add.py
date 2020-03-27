@@ -56,7 +56,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
     def handle(self):
         from poetry.installation.installer import Installer
-        from poetry.semver import parse_constraint
+        from poetry.core.semver import parse_constraint
         from tomlkit import inline_table
 
         packages = self.argument("name")

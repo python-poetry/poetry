@@ -20,10 +20,11 @@ import tomlkit
 
 from clikit.api.io import IO
 
+from poetry.core.semver import parse_constraint
+from poetry.core.semver.version import Version
+from poetry.core.version.markers import BaseMarker
 from poetry.locations import CACHE_DIR
 from poetry.poetry import Poetry
-from poetry.semver import parse_constraint
-from poetry.semver.version import Version
 from poetry.utils._compat import CalledProcessError
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
@@ -31,7 +32,6 @@ from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
 from poetry.utils.toml_file import TomlFile
-from poetry.version.markers import BaseMarker
 
 
 GET_ENVIRONMENT_INFO = """\
