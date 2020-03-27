@@ -26,7 +26,15 @@ class Publisher:
     def files(self):
         return self._uploader.files
 
-    def publish(self, repository_name, username, password, cert=None, client_cert=None):
+    def publish(
+        self,
+        repository_name,
+        username,
+        password,
+        cert=None,
+        client_cert=None,
+        dry_run=False,
+    ):
         if repository_name:
             self._io.write_line(
                 "Publishing <c1>{}</c1> (<c2>{}</c2>) "
@@ -90,4 +98,5 @@ class Publisher:
             url,
             cert=cert or get_cert(self._poetry.config, repository_name),
             client_cert=resolved_client_cert,
+            dry_run=dry_run,
         )

@@ -95,8 +95,8 @@ class Uploader:
         return self._username is not None and self._password is not None
 
     def upload(
-        self, url, cert=None, client_cert=None
-    ):  # type: (str, Optional[Path], Optional[Path]) -> None
+        self, url, cert=None, client_cert=None, dry_run=False
+    ):  # type: (str, Optional[Path], Optional[Path], bool) -> None
         session = self.make_session()
 
         if cert:
@@ -106,7 +106,7 @@ class Uploader:
             session.cert = str(client_cert)
 
         try:
-            self._upload(session, url)
+            self._upload(session, url, dry_run)
         finally:
             session.close()
 
@@ -188,9 +188,9 @@ class Uploader:
 
         return data
 
-    def _upload(self, session, url):
+    def _upload(self, session, url, dry_run=False):
         try:
-            self._do_upload(session, url)
+            self._do_upload(session, url, dry_run)
         except HTTPError as e:
             if (
                 e.response.status_code == 400
@@ -203,15 +203,16 @@ class Uploader:
 
             raise UploadError(e)
 
-    def _do_upload(self, session, url):
+    def _do_upload(self, session, url, dry_run=False):
         for file in self.files:
             # TODO: Check existence
 
-            resp = self._upload_file(session, url, file)
+            resp = self._upload_file(session, url, file, dry_run)
 
-            resp.raise_for_status()
+            if not dry_run:
+                resp.raise_for_status()
 
-    def _upload_file(self, session, url, file):
+    def _upload_file(self, session, url, file, dry_run=False):
         data = self.post_data(file)
         data.update(
             {
@@ -238,14 +239,17 @@ class Uploader:
 
             bar.start()
 
-            resp = session.post(
-                url,
-                data=monitor,
-                allow_redirects=False,
-                headers={"Content-Type": monitor.content_type},
-            )
+            resp = None
 
-            if resp.ok:
+            if not dry_run:
+                resp = session.post(
+                    url,
+                    data=monitor,
+                    allow_redirects=False,
+                    headers={"Content-Type": monitor.content_type},
+                )
+
+            if dry_run or resp.ok:
                 bar.set_format(
                     " - Uploading <c1>{0}</c1> <fg=green>%percent%%</>".format(
                         file.name

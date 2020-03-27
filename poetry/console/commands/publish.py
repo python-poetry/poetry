@@ -26,6 +26,7 @@ class PublishCommand(Command):
             flag=False,
         ),
         option("build", None, "Build the package before publishing."),
+        option("dry-run", None, "Perform all actions except upload the package."),
     ]
 
     help = """The publish command builds and uploads the package to a remote repository.
@@ -79,4 +80,5 @@ the config command.
             self.option("password"),
             cert,
             client_cert,
+            self.option("dry-run"),
         )

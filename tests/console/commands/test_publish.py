@@ -60,7 +60,7 @@ def test_publish_with_cert(app_tester, mocker):
     app_tester.execute("publish --cert path/to/ca.pem")
 
     assert [
-        (None, None, None, Path("path/to/ca.pem"), None)
+        (None, None, None, Path("path/to/ca.pem"), None, False)
     ] == publisher_publish.call_args
 
 
@@ -69,5 +69,22 @@ def test_publish_with_client_cert(app_tester, mocker):
 
     app_tester.execute("publish --client-cert path/to/client.pem")
     assert [
-        (None, None, None, None, Path("path/to/client.pem"))
+        (None, None, None, None, Path("path/to/client.pem"), False)
     ] == publisher_publish.call_args
+
+
+def test_publish_dry_run(app_tester, http):
+    http.register_uri(
+        http.POST, "https://upload.pypi.org/legacy/", status=403, body="Forbidden"
+    )
+
+    exit_code = app_tester.execute("publish --dry-run --username foo --password bar")
+
+    assert 0 == exit_code
+
+    output = app_tester.io.fetch_output()
+    error = app_tester.io.fetch_error()
+
+    assert "Publishing simple-project (1.2.3) to PyPI" in output
+    assert "- Uploading simple-project-1.2.3.tar.gz" in error
+    assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
