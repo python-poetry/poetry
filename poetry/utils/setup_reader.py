@@ -1,10 +1,5 @@
 import ast
 
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
-
 from typing import Any
 from typing import Dict
 from typing import Iterable
@@ -14,8 +9,14 @@ from typing import Tuple
 from typing import Union
 
 from ._compat import PY35
-from ._compat import basestring
 from ._compat import Path
+from ._compat import basestring
+
+
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser
 
 
 class SetupReader(object):
@@ -180,10 +181,12 @@ class SetupReader(object):
                 continue
 
             func = value.func
-            if not isinstance(func, ast.Name):
-                continue
-
-            if func.id != "setup":
+            if not (isinstance(func, ast.Name) and func.id == "setup") and not (
+                isinstance(func, ast.Attribute)
+                and hasattr(func.value, "id")
+                and func.value.id == "setuptools"
+                and func.attr == "setup"
+            ):
                 continue
 
             return value, elements

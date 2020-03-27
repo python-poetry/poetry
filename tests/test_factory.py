@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 import pytest
 
-from poetry.io.null_io import NullIO
 from poetry.factory import Factory
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
@@ -28,8 +27,8 @@ def test_create_poetry():
         package.readme.relative_to(fixtures_dir).as_posix()
         == "sample_project/README.rst"
     )
-    assert package.homepage == "https://poetry.eustace.io"
-    assert package.repository_url == "https://github.com/sdispater/poetry"
+    assert package.homepage == "https://python-poetry.org"
+    assert package.repository_url == "https://github.com/python-poetry/poetry"
     assert package.keywords == ["packaging", "dependency", "poetry"]
 
     assert package.python_versions == "~2.7 || ^3.6"

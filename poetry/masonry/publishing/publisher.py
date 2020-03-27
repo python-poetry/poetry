@@ -1,6 +1,8 @@
 import logging
 
-from poetry.utils.helpers import get_client_cert, get_cert, get_http_basic_auth
+from poetry.utils.helpers import get_cert
+from poetry.utils.helpers import get_client_cert
+from poetry.utils.password_manager import PasswordManager
 
 from .uploader import Uploader
 
@@ -18,6 +20,7 @@ class Publisher:
         self._package = poetry.package
         self._io = io
         self._uploader = Uploader(poetry, io)
+        self._password_manager = PasswordManager(poetry.config)
 
     @property
     def files(self):
@@ -26,8 +29,8 @@ class Publisher:
     def publish(self, repository_name, username, password, cert=None, client_cert=None):
         if repository_name:
             self._io.write_line(
-                "Publishing <info>{}</info> (<comment>{}</comment>) "
-                "to <fg=cyan>{}</>".format(
+                "Publishing <c1>{}</c1> (<b>{}</b>) "
+                "to <info>{}</info>".format(
                     self._package.pretty_name,
                     self._package.pretty_version,
                     repository_name,
@@ -35,8 +38,8 @@ class Publisher:
             )
         else:
             self._io.write_line(
-                "Publishing <info>{}</info> (<comment>{}</comment>) "
-                "to <fg=cyan>PyPI</>".format(
+                "Publishing <c1>{}</c1> (<b>{}</b>) "
+                "to <info>PyPI</info>".format(
                     self._package.pretty_name, self._package.pretty_version
                 )
             )
@@ -46,33 +49,29 @@ class Publisher:
             repository_name = "pypi"
         else:
             # Retrieving config information
-            repository = self._poetry.config.get(
-                "repositories.{}".format(repository_name)
-            )
-            if repository is None:
+            url = self._poetry.config.get("repositories.{}.url".format(repository_name))
+            if url is None:
                 raise RuntimeError(
                     "Repository {} is not defined".format(repository_name)
                 )
 
-            url = repository["url"]
-
         if not (username and password):
             # Check if we have a token first
-            token = self._poetry.config.get("pypi-token.{}".format(repository_name))
+            token = self._password_manager.get_pypi_token(repository_name)
             if token:
                 logger.debug("Found an API token for {}.".format(repository_name))
                 username = "__token__"
                 password = token
             else:
-                auth = get_http_basic_auth(self._poetry.config, repository_name)
+                auth = self._password_manager.get_http_auth(repository_name)
                 if auth:
                     logger.debug(
                         "Found authentication information for {}.".format(
                             repository_name
                         )
                     )
-                    username = auth[0]
-                    password = auth[1]
+                    username = auth["username"]
+                    password = auth["password"]
 
         resolved_client_cert = client_cert or get_client_cert(
             self._poetry.config, repository_name

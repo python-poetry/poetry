@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from clikit.io import NullIO
 from email.parser import Parser
+
+from clikit.io import NullIO
 
 from poetry.factory import Factory
 from poetry.masonry.builders.builder import Builder
@@ -80,7 +81,7 @@ def test_get_metadata_content():
     assert parsed["Keywords"] == "packaging,dependency,poetry"
     assert parsed["Requires-Python"] == ">=3.6,<4.0"
     assert parsed["License"] == "MIT"
-    assert parsed["Home-page"] == "https://poetry.eustace.io/"
+    assert parsed["Home-page"] == "https://python-poetry.org/"
 
     classifiers = parsed.get_all("Classifier")
     assert classifiers == [
@@ -105,9 +106,9 @@ def test_get_metadata_content():
 
     urls = parsed.get_all("Project-URL")
     assert urls == [
-        "Documentation, https://poetry.eustace.io/docs",
-        "Issue Tracker, https://github.com/sdispater/poetry/issues",
-        "Repository, https://github.com/sdispater/poetry",
+        "Documentation, https://python-poetry.org/docs",
+        "Issue Tracker, https://github.com/python-poetry/poetry/issues",
+        "Repository, https://github.com/python-poetry/poetry",
     ]
 
 
@@ -153,6 +154,6 @@ def test_metadata_with_url_dependencies():
     requires_dist = metadata["Requires-Dist"]
 
     assert (
-        "demo @ https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        "demo @ https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
         == requires_dist
     )

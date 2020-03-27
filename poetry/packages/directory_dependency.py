@@ -6,6 +6,7 @@ from poetry.utils.toml_file import TomlFile
 
 from .dependency import Dependency
 
+
 # Patching pkginfo to support Metadata version 2.1 (PEP 566)
 HEADER_ATTRS.update(
     {"2.1": HEADER_ATTRS_2_0 + (("Provides-Extra", "provides_extra", True),)}

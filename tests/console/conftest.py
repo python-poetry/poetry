@@ -1,26 +1,22 @@
 import os
-import pytest
-import shutil
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+import pytest
 
 from cleo import ApplicationTester
 
 from poetry.console import Application as BaseApplication
 from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
-from poetry.poetry import Poetry as BasePoetry
 from poetry.packages import Locker as BaseLocker
+from poetry.poetry import Poetry as BasePoetry
 from poetry.repositories import Pool
 from poetry.repositories import Repository as BaseRepository
-from poetry.utils._compat import PY2
-from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import Path
-from poetry.utils.toml_file import TomlFile
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.utils._compat import Path
+from poetry.utils.env import MockEnv
+from poetry.utils.toml_file import TomlFile
+from tests.helpers import mock_clone
+from tests.helpers import mock_download
 
 
 @pytest.fixture()
@@ -28,52 +24,18 @@ def installer():
     return NoopInstaller()
 
 
-def mock_clone(self, source, dest):
-    # Checking source to determine which folder we need to copy
-    parts = urlparse.urlparse(source)
-
-    folder = (
-        Path(__file__).parent.parent
-        / "fixtures"
-        / "git"
-        / parts.netloc
-        / parts.path.lstrip("/").rstrip(".git")
-    )
-
-    shutil.rmtree(str(dest))
-    shutil.copytree(str(folder), str(dest))
-
-
-def mock_download(self, url, dest):
-    parts = urlparse.urlparse(url)
-
-    fixtures = Path(__file__).parent.parent / "fixtures"
-    fixture = fixtures / parts.path.lstrip("/")
-
-    if dest.exists():
-        shutil.rmtree(str(dest))
-
-    # Python2 does not support os.symlink on Windows whereas Python3 does.  os.symlink requires either administrative
-    # privileges or developer mode on Win10, throwing an OSError is neither is active.
-    if WINDOWS:
-        if PY2:
-            shutil.copyfile(str(fixture), str(dest))
-        else:
-            try:
-                os.symlink(str(fixture), str(dest))
-            except OSError:
-                shutil.copyfile(str(fixture), str(dest))
-    else:
-        os.symlink(str(fixture), str(dest))
-
-
 @pytest.fixture
 def installed():
     return BaseRepository()
 
 
+@pytest.fixture
+def env():
+    return MockEnv(path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True)
+
+
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed, config):
+def setup(mocker, installer, installed, config, env):
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
@@ -94,6 +56,9 @@ def setup(mocker, installer, installed, config):
 
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
+
+    # Patch the virtual environment creation do actually do nothing
+    mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=env)
 
     # Setting terminal width
     environ = dict(os.environ)

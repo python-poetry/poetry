@@ -1,6 +1,7 @@
 [[package]]
 category = "main"
 description = ""
+develop = true
 name = "project-with-extras"
 optional = false
 python-versions = "*"
@@ -18,6 +19,7 @@ url = "tests/fixtures/directory/project_with_transitive_directory_dependencies/.
 [[package]]
 category = "main"
 description = ""
+develop = true
 name = "project-with-transitive-directory-dependencies"
 optional = false
 python-versions = "*"

@@ -1,7 +1,7 @@
 import sys
 
-from os import environ
 from distutils.util import strtobool
+from os import environ
 
 from .env_command import EnvCommand
 

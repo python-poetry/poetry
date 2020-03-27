@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "Some description."
+authors = [
+    "Sébastien Eustace <sebastien@eustace.io>"
+]
+license = "MIT"
+
+readme = "README.rst"
+
+exclude = ["**/data/", "**/*/item*"]
+include = ["my_package/data/data2.txt"]
+
+homepage = "https://python-poetry.org/"
+repository = "https://github.com/python-poetry/poetry"
+documentation = "https://python-poetry.org/docs"
+
+keywords = ["packaging", "dependency", "poetry"]
+
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+# Requirements
+[tool.poetry.dependencies]
+python = "^3.6"
+cleo = "^0.6"
+cachy = { version = "^0.2.0", extras = ["msgpack"] }
+
+pendulum = { version = "^1.4", optional = true }
+
+[tool.poetry.dev-dependencies]
+pytest = "~3.4"
+
+[tool.poetry.extras]
+time = ["pendulum"]
+
+[tool.poetry.scripts]
+my-script = "my_package:main"
+my-2nd-script = "my_package:main2"

@@ -1,11 +1,7 @@
 from cleo.testers import CommandTester
 
-from poetry.utils._compat import Path
-from poetry.utils.env import MockEnv
 
-
-def test_run_passes_all_args(app, mocker):
-    env = MockEnv(path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True)
+def test_run_passes_all_args(app, mocker, env):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
 
     command = app.find("run")

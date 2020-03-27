@@ -4,7 +4,6 @@ from typing import Union
 from clikit.api.io import IO
 from clikit.io import NullIO
 
-from poetry.packages import Dependency
 from poetry.packages import Locker
 from poetry.packages import Package
 from poetry.puzzle import Solver
@@ -16,6 +15,7 @@ from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.semver import parse_constraint
+from poetry.utils.extras import get_extra_package_names
 from poetry.utils.helpers import canonicalize_name
 
 from .base_installer import BaseInstaller
@@ -234,7 +234,7 @@ class Installer:
         # Execute operations
         actual_ops = [op for op in ops if not op.skipped]
         if not actual_ops and (self._execute_operations or self._dry_run):
-            self._io.write_line("Nothing to install or update")
+            self._io.write_line("No dependencies to install or update")
 
         if actual_ops and (self._execute_operations or self._dry_run):
             installs = []
@@ -305,7 +305,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -316,7 +316,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Installing <info>{}</> (<comment>{}</>)".format(
+                "  - Installing <c1>{}</c1> (<b>{}</b>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
@@ -333,7 +333,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
                         target.pretty_name,
                         target.full_pretty_version,
                         operation.skip_reason,
@@ -344,7 +344,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Updating <info>{}</> (<comment>{}</> -> <comment>{}</>)".format(
+                "  - Updating <c1>{}</c1> (<b>{}</b> -> <b>{}</b>)".format(
                     target.pretty_name,
                     source.full_pretty_version,
                     target.full_pretty_version,
@@ -360,7 +360,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Not removing <info>{}</> (<comment>{}</>) {}".format(
+                    "  - Not removing <c1>{}</c1> (<b>{}</b>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -371,7 +371,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Removing <info>{}</> (<comment>{}</>)".format(
+                "  - Removing <c1>{}</c1> (<b>{}</b>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
@@ -399,7 +399,7 @@ class Installer:
         installed_repo = self._installed_repository
         ops = []
 
-        extra_packages = [p.name for p in self._get_extra_packages(locked_repository)]
+        extra_packages = self._get_extra_packages(locked_repository)
         for locked in locked_repository.packages:
             is_installed = False
             for installed in installed_repo.packages:
@@ -429,7 +429,7 @@ class Installer:
     def _filter_operations(
         self, ops, repo
     ):  # type: (List[Operation], Repository) -> None
-        extra_packages = [p.name for p in self._get_extra_packages(repo)]
+        extra_packages = self._get_extra_packages(repo)
         for op in ops:
             if isinstance(op, Update):
                 package = op.target_package
@@ -468,9 +468,9 @@ class Installer:
             if package.category == "dev" and not self.is_dev_mode():
                 op.skip("Dev dependencies not requested")
 
-    def _get_extra_packages(self, repo):
+    def _get_extra_packages(self, repo):  # type: (Repository) -> List[str]
         """
-        Returns all packages required by extras.
+        Returns all package names required by extras.
 
         Maybe we just let the solver handle it?
         """
@@ -479,26 +479,7 @@ class Installer:
         else:
             extras = self._locker.lock_data.get("extras", {})
 
-        extra_packages = []
-        for extra_name, packages in extras.items():
-            if extra_name not in self._extras:
-                continue
-
-            extra_packages += [Dependency(p, "*") for p in packages]
-
-        def _extra_packages(packages):
-            pkgs = []
-            for package in packages:
-                for pkg in repo.packages:
-                    if pkg.name == package.name:
-                        pkgs.append(package)
-                        pkgs += _extra_packages(pkg.requires)
-
-                        break
-
-            return pkgs
-
-        return _extra_packages(extra_packages)
+        return list(get_extra_package_names(repo.packages, extras, self._extras))
 
     def _get_installer(self):  # type: () -> BaseInstaller
         return PipInstaller(self._env, self._io, self._pool)

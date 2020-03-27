@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import ast
-import pytest
 import shutil
 import tarfile
 
 from email.parser import Parser
+
+import pytest
 
 from clikit.io import NullIO
 
@@ -16,7 +17,6 @@ from poetry.packages.vcs_dependency import VCSDependency
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.env import NullEnv
-
 from tests.helpers import get_dependency
 
 
@@ -124,6 +124,7 @@ def test_make_setup():
         "my_package",
         "my_package.sub_pkg1",
         "my_package.sub_pkg2",
+        "my_package.sub_pkg3",
     ]
     assert ns["install_requires"] == ["cachy[msgpack]>=0.2.0,<0.3.0", "cleo>=0.6,<0.7"]
     assert ns["entry_points"] == {
@@ -178,6 +179,7 @@ def test_find_files_to_add():
             Path("my_package/sub_pkg1/__init__.py"),
             Path("my_package/sub_pkg2/__init__.py"),
             Path("my_package/sub_pkg2/data2/data.json"),
+            Path("my_package/sub_pkg3/foo.py"),
             Path("pyproject.toml"),
         ]
     )
@@ -213,7 +215,12 @@ def test_find_packages():
     pkg_dir, packages, pkg_data = builder.find_packages(include)
 
     assert pkg_dir is None
-    assert packages == ["my_package", "my_package.sub_pkg1", "my_package.sub_pkg2"]
+    assert packages == [
+        "my_package",
+        "my_package.sub_pkg1",
+        "my_package.sub_pkg2",
+        "my_package.sub_pkg3",
+    ]
     assert pkg_data == {
         "": ["*"],
         "my_package": ["data1/*"],
@@ -408,6 +415,42 @@ def test_default_with_excluded_data(mocker):
         assert "my-package-1.2.3/pyproject.toml" in names
         assert "my-package-1.2.3/setup.py" in names
         assert "my-package-1.2.3/PKG-INFO" in names
+        # all last modified times should be set to a valid timestamp
+        for tarinfo in tar.getmembers():
+            assert 0 < tarinfo.mtime
+
+
+def test_src_excluded_nested_data():
+    module_path = fixtures_dir / "exclude_nested_data_toml"
+    poetry = Factory().create_poetry(module_path)
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    builder.build()
+
+    sdist = module_path / "dist" / "my-package-1.2.3.tar.gz"
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert len(names) == len(set(names))
+        assert "my-package-1.2.3/LICENSE" in names
+        assert "my-package-1.2.3/README.rst" in names
+        assert "my-package-1.2.3/pyproject.toml" in names
+        assert "my-package-1.2.3/setup.py" in names
+        assert "my-package-1.2.3/PKG-INFO" in names
+        assert "my-package-1.2.3/my_package/__init__.py" in names
+        assert "my-package-1.2.3/my_package/data/sub_data/data2.txt" not in names
+        assert "my-package-1.2.3/my_package/data/sub_data/data3.txt" not in names
+        assert "my-package-1.2.3/my_package/data/data1.txt" not in names
+        assert "my-package-1.2.3/my_package/data/data2.txt" in names
+        assert "my-package-1.2.3/my_package/puplic/publicdata.txt" in names
+        assert "my-package-1.2.3/my_package/public/item1/itemdata1.txt" not in names
+        assert (
+            "my-package-1.2.3/my_package/public/item1/subitem/subitemdata.txt"
+            not in names
+        )
+        assert "my-package-1.2.3/my_package/public/item2/itemdata2.txt" not in names
 
 
 def test_proper_python_requires_if_two_digits_precision_version_specified():
@@ -430,3 +473,18 @@ def test_proper_python_requires_if_three_digits_precision_version_specified():
     parsed = p.parsestr(to_str(pkg_info))
 
     assert parsed["Requires-Python"] == "==2.7.15"
+
+
+def test_excluded_subpackage():
+    poetry = Factory().create_poetry(project("excluded_subpackage"))
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    setup = builder.build_setup()
+
+    setup_ast = ast.parse(setup)
+
+    setup_ast.body = [n for n in setup_ast.body if isinstance(n, ast.Assign)]
+    ns = {}
+    exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
+
+    assert ns["packages"] == ["example"]

@@ -9,6 +9,7 @@ version = "1.4.4"
 [[package]]
 category = "main"
 description = ""
+develop = true
 name = "project-with-extras"
 optional = false
 python-versions = "*"

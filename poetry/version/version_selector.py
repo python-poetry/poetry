@@ -2,8 +2,8 @@ from typing import Union
 
 from poetry.packages import Dependency
 from poetry.packages import Package
-from poetry.semver import parse_constraint
 from poetry.semver import Version
+from poetry.semver import parse_constraint
 
 
 class VersionSelector(object):
@@ -35,8 +35,7 @@ class VersionSelector(object):
 
         dependency = Dependency(package_name, constraint)
 
-        # Select highest version if we have many
-        package = candidates[0]
+        package = None
         for candidate in candidates:
             if (
                 candidate.is_prerelease()
@@ -47,9 +46,11 @@ class VersionSelector(object):
                 continue
 
             # Select highest version of the two
-            if package.version < candidate.version:
+            if package is None or package.version < candidate.version:
                 package = candidate
 
+        if package is None:
+            return False
         return package
 
     def find_recommended_require_version(self, package):

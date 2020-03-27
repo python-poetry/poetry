@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import pytest
 import shutil
 import zipfile
+
+import pytest
 
 from clikit.io import NullIO
 
 from poetry.factory import Factory
-from poetry.masonry.builders import WheelBuilder
+from poetry.masonry.builders.wheel import WheelBuilder
 from poetry.masonry.publishing.uploader import Uploader
 from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
@@ -61,6 +62,42 @@ def test_wheel_prerelease():
     whl = module_path / "dist" / "prerelease-0.1b1-py2.py3-none-any.whl"
 
     assert whl.exists()
+
+
+def test_wheel_excluded_data():
+    module_path = fixtures_dir / "default_with_excluded_data_toml"
+    WheelBuilder.make(Factory().create_poetry(module_path), NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "my_package/__init__.py" in z.namelist()
+        assert "my_package/data/sub_data/data2.txt" in z.namelist()
+        assert "my_package/data/sub_data/data3.txt" in z.namelist()
+        assert "my_package/data/data1.txt" not in z.namelist()
+
+
+def test_wheel_excluded_nested_data():
+    module_path = fixtures_dir / "exclude_nested_data_toml"
+    poetry = Factory().create_poetry(module_path)
+    WheelBuilder.make(poetry, NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "my_package/__init__.py" in z.namelist()
+        assert "my_package/data/sub_data/data2.txt" not in z.namelist()
+        assert "my_package/data/sub_data/data3.txt" not in z.namelist()
+        assert "my_package/data/data1.txt" not in z.namelist()
+        assert "my_package/data/data2.txt" in z.namelist()
+        assert "my_package/puplic/publicdata.txt" in z.namelist()
+        assert "my_package/public/item1/itemdata1.txt" not in z.namelist()
+        assert "my_package/public/item1/subitem/subitemdata.txt" not in z.namelist()
+        assert "my_package/public/item2/itemdata2.txt" not in z.namelist()
 
 
 def test_wheel_localversionlabel():

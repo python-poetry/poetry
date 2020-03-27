@@ -31,18 +31,27 @@ class _Writer:
     def write(self):
         buffer = []
 
-        required_python_version = None
+        required_python_version_notification = False
         for incompatibility in self._root.external_incompatibilities:
             if isinstance(incompatibility.cause, PythonCause):
-                required_python_version = incompatibility.cause.root_python_version
-                break
+                if not required_python_version_notification:
+                    buffer.append(
+                        "The current project's Python requirement ({}) "
+                        "is not compatible with some of the required "
+                        "packages Python requirement:".format(
+                            incompatibility.cause.root_python_version
+                        )
+                    )
+                    required_python_version_notification = True
 
-        if required_python_version is not None:
-            buffer.append(
-                "The current project must support the following Python versions: {}".format(
-                    required_python_version
+                buffer.append(
+                    "  - {} requires Python {}".format(
+                        incompatibility.terms[0].dependency.name,
+                        incompatibility.cause.python_version,
+                    )
                 )
-            )
+
+        if required_python_version_notification:
             buffer.append("")
 
         if isinstance(self._root.cause, ConflictCause):

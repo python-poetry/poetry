@@ -102,3 +102,9 @@ def test_to_pep_508_in_extras():
         ") "
         'and (extra == "foo" or extra == "bar")'
     )
+
+
+def test_to_pep_508_with_single_version_excluded():
+    dependency = Dependency("foo", "!=1.2.3")
+
+    assert "foo (!=1.2.3)" == dependency.to_pep_508()

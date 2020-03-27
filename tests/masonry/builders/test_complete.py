@@ -3,13 +3,14 @@ from __future__ import unicode_literals
 
 import ast
 import os
-import pytest
 import re
 import shutil
 import sys
 import tarfile
-import zipfile
 import tempfile
+import zipfile
+
+import pytest
 
 from clikit.io import NullIO
 
@@ -19,6 +20,7 @@ from poetry.masonry.builders import CompleteBuilder
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils.env import NullEnv
+
 
 fixtures_dir = Path(__file__).parent / "fixtures"
 
@@ -204,7 +206,7 @@ Metadata-Version: 2.1
 Name: my-package
 Version: 1.2.3
 Summary: Some description.
-Home-page: https://poetry.eustace.io/
+Home-page: https://python-poetry.org/
 License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
@@ -223,9 +225,9 @@ Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
 Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
-Project-URL: Documentation, https://poetry.eustace.io/docs
-Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
-Project-URL: Repository, https://github.com/sdispater/poetry
+Project-URL: Documentation, https://python-poetry.org/docs
+Project-URL: Issue Tracker, https://github.com/python-poetry/poetry/issues
+Project-URL: Repository, https://github.com/python-poetry/poetry
 Description-Content-Type: text/x-rst
 
 My Package
@@ -263,6 +265,7 @@ def test_complete_no_vcs():
         "my_package/sub_pkg1/__init__.py",
         "my_package/sub_pkg2/__init__.py",
         "my_package/sub_pkg2/data2/data.json",
+        "my_package/sub_pkg3/foo.py",
         "my_package-1.2.3.dist-info/entry_points.txt",
         "my_package-1.2.3.dist-info/LICENSE",
         "my_package-1.2.3.dist-info/WHEEL",
@@ -307,7 +310,7 @@ Metadata-Version: 2.1
 Name: my-package
 Version: 1.2.3
 Summary: Some description.
-Home-page: https://poetry.eustace.io/
+Home-page: https://python-poetry.org/
 License: MIT
 Keywords: packaging,dependency,poetry
 Author: Sébastien Eustace
@@ -326,9 +329,9 @@ Provides-Extra: time
 Requires-Dist: cachy[msgpack] (>=0.2.0,<0.3.0)
 Requires-Dist: cleo (>=0.6,<0.7)
 Requires-Dist: pendulum (>=1.4,<2.0); (python_version ~= "2.7" and sys_platform == "win32" or python_version in "3.4 3.5") and (extra == "time")
-Project-URL: Documentation, https://poetry.eustace.io/docs
-Project-URL: Issue Tracker, https://github.com/sdispater/poetry/issues
-Project-URL: Repository, https://github.com/sdispater/poetry
+Project-URL: Documentation, https://python-poetry.org/docs
+Project-URL: Issue Tracker, https://github.com/python-poetry/poetry/issues
+Project-URL: Repository, https://github.com/python-poetry/poetry
 Description-Content-Type: text/x-rst
 
 My Package

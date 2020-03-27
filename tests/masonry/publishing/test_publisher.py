@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from poetry.factory import Factory
@@ -118,4 +120,22 @@ def test_publish_uses_client_cert(fixture_dir, mocker, config):
     assert [
         ("https://foo.bar",),
         {"cert": None, "client_cert": Path(client_cert)},
+    ] == uploader_upload.call_args
+
+
+def test_publish_read_from_environment_variable(fixture_dir, environ, mocker, config):
+    os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
+    os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+    uploader_auth = mocker.patch("poetry.masonry.publishing.uploader.Uploader.auth")
+    uploader_upload = mocker.patch("poetry.masonry.publishing.uploader.Uploader.upload")
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    publisher = Publisher(poetry, NullIO())
+
+    publisher.publish("foo", None, None)
+
+    assert [("bar", "baz")] == uploader_auth.call_args
+    assert [
+        ("https://foo.bar",),
+        {"cert": None, "client_cert": None},
     ] == uploader_upload.call_args

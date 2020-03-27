@@ -80,8 +80,8 @@ lists all packages available."""
                 return 0
 
             rows = [
-                ["<info>name</>", " : <info>{}</>".format(pkg.pretty_name)],
-                ["<info>version</>", " : <comment>{}</>".format(pkg.pretty_version)],
+                ["<info>name</>", " : <c1>{}</>".format(pkg.pretty_name)],
+                ["<info>version</>", " : <b>{}</b>".format(pkg.pretty_version)],
                 ["<info>description</>", " : {}".format(pkg.description)],
             ]
 
@@ -93,7 +93,7 @@ lists all packages available."""
                 self.line("<info>dependencies</info>")
                 for dependency in pkg.requires:
                     self.line(
-                        " - {} <comment>{}</>".format(
+                        " - <c1>{}</c1> <b>{}</b>".format(
                             dependency.pretty_name, dependency.pretty_constraint
                         )
                     )
@@ -172,6 +172,13 @@ lists all packages available."""
                         # Non installed in non decorated mode
                         install_marker = " (!)"
 
+            if (
+                show_latest
+                and self.option("outdated")
+                and latest_statuses[locked.pretty_name] == "up-to-date"
+            ):
+                continue
+
             line = "<fg={}>{:{}}{}</>".format(
                 color, name, name_length - len(install_marker), install_marker
             )
@@ -182,9 +189,6 @@ lists all packages available."""
             if show_latest:
                 latest = latest_packages[locked.pretty_name]
                 update_status = latest_statuses[locked.pretty_name]
-
-                if self.option("outdated") and update_status == "up-to-date":
-                    continue
 
                 if write_latest:
                     color = "green"
@@ -211,7 +215,7 @@ lists all packages available."""
             self.line(line)
 
     def display_package_tree(self, io, package, installed_repo):
-        io.write("<info>{}</info>".format(package.pretty_name))
+        io.write("<c1>{}</c1>".format(package.pretty_name))
         description = ""
         if package.description:
             description = " " + package.description

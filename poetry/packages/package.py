@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 import copy
+import logging
 import re
 
 from contextlib import contextmanager
 from typing import Union
+from unicodedata import normalize
+from warnings import warn
 
 from poetry.semver import Version
 from poetry.semver import parse_constraint
-from poetry.spdx import license_by_id
 from poetry.spdx import License
+from poetry.spdx import license_by_id
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 from poetry.version.markers import AnyMarker
@@ -19,10 +22,13 @@ from .dependency import Dependency
 from .directory_dependency import DirectoryDependency
 from .file_dependency import FileDependency
 from .url_dependency import URLDependency
-from .vcs_dependency import VCSDependency
 from .utils.utils import create_nested_marker
+from .vcs_dependency import VCSDependency
+
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+)(?: <(?P<email>.+?)>)?$")
+
+logger = logging.getLogger(__name__)
 
 
 class Package(object):
@@ -155,7 +161,7 @@ class Package(object):
         if not self._authors:
             return {"name": None, "email": None}
 
-        m = AUTHOR_REGEX.match(self._authors[0])
+        m = AUTHOR_REGEX.match(normalize("NFC", self._authors[0]))
 
         name = m.group("name")
         email = m.group("email")
@@ -166,7 +172,7 @@ class Package(object):
         if not self._maintainers:
             return {"name": None, "email": None}
 
-        m = AUTHOR_REGEX.match(self._maintainers[0])
+        m = AUTHOR_REGEX.match(normalize("NFC", self._maintainers[0]))
 
         name = m.group("name")
         email = m.group("email")
@@ -270,7 +276,18 @@ class Package(object):
             python_versions = constraint.get("python")
             platform = constraint.get("platform")
             markers = constraint.get("markers")
-            allows_prereleases = constraint.get("allows-prereleases", False)
+            if "allows-prereleases" in constraint:
+                message = (
+                    'The "{}" dependency specifies '
+                    'the "allows-prereleases" property, which is deprecated. '
+                    'Use "allow-prereleases" instead.'.format(name)
+                )
+                warn(message, DeprecationWarning)
+                logger.warning(message)
+
+            allows_prereleases = constraint.get(
+                "allow-prereleases", constraint.get("allows-prereleases", False)
+            )
 
             if "git" in constraint:
                 # VCS dependency
@@ -281,6 +298,7 @@ class Package(object):
                     branch=constraint.get("branch", None),
                     tag=constraint.get("tag", None),
                     rev=constraint.get("rev", None),
+                    category=category,
                     optional=optional,
                 )
             elif "file" in constraint:

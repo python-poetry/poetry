@@ -1,25 +1,24 @@
 import os
 import tempfile
-from io import open
 
+from io import open
 from subprocess import CalledProcessError
 
 from clikit.api.io import IO
 from clikit.io import NullIO
 
+from poetry.repositories.pool import Pool
+from poetry.utils._compat import encode
+from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
+
+from .base_installer import BaseInstaller
 
 
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
-
-from poetry.repositories.pool import Pool
-from poetry.utils._compat import encode
-from poetry.utils.env import Env
-
-from .base_installer import BaseInstaller
 
 
 class PipInstaller(BaseInstaller):
@@ -41,7 +40,10 @@ class PipInstaller(BaseInstaller):
 
         args = ["install", "--no-deps"]
 
-        if package.source_type == "legacy" and package.source_url:
+        if (
+            package.source_type not in {"git", "directory", "file", "url"}
+            and package.source_url
+        ):
             repository = self._pool.repository(package.source_reference)
             parsed = urlparse.urlparse(package.source_url)
             if parsed.scheme == "http":
@@ -71,7 +73,7 @@ class PipInstaller(BaseInstaller):
         if update:
             args.append("-U")
 
-        if package.files and not package.source_type:
+        if package.files and not package.source_url:
             # Format as a requirements.txt
             # We need to create a requirements.txt file
             # for each package in order to check hashes.
@@ -94,7 +96,12 @@ class PipInstaller(BaseInstaller):
 
             self.run(*args)
 
-    def update(self, _, target):
+    def update(self, package, target):
+        if package.source_type != target.source_type:
+            # If the source type has changed, we remove the current
+            # package to avoid perpetual updates in some cases
+            self.remove(package)
+
         self.install(target, update=True)
 
     def remove(self, package):
@@ -113,7 +120,7 @@ class PipInstaller(BaseInstaller):
             raise
 
     def run(self, *args, **kwargs):  # type: (...) -> str
-        return self._env.run("python", "-m", "pip", *args, **kwargs)
+        return self._env.run_pip(*args, **kwargs)
 
     def requirement(self, package, formatted=False):
         if formatted and not package.source_type:

@@ -1,3 +1,5 @@
+from poetry.vcs import git
+
 from .dependency import Dependency
 
 
@@ -7,7 +9,15 @@ class VCSDependency(Dependency):
     """
 
     def __init__(
-        self, name, vcs, source, branch=None, tag=None, rev=None, optional=False
+        self,
+        name,
+        vcs,
+        source,
+        branch=None,
+        tag=None,
+        rev=None,
+        category="main",
+        optional=False,
     ):
         self._vcs = vcs
         self._source = source
@@ -21,7 +31,7 @@ class VCSDependency(Dependency):
         self._rev = rev
 
         super(VCSDependency, self).__init__(
-            name, "*", optional=optional, allows_prereleases=True
+            name, "*", category=category, optional=optional, allows_prereleases=True
         )
 
     @property
@@ -65,11 +75,17 @@ class VCSDependency(Dependency):
     @property
     def base_pep_508_name(self):  # type: () -> str
         requirement = self.pretty_name
+        parsed_url = git.ParsedUrl.parse(self._source)
 
         if self.extras:
             requirement += "[{}]".format(",".join(self.extras))
 
-        requirement += " @ {}+{}@{}".format(self._vcs, self._source, self.reference)
+        if parsed_url.protocol is not None:
+            requirement += " @ {}+{}@{}".format(self._vcs, self._source, self.reference)
+        else:
+            requirement += " @ {}+ssh://{}@{}".format(
+                self._vcs, parsed_url.format(), self.reference
+            )
 
         return requirement
 

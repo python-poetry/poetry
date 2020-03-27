@@ -63,10 +63,7 @@ class Layout(object):
         self._license = license
         self._python = python
         self._dependencies = dependencies or {}
-        if dev_dependencies is None:
-            dev_dependencies = {"pytest": "^3.5"}
-
-        self._dev_dependencies = dev_dependencies
+        self._dev_dependencies = dev_dependencies or {}
 
         if not author:
             author = "Your Name <you@example.com>"
@@ -131,8 +128,6 @@ class Layout(object):
         readme_file.touch()
 
     def _create_tests(self, path):
-        self._dev_dependencies["pytest"] = "^3.0"
-
         tests = path / "tests"
         tests_init = tests / "__init__.py"
         tests_default = tests / "test_{}.py".format(self._package_name)

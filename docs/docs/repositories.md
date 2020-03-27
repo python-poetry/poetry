@@ -71,7 +71,7 @@ export POETRY_HTTP_BASIC_PYPI_USERNAME=username
 export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
 ```
 
-See [Using environment variables](/configuration#using-environment-variables) for more information
+See [Using environment variables](/docs/configuration/#using-environment-variables) for more information
 on how to configure Poetry with environment variables.
 
 #### Custom certificate authority and mutual TLS authentication

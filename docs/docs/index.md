@@ -16,8 +16,13 @@ Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
+### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+```
+### windows powershell install instructions
+```powershell
+(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
 ```
 
 !!! note
@@ -44,6 +49,12 @@ the `POETRY_UNINSTALL` environment variable before executing the installer.
 ```bash
 python get-poetry.py --uninstall
 POETRY_UNINSTALL=1 python get-poetry.py
+```
+
+By default, Poetry is installed into the user's platform-specific home directory. If you wish to change this, you may define the `POETRY_HOME` environment variable:
+
+```bash
+POETRY_HOME=/etc/poetry python get-poetry.py
 ```
 
 If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`
@@ -111,29 +122,33 @@ pipx uninstall poetry
 
 ## Updating `poetry`
 
-Updating poetry to the latest stable version is as simple as calling the `self:update` command.
+Updating Poetry to the latest stable version is as simple as calling the `self update` command.
 
 ```bash
-poetry self:update
+poetry self update
 ```
 
-If you want to install prerelease versions, you can use the `--preview` option.
+If you want to install pre-release versions, you can use the `--preview` option.
 
 ```bash
-poetry self:update --preview
+poetry self update --preview
 ```
 
-And finally, if you want to install a specific version you can pass it as an argument
-to `self:update`.
+And finally, if you want to install a specific version, you can pass it as an argument
+to `self update`.
 
 ```bash
-poetry self:update 0.8.0
+poetry self update 0.8.0
 ```
 
 !!!note
 
-    The `self:update` command will only work if you used the recommended
+    The `self update` command will only work if you used the recommended
     installer to install Poetry.
+
+!!!note
+
+    If you are still on poetry version < 1.0 use `poetry self:update` instead.
 
 
 ## Enable tab completion for Bash, Fish, or Zsh

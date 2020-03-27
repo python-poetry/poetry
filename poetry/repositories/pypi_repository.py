@@ -1,59 +1,59 @@
 import logging
 import os
 
-
 from collections import defaultdict
 from typing import Dict
 from typing import List
 from typing import Union
+
+from cachecontrol import CacheControl
+from cachecontrol.caches.file_cache import FileCache
+from cachecontrol.controller import logger as cache_control_logger
+from cachy import CacheManager
+from html5lib.html5parser import parse
+from requests import get
+from requests import session
+from requests.exceptions import TooManyRedirects
+
+from poetry.locations import CACHE_DIR
+from poetry.packages import Package
+from poetry.packages import dependency_from_pep_508
+from poetry.packages.utils.link import Link
+from poetry.semver import VersionConstraint
+from poetry.semver import VersionRange
+from poetry.semver import parse_constraint
+from poetry.semver.exceptions import ParseVersionError
+from poetry.utils._compat import Path
+from poetry.utils._compat import to_str
+from poetry.utils.helpers import temporary_directory
+from poetry.utils.inspector import Inspector
+from poetry.utils.patterns import wheel_file_re
+from poetry.version.markers import InvalidMarker
+from poetry.version.markers import parse_marker
+
+from .exceptions import PackageNotFound
+from .remote_repository import RemoteRepository
+
 
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
 
-try:
-    from xmlrpc.client import ServerProxy
-except ImportError:
-    from xmlrpclib import ServerProxy
 
-from cachecontrol import CacheControl
-from cachecontrol.caches.file_cache import FileCache
-from cachy import CacheManager
-from requests import get
-from requests import session
-
-from poetry.locations import CACHE_DIR
-from poetry.packages import dependency_from_pep_508
-from poetry.packages import Package
-from poetry.packages.utils.link import Link
-from poetry.semver import parse_constraint
-from poetry.semver import VersionConstraint
-from poetry.semver import VersionRange
-from poetry.semver.exceptions import ParseVersionError
-from poetry.utils._compat import Path
-from poetry.utils._compat import to_str
-from poetry.utils.helpers import parse_requires
-from poetry.utils.helpers import temporary_directory
-from poetry.utils.inspector import Inspector
-from poetry.utils.patterns import wheel_file_re
-from poetry.utils.setup_reader import SetupReader
-from poetry.version.markers import InvalidMarker
-from poetry.version.markers import parse_marker
-
-from .exceptions import PackageNotFound
-from .repository import Repository
-
+cache_control_logger.setLevel(logging.ERROR)
 
 logger = logging.getLogger(__name__)
 
 
-class PyPiRepository(Repository):
+class PyPiRepository(RemoteRepository):
 
-    CACHE_VERSION = parse_constraint("1.0.0b2")
+    CACHE_VERSION = parse_constraint("1.0.0")
 
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
-        self._url = url
+        super(PyPiRepository, self).__init__(url.rstrip("/") + "/simple/")
+
+        self._base_url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
 
@@ -69,22 +69,11 @@ class PyPiRepository(Repository):
             }
         )
 
-        self._session = CacheControl(
-            session(), cache=FileCache(str(release_cache_dir / "_http"))
-        )
+        self._cache_control_cache = FileCache(str(release_cache_dir / "_http"))
+        self._session = CacheControl(session(), cache=self._cache_control_cache)
         self._inspector = Inspector()
 
-        super(PyPiRepository, self).__init__()
-
         self._name = "PyPI"
-
-    @property
-    def url(self):  # type: () -> str
-        return self._url
-
-    @property
-    def authenticated_url(self):  # type: () -> str
-        return self._url
 
     def find_packages(
         self,
@@ -222,26 +211,32 @@ class PyPiRepository(Repository):
 
         return package
 
-    def search(self, query, mode=0):
+    def search(self, query):
         results = []
 
-        search = {"name": query}
+        search = {"q": query}
 
-        if mode == self.SEARCH_FULLTEXT:
-            search["summary"] = query
+        response = session().get(self._base_url + "search", params=search)
+        content = parse(response.content, namespaceHTMLElements=False)
+        for result in content.findall(".//*[@class='package-snippet']"):
+            name = result.find("h3/*[@class='package-snippet__name']").text
+            version = result.find("h3/*[@class='package-snippet__version']").text
 
-        client = ServerProxy("https://pypi.python.org/pypi")
-        hits = client.search(search, "or")
+            if not name or not version:
+                continue
 
-        for hit in hits:
+            description = result.find("p[@class='package-snippet__description']").text
+            if not description:
+                description = ""
+
             try:
-                result = Package(hit["name"], hit["version"], hit["version"])
-                result.description = to_str(hit["summary"])
+                result = Package(name, version, description)
+                result.description = to_str(description.strip())
                 results.append(result)
             except ParseVersionError:
                 self._log(
                     'Unable to parse version "{}" for the {} package, skipping'.format(
-                        hit["version"], hit["name"]
+                        version, name
                     ),
                     level="debug",
                 )
@@ -357,7 +352,14 @@ class PyPiRepository(Repository):
         return data
 
     def _get(self, endpoint):  # type: (str) -> Union[dict, None]
-        json_response = self._session.get(self._url + endpoint)
+        try:
+            json_response = self._session.get(self._base_url + endpoint)
+        except TooManyRedirects:
+            # Cache control redirect loop.
+            # We try to remove the cache and try again
+            self._cache_control_cache.delete(self._base_url + endpoint)
+            json_response = self._session.get(self._base_url + endpoint)
+
         if json_response.status_code == 404:
             return None
 

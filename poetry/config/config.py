@@ -2,8 +2,10 @@ from __future__ import absolute_import
 
 import os
 import re
+
 from copy import deepcopy
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Optional
 
@@ -14,10 +16,16 @@ from poetry.utils._compat import basestring
 from .config_source import ConfigSource
 from .dict_config_source import DictConfigSource
 
+
 _NOT_SET = object()
 
-boolean_validator = lambda val: val in {"true", "false", "1", "0"}
-boolean_normalizer = lambda val: val in ["true", "1"]
+
+def boolean_validator(val):
+    return val in {"true", "false", "1", "0"}
+
+
+def boolean_normalizer(val):
+    return val in ["true", "1"]
 
 
 class Config(object):

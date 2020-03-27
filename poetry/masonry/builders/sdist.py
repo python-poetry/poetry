@@ -2,6 +2,7 @@
 import os
 import re
 import tarfile
+import time
 
 from collections import defaultdict
 from copy import copy
@@ -16,7 +17,6 @@ from poetry.utils._compat import to_str
 
 from ..utils.helpers import normalize_file_permissions
 from ..utils.package_include import PackageInclude
-
 from .builder import Builder
 
 
@@ -84,12 +84,14 @@ class SdistBuilder(Builder):
             setup = self.build_setup()
             tar_info = tarfile.TarInfo(pjoin(tar_dir, "setup.py"))
             tar_info.size = len(setup)
+            tar_info.mtime = time.time()
             tar.addfile(tar_info, BytesIO(setup))
 
             pkg_info = self.build_pkg_info()
 
             tar_info = tarfile.TarInfo(pjoin(tar_dir, "PKG-INFO"))
             tar_info.size = len(pkg_info)
+            tar_info.mtime = time.time()
             tar.addfile(tar_info, BytesIO(pkg_info))
         finally:
             tar.close()
@@ -235,7 +237,15 @@ class SdistBuilder(Builder):
             if from_top_level == ".":
                 continue
 
-            is_subpkg = "__init__.py" in filenames
+            is_subpkg = any(
+                [filename.endswith(".py") for filename in filenames]
+            ) and not all(
+                [
+                    self.is_excluded(Path(path, filename).relative_to(self._path))
+                    for filename in filenames
+                    if filename.endswith(".py")
+                ]
+            )
             if is_subpkg:
                 subpkg_paths.add(from_top_level)
                 parts = from_top_level.split(os.sep)
@@ -268,9 +278,7 @@ class SdistBuilder(Builder):
         return pkgdir, sorted(packages), pkg_data
 
     @classmethod
-    def convert_dependencies(
-        cls, package, dependencies  # type: Package  # type: List[Dependency]
-    ):
+    def convert_dependencies(cls, package, dependencies):
         main = []
         extras = defaultdict(list)
         req_regex = re.compile(r"^(.+) \((.+)\)$")

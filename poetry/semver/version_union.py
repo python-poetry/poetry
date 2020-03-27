@@ -1,3 +1,5 @@
+from typing import List
+
 from .empty_constraint import EmptyConstraint
 from .version_constraint import VersionConstraint
 
@@ -72,7 +74,7 @@ class VersionUnion(VersionConstraint):
     def is_any(self):
         return False
 
-    def allows(self, version):  # type: (Version) -> bool
+    def allows(self, version):  # type: ("Version") -> bool
         return any([constraint.allows(version) for constraint in self._ranges])
 
     def allows_all(self, other):  # type: (VersionConstraint) -> bool
@@ -214,7 +216,7 @@ class VersionUnion(VersionConstraint):
 
     def _ranges_for(
         self, constraint
-    ):  # type: (VersionConstraint) -> List[VersionRange]
+    ):  # type: (VersionConstraint) -> List["VersionRange"]
         from .version_range import VersionRange
 
         if constraint.is_empty():
@@ -228,7 +230,7 @@ class VersionUnion(VersionConstraint):
 
         raise ValueError("Unknown VersionConstraint type {}".format(constraint))
 
-    def _excludes_single_version(self):  # type: () -> bool
+    def excludes_single_version(self):  # type: () -> bool
         from .version import Version
         from .version_range import VersionRange
 
@@ -243,7 +245,7 @@ class VersionUnion(VersionConstraint):
     def __str__(self):
         from .version_range import VersionRange
 
-        if self._excludes_single_version():
+        if self.excludes_single_version():
             return "!={}".format(VersionRange().difference(self))
 
         return " || ".join([str(r) for r in self._ranges])

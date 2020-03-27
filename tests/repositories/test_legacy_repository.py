@@ -1,10 +1,6 @@
-import pytest
 import shutil
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+import pytest
 
 from poetry.packages import Dependency
 from poetry.repositories.auth import Auth
@@ -13,6 +9,12 @@ from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
+
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 
 class MockRepository(LegacyRepository):
@@ -265,7 +267,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
 
 def test_username_password_special_chars():
-    auth = Auth("http://foo.bar", "user:", "p@ssword")
+    auth = Auth("http://foo.bar", "user:", "/%2Fp@ssword")
     repo = MockRepository(auth=auth)
 
-    assert "http://user%3A:p%40ssword@foo.bar" == repo.authenticated_url
+    assert "http://user%3A:%2F%252Fp%40ssword@foo.bar" == repo.authenticated_url

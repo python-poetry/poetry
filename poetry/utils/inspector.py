@@ -1,21 +1,21 @@
-from typing import Dict
-from typing import List
-from typing import Union
-
 import logging
 import os
 import tarfile
 import zipfile
-from bz2 import BZ2File
-from gzip import GzipFile
+
+from typing import Dict
+from typing import List
+from typing import Union
 
 import pkginfo
+
 from requests import get
 
 from ._compat import Path
 from .helpers import parse_requires
 from .setup_reader import SetupReader
 from .toml_file import TomlFile
+
 
 logger = logging.getLogger(__name__)
 
@@ -112,27 +112,21 @@ class Inspector:
         # Still not dependencies found
         # So, we unpack and introspect
         suffix = file_path.suffix
-        gz = None
         if suffix == ".zip":
             tar = zipfile.ZipFile(str(file_path))
         else:
             if suffix == ".bz2":
-                gz = BZ2File(str(file_path))
                 suffixes = file_path.suffixes
                 if len(suffixes) > 1 and suffixes[-2] == ".tar":
                     suffix = ".tar.bz2"
             else:
-                gz = GzipFile(str(file_path))
                 suffix = ".tar.gz"
 
-            tar = tarfile.TarFile(str(file_path), fileobj=gz)
+            tar = tarfile.open(str(file_path))
 
         try:
             tar.extractall(os.path.join(str(file_path.parent), "unpacked"))
         finally:
-            if gz:
-                gz.close()
-
             tar.close()
 
         unpacked = file_path.parent / "unpacked"

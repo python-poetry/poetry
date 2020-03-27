@@ -16,8 +16,8 @@ assignees: ''
 -->
 
 <!-- Checked checkbox should look like this: [x] -->
-- [ ] I am on the [latest](https://github.com/sdispater/poetry/releases/latest) Poetry version.
-- [ ] I have searched the [issues](https://github.com/sdispater/poetry/issues) of this repo and believe that this is not a duplicate.
+- [ ] I am on the [latest](https://github.com/python-poetry/poetry/releases/latest) Poetry version.
+- [ ] I have searched the [issues](https://github.com/python-poetry/poetry/issues) of this repo and believe that this is not a duplicate.
 - [ ] If an exception occurs when executing a command, I executed it again in debug mode (`-vvv` option).
 
 <!--

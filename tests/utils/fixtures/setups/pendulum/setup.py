@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from distutils.core import setup
 
+from build import *
+
 packages = [
     "pendulum",
     "pendulum._extensions",
@@ -45,7 +47,6 @@ setup_kwargs = {
     "extras_require": extras_require,
     "python_requires": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
 }
-from build import *
 
 build(setup_kwargs)
 

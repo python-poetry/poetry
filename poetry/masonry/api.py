@@ -11,21 +11,23 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import unicode
 from poetry.utils.env import SystemEnv
 
-from .builders import SdistBuilder
-from .builders import WheelBuilder
+from .builders.sdist import SdistBuilder
+from .builders.wheel import WheelBuilder
+
 
 log = logging.getLogger(__name__)
 
 
 def get_requires_for_build_wheel(config_settings=None):
     """
-    Returns a list of requirements for building, as strings
+    Returns an additional list of requirements for building, as PEP508 strings,
+    above and beyond those specified in the pyproject.toml file.
+
+    This implementation is optional. At the moment it only returns an empty list, which would be the same as if
+    not define. So this is just for completeness for future implementation.
     """
-    poetry = Factory().create_poetry(Path("."))
 
-    main, _ = SdistBuilder.convert_dependencies(poetry.package, poetry.package.requires)
-
-    return main
+    return []
 
 
 # For now, we require all dependencies to build either a wheel or an sdist.
