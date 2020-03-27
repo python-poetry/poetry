@@ -1,5 +1,7 @@
 import logging
 
+from .formatters import FORMATTERS
+
 
 class IOFormatter(logging.Formatter):
 
@@ -15,7 +17,9 @@ class IOFormatter(logging.Formatter):
             level = record.levelname.lower()
             msg = record.msg
 
-            if level in self._colors:
+            if record.name in FORMATTERS:
+                msg = FORMATTERS[record.name].format(msg)
+            elif level in self._colors:
                 msg = "<{}>{}</>".format(self._colors[level], msg)
 
             return msg

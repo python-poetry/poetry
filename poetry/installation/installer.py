@@ -305,7 +305,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -316,7 +316,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Installing <c1>{}</c1> (<b>{}</b>)".format(
+                "  - Installing <c1>{}</c1> (<c2>{}</c2>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
@@ -333,7 +333,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         target.pretty_name,
                         target.full_pretty_version,
                         operation.skip_reason,
@@ -344,7 +344,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Updating <c1>{}</c1> (<b>{}</b> -> <b>{}</b>)".format(
+                "  - Updating <c1>{}</c1> (<c2>{}</c2> -> <c2>{}</c2>)".format(
                     target.pretty_name,
                     source.full_pretty_version,
                     target.full_pretty_version,
@@ -360,7 +360,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Not removing <c1>{}</c1> (<b>{}</b>) {}".format(
+                    "  - Not removing <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -371,7 +371,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Removing <c1>{}</c1> (<b>{}</b>)".format(
+                "  - Removing <c1>{}</c1> (<c2>{}</c2>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )

@@ -12,6 +12,11 @@ class BuildCommand(EnvCommand):
         option("format", "f", "Limit the format to either sdist or wheel.", flag=False)
     ]
 
+    loggers = [
+        "poetry.core.masonry.builders.sdist",
+        "poetry.core.masonry.builders.wheel",
+    ]
+
     def handle(self):
         from poetry.core.masonry import Builder
 
@@ -21,7 +26,7 @@ class BuildCommand(EnvCommand):
 
         package = self.poetry.package
         self.line(
-            "Building <c1>{}</c1> (<b>{}</b>)".format(
+            "Building <c1>{}</c1> (<c2>{}</c2>)".format(
                 package.pretty_name, package.version
             )
         )

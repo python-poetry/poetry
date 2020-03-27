@@ -731,31 +731,31 @@ class Provider:
 
                 message = (
                     "<fg=blue>fact</>: <c1>{}</c1>{} "
-                    "depends on <c1>{}</c1> (<b>{}</b>)".format(
+                    "depends on <c1>{}</c1> (<c2>{}</c2>)".format(
                         name, version, m.group(2), m.group(3)
                     )
                 )
             elif " is " in message:
                 message = re.sub(
                     "fact: (.+) is (.+)",
-                    "<fg=blue>fact</>: <c1>\\1</c1> is <b>\\2</b>",
+                    "<fg=blue>fact</>: <c1>\\1</c1> is <c2>\\2</c2>",
                     message,
                 )
             else:
                 message = re.sub(
-                    r"(?<=: )(.+?) \((.+?)\)", "<c1>\\1</c1> (<b>\\2</b>)", message
+                    r"(?<=: )(.+?) \((.+?)\)", "<c1>\\1</c1> (<c2>\\2</c2>)", message
                 )
                 message = "<fg=blue>fact</>: {}".format(message.split("fact: ")[1])
         elif message.startswith("selecting "):
             message = re.sub(
                 r"selecting (.+?) \((.+?)\)",
-                "<fg=blue>selecting</> <c1>\\1</c1> (<b>\\2</b>)",
+                "<fg=blue>selecting</> <c1>\\1</c1> (<c2>\\2</c2>)",
                 message,
             )
         elif message.startswith("derived:"):
             m = re.match(r"derived: (.+?) \((.+?)\)$", message)
             if m:
-                message = "<fg=blue>derived</>: <c1>{}</c1> (<b>{}</b>)".format(
+                message = "<fg=blue>derived</>: <c1>{}</c1> (<c2>{}</c2>)".format(
                     m.group(1), m.group(2)
                 )
             else:
@@ -768,14 +768,14 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<b>{}</b>)".format(m2.group(2))
+                    version = " (<c2>{}</c2>)".format(m2.group(2))
                 else:
                     name = m.group(1)
                     version = ""
 
                 message = (
                     "<fg=red;options=bold>conflict</>: <c1>{}</c1>{} "
-                    "depends on <c1>{}</c1> (<b>{}</b>)".format(
+                    "depends on <c1>{}</c1> (<c2>{}</c2>)".format(
                         name, version, m.group(2), m.group(3)
                     )
                 )
@@ -791,7 +791,7 @@ class Provider:
             debug_info = (
                 "\n".join(
                     [
-                        "<comment>{}:</> {}".format(str(depth).rjust(4), s)
+                        "<debug>{}:</debug> {}".format(str(depth).rjust(4), s)
                         for s in debug_info.split("\n")
                     ]
                 )
@@ -806,9 +806,7 @@ class Provider:
             self._io.write_line("Resolving dependencies...")
             yield
         else:
-            indicator = Indicator(
-                self._io, "{message} <fg=black;options=bold>({elapsed:2s})</>"
-            )
+            indicator = Indicator(self._io, "{message} <debug>({elapsed:2s})</debug>")
 
             with indicator.auto(
                 "<info>Resolving dependencies...</info>",
