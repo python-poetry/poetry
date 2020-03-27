@@ -29,7 +29,7 @@ class Publisher:
     def publish(self, repository_name, username, password, cert=None, client_cert=None):
         if repository_name:
             self._io.write_line(
-                "Publishing <c1>{}</c1> (<b>{}</b>) "
+                "Publishing <c1>{}</c1> (<c2>{}</c2>) "
                 "to <info>{}</info>".format(
                     self._package.pretty_name,
                     self._package.pretty_version,
@@ -38,7 +38,7 @@ class Publisher:
             )
         else:
             self._io.write_line(
-                "Publishing <c1>{}</c1> (<b>{}</b>) "
+                "Publishing <c1>{}</c1> (<c2>{}</c2>) "
                 "to <info>PyPI</info>".format(
                     self._package.pretty_name, self._package.pretty_version
                 )
