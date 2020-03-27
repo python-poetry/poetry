@@ -4,10 +4,9 @@ from typing import Any
 from typing import Dict
 from typing import List
 
-from poetry_core.packages import Package
-from poetry_core.semver import parse_constraint
-from poetry_core.version.markers import AnyMarker
-
+from poetry.core.packages import Package
+from poetry.core.semver import parse_constraint
+from poetry.core.version.markers import AnyMarker
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
@@ -57,7 +56,7 @@ class Solver:
                     installed = True
 
                     if pkg.source_type == "git" and package.source_type == "git":
-                        from poetry_core.vcs.git import Git
+                        from poetry.core.vcs.git import Git
 
                         # Trying to find the currently installed version
                         pkg_source_url = Git.normalize_url(pkg.source_url)

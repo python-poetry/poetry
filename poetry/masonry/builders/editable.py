@@ -5,10 +5,9 @@ import shutil
 
 from collections import defaultdict
 
-from poetry_core.masonry.builders.builder import Builder
-from poetry_core.masonry.builders.sdist import SdistBuilder
-from poetry_core.semver.version import Version
-
+from poetry.core.masonry.builders.builder import Builder
+from poetry.core.masonry.builders.sdist import SdistBuilder
+from poetry.core.semver.version import Version
 from poetry.utils._compat import decode
 
 

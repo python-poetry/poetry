@@ -801,7 +801,7 @@ description = "Core utilities for Poetry"
 name = "poetry-core"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "1.0.0a3"
+version = "1.0.0a5"
 
 [package.dependencies]
 [package.dependencies.typing]
@@ -1322,7 +1322,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "33c3d3a5301b038a4e04fe83f885e35f05d6a1b127d3d63479f3d97a862b8e14"
+content-hash = "35617c80a428d8f081214fcbe428540df288e67e5596531cba40415f19438d57"
 python-versions = "~2.7 || ^3.5"
 
 [metadata.files]
@@ -1600,11 +1600,6 @@ markupsafe = [
     {file = "MarkupSafe-1.1.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:ba59edeaa2fc6114428f1637ffff42da1e311e29382d81b339c1817d37ec93c6"},
     {file = "MarkupSafe-1.1.1-cp37-cp37m-win32.whl", hash = "sha256:b00c1de48212e4cc9603895652c5c410df699856a2853135b3967591e4beebc2"},
     {file = "MarkupSafe-1.1.1-cp37-cp37m-win_amd64.whl", hash = "sha256:9bf40443012702a1d2070043cb6291650a0841ece432556f784f004937f0f32c"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:6788b695d50a51edb699cb55e35487e430fa21f1ed838122d722e0ff0ac5ba15"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:cdb132fc825c38e1aeec2c8aa9338310d29d337bebbd7baa06889d09a60a1fa2"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:13d3144e1e340870b25e7b10b98d779608c02016d5184cfb9927a9f10c689f42"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-win32.whl", hash = "sha256:596510de112c685489095da617b5bcbbac7dd6384aeebeda4df6025d0256a81b"},
-    {file = "MarkupSafe-1.1.1-cp38-cp38-win_amd64.whl", hash = "sha256:e8313f01ba26fbbe36c7be1966a7b7424942f670f38e666995b88d012765b9be"},
     {file = "MarkupSafe-1.1.1.tar.gz", hash = "sha256:29872e92839765e546828bb7754a68c418d927cd064fd4708fab9fe9c8bb116b"},
 ]
 mkdocs = [
@@ -1684,8 +1679,8 @@ pluggy = [
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
 poetry-core = [
-    {file = "poetry-core-1.0.0a3.tar.gz", hash = "sha256:02d1bfed4a53dbe8570c6bc94164d7a5e1b01630f74174f03bc932e8b334be5a"},
-    {file = "poetry_core-1.0.0a3-py2.py3-none-any.whl", hash = "sha256:2351a1e3a8e18414236f1c7db31c0c7d19bd240c27b5540abf9d81156a10da4c"},
+    {file = "poetry-core-1.0.0a5.tar.gz", hash = "sha256:afac65874baf2030328f43df840cec2b5a17bcdad0a04c55b0f830e444ef1120"},
+    {file = "poetry_core-1.0.0a5-py2.py3-none-any.whl", hash = "sha256:ffbd0512d80affce937ce53db2d35bf28ea52d287bae61da5b5d63058618d6b9"},
 ]
 pre-commit = [
     {file = "pre_commit-1.21.0-py2.py3-none-any.whl", hash = "sha256:f92a359477f3252452ae2e8d3029de77aec59415c16ae4189bcfba40b757e029"},

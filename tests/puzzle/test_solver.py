@@ -1,10 +1,10 @@
 import pytest
 
 from clikit.io import NullIO
-from poetry_core.packages import ProjectPackage
-from poetry_core.packages import dependency_from_pep_508
-from poetry_core.version.markers import parse_marker
 
+from poetry.core.packages import ProjectPackage
+from poetry.core.packages import dependency_from_pep_508
+from poetry.core.version.markers import parse_marker
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.installed_repository import InstalledRepository

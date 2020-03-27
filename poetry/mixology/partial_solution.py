@@ -2,8 +2,8 @@ from collections import OrderedDict
 from typing import Dict
 from typing import List
 
-from poetry_core.packages import Dependency
-from poetry_core.packages import Package
+from poetry.core.packages import Dependency
+from poetry.core.packages import Package
 
 from .assignment import Assignment
 from .incompatibility import Incompatibility

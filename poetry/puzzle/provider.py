@@ -13,17 +13,17 @@ from typing import Optional
 import pkginfo
 
 from clikit.ui.components import ProgressIndicator
-from poetry_core.packages import Dependency
-from poetry_core.packages import DirectoryDependency
-from poetry_core.packages import FileDependency
-from poetry_core.packages import Package
-from poetry_core.packages import URLDependency
-from poetry_core.packages import VCSDependency
-from poetry_core.packages import dependency_from_pep_508
-from poetry_core.packages.utils.utils import get_python_constraint_from_marker
-from poetry_core.vcs.git import Git
-from poetry_core.version.markers import MarkerUnion
 
+from poetry.core.packages import Dependency
+from poetry.core.packages import DirectoryDependency
+from poetry.core.packages import FileDependency
+from poetry.core.packages import Package
+from poetry.core.packages import URLDependency
+from poetry.core.packages import VCSDependency
+from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.utils.utils import get_python_constraint_from_marker
+from poetry.core.vcs.git import Git
+from poetry.core.version.markers import MarkerUnion
 from poetry.factory import Factory
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause

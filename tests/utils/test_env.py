@@ -6,8 +6,8 @@ import pytest
 import tomlkit
 
 from clikit.io import NullIO
-from poetry_core.semver import Version
 
+from poetry.core.semver import Version
 from poetry.factory import Factory
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path

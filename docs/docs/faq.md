@@ -43,7 +43,7 @@ So, in your `pyproject.toml` file, add this section if it does not already exist
 ```toml
 [build-system]
 requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry_core.masonry.api"
+build-backend = "poetry.core.masonry.api"
 ```
 
 And use a `tox.ini` configuration file similar to this:

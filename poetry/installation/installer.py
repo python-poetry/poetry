@@ -3,9 +3,9 @@ from typing import Union
 
 from clikit.api.io import IO
 from clikit.io import NullIO
-from poetry_core.packages.package import Package
-from poetry_core.semver import parse_constraint
 
+from poetry.core.packages.package import Package
+from poetry.core.semver import parse_constraint
 from poetry.packages import Locker
 from poetry.puzzle import Solver
 from poetry.puzzle.operations import Install

@@ -5,8 +5,8 @@ import sys
 import pytest
 
 from clikit.io import NullIO
-from poetry_core.packages import ProjectPackage
 
+from poetry.core.packages import ProjectPackage
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker

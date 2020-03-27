@@ -1,6 +1,6 @@
-from poetry_core.semver import VersionConstraint
-from poetry_core.semver import VersionRange
-from poetry_core.semver import parse_constraint
+from poetry.core.semver import VersionConstraint
+from poetry.core.semver import VersionRange
+from poetry.core.semver import parse_constraint
 
 from .base_repository import BaseRepository
 

@@ -23,7 +23,7 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
-poetry-core = "^1.0.0a3"
+poetry-core = "^1.0.0a5"
 cleo = "^0.7.6"
 clikit = "^0.4.3"
 requests = "^2.18"
@@ -75,8 +75,8 @@ poetry = "poetry.console:main"
 
 
 [build-system]
-requires = ["poetry_core>=1.0.0a3"]
-build-backend = "poetry_core.masonry.api"
+requires = ["poetry-core>=1.0.0a3"]
+build-backend = "poetry.core.masonry.api"
 
 
 [tool.isort]

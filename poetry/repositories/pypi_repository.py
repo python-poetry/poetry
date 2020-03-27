@@ -11,19 +11,19 @@ from cachecontrol.caches.file_cache import FileCache
 from cachecontrol.controller import logger as cache_control_logger
 from cachy import CacheManager
 from html5lib.html5parser import parse
-from poetry_core.packages import Package
-from poetry_core.packages import dependency_from_pep_508
-from poetry_core.packages.utils.link import Link
-from poetry_core.semver import VersionConstraint
-from poetry_core.semver import VersionRange
-from poetry_core.semver import parse_constraint
-from poetry_core.semver.exceptions import ParseVersionError
-from poetry_core.version.markers import InvalidMarker
-from poetry_core.version.markers import parse_marker
 from requests import get
 from requests import session
 from requests.exceptions import TooManyRedirects
 
+from poetry.core.packages import Package
+from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.utils.link import Link
+from poetry.core.semver import VersionConstraint
+from poetry.core.semver import VersionRange
+from poetry.core.semver import parse_constraint
+from poetry.core.semver.exceptions import ParseVersionError
+from poetry.core.version.markers import InvalidMarker
+from poetry.core.version.markers import parse_marker
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str

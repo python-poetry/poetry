@@ -3,8 +3,7 @@ import tempfile
 import pytest
 import tomlkit
 
-from poetry_core.packages.project_package import ProjectPackage
-
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.packages.locker import Locker
 
 from ..helpers import get_dependency

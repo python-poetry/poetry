@@ -3,8 +3,8 @@ import sys
 import pytest
 
 from cleo.testers import CommandTester
-from poetry_core.semver import Version
 
+from poetry.core.semver import Version
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
 from tests.helpers import get_dependency

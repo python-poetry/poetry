@@ -1,6 +1,6 @@
 from cleo import Application as BaseApplication
 
-from poetry import __version__
+from poetry.__version__ import __version__
 
 from .commands.about import AboutCommand
 from .commands.add import AddCommand

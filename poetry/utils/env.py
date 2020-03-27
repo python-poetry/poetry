@@ -19,10 +19,10 @@ from typing import Tuple
 import tomlkit
 
 from clikit.api.io import IO
-from poetry_core.semver import parse_constraint
-from poetry_core.semver.version import Version
-from poetry_core.version.markers import BaseMarker
 
+from poetry.core.semver import parse_constraint
+from poetry.core.semver.version import Version
+from poetry.core.version.markers import BaseMarker
 from poetry.locations import CACHE_DIR
 from poetry.poetry import Poetry
 from poetry.utils._compat import CalledProcessError

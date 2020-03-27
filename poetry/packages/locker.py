@@ -4,9 +4,6 @@ import re
 from hashlib import sha256
 from typing import List
 
-from poetry_core.packages.package import Dependency
-from poetry_core.packages.package import Package
-from poetry_core.version.markers import parse_marker
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
@@ -15,6 +12,9 @@ from tomlkit.exceptions import TOMLKitError
 
 import poetry.repositories
 
+from poetry.core.packages.package import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.version.markers import parse_marker
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 

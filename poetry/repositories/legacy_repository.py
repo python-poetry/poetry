@@ -12,15 +12,15 @@ import requests
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
-from poetry_core.packages import Package
-from poetry_core.packages import dependency_from_pep_508
-from poetry_core.packages.utils.link import Link
-from poetry_core.semver import Version
-from poetry_core.semver import VersionConstraint
-from poetry_core.semver import VersionRange
-from poetry_core.semver import parse_constraint
-from poetry_core.version.markers import InvalidMarker
 
+from poetry.core.packages import Package
+from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.utils.link import Link
+from poetry.core.semver import Version
+from poetry.core.semver import VersionConstraint
+from poetry.core.semver import VersionRange
+from poetry.core.semver import parse_constraint
+from poetry.core.version.markers import InvalidMarker
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name

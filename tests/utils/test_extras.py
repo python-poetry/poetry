@@ -1,7 +1,6 @@
 import pytest
 
-from poetry_core.packages import Package
-
+from poetry.core.packages import Package
 from poetry.utils.extras import get_extra_package_names
 
 

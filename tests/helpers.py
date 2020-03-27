@@ -1,10 +1,9 @@
 import os
 import shutil
 
-from poetry_core.packages import Dependency
-from poetry_core.packages import Package
-from poetry_core.vcs.git import ParsedUrl
-
+from poetry.core.packages import Dependency
+from poetry.core.packages import Package
+from poetry.core.vcs.git import ParsedUrl
 from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path

@@ -1,7 +1,6 @@
 import pytest
 
-from poetry_core.packages.package import Package
-
+from poetry.core.packages.package import Package
 from poetry.installation.pip_installer import PipInstaller
 from poetry.io.null_io import NullIO
 from poetry.repositories.legacy_repository import LegacyRepository

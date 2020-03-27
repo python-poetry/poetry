@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from poetry_core.packages import ProjectPackage
-from poetry_core.poetry import Poetry as BasePoetry
+from poetry.core.packages import ProjectPackage
+from poetry.core.poetry import Poetry as BasePoetry
 
 from .__version__ import __version__
 from .config.config import Config

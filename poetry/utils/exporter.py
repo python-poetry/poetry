@@ -1,11 +1,11 @@
 from typing import Union
 
 from clikit.api.io import IO
-from poetry_core.packages.directory_dependency import DirectoryDependency
-from poetry_core.packages.file_dependency import FileDependency
-from poetry_core.packages.url_dependency import URLDependency
-from poetry_core.packages.vcs_dependency import VCSDependency
 
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.url_dependency import URLDependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode

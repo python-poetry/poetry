@@ -5,8 +5,9 @@ from typing import Dict
 from typing import Optional
 
 from clikit.api.io.io import IO
-from poetry_core.factory import Factory as BaseFactory
-from poetry_core.utils.toml_file import TomlFile
+
+from poetry.core.factory import Factory as BaseFactory
+from poetry.core.utils.toml_file import TomlFile
 
 from .config.config import Config
 from .config.file_config_source import FileConfigSource
