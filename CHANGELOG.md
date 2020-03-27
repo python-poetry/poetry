@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.1.0a1] - 2020-03-27
+
+This release **must** be downloaded via the `get-poetry.py` script and not via the `self update` command.
+
+### Changed
+
+- The core features of Poetry have been extracted in to a separate library: `poetry-core` ([#2212](https://github.com/python-poetry/poetry/pull/2212)).
+- The build backend is no longer `poetry.masonry.api` but `poetry.core.masonry.api` which requires `poetry-core>=1.0.0a5` ([#2212](https://github.com/python-poetry/poetry/pull/2212)).
+- The exceptions are now beautifully displayed in the terminal with various level of details depending on the verbosity ([2230](https://github.com/python-poetry/poetry/pull/2230)).
+
+
 ## [1.0.5] - 2020-02-29
 
 ### Fixed
@@ -823,7 +834,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.5...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0a1...develop
+[1.1.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a1
 [1.0.5]: https://github.com/python-poetry/poetry/releases/tag/1.0.5
 [1.0.4]: https://github.com/python-poetry/poetry/releases/tag/1.0.4
 [1.0.3]: https://github.com/python-poetry/poetry/releases/tag/1.0.3
