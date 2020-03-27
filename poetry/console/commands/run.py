@@ -50,7 +50,7 @@ class RunCommand(EnvCommand):
 
     @property
     def _module(self):
-        from ...masonry.utils.module import Module
+        from poetry.core.masonry.utils.module import Module
 
         poetry = self.poetry
         package = poetry.package
