@@ -4,6 +4,10 @@
 
 This release **must** be downloaded via the `get-poetry.py` script and not via the `self update` command.
 
+### Added
+
+- Added a new `--dry-run` option to the `publish` command ([#2199](https://github.com/python-poetry/poetry/pull/2199)).
+
 ### Changed
 
 - The core features of Poetry have been extracted in to a separate library: `poetry-core` ([#2212](https://github.com/python-poetry/poetry/pull/2212)).
