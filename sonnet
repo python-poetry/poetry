@@ -10,6 +10,7 @@ from gzip import GzipFile
 
 from cleo import Application
 from cleo import Command
+from clikit.api.formatter import Style
 
 
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
@@ -272,6 +273,7 @@ class MakeCommand(Command):
 
 
 app = Application("sonnet")
+app.config.add_style(Style("debug").fg("default").dark())
 
 app.add(MakeCommand())
 
