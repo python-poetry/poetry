@@ -24,12 +24,16 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 or, to install Poetry with Python 3:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python3
+wget -qO- https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
 ```
 
 (this example also shows you how to use `wget` instead of `curl` to download the installer script).
 
 Alternatively, you can download the `get-poetry.py` file and execute it separately.
+
+```bash
+wget https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
+```
 
 If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`:
 
@@ -40,7 +44,7 @@ python get-poetry.py --preview
 or using `POETRY_PREVIEW` environment variable:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | POETRY_PREVIEW=1 python3
+wget -qO- https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_PREVIEW=1 python3
 ```
 
 Similarly, if you want to install a specific version, you can use `--version`:
