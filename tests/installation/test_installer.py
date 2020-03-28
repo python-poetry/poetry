@@ -295,6 +295,71 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
     assert len(removals) == 1
 
 
+def test_run_install_only_dev(installer, locker, repo, package, installed):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "B",
+                    "version": "1.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": [], "C": []},
+            },
+        }
+    )
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    package_c = get_package("C", "1.2")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    package.add_dependency("A", "~1.0")
+    package.add_dependency("B", "~1.1")
+    package.add_dependency("C", "~1.2", category="dev")
+
+    installer.only_dev_mode(True)
+    installer.run()
+
+    installs = installer.installer.installs
+    assert len(installs) == 1
+
+    updates = installer.installer.updates
+    assert len(updates) == 0
+
+    removals = installer.installer.removals
+    assert len(removals) == 0
+
+
 def test_run_whitelist_add(installer, locker, repo, package):
     locker.locked(True)
     locker.mock_lock_data(

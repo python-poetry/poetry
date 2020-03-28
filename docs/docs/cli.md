@@ -116,6 +116,13 @@ the `--no-dev` option.
 poetry install --no-dev
 ```
 
+In contrast, if you only need the dev dependencies to e.g. run linters, you can use the
+`only-dev` option.
+
+```bash
+poetry install --only-dev
+```
+
 You can also specify the extras you want installed
 by passing the `--E|--extras` option (See [Extras](#extras) for more info)
 

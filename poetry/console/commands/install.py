@@ -10,6 +10,7 @@ class InstallCommand(EnvCommand):
 
     options = [
         option("no-dev", None, "Do not install the development dependencies."),
+        option("only-dev", None, "Only install the development dependencies."),
         option(
             "no-root", None, "Do not install the root package (the current project)."
         ),
@@ -56,6 +57,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
                 extras.append(extra)
 
         installer.extras(extras)
+        installer.only_dev_mode(self.option("only-dev"))
         installer.dev_mode(not self.option("no-dev"))
         installer.dry_run(self.option("dry-run"))
         installer.verbose(self.option("verbose"))

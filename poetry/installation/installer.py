@@ -43,6 +43,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
+        self._only_dev = False
         self._execute_operations = True
         self._lock = False
 
@@ -95,6 +96,14 @@ class Installer:
         self._dev_mode = dev_mode
 
         return self
+
+    def only_dev_mode(self, only_dev=False):  # type: (bool) -> Installer
+        self._only_dev = only_dev
+
+        return self
+
+    def is_only_dev(self):  # type: () -> Installer
+        return self._only_dev
 
     def is_dev_mode(self):  # type: () -> bool
         return self._dev_mode
@@ -462,6 +471,9 @@ class Installer:
             if package.optional:
                 if package.name not in extra_packages:
                     op.skip("Not required")
+
+            if package.category == "main" and self.is_only_dev():
+                op.skip("Main dependencies not requested")
 
             # If the package is a dev package and dev packages
             # are not requested, we skip it
