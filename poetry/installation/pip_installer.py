@@ -105,12 +105,6 @@ class PipInstaller(BaseInstaller):
         self.install(target, update=True)
 
     def remove(self, package):
-        # If we have a VCS package, remove its source directory
-        if package.source_type == "git":
-            src_dir = self._env.path / "src" / package.name
-            if src_dir.exists():
-                safe_rmtree(str(src_dir))
-
         try:
             self.run("uninstall", package.name, "-y")
         except CalledProcessError as e:
@@ -118,6 +112,12 @@ class PipInstaller(BaseInstaller):
                 return
 
             raise
+
+        # If we have a VCS package, remove its source directory
+        if package.source_type == "git":
+            src_dir = self._env.path / "src" / package.name
+            if src_dir.exists():
+                safe_rmtree(str(src_dir))
 
     def run(self, *args, **kwargs):  # type: (...) -> str
         return self._env.run_pip(*args, **kwargs)
