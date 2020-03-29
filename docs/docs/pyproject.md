@@ -131,11 +131,11 @@ it by using `format`:
 # ...
 packages = [
     { include = "my_package" },
-    { include = "tests", format = "sdist" },
+    { include = "my_other_package", format = "sdist" },
 ]
 ```
 
-From now on, only the `sdist` build archive will include the `tests` package.
+From now on, only the `sdist` build archive will include the `my_other_package` package.
 
 !!!note
 
