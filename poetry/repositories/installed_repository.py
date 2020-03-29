@@ -1,3 +1,5 @@
+from subprocess import CalledProcessError
+
 from poetry.core.packages import Package
 from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
@@ -69,7 +71,7 @@ class InstalledRepository(Repository):
                     package.source_type = "git"
                     package.source_url = url
                     package.source_reference = revision
-                except ValueError:
+                except (ValueError, CalledProcessError):
                     package.source_type = "directory"
                     package.source_url = str(path.parent)
 
