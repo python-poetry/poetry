@@ -29,13 +29,13 @@ import sys
 import tarfile
 import tempfile
 
-from os.path import basename
 from contextlib import closing
 from contextlib import contextmanager
 from functools import cmp_to_key
 from gzip import GzipFile
 from io import UnsupportedOperation
 from io import open
+from os.path import basename
 
 
 try:
