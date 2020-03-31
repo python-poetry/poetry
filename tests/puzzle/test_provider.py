@@ -118,7 +118,7 @@ def test_search_for_vcs_read_setup_with_extras(provider, mocker):
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
     mocker.patch(
-        "poetry.utils.env.VirtualEnv.run",
+        "poetry.puzzle.provider.Provider._execute_setup",
         side_effect=EnvCommandError(CalledProcessError(1, "python", output="")),
     )
 
