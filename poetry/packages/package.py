@@ -333,7 +333,9 @@ class Package(object):
                         develop=constraint.get("develop", True),
                     )
             elif "url" in constraint:
-                dependency = URLDependency(name, constraint["url"], category=category)
+                dependency = URLDependency(
+                    name, constraint["url"], category=category, optional=optional
+                )
             else:
                 version = constraint["version"]
 
