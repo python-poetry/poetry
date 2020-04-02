@@ -215,7 +215,7 @@ version = "0.4.3"
 [[package]]
 category = "main"
 description = "Updated configparser from Python 3.7 for Python 2.6+."
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version == \"2.7\" and python_version == \"2.7\" or python_version < \"3\""
+marker = "python_version < \"3\" or python_version >= \"2.7\" and python_version < \"2.8\""
 name = "configparser"
 optional = false
 python-versions = ">=2.6"
@@ -228,7 +228,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2)", "pytes
 [[package]]
 category = "main"
 description = "Backports and enhancements for the contextlib module"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.4\""
+marker = "python_version < \"3.4\" or python_version >= \"2.7\" and python_version < \"2.8\""
 name = "contextlib2"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -446,7 +446,7 @@ testing = ["packaging", "importlib-resources"]
 [[package]]
 category = "main"
 description = "Read resources from Python packages"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\""
+marker = "python_version < \"3.7\" or python_version >= \"2.7\" and python_version < \"2.8\""
 name = "importlib-resources"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
@@ -1512,7 +1512,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "6e86bcf4be1389d9d1dbd87bd5383089bec887c5a7e9c5e48b09b936699e035d"
+content-hash = "90cb5177483057d7bf7dea367cb6ccf0968861777c801f3bb41b0f745cccdc24"
 python-versions = "~2.7 || ^3.5"
 
 [metadata.files]

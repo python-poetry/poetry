@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
@@ -11,7 +12,6 @@ from poetry.core.packages import Package
 from poetry.core.packages import ProjectPackage
 from poetry.core.semver import Version
 from poetry.core.semver import VersionRange
-from poetry.puzzle.provider import Provider
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility
@@ -23,6 +23,10 @@ from .partial_solution import PartialSolution
 from .result import SolverResult
 from .set_relation import SetRelation
 from .term import Term
+
+
+if TYPE_CHECKING:
+    from poetry.puzzle.provider import Provider
 
 
 _conflict = object()
