@@ -74,6 +74,11 @@ def download_mock(mocker):
     mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
 
 
+@pytest.fixture(autouse=True)
+def execute_setup_mock(mocker):
+    mocker.patch("poetry.puzzle.provider.Provider._execute_setup")
+
+
 @pytest.fixture
 def environ():
     original_environ = dict(os.environ)
