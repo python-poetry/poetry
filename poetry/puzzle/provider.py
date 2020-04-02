@@ -326,10 +326,7 @@ class Provider:
             os.chdir(str(directory))
 
             try:
-                with temporary_directory() as tmp_dir:
-                    EnvManager.build_venv(tmp_dir)
-                    venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
-                    venv.run("python", "setup.py", "egg_info")
+                cls._execute_setup()
             except EnvCommandError:
                 result = SetupReader.read_from_directory(directory)
                 if not result["name"]:
@@ -817,3 +814,9 @@ class Provider:
                 yield
 
         self._in_progress = False
+
+    def _execute_setup(self):
+        with temporary_directory() as tmp_dir:
+            EnvManager.build_venv(tmp_dir)
+            venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+            venv.run("python", "setup.py", "egg_info")
