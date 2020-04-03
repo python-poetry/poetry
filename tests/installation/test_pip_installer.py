@@ -6,7 +6,7 @@ from poetry.packages.package import Package
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import Path
-from poetry.utils.env import NullEnv
+from poetry.utils.env import NullEnv, VirtualEnv
 
 
 @pytest.fixture
@@ -60,6 +60,44 @@ def test_requirement_source_type_url():
     expected = "{}#egg={}".format(foo.source_url, foo.name)
 
     assert expected == result
+
+
+from poetry.factory import Factory
+from poetry.utils.env import EnvManager
+import shutil
+
+
+@pytest.fixture()
+def poetry(config):
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent / "fixtures" / "simple_project"
+    )
+    poetry.set_config(config)
+
+    return poetry
+
+
+@pytest.fixture()
+def manager(poetry):
+    return EnvManager(poetry)
+
+
+@pytest.fixture
+def tmp_venv(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "venv"
+
+    manager.build_venv(str(venv_path))
+
+    venv = VirtualEnv(venv_path)
+    yield venv
+
+    shutil.rmtree(str(venv.path))
+
+
+def test_can_install_pendulum_sdist(tmp_venv):
+    installer = PipInstaller(tmp_venv, NullIO(), Pool())
+
+    installer.run('install', '--no-binary', ':all:', 'pendulum')
 
 
 def test_requirement_git_develop_false(installer, package_git):
