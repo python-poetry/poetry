@@ -95,7 +95,7 @@ def tmp_venv(tmp_dir, manager):
 def test_can_install_pendulum_sdist(tmp_venv):
     installer = PipInstaller(tmp_venv, NullIO(), Pool())
 
-    installer.run('install', '--no-binary', ':all:', 'pendulum')
+    installer.run("install", "--no-binary", ":all:", "pendulum")
 
 
 def test_requirement_git_develop_false(installer, package_git):
