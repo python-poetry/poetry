@@ -1,6 +1,7 @@
 import shutil
 
 import pytest
+
 from poetry.factory import Factory
 from poetry.installation.pip_installer import PipInstaller
 from poetry.io.null_io import NullIO
