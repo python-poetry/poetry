@@ -9,7 +9,9 @@ from poetry.packages.package import Package
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import Path
-from poetry.utils.env import EnvManager, NullEnv, VirtualEnv
+from poetry.utils.env import EnvManager
+from poetry.utils.env import NullEnv
+from poetry.utils.env import VirtualEnv
 
 
 @pytest.fixture
