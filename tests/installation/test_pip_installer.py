@@ -1,12 +1,15 @@
+import shutil
+
 import pytest
 
+from poetry.factory import Factory
 from poetry.installation.pip_installer import PipInstaller
 from poetry.io.null_io import NullIO
 from poetry.packages.package import Package
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import Path
-from poetry.utils.env import NullEnv, VirtualEnv
+from poetry.utils.env import EnvManager, NullEnv, VirtualEnv
 
 
 @pytest.fixture
@@ -60,11 +63,6 @@ def test_requirement_source_type_url():
     expected = "{}#egg={}".format(foo.source_url, foo.name)
 
     assert expected == result
-
-
-from poetry.factory import Factory
-from poetry.utils.env import EnvManager
-import shutil
 
 
 @pytest.fixture()
