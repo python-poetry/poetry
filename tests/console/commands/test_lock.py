@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from cleo.testers import CommandTester
-
 from ..conftest import Path
+
+
+# rom cleo.testers import CommandTester
 
 
 fixtures_dir = Path(__file__).parent.parent.parent / "fixtures"
