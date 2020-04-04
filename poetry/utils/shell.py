@@ -42,17 +42,18 @@ class Shell:
 
         try:
             name, path = detect_shell(os.getpid())
-        except ShellDetectionFailure:
+        except (RuntimeError, ShellDetectionFailure):
+            shell = None
+
             if os.name == "posix":
-                shell = os.environ["SHELL"]
+                shell = os.environ.get("SHELL")
             elif os.name == "nt":
-                shell = os.environ["COMSPEC"]
-            else:
+                shell = os.environ.get("COMSPEC")
+
+            if not shell:
                 raise RuntimeError("Unable to detect the current shell.")
 
             name, path = Path(shell).stem, shell
-        except RuntimeError:
-            raise RuntimeError("Unable to detect the current shell.")
 
         cls._shell = cls(name, path)
 
