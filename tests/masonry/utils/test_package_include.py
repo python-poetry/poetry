@@ -41,3 +41,12 @@ def test_package_include_with_no_python_files_in_dir():
         PackageInclude(base=with_includes, include="not_a_python_pkg")
 
     assert str(e.value) == "not_a_python_pkg is not a package."
+
+
+def test_package_include_with_non_existent_directory():
+    with pytest.raises(ValueError) as e:
+        PackageInclude(base=with_includes, include="not_a_dir")
+
+    err_str = str(with_includes / "not_a_dir") + " does not contain any element"
+
+    assert str(e.value) == err_str
