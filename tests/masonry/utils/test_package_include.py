@@ -47,4 +47,6 @@ def test_package_include_with_non_existent_directory():
     with pytest.raises(ValueError) as e:
         PackageInclude(base=with_includes, include="not_a_dir")
 
-    assert str(e.value) == f"{with_includes / 'not_a_dir'} does not contain any element"
+    err_str = str(with_includes / "not_a_dir") + " does not contain any element"
+
+    assert str(e.value) == err_str
