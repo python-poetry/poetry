@@ -77,7 +77,7 @@ how versions relate to each other, and on the different ways you can specify dep
 
     **How does Poetry download the right files?**
 
-    When you specify a dependency in `pyproject.toml`, Poetry first take the name of the package
+    When you specify a dependency in `pyproject.toml`, Poetry first takes the name of the package
     that you have requested and searches for it in any repository you have registered using the `repositories` key.
     If you have not registered any extra repositories, or it does not find a package with that name in the
     repositories you have specified, it falls back on PyPI.
