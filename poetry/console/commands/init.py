@@ -151,7 +151,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             "  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n"
             "  - A file path (<b>../my-package/my-package.whl</b>)\n"
             "  - A directory (<b>../my-package/</b>)\n"
-            "  - An url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
+            "  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
         )
         help_displayed = False
         if self.confirm(question, True):
