@@ -870,3 +870,23 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected in tester.io.fetch_output()
+
+
+def test_add_with_lock(app, repo, installer):
+    command = app.find("add")
+    tester = CommandTester(command)
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy --lock")
+
+    expected = """\
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+"""
+
+    assert expected == tester.io.fetch_output()

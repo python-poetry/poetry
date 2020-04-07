@@ -245,6 +245,7 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 * `--path`: The path to a dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--lock` : Do not perform install (only update the lockfile).
 
 
 ## remove
