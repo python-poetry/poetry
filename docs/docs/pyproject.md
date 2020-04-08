@@ -293,3 +293,7 @@ build-backend = "poetry.core.masonry.api"
 
     If your `pyproject.toml` file still references `poetry` directly as a build backend,
     you should update it to reference `poetry_core` instead.
+
+## publish-default
+
+Name of the repository that will be used as a default when running `poetry publish`. If not provided the [PyPI](https://pypi.org) will be used.

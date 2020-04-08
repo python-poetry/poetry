@@ -107,3 +107,17 @@ def test_publish_dry_run(app_tester, http):
     assert "Publishing simple-project (1.2.3) to PyPI" in output
     assert "- Uploading simple-project-1.2.3.tar.gz" in error
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
+
+
+def test_publish_with_publish_default_set(app, app_tester, http):
+    app.poetry.package.publish_default = "private_pypi"
+    app_tester.execute("publish")
+
+    expected = """
+Publishing simple-project (1.2.3) to private_pypi
+
+[RuntimeError]
+Repository private_pypi is not defined
+"""
+
+    assert app_tester.io.fetch_output() == expected

@@ -173,6 +173,10 @@
                     "description": "The full url of the custom url."
                 }
             }
+        },
+        "publish-default": {
+            "type": "string",
+            "description": "Name of the default publish repository."
         }
     },
     "definitions": {

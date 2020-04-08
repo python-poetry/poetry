@@ -38,6 +38,9 @@ class Publisher:
         client_cert=None,
         dry_run=False,
     ):  # type: (Optional[str], Optional[str], Optional[str], Optional[Path], Optional[Path], Optional[bool]) -> None
+        # Set repository name to publish-default. It will be None if not set
+        repository_name = repository_name or self._package.publish_default
+
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"

@@ -3,7 +3,8 @@
 ## Using the PyPI repository
 
 By default, Poetry is configured to use the [PyPI](https://pypi.org) repository,
-for package installation and publishing.
+for package installation and publishing. User can override this behavior by setting
+`publish-default` in the `[tool.poetry]` section.
 
 So, when you add dependencies to your project, Poetry will assume they are available
 on PyPI.
