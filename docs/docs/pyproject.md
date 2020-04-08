@@ -293,3 +293,9 @@ build-backend = "poetry.core.masonry.api"
 
     If your `pyproject.toml` file still references `poetry` directly as a build backend,
     you should update it to reference `poetry_core` instead.
+
+## private
+
+Setting this to `true` marks the project as private. This will prevent using
+public PYPI repository by default when running `poetry publish`.
+Publishing will require using `-r` option for projects mark as private.

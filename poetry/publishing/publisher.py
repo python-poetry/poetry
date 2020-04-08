@@ -38,7 +38,11 @@ class Publisher:
         client_cert=None,
         dry_run=False,
     ):  # type: (Optional[str], Optional[str], Optional[str], Optional[Path], Optional[Path], Optional[bool]) -> None
-        if not repository_name:
+        if not repository_name and self._package.private is True:
+            raise RuntimeError(
+                "You need to provide repository name for packages marked as private"
+            )
+        elif not repository_name:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"
         else:

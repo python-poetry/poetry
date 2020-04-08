@@ -173,6 +173,10 @@
                     "description": "The full url of the custom url."
                 }
             }
+        },
+        "private": {
+            "type": "boolean",
+            "description": "Mark as private. Turn off the default publish behavior."
         }
     },
     "definitions": {

@@ -107,3 +107,15 @@ def test_publish_dry_run(app_tester, http):
     assert "Publishing simple-project (1.2.3) to PyPI" in output
     assert "- Uploading simple-project-1.2.3.tar.gz" in error
     assert "- Uploading simple_project-1.2.3-py2.py3-none-any.whl" in error
+
+
+def test_publish_with_private_property(app, app_tester, http):
+    app.poetry.package.private = True
+    app_tester.execute("publish")
+
+    expected = """
+  RuntimeError
+
+  You need to provide repository name for packages marked as private
+"""
+    assert expected in app_tester.io.fetch_output()
