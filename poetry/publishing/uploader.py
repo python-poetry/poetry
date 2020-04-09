@@ -1,13 +1,16 @@
 import hashlib
 import io
-import math
 
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Union
 
 import requests
 
 from requests import adapters
+from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
 from requests.packages.urllib3 import util
 from requests_toolbelt import user_agent
@@ -27,12 +30,19 @@ _has_blake2 = hasattr(hashlib, "blake2b")
 
 
 class UploadError(Exception):
-    def __init__(self, error):  # type: (HTTPError) -> None
-        super(UploadError, self).__init__(
-            "HTTP Error {}: {}".format(
+    def __init__(self, error):  # type: (Union[ConnectionError, HTTPError]) -> None
+        if isinstance(error, HTTPError):
+            message = "HTTP Error {}: {}".format(
                 error.response.status_code, error.response.reason
             )
-        )
+        elif isinstance(error, ConnectionError):
+            message = (
+                "Connection Error: We were unable to connect to the repository, "
+                "ensure the url is correct and can be reached."
+            )
+        else:
+            message = str(error)
+        super(UploadError, self).__init__(message)
 
 
 class Uploader:
@@ -59,7 +69,7 @@ class Uploader:
         return adapters.HTTPAdapter(max_retries=retry)
 
     @property
-    def files(self):  # type: () -> List[str]
+    def files(self):  # type: () -> List[Path]
         dist = self._poetry.file.parent / "dist"
         version = normalize_version(self._package.version.text)
 
@@ -80,7 +90,7 @@ class Uploader:
         self._username = username
         self._password = password
 
-    def make_session(self):
+    def make_session(self):  # type: () -> requests.Session
         session = requests.session()
         if self.is_authenticated():
             session.auth = (self._username, self._password)
@@ -110,7 +120,7 @@ class Uploader:
         finally:
             session.close()
 
-    def post_data(self, file):
+    def post_data(self, file):  # type: (Path) -> Dict[str, Any]
         meta = Metadata.from_package(self._package)
 
         file_type = self._get_type(file)
@@ -188,7 +198,9 @@ class Uploader:
 
         return data
 
-    def _upload(self, session, url, dry_run=False):
+    def _upload(
+        self, session, url, dry_run=False
+    ):  # type: (requests.Session, str, Optional[bool]) -> None
         try:
             self._do_upload(session, url, dry_run)
         except HTTPError as e:
@@ -203,7 +215,9 @@ class Uploader:
 
             raise UploadError(e)
 
-    def _do_upload(self, session, url, dry_run=False):
+    def _do_upload(
+        self, session, url, dry_run=False
+    ):  # type: (requests.Session, str, Optional[bool]) -> None
         for file in self.files:
             # TODO: Check existence
 
@@ -212,7 +226,9 @@ class Uploader:
             if not dry_run:
                 resp.raise_for_status()
 
-    def _upload_file(self, session, url, file, dry_run=False):
+    def _upload_file(
+        self, session, url, file, dry_run=False
+    ):  # type: (requests.Session, str, Path, Optional[bool]) -> requests.Response
         data = self.post_data(file)
         data.update(
             {
@@ -241,36 +257,37 @@ class Uploader:
 
             resp = None
 
-            if not dry_run:
-                resp = session.post(
-                    url,
-                    data=monitor,
-                    allow_redirects=False,
-                    headers={"Content-Type": monitor.content_type},
-                )
-
-            if dry_run or resp.ok:
-                bar.set_format(
-                    " - Uploading <c1>{0}</c1> <fg=green>%percent%%</>".format(
-                        file.name
+            try:
+                if not dry_run:
+                    resp = session.post(
+                        url,
+                        data=monitor,
+                        allow_redirects=False,
+                        headers={"Content-Type": monitor.content_type},
                     )
-                )
-                bar.finish()
-
-                self._io.write_line("")
-            else:
-                if self._io.output.supports_ansi():
-                    self._io.overwrite(
-                        " - Uploading <c1>{0}</c1> <error>{1}%</>".format(
-                            file.name, int(math.floor(bar._percent * 100))
+                if dry_run or resp.ok:
+                    bar.set_format(
+                        " - Uploading <c1>{0}</c1> <fg=green>%percent%%</>".format(
+                            file.name
                         )
                     )
-
+                    bar.finish()
+            except (requests.ConnectionError, requests.HTTPError) as e:
+                if self._io.output.supports_ansi():
+                    self._io.overwrite(
+                        " - Uploading <c1>{0}</c1> <error>{1}</>".format(
+                            file.name, "FAILED"
+                        )
+                    )
+                raise UploadError(e)
+            finally:
                 self._io.write_line("")
 
         return resp
 
-    def _register(self, session, url):
+    def _register(
+        self, session, url
+    ):  # type: (requests.Session, str) -> requests.Response
         """
         Register a package to a repository.
         """

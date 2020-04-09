@@ -1,5 +1,7 @@
 import pytest
+import requests
 
+from poetry.publishing.uploader import UploadError
 from poetry.utils._compat import PY36
 from poetry.utils._compat import Path
 
@@ -24,6 +26,23 @@ Publishing simple-project (1.2.3) to PyPI
 
   HTTP Error 400: Bad Request
 """
+
+    assert expected in app_tester.io.fetch_output()
+
+
+def test_publish_returns_non_zero_code_for_connection_errors(app, app_tester, http):
+    def request_callback(*_, **__):
+        raise requests.ConnectionError()
+
+    http.register_uri(
+        http.POST, "https://upload.pypi.org/legacy/", body=request_callback
+    )
+
+    exit_code = app_tester.execute("publish --username foo --password bar")
+
+    assert 1 == exit_code
+
+    expected = str(UploadError(error=requests.ConnectionError()))
 
     assert expected in app_tester.io.fetch_output()
 

@@ -1,5 +1,8 @@
 import logging
 
+from typing import Optional
+
+from poetry.utils._compat import Path
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
 from poetry.utils.password_manager import PasswordManager
@@ -34,24 +37,7 @@ class Publisher:
         cert=None,
         client_cert=None,
         dry_run=False,
-    ):
-        if repository_name:
-            self._io.write_line(
-                "Publishing <c1>{}</c1> (<c2>{}</c2>) "
-                "to <info>{}</info>".format(
-                    self._package.pretty_name,
-                    self._package.pretty_version,
-                    repository_name,
-                )
-            )
-        else:
-            self._io.write_line(
-                "Publishing <c1>{}</c1> (<c2>{}</c2>) "
-                "to <info>PyPI</info>".format(
-                    self._package.pretty_name, self._package.pretty_version
-                )
-            )
-
+    ):  # type: (Optional[str], Optional[str], Optional[str], Optional[Path], Optional[Path], Optional[bool]) -> None
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"
@@ -89,12 +75,22 @@ class Publisher:
             if username is None:
                 username = self._io.ask("Username:")
 
-            if password is None:
+            # skip password input if no username is provided, assume unauthenticated
+            if username and password is None:
                 password = self._io.ask_hidden("Password:")
 
         self._uploader.auth(username, password)
 
-        return self._uploader.upload(
+        self._io.write_line(
+            "Publishing <c1>{}</c1> (<c2>{}</c2>) "
+            "to <info>{}</info>".format(
+                self._package.pretty_name,
+                self._package.pretty_version,
+                {"pypi": "PyPI"}.get(repository_name, "PyPI"),
+            )
+        )
+
+        self._uploader.upload(
             url,
             cert=cert or get_cert(self._poetry.config, repository_name),
             client_cert=resolved_client_cert,
