@@ -60,18 +60,6 @@ def manager(poetry):
     return EnvManager(poetry)
 
 
-@pytest.fixture
-def tmp_venv(tmp_dir, manager):
-    venv_path = Path(tmp_dir) / "venv"
-
-    manager.build_venv(str(venv_path))
-
-    venv = VirtualEnv(venv_path)
-    yield venv
-
-    shutil.rmtree(str(venv.path))
-
-
 def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, manager):
     venv_path = Path(tmp_dir) / "Virtual Env"
 

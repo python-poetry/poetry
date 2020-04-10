@@ -11,6 +11,8 @@ import pytest
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.utils._compat import Path
+from poetry.utils.env import EnvManager
+from poetry.utils.env import VirtualEnv
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
 
@@ -122,3 +124,15 @@ def tmp_dir():
     yield dir_
 
     shutil.rmtree(dir_)
+
+
+@pytest.fixture
+def tmp_venv(tmp_dir):
+    venv_path = Path(tmp_dir) / "venv"
+
+    EnvManager.build_venv(str(venv_path))
+
+    venv = VirtualEnv(venv_path)
+    yield venv
+
+    shutil.rmtree(str(venv.path))
