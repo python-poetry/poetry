@@ -333,6 +333,7 @@ class Installer:
         version=None,
         preview=False,
         force=False,
+        modify_path=True,
         accept_all=False,
         file=None,
         base_url=BASE_URL,
@@ -340,7 +341,7 @@ class Installer:
         self._version = version
         self._preview = preview
         self._force = force
-        self._modify_path = True
+        self._modify_path = modify_path
         self._accept_all = accept_all
         self._offline_file = file
         self._base_url = base_url
@@ -952,6 +953,13 @@ def main():
         "-f", "--force", dest="force", action="store_true", default=False
     )
     parser.add_argument(
+        "-P",
+        "--no-modify-path",
+        dest="no_modify_path",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
         "-y", "--yes", dest="accept_all", action="store_true", default=False
     )
     parser.add_argument(
@@ -982,6 +990,7 @@ def main():
         version=args.version or os.getenv("POETRY_VERSION"),
         preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
         force=args.force,
+        modify_path=not args.no_modify_path,
         accept_all=args.accept_all
         or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
         or not is_interactive(),
