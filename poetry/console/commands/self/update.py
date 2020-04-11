@@ -39,9 +39,7 @@ class SelfUpdateCommand(Command):
         from poetry.utils._compat import Path
         from poetry.utils.appdirs import expanduser
 
-        home = Path(expanduser("~"))
-
-        return home / ".poetry"
+        return Path(os.environ.get("POETRY_HOME", expanduser("~/.poetry")))
 
     @property
     def lib(self):
