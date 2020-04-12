@@ -8,12 +8,20 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import pep517.meta
+import pep517.envbuild
+import pep517.wrappers
+
+from poetry.utils.helpers import temporary_directory
 
 from ._compat import PY35
 from ._compat import Path
 from ._compat import basestring
 
+
+try:
+    from importlib.metadata import Distribution
+except ImportError:
+    from importlib_metadata import Distribution
 
 try:
     from configparser import ConfigParser
@@ -65,40 +73,50 @@ class SetupReader(object):
 
     @classmethod
     def read_from_build(cls, directory):
-        distribution = pep517.meta.load(directory)
-        result = {
-            "name": distribution.metadata["Name"],
-            "version": distribution.version,
-            "install_requires": [],
-            "python_requires": distribution.metadata["Requires-Python"],
-            "extras_require": {},
-        }
+        hooks = pep517.wrappers.Pep517HookCaller(
+            directory, "setuptools.build_meta", None
+        )
 
-        if distribution.requires:
-            for record in distribution.requires:
-                requirements = record.split(";")
+        with pep517.envbuild.BuildEnvironment() as env, temporary_directory() as tmp_dist:
+            env.pip_install(["setuptools", "wheel"])
+            dist_info = hooks.prepare_metadata_for_build_wheel(tmp_dist)
+            distribution = Distribution.at(Path(tmp_dist) / dist_info)
 
-                for part, marker in enumerate(requirements[1:]):
-                    if marker.strip().startswith("extra"):
-                        group = marker.split("==")[1].strip().replace("'", "")
+            result = {
+                "name": distribution.metadata["Name"],
+                "version": distribution.version,
+                "install_requires": [],
+                "python_requires": distribution.metadata["Requires-Python"],
+                "extras_require": {},
+            }
 
-                        del requirements[part + 1]
-                        extra = (
-                            ";".join(requirements)
-                            .replace("(", "")
-                            .replace(")", "")
-                            .replace(" ", "")
+            if distribution.requires:
+                for record in distribution.requires:
+                    requirements = record.split(";")
+
+                    for part, marker in enumerate(requirements[1:]):
+                        if marker.strip().startswith("extra"):
+                            group = marker.split("==")[1].strip().replace("'", "")
+
+                            del requirements[part + 1]
+                            extra = (
+                                ";".join(requirements)
+                                .replace("(", "")
+                                .replace(")", "")
+                                .replace(" ", "")
+                            )
+
+                            if group in result["extras_require"]:
+                                result["extras_require"][group].append(extra)
+                            else:
+                                result["extras_require"][group] = [extra]
+
+                            break
+                    else:
+                        install = (
+                            record.replace("(", "").replace(")", "").replace(" ", "")
                         )
-
-                        if group in result["extras_require"]:
-                            result["extras_require"][group].append(extra)
-                        else:
-                            result["extras_require"][group] = [extra]
-
-                        break
-                else:
-                    install = record.replace("(", "").replace(")", "").replace(" ", "")
-                    result["install_requires"].append(install)
+                        result["install_requires"].append(install)
 
         return result
 
