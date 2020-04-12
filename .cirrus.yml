@@ -5,18 +5,13 @@ build_task:
     matrix:
       - image_family: freebsd-12-1-snap
       - image_family: freebsd-11-3-snap
-  pkg_script: pkg install -y python27 python35 python36 python37 python38
-  pip_script:
-    - python2.7 -m ensurepip && python2.7 -m pip install -U pip
-    - python3.5 -m ensurepip && python3.5 -m pip install -U pip
-    - python3.6 -m ensurepip && python3.6 -m pip install -U pip
-    - python3.7 -m ensurepip && python3.7 -m pip install -U pip
-    - python3.8 -m ensurepip && python3.8 -m pip install -U pip
-  poetry_script:
-    - python3.7 -m pip install poetry -U --pre
-    - python3.7 -m poetry config virtualenvs.create false
-    - python3.7 -m poetry install --no-dev
-    - python3.7 -m poetry build
-    - python3.7 sonnet make release
-  release_artifacts:
+  python_script: pkg install -y python3 python27 python35 python36 python37 python38
+  ensurepip_script:
+    - python2.7 -m ensurepip
+    - python3.5 -m ensurepip
+    - python3.6 -m ensurepip
+    - python3.7 -m ensurepip
+    - python3.8 -m ensurepip
+  build_script: ./make-nix-release.sh
+  archive_artifacts:
     path: "releases/*"
