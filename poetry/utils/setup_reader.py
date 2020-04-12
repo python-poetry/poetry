@@ -74,7 +74,7 @@ class SetupReader(object):
     @classmethod
     def read_from_build(cls, directory):
         hooks = pep517.wrappers.Pep517HookCaller(
-            directory, "setuptools.build_meta", None
+            str(directory), "setuptools.build_meta", None
         )
 
         with pep517.envbuild.BuildEnvironment() as env, temporary_directory() as tmp_dist:
