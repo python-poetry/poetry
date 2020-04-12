@@ -10,6 +10,7 @@ import sysconfig
 import warnings
 
 from contextlib import contextmanager
+from tempfile import mkdtemp
 from typing import Any
 from typing import Dict
 from typing import List
@@ -70,7 +71,6 @@ env = {
 print(json.dumps(env))
 """
 
-
 GET_BASE_PREFIX = """\
 import sys
 
@@ -124,7 +124,6 @@ except ImportError:
 
 
 class EnvError(Exception):
-
     pass
 
 
@@ -1192,3 +1191,29 @@ class MockEnv(NullEnv):
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv
+
+
+class BuildEnv(VirtualEnv):
+    def __init__(self, path, build_requires, build_backend):
+        super().__init__(path)
+
+        self.build_requires = build_requires
+        self.build_backend = build_backend
+
+    @classmethod
+    @contextmanager
+    def temporary_build_env(cls, build_requires, build_backend):
+        path = mkdtemp(prefix="poetry-", dir="/tmp")
+        EnvManager.build_venv(path)
+
+        env = BuildEnv(Path(path), build_requires, build_backend)
+        env.setup_build_requirements()
+
+        yield env
+
+        shutil.rmtree(path)
+
+    def setup_build_requirements(self):
+        if self.build_requires:
+            cmd = [self.pip, "install"] + self.build_requires
+            self._run(cmd)

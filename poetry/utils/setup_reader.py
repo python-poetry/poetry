@@ -1,4 +1,5 @@
 import ast
+import os
 
 from typing import Any
 from typing import Dict
@@ -8,15 +9,27 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from poetry.utils.env import BuildEnv
+from poetry.utils.helpers import temporary_directory
+
 from ._compat import PY35
 from ._compat import Path
 from ._compat import basestring
 
 
 try:
+    from importlib.metadata import Distribution
+except ImportError:
+    from importlib_metadata import Distribution
+
+try:
     from configparser import ConfigParser
 except ImportError:
     from ConfigParser import ConfigParser
+
+GET_DIST_INFO = """\
+import {build_backend};{build_backend}.prepare_metadata_for_build_wheel('{dist_info_dir}')\
+"""
 
 
 class SetupReader(object):
@@ -56,6 +69,67 @@ class SetupReader(object):
                     result[key] = new_result[key]
 
         return result
+
+    @classmethod
+    def read_from_build(cls, directory):
+        with BuildEnv.temporary_build_env(
+            build_requires=["setuptools", "wheel"],
+            build_backend="setuptools.build_meta",
+        ) as build_env:
+            with temporary_directory() as tmp_dist_info:
+                cwd = os.getcwd()
+                os.chdir(directory)
+                args = [
+                    "-c",
+                    GET_DIST_INFO.format(
+                        build_backend=build_env.build_backend,
+                        dist_info_dir=tmp_dist_info,
+                    ),
+                ]
+                build_env.run("python", *args)
+                os.chdir(cwd)
+                info_dir = list(Path(tmp_dist_info).glob("*.dist-info"))[0]
+
+                distribution = Distribution.at(info_dir)
+                result = {
+                    "name": distribution.metadata["Name"],
+                    "version": distribution.version,
+                    "install_requires": [],
+                    "python_requires": distribution.metadata["Requires-Python"],
+                    "extras_require": {},
+                }
+
+                if distribution.requires:
+                    for record in distribution.requires:
+                        requirements = record.split(";")
+
+                        for part, marker in enumerate(requirements[1:]):
+                            if marker.strip().startswith("extra"):
+                                group = marker.split("==")[1].strip().replace("'", "")
+
+                                del requirements[part + 1]
+                                extra = (
+                                    ";".join(requirements)
+                                    .replace("(", "")
+                                    .replace(")", "")
+                                    .replace(" ", "")
+                                )
+
+                                if group in result["extras_require"]:
+                                    result["extras_require"][group].append(extra)
+                                else:
+                                    result["extras_require"][group] = [extra]
+
+                                break
+                        else:
+                            install = (
+                                record.replace("(", "")
+                                .replace(")", "")
+                                .replace(" ", "")
+                            )
+                            result["install_requires"].append(install)
+
+            return result
 
     @classmethod
     def _is_empty_result(cls, result):  # type: (Dict[str, Any]) -> bool
