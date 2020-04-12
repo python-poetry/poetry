@@ -1,8 +1,10 @@
-freebsd_instance:
-  image_family: freebsd-12-1
 
 build_task:
   only_if: $CIRRUS_TAG != ''
+  freebsd_instance:
+    matrix:
+      - image_family: freebsd-12-1-snap
+      - image_family: freebsd-11-3-snap
   pkg_script: pkg install -y python27 python35 python36 python37 python38
   pip_script:
     - python2.7 -m ensurepip && python2.7 -m pip install -U pip
