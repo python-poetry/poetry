@@ -30,6 +30,7 @@ class DebugResolveCommand(InitCommand):
     def handle(self):
         from poetry.io.null_io import NullIO
         from poetry.core.packages import ProjectPackage
+        from poetry.installation.installer import Installer
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
@@ -114,10 +115,15 @@ class DebugResolveCommand(InitCommand):
             pool.add_repository(locked_repository)
 
             with package.with_python_versions(current_python_version):
+                installer = Installer(NullIO(), env, package, self.poetry.locker, pool)
                 solver = Solver(package, pool, Repository(), Repository(), NullIO())
                 ops = solver.solve()
+                installer._filter_operations(ops, Repository())
 
         for op in ops:
+            if self.option("install") and op.skipped:
+                continue
+
             pkg = op.package
             row = [
                 "<c1>{}</c1>".format(pkg.name),

@@ -46,7 +46,7 @@ from poetry.utils.inspector import Inspector
 from poetry.utils.setup_reader import SetupReader
 from poetry.utils.toml_file import TomlFile
 
-from .exceptions import CompatibilityError
+from .exceptions import OverrideNeeded
 
 
 logger = logging.getLogger(__name__)
@@ -72,6 +72,7 @@ class Provider:
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
+        self._overrides = {}
 
     @property
     def pool(self):  # type: () -> Pool
@@ -87,6 +88,9 @@ class Provider:
 
     def is_debugging(self):
         return self._is_debugging
+
+    def set_overrides(self, overrides):
+        self._overrides = overrides
 
     def name_for(self, dependency):  # type: (Dependency) -> str
         """
@@ -514,12 +518,27 @@ class Provider:
                         )
                     ]
 
-        dependencies = [
+        _dependencies = [
             dep
             for dep in dependencies
             if dep.name not in self.UNSAFE_PACKAGES
             and self._package.python_constraint.allows_any(dep.python_constraint)
         ]
+
+        overrides = self._overrides.get(package, {})
+        dependencies = []
+        overridden = []
+        for dep in _dependencies:
+            if dep.name in overrides:
+                if dep.name in overridden:
+                    continue
+
+                dependencies.append(overrides[dep.name])
+                overridden.append(dep.name)
+
+                continue
+
+            dependencies.append(dep)
 
         return [
             Incompatibility(
@@ -554,11 +573,27 @@ class Provider:
         else:
             requires = package.requires
 
-        dependencies = [
+        _dependencies = [
             r
             for r in requires
             if self._package.python_constraint.allows_any(r.python_constraint)
+            and r.name not in self.UNSAFE_PACKAGES
         ]
+
+        overrides = self._overrides.get(package, {})
+        dependencies = []
+        overridden = []
+        for dep in _dependencies:
+            if dep.name in overrides:
+                if dep.name in overridden:
+                    continue
+
+                dependencies.append(overrides[dep.name])
+                overridden.append(dep.name)
+
+                continue
+
+            dependencies.append(dep)
 
         # Searching for duplicate dependencies
         #
@@ -651,26 +686,70 @@ class Provider:
                 continue
 
             # At this point, we raise an exception that will
-            # tell the solver to enter compatibility mode
-            # which means it will resolve for subsets
-            # Python constraints
+            # tell the solver to make new resolutions with specific overrides.
             #
-            # For instance, if our root package requires Python ~2.7 || ^3.6
-            # And we have one dependency that requires Python <3.6
-            # and the other Python >=3.6 than the solver will solve
-            # dependencies for Python >=2.7,<2.8 || >=3.4,<3.6
-            # and Python >=3.6,<4.0
-            python_constraints = []
+            # For instance, if the foo (1.2.3) package has the following dependencies:
+            #   - bar (>=2.0) ; python_version >= "3.6"
+            #   - bar (<2.0) ; python_version < "3.6"
+            #
+            # then the solver will need to make two new resolutions
+            # with the following overrides:
+            #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
+            #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
+            markers = []
             for constraint, _deps in by_constraint.items():
-                python_constraints.append(_deps[0].python_versions)
+                markers.append(_deps[0].marker)
 
-            _deps = [str(_dep[0]) for _dep in by_constraint.values()]
+            _deps = [_dep[0] for _dep in by_constraint.values()]
             self.debug(
                 "<warning>Different requirements found for {}.</warning>".format(
-                    ", ".join(_deps[:-1]) + " and " + _deps[-1]
+                    ", ".join(
+                        "<c1>{}</c1> <fg=default>(<c2>{}</c2>)</> with markers <b>{}</b>".format(
+                            d.name,
+                            d.pretty_constraint,
+                            d.marker if not d.marker.is_any() else "*",
+                        )
+                        for d in _deps[:-1]
+                    )
+                    + " and "
+                    + "<c1>{}</c1> <fg=default>(<c2>{}</c2>)</> with markers <b>{}</b>".format(
+                        _deps[-1].name,
+                        _deps[-1].pretty_constraint,
+                        _deps[-1].marker if not _deps[-1].marker.is_any() else "*",
+                    )
                 )
             )
-            raise CompatibilityError(*python_constraints)
+
+            # We need to check if one of the duplicate dependencies
+            # has no markers. If there is one, we need to change its
+            # environment markers to the inverse of the union of the
+            # other dependencies markers.
+            # For instance, if we have the following dependencies:
+            #   - ipython
+            #   - ipython (1.2.4) ; implementation_name == "pypy"
+            #
+            # the marker for `ipython` will become `implementation_name != "pypy"`.
+            any_markers_dependencies = [d for d in _deps if d.marker.is_any()]
+            other_markers_dependencies = [d for d in _deps if not d.marker.is_any()]
+
+            if any_markers_dependencies:
+                marker = other_markers_dependencies[0].marker
+                for other_dep in other_markers_dependencies[1:]:
+                    marker = marker.union(other_dep.marker)
+
+                for i, d in enumerate(_deps):
+                    if d.marker.is_any():
+                        _deps[i].marker = marker.invert()
+
+            overrides = []
+            for _dep in _deps:
+                current_overrides = self._overrides.copy()
+                package_overrides = current_overrides.get(package, {})
+                package_overrides.update({_dep.name: _dep})
+                current_overrides.update({package: package_overrides})
+                overrides.append(current_overrides)
+
+            raise OverrideNeeded(*overrides)
 
         # Modifying dependencies as needed
         clean_dependencies = []
@@ -724,7 +803,7 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<b>{}</b>)".format(m2.group(2))
+                    version = " (<c2>{}</c2>)".format(m2.group(2))
                 else:
                     name = m.group(1)
                     version = ""

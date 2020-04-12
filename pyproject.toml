@@ -23,7 +23,8 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
-poetry-core = "^1.0.0a5"
+
+poetry-core = "^1.0.0a6"
 cleo = "^0.8.0"
 clikit = "^0.5.1"
 requests = "^2.18"
