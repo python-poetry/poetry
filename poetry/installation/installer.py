@@ -2,7 +2,6 @@ from typing import List
 from typing import Union
 
 from clikit.api.io import IO
-from clikit.io import NullIO
 
 from poetry.core.packages.package import Package
 from poetry.core.semver import parse_constraint
@@ -196,33 +195,6 @@ class Installer:
         if not self.is_dev_mode():
             root = root.clone()
             del root.dev_requires[:]
-
-        with root.with_python_versions(
-            ".".join([str(i) for i in self._env.version_info[:3]])
-        ):
-            # We resolve again by only using the lock file
-            pool = Pool(ignore_repository_names=True)
-
-            # Making a new repo containing the packages
-            # newly resolved and the ones from the current lock file
-            repo = Repository()
-            for package in local_repo.packages + locked_repository.packages:
-                if not repo.has_package(package):
-                    repo.add_package(package)
-
-            pool.add_repository(repo)
-
-            # We whitelist all packages to be sure
-            # that the latest ones are picked up
-            whitelist = []
-            for pkg in locked_repository.packages:
-                whitelist.append(pkg.name)
-
-            solver = Solver(
-                root, pool, self._installed_repository, locked_repository, NullIO()
-            )
-
-            ops = solver.solve(use_latest=whitelist)
 
         # We need to filter operations so that packages
         # not compatible with the current system,

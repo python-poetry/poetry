@@ -5,13 +5,12 @@ from typing import Dict
 from typing import List
 
 from poetry.core.packages import Package
-from poetry.core.semver import parse_constraint
 from poetry.core.version.markers import AnyMarker
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
 
-from .exceptions import CompatibilityError
+from .exceptions import OverrideNeeded
 from .exceptions import SolverProblemError
 from .operations import Install
 from .operations import Uninstall
@@ -28,7 +27,7 @@ class Solver:
         self._locked = locked
         self._io = io
         self._provider = Provider(self._package, self._pool, self._io)
-        self._branches = []
+        self._overrides = []
 
     def solve(self, use_latest=None):  # type: (...) -> List[Operation]
         with self._provider.progress():
@@ -36,15 +35,15 @@ class Solver:
             packages, depths = self._solve(use_latest=use_latest)
             end = time.time()
 
-            if len(self._branches) > 1:
+            if len(self._overrides) > 1:
                 self._provider.debug(
-                    "Complete version solving took {:.3f} seconds for {} branches".format(
-                        end - start, len(self._branches[1:])
+                    "Complete version solving took {:.3f} seconds with {} overrides".format(
+                        end - start, len(self._overrides)
                     )
                 )
                 self._provider.debug(
-                    "Resolved for branches: {}".format(
-                        ", ".join("({})".format(b) for b in self._branches[1:])
+                    "Resolved with overrides: {}".format(
+                        ", ".join("({})".format(b) for b in self._overrides)
                     )
                 )
 
@@ -135,42 +134,40 @@ class Solver:
             ),
         )
 
-    def solve_in_compatibility_mode(self, constraints, use_latest=None):
+    def solve_in_compatibility_mode(self, overrides, use_latest=None):
         locked = {}
         for package in self._locked.packages:
             locked[package.name] = DependencyPackage(package.to_dependency(), package)
 
         packages = []
         depths = []
-        for constraint in constraints:
-            constraint = parse_constraint(constraint)
-            intersection = constraint.intersect(self._package.python_constraint)
-
+        for override in overrides:
             self._provider.debug(
                 "<comment>Retrying dependency resolution "
-                "for Python ({}).</comment>".format(intersection)
+                "with the following overrides ({}).</comment>".format(override)
             )
-            with self._package.with_python_versions(str(intersection)):
-                _packages, _depths = self._solve(use_latest=use_latest)
-                for index, package in enumerate(_packages):
-                    if package not in packages:
-                        packages.append(package)
-                        depths.append(_depths[index])
-                        continue
-                    else:
-                        idx = packages.index(package)
-                        pkg = packages[idx]
-                        depths[idx] = max(depths[idx], _depths[index])
-                        pkg.marker = pkg.marker.union(package.marker)
+            self._provider.set_overrides(override)
+            _packages, _depths = self._solve(use_latest=use_latest)
+            for index, package in enumerate(_packages):
+                if package not in packages:
+                    packages.append(package)
+                    depths.append(_depths[index])
+                    continue
+                else:
+                    idx = packages.index(package)
+                    pkg = packages[idx]
+                    depths[idx] = max(depths[idx], _depths[index])
+                    pkg.marker = pkg.marker.union(package.marker)
 
-                        for dep in package.requires:
-                            if dep not in pkg.requires:
-                                pkg.requires.append(dep)
+                    for dep in package.requires:
+                        if dep not in pkg.requires:
+                            pkg.requires.append(dep)
 
         return packages, depths
 
     def _solve(self, use_latest=None):
-        self._branches.append(self._package.python_versions)
+        if self._provider._overrides:
+            self._overrides.append(self._provider._overrides)
 
         locked = {}
         for package in self._locked.packages:
@@ -182,10 +179,8 @@ class Solver:
             )
 
             packages = result.packages
-        except CompatibilityError as e:
-            return self.solve_in_compatibility_mode(
-                e.constraints, use_latest=use_latest
-            )
+        except OverrideNeeded as e:
+            return self.solve_in_compatibility_mode(e.overrides, use_latest=use_latest)
         except SolveFailure as e:
             raise SolverProblemError(e)
 
