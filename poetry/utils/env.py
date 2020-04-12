@@ -1203,7 +1203,7 @@ class BuildEnv(VirtualEnv):
     @classmethod
     @contextmanager
     def temporary_build_env(cls, build_requires, build_backend):
-        path = mkdtemp(prefix="poetry-", dir="/tmp")
+        path = mkdtemp(prefix="poetry-")
         EnvManager.build_venv(path)
 
         env = BuildEnv(Path(path), build_requires, build_backend)
