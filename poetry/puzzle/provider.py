@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import re
@@ -9,8 +8,6 @@ from tempfile import mkdtemp
 from typing import Any
 from typing import List
 from typing import Optional
-
-import pkginfo
 
 from clikit.ui.components import ProgressIndicator
 
@@ -32,13 +29,9 @@ from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.repositories import Pool
-from poetry.utils._compat import PY35
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
-from poetry.utils.env import EnvCommandError
-from poetry.utils.env import EnvManager
-from poetry.utils.env import VirtualEnv
 from poetry.utils.helpers import parse_requires
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
@@ -60,7 +53,6 @@ class Indicator(ProgressIndicator):
 
 
 class Provider:
-
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
     def __init__(self, package, pool, io):  # type: (Package, Pool, Any) -> None
