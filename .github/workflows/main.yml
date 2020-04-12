@@ -8,120 +8,63 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.8
       - name: Linting
         run: |
           pip install pre-commit
           pre-commit run --all-files
 
-  Linux:
+  Tests:
     needs: Linting
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} / ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
+        os: [Ubuntu, MacOS, Windows]
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Get full python version
-      id: full-python-version
-      run: |
-        echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
-    - name: Install and set up Poetry
-      run: |
-        python get-poetry.py --preview -y
-        source $HOME/.poetry/env
-        poetry config virtualenvs.in-project true
-    - name: Set up cache
-      uses: actions/cache@v1
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
-    - name: Install dependencies
-      run: |
-        source $HOME/.poetry/env
-        poetry install
-    - name: Test
-      run: |
-        source $HOME/.poetry/env
-        poetry run pytest -q tests
+      - uses: actions/checkout@v2
 
-  MacOS:
-    needs: Linting
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Get full python version
-      id: full-python-version
-      run: |
-        echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
-    - name: Install and set up Poetry
-      run: |
-        python get-poetry.py --preview -y
-        source $HOME/.poetry/env
-        poetry config virtualenvs.in-project true
-    - name: Set up cache
-      uses: actions/cache@v1
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
-    - name: Install dependencies
-      run: |
-        source $HOME/.poetry/env
-        poetry install
-    - name: Test
-      run: |
-        source $HOME/.poetry/env
-        .venv/bin/pytest -q tests
+      - name: Get full python version
+        id: full-python-version
+        shell: bash
+        run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
-  Windows:
-    needs: Linting
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+      - name: Install poetry
+        shell: bash
+        run: |
+          curl -fsS -o get-poetry.py https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
+          python get-poetry.py --preview -y
+          echo "::set-env name=PATH::$HOME/.poetry/bin:$PATH"
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Get full python version
-      id: full-python-version
-      shell: bash
-      run: |
-        echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
-    - name: Install and setup Poetry
-      run: |
-        python get-poetry.py --preview -y
-        $env:Path += ";$env:Userprofile\.poetry\bin"
-        poetry config virtualenvs.in-project true
-    - name: Set up cache
-      uses: actions/cache@v1
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
-    - name: Install dependencies
-      run: |
-        $env:Path += ";$env:Userprofile\.poetry\bin"
-        poetry install
-    - name: Test
-      run: |
-        $env:Path += ";$env:Userprofile\.poetry\bin"
-        poetry run pytest -q tests
+      - name: Configure poetry
+        shell: bash
+        run: poetry config virtualenvs.in-project true
+
+      - name: Set up cache
+        uses: actions/cache@v1
+        id: cache
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Ensure cache is healthy
+        if: steps.cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
+
+      - name: Install dependencies
+        shell: bash
+        run: poetry install
+
+      - name: Run pytest
+        shell: bash
+        run: poetry run pytest -q tests
