@@ -773,6 +773,25 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "0.7.0"
 
 [[package]]
+category = "main"
+description = "Wrappers to build Python packages using PEP 517 hooks"
+name = "pep517"
+optional = false
+python-versions = "*"
+version = "0.8.2"
+
+[package.dependencies]
+toml = "*"
+
+[package.dependencies.importlib_metadata]
+python = "<3.8"
+version = "*"
+
+[package.dependencies.zipp]
+python = "<3.8"
+version = "*"
+
+[[package]]
 category = "dev"
 description = "Backport of PEP 562."
 name = "pep562"
@@ -1100,7 +1119,7 @@ requests = ">=2.0.1,<3.0.0"
 [[package]]
 category = "main"
 description = "scandir, a better directory iterator and faster os.walk()"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.5\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.5\")"
 name = "scandir"
 optional = false
 python-versions = "*"
@@ -1180,7 +1199,7 @@ python-versions = "*"
 version = "1.1.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Python Library for Tom's Obvious, Minimal Language"
 name = "toml"
 optional = false
@@ -1358,7 +1377,7 @@ version = "0.2.1"
 [[package]]
 category = "main"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-marker = "python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\""
+marker = "python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.7\""
 name = "zipp"
 optional = false
 python-versions = ">=2.7"
@@ -1374,7 +1393,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "7ae766406ba58bc44d4b0d5876927ab0db9005d6a80efab83ddd6a2c50c2f8c8"
+content-hash = "7cd08101cf2e377c2d641d908274f60ac6a5b0cad5453034d3aa87f6c538d7eb"
 python-versions = "~2.7 || ^3.5"
 
 [metadata.files]
@@ -1718,6 +1737,10 @@ pathlib2 = [
 pathspec = [
     {file = "pathspec-0.7.0-py2.py3-none-any.whl", hash = "sha256:163b0632d4e31cef212976cf57b43d9fd6b0bac6e67c26015d611a647d5e7424"},
     {file = "pathspec-0.7.0.tar.gz", hash = "sha256:562aa70af2e0d434367d9790ad37aed893de47f1693e4201fd1d3dca15d19b96"},
+]
+pep517 = [
+    {file = "pep517-0.8.2-py2.py3-none-any.whl", hash = "sha256:576c480be81f3e1a70a16182c762311eb80d1f8a7b0d11971e5234967d7a342c"},
+    {file = "pep517-0.8.2.tar.gz", hash = "sha256:8e6199cf1288d48a0c44057f112acf18aa5ebabbf73faa242f598fbe145ba29e"},
 ]
 pep562 = [
     {file = "pep562-1.0-py2.py3-none-any.whl", hash = "sha256:d2a48b178ebf5f8dd31709cc26a19808ef794561fa2fe50ea01ea2bad4d667ef"},

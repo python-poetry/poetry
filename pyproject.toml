@@ -54,6 +54,7 @@ keyring = [
 # Use subprocess32 for Python 2.7
 subprocess32 = { version = "^3.5", python = "~2.7" }
 importlib-metadata = {version = "~1.1.3", python = "<3.8"}
+pep517 = "^0.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.1"
@@ -72,11 +73,6 @@ markdown-include = "^0.5.1"
 
 [tool.poetry.scripts]
 poetry = "poetry.console:main"
-
-
-[build-system]
-requires = ["poetry-core>=1.0.0a3"]
-build-backend = "poetry.core.masonry.api"
 
 
 [tool.isort]
@@ -112,3 +108,8 @@ known_third_party = [
     "shellingham",
     "tomlkit",
 ]
+[build-system]
+requires = ["poetry-core>=1.0.0a3"]
+build-backend = "poetry.core.masonry.api"
+
+
