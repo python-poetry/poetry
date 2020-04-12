@@ -1195,7 +1195,7 @@ class MockEnv(NullEnv):
 
 class BuildEnv(VirtualEnv):
     def __init__(self, path, build_requires, build_backend):
-        super().__init__(path)
+        super(BuildEnv, self).__init__(path)
 
         self.build_requires = build_requires
         self.build_backend = build_backend
