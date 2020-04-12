@@ -78,7 +78,7 @@ class SetupReader(object):
         ) as build_env:
             with temporary_directory() as tmp_dist_info:
                 cwd = os.getcwd()
-                os.chdir(directory)
+                os.chdir(str(directory))
                 args = [
                     "-c",
                     GET_DIST_INFO.format(
@@ -87,7 +87,7 @@ class SetupReader(object):
                     ),
                 ]
                 build_env.run("python", *args)
-                os.chdir(cwd)
+                os.chdir(str(cwd))
                 info_dir = list(Path(tmp_dist_info).glob("*.dist-info"))[0]
 
                 distribution = Distribution.at(info_dir)
