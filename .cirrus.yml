@@ -17,7 +17,7 @@ test_task:
   pip_script:
     - $PYTHON -m ensurepip
     - $PYTHON -m pip install pip -U
-    - $PYTHON -m pip install poetry -U --pre
+    - $PYTHON -m pip install poetry -U
     - $PYTHON -m poetry config virtualenvs.in-project true
   deps_script: $PYTHON -m poetry install
   test_script: $PYTHON -m poetry run pytest -q --junitxml=junit.xml tests
