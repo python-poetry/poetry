@@ -1683,7 +1683,7 @@ def test_solver_chooses_from_correct_repository_if_forced(
         ops, [{"job": "install", "package": get_package("tomlkit", "0.5.2")}]
     )
 
-    assert "http://foo.bar" == ops[0].package.source_url
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
 
 
 def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
@@ -1711,7 +1711,7 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         ],
     )
 
-    assert "http://foo.bar" == ops[0].package.source_url
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
 
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
@@ -1740,10 +1740,10 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
         ],
     )
 
-    assert "http://foo.bar" == ops[0].package.source_url
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
-    assert "http://foo.bar" == ops[2].package.source_url
+    assert "http://legacy.foo.bar" == ops[2].package.source_url
 
 
 def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, io):
@@ -1767,7 +1767,7 @@ def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, i
         ],
     )
 
-    assert "http://foo.bar" == ops[0].package.source_url
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
     assert "" == ops[2].package.source_type
