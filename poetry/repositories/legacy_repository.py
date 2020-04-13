@@ -404,16 +404,9 @@ class LegacyRepository(PyPiRepository):
 
         return data
 
-    def _download(self, url, dest):  # type: (str, str) -> None
-        r = self._session.get(url, stream=True)
-        with open(dest, "wb") as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
-        response = self._session.get(url)
+        response = self.session.get(url)
         if response.status_code == 404:
             return
 
