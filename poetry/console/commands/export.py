@@ -16,7 +16,7 @@ class ExportCommand(Command):
             "f",
             "Format to export to.",
             flag=False,
-            default=Exporter.ACCEPTED_FORMATS[0],
+            default=Exporter.FORMAT_REQUIREMENTS_TXT,
         ),
         option("output", "o", "The name of the output file.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
