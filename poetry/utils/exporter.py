@@ -17,6 +17,10 @@ class Exporter(object):
     Exporter class to export a lock file to alternative formats.
     """
 
+    #: The names of the supported export formats.  The first one will be
+    #: used as the default for the ``export`` CLI command.
+    #:
+    #: .. seealso:: :class:`poetry.console.commands.export.ExportCommand`
     ACCEPTED_FORMATS = ("requirements.txt",)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
