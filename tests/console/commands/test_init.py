@@ -144,7 +144,7 @@ def test_interactive_with_git_dependencies(app, repo, mocker, poetry):
     command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch("poetry.utils._compat.Path.open")
+    # mocker.patch("poetry.utils._compat.Path.open")
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -167,6 +167,7 @@ def test_interactive_with_git_dependencies(app, repo, mocker, poetry):
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
+    Path(Path(__file__).parent / "pyproject.toml").unlink()
 
     expected = """\
 [tool.poetry]
@@ -194,7 +195,7 @@ def test_interactive_with_git_dependencies_with_reference(app, repo, mocker, poe
     command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch("poetry.utils._compat.Path.open")
+    # mocker.patch("poetry.utils._compat.Path.open")
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -217,6 +218,7 @@ def test_interactive_with_git_dependencies_with_reference(app, repo, mocker, poe
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
+    Path(Path(__file__).parent / "pyproject.toml").unlink()
 
     expected = """\
 [tool.poetry]
@@ -294,7 +296,7 @@ def test_interactive_with_directory_dependency(app, repo, mocker, poetry):
     command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch("poetry.utils._compat.Path.open")
+    # mocker.patch("poetry.utils._compat.Path.open")
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -317,6 +319,7 @@ def test_interactive_with_directory_dependency(app, repo, mocker, poetry):
         "\n",  # Generate
     ]
     tester.execute(inputs="\n".join(inputs))
+    Path(Path(__file__).parent / "pyproject.toml").unlink()
 
     expected = """\
 [tool.poetry]
@@ -333,7 +336,6 @@ demo = {path = "../../fixtures/git/github.com/demo/demo"}
 [tool.poetry.dev-dependencies]
 pytest = "^3.6.0"
 """
-
     assert expected in tester.io.fetch_output()
 
 

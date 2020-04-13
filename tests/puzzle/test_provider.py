@@ -116,16 +116,16 @@ def test_search_for_vcs_read_setup_with_extras(provider, mocker):
     }
 
 
-def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
+def test_search_for_vcs_read_setup_with_dynamic_version(provider, mocker):
     mocker.patch(
         "poetry.utils.env.VirtualEnv.run",
         side_effect=EnvCommandError(CalledProcessError(1, "python", output="")),
     )
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/no-version.git")
+    package = provider.search_for_vcs(dependency)[0]
 
-    with pytest.raises(RuntimeError):
-        provider.search_for_vcs(dependency)
+    assert package.version.text == "1.2.3"
 
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])

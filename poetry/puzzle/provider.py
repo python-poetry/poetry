@@ -321,7 +321,7 @@ class Provider:
             if python_requires is None:
                 python_requires = "*"
 
-            package_summary = ""
+            package_summary = result["summary"]
 
             requires = ""
             for dep in result["install_requires"]:

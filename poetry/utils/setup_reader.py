@@ -19,9 +19,9 @@ from ._compat import basestring
 
 
 try:
-    from importlib.metadata import Distribution
+    from importlib.metadata import PathDistribution
 except ImportError:
-    from importlib_metadata import Distribution
+    from importlib_metadata import PathDistribution
 
 try:
     from configparser import ConfigParser
@@ -80,11 +80,12 @@ class SetupReader(object):
         with pep517.envbuild.BuildEnvironment() as env, temporary_directory() as tmp_dist:
             env.pip_install(["setuptools", "wheel"])
             dist_info = hooks.prepare_metadata_for_build_wheel(tmp_dist)
-            distribution = Distribution.at(Path(tmp_dist) / dist_info)
+            distribution = PathDistribution(Path(tmp_dist) / dist_info)
 
             result = {
                 "name": distribution.metadata["Name"],
                 "version": distribution.version,
+                "summary": distribution.metadata["Summary"],
                 "install_requires": [],
                 "python_requires": distribution.metadata["Requires-Python"],
                 "extras_require": {},
