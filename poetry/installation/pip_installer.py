@@ -5,7 +5,6 @@ from io import open
 from subprocess import CalledProcessError
 
 from clikit.api.io import IO
-from clikit.io import NullIO
 
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import encode
@@ -179,7 +178,6 @@ class PipInstaller(BaseInstaller):
         from poetry.core.masonry.builder import SdistBuilder
         from poetry.factory import Factory
         from poetry.utils._compat import decode
-        from poetry.utils.env import NullEnv
         from poetry.utils.toml_file import TomlFile
 
         if package.root_dir:
@@ -210,9 +208,7 @@ class PipInstaller(BaseInstaller):
             # file since pip, as of this comment, does not support
             # build-system for editable packages
             # We also need it for non-PEP-517 packages
-            builder = SdistBuilder(
-                Factory().create_poetry(pyproject.parent), NullEnv(), NullIO()
-            )
+            builder = SdistBuilder(Factory().create_poetry(pyproject.parent),)
 
             with open(setup, "w", encoding="utf-8") as f:
                 f.write(decode(builder.build_setup()))
