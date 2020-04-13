@@ -441,8 +441,8 @@ poetry export -f requirements.txt > requirements.txt
 
 ### Options
 
-* `--format (-f)`: The format to export to.  Currently, only
-  `requirements.txt` is supported.
+* `--format (-f)`: The format to export to (default: `requirements.txt`).
+  Currently, only `requirements.txt` is supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
 * `--dev`: Include development dependencies.
