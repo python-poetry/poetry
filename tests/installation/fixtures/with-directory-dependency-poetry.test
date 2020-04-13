@@ -8,7 +8,7 @@ version = "1.4.4"
 
 [[package]]
 category = "main"
-description = ""
+description = "This is a description"
 develop = true
 name = "project-with-extras"
 optional = false

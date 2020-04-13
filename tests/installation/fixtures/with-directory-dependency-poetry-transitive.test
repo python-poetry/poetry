@@ -1,6 +1,6 @@
 [[package]]
 category = "main"
-description = ""
+description = "This is a description"
 develop = true
 name = "project-with-extras"
 optional = false
@@ -18,7 +18,7 @@ url = "tests/fixtures/directory/project_with_transitive_directory_dependencies/.
 
 [[package]]
 category = "main"
-description = ""
+description = "This is a description"
 develop = true
 name = "project-with-transitive-directory-dependencies"
 optional = false
