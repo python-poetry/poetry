@@ -2,24 +2,18 @@ freebsd_instance:
   image_family: freebsd-12-1-snap
 
 test_task:
+  name: "Tests / FreeBSD / "
   env:
     matrix:
       - PYTHON: python2.7
-        PYPACKAGE: python27
-        SQLPACKAGE: py27-sqlite3
       - PYTHON: python3.5
-        PYPACKAGE: python35
-        SQLPACKAGE: py35-sqlite3
       - PYTHON: python3.6
-        PYPACKAGE: python36
-        SQLPACKAGE: py36-sqlite3
       - PYTHON: python3.7
-        PYPACKAGE: python37
-        SQLPACKAGE: py37-sqlite3
       - PYTHON: python3.8
-        PYPACKAGE: python38
-        SQLPACKAGE: py38-sqlite3
-  python_script: pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
+  python_script:
+    - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
+    - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
+    - pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
   pip_script:
     - $PYTHON -m ensurepip
     - $PYTHON -m pip install pip -U
@@ -28,7 +22,8 @@ test_task:
   deps_script: $PYTHON -m poetry install
   test_script: $PYTHON -m poetry run pytest -q tests
 
-build_task:
+release_task:
+  name: "Release / FreeBSD"
   only_if: $CIRRUS_TAG != ''
   freebsd_instance:
     matrix:
