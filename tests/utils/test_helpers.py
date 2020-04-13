@@ -1,7 +1,7 @@
+from poetry.core.utils.helpers import parse_requires
 from poetry.utils._compat import Path
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
-from poetry.utils.helpers import parse_requires
 
 
 def test_parse_requires():

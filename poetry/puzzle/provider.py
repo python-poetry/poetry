@@ -22,6 +22,7 @@ from poetry.core.packages import URLDependency
 from poetry.core.packages import VCSDependency
 from poetry.core.packages import dependency_from_pep_508
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
+from poetry.core.utils.helpers import parse_requires
 from poetry.core.vcs.git import Git
 from poetry.core.version.markers import MarkerUnion
 from poetry.factory import Factory
@@ -39,7 +40,7 @@ from poetry.utils._compat import urlparse
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import VirtualEnv
-from poetry.utils.helpers import parse_requires
+from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.inspector import Inspector
@@ -465,7 +466,7 @@ class Provider:
         with temporary_directory() as temp_dir:
             temp_dir = Path(temp_dir)
             file_name = os.path.basename(urlparse.urlparse(url).path)
-            Inspector().download(url, temp_dir / file_name)
+            download_file(url, temp_dir / file_name)
 
             package = cls.get_package_from_file(temp_dir / file_name)
 

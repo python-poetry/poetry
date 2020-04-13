@@ -81,10 +81,10 @@ def mock_clone(_, source, dest):
     copy_or_symlink(folder, dest)
 
 
-def mock_download(self, url, dest):
+def mock_download(url, dest, **__):
     parts = urlparse.urlparse(url)
 
     fixtures = Path(__file__).parent / "fixtures"
     fixture = fixtures / parts.path.lstrip("/")
 
-    copy_or_symlink(fixture, dest)
+    copy_or_symlink(fixture, Path(dest))

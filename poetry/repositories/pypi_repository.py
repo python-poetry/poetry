@@ -6,14 +6,13 @@ from typing import Dict
 from typing import List
 from typing import Union
 
+import requests
+
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachecontrol.controller import logger as cache_control_logger
 from cachy import CacheManager
 from html5lib.html5parser import parse
-from requests import get
-from requests import session
-from requests.exceptions import TooManyRedirects
 
 from poetry.core.packages import Package
 from poetry.core.packages import dependency_from_pep_508
@@ -27,6 +26,7 @@ from poetry.core.version.markers import parse_marker
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
+from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.inspector import Inspector
 from poetry.utils.patterns import wheel_file_re
@@ -70,10 +70,16 @@ class PyPiRepository(RemoteRepository):
         )
 
         self._cache_control_cache = FileCache(str(release_cache_dir / "_http"))
-        self._session = CacheControl(session(), cache=self._cache_control_cache)
+        self._session = CacheControl(
+            requests.session(), cache=self._cache_control_cache
+        )
         self._inspector = Inspector()
 
         self._name = "PyPI"
+
+    @property
+    def session(self):
+        return self._session
 
     def find_packages(
         self,
@@ -216,7 +222,7 @@ class PyPiRepository(RemoteRepository):
 
         search = {"q": query}
 
-        response = session().get(self._base_url + "search", params=search)
+        response = requests.session().get(self._base_url + "search", params=search)
         content = parse(response.content, namespaceHTMLElements=False)
         for result in content.findall(".//*[@class='package-snippet']"):
             name = result.find("h3/*[@class='package-snippet__name']").text
@@ -353,12 +359,12 @@ class PyPiRepository(RemoteRepository):
 
     def _get(self, endpoint):  # type: (str) -> Union[dict, None]
         try:
-            json_response = self._session.get(self._base_url + endpoint)
-        except TooManyRedirects:
+            json_response = self.session.get(self._base_url + endpoint)
+        except requests.exceptions.TooManyRedirects:
             # Cache control redirect loop.
             # We try to remove the cache and try again
             self._cache_control_cache.delete(self._base_url + endpoint)
-            json_response = self._session.get(self._base_url + endpoint)
+            json_response = self.session.get(self._base_url + endpoint)
 
         if json_response.status_code == 404:
             return None
@@ -494,13 +500,7 @@ class PyPiRepository(RemoteRepository):
             return self._inspector.inspect_sdist(filepath)
 
     def _download(self, url, dest):  # type: (str, str) -> None
-        r = get(url, stream=True)
-        r.raise_for_status()
-
-        with open(dest, "wb") as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
+        return download_file(url, dest, session=self.session)
 
     def _log(self, msg, level="info"):
         getattr(logger, level)("<debug>{}:</debug> {}".format(self._name, msg))
