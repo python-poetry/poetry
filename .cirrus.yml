@@ -20,7 +20,12 @@ test_task:
     - $PYTHON -m pip install poetry -U --pre
     - $PYTHON -m poetry config virtualenvs.in-project true
   deps_script: $PYTHON -m poetry install
-  test_script: $PYTHON -m poetry run pytest -q tests
+  test_script: $PYTHON -m poetry run pytest -q --junitxml=junit.xml tests
+  on_failure:
+    annotate_failure_artifacts:
+      path: junit.xml
+      format: junit
+      type: text/xml
 
 release_task:
   name: "Release / FreeBSD"
