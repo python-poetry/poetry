@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import re
@@ -10,8 +9,6 @@ from typing import Any
 from typing import List
 from typing import Optional
 
-import pkginfo
-
 from clikit.ui.components import ProgressIndicator
 
 from poetry.core.packages import Dependency
@@ -20,34 +17,25 @@ from poetry.core.packages import FileDependency
 from poetry.core.packages import Package
 from poetry.core.packages import URLDependency
 from poetry.core.packages import VCSDependency
-from poetry.core.packages import dependency_from_pep_508
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
-from poetry.core.utils.helpers import parse_requires
 from poetry.core.vcs.git import Git
 from poetry.core.version.markers import MarkerUnion
-from poetry.factory import Factory
+from poetry.inspection.info import PackageInfo
+from poetry.inspection.info import PackageInfoError
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import DependencyCause
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.term import Term
 from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
+from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories import Pool
-from poetry.utils._compat import PY35
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
-from poetry.utils.env import EnvCommandError
-from poetry.utils.env import EnvManager
-from poetry.utils.env import VirtualEnv
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.inspector import Inspector
-from poetry.utils.setup_reader import SetupReader
-from poetry.utils.toml_file import TomlFile
-
-from .exceptions import OverrideNeeded
 
 
 logger = logging.getLogger(__name__)
@@ -68,7 +56,6 @@ class Provider:
         self._package = package
         self._pool = pool
         self._io = io
-        self._inspector = Inspector()
         self._python_constraint = package.python_constraint
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
@@ -245,30 +232,17 @@ class Provider:
 
     @classmethod
     def get_package_from_file(cls, file_path):  # type: (Path) -> Package
-        info = Inspector().inspect(file_path)
-        if not info["name"]:
+        try:
+            package = PackageInfo.from_path(path=file_path).to_package(
+                root_dir=file_path
+            )
+        except PackageInfoError:
             raise RuntimeError(
-                "Unable to determine the package name of {}".format(file_path)
+                "Unable to determine package info from path: {}".format(file_path)
             )
 
-        package = Package(info["name"], info["version"])
         package.source_type = "file"
         package.source_url = file_path.as_posix()
-
-        package.description = info["summary"]
-        for req in info["requires_dist"]:
-            dep = dependency_from_pep_508(req)
-            for extra in dep.in_extras:
-                if extra not in package.extras:
-                    package.extras[extra] = []
-
-                package.extras[extra].append(dep)
-
-            if not dep.is_optional():
-                package.requires.append(dep)
-
-        if info["requires_python"]:
-            package.python_versions = info["requires_python"]
 
         return package
 
@@ -298,136 +272,9 @@ class Provider:
     def get_package_from_directory(
         cls, directory, name=None
     ):  # type: (Path, Optional[str]) -> Package
-        supports_poetry = False
-        pyproject = directory.joinpath("pyproject.toml")
-        if pyproject.exists():
-            pyproject = TomlFile(pyproject)
-            pyproject_content = pyproject.read()
-            supports_poetry = (
-                "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
-            )
-
-        if supports_poetry:
-            poetry = Factory().create_poetry(directory)
-
-            pkg = poetry.package
-            package = Package(pkg.name, pkg.version)
-
-            for dep in pkg.requires:
-                if not dep.is_optional():
-                    package.requires.append(dep)
-
-            for extra, deps in pkg.extras.items():
-                if extra not in package.extras:
-                    package.extras[extra] = []
-
-                for dep in deps:
-                    package.extras[extra].append(dep)
-
-            package.python_versions = pkg.python_versions
-        else:
-            # Execute egg_info
-            current_dir = os.getcwd()
-            os.chdir(str(directory))
-
-            try:
-                with temporary_directory() as tmp_dir:
-                    EnvManager.build_venv(tmp_dir)
-                    venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
-                    venv.run("python", "setup.py", "egg_info")
-            except EnvCommandError:
-                result = SetupReader.read_from_directory(directory)
-                if not result["name"]:
-                    # The name could not be determined
-                    # We use the dependency name
-                    result["name"] = name
-
-                if not result["version"]:
-                    # The version could not be determined
-                    # so we raise an error since it is mandatory
-                    raise RuntimeError(
-                        "Unable to retrieve the package version for {}".format(
-                            directory
-                        )
-                    )
-
-                package_name = result["name"]
-                package_version = result["version"]
-                python_requires = result["python_requires"]
-                if python_requires is None:
-                    python_requires = "*"
-
-                package_summary = ""
-
-                requires = ""
-                for dep in result["install_requires"]:
-                    requires += dep + "\n"
-
-                if result["extras_require"]:
-                    requires += "\n"
-
-                for extra_name, deps in result["extras_require"].items():
-                    requires += "[{}]\n".format(extra_name)
-
-                    for dep in deps:
-                        requires += dep + "\n"
-
-                    requires += "\n"
-
-                reqs = parse_requires(requires)
-            else:
-                os.chdir(current_dir)
-                # Sometimes pathlib will fail on recursive
-                # symbolic links, so we need to workaround it
-                # and use the glob module instead.
-                # Note that this does not happen with pathlib2
-                # so it's safe to use it for Python < 3.4.
-                if PY35:
-                    egg_info = next(
-                        Path(p)
-                        for p in glob.glob(
-                            os.path.join(str(directory), "**", "*.egg-info"),
-                            recursive=True,
-                        )
-                    )
-                else:
-                    egg_info = next(directory.glob("**/*.egg-info"))
-
-                meta = pkginfo.UnpackedSDist(str(egg_info))
-                package_name = meta.name
-                package_version = meta.version
-                package_summary = meta.summary
-                python_requires = meta.requires_python
-
-                if meta.requires_dist:
-                    reqs = list(meta.requires_dist)
-                else:
-                    reqs = []
-                    requires = egg_info / "requires.txt"
-                    if requires.exists():
-                        with requires.open(encoding="utf-8") as f:
-                            reqs = parse_requires(f.read())
-            finally:
-                os.chdir(current_dir)
-
-            package = Package(package_name, package_version)
-            package.description = package_summary
-
-            for req in reqs:
-                dep = dependency_from_pep_508(req)
-                if dep.in_extras:
-                    for extra in dep.in_extras:
-                        if extra not in package.extras:
-                            package.extras[extra] = []
-
-                        package.extras[extra].append(dep)
-
-                if not dep.is_optional():
-                    package.requires.append(dep)
-
-            if python_requires:
-                package.python_versions = python_requires
-
+        package = PackageInfo.from_directory(
+            path=directory, allow_build=True
+        ).to_package(root_dir=directory)
         if name and name != package.name:
             # For now, the dependency's name must match the actual package's name
             raise RuntimeError(

@@ -16,7 +16,6 @@ from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
 from tests.helpers import mock_clone
-from tests.helpers import mock_download
 
 
 @pytest.fixture()
@@ -53,9 +52,6 @@ def setup(mocker, installer, installed, config, env):
     mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
     p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
-
-    # Patch download to not download anything but to just copy from fixtures
-    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
 
     # Patch the virtual environment creation do actually do nothing
     mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=env)
