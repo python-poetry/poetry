@@ -247,7 +247,7 @@ class Locker(object):
             constraint = {"version": str(dependency.pretty_constraint)}
 
             if dependency.extras:
-                constraint["extras"] = dependency.extras
+                constraint["extras"] = sorted(dependency.extras)
 
             if dependency.is_optional():
                 constraint["optional"] = True

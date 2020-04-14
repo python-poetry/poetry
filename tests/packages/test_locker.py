@@ -246,3 +246,40 @@ A = []
 """
 
     assert expected == content
+
+
+def test_extras_dependencies_are_ordered(locker, root):
+    package_a = get_package("A", "1.0.0")
+    package_a.add_dependency(
+        "B", {"version": "^1.0.0", "optional": True, "extras": ["c", "a", "b"]}
+    )
+    package_a.requires[-1].activate()
+
+    locker.set_lock_data(root, [package_a])
+
+    expected = """[[package]]
+category = "main"
+description = ""
+name = "A"
+optional = false
+python-versions = "*"
+version = "1.0.0"
+
+[package.dependencies]
+[package.dependencies.B]
+extras = ["a", "b", "c"]
+optional = true
+version = "^1.0.0"
+
+[metadata]
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+python-versions = "*"
+
+[metadata.files]
+A = []
+"""
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert expected == content
