@@ -127,7 +127,7 @@ class PyPiRepository(RemoteRepository):
                 continue
 
             try:
-                package = Package(name, version)
+                package = Package(info["info"]["name"], version)
             except ParseVersionError:
                 self._log(
                     'Unable to parse version "{}" for the {} package, skipping'.format(
