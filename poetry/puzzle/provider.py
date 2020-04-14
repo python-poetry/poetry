@@ -313,7 +313,7 @@ class Provider:
 
             package.python_versions = pkg.python_versions
         else:
-            result = SetupReader.read_from_build(directory)
+            result = SetupReader.read_from_pep517_hook(directory)
 
             package_name = result["name"]
             package_version = result["version"]

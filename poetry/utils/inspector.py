@@ -206,7 +206,7 @@ class Inspector:
             "requires_dist": None,
         }
 
-        result = SetupReader.read_from_directory(sdist_dir)
+        result = SetupReader.read_from_pep517_hook(sdist_dir)
         requires = ""
         for dep in result["install_requires"]:
             requires += dep + "\n"
