@@ -91,6 +91,6 @@ class SetupReader(object):
 
         egg_info = Path(directory).glob("*.egg-info")
         for egg in egg_info:
-            shutil.rmtree(egg)
+            shutil.rmtree(str(egg))
 
         return result
