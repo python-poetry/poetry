@@ -1,7 +1,7 @@
-__title__ = 'request'
-__version__ = '1.2.3'
-__description__ = 'request description'
-__author__ = 'request author'
-__author_email__ = 'request author email'
-__url__ = 'request url'
-__license__ = 'request licencse'
+__title__ = "request"
+__version__ = "1.2.3"
+__description__ = "request description"
+__author__ = "request author"
+__author_email__ = "request author email"
+__url__ = "request url"
+__license__ = "request licencse"
