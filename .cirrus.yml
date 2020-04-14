@@ -6,10 +6,7 @@ test_task:
   env:
     matrix:
       - PYTHON: python2.7
-      - PYTHON: python3.5
-      - PYTHON: python3.6
       - PYTHON: python3.7
-      - PYTHON: python3.8
   python_script:
     - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
     - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
