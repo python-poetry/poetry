@@ -215,3 +215,11 @@ def test_urls():
 
     assert "https://pypi.org/simple/" == repository.url
     assert "https://pypi.org/simple/" == repository.authenticated_url
+
+
+def test_use_pypi_pretty_name():
+    repo = MockRepository(fallback=True)
+
+    package = repo.find_packages("twisted")
+    assert len(package) == 1
+    assert package[0].pretty_name == "Twisted"
