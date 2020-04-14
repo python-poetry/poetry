@@ -168,7 +168,7 @@ poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-com
 poetry completions fish > ~/.config/fish/completions/poetry.fish
 
 # Fish (Homebrew)
-poetry completions fish > $(brew --prefix)/share/fish/vendor_completions.d/poetry.fish
+poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
