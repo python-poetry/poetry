@@ -1,5 +1,3 @@
-import pytest
-
 from poetry.masonry.utils.tags import get_abi_tag
 from poetry.utils.env import MockEnv
 
