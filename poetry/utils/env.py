@@ -1152,7 +1152,7 @@ class MockEnv(NullEnv):
         pip_version="19.1",
         sys_path=None,
         config_vars=None,
-        **kwargs,
+        **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
 
