@@ -881,7 +881,7 @@ class Env(object):
                     stderr=subprocess.STDOUT,
                     input=encode(input_),
                     check=True,
-                    **kwargs,
+                    **kwargs
                 ).stdout
             elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
