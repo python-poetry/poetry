@@ -957,7 +957,13 @@ def main():
     parser.add_argument(
         "--uninstall", dest="uninstall", action="store_true", default=False
     )
-    parser.add_argument("--file", dest="file", action="store")
+    parser.add_argument(
+        "--file",
+        dest="file",
+        action="store",
+        help="Install from a local file instead of fetching the latest version "
+        "of Poetry available online.",
+    )
 
     args = parser.parse_args()
 
