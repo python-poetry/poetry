@@ -946,24 +946,43 @@ def main():
         description="Installs the latest (or given) version of poetry"
     )
     parser.add_argument(
-        "-p", "--preview", dest="preview", action="store_true", default=False
+        "-p",
+        "--preview",
+        help="install preview version",
+        dest="preview",
+        action="store_true",
+        default=False,
     )
-    parser.add_argument("--version", dest="version")
+    parser.add_argument("--version", help="install named version", dest="version")
     parser.add_argument(
-        "-f", "--force", dest="force", action="store_true", default=False
+        "-f",
+        "--force",
+        help="install on top of existing version",
+        dest="force",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
-        "-P",
         "--no-modify-path",
+        help="do not modify $PATH",
         dest="no_modify_path",
         action="store_true",
         default=False,
     )
     parser.add_argument(
-        "-y", "--yes", dest="accept_all", action="store_true", default=False
+        "-y",
+        "--yes",
+        help="accept all prompts",
+        dest="accept_all",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
-        "--uninstall", dest="uninstall", action="store_true", default=False
+        "--uninstall",
+        help="uninstall poetry",
+        dest="uninstall",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
         "--file",
