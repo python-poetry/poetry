@@ -117,3 +117,18 @@ def tmp_dir():
     yield dir_
 
     shutil.rmtree(dir_)
+
+
+@pytest.fixture
+def mocked_open_files(mocker):
+    files = []
+    original = Path.open
+
+    def mocked_open(self, *args, **kwargs):
+        if self.name in {"pyproject.toml"}:
+            return mocker.MagicMock()
+        return original(self, *args, **kwargs)
+
+    mocker.patch("poetry.utils._compat.Path.open", mocked_open)
+
+    yield files
