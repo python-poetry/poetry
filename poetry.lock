@@ -389,8 +389,8 @@ description = "Read metadata from Python packages"
 marker = "python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\""
 name = "importlib-metadata"
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
-version = "1.1.3"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+version = "1.6.0"
 
 [package.dependencies]
 zipp = ">=0.5"
@@ -400,6 +400,10 @@ python = "<3"
 version = ">=3.5"
 
 [package.dependencies.contextlib2]
+python = "<3"
+version = "*"
+
+[package.dependencies.pathlib2]
 python = "<3"
 version = "*"
 
@@ -1100,7 +1104,7 @@ requests = ">=2.0.1,<3.0.0"
 [[package]]
 category = "main"
 description = "scandir, a better directory iterator and faster os.walk()"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.5\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.5\")"
 name = "scandir"
 optional = false
 python-versions = "*"
@@ -1374,7 +1378,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "7ae766406ba58bc44d4b0d5876927ab0db9005d6a80efab83ddd6a2c50c2f8c8"
+content-hash = "761458c97b98a1aced89051c7c5253972498ad4b576a9778f3e01810c1fd27c6"
 python-versions = "~2.7 || ^3.5"
 
 [metadata.files]
@@ -1578,8 +1582,8 @@ idna = [
     {file = "idna-2.9.tar.gz", hash = "sha256:7588d1c14ae4c77d74036e8c22ff447b26d0fde8f007354fd48a7814db15b7cb"},
 ]
 importlib-metadata = [
-    {file = "importlib_metadata-1.1.3-py2.py3-none-any.whl", hash = "sha256:7c7f8ac40673f507f349bef2eed21a0e5f01ddf5b2a7356a6c65eb2099b53764"},
-    {file = "importlib_metadata-1.1.3.tar.gz", hash = "sha256:7a99fb4084ffe6dae374961ba7a6521b79c1d07c658ab3a28aa264ee1d1b14e3"},
+    {file = "importlib_metadata-1.6.0-py2.py3-none-any.whl", hash = "sha256:2a688cbaa90e0cc587f1df48bdc97a6eadccdcd9c35fb3f976a09e3b5016d90f"},
+    {file = "importlib_metadata-1.6.0.tar.gz", hash = "sha256:34513a8a0c4962bc66d35b359558fd8a5e10cd472d37aec5f66858addef32c1e"},
 ]
 importlib-resources = [
     {file = "importlib_resources-1.4.0-py2.py3-none-any.whl", hash = "sha256:dd98ceeef3f5ad2ef4cc287b8586da4ebad15877f351e9688987ad663a0a29b8"},
