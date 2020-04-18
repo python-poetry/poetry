@@ -44,7 +44,7 @@ pathlib2 = { version = "^2.3", python = "~2.7" }
 # Use glob2 for Python 2.7 and 3.4
 glob2 = { version = "^0.6", python = "~2.7" }
 # Use virtualenv for Python 2.7 since venv does not exist
-virtualenv = { version = "^16.7.9", python = "~2.7" }
+virtualenv = { version = "^20.0.18", python = "~2.7" }
 # functools32 is needed for Python 2.7
 functools32 = { version = "^3.2.3", python = "~2.7" }
 keyring = [
