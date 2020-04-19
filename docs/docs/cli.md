@@ -456,4 +456,4 @@ poetry export -f requirements.txt > requirements.txt
 The `env` command regroups sub commands to interact with the virtualenvs
 associated with a specific project.
 
-See [Managing environments](./managing-environments.md) for more information about these commands.
+See [Managing environments](/docs/managing-environments.md) for more information about these commands.
