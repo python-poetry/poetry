@@ -1,5 +1,5 @@
 [[package]]
-category = "dev"
+category = "main"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 name = "appdirs"
 optional = false
@@ -104,7 +104,7 @@ version = "2019.11.28"
 [[package]]
 category = "main"
 description = "Foreign Function Interface for Python calling C code."
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (sys_platform == \"linux2\" or sys_platform == \"linux\") or python_version >= \"3.5\" and python_version < \"4.0\" and sys_platform == \"linux\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (sys_platform == \"linux2\" or sys_platform == \"linux\") or python_version >= \"3.5\" and python_version < \"3.6\" and sys_platform == \"linux\" or python_version >= \"3.6\" and python_version < \"4.0\" and sys_platform == \"linux\""
 name = "cffi"
 optional = false
 python-versions = "*"
@@ -192,7 +192,7 @@ version = "0.4.3"
 [[package]]
 category = "main"
 description = "Updated configparser from Python 3.7 for Python 2.6+."
-marker = "python_version == \"2.7\" and python_version == \"2.7\" or python_version < \"3\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\") or python_version == \"2.7\" and python_version == \"2.7\" or python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\""
 name = "configparser"
 optional = false
 python-versions = ">=2.6"
@@ -205,7 +205,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2)", "pytes
 [[package]]
 category = "main"
 description = "Backports and enhancements for the contextlib module"
-marker = "python_version < \"3.4\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\") or python_version < \"3.4\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\") or python_version < \"3.4\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\") or python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\") or python_version < \"3.4\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\") or python_version < \"3.4\""
 name = "contextlib2"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -225,7 +225,7 @@ toml = ["toml"]
 [[package]]
 category = "main"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (sys_platform == \"linux2\" or sys_platform == \"linux\") or python_version >= \"3.5\" and python_version < \"4.0\" and sys_platform == \"linux\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (sys_platform == \"linux2\" or sys_platform == \"linux\") or python_version >= \"3.5\" and python_version < \"3.6\" and sys_platform == \"linux\" or python_version >= \"3.6\" and python_version < \"4.0\" and sys_platform == \"linux\""
 name = "cryptography"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
@@ -251,7 +251,7 @@ pep8test = ["flake8", "flake8-import-order", "pep8-naming"]
 test = ["pytest (>=3.6.0,<3.9.0 || >3.9.0,<3.9.1 || >3.9.1,<3.9.2 || >3.9.2)", "pretend", "iso8601", "pytz", "hypothesis (>=1.11.4,<3.79.2 || >3.79.2)"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Distribution utilities"
 name = "distlib"
 optional = false
@@ -282,7 +282,7 @@ python-versions = "*"
 version = "1.1.10"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "A platform independent file lock."
 name = "filelock"
 optional = false
@@ -386,11 +386,11 @@ version = "2.9"
 [[package]]
 category = "main"
 description = "Read metadata from Python packages"
-marker = "python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") or python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.6\" or python_version >= \"3.6\" and python_version < \"3.8\""
 name = "importlib-metadata"
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
-version = "1.1.3"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+version = "1.6.0"
 
 [package.dependencies]
 zipp = ">=0.5"
@@ -403,14 +403,18 @@ version = ">=3.5"
 python = "<3"
 version = "*"
 
+[package.dependencies.pathlib2]
+python = "<3"
+version = "*"
+
 [package.extras]
 docs = ["sphinx", "rst.linker"]
 testing = ["packaging", "importlib-resources"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Read resources from Python packages"
-marker = "python_version < \"3.7\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\""
 name = "importlib-resources"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
@@ -456,7 +460,7 @@ version = "1.0.23"
 [[package]]
 category = "main"
 description = "Low-level, pure Python DBus protocol wrapper."
-marker = "python_version >= \"3.5\" and python_version < \"4.0\" and sys_platform == \"linux\""
+marker = "python_version >= \"3.5\" and python_version < \"3.6\" and sys_platform == \"linux\" or python_version >= \"3.6\" and python_version < \"4.0\" and sys_platform == \"linux\""
 name = "jeepney"
 optional = false
 python-versions = ">=3.5"
@@ -504,7 +508,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs", "pytest-flake8
 [[package]]
 category = "main"
 description = "Store and access your passwords safely."
-marker = "python_version >= \"3.5\" and python_version < \"4.0\""
+marker = "python_version >= \"3.5\" and python_version < \"3.6\""
 name = "keyring"
 optional = false
 python-versions = ">=3.5"
@@ -513,6 +517,28 @@ version = "20.0.1"
 [package.dependencies]
 pywin32-ctypes = "<0.1.0 || >0.1.0,<0.1.1 || >0.1.1"
 secretstorage = "*"
+
+[package.dependencies.importlib-metadata]
+python = "<3.8"
+version = "*"
+
+[package.extras]
+docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
+testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-black-multipy", "pytest-cov"]
+
+[[package]]
+category = "main"
+description = "Store and access your passwords safely."
+marker = "python_version >= \"3.6\" and python_version < \"4.0\""
+name = "keyring"
+optional = false
+python-versions = ">=3.6"
+version = "21.2.0"
+
+[package.dependencies]
+SecretStorage = ">=3"
+jeepney = ">=0.4.2"
+pywin32-ctypes = "<0.1.0 || >0.1.0,<0.1.1 || >0.1.1"
 
 [package.dependencies.importlib-metadata]
 python = "<3.8"
@@ -750,7 +776,7 @@ version = "0.2.0"
 [[package]]
 category = "main"
 description = "Object-oriented filesystem paths"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.6\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\") or python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform != \"win32\" or python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.6\" or python_version < \"3.4\" and sys_platform != \"win32\""
 name = "pathlib2"
 optional = false
 python-versions = "*"
@@ -880,7 +906,7 @@ version = "1.8.1"
 [[package]]
 category = "main"
 description = "C parser in Python"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (sys_platform == \"linux2\" or sys_platform == \"linux\") or python_version >= \"3.5\" and python_version < \"4.0\" and sys_platform == \"linux\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (sys_platform == \"linux2\" or sys_platform == \"linux\") or python_version >= \"3.5\" and python_version < \"3.6\" and sys_platform == \"linux\" or python_version >= \"3.6\" and python_version < \"4.0\" and sys_platform == \"linux\""
 name = "pycparser"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -1045,7 +1071,7 @@ termcolor = ">=1.1.0"
 [[package]]
 category = "main"
 description = ""
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform == \"win32\" or python_version >= \"3.5\" and python_version < \"4.0\" and sys_platform == \"win32\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform == \"win32\" or python_version >= \"3.5\" and python_version < \"3.6\" and sys_platform == \"win32\" or python_version >= \"3.6\" and python_version < \"4.0\" and sys_platform == \"win32\""
 name = "pywin32-ctypes"
 optional = false
 python-versions = "*"
@@ -1100,7 +1126,7 @@ requests = ">=2.0.1,<3.0.0"
 [[package]]
 category = "main"
 description = "scandir, a better directory iterator and faster os.walk()"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform != \"win32\" or python_version < \"3.5\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform != \"win32\" or python_version < \"3.5\") or python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform != \"win32\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform != \"win32\" or python_version < \"3.5\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform != \"win32\" or python_version < \"3.5\") or python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform != \"win32\" or python_version < \"3.5\" or python_version < \"3.4\" and sys_platform != \"win32\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"2.7\" and python_version < \"2.8\" and sys_platform != \"win32\" or python_version < \"3.5\")"
 name = "scandir"
 optional = false
 python-versions = "*"
@@ -1124,7 +1150,7 @@ dbus-python = ["dbus-python"]
 [[package]]
 category = "main"
 description = "Python bindings to FreeDesktop.org Secret Service API"
-marker = "python_version >= \"3.5\" and python_version < \"4.0\" and sys_platform == \"linux\""
+marker = "python_version >= \"3.5\" and python_version < \"3.6\" and sys_platform == \"linux\" or python_version >= \"3.6\" and python_version < \"4.0\" and sys_platform == \"linux\""
 name = "secretstorage"
 optional = false
 python-versions = ">=3.5"
@@ -1143,9 +1169,9 @@ python-versions = "!=3.0,!=3.1,!=3.2,!=3.3,>=2.6"
 version = "1.3.2"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "This library brings functools.singledispatch from Python 3.4 to Python 2.6-3.3."
-marker = "python_version < \"3.4\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.4\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.4\")"
 name = "singledispatch"
 optional = false
 python-versions = "*"
@@ -1264,7 +1290,7 @@ version = "1.4.1"
 [[package]]
 category = "main"
 description = "Type Hints for Python"
-marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\" or python_version < \"3.5\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version >= \"3.4\" and python_version < \"3.5\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.5\") or python_version < \"3.5\""
 name = "typing"
 optional = false
 python-versions = "*"
@@ -1298,25 +1324,17 @@ description = "Virtual Python Environment builder"
 name = "virtualenv"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
-version = "16.7.10"
-
-[package.extras]
-docs = ["sphinx (>=1.8.0,<2)", "towncrier (>=18.5.0)", "sphinx-rtd-theme (>=0.4.2,<1)"]
-testing = ["pytest (>=4.0.0,<5)", "coverage (>=4.5.0,<5)", "pytest-timeout (>=1.3.0,<2)", "six (>=1.10.0,<2)", "pytest-xdist", "pytest-localserver", "pypiserver", "mock", "xonsh"]
-
-[[package]]
-category = "dev"
-description = "Virtual Python Environment builder"
-name = "virtualenv"
-optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
-version = "20.0.15"
+version = "20.0.18"
 
 [package.dependencies]
 appdirs = ">=1.4.3,<2"
 distlib = ">=0.3.0,<1"
 filelock = ">=3.0.0,<4"
 six = ">=1.9.0,<2"
+
+[package.dependencies.contextlib2]
+python = "<3.3"
+version = ">=0.6.0,<1"
 
 [package.dependencies.importlib-metadata]
 python = "<3.8"
@@ -1326,9 +1344,13 @@ version = ">=0.12,<2"
 python = "<3.7"
 version = ">=1.0,<2"
 
+[package.dependencies.pathlib2]
+python = "<3.4"
+version = ">=2.3.3,<3"
+
 [package.extras]
 docs = ["sphinx (>=2.0.0,<3)", "sphinx-argparse (>=0.2.5,<1)", "sphinx-rtd-theme (>=0.4.3,<1)", "towncrier (>=19.9.0rc1)", "proselint (>=0.10.2,<1)"]
-testing = ["pytest (>=4.0.0,<6)", "coverage (>=4.5.1,<6)", "pytest-mock (>=2.0.0,<3)", "pytest-env (>=0.6.2,<1)", "pytest-timeout (>=1.3.4,<2)", "packaging (>=20.0)", "xonsh (>=0.9.13,<1)"]
+testing = ["pytest (>=4.0.0,<6)", "coverage (>=4.5.1,<6)", "pytest-mock (>=2.0.0,<3)", "pytest-env (>=0.6.2,<1)", "pytest-timeout (>=1.3.4,<2)", "packaging (>=20.0)", "xonsh (>=0.9.16,<1)"]
 
 [[package]]
 category = "dev"
@@ -1358,7 +1380,7 @@ version = "0.2.1"
 [[package]]
 category = "main"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-marker = "python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.7\") and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\") or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\") or python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.7\" or python_version >= \"3.5\" and python_version < \"3.6\" or python_version >= \"3.6\" and python_version < \"3.8\""
 name = "zipp"
 optional = false
 python-versions = ">=2.7"
@@ -1374,7 +1396,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "7ae766406ba58bc44d4b0d5876927ab0db9005d6a80efab83ddd6a2c50c2f8c8"
+content-hash = "36bd5c11ace38ba5d1774fa36a24e70bda79c3cab46083620288fcc5fb5dc5c0"
 python-versions = "~2.7 || ^3.5"
 
 [metadata.files]
@@ -1578,8 +1600,8 @@ idna = [
     {file = "idna-2.9.tar.gz", hash = "sha256:7588d1c14ae4c77d74036e8c22ff447b26d0fde8f007354fd48a7814db15b7cb"},
 ]
 importlib-metadata = [
-    {file = "importlib_metadata-1.1.3-py2.py3-none-any.whl", hash = "sha256:7c7f8ac40673f507f349bef2eed21a0e5f01ddf5b2a7356a6c65eb2099b53764"},
-    {file = "importlib_metadata-1.1.3.tar.gz", hash = "sha256:7a99fb4084ffe6dae374961ba7a6521b79c1d07c658ab3a28aa264ee1d1b14e3"},
+    {file = "importlib_metadata-1.6.0-py2.py3-none-any.whl", hash = "sha256:2a688cbaa90e0cc587f1df48bdc97a6eadccdcd9c35fb3f976a09e3b5016d90f"},
+    {file = "importlib_metadata-1.6.0.tar.gz", hash = "sha256:34513a8a0c4962bc66d35b359558fd8a5e10cd472d37aec5f66858addef32c1e"},
 ]
 importlib-resources = [
     {file = "importlib_resources-1.4.0-py2.py3-none-any.whl", hash = "sha256:dd98ceeef3f5ad2ef4cc287b8586da4ebad15877f351e9688987ad663a0a29b8"},
@@ -1602,6 +1624,8 @@ keyring = [
     {file = "keyring-18.0.1.tar.gz", hash = "sha256:67d6cc0132bd77922725fae9f18366bb314fd8f95ff4d323a4df41890a96a838"},
     {file = "keyring-20.0.1-py2.py3-none-any.whl", hash = "sha256:c674f032424b4bffc62abeac5523ec49cc84aed07a480c3233e0baf618efc15c"},
     {file = "keyring-20.0.1.tar.gz", hash = "sha256:963bfa7f090269d30bdc5e25589e5fd9dad2cf2a7c6f176a7f2386910e5d0d8d"},
+    {file = "keyring-21.2.0-py3-none-any.whl", hash = "sha256:8179b1cdcdcbc221456b5b74e6b7cfa06f8dd9f239eb81892166d9223d82c5ba"},
+    {file = "keyring-21.2.0.tar.gz", hash = "sha256:197fd5903901030ef7b82fe247f43cfed2c157a28e7747d1cfcf4bc5e699dd03"},
 ]
 livereload = [
     {file = "livereload-2.6.1-py2.py3-none-any.whl", hash = "sha256:78d55f2c268a8823ba499305dcac64e28ddeb9a92571e12d543cd304faf5817b"},
@@ -1949,10 +1973,8 @@ urllib3 = [
     {file = "urllib3-1.25.8.tar.gz", hash = "sha256:87716c2d2a7121198ebcb7ce7cccf6ce5e9ba539041cfbaeecfb641dc0bf6acc"},
 ]
 virtualenv = [
-    {file = "virtualenv-16.7.10-py2.py3-none-any.whl", hash = "sha256:105893c8dc66b7817691c7371439ec18e3b6c5e323a304b5ed96cdd2e75cc1ec"},
-    {file = "virtualenv-16.7.10.tar.gz", hash = "sha256:e88fdcb08b0ecb11da97868f463dd06275923f50d87f4b9c8b2fc0994eec40f4"},
-    {file = "virtualenv-20.0.15-py2.py3-none-any.whl", hash = "sha256:4e399f48c6b71228bf79f5febd27e3bbb753d9d5905776a86667bc61ab628a25"},
-    {file = "virtualenv-20.0.15.tar.gz", hash = "sha256:9e81279f4a9d16d1c0654a127c2c86e5bca2073585341691882c1e66e31ef8a5"},
+    {file = "virtualenv-20.0.18-py2.py3-none-any.whl", hash = "sha256:5021396e8f03d0d002a770da90e31e61159684db2859d0ba4850fbea752aa675"},
+    {file = "virtualenv-20.0.18.tar.gz", hash = "sha256:ac53ade75ca189bc97b6c1d9ec0f1a50efe33cbf178ae09452dcd9fd309013c1"},
 ]
 wcwidth = [
     {file = "wcwidth-0.1.9-py2.py3-none-any.whl", hash = "sha256:cafe2186b3c009a04067022ce1dcd79cb38d8d65ee4f4791b8888d6599d1bbe1"},

@@ -137,14 +137,16 @@ python = "^{python}"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies(app, repo, mocker, poetry):
+def test_interactive_with_git_dependencies(
+    app, repo, mocker, poetry, mocked_open_files
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
     command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch("poetry.utils._compat.Path.open")
+    mocked_open_files.append("pyproject.toml")
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -187,14 +189,16 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies_with_reference(app, repo, mocker, poetry):
+def test_interactive_with_git_dependencies_with_reference(
+    app, repo, mocker, poetry, mocked_open_files
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
     command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch("poetry.utils._compat.Path.open")
+    mocked_open_files.append("pyproject.toml")
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -237,14 +241,16 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies_and_other_name(app, repo, mocker, poetry):
+def test_interactive_with_git_dependencies_and_other_name(
+    app, repo, mocker, poetry, mocked_open_files
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
     command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch("poetry.utils._compat.Path.open")
+    mocked_open_files.append("pyproject.toml")
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -287,14 +293,16 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_directory_dependency(app, repo, mocker, poetry):
+def test_interactive_with_directory_dependency(
+    app, repo, mocker, poetry, mocked_open_files
+):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
     command = app.find("init")
     command._pool = poetry.pool
 
-    mocker.patch("poetry.utils._compat.Path.open")
+    mocked_open_files.append("pyproject.toml")
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
