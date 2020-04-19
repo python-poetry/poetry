@@ -113,9 +113,9 @@ def test_publish_with_private_property(app, app_tester, http):
     app.poetry.package.private = True
     app_tester.execute("publish")
 
-    expected = """
-  RuntimeError
+    expected = (
+        "This project can't be published using default repository as it is "
+        "marked as a private package."
+    )
 
-  You need to provide repository name for packages marked as private
-"""
     assert expected in app_tester.io.fetch_output()

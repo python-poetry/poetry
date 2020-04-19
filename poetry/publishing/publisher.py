@@ -38,10 +38,16 @@ class Publisher:
         client_cert=None,
         dry_run=False,
     ):  # type: (Optional[str], Optional[str], Optional[str], Optional[Path], Optional[Path], Optional[bool]) -> None
-        if not repository_name and self._package.private is True:
-            raise RuntimeError(
-                "You need to provide repository name for packages marked as private"
+        if not repository_name and self._package.private:
+            self._io.write_line(
+                "<warning>This project can't be published using default repository "
+                "as it is marked as a <b>private</> package.\n"
+                "You probably don't want to publish it to default pypi "
+                "repository.</>\n\n"
+                "Please use <c1>`poetry publish -r <repository_name>`</> "
+                "to publish this package"
             )
+            return
         elif not repository_name:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"

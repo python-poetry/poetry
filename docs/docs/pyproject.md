@@ -269,6 +269,14 @@ any custom url in the `urls` section.
 
 If you publish you package on PyPI, they will appear in the `Project Links` section.
 
+
+## private
+
+Setting this to `true` marks the project as private. This will prevent using
+public PYPI repository by default when running `poetry publish`.
+Publishing will require using `-r` option for projects mark as private.
+
+
 ## Poetry and PEP-517
 
 [PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way
@@ -293,9 +301,3 @@ build-backend = "poetry.core.masonry.api"
 
     If your `pyproject.toml` file still references `poetry` directly as a build backend,
     you should update it to reference `poetry_core` instead.
-
-## private
-
-Setting this to `true` marks the project as private. This will prevent using
-public PYPI repository by default when running `poetry publish`.
-Publishing will require using `-r` option for projects mark as private.
