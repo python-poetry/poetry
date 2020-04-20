@@ -90,22 +90,7 @@ class Solver:
                         # Trying to find the currently installed version
                         pkg_source_url = Git.normalize_url(pkg.source_url)
                         package_source_url = Git.normalize_url(package.source_url)
-                        lpkg = None
-                        for locked in self._locked.packages:
-                            if locked.name != pkg.name or locked.source_type != "git":
-                                continue
-
-                            locked_source_url = Git.normalize_url(locked.source_url)
-                            if (
-                                locked.name == pkg.name
-                                and locked.source_type == pkg.source_type
-                                and locked_source_url == pkg_source_url
-                            ):
-                                lpkg = Package(pkg.name, locked.version)
-                                lpkg.source_type = "git"
-                                lpkg.source_url = locked.source_url
-                                lpkg.source_reference = locked.source_reference
-                                break
+                        lpkg = self.__find_git_locked_version(pkg)
 
                         if lpkg:
                             if lpkg.source_reference != pkg.source_reference:
@@ -140,7 +125,14 @@ class Solver:
                     break
 
             if not installed:
-                operations.append(Install(package, priority=depths[i]))
+                if package.source_type == "git":
+                    locked_package = self.__find_git_locked_version(package)
+                    if locked_package:
+                        operations.append(Install(locked_package, priority=depths[i]))
+                    else:
+                        operations.append(Install(package, priority=depths[i]))
+                else:
+                    operations.append(Install(package, priority=depths[i]))
 
         # Checking for removals
         for pkg in self._locked.packages:
@@ -178,6 +170,27 @@ class Solver:
         return sorted(
             operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
         )
+
+    def __find_git_locked_version(self, package):
+        from poetry.vcs.git import Git
+
+        # Trying to find the currently installed version
+        package_source_url = Git.normalize_url(package.source_url)
+        for locked in self._locked.packages:
+            if locked.name != package.name or locked.source_type != "git":
+                continue
+
+            locked_source_url = Git.normalize_url(locked.source_url)
+            if (
+                locked.name == package.name
+                and locked.source_type == package.source_type
+                and locked_source_url == package_source_url
+            ):
+                lpkg = Package(package.name, locked.version)
+                lpkg.source_type = "git"
+                lpkg.source_url = locked.source_url
+                lpkg.source_reference = locked.source_reference
+                return lpkg
 
     def solve_in_compatibility_mode(self, overrides, use_latest=None):
         locked = {}

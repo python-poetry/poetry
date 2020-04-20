@@ -2040,7 +2040,7 @@ def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
 
 
 def test_solver_does_not_update_git_package_if_installed_matches_locked(
-    solver, repo, package, locked, pool, installed, io
+    solver, repo, package, locked, pool, installed, mocker
 ):
     package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
 
@@ -2061,18 +2061,20 @@ def test_solver_does_not_update_git_package_if_installed_matches_locked(
     demo_up.source_url = "https://github.com/demo/demo.git"
     demo_up.source_reference = "654321"
 
-    repo.add_package(demo_up)
+    # We need to mock that there is a different head for the git repo available
+    mock = mocker.patch("poetry.puzzle.solver.resolve_version")
+    mock.return_value.packages = [demo_up]
 
     ops = solver.solve()
 
     check_solver_result(
         ops,
-        [{"job": "install", "package": get_package("demo", "0.1.2"), "skipped": True}],
+        [{"job": "install", "package": get_package("demo", "0.1.3"), "skipped": True}],
     )
 
 
 def test_solver_updates_git_package_to_locked_version_if_installed_matches_does_not_match_locked(
-    solver, repo, package, locked, pool, installed, io
+    solver, repo, package, locked, pool, installed, mocker
 ):
     package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
 
@@ -2088,18 +2090,48 @@ def test_solver_updates_git_package_to_locked_version_if_installed_matches_does_
     demo_locked.source_reference = "123456"
     locked.add_package(demo_locked)
 
-    demo_up = get_package("demo", "0.1.2")
+    demo_up = get_package("demo", "0.1.2it")
     demo_up.source_type = "git"
     demo_up.source_url = "https://github.com/demo/demo.git"
     demo_up.source_reference = "654321"
 
-    repo.add_package(demo_up)
+    # We need to mock that there is a different head for the git repo available
+    mock = mocker.patch("poetry.puzzle.solver.resolve_version")
+    mock.return_value.packages = [demo_up]
 
     ops = solver.solve()
 
     check_solver_result(
         ops, [{"job": "update", "from": demo, "to": demo_locked, "skipped": False}],
     )
+
+
+def test_installs_specified_git_package_if_not_installed(
+    solver, repo, package, locked, pool, installed, mocker
+):
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+
+    demo_locked = get_package("demo", "0.1.2")
+    demo_locked.source_type = "git"
+    demo_locked.source_url = "https://github.com/demo/demo.git"
+    demo_locked.source_reference = "123456"
+    locked.add_package(demo_locked)
+
+    demo_up = get_package("demo", "0.1.2")
+    demo_up.source_type = "git"
+    demo_up.source_url = "https://github.com/demo/demo.git"
+    demo_up.source_reference = "654321"
+
+    # We need to mock that there is a different head for the git repo available
+    mock = mocker.patch("poetry.puzzle.solver.resolve_version")
+    mock.return_value.packages = [demo_up]
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": demo_locked, "skipped": False}],
+    )
+    assert ops[0].package.source_reference == "123456"
 
 
 def test_solver_should_not_raise_errors_for_irrelevant_python_constraints(
