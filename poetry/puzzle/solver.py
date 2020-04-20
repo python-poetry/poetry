@@ -113,16 +113,12 @@ class Solver:
                             pkg.source_reference != package.source_reference
                             and not pkg.source_reference.startswith(
                                 package.source_reference
-                            ) and not is_locked
-                        ):
-                            operations.append(Update(pkg, package, priority=depths[i]))
-                        elif is_locked and (
-                            pkg.source_reference != package.source_reference
-                            and not pkg.source_reference.startswith(
-                                package.source_reference
                             )
                         ):
-                            operations.append(Update(package, pkg, priority=depths[i]))
+                            if is_locked:
+                                operations.append(Update(package, pkg, priority=depths[i]))
+                            else:
+                                operations.append(Update(pkg, package, priority=depths[i]))
                         else:
                             operations.append(
                                 Install(package).skip("Already installed")
