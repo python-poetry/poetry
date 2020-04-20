@@ -90,6 +90,7 @@ class Solver:
                         # Trying to find the currently installed version
                         pkg_source_url = Git.normalize_url(pkg.source_url)
                         package_source_url = Git.normalize_url(package.source_url)
+                        is_locked = False
                         for locked in self._locked.packages:
                             if locked.name != pkg.name or locked.source_type != "git":
                                 continue
@@ -101,6 +102,7 @@ class Solver:
                                 and locked_source_url == pkg_source_url
                                 and locked.source_reference == pkg.source_reference
                             ):
+                                is_locked=True
                                 pkg = Package(pkg.name, locked.version)
                                 pkg.source_type = "git"
                                 pkg.source_url = locked.source_url
@@ -111,9 +113,16 @@ class Solver:
                             pkg.source_reference != package.source_reference
                             and not pkg.source_reference.startswith(
                                 package.source_reference
-                            )
+                            ) and not is_locked
                         ):
                             operations.append(Update(pkg, package, priority=depths[i]))
+                        elif is_locked and (
+                            pkg.source_reference != package.source_reference
+                            and not pkg.source_reference.startswith(
+                                package.source_reference
+                            )
+                        ):
+                            operations.append(Update(package, pkg, priority=depths[i]))
                         else:
                             operations.append(
                                 Install(package).skip("Already installed")
