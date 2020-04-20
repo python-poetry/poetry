@@ -2074,6 +2074,7 @@ def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
         ],
     )
 
+
 def test_solver_does_not_update_git_package_if_installed_matches_locked(
     solver, repo, package, locked, pool, installed, io
 ):
@@ -2102,10 +2103,9 @@ def test_solver_does_not_update_git_package_if_installed_matches_locked(
 
     check_solver_result(
         ops,
-        [
-            {"job": "install", "package": get_package("demo", "0.1.2"), "skipped": True},
-        ],
+        [{"job": "install", "package": get_package("demo", "0.1.2"), "skipped": True}],
     )
+
 
 def test_solver_updates_git_package_to_locked_version_if_installed_matches_does_not_match_locked(
     solver, repo, package, locked, pool, installed, io
@@ -2134,10 +2134,7 @@ def test_solver_updates_git_package_to_locked_version_if_installed_matches_does_
     ops = solver.solve()
 
     check_solver_result(
-        ops,
-        [
-            {"job": "update", "from": demo, "to": demo_locked, "skipped": False},
-        ],
+        ops, [{"job": "update", "from": demo, "to": demo_locked, "skipped": False}],
     )
 
 

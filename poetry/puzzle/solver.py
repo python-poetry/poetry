@@ -102,7 +102,7 @@ class Solver:
                                 and locked_source_url == pkg_source_url
                                 and locked.source_reference == pkg.source_reference
                             ):
-                                is_locked=True
+                                is_locked = True
                                 pkg = Package(pkg.name, locked.version)
                                 pkg.source_type = "git"
                                 pkg.source_url = locked.source_url
