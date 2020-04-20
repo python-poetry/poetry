@@ -2090,7 +2090,7 @@ def test_solver_updates_git_package_to_locked_version_if_installed_matches_does_
     demo_locked.source_reference = "123456"
     locked.add_package(demo_locked)
 
-    demo_up = get_package("demo", "0.1.2it")
+    demo_up = get_package("demo", "0.1.2")
     demo_up.source_type = "git"
     demo_up.source_url = "https://github.com/demo/demo.git"
     demo_up.source_reference = "654321"
