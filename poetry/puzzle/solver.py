@@ -90,7 +90,7 @@ class Solver:
                         # Trying to find the currently installed version
                         pkg_source_url = Git.normalize_url(pkg.source_url)
                         package_source_url = Git.normalize_url(package.source_url)
-                        is_locked = False
+                        lpkg = False
                         for locked in self._locked.packages:
                             if locked.name != pkg.name or locked.source_type != "git":
                                 continue
@@ -100,25 +100,22 @@ class Solver:
                                 locked.name == pkg.name
                                 and locked.source_type == pkg.source_type
                                 and locked_source_url == pkg_source_url
-                                and locked.source_reference == pkg.source_reference
                             ):
-                                is_locked = True
-                                pkg = Package(pkg.name, locked.version)
-                                pkg.source_type = "git"
-                                pkg.source_url = locked.source_url
-                                pkg.source_reference = locked.source_reference
+                                lpkg = Package(pkg.name, locked.version)
+                                lpkg.source_type = "git"
+                                lpkg.source_url = locked.source_url
+                                lpkg.source_reference = locked.source_reference
                                 break
 
-                        if pkg_source_url != package_source_url or (
+                        if lpkg and lpkg.source_reference != pkg.source_reference:
+                            operations.append(Update(pkg, package))
+                        elif pkg_source_url != package_source_url or (
                             pkg.source_reference != package.source_reference
                             and not pkg.source_reference.startswith(
                                 package.source_reference
                             )
                         ):
-                            if is_locked:
-                                operations.append(Update(package, pkg, priority=depths[i]))
-                            else:
-                                operations.append(Update(pkg, package, priority=depths[i]))
+                            operations.append(Update(package, pkg, priority=depths[i]))
                         else:
                             operations.append(
                                 Install(package).skip("Already installed")
