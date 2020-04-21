@@ -1151,6 +1151,7 @@ class MockEnv(NullEnv):
         is_venv=False,
         pip_version="19.1",
         sys_path=None,
+        config_vars=None,
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -1162,6 +1163,7 @@ class MockEnv(NullEnv):
         self._is_venv = is_venv
         self._pip_version = Version.parse(pip_version)
         self._sys_path = sys_path
+        self._config_vars = config_vars
 
     @property
     def version_info(self):  # type: () -> Tuple[int]
@@ -1192,3 +1194,12 @@ class MockEnv(NullEnv):
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv
+
+    def config_var(self, var):  # type: (str) -> Any
+        if self._config_vars is None:
+            return super().config_var(var)
+        else:
+            try:
+                return self._config_vars[var]
+            except KeyError:
+                return None
