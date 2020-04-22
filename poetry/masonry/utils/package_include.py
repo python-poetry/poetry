@@ -33,8 +33,7 @@ class PackageInclude(Include):
 
         return self.check_elements()
 
-    @property
-    def stub_only(self):  # type: () -> bool
+    def is_stub_only(self):  # type: () -> bool
         # returns `True` if this a PEP 561 stub-only package,
         # see [PEP 561](https://www.python.org/dev/peps/pep-0561/#stub-only-packages)
         return self.package.endswith("-stubs") and all(
@@ -44,7 +43,6 @@ class PackageInclude(Include):
             if el.is_file()
         )
 
-    @property
     def has_modules(self):  # type: () -> bool
         # Packages no longer need an __init__.py in python3, but there must
         # at least be one .py file for it to be considered a package
@@ -62,7 +60,7 @@ class PackageInclude(Include):
             self._is_package = True
             self._package = root.parent.name
 
-            if not self.stub_only and not self.has_modules:
+            if not self.is_stub_only() and not self.has_modules():
                 raise ValueError("{} is not a package.".format(root.name))
 
         else:
@@ -71,7 +69,7 @@ class PackageInclude(Include):
                 self._package = root.name
                 self._elements = sorted(list(root.glob("**/*")))
 
-                if not self.stub_only and not self.has_modules:
+                if not self.is_stub_only() and not self.has_modules():
                     raise ValueError("{} is not a package.".format(root.name))
 
                 self._is_package = True
