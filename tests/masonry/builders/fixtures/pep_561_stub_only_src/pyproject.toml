@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "pep-561-stubs"
+version = "0.1"
+description = "PEP 561 stub package example with an src layout"
+authors = [
+    "Oleg Höfling <oleg.hoefling@gmail.com>"
+]
+license = "MIT"
+packages = [
+    {include = "pkg-stubs", from = "src"}
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"

@@ -162,3 +162,33 @@ def test_dist_info_file_permissions():
             z.getinfo("my_package-1.2.3.dist-info/entry_points.txt").external_attr
             == 0o644 << 16
         )
+
+
+@pytest.mark.parametrize(
+    "package",
+    ["pep_561_stub_only", "pep_561_stub_only_partial", "pep_561_stub_only_src"],
+)
+def test_wheel_package_pep_561_stub_only(package):
+    root = fixtures_dir / package
+    WheelBuilder.make(Factory().create_poetry(root), NullEnv(), NullIO())
+
+    whl = root / "dist" / "pep_561_stubs-0.1-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "pkg-stubs/__init__.pyi" in z.namelist()
+        assert "pkg-stubs/module.pyi" in z.namelist()
+        assert "pkg-stubs/subpkg/__init__.pyi" in z.namelist()
+
+
+def test_wheel_package_pep_561_stub_only_includes_typed_marker():
+    root = fixtures_dir / "pep_561_stub_only_partial"
+    WheelBuilder.make(Factory().create_poetry(root), NullEnv(), NullIO())
+
+    whl = root / "dist" / "pep_561_stubs-0.1-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "pkg-stubs/py.typed" in z.namelist()

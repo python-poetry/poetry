@@ -50,3 +50,20 @@ def test_package_include_with_non_existent_directory():
     err_str = str(with_includes / "not_a_dir") + " does not contain any element"
 
     assert str(e.value) == err_str
+
+
+def test_pep_561_stub_only_package_good_name_suffix():
+    pkg_include = PackageInclude(
+        base=fixtures_dir / "pep_561_stub_only", include="good-stubs"
+    )
+    assert pkg_include.elements == [
+        fixtures_dir / "pep_561_stub_only/good-stubs/__init__.pyi",
+        fixtures_dir / "pep_561_stub_only/good-stubs/module.pyi",
+    ]
+
+
+def test_pep_561_stub_only_package_bad_name_suffix():
+    with pytest.raises(ValueError) as e:
+        PackageInclude(base=fixtures_dir / "pep_561_stub_only", include="bad")
+
+    assert str(e.value) == "bad is not a package."
