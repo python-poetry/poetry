@@ -33,6 +33,21 @@ class PackageInclude(Include):
 
         return self.check_elements()
 
+    def is_stub_only(self):  # type: () -> bool
+        # returns `True` if this a PEP 561 stub-only package,
+        # see [PEP 561](https://www.python.org/dev/peps/pep-0561/#stub-only-packages)
+        return self.package.endswith("-stubs") and all(
+            el.suffix == ".pyi"
+            or (el.parent.name == self.package and el.name == "py.typed")
+            for el in self.elements
+            if el.is_file()
+        )
+
+    def has_modules(self):  # type: () -> bool
+        # Packages no longer need an __init__.py in python3, but there must
+        # at least be one .py file for it to be considered a package
+        return any(element.suffix == ".py" for element in self.elements)
+
     def check_elements(self):  # type: () -> PackageInclude
         if not self._elements:
             raise ValueError(
@@ -43,20 +58,18 @@ class PackageInclude(Include):
         if len(self._elements) > 1:
             # Probably glob
             self._is_package = True
+            self._package = root.parent.name
 
-            # Packages no longer need an __init__.py in python3, but there must
-            # at least be one .py file for it to be considered a package
-            if not any([element.suffix == ".py" for element in self._elements]):
+            if not self.is_stub_only() and not self.has_modules():
                 raise ValueError("{} is not a package.".format(root.name))
 
-            self._package = root.parent.name
         else:
             if root.is_dir():
                 # If it's a directory, we include everything inside it
                 self._package = root.name
                 self._elements = sorted(list(root.glob("**/*")))
 
-                if not any([element.suffix == ".py" for element in self._elements]):
+                if not self.is_stub_only() and not self.has_modules():
                     raise ValueError("{} is not a package.".format(root.name))
 
                 self._is_package = True

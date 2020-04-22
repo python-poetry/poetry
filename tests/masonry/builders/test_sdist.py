@@ -488,3 +488,21 @@ def test_excluded_subpackage():
     exec(compile(setup_ast, filename="setup.py", mode="exec"), ns)
 
     assert ns["packages"] == ["example"]
+
+
+def test_sdist_package_pep_561_stub_only():
+    root = fixtures_dir / "pep_561_stub_only"
+    poetry = Factory().create_poetry(root)
+
+    builder = SdistBuilder(poetry, NullEnv(), NullIO())
+    builder.build()
+
+    sdist = root / "dist" / "pep-561-stubs-0.1.tar.gz"
+
+    assert sdist.exists()
+
+    with tarfile.open(str(sdist), "r") as tar:
+        names = tar.getnames()
+        assert "pep-561-stubs-0.1/pkg-stubs/__init__.pyi" in names
+        assert "pep-561-stubs-0.1/pkg-stubs/module.pyi" in names
+        assert "pep-561-stubs-0.1/pkg-stubs/subpkg/__init__.pyi" in names
