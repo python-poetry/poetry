@@ -14,13 +14,11 @@ class InstalledRepository(Repository):
     def load(cls, env):  # type: (Env) -> InstalledRepository
         """
         Load installed packages.
-
-        For now, it uses the pip "freeze" command.
         """
         repo = cls()
         seen = set()
 
-        for entry in env.sys_path:
+        for entry in reversed(env.sys_path):
             for distribution in sorted(
                 metadata.distributions(path=[entry]), key=lambda d: str(d._path),
             ):
