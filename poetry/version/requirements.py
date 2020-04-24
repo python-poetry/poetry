@@ -161,7 +161,7 @@ IDENTIFIER = Combine(ALPHANUM + ZeroOrMore(IDENTIFIER_END))
 NAME = IDENTIFIER("name")
 EXTRA = IDENTIFIER
 
-URI = Regex(r"[^ ]+")("url")
+URI = Regex(r"[^ ;]+")("url")
 URL = AT + URI
 
 EXTRAS_LIST = EXTRA + ZeroOrMore(COMMA + EXTRA)
