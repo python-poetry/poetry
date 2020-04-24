@@ -1,4 +1,6 @@
 from cleo.testers import CommandTester
+from clikit.api.args.exceptions import CannotParseArgsException
+from pytest import raises
 
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
@@ -52,6 +54,46 @@ def test_remove_by_name(app, tmp_dir):
 
     expected = "Deleted virtualenv: {}\n".format(
         (Path(tmp_dir) / "{}-py3.6".format(venv_name))
+    )
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_remove_no_python(app, tmp_dir):
+    # additional test for the "required optional argument"
+    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    venv_name = EnvManager.generate_env_name(
+        "simple-project", str(app.poetry.file.parent)
+    )
+    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    command = app.find("env remove")
+    tester = CommandTester(command)
+    with raises(CannotParseArgsException):
+        tester.execute()
+
+
+def test_remove_all(app, tmp_dir):
+    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    venv_name = EnvManager.generate_env_name(
+        "simple-project", str(app.poetry.file.parent)
+    )
+    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    command = app.find("env remove")
+    tester = CommandTester(command)
+    tester.execute("--all")
+
+    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+    assert not (Path(tmp_dir) / "{}-py3.7".format(venv_name)).exists()
+
+    expected = "Deleted virtualenv: {}\nDeleted virtualenv: {}\n".format(
+        (Path(tmp_dir) / "{}-py3.6".format(venv_name)),
+        (Path(tmp_dir) / "{}-py3.7".format(venv_name)),
     )
 
     assert expected == tester.io.fetch_output()

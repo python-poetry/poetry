@@ -119,3 +119,5 @@ poetry env remove test-O3eWbxRl-py3.7
 ```
 
 If your remove the currently activated virtual environment, it will be automatically deactivated.
+
+You can delete all virtual environments at once using `env remove --all`.
