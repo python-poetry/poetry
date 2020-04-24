@@ -101,6 +101,13 @@ import sys
 print(json.dumps(sys.path))
 """
 
+GET_PATHS = """\
+import json
+import sysconfig
+
+print(json.dumps(sysconfig.get_paths()))
+"""
+
 CREATE_VENV_COMMAND = """\
 path = {!r}
 
@@ -734,6 +741,7 @@ class Env(object):
         self._marker_env = None
         self._pip_version = None
         self._site_packages = None
+        self._paths = None
 
     @property
     def path(self):  # type: () -> Path
@@ -790,28 +798,20 @@ class Env(object):
     @property
     def site_packages(self):  # type: () -> Path
         if self._site_packages is None:
-            site_packages = []
-            dist_packages = []
-            for entry in self.sys_path:
-                entry = Path(entry)
-                if entry.name == "site-packages":
-                    site_packages.append(entry)
-                elif entry.name == "dist-packages":
-                    dist_packages.append(entry)
-
-            if not site_packages and not dist_packages:
-                raise RuntimeError("Unable to find the site-packages directory")
-
-            if site_packages:
-                self._site_packages = site_packages[0]
-            else:
-                self._site_packages = dist_packages[0]
+            self._site_packages = Path(self.paths["purelib"])
 
         return self._site_packages
 
     @property
     def sys_path(self):  # type: () -> List[str]
         raise NotImplementedError()
+
+    @property
+    def paths(self):  # type: () -> Dict[str, str]
+        if self._paths is None:
+            self._paths = self.get_paths()
+
+        return self._paths
 
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
@@ -839,6 +839,9 @@ class Env(object):
         raise NotImplementedError()
 
     def get_pip_version(self):  # type: () -> Version
+        raise NotImplementedError()
+
+    def get_paths(self):  # type: () -> Dict[str, str]
         raise NotImplementedError()
 
     def is_valid_for_marker(self, marker):  # type: (BaseMarker) -> bool
@@ -961,6 +964,29 @@ class SystemEnv(Env):
         # has a pip and use that
         return [sys.executable, "-m", "pip"]
 
+    def get_paths(self):  # type: () -> Dict[str, str]
+        # We can't use sysconfig.get_paths() because
+        # on some distributions it does not return the proper paths
+        # (those used by pip for instance). We go through distutils
+        # to get the proper ones.
+        from distutils.core import Distribution
+        from distutils.command.install import SCHEME_KEYS  # noqa
+
+        d = Distribution()
+        d.parse_config_files()
+        obj = d.get_command_obj("install", create=True)
+        obj.finalize_options()
+
+        paths = sysconfig.get_paths().copy()
+        for key in SCHEME_KEYS:
+            if key == "headers":
+                # headers is not a path returned by sysconfig.get_paths()
+                continue
+
+            paths[key] = getattr(obj, "install_{}".format(key))
+
+        return paths
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
@@ -1070,6 +1096,11 @@ class VirtualEnv(Env):
             return Version.parse("0.0")
 
         return Version.parse(m.group(1))
+
+    def get_paths(self):  # type: () -> Dict[str, str]
+        output = self.run("python", "-", input_=GET_PATHS)
+
+        return json.loads(output)
 
     def is_venv(self):  # type: () -> bool
         return True
