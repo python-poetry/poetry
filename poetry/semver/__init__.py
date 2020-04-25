@@ -20,7 +20,7 @@ def parse_constraint(constraints):  # type: (str) -> VersionConstraint
     or_groups = []
     for constraints in or_constraints:
         and_constraints = re.split(
-            "(?<!^)(?<![=>< ,]) *(?<!-)[, ](?!-) *(?!,|$)", constraints
+            "(?<!^)(?<![~=>< ,]) *(?<!-)[, ](?!-) *(?!,|$)", constraints
         )
         constraint_objects = []
 
