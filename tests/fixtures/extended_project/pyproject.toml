@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "simple-project"
+name = "extended-project"
 version = "1.2.3"
 description = "Some description."
 authors = [
@@ -19,6 +19,8 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
+
+build = "build.py"
 
 # Requirements
 [tool.poetry.dependencies]

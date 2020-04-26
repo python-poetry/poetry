@@ -39,7 +39,6 @@ exist it will look for <comment>pyproject.toml</> and do the same.
     _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from clikit.io import NullIO
         from poetry.installation.installer import Installer
         from poetry.masonry.builders import EditableBuilder
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
@@ -69,7 +68,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             return 0
 
         try:
-            builder = EditableBuilder(self.poetry, self._env, NullIO())
+            builder = EditableBuilder(self.poetry, self._env, self._io)
         except ModuleOrPackageNotFound:
             # This is likely due to the fact that the project is an application
             # not following the structure expected by Poetry
