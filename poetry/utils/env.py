@@ -1156,6 +1156,9 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed = []
 
+    def get_pip_command(self):  # type: () -> List[str]
+        return [self._bin("python"), "-m", "pip"]
+
     def _run(self, cmd, **kwargs):
         self.executed.append(cmd)
 
