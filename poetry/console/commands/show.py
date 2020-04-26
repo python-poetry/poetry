@@ -180,6 +180,13 @@ lists all packages available."""
 
                 return 0
 
+            required_by = {}
+            for parent in locked_packages:
+                children = {d.pretty_name: d.pretty_constraint for d in parent.requires}
+
+                if pkg.pretty_name in children:
+                    required_by[parent.pretty_name] = children[pkg.pretty_name]
+
             rows = [
                 ["<info>name</>", " : <c1>{}</>".format(pkg.pretty_name)],
                 ["<info>version</>", " : <b>{}</b>".format(pkg.pretty_version)],
@@ -197,6 +204,14 @@ lists all packages available."""
                         " - <c1>{}</c1> <b>{}</b>".format(
                             dependency.pretty_name, dependency.pretty_constraint
                         )
+                    )
+
+            if required_by:
+                self.line("")
+                self.line("<info>required by</info>")
+                for parent, requires_version in required_by.items():
+                    self.line(
+                        " - <c1>{}</c1> <b>{}</b>".format(parent, requires_version)
                     )
 
             return 0
