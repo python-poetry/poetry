@@ -407,10 +407,13 @@ name        : pendulum
 version     : 1.4.2
 description : Python datetimes made easy
 
-dependencies:
+dependencies
  - python-dateutil >=2.6.1
  - tzlocal >=1.4
  - pytzdata >=2017.2.2
+
+required by
+ - calendar >=1.4.0
 ```
 
 ### Options
