@@ -16,6 +16,7 @@ name = "colorama"
 version = "0.3.9"
 description = "Cross-platform colored terminal text."
 category = "dev"
+marker = "sys_platform == \"win32\""
 optional = false
 python-versions = "*"
 
@@ -24,6 +25,7 @@ name = "funcsigs"
 version = "1.0.2"
 description = "Python function signatures from PEP362 for Python 2.6, 2.7 and 3.2+"
 category = "dev"
+marker = "python_version < \"3.0\""
 optional = false
 python-versions = "*"
 
@@ -68,8 +70,8 @@ six = ">=1.10.0"
 attrs = ">=17.4.0"
 more-itertools = ">=4.0.0"
 pluggy = ">=0.5,<0.7"
-funcsigs = {"version" = "*", "markers" = "python_version < \"3.0\""}
-colorama = {"version" = "*", "markers" = "sys_platform == \"win32\""}
+funcsigs = {"version" = "*", "python" = "<3.0"}
+colorama = "*"
 
 [[package]]
 name = "six"

@@ -244,7 +244,8 @@ class Locker(object):
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
 
-            constraint = {"version": str(dependency.pretty_constraint)}
+            constraint = inline_table()
+            constraint["version"] = str(dependency.pretty_constraint)
 
             if dependency.extras:
                 constraint["extras"] = sorted(dependency.extras)
@@ -252,8 +253,8 @@ class Locker(object):
             if dependency.is_optional():
                 constraint["optional"] = True
 
-            if not dependency.python_constraint.is_any():
-                constraint["python"] = str(dependency.python_constraint)
+            if not dependency.marker.is_any():
+                constraint["markers"] = str(dependency.marker)
 
             dependencies[dependency.pretty_name].append(constraint)
 
@@ -274,8 +275,6 @@ class Locker(object):
             "python-versions": package.python_versions,
             "files": sorted(package.files, key=lambda x: x["file"]),
         }
-        if not package.marker.is_any():
-            data["marker"] = str(package.marker)
 
         if package.extras:
             extras = {}

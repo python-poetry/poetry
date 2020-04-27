@@ -3,8 +3,8 @@ from typing import Union
 
 from clikit.api.io import IO
 
-from poetry.core.packages.package import Package
-from poetry.core.semver import parse_constraint
+from poetry.core.packages.project_package import ProjectPackage
+from poetry.io.null_io import NullIO
 from poetry.packages import Locker
 from poetry.puzzle import Solver
 from poetry.puzzle.operations import Install
@@ -26,7 +26,7 @@ class Installer:
         self,
         io,  # type: IO
         env,
-        package,  # type: Package
+        package,  # type: ProjectPackage
         locker,  # type: Locker
         pool,  # type: Pool
         installed=None,  # type: (Union[InstalledRepository, None])
@@ -195,6 +195,37 @@ class Installer:
         if not self.is_dev_mode():
             root = root.clone()
             del root.dev_requires[:]
+
+        if self._io.is_verbose():
+            self._io.write_line("")
+            self._io.write_line(
+                "<info>Finding the necessary packages for the current system</>"
+            )
+
+        # We resolve again by only using the lock file
+        pool = Pool(ignore_repository_names=True)
+
+        # Making a new repo containing the packages
+        # newly resolved and the ones from the current lock file
+        repo = Repository()
+        for package in local_repo.packages + locked_repository.packages:
+            if not repo.has_package(package):
+                repo.add_package(package)
+
+        pool.add_repository(repo)
+
+        # We whitelist all packages to be sure
+        # that the latest ones are picked up
+        whitelist = []
+        for pkg in locked_repository.packages:
+            whitelist.append(pkg.name)
+
+        solver = Solver(
+            root, pool, self._installed_repository, locked_repository, NullIO()
+        )
+
+        with solver.use_environment(self._env):
+            ops = solver.solve(use_latest=whitelist)
 
         # We need to filter operations so that packages
         # not compatible with the current system,
@@ -409,15 +440,6 @@ class Installer:
                 package = op.package
 
             if op.job_type == "uninstall":
-                continue
-
-            current_python = parse_constraint(
-                ".".join(str(v) for v in self._env.version_info[:3])
-            )
-            if not package.python_constraint.allows(
-                current_python
-            ) or not self._env.is_valid_for_marker(package.marker):
-                op.skip("Not needed for the current environment")
                 continue
 
             if self._update:

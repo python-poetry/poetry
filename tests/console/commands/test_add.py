@@ -598,8 +598,9 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["cachy"] == {"version": "0.2.0", "python": ">=2.7"}
 
 
-def test_add_constraint_with_platform(app, repo, installer):
+def test_add_constraint_with_platform(app, repo, installer, env):
     platform = sys.platform
+    env._platform = platform
     command = app.find("add")
     tester = CommandTester(command)
 
@@ -608,7 +609,7 @@ def test_add_constraint_with_platform(app, repo, installer):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
 
-    tester.execute("cachy=0.2.0 --platform {}".format(platform))
+    tester.execute("cachy=0.2.0 --platform {} -vvv".format(platform))
 
     expected = """\
 

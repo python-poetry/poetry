@@ -1010,7 +1010,9 @@ class SystemEnv(Env):
             "platform_version": platform.version(),
             "python_full_version": platform.python_version(),
             "platform_python_implementation": platform.python_implementation(),
-            "python_version": platform.python_version()[:3],
+            "python_version": ".".join(
+                v for v in platform.python_version().split(".")[:2]
+            ),
             "sys_platform": sys.platform,
             "version_info": sys.version_info,
         }
@@ -1185,6 +1187,7 @@ class MockEnv(NullEnv):
         is_venv=False,
         pip_version="19.1",
         sys_path=None,
+        marker_env=None,
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -1196,14 +1199,7 @@ class MockEnv(NullEnv):
         self._is_venv = is_venv
         self._pip_version = Version.parse(pip_version)
         self._sys_path = sys_path
-
-    @property
-    def version_info(self):  # type: () -> Tuple[int]
-        return self._version_info
-
-    @property
-    def python_implementation(self):  # type: () -> str
-        return self._python_implementation
+        self._mock_marker_env = marker_env
 
     @property
     def platform(self):  # type: () -> str
@@ -1223,6 +1219,18 @@ class MockEnv(NullEnv):
             return super(MockEnv, self).sys_path
 
         return self._sys_path
+
+    def get_marker_env(self):  # type: () -> Dict[str, Any]
+        if self._mock_marker_env is not None:
+            return self._mock_marker_env
+
+        marker_env = super(MockEnv, self).get_marker_env()
+        marker_env["python_implementation"] = self._python_implementation
+        marker_env["version_info"] = self._version_info
+        marker_env["python_version"] = ".".join(str(v) for v in self._version_info[:2])
+        marker_env["sys_platform"] = self._platform
+
+        return marker_env
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv
