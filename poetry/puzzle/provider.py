@@ -803,7 +803,7 @@ class Provider:
             self._io.write_line("Resolving dependencies...")
             yield
         else:
-            indicator = Indicator(self._io, "{message} ({elapsed:2s})</>")
+            indicator = Indicator(self._io, "{message} ({elapsed:2s})")
 
             with indicator.auto(
                 "<info>Resolving dependencies...</info>",
