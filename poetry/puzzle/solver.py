@@ -92,8 +92,6 @@ class Solver:
                         package_source_url = Git.normalize_url(package.source_url)
                         lpkg = self.__find_git_locked_version(pkg)
 
-                        print("pkg", pkg.source_reference)
-                        print("package", package.source_reference)
                         if lpkg:
                             print("lpkg", lpkg.source_reference)
                             print("pkg", pkg.source_reference)
