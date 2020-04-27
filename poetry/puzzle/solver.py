@@ -92,7 +92,11 @@ class Solver:
                         package_source_url = Git.normalize_url(package.source_url)
                         lpkg = self.__find_git_locked_version(pkg)
 
+                        print("pkg", pkg.source_reference)
+                        print("package", package.source_reference)
                         if lpkg:
+                            print("lpkg", lpkg.source_reference)
+                            print("pkg", pkg.source_reference)
                             if lpkg.source_reference != pkg.source_reference:
                                 operations.append(Update(pkg, lpkg))
                             else:
@@ -105,7 +109,7 @@ class Solver:
                                 package.source_reference
                             )
                         ):
-                            operations.append(Update(package, pkg, priority=depths[i]))
+                            operations.append(Update(pkg, package, priority=depths[i]))
                         else:
                             operations.append(
                                 Install(package).skip("Already installed")
