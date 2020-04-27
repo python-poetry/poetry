@@ -180,12 +180,12 @@ lists all packages available."""
 
                 return 0
 
-            required_by = {}
-            for parent in locked_packages:
-                children = {d.pretty_name: d.pretty_constraint for d in parent.requires}
+            required_by = {}  # type: Dict[str, str]
+            for locked in locked_packages:
+                dependencies = {d.name: d.pretty_constraint for d in locked.requires}
 
-                if pkg.pretty_name in children:
-                    required_by[parent.pretty_name] = children[pkg.pretty_name]
+                if pkg.name in dependencies:
+                    required_by[locked.pretty_name] = dependencies[pkg.name]
 
             rows = [
                 ["<info>name</>", " : <c1>{}</>".format(pkg.pretty_name)],
