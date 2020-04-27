@@ -180,7 +180,7 @@ lists all packages available."""
 
                 return 0
 
-            required_by = {}  # type: Dict[str, str]
+            required_by = {}
             for locked in locked_packages:
                 dependencies = {d.name: d.pretty_constraint for d in locked.requires}
 
