@@ -440,6 +440,13 @@ class VersionSolver:
         if dependency.extras:
             locked.requires_extras = dependency.extras
 
+        if not dependency.transitive_marker.without_extras().is_any():
+            marker_intersection = dependency.transitive_marker.without_extras().intersect(
+                locked.dependency.marker.without_extras()
+            )
+            if not marker_intersection.is_empty():
+                locked.dependency.transitive_marker = marker_intersection
+
         return locked
 
     def _log(self, text):

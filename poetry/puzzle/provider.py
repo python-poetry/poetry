@@ -33,6 +33,7 @@ from poetry.repositories import Pool
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
+from poetry.utils.env import Env
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
@@ -52,10 +53,13 @@ class Provider:
 
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
-    def __init__(self, package, pool, io):  # type: (Package, Pool, Any) -> None
+    def __init__(
+        self, package, pool, io, env=None
+    ):  # type: (Package, Pool, Any, Optional[Env]) -> None
         self._package = package
         self._pool = pool
         self._io = io
+        self._env = env
         self._python_constraint = package.python_constraint
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
@@ -66,25 +70,21 @@ class Provider:
     def pool(self):  # type: () -> Pool
         return self._pool
 
-    @property
-    def name_for_explicit_dependency_source(self):  # type: () -> str
-        return "pyproject.toml"
-
-    @property
-    def name_for_locking_dependency_source(self):  # type: () -> str
-        return "poetry.lock"
-
     def is_debugging(self):
         return self._is_debugging
 
     def set_overrides(self, overrides):
         self._overrides = overrides
 
-    def name_for(self, dependency):  # type: (Dependency) -> str
-        """
-        Returns the name for the given dependency.
-        """
-        return dependency.name
+    @contextmanager
+    def use_environment(self, env):  # type: (Env) -> Provider
+        original_env = self._env
+
+        self._env = env
+
+        yield self
+
+        self._env = original_env
 
     def search_for(self, dependency):  # type: (Dependency) -> List[Package]
         """
@@ -371,6 +371,7 @@ class Provider:
             for dep in dependencies
             if dep.name not in self.UNSAFE_PACKAGES
             and self._package.python_constraint.allows_any(dep.python_constraint)
+            and (not self._env or dep.marker.validate(self._env.marker_env))
         ]
 
         overrides = self._overrides.get(package, {})
@@ -426,6 +427,7 @@ class Provider:
             for r in requires
             if self._package.python_constraint.allows_any(r.python_constraint)
             and r.name not in self.UNSAFE_PACKAGES
+            and (not self._env or r.marker.validate(self._env.marker_env))
         ]
 
         overrides = self._overrides.get(package, {})

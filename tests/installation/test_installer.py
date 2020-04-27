@@ -15,6 +15,7 @@ from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
+from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from poetry.utils.toml_file import TomlFile
 from tests.helpers import get_dependency
@@ -1461,15 +1462,15 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency("A", "^1.0")
 
-    a = get_package("A", "1.0")
-    a.add_dependency("B", ">=1.0.1")
-    a.add_dependency("C", {"version": "^1.0", "python": "~2.7"})
-    a.add_dependency("C", {"version": "^2.0", "python": "^3.4"})
+    a10 = get_package("A", "1.0")
+    a11 = get_package("A", "1.1")
+    a11.add_dependency("B", ">=1.0.1")
+    a11.add_dependency("C", {"version": "^1.0", "python": "~2.7"})
+    a11.add_dependency("C", {"version": "^2.0", "python": "^3.4"})
     b101 = get_package("B", "1.0.1")
-    b101.python_versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
     b110 = get_package("B", "1.1.0")
-    b110.python_versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
-    repo.add_package(a)
+    repo.add_package(a10)
+    repo.add_package(a11)
     repo.add_package(b101)
     repo.add_package(b110)
     repo.add_package(get_package("C", "1.0"))
@@ -1557,3 +1558,50 @@ def test_installer_uses_prereleases_if_they_are_compatible(
     installer.run()
 
     assert len(installer.installer.installs) == 2
+
+
+def test_installer_can_handle_old_lock_files(
+    installer, locker, package, repo, installed
+):
+    pool = Pool()
+    pool.add_repository(MockRepository())
+
+    package.add_dependency("pytest", "^3.5", category="dev")
+
+    locker.mock_lock_data(fixture("with-pypi-repository"))
+
+    installer = Installer(
+        NullIO(), MockEnv(), package, locker, pool, installed=installed
+    )
+
+    installer.run()
+
+    assert 6 == len(installer.installer.installs)
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(version_info=(2, 7, 18)),
+        package,
+        locker,
+        pool,
+        installed=installed,
+    )
+
+    installer.run()
+
+    # funcsigs will be added
+    assert 7 == len(installer.installer.installs)
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(version_info=(2, 7, 18), platform="win32"),
+        package,
+        locker,
+        pool,
+        installed=installed,
+    )
+
+    installer.run()
+
+    # colorama will be added
+    assert 8 == len(installer.installer.installs)
