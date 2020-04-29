@@ -39,6 +39,7 @@ python = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.4"
+toml = "^0.10.0"
 ```
 
 ### Specifying dependencies

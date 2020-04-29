@@ -59,7 +59,9 @@ class NewCommand(Command):
             ".".join(str(v) for v in current_env.version_info[:2])
         )
 
-        dev_dependencies = {}
+        dev_dependencies = {
+            "toml": "^0.10.0",
+        }
         python_constraint = parse_constraint(default_python)
         if parse_constraint("<3.5").allows_any(python_constraint):
             dev_dependencies["pytest"] = "^4.6"

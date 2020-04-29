@@ -5,11 +5,20 @@ from tomlkit import table
 from poetry.utils.helpers import module_name
 
 
-TESTS_DEFAULT = u"""from {package_name} import __version__
+TESTS_DEFAULT = u"""\
+from pathlib import Path
+
+import toml
+
+from {package_name} import __version__ as module_version
 
 
 def test_version():
-    assert __version__ == '{version}'
+    pyproject_file = Path(__file__).parents[1] / "pyproject.toml"
+    pyproject = toml.load(pyproject_file)
+    pyproject_version = pyproject["tool"]["poetry"]["version"]
+
+    assert module_version == pyproject_version
 """
 
 
