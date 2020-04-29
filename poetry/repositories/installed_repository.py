@@ -1,9 +1,12 @@
-from poetry.packages import Package
+from poetry.core.packages import Package
 from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
 from poetry.utils.env import Env
 
 from .repository import Repository
+
+
+_VENDORS = Path(__file__).parent.parent.joinpath("_vendor")
 
 
 class InstalledRepository(Repository):
@@ -22,6 +25,7 @@ class InstalledRepository(Repository):
                 metadata.distributions(path=[entry]), key=lambda d: str(d._path),
             ):
                 name = distribution.metadata["name"]
+                path = Path(str(distribution._path))
                 version = distribution.metadata["version"]
                 package = Package(name, version, version)
                 package.description = distribution.metadata.get("summary", "")
@@ -29,11 +33,17 @@ class InstalledRepository(Repository):
                 if package.name in seen:
                     continue
 
+                try:
+                    path.relative_to(_VENDORS)
+                except ValueError:
+                    pass
+                else:
+                    continue
+
                 seen.add(package.name)
 
                 repo.add_package(package)
 
-                path = Path(str(distribution._path))
                 is_standard_package = True
                 try:
                     path.relative_to(env.site_packages)
@@ -50,7 +60,7 @@ class InstalledRepository(Repository):
                 try:
                     path.relative_to(src_path)
 
-                    from poetry.vcs.git import Git
+                    from poetry.core.vcs.git import Git
 
                     git = Git()
                     revision = git.rev_parse("HEAD", src_path / package.name).strip()

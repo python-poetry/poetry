@@ -2,15 +2,15 @@ import pytest
 
 from clikit.io import NullIO
 
-from poetry.packages import ProjectPackage
-from poetry.packages import dependency_from_pep_508
+from poetry.core.packages import ProjectPackage
+from poetry.core.packages import dependency_from_pep_508
+from poetry.core.version.markers import parse_marker
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
 from poetry.utils._compat import Path
-from poetry.version.markers import parse_marker
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -1060,9 +1060,6 @@ def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_wit
         solver.solve()
 
 
-@pytest.mark.skip(
-    "This is not working at the moment due to limitations in the resolver"
-)
 def test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
     solver, repo, package
 ):
@@ -1686,7 +1683,7 @@ def test_solver_chooses_from_correct_repository_if_forced(
         ops, [{"job": "install", "package": get_package("tomlkit", "0.5.2")}]
     )
 
-    assert "http://foo.bar" == ops[0].package.source_url
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
 
 
 def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
@@ -1714,7 +1711,7 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         ],
     )
 
-    assert "http://foo.bar" == ops[0].package.source_url
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
 
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
@@ -1743,10 +1740,10 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
         ],
     )
 
-    assert "http://foo.bar" == ops[0].package.source_url
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
-    assert "http://foo.bar" == ops[2].package.source_url
+    assert "http://legacy.foo.bar" == ops[2].package.source_url
 
 
 def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, io):
@@ -1770,7 +1767,7 @@ def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, i
         ],
     )
 
-    assert "http://foo.bar" == ops[0].package.source_url
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
     assert "" == ops[1].package.source_type
     assert "" == ops[1].package.source_url
     assert "" == ops[2].package.source_type
@@ -1928,3 +1925,37 @@ def test_solver_properly_propagates_markers(solver, repo, package):
         str(ops[0].package.marker)
         == 'python_version >= "3.6" and implementation_name != "pypy"'
     )
+
+
+def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.5"
+    package.add_dependency("A", "^1.0")
+
+    package_a = get_package("A", "1.0.0")
+    package_a.add_dependency("B")
+    package_a.add_dependency(
+        "B", {"version": "^1.0", "markers": "implementation_name == 'pypy'"}
+    )
+
+    package_b20 = get_package("B", "2.0.0")
+    package_b10 = get_package("B", "1.0.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b10)
+    repo.add_package(package_b20)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    assert 'implementation_name == "pypy"' == str(ops[0].package.marker)
+    assert 'implementation_name != "pypy"' == str(ops[1].package.marker)

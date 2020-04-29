@@ -64,7 +64,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.layouts import layout
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
-        from poetry.vcs.git import GitConfig
+        from poetry.core.vcs.git import GitConfig
 
         if (Path.cwd() / "pyproject.toml").exists():
             self.line("<error>A pyproject.toml file already exists.</error>")
@@ -367,8 +367,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if url_parsed.scheme and url_parsed.netloc:
                 # Url
                 if url_parsed.scheme in ["git+https", "git+ssh"]:
-                    from poetry.vcs.git import Git
-                    from poetry.vcs.git import ParsedUrl
+                    from poetry.core.vcs.git import Git
+                    from poetry.core.vcs.git import ParsedUrl
 
                     parsed = ParsedUrl.parse(requirement)
                     url = Git.normalize_url(requirement)
@@ -481,7 +481,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return requires
 
     def _validate_author(self, author, default):
-        from poetry.packages.package import AUTHOR_REGEX
+        from poetry.core.packages.package import AUTHOR_REGEX
 
         author = author or default
 
@@ -498,7 +498,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return author
 
     def _validate_license(self, license):
-        from poetry.spdx import license_by_id
+        from poetry.core.spdx import license_by_id
 
         if license:
             license_by_id(license)

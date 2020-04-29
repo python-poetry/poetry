@@ -245,6 +245,7 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 * `--path`: The path to a dependency.
 * `--optional` : Add as an optional dependency.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--lock` : Do not perform install (only update the lockfile).
 
 
 ## remove
@@ -325,6 +326,7 @@ It can also build the package if you pass it the `--build` option.
 Should match a repository name set by the [`config`](#config) command.
 * `--username (-u)`: The username to access the repository.
 * `--password (-p)`: The password to access the repository.
+* `--dry-run`: Perform all actions except upload the package.
 
 ## config
 
@@ -422,6 +424,9 @@ bump rule is provided.
 The new version should ideally be a valid semver string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
 
+## Options
+
+* `--short (-s)`: Output the version number only.
 
 ## export
 
@@ -437,8 +442,8 @@ poetry export -f requirements.txt > requirements.txt
 
 ### Options
 
-* `--format (-f)`: The format to export to.  Currently, only
-  `requirements.txt` is supported.
+* `--format (-f)`: The format to export to (default: `requirements.txt`).
+  Currently, only `requirements.txt` is supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
 * `--dev`: Include development dependencies.

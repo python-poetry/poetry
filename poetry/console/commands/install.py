@@ -47,7 +47,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         from clikit.io import NullIO
         from poetry.installation.installer import Installer
         from poetry.masonry.builders import EditableBuilder
-        from poetry.masonry.utils.module import ModuleOrPackageNotFound
+        from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
         installer = Installer(
             self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
@@ -83,7 +83,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
             return 0
 
         self.line(
-            "  - Installing <c1>{}</c1> (<b>{}</b>)".format(
+            "  - Installing <c1>{}</c1> (<c2>{}</c2>)".format(
                 self.poetry.package.pretty_name, self.poetry.package.pretty_version
             )
         )

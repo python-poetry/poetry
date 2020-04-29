@@ -4,10 +4,10 @@ import pytest
 
 from clikit.io import NullIO
 
-from poetry.packages import ProjectPackage
-from poetry.packages.directory_dependency import DirectoryDependency
-from poetry.packages.file_dependency import FileDependency
-from poetry.packages.vcs_dependency import VCSDependency
+from poetry.core.packages import ProjectPackage
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository

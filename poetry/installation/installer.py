@@ -2,10 +2,10 @@ from typing import List
 from typing import Union
 
 from clikit.api.io import IO
-from clikit.io import NullIO
 
+from poetry.core.packages.package import Package
+from poetry.core.semver import parse_constraint
 from poetry.packages import Locker
-from poetry.packages import Package
 from poetry.puzzle import Solver
 from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
@@ -14,7 +14,6 @@ from poetry.puzzle.operations.operation import Operation
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.semver import parse_constraint
 from poetry.utils.extras import get_extra_package_names
 from poetry.utils.helpers import canonicalize_name
 
@@ -206,33 +205,6 @@ class Installer:
             root = root.clone()
             del root.dev_requires[:]
 
-        with root.with_python_versions(
-            ".".join([str(i) for i in self._env.version_info[:3]])
-        ):
-            # We resolve again by only using the lock file
-            pool = Pool(ignore_repository_names=True)
-
-            # Making a new repo containing the packages
-            # newly resolved and the ones from the current lock file
-            repo = Repository()
-            for package in local_repo.packages + locked_repository.packages:
-                if not repo.has_package(package):
-                    repo.add_package(package)
-
-            pool.add_repository(repo)
-
-            # We whitelist all packages to be sure
-            # that the latest ones are picked up
-            whitelist = []
-            for pkg in locked_repository.packages:
-                whitelist.append(pkg.name)
-
-            solver = Solver(
-                root, pool, self._installed_repository, locked_repository, NullIO()
-            )
-
-            ops = solver.solve(use_latest=whitelist)
-
         # We need to filter operations so that packages
         # not compatible with the current system,
         # or optional and not requested, are dropped
@@ -314,7 +286,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -325,7 +297,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Installing <c1>{}</c1> (<b>{}</b>)".format(
+                "  - Installing <c1>{}</c1> (<c2>{}</c2>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )
@@ -342,7 +314,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<b>{}</b>) {}".format(
+                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         target.pretty_name,
                         target.full_pretty_version,
                         operation.skip_reason,
@@ -353,7 +325,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Updating <c1>{}</c1> (<b>{}</b> -> <b>{}</b>)".format(
+                "  - Updating <c1>{}</c1> (<c2>{}</c2> -> <c2>{}</c2>)".format(
                     target.pretty_name,
                     source.full_pretty_version,
                     target.full_pretty_version,
@@ -369,7 +341,7 @@ class Installer:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
-                    "  - Not removing <c1>{}</c1> (<b>{}</b>) {}".format(
+                    "  - Not removing <c1>{}</c1> (<c2>{}</c2>) {}".format(
                         operation.package.pretty_name,
                         operation.package.full_pretty_version,
                         operation.skip_reason,
@@ -380,7 +352,7 @@ class Installer:
 
         if self._execute_operations or self.is_dry_run():
             self._io.write_line(
-                "  - Removing <c1>{}</c1> (<b>{}</b>)".format(
+                "  - Removing <c1>{}</c1> (<c2>{}</c2>)".format(
                     operation.package.pretty_name, operation.package.full_pretty_version
                 )
             )

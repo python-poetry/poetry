@@ -36,11 +36,12 @@ class ApplicationConfig(BaseApplicationConfig):
         super(ApplicationConfig, self).configure()
 
         self.add_style(Style("c1").fg("cyan"))
+        self.add_style(Style("c2").fg("green"))
         self.add_style(Style("info").fg("blue"))
         self.add_style(Style("comment").fg("green"))
         self.add_style(Style("error").fg("red").bold())
-        self.add_style(Style("warning").fg("yellow"))
-        self.add_style(Style("debug").fg("black").bold())
+        self.add_style(Style("warning").fg("yellow").bold())
+        self.add_style(Style("debug").fg("default").dark())
 
         self.add_event_listener(PRE_HANDLE, self.register_command_loggers)
         self.add_event_listener(PRE_HANDLE, self.set_env)

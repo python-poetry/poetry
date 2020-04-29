@@ -9,12 +9,14 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 ENV_DIR = (FIXTURES_DIR / "installed").resolve()
 SITE_PACKAGES = ENV_DIR / "lib" / "python3.7" / "site-packages"
 SRC = ENV_DIR / "src"
+VENDOR_DIR = ENV_DIR / "vendor" / "py3.7"
 INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PACKAGES / "cleo-0.7.6.dist-info"),
     metadata.PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
     metadata.PathDistribution(
         zipp.Path(str(SITE_PACKAGES / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
     ),
+    metadata.PathDistribution(VENDOR_DIR / "attrs-19.3.0.dist-info"),
 ]
 
 
@@ -30,16 +32,17 @@ def test_load(mocker):
         return_value=INSTALLED_RESULTS,
     )
     mocker.patch(
-        "poetry.vcs.git.Git.rev_parse",
+        "poetry.core.vcs.git.Git.rev_parse",
         return_value="bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6",
     )
     mocker.patch(
-        "poetry.vcs.git.Git.remote_urls",
+        "poetry.core.vcs.git.Git.remote_urls",
         side_effect=[
             {"remote.origin.url": "https://github.com/sdispater/pendulum.git"},
             {"remote.origin.url": "git@github.com:sdispater/pendulum.git"},
         ],
     )
+    mocker.patch("poetry.repositories.installed_repository._VENDORS", str(VENDOR_DIR))
     repository = InstalledRepository.load(MockEnv(path=ENV_DIR))
 
     assert len(repository.packages) == 3
@@ -63,3 +66,6 @@ def test_load(mocker):
     assert pendulum.source_type == "git"
     assert pendulum.source_url == "https://github.com/sdispater/pendulum.git"
     assert pendulum.source_reference == "bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6"
+
+    for pkg in repository.packages:
+        assert pkg.name != "attrs"

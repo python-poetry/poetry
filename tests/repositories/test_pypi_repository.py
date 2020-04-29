@@ -8,7 +8,7 @@ import pytest
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
-from poetry.packages import Dependency
+from poetry.core.packages import Dependency
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
@@ -208,3 +208,10 @@ def test_get_should_invalid_cache_on_too_many_redirects_error(mocker):
     repository._get("https://pypi.org/pypi/async-timeout/json")
 
     assert delete_cache.called
+
+
+def test_urls():
+    repository = PyPiRepository()
+
+    assert "https://pypi.org/simple/" == repository.url
+    assert "https://pypi.org/simple/" == repository.authenticated_url

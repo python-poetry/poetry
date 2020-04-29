@@ -7,8 +7,8 @@ import tomlkit
 
 from clikit.io import NullIO
 
+from poetry.core.semver import Version
 from poetry.factory import Factory
-from poetry.semver import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvCommandError
