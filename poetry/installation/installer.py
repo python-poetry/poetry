@@ -11,6 +11,7 @@ from poetry.puzzle.operations import Install
 from poetry.puzzle.operations import Uninstall
 from poetry.puzzle.operations import Update
 from poetry.puzzle.operations.operation import Operation
+from poetry.puzzle.provider import Provider
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
@@ -38,7 +39,7 @@ class Installer:
         self._pool = pool
 
         self._dry_run = False
-        self._keep_untracked = False
+        self._remove_untracked = False
         self._update = False
         self._verbose = False
         self._write_lock = True
@@ -83,13 +84,13 @@ class Installer:
     def is_dry_run(self):  # type: () -> bool
         return self._dry_run
 
-    def keep_untracked(self, keep_untracked=True):  # type: (bool) -> Installer
-        self._keep_untracked = keep_untracked
+    def remove_untracked(self, remove_untracked=True):  # type: (bool) -> Installer
+        self._remove_untracked = remove_untracked
 
         return self
 
-    def is_keep_untracked(self):  # type: () -> bool
-        return self._keep_untracked
+    def is_remove_untracked(self):  # type: () -> bool
+        return self._remove_untracked
 
     def verbose(self, verbose=True):  # type: (bool) -> Installer
         self._verbose = verbose
@@ -204,6 +205,18 @@ class Installer:
         if not self.is_dev_mode():
             root = root.clone()
             del root.dev_requires[:]
+
+        if self._remove_untracked:
+            locked_names = {locked.name for locked in locked_repository.packages}
+
+            for installed in self._installed_repository.packages:
+                if installed.name == self._package.name:
+                    continue
+                if installed.name in Provider.UNSAFE_PACKAGES:
+                    # Never remove pip, setuptools etc.
+                    continue
+                if installed.name not in locked_names:
+                    ops.append(Uninstall(installed))
 
         # We need to filter operations so that packages
         # not compatible with the current system,
@@ -404,17 +417,6 @@ class Installer:
                 op.skip("Already installed")
 
             ops.append(op)
-
-        if not self._keep_untracked:
-            for installed in installed_repo.packages:
-                is_in_lock_file = False
-                for locked in locked_repository.packages:
-                    if locked.name == installed.name:
-                        is_in_lock_file = True
-                        break
-
-                if not is_in_lock_file:
-                    ops.append(Uninstall(installed))
 
         return ops
 

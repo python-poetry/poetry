@@ -116,6 +116,13 @@ the `--no-dev` option.
 poetry install --no-dev
 ```
 
+If you want to remove old dependencies no longer present in the lock file, use the
+`--remove-untracked` option.
+
+```bash
+poetry install --remove-untracked
+```
+
 You can also specify the extras you want installed
 by passing the `--E|--extras` option (See [Extras](#extras) for more info)
 
