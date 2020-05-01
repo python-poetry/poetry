@@ -164,6 +164,7 @@ class Installer:
                 self._installed_repository,
                 locked_repository,
                 self._io,
+                remove_untracked=self._remove_untracked,
             )
 
             ops = solver.solve(use_latest=self._whitelist)
@@ -230,7 +231,12 @@ class Installer:
             whitelist.append(pkg.name)
 
         solver = Solver(
-            root, pool, self._installed_repository, locked_repository, NullIO()
+            root,
+            pool,
+            self._installed_repository,
+            locked_repository,
+            NullIO(),
+            remove_untracked=self._remove_untracked,
         )
 
         with solver.use_environment(self._env):
