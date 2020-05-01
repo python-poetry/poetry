@@ -1851,3 +1851,25 @@ def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
             {"job": "install", "package": package_a},
         ],
     )
+
+
+def test_solver_remove_untracked_single(package, pool, installed, locked, io):
+    solver = Solver(package, pool, installed, locked, io, remove_untracked=True)
+    package_a = get_package("a", "1.0")
+    installed.add_package(package_a)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [{"job": "remove", "package": package_a}])
+
+
+def test_solver_remove_untracked_keeps_critical_package(
+    package, pool, installed, locked, io
+):
+    solver = Solver(package, pool, installed, locked, io, remove_untracked=True)
+    package_pip = get_package("pip", "1.0")
+    installed.add_package(package_pip)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [])

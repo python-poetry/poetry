@@ -5,10 +5,15 @@ from typing import Any
 from typing import Dict
 from typing import List
 
+from clikit.io import ConsoleIO
+
 from poetry.core.packages import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
+from poetry.repositories import Pool
+from poetry.repositories import Repository
 from poetry.utils.env import Env
 
 from .exceptions import OverrideNeeded
@@ -21,7 +26,15 @@ from .provider import Provider
 
 
 class Solver:
-    def __init__(self, package, pool, installed, locked, io):
+    def __init__(
+        self,
+        package,  # type: ProjectPackage
+        pool,  # type: Pool
+        installed,  # type: Repository
+        locked,  # type: Repository
+        io,  # type: ConsoleIO
+        remove_untracked=False,  # type: bool
+    ):
         self._package = package
         self._pool = pool
         self._installed = installed
@@ -29,6 +42,7 @@ class Solver:
         self._io = io
         self._provider = Provider(self._package, self._pool, self._io)
         self._overrides = []
+        self._remove_untracked = remove_untracked
 
     @property
     def provider(self):  # type: () -> Provider
@@ -131,6 +145,18 @@ class Solver:
                     op.skip("Not currently installed")
 
                 operations.append(op)
+
+        if self._remove_untracked:
+            locked_names = {locked.name for locked in self._locked.packages}
+
+            for installed in self._installed.packages:
+                if installed.name == self._package.name:
+                    continue
+                if installed.name in Provider.UNSAFE_PACKAGES:
+                    # Never remove pip, setuptools etc.
+                    continue
+                if installed.name not in locked_names:
+                    operations.append(Uninstall(installed))
 
         return sorted(
             operations,

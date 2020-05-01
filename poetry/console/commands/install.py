@@ -20,6 +20,9 @@ class InstallCommand(EnvCommand):
             "(implicitly enables --verbose).",
         ),
         option(
+            "remove-untracked", None, "Removes packages not present in the lock file.",
+        ),
+        option(
             "extras",
             "E",
             "Extra sets of dependencies to install.",
@@ -57,6 +60,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         installer.extras(extras)
         installer.dev_mode(not self.option("no-dev"))
         installer.dry_run(self.option("dry-run"))
+        installer.remove_untracked(self.option("remove-untracked"))
         installer.verbose(self.option("verbose"))
 
         return_code = installer.run()

@@ -38,6 +38,7 @@ class Installer:
         self._pool = pool
 
         self._dry_run = False
+        self._remove_untracked = False
         self._update = False
         self._verbose = False
         self._write_lock = True
@@ -81,6 +82,14 @@ class Installer:
 
     def is_dry_run(self):  # type: () -> bool
         return self._dry_run
+
+    def remove_untracked(self, remove_untracked=True):  # type: (bool) -> Installer
+        self._remove_untracked = remove_untracked
+
+        return self
+
+    def is_remove_untracked(self):  # type: () -> bool
+        return self._remove_untracked
 
     def verbose(self, verbose=True):  # type: (bool) -> Installer
         self._verbose = verbose
@@ -155,6 +164,7 @@ class Installer:
                 self._installed_repository,
                 locked_repository,
                 self._io,
+                remove_untracked=self._remove_untracked,
             )
 
             ops = solver.solve(use_latest=self._whitelist)
@@ -221,7 +231,12 @@ class Installer:
             whitelist.append(pkg.name)
 
         solver = Solver(
-            root, pool, self._installed_repository, locked_repository, NullIO()
+            root,
+            pool,
+            self._installed_repository,
+            locked_repository,
+            NullIO(),
+            remove_untracked=self._remove_untracked,
         )
 
         with solver.use_environment(self._env):
