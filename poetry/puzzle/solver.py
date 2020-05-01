@@ -93,8 +93,6 @@ class Solver:
                         lpkg = self.__find_git_locked_version(pkg)
 
                         if lpkg:
-                            print("lpkg", lpkg.source_reference)
-                            print("pkg", pkg.source_reference)
                             if lpkg.source_reference != pkg.source_reference:
                                 operations.append(Update(pkg, lpkg))
                             else:
