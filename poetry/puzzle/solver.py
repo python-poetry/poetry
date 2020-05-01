@@ -28,7 +28,7 @@ class Solver:
         installed,  # type: Repository
         locked,  # type: Repository
         io,  # type: ConsoleIO
-        remove_untracked=False  # type: bool
+        remove_untracked=False,  # type: bool
     ):
         self._package = package
         self._pool = pool
