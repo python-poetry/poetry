@@ -21,7 +21,15 @@ from .provider import Provider
 
 
 class Solver:
-    def __init__(self, package, pool, installed, locked, io, remove_untracked=False):
+    def __init__(
+        self,
+        package,  # type: ProjectPackage
+        pool,  # type: Pool
+        installed,  # type: Repository
+        locked,  # type: Repository
+        io,  # type: ConsoleIO
+        remove_untracked=False  # type: bool
+    ):
         self._package = package
         self._pool = pool
         self._installed = installed
