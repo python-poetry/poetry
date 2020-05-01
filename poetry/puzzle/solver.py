@@ -5,10 +5,15 @@ from typing import Any
 from typing import Dict
 from typing import List
 
+from clikit.io import ConsoleIO
+
 from poetry.core.packages import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
+from poetry.repositories import Pool
+from poetry.repositories import Repository
 from poetry.utils.env import Env
 
 from .exceptions import OverrideNeeded
