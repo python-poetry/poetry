@@ -559,21 +559,6 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package
         ],
     )
 
-    op = ops[3]  # d
-    assert str(op.package.marker) == 'python_version < "4.0"'
-
-    op = ops[0]  # e
-    assert str(op.package.marker) == (
-        'python_version < "4.0" and sys_platform == "win32" '
-        'or python_version < "5.0" and sys_platform == "win32"'
-    )
-
-    op = ops[1]  # f
-    assert str(op.package.marker) == 'python_version < "5.0"'
-
-    op = ops[4]  # a
-    assert str(op.package.marker) == 'python_version < "5.0"'
-
 
 def test_solver_sub_dependencies_with_not_supported_python_version(
     solver, repo, package
@@ -773,11 +758,6 @@ def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
         ],
     )
 
-    op = ops[0]
-    assert (
-        str(op.package.marker) == 'python_version == "2.7" or python_version >= "3.4"'
-    )
-
 
 def test_solver_duplicate_dependencies_different_constraints(solver, repo, package):
     package.add_dependency("A")
@@ -803,12 +783,6 @@ def test_solver_duplicate_dependencies_different_constraints(solver, repo, packa
             {"job": "install", "package": package_a},
         ],
     )
-
-    op = ops[0]
-    assert str(op.package.marker) == 'python_version < "3.4"'
-
-    op = ops[1]
-    assert str(op.package.marker) == 'python_version >= "3.4"'
 
 
 def test_solver_duplicate_dependencies_different_constraints_same_requirements(
@@ -871,12 +845,6 @@ def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
             {"job": "install", "package": package_a},
         ],
     )
-
-    op = ops[2]
-    assert str(op.package.marker) == 'python_version < "3.4"'
-
-    op = ops[3]
-    assert str(op.package.marker) == 'python_version >= "3.4"'
 
 
 def test_solver_fails_if_dependency_name_does_not_match_package(solver, repo, package):
@@ -1006,11 +974,6 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
 
     check_solver_result(ops, [{"job": "install", "package": package_a}])
 
-    assert (
-        str(ops[0].package.marker)
-        == 'python_version >= "3.6" and python_version < "4.0"'
-    )
-
 
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible_multiple(
     solver, repo, package
@@ -1037,11 +1000,6 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_a},
         ],
-    )
-
-    assert str(ops[0].package.marker) == (
-        'python_version >= "3.6" and python_version < "4.0" '
-        'or python_version >= "3.5.3" and python_version < "4.0.0"'
     )
 
 
@@ -1078,44 +1036,6 @@ def test_solver_finds_compatible_package_for_dependency_python_not_fully_compati
     ops = solver.solve()
 
     check_solver_result(ops, [{"job": "install", "package": package_a100}])
-
-    assert (
-        str(ops[0].package.marker)
-        == 'python_version >= "3.5" and python_version < "4.0"'
-    )
-
-
-def test_solver_sets_appropriate_markers_when_solving(solver, repo, package):
-    dep = dependency_from_pep_508(
-        'B (>=1.0); python_version >= "3.6" and sys_platform != "win32"'
-    )
-
-    package.add_dependency("A", "^1.0")
-
-    package_a = get_package("A", "1.0.0")
-    package_a.requires.append(dep)
-
-    package_b = get_package("B", "1.0.0")
-
-    repo.add_package(package_a)
-    repo.add_package(package_b)
-
-    ops = solver.solve()
-
-    check_solver_result(
-        ops,
-        [
-            {"job": "install", "package": package_b},
-            {"job": "install", "package": package_a},
-        ],
-    )
-
-    assert (
-        str(ops[0].package.marker)
-        == 'python_version >= "3.6" and sys_platform != "win32"'
-    )
-
-    assert str(ops[1].package.marker) == ""
 
 
 def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(
@@ -1902,31 +1822,6 @@ def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package)
     )
 
 
-def test_solver_properly_propagates_markers(solver, repo, package):
-    package.python_versions = "~2.7 || ^3.4"
-    package.add_dependency(
-        "A",
-        {
-            "version": "^1.0",
-            "markers": "python_version >= '3.6' and implementation_name != 'pypy'",
-        },
-    )
-
-    package_a = get_package("A", "1.0.0")
-    package_a.python_versions = ">=3.6"
-
-    repo.add_package(package_a)
-
-    ops = solver.solve()
-
-    check_solver_result(ops, [{"job": "install", "package": package_a}])
-
-    assert (
-        str(ops[0].package.marker)
-        == 'python_version >= "3.6" and implementation_name != "pypy"'
-    )
-
-
 def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
     solver, repo, package
 ):
@@ -1956,6 +1851,3 @@ def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
             {"job": "install", "package": package_a},
         ],
     )
-
-    assert 'implementation_name == "pypy"' == str(ops[0].package.marker)
-    assert 'implementation_name != "pypy"' == str(ops[1].package.marker)

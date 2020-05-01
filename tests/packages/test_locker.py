@@ -266,10 +266,7 @@ python-versions = "*"
 version = "1.0.0"
 
 [package.dependencies]
-[package.dependencies.B]
-extras = ["a", "b", "c"]
-optional = true
-version = "^1.0.0"
+B = {version = "^1.0.0", extras = ["a", "b", "c"], optional = true}
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"

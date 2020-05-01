@@ -1,14 +1,15 @@
 import time
 
+from contextlib import contextmanager
 from typing import Any
 from typing import Dict
 from typing import List
 
 from poetry.core.packages import Package
-from poetry.core.version.markers import AnyMarker
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
+from poetry.utils.env import Env
 
 from .exceptions import OverrideNeeded
 from .exceptions import SolverProblemError
@@ -28,6 +29,15 @@ class Solver:
         self._io = io
         self._provider = Provider(self._package, self._pool, self._io)
         self._overrides = []
+
+    @property
+    def provider(self):  # type: () -> Provider
+        return self._provider
+
+    @contextmanager
+    def use_environment(self, env):  # type: (Env) -> None
+        with self.provider.use_environment(env):
+            yield
 
     def solve(self, use_latest=None):  # type: (...) -> List[Operation]
         with self._provider.progress():
@@ -157,7 +167,6 @@ class Solver:
                     idx = packages.index(package)
                     pkg = packages[idx]
                     depths[idx] = max(depths[idx], _depths[index])
-                    pkg.marker = pkg.marker.union(package.marker)
 
                     for dep in package.requires:
                         if dep not in pkg.requires:
@@ -189,18 +198,10 @@ class Solver:
         depths = []
         final_packages = []
         for package in packages:
-            category, optional, marker, depth = self._get_tags_for_package(
-                package, graph
-            )
-
-            if marker is None:
-                marker = AnyMarker()
-            if marker.is_empty():
-                continue
+            category, optional, depth = self._get_tags_for_package(package, graph)
 
             package.category = category
             package.optional = optional
-            package.marker = marker
 
             depths.append(depth)
             final_packages.append(package)
@@ -213,25 +214,15 @@ class Solver:
         if not previous:
             category = "dev"
             optional = True
-            marker = package.marker
         else:
             category = dep.category
             optional = dep.is_optional() and not dep.is_activated()
-            intersection = (
-                previous["marker"]
-                .without_extras()
-                .intersect(previous_dep.transitive_marker.without_extras())
-            )
-            intersection = intersection.intersect(package.marker.without_extras())
-
-            marker = intersection
 
         childrens = []  # type: List[Dict[str, Any]]
         graph = {
             "name": package.name,
             "category": category,
             "optional": optional,
-            "marker": marker,
             "children": childrens,
         }
 
@@ -290,9 +281,6 @@ class Solver:
                         child_graph["optional"] = True
 
                     if existing:
-                        existing["marker"] = existing["marker"].union(
-                            child_graph["marker"]
-                        )
                         continue
 
                     childrens.append(child_graph)
@@ -302,7 +290,6 @@ class Solver:
     def _get_tags_for_package(self, package, graph, depth=0):
         categories = ["dev"]
         optionals = [True]
-        markers = []
         _depths = [0]
 
         children = graph["children"]
@@ -310,10 +297,9 @@ class Solver:
             if child["name"] == package.name:
                 category = child["category"]
                 optional = child["optional"]
-                marker = child["marker"]
                 _depths.append(depth)
             else:
-                (category, optional, marker, _depth) = self._get_tags_for_package(
+                (category, optional, _depth) = self._get_tags_for_package(
                     package, child, depth=depth + 1
                 )
 
@@ -321,8 +307,6 @@ class Solver:
 
             categories.append(category)
             optionals.append(optional)
-            if marker is not None:
-                markers.append(marker)
 
         if "main" in categories:
             category = "main"
@@ -333,11 +317,4 @@ class Solver:
 
         depth = max(*(_depths + [0]))
 
-        if not markers:
-            marker = None
-        else:
-            marker = markers[0]
-            for m in markers[1:]:
-                marker = marker.union(m)
-
-        return category, optional, marker, depth
+        return category, optional, depth
