@@ -18,6 +18,7 @@ from poetry.utils.extras import get_extra_package_names
 from poetry.utils.helpers import canonicalize_name
 
 from .base_installer import BaseInstaller
+from .executor import Executor
 from .pip_installer import PipInstaller
 
 
@@ -300,8 +301,14 @@ class Installer:
             )
 
         self._io.write_line("")
-        for op in ops:
-            self._execute(op)
+        executor = Executor(
+            installer=self._installer,
+            io=self._io,
+            execute_operations=self._execute_operations,
+            dry_run=self.is_dry_run(),
+            verbose=self.is_verbose(),
+        )
+        executor.execute(ops)
 
     def _write_lock_file(self, repo):  # type: (Repository) -> None
         if self._update and self._write_lock:
@@ -310,94 +317,6 @@ class Installer:
             if updated_lock:
                 self._io.write_line("")
                 self._io.write_line("<info>Writing lock file</>")
-
-    def _execute(self, operation):  # type: (Operation) -> None
-        """
-        Execute a given operation.
-        """
-        method = operation.job_type
-
-        getattr(self, "_execute_{}".format(method))(operation)
-
-    def _execute_install(self, operation):  # type: (Install) -> None
-        if operation.skipped:
-            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
-                self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
-                        operation.package.pretty_name,
-                        operation.package.full_pretty_version,
-                        operation.skip_reason,
-                    )
-                )
-
-            return
-
-        if self._execute_operations or self.is_dry_run():
-            self._io.write_line(
-                "  - Installing <c1>{}</c1> (<c2>{}</c2>)".format(
-                    operation.package.pretty_name, operation.package.full_pretty_version
-                )
-            )
-
-        if not self._execute_operations:
-            return
-
-        self._installer.install(operation.package)
-
-    def _execute_update(self, operation):  # type: (Update) -> None
-        source = operation.initial_package
-        target = operation.target_package
-
-        if operation.skipped:
-            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
-                self._io.write_line(
-                    "  - Skipping <c1>{}</c1> (<c2>{}</c2>) {}".format(
-                        target.pretty_name,
-                        target.full_pretty_version,
-                        operation.skip_reason,
-                    )
-                )
-
-            return
-
-        if self._execute_operations or self.is_dry_run():
-            self._io.write_line(
-                "  - Updating <c1>{}</c1> (<c2>{}</c2> -> <c2>{}</c2>)".format(
-                    target.pretty_name,
-                    source.full_pretty_version,
-                    target.full_pretty_version,
-                )
-            )
-
-        if not self._execute_operations:
-            return
-
-        self._installer.update(source, target)
-
-    def _execute_uninstall(self, operation):  # type: (Uninstall) -> None
-        if operation.skipped:
-            if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
-                self._io.write_line(
-                    "  - Not removing <c1>{}</c1> (<c2>{}</c2>) {}".format(
-                        operation.package.pretty_name,
-                        operation.package.full_pretty_version,
-                        operation.skip_reason,
-                    )
-                )
-
-            return
-
-        if self._execute_operations or self.is_dry_run():
-            self._io.write_line(
-                "  - Removing <c1>{}</c1> (<c2>{}</c2>)".format(
-                    operation.package.pretty_name, operation.package.full_pretty_version
-                )
-            )
-
-        if not self._execute_operations:
-            return
-
-        self._installer.remove(operation.package)
 
     def _populate_local_repo(self, local_repo, ops):
         for op in ops:
