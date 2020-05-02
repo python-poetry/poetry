@@ -57,7 +57,8 @@ class Incompatibility:
                     # irrelevant, since we already know that mutually exclusive version
                     # ranges are incompatible. We should never derive an irrelevant
                     # incompatibility.
-                    assert by_ref[ref] is not None
+                    if by_ref[ref] is None:
+                        raise AssertionError
                 else:
                     by_ref[ref] = term
 
@@ -108,19 +109,24 @@ class Incompatibility:
 
     def __str__(self):
         if isinstance(self._cause, DependencyCause):
-            assert len(self._terms) == 2
+            if len(self._terms) != 2:
+                raise AssertionError
 
             depender = self._terms[0]
             dependee = self._terms[1]
-            assert depender.is_positive()
-            assert not dependee.is_positive()
+            if not depender.is_positive():
+                raise AssertionError
+            if dependee.is_positive():
+                raise AssertionError
 
             return "{} depends on {}".format(
                 self._terse(depender, allow_every=True), self._terse(dependee)
             )
         elif isinstance(self._cause, PythonCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
+            if len(self._terms) != 1:
+                raise AssertionError
+            if not self._terms[0].is_positive():
+                raise AssertionError
 
             cause = self._cause  # type: PythonCause
             text = "{} requires ".format(self._terse(self._terms[0], allow_every=True))
@@ -128,8 +134,10 @@ class Incompatibility:
 
             return text
         elif isinstance(self._cause, PlatformCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
+            if len(self._terms) != 1:
+                raise AssertionError
+            if not self._terms[0].is_positive():
+                raise AssertionError
 
             cause = self._cause  # type: PlatformCause
             text = "{} requires ".format(self._terse(self._terms[0], allow_every=True))
@@ -137,21 +145,28 @@ class Incompatibility:
 
             return text
         elif isinstance(self._cause, NoVersionsCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
+            if len(self._terms) != 1:
+                raise AssertionError
+            if not self._terms[0].is_positive():
+                raise AssertionError
 
             return "no versions of {} match {}".format(
                 self._terms[0].dependency.name, self._terms[0].constraint
             )
         elif isinstance(self._cause, PackageNotFoundCause):
-            assert len(self._terms) == 1
-            assert self._terms[0].is_positive()
+            if len(self._terms) != 1:
+                raise AssertionError
+            if not self._terms[0].is_positive():
+                raise AssertionError
 
             return "{} doesn't exist".format(self._terms[0].dependency.name)
         elif isinstance(self._cause, RootCause):
-            assert len(self._terms) == 1
-            assert not self._terms[0].is_positive()
-            assert self._terms[0].dependency.is_root
+            if len(self._terms) != 1:
+                raise AssertionError
+            if self._terms[0].is_positive():
+                raise AssertionError
+            if not self._terms[0].dependency.is_root:
+                raise AssertionError
 
             return "{} is {}".format(
                 self._terms[0].dependency.name, self._terms[0].dependency.constraint

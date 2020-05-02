@@ -184,7 +184,8 @@ class PartialSolution:
                 if not assignment.is_positive():
                     continue
 
-                assert not term.is_positive()
+                if term.is_positive():
+                    raise AssertionError
 
                 return assignment
 

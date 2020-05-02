@@ -28,7 +28,7 @@ class VersionSelector(object):
         candidates = self._pool.find_packages(
             package_name, constraint, allow_prereleases=True
         )
-        only_prereleases = all([c.version.is_prerelease() for c in candidates])
+        only_prereleases = all(c.version.is_prerelease() for c in candidates)
 
         if not candidates:
             return False

@@ -151,7 +151,7 @@ def _format_marker(marker, first=True):
         else:
             return "(" + " ".join(inner) + ")"
     elif isinstance(marker, tuple):
-        return " ".join([m.serialize() for m in marker])
+        return " ".join(m.serialize() for m in marker)
     else:
         return marker
 

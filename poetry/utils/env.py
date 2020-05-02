@@ -297,7 +297,7 @@ class EnvManager(object):
         if self._env is not None and not reload:
             return self._env
 
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        python_minor = ".".join(str(v) for v in sys.version_info[:2])
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
@@ -509,8 +509,8 @@ class EnvManager(object):
         if not name:
             name = self._poetry.package.name
 
-        python_patch = ".".join([str(v) for v in sys.version_info[:3]])
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        python_patch = ".".join(str(v) for v in sys.version_info[:3])
+        python_minor = ".".join(str(v) for v in sys.version_info[:2])
         if executable:
             python_patch = decode(
                 subprocess.check_output(
@@ -1030,7 +1030,7 @@ class VirtualEnv(Env):
     def get_version_info(self):  # type: () -> Tuple[int]
         output = self.run("python", "-", input_=GET_PYTHON_VERSION)
 
-        return tuple([int(s) for s in output.strip().split(".")])
+        return tuple(int(s) for s in output.strip().split("."))
 
     def get_python_implementation(self):  # type: () -> str
         return self.marker_env["platform_python_implementation"]
