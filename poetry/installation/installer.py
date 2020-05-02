@@ -255,30 +255,19 @@ class Installer:
             self._io.write_line("No dependencies to install or update")
 
         if actual_ops and (self._execute_operations or self._dry_run):
-            installs = []
-            updates = []
-            uninstalls = []
-            skipped = []
+            installs = 0
+            updates = 0
+            uninstalls = 0
+            skipped = 0
             for op in ops:
                 if op.skipped:
-                    skipped.append(op)
-                    continue
-
-                if op.job_type == "install":
-                    installs.append(
-                        "{}:{}".format(
-                            op.package.pretty_name, op.package.full_pretty_version
-                        )
-                    )
+                    skipped += 1
+                elif op.job_type == "install":
+                    installs += 1
                 elif op.job_type == "update":
-                    updates.append(
-                        "{}:{}".format(
-                            op.target_package.pretty_name,
-                            op.target_package.full_pretty_version,
-                        )
-                    )
+                    updates += 1
                 elif op.job_type == "uninstall":
-                    uninstalls.append(op.package.pretty_name)
+                    uninstalls += 1
 
             self._io.write_line("")
             self._io.write_line(
@@ -287,13 +276,13 @@ class Installer:
                 "<info>{}</> update{}, "
                 "<info>{}</> removal{}"
                 "{}".format(
-                    len(installs),
-                    "" if len(installs) == 1 else "s",
-                    len(updates),
-                    "" if len(updates) == 1 else "s",
-                    len(uninstalls),
-                    "" if len(uninstalls) == 1 else "s",
-                    ", <info>{}</> skipped".format(len(skipped))
+                    installs,
+                    "" if installs == 1 else "s",
+                    updates,
+                    "" if updates == 1 else "s",
+                    uninstalls,
+                    "" if uninstalls == 1 else "s",
+                    ", <info>{}</> skipped".format(skipped)
                     if skipped and self.is_verbose()
                     else "",
                 )
