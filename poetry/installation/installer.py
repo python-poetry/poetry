@@ -40,6 +40,7 @@ class Installer:
 
         self._dry_run = False
         self._remove_untracked = False
+        self._parallel = False
         self._update = False
         self._verbose = False
         self._write_lock = True
@@ -89,8 +90,16 @@ class Installer:
 
         return self
 
+    def parallel(self, parallel=True):  # type: (bool) -> Installer
+        self._parallel = parallel
+
+        return self
+
     def is_remove_untracked(self):  # type: () -> bool
         return self._remove_untracked
+
+    def is_parallel(self):  # type: () -> bool
+        return self._parallel
 
     def verbose(self, verbose=True):  # type: (bool) -> Installer
         self._verbose = verbose
@@ -303,6 +312,7 @@ class Installer:
         self._io.write_line("")
         executor = Executor(
             installer=self._installer,
+            parallel=self._parallel,
             io=self._io,
             execute_operations=self._execute_operations,
             dry_run=self.is_dry_run(),

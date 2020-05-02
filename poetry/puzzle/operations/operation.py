@@ -9,6 +9,7 @@ class Operation(object):
 
         self._skipped = False
         self._skip_reason = None
+        self._depth = -1
 
     @property
     def job_type(self):  # type: () -> str
@@ -30,6 +31,10 @@ class Operation(object):
     def package(self):
         raise NotImplementedError()
 
+    @property
+    def depth(self):
+        return self._depth
+
     def format_version(self, package):  # type: (...) -> str
         return package.full_pretty_version
 
@@ -44,3 +49,6 @@ class Operation(object):
         self._skip_reason = None
 
         return self
+
+    def set_depth(self, depth):
+        self._depth = depth

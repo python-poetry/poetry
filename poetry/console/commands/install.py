@@ -23,6 +23,9 @@ class InstallCommand(EnvCommand):
             "remove-untracked", None, "Removes packages not present in the lock file.",
         ),
         option(
+            "parallel", None, "Installs packages in parallel when it is safe to do so.",
+        ),
+        option(
             "extras",
             "E",
             "Extra sets of dependencies to install.",
@@ -61,6 +64,7 @@ exist it will look for <comment>pyproject.toml</> and do the same.
         installer.dev_mode(not self.option("no-dev"))
         installer.dry_run(self.option("dry-run"))
         installer.remove_untracked(self.option("remove-untracked"))
+        installer.parallel(self.option("parallel"))
         installer.verbose(self.option("verbose"))
 
         return_code = installer.run()
