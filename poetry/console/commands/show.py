@@ -75,6 +75,14 @@ lists all packages available."""
             if not pkg:
                 raise ValueError("Package {} not found".format(package))
 
+            if self.option("why"):
+                self.io.write_line(
+                    "Determining why <c1>{pkg_name}</c1> is installed.".format(
+                        pkg_name=pkg.name
+                    )
+                )
+                self.io.write_line("")
+
             if self.option("tree"):
                 if self.option("why"):
                     self.display_package_why(self.io, pkg, locked_repo)
@@ -106,6 +114,23 @@ lists all packages available."""
                 return 0
             else:
                 locked_packages = self._detect_why([pkg], locked_repo)
+
+                # No need to display the package itself
+                locked_packages = locked_packages[1:]
+
+                # test whether this is a direct dependency
+                if package in [e.name for e in self.poetry.package.requires]:
+                    self.io.write_line(
+                        "The package is a dependency of the main project (via the <b>dependencies</b> section)."
+                    )
+                for locked_package in locked_packages:
+                    self.io.write_line(
+                        "The package is required by <c1>{}</c1> (<b>{}</b>).".format(
+                            locked_package.name, locked_package.version,
+                        )
+                    )
+
+                return 0
 
         show_latest = self.option("latest")
         show_all = self.option("all")
@@ -222,10 +247,15 @@ lists all packages available."""
             self.line(line)
 
     def display_package_why(self, io, package, installed_repo):
+        package_name = package.name
         super_packages = self._detect_why([package], installed_repo)
         for package in super_packages:
             self.display_package_tree(
-                io, package, installed_repo, only_packages=super_packages
+                io,
+                package,
+                installed_repo,
+                only_packages=super_packages,
+                highlighted_packages=[package_name],
             )
 
     def _detect_why(self, unprocessed, installed_repo):
@@ -246,7 +276,9 @@ lists all packages available."""
                 result.append(child)
         return result
 
-    def display_package_tree(self, io, package, installed_repo, only_packages=None):
+    def display_package_tree(
+        self, io, package, installed_repo, only_packages=None, highlighted_packages=[]
+    ):
         io.write("<c1>{}</c1>".format(package.pretty_name))
         description = ""
         if package.description:
@@ -271,9 +303,15 @@ lists all packages available."""
 
             level = 1
             color = self.colors[level]
-            info = "{tree_bar}── <{color}>{name}</{color}> {constraint}".format(
+            high_start = "<high>" if dependency.name in highlighted_packages else ""
+            high_end = "</high>" if high_start else ""
+            high_color = "_high" if high_start else ""
+            info = "{tree_bar}── <{color}{high_color}>{name}</{color}{high_color}> {high_start}{constraint}{high_end}".format(
                 tree_bar=tree_bar,
                 color=color,
+                high_color=high_color,
+                high_start=high_start,
+                high_end=high_end,
                 name=dependency.name,
                 constraint=dependency.pretty_constraint,
             )
@@ -290,6 +328,7 @@ lists all packages available."""
                 tree_bar,
                 level + 1,
                 only_packages,
+                highlighted_packages,
             )
 
     def _display_tree(
@@ -301,6 +340,7 @@ lists all packages available."""
         previous_tree_bar="├",
         level=1,
         only_packages=None,
+        highlighted_packages=[],
     ):
         previous_tree_bar = previous_tree_bar.replace("├", "│")
 
@@ -333,9 +373,15 @@ lists all packages available."""
             if dependency.name in current_tree:
                 circular_warn = "(circular dependency aborted here)"
 
-            info = "{tree_bar}── <{color}>{name}</{color}> {constraint} {warn}".format(
+            high_start = "<high>" if dependency.name in highlighted_packages else ""
+            high_end = "</high>" if high_start else ""
+            high_color = "_high" if high_start else ""
+            info = "{tree_bar}── <{color}{high_color}>{name}</{color}{high_color}> {high_start}{constraint}{high_end} {warn}".format(
                 tree_bar=tree_bar,
                 color=color,
+                high_color=high_color,
+                high_start=high_start,
+                high_end=high_end,
                 name=dependency.name,
                 constraint=dependency.pretty_constraint,
                 warn=circular_warn,
@@ -355,6 +401,7 @@ lists all packages available."""
                     tree_bar,
                     level + 1,
                     only_packages,
+                    highlighted_packages,
                 )
 
     def _write_tree_line(self, io, line):
@@ -371,8 +418,16 @@ lists all packages available."""
 
         for color in self.colors:
             style = Style(color).fg(color)
+            style_high = Style(color + "_high").fg(color)
+            style_high.bold()
             io.output.formatter.add_style(style)
             io.error_output.formatter.add_style(style)
+            io.output.formatter.add_style(style_high)
+            io.error_output.formatter.add_style(style_high)
+
+        high_style = Style("high").bold()
+        io.output.formatter.add_style(high_style)
+        io.error_output.formatter.add_style(high_style)
 
     def find_latest_package(self, package, include_dev):
         from clikit.io import NullIO

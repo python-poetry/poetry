@@ -1183,6 +1183,8 @@ def test_show_why(app, poetry, installed):
     tester.execute("--tree --why msgpack-python")
 
     expected = """\
+Determining why msgpack-python is installed.
+
 msgpack-python 0.5.1 Msgpack
 cachy 0.2.0 Cachy
 `-- msgpack-python >=0.5 <0.6
@@ -1194,6 +1196,8 @@ cachy 0.2.0 Cachy
     tester.execute("--tree --why requests")
 
     expected = """\
+Determining why requests is installed.
+
 requests 2.23.0 Requests
 cachy 0.2.0 Cachy
 `-- requests >=2.20 <2.24
@@ -1205,8 +1209,9 @@ cachy 0.2.0 Cachy
     tester.execute("--why requests")
 
     expected = """\
-requests 2.23.0 Requests
-cachy    0.2.0  Cachy
+Determining why requests is installed.
+
+The package is required by cachy (0.2.0).
 """
 
     assert expected == tester.io.fetch_output()
@@ -1215,8 +1220,9 @@ cachy    0.2.0  Cachy
     tester.execute("--why msgpack-python")
 
     expected = """\
-msgpack-python (!) 0.5.1 Msgpack
-cachy              0.2.0 Cachy
+Determining why msgpack-python is installed.
+
+The package is required by cachy (0.2.0).
 """
 
     assert expected == tester.io.fetch_output()
