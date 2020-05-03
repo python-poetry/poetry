@@ -6,15 +6,6 @@ This chapter documents all the available commands.
 To get help from the command-line, simply call `poetry` to see the complete list of commands,
 then `--help` combined with any of those can give you more information.
 
-As `Poetry` uses [cleo](https://github.com/sdispater/cleo) you can call commands by short name if it's not ambiguous.
-
-```bash
-poetry up
-```
-
-calls `poetry update`.
-
-
 ## Global options
 
 * `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
