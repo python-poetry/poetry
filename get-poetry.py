@@ -16,6 +16,8 @@ that it will use the current Python installation.
 What this means is that one Poetry installation can serve for multiple
 Python versions.
 """
+import sys
+sys.path.remove("")
 import argparse
 import hashlib
 import json
@@ -25,7 +27,6 @@ import re
 import shutil
 import stat
 import subprocess
-import sys
 import tarfile
 import tempfile
 
