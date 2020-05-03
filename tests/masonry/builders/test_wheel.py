@@ -64,6 +64,42 @@ def test_wheel_prerelease():
     assert whl.exists()
 
 
+def test_wheel_excluded_data():
+    module_path = fixtures_dir / "default_with_excluded_data_toml"
+    WheelBuilder.make(Factory().create_poetry(module_path), NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "my_package/__init__.py" in z.namelist()
+        assert "my_package/data/sub_data/data2.txt" in z.namelist()
+        assert "my_package/data/sub_data/data3.txt" in z.namelist()
+        assert "my_package/data/data1.txt" not in z.namelist()
+
+
+def test_wheel_excluded_nested_data():
+    module_path = fixtures_dir / "exclude_nested_data_toml"
+    poetry = Factory().create_poetry(module_path)
+    WheelBuilder.make(poetry, NullEnv(), NullIO())
+
+    whl = module_path / "dist" / "my_package-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "my_package/__init__.py" in z.namelist()
+        assert "my_package/data/sub_data/data2.txt" not in z.namelist()
+        assert "my_package/data/sub_data/data3.txt" not in z.namelist()
+        assert "my_package/data/data1.txt" not in z.namelist()
+        assert "my_package/data/data2.txt" in z.namelist()
+        assert "my_package/puplic/publicdata.txt" in z.namelist()
+        assert "my_package/public/item1/itemdata1.txt" not in z.namelist()
+        assert "my_package/public/item1/subitem/subitemdata.txt" not in z.namelist()
+        assert "my_package/public/item2/itemdata2.txt" not in z.namelist()
+
+
 def test_wheel_localversionlabel():
     module_path = fixtures_dir / "localversionlabel"
     project = Factory().create_poetry(module_path)
@@ -126,3 +162,33 @@ def test_dist_info_file_permissions():
             z.getinfo("my_package-1.2.3.dist-info/entry_points.txt").external_attr
             == 0o644 << 16
         )
+
+
+@pytest.mark.parametrize(
+    "package",
+    ["pep_561_stub_only", "pep_561_stub_only_partial", "pep_561_stub_only_src"],
+)
+def test_wheel_package_pep_561_stub_only(package):
+    root = fixtures_dir / package
+    WheelBuilder.make(Factory().create_poetry(root), NullEnv(), NullIO())
+
+    whl = root / "dist" / "pep_561_stubs-0.1-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "pkg-stubs/__init__.pyi" in z.namelist()
+        assert "pkg-stubs/module.pyi" in z.namelist()
+        assert "pkg-stubs/subpkg/__init__.pyi" in z.namelist()
+
+
+def test_wheel_package_pep_561_stub_only_includes_typed_marker():
+    root = fixtures_dir / "pep_561_stub_only_partial"
+    WheelBuilder.make(Factory().create_poetry(root), NullEnv(), NullIO())
+
+    whl = root / "dist" / "pep_561_stubs-0.1-py3-none-any.whl"
+
+    assert whl.exists()
+
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "pkg-stubs/py.typed" in z.namelist()

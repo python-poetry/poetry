@@ -9,7 +9,7 @@ license = "MIT"
 
 readme = "README.rst"
 
-homepage = "https://poetry.eustace.io/"
+homepage = "https://python-poetry.org/"
 
 
 [tool.poetry.dependencies]

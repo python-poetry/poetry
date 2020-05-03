@@ -108,14 +108,19 @@ try:
     from venv import EnvBuilder
 
     builder = EnvBuilder(with_pip=True)
-    build = builder.create
+    builder.create(path)
 except ImportError:
-    # We fallback on virtualenv for Python 2.7
-    from virtualenv import create_environment
+    try:
+        # We fallback on virtualenv for Python 2.7
+        from virtualenv import create_environment
 
-    build = create_environment
+        create_environment(path)
+    except ImportError:
+        # since virtualenv>20 we have to use cli_run
+        from virtualenv import cli_run
 
-build(path)"""
+        cli_run([path])
+"""
 
 
 class EnvError(Exception):
@@ -190,7 +195,7 @@ class EnvManager(object):
         try:
             python_version = decode(
                 subprocess.check_output(
-                    " ".join(
+                    list_to_shell_command(
                         [
                             python,
                             "-c",
@@ -208,6 +213,24 @@ class EnvManager(object):
         patch = python_version.text
 
         create = False
+        is_root_venv = self._poetry.config.get("virtualenvs.in-project")
+        # If we are required to create the virtual environment in the root folder,
+        # create or recreate it if needed
+        if is_root_venv:
+            create = False
+            venv = self._poetry.file.parent / ".venv"
+            if venv.exists():
+                # We need to check if the patch version is correct
+                _venv = VirtualEnv(venv)
+                current_patch = ".".join(str(v) for v in _venv.version_info[:3])
+
+                if patch != current_patch:
+                    create = True
+
+            self.create_venv(io, executable=python, force=create)
+
+            return self.get(reload=True)
+
         envs = tomlkit.document()
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
         if envs_file.exists():
@@ -349,10 +372,19 @@ class EnvManager(object):
         else:
             venv_path = Path(venv_path)
 
-        return [
+        env_list = [
             VirtualEnv(Path(p))
             for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
         ]
+
+        venv = self._poetry.file.parent / ".venv"
+        if (
+            self._poetry.config.get("virtualenvs.in-project")
+            and venv.exists()
+            and venv.is_dir()
+        ):
+            env_list.insert(0, VirtualEnv(venv))
+        return env_list
 
     def remove(self, python):  # type: (str) -> Env
         venv_path = self._poetry.config.get("virtualenvs.path")
@@ -409,7 +441,7 @@ class EnvManager(object):
         try:
             python_version = decode(
                 subprocess.check_output(
-                    " ".join(
+                    list_to_shell_command(
                         [
                             python,
                             "-c",
@@ -455,6 +487,10 @@ class EnvManager(object):
 
         cwd = self._poetry.file.parent
         env = self.get(reload=True)
+
+        if not env.is_sane():
+            force = True
+
         if env.is_venv() and not force:
             # Already inside a virtualenv.
             return env
@@ -476,21 +512,22 @@ class EnvManager(object):
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
-            python_minor = decode(
+            python_patch = decode(
                 subprocess.check_output(
-                    " ".join(
+                    list_to_shell_command(
                         [
                             executable,
                             "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:2]]))\"",
+                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
                         ]
                     ),
                     shell=True,
                 ).strip()
             )
+            python_minor = ".".join(python_patch.split(".")[:2])
 
         supported_python = self._poetry.package.python_constraint
-        if not supported_python.allows(Version.parse(python_minor)):
+        if not supported_python.allows(Version.parse(python_patch)):
             # The currently activated or chosen Python version
             # is not compatible with the Python constraint specified
             # for the project.
@@ -499,7 +536,7 @@ class EnvManager(object):
             # Otherwise, we try to find a compatible Python version.
             if executable:
                 raise NoCompatiblePythonVersionFound(
-                    self._poetry.package.python_versions, python_minor
+                    self._poetry.package.python_versions, python_patch
                 )
 
             io.write_line(
@@ -534,7 +571,7 @@ class EnvManager(object):
                 try:
                     python_patch = decode(
                         subprocess.check_output(
-                            " ".join(
+                            list_to_shell_command(
                                 [
                                     python,
                                     "-c",
@@ -587,6 +624,12 @@ class EnvManager(object):
             self.build_venv(str(venv), executable=executable)
         else:
             if force:
+                if not env.is_sane():
+                    io.write_line(
+                        "<warning>The virtual environment found in {} seems to be broken.</warning>".format(
+                            env.path
+                        )
+                    )
                 io.write_line(
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
@@ -619,7 +662,9 @@ class EnvManager(object):
             # Create virtualenv by using an external executable
             try:
                 p = subprocess.Popen(
-                    " ".join([executable, "-"]), stdin=subprocess.PIPE, shell=True
+                    list_to_shell_command([executable, "-"]),
+                    stdin=subprocess.PIPE,
+                    shell=True,
                 )
                 p.communicate(encode(CREATE_VENV_COMMAND.format(path)))
             except CalledProcessError as e:
@@ -637,14 +682,18 @@ class EnvManager(object):
                 use_symlinks = True
 
             builder = EnvBuilder(with_pip=True, symlinks=use_symlinks)
-            build = builder.create
+            builder.create(path)
         except ImportError:
-            # We fallback on virtualenv for Python 2.7
-            from virtualenv import create_environment
+            try:
+                # We fallback on virtualenv for Python 2.7
+                from virtualenv import create_environment
 
-            build = create_environment
+                create_environment(path)
+            except ImportError:
+                # since virtualenv>20 we have to use cli_run
+                from virtualenv import cli_run
 
-        build(path)
+                cli_run([path])
 
     def remove_venv(self, path):  # type: (str) -> None
         shutil.rmtree(path)
@@ -684,6 +733,7 @@ class Env(object):
 
         self._marker_env = None
         self._pip_version = None
+        self._site_packages = None
 
     @property
     def path(self):  # type: () -> Path
@@ -739,15 +789,25 @@ class Env(object):
 
     @property
     def site_packages(self):  # type: () -> Path
-        if self._is_windows:
-            return self._path / "Lib" / "site-packages"
+        if self._site_packages is None:
+            site_packages = []
+            dist_packages = []
+            for entry in self.sys_path:
+                entry = Path(entry)
+                if entry.name == "site-packages":
+                    site_packages.append(entry)
+                elif entry.name == "dist-packages":
+                    dist_packages.append(entry)
 
-        return (
-            self._path
-            / "lib"
-            / "python{}.{}".format(*self.version_info[:2])
-            / "site-packages"
-        )
+            if not site_packages and not dist_packages:
+                raise RuntimeError("Unable to find the site-packages directory")
+
+            if site_packages:
+                self._site_packages = site_packages[0]
+            else:
+                self._site_packages = dist_packages[0]
+
+        return self._site_packages
 
     @property
     def sys_path(self):  # type: () -> List[str]
@@ -772,6 +832,9 @@ class Env(object):
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         raise NotImplementedError()
 
+    def get_pip_command(self):  # type: () -> List[str]
+        raise NotImplementedError()
+
     def config_var(self, var):  # type: (str) -> Any
         raise NotImplementedError()
 
@@ -788,12 +851,19 @@ class Env(object):
         return True
 
     def run(self, bin, *args, **kwargs):
+        bin = self._bin(bin)
+        cmd = [bin] + list(args)
+        return self._run(cmd, **kwargs)
+
+    def run_pip(self, *args, **kwargs):
+        pip = self.get_pip_command()
+        cmd = pip + list(args)
+        return self._run(cmd, **kwargs)
+
+    def _run(self, cmd, **kwargs):
         """
         Run a command inside the Python environment.
         """
-        bin = self._bin(bin)
-
-        cmd = [bin] + list(args)
         shell = kwargs.get("shell", False)
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
@@ -886,6 +956,11 @@ class SystemEnv(Env):
     def get_python_implementation(self):  # type: () -> str
         return platform.python_implementation()
 
+    def get_pip_command(self):  # type: () -> List[str]
+        # If we're not in a venv, assume the interpreter we're running on
+        # has a pip and use that
+        return [sys.executable, "-m", "pip"]
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
@@ -960,6 +1035,11 @@ class VirtualEnv(Env):
     def get_python_implementation(self):  # type: () -> str
         return self.marker_env["platform_python_implementation"]
 
+    def get_pip_command(self):  # type: () -> List[str]
+        # We're in a virtualenv that is known to be sane,
+        # so assume that we have a functional pip
+        return [self._bin("pip")]
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)
 
@@ -984,7 +1064,7 @@ class VirtualEnv(Env):
         return value
 
     def get_pip_version(self):  # type: () -> Version
-        output = self.run("python", "-m", "pip", "--version").strip()
+        output = self.run_pip("--version").strip()
         m = re.match("pip (.+?)(?: from .+)?$", output)
         if not m:
             return Version.parse("0.0")
@@ -998,7 +1078,7 @@ class VirtualEnv(Env):
         # A virtualenv is considered sane if both "python" and "pip" exist.
         return os.path.exists(self._bin("python")) and os.path.exists(self._bin("pip"))
 
-    def run(self, bin, *args, **kwargs):
+    def _run(self, cmd, **kwargs):
         with self.temp_environ():
             os.environ["PATH"] = self._updated_path()
             os.environ["VIRTUAL_ENV"] = str(self._path)
@@ -1006,7 +1086,7 @@ class VirtualEnv(Env):
             self.unset_env("PYTHONHOME")
             self.unset_env("__PYVENV_LAUNCHER__")
 
-            return super(VirtualEnv, self).run(bin, *args, **kwargs)
+            return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def execute(self, bin, *args, **kwargs):
         with self.temp_environ():
@@ -1045,11 +1125,11 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed = []
 
-    def run(self, bin, *args, **kwargs):
-        self.executed.append([bin] + list(args))
+    def _run(self, cmd, **kwargs):
+        self.executed.append(cmd)
 
         if self._execute:
-            return super(NullEnv, self).run(bin, *args, **kwargs)
+            return super(NullEnv, self)._run(cmd, **kwargs)
 
     def execute(self, bin, *args, **kwargs):
         self.executed.append([bin] + list(args))
@@ -1070,6 +1150,8 @@ class MockEnv(NullEnv):
         os_name="posix",
         is_venv=False,
         pip_version="19.1",
+        sys_path=None,
+        config_vars=None,
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -1080,6 +1162,8 @@ class MockEnv(NullEnv):
         self._os_name = os_name
         self._is_venv = is_venv
         self._pip_version = Version.parse(pip_version)
+        self._sys_path = sys_path
+        self._config_vars = config_vars
 
     @property
     def version_info(self):  # type: () -> Tuple[int]
@@ -1101,5 +1185,21 @@ class MockEnv(NullEnv):
     def pip_version(self):
         return self._pip_version
 
+    @property
+    def sys_path(self):
+        if self._sys_path is None:
+            return super(MockEnv, self).sys_path
+
+        return self._sys_path
+
     def is_venv(self):  # type: () -> bool
         return self._is_venv
+
+    def config_var(self, var):  # type: (str) -> Any
+        if self._config_vars is None:
+            return super().config_var(var)
+        else:
+            try:
+                return self._config_vars[var]
+            except KeyError:
+                return None

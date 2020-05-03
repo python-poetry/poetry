@@ -32,7 +32,7 @@ from poetry.version.markers import InvalidMarker
 from poetry.version.markers import parse_marker
 
 from .exceptions import PackageNotFound
-from .repository import Repository
+from .remote_repository import RemoteRepository
 
 
 try:
@@ -46,12 +46,14 @@ cache_control_logger.setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
-class PyPiRepository(Repository):
+class PyPiRepository(RemoteRepository):
 
-    CACHE_VERSION = parse_constraint("1.0.0b2")
+    CACHE_VERSION = parse_constraint("1.0.0")
 
     def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
-        self._url = url
+        super(PyPiRepository, self).__init__(url.rstrip("/") + "/simple/")
+
+        self._base_url = url
         self._disable_cache = disable_cache
         self._fallback = fallback
 
@@ -71,17 +73,7 @@ class PyPiRepository(Repository):
         self._session = CacheControl(session(), cache=self._cache_control_cache)
         self._inspector = Inspector()
 
-        super(PyPiRepository, self).__init__()
-
         self._name = "PyPI"
-
-    @property
-    def url(self):  # type: () -> str
-        return self._url
-
-    @property
-    def authenticated_url(self):  # type: () -> str
-        return self._url
 
     def find_packages(
         self,
@@ -224,7 +216,7 @@ class PyPiRepository(Repository):
 
         search = {"q": query}
 
-        response = session().get(self._url + "search", params=search)
+        response = session().get(self._base_url + "search", params=search)
         content = parse(response.content, namespaceHTMLElements=False)
         for result in content.findall(".//*[@class='package-snippet']"):
             name = result.find("h3/*[@class='package-snippet__name']").text
@@ -361,12 +353,12 @@ class PyPiRepository(Repository):
 
     def _get(self, endpoint):  # type: (str) -> Union[dict, None]
         try:
-            json_response = self._session.get(self._url + endpoint)
+            json_response = self._session.get(self._base_url + endpoint)
         except TooManyRedirects:
             # Cache control redirect loop.
             # We try to remove the cache and try again
-            self._cache_control_cache.delete(self._url + endpoint)
-            json_response = self._session.get(self._url + endpoint)
+            self._cache_control_cache.delete(self._base_url + endpoint)
+            json_response = self._session.get(self._base_url + endpoint)
 
         if json_response.status_code == 404:
             return None

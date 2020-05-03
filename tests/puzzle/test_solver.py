@@ -1887,3 +1887,44 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
             {"job": "install", "package": git_package, "skipped": True},
         ],
     )
+
+
+def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package):
+    pytest = get_package("demo", "1.0.0")
+    pytest.add_dependency("configparser", {"version": "^1.2.3", "python": "<3.2"})
+
+    package.add_dependency("demo", {"version": "^1.0.0", "python": "^3.6"})
+
+    repo.add_package(pytest)
+    repo.add_package(get_package("configparser", "1.2.3"))
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": pytest}],
+    )
+
+
+def test_solver_properly_propagates_markers(solver, repo, package):
+    package.python_versions = "~2.7 || ^3.4"
+    package.add_dependency(
+        "A",
+        {
+            "version": "^1.0",
+            "markers": "python_version >= '3.6' and implementation_name != 'pypy'",
+        },
+    )
+
+    package_a = get_package("A", "1.0.0")
+    package_a.python_versions = ">=3.6"
+
+    repo.add_package(package_a)
+
+    ops = solver.solve()
+
+    check_solver_result(ops, [{"job": "install", "package": package_a}])
+
+    assert (
+        str(ops[0].package.marker)
+        == 'python_version >= "3.6" and implementation_name != "pypy"'
+    )

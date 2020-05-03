@@ -8,9 +8,9 @@ from poetry.utils._compat import encode
 
 
 def test_auth_with_request_on_the_same_host():
-    auth = Auth("https://poetry.eustace.io", "foo", "bar")
+    auth = Auth("https://python-poetry.org", "foo", "bar")
 
-    request = Request("GET", "https://poetry.eustace.io/docs/")
+    request = Request("GET", "https://python-poetry.org/docs/")
     assert "Authorization" not in request.headers
 
     request = auth(request)
@@ -22,9 +22,9 @@ def test_auth_with_request_on_the_same_host():
 
 
 def test_auth_with_request_with_same_authentication():
-    auth = Auth("https://poetry.eustace.io", "foo", "bar")
+    auth = Auth("https://python-poetry.org", "foo", "bar")
 
-    request = Request("GET", "https://foo:bar@poetry.eustace.io/docs/")
+    request = Request("GET", "https://foo:bar@python-poetry.org/docs/")
     assert "Authorization" not in request.headers
 
     request = auth(request)
@@ -36,7 +36,7 @@ def test_auth_with_request_with_same_authentication():
 
 
 def test_auth_with_request_on_different_hosts():
-    auth = Auth("https://poetry.eustace.io", "foo", "bar")
+    auth = Auth("https://python-poetry.org", "foo", "bar")
 
     request = Request("GET", "https://pendulum.eustace.io/docs/")
     assert "Authorization" not in request.headers

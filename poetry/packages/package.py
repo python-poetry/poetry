@@ -5,6 +5,7 @@ import re
 
 from contextlib import contextmanager
 from typing import Union
+from unicodedata import normalize
 from warnings import warn
 
 from poetry.semver import Version
@@ -160,7 +161,7 @@ class Package(object):
         if not self._authors:
             return {"name": None, "email": None}
 
-        m = AUTHOR_REGEX.match(self._authors[0])
+        m = AUTHOR_REGEX.match(normalize("NFC", self._authors[0]))
 
         name = m.group("name")
         email = m.group("email")
@@ -171,7 +172,7 @@ class Package(object):
         if not self._maintainers:
             return {"name": None, "email": None}
 
-        m = AUTHOR_REGEX.match(self._maintainers[0])
+        m = AUTHOR_REGEX.match(normalize("NFC", self._maintainers[0]))
 
         name = m.group("name")
         email = m.group("email")
@@ -297,6 +298,7 @@ class Package(object):
                     branch=constraint.get("branch", None),
                     tag=constraint.get("tag", None),
                     rev=constraint.get("rev", None),
+                    category=category,
                     optional=optional,
                 )
             elif "file" in constraint:
@@ -331,7 +333,9 @@ class Package(object):
                         develop=constraint.get("develop", True),
                     )
             elif "url" in constraint:
-                dependency = URLDependency(name, constraint["url"], category=category)
+                dependency = URLDependency(
+                    name, constraint["url"], category=category, optional=optional
+                )
             else:
                 version = constraint["version"]
 

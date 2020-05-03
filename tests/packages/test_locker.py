@@ -181,3 +181,68 @@ A = []
         content = f.read()
 
     assert expected == content
+
+
+def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
+    content = u"""[[package]]
+category = "main"
+description = ""
+name = "A"
+optional = false
+python-versions = "*"
+version = "1.0.0"
+
+[package.extras]
+foo = ["bar"]
+
+[package.extras]
+foo = ["bar"]
+
+[metadata]
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+python-versions = "*"
+
+[metadata.files]
+A = []
+"""
+    with locker.lock.open("w", encoding="utf-8") as f:
+        f.write(content)
+
+    with pytest.raises(RuntimeError) as e:
+        _ = locker.lock_data
+
+    assert "Unable to read the lock file" in str(e.value)
+
+
+def test_locking_legacy_repository_package_should_include_source_section(root, locker):
+    package_a = get_package("A", "1.0.0")
+    package_a.source_url = "https://foo.bar"
+    package_a.source_reference = "legacy"
+    packages = [package_a]
+
+    locker.set_lock_data(root, packages)
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """[[package]]
+category = "main"
+description = ""
+name = "A"
+optional = false
+python-versions = "*"
+version = "1.0.0"
+
+[package.source]
+reference = "legacy"
+url = "https://foo.bar"
+
+[metadata]
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+python-versions = "*"
+
+[metadata.files]
+A = []
+"""
+
+    assert expected == content

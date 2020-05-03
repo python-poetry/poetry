@@ -20,7 +20,7 @@ def parse_constraint(constraints):  # type: (str) -> VersionConstraint
     or_groups = []
     for constraints in or_constraints:
         and_constraints = re.split(
-            "(?<!^)(?<![=>< ,]) *(?<!-)[, ](?!-) *(?!,|$)", constraints
+            "(?<!^)(?<![~=>< ,]) *(?<!-)[, ](?!-) *(?!,|$)", constraints
         )
         constraint_objects = []
 
@@ -76,14 +76,12 @@ def parse_single_constraint(constraint):  # type: (str) -> VersionConstraint
         version = Version.parse(m.group(1))
 
         if precision == 2:
-            low = version
             high = version.stable.next_major
         else:
-            low = Version(version.major, version.minor, version.patch)
             high = version.stable.next_minor
 
         return VersionRange(
-            low, high, include_min=True, always_include_max_prerelease=True
+            version, high, include_min=True, always_include_max_prerelease=True
         )
 
     # Caret range

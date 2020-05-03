@@ -12,6 +12,13 @@ except ImportError:
     from glob import glob
 
 try:
+    from importlib import metadata
+    import zipfile as zipp
+except ImportError:
+    import importlib_metadata as metadata
+    import zipp
+
+try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse

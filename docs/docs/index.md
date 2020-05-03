@@ -16,14 +16,19 @@ Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
+### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+```
+### windows powershell install instructions
+```powershell
+(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
 ```
 
 !!! note
 
     You only need to install Poetry once. It will automatically pick up the current
-    Python version and use it to [create virtualenvs](/docs/basic-usage/#poetry-and-virtualenvs) accordingly.
+    Python version and use it to [create virtualenvs](/docs/managing-environments.md) accordingly.
 
 The installer installs the `poetry` tool to Poetry's `bin` directory.
 On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
@@ -44,6 +49,12 @@ the `POETRY_UNINSTALL` environment variable before executing the installer.
 ```bash
 python get-poetry.py --uninstall
 POETRY_UNINSTALL=1 python get-poetry.py
+```
+
+By default, Poetry is installed into the user's platform-specific home directory. If you wish to change this, you may define the `POETRY_HOME` environment variable:
+
+```bash
+POETRY_HOME=/etc/poetry python get-poetry.py
 ```
 
 If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`
@@ -111,29 +122,33 @@ pipx uninstall poetry
 
 ## Updating `poetry`
 
-Updating poetry to the latest stable version is as simple as calling the `self:update` command.
+Updating Poetry to the latest stable version is as simple as calling the `self update` command.
 
 ```bash
-poetry self:update
+poetry self update
 ```
 
-If you want to install prerelease versions, you can use the `--preview` option.
+If you want to install pre-release versions, you can use the `--preview` option.
 
 ```bash
-poetry self:update --preview
+poetry self update --preview
 ```
 
-And finally, if you want to install a specific version you can pass it as an argument
-to `self:update`.
+And finally, if you want to install a specific version, you can pass it as an argument
+to `self update`.
 
 ```bash
-poetry self:update 0.8.0
+poetry self update 0.8.0
 ```
 
 !!!note
 
-    The `self:update` command will only work if you used the recommended
+    The `self update` command will only work if you used the recommended
     installer to install Poetry.
+
+!!!note
+
+    If you are still on poetry version < 1.0 use `poetry self:update` instead.
 
 
 ## Enable tab completion for Bash, Fish, or Zsh
@@ -146,11 +161,14 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 # Bash
 poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
-# Bash (macOS/Homebrew)
+# Bash (Homebrew)
 poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
+
+# Fish (Homebrew)
+poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry

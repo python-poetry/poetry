@@ -28,10 +28,11 @@ class DebugResolveCommand(InitCommand):
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
+        from poetry.io.null_io import NullIO
         from poetry.packages import ProjectPackage
         from poetry.puzzle import Solver
+        from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
-        from poetry.semver import parse_constraint
         from poetry.utils.env import EnvManager
 
         packages = self.argument("package")
@@ -99,20 +100,30 @@ class DebugResolveCommand(InitCommand):
 
             return 0
 
-        env = EnvManager(self.poetry).get()
-        current_python_version = parse_constraint(
-            ".".join(str(v) for v in env.version_info)
-        )
         table = self.table([], style="borderless")
         rows = []
+
+        if self.option("install"):
+            env = EnvManager(self.poetry).get()
+            current_python_version = ".".join(str(v) for v in env.version_info)
+            pool = Pool()
+            locked_repository = Repository()
+            for op in ops:
+                locked_repository.add_package(op.package)
+
+            pool.add_repository(locked_repository)
+
+            with package.with_python_versions(current_python_version):
+                solver = Solver(package, pool, Repository(), Repository(), NullIO())
+                ops = solver.solve()
+
         for op in ops:
             pkg = op.package
-            if self.option("install"):
-                if not pkg.python_constraint.allows(
-                    current_python_version
-                ) or not env.is_valid_for_marker(pkg.marker):
-                    continue
-            row = ["<c1>{}</c1>".format(pkg.name), "<b>{}</b>".format(pkg.version), ""]
+            row = [
+                "<c1>{}</c1>".format(pkg.name),
+                "<b>{}</b>".format(pkg.version),
+                "",
+            ]
 
             if not pkg.marker.is_any():
                 row[2] = str(pkg.marker)

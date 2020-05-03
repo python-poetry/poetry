@@ -96,16 +96,15 @@ class PipInstaller(BaseInstaller):
 
             self.run(*args)
 
-    def update(self, _, target):
+    def update(self, package, target):
+        if package.source_type != target.source_type:
+            # If the source type has changed, we remove the current
+            # package to avoid perpetual updates in some cases
+            self.remove(package)
+
         self.install(target, update=True)
 
     def remove(self, package):
-        # If we have a VCS package, remove its source directory
-        if package.source_type == "git":
-            src_dir = self._env.path / "src" / package.name
-            if src_dir.exists():
-                safe_rmtree(str(src_dir))
-
         try:
             self.run("uninstall", package.name, "-y")
         except CalledProcessError as e:
@@ -114,8 +113,19 @@ class PipInstaller(BaseInstaller):
 
             raise
 
+        # This is a workaround for https://github.com/pypa/pip/issues/4176
+        nspkg_pth_file = self._env.site_packages / "{}-nspkg.pth".format(package.name)
+        if nspkg_pth_file.exists():
+            nspkg_pth_file.unlink()
+
+        # If we have a VCS package, remove its source directory
+        if package.source_type == "git":
+            src_dir = self._env.path / "src" / package.name
+            if src_dir.exists():
+                safe_rmtree(str(src_dir))
+
     def run(self, *args, **kwargs):  # type: (...) -> str
-        return self._env.run("python", "-m", "pip", *args, **kwargs)
+        return self._env.run_pip(*args, **kwargs)
 
     def requirement(self, package, formatted=False):
         if formatted and not package.source_type:

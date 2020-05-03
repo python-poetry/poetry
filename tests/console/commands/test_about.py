@@ -11,7 +11,7 @@ def test_about(app):
 Poetry - Package Management for Python
 
 Poetry is a dependency manager tracking local dependencies of your projects and libraries.
-See https://github.com/sdispater/poetry for more information.
+See https://github.com/python-poetry/poetry for more information.
 """
 
     assert expected == tester.io.fetch_output()

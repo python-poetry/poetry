@@ -3,6 +3,8 @@ import sys
 from cleo import argument
 from cleo import option
 
+from poetry.utils.helpers import module_name
+
 from .command import Command
 
 
@@ -76,6 +78,6 @@ class NewCommand(Command):
 
         self.line(
             "Created package <info>{}</> in <fg=blue>{}</>".format(
-                name, path.relative_to(Path.cwd())
+                module_name(name), path.relative_to(Path.cwd())
             )
         )

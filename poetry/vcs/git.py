@@ -7,45 +7,84 @@ from collections import namedtuple
 from poetry.utils._compat import decode
 
 
+pattern_formats = {
+    "protocol": r"\w+",
+    "user": r"[a-zA-Z0-9_.-]+",
+    "resource": r"[a-zA-Z0-9_.-]+",
+    "port": r"\d+",
+    "path": r"[\w~.\-/\\]+",
+    "name": r"[\w~.\-]+",
+    "rev": r"[^@#]+",
+}
+
 PATTERNS = [
     re.compile(
         r"^(git\+)?"
         r"(?P<protocol>https?|git|ssh|rsync|file)://"
-        r"(?:(?P<user>.+)@)*"
-        r"(?P<resource>[a-z0-9_.-]*)"
-        r"(:?P<port>[\d]+)?"
-        r"(?P<pathname>[:/]((?P<owner>[\w\-]+)/)?"
-        r"((?P<name>[\w\-.]+?)(\.git|/)?)?)"
-        r"([@#](?P<rev>[^@#]+))?"
-        r"$"
+        r"(?:(?P<user>{user})@)?"
+        r"(?P<resource>{resource})?"
+        r"(:(?P<port>{port}))?"
+        r"(?P<pathname>[:/\\]({path}[/\\])?"
+        r"((?P<name>{name}?)(\.git|[/\\])?)?)"
+        r"([@#](?P<rev>{rev}))?"
+        r"$".format(
+            user=pattern_formats["user"],
+            resource=pattern_formats["resource"],
+            port=pattern_formats["port"],
+            path=pattern_formats["path"],
+            name=pattern_formats["name"],
+            rev=pattern_formats["rev"],
+        )
     ),
     re.compile(
         r"(git\+)?"
-        r"((?P<protocol>\w+)://)"
-        r"((?P<user>\w+)@)?"
-        r"(?P<resource>[\w.\-]+)"
-        r"(:(?P<port>\d+))?"
-        r"(?P<pathname>(/(?P<owner>\w+)/)"
-        r"(/?(?P<name>[\w\-]+)(\.git|/)?)?)"
-        r"([@#](?P<rev>[^@#]+))?"
-        r"$"
+        r"((?P<protocol>{protocol})://)"
+        r"(?:(?P<user>{user})@)?"
+        r"(?P<resource>{resource}:?)"
+        r"(:(?P<port>{port}))?"
+        r"(?P<pathname>({path})"
+        r"(?P<name>{name})(\.git|/)?)"
+        r"([@#](?P<rev>{rev}))?"
+        r"$".format(
+            protocol=pattern_formats["protocol"],
+            user=pattern_formats["user"],
+            resource=pattern_formats["resource"],
+            port=pattern_formats["port"],
+            path=pattern_formats["path"],
+            name=pattern_formats["name"],
+            rev=pattern_formats["rev"],
+        )
     ),
     re.compile(
-        r"^(?:(?P<user>.+)@)*"
-        r"(?P<resource>[a-z0-9_.-]*)[:]*"
-        r"(?P<port>[\d]+)?"
-        r"(?P<pathname>/?(?P<owner>.+)/(?P<name>.+).git)"
-        r"([@#](?P<rev>[^@#]+))?"
-        r"$"
+        r"^(?:(?P<user>{user})@)?"
+        r"(?P<resource>{resource})"
+        r"(:(?P<port>{port}))?"
+        r"(?P<pathname>([:/]{path}/)"
+        r"(?P<name>{name})(\.git|/)?)"
+        r"([@#](?P<rev>{rev}))?"
+        r"$".format(
+            user=pattern_formats["user"],
+            resource=pattern_formats["resource"],
+            port=pattern_formats["port"],
+            path=pattern_formats["path"],
+            name=pattern_formats["name"],
+            rev=pattern_formats["rev"],
+        )
     ),
     re.compile(
-        r"((?P<user>\w+)@)?"
-        r"(?P<resource>[\w.\-]+)"
-        r"[:/]{1,2}"
-        r"(?P<pathname>((?P<owner>\w+)/)?"
-        r"((?P<name>[\w\-]+)(\.git|/)?)?)"
-        r"([@#](?P<rev>[^@#]+))?"
-        r"$"
+        r"((?P<user>{user})@)?"
+        r"(?P<resource>{resource})"
+        r"[:/]{{1,2}}"
+        r"(?P<pathname>({path})"
+        r"(?P<name>{name})(\.git|/)?)"
+        r"([@#](?P<rev>{rev}))?"
+        r"$".format(
+            user=pattern_formats["user"],
+            resource=pattern_formats["resource"],
+            path=pattern_formats["path"],
+            name=pattern_formats["name"],
+            rev=pattern_formats["rev"],
+        )
     ),
 ]
 
@@ -78,15 +117,18 @@ class ParsedUrl:
 
         raise ValueError('Invalid git url "{}"'.format(url))
 
-    def format(self):
+    @property
+    def url(self):  # type: () -> str
         return "{}{}{}{}{}".format(
             "{}://".format(self.protocol) if self.protocol else "",
             "{}@".format(self.user) if self.user else "",
             self.resource,
             ":{}".format(self.port) if self.port else "",
-            "/" + self.pathname if self.pathname.startswith(":") else self.pathname,
-            "#{}".format(self.rev) if self.rev else "",
+            "/" + self.pathname.lstrip(":/"),
         )
+
+    def format(self):
+        return "{}".format(self.url, "#{}".format(self.rev) if self.rev else "",)
 
     def __str__(self):  # type: () -> str
         return self.format()
@@ -187,7 +229,9 @@ class Git:
                 folder.as_posix(),
             ]
 
-        args += ["rev-parse", rev]
+        # We need "^{commit}" to ensure that the commit SHA of the commit the
+        # tag points to is returned, even in the case of annotated tags.
+        args += ["rev-parse", rev + "^{commit}"]
 
         return self.run(*args)
 
@@ -207,7 +251,7 @@ class Git:
         args += ["ls-files", "--others", "-i", "--exclude-standard"]
         output = self.run(*args)
 
-        return output.split("\n")
+        return output.strip().split("\n")
 
     def remote_urls(self, folder=None):  # type: (...) -> dict
         output = self.run(

@@ -2,6 +2,7 @@ import os
 import re
 
 from poetry.semver import Version
+from poetry.utils.patterns import wheel_file_re
 from poetry.version.requirements import Requirement
 
 from .dependency import Dependency
@@ -25,6 +26,8 @@ from .vcs_dependency import VCSDependency
 
 
 def dependency_from_pep_508(name):
+    from poetry.vcs.git import ParsedUrl
+
     # Removing comments
     parts = name.split("#", 1)
     name = parts[0].strip()
@@ -46,6 +49,8 @@ def dependency_from_pep_508(name):
 
     if is_url(name):
         link = Link(name)
+    elif req.url:
+        link = Link(req.url)
     else:
         p, extras = strip_extras(path)
         if os.path.isdir(p) and (os.path.sep in name or name.startswith(".")):
@@ -66,7 +71,7 @@ def dependency_from_pep_508(name):
             link = Link(path_to_url(os.path.normpath(os.path.abspath(link.path))))
         # wheel file
         if link.is_wheel:
-            m = re.match(r"^(?P<namever>(?P<name>.+?)-(?P<ver>\d.*?))", link.filename)
+            m = wheel_file_re.match(link.filename)
             if not m:
                 raise ValueError("Invalid wheel name: {}".format(link.filename))
 
@@ -74,10 +79,15 @@ def dependency_from_pep_508(name):
             version = m.group("ver")
             dep = Dependency(name, version)
         else:
-            name = link.egg_fragment
+            name = req.name or link.egg_fragment
 
-            if link.scheme == "git":
+            if link.scheme.startswith("git+"):
+                url = ParsedUrl.parse(link.url)
+                dep = VCSDependency(name, "git", url.url, rev=url.rev)
+            elif link.scheme == "git":
                 dep = VCSDependency(name, "git", link.url_without_fragment)
+            elif link.scheme in ["http", "https"]:
+                dep = URLDependency(name, link.url_without_fragment)
             else:
                 dep = Dependency(name, "*")
     else:

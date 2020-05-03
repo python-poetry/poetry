@@ -25,6 +25,9 @@ from tests.repositories.test_legacy_repository import (
 from tests.repositories.test_pypi_repository import MockRepository
 
 
+fixtures_dir = Path("tests/fixtures")
+
+
 class Installer(BaseInstaller):
     def _get_installer(self):
         return NoopInstaller()
@@ -662,7 +665,7 @@ def test_installer_with_pypi_repository(package, locker, installed):
 
 
 def test_run_installs_with_local_file(installer, locker, repo, package):
-    file_path = Path("tests/fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl")
+    file_path = fixtures_dir / "distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency("demo", {"file": str(file_path)})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -677,8 +680,8 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
 
 
 def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, package):
-    file_path = Path(
-        "tests/fixtures/wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
+    file_path = (
+        fixtures_dir / "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
     )
     package.add_dependency("demo", {"file": str(file_path)})
 
@@ -694,7 +697,7 @@ def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, packa
 def test_run_installs_with_local_poetry_directory_and_extras(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path("tests/fixtures/project_with_extras")
+    file_path = fixtures_dir / "project_with_extras"
     package.add_dependency(
         "project-with-extras", {"path": str(file_path), "extras": ["extras_a"]}
     )
@@ -713,8 +716,8 @@ def test_run_installs_with_local_poetry_directory_and_extras(
 def test_run_installs_with_local_poetry_directory_transitive(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path(
-        "tests/fixtures/directory/project_with_transitive_directory_dependencies/"
+    file_path = (
+        fixtures_dir / "directory/project_with_transitive_directory_dependencies/"
     )
     package.add_dependency(
         "project-with-transitive-directory-dependencies", {"path": str(file_path)}
@@ -735,9 +738,7 @@ def test_run_installs_with_local_poetry_directory_transitive(
 def test_run_installs_with_local_poetry_file_transitive(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path(
-        "tests/fixtures/directory/project_with_transitive_file_dependencies/"
-    )
+    file_path = fixtures_dir / "directory/project_with_transitive_file_dependencies/"
     package.add_dependency(
         "project-with-transitive-file-dependencies", {"path": str(file_path)}
     )
@@ -757,7 +758,7 @@ def test_run_installs_with_local_poetry_file_transitive(
 def test_run_installs_with_local_setuptools_directory(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = Path("tests/fixtures/project_with_setup/")
+    file_path = fixtures_dir / "project_with_setup/"
     package.add_dependency("my-package", {"path": str(file_path)})
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1182,8 +1183,8 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "checksum": [],
                     "dependencies": {
                         "B": [
-                            {"version": "^1.0", "python": "<4.0"},
-                            {"version": "^2.0", "python": ">=4.0"},
+                            {"version": "^1.0", "python": "<2.7"},
+                            {"version": "^2.0", "python": ">=2.7"},
                         ]
                     },
                 },
@@ -1196,7 +1197,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {"C": "1.2"},
-                    "requirements": {"python": "<4.0"},
+                    "requirements": {"python": "<2.7"},
                 },
                 {
                     "name": "B",
@@ -1207,7 +1208,7 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
                     "python-versions": "*",
                     "checksum": [],
                     "dependencies": {"C": "1.5"},
-                    "requirements": {"python": ">=4.0"},
+                    "requirements": {"python": ">=2.7"},
                 },
                 {
                     "name": "C",
@@ -1516,7 +1517,7 @@ def test_installer_can_install_dependencies_from_forced_source(
 
 
 def test_run_installs_with_url_file(installer, locker, repo, package):
-    url = "https://poetry.eustace.io/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency("demo", {"url": url})
 
     repo.add_package(get_package("pendulum", "1.4.4"))

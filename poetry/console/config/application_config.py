@@ -1,5 +1,7 @@
 import logging
 
+from typing import Any
+
 from cleo.config import ApplicationConfig as BaseApplicationConfig
 from clikit.api.application.application import Application
 from clikit.api.args.raw_args import RawArgs
@@ -7,6 +9,7 @@ from clikit.api.event import PRE_HANDLE
 from clikit.api.event import PreHandleEvent
 from clikit.api.event import PreResolveEvent
 from clikit.api.event.event_dispatcher import EventDispatcher
+from clikit.api.exceptions import CliKitException
 from clikit.api.formatter import Style
 from clikit.api.io import Input
 from clikit.api.io import InputStream
@@ -43,15 +46,15 @@ class ApplicationConfig(BaseApplicationConfig):
         self.add_event_listener(PRE_HANDLE, self.set_env)
 
     def register_command_loggers(
-        self, event, event_name, _  # type: PreHandleEvent  # type: str
-    ):  # type: (...) -> None
+        self, event, event_name, _
+    ):  # type: (PreHandleEvent, str, Any) -> None
         command = event.command.config.handler
         if not isinstance(command, Command):
             return
 
         io = event.io
 
-        loggers = ["poetry.packages.package"]
+        loggers = ["poetry.packages.package", "poetry.utils.password_manager"]
 
         loggers += command.loggers
 
@@ -72,7 +75,7 @@ class ApplicationConfig(BaseApplicationConfig):
 
             logger.setLevel(level)
 
-    def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, _) -> None
+    def set_env(self, event, event_name, _):  # type: (PreHandleEvent, str, Any) -> None
         from poetry.utils.env import EnvManager
 
         command = event.command.config.handler  # type: EnvCommand
@@ -99,7 +102,16 @@ class ApplicationConfig(BaseApplicationConfig):
         if args.has_option_token("-h") or args.has_option_token("--help"):
             from clikit.api.resolver import ResolvedCommand
 
-            resolved_command = self.command_resolver.resolve(args, application)
+            try:
+                resolved_command = self.command_resolver.resolve(args, application)
+            except CliKitException:
+                # We weren't able to resolve the command,
+                # due to a parse error most likely,
+                # so we fall back on the default behavior
+                return super(ApplicationConfig, self).resolve_help_command(
+                    event, event_name, dispatcher
+                )
+
             # If the current command is the run one, skip option
             # check and interpret them as part of the executed command
             if resolved_command.command.name == "run":

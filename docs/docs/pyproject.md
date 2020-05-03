@@ -27,18 +27,22 @@ The recommended notation for the most common licenses is (alphabetical):
 * BSD-2-Clause
 * BSD-3-Clause
 * BSD-4-Clause
-* GPL-2.0
-* GPL-2.0+
-* GPL-3.0
-* GPL-3.0+
-* LGPL-2.1
-* LGPL-2.1+
-* LGPL-3.0
-* LGPL-3.0+
+* GPL-2.0-only
+* GPL-2.0-or-later
+* GPL-3.0-only
+* GPL-3.0-or-later
+* LGPL-2.1-only
+* LGPL-2.1-or-later
+* LGPL-3.0-only
+* LGPL-3.0-or-later
 * MIT
 
 Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://www.spdx.org/licenses/).
+
+!!!note
+
+    If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
 
 ## authors
 
@@ -127,11 +131,11 @@ it by using `format`:
 # ...
 packages = [
     { include = "my_package" },
-    { include = "tests", format = "sdist" },
+    { include = "my_other_package", format = "sdist" },
 ]
 ```
 
-From now on, only the `sdist` build archive will include the `tests` package.
+From now on, only the `sdist` build archive will include the `my_other_package` package.
 
 !!!note
 
@@ -264,7 +268,7 @@ any custom url in the `urls` section.
 
 ```toml
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/sdispater/poetry/issues"
+"Bug Tracker" = "https://github.com/python-poetry/poetry/issues"
 ```
 
 If you publish you package on PyPI, they will appear in the `Project Links` section.

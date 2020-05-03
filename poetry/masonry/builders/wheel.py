@@ -10,7 +10,6 @@ import zipfile
 
 from base64 import urlsafe_b64encode
 from io import StringIO
-from typing import Set
 
 from clikit.api.io.flags import VERY_VERBOSE
 
@@ -116,9 +115,9 @@ class WheelBuilder(Builder):
                 return
 
             lib = lib[0]
-            excluded = self.find_excluded_files()
+
             for pkg in lib.glob("**/*"):
-                if pkg.is_dir() or pkg in excluded:
+                if pkg.is_dir() or self.is_excluded(pkg):
                     continue
 
                 rel_path = str(pkg.relative_to(lib))
@@ -133,7 +132,7 @@ class WheelBuilder(Builder):
                 self._add_file(wheel, pkg, rel_path)
 
     def _copy_module(self, wheel):
-        excluded = self.find_excluded_files()
+
         to_add = []
 
         for include in self._module.includes:
@@ -154,7 +153,9 @@ class WheelBuilder(Builder):
                 else:
                     rel_file = file.relative_to(self._path)
 
-                if file in excluded:
+                if self.is_excluded(rel_file.as_posix()) and isinstance(
+                    include, PackageInclude
+                ):
                     continue
 
                 if file.suffix == ".pyc":
@@ -199,10 +200,6 @@ class WheelBuilder(Builder):
                 f.write("{},sha256={},{}\n".format(path, hash, size))
             # RECORD itself is recorded with no hash or size
             f.write(self.dist_info + "/RECORD,,\n")
-
-    def find_excluded_files(self):  # type: () -> Set
-        # Checking VCS
-        return set()
 
     @property
     def dist_info(self):  # type: () -> str

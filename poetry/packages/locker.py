@@ -8,6 +8,7 @@ from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
 from tomlkit import table
+from tomlkit.exceptions import TOMLKitError
 
 import poetry.packages
 import poetry.repositories
@@ -137,8 +138,11 @@ class Locker(object):
 
                 package.add_dependency(dep_name, constraint)
 
+            if "develop" in info:
+                package.develop = info["develop"]
+
             if "source" in info:
-                package.source_type = info["source"]["type"]
+                package.source_type = info["source"].get("type", "")
                 package.source_url = info["source"]["url"]
                 package.source_reference = info["source"]["reference"]
 
@@ -217,7 +221,10 @@ class Locker(object):
         if not self._lock.exists():
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
-        return self._lock.read()
+        try:
+            return self._lock.read()
+        except TOMLKitError as e:
+            raise RuntimeError("Unable to read the lock file ({}).".format(e))
 
     def _lock_packages(
         self, packages
@@ -290,11 +297,14 @@ class Locker(object):
 
             data["dependencies"] = dependencies
 
-        if package.source_type:
+        if package.source_url:
             data["source"] = {
-                "type": package.source_type,
                 "url": package.source_url,
                 "reference": package.source_reference,
             }
+            if package.source_type:
+                data["source"]["type"] = package.source_type
+            if package.source_type == "directory":
+                data["develop"] = package.develop
 
         return data

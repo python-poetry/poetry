@@ -9,6 +9,7 @@ python-versions = "*"
 [[package]]
 name = "my-package"
 version = "0.1.2"
+develop = true
 description = "Demo project."
 category = "main"
 optional = false

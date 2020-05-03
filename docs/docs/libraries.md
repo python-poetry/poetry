@@ -2,11 +2,6 @@
 
 This chapter will tell you how to make your library installable through Poetry.
 
-## Every project is a package
-
-As soon as you have a `pyproject.toml` in a directory, that directory is a package.
-However, to make it accessible to others you will need to package and publish it.
-
 
 ## Versioning
 
@@ -14,7 +9,7 @@ While Poetry does not enforce any convention regarding package versioning,
 it **strongly** recommends to follow [semantic versioning](https://semver.org).
 
 This has many advantages for the end users and allows them to set appropriate
-[version constraints](/docs/versions/).
+[version constraints](/docs/dependency-specification/#version-constraints).
 
 ## Lock file
 
