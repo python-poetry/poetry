@@ -1,8 +1,6 @@
 import os
 
-from pathlib import Path
-
 
 def test_get_poetry():
-    cmd = "cd {} && cat ../get-poetry.py | python3".format(Path(__file__).parent)
+    cmd = "cd {} && cat ../get-poetry.py | python".format(os.path.dirname(__file__))
     os.system(cmd)
