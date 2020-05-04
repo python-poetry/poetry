@@ -19,24 +19,24 @@ Python versions.
 import sys  # isort:skip
 
 sys.path.remove("")
-import argparse
-import hashlib
-import json
-import os
-import platform
-import re
-import shutil
-import stat
-import subprocess
-import tarfile
-import tempfile
+import argparse  # noqa: E402
+import hashlib  # noqa: E402
+import json  # noqa: E402
+import os  # noqa: E402
+import platform  # noqa: E402
+import re  # noqa: E402
+import shutil  # noqa: E402
+import stat  # noqa: E402
+import subprocess  # noqa: E402
+import tarfile  # noqa: E402
+import tempfile  # noqa: E402
 
-from contextlib import closing
-from contextlib import contextmanager
-from functools import cmp_to_key
-from gzip import GzipFile
-from io import UnsupportedOperation
-from io import open
+from contextlib import closing  # noqa: E402
+from contextlib import contextmanager  # noqa: E402
+from functools import cmp_to_key  # noqa: E402
+from gzip import GzipFile  # noqa: E402
+from io import UnsupportedOperation  # noqa: E402
+from io import open  # noqa: E402
 
 
 try:
