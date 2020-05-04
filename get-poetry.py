@@ -17,6 +17,7 @@ What this means is that one Poetry installation can serve for multiple
 Python versions.
 """
 import sys  # isort:skip
+
 sys.path.remove("")
 import argparse
 import hashlib
