@@ -34,7 +34,6 @@ class Executor:
         for future in current_tasks:
             future.result()
 
-
     def _execute_single(self, operation):  # type: (Operation) -> None
         """
         Execute a given operation.
@@ -122,7 +121,6 @@ class Executor:
             return
 
         self._installer.remove(operation.package)
-
 
     def _write_line(self, *args, **kwargs):
         with self._write_lock:

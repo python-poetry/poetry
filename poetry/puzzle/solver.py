@@ -161,7 +161,9 @@ class Solver:
         for op in operations:
             # Packages to be uninstalled have no depth so we default to 0
             # since it actually doesn't matter since removals are always on top.
-            op.set_depth(depths[packages.index(op.package)] if op.job_type != "uninstall" else 0)
+            op.set_depth(
+                depths[packages.index(op.package)] if op.job_type != "uninstall" else 0
+            )
 
         return sorted(
             operations,
