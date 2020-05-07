@@ -49,6 +49,19 @@ class InstalledRepository(Repository):
                     is_standard_package = False
 
                 if is_standard_package:
+                    if (
+                        path.name.endswith(".dist-info")
+                        and env.site_packages.joinpath(
+                            "{}.pth".format(package.pretty_name)
+                        ).exists()
+                    ):
+                        with env.site_packages.joinpath(
+                            "{}.pth".format(package.pretty_name)
+                        ).open() as f:
+                            directory = Path(f.readline().strip())
+                            package.source_type = "directory"
+                            package.source_url = directory.as_posix()
+
                     continue
 
                 src_path = env.path / "src"

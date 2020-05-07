@@ -17,6 +17,7 @@ INSTALLED_RESULTS = [
         zipp.Path(str(SITE_PACKAGES / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
     ),
     metadata.PathDistribution(VENDOR_DIR / "attrs-19.3.0.dist-info"),
+    metadata.PathDistribution(SITE_PACKAGES / "editable-2.3.4.dist-info"),
 ]
 
 
@@ -45,7 +46,7 @@ def test_load(mocker):
     mocker.patch("poetry.repositories.installed_repository._VENDORS", str(VENDOR_DIR))
     repository = InstalledRepository.load(MockEnv(path=ENV_DIR))
 
-    assert len(repository.packages) == 3
+    assert len(repository.packages) == 4
 
     cleo = repository.packages[0]
     assert cleo.name == "cleo"
@@ -55,11 +56,11 @@ def test_load(mocker):
         == "Cleo allows you to create beautiful and testable command-line interfaces."
     )
 
-    foo = repository.packages[1]
+    foo = repository.packages[2]
     assert foo.name == "foo"
     assert foo.version.text == "0.1.0"
 
-    pendulum = repository.packages[2]
+    pendulum = repository.packages[3]
     assert pendulum.name == "pendulum"
     assert pendulum.version.text == "2.0.5"
     assert pendulum.description == "Python datetimes made easy"
@@ -69,3 +70,9 @@ def test_load(mocker):
 
     for pkg in repository.packages:
         assert pkg.name != "attrs"
+
+    editable = repository.packages[1]
+    assert "editable" == editable.name
+    assert "2.3.4" == editable.version.text
+    assert "directory" == editable.source_type
+    assert "/path/to/editable" == editable.source_url
