@@ -78,7 +78,35 @@ class Factory(BaseFactory):
         # Always put PyPI last to prefer private repositories
         # but only if we have no other default source
         if not poetry.pool.has_default():
-            poetry.pool.add_repository(PyPiRepository(), True)
+            # try to read customized pip source url from global pip config if exists
+            from .utils._compat import Path
+            from .utils.env import SystemEnv,EnvCommandError
+            try:
+                import sys
+
+                current_env = SystemEnv(Path(sys.executable))
+                customized_url = current_env.run_pip(
+                    "config", "get", "global.index-url"
+                ).strip()
+                if io.is_debug():
+                    io.write_line(
+                        "Adding customized PyPI repository ({}) according to pip global config".format(
+                            customized_url
+                        )
+                    )
+
+                repository = self.create_legacy_repository(
+                    {
+                        "name": "customizedPyPI",
+                        "url": customized_url,
+                        "default": "true",
+                    },
+                    config,
+                )
+                poetry.pool.add_repository(repository, True)
+            except EnvCommandError:
+                # use default official PyPI if `global.index-url` config not exists
+                poetry.pool.add_repository(PyPiRepository(), True)
         else:
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
