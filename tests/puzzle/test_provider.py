@@ -204,16 +204,13 @@ def test_search_for_directory_setup_with_base(provider, directory):
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
-    assert (
-        package.root_dir
-        == (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / "git"
-            / "github.com"
-            / "demo"
-            / directory
-        ).as_posix()
+    assert package.root_dir == (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / directory
     )
 
 

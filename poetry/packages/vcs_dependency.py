@@ -94,3 +94,11 @@ class VCSDependency(Dependency):
 
     def accepts_prereleases(self):  # type: () -> bool
         return True
+
+    def __str__(self):
+        return "{} ({} {})".format(
+            self._pretty_name, self._pretty_constraint, self._vcs
+        )
+
+    def __hash__(self):
+        return hash((self._name, self._vcs, self._branch, self._tag, self._rev))

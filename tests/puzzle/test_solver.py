@@ -1928,3 +1928,114 @@ def test_solver_properly_propagates_markers(solver, repo, package):
         str(ops[0].package.marker)
         == 'python_version >= "3.6" and implementation_name != "pypy"'
     )
+
+
+def test_solver_cannot_choose_another_version_for_directory_dependencies(
+    solver, repo, package
+):
+    pendulum = get_package("pendulum", "2.0.3")
+    demo = get_package("demo", "0.1.0")
+    foo = get_package("foo", "1.2.3")
+    foo.add_dependency("demo", "<0.1.2")
+    repo.add_package(foo)
+    repo.add_package(demo)
+    repo.add_package(pendulum)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / "demo"
+    ).as_posix()
+
+    package.add_dependency("demo", {"path": path})
+    package.add_dependency("foo", "^1.2.3")
+
+    # This is not solvable since the demo version is pinned
+    # via the directory dependency
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
+def test_solver_cannot_choose_another_version_for_file_dependencies(
+    solver, repo, package
+):
+    pendulum = get_package("pendulum", "2.0.3")
+    demo = get_package("demo", "0.0.8")
+    foo = get_package("foo", "1.2.3")
+    foo.add_dependency("demo", "<0.1.0")
+    repo.add_package(foo)
+    repo.add_package(demo)
+    repo.add_package(pendulum)
+
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "distributions"
+        / "demo-0.1.0-py2.py3-none-any.whl"
+    ).as_posix()
+
+    package.add_dependency("demo", {"path": path})
+    package.add_dependency("foo", "^1.2.3")
+
+    # This is not solvable since the demo version is pinned
+    # via the file dependency
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
+def test_solver_cannot_choose_another_version_for_git_dependencies(
+    solver, repo, package
+):
+    pendulum = get_package("pendulum", "2.0.3")
+    demo = get_package("demo", "0.0.8")
+    foo = get_package("foo", "1.2.3")
+    foo.add_dependency("demo", "<0.1.0")
+    repo.add_package(foo)
+    repo.add_package(demo)
+    repo.add_package(pendulum)
+
+    package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+    package.add_dependency("foo", "^1.2.3")
+
+    # This is not solvable since the demo version is pinned
+    # via the file dependency
+    with pytest.raises(SolverProblemError):
+        solver.solve()
+
+
+def test_solver_cannot_choose_another_version_for_url_dependencies(
+    solver, repo, package, http
+):
+    path = (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "distributions"
+        / "demo-0.1.0-py2.py3-none-any.whl"
+    )
+
+    http.register_uri(
+        "GET",
+        "https://foo.bar/demo-0.1.0-py2.py3-none-any.whl",
+        body=path.read_bytes(),
+        streaming=True,
+    )
+    pendulum = get_package("pendulum", "2.0.3")
+    demo = get_package("demo", "0.0.8")
+    foo = get_package("foo", "1.2.3")
+    foo.add_dependency("demo", "<0.1.0")
+    repo.add_package(foo)
+    repo.add_package(demo)
+    repo.add_package(pendulum)
+
+    package.add_dependency(
+        "demo", {"url": "https://foo.bar/distributions/demo-0.1.0-py2.py3-none-any.whl"}
+    )
+    package.add_dependency("foo", "^1.2.3")
+
+    # This is not solvable since the demo version is pinned
+    # via the git dependency
+    with pytest.raises(SolverProblemError):
+        solver.solve()
