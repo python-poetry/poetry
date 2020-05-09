@@ -118,4 +118,4 @@ poetry env remove 3.7
 poetry env remove test-O3eWbxRl-py3.7
 ```
 
-If your remove the currently activated virtual environment, it will be automatically deactivated.
+If you remove the currently activated virtual environment, it will be automatically deactivated.
