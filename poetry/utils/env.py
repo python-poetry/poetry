@@ -259,7 +259,11 @@ class EnvManager(object):
             self.create_venv(io, executable=python, force=create)
 
         # Activate
-        envs[base_env_name] = {"minor": minor, "patch": patch}
+        envs[base_env_name] = {
+            "minor": minor,
+            "patch": patch,
+            "implementation": python_implementation,
+        }
         envs_file.write(envs)
 
         return self.get(reload=True)
@@ -279,9 +283,11 @@ class EnvManager(object):
             envs = envs_file.read()
             env = envs.get(name)
             if env is not None:
+                python_implementation = env.get("implementation", "py")
                 io.write_line(
                     "Deactivating virtualenv: <comment>{}</comment>".format(
-                        venv_path / (name + "-py{}".format(env["minor"]))
+                        venv_path
+                        / (name + "-{}{}".format(python_implementation, env["minor"]))
                     )
                 )
                 del envs[name]
@@ -293,6 +299,9 @@ class EnvManager(object):
             return self._env
 
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        python_implementation = self.normalize_python_implementation(
+            platform.python_implementation()
+        )
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
@@ -309,6 +318,7 @@ class EnvManager(object):
             env = envs.get(base_env_name)
             if env:
                 python_minor = env["minor"]
+                python_implementation = env.get("implementation", "py")
 
         # Check if we are inside a virtualenv or not
         # Conda sets CONDA_PREFIX in its envs, see
@@ -337,7 +347,9 @@ class EnvManager(object):
             else:
                 venv_path = Path(venv_path)
 
-            name = "{}-py{}".format(base_env_name, python_minor.strip())
+            name = "{}-{}{}".format(
+                base_env_name, python_implementation, python_minor.strip()
+            )
 
             venv = venv_path / name
 
