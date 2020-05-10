@@ -83,7 +83,7 @@ def parse_requires(requires):  # type: (str) -> List[str]
             continue
 
         if current_marker:
-            line = "{}; {}".format(line, current_marker)
+            line = "{} ; {}".format(line, current_marker)
 
         requires_dist.append(line)
 

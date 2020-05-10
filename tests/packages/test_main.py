@@ -183,6 +183,22 @@ def test_dependency_from_pep_508_with_git_url():
     assert "1.2" == dep.reference
 
 
+def test_dependency_from_pep_508_with_git_url_and_comment_and_extra():
+    name = (
+        "poetry @ git+https://github.com/python-poetry/poetry.git@b;ar;#egg=poetry"
+        ' ; extra == "foo;"'
+    )
+
+    dep = dependency_from_pep_508(name)
+
+    assert "poetry" == dep.name
+    assert dep.is_vcs()
+    assert "git" == dep.vcs
+    assert "https://github.com/python-poetry/poetry.git" == dep.source
+    assert "b;ar;" == dep.reference
+    assert dep.in_extras == ["foo;"]
+
+
 def test_dependency_from_pep_508_with_url():
     name = "django-utils @ https://example.com/django-utils-1.0.0.tar.gz"
 
