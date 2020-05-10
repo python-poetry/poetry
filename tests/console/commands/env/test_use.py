@@ -26,8 +26,8 @@ def remove_venv(path):
 
 def check_output_wrapper(version=Version.parse("3.7.1")):
     def check_output(cmd, *args, **kwargs):
-        if "sys.version_info[:3]" in cmd:
-            return version.text
+        if "sys.version_info[:3]" in cmd and "platform.python_implementation" in cmd:
+            return "{}\n{}".format(version.text, "CPython")
         elif "sys.version_info[:2]" in cmd:
             return "{}.{}".format(version.major, version.minor)
         else:

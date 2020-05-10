@@ -200,21 +200,9 @@ class EnvManager(object):
             pass
 
         try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
+            python_version, python_implementation = self.get_python_information(python)
         except CalledProcessError as e:
             raise EnvCommandError(e)
-
         python_version = Version.parse(python_version.strip())
         minor = "{}.{}".format(python_version.major, python_version.minor)
         patch = python_version.text
@@ -251,7 +239,7 @@ class EnvManager(object):
                     # We need to recreate
                     create = True
 
-        name = "{}-py{}".format(base_env_name, minor)
+        name = "{}-{}{}".format(base_env_name, python_implementation, minor)
         venv = venv_path / name
 
         # Create if needed
@@ -381,7 +369,7 @@ class EnvManager(object):
 
         env_list = [
             VirtualEnv(Path(p))
-            for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
+            for p in sorted(venv_path.glob("{}-*".format(venv_name)))
         ]
 
         venv = self._poetry.file.parent / ".venv"
@@ -446,25 +434,13 @@ class EnvManager(object):
             pass
 
         try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
+            python_version, python_implementation = self.get_python_information(python)
         except CalledProcessError as e:
             raise EnvCommandError(e)
-
         python_version = Version.parse(python_version.strip())
         minor = "{}.{}".format(python_version.major, python_version.minor)
 
-        name = "{}-py{}".format(base_env_name, minor)
+        name = "{}-{}{}".format(base_env_name, python_implementation, minor)
         venv = venv_path / name
 
         if not venv.exists():
@@ -518,18 +494,12 @@ class EnvManager(object):
 
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        python_implementation = self.normalize_python_implementation(
+            platform.python_implementation()
+        )
         if executable:
-            python_patch = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            executable,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                ).strip()
+            python_patch, python_implementation = self.get_python_information(
+                executable
             )
             python_minor = ".".join(python_patch.split(".")[:2])
 
@@ -576,18 +546,8 @@ class EnvManager(object):
                     io.write_line("<debug>Trying {}</debug>".format(python))
 
                 try:
-                    python_patch = decode(
-                        subprocess.check_output(
-                            list_to_shell_command(
-                                [
-                                    python,
-                                    "-c",
-                                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                                ]
-                            ),
-                            stderr=subprocess.STDOUT,
-                            shell=True,
-                        ).strip()
+                    python_patch, python_implementation = self.get_python_information(
+                        python
                     )
                 except CalledProcessError:
                     continue
@@ -610,7 +570,7 @@ class EnvManager(object):
             venv = venv_path
         else:
             name = self.generate_env_name(name, str(cwd))
-            name = "{}-py{}".format(name, python_minor.strip())
+            name = "{}-{}{}".format(name, python_implementation, python_minor.strip())
             venv = venv_path / name
 
         if not venv.exists():
@@ -722,6 +682,38 @@ class EnvManager(object):
         h = base64.urlsafe_b64encode(h).decode()[:8]
 
         return "{}-{}".format(sanitized_name, h)
+
+    @classmethod
+    def get_python_information(cls, executable):
+        command_output = decode(
+            subprocess.check_output(
+                list_to_shell_command(
+                    [
+                        executable,
+                        "-c",
+                        '"'
+                        "import sys;"
+                        "import platform;"
+                        "print('.'.join([str(s) for s in sys.version_info[:3]]));"
+                        "print(platform.python_implementation());"
+                        '"',
+                    ]
+                ),
+                shell=True,
+            ).strip()
+        )
+        python_patch, python_implementation = command_output.split("\n")
+        python_implementation = cls.normalize_python_implementation(
+            python_implementation
+        )
+        return python_patch, python_implementation
+
+    @classmethod
+    def normalize_python_implementation(cls, python_implementation):
+        python_implementation = python_implementation.lower()
+        if python_implementation == "cpython":
+            python_implementation = "py"
+        return python_implementation
 
 
 class Env(object):
