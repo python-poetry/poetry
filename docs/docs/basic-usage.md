@@ -64,6 +64,23 @@ $ poetry add pendulum
 It will automatically find a suitable version constraint **and install** the package and subdependencies.
 
 
+## Using your virtual environment
+
+By default, poetry creates a virtual environment in `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows). 
+There are two ways to run commands within this virtual environment.
+
+### Using `poetry run`
+
+To run your script simply use `poetry run python your_script.py`.
+Likewise if you have command line tools such as `pytest` or `black` you can run them using `poetry run pytest`. 
+
+
+### Activating the virtual environment
+
+Alternatively you can activate the virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
+To get the path to your virtual environment run `poetry env info --path`
+
+
 ### Version constraints
 
 In our example, we are requesting the `pendulum` package with the version constraint `^1.4`.
@@ -158,19 +175,3 @@ and update the lock file with the new versions.
     Poetry will display a **Warning** when executing an install command if `poetry.lock` and `pyproject.toml`
     are not synchronized.
 
-
-## Using your virtual environment
-
-By default, poetry creates a virtual environment in `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows). 
-There are two ways to run commands within this virtual environment.
-
-### Using `poetry run`
-
-To run your script simply use `poetry run python your_script.py`.
-Likewise if you have command line tools such as `pytest` or `black` you can run them using `poetry run pytest`. 
-
-
-### Activating the virtual environment
-
-Alternatively you can activate the virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
-To get the path to your virtual environment run `poetry env info --path`
