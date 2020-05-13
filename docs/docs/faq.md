@@ -38,26 +38,24 @@ The `^` operator works very well with libraries following [semantic versioning](
 Yes. By using the [isolated builds](https://tox.readthedocs.io/en/latest/config.html#conf-isolated_build) `tox` provides,
 you can use it in combination with the PEP 517 compliant build system provided by Poetry.
 
-So, in your `pyproject.toml` file, add this section if it does not already exist:
+In your `pyproject.toml` file, ensure that the following section is present:
 
 ```toml
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=1.0"]
 build-backend = "poetry.masonry.api"
 ```
 
-And use a `tox.ini` configuration file similar to this:
+Use a `tox.ini` configuration file similar to this:
 
-```INI
+```ini
 [tox]
+envlist = py36, py37
 isolated_build = true
-envlist = py27, py36
 
 [testenv]
-whitelist_externals = poetry
-commands =
-    poetry install -v
-    poetry run pytest tests/
+deps = pytest
+commands = pytest {posargs}
 ```
 
 ## I don't want Poetry to manage my virtual environments. Can I disable it?
@@ -68,6 +66,6 @@ and is an overhead, like when working with containers.
 
 In this case, you can disable this feature by setting the `virtualenvs.create` setting to `false`:
 
-```bash
+```console
 poetry config virtualenvs.create false
 ```
