@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+import tempfile
 
 import pytest
 import tomlkit
@@ -831,3 +832,23 @@ def test_env_site_packages_should_raise_an_error_if_no_site_packages(tmp_dir):
 
     with pytest.raises(RuntimeError):
         env.site_packages
+
+
+def test_case_should_be_ignored_if_fs_is_case_sensitive(tmp_dir):
+    with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
+        if not os.path.exists(tmp_file.name.lower()):
+            path_with_lowercase = Path(tmp_dir) / "lowerpath"
+            path_with_uppercase = Path(tmp_dir) / "UPPERPATH"
+            path_with_bothcase = Path(tmp_dir) / "BoThCaSe"
+
+            venv_with_lowercase = EnvManager.generate_env_name(
+                "simple-project", str(path_with_lowercase)
+            )
+            venv_with_uppercase = EnvManager.generate_env_name(
+                "simple-project", str(path_with_uppercase)
+            )
+            venv_with_bothcase = EnvManager.generate_env_name(
+                "simple-project", str(path_with_bothcase)
+            )
+
+            assert venv_with_lowercase != venv_with_uppercase != venv_with_bothcase
