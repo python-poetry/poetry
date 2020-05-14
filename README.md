@@ -23,6 +23,13 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 
 Alternatively, you can download the `get-poetry.py` file and execute it separately.
 
+The setup script must be able to find one of following executables in your shell's path environment:
+
+- `python` (which can be a py3 or py2 interpreter)
+- `python3`
+- `py.exe -3` (Windows)
+- `py.exe -2` (Windows)
+
 If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`:
 
 ```bash
