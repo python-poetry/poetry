@@ -137,7 +137,7 @@ class Page:
         m = wheel_file_re.match(link.filename)
         if m:
             version = m.group("ver")
-            package_name = m.group("name").replace('_', '-')
+            package_name = m.group("name").replace("_", "-")
         else:
             info, ext = link.splitext()
             match = self.VERSION_REGEX.match(info)
