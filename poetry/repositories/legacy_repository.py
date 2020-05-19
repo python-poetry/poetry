@@ -74,11 +74,12 @@ class Page:
         ".tar",
     ]
 
-    def __init__(self, url, content, headers):
+    def __init__(self, url, package_name, content, headers):
         if not url.endswith("/"):
             url += "/"
 
         self._url = url
+        self._package_name = package_name
         encoding = None
         if headers and "Content-Type" in headers:
             content_type, params = cgi.parse_header(headers["Content-Type"])
@@ -136,14 +137,18 @@ class Page:
         m = wheel_file_re.match(link.filename)
         if m:
             version = m.group("ver")
+            package_name = m.group("name").replace('_', '-')
         else:
             info, ext = link.splitext()
             match = self.VERSION_REGEX.match(info)
             if not match:
                 return
 
+            package_name = match.group(1)
             version = match.group(2)
 
+        if package_name.lower() != self._package_name.lower():
+            return
         try:
             version = Version.parse(version)
         except ValueError:
@@ -253,7 +258,7 @@ class LegacyRepository(PyPiRepository):
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
+            page = self._get(canonicalize_name(name).replace(".", "-"))
             if page is None:
                 return []
 
@@ -364,7 +369,7 @@ class LegacyRepository(PyPiRepository):
             return package
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
-        page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
+        page = self._get(canonicalize_name(name).replace(".", "-"))
         if page is None:
             raise PackageNotFound('No package named "{}"'.format(name))
 
@@ -418,9 +423,10 @@ class LegacyRepository(PyPiRepository):
                     f.write(chunk)
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
-        url = self._url + endpoint
+        package_name = endpoint
+        url = "{}/{}/".format(self._url, endpoint)
         response = self._session.get(url)
         if response.status_code == 404:
             return
 
-        return Page(url, response.content, response.headers)
+        return Page(url, package_name, response.content, response.headers)

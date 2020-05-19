@@ -28,14 +28,14 @@ class MockRepository(LegacyRepository):
 
     def _get(self, endpoint):
         parts = endpoint.split("/")
-        name = parts[1]
+        package_name = parts[1]
 
-        fixture = self.FIXTURES / (name + ".html")
+        fixture = self.FIXTURES / (package_name + ".html")
         if not fixture.exists():
             return
 
         with fixture.open(encoding="utf-8") as f:
-            return Page(self._url + endpoint, f.read(), {})
+            return Page(self._url + endpoint, package_name, f.read(), {})
 
     def _download(self, url, dest):
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
@@ -264,6 +264,13 @@ def test_get_package_retrieves_packages_with_no_hashes():
     package = repo.package("jupyter", "1.0.0")
 
     assert [] == package.files
+
+
+def test_page_with_invalid_link_name_ignores_package():
+    repo = MockRepository()
+
+    with pytest.raises(PackageNotFound):
+        repo.package("invalid-link", "1.0")
 
 
 def test_username_password_special_chars():
