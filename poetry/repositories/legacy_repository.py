@@ -258,7 +258,7 @@ class LegacyRepository(PyPiRepository):
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get(canonicalize_name(name).replace(".", "-"))
+            page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
             if page is None:
                 return []
 
@@ -369,7 +369,7 @@ class LegacyRepository(PyPiRepository):
             return package
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
-        page = self._get(canonicalize_name(name).replace(".", "-"))
+        page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:
             raise PackageNotFound('No package named "{}"'.format(name))
 
@@ -423,8 +423,8 @@ class LegacyRepository(PyPiRepository):
                     f.write(chunk)
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
-        package_name = endpoint
-        url = "{}/{}/".format(self._url, endpoint)
+        package_name = endpoint.split("/")[1]
+        url = self._url + endpoint
         response = self._session.get(url)
         if response.status_code == 404:
             return
