@@ -70,7 +70,7 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
 
     assert "poetry" == dist_info.joinpath("INSTALLER").read_text()
     assert (
-        "[console_scripts]\nfoo=foo:bar\n\n"
+        "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\n\n"
         == dist_info.joinpath("entry_points.txt").read_text()
     )
 
@@ -109,10 +109,35 @@ My Package
     records = dist_info.joinpath("RECORD").read_text()
     assert str(tmp_venv.site_packages.joinpath("simple_project.pth")) in records
     assert str(tmp_venv._bin_dir.joinpath("foo")) in records
+    assert str(tmp_venv._bin_dir.joinpath("baz")) in records
     assert str(dist_info.joinpath("METADATA")) in records
     assert str(dist_info.joinpath("INSTALLER")) in records
     assert str(dist_info.joinpath("entry_points.txt")) in records
     assert str(dist_info.joinpath("RECORD")) in records
+
+    baz_script = """\
+#!{python}
+from bar import baz.boom
+
+if __name__ == '__main__':
+    baz.boom.bim()
+""".format(
+        python=tmp_venv._bin("python")
+    )
+
+    assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text()
+
+    foo_script = """\
+#!{python}
+from foo import bar
+
+if __name__ == '__main__':
+    bar()
+""".format(
+        python=tmp_venv._bin("python")
+    )
+
+    assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text()
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(

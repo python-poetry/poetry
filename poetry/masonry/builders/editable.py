@@ -16,7 +16,7 @@ from poetry.utils._compat import decode
 
 SCRIPT_TEMPLATE = """\
 #!{python}
-from {module} import {callable_}
+from {module} import {callable_holder}
 
 if __name__ == '__main__':
     {callable_}()
@@ -105,6 +105,8 @@ class EditableBuilder(Builder):
         for script in scripts:
             name, script = script.split(" = ")
             module, callable_ = script.split(":")
+            callable_holder = callable_.rsplit(".", 1)[0]
+
             script_file = scripts_path.joinpath(name)
             self._debug(
                 "  - Adding the <c2>{}</c2> script to <b>{}</b>".format(
@@ -117,6 +119,7 @@ class EditableBuilder(Builder):
                         SCRIPT_TEMPLATE.format(
                             python=self._env._bin("python"),
                             module=module,
+                            callable_holder=callable_holder,
                             callable_=callable_,
                         )
                     )
