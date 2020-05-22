@@ -31,8 +31,8 @@ class Installer:
         package,  # type: ProjectPackage
         locker,  # type: Locker
         pool,  # type: Pool
-        installed=None,  # type: (Union[InstalledRepository, None])
-        executor=None,  # type: (Optional[Executor])
+        installed=None,  # type: Union[InstalledRepository, None]
+        executor=None,  # type: Optional[Executor]
     ):
         self._io = io
         self._env = env
@@ -269,8 +269,6 @@ class Installer:
         # not compatible with the current system,
         # or optional and not requested, are dropped
         self._filter_operations(ops, local_repo)
-
-        self._io.write_line("")
 
         # Execute operations
         actual_ops = [op for op in ops if not op.skipped]

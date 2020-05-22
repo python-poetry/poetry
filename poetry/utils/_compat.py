@@ -23,6 +23,11 @@ try:
 except ImportError:
     import urlparse
 
+try:
+    from os import cpu_count
+except ImportError:  # Python 2
+    from multiprocessing import cpu_count
+
 try:  # Python 2
     long = long
     unicode = unicode

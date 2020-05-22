@@ -72,7 +72,7 @@ class Solver:
                 )
 
         operations = []
-        for package in packages:
+        for i, package in enumerate(packages):
             installed = False
             for pkg in self._installed.packages:
                 if package.name == pkg.name:
@@ -107,23 +107,27 @@ class Solver:
                                 package.source_reference
                             )
                         ):
-                            operations.append(Update(pkg, package))
+                            operations.append(Update(pkg, package, priority=depths[i]))
                         else:
                             operations.append(
                                 Install(package).skip("Already installed")
                             )
                     elif package.version != pkg.version:
                         # Checking version
-                        operations.append(Update(pkg, package))
+                        operations.append(Update(pkg, package, priority=depths[i]))
                     elif pkg.source_type and package.source_type != pkg.source_type:
-                        operations.append(Update(pkg, package))
+                        operations.append(Update(pkg, package, priority=depths[i]))
                     else:
-                        operations.append(Install(package).skip("Already installed"))
+                        operations.append(
+                            Install(package, priority=depths[i]).skip(
+                                "Already installed"
+                            )
+                        )
 
                     break
 
             if not installed:
-                operations.append(Install(package))
+                operations.append(Install(package, priority=depths[i]))
 
         # Checking for removals
         for pkg in self._locked.packages:
@@ -159,15 +163,7 @@ class Solver:
                     operations.append(Uninstall(installed))
 
         return sorted(
-            operations,
-            key=lambda o: (
-                o.job_type == "uninstall",
-                # Packages to be uninstalled have no depth so we default to 0
-                # since it actually doesn't matter since removals are always on top.
-                -depths[packages.index(o.package)] if o.job_type != "uninstall" else 0,
-                o.package.name,
-                o.package.version,
-            ),
+            operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
         )
 
     def solve_in_compatibility_mode(self, overrides, use_latest=None):

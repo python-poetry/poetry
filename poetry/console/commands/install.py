@@ -88,15 +88,32 @@ dependencies and not including the current project, run the command with the
             # If this is a true error it will be picked up later by build anyway.
             return 0
 
-        self.line(
-            "  - Installing <c1>{}</c1> (<c2>{}</c2>)".format(
-                self.poetry.package.pretty_name, self.poetry.package.pretty_version
+        self.line("")
+        if not self._io.supports_ansi() or self.io.is_debug():
+            self.line(
+                "<b>Installing</> the current project: <c1>{}</c1> (<c2>{}</c2>)".format(
+                    self.poetry.package.pretty_name, self.poetry.package.pretty_version
+                )
             )
-        )
+        else:
+            self.write(
+                "<b>Installing</> the current project: <c1>{}</c1> (<c2>{}</c2>)".format(
+                    self.poetry.package.pretty_name, self.poetry.package.pretty_version
+                )
+            )
 
         if self.option("dry-run"):
+            self.line("")
             return 0
 
         builder.build()
+
+        if self._io.supports_ansi() and not self.io.is_debug():
+            self.overwrite(
+                "<b>Installing</> the current project: <c1>{}</c1> (<success>{}</success>)".format(
+                    self.poetry.package.pretty_name, self.poetry.package.pretty_version
+                )
+            )
+            self.line("")
 
         return 0
