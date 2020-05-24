@@ -297,6 +297,7 @@ class LegacyRepository(PyPiRepository):
         except ValueError:
             package = super(LegacyRepository, self).package(name, version, extras)
             package.source_url = self._url
+            package.source_reference = self.name
             return package
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict

@@ -72,6 +72,15 @@ def test_sdist_format_support():
     assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
 
 
+def test_get_package_sets_source_reference_and_url():
+    repo = MockRepository()
+
+    package = repo.package("jupyter", "1.0.0")
+
+    assert "legacy" == package.source_reference
+    assert "http://legacy.foo.bar" == package.source_url
+
+
 def test_missing_version():
     repo = MockRepository()
 
