@@ -74,14 +74,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             with (Path.cwd() / "pyproject.toml").open() as toml_file:
                 original_toml = tomlkit.loads(toml_file.read())
 
-                try:
-                    if original_toml["tool"]["poetry"]:
-                        self.line(
-                            "<error>A pyproject.toml file with a poetry section already exists.</error>"
-                        )
-                        return 1
-                except KeyError:
-                    pass
+                if original_toml.get("tool", {}).get("poetry"):
+                    self.line(
+                        "<error>A pyproject.toml file with a poetry section already exists.</error>"
+                    )
+                    return 1
 
                 if original_toml.get("build-system"):
                     self.line(
@@ -216,7 +213,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content()
+        content = layout_.generate_poetry_content(original_toml)
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")
@@ -230,10 +227,6 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
             f.write(content)
-
-            if original_toml:
-                f.write("\n")
-                f.write(tomlkit.dumps(original_toml))
 
     def _determine_requirements(
         self, requires, allow_prereleases=False, source=None

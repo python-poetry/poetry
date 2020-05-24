@@ -81,7 +81,7 @@ class Layout(object):
 
         self._write_poetry(path)
 
-    def generate_poetry_content(self):
+    def generate_poetry_content(self, original_toml):
         template = POETRY_DEFAULT
         if self._license:
             template = POETRY_WITH_LICENSE
@@ -114,7 +114,12 @@ class Layout(object):
 
         content.add("build-system", build_system)
 
-        return dumps(content)
+        content = dumps(content)
+
+        if original_toml:
+            content += "\n" + dumps(original_toml)
+
+        return content
 
     def _create_default(self, path, src=True):
         raise NotImplementedError()
