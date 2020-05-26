@@ -197,7 +197,7 @@ POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
-BIN = """#!{}
+BIN = """#!/usr/bin/env {}
 # -*- coding: utf-8 -*-
 import glob
 import sys
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
     main()
 """.format(
-    sys.executable
+    os.path.basename(sys.executable)
 )
 
 BAT = u('@echo off\r\npython "{poetry_bin}" %*\r\n')
