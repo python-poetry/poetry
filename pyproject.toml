@@ -37,6 +37,7 @@ html5lib = "^1.0"
 shellingham = "^1.1"
 tomlkit = "^0.5.11"
 pexpect = "^4.7.0"
+packaging = "^20.4"
 
 # The typing module is not in the stdlib in Python 2.7
 typing = { version = "^3.6", python = "~2.7" }

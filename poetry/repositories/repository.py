@@ -115,6 +115,9 @@ class Repository(BaseRepository):
         if index is not None:
             del self._packages[index]
 
+    def find_links_for_package(self, package):
+        return []
+
     def search(self, query):
         results = []
 

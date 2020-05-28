@@ -104,7 +104,7 @@ def git_mock(mocker):
 
 @pytest.fixture
 def http():
-    httpretty.enable()
+    httpretty.enable(allow_net_connect=False)
 
     yield httpretty
 

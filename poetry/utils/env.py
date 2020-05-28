@@ -7,7 +7,7 @@ import re
 import shutil
 import sys
 import sysconfig
-import warnings
+import textwrap
 
 from contextlib import contextmanager
 from typing import Any
@@ -20,6 +20,10 @@ import tomlkit
 
 from clikit.api.io import IO
 
+import packaging.tags
+
+from packaging.tags import Tag
+from packaging.tags import sys_tags
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import BaseMarker
@@ -32,8 +36,6 @@ from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
 from poetry.utils.toml_file import TomlFile
-
-from .env_scripts.tags import get_supported
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -82,12 +84,6 @@ elif hasattr(sys, "base_prefix"):
     print(sys.base_prefix)
 else:
     print(sys.prefix)
-"""
-
-GET_CONFIG_VAR = """\
-import sysconfig
-
-print(sysconfig.get_config_var("{config_var}")),
 """
 
 GET_PYTHON_VERSION = """\
@@ -817,7 +813,7 @@ class Env(object):
         return self._paths
 
     @property
-    def supported_tags(self):  # type: () -> List[Tuple[str, str, str]]
+    def supported_tags(self):  # type: () -> List[Tag]
         if self._supported_tags is None:
             self._supported_tags = self.get_supported_tags()
 
@@ -845,10 +841,7 @@ class Env(object):
     def get_pip_command(self):  # type: () -> List[str]
         raise NotImplementedError()
 
-    def get_supported_tags(self):  # type: () -> List[Tuple[str, str, str]]
-        raise NotImplementedError()
-
-    def config_var(self, var):  # type: (str) -> Any
+    def get_supported_tags(self):  # type: () -> List[Tag]
         raise NotImplementedError()
 
     def get_pip_version(self):  # type: () -> Version
@@ -1000,8 +993,8 @@ class SystemEnv(Env):
 
         return paths
 
-    def get_supported_tags(self):  # type: () -> List[Tuple[str, str, str]]
-        return get_supported()
+    def get_supported_tags(self):  # type: () -> List[Tag]
+        return list(sys_tags())
 
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         if hasattr(sys, "implementation"):
@@ -1032,14 +1025,6 @@ class SystemEnv(Env):
             "sys_platform": sys.platform,
             "version_info": sys.version_info,
         }
-
-    def config_var(self, var):  # type: (str) -> Any
-        try:
-            return sysconfig.get_config_var(var)
-        except IOError as e:
-            warnings.warn("{0}".format(e), RuntimeWarning)
-
-            return
 
     def get_pip_version(self):  # type: () -> Version
         from pip import __version__
@@ -1084,36 +1069,35 @@ class VirtualEnv(Env):
         # so assume that we have a functional pip
         return [self._bin("pip")]
 
-    def get_supported_tags(self):  # type: () -> List[Tuple[str, str, str]]
-        with (Path(__file__).parent / "env_scripts" / "tags.py").open(
-            encoding="utf-8"
-        ) as f:
-            output = self.run("python", "-", input_=f.read())
+    def get_supported_tags(self):  # type: () -> List[Tag]
+        with Path(packaging.tags.__file__).open(encoding="utf-8") as f:
+            script = f.read()
 
-        return [tuple(tag) for tag in json.loads(output)]
+        script = script.replace(
+            "from ._typing import TYPE_CHECKING, cast",
+            "TYPE_CHECKING = False\ncast = lambda type_, value: value",
+        )
+        script = script.replace(
+            "from ._typing import MYPY_CHECK_RUNNING, cast",
+            "MYPY_CHECK_RUNNING = False\ncast = lambda type_, value: value",
+        )
+
+        script += textwrap.dedent(
+            """
+            import json
+
+            print(json.dumps([(t.interpreter, t.abi, t.platform) for t in sys_tags()]))
+            """
+        )
+
+        output = self.run("python", "-", input_=script)
+
+        return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)
 
         return json.loads(output)
-
-    def config_var(self, var):  # type: (str) -> Any
-        try:
-            value = self.run(
-                "python", "-", input_=GET_CONFIG_VAR.format(config_var=var)
-            ).strip()
-        except EnvCommandError as e:
-            warnings.warn("{0}".format(e), RuntimeWarning)
-            return None
-
-        if value == "None":
-            value = None
-        elif value == "1":
-            value = 1
-        elif value == "0":
-            value = 0
-
-        return value
 
     def get_pip_version(self):  # type: () -> Version
         output = self.run_pip("--version").strip()
@@ -1212,7 +1196,7 @@ class MockEnv(NullEnv):
         pip_version="19.1",
         sys_path=None,
         marker_env=None,
-        config_vars=None,
+        supported_tags=None,
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -1225,15 +1209,7 @@ class MockEnv(NullEnv):
         self._pip_version = Version.parse(pip_version)
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
-        self._config_vars = config_vars
-
-    @property
-    def version_info(self):  # type: () -> Tuple[int]
-        return self._version_info
-
-    @property
-    def python_implementation(self):  # type: () -> str
-        return self._python_implementation
+        self._supported_tags = supported_tags
 
     @property
     def platform(self):  # type: () -> str
@@ -1268,12 +1244,3 @@ class MockEnv(NullEnv):
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv
-
-    def config_var(self, var):  # type: (str) -> Any
-        if self._config_vars is None:
-            return super().config_var(var)
-        else:
-            try:
-                return self._config_vars[var]
-            except KeyError:
-                return None

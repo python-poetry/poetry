@@ -54,7 +54,7 @@ class Installer:
         self._extras = []
 
         if executor is None:
-            executor = Executor(self._env, self._io)
+            executor = Executor(self._env, self._pool, self._io)
 
         self._executor = executor
         self._use_executor = False
@@ -271,9 +271,7 @@ class Installer:
         self._filter_operations(ops, local_repo)
 
         # Execute operations
-        actual_ops = [op for op in ops if not op.skipped]
-
-        self._execute(actual_ops)
+        self._execute(ops)
 
     def _write_lock_file(self, repo):  # type: (Repository) -> None
         if self._update and self._write_lock:

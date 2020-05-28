@@ -37,14 +37,14 @@ def chunked(iterable, n):
 
 
 class Executor(object):
-    def __init__(self, env, io, parallel=True):
+    def __init__(self, env, pool, io, parallel=True):
         self._env = env
         self._io = io
         self._dry_run = False
         self._enabled = True
         self._verbose = False
         self._chef = Chef(self._env)
-        self._chooser = Chooser(self._env)
+        self._chooser = Chooser(pool, self._env)
 
         if parallel:
             # This should be directly handled by ThreadPoolExecutor
