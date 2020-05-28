@@ -258,6 +258,7 @@ class Factory:
             auth=auth,
             cert=get_cert(auth_config, name),
             client_cert=get_client_cert(auth_config, name),
+            trusted=source.get("trusted", False),
         )
 
     @classmethod

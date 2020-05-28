@@ -162,7 +162,14 @@ class Page:
 
 class LegacyRepository(PyPiRepository):
     def __init__(
-        self, name, url, auth=None, disable_cache=False, cert=None, client_cert=None
+        self,
+        name,
+        url,
+        auth=None,
+        disable_cache=False,
+        cert=None,
+        client_cert=None,
+        trusted=False,
     ):  # type: (str, str, Optional[Auth], bool, Optional[Path], Optional[Path]) -> None
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
@@ -170,6 +177,7 @@ class LegacyRepository(PyPiRepository):
         self._packages = []
         self._name = name
         self._url = url.rstrip("/")
+        self._trusted = trusted
         self._auth = auth
         self._client_cert = client_cert
         self._cert = cert
@@ -210,6 +218,10 @@ class LegacyRepository(PyPiRepository):
     @property
     def client_cert(self):  # type: () -> Optional[Path]
         return self._client_cert
+
+    @property
+    def trusted(self):
+        return self._trusted
 
     @property
     def authenticated_url(self):  # type: () -> str
@@ -411,7 +423,7 @@ class LegacyRepository(PyPiRepository):
         return data
 
     def _download(self, url, dest):  # type: (str, str) -> None
-        r = self._session.get(url, stream=True)
+        r = self._session.get(url, stream=True, verify=not self._trusted)
         with open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
@@ -419,7 +431,7 @@ class LegacyRepository(PyPiRepository):
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
-        response = self._session.get(url)
+        response = self._session.get(url, verify=not self._trusted)
         if response.status_code == 404:
             return
 

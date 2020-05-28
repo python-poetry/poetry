@@ -523,6 +523,10 @@
                 "secondary": {
                     "type": "boolean",
                     "description": "Declare this repository as secondary, i.e. it will only be looked up last for packages."
+                },
+                "trusted": {
+                    "type": "boolean",
+                    "description": "Declare this repository as trusted, i.e. option --trusted-host will be used when installing packages with pip."
                 }
             }
         }

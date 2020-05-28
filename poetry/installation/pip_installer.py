@@ -62,6 +62,9 @@ class PipInstaller(BaseInstaller):
 
             index_url = repository.authenticated_url
 
+            if repository.trusted:
+                args += ["--trusted-host", parsed.hostname]
+
             args += ["--index-url", index_url]
             if self._pool.has_default():
                 if repository.name != self._pool.repositories[0].name:
