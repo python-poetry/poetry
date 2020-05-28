@@ -423,7 +423,17 @@ class LegacyRepository(PyPiRepository):
         return data
 
     def _download(self, url, dest):  # type: (str, str) -> None
+        if self._trusted:
+            import urllib3
+
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         r = self._session.get(url, stream=True, verify=not self._trusted)
+        if self._trusted:
+            import urllib3
+
+            urllib3.warnings.simplefilter(
+                "default", urllib3.exceptions.InsecureRequestWarning
+            )
         with open(dest, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
@@ -431,7 +441,17 @@ class LegacyRepository(PyPiRepository):
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
+        if self._trusted:
+            import urllib3
+
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         response = self._session.get(url, verify=not self._trusted)
+        if self._trusted:
+            import urllib3
+
+            urllib3.warnings.simplefilter(
+                "default", urllib3.exceptions.InsecureRequestWarning
+            )
         if response.status_code == 404:
             return
 
