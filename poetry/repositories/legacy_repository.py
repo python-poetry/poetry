@@ -158,7 +158,14 @@ class Page:
 
 class LegacyRepository(PyPiRepository):
     def __init__(
-        self, name, url, auth=None, disable_cache=False, cert=None, client_cert=None
+        self,
+        name,
+        url,
+        auth=None,
+        disable_cache=False,
+        cert=None,
+        client_cert=None,
+        trusted=False,
     ):  # type: (str, str, Optional[Auth], bool, Optional[Path], Optional[Path]) -> None
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
@@ -169,6 +176,7 @@ class LegacyRepository(PyPiRepository):
         self._auth = auth
         self._client_cert = client_cert
         self._cert = cert
+        self._trusted = trusted
         self._cache_dir = REPOSITORY_CACHE_DIR / name
         self._cache = CacheManager(
             {
@@ -205,6 +213,10 @@ class LegacyRepository(PyPiRepository):
     @property
     def client_cert(self):  # type: () -> Optional[Path]
         return self._client_cert
+
+    @property
+    def trusted(self):
+        return self._trusted
 
     @property
     def authenticated_url(self):  # type: () -> str
@@ -349,7 +361,17 @@ class LegacyRepository(PyPiRepository):
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
-        response = self.session.get(url)
+        if self._trusted:
+            import urllib3
+
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        response = self.session.get(url, verify=not self._trusted)
+        if self._trusted:
+            import urllib3
+
+            urllib3.warnings.simplefilter(
+                "default", urllib3.exceptions.InsecureRequestWarning
+            )
         if response.status_code == 404:
             return
 

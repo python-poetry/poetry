@@ -134,3 +134,14 @@ default = true
 ```
 
 A default source will also be the fallback source if you add other sources.
+
+### Trusting a repository
+
+You can bypass SSL verification for a repository if you know it can be trusted (useful for corporate private repositories):
+
+```toml
+[[tool.poetry.source]]
+name = "foo"
+url = "https://foo.bar/simple/"
+trusted = true
+```
