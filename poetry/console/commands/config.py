@@ -60,7 +60,7 @@ To remove a repository (repo is a short alias for repositories):
             "experimental.new-installer": (
                 boolean_validator,
                 boolean_normalizer,
-                False,
+                True,
             ),
         }
 

@@ -13,7 +13,7 @@ def test_list_displays_default_value_if_not_set(app, config):
     tester.execute("--list")
 
     expected = """cache-dir = "/foo"
-experimental.new-installer = false
+experimental.new-installer = true
 virtualenvs.create = true
 virtualenvs.in-project = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
@@ -33,7 +33,7 @@ def test_list_displays_set_get_setting(app, config):
     tester.execute("--list")
 
     expected = """cache-dir = "/foo"
-experimental.new-installer = false
+experimental.new-installer = true
 virtualenvs.create = false
 virtualenvs.in-project = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
@@ -81,7 +81,7 @@ def test_list_displays_set_get_local_setting(app, config):
     tester.execute("--list")
 
     expected = """cache-dir = "/foo"
-experimental.new-installer = false
+experimental.new-installer = true
 virtualenvs.create = false
 virtualenvs.in-project = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
