@@ -333,6 +333,7 @@ class Installer:
         preview=False,
         force=False,
         accept_all=False,
+        accept_none=False,
         base_url=BASE_URL,
     ):
         self._version = version
@@ -340,6 +341,7 @@ class Installer:
         self._force = force
         self._modify_path = True
         self._accept_all = accept_all
+        self._accept_none = accept_none
         self._base_url = base_url
 
     def allows_prereleases(self):
@@ -443,7 +445,9 @@ class Installer:
         return version, current_version
 
     def customize_install(self):
-        if not self._accept_all:
+        if self._accept_none:
+            self._modify_path = False
+        elif not self._accept_all:
             print("Before we start, please answer the following questions.")
             print("You may simply press the Enter key to leave unchanged.")
 
@@ -454,7 +458,9 @@ class Installer:
             print("")
 
     def customize_uninstall(self):
-        if not self._accept_all:
+        if self._accept_none:
+            return False
+        elif not self._accept_all:
             print()
 
             uninstall = (
@@ -928,6 +934,9 @@ def main():
         "-y", "--yes", dest="accept_all", action="store_true", default=False
     )
     parser.add_argument(
+        "-n", "--no", dest="accept_none", action="store_true", default=False
+    )
+    parser.add_argument(
         "--uninstall", dest="uninstall", action="store_true", default=False
     )
 
@@ -949,6 +958,7 @@ def main():
         accept_all=args.accept_all
         or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
         or not is_interactive(),
+        accept_none=args.accept_none,
         base_url=base_url,
     )
 
