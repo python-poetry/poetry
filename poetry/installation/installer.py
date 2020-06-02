@@ -446,6 +446,10 @@ class Installer:
             if op.job_type == "uninstall":
                 continue
 
+            if not self._env.is_valid_for_marker(package.marker):
+                op.skip("Not needed for the current environment")
+                continue
+
             if self._update:
                 extras = {}
                 for extra, deps in self._package.extras.items():

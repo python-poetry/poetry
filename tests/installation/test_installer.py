@@ -1627,7 +1627,8 @@ def test_installer_can_handle_old_lock_files(
 
     package.add_dependency("pytest", "^3.5", category="dev")
 
-    locker.mock_lock_data(fixture("with-pypi-repository"))
+    locker.locked()
+    locker.mock_lock_data(fixture("old-lock"))
 
     installer = Installer(
         NullIO(), MockEnv(), package, locker, pool, installed=installed
