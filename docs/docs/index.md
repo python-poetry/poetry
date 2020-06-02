@@ -177,6 +177,9 @@ poetry completions zsh > ~/.zfunc/_poetry
 mkdir $ZSH/plugins/poetry
 poetry completions zsh > $ZSH/plugins/poetry/_poetry
 
+# prezto
+poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
+
 ```
 
 !!! note
