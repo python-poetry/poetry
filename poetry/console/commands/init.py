@@ -262,6 +262,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         attempts=3,
                     )
 
+                    # package selected by user, set constraint name to package name
+                    if package is not False:
+                        constraint["name"] = package
+
                 # no constraint yet, determine the best version automatically
                 if package is not False and "version" not in constraint:
                     question = self.create_question(
