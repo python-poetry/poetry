@@ -46,6 +46,7 @@ python = "~2.7 || ^3.6"
 
 
 def test_interactive_with_dependencies(app, repo, mocker, poetry):
+    repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -65,8 +66,8 @@ def test_interactive_with_dependencies(app, repo, mocker, poetry):
         "MIT",  # License
         "~2.7 || ^3.6",  # Python
         "",  # Interactive packages
-        "pendulum",  # Search for package
-        "0",  # First option
+        "pendulu",  # Search for package
+        "1",  # Second option is pendulum
         "",  # Do not set constraint
         "",  # Stop searching for packages
         "",  # Interactive dev packages
