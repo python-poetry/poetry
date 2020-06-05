@@ -74,6 +74,9 @@ class Page:
         ".tar",
     ]
 
+    _links = set()
+    _versions_loaded = False
+
     def __init__(self, url, content, headers):
         if not url.endswith("/"):
             url += "/"
@@ -124,8 +127,79 @@ class Page:
 
                 if link.ext not in self.SUPPORTED_FORMATS:
                     continue
+                else:
+                    self._links.add(link)
 
                 yield link
+
+    def add_link( self, version_url, content, headers ):
+        encoding = None
+        parsed = None
+
+        if headers and "Content-Type" in headers:
+            content_type, params = cgi.parse_header(headers["Content-Type"])
+
+            if "charset" in params:
+                encoding = params["charset"]
+
+        if encoding is None:
+            parsed = html5lib.parse(content, namespaceHTMLElements=False)
+        else:
+            parsed = html5lib.parse(
+                content, transport_encoding=encoding, namespaceHTMLElements=False
+            )
+
+        # Create a LINK based on the parsed content
+        for anchor in parsed.findall(".//a"):
+            if anchor.get("href"):
+                href = anchor.get("href")
+
+                link_url = None
+
+                if version_url.endswith('/') :
+                    link_url = version_url + href
+                else:
+                    link_url = version_url + '/' + href
+
+                pyrequire = anchor.get("data-requires-python")
+                pyrequire = unescape(pyrequire) if pyrequire else None
+
+                link = Link(link_url, self, requires_python=pyrequire)
+
+
+                if link.ext not in self.SUPPORTED_FORMATS:
+                    #print( f'Unsupported Link EXT = {link.ext} ' )
+                    continue
+                else:
+                    self._links.add( link )
+
+
+    def count_versions(self):
+       count = 0
+       for v in self.versions:
+           count += 1
+
+       return count
+
+    def _count_link_urls(self):
+       count = 0
+       for u in self.get_link_urls():
+           count += 1
+
+       return count
+
+    def get_link_urls(self):
+        for anchor in self._parsed.findall(".//a"):
+            if anchor.get("href"):
+                href = anchor.get("href")
+                linkurl = self.clean_link(urlparse.urljoin(self._url, href))
+
+                # The _url points to repo_url + package_name
+                # Any url longer than that would be version urls
+                if self._url >= linkurl :
+                    continue
+                else:
+                    yield linkurl
 
     def links_for_version(self, version):  # type: (Version) -> Generator[Link]
         for link in self.links:
@@ -426,4 +500,42 @@ class LegacyRepository(PyPiRepository):
         if response.status_code == 404:
             return
 
-        return Page(url, response.content, response.headers)
+        page = Page(url, response.content, response.headers)
+
+        # Check whether the versions are loaded in the page.
+        if page.count_versions() == 0 and page.count_link_urls() > 0 :
+
+            # The legacy repositories have versions found in child pages
+            # PYPI Repository:
+            # https://pypi.org/simple/flask/ : this page contains href elements that point to .whl, tar.gz etc
+            #
+            # PyPI href elements will be similar to the following href example
+            # <a href="https://files.pythonhosted.org/packages/d8/94/7350820/Flask-1.0.4-py2.py3-none-any.whl#sha256=1a21ccc"
+            #       data-requires-python="&gt;=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*">Flask-1.0.4-py2.py3-none-any.whl</a>
+
+            #
+            # Legacy Repository
+            #
+            # https://artifactory.repo.com/artifactory/my-repo/py-pkg/ only points to child pages
+            # Versions are provided by following pages
+            #
+            # https://artifactory.repo.com/artifactory/my-repo/py-pkg/0.1.0
+            # https://artifactory.repo.com/artifactory/my-repo/py-pkg/0.2.0
+            #
+            # For legacy repositories, child pages must be read
+
+            # load the content of the child pages
+            # and add it the main package page as versions
+            for version_url in page.get_link_urls():
+
+                v_res = self._session.get( version_url )
+                if v_res.status_code == 404:
+                   continue;
+
+                page.add_link( version_url, v_res.content, v_res.headers )
+
+        # mark the page as "loaded" once the versions are added
+        if len( page._links ) > 0:
+            page._versions_loaded = True
+
+        return page
