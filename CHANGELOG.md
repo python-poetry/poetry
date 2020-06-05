@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.0.8] - 2020-06-05
+
+### Fixed
+
+- Fixed a possible error when installing the root package ([#2505](https://github.com/python-poetry/poetry/pull/2505)).
+- Fixed an error where directory and VCS dependencies were not installed ([#2505](https://github.com/python-poetry/poetry/pull/2505)).
+
+
 ## [1.0.7] - 2020-06-05
 
 ### Fixed
@@ -852,7 +860,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.7...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.8...master
+[1.0.8]: https://github.com/python-poetry/poetry/releases/tag/1.0.8
 [1.0.7]: https://github.com/python-poetry/poetry/releases/tag/1.0.7
 [1.0.6]: https://github.com/python-poetry/poetry/releases/tag/1.0.6
 [1.0.5]: https://github.com/python-poetry/poetry/releases/tag/1.0.5
