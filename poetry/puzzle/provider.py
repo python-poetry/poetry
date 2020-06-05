@@ -866,7 +866,8 @@ class Provider:
 
         self._in_progress = False
 
-    def _execute_setup(self):
+    @classmethod
+    def _execute_setup(cls):
         with temporary_directory() as tmp_dir:
             EnvManager.build_venv(tmp_dir)
             venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
