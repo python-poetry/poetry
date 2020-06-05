@@ -132,7 +132,7 @@ class Page:
 
                 yield link
 
-    def add_link( self, version_url, content, headers ):
+    def add_link(self, version_url, content, headers):
         encoding = None
         parsed = None
 
@@ -156,37 +156,34 @@ class Page:
 
                 link_url = None
 
-                if version_url.endswith('/') :
+                if version_url.endswith("/"):
                     link_url = version_url + href
                 else:
-                    link_url = version_url + '/' + href
+                    link_url = version_url + "/" + href
 
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
 
                 link = Link(link_url, self, requires_python=pyrequire)
 
-
                 if link.ext not in self.SUPPORTED_FORMATS:
-                    #print( f'Unsupported Link EXT = {link.ext} ' )
                     continue
                 else:
-                    self._links.add( link )
-
+                    self._links.add(link)
 
     def count_versions(self):
-       count = 0
-       for v in self.versions:
-           count += 1
+        count = 0
+        for v in self.versions:
+            count += 1
 
-       return count
+        return count
 
     def _count_link_urls(self):
-       count = 0
-       for u in self.get_link_urls():
-           count += 1
+        count = 0
+        for u in self.get_link_urls():
+            count += 1
 
-       return count
+        return count
 
     def get_link_urls(self):
         for anchor in self._parsed.findall(".//a"):
@@ -196,7 +193,7 @@ class Page:
 
                 # The _url points to repo_url + package_name
                 # Any url longer than that would be version urls
-                if self._url >= linkurl :
+                if self._url >= linkurl:
                     continue
                 else:
                     yield linkurl
@@ -503,7 +500,7 @@ class LegacyRepository(PyPiRepository):
         page = Page(url, response.content, response.headers)
 
         # Check whether the versions are loaded in the page.
-        if page.count_versions() == 0 and page.count_link_urls() > 0 :
+        if page.count_versions() == 0 and page.count_link_urls() > 0:
 
             # The legacy repositories have versions found in child pages
             # PYPI Repository:
@@ -528,14 +525,14 @@ class LegacyRepository(PyPiRepository):
             # and add it the main package page as versions
             for version_url in page.get_link_urls():
 
-                v_res = self._session.get( version_url )
+                v_res = self._session.get(version_url)
                 if v_res.status_code == 404:
-                   continue;
+                    continue
 
-                page.add_link( version_url, v_res.content, v_res.headers )
+                page.add_link(version_url, v_res.content, v_res.headers)
 
         # mark the page as "loaded" once the versions are added
-        if len( page._links ) > 0:
+        if len(page._links) > 0:
             page._versions_loaded = True
 
         return page
