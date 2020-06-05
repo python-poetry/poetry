@@ -38,7 +38,7 @@ class EditableBuilder(Builder):
                     str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
                 )
                 try:
-                    self._env.run_pip("install", "-e", str(self._path))
+                    self._env.run_pip("install", "--no-deps", "-e", str(self._path))
                 finally:
                     shutil.move(
                         str(self._poetry.file.with_suffix(".tmp")),

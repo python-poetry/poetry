@@ -181,7 +181,6 @@ class PipInstaller(BaseInstaller):
 
     def install_directory(self, package):
         from poetry.factory import Factory
-        from poetry.utils.env import NullEnv
         from poetry.utils.toml_file import TomlFile
 
         if package.root_dir:
@@ -215,7 +214,7 @@ class PipInstaller(BaseInstaller):
             from poetry.masonry.builders.editable import EditableBuilder
 
             builder = EditableBuilder(
-                Factory().create_poetry(pyproject.parent), NullEnv(), NullIO()
+                Factory().create_poetry(pyproject.parent), self._env, NullIO()
             )
 
             builder.build()
