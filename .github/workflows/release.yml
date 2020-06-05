@@ -148,32 +148,32 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-          path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
+          path: releases/
       - name: Download Linux checksum file
         uses: actions/download-artifact@master
         with:
           name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-          path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
+          path: releases/
       - name: Download MacOS release file
         uses: actions/download-artifact@master
         with:
           name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-          path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
+          path: releases/
       - name: Download MacOS checksum file
         uses: actions/download-artifact@master
         with:
           name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-          path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
+          path: releases/
       - name: Download Windows release file
         uses: actions/download-artifact@master
         with:
           name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-          path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
+          path: releases/
       - name: Download Windows checksum file
         uses: actions/download-artifact@master
         with:
           name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-          path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
+          path: releases/
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -190,7 +190,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz/poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
+          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
           asset_name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
           asset_content_type: application/gzip
       - name: Upload Linux checksum file asset
@@ -199,16 +199,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
+          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-          asset_content_type: text/pain
+          asset_content_type: text/plain
       - name: Upload MacOS release file asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz/poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
+          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
           asset_name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
           asset_content_type: application/gzip
       - name: Upload MacOS checksum file asset
@@ -217,16 +217,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
+          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-          asset_content_type: text/pain
+          asset_content_type: text/plain
       - name: Upload Windows release file asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz/poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
+          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
           asset_name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
           asset_content_type: application/gzip
       - name: Upload Windows checksum file asset
@@ -235,9 +235,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
+          asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-          asset_content_type: text/pain
+          asset_content_type: text/plain
       - name: Install Poetry
         run: |
           python get-poetry.py --preview -y

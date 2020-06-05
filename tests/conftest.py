@@ -11,6 +11,8 @@ import pytest
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.utils._compat import Path
+from poetry.utils.env import EnvManager
+from poetry.utils.env import VirtualEnv
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
 
@@ -76,6 +78,11 @@ def download_mock(mocker):
     mocker.patch("poetry.repositories.pypi_repository.download_file", new=mock_download)
 
 
+@pytest.fixture(autouse=True)
+def execute_setup_mock(mocker):
+    mocker.patch("poetry.inspection.info.PackageInfo._execute_setup")
+
+
 @pytest.fixture
 def environ():
     original_environ = dict(os.environ)
@@ -134,3 +141,15 @@ def mocked_open_files(mocker):
     mocker.patch("poetry.utils._compat.Path.open", mocked_open)
 
     yield files
+
+
+@pytest.fixture
+def tmp_venv(tmp_dir):
+    venv_path = Path(tmp_dir) / "venv"
+
+    EnvManager.build_venv(str(venv_path))
+
+    venv = VirtualEnv(venv_path)
+    yield venv
+
+    shutil.rmtree(str(venv.path))

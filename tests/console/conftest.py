@@ -56,6 +56,9 @@ def setup(mocker, installer, installed, config, env):
     # Patch the virtual environment creation do actually do nothing
     mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=env)
 
+    # Patch the virtual environment creation do actually do nothing
+    mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=env)
+
     # Setting terminal width
     environ = dict(os.environ)
     os.environ["COLUMNS"] = "80"

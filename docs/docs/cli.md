@@ -6,15 +6,6 @@ This chapter documents all the available commands.
 To get help from the command-line, simply call `poetry` to see the complete list of commands,
 then `--help` combined with any of those can give you more information.
 
-As `Poetry` uses [cleo](https://github.com/sdispater/cleo) you can call commands by short name if it's not ambiguous.
-
-```bash
-poetry up
-```
-
-calls `poetry update`.
-
-
 ## Global options
 
 * `--verbose (-v|vv|vvv)`: Increase the verbosity of messages: "-v" for normal output, "-vv" for more verbose output and "-vvv" for debug.
@@ -171,6 +162,11 @@ If you just want to update a few packages and not all, you can list them as such
 ```bash
 poetry update requests toml
 ```
+
+Note that this will not update versions for dependencies outside their version constraints specified
+in the `pyproject.toml` file. In other terms, `poetry update foo` will be a no-op if the version constraint
+specified for `foo` is `~2.3` or `2.3` and `2.4` is available. In order for `foo` to be updated, you must
+update the constraint, for example `^2.3`. You can do this using the `add` command.
 
 ### Options
 
@@ -428,8 +424,22 @@ This command shows the current version of the project or bumps the version of
 the project and writes the new version back to `pyproject.toml` if a valid
 bump rule is provided.
 
-The new version should ideally be a valid semver string or a valid bump rule:
+The new version should ideally be a valid [semver](https://semver.org/) string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
+
+The table below illustrates the effect of these rules with concrete examples.
+
+| rule       |        before | after         |
+|------------|---------------|---------------|
+| major      |         1.3.0 | 2.0.0         |
+| minor      |         2.1.4 | 2.2.0         |
+| patch      |         4.1.1 | 4.1.2         |
+| premajor   |         1.0.2 | 2.0.0-alpha.0 |
+| preminor   |         1.0.2 | 1.1.0-alpha.0 |
+| prepatch   |         1.0.2 | 1.0.3-alpha.0 |
+| prerelease |         1.0.2 | 1.0.3-alpha.0 |
+| prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
+| prerelease |  1.0.3-beta.0 | 1.0.3-beta.1  |
 
 ## Options
 
@@ -463,7 +473,7 @@ poetry export -f requirements.txt > requirements.txt
 The `env` command regroups sub commands to interact with the virtualenvs
 associated with a specific project.
 
-See [Managing environments](./managing-environments.md) for more information about these commands.
+See [Managing environments](/docs/managing-environments.md) for more information about these commands.
 
 ## cache
 

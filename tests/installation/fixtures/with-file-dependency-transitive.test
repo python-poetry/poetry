@@ -16,7 +16,21 @@ foo = ["cleo"]
 [package.source]
 reference = ""
 type = "file"
-url = "tests/fixtures/directory/project_with_transitive_file_dependencies/../../distributions/demo-0.1.0-py2.py3-none-any.whl"
+url = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
+
+[[package]]
+category = "main"
+description = "This is a description"
+develop = true
+name = "inner-directory-project"
+optional = false
+python-versions = "*"
+version = "1.2.4"
+
+[package.source]
+reference = ""
+type = "directory"
+url = "project_with_transitive_file_dependencies/inner-directory-project"
 
 [[package]]
 category = "main"
@@ -36,12 +50,13 @@ python-versions = "*"
 version = "1.2.3"
 
 [package.dependencies]
-demo = "*"
+demo = "0.1.0"
+inner-directory-project = "1.2.4"
 
 [package.source]
 reference = ""
 type = "directory"
-url = "tests/fixtures/directory/project_with_transitive_file_dependencies"
+url = "project_with_transitive_file_dependencies"
 
 [metadata]
 content-hash = "123456789"
@@ -51,5 +66,6 @@ python-versions = "*"
 demo = [
     {file = "demo-0.1.0-py2.py3-none-any.whl", hash = "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"},
 ]
+inner-directory-project = []
 pendulum = []
 project-with-transitive-file-dependencies = []

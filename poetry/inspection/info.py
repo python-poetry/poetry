@@ -422,10 +422,7 @@ class PackageInfo:
             os.chdir(str(path))
 
             # Execute egg_info
-            with temporary_directory() as tmp_dir:
-                EnvManager.build_venv(tmp_dir)
-                venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
-                venv.run("python", "setup.py", "egg_info")
+            cls._execute_setup()
         except EnvCommandError:
             cls._log(
                 "Falling back to parsing setup.py file for {}".format(path), "debug"
@@ -497,3 +494,10 @@ class PackageInfo:
             return cls.from_bdist(path=path)
         except PackageInfoError:
             return cls.from_sdist(path=path)
+
+    @classmethod
+    def _execute_setup(cls):
+        with temporary_directory() as tmp_dir:
+            EnvManager.build_venv(tmp_dir)
+            venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
+            venv.run("python", "setup.py", "egg_info")

@@ -118,7 +118,7 @@ def test_search_for_vcs_read_setup_with_extras(provider, mocker):
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
     mocker.patch(
-        "poetry.utils.env.VirtualEnv.run",
+        "poetry.inspection.info.PackageInfo._execute_setup",
         side_effect=EnvCommandError(CalledProcessError(1, "python", output="")),
     )
 
@@ -204,16 +204,13 @@ def test_search_for_directory_setup_with_base(provider, directory):
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
-    assert (
-        package.root_dir
-        == (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / "git"
-            / "github.com"
-            / "demo"
-            / directory
-        ).as_posix()
+    assert package.root_dir == (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / directory
     )
 
 
