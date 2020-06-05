@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.7] - 2020-06-05
+
+### Fixed
+
+- Fixed an error when trying to execute some packages `setup.py` file ([#2349](https://github.com/python-poetry/poetry/pull/2349)).
+
+
 ## [1.0.6] - 2020-06-05
 
 ### Changed
@@ -845,7 +852,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.6...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.7...master
+[1.0.7]: https://github.com/python-poetry/poetry/releases/tag/1.0.7
 [1.0.6]: https://github.com/python-poetry/poetry/releases/tag/1.0.6
 [1.0.5]: https://github.com/python-poetry/poetry/releases/tag/1.0.5
 [1.0.4]: https://github.com/python-poetry/poetry/releases/tag/1.0.4
