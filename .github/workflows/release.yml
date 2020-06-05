@@ -205,7 +205,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-          asset_content_type: text/pain
+          asset_content_type: text/plain
       - name: Upload MacOS release file asset
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -223,7 +223,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-          asset_content_type: text/pain
+          asset_content_type: text/plain
       - name: Upload Windows release file asset
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -241,7 +241,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
           asset_name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-          asset_content_type: text/pain
+          asset_content_type: text/plain
       - name: Install Poetry
         run: |
           python get-poetry.py --preview -y
