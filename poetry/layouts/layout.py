@@ -117,7 +117,7 @@ class Layout(object):
         content = dumps(content)
 
         if original_toml:
-            content += "\n" + dumps(original_toml)
+            content = dumps(original_toml) + "\n" + content
 
         return content
 
