@@ -9,7 +9,7 @@ from poetry.utils._compat import decode
 
 pattern_formats = {
     "protocol": r"\w+",
-    "user": r"[a-zA-Z0-9_.\+-]+(:[\w\d]+)?",
+    "user": r"[a-zA-Z0-9_.\+-]+(:[\w\d-]+)?",
     "resource": r"[a-zA-Z0-9_.-]+",
     "port": r"\d+",
     "path": r"[\w~.\-/\\]+",
