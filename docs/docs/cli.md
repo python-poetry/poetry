@@ -405,7 +405,7 @@ and returns a detailed report if there are any errors.
 
 !!!note
 
-    This command is also available as `pre-commit` hook.
+    This command is also available as a `pre-commit` hook.
     See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
 
 ```bash
@@ -426,7 +426,7 @@ This command locks (without installing) the dependencies specified in `pyproject
 
 !!!note
 
-    This command is also available as `pre-commit` hook.
+    This command is also available as a `pre-commit` hook.
     See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
 
 ```bash
@@ -474,7 +474,7 @@ poetry export -f requirements.txt --output requirements.txt
 
 !!!note
 
-    This command is also available as `pre-commit` hook.
+    This command is also available as a `pre-commit` hook.
     See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
 
 ### Options
