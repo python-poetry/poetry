@@ -67,17 +67,18 @@ It will automatically find a suitable version constraint **and install** the pac
 ## Using your virtual environment
 
 By default, poetry creates a virtual environment in `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
-There are two ways to run commands within this virtual environment.
+There are several ways to run commands within this virtual environment.
 
 ### Using `poetry run`
 
 To run your script simply use `poetry run python your_script.py`.
 Likewise if you have command line tools such as `pytest` or `black` you can run them using `poetry run pytest`.
 
-
 ### Activating the virtual environment
 
-Alternatively you can activate the virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
+The easiest way to activate the virtual environment is `poetry shell`.
+
+Alternatively you can manually activate the virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
 To get the path to your virtual environment run `poetry env info --path`.
 
 
