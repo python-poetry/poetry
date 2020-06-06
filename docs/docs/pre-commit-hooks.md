@@ -1,7 +1,7 @@
 # pre-commit hooks
 
-`pre-commit` is a tool which manages running of 
-[git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) scripts. 
+`pre-commit` is a tool which manages running of
+[git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) scripts.
 See the official documentation for more information: [pre-commit.com](https://pre-commit.com/)
 
 Below you can see the available `pre-commit` hooks you can use.
@@ -9,12 +9,12 @@ Below you can see the available `pre-commit` hooks you can use.
 
 ## poetry-check
 
-The `poetry-check` hook calls the `poetry check` command 
+The `poetry-check` hook calls the `poetry check` command
 to make sure the poetry configuration does not get committed in a broken state.
 
 ### Arguments
 
-The hook takes the same arguments as the CLI command. 
+The hook takes the same arguments as the CLI command.
 For more information see the [check command](/docs/cli#check).
 
 
