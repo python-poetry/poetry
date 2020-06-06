@@ -12,3 +12,11 @@
   language: python
   language_version: python3
   pass_filenames: false
+- id: poetry-export
+  name: poetry-export
+  description: run poetry export to sync lock file with requirements.txt
+  entry: poetry export
+  language: python
+  language_version: python3
+  pass_filenames: false
+  args: ["-f", "requirements.txt"]
