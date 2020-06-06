@@ -14,7 +14,7 @@ to make sure the poetry configuration does not get committed in a broken state.
 
 ### Arguments
 
-The hook takes the same arguments as the CLI command.
+The hook takes the same arguments as the poetry command.
 For more information see the [check command](/docs/cli#check).
 
 
@@ -25,7 +25,7 @@ to make sure the lock file is up-to-date when committing changes.
 
 ### Arguments
 
-The hook takes the same arguments as the CLI command.
+The hook takes the same arguments as the poetry command.
 For more information see the [lock command](/docs/cli#lock).
 
 
@@ -40,7 +40,7 @@ to sync your `requirements.txt` file with your current dependencies.
 
 ### Arguments
 
-The hook takes the same arguments as the CLI command.
+The hook takes the same arguments as the poetry command.
 For more information see the [export command](/docs/cli#export).
 
 If no arguments are given the hook falls back to `args: ["-f", "requirements.txt"]`.
