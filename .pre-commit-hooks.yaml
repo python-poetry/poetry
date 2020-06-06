@@ -1,0 +1,14 @@
+- id: poetry-check
+  name: poetry-check
+  description: run poetry check to validate config
+  entry: poetry check
+  language: python
+  language_version: python3
+  pass_filenames: false
+- id: poetry-lock
+  name: poetry-lock
+  description: run poetry lock to update lock file
+  entry: poetry lock
+  language: python
+  language_version: python3
+  pass_filenames: false
