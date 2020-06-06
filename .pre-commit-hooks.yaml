@@ -5,6 +5,7 @@
   language: python
   language_version: python3
   pass_filenames: false
+
 - id: poetry-lock
   name: poetry-lock
   description: run poetry lock to update lock file
@@ -12,6 +13,7 @@
   language: python
   language_version: python3
   pass_filenames: false
+
 - id: poetry-export
   name: poetry-export
   description: run poetry export to sync lock file with requirements.txt
