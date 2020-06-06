@@ -43,13 +43,16 @@ to sync your `requirements.txt` file with your current dependencies.
 The hook takes the same arguments as the poetry command.
 For more information see the [export command](/docs/cli#export).
 
-If no arguments are given the hook falls back to `args: ["-f", "requirements.txt"]`.
-If you want to see the output on the commandline add `verbose: true` to `poetry-export`
+`args: ["-f", "requirements.txt", "-o", "requirements.txt"]` are the default arguments
+which will create/update the requirements.txt file in the current working directory.
+
+For output to the console change the arguments and add `verbose: true` to `poetry-export`
 in your `.pre-commit-config.yaml` file like so:
 
 ```yaml
 hooks:
   - id: poetry-export
+    args: ["-f", "requirements.txt"]
     verbose: true
 ```
 
