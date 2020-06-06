@@ -403,6 +403,11 @@ poetry shell
 The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
+!!!note
+
+    This command is also available as `pre-commit` hook.
+    See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
+
 ```bash
 poetry check
 ```
@@ -418,6 +423,11 @@ poetry search requests pendulum
 ## lock
 
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
+
+!!!note
+
+    This command is also available as `pre-commit` hook.
+    See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
 
 ```bash
 poetry lock
@@ -461,6 +471,11 @@ poetry export -f requirements.txt --output requirements.txt
 !!!note
 
     Only the `requirements.txt` format is currently supported.
+
+!!!note
+
+    This command is also available as `pre-commit` hook.
+    See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
 
 ### Options
 
