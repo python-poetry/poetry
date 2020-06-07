@@ -80,7 +80,22 @@ poetry = "poetry.console:main"
 
 
 [build-system]
-requires = ["intreehooks"]
+requires = [
+    "intreehooks",
+    "clikit>=0.4.2,<0.5.0",
+    "importlib_metadata==1.1.3",
+    "tomlkit>=0.5.11,<0.6.0",
+    "cleo>=0.7.6,<0.8.0",
+    "jsonschema>=3.1,<4.0",
+    "pyparsing>=2.2,<3.0",
+    "pkginfo>=1.4,<2.0",
+    "cachecontrol[filecache]>=0.12.4,<0.13.0",
+    "cachy>=0.3.0,<0.4.0",
+    "html5lib>=1.0,<2.0",
+    "typing>=3.6,<4.0; python_version>='2.7' and python_version<'2.8' or python_version>='3.4' and python_version<'3.5'",
+    "subprocess32>=3.5,<4.0; python_version>='2.7' and python_version<'2.8' or python_version>='3.4' and python_version<'3.5'",
+    "functools32>=3.2.3,<4.0.0; python_version>='2.7' and python_version<'2.8'",
+]
 build-backend = "intreehooks:loader"
 
 [tool.intreehooks]
