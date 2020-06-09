@@ -25,8 +25,8 @@ classifiers = [
 python = "~2.7 || ^3.5"
 
 poetry-core = "^1.0.0a6"
-cleo = "^0.8.0"
-clikit = "^0.5.1"
+cleo = "^0.8.1"
+clikit = "^0.6.2"
 requests = "^2.18"
 cachy = "^0.3.0"
 requests-toolbelt = "^0.8.0"

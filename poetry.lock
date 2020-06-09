@@ -161,10 +161,10 @@ description = "Cleo allows you to create beautiful and testable command-line int
 name = "cleo"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.8.0"
+version = "0.8.1"
 
 [package.dependencies]
-clikit = ">=0.5.0,<0.6.0"
+clikit = ">=0.6.0,<0.7.0"
 
 [[package]]
 category = "dev"
@@ -181,11 +181,15 @@ description = "CliKit is a group of utilities to build beautiful and testable co
 name = "clikit"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.5.1"
+version = "0.6.2"
 
 [package.dependencies]
 pastel = ">=0.2.0,<0.3.0"
 pylev = ">=1.3,<2.0"
+
+[package.dependencies.crashtest]
+python = ">=3.6,<4.0"
+version = ">=0.3.0,<0.4.0"
 
 [package.dependencies.enum34]
 python = ">=2.7,<2.8"
@@ -196,12 +200,8 @@ python = ">=2.7,<2.8 || >=3.4,<3.5"
 version = ">=3.6,<4.0"
 
 [package.dependencies.typing-extensions]
-python = ">=3.5.0,<3.5.4"
+python = ">=3.5,<3.5.4"
 version = ">=3.6,<4.0"
-
-[package.dependencies.woops]
-python = ">=3.6,<4.0"
-version = ">=0.2.1,<0.3.0"
 
 [[package]]
 category = "dev"
@@ -244,6 +244,15 @@ version = "5.1"
 
 [package.extras]
 toml = ["toml"]
+
+[[package]]
+category = "main"
+description = "Manage Python errors with ease"
+marker = "python_version >= \"3.6\" and python_version < \"4.0\""
+name = "crashtest"
+optional = false
+python-versions = ">=3.6,<4.0"
+version = "0.3.0"
 
 [[package]]
 category = "main"
@@ -1256,7 +1265,7 @@ version = "1.3.2"
 [[package]]
 category = "main"
 description = "This library brings functools.singledispatch from Python 3.4 to Python 2.6-3.3."
-marker = "python_version >= \"2.7\" and python_version < \"2.8\""
+marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.4\" or python_version >= \"2.7\" and python_version < \"2.8\" and (python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.4\")"
 name = "singledispatch"
 optional = false
 python-versions = "*"
@@ -1322,7 +1331,7 @@ version = ">=3.6,<4.0"
 [[package]]
 category = "dev"
 description = "Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed."
-marker = "python_version >= \"2.7.9\" and python_version < \"2.8.0\" or python_version >= \"3.4\" and python_version < \"4.0\""
+marker = "python_version >= \"2.7.9\" and python_version < \"2.8.0\" and python_full_version >= \"2.7.9\" and python_full_version < \"2.8.0\" or python_version >= \"3.4\" and python_version < \"4.0\" and python_full_version >= \"2.7.9\" and python_full_version < \"2.8.0\" or python_version >= \"3.4\" and python_version < \"4.0\""
 name = "tornado"
 optional = false
 python-versions = ">= 2.7, !=3.0.*, !=3.1.*, !=3.2.*, != 3.3.*"
@@ -1331,7 +1340,7 @@ version = "5.1.1"
 [[package]]
 category = "dev"
 description = "Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed."
-marker = "python_version >= \"2.7.9\" and python_version < \"2.8.0\" or python_version >= \"3.4\" and python_version < \"4.0\""
+marker = "python_version >= \"2.7.9\" and python_version < \"2.8.0\" and python_full_version >= \"2.7.9\" and python_full_version < \"2.8.0\" or python_version >= \"2.7.9\" and python_version < \"2.8.0\" or python_version >= \"3.4\" and python_version < \"4.0\" and python_full_version >= \"2.7.9\" and python_full_version < \"2.8.0\" or python_version >= \"3.4\" and python_version < \"4.0\""
 name = "tornado"
 optional = false
 python-versions = ">= 3.5"
@@ -1396,7 +1405,7 @@ version = "3.7.4.1"
 [[package]]
 category = "main"
 description = "Backported and Experimental Type Hints for Python 3.5+"
-marker = "python_version >= \"3.5.0\" and python_version < \"3.5.4\""
+marker = "python_version >= \"3.5\" and python_full_version < \"3.5.4\""
 name = "typing-extensions"
 optional = false
 python-versions = "*"
@@ -1473,15 +1482,6 @@ version = "0.5.1"
 
 [[package]]
 category = "main"
-description = "Handle and manage Python errors with ease"
-marker = "python_version >= \"3.6\" and python_version < \"4.0\""
-name = "woops"
-optional = false
-python-versions = ">=3.6,<4.0"
-version = "0.2.1"
-
-[[package]]
-category = "main"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 marker = "python_version >= \"2.7\" and python_version < \"2.8\" or python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.6\" or python_version >= \"3.5\" and python_version < \"3.8\" or python_version >= \"2.7.9\" and python_version < \"2.8.0\" or python_version >= \"3.4\" and python_version < \"3.8\""
 name = "zipp"
@@ -1512,7 +1512,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "239135f8ef78cecd4fc9e9a00a3d58ffe35b47174a054238b295229e75686e54"
+content-hash = "6e86bcf4be1389d9d1dbd87bd5383089bec887c5a7e9c5e48b09b936699e035d"
 python-versions = "~2.7 || ^3.5"
 
 [metadata.files]
@@ -1593,16 +1593,16 @@ chardet = [
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
 ]
 cleo = [
-    {file = "cleo-0.8.0-py2.py3-none-any.whl", hash = "sha256:dcb791b246c02d59ea8eaf05a05d986e547dbe8ba2496ed59048e5d4ab93b537"},
-    {file = "cleo-0.8.0.tar.gz", hash = "sha256:b2d56e93b182358591d0ec46c4f787736378a6a8adf4a6512f72aeb0506de981"},
+    {file = "cleo-0.8.1-py2.py3-none-any.whl", hash = "sha256:141cda6dc94a92343be626bb87a0b6c86ae291dfc732a57bf04310d4b4201753"},
+    {file = "cleo-0.8.1.tar.gz", hash = "sha256:3d0e22d30117851b45970b6c14aca4ab0b18b1b53c8af57bed13208147e4069f"},
 ]
 click = [
     {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
     {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
 ]
 clikit = [
-    {file = "clikit-0.5.1-py2.py3-none-any.whl", hash = "sha256:f697b6e3125cf4bdc6394184c687f52fe3323152ca6bb99db444201f32904a64"},
-    {file = "clikit-0.5.1.tar.gz", hash = "sha256:2e9cd4c87539d9a0f0275b26e3e50d2d531d7bfbcf4f91909aaa013cfac9d0e1"},
+    {file = "clikit-0.6.2-py2.py3-none-any.whl", hash = "sha256:71268e074e68082306e23d7369a7b99f824a0ef926e55ba2665e911f7208489e"},
+    {file = "clikit-0.6.2.tar.gz", hash = "sha256:442ee5db9a14120635c5990bcdbfe7c03ada5898291f0c802f77be71569ded59"},
 ]
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
@@ -1648,6 +1648,10 @@ coverage = [
     {file = "coverage-5.1-cp39-cp39-win32.whl", hash = "sha256:a82b92b04a23d3c8a581fc049228bafde988abacba397d57ce95fe95e0338ab4"},
     {file = "coverage-5.1-cp39-cp39-win_amd64.whl", hash = "sha256:bb28a7245de68bf29f6fb199545d072d1036a1917dca17a1e75bbb919e14ee8e"},
     {file = "coverage-5.1.tar.gz", hash = "sha256:f90bfc4ad18450c80b024036eaf91e4a246ae287701aaa88eaebebf150868052"},
+]
+crashtest = [
+    {file = "crashtest-0.3.0-py3-none-any.whl", hash = "sha256:06069a9267c54be31c42b03574b72407bf780e13c82cb0238f24ea69cf25b6dd"},
+    {file = "crashtest-0.3.0.tar.gz", hash = "sha256:e9c06cc96400939ab5327123a3f699078eaad8a6283247d7b2ae0f6afffadf14"},
 ]
 cryptography = [
     {file = "cryptography-2.9.2-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:daf54a4b07d67ad437ff239c8a4080cfd1cc7213df57d33c97de7b4738048d5e"},
@@ -2107,10 +2111,6 @@ wcwidth = [
 webencodings = [
     {file = "webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78"},
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
-]
-woops = [
-    {file = "woops-0.2.1-py3-none-any.whl", hash = "sha256:77f7179941d0a3d354d923f71428ee2c2519e0b86f465ed5882b98a6d00ec7f0"},
-    {file = "woops-0.2.1.tar.gz", hash = "sha256:f95dee22e055b61980209fdf481f33e743e02d5ef135853c9089d0061370f94a"},
 ]
 zipp = [
     {file = "zipp-1.2.0-py2.py3-none-any.whl", hash = "sha256:e0d9e63797e483a30d27e09fffd308c59a700d365ec34e93cc100844168bf921"},
