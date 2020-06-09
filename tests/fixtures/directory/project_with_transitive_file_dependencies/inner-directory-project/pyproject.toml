@@ -1,0 +1,11 @@
+[tool.poetry]
+name = "inner-directory-project"
+version = "1.2.4"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "*"
+
+[tool.poetry.dev-dependencies]

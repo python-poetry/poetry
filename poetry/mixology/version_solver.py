@@ -339,6 +339,16 @@ class VersionSolver:
             if dependency.name in self._locked:
                 return 1
 
+            # VCS, URL, File or Directory dependencies
+            # represent a single version
+            if (
+                dependency.is_vcs()
+                or dependency.is_url()
+                or dependency.is_file()
+                or dependency.is_directory()
+            ):
+                return 1
+
             try:
                 return len(self._provider.search_for(dependency))
             except ValueError:

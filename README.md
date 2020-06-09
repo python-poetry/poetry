@@ -93,6 +93,13 @@ poetry completions zsh > ~/.zfunc/_poetry
 
 # Zsh (Homebrew)
 poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
+
+# Zsh (Oh-My-Zsh)
+mkdir $ZSH/plugins/poetry
+poetry completions zsh > $ZSH/plugins/poetry/_poetry
+
+# Zsh (prezto)
+poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 ```
 
 *Note:* you may need to restart your shell in order for the changes to take

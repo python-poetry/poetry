@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.0.5"
+version = "1.0.8"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -58,7 +58,10 @@ subprocess32 = { version = "^3.5", python = "~2.7 || ~3.4" }
 importlib-metadata = {version = "~1.1.3", python = "<3.8"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^4.1"
+pytest = [
+    {version = "^4.1", python = "<3.5"},
+    {version = "^5.4.3", python = ">=3.5"}
+]
 pytest-cov = "^2.5"
 mkdocs = { version = "^1.0", python = "~2.7.9 || ^3.4" }
 pymdown-extensions = "^6.0"

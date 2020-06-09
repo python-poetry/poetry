@@ -200,6 +200,12 @@ You can also add `git` dependencies:
 poetry add git+https://github.com/sdispater/pendulum.git
 ```
 
+or use ssh instead of https:
+
+```bash
+poetry add git+ssh://git@github.com/sdispater/pendulum.git
+```
+
 If you need to checkout a specific branch, tag or revision,
 you can specify it when using `add`:
 
@@ -415,8 +421,23 @@ This command shows the current version of the project or bumps the version of
 the project and writes the new version back to `pyproject.toml` if a valid
 bump rule is provided.
 
-The new version should ideally be a valid semver string or a valid bump rule:
+The new version should ideally be a valid [semver](https://semver.org/) string or a valid bump rule:
 `patch`, `minor`, `major`, `prepatch`, `preminor`, `premajor`, `prerelease`.
+
+The table below illustrates the effect of these rules with concrete examples.
+
+| rule       |        before | after         |
+|------------|---------------|---------------|
+| major      |         1.3.0 | 2.0.0         |
+| minor      |         2.1.4 | 2.2.0         |
+| patch      |         4.1.1 | 4.1.2         |
+| premajor   |         1.0.2 | 2.0.0-alpha.0 |
+| preminor   |         1.0.2 | 1.1.0-alpha.0 |
+| prepatch   |         1.0.2 | 1.0.3-alpha.0 |
+| prerelease |         1.0.2 | 1.0.3-alpha.0 |
+| prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
+| prerelease |  1.0.3-beta.0 | 1.0.3-beta.1  |
+
 
 
 ## export
