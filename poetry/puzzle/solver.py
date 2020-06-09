@@ -115,7 +115,7 @@ class Solver:
                     elif package.version != pkg.version:
                         # Checking version
                         operations.append(Update(pkg, package))
-                    elif package.source_type != pkg.source_type:
+                    elif pkg.source_type and package.source_type != pkg.source_type:
                         operations.append(Update(pkg, package))
                     else:
                         operations.append(Install(package).skip("Already installed"))

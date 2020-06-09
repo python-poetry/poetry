@@ -15,6 +15,14 @@ This release **must** be downloaded via the `get-poetry.py` script and not via t
 - The exceptions are now beautifully displayed in the terminal with various level of details depending on the verbosity ([2230](https://github.com/python-poetry/poetry/pull/2230)).
 
 
+## [1.0.9] - 2010-06-09
+
+### Fixed
+
+- Fixed an issue where packages from custom indices where continuously updated ([#2525](https://github.com/python-poetry/poetry/pull/2525)).
+- Fixed errors in the way Python environment markers were parsed and generated ([#2526](https://github.com/python-poetry/poetry/pull/2526)).
+
+
 ## [1.0.8] - 2020-06-05
 
 ### Fixed
@@ -876,6 +884,7 @@ Initial release
 
 [Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0a1...develop
 [1.1.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a1
+[1.0.9]: https://github.com/python-poetry/poetry/releases/tag/1.0.9
 [1.0.8]: https://github.com/python-poetry/poetry/releases/tag/1.0.8
 [1.0.7]: https://github.com/python-poetry/poetry/releases/tag/1.0.7
 [1.0.6]: https://github.com/python-poetry/poetry/releases/tag/1.0.6

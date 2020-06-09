@@ -207,6 +207,12 @@ You can also add `git` dependencies:
 poetry add git+https://github.com/sdispater/pendulum.git
 ```
 
+or use ssh instead of https:
+
+```bash
+poetry add git+ssh://git@github.com/sdispater/pendulum.git
+```
+
 If you need to checkout a specific branch, tag or revision,
 you can specify it when using `add`:
 
