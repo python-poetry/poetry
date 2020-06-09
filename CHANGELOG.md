@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.0.9] - 2010-06-09
+
+### Fixed
+
+- Fixed an issue where packages from custom indices where continuously updated ([#2525](https://github.com/python-poetry/poetry/pull/2525)).
+- Fixed errors in the way Python environment markers were parsed and generated ([#2526](https://github.com/python-poetry/poetry/pull/2526)).
+
+
 ## [1.0.8] - 2020-06-05
 
 ### Fixed
@@ -860,7 +868,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.8...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.9...master
+[1.0.9]: https://github.com/python-poetry/poetry/releases/tag/1.0.9
 [1.0.8]: https://github.com/python-poetry/poetry/releases/tag/1.0.8
 [1.0.7]: https://github.com/python-poetry/poetry/releases/tag/1.0.7
 [1.0.6]: https://github.com/python-poetry/poetry/releases/tag/1.0.6
