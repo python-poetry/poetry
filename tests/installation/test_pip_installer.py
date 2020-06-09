@@ -1,3 +1,5 @@
+import shutil
+
 import pytest
 
 from poetry.core.packages.package import Package
@@ -152,3 +154,42 @@ def test_requirement_git_develop_true(installer, package_git):
     expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
 
     assert expected == result
+
+
+def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
+    # this test scenario requires a real installation using the pip installer
+    installer = PipInstaller(tmp_venv, NullIO(), pool)
+
+    # use a namepspace package
+    package = Package("namespace-package-one", "1.0.0")
+    package.source_type = "git"
+    package.source_url = "https://github.com/demo/namespace-package-one.git"
+    package.source_reference = "master"
+    package.develop = True
+
+    # we do this here because the virtual env might not be usable if failure case is triggered
+    pth_file_candidate = tmp_venv.site_packages / "{}-nspkg.pth".format(package.name)
+
+    # in order to reproduce the scenario where the git source is removed prior to proper
+    # clean up of nspkg.pth file, we need to make sure the fixture is copied and not
+    # symlinked into the git src directory
+    def copy_only(source, dest):
+        if dest.exists():
+            dest.unlink()
+
+        if source.is_dir():
+            shutil.copytree(str(source), str(dest))
+        else:
+            shutil.copyfile(str(source), str(dest))
+
+    mocker.patch("tests.helpers.copy_or_symlink", new=copy_only)
+
+    # install package and then remove it
+    installer.install(package)
+    installer.remove(package)
+
+    assert not Path(pth_file_candidate).exists()
+
+    # any command in the virtual environment should trigger the error message
+    output = tmp_venv.run("python", "-m", "site")
+    assert "Error processing line 1 of {}".format(pth_file_candidate) not in output

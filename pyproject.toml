@@ -25,8 +25,8 @@ classifiers = [
 python = "~2.7 || ^3.5"
 
 poetry-core = "^1.0.0a6"
-cleo = "^0.8.0"
-clikit = "^0.5.1"
+cleo = "^0.8.1"
+clikit = "^0.6.2"
 requests = "^2.18"
 cachy = "^0.3.0"
 requests-toolbelt = "^0.8.0"
@@ -58,7 +58,10 @@ subprocess32 = { version = "^3.5", python = "~2.7" }
 importlib-metadata = {version = "^1.6.0", python = "<3.8"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^4.1"
+pytest = [
+    {version = "^4.1", python = "<3.5"},
+    {version = "^5.4.3", python = ">=3.5"}
+]
 pytest-cov = "^2.5"
 mkdocs = { version = "^1.0", python = "~2.7.9 || ^3.4" }
 pymdown-extensions = "^6.0"
@@ -114,3 +117,23 @@ known_third_party = [
     "shellingham",
     "tomlkit",
 ]
+
+
+[tool.black]
+line-length = 88
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | tests/.*/setup.py
+)/
+'''

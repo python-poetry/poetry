@@ -770,11 +770,13 @@ def test_run_installs_with_local_poetry_directory_and_extras(
 def test_run_installs_with_local_poetry_directory_transitive(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = (
-        fixtures_dir / "directory/project_with_transitive_directory_dependencies/"
+    package.root_dir = fixtures_dir.joinpath("directory")
+    directory = fixtures_dir.joinpath("directory").joinpath(
+        "project_with_transitive_directory_dependencies"
     )
     package.add_dependency(
-        "project-with-transitive-directory-dependencies", {"path": str(file_path)}
+        "project-with-transitive-directory-dependencies",
+        {"path": str(directory.relative_to(fixtures_dir.joinpath("directory")))},
     )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -786,15 +788,19 @@ def test_run_installs_with_local_poetry_directory_transitive(
 
     assert locker.written_data == expected
 
-    assert len(installer.installer.installs) == 2
+    assert len(installer.installer.installs) == 6
 
 
 def test_run_installs_with_local_poetry_file_transitive(
     installer, locker, repo, package, tmpdir
 ):
-    file_path = fixtures_dir / "directory/project_with_transitive_file_dependencies/"
+    package.root_dir = fixtures_dir.joinpath("directory")
+    directory = fixtures_dir.joinpath("directory").joinpath(
+        "project_with_transitive_file_dependencies"
+    )
     package.add_dependency(
-        "project-with-transitive-file-dependencies", {"path": str(file_path)}
+        "project-with-transitive-file-dependencies",
+        {"path": str(directory.relative_to(fixtures_dir.joinpath("directory")))},
     )
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -806,7 +812,7 @@ def test_run_installs_with_local_poetry_file_transitive(
 
     assert locker.written_data == expected
 
-    assert len(installer.installer.installs) == 3
+    assert len(installer.installer.installs) == 4
 
 
 def test_run_installs_with_local_setuptools_directory(

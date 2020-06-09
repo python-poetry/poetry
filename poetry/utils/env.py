@@ -1188,6 +1188,7 @@ class MockEnv(NullEnv):
         pip_version="19.1",
         sys_path=None,
         marker_env=None,
+        config_vars=None,
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -1200,6 +1201,15 @@ class MockEnv(NullEnv):
         self._pip_version = Version.parse(pip_version)
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
+        self._config_vars = config_vars
+
+    @property
+    def version_info(self):  # type: () -> Tuple[int]
+        return self._version_info
+
+    @property
+    def python_implementation(self):  # type: () -> str
+        return self._python_implementation
 
     @property
     def platform(self):  # type: () -> str
@@ -1234,3 +1244,12 @@ class MockEnv(NullEnv):
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv
+
+    def config_var(self, var):  # type: (str) -> Any
+        if self._config_vars is None:
+            return super().config_var(var)
+        else:
+            try:
+                return self._config_vars[var]
+            except KeyError:
+                return None

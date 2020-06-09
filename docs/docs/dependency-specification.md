@@ -42,7 +42,7 @@ If you only specify a major version, then minor- and patch-level changes are all
 
 ### Wildcard requirements
 
-**Wildcard requirements** allow for any version where the wildcard is positioned.
+**Wildcard requirements** allow for the latest (dependency dependent) version where the wildcard is positioned.
 
 `*`, `1.*` and `1.2.*` are examples of wildcard requirements.
 
@@ -178,6 +178,34 @@ foo = [
     {version = "^2.0", python = "^3.4"}
 ]
 ```
+
+## Expanded dependency specification syntax
+
+In the case of more complex dependency specifications, you may find that you
+end up with lines which are very long and difficult to read. In these cases,
+you can shift from using "inline table" syntax, to the "standard table" syntax.
+
+An example where this might be useful is the following:
+
+```toml
+[tool.poetry.dev-dependencies]
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'}
+```
+
+As a single line, this is a lot to digest. To make this a little bit easier to
+work with, you can do the following:
+
+```toml
+[tool.poetry.dev-dependencies.black]
+version = "19.10b0"
+allow-prereleases = true
+python = "^3.6"
+markers = "platform_python_implementation == 'CPython'"
+```
+
+All of the same information is still present, and ends up providing the exact
+same specification. It's simply split into multiple, slightly more readable,
+lines.
 
 !!!note
 

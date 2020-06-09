@@ -86,17 +86,27 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 # Bash
 poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
-# Bash (macOS/Homebrew)
+# Bash (Homebrew)
 poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
 
+# Fish (Homebrew)
+poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
+
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
 
-# Zsh (macOS/Homebrew)
+# Zsh (Homebrew)
 poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
+
+# Zsh (Oh-My-Zsh)
+mkdir $ZSH/plugins/poetry
+poetry completions zsh > $ZSH/plugins/poetry/_poetry
+
+# Zsh (prezto)
+poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 ```
 
 *Note:* you may need to restart your shell in order for the changes to take

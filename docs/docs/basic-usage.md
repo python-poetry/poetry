@@ -77,7 +77,7 @@ how versions relate to each other, and on the different ways you can specify dep
 
     **How does Poetry download the right files?**
 
-    When you specify a dependency in `pyproject.toml`, Poetry first take the name of the package
+    When you specify a dependency in `pyproject.toml`, Poetry first takes the name of the package
     that you have requested and searches for it in any repository you have registered using the `repositories` key.
     If you have not registered any extra repositories, or it does not find a package with that name in the
     repositories you have specified, it falls back on PyPI.
@@ -134,6 +134,15 @@ the dependencies installed are still working even if your dependencies released 
 
     For libraries it is not necessary to commit the lock file.
 
+### Installing dependencies only
+
+The current project is installed in [editable](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) mode by default.
+
+If you want to install the dependencies only, run the `install` command with the `--no-root` flag:
+
+```bash
+poetry install --no-root
+```
 
 ## Updating dependencies to their latest versions
 

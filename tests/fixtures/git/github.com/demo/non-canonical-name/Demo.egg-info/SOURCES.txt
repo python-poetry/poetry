@@ -1,0 +1,7 @@
+setup.py
+Demo.egg-info/PKG-INFO
+Demo.egg-info/SOURCES.txt
+Demo.egg-info/dependency_links.txt
+Demo.egg-info/requires.txt
+Demo.egg-info/top_level.txt
+demo/__init__.py
