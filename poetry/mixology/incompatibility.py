@@ -61,18 +61,18 @@ class Incompatibility:
                 else:
                     by_ref[ref] = term
 
-                new_terms = []
-                for by_ref in by_name.values():
-                    positive_terms = [
-                        term for term in by_ref.values() if term.is_positive()
-                    ]
-                    if positive_terms:
-                        new_terms += positive_terms
-                        continue
+            new_terms = []
+            for by_ref in by_name.values():
+                positive_terms = [
+                    term for term in by_ref.values() if term.is_positive()
+                ]
+                if positive_terms:
+                    new_terms += positive_terms
+                    continue
 
-                    new_terms += list(by_ref.values())
+                new_terms += list(by_ref.values())
 
-                terms = new_terms
+            terms = new_terms
 
         self._terms = terms
         self._cause = cause
