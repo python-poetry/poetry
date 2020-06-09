@@ -1,23 +1,23 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: stable
+    rev: 6bedb5c58a7d8c25aa9509f8217bc24e9797e90d  # frozen: 19.10b0
     hooks:
       - id: black
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.8
+    rev: 05f6544aef321e2fee03a1277ce2eef8880fb927  # frozen: 3.8.3
     hooks:
       - id: flake8
 
   - repo: https://github.com/timothycrosley/isort
-    rev: 4.3.21-2
+    rev: 7c29dd9d55161704cfc45998c6f5c2c43d39264b  # frozen: 4.3.21
     hooks:
       - id: isort
         additional_dependencies: [toml]
         exclude: ^.*/?setup\.py$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: ebc15addedad713c86ef18ae9632c88e187dd0af  # frozen: v3.1.0
     hooks:
       - id: trailing-whitespace
         exclude: ^tests/.*/fixtures/.*
