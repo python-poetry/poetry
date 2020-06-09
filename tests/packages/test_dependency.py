@@ -1,3 +1,5 @@
+import pytest
+
 from poetry.packages import Dependency
 from poetry.packages import Package
 
@@ -108,3 +110,23 @@ def test_to_pep_508_with_single_version_excluded():
     dependency = Dependency("foo", "!=1.2.3")
 
     assert "foo (!=1.2.3)" == dependency.to_pep_508()
+
+
+@pytest.mark.parametrize(
+    "python_versions, marker",
+    [
+        (">=3.5,<3.5.4", 'python_version >= "3.5" and python_full_version < "3.5.4"'),
+        (">=3.5.4,<3.6", 'python_full_version >= "3.5.4" and python_version < "3.6"'),
+        ("<3.5.4", 'python_full_version < "3.5.4"'),
+        (">=3.5.4", 'python_full_version >= "3.5.4"'),
+        ("== 3.5.4", 'python_full_version == "3.5.4"'),
+    ],
+)
+def test_to_pep_508_with_patch_python_version(python_versions, marker):
+    dependency = Dependency("Django", "^1.23")
+    dependency.python_versions = python_versions
+
+    expected = "Django (>=1.23,<2.0); {}".format(marker)
+
+    assert expected == dependency.to_pep_508()
+    assert marker == str(dependency.marker)

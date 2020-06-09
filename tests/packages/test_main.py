@@ -218,3 +218,21 @@ def test_dependency_from_pep_508_with_wheel_url():
 
     assert "example-wheel" == dep.name
     assert str(dep.constraint) == "14.0.2"
+
+
+def test_dependency_from_pep_508_with_python_full_version():
+    name = (
+        "requests (==2.18.0); "
+        '(python_version >= "2.7" and python_version < "2.8") '
+        'or (python_full_version >= "3.4" and python_full_version < "3.5.4")'
+    )
+    dep = dependency_from_pep_508(name)
+
+    assert dep.name == "requests"
+    assert str(dep.constraint) == "2.18.0"
+    assert dep.extras == []
+    assert dep.python_versions == ">=2.7 <2.8 || >=3.4 <3.5.4"
+    assert str(dep.marker) == (
+        'python_version >= "2.7" and python_version < "2.8" '
+        'or python_full_version >= "3.4" and python_full_version < "3.5.4"'
+    )
