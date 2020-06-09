@@ -2039,3 +2039,22 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
     # via the git dependency
     with pytest.raises(SolverProblemError):
         solver.solve()
+
+
+def test_solver_should_not_update_same_version_packages_if_installed_has_no_source_type(
+    solver, repo, package, installed
+):
+    package.add_dependency("foo", "1.0.0")
+
+    foo = get_package("foo", "1.0.0")
+    foo.source_type = "legacy"
+    foo.source_reference = "custom"
+    foo.source_url = "https://foo.bar"
+    repo.add_package(foo)
+    installed.add_package(get_package("foo", "1.0.0"))
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": foo, "skipped": True}],
+    )
