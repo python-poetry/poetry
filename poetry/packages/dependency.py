@@ -228,7 +228,7 @@ class Dependency(object):
             )
 
         if markers:
-            if self.is_vcs():
+            if self.is_vcs() or self.is_url():
                 requirement += " "
 
             if len(markers) > 1:
