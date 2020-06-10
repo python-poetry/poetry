@@ -6,7 +6,8 @@
     "required": [
         "name",
         "version",
-        "description"
+        "description",
+        "authors"
     ],
     "properties": {
         "name": {
