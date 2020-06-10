@@ -630,6 +630,14 @@ class Installer:
 
         if WINDOWS:
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
+                print(
+                    BAT.format(
+                        python_executable=python_executable,
+                        poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
+                            os.environ["USERPROFILE"], "%USERPROFILE%"
+                        ),
+                    )
+                )
                 f.write(
                     u(
                         BAT.format(
