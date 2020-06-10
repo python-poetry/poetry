@@ -77,6 +77,15 @@ POETRY_VERSION=0.12.0 python get-poetry.py
 
     Note that the installer does not support Poetry releases < 0.12.0.
 
+!!!note
+
+    The setup script must be able to find one of following executables in your shell's path environment:
+
+    - `python` (which can be a py3 or py2 interpreter)
+    - `python3`
+    - `py.exe -3` (Windows)
+    - `py.exe -2` (Windows)
+
 ### Alternative installation methods (not recommended)
 
 !!!note
