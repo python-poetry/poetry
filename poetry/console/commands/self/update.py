@@ -320,8 +320,7 @@ class SelfUpdateCommand(Command):
                 continue
 
             match = version_matcher.match(raw_version.strip())
-            if match and tuple(map(int, match.groups())) >= (3, 0):
-                # favor the first py3 executable we can find.
+            if match:
                 return executable
 
             if fallback is None:
