@@ -626,6 +626,7 @@ class Installer:
             os.mkdir(POETRY_BIN, 0o755)
 
         python_executable = self._which_python()
+        print('Using "{}" executable'.format(python_executable))
 
         if WINDOWS:
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
