@@ -61,5 +61,5 @@ def test_new_command(app, format_param, readme):
     assert "description" in pyproject["tool"]["poetry"]
     assert pyproject["tool"]["poetry"]["readme"] == readme
 
-    assert "poetry>=0.12" in pyproject["build-system"]["requires"]
-    assert pyproject["build-system"]["build-backend"] == "poetry.masonry.api"
+    assert "poetry-core>=1.0.0a5" in pyproject["build-system"]["requires"]
+    assert pyproject["build-system"]["build-backend"] == "poetry.core.masonry.api"
