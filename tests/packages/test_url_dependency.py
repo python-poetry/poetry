@@ -1,5 +1,3 @@
-import pytest
-
 from poetry.packages.url_dependency import URLDependency
 
 
