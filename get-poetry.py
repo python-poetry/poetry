@@ -216,7 +216,11 @@ if __name__ == "__main__":
     main()
 """
 
-BAT = u('@echo off\r\n{python_executable} "{poetry_bin}" %*\r\n')
+BAT = u(
+    """\
+@echo off\r\n{python_executable} "%~dp0\\{poetry_bin}" %*\r\n
+"""
+)
 
 
 PRE_MESSAGE = """# Welcome to {poetry}!
@@ -626,18 +630,9 @@ class Installer:
             os.mkdir(POETRY_BIN, 0o755)
 
         python_executable = self._which_python()
-        print('Using "{}" executable'.format(python_executable))
 
         if WINDOWS:
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
-                print(
-                    BAT.format(
-                        python_executable=python_executable,
-                        poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
-                            os.environ["USERPROFILE"], "%USERPROFILE%"
-                        ),
-                    )
-                )
                 f.write(
                     u(
                         BAT.format(
