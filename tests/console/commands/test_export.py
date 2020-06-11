@@ -211,3 +211,26 @@ foo==1.0.0
 """
 
     assert expected == tester.io.fetch_output()
+
+
+def test_export_include_all_extras(app, repo):
+    repo.add_package(get_package("foo", "1.0.0"))
+    repo.add_package(get_package("bar", "1.1.0"))
+
+    command = app.find("lock")
+    tester = CommandTester(command)
+    tester.execute()
+
+    assert app.poetry.locker.lock.exists()
+
+    command = app.find("export")
+    tester = CommandTester(command)
+
+    tester.execute("--format requirements.txt --all-optional")
+
+    expected = """\
+bar==1.1.0
+foo==1.0.0
+"""
+
+    assert expected == tester.io.fetch_output()
