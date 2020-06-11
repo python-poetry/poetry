@@ -468,6 +468,7 @@ poetry export -f requirements.txt --output requirements.txt
   output.
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
+* `--all-optional`: Include all optional dependencies.
 * `--without-hashes`: Exclude hashes from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
 
