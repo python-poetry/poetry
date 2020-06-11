@@ -29,6 +29,11 @@ class ExportCommand(Command):
             multiple=True,
         ),
         option("with-credentials", None, "Include credentials for extra indices."),
+        option(
+            "all-optional",
+            None,
+            "Include all optional dependencies.",
+        ),
     ]
 
     def handle(self):
@@ -71,4 +76,5 @@ class ExportCommand(Command):
             dev=self.option("dev"),
             extras=self.option("extras"),
             with_credentials=self.option("with-credentials"),
+            all_optional=self.option("all-optional"),
         )

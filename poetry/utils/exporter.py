@@ -34,7 +34,8 @@ class Exporter(object):
         dev=False,
         extras=None,
         with_credentials=False,
-    ):  # type: (str, Path, Union[IO, str], bool, bool, bool) -> None
+        all_optional=False,
+    ):  # type: (str, Path, Union[IO, str], bool, bool, bool, bool, bool) -> None
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
 
@@ -45,6 +46,7 @@ class Exporter(object):
             dev=dev,
             extras=extras,
             with_credentials=with_credentials,
+            all_optional=all_optional,
         )
 
     def _export_requirements_txt(
@@ -55,7 +57,8 @@ class Exporter(object):
         dev=False,
         extras=None,
         with_credentials=False,
-    ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
+        all_optional=False,
+    ):  # type: (Path, Union[IO, str], bool, bool, bool, bool, bool) -> None
         indexes = set()
         content = ""
         packages = self._poetry.locker.locked_repository(dev).packages
@@ -69,7 +72,7 @@ class Exporter(object):
 
         for package in sorted(packages, key=lambda p: p.name):
             # If a package is optional and we haven't opted in to it, continue
-            if package.optional and package.name not in extra_package_names:
+            if not all_optional and package.optional and package.name not in extra_package_names:
                 continue
 
             if package.source_type == "git":
