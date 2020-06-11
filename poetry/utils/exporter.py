@@ -72,7 +72,11 @@ class Exporter(object):
 
         for package in sorted(packages, key=lambda p: p.name):
             # If a package is optional and we haven't opted in to it, continue
-            if not all_optional and package.optional and package.name not in extra_package_names:
+            if (
+                not all_optional
+                and package.optional
+                and package.name not in extra_package_names
+            ):
                 continue
 
             if package.source_type == "git":
