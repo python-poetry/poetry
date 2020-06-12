@@ -19,10 +19,10 @@ from cleo.io.inputs.argv_input import ArgvInput
 from cleo.io.inputs.input import Input
 from cleo.io.io import IO
 from cleo.io.outputs.output import Output
-from cleo.loaders.factory_command_loader import FactoryCommandLoader
 
 from poetry.__version__ import __version__
 
+from .command_loader import CommandLoader
 from .commands.command import Command
 
 
@@ -76,6 +76,8 @@ COMMANDS = [
 
 
 if TYPE_CHECKING:
+    from cleo.io.inputs.definition import Definition
+
     from poetry.poetry import Poetry
 
 
@@ -84,6 +86,9 @@ class Application(BaseApplication):
         super(Application, self).__init__("poetry", __version__)
 
         self._poetry = None
+        self._io: Optional[IO] = None
+        self._disable_plugins = False
+        self._plugins_loaded = False
 
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, self.register_command_loggers)
@@ -91,9 +96,7 @@ class Application(BaseApplication):
         dispatcher.add_listener(COMMAND, self.set_installer)
         self.set_event_dispatcher(dispatcher)
 
-        command_loader = FactoryCommandLoader(
-            {name: load_command(name) for name in COMMANDS}
-        )
+        command_loader = CommandLoader({name: load_command(name) for name in COMMANDS})
         self.set_command_loader(command_loader)
 
     @property
@@ -105,9 +108,15 @@ class Application(BaseApplication):
         if self._poetry is not None:
             return self._poetry
 
-        self._poetry = Factory().create_poetry(Path.cwd())
+        self._poetry = Factory().create_poetry(
+            Path.cwd(), io=self._io, disable_plugins=self._disable_plugins
+        )
 
         return self._poetry
+
+    @property
+    def command_loader(self) -> CommandLoader:
+        return self._command_loader
 
     def reset_poetry(self) -> None:
         self._poetry = None
@@ -138,7 +147,16 @@ class Application(BaseApplication):
         io.output.set_formatter(formatter)
         io.error_output.set_formatter(formatter)
 
+        self._io = io
+
         return io
+
+    def _run(self, io: IO) -> int:
+        self._disable_plugins = io.input.parameter_option("--no-plugins")
+
+        self._load_plugins(io)
+
+        return super()._run(io)
 
     def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
@@ -271,6 +289,45 @@ class Application(BaseApplication):
         )
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
+
+    def _load_plugins(self, io: IO) -> None:
+        if self._plugins_loaded:
+            return
+
+        from cleo.exceptions import CommandNotFoundException
+
+        name = self._get_command_name(io)
+        command_name = ""
+        if name:
+            try:
+                command_name = self.find(name).name
+            except CommandNotFoundException:
+                pass
+
+        self._disable_plugins = (
+            io.input.has_parameter_option("--no-plugins") or command_name == "new"
+        )
+
+        if not self._disable_plugins:
+            from poetry.plugins.plugin_manager import PluginManager
+
+            manager = PluginManager("application.plugin")
+            manager.load_plugins()
+            manager.activate(self)
+
+        self._plugins_loaded = True
+
+    @property
+    def _default_definition(self) -> "Definition":
+        from cleo.io.inputs.option import Option
+
+        definition = super()._default_definition
+
+        definition.add_option(
+            Option("--no-plugins", flag=True, description="Disables plugins.")
+        )
+
+        return definition
 
 
 def main() -> int:
