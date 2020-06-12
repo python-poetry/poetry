@@ -4,6 +4,7 @@ from typing import Any
 
 from cleo.config import ApplicationConfig as BaseApplicationConfig
 from clikit.api.application.application import Application
+from clikit.api.args.format.option import Option
 from clikit.api.args.raw_args import RawArgs
 from clikit.api.event import PRE_HANDLE
 from clikit.api.event import PreHandleEvent
@@ -36,6 +37,10 @@ from poetry.utils._compat import PY36
 class ApplicationConfig(BaseApplicationConfig):
     def configure(self):
         super(ApplicationConfig, self).configure()
+
+        self.add_option(
+            "no-plugins", None, Option.NO_VALUE, "Disable plugins.",
+        )
 
         self.add_style(Style("c1").fg("cyan"))
         self.add_style(Style("c2").fg("default").bold())
@@ -73,7 +78,11 @@ class ApplicationConfig(BaseApplicationConfig):
 
         io = event.io
 
-        loggers = ["poetry.packages.package", "poetry.utils.password_manager"]
+        loggers = [
+            "poetry.packages.package",
+            "poetry.plugins.plgin_manager",
+            "poetry.utils.password_manager",
+        ]
 
         loggers += command.loggers
 
@@ -214,6 +223,8 @@ class ApplicationConfig(BaseApplicationConfig):
         # If the current command is the run one, skip option
         # check and interpret them as part of the executed command
         if resolved_command.command.name == "run":
+            application.set_io(io)
+
             return io
 
         if args.has_option_token("--no-ansi"):
@@ -237,5 +248,7 @@ class ApplicationConfig(BaseApplicationConfig):
 
         if args.has_option_token("--no-interaction") or args.has_option_token("-n"):
             io.set_interactive(False)
+
+        application.set_io(io)
 
         return io

@@ -14,6 +14,8 @@ from .config.file_config_source import FileConfigSource
 from .io.null_io import NullIO
 from .locations import CONFIG_DIR
 from .packages.locker import Locker
+from .packages.project_package import ProjectPackage
+from .plugins.plugin_manager import PluginManager
 from .poetry import Poetry
 from .repositories.pypi_repository import PyPiRepository
 from .utils._compat import Path
@@ -25,7 +27,7 @@ class Factory(BaseFactory):
     """
 
     def create_poetry(
-        self, cwd=None, io=None
+        self, cwd=None, io=None, disable_plugins=False
     ):  # type: (Optional[Path], Optional[IO]) -> Poetry
         if io is None:
             io = NullIO()
@@ -83,7 +85,16 @@ class Factory(BaseFactory):
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
 
+        plugin_manager = PluginManager("plugin", disable_plugins=disable_plugins)
+        plugin_manager.load_plugins()
+        poetry.set_plugin_manager(plugin_manager)
+        plugin_manager.activate(poetry, io)
+
         return poetry
+
+    @classmethod
+    def get_package(cls, name, version):  # type: (str, str) -> ProjectPackage
+        return ProjectPackage(name, version, version)
 
     @classmethod
     def create_config(cls, io=None):  # type: (Optional[IO]) -> Config

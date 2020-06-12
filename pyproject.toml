@@ -24,7 +24,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
 
-poetry-core = "^1.0.0a8"
+poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "make-factory-more-pluggable" }
 cleo = "^0.8.1"
 clikit = "^0.6.2"
 crashtest = { version = "^0.3.0", python = "^3.6" }
@@ -38,6 +38,7 @@ shellingham = "^1.1"
 tomlkit = "^0.5.11"
 pexpect = "^4.7.0"
 packaging = "^20.4"
+entrypoints = "^0.3"
 
 # The typing module is not in the stdlib in Python 2.7
 typing = { version = "^3.6", python = "~2.7" }

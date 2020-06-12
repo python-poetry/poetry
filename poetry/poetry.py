@@ -7,6 +7,7 @@ from poetry.core.poetry import Poetry as BasePoetry
 from .__version__ import __version__
 from .config.config import Config
 from .packages import Locker
+from .plugins.plugin_manager import PluginManager
 from .repositories.pool import Pool
 from .utils._compat import Path
 
@@ -28,6 +29,7 @@ class Poetry(BasePoetry):
         self._locker = locker
         self._config = config
         self._pool = Pool()
+        self._plugin_manager = None
 
     @property
     def locker(self):  # type: () -> Locker
@@ -53,5 +55,10 @@ class Poetry(BasePoetry):
 
     def set_config(self, config):  # type: (Config) -> Poetry
         self._config = config
+
+        return self
+
+    def set_plugin_manager(self, plugin_manager):  # type: (PluginManager) -> Poetry
+        self._plugin_manager = plugin_manager
 
         return self
