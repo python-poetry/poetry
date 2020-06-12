@@ -6,13 +6,22 @@ from pathlib import Path
 
 import pytest
 
+from entrypoints import EntryPoint
+
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
+from poetry.plugins.plugin import Plugin
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
+
+
+class MyPlugin(Plugin):
+    def activate(self, poetry, io):
+        io.write_line("Updating version")
+        poetry.package.set_version("9.9.9")
 
 
 def test_create_poetry():
@@ -224,3 +233,14 @@ def test_create_poetry_with_local_config(fixture_dir):
     assert not poetry.config.get("virtualenvs.create")
     assert not poetry.config.get("virtualenvs.options.always-copy")
     assert not poetry.config.get("virtualenvs.options.system-site-packages")
+
+
+def test_create_poetry_with_plugins(mocker):
+    mocker.patch(
+        "entrypoints.get_group_all",
+        return_value=[EntryPoint("my-plugin", "tests.test_factory", "MyPlugin")],
+    )
+
+    poetry = Factory().create_poetry(fixtures_dir / "sample_project")
+
+    assert "9.9.9" == poetry.package.version.text
