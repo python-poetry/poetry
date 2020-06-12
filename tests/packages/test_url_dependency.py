@@ -10,7 +10,7 @@ EXAMPLE_URL = (
 def test_to_pep_508():
     dependency = URLDependency("poetry", EXAMPLE_URL,)
 
-    expected = f"poetry @ {EXAMPLE_URL}"
+    expected = "poetry @ {}".format(EXAMPLE_URL)
 
     assert expected == dependency.to_pep_508()
 
@@ -19,5 +19,5 @@ def test_to_pep_508_in_extras():
     dependency = URLDependency("poetry", EXAMPLE_URL,)
     dependency.in_extras.append("foo")
 
-    expected = f'poetry @ {EXAMPLE_URL} ; extra == "foo"'
+    expected = 'poetry @ {} ; extra == "foo"'.format(EXAMPLE_URL)
     assert expected == dependency.to_pep_508()
