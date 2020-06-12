@@ -33,7 +33,12 @@ class UpdateCommand(EnvCommand):
         packages = self.argument("packages")
 
         installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
+            self.io,
+            self.env,
+            self.poetry.package,
+            self.poetry.locker,
+            self.poetry.pool,
+            self.poetry.config,
         )
         installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)

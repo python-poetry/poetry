@@ -9,8 +9,6 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from subprocess import CalledProcessError
 
-from requests import Session
-
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.io.null_io import NullIO
@@ -37,8 +35,9 @@ def chunked(iterable, n):
 
 
 class Executor(object):
-    def __init__(self, env, pool, io, parallel=True):
+    def __init__(self, env, pool, authenticator, io, parallel=True):
         self._env = env
+        self._authenticator = authenticator
         self._io = io
         self._dry_run = False
         self._enabled = True
@@ -431,9 +430,7 @@ class Executor(object):
     def _download_archive(
         self, operation, link, archive
     ):  # type: (Operation, Link, Path) -> Path
-        session = Session()
-        response = session.get(link.url, stream=True)
-        response.raise_for_status()
+        response = self._authenticator.request("get", link.url)
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)
         message = "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</>".format(

@@ -4,6 +4,7 @@ from typing import Union
 
 from clikit.api.io import IO
 
+from poetry.config.config import Config
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.io.null_io import NullIO
 from poetry.packages import Locker
@@ -31,6 +32,7 @@ class Installer:
         package,  # type: ProjectPackage
         locker,  # type: Locker
         pool,  # type: Pool
+        config,  # type: Config
         installed=None,  # type: Union[InstalledRepository, None]
         executor=None,  # type: Optional[Executor]
     ):
@@ -54,7 +56,11 @@ class Installer:
         self._extras = []
 
         if executor is None:
-            executor = Executor(self._env, self._pool, self._io)
+            from .authenticator import Authenticator
+
+            executor = Executor(
+                self._env, self._pool, Authenticator(config, self._io), self._io
+            )
 
         self._executor = executor
         self._use_executor = False

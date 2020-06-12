@@ -122,8 +122,8 @@ def env():
 
 
 @pytest.fixture()
-def installer(package, pool, locker, env, installed):
-    return Installer(NullIO(), env, package, locker, pool, installed=installed)
+def installer(package, pool, locker, env, installed, config):
+    return Installer(NullIO(), env, package, locker, pool, config, installed=installed)
 
 
 def fixture(name):
@@ -702,12 +702,12 @@ def test_run_installs_extras_with_deps_if_requested_locked(
     assert len(installer.installs) == 4  # A, B, C, D
 
 
-def test_installer_with_pypi_repository(package, locker, installed):
+def test_installer_with_pypi_repository(package, locker, installed, config):
     pool = Pool()
     pool.add_repository(MockRepository())
 
     installer = Installer(
-        NullIO(), NullEnv(), package, locker, pool, installed=installed
+        NullIO(), NullEnv(), package, locker, pool, config, installed=installed
     )
 
     package.add_dependency("pytest", "^3.5", category="dev")
@@ -1366,7 +1366,7 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
 
 
 def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(
-    installer, locker, repo, package, installed, env, pool
+    installer, locker, repo, package, installed, env, pool, config
 ):
     package.add_dependency("A", {"version": "^1.0"})
 
@@ -1400,7 +1400,9 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installed.add_package(package_b)
     installed.add_package(package_c)
 
-    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+    installer = Installer(
+        NullIO(), env, package, locker, pool, config, installed=installed
+    )
 
     installer.update(True)
     installer.whitelist(["D"])
@@ -1412,14 +1414,16 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
 
 
 def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(
-    locker, repo, package, installed, env, mocker
+    locker, repo, package, installed, env, mocker, config
 ):
     mocker.patch("sys.platform", "darwin")
 
     pool = Pool()
     pool.add_repository(MockRepository())
 
-    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+    installer = Installer(
+        NullIO(), env, package, locker, pool, config, installed=installed
+    )
 
     package.add_dependency("poetry", {"version": "^0.12.0"})
 
@@ -1438,7 +1442,9 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     for pkg in installer.installer.installs:
         installed.add_package(pkg)
 
-    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+    installer = Installer(
+        NullIO(), env, package, locker, pool, config, installed=installed
+    )
 
     installer.update(True)
     installer.whitelist(["pytest"])
@@ -1450,12 +1456,14 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
 
 
 def test_installer_required_extras_should_be_installed(
-    locker, repo, package, installed, env, mocker
+    locker, repo, package, installed, env, config
 ):
     pool = Pool()
     pool.add_repository(MockRepository())
 
-    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+    installer = Installer(
+        NullIO(), env, package, locker, pool, config, installed=installed
+    )
 
     package.add_dependency(
         "cachecontrol", {"version": "^0.12.5", "extras": ["filecache"]}
@@ -1471,7 +1479,9 @@ def test_installer_required_extras_should_be_installed(
     locker.locked(True)
     locker.mock_lock_data(locker.written_data)
 
-    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+    installer = Installer(
+        NullIO(), env, package, locker, pool, config, installed=installed
+    )
 
     installer.update(True)
     installer.run()
@@ -1557,7 +1567,7 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
 
 
 def test_installer_can_install_dependencies_from_forced_source(
-    locker, package, installed, env
+    locker, package, installed, env, config
 ):
     package.python_versions = "^3.7"
     package.add_dependency("tomlkit", {"version": "^0.5", "source": "legacy"})
@@ -1566,7 +1576,9 @@ def test_installer_can_install_dependencies_from_forced_source(
     pool.add_repository(MockLegacyRepository())
     pool.add_repository(MockRepository())
 
-    installer = Installer(NullIO(), env, package, locker, pool, installed=installed)
+    installer = Installer(
+        NullIO(), env, package, locker, pool, config, installed=installed
+    )
 
     installer.update(True)
     installer.run()
@@ -1620,7 +1632,7 @@ def test_installer_uses_prereleases_if_they_are_compatible(
 
 
 def test_installer_can_handle_old_lock_files(
-    installer, locker, package, repo, installed
+    installer, locker, package, repo, installed, config
 ):
     pool = Pool()
     pool.add_repository(MockRepository())
@@ -1631,7 +1643,7 @@ def test_installer_can_handle_old_lock_files(
     locker.mock_lock_data(fixture("old-lock"))
 
     installer = Installer(
-        NullIO(), MockEnv(), package, locker, pool, installed=installed
+        NullIO(), MockEnv(), package, locker, pool, config, installed=installed
     )
 
     installer.run()
@@ -1644,6 +1656,7 @@ def test_installer_can_handle_old_lock_files(
         package,
         locker,
         pool,
+        config,
         installed=installed,
     )
 
@@ -1658,6 +1671,7 @@ def test_installer_can_handle_old_lock_files(
         package,
         locker,
         pool,
+        config,
         installed=installed,
     )
 

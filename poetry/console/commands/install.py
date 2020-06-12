@@ -53,7 +53,12 @@ dependencies and not including the current project, run the command with the
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
         installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
+            self.io,
+            self.env,
+            self.poetry.package,
+            self.poetry.locker,
+            self.poetry.pool,
+            self.poetry.config,
         )
         installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)

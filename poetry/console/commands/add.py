@@ -150,7 +150,12 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         self.reset_poetry()
 
         installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
+            self.io,
+            self.env,
+            self.poetry.package,
+            self.poetry.locker,
+            self.poetry.pool,
+            self.poetry.config,
         )
         installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
