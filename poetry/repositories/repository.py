@@ -6,10 +6,10 @@ from .base_repository import BaseRepository
 
 
 class Repository(BaseRepository):
-    def __init__(self, packages=None):
+    def __init__(self, packages=None, name=None):
         super(Repository, self).__init__()
 
-        self._name = None
+        self._name = name
 
         if packages is None:
             packages = []

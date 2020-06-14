@@ -35,7 +35,7 @@ def chunked(iterable, n):
 
 
 class Executor(object):
-    def __init__(self, env, pool, authenticator, io, parallel=True):
+    def __init__(self, env, pool, authenticator, io, parallel=None):
         self._env = env
         self._authenticator = authenticator
         self._io = io
@@ -44,6 +44,9 @@ class Executor(object):
         self._verbose = False
         self._chef = Chef(self._env)
         self._chooser = Chooser(pool, self._env)
+
+        if parallel is None:
+            parallel = self.supports_fancy_output()
 
         if parallel:
             # This should be directly handled by ThreadPoolExecutor
@@ -61,8 +64,22 @@ class Executor(object):
         self._cache_dir = Path(CACHE_DIR) / "artifacts"
         self._total_operations = 0
         self._executed_operations = 0
+        self._executed = {"install": 0, "update": 0, "uninstall": 0}
+        self._skipped = {"install": 0, "update": 0, "uninstall": 0}
         self._sections = OrderedDict()
         self._lock = threading.Lock()
+
+    @property
+    def installations_count(self):  # type: () -> int
+        return self._executed["install"]
+
+    @property
+    def updates_count(self):  # type: () -> int
+        return self._executed["update"]
+
+    @property
+    def removals_count(self):  # type: () -> int
+        return self._executed["uninstall"]
 
     def supports_fancy_output(self):  # type: () -> bool
         return (
@@ -86,32 +103,39 @@ class Executor(object):
 
     def execute(self, operations):
         self._total_operations = len(operations)
+        for job_type in self._executed:
+            self._executed[job_type] = 0
+            self._skipped[job_type] = 0
 
         if operations and (self._enabled or self._dry_run):
             self._display_summary(operations)
 
         # We group operations by priority
-
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
         i = 0
         self._sections = OrderedDict()
-        self._last_write_times = OrderedDict()
         for _, group in groups:
             for chunk in chunked(group, self._max_workers):
                 tasks = []
                 for operation in chunk:
-                    if id(operation) not in self._sections:
-                        if self.supports_fancy_output() and self._should_write_operation(
-                            operation
-                        ):
-                            self._lock.acquire()
-                            self._sections[id(operation)] = self._io.section()
-                            self._sections[id(operation)].write_line(
+                    if self.supports_fancy_output():
+                        if id(operation) not in self._sections:
+                            if self._should_write_operation(operation):
+                                self._lock.acquire()
+                                self._sections[id(operation)] = self._io.section()
+                                self._sections[id(operation)].write_line(
+                                    "  <fg=blue;options=bold>•</> {message}".format(
+                                        message=self.get_operation_message(operation),
+                                    ),
+                                )
+                                self._lock.release()
+                    else:
+                        if self._should_write_operation(operation):
+                            self._io.write_line(
                                 "  <fg=blue;options=bold>•</> {message}".format(
                                     message=self.get_operation_message(operation),
                                 ),
                             )
-                            self._lock.release()
 
                 for operation in chunk:
                     tasks.append(
@@ -122,6 +146,9 @@ class Executor(object):
                 [t.result() for t in tasks]
 
     def _write(self, operation, line):
+        if not self.supports_fancy_output():
+            return
+
         self._lock.acquire()
         section = self._sections[id(operation)]
         section.output.clear()
@@ -141,6 +168,8 @@ class Executor(object):
                     ),
                 )
 
+            self._skipped[operation.job_type] += 1
+
             return
 
         if not self._enabled or self._dry_run:
@@ -159,7 +188,17 @@ class Executor(object):
         )
         self._write(operation, message)
 
-        self._executed_operations += 1
+        self._increment_operations_count(operation, True)
+
+    def _increment_operations_count(self, operation, executed):
+        self._lock.acquire()
+        if executed:
+            self._executed_operations += 1
+            self._executed[operation.job_type] += 1
+        else:
+            self._skipped[operation.job_type] += 1
+
+        self._lock.release()
 
     def run(self, *args, **kwargs):  # type: (...) -> str
         return self._env.run("python", "-m", "pip", *args, **kwargs)
@@ -263,7 +302,13 @@ class Executor(object):
 
             return
 
-        archive = self._download(operation)
+        if package.source_type == "file":
+            archive = self._prepare_file(operation)
+        elif package.source_type == "url":
+            archive = self._download_link(operation, Link(package.source_url))
+        else:
+            archive = self._download(operation)
+
         operation_message = self.get_operation_message(operation)
         message = "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
             message=operation_message,
@@ -296,6 +341,22 @@ class Executor(object):
 
             raise
 
+    def _prepare_file(self, operation):
+        package = operation.package
+
+        message = "  <fg=blue;options=bold>•</> {message}: <info>Preparing...</info>".format(
+            message=self.get_operation_message(operation),
+        )
+        self._write(operation, message)
+
+        archive = Path(package.source_url)
+        if not Path(package.source_url).is_absolute() and package.root_dir:
+            archive = package.root_dir / archive
+
+        archive = self._chef.prepare(archive)
+
+        return archive
+
     def _install_directory(self, operation):
         from poetry.factory import Factory
         from poetry.utils.toml_file import TomlFile
@@ -309,7 +370,7 @@ class Executor(object):
         self._write(operation, message)
 
         if package.root_dir:
-            req = os.path.join(package.root_dir, package.source_url)
+            req = os.path.join(str(package.root_dir), package.source_url)
         else:
             req = os.path.realpath(package.source_url)
 
@@ -398,11 +459,14 @@ class Executor(object):
         self._install_directory(operation)
 
     def _download(self, operation):  # type: (Operation) -> Path
+        link = self._chooser.choose_for(operation.package)
+
+        return self._download_link(operation, link)
+
+    def _download_link(self, operation, link):
         package = operation.package
         cache_dir = self._cache_dir / package.name
         cache_dir.mkdir(parents=True, exist_ok=True)
-
-        link = self._chooser.choose_for(package)
 
         archive = cache_dir / link.filename
         if not archive.exists():
@@ -437,9 +501,7 @@ class Executor(object):
             message=operation_message,
         )
         progress = None
-        if not self.supports_fancy_output() or wheel_size is None:
-            self._io.write_line(message)
-        else:
+        if self.supports_fancy_output() and wheel_size is not None:
             from clikit.ui.components.progress_bar import ProgressBar
 
             progress = ProgressBar(

@@ -27,6 +27,7 @@ from clikit.io.output_stream import StandardOutputStream
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.console.commands.installer_command import InstallerCommand
 from poetry.console.logging.io_formatter import IOFormatter
 from poetry.console.logging.io_handler import IOHandler
 from poetry.utils._compat import PY36
@@ -47,6 +48,7 @@ class ApplicationConfig(BaseApplicationConfig):
 
         self.add_event_listener(PRE_HANDLE, self.register_command_loggers)
         self.add_event_listener(PRE_HANDLE, self.set_env)
+        self.add_event_listener(PRE_HANDLE, self.set_installer)
 
         if PY36:
             from poetry.mixology.solutions.providers import (
@@ -94,6 +96,9 @@ class ApplicationConfig(BaseApplicationConfig):
         if not isinstance(command, EnvCommand):
             return
 
+        if command.env is not None:
+            return
+
         io = event.io
         poetry = command.poetry
 
@@ -104,6 +109,32 @@ class ApplicationConfig(BaseApplicationConfig):
             io.write_line("Using virtualenv: <comment>{}</>".format(env.path))
 
         command.set_env(env)
+
+    def set_installer(
+        self, event, event_name, _
+    ):  # type: (PreHandleEvent, str, Any) -> None
+        command = event.command.config.handler  # type: InstallerCommand
+        if not isinstance(command, InstallerCommand):
+            return
+
+        # If the command already has an installer
+        # we skip this step
+        if command.installer is not None:
+            return
+
+        from poetry.installation.installer import Installer
+
+        poetry = command.poetry
+        installer = Installer(
+            event.io,
+            command.env,
+            poetry.package,
+            poetry.locker,
+            poetry.pool,
+            poetry.config,
+        )
+        installer.use_executor(poetry.config.get("experimental.new-installer", False))
+        command.set_installer(installer)
 
     def resolve_help_command(
         self, event, event_name, dispatcher

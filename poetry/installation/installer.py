@@ -79,6 +79,11 @@ class Installer:
     def installer(self):
         return self._installer
 
+    def set_package(self, package):  # type: (ProjectPackage) -> Installer
+        self._package = package
+
+        return self
+
     def run(self):
         # Force update if there is no lock file present
         if not self._update and not self._locker.is_locked():

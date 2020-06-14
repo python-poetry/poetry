@@ -1,9 +1,9 @@
 from cleo import option
 
-from .env_command import EnvCommand
+from .installer_command import InstallerCommand
 
 
-class InstallCommand(EnvCommand):
+class InstallCommand(InstallerCommand):
 
     name = "install"
     description = "Installs the project dependencies."
@@ -48,19 +48,10 @@ dependencies and not including the current project, run the command with the
     _loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation.installer import Installer
         from poetry.masonry.builders import EditableBuilder
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
 
-        installer = Installer(
-            self.io,
-            self.env,
-            self.poetry.package,
-            self.poetry.locker,
-            self.poetry.pool,
-            self.poetry.config,
-        )
-        installer.use_executor(
+        self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )
 
@@ -71,13 +62,13 @@ dependencies and not including the current project, run the command with the
             else:
                 extras.append(extra)
 
-        installer.extras(extras)
-        installer.dev_mode(not self.option("no-dev"))
-        installer.dry_run(self.option("dry-run"))
-        installer.remove_untracked(self.option("remove-untracked"))
-        installer.verbose(self.option("verbose"))
+        self._installer.extras(extras)
+        self._installer.dev_mode(not self.option("no-dev"))
+        self._installer.dry_run(self.option("dry-run"))
+        self._installer.remove_untracked(self.option("remove-untracked"))
+        self._installer.verbose(self.option("verbose"))
 
-        return_code = installer.run()
+        return_code = self._installer.run()
 
         if return_code != 0:
             return return_code

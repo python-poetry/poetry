@@ -1070,8 +1070,13 @@ class VirtualEnv(Env):
         return [self._bin("pip")]
 
     def get_supported_tags(self):  # type: () -> List[Tag]
-        with Path(packaging.tags.__file__).open(encoding="utf-8") as f:
-            script = f.read()
+        file_path = Path(packaging.tags.__file__)
+        if file_path.suffix == ".pyc":
+            # Python 2
+            file_path = file_path.with_suffix(".py")
+
+        with file_path.open(encoding="utf-8") as f:
+            script = decode(f.read())
 
         script = script.replace(
             "from ._typing import TYPE_CHECKING, cast",

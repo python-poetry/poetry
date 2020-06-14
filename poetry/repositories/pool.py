@@ -109,6 +109,9 @@ class Pool(BaseRepository):
     def package(
         self, name, version, extras=None, repository=None
     ):  # type: (str, str, List[str], str) -> "Package"
+        if repository is not None:
+            repository = repository.lower()
+
         if (
             repository is not None
             and repository not in self._lookup
@@ -143,6 +146,9 @@ class Pool(BaseRepository):
         allow_prereleases=False,
         repository=None,
     ):
+        if repository is not None:
+            repository = repository.lower()
+
         if (
             repository is not None
             and repository not in self._lookup

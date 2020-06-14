@@ -1,10 +1,14 @@
 import os
+import re
 
 import pytest
 
 from cleo import ApplicationTester
 
 from poetry.console import Application as BaseApplication
+from poetry.core.masonry.utils.helpers import escape_name
+from poetry.core.masonry.utils.helpers import escape_version
+from poetry.core.packages.utils.link import Link
 from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
@@ -38,6 +42,9 @@ def setup(mocker, installer, installed, config, env):
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
+
+    # Do not run pip commands of the executor
+    mocker.patch("poetry.installation.executor.Executor.run")
 
     p = mocker.patch("poetry.installation.installer.Installer._get_installed")
     p.return_value = installed
@@ -144,10 +151,22 @@ class Repository(BaseRepository):
             raise PackageNotFound("Package [{}] not found.".format(name))
         return packages
 
+    def find_links_for_package(self, package):
+        return [
+            Link(
+                "https://foo.bar/files/{}-{}-py2.py3-none-any.whl".format(
+                    escape_name(package.name), escape_version(package.version.text)
+                )
+            )
+        ]
+
 
 @pytest.fixture
-def repo():
-    return Repository()
+def repo(http):
+    http.register_uri(
+        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
+    )
+    return Repository(name="foo")
 
 
 @pytest.fixture
@@ -188,3 +207,8 @@ def app(poetry):
 @pytest.fixture
 def app_tester(app):
     return ApplicationTester(app)
+
+
+@pytest.fixture
+def new_installer_disabled(config):
+    config.merge({"experimental": {"new-installer": False}})

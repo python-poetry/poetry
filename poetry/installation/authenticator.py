@@ -108,7 +108,7 @@ class Authenticator(object):
         self, netloc
     ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
         credentials = (None, None)
-        for repository_name in self._config.get("http-basic"):
+        for repository_name in self._config.get("http-basic", {}):
             repository_config = self._config.get(
                 "repositories.{}".format(repository_name)
             )
