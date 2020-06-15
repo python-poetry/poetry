@@ -177,17 +177,6 @@ class PartialSolution:
             if assignment.dependency.name != term.dependency.name:
                 continue
 
-            if (
-                not assignment.dependency.is_root
-                and not assignment.dependency.name == term.dependency.name
-            ):
-                if not assignment.is_positive():
-                    continue
-
-                assert not term.is_positive()
-
-                return assignment
-
             if assigned_term is None:
                 assigned_term = assignment
             else:
