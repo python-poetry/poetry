@@ -32,6 +32,7 @@ class InitCommand(Command):
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
         option("author", None, "Author name of the package.", flag=False),
+        option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
             None,
@@ -126,17 +127,19 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question.set_validator(self._validate_license)
         license = self.ask(question)
 
-        current_env = SystemEnv(Path(sys.executable))
-        default_python = "^{}".format(
-            ".".join(str(v) for v in current_env.version_info[:2])
-        )
-        question = self.create_question(
-            "Compatible Python versions [<comment>{}</comment>]: ".format(
-                default_python
-            ),
-            default=default_python,
-        )
-        python = self.ask(question)
+        python = self.option("python")
+        if not python:
+            current_env = SystemEnv(Path(sys.executable))
+            default_python = "^{}".format(
+                ".".join(str(v) for v in current_env.version_info[:2])
+            )
+            question = self.create_question(
+                "Compatible Python versions [<comment>{}</comment>]: ".format(
+                    default_python
+                ),
+                default=default_python,
+            )
+            python = self.ask(question)
 
         self.line("")
 
