@@ -601,6 +601,41 @@ class EnvManager(object):
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
 
+            try:
+                pyenv_versions = decode(
+                    subprocess.check_output(
+                        list_to_shell_command(
+                            [
+                                "pyenv",
+                                "versions",
+                                "--bare",
+                            ]
+                        ),
+                        stderr=subprocess.STDOUT,
+                        shell=True,
+                    ).strip()
+                )
+            except CalledProcessError:
+                pyenv_versions = ""
+            versions = [Version.parse(ver) for ver in pyenv_versions.splitlines()]
+            best_version = max(filter(supported_python.allows, versions), default=None)
+            if best_version:
+                pyenv_root = decode(
+                    subprocess.check_output(
+                        list_to_shell_command(
+                            [
+                                "pyenv",
+                                "root",
+                            ]
+                        ),
+                        stderr=subprocess.STDOUT,
+                        shell=True,
+                    ).strip()
+                )
+                executable = "{}/versions/{}/bin/python".format(pyenv_root, best_version.text)
+                python_minor = "{}.{}".format(best_version.major, best_version.minor)
+                io.write_line("Using <c1>{}</c1> ({})".format(executable, best_version.text))
+
             if not executable:
                 raise NoCompatiblePythonVersionFound(
                     self._poetry.package.python_versions
