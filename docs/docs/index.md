@@ -28,7 +28,7 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 !!! note
 
     You only need to install Poetry once. It will automatically pick up the current
-    Python version and use it to [create virtualenvs](/docs/managing-environments.md) accordingly.
+    Python version and use it to [create virtualenvs](/docs/managing-environments) accordingly.
 
 The installer installs the `poetry` tool to Poetry's `bin` directory.
 On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
