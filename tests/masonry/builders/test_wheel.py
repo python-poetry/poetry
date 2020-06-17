@@ -192,3 +192,20 @@ def test_wheel_package_pep_561_stub_only_includes_typed_marker():
 
     with zipfile.ZipFile(str(whl)) as z:
         assert "pkg-stubs/py.typed" in z.namelist()
+
+
+def test_wheel_includes_licenses_in_correct_paths():
+    root = fixtures_dir / "licenses_and_copying"
+    WheelBuilder.make(Factory().create_poetry(root), NullEnv(), NullIO())
+
+    whl = root / "dist" / "my_package-1.2.3-py3-none-any.whl"
+
+    assert whl.exists()
+    with zipfile.ZipFile(str(whl)) as z:
+        assert "my_package-1.2.3.dist-info/COPYING" in z.namelist()
+        assert "my_package-1.2.3.dist-info/COPYING.txt" in z.namelist()
+        assert "my_package-1.2.3.dist-info/LICENSE" in z.namelist()
+        assert "my_package-1.2.3.dist-info/LICENSE.md" in z.namelist()
+        assert "my_package-1.2.3.dist-info/LICENSES/CUSTOM-LICENSE" in z.namelist()
+        assert "my_package-1.2.3.dist-info/LICENSES/BSD-3.md" in z.namelist()
+        assert "my_package-1.2.3.dist-info/LICENSES/MIT.txt" in z.namelist()
