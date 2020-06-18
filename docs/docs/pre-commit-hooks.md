@@ -9,8 +9,8 @@ Below you can see the available `pre-commit` hooks you can use.
 
 !!!note
 
-    If you specify the `args:` section for a hook in your pre-commit config 
-    the default `args:` are overwritten. So if you want to add arguments 
+    If you specify the `args:` section for a hook in your pre-commit config
+    the default `args:` are overwritten. So if you want to add arguments
     you need to specify the default ones in your config also.
 
 
