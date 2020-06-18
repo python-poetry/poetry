@@ -33,8 +33,11 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 The installer installs the `poetry` tool to Poetry's `bin` directory.
 On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
 
-This directory will be in your `$PATH` environment variable,
-which means you can run them from the shell without further configuration.
+If using bash this directory will be in your `$PATH` environment variable,
+which means you can run them from the shell without further configuration. 
+Otherwise you can add poetry to your path by adding `export PATH="$HOME/.poetry/bin:$PATH"` 
+in your shells config file.
+
 Open a new shell and type the following:
 
 ```bash
