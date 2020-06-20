@@ -389,6 +389,7 @@ class LegacyRepository(PyPiRepository):
                 )
             )
         urls = defaultdict(list)
+        url_requires_python_dict = {}
         files = []
         for link in links:
             if link.is_wheel:
@@ -398,6 +399,7 @@ class LegacyRepository(PyPiRepository):
             ):
                 urls["sdist"].append(link.url)
 
+            url_requires_python_dict[link.url] = link.requires_python
             h = link.hash
             if h:
                 h = link.hash_name + ":" + link.hash
@@ -405,7 +407,7 @@ class LegacyRepository(PyPiRepository):
 
         data["files"] = files
 
-        info = self._get_info_from_urls(urls)
+        info = self._get_info_from_urls(urls, url_requires_python_dict)
 
         data["summary"] = info["summary"]
         data["requires_dist"] = info["requires_dist"]

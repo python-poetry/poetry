@@ -331,6 +331,7 @@ class PyPiRepository(RemoteRepository):
             # So, we need to make sure there is actually no
             # dependencies by introspecting packages
             urls = defaultdict(list)
+            url_requires_python_dict = {}
             for url in json_data["urls"]:
                 # Only get sdist and wheels if they exist
                 dist_type = url["packagetype"]
@@ -338,11 +339,12 @@ class PyPiRepository(RemoteRepository):
                     continue
 
                 urls[dist_type].append(url["url"])
+                url_requires_python_dict[url["url"]] = url["requires_python"]
 
             if not urls:
                 return data
 
-            info = self._get_info_from_urls(urls)
+            info = self._get_info_from_urls(urls, url_requires_python_dict)
 
             data["requires_dist"] = info["requires_dist"]
 
@@ -368,8 +370,15 @@ class PyPiRepository(RemoteRepository):
         return json_data
 
     def _get_info_from_urls(
-        self, urls
-    ):  # type: (Dict[str, List[str]]) -> Dict[str, Union[str, List, None]]
+        self, urls, url_requires_python_dict
+    ):  # type: (Dict[str, List[str]], Dict[str, Union[str, None]]) -> Dict[str, Union[str, List, None]]
+        # If requires_python exists in anchor of link, apply it to the release info (PEP503)
+        def _get_info_with_url_requires_python(url, get_info_handler):
+            info = get_info_handler(url)
+            if url_requires_python_dict[url]:
+                info["requires_python"] = url_requires_python_dict[url]
+            return info
+
         # Checking wheels first as they are more likely to hold
         # the necessary information
         if "bdist_wheel" in urls:
@@ -402,13 +411,19 @@ class PyPiRepository(RemoteRepository):
                     platform_specific_wheels.append(wheel)
 
             if universal_wheel is not None:
-                return self._get_info_from_wheel(universal_wheel)
+                return _get_info_with_url_requires_python(
+                    universal_wheel, self._get_info_from_wheel
+                )
 
             info = {}
             if universal_python2_wheel and universal_python3_wheel:
-                info = self._get_info_from_wheel(universal_python2_wheel)
+                info = _get_info_with_url_requires_python(
+                    universal_python2_wheel, self._get_info_from_wheel
+                )
 
-                py3_info = self._get_info_from_wheel(universal_python3_wheel)
+                py3_info = _get_info_with_url_requires_python(
+                    universal_python3_wheel, self._get_info_from_wheel
+                )
                 if py3_info["requires_dist"]:
                     if not info["requires_dist"]:
                         info["requires_dist"] = py3_info["requires_dist"]
@@ -450,16 +465,24 @@ class PyPiRepository(RemoteRepository):
 
             # Prefer non platform specific wheels
             if universal_python3_wheel:
-                return self._get_info_from_wheel(universal_python3_wheel)
+                return _get_info_with_url_requires_python(
+                    universal_python3_wheel, self._get_info_from_wheel
+                )
 
             if universal_python2_wheel:
-                return self._get_info_from_wheel(universal_python2_wheel)
+                return _get_info_with_url_requires_python(
+                    universal_python2_wheel, self._get_info_from_wheel
+                )
 
             if platform_specific_wheels and "sdist" not in urls:
                 # Pick the first wheel available and hope for the best
-                return self._get_info_from_wheel(platform_specific_wheels[0])
+                return _get_info_with_url_requires_python(
+                    platform_specific_wheels[0], self._get_info_from_wheel
+                )
 
-        return self._get_info_from_sdist(urls["sdist"][0])
+        return _get_info_with_url_requires_python(
+            urls["sdist"][0], self._get_info_from_sdist
+        )
 
     def _get_info_from_wheel(
         self, url
