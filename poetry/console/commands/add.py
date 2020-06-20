@@ -40,11 +40,18 @@ class AddCommand(EnvCommand, InitCommand):
             "Output the operations but do not execute anything (implicitly enables --verbose).",
         ),
     ]
-
-    help = """The add command adds required packages to your <comment>pyproject.toml</> and installs them.
-
-If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.
-"""
+    help = (
+        "The add command adds required packages to your <comment>pyproject.toml</> and installs them.\n\n"
+        "If you do not specify a version constraint, poetry will choose a suitable one based on the available package versions.\n\n"
+        "You can specify a package in the following forms:\n"
+        "  - A single name (<b>requests</b>)\n"
+        "  - A name and a constraint (<b>requests@^2.23.0</b>)\n"
+        "  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)\n"
+        "  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n"
+        "  - A file path (<b>../my-package/my-package.whl</b>)\n"
+        "  - A directory (<b>../my-package/</b>)\n"
+        "  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
+    )
 
     loggers = ["poetry.repositories.pypi_repository"]
 
