@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
     from clikit.api.io import IO
     from requests import Request  # noqa
+    from requests import Response  # noqa
     from requests import Session  # noqa
 
     from poetry.config.config import Config
@@ -33,7 +34,7 @@ class Authenticator(object):
 
         return self._session
 
-    def request(self, method, url, **kwargs):  # type: (str, str, Any) -> Request
+    def request(self, method, url, **kwargs):  # type: (str, str, Any) -> Response
         from requests import Request  # noqa
         from requests.auth import HTTPBasicAuth
 

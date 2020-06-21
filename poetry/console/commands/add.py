@@ -150,6 +150,7 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
 
         self._installer.set_package(self.poetry.package)
         self._installer.dry_run(self.option("dry-run"))
+        self._installer.verbose(self._io.is_verbose())
         self._installer.update(True)
         if self.option("lock"):
             self._installer.lock()

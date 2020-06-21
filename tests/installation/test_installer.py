@@ -8,7 +8,6 @@ from clikit.io import NullIO
 
 from poetry.core.packages import ProjectPackage
 from poetry.installation import Installer as BaseInstaller
-from poetry.installation.authenticator import Authenticator
 from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
@@ -169,7 +168,7 @@ def installer(package, pool, locker, env, installed, config):
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, Authenticator(config, NullIO()), NullIO()),
+        executor=Executor(env, pool, config, NullIO()),
     )
     installer.use_executor(True)
 
@@ -1425,7 +1424,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, Authenticator(config, NullIO()), NullIO()),
+        executor=Executor(env, pool, config, NullIO()),
     )
     installer.use_executor()
 
@@ -1454,7 +1453,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, Authenticator(config, NullIO()), NullIO()),
+        executor=Executor(env, pool, config, NullIO()),
     )
     installer.use_executor()
 
@@ -1483,7 +1482,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, Authenticator(config, NullIO()), NullIO()),
+        executor=Executor(env, pool, config, NullIO()),
     )
     installer.use_executor()
 
@@ -1510,7 +1509,7 @@ def test_installer_required_extras_should_be_installed(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, Authenticator(config, NullIO()), NullIO()),
+        executor=Executor(env, pool, config, NullIO()),
     )
     installer.use_executor()
 
@@ -1536,7 +1535,7 @@ def test_installer_required_extras_should_be_installed(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, Authenticator(config, NullIO()), NullIO()),
+        executor=Executor(env, pool, config, NullIO()),
     )
     installer.use_executor()
 
@@ -1641,7 +1640,7 @@ def test_installer_can_install_dependencies_from_forced_source(
         pool,
         config,
         installed=installed,
-        executor=Executor(env, pool, Authenticator(config, NullIO()), NullIO()),
+        executor=Executor(env, pool, config, NullIO()),
     )
     installer.use_executor()
 
@@ -1715,7 +1714,7 @@ def test_installer_can_handle_old_lock_files(
         pool,
         config,
         installed=installed,
-        executor=Executor(MockEnv(), pool, Authenticator(config, NullIO()), NullIO(),),
+        executor=Executor(MockEnv(), pool, config, NullIO(),),
     )
     installer.use_executor()
 
@@ -1731,12 +1730,7 @@ def test_installer_can_handle_old_lock_files(
         pool,
         config,
         installed=installed,
-        executor=Executor(
-            MockEnv(version_info=(2, 7, 18)),
-            pool,
-            Authenticator(config, NullIO()),
-            NullIO(),
-        ),
+        executor=Executor(MockEnv(version_info=(2, 7, 18)), pool, config, NullIO(),),
     )
     installer.use_executor()
 
@@ -1754,10 +1748,7 @@ def test_installer_can_handle_old_lock_files(
         config,
         installed=installed,
         executor=Executor(
-            MockEnv(version_info=(2, 7, 18), platform="win32"),
-            pool,
-            Authenticator(config, NullIO()),
-            NullIO(),
+            MockEnv(version_info=(2, 7, 18), platform="win32"), pool, config, NullIO(),
         ),
     )
     installer.use_executor()

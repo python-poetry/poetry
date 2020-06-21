@@ -46,6 +46,11 @@ class ApplicationConfig(BaseApplicationConfig):
         self.add_style(Style("debug").fg("default").dark())
         self.add_style(Style("success").fg("green"))
 
+        # Dark variants
+        self.add_style(Style("c1_dark").fg("cyan").dark())
+        self.add_style(Style("c2_dark").fg("default").bold().dark())
+        self.add_style(Style("success_dark").fg("green").dark())
+
         self.add_event_listener(PRE_HANDLE, self.register_command_loggers)
         self.add_event_listener(PRE_HANDLE, self.set_env)
         self.add_event_listener(PRE_HANDLE, self.set_installer)

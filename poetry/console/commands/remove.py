@@ -66,6 +66,7 @@ list of installed packages
         )
 
         self._installer.dry_run(self.option("dry-run"))
+        self._installer.verbose(self._io.is_verbose())
         self._installer.update(True)
         self._installer.whitelist(requirements)
 

@@ -10,7 +10,9 @@ from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
 from poetry.core.packages.utils.link import Link
 from poetry.factory import Factory
+from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
+from poetry.io.null_io import NullIO
 from poetry.packages import Locker as BaseLocker
 from poetry.poetry import Poetry as BasePoetry
 from poetry.repositories import Pool
@@ -20,6 +22,42 @@ from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
 from tests.helpers import mock_clone
+
+
+class Executor(BaseExecutor):
+    def __init__(self, *args, **kwargs):
+        super(Executor, self).__init__(*args, **kwargs)
+
+        self._installs = []
+        self._updates = []
+        self._uninstalls = []
+
+    @property
+    def installations(self):
+        return self._installs
+
+    @property
+    def updates(self):
+        return self._updates
+
+    @property
+    def removals(self):
+        return self._uninstalls
+
+    def _execute_operation(self, operation):
+        super(Executor, self)._execute_operation(operation)
+
+        if not operation.skipped:
+            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
+
+    def _execute_install(self, operation):
+        pass
+
+    def _execute_update(self, operation):
+        pass
+
+    def _execute_remove(self, operation):
+        pass
 
 
 @pytest.fixture()
@@ -212,3 +250,8 @@ def app_tester(app):
 @pytest.fixture
 def new_installer_disabled(config):
     config.merge({"experimental": {"new-installer": False}})
+
+
+@pytest.fixture()
+def executor(poetry, config, env):
+    return Executor(env, poetry.pool, config, NullIO())

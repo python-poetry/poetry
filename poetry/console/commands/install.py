@@ -66,7 +66,7 @@ dependencies and not including the current project, run the command with the
         self._installer.dev_mode(not self.option("no-dev"))
         self._installer.dry_run(self.option("dry-run"))
         self._installer.remove_untracked(self.option("remove-untracked"))
-        self._installer.verbose(self.option("verbose"))
+        self._installer.verbose(self._io.is_verbose())
 
         return_code = self._installer.run()
 

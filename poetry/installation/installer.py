@@ -56,11 +56,7 @@ class Installer:
         self._extras = []
 
         if executor is None:
-            from .authenticator import Authenticator
-
-            executor = Executor(
-                self._env, self._pool, Authenticator(config, self._io), self._io
-            )
+            executor = Executor(self._env, self._pool, config, self._io)
 
         self._executor = executor
         self._use_executor = False

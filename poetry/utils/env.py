@@ -23,6 +23,8 @@ from clikit.api.io import IO
 import packaging.tags
 
 from packaging.tags import Tag
+from packaging.tags import interpreter_name
+from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
@@ -43,6 +45,36 @@ import json
 import os
 import platform
 import sys
+import sysconfig
+
+INTERPRETER_SHORT_NAMES = {
+    "python": "py",
+    "cpython": "cp",
+    "pypy": "pp",
+    "ironpython": "ip",
+    "jython": "jy",
+}
+
+
+def interpreter_version():
+    version = sysconfig.get_config_var("interpreter_version")
+    if version:
+        version = str(version)
+    else:
+        version = _version_nodot(sys.version_info[:2])
+
+    return version
+
+
+def _version_nodot(version):
+    # type: (PythonVersion) -> str
+    if any(v >= 10 for v in version):
+        sep = "_"
+    else:
+        sep = ""
+
+    return sep.join(map(str, version))
+
 
 if hasattr(sys, "implementation"):
     info = sys.implementation.version
@@ -54,7 +86,7 @@ if hasattr(sys, "implementation"):
     implementation_name = sys.implementation.name
 else:
     iver = "0"
-    implementation_name = ""
+    implementation_name = platform.python_implementation().lower()
 
 env = {
     "implementation_name": implementation_name,
@@ -69,6 +101,9 @@ env = {
     "python_version": platform.python_version()[:3],
     "sys_platform": sys.platform,
     "version_info": tuple(sys.version_info),
+    # Extra information
+    "interpreter_name": INTERPRETER_SHORT_NAMES.get(implementation_name, implementation_name),
+    "interpreter_version": interpreter_version(),
 }
 
 print(json.dumps(env))
@@ -1024,6 +1059,9 @@ class SystemEnv(Env):
             ),
             "sys_platform": sys.platform,
             "version_info": sys.version_info,
+            # Extra information
+            "interpreter_name": interpreter_name(),
+            "interpreter_version": interpreter_version(),
         }
 
     def get_pip_version(self):  # type: () -> Version
@@ -1244,6 +1282,10 @@ class MockEnv(NullEnv):
         marker_env["version_info"] = self._version_info
         marker_env["python_version"] = ".".join(str(v) for v in self._version_info[:2])
         marker_env["sys_platform"] = self._platform
+        marker_env["interpreter_name"] = self._python_implementation.lower()
+        marker_env["interpreter_version"] = "cp" + "".join(
+            str(v) for v in self._version_info[:2]
+        )
 
         return marker_env
 

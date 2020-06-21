@@ -12,7 +12,6 @@ from subprocess import CalledProcessError
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.io.null_io import NullIO
-from poetry.locations import CACHE_DIR
 from poetry.puzzle.operations.install import Install
 from poetry.puzzle.operations.operation import Operation
 from poetry.puzzle.operations.uninstall import Uninstall
@@ -22,6 +21,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import cpu_count
 from poetry.utils.helpers import safe_rmtree
 
+from .authenticator import Authenticator
 from .chef import Chef
 from .chooser import Chooser
 
@@ -35,14 +35,14 @@ def chunked(iterable, n):
 
 
 class Executor(object):
-    def __init__(self, env, pool, authenticator, io, parallel=None):
+    def __init__(self, env, pool, config, io, parallel=None):
         self._env = env
-        self._authenticator = authenticator
         self._io = io
         self._dry_run = False
         self._enabled = True
         self._verbose = False
-        self._chef = Chef(self._env)
+        self._authenticator = Authenticator(config, self._io)
+        self._chef = Chef(config, self._env)
         self._chooser = Chooser(pool, self._env)
 
         if parallel is None:
@@ -61,7 +61,6 @@ class Executor(object):
             self._max_workers = 1
 
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
-        self._cache_dir = Path(CACHE_DIR) / "artifacts"
         self._total_operations = 0
         self._executed_operations = 0
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
@@ -82,9 +81,7 @@ class Executor(object):
         return self._executed["uninstall"]
 
     def supports_fancy_output(self):  # type: () -> bool
-        return (
-            self._io.supports_ansi() and not self._io.is_debug() and not self._dry_run
-        )
+        return self._io.supports_ansi() and not self._dry_run
 
     def disable(self):
         self._enabled = False
@@ -124,7 +121,7 @@ class Executor(object):
                                 self._lock.acquire()
                                 self._sections[id(operation)] = self._io.section()
                                 self._sections[id(operation)].write_line(
-                                    "  <fg=blue;options=bold>•</> {message}".format(
+                                    "  <fg=blue;options=bold>•</> {message}: <fg=blue>Pending...</>".format(
                                         message=self.get_operation_message(operation),
                                     ),
                                 )
@@ -149,6 +146,14 @@ class Executor(object):
         if not self.supports_fancy_output():
             return
 
+        if self._io.is_debug():
+            self._lock.acquire()
+            section = self._sections[id(operation)]
+            section.write_line(line)
+            self._lock.release()
+
+            return
+
         self._lock.acquire()
         section = self._sections[id(operation)]
         section.output.clear()
@@ -163,7 +168,10 @@ class Executor(object):
             if self._verbose and (self._enabled or self._dry_run):
                 self._write(
                     operation,
-                    "  <fg=yellow;options=bold>•</> {message}: <fg=yellow>Skipped</> ({reason})".format(
+                    "  <fg=default;options=bold,dark>•</> {message}: "
+                    "<fg=default;options=bold,dark>Skipped</> "
+                    "<fg=default;options=dark>for the following reason:</> "
+                    "<fg=default;options=bold,dark>{reason}</>".format(
                         message=operation_message, reason=operation.skip_reason,
                     ),
                 )
@@ -204,29 +212,49 @@ class Executor(object):
         return self._env.run("python", "-m", "pip", *args, **kwargs)
 
     def get_operation_message(self, operation, done=False):
+        base_tag = "fg=default"
         operation_color = "c2"
+        source_operation_color = "c2"
+        package_color = "c1"
 
         if done:
             operation_color = "success"
 
+        if operation.skipped:
+            base_tag = "fg=default;options=dark"
+            operation_color += "_dark"
+            source_operation_color += "_dark"
+            package_color += "_dark"
+
         if operation.job_type == "install":
-            return "Installing <c1>{}</c1> (<{}>{}</>)".format(
+            return "<{}>Installing <{}>{}</{}> (<{}>{}</>)</>".format(
+                base_tag,
+                package_color,
                 operation.package.name,
+                package_color,
                 operation_color,
                 operation.package.full_pretty_version,
             )
 
         if operation.job_type == "uninstall":
-            return "Removing <c1>{}</c1> (<{}>{}</>)".format(
+            return "<{}>Removing <{}>{}</{}> (<{}>{}</>)</>".format(
+                base_tag,
+                package_color,
                 operation.package.name,
+                package_color,
                 operation_color,
                 operation.package.full_pretty_version,
             )
 
         if operation.job_type == "update":
-            return "Updating <c1>{}</c1> (<c2>{}</c2> -> <{}>{}</>)".format(
+            return "<{}>Updating <{}>{}</{}> (<{}>{}</{}> -> <{}>{}</>)</>".format(
+                base_tag,
+                package_color,
                 operation.initial_package.name,
+                package_color,
+                source_operation_color,
                 operation.initial_package.full_pretty_version,
+                source_operation_color,
                 operation_color,
                 operation.target_package.full_pretty_version,
             )
@@ -465,15 +493,15 @@ class Executor(object):
 
     def _download_link(self, operation, link):
         package = operation.package
-        cache_dir = self._cache_dir / package.name
-        cache_dir.mkdir(parents=True, exist_ok=True)
 
-        archive = cache_dir / link.filename
-        if not archive.exists():
+        archive = self._chef.get_cached_archive_for(link)
+        if archive is link:
+            # No cached distributions was found, so we download and prepare it
             try:
-                archive = self._download_archive(operation, link, archive)
+                archive = self._download_archive(operation, link)
             except BaseException:
-                archive.unlink(missing_ok=True)
+                cache_directory = self._chef.get_cache_directory_for_link(link)
+                cache_directory.joinpath(link.filename).unlink(missing_ok=True)
 
                 raise
 
@@ -491,23 +519,24 @@ class Executor(object):
 
         return archive
 
-    def _download_archive(
-        self, operation, link, archive
-    ):  # type: (Operation, Link, Path) -> Path
-        response = self._authenticator.request("get", link.url)
+    def _download_archive(self, operation, link):  # type: (Operation, Link) -> Path
+        response = self._authenticator.request("get", link.url, stream=True)
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)
         message = "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</>".format(
             message=operation_message,
         )
         progress = None
-        if self.supports_fancy_output() and wheel_size is not None:
-            from clikit.ui.components.progress_bar import ProgressBar
+        if self.supports_fancy_output():
+            if wheel_size is None:
+                self._write(operation, message)
+            else:
+                from clikit.ui.components.progress_bar import ProgressBar
 
-            progress = ProgressBar(
-                self._sections[id(operation)].output, max=int(wheel_size)
-            )
-            progress.set_format(message + " (<b>%percent%%</b>)")
+                progress = ProgressBar(
+                    self._sections[id(operation)].output, max=int(wheel_size)
+                )
+                progress.set_format(message + " <b>%percent%%</b>")
 
         if progress:
             self._lock.acquire()
@@ -515,6 +544,8 @@ class Executor(object):
             self._lock.release()
 
         done = 0
+        archive = self._chef.get_cache_directory_for_link(link) / link.filename
+        archive.parent.mkdir(parents=True, exist_ok=True)
         with archive.open("wb") as f:
             for chunk in response.iter_content(chunk_size=4096):
                 if not chunk:
