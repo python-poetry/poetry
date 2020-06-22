@@ -375,7 +375,7 @@ class PyPiRepository(RemoteRepository):
         # If requires_python exists in anchor of link, apply it to the release info (PEP503)
         def _get_info_with_url_requires_python(url, get_info_handler):
             info = get_info_handler(url)
-            if url_requires_python_dict[url]:
+            if url_requires_python_dict[url] and not info["requires_python"]:
                 info["requires_python"] = url_requires_python_dict[url]
             return info
 
