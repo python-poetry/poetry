@@ -445,3 +445,41 @@ pytest = "^3.6.0"
 """
 
     assert expected in tester.io.fetch_output()
+
+
+def test_python_option(app, mocker, poetry):
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__)
+
+    tester = CommandTester(command)
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+    tester.execute("--python '~2.7 || ^3.6'", inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+
+[tool.poetry.dev-dependencies]
+"""
+
+    assert expected in tester.io.fetch_output()
