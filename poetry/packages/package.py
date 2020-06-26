@@ -163,6 +163,12 @@ class Package(object):
 
         m = AUTHOR_REGEX.match(normalize("NFC", self._authors[0]))
 
+        if m is None:
+            raise ValueError(
+                "Invalid author string. Must be in the format: "
+                "John Smith <john@example.com>"
+            )
+
         name = m.group("name")
         email = m.group("email")
 
@@ -173,6 +179,12 @@ class Package(object):
             return {"name": None, "email": None}
 
         m = AUTHOR_REGEX.match(normalize("NFC", self._maintainers[0]))
+
+        if m is None:
+            raise ValueError(
+                "Invalid maintainer string. Must be in the format: "
+                "John Smith <john@example.com>"
+            )
 
         name = m.group("name")
         email = m.group("email")
