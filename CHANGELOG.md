@@ -1,5 +1,27 @@
 # Change Log
 
+## [1.1.0a2] - 2020-06-26
+
+Note that lock files generated with this release are not compatible with previous releases of Poetry.
+
+### Added
+
+- The `install` command now supports a `--remove-untracked` option to ensure only packages from the lock file are present in the environment ([#2172](https://github.com/python-poetry/poetry/pull/2172)).
+- Some errors will now be provided with possible solutions and links to the documentation ([#2396](https://github.com/python-poetry/poetry/pull/2396)).
+
+### Changed
+
+- Editable installations of Poetry projects have been improved and are now faster ([#2360](https://github.com/python-poetry/poetry/pull/2360)).
+- Improved the accuracy of the dependency resolver in case of dependencies with environment markers ([#2361](https://github.com/python-poetry/poetry/pull/2361))
+- Environment markers of dependencies are no longer stored in the lock file ([#2361](https://github.com/python-poetry/poetry/pull/2361)).
+- Improved the way connection errors are handled when publishing ([#2285](https://github.com/python-poetry/poetry/pull/2285)).
+
+### Fixed
+
+- Fixed errors when handling duplicate dependencies with environment markers ([#2342](https://github.com/python-poetry/poetry/pull/2342)).
+- Fixed the detection of installed packages ([#2360](https://github.com/python-poetry/poetry/pull/2360)).
+
+
 ## [1.1.0a1] - 2020-03-27
 
 This release **must** be downloaded via the `get-poetry.py` script and not via the `self update` command.
@@ -882,7 +904,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0a1...develop
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0a2...develop
+[1.1.0a2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a2
 [1.1.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a1
 [1.0.9]: https://github.com/python-poetry/poetry/releases/tag/1.0.9
 [1.0.8]: https://github.com/python-poetry/poetry/releases/tag/1.0.8
