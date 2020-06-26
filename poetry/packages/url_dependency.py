@@ -38,3 +38,9 @@ class URLDependency(Dependency):
 
     def is_url(self):  # type: () -> bool
         return True
+
+    def __str__(self):
+        return "{} ({} url)".format(self._pretty_name, self._pretty_constraint)
+
+    def __hash__(self):
+        return hash((self._name, self._url))

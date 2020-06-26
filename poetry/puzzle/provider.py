@@ -72,6 +72,7 @@ class Provider:
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
+        self._deferred_cache = {}
 
     @property
     def pool(self):  # type: () -> Pool
@@ -164,6 +165,9 @@ class Provider:
         Basically, we clone the repository in a temporary directory
         and get the information we need by checking out the specified reference.
         """
+        if dependency in self._deferred_cache:
+            return [self._deferred_cache[dependency]]
+
         package = self.get_package_from_vcs(
             dependency.vcs,
             dependency.source,
@@ -177,6 +181,11 @@ class Provider:
                     dep.activate()
 
                 package.requires += package.extras[extra]
+
+        dependency._constraint = package.version
+        dependency._pretty_constraint = package.version.text
+
+        self._deferred_cache[dependency] = package
 
         return [package]
 
@@ -214,7 +223,17 @@ class Provider:
         return package
 
     def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
-        package = self.get_package_from_file(dependency.full_path)
+        if dependency in self._deferred_cache:
+            dependency, _package = self._deferred_cache[dependency]
+
+            package = _package.clone()
+        else:
+            package = self.get_package_from_file(dependency.full_path)
+
+            dependency._constraint = package.version
+            dependency._pretty_constraint = package.version.text
+
+            self._deferred_cache[dependency] = (dependency, package)
 
         if dependency.name != package.name:
             # For now, the dependency's name must match the actual package's name
@@ -223,6 +242,9 @@ class Provider:
                     dependency.name, package.name
                 )
             )
+
+        if dependency.base is not None:
+            package.root_dir = dependency.base
 
         package.source_url = dependency.path.as_posix()
         package.files = [
@@ -270,15 +292,25 @@ class Provider:
     def search_for_directory(
         self, dependency
     ):  # type: (DirectoryDependency) -> List[Package]
-        package = self.get_package_from_directory(
-            dependency.full_path, name=dependency.name
-        )
+        if dependency in self._deferred_cache:
+            dependency, _package = self._deferred_cache[dependency]
+
+            package = _package.clone()
+        else:
+            package = self.get_package_from_directory(
+                dependency.full_path, name=dependency.name
+            )
+
+            dependency._constraint = package.version
+            dependency._pretty_constraint = package.version.text
+
+            self._deferred_cache[dependency] = (dependency, package)
 
         package.source_url = dependency.path.as_posix()
         package.develop = dependency.develop
 
         if dependency.base is not None:
-            package.root_dir = dependency.base.as_posix()
+            package.root_dir = dependency.base
 
         for extra in dependency.extras:
             if extra in package.extras:
@@ -434,6 +466,9 @@ class Provider:
         return package
 
     def search_for_url(self, dependency):  # type: (URLDependency) -> List[Package]
+        if dependency in self._deferred_cache:
+            return [self._deferred_cache[dependency]]
+
         package = self.get_package_from_url(dependency.url)
 
         if dependency.name != package.name:
@@ -450,6 +485,11 @@ class Provider:
                     dep.activate()
 
                 package.requires += package.extras[extra]
+
+        dependency._constraint = package.version
+        dependency._pretty_constraint = package.version.text
+
+        self._deferred_cache[dependency] = package
 
         return [package]
 
@@ -550,6 +590,17 @@ class Provider:
             requires = package.requires
         else:
             requires = package.requires
+
+        # Retrieving constraints for deferred dependencies
+        for r in requires:
+            if r.is_directory():
+                self.search_for_directory(r)
+            elif r.is_file():
+                self.search_for_file(r)
+            elif r.is_vcs():
+                self.search_for_vcs(r)
+            elif r.is_url():
+                self.search_for_url(r)
 
         dependencies = [
             r
@@ -696,15 +747,15 @@ class Provider:
             if (package.dependency.is_directory() or package.dependency.is_file()) and (
                 dep.is_directory() or dep.is_file()
             ):
-                if dep.path.as_posix().startswith(package.source_url):
-                    relative = (Path(package.source_url) / dep.path).relative_to(
-                        package.source_url
+                relative_path = Path(
+                    os.path.relpath(
+                        dep.full_path.as_posix(), package.root_dir.as_posix()
                     )
-                else:
-                    relative = Path(package.source_url) / dep.path
+                )
 
                 # TODO: Improve the way we set the correct relative path for dependencies
-                dep._path = relative
+                dep._path = relative_path
+
             clean_dependencies.append(dep)
 
         package.requires = clean_dependencies
@@ -815,7 +866,8 @@ class Provider:
 
         self._in_progress = False
 
-    def _execute_setup(self):
+    @classmethod
+    def _execute_setup(cls):
         with temporary_directory() as tmp_dir:
             EnvManager.build_venv(tmp_dir)
             venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))

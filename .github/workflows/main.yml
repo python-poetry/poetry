@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Get full python version
+      - name: Get full Python version
         id: full-python-version
         shell: bash
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
@@ -41,8 +41,7 @@ jobs:
       - name: Install poetry
         shell: bash
         run: |
-          curl -fsS -o get-poetry.py https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
-          python get-poetry.py --preview -y
+          python get-poetry.py -y
           echo "::set-env name=PATH::$HOME/.poetry/bin:$PATH"
 
       - name: Configure poetry
@@ -50,7 +49,7 @@ jobs:
         run: poetry config virtualenvs.in-project true
 
       - name: Set up cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         id: cache
         with:
           path: .venv

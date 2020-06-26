@@ -33,8 +33,8 @@ def dependency_from_pep_508(name):
     name = parts[0].strip()
     if len(parts) > 1:
         rest = parts[1]
-        if ";" in rest:
-            name += ";" + rest.split(";", 1)[1]
+        if " ;" in rest:
+            name += " ;" + rest.split(" ;", 1)[1]
 
     req = Requirement(name)
 

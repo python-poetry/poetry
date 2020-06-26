@@ -197,8 +197,7 @@ POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
-BIN = """#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+BIN = """# -*- coding: utf-8 -*-
 import glob
 import sys
 import os
@@ -217,7 +216,7 @@ if __name__ == "__main__":
     main()
 """
 
-BAT = u('@echo off\r\npython "{poetry_bin}" %*\r\n')
+BAT = u('@echo off\r\n{python_executable} "{poetry_bin}" %*\r\n')
 
 
 PRE_MESSAGE = """# Welcome to {poetry}!
@@ -589,23 +588,63 @@ class Installer:
             finally:
                 gz.close()
 
+    def _which_python(self):
+        """Decides which python executable we'll embed in the launcher script."""
+        allowed_executables = ["python", "python3"]
+        if WINDOWS:
+            allowed_executables += ["py.exe -3", "py.exe -2"]
+
+        # \d in regex ensures we can convert to int later
+        version_matcher = re.compile(r"^Python (?P<major>\d+)\.(?P<minor>\d+)\..+$")
+        fallback = None
+        for executable in allowed_executables:
+            try:
+                raw_version = subprocess.check_output(
+                    executable + " --version", stderr=subprocess.STDOUT, shell=True
+                ).decode("utf-8")
+            except subprocess.CalledProcessError:
+                continue
+
+            match = version_matcher.match(raw_version.strip())
+            if match:
+                return executable
+
+            if fallback is None:
+                # keep this one as the fallback; it was the first valid executable we found.
+                fallback = executable
+
+        if fallback is None:
+            raise RuntimeError(
+                "No python executable found in shell environment. Tried: "
+                + str(allowed_executables)
+            )
+
+        return fallback
+
     def make_bin(self):
         if not os.path.exists(POETRY_BIN):
             os.mkdir(POETRY_BIN, 0o755)
+
+        python_executable = self._which_python()
 
         if WINDOWS:
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
                 f.write(
                     u(
                         BAT.format(
+                            python_executable=python_executable,
                             poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
                                 os.environ["USERPROFILE"], "%USERPROFILE%"
-                            )
+                            ),
                         )
                     )
                 )
 
         with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
+            if WINDOWS:
+                python_executable = "python"
+
+            f.write(u("#!/usr/bin/env {}\n".format(python_executable)))
             f.write(u(BIN))
 
         if not WINDOWS:

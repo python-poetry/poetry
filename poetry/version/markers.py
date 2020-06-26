@@ -270,7 +270,11 @@ class EmptyMarker(BaseMarker):
 class SingleMarker(BaseMarker):
 
     _CONSTRAINT_RE = re.compile(r"(?i)^(~=|!=|>=?|<=?|==?|in|not in)?\s*(.+)$")
-    _VERSION_LIKE_MARKER_NAME = {"python_version", "platform_release"}
+    _VERSION_LIKE_MARKER_NAME = {
+        "python_version",
+        "python_full_version",
+        "platform_release",
+    }
 
     def __init__(self, name, constraint):
         from poetry.packages.constraints import (

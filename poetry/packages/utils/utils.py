@@ -22,12 +22,10 @@ try:
 except ImportError:
     import urlparse
 
-
 try:
     import urllib.request as urllib2
 except ImportError:
     import urllib2
-
 
 BZ2_EXTENSIONS = (".tar.bz2", ".tbz")
 XZ_EXTENSIONS = (".tar.xz", ".txz", ".tlz", ".tar.lz", ".tar.lzma")
@@ -77,7 +75,8 @@ def is_url(name):
         "hg",
         "bzr",
         "sftp",
-        "svn" "ssh",
+        "svn",
+        "ssh",
     ]
 
 

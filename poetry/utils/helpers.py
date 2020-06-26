@@ -34,19 +34,18 @@ def normalize_version(version):  # type: (str) -> str
     return str(Version(version))
 
 
+def _del_ro(action, name, exc):
+    os.chmod(name, stat.S_IWRITE)
+    os.remove(name)
+
+
 @contextmanager
 def temporary_directory(*args, **kwargs):
-    try:
-        from tempfile import TemporaryDirectory
+    name = tempfile.mkdtemp(*args, **kwargs)
 
-        with TemporaryDirectory(*args, **kwargs) as name:
-            yield name
-    except ImportError:
-        name = tempfile.mkdtemp(*args, **kwargs)
+    yield name
 
-        yield name
-
-        shutil.rmtree(name)
+    shutil.rmtree(name, onerror=_del_ro)
 
 
 def parse_requires(requires):  # type: (str) -> List[str]
@@ -83,7 +82,7 @@ def parse_requires(requires):  # type: (str) -> List[str]
             continue
 
         if current_marker:
-            line = "{}; {}".format(line, current_marker)
+            line = "{} ; {}".format(line, current_marker)
 
         requires_dist.append(line)
 
