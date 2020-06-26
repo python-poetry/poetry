@@ -9,6 +9,10 @@ from clikit.io import ConsoleIO
 
 from poetry.core.packages import Package
 from poetry.core.packages.project_package import ProjectPackage
+from poetry.installation.operations import Install
+from poetry.installation.operations import Uninstall
+from poetry.installation.operations import Update
+from poetry.installation.operations.operation import Operation
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
@@ -18,10 +22,6 @@ from poetry.utils.env import Env
 
 from .exceptions import OverrideNeeded
 from .exceptions import SolverProblemError
-from .operations import Install
-from .operations import Uninstall
-from .operations import Update
-from .operations.operation import Operation
 from .provider import Provider
 
 

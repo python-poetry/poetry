@@ -12,10 +12,6 @@ from subprocess import CalledProcessError
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.io.null_io import NullIO
-from poetry.puzzle.operations.install import Install
-from poetry.puzzle.operations.operation import Operation
-from poetry.puzzle.operations.uninstall import Uninstall
-from poetry.puzzle.operations.update import Update
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import cpu_count
@@ -24,6 +20,10 @@ from poetry.utils.helpers import safe_rmtree
 from .authenticator import Authenticator
 from .chef import Chef
 from .chooser import Chooser
+from .operations.install import Install
+from .operations.operation import Operation
+from .operations.uninstall import Uninstall
+from .operations.update import Update
 
 
 def take(n, iterable):
@@ -128,11 +128,22 @@ class Executor(object):
                                 self._lock.release()
                     else:
                         if self._should_write_operation(operation):
-                            self._io.write_line(
-                                "  <fg=blue;options=bold>•</> {message}".format(
-                                    message=self.get_operation_message(operation),
-                                ),
-                            )
+                            if not operation.skipped:
+                                self._io.write_line(
+                                    "  <fg=blue;options=bold>•</> {message}".format(
+                                        message=self.get_operation_message(operation),
+                                    ),
+                                )
+                            else:
+                                self._io.write_line(
+                                    "  <fg=default;options=bold,dark>•</> {message}: "
+                                    "<fg=default;options=bold,dark>Skipped</> "
+                                    "<fg=default;options=dark>for the following reason:</> "
+                                    "<fg=default;options=bold,dark>{reason}</>".format(
+                                        message=self.get_operation_message(operation),
+                                        reason=operation.skip_reason,
+                                    )
+                                )
 
                 for operation in chunk:
                     tasks.append(
@@ -143,7 +154,9 @@ class Executor(object):
                 [t.result() for t in tasks]
 
     def _write(self, operation, line):
-        if not self.supports_fancy_output():
+        if not self.supports_fancy_output() or not self._should_write_operation(
+            operation
+        ):
             return
 
         if self._io.is_debug():
@@ -165,7 +178,7 @@ class Executor(object):
 
         operation_message = self.get_operation_message(operation)
         if operation.skipped:
-            if self._verbose and (self._enabled or self._dry_run):
+            if self.supports_fancy_output():
                 self._write(
                     operation,
                     "  <fg=default;options=bold,dark>•</> {message}: "
@@ -494,7 +507,7 @@ class Executor(object):
     def _download_link(self, operation, link):
         package = operation.package
 
-        archive = self._chef.get_cached_archive_for(link)
+        archive = self._chef.get_cached_archive_for_link(link)
         if archive is link:
             # No cached distributions was found, so we download and prepare it
             try:

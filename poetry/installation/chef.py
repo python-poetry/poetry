@@ -41,12 +41,12 @@ class Chef:
     def is_wheel(self, archive):  # type: (Path) -> bool
         return archive.suffix == ".whl"
 
-    def get_cached_archive_for(self, link):  # type: (Link) -> Optional[Link]
+    def get_cached_archive_for_link(self, link):  # type: (Link) -> Optional[Link]
         # If the archive is already a wheel, there is no need to cache it.
         if link.is_wheel:
             pass
 
-        archives = self.get_cached_archives_for(link)
+        archives = self.get_cached_archives_for_link(link)
 
         if not archives:
             return link
@@ -74,7 +74,7 @@ class Chef:
 
         return min(candidates)[1]
 
-    def get_cached_archives_for(self, link):  # type: (Link) -> List[Link]
+    def get_cached_archives_for_link(self, link):  # type: (Link) -> List[Link]
         cache_dir = self.get_cache_directory_for_link(link)
 
         archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
