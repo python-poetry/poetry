@@ -24,7 +24,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
 
-poetry-core = "^1.0.0a6"
+poetry-core = "^1.0.0a8"
 cleo = "^0.8.1"
 clikit = "^0.6.2"
 crashtest = { version = "^0.3.0", python = "^3.6" }
@@ -70,7 +70,7 @@ pygments = "^2.2"
 pytest-mock = "^1.9"
 pygments-github-lexers = "^0.0.5"
 black = { version = "^19.10b0", python = "^3.6" }
-pre-commit = "^1.10"
+pre-commit = { version = "^2.5.1", python = "^3.6.1" }
 tox = "^3.0"
 pytest-sugar = "^0.9.2"
 httpretty = "^0.9.6"
