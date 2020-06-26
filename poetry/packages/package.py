@@ -163,11 +163,10 @@ class Package(object):
         m = AUTHOR_REGEX.match(self._authors[0])
 
         if m is None:
-            logger.warning(
+            raise ValueError(
                 "Invalid author string. Must be in the format: "
                 "John Smith <john@example.com>"
             )
-            return {"name": None, "email": None}
 
         name = m.group("name")
         email = m.group("email")
@@ -181,11 +180,10 @@ class Package(object):
         m = AUTHOR_REGEX.match(self._maintainers[0])
 
         if m is None:
-            logger.warning(
+            raise ValueError(
                 "Invalid maintainer string. Must be in the format: "
                 "John Smith <john@example.com>"
             )
-            return {"name": None, "email": None}
 
         name = m.group("name")
         email = m.group("email")

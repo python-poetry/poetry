@@ -17,9 +17,18 @@ def test_package_authors():
     assert package.author_name == "John Doe"
     assert package.author_email is None
 
+
+def test_package_authors_invalid():
+    package = Package("foo", "0.1.0")
+
     package.authors.insert(0, "<John Doe")
-    assert package.author_name is None
-    assert package.author_email is None
+    with pytest.raises(ValueError) as e:
+        package.author_name
+
+    assert (
+        str(e.value)
+        == "Invalid author string. Must be in the format: John Smith <john@example.com>"
+    )
 
 
 @pytest.mark.parametrize("category", ["main", "dev"])
