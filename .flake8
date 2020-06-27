@@ -1,10 +1,8 @@
 [flake8]
 max-line-length = 88
-ignore = E501, E203, W503
+extend-ignore = E501, E203
 per-file-ignores = __init__.py:F401
-exclude =
-    .git
-    __pycache__
+extend-exclude =
     setup.py
     build
     dist
