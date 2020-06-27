@@ -1,11 +1,11 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: stable
+    rev: 19.10b0
     hooks:
       - id: black
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.8
+    rev: 3.8.3
     hooks:
       - id: flake8
 
@@ -17,7 +17,7 @@ repos:
         exclude: ^.*/?setup\.py$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v3.1.0
     hooks:
       - id: trailing-whitespace
         exclude: ^tests/.*/fixtures/.*
