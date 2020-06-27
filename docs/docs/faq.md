@@ -54,10 +54,9 @@ isolated_build = true
 envlist = py27, py36
 
 [testenv]
-whitelist_externals = poetry
 commands =
-    poetry install -v
-    poetry run pytest tests/
+    {toxworkdir}/.package/bin/poetry install -v
+    {toxworkdir}/.package/bin/poetry run pytest tests/
 ```
 
 ## I don't want Poetry to manage my virtual environments. Can I disable it?
