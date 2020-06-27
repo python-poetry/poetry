@@ -5,6 +5,7 @@ import tempfile
 
 from collections import defaultdict
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 from typing import Set
 from typing import Union
 
@@ -19,6 +20,12 @@ from poetry.vcs import get_vcs
 from ..metadata import Metadata
 from ..utils.module import Module
 from ..utils.package_include import PackageInclude
+
+
+if TYPE_CHECKING:
+    from clikit.api.io import IO
+    from poetry.poetry import Poetry
+    from poetry.utils.env import Env
 
 
 AUTHOR_REGEX = re.compile(r"(?u)^(?P<name>[- .,\w\d'’\"()]+) <(?P<email>.+?)>$")
@@ -38,7 +45,7 @@ class Builder(object):
 
     def __init__(
         self, poetry, env, io, ignore_packages_formats=False
-    ):  # type: ("Poetry", "Env", "IO", bool) -> None
+    ):  # type: (Poetry, Env, IO, bool) -> None
         self._poetry = poetry
         self._env = env
         self._io = io

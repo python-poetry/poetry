@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -5,6 +6,10 @@ from typing import Optional
 from .base_repository import BaseRepository
 from .exceptions import PackageNotFound
 from .repository import Repository
+
+
+if TYPE_CHECKING:
+    from poetry.packages import Package
 
 
 class Pool(BaseRepository):

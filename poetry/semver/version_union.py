@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
 from typing import List
 
 from .empty_constraint import EmptyConstraint
 from .version_constraint import VersionConstraint
+
+
+if TYPE_CHECKING:
+    from .version import Version
 
 
 class VersionUnion(VersionConstraint):
@@ -74,7 +79,7 @@ class VersionUnion(VersionConstraint):
     def is_any(self):
         return False
 
-    def allows(self, version):  # type: ("Version") -> bool
+    def allows(self, version):  # type: (Version) -> bool
         return any([constraint.allows(version) for constraint in self._ranges])
 
     def allows_all(self, other):  # type: (VersionConstraint) -> bool

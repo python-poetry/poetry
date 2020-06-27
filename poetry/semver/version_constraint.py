@@ -1,3 +1,10 @@
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from .version import Version
+
+
 class VersionConstraint:
     def is_empty(self):  # type: () -> bool
         raise NotImplementedError()
@@ -5,7 +12,7 @@ class VersionConstraint:
     def is_any(self):  # type: () -> bool
         raise NotImplementedError()
 
-    def allows(self, version):  # type: ("Version") -> bool
+    def allows(self, version):  # type: (Version) -> bool
         raise NotImplementedError()
 
     def allows_all(self, other):  # type: (VersionConstraint) -> bool

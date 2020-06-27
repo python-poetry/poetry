@@ -128,7 +128,7 @@ class ParsedUrl:
         )
 
     def format(self):
-        return "{}".format(self.url, "#{}".format(self.rev) if self.rev else "",)
+        return "{}".format(self.url)
 
     def __str__(self):  # type: () -> str
         return self.format()
