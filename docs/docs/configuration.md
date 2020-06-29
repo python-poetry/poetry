@@ -34,6 +34,7 @@ which will give you something similar to this:
 cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
 virtualenvs.in-project = false
+virtualenvs.in-project-dir = ".venv"
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 ```
 
@@ -111,6 +112,11 @@ Defaults to `true`.
 
 Create the virtualenv inside the project's root directory.
 Defaults to `false`.
+
+### `virtualenvs.in-project-dir`: string
+
+When `virtualenvs.in-project` is set to `true`, specify where the virtualenv locates relative to the project's root directory.
+Defaults to `.venv`.
 
 ### `virtualenvs.path`: string
 

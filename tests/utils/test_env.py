@@ -10,7 +10,7 @@ from clikit.io import NullIO
 from poetry.core.semver import Version
 from poetry.factory import Factory
 from poetry.utils._compat import Path
-from poetry.utils.env import EnvCommandError
+from poetry.utils.env import EnvError, EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import SystemEnv
@@ -70,15 +70,28 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, manager
     assert venv.run("python", "-V", shell=True).startswith("Python")
 
 
-def test_env_get_in_project_venv(manager, poetry):
+@pytest.mark.parametrize(
+    "_expected",
+    [
+        lambda manager, poetry, config: poetry.file.parent / ".venv",
+        lambda manager, poetry, config: (
+            config.merge(
+                {"virtualenvs": {"in-project-dir": "explicitly-specified-venv"}}
+            ),
+            poetry.file.parent / "explicitly-specified-venv",
+        )[-1],
+    ],
+)
+def test_env_get_in_project_venv(manager, poetry, config, _expected):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    (poetry.file.parent / ".venv").mkdir()
+    expected = _expected(manager, poetry, config)
+    expected.mkdir()
 
     venv = manager.get()
 
-    assert venv.path == poetry.file.parent / ".venv"
+    assert venv.path == expected
 
     shutil.rmtree(str(venv.path))
 
@@ -89,6 +102,40 @@ def build_venv(path, executable=None):
 
 def remove_venv(path):
     shutil.rmtree(path)
+
+
+def test_env_get_in_project_venv_nonrelative(manager, poetry, config):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    config.merge(
+        {
+            "virtualenvs": {
+                "in-project": True,
+                "in-project-dir": str(poetry.file.parent.resolve()),
+            }
+        }
+    )
+
+    with pytest.raises(EnvError):
+        manager.get()
+
+
+def test_env_get_in_project_venv_outside_tree(manager, poetry, config):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    config.merge(
+        {
+            "virtualenvs": {
+                "in-project": True,
+                "in-project-dir": str(poetry.file.parent / ".."),
+            }
+        }
+    )
+
+    with pytest.raises(EnvError):
+        manager.get()
 
 
 def check_output_wrapper(version=Version.parse("3.7.1")):

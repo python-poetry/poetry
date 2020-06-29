@@ -179,6 +179,23 @@ class EnvManager(object):
     def __init__(self, poetry):  # type: (Poetry) -> None
         self._poetry = poetry
 
+    def get_local_venv_dir(self, relative_from):  # type: (Path) -> Path
+        """
+        resolves in-project virtualenv directory and return it
+        """
+        venv_dir = self._poetry.config.get("virtualenvs.in-project-dir", ".venv")
+        venv_dir_path = Path(venv_dir)
+        if venv_dir_path.is_absolute():
+            raise EnvError(
+                "virtualenvs.in-project-directory must be a relative path to the project root"
+            )
+        venv = (relative_from / venv_dir_path).resolve()
+        if ".." in venv.relative_to(relative_from.resolve()).parts:
+            raise EnvError(
+                "virtualenvs.in-project-directory points to a directory outside the project tree"
+            )
+        return venv
+
     def activate(self, python, io):  # type: (str, IO) -> Env
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
@@ -225,7 +242,7 @@ class EnvManager(object):
         # create or recreate it if needed
         if is_root_venv:
             create = False
-            venv = self._poetry.file.parent / ".venv"
+            venv = self.get_local_venv_dir(self._poetry.file.parent)
             if venv.exists():
                 # We need to check if the patch version is correct
                 _venv = VirtualEnv(venv)
@@ -333,9 +350,9 @@ class EnvManager(object):
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
-            if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
-                venv = cwd / ".venv"
-
+            venv = self.get_local_venv_dir(cwd)
+            if venv.exists() and venv.is_dir():
+                print("*** OK ***", venv)
                 return VirtualEnv(venv)
 
             create_venv = self._poetry.config.get("virtualenvs.create", True)
@@ -384,7 +401,7 @@ class EnvManager(object):
             for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
         ]
 
-        venv = self._poetry.file.parent / ".venv"
+        venv = self.get_local_venv_dir(self._poetry.file.parent)
         if (
             self._poetry.config.get("virtualenvs.in-project")
             and venv.exists()
@@ -507,7 +524,7 @@ class EnvManager(object):
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if root_venv:
-            venv_path = cwd / ".venv"
+            venv_path = self.get_local_venv_dir(cwd)
         elif venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
         else:

@@ -35,6 +35,7 @@ class Config(object):
         "virtualenvs": {
             "create": True,
             "in-project": False,
+            "in-project-dir": ".venv",
             "path": os.path.join("{cache-dir}", "virtualenvs"),
         },
     }
@@ -133,14 +134,14 @@ class Config(object):
         if name in {"virtualenvs.create", "virtualenvs.in-project"}:
             return boolean_validator
 
-        if name == "virtualenvs.path":
+        if name in {"virtualenvs.path", "virtualenvs.in-project-dir"}:
             return str
 
     def _get_normalizer(self, name):  # type: (str) -> Callable
         if name in {"virtualenvs.create", "virtualenvs.in-project"}:
             return boolean_normalizer
 
-        if name == "virtualenvs.path":
+        if name in {"virtualenvs.path", "virtualenvs.in-project-dir"}:
             return lambda val: str(Path(val))
 
         return lambda val: val
