@@ -29,7 +29,7 @@ class InstalledRepository(Repository):
                 # Empty dist-info folder. Skip processing.
                 if name is None and path.suffix == ".dist-info":
                     continue
-                
+
                 package = Package(name, version, version)
                 package.description = distribution.metadata.get("summary", "")
 
