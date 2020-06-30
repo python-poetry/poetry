@@ -1,6 +1,6 @@
 from poetry import _CURRENT_VENDOR
 from poetry.packages import Package
-from poetry.utils._compat import Path
+from poetry.utils._compat import Pat
 from poetry.utils._compat import metadata
 from poetry.utils.env import Env
 
@@ -25,6 +25,11 @@ class InstalledRepository(Repository):
                 name = distribution.metadata["name"]
                 path = Path(str(distribution._path))
                 version = distribution.metadata["version"]
+
+                # Empty dist-info folder. Skip processing.
+                if name is None and path.suffix == ".dist-info":
+                    continue
+                
                 package = Package(name, version, version)
                 package.description = distribution.metadata.get("summary", "")
 
