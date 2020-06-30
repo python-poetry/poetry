@@ -12,6 +12,7 @@ SRC = ENV_DIR / "src"
 VENDOR_DIR = ENV_DIR / "vendor" / "py3.7"
 INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PACKAGES / "cleo-0.7.6.dist-info"),
+    metadata.PathDistribution(SITE_PACKAGES / "empty.dist-info"),
     metadata.PathDistribution(SRC / "pendulum" / "pendulum.egg-info"),
     metadata.PathDistribution(
         zipp.Path(str(SITE_PACKAGES / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
@@ -47,6 +48,7 @@ def test_load(mocker):
     )
     repository = InstalledRepository.load(MockEnv(path=ENV_DIR))
 
+    # Empty dist-info remains should be skipped.
     assert len(repository.packages) == 3
 
     cleo = repository.packages[0]
