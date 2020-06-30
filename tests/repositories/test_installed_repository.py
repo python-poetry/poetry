@@ -1,8 +1,12 @@
+import pytest
+
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils._compat import PY36
 from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
 from poetry.utils._compat import zipp
 from poetry.utils.env import MockEnv as BaseMockEnv
+from pytest_mock.plugin import MockFixture
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -28,7 +32,13 @@ class MockEnv(BaseMockEnv):
         return SITE_PACKAGES
 
 
-def test_load(mocker):
+@pytest.fixture
+def env():  # type: () -> MockEnv
+    return MockEnv(path=ENV_DIR)
+
+
+@pytest.fixture
+def repository(mocker, env):  # type: (MockFixture, MockEnv) -> InstalledRepository
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,
@@ -45,10 +55,19 @@ def test_load(mocker):
         ],
     )
     mocker.patch("poetry.repositories.installed_repository._VENDORS", str(VENDOR_DIR))
-    repository = InstalledRepository.load(MockEnv(path=ENV_DIR))
+    return InstalledRepository.load(env)
 
+
+def test_load_successful(repository):
     assert len(repository.packages) == 5
 
+
+def test_load_ensure_isolation(repository):
+    for pkg in repository.packages:
+        assert pkg.name != "attrs"
+
+
+def test_load_standard_package(repository):
     cleo = repository.packages[0]
     assert cleo.name == "cleo"
     assert cleo.version.text == "0.7.6"
@@ -61,6 +80,8 @@ def test_load(mocker):
     assert foo.name == "foo"
     assert foo.version.text == "0.1.0"
 
+
+def test_load_git_package(repository):
     pendulum = repository.packages[4]
     assert pendulum.name == "pendulum"
     assert pendulum.version.text == "2.0.5"
@@ -69,16 +90,23 @@ def test_load(mocker):
     assert pendulum.source_url == "https://github.com/sdispater/pendulum.git"
     assert pendulum.source_reference == "bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6"
 
-    for pkg in repository.packages:
-        assert pkg.name != "attrs"
 
+@pytest.mark.skipif(
+    not PY36, reason="pathlib.resolve() does not support strict argument"
+)
+def test_load_editable_package(repository):
     # test editable package with text .pth file
     editable = repository.packages[1]
     assert editable.name == "editable"
     assert editable.version.text == "2.3.4"
     assert editable.source_type == "directory"
-    assert editable.source_url == Path("/path/to/editable").as_posix()
+    assert (
+        editable.source_url
+        == Path("/path/to/editable").resolve(strict=False).as_posix()
+    )
 
+
+def test_load_editable_with_import_package(repository):
     # test editable package with executable .pth file
     editable = repository.packages[2]
     assert editable.name == "editable-with-import"
