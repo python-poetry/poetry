@@ -176,10 +176,11 @@ class PackageInfo:
 
         :param dist: The distribution instance to parse information from.
         """
+        requirements = None
+
         if dist.requires_dist:
             requirements = list(dist.requires_dist)
         else:
-            requirements = []
             requires = Path(dist.filename) / "requires.txt"
             if requires.exists():
                 with requires.open(encoding="utf-8") as f:
@@ -190,7 +191,7 @@ class PackageInfo:
             version=dist.version,
             summary=dist.summary,
             platform=dist.supported_platforms,
-            requires_dist=requirements or None,
+            requires_dist=requirements,
             requires_python=dist.requires_python,
         )
 
@@ -234,8 +235,8 @@ class PackageInfo:
 
         with temporary_directory() as tmp:
             tmp = Path(tmp)
-            with context(str(path)) as archive:
-                archive.extractall(str(tmp))
+            with context(path.as_posix()) as archive:
+                archive.extractall(tmp.as_posix())
 
             # a little bit of guess work to determine the directory we care about
             elements = list(tmp.glob("*"))
@@ -244,6 +245,8 @@ class PackageInfo:
                 sdist_dir = elements[0]
             else:
                 sdist_dir = tmp / path.name.rstrip(suffix)
+                if not sdist_dir.is_dir():
+                    sdist_dir = tmp
 
             # now this is an unpacked directory we know how to deal with
             new_info = cls.from_directory(path=sdist_dir)
@@ -313,7 +316,7 @@ class PackageInfo:
             yield Path(d)
 
     @classmethod
-    def from_metadata(cls, path):  # type: (Union[str, Path]) -> PackageInfo
+    def from_metadata(cls, path):  # type: (Union[str, Path]) -> Optional[PackageInfo]
         """
         Helper method to parse package information from an unpacked metadata directory.
 
@@ -322,23 +325,31 @@ class PackageInfo:
         path = Path(path)
 
         if path.suffix in {".dist-info", ".egg-info"}:
-            directories = [path.suffix]
+            directories = [path]
         else:
             directories = cls._find_dist_info(path=path)
 
         for directory in directories:
             try:
                 if directory.suffix == ".egg-info":
-                    dist = pkginfo.UnpackedSDist(str(directory))
+                    dist = pkginfo.UnpackedSDist(directory.as_posix())
                 elif directory.suffix == ".dist-info":
-                    dist = pkginfo.Wheel(str(directory))
+                    dist = pkginfo.Wheel(directory.as_posix())
                 else:
                     continue
-                info = cls._from_distribution(dist=dist)
-                if info:
-                    return info
+                break
             except ValueError:
-                pass
+                continue
+        else:
+            try:
+                # handle PKG-INFO in unpacked sdist root
+                dist = pkginfo.UnpackedSDist(path.as_posix())
+            except ValueError:
+                return
+
+        info = cls._from_distribution(dist=dist)
+        if info:
+            return info
 
     @classmethod
     def from_package(cls, package):  # type: (Package) -> PackageInfo
@@ -355,7 +366,7 @@ class PackageInfo:
 
         return cls(
             name=package.name,
-            version=package.version,
+            version=str(package.version),
             summary=package.description,
             platform=package.platform,
             requires_dist=list(requires),
@@ -395,16 +406,6 @@ class PackageInfo:
         """
         path = Path(path)
 
-        setup_py = path.joinpath("setup.py")
-
-        project_package = cls._get_poetry_package(path)
-        if project_package:
-            return cls.from_package(project_package)
-
-        if not setup_py.exists():
-            # this means we cannot do anything else here
-            raise PackageInfoError(path)
-
         current_dir = os.getcwd()
 
         info = cls.from_metadata(path)
@@ -412,6 +413,19 @@ class PackageInfo:
         if info and info.requires_dist is not None:
             # return only if requirements are discovered
             return info
+
+        setup_py = path.joinpath("setup.py")
+
+        project_package = cls._get_poetry_package(path)
+        if project_package:
+            return cls.from_package(project_package)
+
+        if not setup_py.exists():
+            if not allow_build and info:
+                # we discovered PkgInfo but no requirements were listed
+                return info
+            # this means we cannot do anything else here
+            raise PackageInfoError(path)
 
         if not allow_build:
             return cls.from_setup_py(path=path)
