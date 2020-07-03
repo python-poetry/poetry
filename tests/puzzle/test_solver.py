@@ -2003,3 +2003,43 @@ def test_solver_should_not_update_same_version_packages_if_installed_has_no_sour
     check_solver_result(
         ops, [{"job": "install", "package": foo, "skipped": True}],
     )
+
+
+def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.5"
+    package.add_dependency(
+        "A", {"version": "^1.0", "markers": "python_version < '3.5'"}
+    )
+    package.add_dependency(
+        "A", {"version": "^2.0", "markers": "python_version >= '3.5'"}
+    )
+    package.add_dependency(
+        "B", {"version": "^3.0", "markers": "python_version < '3.5'"}
+    )
+    package.add_dependency(
+        "B", {"version": "^4.0", "markers": "python_version >= '3.5'"}
+    )
+
+    package_a10 = get_package("A", "1.0.0")
+    package_a20 = get_package("A", "2.0.0")
+    package_b30 = get_package("B", "3.0.0")
+    package_b40 = get_package("B", "4.0.0")
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a20)
+    repo.add_package(package_b30)
+    repo.add_package(package_b40)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_a10},
+            {"job": "install", "package": package_a20},
+            {"job": "install", "package": package_b30},
+            {"job": "install", "package": package_b40},
+        ],
+    )

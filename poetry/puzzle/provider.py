@@ -646,7 +646,7 @@ class Provider:
             overrides = []
             for _dep in _deps:
                 current_overrides = self._overrides.copy()
-                package_overrides = current_overrides.get(package, {})
+                package_overrides = current_overrides.get(package, {}).copy()
                 package_overrides.update({_dep.name: _dep})
                 current_overrides.update({package: package_overrides})
                 overrides.append(current_overrides)
