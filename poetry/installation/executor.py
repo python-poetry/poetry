@@ -221,7 +221,7 @@ class Executor(object):
 
         self._lock.release()
 
-    def run(self, *args, **kwargs):  # type: (...) -> str
+    def run_pip(self, *args, **kwargs):  # type: (...) -> str
         return self._env.run("python", "-m", "pip", *args, **kwargs)
 
     def get_operation_message(self, operation, done=False):
@@ -360,7 +360,7 @@ class Executor(object):
         if operation.job_type == "update":
             args.insert(2, "-U")
 
-        self.run(*args)
+        self.run_pip(*args)
 
     def _update(self, operation):
         return self._install(operation)
@@ -375,7 +375,7 @@ class Executor(object):
                 safe_rmtree(str(src_dir))
 
         try:
-            self.run("uninstall", package.name, "-y")
+            self.run_pip("uninstall", package.name, "-y")
         except CalledProcessError as e:
             if "not installed" in str(e):
                 return
@@ -464,14 +464,14 @@ class Executor(object):
 
                     args.append(req)
 
-                    return self.run(*args)
+                    return self.run_pip(*args)
 
         if package.develop:
             args.append("-e")
 
         args.append(req)
 
-        return self.run(*args)
+        return self.run_pip(*args)
 
     def _install_git(self, operation):
         from poetry.core.vcs import Git

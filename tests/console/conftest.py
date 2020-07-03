@@ -82,7 +82,7 @@ def setup(mocker, installer, installed, config, env):
     p.return_value = installer
 
     # Do not run pip commands of the executor
-    mocker.patch("poetry.installation.executor.Executor.run")
+    mocker.patch("poetry.installation.executor.Executor.run_pip")
 
     p = mocker.patch("poetry.installation.installer.Installer._get_installed")
     p.return_value = installed
