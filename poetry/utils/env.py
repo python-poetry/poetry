@@ -1238,6 +1238,7 @@ class MockEnv(NullEnv):
         marker_env["python_implementation"] = self._python_implementation
         marker_env["version_info"] = self._version_info
         marker_env["python_version"] = ".".join(str(v) for v in self._version_info[:2])
+        marker_env["python_full_version"] = ".".join(str(v) for v in self._version_info)
         marker_env["sys_platform"] = self._platform
 
         return marker_env

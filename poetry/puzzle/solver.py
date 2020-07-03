@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 
 from clikit.io import ConsoleIO
 
@@ -33,14 +34,19 @@ class Solver:
         installed,  # type: Repository
         locked,  # type: Repository
         io,  # type: ConsoleIO
-        remove_untracked=False,  # type: bool
+        remove_untracked=False,  # type: bool,
+        provider=None,  # type: Optional[Provider]
     ):
         self._package = package
         self._pool = pool
         self._installed = installed
         self._locked = locked
         self._io = io
-        self._provider = Provider(self._package, self._pool, self._io)
+
+        if provider is None:
+            provider = Provider(self._package, self._pool, self._io)
+
+        self._provider = provider
         self._overrides = []
         self._remove_untracked = remove_untracked
 
