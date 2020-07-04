@@ -30,6 +30,17 @@ from poetry.utils.toml_file import TomlFile
 
 logger = logging.getLogger(__name__)
 
+PEP517_META_BUILD = """\
+import pep517.build
+import pep517.meta
+
+path='{source}'
+system=pep517.build.compat_system(path)
+pep517.meta.build(source_dir=path, dest='{dest}', system=system)
+"""
+
+PEP517_META_BUILD_DEPS = ["pep517===0.8.2", "toml==0.10.1"]
+
 
 class PackageInfoError(ValueError):
     def __init__(self, path):  # type: (Union[Path, str]) -> None
@@ -256,17 +267,27 @@ class PackageInfo:
 
         return info.update(new_info)
 
+    @staticmethod
+    def has_setup_files(path):  # type: (Path) -> bool
+        return any((path / f).exists() for f in SetupReader.FILES)
+
     @classmethod
-    def from_setup_py(cls, path):  # type: (Union[str, Path]) -> PackageInfo
+    def from_setup_files(cls, path):  # type: (Path) -> PackageInfo
         """
-        Mechanism to parse package information from a `setup.py` file. This uses the implentation
+        Mechanism to parse package information from a `setup.[py|cfg]` file. This uses the implementation
         at `poetry.utils.setup_reader.SetupReader` in order to parse the file. This is not reliable for
         complex setup files and should only attempted as a fallback.
 
         :param path: Path to `setup.py` file
-        :return:
         """
-        result = SetupReader.read_from_directory(Path(path))
+        if not cls.has_setup_files(path):
+            raise PackageInfoError(path)
+
+        try:
+            result = SetupReader.read_from_directory(path)
+        except Exception:
+            raise PackageInfoError(path)
+
         python_requires = result["python_requires"]
         if python_requires is None:
             python_requires = "*"
@@ -288,13 +309,19 @@ class PackageInfo:
 
         requirements = parse_requires(requires)
 
-        return cls(
+        info = cls(
             name=result.get("name"),
             version=result.get("version"),
             summary=result.get("description", ""),
             requires_dist=requirements or None,
             requires_python=python_requires,
         )
+
+        if not (info.name and info.version) and not info.requires_dist:
+            # there is nothing useful here
+            raise PackageInfoError(path)
+
+        return info
 
     @staticmethod
     def _find_dist_info(path):  # type: (Path) -> Iterator[Path]
@@ -308,7 +335,7 @@ class PackageInfo:
             # Sometimes pathlib will fail on recursive symbolic links, so we need to workaround it
             # and use the glob module instead. Note that this does not happen with pathlib2
             # so it's safe to use it for Python < 3.4.
-            directories = glob.iglob(Path(path, pattern).as_posix(), recursive=True)
+            directories = glob.iglob(path.joinpath(pattern).as_posix(), recursive=True)
         else:
             directories = path.glob(pattern)
 
@@ -316,14 +343,12 @@ class PackageInfo:
             yield Path(d)
 
     @classmethod
-    def from_metadata(cls, path):  # type: (Union[str, Path]) -> Optional[PackageInfo]
+    def from_metadata(cls, path):  # type: (Path) -> Optional[PackageInfo]
         """
         Helper method to parse package information from an unpacked metadata directory.
 
         :param path: The metadata directory to parse information from.
         """
-        path = Path(path)
-
         if path.suffix in {".dist-info", ".egg-info"}:
             directories = [path]
         else:
@@ -393,9 +418,78 @@ class PackageInfo:
             pass
 
     @classmethod
+    def _pep517_metadata(cls, path):  # type (Path) -> PackageInfo
+        """
+        Helper method to use PEP-517 library to build and read package metadata.
+
+        :param path: Path to package source to build and read metadata for.
+        """
+        info = None
+        try:
+            info = cls.from_setup_files(path)
+            if info.requires_dist is not None:
+                return info
+        except PackageInfoError:
+            pass
+
+        with temporary_directory() as tmp_dir:
+            # TODO: cache PEP 517 build environment corresponding to each project venv
+            venv_dir = Path(tmp_dir) / ".venv"
+            EnvManager.build_venv(venv_dir.as_posix())
+            venv = VirtualEnv(venv_dir, venv_dir)
+
+            dest_dir = Path(tmp_dir) / "dist"
+            dest_dir.mkdir()
+
+            try:
+                venv.run(
+                    "python",
+                    "-m",
+                    "pip",
+                    "install",
+                    "--disable-pip-version-check",
+                    "--ignore-installed",
+                    *PEP517_META_BUILD_DEPS
+                )
+                venv.run(
+                    "python",
+                    "-",
+                    input_=PEP517_META_BUILD.format(
+                        source=path.as_posix(), dest=dest_dir.as_posix()
+                    ),
+                )
+                return cls.from_metadata(dest_dir)
+            except EnvCommandError as e:
+                # something went wrong while attempting pep517 metadata build
+                # fallback to egg_info if setup.py available
+                cls._log("PEP517 build failed: {}".format(e), level="debug")
+                setup_py = path / "setup.py"
+                if not setup_py.exists():
+                    raise PackageInfoError(path)
+
+                cwd = Path.cwd()
+                os.chdir(path.as_posix())
+                try:
+                    venv.run("python", "setup.py", "egg_info")
+                    return cls.from_metadata(path)
+                except EnvCommandError:
+                    raise PackageInfoError(path)
+                finally:
+                    os.chdir(cwd.as_posix())
+
+        if info:
+            cls._log(
+                "Falling back to parsed setup.py file for {}".format(path), "debug"
+            )
+            return info
+
+        # if we reach here, everything has failed and all hope is lost
+        raise PackageInfoError(path)
+
+    @classmethod
     def from_directory(
         cls, path, allow_build=False
-    ):  # type: (Union[str, Path], bool) -> PackageInfo
+    ):  # type: (Path, bool) -> PackageInfo
         """
         Generate package information from a package source directory. When `allow_build` is enabled and
         introspection of all available metadata fails, the package is attempted to be build in an isolated
@@ -404,57 +498,28 @@ class PackageInfo:
         :param path: Path to generate package information from.
         :param allow_build: If enabled, as a fallback, build the project to gather metadata.
         """
-        path = Path(path)
-
-        current_dir = os.getcwd()
-
         info = cls.from_metadata(path)
 
         if info and info.requires_dist is not None:
             # return only if requirements are discovered
             return info
 
-        setup_py = path.joinpath("setup.py")
-
         project_package = cls._get_poetry_package(path)
         if project_package:
             return cls.from_package(project_package)
 
-        if not setup_py.exists():
-            if not allow_build and info:
+        try:
+            if not allow_build:
+                return cls.from_setup_files(path)
+            return cls._pep517_metadata(path)
+        except PackageInfoError as e:
+            if info:
                 # we discovered PkgInfo but no requirements were listed
                 return info
-            # this means we cannot do anything else here
-            raise PackageInfoError(path)
-
-        if not allow_build:
-            return cls.from_setup_py(path=path)
-
-        try:
-            # TODO: replace with PEP517
-            # we need to switch to the correct path in order for egg_info command to work
-            os.chdir(str(path))
-
-            # Execute egg_info
-            cls._execute_setup()
-        except EnvCommandError:
-            cls._log(
-                "Falling back to parsing setup.py file for {}".format(path), "debug"
-            )
-            # egg_info could not be generated, we fallback to ast parser
-            return cls.from_setup_py(path=path)
-        else:
-            info = cls.from_metadata(path)
-            if info:
-                return info
-        finally:
-            os.chdir(current_dir)
-
-        # if we reach here, everything has failed and all hope is lost
-        raise PackageInfoError(path)
+            raise e
 
     @classmethod
-    def from_sdist(cls, path):  # type: (Union[Path, pkginfo.SDist]) -> PackageInfo
+    def from_sdist(cls, path):  # type: (Path) -> PackageInfo
         """
         Gather package information from an sdist file, packed or unpacked.
 
@@ -508,10 +573,3 @@ class PackageInfo:
             return cls.from_bdist(path=path)
         except PackageInfoError:
             return cls.from_sdist(path=path)
-
-    @classmethod
-    def _execute_setup(cls):
-        with temporary_directory() as tmp_dir:
-            EnvManager.build_venv(tmp_dir)
-            venv = VirtualEnv(Path(tmp_dir), Path(tmp_dir))
-            venv.run("python", "setup.py", "egg_info")

@@ -10,6 +10,7 @@ import pytest
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
+from poetry.inspection.info import PackageInfo
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import VirtualEnv
@@ -79,8 +80,11 @@ def download_mock(mocker):
 
 
 @pytest.fixture(autouse=True)
-def execute_setup_mock(mocker):
-    mocker.patch("poetry.inspection.info.PackageInfo._execute_setup")
+def pep517_metadata_mock(mocker):
+    mocker.patch(
+        "poetry.inspection.info.PackageInfo._pep517_metadata",
+        return_value=PackageInfo(name="demo", version="0.1.2"),
+    )
 
 
 @pytest.fixture
