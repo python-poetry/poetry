@@ -113,7 +113,7 @@ packages = [
 ]
 ```
 
-If your package is stored inside a "source" directory, you must specify it:
+If your package is stored inside a "lib" directory, you must specify it:
 
 ```toml
 [tool.poetry]
