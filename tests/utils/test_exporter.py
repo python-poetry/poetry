@@ -898,8 +898,7 @@ def test_exporter_exports_requirements_txt_with_index_url_and_extra_index_url(
     poetry.pool.remove_repository("PyPI")
 
     poetry.pool.add_repository(
-        LegacyRepository("default", "https://example.com/default/simple"),
-        default=True,
+        LegacyRepository("default", "https://example.com/default/simple"), default=True,
     )
     # This non-default repository is prior to the defualt repository because
     # they are sorted by their URL. (.../custom/... < .../default/...)
@@ -945,10 +944,7 @@ def test_exporter_exports_requirements_txt_with_index_url_and_extra_index_url(
     exporter = Exporter(poetry)
 
     exporter.export(
-        "requirements.txt",
-        Path(tmp_dir),
-        "requirements.txt",
-        with_hashes=False,
+        "requirements.txt", Path(tmp_dir), "requirements.txt", with_hashes=False,
     )
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
