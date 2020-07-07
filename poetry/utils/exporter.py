@@ -135,7 +135,8 @@ class Exporter(object):
 
         if indexes:
             # If we have extra indexes, we add them to the beginning of the output
-            indexes_header = ""
+            default_index_header = ""
+            extra_indexes_header = ""
             for index in sorted(indexes):
                 repository = [
                     r
@@ -151,15 +152,15 @@ class Exporter(object):
                         if with_credentials
                         else repository.url
                     )
-                    indexes_header = "--index-url {}\n".format(url)
+                    default_index_header = "--index-url {}\n".format(url)
                     continue
 
                 url = (
                     repository.authenticated_url if with_credentials else repository.url
                 )
-                indexes_header += "--extra-index-url {}\n".format(url)
+                extra_indexes_header += "--extra-index-url {}\n".format(url)
 
-            content = indexes_header + "\n" + content
+            content = default_index_header + extra_indexes_header + "\n" + content
 
         self._output(content, cwd, output)
 
