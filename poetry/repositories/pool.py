@@ -87,6 +87,9 @@ class Pool(BaseRepository):
         if idx is not None:
             del self._repositories[idx]
 
+        if idx == 0 and self.has_default():
+            self._default = False
+
         return self
 
     def has_package(self, package):
