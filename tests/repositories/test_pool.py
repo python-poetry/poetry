@@ -69,3 +69,28 @@ def test_repository_with_normal_default_and_secondary_repositories():
     assert pool.repository("foo") is repo1
     assert pool.repository("bar") is repo2
     assert pool.has_default()
+
+
+def test_remove_default_repository():
+    pool = Pool()
+
+    repo = LegacyRepository("foo", "https://foo.bar")
+    pool.add_repository(repo, default=True)
+    assert pool.has_default()
+
+    pool.remove_repository("foo")
+    assert not pool.has_default()
+
+
+def test_remove_non_default_repository():
+    pool = Pool()
+
+    repo1 = LegacyRepository("foo", "https://foo.bar")
+    repo2 = LegacyRepository("bar", "https://bar.baz")
+
+    pool.add_repository(repo1, default=True)
+    pool.add_repository(repo2, default=False)
+    assert pool.has_default()
+
+    pool.remove_repository("bar")
+    assert pool.has_default()
