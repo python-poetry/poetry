@@ -41,6 +41,15 @@ python = "*"
 pytest = "^3.4"
 ```
 
+If you have a pre-existing project, say `pre-existing-demo`, and want to use poetry:
+
+```bash
+cd pre-existing-demo
+poetry init
+```
+
+This will interactively guide you through creating a `pyproject.toml` file.
+
 ### Specifying dependencies
 
 If you want to add dependencies to your project, you can specify them in the `tool.poetry.dependencies` section.
