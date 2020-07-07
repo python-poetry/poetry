@@ -889,3 +889,77 @@ foo==1.2.3
 """
 
     assert out == expected
+
+
+def test_exporter_exports_requirements_txt_with_index_url_and_extra_index_url(
+    tmp_dir, poetry
+):
+    # Remove default PyPI to test custom default repository.
+    poetry.pool.remove_repository("PyPI")
+
+    poetry.pool.add_repository(
+        LegacyRepository("default", "https://example.com/default/simple"),
+        default=True,
+    )
+    # This non-default repository is prior to the defualt repository because
+    # they are sorted by their URL. (.../custom/... < .../default/...)
+    poetry.pool.add_repository(
+        LegacyRepository("custom", "https://example.com/custom/simple"),
+    )
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/default/simple",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/custom/simple",
+                        "reference": "",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": ["12345"], "bar": ["67890"]},
+            },
+        }
+    )
+    exporter = Exporter(poetry)
+
+    exporter.export(
+        "requirements.txt",
+        Path(tmp_dir),
+        "requirements.txt",
+        with_hashes=False,
+    )
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+--index-url https://example.com/default/simple
+--extra-index-url https://example.com/custom/simple
+
+bar==4.5.6
+foo==1.2.3
+"""
+
+    assert expected == content
