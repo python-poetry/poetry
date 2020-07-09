@@ -90,9 +90,8 @@ class Installer:
             self._execute_operations = False
 
         local_repo = Repository()
-        self._do_install(local_repo)
 
-        return 0
+        return self._do_install(local_repo)
 
     def dry_run(self, dry_run=True):  # type: (bool) -> Installer
         self._dry_run = dry_run
@@ -279,7 +278,7 @@ class Installer:
         self._filter_operations(ops, local_repo)
 
         # Execute operations
-        self._execute(ops)
+        return self._execute(ops)
 
     def _write_lock_file(self, repo):  # type: (Repository) -> None
         if self._update and self._write_lock:
@@ -334,6 +333,8 @@ class Installer:
 
         for op in operations:
             self._execute_operation(op)
+
+        return 0
 
     def _execute_operation(self, operation):  # type: (Operation) -> None
         """

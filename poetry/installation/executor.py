@@ -6,7 +6,7 @@ import os
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
+from concurrent.futures import wait
 from subprocess import CalledProcessError
 
 from poetry.core.packages.file_dependency import FileDependency
@@ -15,6 +15,8 @@ from poetry.io.null_io import NullIO
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import cpu_count
+from poetry.utils._compat import decode
+from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
 
 from .authenticator import Authenticator
@@ -24,14 +26,6 @@ from .operations.install import Install
 from .operations.operation import Operation
 from .operations.uninstall import Uninstall
 from .operations.update import Update
-
-
-def take(n, iterable):
-    return list(itertools.islice(iterable, n))
-
-
-def chunked(iterable, n):
-    return iter(partial(take, n, iter(iterable)), [])
 
 
 class Executor(object):
@@ -67,6 +61,7 @@ class Executor(object):
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
         self._sections = OrderedDict()
         self._lock = threading.Lock()
+        self._shutdown = False
 
     @property
     def installations_count(self):  # type: () -> int
@@ -98,7 +93,7 @@ class Executor(object):
 
         return self
 
-    def execute(self, operations):
+    def execute(self, operations):  # type: (Operation) -> int
         self._total_operations = len(operations)
         for job_type in self._executed:
             self._executed[job_type] = 0
@@ -109,49 +104,26 @@ class Executor(object):
 
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
-        i = 0
         self._sections = OrderedDict()
         for _, group in groups:
-            for chunk in chunked(group, self._max_workers):
-                tasks = []
-                for operation in chunk:
-                    if self.supports_fancy_output():
-                        if id(operation) not in self._sections:
-                            if self._should_write_operation(operation):
-                                self._lock.acquire()
-                                self._sections[id(operation)] = self._io.section()
-                                self._sections[id(operation)].write_line(
-                                    "  <fg=blue;options=bold>•</> {message}: <fg=blue>Pending...</>".format(
-                                        message=self.get_operation_message(operation),
-                                    ),
-                                )
-                                self._lock.release()
-                    else:
-                        if self._should_write_operation(operation):
-                            if not operation.skipped:
-                                self._io.write_line(
-                                    "  <fg=blue;options=bold>•</> {message}".format(
-                                        message=self.get_operation_message(operation),
-                                    ),
-                                )
-                            else:
-                                self._io.write_line(
-                                    "  <fg=default;options=bold,dark>•</> {message}: "
-                                    "<fg=default;options=bold,dark>Skipped</> "
-                                    "<fg=default;options=dark>for the following reason:</> "
-                                    "<fg=default;options=bold,dark>{reason}</>".format(
-                                        message=self.get_operation_message(operation),
-                                        reason=operation.skip_reason,
-                                    )
-                                )
+            tasks = []
+            for operation in group:
+                if self._shutdown:
+                    break
 
-                for operation in chunk:
-                    tasks.append(
-                        self._executor.submit(self._execute_operation, operation)
-                    )
-                    i += 1
+                tasks.append(self._executor.submit(self._execute_operation, operation))
 
-                [t.result() for t in tasks]
+            try:
+                wait(tasks)
+            except KeyboardInterrupt:
+                self._shutdown = True
+
+            if self._shutdown:
+                self._executor.shutdown(wait=True)
+
+                break
+
+        return self._shutdown
 
     def _write(self, operation, line):
         if not self.supports_fancy_output() or not self._should_write_operation(
@@ -174,6 +146,84 @@ class Executor(object):
         self._lock.release()
 
     def _execute_operation(self, operation):
+        try:
+            if self.supports_fancy_output():
+                if id(operation) not in self._sections:
+                    if self._should_write_operation(operation):
+                        self._lock.acquire()
+                        self._sections[id(operation)] = self._io.section()
+                        self._sections[id(operation)].write_line(
+                            "  <fg=blue;options=bold>•</> {message}: <fg=blue>Pending...</>".format(
+                                message=self.get_operation_message(operation),
+                            ),
+                        )
+                        self._lock.release()
+            else:
+                if self._should_write_operation(operation):
+                    if not operation.skipped:
+                        self._io.write_line(
+                            "  <fg=blue;options=bold>•</> {message}".format(
+                                message=self.get_operation_message(operation),
+                            ),
+                        )
+                    else:
+                        self._io.write_line(
+                            "  <fg=default;options=bold,dark>•</> {message}: "
+                            "<fg=default;options=bold,dark>Skipped</> "
+                            "<fg=default;options=dark>for the following reason:</> "
+                            "<fg=default;options=bold,dark>{reason}</>".format(
+                                message=self.get_operation_message(operation),
+                                reason=operation.skip_reason,
+                            )
+                        )
+
+            try:
+                result = self._do_execute_operation(operation)
+            except EnvCommandError as e:
+                if e.e.returncode == -2:
+                    result = -2
+                else:
+                    raise
+
+            # If we have a result of -2 it means a KeyboardInterrupt
+            # in the any python subprocess, so we raise a KeyboardInterrupt
+            # error to be picked up by the error handler.
+            if result == -2:
+                raise KeyboardInterrupt
+        except Exception as e:
+            from clikit.ui.components.exception_trace import ExceptionTrace
+
+            if not self.supports_fancy_output():
+                io = self._io
+            else:
+                message = "  <error>•</error> {message}: <error>Failed</error>".format(
+                    message=self.get_operation_message(operation, error=True),
+                )
+                self._write(operation, message)
+                io = self._sections.get(id(operation), self._io)
+
+            self._lock.acquire()
+
+            trace = ExceptionTrace(e)
+            trace.render(io)
+            io.write_line("")
+
+            self._shutdown = True
+            self._lock.release()
+        except KeyboardInterrupt:
+            message = "  <warning>•</warning> {message}: <warning>Cancelled</warning>".format(
+                message=self.get_operation_message(operation, warning=True),
+            )
+            if not self.supports_fancy_output():
+                self._io.write_line(message)
+            else:
+                self._write(operation, message)
+
+            self._lock.acquire()
+            self._shutdown = True
+            self._lock.release()
+
+    def _do_execute_operation(self, operation):
         method = operation.job_type
 
         operation_message = self.get_operation_message(operation)
@@ -191,7 +241,7 @@ class Executor(object):
 
             self._skipped[operation.job_type] += 1
 
-            return
+            return 0
 
         if not self._enabled or self._dry_run:
             self._io.write_line(
@@ -200,9 +250,12 @@ class Executor(object):
                 )
             )
 
-            return
+            return 0
 
-        getattr(self, "_execute_{}".format(method))(operation)
+        result = getattr(self, "_execute_{}".format(method))(operation)
+
+        if result != 0:
+            return result
 
         message = "  <fg=green;options=bold>•</> {message}".format(
             message=self.get_operation_message(operation, done=True),
@@ -210,6 +263,8 @@ class Executor(object):
         self._write(operation, message)
 
         self._increment_operations_count(operation, True)
+
+        return result
 
     def _increment_operations_count(self, operation, executed):
         self._lock.acquire()
@@ -221,16 +276,32 @@ class Executor(object):
 
         self._lock.release()
 
-    def run_pip(self, *args, **kwargs):  # type: (...) -> str
-        return self._env.run("python", "-m", "pip", *args, **kwargs)
+    def run_pip(self, *args, **kwargs):  # type: (...) -> int
+        try:
+            self._env.run("python", "-m", "pip", *args, **kwargs)
+        except EnvCommandError as e:
+            output = decode(e.e.output)
+            if (
+                "KeyboardInterrupt" in output
+                or "ERROR: Operation cancelled by user" in output
+            ):
+                return -2
 
-    def get_operation_message(self, operation, done=False):
+            raise
+
+        return 0
+
+    def get_operation_message(self, operation, done=False, error=False, warning=False):
         base_tag = "fg=default"
         operation_color = "c2"
         source_operation_color = "c2"
         package_color = "c1"
 
-        if done:
+        if error:
+            operation_color = "error"
+        elif warning:
+            operation_color = "warning"
+        elif done:
             operation_color = "success"
 
         if operation.skipped:
@@ -318,10 +389,10 @@ class Executor(object):
         self._io.write_line("")
 
     def _execute_install(self, operation):  # type: (Install) -> None
-        self._install(operation)
+        return self._install(operation)
 
     def _execute_update(self, operation):  # type: (Update) -> None
-        self._update(operation)
+        return self._update(operation)
 
     def _execute_uninstall(self, operation):  # type: (Uninstall) -> None
         message = "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
@@ -329,19 +400,15 @@ class Executor(object):
         )
         self._write(operation, message)
 
-        self._remove(operation)
+        return self._remove(operation)
 
     def _install(self, operation):
         package = operation.package
         if package.source_type == "directory":
-            self._install_directory(operation)
-
-            return
+            return self._install_directory(operation)
 
         if package.source_type == "git":
-            self._install_git(operation)
-
-            return
+            return self._install_git(operation)
 
         if package.source_type == "file":
             archive = self._prepare_file(operation)
@@ -360,7 +427,7 @@ class Executor(object):
         if operation.job_type == "update":
             args.insert(2, "-U")
 
-        self.run_pip(*args)
+        return self.run_pip(*args)
 
     def _update(self, operation):
         return self._install(operation)
@@ -375,10 +442,10 @@ class Executor(object):
                 safe_rmtree(str(src_dir))
 
         try:
-            self.run_pip("uninstall", package.name, "-y")
+            return self.run_pip("uninstall", package.name, "-y")
         except CalledProcessError as e:
             if "not installed" in str(e):
-                return
+                return 0
 
             raise
 
@@ -448,7 +515,7 @@ class Executor(object):
                 builder = EditableBuilder(package_poetry, self._env, NullIO())
                 builder.build()
 
-                return
+                return 0
             elif not has_build_system or package_poetry.package.build_script:
                 from poetry.core.masonry.builders.sdist import SdistBuilder
 
@@ -497,7 +564,7 @@ class Executor(object):
         # Now we just need to install from the source directory
         package.source_url = str(src_dir)
 
-        self._install_directory(operation)
+        return self._install_directory(operation)
 
     def _download(self, operation):  # type: (Operation) -> Path
         link = self._chooser.choose_for(operation.package)

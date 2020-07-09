@@ -167,10 +167,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         if status != 0 or self.option("dry-run"):
             # Revert changes
             if not self.option("dry-run"):
-                self.error(
+                self.line_error(
                     "\n"
-                    "Addition failed, reverting pyproject.toml "
-                    "to its original content."
+                    "<error>Failed to add packages, reverting the pyproject.toml file "
+                    "to its original content.</error>"
                 )
 
             self.poetry.file.write(original_content)

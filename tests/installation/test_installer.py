@@ -55,20 +55,20 @@ class Executor(BaseExecutor):
     def removals(self):
         return self._uninstalls
 
-    def _execute_operation(self, operation):
-        super(Executor, self)._execute_operation(operation)
+    def _do_execute_operation(self, operation):
+        super(Executor, self)._do_execute_operation(operation)
 
         if not operation.skipped:
             getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
 
     def _execute_install(self, operation):
-        pass
+        return 0
 
     def _execute_update(self, operation):
-        pass
+        return 0
 
-    def _execute_remove(self, operation):
-        pass
+    def _execute_uninstall(self, operation):
+        return 0
 
 
 class CustomInstalledRepository(InstalledRepository):

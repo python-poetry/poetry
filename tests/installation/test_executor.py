@@ -15,6 +15,7 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.repositories.pool import Pool
+from poetry.utils._compat import PY36
 from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
@@ -26,6 +27,7 @@ def io():
     io.formatter.add_style(Style("c1_dark").fg("cyan").dark())
     io.formatter.add_style(Style("c2_dark").fg("default").bold().dark())
     io.formatter.add_style(Style("success_dark").fg("green").dark())
+    io.formatter.add_style(Style("warning").fg("yellow"))
 
     return io
 
@@ -83,7 +85,7 @@ def test_execute_executes_a_batch_of_operations(
     git_package.source_reference = "master"
     git_package.source_url = "https://github.com/demo/demo.git"
 
-    executor.execute(
+    assert 0 == executor.execute(
         [
             Install(Package("pytest", "3.5.2")),
             Uninstall(Package("attrs", "17.4.0")),
@@ -119,7 +121,7 @@ def test_execute_shows_skipped_operations_if_verbose(config, pool, io):
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
-    executor.execute(
+    assert 0 == executor.execute(
         [Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed")]
     )
 
@@ -130,3 +132,50 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
 """
     assert expected == io.fetch_output()
     assert 0 == len(env.executed)
+
+
+@pytest.mark.skipif(
+    not PY36, reason="Improved error rendering is only available on Python >=3.6"
+)
+def test_execute_should_show_errors(config, mocker, io):
+    env = MockEnv()
+    executor = Executor(env, pool, config, io)
+    executor.verbose()
+
+    mocker.patch.object(executor, "_install", side_effect=Exception("It failed!"))
+
+    assert 1 == executor.execute([Install(Package("clikit", "0.2.3"))])
+
+    expected = """
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing clikit (0.2.3)
+
+  Exception
+
+  It failed!
+"""
+
+    assert expected in io.fetch_output()
+
+
+def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_interrupt(
+    config, mocker, io
+):
+    env = MockEnv()
+    executor = Executor(env, pool, config, io)
+    executor.verbose()
+
+    # A return code of -2 means KeyboardInterrupt in the pip subprocess
+    mocker.patch.object(executor, "_install", return_value=-2)
+
+    assert 1 == executor.execute([Install(Package("clikit", "0.2.3"))])
+
+    expected = """
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing clikit (0.2.3)
+  • Installing clikit (0.2.3): Cancelled
+"""
+
+    assert expected == io.fetch_output()
