@@ -57,16 +57,18 @@ jobs:
         curl -L https://github.com/sdispater/python-binaries/releases/download/3.5.9/python-3.5.9.macos.tar.xz -o python-3.5.9.tar.xz
         curl -L https://github.com/sdispater/python-binaries/releases/download/3.6.8/python-3.6.8.macos.tar.xz -o python-3.6.8.tar.xz
         curl -L https://github.com/sdispater/python-binaries/releases/download/3.7.6/python-3.7.6.macos.tar.xz -o python-3.7.6.tar.xz
-        curl -L https://github.com/sdispater/python-binaries/releases/download/3.8.2/python-3.8.2.macos.tar.xz -o python-3.8.2.tar.xz
+        curl -L https://github.com/sdispater/python-binaries/releases/download/3.8.3/python-3.8.3.macos.tar.xz -o python-3.8.3.tar.xz
+        curl -L https://github.com/sdispater/python-binaries/releases/download/3.9.0b4/python-3.9.0b4.macos.tar.xz -o python-3.9.0b4.tar.xz
         tar -zxf python-2.7.17.tar.xz
         tar -zxf python-3.5.9.tar.xz
         tar -zxf python-3.6.8.tar.xz
         tar -zxf python-3.7.6.tar.xz
-        tar -zxf python-3.8.2.tar.xz
+        tar -zxf python-3.8.3.tar.xz
+        tar -zxf python-3.9.0b4.tar.xz
     - name: Build specific release
       run: |
         source $HOME/.poetry/env
-        poetry run python sonnet make release --ansi -P "2.7:python-2.7.17/bin/python" -P "3.5:python-3.5.9/bin/python" -P "3.6:python-3.6.8/bin/python" -P "3.7:python-3.7.6/bin/python" -P "3.8:python-3.8.2/bin/python"
+        poetry run python sonnet make release --ansi -P "2.7:python-2.7.17/bin/python" -P "3.5:python-3.5.9/bin/python" -P "3.6:python-3.6.8/bin/python" -P "3.7:python-3.7.6/bin/python" -P "3.8:python-3.8.3/bin/python" -P "3.9:python-3.9.0b4/bin/python"
     - name: Upload release file
       uses: actions/upload-artifact@v1
       with:
@@ -106,22 +108,25 @@ jobs:
         Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.5.4/python-3.5.4.windows.tar.xz -O python-3.5.4.tar.xz
         Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.6.8/python-3.6.8.windows.tar.xz -O python-3.6.8.tar.xz
         Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.7.6/python-3.7.6.windows.tar.xz -O python-3.7.6.tar.xz
-        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.8.2/python-3.8.2.windows.tar.xz -O python-3.8.2.tar.xz
+        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.8.3/python-3.8.3.windows.tar.xz -O python-3.8.3.tar.xz
+        Invoke-WebRequest https://github.com/sdispater/python-binaries/releases/download/3.9.0b4/python-3.9.0b4.windows.tar.xz -O python-3.9.0b4.tar.xz
         7z x python-2.7.17.tar.xz
         7z x python-3.5.4.tar.xz
         7z x python-3.6.8.tar.xz
         7z x python-3.7.6.tar.xz
-        7z x python-3.8.2.tar.xz
+        7z x python-3.8.3.tar.xz
+        7z x python-3.9.0b4.tar.xz
         7z x python-2.7.17.tar
         7z x python-3.4.4.tar
         7z x python-3.5.4.tar
         7z x python-3.6.8.tar
         7z x python-3.7.6.tar
-        7z x python-3.8.2.tar
+        7z x python-3.8.3.tar
+        7z x python-3.9.0b4.tar
     - name: Build specific release
       run: |
         $env:Path += ";$env:Userprofile\.poetry\bin"
-        poetry run python sonnet make release --ansi -P "2.7:python-2.7.17\python.exe" -P "3.5:python-3.5.4\python.exe" -P "3.6:python-3.6.8\python.exe" -P "3.7:python-3.7.6\python.exe" -P "3.8:python-3.8.2\python.exe"
+        poetry run python sonnet make release --ansi -P "2.7:python-2.7.17\python.exe" -P "3.5:python-3.5.4\python.exe" -P "3.6:python-3.6.8\python.exe" -P "3.7:python-3.7.6\python.exe" -P "3.8:python-3.8.3\python.exe" -P "3.9:python-3.9.0b4\python.exe"
     - name: Upload release file
       uses: actions/upload-artifact@v1
       with:
