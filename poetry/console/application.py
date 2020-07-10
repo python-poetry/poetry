@@ -18,6 +18,7 @@ from .commands.init import InitCommand
 from .commands.install import InstallCommand
 from .commands.lock import LockCommand
 from .commands.new import NewCommand
+from .commands.plugin.plugin import PluginCommand
 from .commands.publish import PublishCommand
 from .commands.remove import RemoveCommand
 from .commands.run import RunCommand
@@ -84,6 +85,7 @@ class Application(BaseApplication):
             InstallCommand(),
             LockCommand(),
             NewCommand(),
+            PluginCommand(),
             PublishCommand(),
             RemoveCommand(),
             RunCommand(),

@@ -692,7 +692,7 @@ class EnvManager(object):
         p_venv = os.path.normcase(str(venv))
         if any(p.startswith(p_venv) for p in paths):
             # Running properly in the virtualenv, don't need to do anything
-            return SystemEnv(Path(sys.prefix), self.get_base_prefix())
+            return self.get_system_env()
 
         return VirtualEnv(venv)
 
@@ -735,17 +735,23 @@ class EnvManager(object):
 
                 cli_run([path])
 
-    def remove_venv(self, path):  # type: (str) -> None
+    @classmethod
+    def remove_venv(cls, path):  # type: (str) -> None
         shutil.rmtree(path)
 
-    def get_base_prefix(self):  # type: () -> Path
+    @classmethod
+    def get_system_env(cls):  # type:() -> SystemEnv
+        return SystemEnv(Path(sys.prefix), cls.get_base_prefix())
+
+    @classmethod
+    def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
-            return sys.real_prefix
+            return Path(sys.real_prefix)
 
         if hasattr(sys, "base_prefix"):
-            return sys.base_prefix
+            return Path(sys.base_prefix)
 
-        return sys.prefix
+        return Path(sys.prefix)
 
     @classmethod
     def generate_env_name(cls, name, cwd):  # type: (str, str) -> str
@@ -776,6 +782,7 @@ class Env(object):
         self._site_packages = None
         self._paths = None
         self._supported_tags = None
+        self._sys_path = None
 
     @property
     def path(self):  # type: () -> Path
@@ -838,7 +845,10 @@ class Env(object):
 
     @property
     def sys_path(self):  # type: () -> List[str]
-        raise NotImplementedError()
+        if self._sys_path is None:
+            self._sys_path = self.get_sys_path()
+
+        return self._sys_path
 
     @property
     def paths(self):  # type: () -> Dict[str, str]
@@ -880,6 +890,9 @@ class Env(object):
         raise NotImplementedError()
 
     def get_pip_version(self):  # type: () -> Version
+        raise NotImplementedError()
+
+    def get_sys_path():  # type: () -> List[str]
         raise NotImplementedError()
 
     def get_paths(self):  # type: () -> Dict[str, str]
@@ -990,10 +1003,6 @@ class SystemEnv(Env):
     A system (i.e. not a virtualenv) Python environment.
     """
 
-    @property
-    def sys_path(self):  # type: () -> List[str]
-        return sys.path
-
     def get_version_info(self):  # type: () -> Tuple[int]
         return sys.version_info
 
@@ -1004,6 +1013,9 @@ class SystemEnv(Env):
         # If we're not in a venv, assume the interpreter we're running on
         # has a pip and use that
         return [sys.executable, "-m", "pip"]
+
+    def get_sys_path(self):  # type: () -> List[str]
+        return sys.path
 
     def get_paths(self):  # type: () -> Dict[str, str]
         # We can't use sysconfig.get_paths() because
@@ -1088,12 +1100,6 @@ class VirtualEnv(Env):
         if base is None:
             self._base = Path(self.run("python", "-", input_=GET_BASE_PREFIX).strip())
 
-    @property
-    def sys_path(self):  # type: () -> List[str]
-        output = self.run("python", "-", input_=GET_SYS_PATH)
-
-        return json.loads(output)
-
     def get_version_info(self):  # type: () -> Tuple[int]
         output = self.run("python", "-", input_=GET_PYTHON_VERSION)
 
@@ -1149,6 +1155,11 @@ class VirtualEnv(Env):
             return Version.parse("0.0")
 
         return Version.parse(m.group(1))
+
+    def get_sys_path(self):  # type: () -> List[str]
+        output = self.run("python", "-", input_=GET_SYS_PATH)
+
+        return json.loads(output)
 
     def get_paths(self):  # type: () -> Dict[str, str]
         output = self.run("python", "-", input_=GET_PATHS)
@@ -1265,13 +1276,6 @@ class MockEnv(NullEnv):
     @property
     def pip_version(self):
         return self._pip_version
-
-    @property
-    def sys_path(self):
-        if self._sys_path is None:
-            return super(MockEnv, self).sys_path
-
-        return self._sys_path
 
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         if self._mock_marker_env is not None:

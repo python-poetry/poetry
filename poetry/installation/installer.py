@@ -153,7 +153,7 @@ class Installer:
 
         return self
 
-    def whitelist(self, packages):  # type: (dict) -> Installer
+    def whitelist(self, packages):  # type: (Union[dict, list]) -> Installer
         self._whitelist = [canonicalize_name(p) for p in packages]
 
         return self

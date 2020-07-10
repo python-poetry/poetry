@@ -304,3 +304,19 @@ class Locker(object):
                 data["develop"] = package.develop
 
         return data
+
+
+class NullLocker(Locker):
+    def __init__(self, locked=False):  # type: (bool) -> None
+        self._locked = locked
+
+    def is_locked(self):  # type: () -> bool
+        return self._locked
+
+    def set_lock_data(self, root, packages):  # type: (...) -> bool
+        return True
+
+    def locked_repository(
+        self, with_dev_reqs=False
+    ):  # type: (bool) -> poetry.repositories.Repository
+        return poetry.repositories.Repository()

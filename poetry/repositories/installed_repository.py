@@ -44,10 +44,14 @@ class InstalledRepository(Repository):
         return paths
 
     @classmethod
-    def load(cls, env):  # type: (Env) -> InstalledRepository
+    def load(
+        cls, env, with_dependencies=False
+    ):  # type: (Env, bool) -> InstalledRepository
         """
         Load installed packages.
         """
+        from poetry.core.packages import dependency_from_pep_508
+
         repo = cls()
         seen = set()
 
@@ -60,6 +64,16 @@ class InstalledRepository(Repository):
                 version = distribution.metadata["version"]
                 package = Package(name, version, version)
                 package.description = distribution.metadata.get("summary", "")
+
+                if with_dependencies:
+                    for require in distribution.metadata.get_all("requires-dist", []):
+                        dep = dependency_from_pep_508(require)
+                        if (
+                            not dep.is_optional()
+                            or dep.is_optional()
+                            and dep.is_activated()
+                        ):
+                            package.requires.append(dep)
 
                 if package.name in seen:
                     continue
