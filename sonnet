@@ -110,8 +110,8 @@ class MakeReleaseCommand(Command):
                     ).stdout
                 )
                 env = VirtualEnv(Path(prefix.strip()), base=Path(prefix.strip()))
-                with package.with_python_versions("~{}".format(version)):
-                    solver = Solver(package, pool, Repository(), Repository(), self.io)
+                solver = Solver(package, pool, Repository(), Repository(), self.io)
+                with solver.use_environment(env):
                     ops = solver.solve()
                     for op in ops:
                         if not env.is_valid_for_marker(op.package.marker):
