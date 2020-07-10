@@ -538,3 +538,46 @@ To only remove a specific package from a cache, you have to specify the cache en
 ```bash
 poetry cache clear pypi:requests:2.24.0
 ```
+
+## plugin
+
+The `plugin` namespace regroups sub commands to manage Poetry plugins.
+
+### `plugin add`
+
+The `plugin add` command installs Poetry plugins and make them available at runtime.
+
+For example, to install the `poetry-plugin` plugin, you can run:
+
+```bash
+poetry plugin add poetry-plugin
+```
+
+The package specification formats supported by the `plugin add` command are the same as the ones supported
+by the [`add` command](#add).
+
+If you just want to check what would happen by installing a plugin, you can use the `--dry-run` option
+
+```bash
+poetry plugin add poetry-plugin --dry-run
+```
+
+#### Options
+
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+
+### `plugin list`
+
+The `plugin list` command lists all the currently installed plugins.
+
+```bash
+poetry plugin list
+```
+
+### `plugin remove`
+
+The `plugin remove` command removes installed plugins.
+
+```bash
+poetry plugin remove poetry-plugin
+```

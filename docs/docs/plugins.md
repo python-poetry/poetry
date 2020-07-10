@@ -78,15 +78,15 @@ from poetry.plugins.application_plugin import ApplicationPlugin
 
 
 class CustomCommand(Command):
-    
+
     name = "my-command"
-    
+
     def handle(self) -> int:
         self.line("My command")
-        
+
         return 0
 
-        
+
 def factory():
     return CustomCommand()
 
@@ -127,8 +127,6 @@ foo-command = "poetry_demo_plugin.plugin:MyApplicationPlugin"
 
 Plugins can also listen to specific events and act on them if necessary.
 
-There are two types of events: application events and generic events.
-
 These events are fired by [Cleo](https://github.com/sdispater/cleo)
 and are accessible from the `cleo.events.console_events` module.
 
@@ -159,14 +157,75 @@ class MyApplicationPlugin(ApplicationPlugin):
     def load_dotenv(
         self, event: ConsoleCommandEvent, event_name: str, dispatcher: EventDispatcher
     ) -> None:
-        command = event.io
+        command = event.command
         if not isinstance(command, EnvCommand):
             return
-        
+
         io = event.io
 
         if io.is_debug():
             io.write_line("<debug>Loading environment variables.</debug>")
 
         load_dotenv()
+```
+
+
+## Using plugins
+
+Installed plugin packages are automatically loaded when Poetry starts up.
+
+You have multiple ways to install plugins for Poetry
+
+### The `plugin add` command
+
+This is the easiest way and should account for all the ways Poetry can be installed.
+
+```bash
+poetry plugin add poetry-plugin
+```
+
+The `plugin add` command will ensure that the plugin is compatible with the current version of Poetry
+and install the needed packages for the plugin to work.
+
+The package specification formats supported by the `plugin add` command are the same as the ones supported
+by the [`add` command](/docs/cli/#add).
+
+If you no longer need a plugin and want to uninstall it, you can use the `plugin remove` command.
+
+```shell
+poetry plugin remove poetry-plugin
+```
+
+You can also list all currently installed plugins by running:
+
+```shell
+poetry plugin list
+```
+
+### With `pipx inject`
+
+If you used `pipx` to install Poetry you can add the plugin packages via the `pipx inject` command.
+
+```shell
+pipx inject poetry poetry-plugin
+```
+
+If you want to uninstall a plugin, you can run:
+
+```shell
+pipx runpip poetry uninstall poetry-plugin
+```
+
+### With `pip`
+
+If you used `pip` to install Poetry you can add the plugin packages via the `pip install` command.
+
+```shell
+pip install --user poetry-plugin
+```
+
+If you want to uninstall a plugin, you can run:
+
+```shell
+pip uninstall poetry-plugin
 ```

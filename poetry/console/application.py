@@ -70,6 +70,8 @@ COMMANDS = [
     "env list",
     "env remove",
     "env use",
+    # Plugin commands
+    "plugin add",
     # Self commands
     "self update",
 ]
@@ -78,6 +80,7 @@ COMMANDS = [
 if TYPE_CHECKING:
     from cleo.io.inputs.definition import Definition
 
+    from poetry.console.commands.installer_command import InstallerCommand
     from poetry.poetry import Poetry
 
 
@@ -92,8 +95,8 @@ class Application(BaseApplication):
 
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, self.register_command_loggers)
-        dispatcher.add_listener(COMMAND, self.set_env)
-        dispatcher.add_listener(COMMAND, self.set_installer)
+        dispatcher.add_listener(COMMAND, self.configure_env)
+        dispatcher.add_listener(COMMAND, self.configure_installer)
         self.set_event_dispatcher(dispatcher)
 
         command_loader = CommandLoader({name: load_command(name) for name in COMMANDS})
@@ -239,7 +242,9 @@ class Application(BaseApplication):
 
             logger.setLevel(level)
 
-    def set_env(self, event: ConsoleCommandEvent, event_name: str, _: Any) -> None:
+    def configure_env(
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
+    ) -> None:
         from .commands.env_command import EnvCommand
 
         command: EnvCommand = cast(EnvCommand, event.command)
@@ -262,7 +267,7 @@ class Application(BaseApplication):
 
         command.set_env(env)
 
-    def set_installer(
+    def configure_installer(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from .commands.installer_command import InstallerCommand
@@ -276,11 +281,14 @@ class Application(BaseApplication):
         if command.installer is not None:
             return
 
+        self._configure_installer(command, event.io)
+
+    def _configure_installer(self, command: "InstallerCommand", io: "IO") -> None:
         from poetry.installation.installer import Installer
 
         poetry = command.poetry
         installer = Installer(
-            event.io,
+            io,
             command.env,
             poetry.package,
             poetry.locker,

@@ -40,7 +40,7 @@ class Installer:
         locker: Locker,
         pool: Pool,
         config: Config,
-        installed: Union[InstalledRepository, None] = None,
+        installed: Union[Repository, None] = None,
         executor: Optional[Executor] = None,
     ):
         self._io = io
