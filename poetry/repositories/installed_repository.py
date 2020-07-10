@@ -90,6 +90,7 @@ class InstalledRepository(Repository):
                             # TODO: handle multiple source directories?
                             package.source_type = "directory"
                             package.source_url = paths.pop().as_posix()
+
                     continue
 
                 src_path = env.path / "src"

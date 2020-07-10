@@ -7,7 +7,7 @@ import re
 import shutil
 import sys
 import sysconfig
-import warnings
+import textwrap
 
 from contextlib import contextmanager
 from typing import Any
@@ -20,6 +20,12 @@ import tomlkit
 
 from clikit.api.io import IO
 
+import packaging.tags
+
+from packaging.tags import Tag
+from packaging.tags import interpreter_name
+from packaging.tags import interpreter_version
+from packaging.tags import sys_tags
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import BaseMarker
@@ -39,6 +45,36 @@ import json
 import os
 import platform
 import sys
+import sysconfig
+
+INTERPRETER_SHORT_NAMES = {
+    "python": "py",
+    "cpython": "cp",
+    "pypy": "pp",
+    "ironpython": "ip",
+    "jython": "jy",
+}
+
+
+def interpreter_version():
+    version = sysconfig.get_config_var("interpreter_version")
+    if version:
+        version = str(version)
+    else:
+        version = _version_nodot(sys.version_info[:2])
+
+    return version
+
+
+def _version_nodot(version):
+    # type: (PythonVersion) -> str
+    if any(v >= 10 for v in version):
+        sep = "_"
+    else:
+        sep = ""
+
+    return sep.join(map(str, version))
+
 
 if hasattr(sys, "implementation"):
     info = sys.implementation.version
@@ -50,7 +86,7 @@ if hasattr(sys, "implementation"):
     implementation_name = sys.implementation.name
 else:
     iver = "0"
-    implementation_name = ""
+    implementation_name = platform.python_implementation().lower()
 
 env = {
     "implementation_name": implementation_name,
@@ -65,6 +101,9 @@ env = {
     "python_version": platform.python_version()[:3],
     "sys_platform": sys.platform,
     "version_info": tuple(sys.version_info),
+    # Extra information
+    "interpreter_name": INTERPRETER_SHORT_NAMES.get(implementation_name, implementation_name),
+    "interpreter_version": interpreter_version(),
 }
 
 print(json.dumps(env))
@@ -80,12 +119,6 @@ elif hasattr(sys, "base_prefix"):
     print(sys.base_prefix)
 else:
     print(sys.prefix)
-"""
-
-GET_CONFIG_VAR = """\
-import sysconfig
-
-print(sysconfig.get_config_var("{config_var}")),
 """
 
 GET_PYTHON_VERSION = """\
@@ -742,6 +775,7 @@ class Env(object):
         self._pip_version = None
         self._site_packages = None
         self._paths = None
+        self._supported_tags = None
 
     @property
     def path(self):  # type: () -> Path
@@ -813,6 +847,13 @@ class Env(object):
 
         return self._paths
 
+    @property
+    def supported_tags(self):  # type: () -> List[Tag]
+        if self._supported_tags is None:
+            self._supported_tags = self.get_supported_tags()
+
+        return self._supported_tags
+
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
@@ -835,7 +876,7 @@ class Env(object):
     def get_pip_command(self):  # type: () -> List[str]
         raise NotImplementedError()
 
-    def config_var(self, var):  # type: (str) -> Any
+    def get_supported_tags(self):  # type: () -> List[Tag]
         raise NotImplementedError()
 
     def get_pip_version(self):  # type: () -> Version
@@ -987,6 +1028,9 @@ class SystemEnv(Env):
 
         return paths
 
+    def get_supported_tags(self):  # type: () -> List[Tag]
+        return list(sys_tags())
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         if hasattr(sys, "implementation"):
             info = sys.implementation.version
@@ -1015,15 +1059,10 @@ class SystemEnv(Env):
             ),
             "sys_platform": sys.platform,
             "version_info": sys.version_info,
+            # Extra information
+            "interpreter_name": interpreter_name(),
+            "interpreter_version": interpreter_version(),
         }
-
-    def config_var(self, var):  # type: (str) -> Any
-        try:
-            return sysconfig.get_config_var(var)
-        except IOError as e:
-            warnings.warn("{0}".format(e), RuntimeWarning)
-
-            return
 
     def get_pip_version(self):  # type: () -> Version
         from pip import __version__
@@ -1068,28 +1107,40 @@ class VirtualEnv(Env):
         # so assume that we have a functional pip
         return [self._bin("pip")]
 
+    def get_supported_tags(self):  # type: () -> List[Tag]
+        file_path = Path(packaging.tags.__file__)
+        if file_path.suffix == ".pyc":
+            # Python 2
+            file_path = file_path.with_suffix(".py")
+
+        with file_path.open(encoding="utf-8") as f:
+            script = decode(f.read())
+
+        script = script.replace(
+            "from ._typing import TYPE_CHECKING, cast",
+            "TYPE_CHECKING = False\ncast = lambda type_, value: value",
+        )
+        script = script.replace(
+            "from ._typing import MYPY_CHECK_RUNNING, cast",
+            "MYPY_CHECK_RUNNING = False\ncast = lambda type_, value: value",
+        )
+
+        script += textwrap.dedent(
+            """
+            import json
+
+            print(json.dumps([(t.interpreter, t.abi, t.platform) for t in sys_tags()]))
+            """
+        )
+
+        output = self.run("python", "-", input_=script)
+
+        return [Tag(*t) for t in json.loads(output)]
+
     def get_marker_env(self):  # type: () -> Dict[str, Any]
         output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)
 
         return json.loads(output)
-
-    def config_var(self, var):  # type: (str) -> Any
-        try:
-            value = self.run(
-                "python", "-", input_=GET_CONFIG_VAR.format(config_var=var)
-            ).strip()
-        except EnvCommandError as e:
-            warnings.warn("{0}".format(e), RuntimeWarning)
-            return None
-
-        if value == "None":
-            value = None
-        elif value == "1":
-            value = 1
-        elif value == "0":
-            value = 0
-
-        return value
 
     def get_pip_version(self):  # type: () -> Version
         output = self.run_pip("--version").strip()
@@ -1188,7 +1239,7 @@ class MockEnv(NullEnv):
         pip_version="19.1",
         sys_path=None,
         marker_env=None,
-        config_vars=None,
+        supported_tags=None,
         **kwargs
     ):
         super(MockEnv, self).__init__(**kwargs)
@@ -1201,15 +1252,7 @@ class MockEnv(NullEnv):
         self._pip_version = Version.parse(pip_version)
         self._sys_path = sys_path
         self._mock_marker_env = marker_env
-        self._config_vars = config_vars
-
-    @property
-    def version_info(self):  # type: () -> Tuple[int]
-        return self._version_info
-
-    @property
-    def python_implementation(self):  # type: () -> str
-        return self._python_implementation
+        self._supported_tags = supported_tags
 
     @property
     def platform(self):  # type: () -> str
@@ -1240,17 +1283,12 @@ class MockEnv(NullEnv):
         marker_env["python_version"] = ".".join(str(v) for v in self._version_info[:2])
         marker_env["python_full_version"] = ".".join(str(v) for v in self._version_info)
         marker_env["sys_platform"] = self._platform
+        marker_env["interpreter_name"] = self._python_implementation.lower()
+        marker_env["interpreter_version"] = "cp" + "".join(
+            str(v) for v in self._version_info[:2]
+        )
 
         return marker_env
 
     def is_venv(self):  # type: () -> bool
         return self._is_venv
-
-    def config_var(self, var):  # type: (str) -> Any
-        if self._config_vars is None:
-            return super().config_var(var)
-        else:
-            try:
-                return self._config_vars[var]
-            except KeyError:
-                return None

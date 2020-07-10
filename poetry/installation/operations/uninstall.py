@@ -2,8 +2,8 @@ from .operation import Operation
 
 
 class Uninstall(Operation):
-    def __init__(self, package, reason=None):
-        super(Uninstall, self).__init__(reason)
+    def __init__(self, package, reason=None, priority=float("inf")):
+        super(Uninstall, self).__init__(reason, priority=priority)
 
         self._package = package
 

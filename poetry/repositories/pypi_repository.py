@@ -241,6 +241,18 @@ class PyPiRepository(RemoteRepository):
 
         return PackageInfo.load(cached)
 
+    def find_links_for_package(self, package):
+        json_data = self._get("pypi/{}/{}/json".format(package.name, package.version))
+        if json_data is None:
+            return []
+
+        links = []
+        for url in json_data["urls"]:
+            h = "sha256={}".format(url["digests"]["sha256"])
+            links.append(Link(url["url"] + "#" + h))
+
+        return links
+
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         self._log("Getting info for {} ({}) from PyPI".format(name, version), "debug")
 

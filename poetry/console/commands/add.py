@@ -1,11 +1,11 @@
 from cleo import argument
 from cleo import option
 
-from .env_command import EnvCommand
 from .init import InitCommand
+from .installer_command import InstallerCommand
 
 
-class AddCommand(EnvCommand, InitCommand):
+class AddCommand(InstallerCommand, InitCommand):
 
     name = "add"
     description = "Adds a new dependency to <comment>pyproject.toml</>."
@@ -56,7 +56,6 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation.installer import Installer
         from poetry.core.semver import parse_constraint
         from tomlkit import inline_table
 
@@ -149,18 +148,17 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         # Update packages
         self.reset_poetry()
 
-        installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
-        )
-
-        installer.dry_run(self.option("dry-run"))
-        installer.update(True)
+        self._installer.set_package(self.poetry.package)
+        self._installer.dry_run(self.option("dry-run"))
+        self._installer.verbose(self._io.is_verbose())
+        self._installer.update(True)
         if self.option("lock"):
-            installer.lock()
-        installer.whitelist([r["name"] for r in requirements])
+            self._installer.lock()
+
+        self._installer.whitelist([r["name"] for r in requirements])
 
         try:
-            status = installer.run()
+            status = self._installer.run()
         except Exception:
             self.poetry.file.write(original_content)
 
@@ -169,10 +167,10 @@ If you do not specify a version constraint, poetry will choose a suitable one ba
         if status != 0 or self.option("dry-run"):
             # Revert changes
             if not self.option("dry-run"):
-                self.error(
+                self.line_error(
                     "\n"
-                    "Addition failed, reverting pyproject.toml "
-                    "to its original content."
+                    "<error>Failed to add packages, reverting the pyproject.toml file "
+                    "to its original content.</error>"
                 )
 
             self.poetry.file.write(original_content)
