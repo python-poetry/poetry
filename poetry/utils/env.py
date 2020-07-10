@@ -908,15 +908,15 @@ class Env(object):
         """
         Run a command inside the Python environment.
         """
-        shell = kwargs.get("shell", False)
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
 
-        if shell:
-            cmd = list_to_shell_command(cmd)
         try:
             if self._is_windows:
                 kwargs["shell"] = True
+
+            if kwargs.get("shell", False):
+                cmd = list_to_shell_command(cmd)
 
             if input_:
                 output = subprocess.run(
