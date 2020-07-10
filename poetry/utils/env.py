@@ -803,7 +803,7 @@ class EnvManager(object):
         p_venv = os.path.normcase(str(venv))
         if any(p.startswith(p_venv) for p in paths):
             # Running properly in the virtualenv, don't need to do anything
-            return SystemEnv(Path(sys.prefix), self.get_base_prefix())
+            return self.get_system_env()
 
         return VirtualEnv(venv)
 
@@ -874,7 +874,12 @@ class EnvManager(object):
             elif file_path.is_dir():
                 shutil.rmtree(str(file_path))
 
-    def get_base_prefix(self) -> Path:
+    @classmethod
+    def get_system_env(cls) -> "SystemEnv":
+        return SystemEnv(Path(sys.prefix), cls.get_base_prefix())
+
+    @classmethod
+    def get_base_prefix(cls) -> Path:
         if hasattr(sys, "real_prefix"):
             return Path(sys.real_prefix)
 

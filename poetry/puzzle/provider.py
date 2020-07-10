@@ -431,7 +431,6 @@ class Provider:
         ]
 
     def complete_package(self, package: DependencyPackage) -> DependencyPackage:
-
         if package.is_root():
             package = package.clone()
             requires = package.all_requires

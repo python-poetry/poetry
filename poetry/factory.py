@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Dict
+from typing import List
 from typing import Optional
 
 from cleo.io.io import IO
@@ -80,32 +81,9 @@ class Factory(BaseFactory):
         )
 
         # Configuring sources
-        sources = poetry.local_config.get("source", [])
-        for source in sources:
-            repository = self.create_legacy_repository(source, config)
-            is_default = source.get("default", False)
-            is_secondary = source.get("secondary", False)
-            if io.is_debug():
-                message = "Adding repository {} ({})".format(
-                    repository.name, repository.url
-                )
-                if is_default:
-                    message += " and setting it as the default one"
-                elif is_secondary:
-                    message += " and setting it as secondary"
-
-                io.write_line(message)
-
-            poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
-
-        # Always put PyPI last to prefer private repositories
-        # but only if we have no other default source
-        if not poetry.pool.has_default():
-            has_sources = bool(sources)
-            poetry.pool.add_repository(PyPiRepository(), not has_sources, has_sources)
-        else:
-            if io.is_debug():
-                io.write_line("Deactivating the PyPI repository")
+        self.configure_sources(
+            poetry, poetry.local_config.get("source", []), config, io
+        )
 
         plugin_manager = PluginManager("plugin", disable_plugins=disable_plugins)
         plugin_manager.load_plugins()
@@ -154,8 +132,39 @@ class Factory(BaseFactory):
 
         return config
 
+    @classmethod
+    def configure_sources(
+        cls, poetry: "Poetry", sources: List[Dict[str, str]], config: "Config", io: "IO"
+    ) -> None:
+        for source in sources:
+            repository = cls.create_legacy_repository(source, config)
+            is_default = source.get("default", False)
+            is_secondary = source.get("secondary", False)
+            if io.is_debug():
+                message = "Adding repository {} ({})".format(
+                    repository.name, repository.url
+                )
+                if is_default:
+                    message += " and setting it as the default one"
+                elif is_secondary:
+                    message += " and setting it as secondary"
+
+                io.write_line(message)
+
+            poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
+
+        # Always put PyPI last to prefer private repositories
+        # but only if we have no other default source
+        if not poetry.pool.has_default():
+            has_sources = bool(sources)
+            poetry.pool.add_repository(PyPiRepository(), not has_sources, has_sources)
+        else:
+            if io.is_debug():
+                io.write_line("Deactivating the PyPI repository")
+
+    @classmethod
     def create_legacy_repository(
-        self, source: Dict[str, str], auth_config: Config
+        cls, source: Dict[str, str], auth_config: Config
     ) -> "LegacyRepository":
         from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
@@ -177,4 +186,50 @@ class Factory(BaseFactory):
             config=auth_config,
             cert=get_cert(auth_config, name),
             client_cert=get_client_cert(auth_config, name),
+        )
+
+    @classmethod
+    def create_pyproject_from_package(
+        cls, package: "ProjectPackage", path: "Path"
+    ) -> None:
+        import tomlkit
+
+        from poetry.layouts.layout import POETRY_DEFAULT
+
+        pyproject = tomlkit.loads(POETRY_DEFAULT)
+        content = pyproject["tool"]["poetry"]
+
+        content["name"] = package.name
+        content["version"] = package.version.text
+        content["description"] = package.description
+        content["authors"] = package.authors
+
+        dependency_section = content["dependencies"]
+        dependency_section["python"] = package.python_versions
+
+        for dep in package.requires:
+            constraint = tomlkit.inline_table()
+            if dep.is_vcs():
+                constraint[dep.vcs] = dep.source_url
+
+                if dep.reference:
+                    constraint["rev"] = dep.reference
+            elif dep.is_file() or dep.is_directory():
+                constraint["path"] = dep.source_url
+            else:
+                constraint["version"] = dep.pretty_constraint
+
+            if not dep.marker.is_any():
+                constraint["markers"] = str(dep.marker)
+
+            if dep.extras:
+                constraint["extras"] = list(sorted(dep.extras))
+
+            if len(constraint) == 1 and "version" in constraint:
+                constraint = constraint["version"]
+
+            dependency_section[dep.name] = constraint
+
+        path.joinpath("pyproject.toml").write_text(
+            pyproject.as_string(), encoding="utf-8"
         )
