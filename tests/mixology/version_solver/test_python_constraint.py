@@ -3,12 +3,12 @@ from ..helpers import check_solver_result
 
 
 def test_dependency_does_not_match_root_python_constraint(root, provider, repo):
-    root.python_versions = "^3.6"
+    provider.set_package_python_versions("^3.6")
     root.add_dependency("foo", "*")
 
     add_to_repo(repo, "foo", "1.0.0", python="<3.5")
 
-    error = """The current project's Python requirement (^3.6) \
+    error = """The current project's Python requirement (>=3.6,<4.0) \
 is not compatible with some of the required packages Python requirement:
   - foo requires Python <3.5, so it will not be satisfied for Python >=3.6,<4.0
 
