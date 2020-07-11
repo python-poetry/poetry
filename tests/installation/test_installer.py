@@ -82,6 +82,7 @@ class Locker(BaseLocker):
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
+        self._write_hash = True
 
     @property
     def written_data(self):

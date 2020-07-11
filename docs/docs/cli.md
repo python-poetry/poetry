@@ -174,6 +174,7 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--no-dev` : Do not install dev dependencies.
 * `--lock` : Do not perform install (only update the lockfile).
+* `--no-hash` : Do not write a content-hash to the lockfile. Useful with merge conflics.
 
 ## add
 

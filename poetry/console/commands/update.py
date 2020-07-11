@@ -23,6 +23,7 @@ class UpdateCommand(InstallerCommand):
             "(implicitly enables --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
+        option("no-hash", None, "Do not write a content-hash to the lockfile."),
     ]
 
     loggers = ["poetry.repositories.pypi_repository"]
@@ -39,6 +40,7 @@ class UpdateCommand(InstallerCommand):
 
         self._installer.dev_mode(not self.option("no-dev"))
         self._installer.dry_run(self.option("dry-run"))
+        self.poetry.locker.set_write_hash(not self.option("no-hash"))
         self._installer.execute_operations(not self.option("lock"))
 
         # Force update

@@ -139,6 +139,7 @@ class Locker(BaseLocker):
         self._locked = False
         self._lock_data = None
         self._write = False
+        self._write_hash = True
 
     def write(self, write=True):
         self._write = write

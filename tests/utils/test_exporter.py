@@ -14,6 +14,7 @@ class Locker(BaseLocker):
     def __init__(self):
         self._locked = True
         self._content_hash = self._get_content_hash()
+        self._write_hash = True
 
     def locked(self, is_locked=True):
         self._locked = is_locked

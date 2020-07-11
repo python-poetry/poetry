@@ -36,6 +36,7 @@ class Locker(object):
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
+        self._write_hash = True
 
     @property
     def lock(self):  # type: () -> TomlFile
@@ -190,6 +191,8 @@ class Locker(object):
             "content-hash": self._content_hash,
             "files": files,
         }
+        if not self._write_hash:
+            del lock["metadata"]["content-hash"]
 
         if not self.is_locked() or lock != self.lock_data:
             self._write_lock_data(lock)
@@ -206,6 +209,9 @@ class Locker(object):
             raise RuntimeError("Inconsistent lock file data.")
 
         self._lock_data = None
+
+    def set_write_hash(self, write_hash=True):
+        self._write_hash = write_hash
 
     def _get_content_hash(self):  # type: () -> str
         """
