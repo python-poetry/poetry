@@ -119,6 +119,8 @@ class Executor(object):
                 self._shutdown = True
 
             if self._shutdown:
+                # Cancelling further tasks from being executed
+                [task.cancel() for task in tasks]
                 self._executor.shutdown(wait=True)
 
                 break
