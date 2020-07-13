@@ -229,9 +229,15 @@ class Git:
                 folder.as_posix(),
             ]
 
-        # We need "^{commit}" to ensure that the commit SHA of the commit the
-        # tag points to is returned, even in the case of annotated tags.
-        args += ["rev-parse", rev + "^{commit}"]
+        # We need "^0" (an alternative to "^{commit}") to ensure that the
+        # commit SHA of the commit the tag points to is returned, even in
+        # the case of annotated tags.
+        #
+        # We deliberately avoid the "^{commit}" syntax itself as on some
+        # platforms (cygwin/msys to be specific), the braces are interpreted
+        # as special characters and would require escaping, while on others
+        # they should not be escaped.
+        args += ["rev-parse", rev + "^0"]
 
         return self.run(*args)
 
