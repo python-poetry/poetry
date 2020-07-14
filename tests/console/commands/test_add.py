@@ -513,8 +513,8 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing demo (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
     # Order might be different, split into lines and compare the overall output.
-    expected = set(expected.splitlines)
-    output = set(tester.io.fetch_output())
+    expected = set(expected.splitlines())
+    output = set(tester.io.fetch_output().splitlines())
     assert expected == output
     assert 4 == tester._command.installer.executor.installations_count
 
