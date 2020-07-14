@@ -253,7 +253,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert expected.strip() == tester.io.fetch_output().strip()
     assert 4 == tester._command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
