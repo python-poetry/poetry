@@ -185,7 +185,7 @@ class Factory:
         # Always put PyPI last to prefer private repositories
         # but only if we have no other default source
         if not poetry.pool.has_default():
-            poetry.pool.add_repository(PyPiRepository(), True)
+            poetry.pool.add_repository(PyPiRepository(), default=False)
         else:
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")

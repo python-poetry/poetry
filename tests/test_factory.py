@@ -155,6 +155,14 @@ def test_poetry_with_two_default_sources():
     assert "Only one repository can be the default" == str(e.value)
 
 
+def test_poetry_with_custom_source():
+    poetry = Factory().create_poetry(fixtures_dir / "with_custom_source")
+
+    assert ["foo", "PyPI"] == [
+        repository.name for repository in poetry.pool.repositories
+    ]
+
+
 def test_validate():
     complete = TomlFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
