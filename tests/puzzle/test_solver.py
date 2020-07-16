@@ -431,6 +431,30 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
     assert ops[0].package.marker.is_any()
 
 
+def test_solver_returns_extras_multi_markers(solver, repo, package):
+    package.add_dependency("A", {"version": "*", "extras": ["foo"]})
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+
+    package_a.add_dependency(
+        "B", {"version": "^1.0", "markers": "extra == 'foo' or extra == 'bar'"}
+    )
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+
 def test_solver_returns_prereleases_if_requested(solver, repo, package):
     package.add_dependency("A")
     package.add_dependency("B")

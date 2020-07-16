@@ -658,7 +658,10 @@ class MarkerUnion(BaseMarker):
         return False
 
     def without_extras(self):
-        return self.exclude("extra")
+        marker = self.exclude("extra")
+        if marker.is_empty():
+            return AnyMarker()
+        return marker
 
     def exclude(self, marker_name):  # type: (str) -> BaseMarker
         new_markers = []
