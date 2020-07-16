@@ -1,5 +1,18 @@
 # Change Log
 
+## [1.1.0a3] - 2020-07-10
+
+### Added
+
+- New installer which provides a faster and better experience ([#2595](https://github.com/python-poetry/poetry/pull/2595)).
+
+### Fixed
+
+- Fixed resolution error when handling duplicate dependencies with environment markers ([#2622](https://github.com/python-poetry/poetry/pull/2622)).
+- Fixed erroneous resolution errors when resolving packages to install ([#2625](https://github.com/python-poetry/poetry/pull/2625)).
+- Fixed errors when detecting installed editable packages ([#2602](https://github.com/python-poetry/poetry/pull/2602)).
+
+
 ## [1.1.0a2] - 2020-06-26
 
 Note that lock files generated with this release are not compatible with previous releases of Poetry.
@@ -904,7 +917,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0a2...develop
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0a3...develop
+[1.1.0a3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a3
 [1.1.0a2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a2
 [1.1.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a1
 [1.0.9]: https://github.com/python-poetry/poetry/releases/tag/1.0.9

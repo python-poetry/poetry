@@ -4,11 +4,14 @@ from typing import Union
 
 
 class Operation(object):
-    def __init__(self, reason=None):  # type: (Union[str, None]) -> None
+    def __init__(
+        self, reason=None, priority=0
+    ):  # type: (Union[str, None], int) -> None
         self._reason = reason
 
         self._skipped = False
         self._skip_reason = None
+        self._priority = priority
 
     @property
     def job_type(self):  # type: () -> str
@@ -25,6 +28,10 @@ class Operation(object):
     @property
     def skip_reason(self):  # type: () -> Union[str, None]
         return self._skip_reason
+
+    @property
+    def priority(self):  # type: () -> int
+        return self._priority
 
     @property
     def package(self):

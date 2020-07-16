@@ -18,6 +18,7 @@ from poetry.core.packages import Package
 from poetry.core.packages import URLDependency
 from poetry.core.packages import VCSDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
+from poetry.core.semver.version import Version
 from poetry.core.vcs.git import Git
 from poetry.core.version.markers import MarkerUnion
 from poetry.inspection.info import PackageInfo
@@ -80,12 +81,15 @@ class Provider:
     @contextmanager
     def use_environment(self, env):  # type: (Env) -> Provider
         original_env = self._env
+        original_python_constraint = self._python_constraint
 
         self._env = env
+        self._python_constraint = Version.parse(env.marker_env["python_full_version"])
 
         yield self
 
         self._env = original_env
+        self._python_constraint = original_python_constraint
 
     def search_for(self, dependency):  # type: (Dependency) -> List[Package]
         """
@@ -380,9 +384,7 @@ class Provider:
         else:
             dependencies = package.requires
 
-            if not package.python_constraint.allows_all(
-                self._package.python_constraint
-            ):
+            if not package.python_constraint.allows_all(self._python_constraint):
                 transitive_python_constraint = get_python_constraint_from_marker(
                     package.dependency.transitive_marker
                 )
@@ -392,7 +394,7 @@ class Provider:
                 difference = transitive_python_constraint.difference(intersection)
                 if (
                     transitive_python_constraint.is_any()
-                    or self._package.python_constraint.intersect(
+                    or self._python_constraint.intersect(
                         package.dependency.python_constraint
                     ).is_empty()
                     or intersection.is_empty()
@@ -402,7 +404,7 @@ class Provider:
                         Incompatibility(
                             [Term(package.to_dependency(), True)],
                             PythonCause(
-                                package.python_versions, self._package.python_versions
+                                package.python_versions, str(self._python_constraint)
                             ),
                         )
                     ]
@@ -411,7 +413,7 @@ class Provider:
             dep
             for dep in dependencies
             if dep.name not in self.UNSAFE_PACKAGES
-            and self._package.python_constraint.allows_any(dep.python_constraint)
+            and self._python_constraint.allows_any(dep.python_constraint)
             and (not self._env or dep.marker.validate(self._env.marker_env))
         ]
 
@@ -477,7 +479,7 @@ class Provider:
         _dependencies = [
             r
             for r in requires
-            if self._package.python_constraint.allows_any(r.python_constraint)
+            if self._python_constraint.allows_any(r.python_constraint)
             and r.name not in self.UNSAFE_PACKAGES
             and (not self._env or r.marker.validate(self._env.marker_env))
         ]
@@ -646,7 +648,7 @@ class Provider:
             overrides = []
             for _dep in _deps:
                 current_overrides = self._overrides.copy()
-                package_overrides = current_overrides.get(package, {})
+                package_overrides = current_overrides.get(package, {}).copy()
                 package_overrides.update({_dep.name: _dep})
                 current_overrides.update({package: package_overrides})
                 overrides.append(current_overrides)

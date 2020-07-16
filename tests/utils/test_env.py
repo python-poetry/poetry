@@ -9,6 +9,7 @@ from clikit.io import NullIO
 
 from poetry.core.semver import Version
 from poetry.factory import Factory
+from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
@@ -535,17 +536,11 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     assert venv_name not in envs
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or PY2, reason="Symlinks are not support for Windows"
+)
 def test_env_has_symlinks_on_nix(tmp_dir, tmp_venv):
-    venv_available = False
-    try:
-        from venv import EnvBuilder  # noqa
-
-        venv_available = True
-    except ImportError:
-        pass
-
-    if os.name != "nt" and venv_available:
-        assert os.path.islink(tmp_venv.python)
+    assert os.path.islink(tmp_venv.python)
 
 
 def test_run_with_input(tmp_dir, tmp_venv):

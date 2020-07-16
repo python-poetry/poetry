@@ -3,7 +3,7 @@
 set -e
 
 test -n "$PYTHON" || PYTHON="python3"
-$PYTHON get-poetry.py -y
+$PYTHON get-poetry.py -y --preview
 $PYTHON $HOME/.poetry/bin/poetry config virtualenvs.create false
 $PYTHON $HOME/.poetry/bin/poetry install --no-dev
 $PYTHON $HOME/.poetry/bin/poetry run python sonnet make release \
