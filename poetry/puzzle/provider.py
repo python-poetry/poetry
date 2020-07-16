@@ -52,6 +52,8 @@ class Indicator(ProgressIndicator):
 
 class Provider:
 
+    # See the following link about why pkg-resources is included:
+    # https://stackoverflow.com/questions/39577984/what-is-pkg-resources-0-0-0-in-output-of-pip-freeze-command
     UNSAFE_PACKAGES = {"setuptools", "pkg-resources", "distribute", "pip"}
 
     def __init__(
