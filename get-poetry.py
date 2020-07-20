@@ -449,6 +449,26 @@ class Installer:
 
                 break
 
+        current_version = None
+        if os.path.exists(POETRY_LIB):
+            with open(
+                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
+            ) as f:
+                version_content = f.read()
+
+            current_version_re = re.match(
+                '(?ms).*__version__ = "(.+)".*', version_content
+            )
+            if not current_version_re:
+                print(
+                    colorize(
+                        "warning",
+                        "Unable to get the current Poetry version. Assuming None",
+                    )
+                )
+            else:
+                current_version = current_version_re.group(1)
+
         if current_version == version and not self._force:
             print("Latest version already installed.")
             return None, current_version
@@ -637,6 +657,7 @@ class Installer:
             if match and tuple(map(int, match.groups())) >= (3, 0):
                 # favor the first py3 executable we can find.
                 return executable
+
             if fallback is None:
                 # keep this one as the fallback; it was the first valid executable we found.
                 fallback = executable
@@ -669,8 +690,10 @@ class Installer:
                 )
 
         with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
-            if not WINDOWS:
-                f.write(u("#!/usr/bin/env {}\n".format(python_executable)))
+            if WINDOWS:
+                python_executable = "python"
+
+            f.write(u("#!/usr/bin/env {}\n".format(python_executable)))
             f.write(u(BIN))
 
         if not WINDOWS:
