@@ -50,7 +50,7 @@ This release **must** be downloaded via the `get-poetry.py` script and not via t
 - The exceptions are now beautifully displayed in the terminal with various level of details depending on the verbosity ([2230](https://github.com/python-poetry/poetry/pull/2230)).
 
 
-## [1.0.9] - 2010-06-09
+## [1.0.9] - 2020-06-09
 
 ### Fixed
 

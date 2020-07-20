@@ -142,7 +142,7 @@ class PipInstaller(BaseInstaller):
 
         if package.source_type in ["file", "directory"]:
             if package.root_dir:
-                req = os.path.join(package.root_dir, package.source_url)
+                req = (package.root_dir / package.source_url).as_posix()
             else:
                 req = os.path.realpath(package.source_url)
 
@@ -185,7 +185,7 @@ class PipInstaller(BaseInstaller):
         from poetry.utils.toml_file import TomlFile
 
         if package.root_dir:
-            req = os.path.join(package.root_dir, package.source_url)
+            req = (package.root_dir / package.source_url).as_posix()
         else:
             req = os.path.realpath(package.source_url)
 

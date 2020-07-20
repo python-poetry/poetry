@@ -424,7 +424,7 @@ class EnvManager(object):
                 if venv.path.name == python:
                     # Exact virtualenv name
                     if not envs_file.exists():
-                        self.remove_venv(str(venv.path))
+                        self.remove_venv(venv.path)
 
                         return venv
 
@@ -434,7 +434,7 @@ class EnvManager(object):
 
                     current_env = envs.get(base_env_name)
                     if not current_env:
-                        self.remove_venv(str(venv.path))
+                        self.remove_venv(venv.path)
 
                         return venv
 
@@ -442,7 +442,7 @@ class EnvManager(object):
                         del envs[base_env_name]
                         envs_file.write(envs)
 
-                    self.remove_venv(str(venv.path))
+                    self.remove_venv(venv.path)
 
                     return venv
 
@@ -496,7 +496,7 @@ class EnvManager(object):
                     del envs[base_env_name]
                     envs_file.write(envs)
 
-        self.remove_venv(str(venv))
+        self.remove_venv(venv)
 
         return VirtualEnv(venv)
 
@@ -642,7 +642,7 @@ class EnvManager(object):
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
             )
 
-            self.build_venv(str(venv), executable=executable)
+            self.build_venv(venv, executable=executable)
         else:
             if force:
                 if not env.is_sane():
@@ -654,8 +654,8 @@ class EnvManager(object):
                 io.write_line(
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
-                self.remove_venv(str(venv))
-                self.build_venv(str(venv), executable=executable)
+                self.remove_venv(venv)
+                self.build_venv(venv, executable=executable)
             elif io.is_very_verbose():
                 io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
 
@@ -680,21 +680,41 @@ class EnvManager(object):
     @classmethod
     def build_venv(
         cls, path, executable=None
-    ):  # type: (str, Optional[Union[str, Path]]) -> virtualenv.run.session.Session
+    ):  # type: (Union[Path,str], Optional[Union[str, Path]]) -> virtualenv.run.session.Session
         if isinstance(executable, Path):
-            executable = executable.resolve()
+            executable = executable.resolve().as_posix()
         return virtualenv.cli_run(
             [
                 "--no-download",
                 "--no-periodic-update",
                 "--python",
                 executable or sys.executable,
-                path,
+                str(path),
             ]
         )
 
-    def remove_venv(self, path):  # type: (str) -> None
-        shutil.rmtree(path)
+    @classmethod
+    def remove_venv(cls, path):  # type: (Union[Path,str]) -> None
+        if isinstance(path, str):
+            path = Path(path)
+        assert path.is_dir()
+        try:
+            shutil.rmtree(str(path))
+            return
+        except OSError as e:
+            # Continue only if e.errno == 16
+            if e.errno != 16:  # ERRNO 16: Device or resource busy
+                raise e
+
+        # Delete all files and folders but the toplevel one. This is because sometimes
+        # the venv folder is mounted by the OS, such as in a docker volume. In such
+        # cases, an attempt to delete the folder itself will result in an `OSError`.
+        # See https://github.com/python-poetry/poetry/pull/2064
+        for file_path in path.iterdir():
+            if file_path.is_file() or file_path.is_symlink():
+                file_path.unlink()
+            elif file_path.is_dir():
+                shutil.rmtree(str(file_path))
 
     def get_base_prefix(self):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
