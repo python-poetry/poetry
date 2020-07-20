@@ -48,7 +48,7 @@ jobs:
       - name: Install poetry
         shell: bash
         run: |
-          python get-poetry.py -y
+          python get-poetry.py -y --preview
           echo "::set-env name=PATH::$HOME/.poetry/bin:$PATH"
 
       - name: Configure poetry
