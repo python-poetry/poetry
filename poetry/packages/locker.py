@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 
 from hashlib import sha256
@@ -13,12 +14,19 @@ from tomlkit.exceptions import TOMLKitError
 import poetry.packages
 import poetry.repositories
 
+from poetry.semver import parse_constraint
+from poetry.semver.version import Version
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 from poetry.version.markers import parse_marker
 
 
+logger = logging.getLogger(__name__)
+
+
 class Locker(object):
+
+    _VERSION = "1.0"
 
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
@@ -180,6 +188,7 @@ class Locker(object):
             }
 
         lock["metadata"] = {
+            "lock-version": self._VERSION,
             "python-versions": root.python_versions,
             "content-hash": self._content_hash,
             "files": files,
@@ -222,9 +231,30 @@ class Locker(object):
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
         try:
-            return self._lock.read()
+            lock_data = self._lock.read()
         except TOMLKitError as e:
             raise RuntimeError("Unable to read the lock file ({}).".format(e))
+
+        lock_version = Version.parse(lock_data["metadata"].get("lock-version", "1.0"))
+        current_version = Version.parse(self._VERSION)
+        accepted_versions = parse_constraint(
+            "^{}".format(Version(current_version.major, current_version.minor))
+        )
+        lock_version_allowed = accepted_versions.allows(lock_version)
+        if lock_version_allowed and current_version < lock_version:
+            logger.warning(
+                "The lock file might not be compatible with the current version of Poetry.\n"
+                "Upgrade Poetry to ensure the lock file is read properly or, alternatively, "
+                "regenerate the lock file with the `poetry lock` command."
+            )
+        elif not lock_version_allowed:
+            raise RuntimeError(
+                "The lock file is not compatible with the current version of Poetry.\n"
+                "Upgrade Poetry to be able to read the lock file or, alternatively, "
+                "regenerate the lock file with the `poetry lock` command."
+            )
+
+        return lock_data
 
     def _lock_packages(
         self, packages

@@ -54,7 +54,11 @@ class ApplicationConfig(BaseApplicationConfig):
 
         io = event.io
 
-        loggers = ["poetry.packages.package", "poetry.utils.password_manager"]
+        loggers = [
+            "poetry.packages.locker",
+            "poetry.packages.package",
+            "poetry.utils.password_manager",
+        ]
 
         loggers += command.loggers
 
@@ -65,7 +69,6 @@ class ApplicationConfig(BaseApplicationConfig):
             logger = logging.getLogger(logger)
 
             logger.handlers = [handler]
-            logger.propagate = False
 
             level = logging.WARNING
             if io.is_debug():
