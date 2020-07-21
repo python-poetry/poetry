@@ -60,6 +60,7 @@ url = "project_with_transitive_file_dependencies"
 
 [metadata]
 content-hash = "123456789"
+lock-version = "1.0"
 python-versions = "*"
 
 [metadata.files]
