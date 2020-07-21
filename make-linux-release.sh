@@ -1,15 +1,15 @@
-#!/bin/bash
-PYTHON_VERSIONS="cp27-cp27m cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38"
+#!/bin/sh
 
-cd /io
-/opt/python/cp37-cp37m/bin/pip install pip -U
-/opt/python/cp37-cp37m/bin/pip install poetry -U --pre
-/opt/python/cp37-cp37m/bin/poetry config virtualenvs.create false
-/opt/python/cp37-cp37m/bin/poetry install --no-dev
-/opt/python/cp37-cp37m/bin/python sonnet make release --ansi \
-    -P "2.7:/opt/python/cp27-cp27m/bin/python" \
-    -P "3.5:/opt/python/cp35-cp35m/bin/python" \
-    -P "3.6:/opt/python/cp36-cp36m/bin/python" \
-    -P "3.7:/opt/python/cp37-cp37m/bin/python" \
-    -P "3.8:/opt/python/cp38-cp38/bin/python"
-cd -
+set -e
+
+test -n "$PYTHON" || PYTHON="python3"
+$PYTHON get-poetry.py -y
+$PYTHON $HOME/.poetry/bin/poetry config virtualenvs.create false
+$PYTHON $HOME/.poetry/bin/poetry install --no-dev
+$PYTHON $HOME/.poetry/bin/poetry run python sonnet make release \
+    ${PYTHON27:+-P "2.7:$PYTHON27"} \
+    ${PYTHON35:+-P "3.5:$PYTHON35"} \
+    ${PYTHON36:+-P "3.6:$PYTHON36"} \
+    ${PYTHON37:+-P "3.7:$PYTHON37"} \
+    ${PYTHON38:+-P "3.8:$PYTHON38"} \
+    ${PYTHON39:+-P "3.9:$PYTHON39"}
