@@ -4,10 +4,10 @@ import pytest
 
 from clikit.io import NullIO
 
-from poetry.packages import ProjectPackage
-from poetry.packages.directory_dependency import DirectoryDependency
-from poetry.packages.file_dependency import FileDependency
-from poetry.packages.vcs_dependency import VCSDependency
+from poetry.core.packages import ProjectPackage
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
@@ -118,7 +118,7 @@ def test_search_for_vcs_read_setup_with_extras(provider, mocker):
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
     mocker.patch(
-        "poetry.puzzle.provider.Provider._execute_setup",
+        "poetry.inspection.info.PackageInfo._execute_setup",
         side_effect=EnvCommandError(CalledProcessError(1, "python", output="")),
     )
 

@@ -1,6 +1,13 @@
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   Linting:
@@ -41,7 +48,7 @@ jobs:
       - name: Install poetry
         shell: bash
         run: |
-          python get-poetry.py -y
+          python get-poetry.py -y --preview
           echo "::set-env name=PATH::$HOME/.poetry/bin:$PATH"
 
       - name: Configure poetry
@@ -60,10 +67,14 @@ jobs:
         shell: bash
         run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
 
+      - name: Upgrade pip
+        shell: bash
+        run: poetry run python -m pip install pip -U
+
       - name: Install dependencies
         shell: bash
         run: poetry install
 
       - name: Run pytest
         shell: bash
-        run: poetry run pytest -q tests
+        run: poetry run pytest -v tests

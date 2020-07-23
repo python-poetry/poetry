@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.0.10"
+version = "1.1.0a3"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -22,40 +22,43 @@ classifiers = [
 
 # Requirements
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.4"
-cleo = "^0.7.6"
-clikit = "^0.4.2"
+python = "~2.7 || ^3.5"
+
+poetry-core = "^1.0.0a8"
+cleo = "^0.8.1"
+clikit = "^0.6.2"
+crashtest = { version = "^0.3.0", python = "^3.6" }
 requests = "^2.18"
 cachy = "^0.3.0"
 requests-toolbelt = "^0.8.0"
-jsonschema = "^3.1"
-pyrsistent = "^0.14.2"
-pyparsing = "^2.2"
 cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
 tomlkit = "^0.5.11"
 pexpect = "^4.7.0"
+packaging = "^20.4"
+virtualenv = { version = "^20.0.26" }
 
-# The typing module is not in the stdlib in Python 2.7 and 3.4
-typing = { version = "^3.6", python = "~2.7 || ~3.4" }
+# The typing module is not in the stdlib in Python 2.7
+typing = { version = "^3.6", python = "~2.7" }
 
-# Use pathlib2 for Python 2.7 and 3.4
-pathlib2 = { version = "^2.3", python = "~2.7 || ~3.4" }
+# Use pathlib2 for Python 2.7
+pathlib2 = { version = "^2.3", python = "~2.7" }
+# Use futures on Python 2.7
+futures = { version = "^3.3.0", python = "~2.7" }
 # Use glob2 for Python 2.7 and 3.4
-glob2 = { version = "^0.6", python = "~2.7 || ~3.4" }
-# Use virtualenv for Python 2.7 since venv does not exist
-virtualenv = { version = "^16.7.9", python = "~2.7" }
+glob2 = { version = "^0.6", python = "~2.7" }
 # functools32 is needed for Python 2.7
 functools32 = { version = "^3.2.3", python = "~2.7" }
 keyring = [
-    { version = "^18.0.1", python = "~2.7 || ~3.4" },
-    { version = "^20.0.1", python = "^3.5" }
+    { version = "^18.0.1", python = "~2.7" },
+    { version = "^20.0.1", python = "~3.5" },
+    { version = "^21.2.0", python = "^3.6" }
 ]
-# Use subprocess32 for Python 2.7 and 3.4
-subprocess32 = { version = "^3.5", python = "~2.7 || ~3.4" }
-importlib-metadata = {version = "~1.1.3", python = "<3.8"}
+# Use subprocess32 for Python 2.7
+subprocess32 = { version = "^3.5", python = "~2.7" }
+importlib-metadata = {version = "^1.6.0", python = "<3.8"}
 
 [tool.poetry.dev-dependencies]
 pytest = [
@@ -69,7 +72,7 @@ pygments = "^2.2"
 pytest-mock = "^1.9"
 pygments-github-lexers = "^0.0.5"
 black = { version = "^19.10b0", python = "^3.6" }
-pre-commit = "^1.10"
+pre-commit = { version = "^2.5.1", python = "^3.6.1" }
 tox = "^3.0"
 pytest-sugar = "^0.9.2"
 httpretty = "^0.9.6"
@@ -80,11 +83,8 @@ poetry = "poetry.console:main"
 
 
 [build-system]
-requires = ["intreehooks"]
-build-backend = "intreehooks:loader"
-
-[tool.intreehooks]
-build-backend = "poetry.masonry.api"
+requires = ["poetry-core>=1.0.0a3"]
+build-backend = "poetry.core.masonry.api"
 
 
 [tool.isort]
@@ -112,6 +112,7 @@ known_third_party = [
     "keyring",
     "pexpect",
     "pkginfo",
+    "poetry_core",
     "pyparsing",
     "pytest",
     "requests",

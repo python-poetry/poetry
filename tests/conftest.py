@@ -73,12 +73,14 @@ def config(config_source, auth_config_source, mocker):
 @pytest.fixture(autouse=True)
 def download_mock(mocker):
     # Patch download to not download anything but to just copy from fixtures
-    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
+    mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
+    mocker.patch("poetry.puzzle.provider.download_file", new=mock_download)
+    mocker.patch("poetry.repositories.pypi_repository.download_file", new=mock_download)
 
 
 @pytest.fixture(autouse=True)
 def execute_setup_mock(mocker):
-    mocker.patch("poetry.puzzle.provider.Provider._execute_setup")
+    mocker.patch("poetry.inspection.info.PackageInfo._execute_setup")
 
 
 @pytest.fixture
@@ -94,19 +96,21 @@ def environ():
 @pytest.fixture(autouse=True)
 def git_mock(mocker):
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.vcs.git.Git.rev_parse")
+    mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
+    mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
+    p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
 
 @pytest.fixture
 def http():
-    httpretty.enable()
+    httpretty.reset()
+    httpretty.enable(allow_net_connect=False)
 
     yield httpretty
 
-    httpretty.disable()
+    httpretty.activate()
+    httpretty.reset()
 
 
 @pytest.fixture
@@ -124,6 +128,21 @@ def tmp_dir():
     yield dir_
 
     shutil.rmtree(dir_)
+
+
+@pytest.fixture
+def mocked_open_files(mocker):
+    files = []
+    original = Path.open
+
+    def mocked_open(self, *args, **kwargs):
+        if self.name in {"pyproject.toml"}:
+            return mocker.MagicMock()
+        return original(self, *args, **kwargs)
+
+    mocker.patch("poetry.utils._compat.Path.open", mocked_open)
+
+    yield files
 
 
 @pytest.fixture

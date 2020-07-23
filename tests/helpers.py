@@ -1,13 +1,13 @@
 import os
 import shutil
 
-from poetry.packages import Dependency
-from poetry.packages import Package
+from poetry.core.packages import Dependency
+from poetry.core.packages import Package
+from poetry.core.vcs.git import ParsedUrl
 from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
-from poetry.vcs.git import ParsedUrl
 
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
@@ -81,10 +81,10 @@ def mock_clone(_, source, dest):
     copy_or_symlink(folder, dest)
 
 
-def mock_download(self, url, dest):
+def mock_download(url, dest, **__):
     parts = urlparse.urlparse(url)
 
     fixtures = Path(__file__).parent / "fixtures"
     fixture = fixtures / parts.path.lstrip("/")
 
-    copy_or_symlink(fixture, dest)
+    copy_or_symlink(fixture, Path(dest))

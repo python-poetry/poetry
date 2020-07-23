@@ -20,7 +20,7 @@ url = "../../distributions/demo-0.1.0-py2.py3-none-any.whl"
 
 [[package]]
 category = "main"
-description = ""
+description = "This is a description"
 develop = true
 name = "inner-directory-project"
 optional = false
@@ -42,7 +42,7 @@ version = "1.4.4"
 
 [[package]]
 category = "main"
-description = ""
+description = "This is a description"
 develop = true
 name = "project-with-extras"
 optional = false
@@ -60,7 +60,7 @@ url = "../project_with_extras"
 
 [[package]]
 category = "main"
-description = ""
+description = "This is a description"
 develop = true
 name = "project-with-transitive-directory-dependencies"
 optional = false
@@ -78,7 +78,7 @@ url = "project_with_transitive_directory_dependencies"
 
 [[package]]
 category = "main"
-description = ""
+description = "This is a description"
 develop = true
 name = "project-with-transitive-file-dependencies"
 optional = false

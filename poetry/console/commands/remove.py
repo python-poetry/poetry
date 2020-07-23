@@ -1,10 +1,10 @@
 from cleo import argument
 from cleo import option
 
-from .env_command import EnvCommand
+from .installer_command import InstallerCommand
 
 
-class RemoveCommand(EnvCommand):
+class RemoveCommand(InstallerCommand):
 
     name = "remove"
     description = "Removes a package from the project dependencies."
@@ -28,8 +28,6 @@ list of installed packages
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation.installer import Installer
-
         packages = self.argument("packages")
         is_dev = self.option("dev")
 
@@ -62,16 +60,18 @@ list of installed packages
         # Update packages
         self.reset_poetry()
 
-        installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
+        self._installer.set_package(self.poetry.package)
+        self._installer.use_executor(
+            self.poetry.config.get("experimental.new-installer", False)
         )
 
-        installer.dry_run(self.option("dry-run"))
-        installer.update(True)
-        installer.whitelist(requirements)
+        self._installer.dry_run(self.option("dry-run"))
+        self._installer.verbose(self._io.is_verbose())
+        self._installer.update(True)
+        self._installer.whitelist(requirements)
 
         try:
-            status = installer.run()
+            status = self._installer.run()
         except Exception:
             self.poetry.file.write(original_content)
 
@@ -80,7 +80,7 @@ list of installed packages
         if status != 0 or self.option("dry-run"):
             # Revert changes
             if not self.option("dry-run"):
-                self.error(
+                self.line_error(
                     "\n"
                     "Removal failed, reverting pyproject.toml "
                     "to its original content."

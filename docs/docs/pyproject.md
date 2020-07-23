@@ -278,16 +278,22 @@ If you publish you package on PyPI, they will appear in the `Project Links` sect
 [PEP-517](https://www.python.org/dev/peps/pep-0517/) introduces a standard way
 to define alternative build systems to build a Python project.
 
-Poetry is compliant with PEP-517 so if you use Poetry to manage your Python
-project you should reference it in the `build-system` section of the `pyproject.toml`
-file like so:
+Poetry is compliant with PEP-517, by providing a lightweight core library,
+so if you use Poetry to manage your Python project you should reference
+it in the `build-system` section of the `pyproject.toml` file like so:
 
 ```toml
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 ```
 
 !!!note
 
     When using the `new` or `init` command this section will be automatically added.
+
+
+!!!note
+
+    If your `pyproject.toml` file still references `poetry` directly as a build backend,
+    you should update it to reference `poetry_core` instead.

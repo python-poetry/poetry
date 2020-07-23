@@ -1,0 +1,45 @@
+freebsd_instance:
+  image_family: freebsd-12-1-snap
+
+test_task:
+  name: "Tests / FreeBSD / "
+  env:
+    matrix:
+      - PYTHON: python2.7
+      - PYTHON: python3.5
+      - PYTHON: python3.6
+      - PYTHON: python3.7
+      - PYTHON: python3.8
+  python_script:
+    - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
+    - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
+    - pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
+  pip_script:
+    - $PYTHON -m ensurepip
+    - $PYTHON -m pip install -U pip tox
+    - $PYTHON -m pip install -U --pre poetry
+    - poetry config virtualenvs.in-project true
+  tox_script: $PYTHON -m tox -e py -- -q --junitxml=junit.xml tests
+  on_failure:
+    annotate_failure_artifacts:
+      path: junit.xml
+      format: junit
+      type: text/xml
+
+release_task:
+  name: "Release / FreeBSD"
+  only_if: $CIRRUS_TAG != ''
+  freebsd_instance:
+    matrix:
+      - image_family: freebsd-12-1-snap
+      - image_family: freebsd-11-3-snap
+  python_script: pkg install -y python3 python27 python35 python36 python37 python38
+  pip_script:
+    - python2.7 -m ensurepip
+    - python3.5 -m ensurepip
+    - python3.6 -m ensurepip
+    - python3.7 -m ensurepip
+    - python3.8 -m ensurepip
+  build_script: ./make-nix-release.sh
+  archive_artifacts:
+    path: "releases/*"

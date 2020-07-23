@@ -113,9 +113,7 @@ def test_create_poetry():
 
 
 def test_create_poetry_with_packages_and_includes():
-    poetry = Factory().create_poetry(
-        fixtures_dir.parent / "masonry" / "builders" / "fixtures" / "with-include"
-    )
+    poetry = Factory().create_poetry(fixtures_dir / "with-include")
 
     package = poetry.package
 
@@ -129,7 +127,10 @@ def test_create_poetry_with_packages_and_includes():
         {"include": "src_package", "from": "src"},
     ]
 
-    assert package.include == ["extra_dir/vcs_excluded.txt", "notes.txt"]
+    assert package.include == [
+        {"path": "extra_dir/vcs_excluded.txt", "format": []},
+        {"path": "notes.txt", "format": []},
+    ]
 
 
 def test_create_poetry_with_multi_constraints_dependency():
