@@ -2,6 +2,9 @@ import os
 import shutil
 import sys
 
+from typing import Optional
+from typing import Union
+
 import pytest
 import tomlkit
 
@@ -84,12 +87,8 @@ def test_env_get_in_project_venv(manager, poetry):
     shutil.rmtree(str(venv.path))
 
 
-def build_venv(path, executable=None):
-    os.mkdir(path)
-
-
-def remove_venv(path):
-    shutil.rmtree(path)
+def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()
+    os.mkdir(str(path))
 
 
 def check_output_wrapper(version=Version.parse("3.7.1")):
@@ -126,7 +125,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
     )
 
     envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
@@ -244,7 +243,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = manager.activate("python3.6", NullIO())
 
     m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.6".format(venv_name)), executable="python3.6"
+        Path(tmp_dir) / "{}-py3.6".format(venv_name), executable="python3.6"
     )
 
     assert envs_file.exists()
@@ -290,17 +289,15 @@ def test_activate_activates_recreates_for_different_patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
     )
     remove_venv_m = mocker.patch(
-        "poetry.utils.env.EnvManager.remove_venv", side_effect=remove_venv
+        "poetry.utils.env.EnvManager.remove_venv", side_effect=EnvManager.remove_venv
     )
 
     env = manager.activate("python3.7", NullIO())
 
     build_venv_m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)), executable="python3.7"
+        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
     )
-    remove_venv_m.assert_called_with(
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name))
-    )
+    remove_venv_m.assert_called_with(Path(tmp_dir) / "{}-py3.7".format(venv_name))
 
     assert envs_file.exists()
     envs = envs_file.read()
@@ -341,7 +338,7 @@ def test_activate_does_not_recreate_when_switching_minor(
         "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
     )
     remove_venv_m = mocker.patch(
-        "poetry.utils.env.EnvManager.remove_venv", side_effect=remove_venv
+        "poetry.utils.env.EnvManager.remove_venv", side_effect=EnvManager.remove_venv
     )
 
     env = manager.activate("python3.6", NullIO())
@@ -536,6 +533,54 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     assert venv_name not in envs
 
 
+def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mocker):
+    # Ensure we empty rather than delete folder if its is an active mount point.
+    # See https://github.com/python-poetry/poetry/pull/2064
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    venv_path = Path(tmp_dir) / "{}-py3.6".format(venv_name)
+    venv_path.mkdir()
+
+    folder1_path = venv_path / "folder1"
+    folder1_path.mkdir()
+
+    file1_path = folder1_path / "file1"
+    file1_path.touch(exist_ok=False)
+
+    file2_path = venv_path / "file2"
+    file2_path.touch(exist_ok=False)
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+
+    original_rmtree = shutil.rmtree
+
+    def err_on_rm_venv_only(path, *args, **kwargs):
+        print(path)
+        if path == str(venv_path):
+            raise OSError(16, "Test error")  # ERRNO 16: Device or resource busy
+        else:
+            original_rmtree(path)
+
+    m = mocker.patch("shutil.rmtree", side_effect=err_on_rm_venv_only)
+
+    venv = manager.remove("{}-py3.6".format(venv_name))
+
+    m.assert_any_call(str(venv_path))
+
+    assert venv_path == venv.path
+    assert venv_path.exists()
+
+    assert not folder1_path.exists()
+    assert not file1_path.exists()
+    assert not file2_path.exists()
+
+    m.side_effect = original_rmtree  # Avoid teardown using `err_on_rm_venv_only`
+
+
 @pytest.mark.skipif(
     os.name == "nt" or PY2, reason="Symlinks are not support for Windows"
 )
@@ -579,7 +624,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        str(Path("/foo/virtualenvs/{}-py3.7".format(venv_name))), executable="python3"
+        Path("/foo/virtualenvs/{}-py3.7".format(venv_name)), executable="python3"
     )
 
 
@@ -603,7 +648,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        str(Path("/foo/virtualenvs/{}-py3.8".format(venv_name))), executable="python3.8"
+        Path("/foo/virtualenvs/{}-py3.8".format(venv_name)), executable="python3.8"
     )
 
 
@@ -686,11 +731,9 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     assert not check_output.called
     m.assert_called_with(
-        str(
-            Path(
-                "/foo/virtualenvs/{}-py{}.{}".format(
-                    venv_name, version.major, version.minor
-                )
+        Path(
+            "/foo/virtualenvs/{}-py{}.{}".format(
+                venv_name, version.major, version.minor
             )
         ),
         executable=None,
@@ -725,11 +768,9 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
 
     assert check_output.called
     m.assert_called_with(
-        str(
-            Path(
-                "/foo/virtualenvs/{}-py{}.{}".format(
-                    venv_name, version.major, version.minor - 1
-                )
+        Path(
+            "/foo/virtualenvs/{}-py{}.{}".format(
+                venv_name, version.major, version.minor - 1
             )
         ),
         executable="python{}.{}".format(version.major, version.minor - 1),
@@ -763,9 +804,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
 
     manager.activate("python3.7", NullIO())
 
-    m.assert_called_with(
-        os.path.join(str(poetry.file.parent), ".venv"), executable="python3.7"
-    )
+    m.assert_called_with(poetry.file.parent / ".venv", executable="python3.7")
 
     envs_file = TomlFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
     assert not envs_file.exists()
