@@ -8,7 +8,7 @@ import pytest
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
-from poetry.packages import Dependency
+from poetry.core.packages import Dependency
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path

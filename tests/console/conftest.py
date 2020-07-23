@@ -1,12 +1,18 @@
 import os
+import re
 
 import pytest
 
 from cleo import ApplicationTester
 
 from poetry.console import Application as BaseApplication
+from poetry.core.masonry.utils.helpers import escape_name
+from poetry.core.masonry.utils.helpers import escape_version
+from poetry.core.packages.utils.link import Link
 from poetry.factory import Factory
+from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
+from poetry.io.null_io import NullIO
 from poetry.packages import Locker as BaseLocker
 from poetry.poetry import Poetry as BasePoetry
 from poetry.repositories import Pool
@@ -16,7 +22,42 @@ from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
 from tests.helpers import mock_clone
-from tests.helpers import mock_download
+
+
+class Executor(BaseExecutor):
+    def __init__(self, *args, **kwargs):
+        super(Executor, self).__init__(*args, **kwargs)
+
+        self._installs = []
+        self._updates = []
+        self._uninstalls = []
+
+    @property
+    def installations(self):
+        return self._installs
+
+    @property
+    def updates(self):
+        return self._updates
+
+    @property
+    def removals(self):
+        return self._uninstalls
+
+    def _do_execute_operation(self, operation):
+        super(Executor, self)._do_execute_operation(operation)
+
+        if not operation.skipped:
+            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
+
+    def _execute_install(self, operation):
+        return 0
+
+    def _execute_update(self, operation):
+        return 0
+
+    def _execute_remove(self, operation):
+        return 0
 
 
 @pytest.fixture()
@@ -40,6 +81,9 @@ def setup(mocker, installer, installed, config, env):
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
 
+    # Do not run pip commands of the executor
+    mocker.patch("poetry.installation.executor.Executor.run_pip")
+
     p = mocker.patch("poetry.installation.installer.Installer._get_installed")
     p.return_value = installed
 
@@ -49,13 +93,13 @@ def setup(mocker, installer, installed, config, env):
     p.return_value = installed
 
     # Patch git module to not actually clone projects
-    mocker.patch("poetry.vcs.git.Git.clone", new=mock_clone)
-    mocker.patch("poetry.vcs.git.Git.checkout", new=lambda *_: None)
-    p = mocker.patch("poetry.vcs.git.Git.rev_parse")
+    mocker.patch("poetry.core.vcs.git.Git.clone", new=mock_clone)
+    mocker.patch("poetry.core.vcs.git.Git.checkout", new=lambda *_: None)
+    p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
-    # Patch download to not download anything but to just copy from fixtures
-    mocker.patch("poetry.utils.inspector.Inspector.download", new=mock_download)
+    # Patch the virtual environment creation do actually do nothing
+    mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=env)
 
     # Patch the virtual environment creation do actually do nothing
     mocker.patch("poetry.utils.env.EnvManager.create_venv", return_value=env)
@@ -145,10 +189,22 @@ class Repository(BaseRepository):
             raise PackageNotFound("Package [{}] not found.".format(name))
         return packages
 
+    def find_links_for_package(self, package):
+        return [
+            Link(
+                "https://foo.bar/files/{}-{}-py2.py3-none-any.whl".format(
+                    escape_name(package.name), escape_version(package.version.text)
+                )
+            )
+        ]
+
 
 @pytest.fixture
-def repo():
-    return Repository()
+def repo(http):
+    http.register_uri(
+        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
+    )
+    return Repository(name="foo")
 
 
 @pytest.fixture
@@ -189,3 +245,13 @@ def app(poetry):
 @pytest.fixture
 def app_tester(app):
     return ApplicationTester(app)
+
+
+@pytest.fixture
+def new_installer_disabled(config):
+    config.merge({"experimental": {"new-installer": False}})
+
+
+@pytest.fixture()
+def executor(poetry, config, env):
+    return Executor(env, poetry.pool, config, NullIO())

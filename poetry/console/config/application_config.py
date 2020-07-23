@@ -27,8 +27,10 @@ from clikit.io.output_stream import StandardOutputStream
 
 from poetry.console.commands.command import Command
 from poetry.console.commands.env_command import EnvCommand
+from poetry.console.commands.installer_command import InstallerCommand
 from poetry.console.logging.io_formatter import IOFormatter
 from poetry.console.logging.io_handler import IOHandler
+from poetry.utils._compat import PY36
 
 
 class ApplicationConfig(BaseApplicationConfig):
@@ -36,14 +38,31 @@ class ApplicationConfig(BaseApplicationConfig):
         super(ApplicationConfig, self).configure()
 
         self.add_style(Style("c1").fg("cyan"))
+        self.add_style(Style("c2").fg("default").bold())
         self.add_style(Style("info").fg("blue"))
         self.add_style(Style("comment").fg("green"))
         self.add_style(Style("error").fg("red").bold())
-        self.add_style(Style("warning").fg("yellow"))
-        self.add_style(Style("debug").fg("black").bold())
+        self.add_style(Style("warning").fg("yellow").bold())
+        self.add_style(Style("debug").fg("default").dark())
+        self.add_style(Style("success").fg("green"))
+
+        # Dark variants
+        self.add_style(Style("c1_dark").fg("cyan").dark())
+        self.add_style(Style("c2_dark").fg("default").bold().dark())
+        self.add_style(Style("success_dark").fg("green").dark())
 
         self.add_event_listener(PRE_HANDLE, self.register_command_loggers)
         self.add_event_listener(PRE_HANDLE, self.set_env)
+        self.add_event_listener(PRE_HANDLE, self.set_installer)
+
+        if PY36:
+            from poetry.mixology.solutions.providers import (
+                PythonRequirementSolutionProvider,
+            )
+
+            self._solution_provider_repository.register_solution_providers(
+                [PythonRequirementSolutionProvider]
+            )
 
     def register_command_loggers(
         self, event, event_name, _
@@ -85,6 +104,9 @@ class ApplicationConfig(BaseApplicationConfig):
         if not isinstance(command, EnvCommand):
             return
 
+        if command.env is not None:
+            return
+
         io = event.io
         poetry = command.poetry
 
@@ -95,6 +117,32 @@ class ApplicationConfig(BaseApplicationConfig):
             io.write_line("Using virtualenv: <comment>{}</>".format(env.path))
 
         command.set_env(env)
+
+    def set_installer(
+        self, event, event_name, _
+    ):  # type: (PreHandleEvent, str, Any) -> None
+        command = event.command.config.handler  # type: InstallerCommand
+        if not isinstance(command, InstallerCommand):
+            return
+
+        # If the command already has an installer
+        # we skip this step
+        if command.installer is not None:
+            return
+
+        from poetry.installation.installer import Installer
+
+        poetry = command.poetry
+        installer = Installer(
+            event.io,
+            command.env,
+            poetry.package,
+            poetry.locker,
+            poetry.pool,
+            poetry.config,
+        )
+        installer.use_executor(poetry.config.get("experimental.new-installer", False))
+        command.set_installer(installer)
 
     def resolve_help_command(
         self, event, event_name, dispatcher

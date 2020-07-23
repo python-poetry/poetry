@@ -28,8 +28,8 @@ class DebugResolveCommand(InitCommand):
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
+        from poetry.core.packages.project_package import ProjectPackage
         from poetry.io.null_io import NullIO
-        from poetry.packages import ProjectPackage
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
@@ -105,7 +105,6 @@ class DebugResolveCommand(InitCommand):
 
         if self.option("install"):
             env = EnvManager(self.poetry).get()
-            current_python_version = ".".join(str(v) for v in env.version_info)
             pool = Pool()
             locked_repository = Repository()
             for op in ops:
@@ -113,11 +112,14 @@ class DebugResolveCommand(InitCommand):
 
             pool.add_repository(locked_repository)
 
-            with package.with_python_versions(current_python_version):
-                solver = Solver(package, pool, Repository(), Repository(), NullIO())
+            solver = Solver(package, pool, Repository(), Repository(), NullIO())
+            with solver.use_environment(env):
                 ops = solver.solve()
 
         for op in ops:
+            if self.option("install") and op.skipped:
+                continue
+
             pkg = op.package
             row = [
                 "<c1>{}</c1>".format(pkg.name),

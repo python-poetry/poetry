@@ -1,12 +1,3 @@
-class CompatibilityError(Exception):
-    def __init__(self, *constraints):
-        self._constraints = list(constraints)
-
-    @property
-    def constraints(self):
-        return self._constraints
-
-
 class SolverProblemError(Exception):
     def __init__(self, error):
         self._error = error
@@ -16,3 +7,12 @@ class SolverProblemError(Exception):
     @property
     def error(self):
         return self._error
+
+
+class OverrideNeeded(Exception):
+    def __init__(self, *overrides):
+        self._overrides = overrides
+
+    @property
+    def overrides(self):
+        return self._overrides

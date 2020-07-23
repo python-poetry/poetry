@@ -1,15 +1,15 @@
-from poetry.semver import VersionConstraint
-from poetry.semver import VersionRange
-from poetry.semver import parse_constraint
+from poetry.core.semver import VersionConstraint
+from poetry.core.semver import VersionRange
+from poetry.core.semver import parse_constraint
 
 from .base_repository import BaseRepository
 
 
 class Repository(BaseRepository):
-    def __init__(self, packages=None):
+    def __init__(self, packages=None, name=None):
         super(Repository, self).__init__()
 
-        self._name = None
+        self._name = name
 
         if packages is None:
             packages = []
@@ -114,6 +114,9 @@ class Repository(BaseRepository):
 
         if index is not None:
             del self._packages[index]
+
+    def find_links_for_package(self, package):
+        return []
 
     def search(self, query):
         results = []

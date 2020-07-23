@@ -3,8 +3,8 @@ import os
 from cleo.testers import CommandTester
 
 from poetry.__version__ import __version__
-from poetry.packages.package import Package
-from poetry.semver.version import Version
+from poetry.core.packages.package import Package
+from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 

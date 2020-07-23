@@ -207,6 +207,7 @@ vendors = os.path.join(lib, "poetry", "_vendor")
 current_vendors = os.path.join(
     vendors, "py{}".format(".".join(str(v) for v in sys.version_info[:2]))
 )
+
 sys.path.insert(0, lib)
 sys.path.insert(0, current_vendors)
 
@@ -331,14 +332,17 @@ class Installer:
         version=None,
         preview=False,
         force=False,
+        modify_path=True,
         accept_all=False,
+        file=None,
         base_url=BASE_URL,
     ):
         self._version = version
         self._preview = preview
         self._force = force
-        self._modify_path = True
+        self._modify_path = modify_path
         self._accept_all = accept_all
+        self._offline_file = file
         self._base_url = base_url
 
     def allows_prereleases(self):
@@ -355,7 +359,9 @@ class Installer:
         self.ensure_home()
 
         try:
-            self.install(version, upgrade=current_version is not None)
+            self.install(
+                version, upgrade=current_version is not None, file=self._offline_file
+            )
         except subprocess.CalledProcessError as e:
             print(colorize("error", "An error has occured: {}".format(str(e))))
             print(e.output.decode())
@@ -376,6 +382,34 @@ class Installer:
         self.remove_from_path()
 
     def get_version(self):
+        current_version = None
+        if os.path.exists(POETRY_LIB):
+            with open(
+                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
+            ) as f:
+                version_content = f.read()
+
+            current_version_re = re.match(
+                '(?ms).*__version__ = "(.+)".*', version_content
+            )
+            if not current_version_re:
+                print(
+                    colorize(
+                        "warning",
+                        "Unable to get the current Poetry version. Assuming None",
+                    )
+                )
+            else:
+                current_version = current_version_re.group(1)
+
+        # Skip retrieving online release versions if install file is specified
+        if self._offline_file is not None:
+            if current_version is not None and not self._force:
+                print("There is a version of Poetry already installed.")
+                return None, current_version
+
+            return "from an offline file", current_version
+
         print(colorize("info", "Retrieving Poetry metadata"))
 
         metadata = json.loads(self._get(self.METADATA_URL).decode())
@@ -482,11 +516,14 @@ class Installer:
 
         shutil.rmtree(POETRY_HOME)
 
-    def install(self, version, upgrade=False):
+    def install(self, version, upgrade=False, file=None):
         """
         Installs Poetry in $POETRY_HOME.
         """
-        print("Installing version: " + colorize("info", version))
+        if file is not None:
+            print("Attempting to install from file: " + colorize("info", file))
+        else:
+            print("Installing version: " + colorize("info", version))
 
         self.make_lib(version)
         self.make_bin()
@@ -522,6 +559,14 @@ class Installer:
                 shutil.rmtree(POETRY_LIB_BACKUP)
 
     def _make_lib(self, version):
+        # Check if an offline installer file has been specified
+        if self._offline_file is not None:
+            try:
+                self.extract_lib(self._offline_file)
+                return
+            except Exception:
+                raise RuntimeError("Could not install from offline file.")
+
         # We get the payload from the remote host
         platform = sys.platform
         if platform == "linux2":
@@ -581,12 +626,15 @@ class Installer:
                     )
                 )
 
-            gz = GzipFile(tar, mode="rb")
-            try:
-                with tarfile.TarFile(tar, fileobj=gz, format=tarfile.PAX_FORMAT) as f:
-                    f.extractall(POETRY_LIB)
-            finally:
-                gz.close()
+            self.extract_lib(tar)
+
+    def extract_lib(self, filename):
+        gz = GzipFile(filename, mode="rb")
+        try:
+            with tarfile.TarFile(filename, fileobj=gz, format=tarfile.PAX_FORMAT) as f:
+                f.extractall(POETRY_LIB)
+        finally:
+            gz.close()
 
     def _which_python(self):
         """Decides which python executable we'll embed in the launcher script."""
@@ -957,37 +1005,74 @@ def main():
         description="Installs the latest (or given) version of poetry"
     )
     parser.add_argument(
-        "-p", "--preview", dest="preview", action="store_true", default=False
+        "-p",
+        "--preview",
+        help="install preview version",
+        dest="preview",
+        action="store_true",
+        default=False,
     )
-    parser.add_argument("--version", dest="version")
+    parser.add_argument("--version", help="install named version", dest="version")
     parser.add_argument(
-        "-f", "--force", dest="force", action="store_true", default=False
+        "-f",
+        "--force",
+        help="install on top of existing version",
+        dest="force",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
-        "-y", "--yes", dest="accept_all", action="store_true", default=False
+        "--no-modify-path",
+        help="do not modify $PATH",
+        dest="no_modify_path",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
-        "--uninstall", dest="uninstall", action="store_true", default=False
+        "-y",
+        "--yes",
+        help="accept all prompts",
+        dest="accept_all",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--uninstall",
+        help="uninstall poetry",
+        dest="uninstall",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--file",
+        dest="file",
+        action="store",
+        help="Install from a local file instead of fetching the latest version "
+        "of Poetry available online.",
     )
 
     args = parser.parse_args()
 
     base_url = Installer.BASE_URL
-    try:
-        urlopen(Installer.REPOSITORY_URL)
-    except HTTPError as e:
-        if e.code == 404:
-            base_url = Installer.FALLBACK_BASE_URL
-        else:
-            raise
+
+    if args.file is None:
+        try:
+            urlopen(Installer.REPOSITORY_URL)
+        except HTTPError as e:
+            if e.code == 404:
+                base_url = Installer.FALLBACK_BASE_URL
+            else:
+                raise
 
     installer = Installer(
         version=args.version or os.getenv("POETRY_VERSION"),
         preview=args.preview or string_to_bool(os.getenv("POETRY_PREVIEW", "0")),
         force=args.force,
+        modify_path=not args.no_modify_path,
         accept_all=args.accept_all
         or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
         or not is_interactive(),
+        file=args.file,
         base_url=base_url,
     )
 

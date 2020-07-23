@@ -1,7 +1,7 @@
-from .env_command import EnvCommand
+from .installer_command import InstallerCommand
 
 
-class LockCommand(EnvCommand):
+class LockCommand(InstallerCommand):
 
     name = "lock"
     description = "Locks the project dependencies."
@@ -17,12 +17,10 @@ file.
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation.installer import Installer
-
-        installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
+        self._installer.use_executor(
+            self.poetry.config.get("experimental.new-installer", False)
         )
 
-        installer.lock()
+        self._installer.lock()
 
-        return installer.run()
+        return self._installer.run()

@@ -61,14 +61,8 @@ class SelfUpdateCommand(Command):
     @property
     def home(self):
         from poetry.utils._compat import Path
-        from poetry.utils.appdirs import expanduser
 
-        if os.environ.get("POETRY_HOME"):
-            return Path(expanduser(os.environ["POETRY_HOME"]))
-
-        home = Path(expanduser("~"))
-
-        return home / ".poetry"
+        return Path(os.environ.get("POETRY_HOME", "~/.poetry")).expanduser()
 
     @property
     def bin(self):
@@ -85,7 +79,7 @@ class SelfUpdateCommand(Command):
     def handle(self):
         from poetry.__version__ import __version__
         from poetry.repositories.pypi_repository import PyPiRepository
-        from poetry.semver import Version
+        from poetry.core.semver import Version
 
         self._check_recommended_installation()
 

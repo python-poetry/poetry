@@ -2,7 +2,7 @@ import shutil
 
 import pytest
 
-from poetry.packages import Dependency
+from poetry.core.packages import Dependency
 from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -23,7 +23,7 @@ class MockRepository(LegacyRepository):
 
     def __init__(self, auth=None):
         super(MockRepository, self).__init__(
-            "legacy", url="http://foo.bar", auth=auth, disable_cache=True
+            "legacy", url="http://legacy.foo.bar", auth=auth, disable_cache=True
         )
 
     def _get(self, endpoint):
@@ -50,7 +50,7 @@ def test_page_relative_links_path_are_correct():
     page = repo._get("/relative")
 
     for link in page.links:
-        assert link.netloc == "foo.bar"
+        assert link.netloc == "legacy.foo.bar"
         assert link.path.startswith("/relative/poetry")
 
 
@@ -274,7 +274,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
 
 def test_username_password_special_chars():
-    auth = Auth("http://foo.bar", "user:", "/%2Fp@ssword")
+    auth = Auth("http://legacy.foo.bar", "user:", "/%2Fp@ssword")
     repo = MockRepository(auth=auth)
 
-    assert "http://user%3A:%2F%252Fp%40ssword@foo.bar" == repo.authenticated_url
+    assert "http://user%3A:%2F%252Fp%40ssword@legacy.foo.bar" == repo.authenticated_url

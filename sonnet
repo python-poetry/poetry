@@ -10,6 +10,7 @@ from gzip import GzipFile
 
 from cleo import Application
 from cleo import Command
+from clikit.api.formatter import Style
 
 
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
@@ -25,7 +26,6 @@ class MakeReleaseCommand(Command):
 
     PYTHON = {
         "2.7": "python2.7",
-        "3.4": "python3.4",
         "3.5": "python3.5",
         "3.6": "python3.6",
         "3.7": "python3.7",
@@ -48,7 +48,8 @@ class MakeReleaseCommand(Command):
 
         self.check_system(pythons)
 
-        from poetry import __version__
+        from poetry.__version__ import __version__
+        from poetry.core.vcs import get_vcs
         from poetry.factory import Factory
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
@@ -60,7 +61,6 @@ class MakeReleaseCommand(Command):
         from poetry.utils.env import GET_BASE_PREFIX
         from poetry.utils.env import VirtualEnv
         from poetry.utils.helpers import temporary_directory
-        from poetry.vcs import get_vcs
 
         project = Factory().create_poetry(Path.cwd())
         package = project.package
@@ -111,8 +111,8 @@ class MakeReleaseCommand(Command):
                     ).stdout
                 )
                 env = VirtualEnv(Path(prefix.strip()), base=Path(prefix.strip()))
-                with package.with_python_versions("~{}".format(version)):
-                    solver = Solver(package, pool, Repository(), Repository(), self.io)
+                solver = Solver(package, pool, Repository(), Repository(), self.io)
+                with solver.use_environment(env):
                     ops = solver.solve()
                     for op in ops:
                         if not env.is_valid_for_marker(op.package.marker):
@@ -274,6 +274,7 @@ class MakeCommand(Command):
 
 
 app = Application("sonnet")
+app.config.add_style(Style("debug").fg("default").dark())
 
 app.add(MakeCommand())
 
