@@ -190,34 +190,37 @@ class Executor(object):
             if result == -2:
                 raise KeyboardInterrupt
         except Exception as e:
-            from clikit.ui.components.exception_trace import ExceptionTrace
+            try:
+                from clikit.ui.components.exception_trace import ExceptionTrace
 
-            if not self.supports_fancy_output():
-                io = self._io
-            else:
-                message = "  <error>•</error> {message}: <error>Failed</error>".format(
-                    message=self.get_operation_message(operation, error=True),
-                )
-                self._write(operation, message)
-                io = self._sections.get(id(operation), self._io)
+                if not self.supports_fancy_output():
+                    io = self._io
+                else:
+                    message = "  <error>•</error> {message}: <error>Failed</error>".format(
+                        message=self.get_operation_message(operation, error=True),
+                    )
+                    self._write(operation, message)
+                    io = self._sections.get(id(operation), self._io)
 
-            with self._lock:
-                trace = ExceptionTrace(e)
-                trace.render(io)
-                io.write_line("")
-
-                self._shutdown = True
+                with self._lock:
+                    trace = ExceptionTrace(e)
+                    trace.render(io)
+                    io.write_line("")
+            finally:
+                with self._lock:
+                    self._shutdown = True
         except KeyboardInterrupt:
-            message = "  <warning>•</warning> {message}: <warning>Cancelled</warning>".format(
-                message=self.get_operation_message(operation, warning=True),
-            )
-            if not self.supports_fancy_output():
-                self._io.write_line(message)
-            else:
-                self._write(operation, message)
-
-            with self._lock:
-                self._shutdown = True
+            try:
+                message = "  <warning>•</warning> {message}: <warning>Cancelled</warning>".format(
+                    message=self.get_operation_message(operation, warning=True),
+                )
+                if not self.supports_fancy_output():
+                    self._io.write_line(message)
+                else:
+                    self._write(operation, message)
+            finally:
+                with self._lock:
+                    self._shutdown = True
 
     def _do_execute_operation(self, operation):
         method = operation.job_type
