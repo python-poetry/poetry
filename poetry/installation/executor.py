@@ -280,7 +280,7 @@ class Executor(object):
 
     def run_pip(self, *args, **kwargs):  # type: (...) -> int
         try:
-            self._env.run("python", "-m", "pip", *args, **kwargs)
+            self._env.run_pip(*args, **kwargs)
         except EnvCommandError as e:
             output = decode(e.e.output)
             if (
