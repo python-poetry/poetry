@@ -77,4 +77,4 @@ jobs:
 
       - name: Run pytest
         shell: bash
-        run: poetry run pytest -v tests
+        run: poetry run python -m pytest -v tests
