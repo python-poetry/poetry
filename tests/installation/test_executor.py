@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import re
+import shutil
 
 import pytest
 
@@ -179,3 +180,36 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == io.fetch_output()
+
+
+def test_executor_should_delete_incomplete_downloads(
+    config, io, tmp_dir, mocker, pool, mock_file_downloads
+):
+    fixture = Path(__file__).parent.parent.joinpath(
+        "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    )
+    destination_fixture = Path(tmp_dir) / "tomlkit-0.5.3-py2.py3-none-any.whl"
+    shutil.copyfile(str(fixture), str(destination_fixture))
+    mocker.patch(
+        "poetry.installation.executor.Executor._download_archive",
+        side_effect=Exception("Download error"),
+    )
+    mocker.patch(
+        "poetry.installation.chef.Chef.get_cached_archive_for_link",
+        side_effect=lambda link: link,
+    )
+    mocker.patch(
+        "poetry.installation.chef.Chef.get_cache_directory_for_link",
+        return_value=Path(tmp_dir),
+    )
+
+    config = Config()
+    config.merge({"cache-dir": tmp_dir})
+
+    env = MockEnv(path=Path(tmp_dir))
+    executor = Executor(env, pool, config, io)
+
+    with pytest.raises(Exception, match="Download error"):
+        executor._download(Install(Package("tomlkit", "0.5.3")))
+
+    assert not destination_fixture.exists()
