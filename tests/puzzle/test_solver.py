@@ -2073,3 +2073,19 @@ def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
             {"job": "install", "package": package_b40},
         ],
     )
+
+
+def test_solver_should_not_raise_errors_for_irrelevant_python_constraints(
+    solver, repo, package
+):
+    package.python_versions = "^3.6"
+    solver.provider.set_package_python_versions("^3.6")
+    package.add_dependency("dataclasses", {"version": "^0.7", "python": "<3.7"})
+
+    dataclasses = get_package("dataclasses", "0.7")
+    dataclasses.python_versions = ">=3.6, <3.7"
+
+    repo.add_package(dataclasses)
+    ops = solver.solve()
+
+    check_solver_result(ops, [{"job": "install", "package": dataclasses}])
