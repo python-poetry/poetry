@@ -639,7 +639,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
 
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output", side_effect=["3.5.3", "3.8.0"]
+        "poetry.utils._compat.subprocess.check_output", side_effect=["3.5.3", "3.9.0"]
     )
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
@@ -648,7 +648,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        Path("/foo/virtualenvs/{}-py3.8".format(venv_name)), executable="python3.8"
+        Path("/foo/virtualenvs/{}-py3.9".format(venv_name)), executable="python3.9"
     )
 
 
