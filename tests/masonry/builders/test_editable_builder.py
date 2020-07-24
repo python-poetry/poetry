@@ -43,6 +43,17 @@ def extended_poetry():
 
 
 @pytest.fixture()
+def extended_without_setup_poetry():
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "extended_project_without_setup"
+    )
+
+    return poetry
+
+
+@pytest.fixture()
 def env_manager(simple_poetry):
     return EnvManager(simple_poetry)
 
@@ -194,3 +205,14 @@ def test_builder_installs_proper_files_when_packages_configured(
 
     assert paths.issubset(expected)
     assert len(paths) == len(expected)
+
+
+def test_builder_should_execute_build_scripts(extended_without_setup_poetry):
+    env = MockEnv(path=Path("/foo"))
+    builder = EditableBuilder(extended_without_setup_poetry, env, NullIO())
+
+    builder.build()
+
+    assert [
+        ["python", str(extended_without_setup_poetry.file.parent / "build.py")]
+    ] == env.executed
