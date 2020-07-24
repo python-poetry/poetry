@@ -90,6 +90,11 @@ class ApplicationConfig(BaseApplicationConfig):
             logger.handlers = [handler]
 
             level = logging.WARNING
+            # The builders loggers are special and we can actually
+            # start at the INFO level.
+            if logger.name.startswith("poetry.core.masonry.builders"):
+                level = logging.INFO
+
             if io.is_debug():
                 level = logging.DEBUG
             elif io.is_very_verbose() or io.is_verbose():
