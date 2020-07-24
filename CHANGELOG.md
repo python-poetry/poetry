@@ -1,5 +1,23 @@
 # Change Log
 
+## [1.1.0b1] - 2020-07-24
+
+### Changed
+
+- Virtual environments will now exclusively be built with `virtualenv` ([#2666](https://github.com/python-poetry/poetry/pull/2666)).
+- Support for Python 2.7 and 3.5 is now officially deprecated and a warning message will be displayed ([#2683](https://github.com/python-poetry/poetry/pull/2683)).
+- Improved metadata inspection of packages by using the PEP-517 build system ([#2632](https://github.com/python-poetry/poetry/pull/2632)).
+
+### Fixed
+
+- Fixed parallel tasks not being cancelled when the installation is interrupted or has failed ([#2656](https://github.com/python-poetry/poetry/pull/2656)).
+- Fixed an error where the editable builder would not expose all packages ([#2664](https://github.com/python-poetry/poetry/pull/2656)).
+- Fixed an error for Python 2.7 when a file could not be downloaded in the installer ([#2709](https://github.com/python-poetry/poetry/pull/2709)).
+- Fixed the lock file `content-hash` value not being updated when using the `add` and `remove` commands ([#2710](https://github.com/python-poetry/poetry/pull/2710)).
+- Fixed incorrect resolution errors being raised for packages with python requirements ([#2712](https://github.com/python-poetry/poetry/pull/2712)).
+- Fixed an error causing the build log messages to no longer be displayed ([#2715](https://github.com/python-poetry/poetry/pull/2715)).
+
+
 ## [1.0.10] - 2020-07-21
 
 ### Changed
@@ -932,7 +950,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0a3...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b1...master
+[1.1.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0ab1
 [1.1.0a3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a3
 [1.1.0a2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a2
 [1.1.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a1
