@@ -340,3 +340,29 @@ A = []
         content = f.read()
 
     assert expected == content
+
+
+def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(
+    locker, caplog
+):
+    current_version = Version.parse(Locker._VERSION)
+    older_version = ".".join(
+        [str(current_version.major), str(current_version.minor - 1)]
+    )
+    content = """\
+[metadata]
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
+lock-version = "{version}"
+python-versions = "~2.7 || ^3.4"
+
+[metadata.files]
+""".format(
+        version=older_version
+    )
+    caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
+
+    locker.lock.write(tomlkit.parse(content))
+
+    _ = locker.lock_data
+
+    assert 0 == len(caplog.records)
