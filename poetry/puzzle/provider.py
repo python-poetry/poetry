@@ -392,6 +392,10 @@ class Provider:
                     transitive_python_constraint
                 )
                 difference = transitive_python_constraint.difference(intersection)
+
+                # The difference is only relevant if it intersects
+                # the root package python constraint
+                difference = difference.intersect(self._python_constraint)
                 if (
                     transitive_python_constraint.is_any()
                     or self._python_constraint.intersect(
