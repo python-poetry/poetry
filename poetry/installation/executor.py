@@ -583,7 +583,11 @@ class Executor(object):
                 archive = self._download_archive(operation, link)
             except BaseException:
                 cache_directory = self._chef.get_cache_directory_for_link(link)
-                cache_directory.joinpath(link.filename).unlink(missing_ok=True)
+                cached_file = cache_directory.joinpath(link.filename)
+                # We can't use unlink(missing_ok=True) because it's not available
+                # in pathlib2 for Python 2.7
+                if cached_file.exists():
+                    cached_file.unlink()
 
                 raise
 
