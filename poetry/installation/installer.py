@@ -79,6 +79,11 @@ class Installer:
 
         return self
 
+    def set_locker(self, locker):  # type: (Locker) -> Installer
+        self._locker = locker
+
+        return self
+
     def run(self):
         # Force update if there is no lock file present
         if not self._update and not self._locker.is_locked():
