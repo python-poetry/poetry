@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class Locker(object):
 
-    _VERSION = "1.0"
+    _VERSION = "1.1"
 
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
