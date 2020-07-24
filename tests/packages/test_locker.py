@@ -5,6 +5,7 @@ import pytest
 import tomlkit
 
 from poetry.core.packages.project_package import ProjectPackage
+from poetry.core.semver.version import Version
 from poetry.packages.locker import Locker
 
 from ..helpers import get_dependency
@@ -57,7 +58,7 @@ version = "1.2"
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-lock-version = "1.0"
+lock-version = "1.1"
 python-versions = "*"
 
 [metadata.files]
@@ -95,7 +96,7 @@ redis = ["redis (>=2.10.5)"]
 
 [metadata]
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
-lock-version = "1.0"
+lock-version = "1.1"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.files]
@@ -135,7 +136,7 @@ version = "1.0.0"
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-lock-version = "1.0"
+lock-version = "1.1"
 python-versions = "*"
 
 [metadata.files]
@@ -175,7 +176,7 @@ foo = ["B (>=1.0.0)"]
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-lock-version = "1.0"
+lock-version = "1.1"
 python-versions = "*"
 
 [metadata.files]
@@ -205,7 +206,7 @@ foo = ["bar"]
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-lock-version = "1.0"
+lock-version = "1.1"
 python-versions = "*"
 
 [metadata.files]
@@ -245,7 +246,7 @@ url = "https://foo.bar"
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-lock-version = "1.0"
+lock-version = "1.1"
 python-versions = "*"
 
 [metadata.files]
@@ -261,11 +262,13 @@ def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
     content = """\
 [metadata]
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
-lock-version = "1.1"
+lock-version = "{version}"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.files]
-"""
+""".format(
+        version=".".join(Version.parse(Locker._VERSION).next_minor.text.split(".")[:2])
+    )
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
     locker.lock.write(tomlkit.parse(content))
@@ -326,7 +329,7 @@ B = {version = "^1.0.0", extras = ["a", "b", "c"], optional = true}
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
-lock-version = "1.0"
+lock-version = "1.1"
 python-versions = "*"
 
 [metadata.files]
