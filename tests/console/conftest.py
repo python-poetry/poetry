@@ -125,7 +125,9 @@ class Application(BaseApplication):
         self._poetry = Factory().create_poetry(self._poetry.file.path.parent)
         self._poetry.set_pool(poetry.pool)
         self._poetry.set_config(poetry.config)
-        self._poetry.set_locker(poetry.locker)
+        self._poetry.set_locker(
+            Locker(poetry.locker.lock.path, self._poetry.local_config)
+        )
 
 
 class Locker(BaseLocker):
@@ -163,7 +165,7 @@ class Locker(BaseLocker):
             self._locked = True
             return
 
-        self._lock_data = None
+        self._lock_data = data
 
 
 class Poetry(BasePoetry):

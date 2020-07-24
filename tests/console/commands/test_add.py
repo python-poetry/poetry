@@ -792,6 +792,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_with_lock(app, repo, tester):
+    content_hash = app.poetry.locker._get_content_hash()
     repo.add_package(get_package("cachy", "0.2.0"))
 
     tester.execute("cachy --lock")
@@ -806,6 +807,7 @@ Writing lock file
 """
 
     assert expected == tester.io.fetch_output()
+    assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
 
 
 def test_add_no_constraint_old_installer(app, repo, installer, old_tester):
