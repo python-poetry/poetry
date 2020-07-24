@@ -75,11 +75,7 @@ class InstalledRepository(Repository):
 
                 repo.add_package(package)
 
-                is_standard_package = True
-                try:
-                    path.relative_to(env.site_packages)
-                except ValueError:
-                    is_standard_package = False
+                is_standard_package = env.is_path_relative_to_lib(path)
 
                 if is_standard_package:
                     if path.name.endswith(".dist-info"):

@@ -754,6 +754,8 @@ class Env(object):
         self._site_packages = None
         self._paths = None
         self._supported_tags = None
+        self._purelib = None
+        self._platlib = None
 
     @property
     def path(self):  # type: () -> Path
@@ -810,9 +812,36 @@ class Env(object):
     @property
     def site_packages(self):  # type: () -> Path
         if self._site_packages is None:
-            self._site_packages = Path(self.paths["purelib"])
+            self._site_packages = Path(self.purelib)
 
         return self._site_packages
+
+    @property
+    def purelib(self):  # type: () -> Path
+        if self._purelib is None:
+            self._purelib = Path(self.paths["purelib"])
+
+        return self._purelib
+
+    @property
+    def platlib(self):  # type: () -> Path
+        if self._platlib is None:
+            if "platlib" in self.paths:
+                self._platlib = Path(self.paths["platlib"])
+            else:
+                self._platlib = self.purelib
+
+        return self._platlib
+
+    def is_path_relative_to_lib(self, path):  # type: (Path) -> bool
+        for lib_path in [self.purelib, self.platlib]:
+            try:
+                path.relative_to(lib_path)
+                return True
+            except ValueError:
+                pass
+
+        return False
 
     @property
     def sys_path(self):  # type: () -> List[str]
