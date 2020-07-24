@@ -202,11 +202,7 @@ def test_execute_should_gracefully_handle_io_error(config, mocker, io):
 Package operations: 1 install, 0 updates, 0 removals
 
 
-  UnicodeEncodeError
-
-  'ascii' codec can't encode character '\\u2022' in position \d+: ordinal not in range\(128\)
-
-  at tests/installation/test_executor\.py:\d+ in write_line
+\s*Unicode\w+Error
 """
 
     assert re.match(expected, io.fetch_output())
