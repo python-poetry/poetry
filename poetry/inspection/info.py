@@ -498,15 +498,15 @@ class PackageInfo:
         :param path: Path to generate package information from.
         :param allow_build: If enabled, as a fallback, build the project to gather metadata.
         """
+        project_package = cls._get_poetry_package(path)
+        if project_package:
+            return cls.from_package(project_package)
+
         info = cls.from_metadata(path)
 
         if info and info.requires_dist is not None:
             # return only if requirements are discovered
             return info
-
-        project_package = cls._get_poetry_package(path)
-        if project_package:
-            return cls.from_package(project_package)
 
         try:
             if not allow_build:

@@ -211,3 +211,10 @@ def test_info_setup_complex_disable_build(mocker, demo_setup_complex):
     assert info.name == "demo"
     assert info.version == "0.1.0"
     assert info.requires_dist is None
+
+
+def test_info_prefer_poetry_config_over_egg_info():
+    info = PackageInfo.from_directory(
+        FIXTURE_DIR_INSPECTIONS / "demo_with_obsolete_egg_info"
+    )
+    demo_check_info(info)
