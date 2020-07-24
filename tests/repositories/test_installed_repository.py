@@ -28,6 +28,7 @@ INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PURELIB / "editable-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "editable-with-import-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "lib64-2.3.4.dist-info"),
+    metadata.PathDistribution(SITE_PLATLIB / "bender-2.0.5.dist-info"),
 ]
 
 
@@ -110,8 +111,19 @@ def test_load_git_package(repository):
     assert pendulum.version.text == "2.0.5"
     assert pendulum.description == "Python datetimes made easy"
     assert pendulum.source_type == "git"
-    assert pendulum.source_url == "https://github.com/sdispater/pendulum.git"
+    assert pendulum.source_url in [
+        "git@github.com:sdispater/pendulum.git",
+        "https://github.com/sdispater/pendulum.git",
+    ]
     assert pendulum.source_reference == "bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6"
+
+
+def test_load_git_package_pth(repository):
+    bender = get_package_from_repository("bender", repository)
+    assert bender is not None
+    assert bender.name == "bender"
+    assert bender.version.text == "2.0.5"
+    assert bender.source_type == "git"
 
 
 def test_load_platlib_package(repository):
