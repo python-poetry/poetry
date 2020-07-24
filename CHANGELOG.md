@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.1.0b2] - 2020-07-24
+
+### Changed
+
+- Added support for build scripts without the `setup.py` file generation in the editable builder ([#2718](https://github.com/python-poetry/poetry/pull/2718)).
+
+### Fixed
+
+- Fixed an error occurring when using older lock files ([#2717](https://github.com/python-poetry/poetry/pull/2717)).
+
+
 ## [1.1.0b1] - 2020-07-24
 
 ### Changed
@@ -950,8 +961,9 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b1...master
-[1.1.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0ab1
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b2...master
+[1.1.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b2
+[1.1.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b1
 [1.1.0a3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a3
 [1.1.0a2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a2
 [1.1.0a1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a1
