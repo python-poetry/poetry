@@ -1,0 +1,23 @@
+[[package]]
+name = "demo"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.source]
+type = "git"
+reference = "f64843797eb954d530b6bfd229bfd6a55d13fe68"
+url = "https://github.com/demo/demo.git"
+
+[package.dependencies]
+
+[package.extras]
+
+[metadata.files]
+demo = []
+
+type = "url"
+reference = ""
+url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"

@@ -178,7 +178,7 @@ class Installer:
 
         locked_repository = Repository()
         if self._update:
-            if self._locker.is_locked() and not self._lock:
+            if self._locker.is_locked():
                 locked_repository = self._locker.locked_repository(True)
 
                 # If no packages have been whitelisted (The ones we want to update),

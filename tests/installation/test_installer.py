@@ -11,6 +11,7 @@ from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
+from poetry.puzzle.provider import Provider
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
@@ -1757,3 +1758,67 @@ def test_installer_can_handle_old_lock_files(
 
     # colorama will be added
     assert 8 == installer.executor.installations_count
+
+
+def installer_add_with_existing_demo_package(
+    package, locker, repo, installer, lock_data, demo_constraint
+):
+    locker.locked(True)
+    locker.mock_lock_data(lock_data)
+
+    repo.add_package(get_package("A", "1.0"))
+
+    package.add_dependency("demo", demo_constraint)
+    package.add_dependency("A", "^1.0")
+
+    installer.update(True)
+    installer.run()
+
+
+def test_installer_reuse_lock_data_file(mocker, installer, locker, repo, package):
+    spy = mocker.spy(Provider, "get_package_from_file")
+    data = fixture("with-reusable-package-info-git")
+    constraint = {
+        "file": str(fixtures_dir / "distributions/demo-0.1.0-py2.py3-none-any.whl")
+    }
+    installer_add_with_existing_demo_package(
+        package=package,
+        locker=locker,
+        repo=repo,
+        installer=installer,
+        lock_data=data,
+        demo_constraint=constraint,
+    )
+    spy.assert_not_called()
+
+
+def test_installer_reuse_lock_data_git(mocker, installer, locker, repo, package):
+    spy = mocker.spy(Provider, "get_package_from_vcs")
+    data = fixture("with-reusable-package-info-git")
+    constraint = {"git": "https://github.com/demo/demo.git"}
+    installer_add_with_existing_demo_package(
+        package=package,
+        locker=locker,
+        repo=repo,
+        installer=installer,
+        lock_data=data,
+        demo_constraint=constraint,
+    )
+    spy.assert_not_called()
+
+
+def test_installer_reuse_lock_data_url(mocker, installer, locker, repo, package):
+    spy = mocker.spy(Provider, "get_package_from_url")
+    data = fixture("with-reusable-package-info-url")
+    constraint = {
+        "url": "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
+    }
+    installer_add_with_existing_demo_package(
+        package=package,
+        locker=locker,
+        repo=repo,
+        installer=installer,
+        lock_data=data,
+        demo_constraint=constraint,
+    )
+    spy.assert_not_called()

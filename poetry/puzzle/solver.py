@@ -44,7 +44,9 @@ class Solver:
         self._io = io
 
         if provider is None:
-            provider = Provider(self._package, self._pool, self._io)
+            provider = Provider(
+                self._package, self._pool, self._io, locked=self._locked
+            )
 
         self._provider = provider
         self._overrides = []

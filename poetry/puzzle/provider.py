@@ -31,6 +31,7 @@ from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories import Pool
+from poetry.repositories import Repository
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
@@ -55,8 +56,8 @@ class Provider:
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip"}
 
     def __init__(
-        self, package, pool, io, env=None
-    ):  # type: (Package, Pool, Any, Optional[Env]) -> None
+        self, package, pool, io, env=None, locked=None
+    ):  # type: (Package, Pool, Any, Optional[Env], Optional[Repository]) -> None
         self._package = package
         self._pool = pool
         self._io = io
@@ -67,6 +68,11 @@ class Provider:
         self._in_progress = False
         self._overrides = {}
         self._deferred_cache = {}
+        self._locked_packages = {}
+
+        if locked:
+            for package in locked.packages:
+                self._locked_packages[package.name] = package
 
     @property
     def pool(self):  # type: () -> Pool
@@ -164,6 +170,9 @@ class Provider:
         if dependency in self._deferred_cache:
             return [self._deferred_cache[dependency]]
 
+        if dependency.name in self._locked_packages:
+            return [self._locked_packages[dependency.name]]
+
         package = self.get_package_from_vcs(
             dependency.vcs,
             dependency.source,
@@ -223,6 +232,8 @@ class Provider:
             dependency, _package = self._deferred_cache[dependency]
 
             package = _package.clone()
+        elif dependency.name in self._locked_packages:
+            package = self._locked_packages[dependency.name].clone()
         else:
             package = self.get_package_from_file(dependency.full_path)
 
@@ -279,6 +290,8 @@ class Provider:
             dependency, _package = self._deferred_cache[dependency]
 
             package = _package.clone()
+        elif dependency.name in self._locked_packages:
+            package = self._locked_packages[dependency.name].clone()
         else:
             package = self.get_package_from_directory(
                 dependency.full_path, name=dependency.name
@@ -328,6 +341,9 @@ class Provider:
     def search_for_url(self, dependency):  # type: (URLDependency) -> List[Package]
         if dependency in self._deferred_cache:
             return [self._deferred_cache[dependency]]
+
+        if dependency.name in self._locked_packages:
+            return [self._locked_packages[dependency.name]]
 
         package = self.get_package_from_url(dependency.url)
 
