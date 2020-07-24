@@ -134,32 +134,29 @@ class Executor(object):
             return
 
         if self._io.is_debug():
-            self._lock.acquire()
-            section = self._sections[id(operation)]
-            section.write_line(line)
-            self._lock.release()
+            with self._lock:
+                section = self._sections[id(operation)]
+                section.write_line(line)
 
             return
 
-        self._lock.acquire()
-        section = self._sections[id(operation)]
-        section.output.clear()
-        section.write(line)
-        self._lock.release()
+        with self._lock:
+            section = self._sections[id(operation)]
+            section.output.clear()
+            section.write(line)
 
     def _execute_operation(self, operation):
         try:
             if self.supports_fancy_output():
                 if id(operation) not in self._sections:
                     if self._should_write_operation(operation):
-                        self._lock.acquire()
-                        self._sections[id(operation)] = self._io.section()
-                        self._sections[id(operation)].write_line(
-                            "  <fg=blue;options=bold>•</> {message}: <fg=blue>Pending...</>".format(
-                                message=self.get_operation_message(operation),
-                            ),
-                        )
-                        self._lock.release()
+                        with self._lock:
+                            self._sections[id(operation)] = self._io.section()
+                            self._sections[id(operation)].write_line(
+                                "  <fg=blue;options=bold>•</> {message}: <fg=blue>Pending...</>".format(
+                                    message=self.get_operation_message(operation),
+                                ),
+                            )
             else:
                 if self._should_write_operation(operation):
                     if not operation.skipped:
@@ -204,14 +201,12 @@ class Executor(object):
                 self._write(operation, message)
                 io = self._sections.get(id(operation), self._io)
 
-            self._lock.acquire()
+            with self._lock:
+                trace = ExceptionTrace(e)
+                trace.render(io)
+                io.write_line("")
 
-            trace = ExceptionTrace(e)
-            trace.render(io)
-            io.write_line("")
-
-            self._shutdown = True
-            self._lock.release()
+                self._shutdown = True
         except KeyboardInterrupt:
             message = "  <warning>•</warning> {message}: <warning>Cancelled</warning>".format(
                 message=self.get_operation_message(operation, warning=True),
@@ -221,9 +216,8 @@ class Executor(object):
             else:
                 self._write(operation, message)
 
-            self._lock.acquire()
-            self._shutdown = True
-            self._lock.release()
+            with self._lock:
+                self._shutdown = True
 
     def _do_execute_operation(self, operation):
         method = operation.job_type
@@ -269,14 +263,12 @@ class Executor(object):
         return result
 
     def _increment_operations_count(self, operation, executed):
-        self._lock.acquire()
-        if executed:
-            self._executed_operations += 1
-            self._executed[operation.job_type] += 1
-        else:
-            self._skipped[operation.job_type] += 1
-
-        self._lock.release()
+        with self._lock:
+            if executed:
+                self._executed_operations += 1
+                self._executed[operation.job_type] += 1
+            else:
+                self._skipped[operation.job_type] += 1
 
     def run_pip(self, *args, **kwargs):  # type: (...) -> int
         try:
@@ -625,9 +617,8 @@ class Executor(object):
                 progress.set_format(message + " <b>%percent%%</b>")
 
         if progress:
-            self._lock.acquire()
-            progress.start()
-            self._lock.release()
+            with self._lock:
+                progress.start()
 
         done = 0
         archive = self._chef.get_cache_directory_for_link(link) / link.filename
@@ -640,16 +631,14 @@ class Executor(object):
                 done += len(chunk)
 
                 if progress:
-                    self._lock.acquire()
-                    progress.set_progress(done)
-                    self._lock.release()
+                    with self._lock:
+                        progress.set_progress(done)
 
                 f.write(chunk)
 
         if progress:
-            self._lock.acquire()
-            progress.finish()
-            self._lock.release()
+            with self._lock:
+                progress.finish()
 
         return archive
 
