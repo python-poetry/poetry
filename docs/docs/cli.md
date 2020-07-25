@@ -116,7 +116,7 @@ poetry install --remove-untracked
 ```
 
 You can also specify the extras you want installed
-by passing the `--E|--extras` option (See [Extras](https://python-poetry.org/docs/pyproject/#extras) for more info)
+by passing the `--E|--extras` option (See [Extras](/docs/pyproject/#extras) for more info)
 
 ```bash
 poetry install --extras "mysql pgsql"
