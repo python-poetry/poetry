@@ -176,7 +176,7 @@ class Solver:
         )
 
     def __find_git_locked_version(self, package):
-        from poetry.vcs.git import Git
+        from poetry.core.vcs.git import Git
 
         # Trying to find the currently installed version
         package_source_url = Git.normalize_url(package.source_url)
