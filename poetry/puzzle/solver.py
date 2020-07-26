@@ -94,10 +94,12 @@ class Solver:
 
                         if lpkg:
                             if lpkg.source_reference != pkg.source_reference:
-                                operations.append(Update(pkg, lpkg))
+                                operations.append(Update(pkg, lpkg, priority=depths[i]))
                             else:
                                 operations.append(
-                                    Install(package).skip("Already installed")
+                                    Install(package, priority=depths[i]).skip(
+                                        "Already installed"
+                                    )
                                 )
                         elif pkg_source_url != package_source_url or (
                             pkg.source_reference != package.source_reference
@@ -108,7 +110,9 @@ class Solver:
                             operations.append(Update(pkg, package, priority=depths[i]))
                         else:
                             operations.append(
-                                Install(package).skip("Already installed")
+                                Install(package, priority=depths[i]).skip(
+                                    "Already installed"
+                                )
                             )
                     elif package.version != pkg.version:
                         # Checking version
