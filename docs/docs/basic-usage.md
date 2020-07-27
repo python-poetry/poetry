@@ -41,14 +41,23 @@ python = "*"
 pytest = "^3.4"
 ```
 
-If you have a pre-existing project, say `pre-existing-demo`, and want to use poetry:
+### Initialising a pre-existing project
 
-```bash
-cd pre-existing-demo
-poetry init
+Instead of creating a new project, Poetry can be used to 'initialise' a pre-populated
+directory. It expects a standard Python package structure to do this:
+
+```text
+pre-existing-project
+├── README.rst
+└── pre_existing_project
+    └── __init__.py
 ```
 
-This will interactively guide you through creating a `pyproject.toml` file.
+To initialise this project, and interactively create a `pyproject.toml` file:
+
+```bash
+poetry init pre-existing-project
+```
 
 ### Specifying dependencies
 
