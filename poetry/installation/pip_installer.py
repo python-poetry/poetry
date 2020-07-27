@@ -4,7 +4,6 @@ import tempfile
 from subprocess import CalledProcessError
 
 from clikit.api.io import IO
-from clikit.io import NullIO
 
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import encode
@@ -181,6 +180,8 @@ class PipInstaller(BaseInstaller):
 
     def install_directory(self, package):
         from poetry.factory import Factory
+        from poetry.io.null_io import NullIO
+        from poetry.masonry.builders.editable import EditableBuilder
         from poetry.utils.toml_file import TomlFile
 
         if package.root_dir:
@@ -200,41 +201,53 @@ class PipInstaller(BaseInstaller):
                 "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
             )
             # Even if there is a build system specified
-            # pip as of right now does not support it fully
-            # TODO: Check for pip version when proper PEP-517 support lands
-            # has_build_system = ("build-system" in pyproject_content)
-
-        setup = os.path.join(req, "setup.py")
-        has_setup = os.path.exists(setup)
-        if has_poetry and (package.develop or not has_build_system):
-            # We actually need to rely on creating a temporary setup.py
-            # file since pip, as of this comment, does not support
-            # build-system for editable packages
-            # We also need it for non-PEP-517 packages
-            from poetry.masonry.builders.editable import EditableBuilder
-
-            builder = EditableBuilder(
-                Factory().create_poetry(pyproject.parent), self._env, NullIO()
+            # some versions of pip (< 19.0.0) don't understand it
+            # so we need to check the version of pip to know
+            # if we can rely on the build system
+            pip_version = self._env.pip_version
+            pip_version_with_build_system_support = pip_version.__class__(19, 0, 0)
+            has_build_system = (
+                "build-system" in pyproject_content
+                and pip_version >= pip_version_with_build_system_support
             )
 
-            builder.build()
+        if has_poetry:
+            package_poetry = Factory().create_poetry(pyproject.parent)
+            if package.develop and not package_poetry.package.build_script:
+                # This is a Poetry package in editable mode
+                # we can use the EditableBuilder without going through pip
+                # to install it, unless it has a build script.
+                builder = EditableBuilder(package_poetry, self._env, NullIO())
+                builder.build()
 
-            return
+                return
+            elif not has_build_system or package_poetry.package.build_script:
+                from poetry.core.masonry.builders.sdist import SdistBuilder
+
+                # We need to rely on creating a temporary setup.py
+                # file since the version of pip does not support
+                # build-systems
+                # We also need it for non-PEP-517 packages
+                builder = SdistBuilder(package_poetry)
+
+                with builder.setup_py():
+                    if package.develop:
+                        args.append("-e")
+
+                    args.append(req)
+
+                    return self.run(*args)
 
         if package.develop:
             args.append("-e")
 
         args.append(req)
 
-        try:
-            return self.run(*args)
-        finally:
-            if not has_setup and os.path.exists(setup):
-                os.remove(setup)
+        return self.run(*args)
 
     def install_git(self, package):
-        from poetry.packages import Package
-        from poetry.vcs import Git
+        from poetry.core.packages import Package
+        from poetry.core.vcs import Git
 
         src_dir = self._env.path / "src" / package.name
         if src_dir.exists():

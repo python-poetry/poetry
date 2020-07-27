@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 import time
 
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Union
 
-from poetry.packages import Dependency
-from poetry.packages import Package
-from poetry.packages import ProjectPackage
-from poetry.puzzle.provider import Provider
-from poetry.semver import Version
-from poetry.semver import VersionRange
+from poetry.core.packages import Dependency
+from poetry.core.packages import Package
+from poetry.core.packages import ProjectPackage
+from poetry.core.semver import Version
+from poetry.core.semver import VersionRange
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility
@@ -23,6 +23,10 @@ from .partial_solution import PartialSolution
 from .result import SolverResult
 from .set_relation import SetRelation
 from .term import Term
+
+
+if TYPE_CHECKING:
+    from poetry.puzzle.provider import Provider
 
 
 _conflict = object()
@@ -449,6 +453,13 @@ class VersionSolver:
 
         if dependency.extras:
             locked.requires_extras = dependency.extras
+
+        if not dependency.transitive_marker.without_extras().is_any():
+            marker_intersection = dependency.transitive_marker.without_extras().intersect(
+                locked.dependency.marker.without_extras()
+            )
+            if not marker_intersection.is_empty():
+                locked.dependency.transitive_marker = marker_intersection
 
         return locked
 

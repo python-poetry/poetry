@@ -13,22 +13,18 @@ from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
 
-import poetry.packages
-
-from poetry.locations import CACHE_DIR
-from poetry.packages import Package
-from poetry.packages import dependency_from_pep_508
-from poetry.packages.utils.link import Link
-from poetry.semver import Version
-from poetry.semver import VersionConstraint
-from poetry.semver import VersionRange
-from poetry.semver import parse_constraint
+from poetry.core.packages import Package
+from poetry.core.packages.utils.link import Link
+from poetry.core.semver import Version
+from poetry.core.semver import VersionConstraint
+from poetry.core.semver import VersionRange
+from poetry.core.semver import parse_constraint
+from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
-from poetry.utils.inspector import Inspector
 from poetry.utils.patterns import wheel_file_re
-from poetry.version.markers import InvalidMarker
 
+from ..inspection.info import PackageInfo
 from .auth import Auth
 from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
@@ -173,8 +169,7 @@ class LegacyRepository(PyPiRepository):
         self._auth = auth
         self._client_cert = client_cert
         self._cert = cert
-        self._inspector = Inspector()
-        self._cache_dir = Path(CACHE_DIR) / "cache" / "repositories" / name
+        self._cache_dir = REPOSITORY_CACHE_DIR / name
         self._cache = CacheManager(
             {
                 "default": "releases",
@@ -285,9 +280,7 @@ class LegacyRepository(PyPiRepository):
 
         return packages
 
-    def package(
-        self, name, version, extras=None
-    ):  # type: (...) -> poetry.packages.Package
+    def package(self, name, version, extras=None):  # type: (...) -> Package
         """
         Retrieve the release information.
 
@@ -300,86 +293,39 @@ class LegacyRepository(PyPiRepository):
         should be much faster.
         """
         try:
-            index = self._packages.index(
-                poetry.packages.Package(name, version, version)
-            )
+            index = self._packages.index(Package(name, version, version))
 
             return self._packages[index]
         except ValueError:
-            if extras is None:
-                extras = []
-
-            release_info = self.get_release_info(name, version)
-
-            package = poetry.packages.Package(name, version, version)
-            if release_info["requires_python"]:
-                package.python_versions = release_info["requires_python"]
-
+            package = super(LegacyRepository, self).package(name, version, extras)
             package.source_type = "legacy"
             package.source_url = self._url
             package.source_reference = self.name
 
-            requires_dist = release_info["requires_dist"] or []
-            for req in requires_dist:
-                try:
-                    dependency = dependency_from_pep_508(req)
-                except InvalidMarker:
-                    # Invalid marker
-                    # We strip the markers hoping for the best
-                    req = req.split(";")[0]
-
-                    dependency = dependency_from_pep_508(req)
-                except ValueError:
-                    # Likely unable to parse constraint so we skip it
-                    self._log(
-                        "Invalid constraint ({}) found in {}-{} dependencies, "
-                        "skipping".format(req, package.name, package.version),
-                        level="debug",
-                    )
-                    continue
-
-                if dependency.in_extras:
-                    for extra in dependency.in_extras:
-                        if extra not in package.extras:
-                            package.extras[extra] = []
-
-                        package.extras[extra].append(dependency)
-
-                if not dependency.is_optional():
-                    package.requires.append(dependency)
-
-            # Adding description
-            package.description = release_info.get("summary", "")
-
-            # Adding hashes information
-            package.files = release_info["files"]
-
-            # Activate extra dependencies
-            for extra in extras:
-                if extra in package.extras:
-                    for dep in package.extras[extra]:
-                        dep.activate()
-
-                    package.requires += package.extras[extra]
-
-            self._packages.append(package)
-
             return package
+
+    def find_links_for_package(self, package):
+        page = self._get("/{}/".format(package.name.replace(".", "-")))
+        if page is None:
+            return []
+
+        return list(page.links_for_version(package.version))
 
     def _get_release_info(self, name, version):  # type: (str, str) -> dict
         page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:
             raise PackageNotFound('No package named "{}"'.format(name))
 
-        data = {
-            "name": name,
-            "version": version,
-            "summary": "",
-            "requires_dist": [],
-            "requires_python": None,
-            "files": [],
-            "_cache_version": str(self.CACHE_VERSION),
-        }
+        data = PackageInfo(
+            name=name,
+            version=version,
+            summary="",
+            platform=None,
+            requires_dist=[],
+            requires_python=None,
+            files=[],
+            cache_version=str(self.CACHE_VERSION),
+        )
 
         links = list(page.links_for_version(Version.parse(version)))
         if not links:
@@ -403,26 +349,19 @@ class LegacyRepository(PyPiRepository):
                 h = link.hash_name + ":" + link.hash
                 files.append({"file": link.filename, "hash": h})
 
-        data["files"] = files
+        data.files = files
 
         info = self._get_info_from_urls(urls)
 
-        data["summary"] = info["summary"]
-        data["requires_dist"] = info["requires_dist"]
-        data["requires_python"] = info["requires_python"]
+        data.summary = info.summary
+        data.requires_dist = info.requires_dist
+        data.requires_python = info.requires_python
 
-        return data
-
-    def _download(self, url, dest):  # type: (str, str) -> None
-        r = self._session.get(url, stream=True)
-        with open(dest, "wb") as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
+        return data.asdict()
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
-        response = self._session.get(url)
+        response = self.session.get(url)
         if response.status_code == 404:
             return
 

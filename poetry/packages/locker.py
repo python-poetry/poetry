@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 
 from hashlib import sha256
@@ -10,15 +11,23 @@ from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
 
-import poetry.packages
 import poetry.repositories
 
+from poetry.core.packages.package import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.semver import parse_constraint
+from poetry.core.semver.version import Version
+from poetry.core.version.markers import parse_marker
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
-from poetry.version.markers import parse_marker
+
+
+logger = logging.getLogger(__name__)
 
 
 class Locker(object):
+
+    _VERSION = "1.1"
 
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
@@ -83,9 +92,7 @@ class Locker(object):
             return packages
 
         for info in locked_packages:
-            package = poetry.packages.Package(
-                info["name"], info["version"], info["version"]
-            )
+            package = Package(info["name"], info["version"], info["version"])
             package.description = info.get("description", "")
             package.category = info["category"]
             package.optional = info["optional"]
@@ -109,16 +116,14 @@ class Locker(object):
                         dep_name = m.group(1)
                         constraint = m.group(2) or "*"
 
-                        package.extras[name].append(
-                            poetry.packages.Dependency(dep_name, constraint)
-                        )
+                        package.extras[name].append(Dependency(dep_name, constraint))
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
             else:
                 # Compatibility for old locks
                 if "requirements" in info:
-                    dep = poetry.packages.Dependency("foo", "0.0.0")
+                    dep = Dependency("foo", "0.0.0")
                     for name, value in info["requirements"].items():
                         if name == "python":
                             dep.python_versions = value
@@ -180,6 +185,7 @@ class Locker(object):
             }
 
         lock["metadata"] = {
+            "lock-version": self._VERSION,
             "python-versions": root.python_versions,
             "content-hash": self._content_hash,
             "files": files,
@@ -222,9 +228,32 @@ class Locker(object):
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
         try:
-            return self._lock.read()
+            lock_data = self._lock.read()
         except TOMLKitError as e:
             raise RuntimeError("Unable to read the lock file ({}).".format(e))
+
+        lock_version = Version.parse(lock_data["metadata"].get("lock-version", "1.0"))
+        current_version = Version.parse(self._VERSION)
+        # We expect the locker to be able to read lock files
+        # from the same semantic versioning range
+        accepted_versions = parse_constraint(
+            "^{}".format(Version(current_version.major, 0))
+        )
+        lock_version_allowed = accepted_versions.allows(lock_version)
+        if lock_version_allowed and current_version < lock_version:
+            logger.warning(
+                "The lock file might not be compatible with the current version of Poetry.\n"
+                "Upgrade Poetry to ensure the lock file is read properly or, alternatively, "
+                "regenerate the lock file with the `poetry lock` command."
+            )
+        elif not lock_version_allowed:
+            raise RuntimeError(
+                "The lock file is not compatible with the current version of Poetry.\n"
+                "Upgrade Poetry to be able to read the lock file or, alternatively, "
+                "regenerate the lock file with the `poetry lock` command."
+            )
+
+        return lock_data
 
     def _lock_packages(
         self, packages
@@ -238,7 +267,7 @@ class Locker(object):
 
         return locked
 
-    def _dump_package(self, package):  # type: (poetry.packages.Package) -> dict
+    def _dump_package(self, package):  # type: (Package) -> dict
         dependencies = {}
         for dependency in sorted(package.requires, key=lambda d: d.name):
             if dependency.is_optional() and not dependency.is_activated():
@@ -247,16 +276,17 @@ class Locker(object):
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
 
-            constraint = {"version": str(dependency.pretty_constraint)}
+            constraint = inline_table()
+            constraint["version"] = str(dependency.pretty_constraint)
 
             if dependency.extras:
-                constraint["extras"] = dependency.extras
+                constraint["extras"] = sorted(dependency.extras)
 
             if dependency.is_optional():
                 constraint["optional"] = True
 
-            if not dependency.python_constraint.is_any():
-                constraint["python"] = str(dependency.python_constraint)
+            if not dependency.marker.is_any():
+                constraint["markers"] = str(dependency.marker)
 
             dependencies[dependency.pretty_name].append(constraint)
 
@@ -277,8 +307,6 @@ class Locker(object):
             "python-versions": package.python_versions,
             "files": sorted(package.files, key=lambda x: x["file"]),
         }
-        if not package.marker.is_any():
-            data["marker"] = str(package.marker)
 
         if package.extras:
             extras = {}

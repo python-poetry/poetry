@@ -32,6 +32,7 @@ class InitCommand(Command):
         option("name", None, "Name of the package.", flag=False),
         option("description", None, "Description of the package.", flag=False),
         option("author", None, "Author name of the package.", flag=False),
+        option("python", None, "Compatible Python versions.", flag=False),
         option(
             "dependency",
             None,
@@ -64,7 +65,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.layouts import layout
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
-        from poetry.vcs.git import GitConfig
+        from poetry.core.vcs.git import GitConfig
 
         if (Path.cwd() / "pyproject.toml").exists():
             self.line("<error>A pyproject.toml file already exists.</error>")
@@ -126,17 +127,19 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         question.set_validator(self._validate_license)
         license = self.ask(question)
 
-        current_env = SystemEnv(Path(sys.executable))
-        default_python = "^{}".format(
-            ".".join(str(v) for v in current_env.version_info[:2])
-        )
-        question = self.create_question(
-            "Compatible Python versions [<comment>{}</comment>]: ".format(
-                default_python
-            ),
-            default=default_python,
-        )
-        python = self.ask(question)
+        python = self.option("python")
+        if not python:
+            current_env = SystemEnv(Path(sys.executable))
+            default_python = "^{}".format(
+                ".".join(str(v) for v in current_env.version_info[:2])
+            )
+            question = self.create_question(
+                "Compatible Python versions [<comment>{}</comment>]: ".format(
+                    default_python
+                ),
+                default=default_python,
+            )
+            python = self.ask(question)
 
         self.line("")
 
@@ -203,7 +206,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             f.write(content)
 
     def _determine_requirements(
-        self, requires, allow_prereleases=False
+        self, requires, allow_prereleases=False, source=None
     ):  # type: (List[str], bool) -> List[Dict[str, str]]
         if not requires:
             requires = []
@@ -299,7 +302,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             elif "version" not in requirement:
                 # determine the best version automatically
                 name, version = self._find_best_version_for_package(
-                    requirement["name"], allow_prereleases=allow_prereleases
+                    requirement["name"],
+                    allow_prereleases=allow_prereleases,
+                    source=source,
                 )
                 requirement["version"] = version
                 requirement["name"] = name
@@ -314,6 +319,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     requirement["name"],
                     requirement["version"],
                     allow_prereleases=allow_prereleases,
+                    source=source,
                 )
 
                 requirement["name"] = name
@@ -323,13 +329,13 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return result
 
     def _find_best_version_for_package(
-        self, name, required_version=None, allow_prereleases=False
+        self, name, required_version=None, allow_prereleases=False, source=None
     ):  # type: (...) -> Tuple[str, str]
         from poetry.version.version_selector import VersionSelector
 
         selector = VersionSelector(self._get_pool())
         package = selector.find_best_candidate(
-            name, required_version, allow_prereleases=allow_prereleases
+            name, required_version, allow_prereleases=allow_prereleases, source=source
         )
 
         if not package:
@@ -364,8 +370,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if url_parsed.scheme and url_parsed.netloc:
                 # Url
                 if url_parsed.scheme in ["git+https", "git+ssh"]:
-                    from poetry.vcs.git import Git
-                    from poetry.vcs.git import ParsedUrl
+                    from poetry.core.vcs.git import Git
+                    from poetry.core.vcs.git import ParsedUrl
 
                     parsed = ParsedUrl.parse(requirement)
                     url = Git.normalize_url(requirement)
@@ -478,7 +484,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return requires
 
     def _validate_author(self, author, default):
-        from poetry.packages.package import AUTHOR_REGEX
+        from poetry.core.packages.package import AUTHOR_REGEX
 
         author = author or default
 
@@ -495,7 +501,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return author
 
     def _validate_license(self, license):
-        from poetry.spdx import license_by_id
+        from poetry.core.spdx import license_by_id
 
         if license:
             license_by_id(license)

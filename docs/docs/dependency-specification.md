@@ -189,7 +189,7 @@ An example where this might be useful is the following:
 
 ```toml
 [tool.poetry.dev-dependencies]
-black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'}
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'"}
 ```
 
 As a single line, this is a lot to digest. To make this a little bit easier to

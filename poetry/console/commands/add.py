@@ -1,11 +1,11 @@
 from cleo import argument
 from cleo import option
 
-from .env_command import EnvCommand
 from .init import InitCommand
+from .installer_command import InstallerCommand
 
 
-class AddCommand(EnvCommand, InitCommand):
+class AddCommand(InstallerCommand, InitCommand):
 
     name = "add"
     description = "Adds a new dependency to <comment>pyproject.toml</>."
@@ -33,12 +33,19 @@ class AddCommand(EnvCommand, InitCommand):
             "Platforms for which the dependency must be installed.",
             flag=False,
         ),
+        option(
+            "source",
+            None,
+            "Name of the source to use to install the package.",
+            flag=False,
+        ),
         option("allow-prereleases", None, "Accept prereleases."),
         option(
             "dry-run",
             None,
             "Output the operations but do not execute anything (implicitly enables --verbose).",
         ),
+        option("lock", None, "Do not perform operations (only update the lockfile)."),
     ]
     help = (
         "The add command adds required packages to your <comment>pyproject.toml</> and installs them.\n\n"
@@ -56,8 +63,7 @@ class AddCommand(EnvCommand, InitCommand):
     loggers = ["poetry.repositories.pypi_repository"]
 
     def handle(self):
-        from poetry.installation.installer import Installer
-        from poetry.semver import parse_constraint
+        from poetry.core.semver import parse_constraint
         from tomlkit import inline_table
 
         packages = self.argument("name")
@@ -93,7 +99,9 @@ class AddCommand(EnvCommand, InitCommand):
                     raise ValueError("Package {} is already present".format(name))
 
         requirements = self._determine_requirements(
-            packages, allow_prereleases=self.option("allow-prereleases")
+            packages,
+            allow_prereleases=self.option("allow-prereleases"),
+            source=self.option("source"),
         )
 
         for _constraint in requirements:
@@ -130,6 +138,9 @@ class AddCommand(EnvCommand, InitCommand):
             if self.option("platform"):
                 constraint["platform"] = self.option("platform")
 
+            if self.option("source"):
+                constraint["source"] = self.option("source")
+
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
 
@@ -144,16 +155,17 @@ class AddCommand(EnvCommand, InitCommand):
         # Update packages
         self.reset_poetry()
 
-        installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
-        )
+        self._installer.set_package(self.poetry.package)
+        self._installer.dry_run(self.option("dry-run"))
+        self._installer.verbose(self._io.is_verbose())
+        self._installer.update(True)
+        if self.option("lock"):
+            self._installer.lock()
 
-        installer.dry_run(self.option("dry-run"))
-        installer.update(True)
-        installer.whitelist([r["name"] for r in requirements])
+        self._installer.whitelist([r["name"] for r in requirements])
 
         try:
-            status = installer.run()
+            status = self._installer.run()
         except Exception:
             self.poetry.file.write(original_content)
 
@@ -162,10 +174,10 @@ class AddCommand(EnvCommand, InitCommand):
         if status != 0 or self.option("dry-run"):
             # Revert changes
             if not self.option("dry-run"):
-                self.error(
+                self.line_error(
                     "\n"
-                    "Addition failed, reverting pyproject.toml "
-                    "to its original content."
+                    "<error>Failed to add packages, reverting the pyproject.toml file "
+                    "to its original content.</error>"
                 )
 
             self.poetry.file.write(original_content)

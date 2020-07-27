@@ -11,7 +11,6 @@ name = "B"
 version = "1.1"
 description = ""
 category = "main"
-marker = "sys_platform == \"custom\""
 optional = false
 python-versions = "*"
 
@@ -20,7 +19,6 @@ name = "C"
 version = "1.3"
 description = ""
 category = "main"
-marker = "sys_platform == \"darwin\""
 optional = false
 python-versions = "*"
 
@@ -32,7 +30,6 @@ name = "D"
 version = "1.4"
 description = ""
 category = "main"
-marker = "sys_platform == \"darwin\""
 optional = false
 python-versions = "*"
 
@@ -41,6 +38,7 @@ foo = ["A"]
 
 [metadata]
 python-versions = "*"
+lock-version = "1.1"
 content-hash = "123456789"
 
 [metadata.files]

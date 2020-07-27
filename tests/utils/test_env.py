@@ -10,13 +10,14 @@ import tomlkit
 
 from clikit.io import NullIO
 
+from poetry.core.semver import Version
 from poetry.factory import Factory
-from poetry.semver import Version
-from poetry.utils._compat import WINDOWS
+from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import NoCompatiblePythonVersionFound
+from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
 from poetry.utils.toml_file import TomlFile
 
@@ -580,17 +581,11 @@ def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mo
     m.side_effect = original_rmtree  # Avoid teardown using `err_on_rm_venv_only`
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or PY2, reason="Symlinks are not support for Windows"
+)
 def test_env_has_symlinks_on_nix(tmp_dir, tmp_venv):
-    venv_available = False
-    try:
-        from venv import EnvBuilder  # noqa
-
-        venv_available = True
-    except ImportError:
-        pass
-
-    if os.name != "nt" and venv_available:
-        assert os.path.islink(tmp_venv.python)
+    assert os.path.islink(tmp_venv.python)
 
 
 def test_run_with_input(tmp_dir, tmp_venv):
@@ -644,7 +639,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
 
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output", side_effect=["3.5.3", "3.8.0"]
+        "poetry.utils._compat.subprocess.check_output", side_effect=["3.5.3", "3.9.0"]
     )
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
@@ -653,7 +648,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        Path("/foo/virtualenvs/{}-py3.8".format(venv_name)), executable="python3.8"
+        Path("/foo/virtualenvs/{}-py3.9".format(venv_name)), executable="python3.9"
     )
 
 
@@ -815,58 +810,21 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     assert not envs_file.exists()
 
 
-def test_env_site_packages_should_find_the_site_packages_directory_if_standard(tmp_dir):
-    if WINDOWS:
-        site_packages = Path(tmp_dir).joinpath("Lib/site-packages")
-    else:
-        site_packages = Path(tmp_dir).joinpath(
-            "lib/python{}/site-packages".format(
-                ".".join(str(v) for v in sys.version_info[:2])
-            )
-        )
+def test_system_env_has_correct_paths():
+    env = SystemEnv(Path(sys.prefix))
 
-    site_packages.mkdir(parents=True)
+    paths = env.paths
 
-    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
-
-    assert site_packages == env.site_packages
+    assert paths.get("purelib") is not None
+    assert paths.get("platlib") is not None
+    assert paths.get("scripts") is not None
+    assert env.site_packages == Path(paths["purelib"])
 
 
-def test_env_site_packages_should_find_the_site_packages_directory_if_root(tmp_dir):
-    site_packages = Path(tmp_dir).joinpath("site-packages")
-    site_packages.mkdir(parents=True)
+def test_venv_has_correct_paths(tmp_venv):
+    paths = tmp_venv.paths
 
-    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
-
-    assert site_packages == env.site_packages
-
-
-def test_env_site_packages_should_find_the_dist_packages_directory_if_necessary(
-    tmp_dir,
-):
-    site_packages = Path(tmp_dir).joinpath("dist-packages")
-    site_packages.mkdir(parents=True)
-
-    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[str(site_packages)])
-
-    assert site_packages == env.site_packages
-
-
-def test_env_site_packages_should_prefer_site_packages_over_dist_packages(tmp_dir):
-    dist_packages = Path(tmp_dir).joinpath("dist-packages")
-    dist_packages.mkdir(parents=True)
-    site_packages = Path(tmp_dir).joinpath("site-packages")
-    site_packages.mkdir(parents=True)
-
-    env = MockVirtualEnv(
-        Path(tmp_dir), Path(tmp_dir), sys_path=[str(dist_packages), str(site_packages)]
-    )
-
-    assert site_packages == env.site_packages
-
-
-def test_env_site_packages_should_raise_an_error_if_no_site_packages(tmp_dir):
-    env = MockVirtualEnv(Path(tmp_dir), Path(tmp_dir), sys_path=[])
-
-    with pytest.raises(RuntimeError):
-        env.site_packages
+    assert paths.get("purelib") is not None
+    assert paths.get("platlib") is not None
+    assert paths.get("scripts") is not None
+    assert tmp_venv.site_packages == Path(paths["purelib"])
