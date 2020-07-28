@@ -253,7 +253,7 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing demo (0.1.2 9cf87a2)
 """
 
-    assert expected == tester.io.fetch_output()
+    assert expected.strip() == tester.io.fetch_output().strip()
     assert 4 == tester._command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
@@ -512,8 +512,10 @@ Package operations: 4 installs, 0 updates, 0 removals
   • Installing tomlkit (0.5.5)
   • Installing demo (0.1.0 https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl)
 """
-
-    assert expected == tester.io.fetch_output()
+    # Order might be different, split into lines and compare the overall output.
+    expected = set(expected.splitlines())
+    output = set(tester.io.fetch_output().splitlines())
+    assert expected == output
     assert 4 == tester._command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]

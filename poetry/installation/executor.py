@@ -29,7 +29,7 @@ from .operations.update import Update
 
 
 class Executor(object):
-    def __init__(self, env, pool, config, io, parallel=None):
+    def __init__(self, env, pool, config, io, parallel=True):
         self._env = env
         self._io = io
         self._dry_run = False
@@ -38,9 +38,6 @@ class Executor(object):
         self._authenticator = Authenticator(config, self._io)
         self._chef = Chef(config, self._env)
         self._chooser = Chooser(pool, self._env)
-
-        if parallel is None:
-            parallel = self.supports_fancy_output()
 
         if parallel:
             # This should be directly handled by ThreadPoolExecutor

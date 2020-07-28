@@ -110,7 +110,10 @@ Package operations: 4 installs, 1 update, 1 removal
 """.format(
         file_package.source_url, directory_package.source_url
     )
-    assert expected == io.fetch_output()
+
+    expected = set(expected.splitlines())
+    output = set(io.fetch_output().splitlines())
+    assert expected == output
     assert 5 == len(env.executed)
 
 
