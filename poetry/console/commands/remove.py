@@ -25,7 +25,7 @@ list of installed packages
 
 <info>poetry remove</info>"""
 
-    loggers = ["poetry.repositories.pypi_repository"]
+    loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self):
         packages = self.argument("packages")

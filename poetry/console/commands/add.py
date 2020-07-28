@@ -60,7 +60,7 @@ class AddCommand(InstallerCommand, InitCommand):
         "  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
     )
 
-    loggers = ["poetry.repositories.pypi_repository"]
+    loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self):
         from poetry.core.semver import parse_constraint
