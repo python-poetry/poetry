@@ -16,6 +16,7 @@ class NewCommand(Command):
     arguments = [argument("path", "The path to create the project at.")]
     options = [
         option("name", None, "Set the resulting package name.", flag=False),
+        option("author", None, "Author name of the package.", flag=False),
         option("src", None, "Use the src layout for the project."),
     ]
 
@@ -47,8 +48,8 @@ class NewCommand(Command):
         readme_format = "rst"
 
         config = GitConfig()
-        author = None
-        if config.get("user.name"):
+        author = self.option("author")
+        if (not author) and config.get("user.name"):
             author = config["user.name"]
             author_email = config.get("user.email")
             if author_email:
