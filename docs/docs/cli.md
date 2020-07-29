@@ -65,6 +65,12 @@ my-package
     └── test_my_package.py
 ```
 
+### Options
+
+* `--name`: Set the resulting package name.
+* `--author`: Author name of the package.
+* `--src`: Use the src layout for the project.
+
 ## init
 
 This command will help you create a `pyproject.toml` file interactively
