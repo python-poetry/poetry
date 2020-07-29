@@ -9,7 +9,12 @@ class EnvRemoveCommand(Command):
     description = "Removes a specific virtualenv associated with the project."
 
     arguments = [
-        argument("python", "The python executable to remove the virtualenv for.")
+        argument(
+            "python",
+            "The python executable to remove the virtualenv for.",
+            default=".venv",
+            optional=True,
+        )
     ]
 
     def handle(self):

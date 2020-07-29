@@ -524,6 +524,22 @@ class EnvManager(object):
         return env_list
 
     def remove(self, python):  # type: (str) -> Env
+        cwd = self._poetry.file.parent
+
+        # check python value to allow for removal of other environments even
+        # though virtualenvs.in-project is used
+        if self._poetry.config.get("virtualenvs.in-project") and python == ".venv":
+            env = cwd / ".venv"
+            if not env.exists():
+                raise ValueError(
+                    '<warning>Environment "{}" does not exist.</warning>'.format(
+                        env.name
+                    )
+                )
+            self.remove_venv(env)
+
+            return VirtualEnv(env)
+
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
             venv_path = Path(CACHE_DIR) / "virtualenvs"
