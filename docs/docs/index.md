@@ -188,8 +188,8 @@ poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry
 poetry completions zsh > ~/.zfunc/_poetry
 
 # Oh-My-Zsh
-mkdir $ZSH/plugins/poetry
-poetry completions zsh > $ZSH/plugins/poetry/_poetry
+mkdir $ZSH_CUSTOM/plugins/poetry
+poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
 
 # prezto
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
