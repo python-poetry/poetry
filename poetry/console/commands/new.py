@@ -49,7 +49,15 @@ class NewCommand(Command):
 
         config = GitConfig()
         author = self.option("author")
-        if (not author) and config.get("user.name"):
+        if author:
+            from poetry.packages.package import AUTHOR_REGEX
+
+            if not AUTHOR_REGEX.match(author):
+                raise ValueError(
+                    "Invalid author string. Must be in the format: "
+                    "John Smith <john@example.com>"
+                )
+        elif config.get("user.name"):
             author = config["user.name"]
             author_email = config.get("user.email")
             if author_email:
