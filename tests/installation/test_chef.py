@@ -44,17 +44,19 @@ def test_get_cached_archives_for_link(config, mocker):
         ),
     )
 
+    distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
     mocker.patch.object(
-        chef,
-        "get_cache_directory_for_link",
-        return_value=Path(__file__).parent.parent.joinpath("fixtures/distributions"),
+        chef, "get_cache_directory_for_link", return_value=distributions,
     )
 
     archives = chef.get_cached_archives_for_link(
         Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
     )
 
-    assert 2 == len(archives)
+    assert archives
+    assert set(archives) == {
+        Link(path.as_uri()) for path in distributions.glob("demo-0.1.0*")
+    }
 
 
 def test_get_cache_directory_for_link(config):
