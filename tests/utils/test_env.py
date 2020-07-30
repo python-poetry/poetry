@@ -572,6 +572,44 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     assert venv_name not in envs
 
 
+def test_remove_in_project(config, manager, monkeypatch, tmp_path):
+    config.merge({"virtualenvs": {"in-project": True}})
+    monkeypatch.setattr(manager._poetry.file, "parent", tmp_path)
+
+    venv_path = tmp_path / ".venv"
+    venv_path.mkdir()
+
+    manager.remove(".venv")
+    assert not venv_path.exists()
+
+    with pytest.raises(ValueError) as excinfo:
+        manager.remove(".venv")
+    assert venv_path.name in str(excinfo.value)
+
+
+def test_remove_in_project_external(
+    config, manager, mocker, monkeypatch, poetry, tmp_path
+):
+    config.merge({"virtualenvs": {"in-project": True, "path": str(tmp_path)}})
+    monkeypatch.setattr(manager._poetry.file, "parent", tmp_path)
+
+    dot_venv_path = tmp_path / ".venv"
+    dot_venv_path.mkdir()
+
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    venv_path = tmp_path / "{}-py3.7".format(venv_name)
+    venv_path.mkdir()
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.7.6")),
+    )
+
+    manager.remove("python3.7")
+    assert not venv_path.exists()
+    assert dot_venv_path.exists
+
+
 def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mocker):
     # Ensure we empty rather than delete folder if its is an active mount point.
     # See https://github.com/python-poetry/poetry/pull/2064
