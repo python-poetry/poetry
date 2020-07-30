@@ -116,6 +116,7 @@ poetry env remove /full/path/to/python
 poetry env remove python3.7
 poetry env remove 3.7
 poetry env remove test-O3eWbxRl-py3.7
+poetry env remove .venv
 ```
 
 If you remove the currently activated virtual environment, it will be automatically deactivated.
