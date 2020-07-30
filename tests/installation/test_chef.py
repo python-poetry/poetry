@@ -73,3 +73,36 @@ def test_get_cache_directory_for_link(config):
     )
 
     assert expected == directory
+
+
+def test_no_backslashes_with_file_protocol(config, mocker):
+    """Protocol file:// cannot be combined w/ backslashes on Windows."""
+    chef = Chef(
+        config,
+        MockEnv(
+            marker_env={"interpreter_name": "cpython", "interpreter_version": "3.8.3"}
+        ),
+    )
+
+    link = "https://files.pythonhosted.org/packages/96/0a/67556e9b7782df7118c1f49bdc494da5e5e429c93aa77965f33e81287c8c/zipp-1.2.0-py2.py3-none-any.whl#sha256=e0d9e63797e483a30d27e09fffd308c59a700d365ec34e93cc100844168bf921"
+    mocked_cache_dir = Path("C:\\Users\\johnsmith\\AppData\\Local\\pypoetry\\Cache\\artifacts\\96\\15\\17\\6dc4596b5827e94647f1e4e7362bec368fcdda2100141109ada8a1e3dd")
+    archive = Path("C:\\Users\\johnsmith\\AppData\\Local\\pypoetry\\Cache\\artifacts\\96\\15\\17\\6dc4596b5827e94647f1e4e7362bec368fcdda2100141109ada8a1e3dd\\zipp-1.2.0-py2.py3-none-any.whl")
+    expected = "file://" + str(archive.as_posix())
+
+
+    mocker.patch.object(
+        chef,
+        "get_cache_directory_for_link",
+        return_value=mocked_cache_dir,
+    )
+
+    mocker.patch.object(
+        Path,
+        "glob",
+        return_value=[archive],
+    )
+
+    archives = chef.get_cached_archives_for_link(link)
+
+    assert str(archives[0]) == expected
+
