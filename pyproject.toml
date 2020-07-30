@@ -35,7 +35,7 @@ cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
 html5lib = "^1.0"
 shellingham = "^1.1"
-tomlkit = "^0.5.11"
+tomlkit = ">=0.7.0,<1.0.0"
 pexpect = "^4.7.0"
 packaging = "^20.4"
 virtualenv = { version = "^20.0.26" }
