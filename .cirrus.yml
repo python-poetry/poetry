@@ -6,10 +6,7 @@ test_task:
   env:
     matrix:
       - PYTHON: python2.7
-      - PYTHON: python3.5
-      - PYTHON: python3.6
       - PYTHON: python3.7
-      - PYTHON: python3.8
   python_script:
     - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
     - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
@@ -29,11 +26,13 @@ test_task:
 release_task:
   name: "Release / FreeBSD"
   only_if: $CIRRUS_TAG != ''
+  env:
+    GITHUB_TOKEN: ENCRYPTED[e637a1887c028ea4e44867715a8a4b7c5e27568559a15c45a3e33739b0d97fc050394c728a44e9bfe7c246179810cad7]
   freebsd_instance:
     matrix:
       - image_family: freebsd-12-1-snap
       - image_family: freebsd-11-3-snap
-  python_script: pkg install -y python3 python27 python35 python36 python37 python38
+  python_script: pkg install -y curl python3 python27 python35 python36 python37 python38
   pip_script:
     - python2.7 -m ensurepip
     - python3.5 -m ensurepip
@@ -41,5 +40,17 @@ release_task:
     - python3.7 -m ensurepip
     - python3.8 -m ensurepip
   build_script: ./make-nix-release.sh
+  upload_script: |
+    for fpath in releases/*
+    do
+      echo "Uploading $fpath..."
+      name=$(basename "$fpath")
+      url_to_upload="https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/$CIRRUS_TAG/assets?name=$name"
+      curl -X POST \
+        --data-binary @$fpath \
+        --header "Authorization: token $GITHUB_TOKEN" \
+        --header "Content-Type: application/octet-stream" \
+        $url_to_upload
+    done
   archive_artifacts:
     path: "releases/*"

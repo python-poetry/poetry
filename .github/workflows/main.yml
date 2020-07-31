@@ -4,6 +4,7 @@ on:
   push:
     paths-ignore:
       - 'docs/**'
+      - '.cirrus.yml'
     branches:
       - master
       - develop
