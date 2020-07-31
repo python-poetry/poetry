@@ -890,7 +890,7 @@ def test_run_with_prereleases(installer, locker, repo, package):
     repo.add_package(package_a)
     repo.add_package(package_b)
 
-    package.add_dependency("A", {"version": "*", "allows-prereleases": True})
+    package.add_dependency("A", {"version": "*", "allow-prereleases": True})
     package.add_dependency("B", "^1.1")
 
     installer.update(True)
