@@ -79,6 +79,13 @@ poetry self update 1.0.0
 
     If you are still on poetry version < 1.0 use `poetry self:update` instead.
 
+### Installing on Windows
+
+Windows users who have the [Chocolatey package manager](https://www.chocolatey.org) can use the following to install the latest stable version:
+
+```cmd
+choco install poetry
+```
 
 ## Enable tab completion for Bash, Fish, or Zsh
 
