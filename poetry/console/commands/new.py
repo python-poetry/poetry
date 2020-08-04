@@ -3,8 +3,6 @@ import sys
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from poetry.utils.helpers import module_name
-
 from .command import Command
 
 
@@ -31,7 +29,11 @@ class NewCommand(Command):
         else:
             layout_ = layout("standard")
 
-        path = Path.cwd() / Path(self.argument("path"))
+        path = Path(self.argument("path"))
+        if not path.is_absolute():
+            # we do not use resolve here due to compatibility issues for path.resolve(strict=False)
+            path = Path.cwd().joinpath(path)
+
         name = self.option("name")
         if not name:
             name = path.name
@@ -68,8 +70,15 @@ class NewCommand(Command):
         )
         layout_.create(path)
 
+        path = path.resolve()
+
+        try:
+            path = path.relative_to(Path.cwd())
+        except ValueError:
+            pass
+
         self.line(
             "Created package <info>{}</> in <fg=blue>{}</>".format(
-                module_name(name), path.relative_to(Path.cwd())
+                layout_._package_name, path.as_posix()  # noqa
             )
         )
