@@ -66,6 +66,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -112,6 +113,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -144,6 +146,7 @@ name = "my-package"
 version = "1.2.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
+packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
@@ -152,7 +155,6 @@ python = "^{python}"
 """.format(
         python=".".join(str(c) for c in sys.version_info[:2])
     )
-
     assert expected in tester.io.fetch_output()
 
 
@@ -186,6 +188,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -228,6 +231,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -270,6 +274,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -315,6 +320,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -361,6 +367,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -406,6 +413,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -471,6 +479,7 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
