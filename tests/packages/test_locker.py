@@ -169,6 +169,8 @@ url-package = []
 
 def test_locker_properly_loads_extras(locker: Locker):
     content = """\
+@generated
+
 [[package]]
 name = "cachecontrol"
 version = "0.12.5"
@@ -523,6 +525,8 @@ def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
     locker: Locker, caplog: LogCaptureFixture
 ):
     content = """\
+# @generated
+
 [metadata]
 lock-version = "2.0"
 python-versions = "~2.7 || ^3.4"
