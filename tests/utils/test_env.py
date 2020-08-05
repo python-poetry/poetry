@@ -74,17 +74,35 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, manager
     assert venv.run("python", "-V", shell=True).startswith("Python")
 
 
-def test_env_get_in_project_venv(manager, poetry):
+@pytest.mark.parametrize("in_project", [True, None])
+def test_env_get_in_project_venv_with_venv_folder_present(manager, poetry, in_project):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    (poetry.file.parent / ".venv").mkdir()
+    venv_folder = Path(poetry.file.parent) / ".venv"
+    venv_folder.mkdir()
+    poetry.config.config["virtualenvs"]["in-project"] = in_project
 
     venv = manager.get()
 
-    assert venv.path == poetry.file.parent / ".venv"
+    assert venv.path == venv_folder
 
-    shutil.rmtree(str(venv.path))
+    shutil.rmtree(str(venv_folder))
+
+
+def test_env_get_venv_with_venv_folder_present(manager, poetry):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    venv_folder = Path(poetry.file.parent) / ".venv"
+    venv_folder.mkdir()
+    poetry.config.config["virtualenvs"]["in-project"] = False
+
+    venv = manager.get()
+
+    assert venv.path != venv_folder
+
+    shutil.rmtree(str(venv_folder))
 
 
 def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()

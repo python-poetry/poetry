@@ -347,9 +347,10 @@ class EnvManager(object):
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
             if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
-                venv = cwd / ".venv"
+                if self._poetry.config.get("virtualenvs.in-project") is not False:
+                    venv = cwd / ".venv"
 
-                return VirtualEnv(venv)
+                    return VirtualEnv(venv)
 
             create_venv = self._poetry.config.get("virtualenvs.create", True)
 
@@ -1016,8 +1017,8 @@ class SystemEnv(Env):
         # on some distributions it does not return the proper paths
         # (those used by pip for instance). We go through distutils
         # to get the proper ones.
-        from distutils.command.install import SCHEME_KEYS  # noqa
         from distutils.core import Distribution
+        from distutils.command.install import SCHEME_KEYS  # noqa
 
         d = Distribution()
         d.parse_config_files()
