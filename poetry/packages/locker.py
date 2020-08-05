@@ -9,7 +9,6 @@ from tomlkit import comment
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
-from tomlkit import nl
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
 
@@ -179,7 +178,6 @@ class Locker(object):
 
         lock = document()
         lock.add(comment("@generated"))
-        lock.add(nl())
         lock["package"] = packages
 
         if root.extras:

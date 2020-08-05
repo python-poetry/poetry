@@ -169,7 +169,7 @@ url-package = []
 
 def test_locker_properly_loads_extras(locker: Locker):
     content = """\
-@generated
+# @generated
 
 [[package]]
 name = "cachecontrol"
