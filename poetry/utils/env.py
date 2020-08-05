@@ -17,16 +17,17 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import packaging.tags
 import tomlkit
-import virtualenv
 
 from clikit.api.io import IO
+
+import packaging.tags
+import virtualenv
+
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
-
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import BaseMarker

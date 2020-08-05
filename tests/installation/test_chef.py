@@ -1,5 +1,4 @@
 from packaging.tags import Tag
-
 from poetry.core.packages.utils.link import Link
 from poetry.installation.chef import Chef
 from poetry.utils._compat import Path

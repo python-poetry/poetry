@@ -114,7 +114,7 @@ Defaults to `false`.
 
 If set to `true`, the virtualenv wil be created and expected in a folder named `.venv` within the root directory of the project.
 
-If set to `None`, `poetry` will use the virtualenv from the `.venv` directory only if available. 
+If set to `None`, `poetry` will use the virtualenv from the `.venv` directory only if available.
 
 ### `virtualenvs.path`: string
 

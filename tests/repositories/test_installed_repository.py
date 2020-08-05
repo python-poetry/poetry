@@ -2,8 +2,6 @@ from typing import Optional
 
 import pytest
 
-from pytest_mock.plugin import MockFixture
-
 from poetry.core.packages import Package
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import PY36
@@ -11,6 +9,7 @@ from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
 from poetry.utils._compat import zipp
 from poetry.utils.env import MockEnv as BaseMockEnv
+from pytest_mock.plugin import MockFixture
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
