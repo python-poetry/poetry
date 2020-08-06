@@ -31,7 +31,7 @@ will create a folder as follows:
 ```text
 my-package
 ├── pyproject.toml
-├── README.rst
+├── README.md
 ├── my_package
 │   └── __init__.py
 └── tests
@@ -56,7 +56,7 @@ That will create a folder structure as follows:
 ```text
 my-package
 ├── pyproject.toml
-├── README.rst
+├── README.md
 ├── src
 │   └── my_package
 │       └── __init__.py
@@ -76,6 +76,7 @@ will create the following structure:
 ```text
 my-package
 ├── pyproject.toml
+├── README.md
 ├── src
 │   └── my
 │       └── package

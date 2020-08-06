@@ -1,21 +1,20 @@
+from pathlib import Path
+from typing import Optional
+
 import pytest
 
-from cleo.testers import CommandTester
-
-from poetry.console import Application
 from poetry.factory import Factory
 from poetry.poetry import Poetry
-from poetry.utils._compat import Path  # noqa
 
 
 @pytest.fixture
-def command(app, poetry):  # type: (Application, Poetry) -> CommandTester
-    command = app.find("new")
-    command._pool = poetry.pool
-    return CommandTester(command)
+def tester(command_tester_factory):
+    return command_tester_factory("new")
 
 
-def verify_project_directory(path, package_name, package_path, include_from=None):
+def verify_project_directory(
+    path: Path, package_name: str, package_path: str, include_from: Optional[str] = None
+) -> Poetry:
     package_path = Path(package_path)
     assert path.is_dir()
 
@@ -46,6 +45,8 @@ def verify_project_directory(path, package_name, package_path, include_from=None
     else:
         assert len(packages) == 1
         assert packages[0] == package_include
+
+    return poetry
 
 
 @pytest.mark.parametrize(
@@ -134,9 +135,21 @@ def verify_project_directory(path, package_name, package_path, include_from=None
     ],
 )
 def test_command_new(
-    options, directory, package_name, package_path, include_from, command, tmp_dir
+    options, directory, package_name, package_path, include_from, tester, tmp_dir
 ):
     path = Path(tmp_dir) / directory
     options.append(path.as_posix())
-    command.execute(" ".join(options))
+    tester.execute(" ".join(options))
     verify_project_directory(path, package_name, package_path, include_from)
+
+
+@pytest.mark.parametrize("fmt", [(None,), ("md",), ("rst",)])
+def test_command_new_with_readme(fmt, tester, tmp_dir):
+    fmt = "md"
+    package = "package"
+    path = Path(tmp_dir) / package
+    options = ["--readme {}".format(fmt) if fmt else "md", path.as_posix()]
+    tester.execute(" ".join(options))
+
+    poetry = verify_project_directory(path, package, package, None)
+    assert poetry.local_config.get("readme") == "README.{}".format(fmt or "md")
