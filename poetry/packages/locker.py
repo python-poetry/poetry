@@ -177,7 +177,7 @@ class Locker(object):
             del package["files"]
 
         lock = document()
-        lock.add(comment("@generated"))
+        lock.add(comment("@" + "generated"))
         lock["package"] = packages
 
         if root.extras:
