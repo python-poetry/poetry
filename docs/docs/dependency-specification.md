@@ -117,6 +117,12 @@ my-package = { path = "../my-package/" }
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
+The package is installed as an "editable installation" by default. This can be specified more explicitly:
+
+```toml
+my-package = { path = "../my-package/", develop = true }
+```
+
 
 ## `url` dependencies
 
