@@ -338,6 +338,8 @@ class Solver:
 
         if "main" in categories:
             category = "main"
+        elif "build" in categories:
+            category = "build"
         else:
             category = "dev"
 

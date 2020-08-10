@@ -1,9 +1,9 @@
 from cleo import option
 
-from .env_command import EnvCommand
+from poetry.console.commands.installer_command import InstallerCommand
 
 
-class BuildCommand(EnvCommand):
+class BuildCommand(InstallerCommand):
 
     name = "build"
     description = "Builds a package, as a tarball and a wheel by default."
@@ -33,4 +33,11 @@ class BuildCommand(EnvCommand):
         )
 
         builder = Builder(self.poetry)
-        builder.build(fmt)
+
+        executable = None
+        if self.poetry.package.build_requires:
+            # ensure build requirements are available if specified
+            self.installer.categories({"build"}).run()
+            executable = self.installer.env.python
+
+        builder.build(fmt, executable=executable)

@@ -1,3 +1,4 @@
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Union
@@ -11,6 +12,7 @@ from poetry.packages import Locker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
+from poetry.utils.env import Env
 from poetry.utils.extras import get_extra_package_names
 from poetry.utils.helpers import canonicalize_name
 
@@ -47,10 +49,12 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
+        self._build_mode = True
         self._execute_operations = True
         self._lock = False
 
         self._whitelist = []
+        self._categories = set()
 
         self._extras = []
 
@@ -65,6 +69,10 @@ class Installer:
             installed = self._get_installed()
 
         self._installed_repository = installed
+
+    @property
+    def env(self):  # type: () -> Env
+        return self._env
 
     @property
     def executor(self):
@@ -132,6 +140,14 @@ class Installer:
     def is_dev_mode(self):  # type: () -> bool
         return self._dev_mode
 
+    def build_mode(self, build_mode=True):  # type: (bool) -> Installer
+        self._build_mode = build_mode
+
+        return self
+
+    def is_build_mode(self):  # type: () -> bool
+        return self._build_mode or self._dev_mode
+
     def update(self, update=True):  # type: (bool) -> Installer
         self._update = update
 
@@ -160,6 +176,13 @@ class Installer:
 
     def whitelist(self, packages):  # type: (dict) -> Installer
         self._whitelist = [canonicalize_name(p) for p in packages]
+
+        return self
+
+    def categories(
+        self, categories=None
+    ):  # type: (Optional[Iterable[str]]) -> Installer
+        self._categories = {category for category in categories or []}
 
         return self
 
@@ -240,6 +263,10 @@ class Installer:
         if not self.is_dev_mode():
             root = root.clone()
             del root.dev_requires[:]
+
+        if not self.is_build_mode():
+            root = root.clone()
+            del root.build_requires[:]
 
         if self._io.is_verbose():
             self._io.write_line("")
@@ -455,6 +482,8 @@ class Installer:
                     is_installed = True
                     if locked.category == "dev" and not self.is_dev_mode():
                         ops.append(Uninstall(locked))
+                    elif locked.category == "build" and not self.is_build_mode():
+                        ops.append(Uninstall(locked))
                     elif locked.optional and locked.name not in extra_packages:
                         # Installed but optional and not requested in extras
                         ops.append(Uninstall(locked))
@@ -506,10 +535,18 @@ class Installer:
                 if package.name not in extra_packages:
                     op.skip("Not required")
 
+            if self._categories and package.category not in self._categories:
+                op.skip("Category ({}) not enabled".format(package.category))
+
             # If the package is a dev package and dev packages
             # are not requested, we skip it
             if package.category == "dev" and not self.is_dev_mode():
                 op.skip("Dev dependencies not requested")
+
+            # If the package is a build package and build packages
+            # are not requested, we skip it
+            if package.category == "build" and not self.is_build_mode():
+                op.skip("Build dependencies not requested")
 
     def _get_extra_packages(self, repo):  # type: (Repository) -> List[str]
         """

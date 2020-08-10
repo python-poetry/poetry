@@ -1,4 +1,8 @@
 class BaseInstaller:
+    @property
+    def env(self):
+        return getattr(self, "_env", None)
+
     def install(self, package):
         raise NotImplementedError
 

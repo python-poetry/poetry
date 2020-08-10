@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "project"
+version = "1.2.3"
+description = "Some description."
+authors = []
+license = "MIT"
+
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = false
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[build-system]
+requires = [
+  "poetry-core",
+  "Cython>=0.29.6",
+]
