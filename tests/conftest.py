@@ -2,40 +2,17 @@ import os
 import shutil
 import tempfile
 
-from typing import Any
-from typing import Dict
-
 import httpretty
 import pytest
 
-from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.inspection.info import PackageInfo
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import VirtualEnv
+from tests.helpers import Config
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
-
-
-class Config(BaseConfig):
-    def get(self, setting_name, default=None):  # type: (str, Any) -> Any
-        self.merge(self._config_source.config)
-        self.merge(self._auth_config_source.config)
-
-        return super(Config, self).get(setting_name, default=default)
-
-    def raw(self):  # type: () -> Dict[str, Any]
-        self.merge(self._config_source.config)
-        self.merge(self._auth_config_source.config)
-
-        return super(Config, self).raw()
-
-    def all(self):  # type: () -> Dict[str, Any]
-        self.merge(self._config_source.config)
-        self.merge(self._auth_config_source.config)
-
-        return super(Config, self).all()
 
 
 @pytest.fixture

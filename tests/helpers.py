@@ -1,9 +1,14 @@
 import os
 import shutil
 
+from typing import Any
+from typing import Dict
+
+from poetry.config.config import Config as BaseConfig
 from poetry.core.packages import Dependency
 from poetry.core.packages import Package
 from poetry.core.vcs.git import ParsedUrl
+from poetry.installation.executor import Executor as BaseExecutor
 from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
@@ -11,6 +16,26 @@ from poetry.utils._compat import urlparse
 
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
+
+
+class Config(BaseConfig):
+    def get(self, setting_name, default=None):  # type: (str, Any) -> Any
+        self.merge(self._config_source.config)
+        self.merge(self._auth_config_source.config)
+
+        return super(Config, self).get(setting_name, default=default)
+
+    def raw(self):  # type: () -> Dict[str, Any]
+        self.merge(self._config_source.config)
+        self.merge(self._auth_config_source.config)
+
+        return super(Config, self).raw()
+
+    def all(self):  # type: () -> Dict[str, Any]
+        self.merge(self._config_source.config)
+        self.merge(self._auth_config_source.config)
+
+        return super(Config, self).all()
 
 
 def get_package(name, version):
@@ -88,3 +113,39 @@ def mock_download(url, dest, **__):
     fixture = fixtures / parts.path.lstrip("/")
 
     copy_or_symlink(fixture, Path(dest))
+
+
+class Executor(BaseExecutor):
+    def __init__(self, *args, **kwargs):
+        super(Executor, self).__init__(*args, **kwargs)
+
+        self._installs = []
+        self._updates = []
+        self._uninstalls = []
+
+    @property
+    def installations(self):
+        return self._installs
+
+    @property
+    def updates(self):
+        return self._updates
+
+    @property
+    def removals(self):
+        return self._uninstalls
+
+    def _do_execute_operation(self, operation):
+        super(Executor, self)._do_execute_operation(operation)
+
+        if not operation.skipped:
+            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
+
+    def _execute_install(self, operation):
+        return 0
+
+    def _execute_update(self, operation):
+        return 0
+
+    def _execute_remove(self, operation):
+        return 0

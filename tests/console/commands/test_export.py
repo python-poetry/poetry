@@ -9,9 +9,9 @@ from poetry.factory import Factory
 from poetry.repositories.pool import Pool
 from tests.helpers import get_package
 
-from ..conftest import Application
-from ..conftest import Locker
 from ..conftest import Path
+from ..helpers import Application
+from ..helpers import Locker
 
 
 PYPROJECT_CONTENT = """\

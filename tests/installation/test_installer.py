@@ -8,7 +8,6 @@ from clikit.io import NullIO
 
 from poetry.core.packages import ProjectPackage
 from poetry.installation import Installer as BaseInstaller
-from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
@@ -19,6 +18,7 @@ from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from poetry.utils.toml_file import TomlFile
+from tests.helpers import Executor
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -33,42 +33,6 @@ fixtures_dir = Path("tests/fixtures")
 class Installer(BaseInstaller):
     def _get_installer(self):
         return NoopInstaller()
-
-
-class Executor(BaseExecutor):
-    def __init__(self, *args, **kwargs):
-        super(Executor, self).__init__(*args, **kwargs)
-
-        self._installs = []
-        self._updates = []
-        self._uninstalls = []
-
-    @property
-    def installations(self):
-        return self._installs
-
-    @property
-    def updates(self):
-        return self._updates
-
-    @property
-    def removals(self):
-        return self._uninstalls
-
-    def _do_execute_operation(self, operation):
-        super(Executor, self)._do_execute_operation(operation)
-
-        if not operation.skipped:
-            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
-
-    def _execute_install(self, operation):
-        return 0
-
-    def _execute_update(self, operation):
-        return 0
-
-    def _execute_uninstall(self, operation):
-        return 0
 
 
 class CustomInstalledRepository(InstalledRepository):
