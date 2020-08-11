@@ -1,4 +1,5 @@
 import cgi
+import logging
 import re
 import warnings
 
@@ -29,6 +30,8 @@ from .auth import Auth
 from .exceptions import PackageNotFound
 from .pypi_repository import PyPiRepository
 
+
+logger = logging.getLogger(__name__)
 
 try:
     import urllib.parse as urlparse
@@ -359,10 +362,22 @@ class LegacyRepository(PyPiRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint):  # type: (str) -> Union[Page, None]
+    def _get(self, endpoint):  # type: (str) -> Optional[Page]
         url = self._url + endpoint
         response = self.session.get(url)
         if response.status_code == 404:
             return
+        if 400 <= response.status_code < 500:
+            logger.warning(
+                "Request failed with status {} for url {}.".format(
+                    response.status_code, url
+                )
+            )
+        elif response.status_code != 200:
+            logger.debug(
+                "Request failed with non 200 status code ({}) for url {}.".format(
+                    response.status_code, url
+                )
+            )
 
         return Page(url, response.content, response.headers)

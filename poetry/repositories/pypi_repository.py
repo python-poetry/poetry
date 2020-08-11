@@ -77,6 +77,7 @@ class PyPiRepository(RemoteRepository):
 
     @property
     def session(self):
+        # type: () -> CacheControl
         return self._session
 
     def find_packages(

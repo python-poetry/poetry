@@ -2,11 +2,14 @@ import shutil
 
 import pytest
 
+from requests import Response
+
 from poetry.core.packages import Dependency
 from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
+from poetry.repositories.legacy_repository import logger as legacy_logger
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
 
@@ -42,6 +45,16 @@ class MockRepository(LegacyRepository):
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 
         shutil.copyfile(str(filepath), dest)
+
+
+class MockSession:
+    def __init__(self, status_code):
+        response = Response()
+        response.status_code = status_code
+        self._response = response
+
+    def get(self, _):  # type: (str) -> Response
+        return self._response
 
 
 def test_page_relative_links_path_are_correct():
@@ -278,3 +291,30 @@ def test_username_password_special_chars():
     repo = MockRepository(auth=auth)
 
     assert "http://user%3A:%2F%252Fp%40ssword@legacy.foo.bar" == repo.authenticated_url
+
+
+def test_should_warn_on_auth_failure(caplog):
+    repo = LegacyRepository("legacy", url="http://legacy.foo.bar", disable_cache=True)
+    repo._session = MockSession(status_code=401)
+    repo._get("does not matter")
+    assert any(
+        [
+            "401" in logline.message
+            for logline in caplog.records
+            if logline.levelname == "WARNING"
+        ]
+    )
+
+
+def test_should_log_on_other_failure(caplog):
+    legacy_logger.setLevel("DEBUG")
+    repo = LegacyRepository("legacy", url="http://legacy.foo.bar", disable_cache=True)
+    repo._session = MockSession(status_code=500)
+    repo._get("does not matter")
+    assert any(
+        [
+            "500" in logline.message
+            for logline in caplog.records
+            if logline.levelname == "DEBUG"
+        ]
+    )
