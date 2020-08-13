@@ -76,7 +76,17 @@ Likewise if you have command line tools such as `pytest` or `black` you can run 
 
 ### Activating the virtual environment
 
-The easiest way to activate the virtual environment is `poetry shell`.
+The easiest way to activate the virtual environment is to create a new shell with `poetry shell`.
+To deactivate the virtual environment and exit this new shell type `exit`.
+To deactivate the virtual environment without leaving the shell use `deactivate`.
+
+!!!note
+
+	**Why a new shell?**
+ 	Python cannot set or change environment variables in the current shell,
+	Therefore, poetry has to create a new shell with the `PYTHONHOME` and `PATH`
+	environment variables pointing to the virtual environment.
+
 
 Alternatively you can manually activate the virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
 To get the path to your virtual environment run `poetry env info --path`.
