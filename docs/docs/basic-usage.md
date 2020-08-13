@@ -68,7 +68,7 @@ It will automatically find a suitable version constraint **and install** the pac
 
 By default, poetry creates a virtual environment in `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 You can change the [`cache-dir`](/docs/configuration/#cache-dir) value by editing the poetry config.
-Addtionally, you can use the [`virtualenvs.in-project`](/docs/configuration/#virtualenvs.in-project) configuration variable
+Additionally, you can use the [`virtualenvs.in-project`](/docs/configuration/#virtualenvs.in-project) configuration variable
 to create virtual environment within your project directory.
 
 
@@ -94,8 +94,17 @@ To deactivate the virtual environment without leaving the shell use `deactivate`
 	environment variables pointing to the virtual environment.
 
 
-Alternatively you can manually activate the virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
+Alternatively, to avoid creating a new shell, you can manually activate the
+virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
 To get the path to your virtual environment run `poetry env info --path`.
+You can also combine these into a nice one-liner, `source $(poetry env info --path)/bin/activate`
+To deactivate this virtual environment simply use `deactivate`.
+
+|                   | Linux/Mac                                      | Windows                                     | Exit/Deactivate |
+|-------------------|------------------------------------------------|---------------------------------------------|-----------------|
+| New Shell         | `poetry shell`                                 | `poetry shell`                              | `exit`          |
+| Manual Activation | `source {path_to_venv}/bin/activate`           | `source {path_to_venv}\Scripts\activate.bat`| `deactivate`    |
+| One-liner         | `source $(poetry env info --path)/bin/activate`|                                             | `deactivate`    |
 
 
 ### Version constraints
