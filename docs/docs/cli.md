@@ -413,10 +413,6 @@ This command searches for packages on a remote index.
 poetry search requests pendulum
 ```
 
-### Options
-
-* `--only-name (-N)`: Search only in name.
-
 ## lock
 
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
