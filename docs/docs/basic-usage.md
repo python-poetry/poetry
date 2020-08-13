@@ -89,9 +89,15 @@ To deactivate the virtual environment without leaving the shell use `deactivate`
 !!!note
 
 	**Why a new shell?**
- 	Python cannot set or change environment variables in the current shell,
-	Therefore, poetry has to create a new shell with the `PYTHONHOME` and `PATH`
-	environment variables pointing to the virtual environment.
+	Child processes inherit their environment from their parents, but do not share 
+	them. As such, any modifications made by a child process, is not persisted after 
+	the child process exits. A Python application (Poetry), being a child process, 
+	cannot modify the environment of the shell that it has been called from such 
+	that an activated virtual environment remains active after the Poetry command 
+	has completed execution.
+	
+	Therefore, Poetry has to create a sub-shell with the virtual envrionment activated
+	in order for the subsequent commands to run from within the virtual environment.
 
 
 Alternatively, to avoid creating a new shell, you can manually activate the
