@@ -264,6 +264,8 @@ so `poetry` will try to find a version of `oslo.i18n` that satisfies `pbr (>=0.6
 By analyzing the releases of `oslo.i18n`, it will find `oslo.i18n==2.1.0` which requires `pbr (>=0.11,<2.0)`.
 At this point the rest of the resolution is straightforward since there is no more conflict.
 
+Testing Cirrus Failure.
+
 ## Resources
 
 * [Official Website](https://python-poetry.org)
