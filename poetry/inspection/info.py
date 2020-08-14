@@ -488,15 +488,16 @@ class PackageInfo:
 
     @classmethod
     def from_directory(
-        cls, path, allow_build=False
+        cls, path, disable_build=False
     ):  # type: (Path, bool) -> PackageInfo
         """
-        Generate package information from a package source directory. When `allow_build` is enabled and
+        Generate package information from a package source directory. If `disable_build` is not `True` and
         introspection of all available metadata fails, the package is attempted to be build in an isolated
         environment so as to generate required metadata.
 
         :param path: Path to generate package information from.
-        :param allow_build: If enabled, as a fallback, build the project to gather metadata.
+        :param disable_build: If not `True` and setup reader fails, PEP 517 isolated build is attempted in
+            order to gather metadata.
         """
         project_package = cls._get_poetry_package(path)
         if project_package:
@@ -509,7 +510,7 @@ class PackageInfo:
             return info
 
         try:
-            if not allow_build:
+            if disable_build:
                 return cls.from_setup_files(path)
             return cls._pep517_metadata(path)
         except PackageInfoError as e:
