@@ -121,7 +121,9 @@ def test_info_from_bdist(demo_wheel):
 
 
 def test_info_from_poetry_directory():
-    info = PackageInfo.from_directory(FIXTURE_DIR_INSPECTIONS / "demo")
+    info = PackageInfo.from_directory(
+        FIXTURE_DIR_INSPECTIONS / "demo", disable_build=True
+    )
     demo_check_info(info)
 
 
@@ -146,7 +148,7 @@ def test_info_from_setup_cfg(demo_setup_cfg):
 
 def test_info_no_setup_pkg_info_no_deps():
     info = PackageInfo.from_directory(
-        FIXTURE_DIR_INSPECTIONS / "demo_no_setup_pkg_info_no_deps"
+        FIXTURE_DIR_INSPECTIONS / "demo_no_setup_pkg_info_no_deps", disable_build=True,
     )
     assert info.name == "demo"
     assert info.version == "0.1.0"
@@ -156,7 +158,7 @@ def test_info_no_setup_pkg_info_no_deps():
 @pytest.mark.skipif(not PY35, reason="Parsing of setup.py is skipped for Python < 3.5")
 def test_info_setup_simple(mocker, demo_setup):
     spy = mocker.spy(VirtualEnv, "run")
-    info = PackageInfo.from_directory(demo_setup, allow_build=True)
+    info = PackageInfo.from_directory(demo_setup)
     assert spy.call_count == 0
     demo_check_info(info, requires_dist={"package"})
 
@@ -167,7 +169,7 @@ def test_info_setup_simple(mocker, demo_setup):
 )
 def test_info_setup_simple_py2(mocker, demo_setup):
     spy = mocker.spy(VirtualEnv, "run")
-    info = PackageInfo.from_directory(demo_setup, allow_build=True)
+    info = PackageInfo.from_directory(demo_setup)
     assert spy.call_count == 2
     demo_check_info(info, requires_dist={"package"})
 
@@ -175,13 +177,13 @@ def test_info_setup_simple_py2(mocker, demo_setup):
 @pytest.mark.skipif(not PY35, reason="Parsing of setup.cfg is skipped for Python < 3.5")
 def test_info_setup_cfg(mocker, demo_setup_cfg):
     spy = mocker.spy(VirtualEnv, "run")
-    info = PackageInfo.from_directory(demo_setup_cfg, allow_build=True)
+    info = PackageInfo.from_directory(demo_setup_cfg)
     assert spy.call_count == 0
     demo_check_info(info, requires_dist={"package"})
 
 
 def test_info_setup_complex(demo_setup_complex):
-    info = PackageInfo.from_directory(demo_setup_complex, allow_build=True)
+    info = PackageInfo.from_directory(demo_setup_complex)
     demo_check_info(info, requires_dist={"package"})
 
 
@@ -193,20 +195,18 @@ def test_info_setup_complex_pep517_error(mocker, demo_setup_complex):
     )
 
     with pytest.raises(PackageInfoError):
-        PackageInfo.from_directory(demo_setup_complex, allow_build=True)
+        PackageInfo.from_directory(demo_setup_complex)
 
 
 def test_info_setup_complex_pep517_legacy(demo_setup_complex_pep517_legacy):
-    info = PackageInfo.from_directory(
-        demo_setup_complex_pep517_legacy, allow_build=True
-    )
+    info = PackageInfo.from_directory(demo_setup_complex_pep517_legacy)
     demo_check_info(info, requires_dist={"package"})
 
 
 @pytest.mark.skipif(not PY35, reason="Parsing of setup.py is skipped for Python < 3.5")
 def test_info_setup_complex_disable_build(mocker, demo_setup_complex):
     spy = mocker.spy(VirtualEnv, "run")
-    info = PackageInfo.from_directory(demo_setup_complex, allow_build=False)
+    info = PackageInfo.from_directory(demo_setup_complex, disable_build=True)
     assert spy.call_count == 0
     assert info.name == "demo"
     assert info.version == "0.1.0"

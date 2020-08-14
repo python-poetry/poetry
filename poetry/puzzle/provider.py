@@ -308,9 +308,9 @@ class Provider:
     def get_package_from_directory(
         cls, directory, name=None
     ):  # type: (Path, Optional[str]) -> Package
-        package = PackageInfo.from_directory(
-            path=directory, allow_build=True
-        ).to_package(root_dir=directory)
+        package = PackageInfo.from_directory(path=directory).to_package(
+            root_dir=directory
+        )
 
         if name and name != package.name:
             # For now, the dependency's name must match the actual package's name
