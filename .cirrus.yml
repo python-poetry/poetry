@@ -3,7 +3,7 @@ freebsd_instance:
 
 test_task:
   name: "Tests / FreeBSD / "
-  skip: "!changesInclude('.cirrus.yml', '**.{py,json,lock,toml}')"
+  skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
     matrix:
       - PYTHON: python2.7
