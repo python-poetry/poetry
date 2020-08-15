@@ -66,17 +66,12 @@ pytest = [
     {version = "^5.4.3", python = ">=3.5"}
 ]
 pytest-cov = "^2.5"
-mkdocs = { version = "^1.0", python = "~2.7.9 || ^3.4" }
-pymdown-extensions = "^6.0"
-pygments = "^2.2"
 pytest-mock = "^1.9"
-pygments-github-lexers = "^0.0.5"
 black = { version = "^19.10b0", python = "^3.6" }
 pre-commit = { version = "^2.5.1", python = "^3.6.1" }
 tox = "^3.0"
 pytest-sugar = "^0.9.2"
 httpretty = "^0.9.6"
-markdown-include = "^0.5.1"
 
 [tool.poetry.scripts]
 poetry = "poetry.console:main"
