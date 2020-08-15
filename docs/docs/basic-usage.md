@@ -89,13 +89,13 @@ To deactivate the virtual environment without leaving the shell use `deactivate`
 !!!note
 
 	**Why a new shell?**
-	Child processes inherit their environment from their parents, but do not share 
-	them. As such, any modifications made by a child process, is not persisted after 
-	the child process exits. A Python application (Poetry), being a child process, 
-	cannot modify the environment of the shell that it has been called from such 
-	that an activated virtual environment remains active after the Poetry command 
+	Child processes inherit their environment from their parents, but do not share
+	them. As such, any modifications made by a child process, is not persisted after
+	the child process exits. A Python application (Poetry), being a child process,
+	cannot modify the environment of the shell that it has been called from such
+	that an activated virtual environment remains active after the Poetry command
 	has completed execution.
-	
+
 	Therefore, Poetry has to create a sub-shell with the virtual envrionment activated
 	in order for the subsequent commands to run from within the virtual environment.
 
