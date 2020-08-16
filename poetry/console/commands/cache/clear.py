@@ -16,6 +16,7 @@ class CacheClearCommand(Command):
 
     def handle(self):
         from cachy import CacheManager
+
         from poetry.locations import REPOSITORY_CACHE_DIR
 
         cache = self.argument("cache")

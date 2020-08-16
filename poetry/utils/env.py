@@ -17,17 +17,16 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import tomlkit
-
-from clikit.api.io import IO
-
 import packaging.tags
+import tomlkit
 import virtualenv
 
+from clikit.api.io import IO
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
+
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import BaseMarker
@@ -1017,8 +1016,8 @@ class SystemEnv(Env):
         # on some distributions it does not return the proper paths
         # (those used by pip for instance). We go through distutils
         # to get the proper ones.
-        from distutils.core import Distribution
         from distutils.command.install import SCHEME_KEYS  # noqa
+        from distutils.core import Distribution
 
         d = Distribution()
         d.parse_config_files()

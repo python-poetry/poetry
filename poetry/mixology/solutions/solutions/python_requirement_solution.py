@@ -3,8 +3,8 @@ from crashtest.contracts.solution import Solution
 
 class PythonRequirementSolution(Solution):
     def __init__(self, exception):
-        from poetry.mixology.incompatibility_cause import PythonCause
         from poetry.core.semver import parse_constraint
+        from poetry.mixology.incompatibility_cause import PythonCause
 
         self._title = "Check your dependencies Python requirement."
 

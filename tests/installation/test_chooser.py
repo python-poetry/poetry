@@ -3,6 +3,7 @@ import re
 import pytest
 
 from packaging.tags import Tag
+
 from poetry.core.packages.package import Package
 from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository

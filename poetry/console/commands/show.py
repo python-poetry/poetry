@@ -34,8 +34,9 @@ lists all packages available."""
 
     def handle(self):
         from clikit.utils.terminal import Terminal
-        from poetry.repositories.installed_repository import InstalledRepository
+
         from poetry.core.semver import Version
+        from poetry.repositories.installed_repository import InstalledRepository
 
         package = self.argument("package")
 
@@ -321,6 +322,7 @@ lists all packages available."""
 
     def find_latest_package(self, package, include_dev):
         from clikit.io import NullIO
+
         from poetry.puzzle.provider import Provider
         from poetry.version.version_selector import VersionSelector
 

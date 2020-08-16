@@ -62,10 +62,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         self._pool = None
 
     def handle(self):
+        from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
-        from poetry.core.vcs.git import GitConfig
 
         if (Path.cwd() / "pyproject.toml").exists():
             self.line("<error>A pyproject.toml file already exists.</error>")
