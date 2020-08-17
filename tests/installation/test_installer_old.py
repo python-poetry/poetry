@@ -318,15 +318,19 @@ def test_run_install_remove_untracked(installer, locker, repo, package, installe
     package_b = get_package("b", "1.1")
     package_c = get_package("c", "1.2")
     package_pip = get_package("pip", "20.0.0")
+    package_setuptools = get_package("setuptools", "20.0.0")
+
     repo.add_package(package_a)
     repo.add_package(package_b)
     repo.add_package(package_c)
     repo.add_package(package_pip)
+    repo.add_package(package_setuptools)
 
     installed.add_package(package_a)
     installed.add_package(package_b)
     installed.add_package(package_c)
-    installed.add_package(package_pip)  # Always required and never removed.
+    installed.add_package(package_pip)
+    installed.add_package(package_setuptools)  # Always required and never removed.
     installed.add_package(package)  # Root package never removed.
 
     package.add_dependency(Factory.create_dependency("A", "~1.0"))
@@ -341,7 +345,7 @@ def test_run_install_remove_untracked(installer, locker, repo, package, installe
     assert len(updates) == 0
 
     removals = installer.installer.removals
-    assert set(r.name for r in removals) == {"b", "c"}
+    assert set(r.name for r in removals) == {"b", "c", "pip"}
 
 
 def test_run_whitelist_add(installer, locker, repo, package):
