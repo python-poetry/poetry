@@ -246,6 +246,8 @@ class LegacyRepository(PyPiRepository):
         if not constraint.is_any():
             key = "{}:{}".format(key, str(constraint))
 
+        ignored_pre_release_versions = []
+
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
@@ -256,6 +258,9 @@ class LegacyRepository(PyPiRepository):
             versions = []
             for version in page.versions:
                 if version.is_prerelease() and not allow_prereleases:
+                    if constraint.is_any():
+                        # we need this when all versions of the package are pre-releases
+                        ignored_pre_release_versions.append(version)
                     continue
 
                 if constraint.allows(version):
@@ -263,21 +268,28 @@ class LegacyRepository(PyPiRepository):
 
             self._cache.store("matches").put(key, versions, 5)
 
-        for version in versions:
-            package = Package(name, version)
-            package.source_type = "legacy"
-            package.source_reference = self.name
-            package.source_url = self._url
+        for package_versions in (versions, ignored_pre_release_versions):
+            for version in package_versions:
+                package = Package(name, version)
+                package.source_type = "legacy"
+                package.source_reference = self.name
+                package.source_url = self._url
 
-            if extras is not None:
-                package.requires_extras = extras
+                if extras is not None:
+                    package.requires_extras = extras
 
-            packages.append(package)
+                packages.append(package)
 
-        self._log(
-            "{} packages found for {} {}".format(len(packages), name, str(constraint)),
-            level="debug",
-        )
+            self._log(
+                "{} packages found for {} {}".format(
+                    len(packages), name, str(constraint)
+                ),
+                level="debug",
+            )
+
+            if packages or not constraint.is_any():
+                # we have matching packages, or constraint is not (*)
+                break
 
         return packages
 
