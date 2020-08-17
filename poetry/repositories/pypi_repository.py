@@ -114,6 +114,7 @@ class PyPiRepository(RemoteRepository):
             return []
 
         packages = []
+        ignored_pre_release_packages = []
 
         for version, release in info["releases"].items():
             if not release:
@@ -138,6 +139,9 @@ class PyPiRepository(RemoteRepository):
                 continue
 
             if package.is_prerelease() and not allow_prereleases:
+                if constraint.is_any():
+                    # we need this when all versions of the package are pre-releases
+                    ignored_pre_release_packages.append(package)
                 continue
 
             if not constraint or (constraint and constraint.allows(package.version)):
@@ -151,7 +155,7 @@ class PyPiRepository(RemoteRepository):
             level="debug",
         )
 
-        return packages
+        return packages or ignored_pre_release_packages
 
     def package(
         self,

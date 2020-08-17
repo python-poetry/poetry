@@ -151,6 +151,27 @@ def test_find_packages_no_prereleases():
     assert packages[0].source_url == repo.url
 
 
+@pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
+def test_find_packages_only_prereleases(constraint, count):
+    repo = MockRepository()
+    packages = repo.find_packages("black", constraint=constraint)
+
+    assert len(packages) == count
+
+    if count >= 0:
+        for package in packages:
+            assert package.source_type == "legacy"
+            assert package.source_reference == repo.name
+            assert package.source_url == repo.url
+
+
+def test_find_packages_only_prereleases_empty_when_not_any():
+    repo = MockRepository()
+    packages = repo.find_packages("black", constraint=">=1")
+
+    assert len(packages) == 0
+
+
 def test_get_package_information_chooses_correct_distribution():
     repo = MockRepository()
 

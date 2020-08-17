@@ -44,6 +44,8 @@ class Repository(BaseRepository):
     ):
         name = name.lower()
         packages = []
+        ignored_pre_release_packages = []
+
         if extras is None:
             extras = []
 
@@ -71,6 +73,9 @@ class Repository(BaseRepository):
                 ):
                     # If prereleases are not allowed and the package is a prerelease
                     # and is a standard package then we skip it
+                    if constraint.is_any():
+                        # we need this when all versions of the package are pre-releases
+                        ignored_pre_release_packages.append(package)
                     continue
 
                 if constraint.allows(package.version):
@@ -89,7 +94,7 @@ class Repository(BaseRepository):
 
                     packages.append(package)
 
-        return packages
+        return packages or ignored_pre_release_packages
 
     def has_package(self, package):
         package_id = package.unique_name
