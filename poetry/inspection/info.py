@@ -454,17 +454,14 @@ class PackageInfo:
         with temporary_directory() as tmp_dir:
             # TODO: cache PEP 517 build environment corresponding to each project venv
             venv_dir = Path(tmp_dir) / ".venv"
-            EnvManager.build_venv(venv_dir.as_posix())
+            EnvManager.build_venv(venv_dir.as_posix(), with_pip=True)
             venv = VirtualEnv(venv_dir, venv_dir)
 
             dest_dir = Path(tmp_dir) / "dist"
             dest_dir.mkdir()
 
             try:
-                venv.run(
-                    "python",
-                    "-m",
-                    "pip",
+                venv.run_pip(
                     "install",
                     "--disable-pip-version-check",
                     "--ignore-installed",

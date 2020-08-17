@@ -2407,7 +2407,7 @@ def test_solver_remove_untracked_keeps_critical_package(
     package, pool, installed, locked, io
 ):
     solver = Solver(package, pool, installed, locked, io, remove_untracked=True)
-    package_pip = get_package("pip", "1.0")
+    package_pip = get_package("setuptools", "1.0")
     installed.add_package(package_pip)
 
     ops = solver.solve()

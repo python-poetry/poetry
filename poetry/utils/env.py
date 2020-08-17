@@ -30,6 +30,7 @@ from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version
 from packaging.tags import sys_tags
+from virtualenv.seed.wheels.embed import get_embed_wheel
 
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
@@ -810,6 +811,7 @@ class EnvManager(object):
         path: Union[Path, str],
         executable: Optional[Union[str, Path]] = None,
         flags: Dict[str, bool] = None,
+        with_pip: bool = False,
     ) -> virtualenv.run.session.Session:
         flags = flags or {}
 
@@ -821,12 +823,17 @@ class EnvManager(object):
             "--no-periodic-update",
             "--python",
             executable or sys.executable,
-            str(path),
         ]
+
+        if not with_pip:
+            # we cannot drop setuptools yet because we do editable installs (git, path) in project envs
+            args.extend(["--no-pip", "--no-wheel"])
 
         for flag, value in flags.items():
             if value is True:
-                args.insert(0, "--{}".format(flag))
+                args.append("--{}".format(flag))
+
+        args.append(str(path))
 
         return virtualenv.cli_run(args)
 
@@ -929,12 +936,21 @@ class Env(object):
 
         return self._marker_env
 
+    def get_embedded_wheel(self, distribution):
+        return get_embed_wheel(
+            distribution, "{}.{}".format(self.version_info[0], self.version_info[1])
+        ).path
+
     @property
     def pip(self) -> str:
         """
         Path to current pip executable
         """
-        return self._bin("pip")
+        # we do not use as_posix() here due to issues with windows pathlib2 implementation
+        path = self._bin("pip")
+        if not Path(path).exists():
+            return str(self.get_embedded_wheel("pip") / "pip")
+        return path
 
     @property
     def platform(self) -> str:
@@ -1181,7 +1197,7 @@ class SystemEnv(Env):
     def get_pip_command(self) -> List[str]:
         # If we're not in a venv, assume the interpreter we're running on
         # has a pip and use that
-        return [sys.executable, "-m", "pip"]
+        return [sys.executable, self.pip]
 
     def get_paths(self) -> Dict[str, str]:
         # We can't use sysconfig.get_paths() because
@@ -1289,7 +1305,7 @@ class VirtualEnv(Env):
     def get_pip_command(self) -> List[str]:
         # We're in a virtualenv that is known to be sane,
         # so assume that we have a functional pip
-        return [self._bin("pip")]
+        return [self._bin("python"), self.pip]
 
     def get_supported_tags(self) -> List[Tag]:
         file_path = Path(packaging.tags.__file__)
@@ -1343,8 +1359,8 @@ class VirtualEnv(Env):
         return True
 
     def is_sane(self) -> bool:
-        # A virtualenv is considered sane if both "python" and "pip" exist.
-        return os.path.exists(self.python) and os.path.exists(self._bin("pip"))
+        # A virtualenv is considered sane if "python" exists.
+        return os.path.exists(self.python)
 
     def _run(self, cmd: List[str], **kwargs: Any) -> Optional[int]:
         with self.temp_environ():
@@ -1396,7 +1412,7 @@ class NullEnv(SystemEnv):
         self.executed = []
 
     def get_pip_command(self) -> List[str]:
-        return [self._bin("python"), "-m", "pip"]
+        return [self._bin("python"), self.pip]
 
     def _run(self, cmd: List[str], **kwargs: Any) -> int:
         self.executed.append(cmd)

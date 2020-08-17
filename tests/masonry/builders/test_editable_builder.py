@@ -185,17 +185,9 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
     builder = EditableBuilder(extended_poetry, env, NullIO())
 
     builder.build()
-
     assert [
-        [
-            "python",
-            "-m",
-            "pip",
-            "install",
-            "-e",
-            str(extended_poetry.file.parent),
-            "--no-deps",
-        ]
+        env.get_pip_command()
+        + ["install", "-e", str(extended_poetry.file.parent), "--no-deps"]
     ] == env.executed
 
 
