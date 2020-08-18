@@ -8,6 +8,7 @@ import pytest
 
 from cleo.io.null_io import NullIO
 
+from deepdiff import DeepDiff
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
@@ -330,7 +331,7 @@ def test_run_install_remove_untracked(installer, locker, repo, package, installe
     installed.add_package(package_b)
     installed.add_package(package_c)
     installed.add_package(package_pip)
-    installed.add_package(package_setuptools)  # Always required and never removed.
+    installed.add_package(package_setuptools)
     installed.add_package(package)  # Root package never removed.
 
     package.add_dependency(Factory.create_dependency("A", "~1.0"))
@@ -345,7 +346,7 @@ def test_run_install_remove_untracked(installer, locker, repo, package, installe
     assert len(updates) == 0
 
     removals = installer.installer.removals
-    assert set(r.name for r in removals) == {"b", "c", "pip"}
+    assert set(r.name for r in removals) == {"b", "c", "pip", "setuptools"}
 
 
 def test_run_whitelist_add(installer, locker, repo, package):
@@ -738,7 +739,7 @@ def test_installer_with_pypi_repository(package, locker, installed, config):
 
     expected = fixture("with-pypi-repository")
 
-    assert locker.written_data == expected
+    assert not DeepDiff(locker.written_data, expected, ignore_order=True)
 
 
 def test_run_installs_with_local_file(installer, locker, repo, package, fixture_dir):
@@ -1509,7 +1510,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.whitelist(["pytest"])
     installer.run()
 
-    assert len(installer.installer.installs) == 6
+    assert len(installer.installer.installs) == 7
     assert len(installer.installer.updates) == 0
     assert len(installer.installer.removals) == 0
 

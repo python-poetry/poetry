@@ -826,8 +826,7 @@ class EnvManager(object):
         ]
 
         if not with_pip:
-            # we cannot drop setuptools yet because we do editable installs (git, path) in project envs
-            args.extend(["--no-pip", "--no-wheel"])
+            args.extend(["--no-pip", "--no-wheel", "--no-setuptools"])
 
         for flag, value in flags.items():
             if value is True:

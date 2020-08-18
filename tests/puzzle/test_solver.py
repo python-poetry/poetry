@@ -2403,6 +2403,7 @@ def test_solver_remove_untracked_single(package, pool, installed, locked, io):
     check_solver_result(ops, [{"job": "remove", "package": package_a}])
 
 
+@pytest.mark.skip(reason="Poetry no longer has critical package requirements")
 def test_solver_remove_untracked_keeps_critical_package(
     package, pool, installed, locked, io
 ):
