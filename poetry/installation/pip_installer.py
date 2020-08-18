@@ -2,6 +2,7 @@ import os
 import tempfile
 import urllib.parse
 
+from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
@@ -9,14 +10,15 @@ from typing import Union
 
 from cleo.io.io import IO
 
+from poetry.installation.base_installer import BaseInstaller
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import encode
 from poetry.utils.env import Env
+from poetry.utils.env import EnvManager
+from poetry.utils.env import VirtualEnv
 from poetry.utils.helpers import safe_rmtree
-
-from .base_installer import BaseInstaller
-
+from poetry.utils.helpers import temporary_directory
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
@@ -193,7 +195,7 @@ class PipInstaller(BaseInstaller):
         else:
             req = os.path.realpath(package.source_url)
 
-        args = ["install", "--no-deps", "-U"]
+        args = ["install", "--no-deps", "-U", "--root", str(self._env.path)]
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
@@ -239,7 +241,11 @@ class PipInstaller(BaseInstaller):
 
         args.append(req)
 
-        return self.run(*args)
+        with temporary_directory() as tmp_dir:
+            venv_dir = Path(tmp_dir) / ".venv"
+            EnvManager.build_venv(venv_dir.as_posix(), with_pip=True)
+            venv = VirtualEnv(venv_dir, venv_dir)
+            return venv.run("pip", *args)
 
     def install_git(self, package: "Package") -> None:
         from poetry.core.packages.package import Package
