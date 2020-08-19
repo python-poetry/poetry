@@ -471,6 +471,17 @@ def test_list(tmp_dir, manager, poetry, config):
     assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == venvs[1].path
 
 
+def test_path(tmp_dir, manager, poetry, config):
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
+    manager.activate("python3.7", NullIO())
+
+    activated_venv = manager.get()
+    assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == activated_venv.path
+
+
 def test_remove_by_python_version(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
