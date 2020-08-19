@@ -471,12 +471,28 @@ def test_list(tmp_dir, manager, poetry, config):
     assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == venvs[1].path
 
 
-def test_path(tmp_dir, manager, poetry, config):
+def test_path(tmp_dir, manager, poetry, config, mocker):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
-    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    manager.activate("python3.7", NullIO())
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    mocker.patch(
+        "poetry.utils._compat.subprocess.Popen.communicate",
+        side_effect=[("/prefix", None), ("/prefix", None)],
+    )
+    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
+
+    env = manager.activate("python3.7", NullIO())
+    venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    m.assert_called_with(
+        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
+    )
 
     activated_venv = manager.get()
     assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == activated_venv.path
