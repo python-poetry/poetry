@@ -107,6 +107,10 @@ Defaults to one of the following directories:
 Create a new virtual environment if one doesn't already exist.
 Defaults to `true`.
 
+!!!note:
+	While `pip` is not a system requirment for poetry when installed via the provided installer,
+	`pip` is required if this is set to `false`.
+
 ### `virtualenvs.in-project`: boolean
 
 Create the virtualenv inside the project's root directory.
