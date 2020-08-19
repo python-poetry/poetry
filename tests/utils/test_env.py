@@ -494,8 +494,7 @@ def test_path(tmp_dir, manager, poetry, config, mocker):
         Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
     )
 
-    activated_venv = manager.get()
-    assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == activated_venv.path
+    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
 
 
 def test_remove_by_python_version(tmp_dir, manager, poetry, config, mocker):
