@@ -216,6 +216,8 @@ poetry = 'poetry.console:run'
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
 
+When developing, run `poetry install` after editing the `scripts` section, to install the scripts in the virtualenv.
+
 ## `extras`
 
 Poetry supports extras to allow expression of:
