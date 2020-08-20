@@ -12,8 +12,9 @@ except ImportError:
     from glob import glob
 
 try:
-    from importlib import metadata
     import zipfile as zipp
+
+    from importlib import metadata
 except ImportError:
     import importlib_metadata as metadata
     import zipp
@@ -76,9 +77,11 @@ else:
 
 if PY35:
     import subprocess as subprocess
+
     from subprocess import CalledProcessError
 else:
     import subprocess32 as subprocess
+
     from subprocess32 import CalledProcessError
 
 

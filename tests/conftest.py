@@ -56,6 +56,7 @@ def auth_config_source():
 @pytest.fixture
 def config(config_source, auth_config_source, mocker):
     import keyring
+
     from keyring.backends.fail import Keyring
 
     keyring.set_keyring(Keyring())

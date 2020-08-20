@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -5,6 +6,10 @@ from typing import Optional
 from .base_repository import BaseRepository
 from .exceptions import PackageNotFound
 from .repository import Repository
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages import Package
 
 
 class Pool(BaseRepository):
@@ -108,7 +113,7 @@ class Pool(BaseRepository):
 
     def package(
         self, name, version, extras=None, repository=None
-    ):  # type: (str, str, List[str], str) -> "Package"
+    ):  # type: (str, str, List[str], str) -> Package
         if repository is not None:
             repository = repository.lower()
 
