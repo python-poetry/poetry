@@ -5,9 +5,7 @@ import os
 from poetry.core.packages import Dependency
 from poetry.core.utils._compat import Path
 from poetry.core.factory import Factory
-
-from tomlkit.toml_document import TOMLDocument
-from tomlkit.toml_file import TOMLFile
+from poetry.core.utils.toml_file import TomlFile as TOMLFile
 
 
 def main():
@@ -22,40 +20,44 @@ def main():
     original = toml.read()
     pyproject = toml.read()
 
-    poetry = TOMLDocument()
-    poetry["formal_name"] = project.package.name
-    poetry["description"] = project.package.description
-    poetry["icon"] = "poetry/resources/poetry"
-    poetry["sources"] = ["poetry"]
-    poetry["requires"] = requires
+    briefcase = {
+        "project_name": project.package.name,
+        "bundle": "org.python-poetry.console",
+        "version": project.package.version.text,
+        "url": project.package.homepage,
+        "license": "MIT license",
+        "author": project.package.author_name,
+        "author_email": project.package.author_email,
+        "app": {
+            project.package.name: {
+                "formal_name": project.package.name,
+                "description": project.package.description,
+                "icon": "poetry/resources/poetry",
+                "sources": ["poetry"],
+                "requires": requires,
+                "linux": {"requires": []},
+                "windows": {"requires": []},
+                "macOS": {"requires": []},
+            }
+        }
+    }
 
-    briefcase = TOMLDocument()
-    briefcase["project_name"] = project.package.name
-    briefcase["bundle"] = "org.python-poetry.console"
-    briefcase["version"] = project.package.version.text
-    briefcase["url"] = project.package.homepage
-    briefcase["license"] = "MIT license"
-    briefcase["author"] = project.package.author_name
-    briefcase["author_email"] = project.package.author_email
+    pyproject["tool"].append("briefcase", briefcase)  # noqa
 
-    briefcase["app"] = TOMLDocument()
-    briefcase["app"]["poetry"] = poetry
+    snippet = TOMLFile(project_directory / "briefcase.toml")
+    data = snippet.read()
+    data.append("tool", {"briefcase": briefcase})  # noqa
+    snippet.write(data)
 
-    pyproject["tool"]["briefcase"] = briefcase
-
-    snippet = TOMLDocument()
-    snippet["tool"] = TOMLDocument()
-    snippet["briefcase"] = briefcase
     print("Using Briefcase Config:")
-    print(briefcase.as_string())
-    TOMLFile(project_directory / "briefcase.toml").write(snippet)
+    print(data.as_string())
 
     toml.write(pyproject)
     cwd = Path()
 
     try:
         os.chdir(project_directory.as_posix())
-        os.system("briefcase build")
+        os.system("briefcase package")
     except OSError:
         print("Build failed")
     finally:
