@@ -44,7 +44,11 @@ def main():
 
     pyproject["tool"].append("briefcase", briefcase)  # noqa
 
-    snippet = TOMLFile(project_directory / "briefcase.toml")
+    briefcase_toml = project_directory / "briefcase.toml"
+    with briefcase_toml.open(mode="w") as f:
+        f.write("")
+
+    snippet = TOMLFile(briefcase_toml)
     data = snippet.read()
     data.append("tool", {"briefcase": briefcase})  # noqa
     snippet.write(data)
