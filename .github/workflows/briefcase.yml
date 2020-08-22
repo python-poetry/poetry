@@ -1,0 +1,54 @@
+name: Beeware Builds
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '.cirrus.yml'
+    branches:
+      - master
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '.cirrus.yml'
+    branches:
+      - '**'
+
+jobs:
+  beeware:
+    name: ${{ matrix.os }} / ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        os: [ Ubuntu, MacOS, Windows ]
+        python-version: [3.8]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Tox
+        run: python -m pip install tox
+
+      - name: Build Distribution
+        run: tox -e briefcase
+
+      - name: List Everything
+        shell: bash
+        run: "ls -all *"
+
+      - name: Upload beeware configuration
+        uses: actions/upload-artifact@v2
+        with:
+          name: briefcase.toml
+          path: briefcase.toml
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v2
+        if: matrix.os == 'Ubuntu'
+        with:
+          path: linux/poetry-*.AppImage

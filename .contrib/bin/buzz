@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+import os
+
+from poetry.core.packages import Dependency
+from poetry.core.utils._compat import Path
+from poetry.core.factory import Factory
+
+from tomlkit.toml_document import TOMLDocument
+from tomlkit.toml_file import TOMLFile
+
+
+def main():
+    project_directory = Path(__file__).parent.parent.parent
+    project = Factory().create_poetry(project_directory)
+
+    requires = []
+    for requirement in project.package.requires:  # type: Dependency
+        requires.append(requirement.to_pep_508())
+
+    toml = TOMLFile(project_directory / "pyproject.toml")
+    original = toml.read()
+    pyproject = toml.read()
+
+    poetry = TOMLDocument()
+    poetry["formal_name"] = project.package.name
+    poetry["description"] = project.package.description
+    poetry["icon"] = "poetry/resources/poetry"
+    poetry["sources"] = ["poetry"]
+    poetry["requires"] = requires
+
+    briefcase = TOMLDocument()
+    briefcase["project_name"] = project.package.name
+    briefcase["bundle"] = "org.python-poetry.console"
+    briefcase["version"] = project.package.version.text
+    briefcase["url"] = project.package.homepage
+    briefcase["license"] = "MIT license"
+    briefcase["author"] = project.package.author_name
+    briefcase["author_email"] = project.package.author_email
+
+    briefcase["app"] = TOMLDocument()
+    briefcase["app"]["poetry"] = poetry
+
+    pyproject["tool"]["briefcase"] = briefcase
+
+    snippet = TOMLDocument()
+    snippet["tool"] = TOMLDocument()
+    snippet["briefcase"] = briefcase
+    print("Using Briefcase Config:")
+    print(briefcase.as_string())
+    TOMLFile(project_directory / "briefcase.toml").write(snippet)
+
+    toml.write(pyproject)
+    cwd = Path()
+
+    try:
+        os.chdir(project_directory.as_posix())
+        os.system("briefcase build")
+    except OSError:
+        print("Build failed")
+    finally:
+        os.chdir(cwd.as_posix())
+        toml.write(original)
+
+
+if __name__ == "__main__":
+    main()
