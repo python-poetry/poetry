@@ -3,13 +3,11 @@ name: Code Quality
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
-      - '.cirrus.yml'
+      - '**'
   push:
     branches: [master]
     paths-ignore:
-      - 'docs/**'
-      - '.cirrus.yml'
+      - '**'
 
 jobs:
   pre-commit:
