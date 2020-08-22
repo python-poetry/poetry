@@ -56,7 +56,7 @@ jobs:
 
       - name: Upload MacOS App
         uses: actions/upload-artifact@v2
-        if: matrix.os == 'Mac'
+        if: matrix.os == 'MacOS'
         with:
           name: poetry-macOS-app-${{ steps.vars.outputs.sha_short }}
           path: macOS/poetry/poetry.app
