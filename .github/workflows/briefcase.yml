@@ -37,18 +37,33 @@ jobs:
       - name: Build Distribution
         run: tox -e briefcase
 
-      - name: List Everything
-        shell: bash
-        run: "ls -all *"
-
       - name: Upload beeware configuration
         uses: actions/upload-artifact@v2
         with:
           name: briefcase.toml
           path: briefcase.toml
 
+      - name: Get Short SHA
+        id: vars
+        run: echo "::set-output name=sha_short::${{ github.sha }}
+
       - name: Upload AppImage
         uses: actions/upload-artifact@v2
         if: matrix.os == 'Ubuntu'
         with:
+          name: poetry-linux-appimage-${{ steps.vars.outputs.sha_short }}
           path: linux/poetry-*.AppImage
+
+      - name: Upload MacOS App
+        uses: actions/upload-artifact@v2
+        if: matrix.os == 'Mac'
+        with:
+          name: poetry-macOS-app-${{ steps.vars.outputs.sha_short }}
+          path: macOS/poetry/poetry.app
+
+      - name: Upload MacOS App
+        uses: actions/upload-artifact@v2
+        if: matrix.os == 'Windows'
+        with:
+          name: poetry-Windows-msi-${{ steps.vars.outputs.sha_short }}
+          path: windows/poetry-*.msi
