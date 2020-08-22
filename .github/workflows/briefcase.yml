@@ -45,7 +45,7 @@ jobs:
 
       - name: Get Short SHA
         id: vars
-        run: echo "::set-output name=sha_short::${{ github.sha }}
+        run: echo "::set-output name=sha_short::${{ github.sha }}"
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v2
