@@ -278,7 +278,7 @@ class LegacyRepository(PyPiRepository):
         for package_versions in (versions, ignored_pre_release_versions):
             for version in package_versions:
                 package = Package(name, version)
-                package.source_type = "legacy"
+                package.source_type = self.repository_type
                 package.source_reference = self.name
                 package.source_url = self._url
 
@@ -323,7 +323,7 @@ class LegacyRepository(PyPiRepository):
             if release_info["requires_python"]:
                 package.python_versions = release_info["requires_python"]
 
-            package.source_type = "legacy"
+            package.source_type = self.repository_type
             package.source_url = self._url
             package.source_reference = self.name
 
