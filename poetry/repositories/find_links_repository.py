@@ -4,7 +4,7 @@ from typing import Generator
 from typing import Tuple
 from typing import Union
 
-from poetry.packages.utils.link import Link
+from poetry.core.packages.utils.link import Link
 
 from .legacy_repository import LegacyRepository
 from .legacy_repository import Page

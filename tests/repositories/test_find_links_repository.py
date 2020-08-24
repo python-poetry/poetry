@@ -1,6 +1,6 @@
 import shutil
 
-from poetry.packages.utils.link import Link
+from poetry.core.packages.utils.link import Link
 from poetry.repositories.find_links_repository import FilteredPage
 from poetry.repositories.find_links_repository import FindLinksRepository
 from poetry.repositories.find_links_repository import SingleLink
