@@ -185,6 +185,32 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected == io.fetch_output()
 
 
+def test_execute_should_gracefully_handle_io_error(config, mocker, io):
+    env = MockEnv()
+    executor = Executor(env, pool, config, io)
+    executor.verbose()
+
+    original_write_line = executor._io.write_line
+
+    def write_line(string, flags=None):
+        # Simulate UnicodeEncodeError
+        string.encode("ascii")
+        original_write_line(string, flags)
+
+    mocker.patch.object(io, "write_line", side_effect=write_line)
+
+    assert 1 == executor.execute([Install(Package("clikit", "0.2.3"))])
+
+    expected = r"""
+Package operations: 1 install, 0 updates, 0 removals
+
+
+\s*Unicode\w+Error
+"""
+
+    assert re.match(expected, io.fetch_output())
+
+
 def test_executor_should_delete_incomplete_downloads(
     config, io, tmp_dir, mocker, pool, mock_file_downloads
 ):
