@@ -44,19 +44,11 @@ pytest = "^3.4"
 ### Initialising a pre-existing project
 
 Instead of creating a new project, Poetry can be used to 'initialise' a pre-populated
-directory. It expects a standard Python package structure to do this:
-
-```text
-pre-existing-project
-├── README.rst
-└── pre_existing_project
-    └── __init__.py
-```
-
-To initialise this project, and interactively create a `pyproject.toml` file:
+directory. To interactively create a `pyproject.toml` file in directory `pre-existing-project`:
 
 ```bash
-poetry init pre-existing-project
+cd pre-existing-project
+poetry init
 ```
 
 ### Specifying dependencies
