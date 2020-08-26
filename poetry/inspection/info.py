@@ -155,7 +155,7 @@ class PackageInfo:
                 self._log(
                     "Invalid constraint ({}) found in {}-{} dependencies, "
                     "skipping".format(req, package.name, package.version),
-                    level="debug",
+                    level="warning",
                 )
                 continue
 

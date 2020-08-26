@@ -81,7 +81,7 @@ class Chef:
         links = []
         for archive_type in archive_types:
             for archive in cache_dir.glob("*.{}".format(archive_type)):
-                links.append(Link("file://{}".format(str(archive))))
+                links.append(Link(archive.as_uri()))
 
         return links
 

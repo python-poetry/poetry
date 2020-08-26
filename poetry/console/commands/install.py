@@ -45,11 +45,11 @@ dependencies and not including the current project, run the command with the
 <info> poetry install --no-root</info>
 """
 
-    _loggers = ["poetry.repositories.pypi_repository"]
+    _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self):
-        from poetry.masonry.builders import EditableBuilder
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
+        from poetry.masonry.builders import EditableBuilder
 
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)

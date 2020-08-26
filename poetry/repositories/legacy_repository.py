@@ -27,6 +27,7 @@ from poetry.utils.patterns import wheel_file_re
 from ..inspection.info import PackageInfo
 from .auth import Auth
 from .exceptions import PackageNotFound
+from .exceptions import RepositoryError
 from .pypi_repository import PyPiRepository
 
 
@@ -361,8 +362,12 @@ class LegacyRepository(PyPiRepository):
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
-        response = self.session.get(url)
-        if response.status_code == 404:
-            return
+        try:
+            response = self.session.get(url)
+            if response.status_code == 404:
+                return
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            raise RepositoryError(e)
 
         return Page(url, response.content, response.headers)

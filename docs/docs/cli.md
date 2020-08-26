@@ -116,7 +116,7 @@ poetry install --remove-untracked
 ```
 
 You can also specify the extras you want installed
-by passing the `--E|--extras` option (See [Extras](#extras) for more info)
+by passing the `--E|--extras` option (See [Extras](/docs/pyproject/#extras) for more info)
 
 ```bash
 poetry install --extras "mysql pgsql"
@@ -412,10 +412,6 @@ This command searches for packages on a remote index.
 ```bash
 poetry search requests pendulum
 ```
-
-### Options
-
-* `--only-name (-N)`: Search only in name.
 
 ## lock
 

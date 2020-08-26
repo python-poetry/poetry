@@ -8,6 +8,7 @@ from cleo.testers import CommandTester
 @pytest.fixture
 def repository_cache_dir(monkeypatch, tmpdir):
     import poetry.locations
+
     from poetry.utils._compat import Path
 
     path = Path(str(tmpdir))

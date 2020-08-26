@@ -902,12 +902,14 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
     check_solver_result(
         ops,
-        [
-            {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.2")},
-        ],
+        [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
     op = ops[1]
@@ -928,12 +930,17 @@ def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
     check_solver_result(
         ops,
         [
             {"job": "install", "package": cleo},
             {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.2")},
+            {"job": "install", "package": demo},
         ],
     )
 
@@ -949,7 +956,12 @@ def test_solver_can_resolve_git_dependencies_with_ref(solver, repo, package, ref
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    git_config = {"git": "https://github.com/demo/demo.git"}
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
+    git_config = {demo.source_type: demo.source_url}
     git_config.update(ref)
     package.add_dependency("demo", git_config)
 
@@ -957,10 +969,7 @@ def test_solver_can_resolve_git_dependencies_with_ref(solver, repo, package, ref
 
     check_solver_result(
         ops,
-        [
-            {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.2")},
-        ],
+        [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
     op = ops[1]
@@ -1206,25 +1215,26 @@ def test_solver_git_dependencies_update(solver, repo, package, installed):
     repo.add_package(pendulum)
     repo.add_package(cleo)
 
-    demo = get_package("demo", "0.1.2")
-    demo.source_type = "git"
-    demo.source_url = "https://github.com/demo/demo.git"
-    demo.source_reference = "123456"
-    installed.add_package(demo)
+    demo_installed = get_package("demo", "0.1.2")
+    demo_installed.source_type = "git"
+    demo_installed.source_url = "https://github.com/demo/demo.git"
+    demo_installed.source_reference = "123456"
+    installed.add_package(demo_installed)
 
     package.add_dependency("demo", {"git": "https://github.com/demo/demo.git"})
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "git"
+    demo.source_url = "https://github.com/demo/demo.git"
+    demo.source_reference = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
+
     check_solver_result(
         ops,
         [
             {"job": "install", "package": pendulum},
-            {
-                "job": "update",
-                "from": get_package("demo", "0.1.2"),
-                "to": get_package("demo", "0.1.2"),
-            },
+            {"job": "update", "from": demo_installed, "to": demo},
         ],
     )
 
@@ -1256,11 +1266,7 @@ def test_solver_git_dependencies_update_skipped(solver, repo, package, installed
         ops,
         [
             {"job": "install", "package": pendulum},
-            {
-                "job": "install",
-                "package": get_package("demo", "0.1.2"),
-                "skipped": True,
-            },
+            {"job": "install", "package": demo, "skipped": True},
         ],
     )
 
@@ -1289,11 +1295,7 @@ def test_solver_git_dependencies_short_hash_update_skipped(
         ops,
         [
             {"job": "install", "package": pendulum},
-            {
-                "job": "install",
-                "package": get_package("demo", "0.1.2"),
-                "skipped": True,
-            },
+            {"job": "install", "package": demo, "skipped": True},
         ],
     )
 
@@ -1315,12 +1317,13 @@ def test_solver_can_resolve_directory_dependencies(solver, repo, package):
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "directory"
+    demo.source_url = path
+
     check_solver_result(
         ops,
-        [
-            {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.2")},
-        ],
+        [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
     op = ops[1]
@@ -1350,12 +1353,16 @@ def test_solver_can_resolve_directory_dependencies_with_extras(solver, repo, pac
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.2")
+    demo.source_type = "directory"
+    demo.source_url = path
+
     check_solver_result(
         ops,
         [
             {"job": "install", "package": cleo},
             {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.2")},
+            {"job": "install", "package": demo},
         ],
     )
 
@@ -1382,12 +1389,13 @@ def test_solver_can_resolve_sdist_dependencies(solver, repo, package):
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.0")
+    demo.source_type = "file"
+    demo.source_url = path
+
     check_solver_result(
         ops,
-        [
-            {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.0")},
-        ],
+        [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
     op = ops[1]
@@ -1415,12 +1423,16 @@ def test_solver_can_resolve_sdist_dependencies_with_extras(solver, repo, package
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.0")
+    demo.source_type = "file"
+    demo.source_url = path
+
     check_solver_result(
         ops,
         [
             {"job": "install", "package": cleo},
             {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.0")},
+            {"job": "install", "package": demo},
         ],
     )
 
@@ -1447,12 +1459,13 @@ def test_solver_can_resolve_wheel_dependencies(solver, repo, package):
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.0")
+    demo.source_type = "file"
+    demo.source_url = path
+
     check_solver_result(
         ops,
-        [
-            {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.0")},
-        ],
+        [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
     op = ops[1]
@@ -1480,12 +1493,16 @@ def test_solver_can_resolve_wheel_dependencies_with_extras(solver, repo, package
 
     ops = solver.solve()
 
+    demo = get_package("demo", "0.1.0")
+    demo.source_type = "file"
+    demo.source_url = path
+
     check_solver_result(
         ops,
         [
             {"job": "install", "package": cleo},
             {"job": "install", "package": pendulum},
-            {"job": "install", "package": get_package("demo", "0.1.0")},
+            {"job": "install", "package": demo},
         ],
     )
 
