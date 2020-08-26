@@ -43,7 +43,6 @@ def test_remove_by_name(tester, venvs_in_cache_dirs, venv_name, venv_cache):
     assert expected == tester.io.fetch_output()
 
 
-@pytest.mark.wip
 @pytest.mark.parametrize("python_arg", ["", ".venv"])
 def test_remove_in_project(python_arg, app, tmp_path, monkeypatch):
     app.poetry.config.merge({"virtualenvs": {"in-project": True}})
