@@ -453,7 +453,7 @@ The table below illustrates the effect of these rules with concrete examples.
 This command exports the lock file to other formats.
 
 ```bash
-poetry export -f requirements.txt > requirements.txt
+poetry export -f requirements.txt --output requirements.txt
 ```
 
 !!!note
