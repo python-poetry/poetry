@@ -41,6 +41,16 @@ python = "*"
 pytest = "^3.4"
 ```
 
+### Initialising a pre-existing project
+
+Instead of creating a new project, Poetry can be used to 'initialise' a pre-populated
+directory. To interactively create a `pyproject.toml` file in directory `pre-existing-project`:
+
+```bash
+cd pre-existing-project
+poetry init
+```
+
 ### Specifying dependencies
 
 If you want to add dependencies to your project, you can specify them in the `tool.poetry.dependencies` section.
