@@ -136,6 +136,15 @@ def test_get_release_info():
 
     for package_name in TEST_PACKAGES:
         package = repo.find_packages(package_name)[0]
-        assert repo.get_release_info(
+        info = repo.get_release_info(
             package_name, package.version.text
-        ) == legacy_repo.get_release_info(package_name, package.version.text)
+        )
+        legacy_info = legacy_repo.get_release_info(package_name, package.version.text)
+        assert info.cache_version == legacy_info.cache_version
+        assert info.files == legacy_info.files
+        assert info.name == legacy_info.name
+        assert info.platform == legacy_info.platform
+        assert info.requires_dist == legacy_info.requires_dist
+        assert info.requires_python == legacy_info.requires_python
+        assert info.summary == legacy_info.summary
+        assert info.version == legacy_info.version
