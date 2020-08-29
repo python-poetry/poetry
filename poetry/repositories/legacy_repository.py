@@ -320,8 +320,6 @@ class LegacyRepository(PyPiRepository):
             release_info = self.get_release_info(name, version)
 
             package = super(LegacyRepository, self).package(name, version, extras)
-            if release_info["requires_python"]:
-                package.python_versions = release_info["requires_python"]
 
             package.source_type = self.repository_type
             package.source_url = self._url
