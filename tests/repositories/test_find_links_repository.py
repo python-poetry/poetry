@@ -136,9 +136,7 @@ def test_get_release_info():
 
     for package_name in TEST_PACKAGES:
         package = repo.find_packages(package_name)[0]
-        info = repo.get_release_info(
-            package_name, package.version.text
-        )
+        info = repo.get_release_info(package_name, package.version.text)
         legacy_info = legacy_repo.get_release_info(package_name, package.version.text)
         assert info.cache_version == legacy_info.cache_version
         assert info.files == legacy_info.files

@@ -21,7 +21,6 @@ from poetry.core.semver import VersionRange
 from poetry.core.semver import parse_constraint
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils._compat import Path
-from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import wheel_file_re
 
 from ..inspection.info import PackageInfo
@@ -317,8 +316,6 @@ class LegacyRepository(PyPiRepository):
 
             return self._packages[index]
         except ValueError:
-            release_info = self.get_release_info(name, version)
-
             package = super(LegacyRepository, self).package(name, version, extras)
 
             package.source_type = self.repository_type

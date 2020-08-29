@@ -125,8 +125,8 @@ class Factory(BaseFactory):
         self, source, auth_config
     ):  # type: (Dict[str, str], Config) -> LegacyRepository
         from .repositories.auth import Auth
-        from .repositories.legacy_repository import LegacyRepository
         from .repositories.find_links_repository import FindLinksRepository
+        from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert
         from .utils.password_manager import PasswordManager
