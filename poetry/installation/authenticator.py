@@ -1,5 +1,12 @@
+import time
+
 from typing import TYPE_CHECKING
 
+import requests
+import requests.auth
+import requests.exceptions
+
+from poetry.exceptions import PoetryException
 from poetry.utils._compat import urlparse
 from poetry.utils.password_manager import PasswordManager
 
@@ -10,10 +17,6 @@ if TYPE_CHECKING:
     from typing import Tuple
 
     from clikit.api.io import IO
-    from requests import Request  # noqa
-    from requests import Response  # noqa
-    from requests import Session  # noqa
-
     from poetry.config.config import Config
 
 
@@ -26,24 +29,22 @@ class Authenticator(object):
         self._password_manager = PasswordManager(self._config)
 
     @property
-    def session(self):  # type: () -> Session
-        from requests import Session  # noqa
-
+    def session(self):  # type: () -> requests.Session
         if self._session is None:
-            self._session = Session()
+            self._session = requests.Session()
 
         return self._session
 
-    def request(self, method, url, **kwargs):  # type: (str, str, Any) -> Response
-        from requests import Request  # noqa
-        from requests.auth import HTTPBasicAuth
-
-        request = Request(method, url)
+    def request(
+        self, method, url, **kwargs
+    ):  # type: (str, str, Any) -> requests.Response
+        request = requests.Request(method, url)
+        io = kwargs.get("io", self._io)
 
         username, password = self._get_credentials_for_url(url)
 
         if username is not None and password is not None:
-            request = HTTPBasicAuth(username, password)(request)
+            request = requests.auth.HTTPBasicAuth(username, password)(request)
 
         session = self.session
         prepared_request = session.prepare_request(request)
@@ -63,11 +64,32 @@ class Authenticator(object):
             "allow_redirects": kwargs.get("allow_redirects", True),
         }
         send_kwargs.update(settings)
-        resp = session.send(prepared_request, **send_kwargs)
 
-        resp.raise_for_status()
+        attempt = 0
 
-        return resp
+        while True:
+            is_last_attempt = attempt >= 5
+            try:
+                resp = session.send(prepared_request, **send_kwargs)
+            except (requests.exceptions.ConnectionError, OSError) as e:
+                if is_last_attempt:
+                    raise e
+            else:
+                if resp.status_code not in [502, 503, 504] or is_last_attempt:
+                    resp.raise_for_status()
+                    return resp
+
+            if not is_last_attempt:
+                attempt += 1
+                delay = 0.5 * attempt
+                io.write_line(
+                    "<debug>Retrying HTTP request in {} seconds.</debug>".format(delay)
+                )
+                time.sleep(delay)
+                continue
+
+        # this should never really be hit under any sane circumstance
+        raise PoetryException("Failed HTTP {} request", method.upper())
 
     def _get_credentials_for_url(
         self, url

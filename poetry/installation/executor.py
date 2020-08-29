@@ -598,7 +598,9 @@ class Executor(object):
         return archive
 
     def _download_archive(self, operation, link):  # type: (Operation, Link) -> Path
-        response = self._authenticator.request("get", link.url, stream=True)
+        response = self._authenticator.request(
+            "get", link.url, stream=True, io=self._sections.get(id(operation))
+        )
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)
         message = "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</>".format(

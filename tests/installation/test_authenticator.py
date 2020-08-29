@@ -1,6 +1,9 @@
 import re
+import uuid
 
+import httpretty
 import pytest
+import requests
 
 from poetry.installation.authenticator import Authenticator
 from poetry.io.null_io import NullIO
@@ -113,3 +116,67 @@ def test_authenticator_uses_empty_strings_as_default_username(
     request = http.last_request()
 
     assert "Basic OmJhcg==" == request.headers["Authorization"]
+
+
+def test_authenticator_request_retries_on_exception(mocker, config, http):
+    sleep = mocker.patch("time.sleep")
+    sdist_uri = "https://foo.bar/files/{}/foo-0.1.0.tar.gz".format(str(uuid.uuid4()))
+    content = str(uuid.uuid4())
+    seen = list()
+
+    def callback(request, uri, response_headers):
+        if seen.count(uri) < 2:
+            seen.append(uri)
+            raise requests.exceptions.ConnectionError("Disconnected")
+        return [200, response_headers, content]
+
+    httpretty.register_uri(httpretty.GET, sdist_uri, body=callback)
+
+    authenticator = Authenticator(config, NullIO())
+    response = authenticator.request("get", sdist_uri)
+    assert response.text == content
+    assert sleep.call_count == 2
+
+
+def test_authenticator_request_raises_exception_when_attempts_exhausted(
+    mocker, config, http
+):
+    sleep = mocker.patch("time.sleep")
+    sdist_uri = "https://foo.bar/files/{}/foo-0.1.0.tar.gz".format(str(uuid.uuid4()))
+
+    def callback(*_, **__):
+        raise requests.exceptions.ConnectionError(str(uuid.uuid4()))
+
+    httpretty.register_uri(httpretty.GET, sdist_uri, body=callback)
+    authenticator = Authenticator(config, NullIO())
+
+    with pytest.raises(requests.exceptions.ConnectionError):
+        authenticator.request("get", sdist_uri)
+
+    assert sleep.call_count == 5
+
+
+@pytest.mark.parametrize(
+    "status, attempts",
+    [(400, 0), (401, 0), (403, 0), (404, 0), (500, 0), (502, 5), (503, 5), (504, 5)],
+)
+def test_authenticator_request_retries_on_status_code(
+    mocker, config, http, status, attempts
+):
+    sleep = mocker.patch("time.sleep")
+    sdist_uri = "https://foo.bar/files/{}/foo-0.1.0.tar.gz".format(str(uuid.uuid4()))
+    content = str(uuid.uuid4())
+
+    def callback(request, uri, response_headers):
+        return [status, response_headers, content]
+
+    httpretty.register_uri(httpretty.GET, sdist_uri, body=callback)
+    authenticator = Authenticator(config, NullIO())
+
+    with pytest.raises(requests.exceptions.HTTPError) as excinfo:
+        authenticator.request("get", sdist_uri)
+
+    assert excinfo.value.response.status_code == status
+    assert excinfo.value.response.text == content
+
+    assert sleep.call_count == attempts
