@@ -1,5 +1,28 @@
 # Change Log
 
+## [1.0.10] - 2020-07-21
+
+### Changed
+
+- The lock files are now versioned to ease transitions for lock file format changes, with warnings being displayed on incompatibility detection ([#2695](https://github.com/python-poetry/poetry/pull/2695)).
+- The `init` and `new` commands will now provide hints on invalid given licenses ([#1634](https://github.com/python-poetry/poetry/pull/1634)).
+
+### Fixed
+
+- Fixed error messages when the authors specified in the `pyproject.toml` file are invalid ([#2525](https://github.com/python-poetry/poetry/pull/2525)).
+- Fixed empty `.venv` directories being deleted ([#2064](https://github.com/python-poetry/poetry/pull/2064)).
+- Fixed the `shell` command for `tcsh` shells ([#2583](https://github.com/python-poetry/poetry/pull/2583)).
+- Fixed errors when installing directory or file dependencies in some cases ([#2582](https://github.com/python-poetry/poetry/pull/2582)).
+
+
+## [1.0.9] - 2020-06-09
+
+### Fixed
+
+- Fixed an issue where packages from custom indices where continuously updated ([#2525](https://github.com/python-poetry/poetry/pull/2525)).
+- Fixed errors in the way Python environment markers were parsed and generated ([#2526](https://github.com/python-poetry/poetry/pull/2526)).
+
+
 ## [1.0.8] - 2020-06-05
 
 ### Fixed
@@ -860,7 +883,9 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.8...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.0.10...master
+[1.0.10]: https://github.com/python-poetry/poetry/releases/tag/1.0.10
+[1.0.9]: https://github.com/python-poetry/poetry/releases/tag/1.0.9
 [1.0.8]: https://github.com/python-poetry/poetry/releases/tag/1.0.8
 [1.0.7]: https://github.com/python-poetry/poetry/releases/tag/1.0.7
 [1.0.6]: https://github.com/python-poetry/poetry/releases/tag/1.0.6

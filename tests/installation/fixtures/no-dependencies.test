@@ -2,6 +2,7 @@ package = []
 
 [metadata]
 python-versions = "*"
+lock-version = "1.0"
 content-hash = "123456789"
 
 [metadata.files]

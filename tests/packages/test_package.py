@@ -30,6 +30,19 @@ def test_package_authors():
     assert package.author_email is None
 
 
+def test_package_authors_invalid():
+    package = Package("foo", "0.1.0")
+
+    package.authors.insert(0, "<John Doe")
+    with pytest.raises(ValueError) as e:
+        package.author_name
+
+    assert (
+        str(e.value)
+        == "Invalid author string. Must be in the format: John Smith <john@example.com>"
+    )
+
+
 @pytest.mark.parametrize("category", ["main", "dev"])
 def test_package_add_dependency_vcs_category(category):
     package = Package("foo", "0.1.0")

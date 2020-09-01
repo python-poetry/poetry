@@ -17,7 +17,36 @@ def license_by_id(identifier):
     id = identifier.lower()
 
     if id not in _licenses:
-        raise ValueError("Invalid license id: {}".format(identifier))
+        err = "Invalid license id: {}\nPoetry uses SPDX license identifiers: https://spdx.org/licenses/".format(
+            identifier
+        )
+
+        # Covers the licenses listed as common for python packages in https://snyk.io/blog/over-10-of-python-packages-on-pypi-are-distributed-without-any-license/
+        # MIT/WTFPL/Unlicense are excluded as their ids are simply their name - if someone types "mit", they've already found the license they were looking for
+
+        common_strings = ["agpl", "lgpl", "gpl", "bsd", "apache", "mpl", "cc0"]
+        for string in common_strings:
+            if string in id:
+
+                err += "\n"
+                err += "Did you mean one of the following?"
+
+                matches = sorted(
+                    {
+                        license.id
+                        for license in _licenses.values()
+                        if license.id.lower().startswith(string)
+                        and not license.is_deprecated
+                    }
+                )
+
+                for license in matches:
+                    err += "\n * {}".format(license)
+
+                # Don't match agpl for "gpl"
+                break
+
+        raise ValueError(err)
 
     return _licenses[id]
 

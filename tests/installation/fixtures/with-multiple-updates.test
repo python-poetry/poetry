@@ -49,6 +49,7 @@ python-versions = "*"
 
 [metadata]
 python-versions = "~2.7 || ^3.4"
+lock-version = "1.0"
 content-hash = "123456789"
 
 [metadata.files]

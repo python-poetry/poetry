@@ -1,3 +1,4 @@
+import logging
 import tempfile
 
 import pytest
@@ -56,6 +57,7 @@ version = "1.2"
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+lock-version = "1.0"
 python-versions = "*"
 
 [metadata.files]
@@ -93,6 +95,7 @@ redis = ["redis (>=2.10.5)"]
 
 [metadata]
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
+lock-version = "1.0"
 python-versions = "~2.7 || ^3.4"
 
 [metadata.files]
@@ -132,6 +135,7 @@ version = "1.0.0"
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+lock-version = "1.0"
 python-versions = "*"
 
 [metadata.files]
@@ -171,6 +175,7 @@ foo = ["B (>=1.0.0)"]
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+lock-version = "1.0"
 python-versions = "*"
 
 [metadata.files]
@@ -200,6 +205,7 @@ foo = ["bar"]
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+lock-version = "1.0"
 python-versions = "*"
 
 [metadata.files]
@@ -239,6 +245,7 @@ url = "https://foo.bar"
 
 [metadata]
 content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+lock-version = "1.0"
 python-versions = "*"
 
 [metadata.files]
@@ -246,3 +253,52 @@ A = []
 """
 
     assert expected == content
+
+
+def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
+    locker, caplog
+):
+    content = """\
+[metadata]
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
+lock-version = "1.1"
+python-versions = "~2.7 || ^3.4"
+
+[metadata.files]
+"""
+    caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
+
+    locker.lock.write(tomlkit.parse(content))
+
+    _ = locker.lock_data
+
+    assert 1 == len(caplog.records)
+
+    record = caplog.records[0]
+    assert "WARNING" == record.levelname
+
+    expected = """\
+The lock file might not be compatible with the current version of Poetry.
+Upgrade Poetry to ensure the lock file is read properly or, alternatively, \
+regenerate the lock file with the `poetry lock` command.\
+"""
+    assert expected == record.message
+
+
+def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
+    locker, caplog
+):
+    content = """\
+[metadata]
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
+lock-version = "2.0"
+python-versions = "~2.7 || ^3.4"
+
+[metadata.files]
+"""
+    caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
+
+    locker.lock.write(tomlkit.parse(content))
+
+    with pytest.raises(RuntimeError, match="^The lock file is not compatible"):
+        _ = locker.lock_data
