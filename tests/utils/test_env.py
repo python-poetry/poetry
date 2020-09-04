@@ -559,7 +559,6 @@ def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mo
     original_rmtree = shutil.rmtree
 
     def err_on_rm_venv_only(path, *args, **kwargs):
-        print(path)
         if path == str(venv_path):
             raise OSError(16, "Test error")  # ERRNO 16: Device or resource busy
         else:

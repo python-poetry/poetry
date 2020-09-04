@@ -1,10 +1,12 @@
+from poetry.factory import Factory
+
 from ..helpers import add_to_repo
 from ..helpers import check_solver_result
 
 
 def test_dependency_does_not_match_root_python_constraint(root, provider, repo):
     provider.set_package_python_versions("^3.6")
-    root.add_dependency("foo", "*")
+    root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", python="<3.5")
 

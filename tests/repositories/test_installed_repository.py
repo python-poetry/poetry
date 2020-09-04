@@ -156,5 +156,5 @@ def test_load_editable_with_import_package(repository):
     assert editable is not None
     assert editable.name == "editable-with-import"
     assert editable.version.text == "2.3.4"
-    assert editable.source_type == ""
-    assert editable.source_url == ""
+    assert editable.source_type is None
+    assert editable.source_url is None

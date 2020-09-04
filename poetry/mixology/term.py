@@ -38,7 +38,7 @@ class Term(object):
         Returns whether this term satisfies another.
         """
         return (
-            self.dependency.name == other.dependency.name
+            self.dependency.complete_name == other.dependency.complete_name
             and self.relation(other) == SetRelation.SUBSET
         )
 
@@ -47,9 +47,9 @@ class Term(object):
         Returns the relationship between the package versions
         allowed by this term and another.
         """
-        if self.dependency.name != other.dependency.name:
+        if self.dependency.complete_name != other.dependency.complete_name:
             raise ValueError(
-                "{} should refer to {}".format(other, self.dependency.name)
+                "{} should refer to {}".format(other, self.dependency.complete_name)
             )
 
         other_constraint = other.constraint
@@ -111,9 +111,9 @@ class Term(object):
         Returns a Term that represents the packages
         allowed by both this term and another
         """
-        if self.dependency.name != other.dependency.name:
+        if self.dependency.complete_name != other.dependency.complete_name:
             raise ValueError(
-                "{} should refer to {}".format(other, self.dependency.name)
+                "{} should refer to {}".format(other, self.dependency.complete_name)
             )
 
         if self._compatible_dependency(other.dependency):
@@ -151,17 +151,14 @@ class Term(object):
         return (
             self.dependency.is_root
             or other.is_root
-            or other.name == self.dependency.name
+            or other.is_same_package_as(self.dependency)
         )
 
     def _non_empty_term(self, constraint, is_positive):
         if constraint.is_empty():
             return
 
-        dep = Dependency(self.dependency.name, constraint)
-        dep.python_versions = str(self.dependency.python_versions)
-
-        return Term(dep, is_positive)
+        return Term(self.dependency.with_constraint(constraint), is_positive)
 
     def __str__(self):
         return "{}{}".format("not " if not self.is_positive() else "", self._dependency)

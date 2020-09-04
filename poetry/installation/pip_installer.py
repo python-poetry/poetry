@@ -261,8 +261,8 @@ class PipInstaller(BaseInstaller):
 
         # Now we just need to install from the source directory
         pkg = Package(package.name, package.version)
-        pkg.source_type = "directory"
-        pkg.source_url = str(src_dir)
+        pkg._source_type = "directory"
+        pkg._source_url = str(src_dir)
         pkg.develop = package.develop
 
         self.install_directory(pkg)

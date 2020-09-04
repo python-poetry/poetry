@@ -37,6 +37,7 @@ lists all packages available."""
 
         from poetry.core.semver import Version
         from poetry.repositories.installed_repository import InstalledRepository
+        from poetry.utils.helpers import get_package_version_display_string
 
         package = self.argument("package")
 
@@ -144,12 +145,31 @@ lists all packages available."""
                 if not self.option("outdated") or update_status != "up-to-date":
                     name_length = max(name_length, current_length)
                     version_length = max(
-                        version_length, len(locked.full_pretty_version)
+                        version_length,
+                        len(
+                            get_package_version_display_string(
+                                locked, root=self.poetry.file.parent
+                            )
+                        ),
                     )
-                    latest_length = max(latest_length, len(latest.full_pretty_version))
+                    latest_length = max(
+                        latest_length,
+                        len(
+                            get_package_version_display_string(
+                                latest, root=self.poetry.file.parent
+                            )
+                        ),
+                    )
             else:
                 name_length = max(name_length, current_length)
-                version_length = max(version_length, len(locked.full_pretty_version))
+                version_length = max(
+                    version_length,
+                    len(
+                        get_package_version_display_string(
+                            locked, root=self.poetry.file.parent
+                        )
+                    ),
+                )
 
         write_version = name_length + version_length + 3 <= width
         write_latest = name_length + version_length + latest_length + 3 <= width
@@ -185,7 +205,10 @@ lists all packages available."""
             )
             if write_version:
                 line += " <b>{:{}}</b>".format(
-                    locked.full_pretty_version, version_length
+                    get_package_version_display_string(
+                        locked, root=self.poetry.file.parent
+                    ),
+                    version_length,
                 )
             if show_latest:
                 latest = latest_packages[locked.pretty_name]
@@ -199,7 +222,11 @@ lists all packages available."""
                         color = "yellow"
 
                     line += " <fg={}>{:{}}</>".format(
-                        color, latest.full_pretty_version, latest_length
+                        color,
+                        get_package_version_display_string(
+                            latest, root=self.poetry.file.parent
+                        ),
+                        latest_length,
                     )
 
             if write_description:

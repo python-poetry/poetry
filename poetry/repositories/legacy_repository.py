@@ -222,17 +222,17 @@ class LegacyRepository(PyPiRepository):
             path=parsed.path,
         )
 
-    def find_packages(
-        self, name, constraint=None, extras=None, allow_prereleases=False
-    ):
+    def find_packages(self, dependency):
         packages = []
 
+        constraint = dependency.constraint
         if constraint is None:
             constraint = "*"
 
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        allow_prereleases = dependency.allows_prereleases()
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
@@ -242,7 +242,7 @@ class LegacyRepository(PyPiRepository):
             ):
                 allow_prereleases = True
 
-        key = name
+        key = dependency.name
         if not constraint.is_any():
             key = "{}:{}".format(key, str(constraint))
 
@@ -251,7 +251,7 @@ class LegacyRepository(PyPiRepository):
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
+            page = self._get("/{}/".format(dependency.name.replace(".", "-")))
             if page is None:
                 return []
 
@@ -270,19 +270,19 @@ class LegacyRepository(PyPiRepository):
 
         for package_versions in (versions, ignored_pre_release_versions):
             for version in package_versions:
-                package = Package(name, version)
-                package.source_type = "legacy"
-                package.source_reference = self.name
-                package.source_url = self._url
-
-                if extras is not None:
-                    package.requires_extras = extras
+                package = Package(
+                    dependency.name,
+                    version,
+                    source_type="legacy",
+                    source_reference=self.name,
+                    source_url=self._url,
+                )
 
                 packages.append(package)
 
             self._log(
                 "{} packages found for {} {}".format(
-                    len(packages), name, str(constraint)
+                    len(packages), dependency.name, str(constraint)
                 ),
                 level="debug",
             )
@@ -302,7 +302,7 @@ class LegacyRepository(PyPiRepository):
         We also need to download every file matching this release
         to get the various hashes.
 
-        Note that, this will be cached so the subsequent operations
+        Note that this will be cached so the subsequent operations
         should be much faster.
         """
         try:
@@ -311,9 +311,9 @@ class LegacyRepository(PyPiRepository):
             return self._packages[index]
         except ValueError:
             package = super(LegacyRepository, self).package(name, version, extras)
-            package.source_type = "legacy"
-            package.source_url = self._url
-            package.source_reference = self.name
+            package._source_type = "legacy"
+            package._source_url = self._url
+            package._source_reference = self.name
 
             return package
 

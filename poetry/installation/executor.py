@@ -556,7 +556,7 @@ class Executor(object):
         git.checkout(package.source_reference, src_dir)
 
         # Now we just need to install from the source directory
-        package.source_url = str(src_dir)
+        package._source_url = str(src_dir)
 
         return self._install_directory(operation)
 
@@ -599,7 +599,7 @@ class Executor(object):
 
     def _download_archive(self, operation, link):  # type: (Operation, Link) -> Path
         response = self._authenticator.request(
-            "get", link.url, stream=True, io=self._sections.get(id(operation))
+            "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
         )
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)

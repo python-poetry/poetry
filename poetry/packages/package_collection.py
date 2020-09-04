@@ -14,7 +14,9 @@ class PackageCollection(list):
             self.append(package)
 
     def append(self, package):
-        if not isinstance(package, DependencyPackage):
-            package = DependencyPackage(self._dependency, package)
+        if isinstance(package, DependencyPackage):
+            package = package.package
+
+        package = DependencyPackage(self._dependency, package)
 
         return super(PackageCollection, self).append(package)

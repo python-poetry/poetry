@@ -34,7 +34,7 @@ class Solver:
         installed,  # type: Repository
         locked,  # type: Repository
         io,  # type: ConsoleIO
-        remove_untracked=False,  # type: bool,
+        remove_untracked=False,  # type: bool
         provider=None,  # type: Optional[Provider]
     ):
         self._package = package
@@ -100,17 +100,36 @@ class Solver:
                                 and locked.source_type == pkg.source_type
                                 and locked_source_url == pkg_source_url
                                 and locked.source_reference == pkg.source_reference
+                                and locked.source_resolved_reference
+                                == pkg.source_resolved_reference
                             ):
-                                pkg = Package(pkg.name, locked.version)
-                                pkg.source_type = "git"
-                                pkg.source_url = locked.source_url
-                                pkg.source_reference = locked.source_reference
+                                pkg = Package(
+                                    pkg.name,
+                                    locked.version,
+                                    source_type="git",
+                                    source_url=locked.source_url,
+                                    source_reference=locked.source_reference,
+                                    source_resolved_reference=locked.source_resolved_reference,
+                                )
                                 break
 
                         if pkg_source_url != package_source_url or (
-                            pkg.source_reference != package.source_reference
+                            (
+                                not pkg.source_resolved_reference
+                                or not package.source_resolved_reference
+                            )
+                            and pkg.source_reference != package.source_reference
                             and not pkg.source_reference.startswith(
                                 package.source_reference
+                            )
+                            or (
+                                pkg.source_resolved_reference
+                                and package.source_resolved_reference
+                                and pkg.source_resolved_reference
+                                != package.source_resolved_reference
+                                and not pkg.source_resolved_reference.startswith(
+                                    package.source_resolved_reference
+                                )
                             )
                         ):
                             operations.append(Update(pkg, package, priority=depths[i]))
@@ -226,17 +245,39 @@ class Solver:
                 PackageNode(self._package, packages), aggregate_package_nodes
             )
         )
-        # Return the packages in their original order with associated depths
-        final_packages = packages
-        depths = [results[package] for package in packages]
 
+        # Merging feature packages with base packages
+        final_packages = []
+        depths = []
+        for package in packages:
+            if package.features:
+                for _package in packages:
+                    if (
+                        _package.name == package.name
+                        and not _package.is_same_package_as(package)
+                        and _package.version == package.version
+                    ):
+                        for dep in package.requires:
+                            if dep.is_same_package_as(_package):
+                                continue
+
+                            if dep not in _package.requires:
+                                _package.requires.append(dep)
+
+                continue
+
+            final_packages.append(package)
+            depths.append(results[package])
+
+        # Return the packages in their original order with associated depths
         return final_packages, depths
 
 
 class DFSNode(object):
-    def __init__(self, id, name):
+    def __init__(self, id, name, base_name):
         self.id = id
         self.name = name
+        self.base_name = base_name
 
     def reachable(self):
         return []
@@ -302,13 +343,7 @@ def dfs_visit(node, back_edges, visited, sorted_nodes):
 
 class PackageNode(DFSNode):
     def __init__(
-        self,
-        package,
-        packages,
-        previous=None,
-        previous_dep=None,
-        dep=None,
-        is_activated=True,
+        self, package, packages, previous=None, previous_dep=None, dep=None,
     ):
         self.package = package
         self.packages = packages
@@ -323,11 +358,12 @@ class PackageNode(DFSNode):
             self.optional = True
         else:
             self.category = dep.category
-            self.optional = dep.is_optional() and not dep.is_activated()
-        if not is_activated:
-            self.optional = True
+            self.optional = dep.is_optional()
+
         super(PackageNode, self).__init__(
-            (package.name, self.category, self.optional), package.name
+            (package.complete_name, self.category, self.optional),
+            package.complete_name,
+            package.name,
         )
 
     def reachable(self):
@@ -341,29 +377,7 @@ class PackageNode(DFSNode):
             return []
 
         for dependency in self.package.all_requires:
-            is_activated = True
-            if dependency.is_optional():
-                if not self.package.is_root() and (
-                    not self.previous_dep or not self.previous_dep.extras
-                ):
-                    continue
-
-                is_activated = False
-                for group, extra_deps in self.package.extras.items():
-                    if self.dep:
-                        extras = self.previous_dep.extras
-                    elif self.package.is_root():
-                        extras = self.package.extras
-                    else:
-                        extras = []
-
-                    if group in extras and dependency.name in (
-                        d.name for d in self.package.extras[group]
-                    ):
-                        is_activated = True
-                        break
-
-            if self.previous and self.previous.package.name == dependency.name:
+            if self.previous and self.previous.name == dependency.name:
                 # We have a circular dependency.
                 # Since the dependencies are resolved we can
                 # simply skip it because we already have it
@@ -372,8 +386,9 @@ class PackageNode(DFSNode):
                 continue
 
             for pkg in self.packages:
-                if pkg.name == dependency.name and dependency.constraint.allows(
-                    pkg.version
+                if (
+                    pkg.complete_name == dependency.complete_name
+                    and dependency.constraint.allows(pkg.version)
                 ):
                     # If there is already a child with this name
                     # we merge the requirements
@@ -383,6 +398,7 @@ class PackageNode(DFSNode):
                         for child in children
                     ):
                         continue
+
                     children.append(
                         PackageNode(
                             pkg,
@@ -390,15 +406,21 @@ class PackageNode(DFSNode):
                             self,
                             dependency,
                             self.dep or dependency,
-                            is_activated=is_activated,
                         )
                     )
+
         return children
 
     def visit(self, parents):
         # The root package, which has no parents, is defined as having depth -1
         # So that the root package's top-level dependencies have depth 0.
-        self.depth = 1 + max([parent.depth for parent in parents] + [-2])
+        self.depth = 1 + max(
+            [
+                parent.depth if parent.base_name != self.base_name else parent.depth - 1
+                for parent in parents
+            ]
+            + [-2]
+        )
 
 
 def aggregate_package_nodes(nodes, children):
