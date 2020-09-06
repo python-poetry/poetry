@@ -207,7 +207,7 @@ url = 'http://example.com/simple'
 
 ## `scripts`
 
-This section describe the scripts or executable that will be installed when installing the package
+This section describes the scripts or executables that will be installed when installing the package
 
 ```toml
 [tool.poetry.scripts]
