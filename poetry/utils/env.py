@@ -552,69 +552,45 @@ class EnvManager:
         if self._env is not None and not reload:
             return self._env
 
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        return (
+            self._get_activated_venv() or
+            self._get_project_venv() or
+            self._get_system_env()
+        )
 
-        venv_path = self._poetry.config.get("virtualenvs.path")
-        if venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
-        else:
-            venv_path = Path(venv_path)
-
-        cwd = self._poetry.file.parent
-        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
-        env = None
-        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
-        if envs_file.exists():
-            envs = envs_file.read()
-            env = envs.get(base_env_name)
-            if env:
-                python_minor = env["minor"]
-
-        # Check if we are inside a virtualenv or not
+    def _get_activated_venv(self):
         # Conda sets CONDA_PREFIX in its envs, see
         # https://github.com/conda/conda/issues/2764
         env_prefix = os.environ.get("VIRTUAL_ENV", os.environ.get("CONDA_PREFIX"))
         conda_env_name = os.environ.get("CONDA_DEFAULT_ENV")
         # It's probably not a good idea to pollute Conda's global "base" env, since
         # most users have it activated all the time.
-        in_venv = env_prefix is not None and conda_env_name != "base"
+        if conda_env_name == "base":
+            env_prefix = None
+        if env_prefix:
+            return VirtualEnv(Path(env_prefix))
 
-        if not in_venv or env is not None:
-            # Checking if a local virtualenv exists
-            if self._poetry.config.get("virtualenvs.in-project") is not False:
-                if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
-                    venv = cwd / ".venv"
-
-                    return VirtualEnv(venv)
-
-            create_venv = self._poetry.config.get("virtualenvs.create", True)
-
-            if not create_venv:
-                return SystemEnv(Path(sys.prefix))
-
-            venv_path = self._poetry.config.get("virtualenvs.path")
-            if venv_path is None:
-                venv_path = Path(CACHE_DIR) / "virtualenvs"
-            else:
-                venv_path = Path(venv_path)
-
+    def _get_project_venv(self):
+        if self._poetry.config.get("virtualenvs.in-project") is False:
+            python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+            venv_path = self._poetry.config.get("virtualenvs.path") or Path(CACHE_DIR) / "virtualenvs"
+            venv_path = Path(venv_path)
+            envs_file = TOMLFile(venv_path / self.ENVS_FILE)
+            base_env_name = self.generate_env_name(self._poetry.package.name, str(self._poetry.file.parent))
+            if envs_file.exists():
+                envs = envs_file.read()
+                env = envs.get(base_env_name)
+                if env:
+                    python_minor = env["minor"]
             name = f"{base_env_name}-py{python_minor.strip()}"
-
             venv = venv_path / name
-
-            if not venv.exists():
-                return SystemEnv(Path(sys.prefix))
-
+        else:
+            venv = self._poetry.file.parent / ".venv"
+        if venv.exists() or self._poetry.config.get("virtualenvs.create", True):
             return VirtualEnv(venv)
 
-        if env_prefix is not None:
-            prefix = Path(env_prefix)
-            base_prefix = None
-        else:
-            prefix = Path(sys.prefix)
-            base_prefix = self.get_base_prefix()
-
-        return VirtualEnv(prefix, base_prefix)
+    def _get_system_env(self):
+        return SystemEnv(Path(sys.prefix))
 
     def list(self, name: Optional[str] = None) -> List["VirtualEnv"]:
         if name is None:
