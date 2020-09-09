@@ -67,17 +67,15 @@ class NewCommand(Command):
         author_name = self.option("author-name")
         author_email = self.option("author-email")
 
-        if author_email and not author_name:
+        if bool(author_email) != bool(author_name):
             raise ValueError(
-                "`--author-name` with no default value not used when option `--author-email` "
-                "is defined or has a default value. "
-                "A value for `--author-name` is required when `--author-email` is defined."
+                "`--author-name` and `--author-email` must either both be defined or undefined. "
+                "If one is defined, either by passing the CLI option or by having a defined "
+                "default value (see `poetry new --help` for default values), the other must also "
+                "be defined."
             )
-        if author_name:
-            if author_email:
-                author = "{name} <{email}>".format(name=author_name, email=author_email)
-            else:
-                author = author_name
+        elif author_name:
+            author = "{name} <{email}>".format(name=author_name, email=author_email)
 
         current_env = SystemEnv(Path(sys.executable))
         default_python = "^{}".format(
