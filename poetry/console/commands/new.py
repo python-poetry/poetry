@@ -3,8 +3,8 @@ import sys
 from cleo import argument
 from cleo import option
 
-from poetry.utils.helpers import module_name
 from poetry.core.vcs.git import GitConfig
+from poetry.utils.helpers import module_name
 
 from .command import Command
 
@@ -39,7 +39,6 @@ class NewCommand(Command):
 
     def handle(self):
         from poetry.core.semver import parse_constraint
-        from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
