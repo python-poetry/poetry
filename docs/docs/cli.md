@@ -68,7 +68,8 @@ my-package
 ### Options
 
 * `--name`: Set the resulting package name.
-* `--author`: Author name of the package.
+* `--author-name`: Author name of the package. Will default to `user.name` from git config if found. Required if `--author-email` is defined.
+* `--author-email`: Author email of the package. Will default to `user.email` from git config if found.
 * `--src`: Use the src layout for the project.
 
 ## init
