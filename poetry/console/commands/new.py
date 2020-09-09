@@ -4,7 +4,7 @@ from cleo import argument
 from cleo import option
 
 from poetry.utils.helpers import module_name
-from poetry.vcs.git import GitConfig
+from poetry.core.vcs.git import GitConfig
 
 from .command import Command
 
