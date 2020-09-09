@@ -4,6 +4,8 @@ from cleo import argument
 from cleo import option
 
 from poetry.utils.helpers import module_name
+from poetry.vcs.git import GitConfig
+
 
 from .command import Command
 
@@ -14,9 +16,13 @@ class NewCommand(Command):
     description = "Creates a new Python project at <path>."
 
     arguments = [argument("path", "The path to create the project at.")]
+
+    _config = GitConfig()
+
     options = [
         option("name", None, "Set the resulting package name.", flag=False),
-        option("author", None, "Author name of the package.", flag=False),
+        option("author-name", None, "Author name of the package.", flag=False, default=_config.get("user.name")),
+        option("author-email", None, "Author email of the package.", flag=False, default=_config.get("user.email")),
         option("src", None, "Use the src layout for the project."),
     ]
 
@@ -25,7 +31,6 @@ class NewCommand(Command):
         from poetry.semver import parse_constraint
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
-        from poetry.vcs.git import GitConfig
 
         if self.option("src"):
             layout_ = layout("src")
@@ -47,21 +52,21 @@ class NewCommand(Command):
 
         readme_format = "rst"
 
-        config = GitConfig()
-        author = self.option("author")
-        if author:
-            from poetry.packages.package import AUTHOR_REGEX
+        author = None
+        author_name = self.option("author-name")
+        author_email = self.option("author-email")
 
-            if not AUTHOR_REGEX.match(author):
-                raise ValueError(
-                    "Invalid author string. Must be in the format: "
-                    "John Smith <john@example.com>"
-                )
-        elif config.get("user.name"):
-            author = config["user.name"]
-            author_email = config.get("user.email")
+        if author_email and not author_name:
+            raise ValueError(
+                "`--author-name` with no default value not used when option `--author-email` "
+                "is defined or has a default value. "
+                "A value for `--author-name` is required when `--author-email` is defined."
+            )
+        if author_name:
             if author_email:
-                author += " <{}>".format(author_email)
+                author = "{name} <{email}>".format(name=author_name, email=author_email)
+            else:
+                author = author_name
 
         current_env = SystemEnv(Path(sys.executable))
         default_python = "^{}".format(
