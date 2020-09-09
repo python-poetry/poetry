@@ -12,8 +12,9 @@ except ImportError:
     from glob import glob
 
 try:
-    from importlib import metadata
     import zipfile as zipp
+
+    from importlib import metadata
 except ImportError:
     import importlib_metadata as metadata
     import zipp
@@ -22,6 +23,11 @@ try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
+
+try:
+    from os import cpu_count
+except ImportError:  # Python 2
+    from multiprocessing import cpu_count
 
 try:  # Python 2
     long = long
@@ -50,6 +56,14 @@ else:
     shell_quote = shlex.quote
 
 
+if PY34:
+    from importlib.machinery import EXTENSION_SUFFIXES
+else:
+    from imp import get_suffixes
+
+    EXTENSION_SUFFIXES = [suffix[0] for suffix in get_suffixes()]
+
+
 if PY35:
     from pathlib import Path
 else:
@@ -63,9 +77,11 @@ else:
 
 if PY35:
     import subprocess as subprocess
+
     from subprocess import CalledProcessError
 else:
     import subprocess32 as subprocess
+
     from subprocess32 import CalledProcessError
 
 

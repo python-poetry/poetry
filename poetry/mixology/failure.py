@@ -2,6 +2,8 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
+from poetry.core.semver import parse_constraint
+
 from .incompatibility import Incompatibility
 from .incompatibility_cause import ConflictCause
 from .incompatibility_cause import PythonCause
@@ -44,10 +46,15 @@ class _Writer:
                     )
                     required_python_version_notification = True
 
+                root_constraint = parse_constraint(
+                    incompatibility.cause.root_python_version
+                )
+                constraint = parse_constraint(incompatibility.cause.python_version)
                 buffer.append(
-                    "  - {} requires Python {}".format(
+                    "  - {} requires Python {}, so it will not be satisfied for Python {}".format(
                         incompatibility.terms[0].dependency.name,
                         incompatibility.cause.python_version,
+                        root_constraint.difference(constraint),
                     )
                 )
 

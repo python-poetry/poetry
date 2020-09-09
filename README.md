@@ -5,7 +5,10 @@ ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-It supports Python 2.7 and 3.4+.
+It supports Python 2.7 and 3.5+.
+
+**Note**: Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
+You should consider updating your Python version to a supported one.
 
 [![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
 
@@ -22,6 +25,13 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 ```
 
 Alternatively, you can download the `get-poetry.py` file and execute it separately.
+
+The setup script must be able to find one of following executables in your shell's path environment:
+
+- `python` (which can be a py3 or py2 interpreter)
+- `python3`
+- `py.exe -3` (Windows)
+- `py.exe -2` (Windows)
 
 If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`:
 
@@ -95,8 +105,8 @@ poetry completions zsh > ~/.zfunc/_poetry
 poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
 
 # Zsh (Oh-My-Zsh)
-mkdir $ZSH/plugins/poetry
-poetry completions zsh > $ZSH/plugins/poetry/_poetry
+mkdir $ZSH_CUSTOM/plugins/poetry
+poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
 
 # Zsh (prezto)
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry

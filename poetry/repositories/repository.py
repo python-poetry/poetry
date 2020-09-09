@@ -1,15 +1,15 @@
-from poetry.semver import VersionConstraint
-from poetry.semver import VersionRange
-from poetry.semver import parse_constraint
+from poetry.core.semver import VersionConstraint
+from poetry.core.semver import VersionRange
+from poetry.core.semver import parse_constraint
 
 from .base_repository import BaseRepository
 
 
 class Repository(BaseRepository):
-    def __init__(self, packages=None):
+    def __init__(self, packages=None, name=None):
         super(Repository, self).__init__()
 
-        self._name = None
+        self._name = name
 
         if packages is None:
             packages = []
@@ -44,6 +44,8 @@ class Repository(BaseRepository):
     ):
         name = name.lower()
         packages = []
+        ignored_pre_release_packages = []
+
         if extras is None:
             extras = []
 
@@ -71,6 +73,9 @@ class Repository(BaseRepository):
                 ):
                     # If prereleases are not allowed and the package is a prerelease
                     # and is a standard package then we skip it
+                    if constraint.is_any():
+                        # we need this when all versions of the package are pre-releases
+                        ignored_pre_release_packages.append(package)
                     continue
 
                 if constraint.allows(package.version):
@@ -89,7 +94,7 @@ class Repository(BaseRepository):
 
                     packages.append(package)
 
-        return packages
+        return packages or ignored_pre_release_packages
 
     def has_package(self, package):
         package_id = package.unique_name
@@ -114,6 +119,9 @@ class Repository(BaseRepository):
 
         if index is not None:
             del self._packages[index]
+
+    def find_links_for_package(self, package):
+        return []
 
     def search(self, query):
         results = []

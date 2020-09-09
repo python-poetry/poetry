@@ -3,7 +3,7 @@ from typing import List
 from typing import Mapping
 from typing import Sequence
 
-from poetry.packages import Package
+from poetry.core.packages import Package
 from poetry.utils.helpers import canonicalize_name
 
 
@@ -33,6 +33,9 @@ def get_extra_package_names(
         for extra_package_name in extras.get(extra_name, ())
     ]
 
+    # keep record of packages seen during recursion in order to avoid recursion error
+    seen_package_names = set()
+
     def _extra_packages(package_names):
         """Recursively find dependencies for packages names"""
         # for each extra pacakge name
@@ -41,11 +44,16 @@ def get_extra_package_names(
             # dependency (like setuptools), which should be ignored
             package = packages_by_name.get(canonicalize_name(package_name))
             if package:
-                yield package.name
+                if package.name not in seen_package_names:
+                    seen_package_names.add(package.name)
+                    yield package.name
                 # Recurse for dependencies
                 for dependency_package_name in _extra_packages(
-                    dependency.name for dependency in package.requires
+                    dependency.name
+                    for dependency in package.requires
+                    if dependency.name not in seen_package_names
                 ):
+                    seen_package_names.add(dependency_package_name)
                     yield dependency_package_name
 
     return _extra_packages(extra_package_names)

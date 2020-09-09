@@ -38,8 +38,9 @@ class NewCommand(Command):
     ]
 
     def handle(self):
+        from poetry.core.semver import parse_constraint
+        from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
-        from poetry.semver import parse_constraint
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 

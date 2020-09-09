@@ -8,7 +8,7 @@ import pytest
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
-from poetry.packages import Dependency
+from poetry.core.packages import Dependency
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import PY35
 from poetry.utils._compat import Path
@@ -73,6 +73,14 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed():
     packages = repo.find_packages("pyyaml")
 
     assert len(packages) == 1
+
+
+@pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
+def test_find_packages_only_prereleases(constraint, count):
+    repo = MockRepository()
+    packages = repo.find_packages("black", constraint=constraint)
+
+    assert len(packages) == count
 
 
 def test_package():
@@ -215,3 +223,11 @@ def test_urls():
 
     assert "https://pypi.org/simple/" == repository.url
     assert "https://pypi.org/simple/" == repository.authenticated_url
+
+
+def test_use_pypi_pretty_name():
+    repo = MockRepository(fallback=True)
+
+    package = repo.find_packages("twisted")
+    assert len(package) == 1
+    assert package[0].pretty_name == "Twisted"

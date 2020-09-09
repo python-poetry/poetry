@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -5,6 +6,10 @@ from typing import Optional
 from .base_repository import BaseRepository
 from .exceptions import PackageNotFound
 from .repository import Repository
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages import Package
 
 
 class Pool(BaseRepository):
@@ -33,7 +38,15 @@ class Pool(BaseRepository):
     def has_default(self):  # type: () -> bool
         return self._default
 
+    def has_repository(self, name):  # type: (str) -> bool
+        name = name.lower() if name is not None else None
+
+        return name in self._lookup
+
     def repository(self, name):  # type: (str) -> Repository
+        if name is not None:
+            name = name.lower()
+
         if name in self._lookup:
             return self._repositories[self._lookup[name]]
 
@@ -45,6 +58,9 @@ class Pool(BaseRepository):
         """
         Adds a repository to the pool.
         """
+        repository_name = (
+            repository.name.lower() if repository.name is not None else None
+        )
         if default:
             if self.has_default():
                 raise ValueError("Only one repository can be the default")
@@ -57,17 +73,17 @@ class Pool(BaseRepository):
             if self._secondary_start_idx is not None:
                 self._secondary_start_idx += 1
 
-            self._lookup[repository.name] = 0
+            self._lookup[repository_name] = 0
         elif secondary:
             if self._secondary_start_idx is None:
                 self._secondary_start_idx = len(self._repositories)
 
             self._repositories.append(repository)
-            self._lookup[repository.name] = len(self._repositories) - 1
+            self._lookup[repository_name] = len(self._repositories) - 1
         else:
             if self._secondary_start_idx is None:
                 self._repositories.append(repository)
-                self._lookup[repository.name] = len(self._repositories) - 1
+                self._lookup[repository_name] = len(self._repositories) - 1
             else:
                 self._repositories.insert(self._secondary_start_idx, repository)
 
@@ -77,12 +93,15 @@ class Pool(BaseRepository):
 
                     self._lookup[name] += 1
 
-                self._lookup[repository.name] = self._secondary_start_idx
+                self._lookup[repository_name] = self._secondary_start_idx
                 self._secondary_start_idx += 1
 
         return self
 
     def remove_repository(self, repository_name):  # type: (str) -> Pool
+        if repository_name is not None:
+            repository_name = repository_name.lower()
+
         idx = self._lookup.get(repository_name)
         if idx is not None:
             del self._repositories[idx]
@@ -94,7 +113,10 @@ class Pool(BaseRepository):
 
     def package(
         self, name, version, extras=None, repository=None
-    ):  # type: (str, str, List[str], str) -> "Package"
+    ):  # type: (str, str, List[str], str) -> Package
+        if repository is not None:
+            repository = repository.lower()
+
         if (
             repository is not None
             and repository not in self._lookup
@@ -104,9 +126,7 @@ class Pool(BaseRepository):
 
         if repository is not None and not self._ignore_repository_names:
             try:
-                return self._repositories[self._lookup[repository]].package(
-                    name, version, extras=extras
-                )
+                return self.repository(repository).package(name, version, extras=extras)
             except PackageNotFound:
                 pass
         else:
@@ -131,6 +151,9 @@ class Pool(BaseRepository):
         allow_prereleases=False,
         repository=None,
     ):
+        if repository is not None:
+            repository = repository.lower()
+
         if (
             repository is not None
             and repository not in self._lookup
@@ -139,7 +162,7 @@ class Pool(BaseRepository):
             raise ValueError('Repository "{}" does not exist.'.format(repository))
 
         if repository is not None and not self._ignore_repository_names:
-            return self._repositories[self._lookup[repository]].find_packages(
+            return self.repository(repository).find_packages(
                 name, constraint, extras=extras, allow_prereleases=allow_prereleases
             )
 

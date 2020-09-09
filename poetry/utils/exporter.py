@@ -2,10 +2,10 @@ from typing import Union
 
 from clikit.api.io import IO
 
-from poetry.packages.directory_dependency import DirectoryDependency
-from poetry.packages.file_dependency import FileDependency
-from poetry.packages.url_dependency import URLDependency
-from poetry.packages.vcs_dependency import VCSDependency
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.url_dependency import URLDependency
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
@@ -17,7 +17,9 @@ class Exporter(object):
     Exporter class to export a lock file to alternative formats.
     """
 
-    ACCEPTED_FORMATS = ("requirements.txt",)
+    FORMAT_REQUIREMENTS_TXT = "requirements.txt"
+    #: The names of the supported export formats.
+    ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
     def __init__(self, poetry):  # type: (Poetry) -> None

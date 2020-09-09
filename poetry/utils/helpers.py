@@ -5,12 +5,13 @@ import stat
 import tempfile
 
 from contextlib import contextmanager
-from typing import List
 from typing import Optional
 
+import requests
+
 from poetry.config.config import Config
+from poetry.core.version import Version
 from poetry.utils._compat import Path
-from poetry.version import Version
 
 
 try:
@@ -46,47 +47,6 @@ def temporary_directory(*args, **kwargs):
     yield name
 
     shutil.rmtree(name, onerror=_del_ro)
-
-
-def parse_requires(requires):  # type: (str) -> List[str]
-    lines = requires.split("\n")
-
-    requires_dist = []
-    in_section = False
-    current_marker = None
-    for line in lines:
-        line = line.strip()
-        if not line:
-            if in_section:
-                in_section = False
-
-            continue
-
-        if line.startswith("["):
-            # extras or conditional dependencies
-            marker = line.lstrip("[").rstrip("]")
-            if ":" not in marker:
-                extra, marker = marker, None
-            else:
-                extra, marker = marker.split(":")
-
-            if extra:
-                if marker:
-                    marker = '{} and extra == "{}"'.format(marker, extra)
-                else:
-                    marker = 'extra == "{}"'.format(extra)
-
-            if marker:
-                current_marker = marker
-
-            continue
-
-        if current_marker:
-            line = "{} ; {}".format(line, current_marker)
-
-        requires_dist.append(line)
-
-    return requires_dist
 
 
 def get_cert(config, repository_name):  # type: (Config, str) -> Optional[Path]
@@ -126,3 +86,17 @@ def merge_dicts(d1, d2):
             merge_dicts(d1[k], d2[k])
         else:
             d1[k] = d2[k]
+
+
+def download_file(
+    url, dest, session=None, chunk_size=1024
+):  # type: (str, str, Optional[requests.Session], int) -> None
+    get = requests.get if not session else session.get
+
+    with get(url, stream=True) as response:
+        response.raise_for_status()
+
+        with open(dest, "wb") as f:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
