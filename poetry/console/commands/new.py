@@ -6,7 +6,6 @@ from cleo import option
 from poetry.utils.helpers import module_name
 from poetry.vcs.git import GitConfig
 
-
 from .command import Command
 
 
@@ -21,8 +20,20 @@ class NewCommand(Command):
 
     options = [
         option("name", None, "Set the resulting package name.", flag=False),
-        option("author-name", None, "Author name of the package.", flag=False, default=_config.get("user.name")),
-        option("author-email", None, "Author email of the package.", flag=False, default=_config.get("user.email")),
+        option(
+            "author-name",
+            None,
+            "Author name of the package.",
+            flag=False,
+            default=_config.get("user.name"),
+        ),
+        option(
+            "author-email",
+            None,
+            "Author email of the package.",
+            flag=False,
+            default=_config.get("user.email"),
+        ),
         option("src", None, "Use the src layout for the project."),
     ]
 
