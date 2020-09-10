@@ -1,3 +1,6 @@
+from typing import Dict
+from typing import List
+
 from cleo import argument
 from cleo import option
 
@@ -86,18 +89,14 @@ class AddCommand(InstallerCommand, InitCommand):
         if section not in poetry_content:
             poetry_content[section] = {}
 
-        for name in packages:
-            for key in poetry_content[section]:
-                if key.lower() == name.lower():
-                    pair = self._parse_requirements([name])[0]
-                    if (
-                        "git" in pair
-                        or "url" in pair
-                        or pair.get("version") == "latest"
-                    ):
-                        continue
+        packages = self.remove_existing_packages_from_input(
+            packages, poetry_content, section
+        )
 
-                    raise ValueError("Package {} is already present".format(name))
+        if not packages:
+            self.poetry.file.write(content)
+            self.line("Nothing to add.", style="info")
+            return 0
 
         requirements = self._determine_requirements(
             packages,
@@ -184,3 +183,21 @@ class AddCommand(InstallerCommand, InitCommand):
             self.poetry.file.write(original_content)
 
         return status
+
+    def remove_existing_packages_from_input(
+        self, packages, poetry_content, target_section
+    ):  # type: (List[str], Dict, str) -> List[str]
+        existing_packages = []
+
+        for name in packages:
+            for key in poetry_content[target_section]:
+                if key.lower() == name.lower():
+                    existing_packages.append(name)
+                    self.line(
+                        "{name} is already in pyproject.toml. Skipping.".format(
+                            name=name
+                        )
+                    )
+        packages = [name for name in packages if name not in existing_packages]
+
+        return packages
