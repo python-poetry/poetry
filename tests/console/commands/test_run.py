@@ -1,12 +1,16 @@
-from cleo.testers import CommandTester
+import pytest
 
 
-def test_run_passes_all_args(app, mocker, env):
+@pytest.fixture
+def tester(command_tester_factory):
+    return command_tester_factory("run")
+
+
+@pytest.fixture(autouse=True)
+def patches(mocker, env):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=env)
 
-    command = app.find("run")
-    tester = CommandTester(command)
 
+def test_run_passes_all_args(tester, env):
     tester.execute("python -V")
-
     assert [["python", "-V"]] == env.executed

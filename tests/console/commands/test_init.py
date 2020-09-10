@@ -1,20 +1,24 @@
 import sys
 
-from cleo.testers import CommandTester
+import pytest
 
 from poetry.utils._compat import Path
 from tests.helpers import get_package
 
 
-def test_basic_interactive(app, mocker, poetry):
-    command = app.find("init")
-    command._pool = poetry.pool
+@pytest.fixture(autouse=True)
+def patches(mocker, mocked_open_files):
+    mocked_open_files.append("pyproject.toml")
+    patch = mocker.patch("poetry.utils._compat.Path.cwd")
+    patch.return_value = Path(__file__).parent
 
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__)
 
-    tester = CommandTester(command)
+@pytest.fixture
+def tester(command_tester_factory):
+    return command_tester_factory("init")
+
+
+def test_basic_interactive(tester):
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -45,19 +49,11 @@ python = "~2.7 || ^3.6"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_dependencies(app, repo, mocker, poetry):
+def test_interactive_with_dependencies(tester, repo):
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__).parent
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -98,15 +94,7 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_empty_license(app, mocker, poetry):
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__)
-
-    tester = CommandTester(command)
+def test_empty_license(tester):
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -138,20 +126,10 @@ python = "^{python}"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies(
-    app, repo, mocker, poetry, mocked_open_files
-):
+def test_interactive_with_git_dependencies(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocked_open_files.append("pyproject.toml")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__).parent
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -190,20 +168,10 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies_with_reference(
-    app, repo, mocker, poetry, mocked_open_files
-):
+def test_interactive_with_git_dependencies_with_reference(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocked_open_files.append("pyproject.toml")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__).parent
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -242,20 +210,10 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_git_dependencies_and_other_name(
-    app, repo, mocker, poetry, mocked_open_files
-):
+def test_interactive_with_git_dependencies_and_other_name(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocked_open_files.append("pyproject.toml")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__).parent
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -294,20 +252,10 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_directory_dependency(
-    app, repo, mocker, poetry, mocked_open_files
-):
+def test_interactive_with_directory_dependency(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocked_open_files.append("pyproject.toml")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__).parent
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -346,20 +294,10 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_directory_dependency_and_other_name(
-    app, repo, mocker, poetry
-):
+def test_interactive_with_directory_dependency_and_other_name(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__).parent
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -398,18 +336,10 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_file_dependency(app, repo, mocker, poetry):
+def test_interactive_with_file_dependency(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__).parent
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -448,15 +378,7 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_python_option(app, mocker, poetry):
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__)
-
-    tester = CommandTester(command)
+def test_python_option(tester):
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -486,17 +408,9 @@ python = "~2.7 || ^3.6"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_dependency(app, repo, mocker, poetry):
+def test_predefined_dependency(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__)
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -528,18 +442,10 @@ pendulum = "^2.0.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_and_interactive_dependencies(app, repo, mocker, poetry):
+def test_predefined_and_interactive_dependencies(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pyramid", "1.10"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__)
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -575,17 +481,9 @@ python = "~2.7 || ^3.6"
     assert 'pyramid = "^1.10"' in output
 
 
-def test_predefined_dev_dependency(app, repo, mocker, poetry):
+def test_predefined_dev_dependency(tester, repo):
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__)
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -618,18 +516,10 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_predefined_and_interactive_dev_dependencies(app, repo, mocker, poetry):
+def test_predefined_and_interactive_dev_dependencies(tester, repo):
     repo.add_package(get_package("pytest", "3.6.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
 
-    command = app.find("init")
-    command._pool = poetry.pool
-
-    mocker.patch("poetry.utils._compat.Path.open")
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__)
-
-    tester = CommandTester(command)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version

@@ -1,5 +1,7 @@
 import os
+import re
 import shutil
+import sys
 import tempfile
 
 from typing import Any
@@ -8,13 +10,25 @@ from typing import Dict
 import httpretty
 import pytest
 
+from cleo import CommandTester
+
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
+from poetry.factory import Factory
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
+from poetry.installation import Installer
+from poetry.layouts import layout
+from poetry.repositories import Pool
+from poetry.repositories import Repository
 from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
+from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
+from tests.helpers import TestExecutor
+from tests.helpers import TestLocker
+from tests.helpers import TestRepository
+from tests.helpers import get_package
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
 
@@ -168,3 +182,130 @@ def tmp_venv(tmp_dir):
     yield venv
 
     shutil.rmtree(str(venv.path))
+
+
+@pytest.fixture
+def installed():
+    return Repository()
+
+
+@pytest.fixture(scope="session")
+def current_env():
+    return SystemEnv(Path(sys.executable))
+
+
+@pytest.fixture(scope="session")
+def current_python(current_env):
+    return current_env.version_info[:3]
+
+
+@pytest.fixture(scope="session")
+def default_python(current_python):
+    return "^{}".format(".".join(str(v) for v in current_python[:2]))
+
+
+@pytest.fixture
+def repo(http):
+    http.register_uri(
+        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
+    )
+    return TestRepository(name="foo")
+
+
+@pytest.fixture
+def project_factory(tmp_dir, config, repo, installed, default_python):
+    workspace = Path(tmp_dir)
+
+    def _factory(
+        name=None,
+        dependencies=None,
+        dev_dependencies=None,
+        pyproject_content=None,
+        install_deps=True,
+    ):
+        project_dir = workspace / "poetry-fixture-{}".format(name)
+        dependencies = dependencies or {}
+        dev_dependencies = dev_dependencies or {}
+
+        if pyproject_content:
+            project_dir.mkdir(parents=True, exist_ok=True)
+            with project_dir.joinpath("pyproject.toml").open(
+                "w", encoding="utf-8"
+            ) as f:
+                f.write(pyproject_content)
+        else:
+            layout("src")(
+                name,
+                "0.1.0",
+                author="PyTest Tester <mc.testy@testface.com>",
+                readme_format="md",
+                python=default_python,
+                dependencies=dependencies,
+                dev_dependencies=dev_dependencies,
+            ).create(project_dir, with_tests=False)
+
+        poetry = Factory().create_poetry(project_dir)
+
+        locker = TestLocker(
+            poetry.locker.lock.path, poetry.locker._local_config
+        )  # noqa
+        locker.write()
+
+        poetry.set_locker(locker)
+        poetry.set_config(config)
+
+        pool = Pool()
+        pool.add_repository(repo)
+
+        poetry.set_pool(pool)
+
+        if install_deps:
+            for deps in [dependencies, dev_dependencies]:
+                for name, version in deps.items():
+                    pkg = get_package(name, version)
+                    repo.add_package(pkg)
+                    installed.add_package(pkg)
+
+        return poetry
+
+    return _factory
+
+
+@pytest.fixture
+def command_tester_factory(app, env):
+    def _tester(command, poetry=None, installer=None, executor=None, environment=None):
+        command = app.find(command)
+        tester = CommandTester(command)
+
+        if poetry:
+            app._poetry = poetry
+
+        poetry = app.poetry
+        command._pool = poetry.pool
+
+        if hasattr(command, "set_env"):
+            command.set_env(environment or env)
+
+        if hasattr(command, "set_installer"):
+            installer = installer or Installer(
+                tester.io,
+                env,
+                poetry.package,
+                poetry.locker,
+                poetry.pool,
+                poetry.config,
+                executor=executor
+                or TestExecutor(env, poetry.pool, poetry.config, tester.io),
+            )
+            installer.use_executor(True)
+            command.set_installer(installer)
+
+        return tester
+
+    return _tester
+
+
+@pytest.fixture
+def do_lock(command_tester_factory, poetry):
+    command_tester_factory("lock").execute()
+    assert poetry.locker.lock.exists()

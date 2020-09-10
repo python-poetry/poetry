@@ -1,13 +1,15 @@
-from cleo.testers import CommandTester
+import pytest
 
 from poetry.factory import Factory
 from tests.helpers import get_package
 
 
-def test_debug_resolve_gives_resolution_results(app, repo):
-    command = app.find("debug resolve")
-    tester = CommandTester(command)
+@pytest.fixture()
+def tester(command_tester_factory):
+    return command_tester_factory("debug resolve")
 
+
+def test_debug_resolve_gives_resolution_results(tester, repo):
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
@@ -29,10 +31,7 @@ cachy          0.2.0
     assert expected == tester.io.fetch_output()
 
 
-def test_debug_resolve_tree_option_gives_the_dependency_tree(app, repo):
-    command = app.find("debug resolve")
-    tester = CommandTester(command)
-
+def test_debug_resolve_tree_option_gives_the_dependency_tree(tester, repo):
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
@@ -54,12 +53,9 @@ cachy 0.2.0
     assert expected == tester.io.fetch_output()
 
 
-def test_debug_resolve_git_dependency(app, repo):
+def test_debug_resolve_git_dependency(tester, repo):
     repo.add_package(get_package("pendulum", "2.0.3"))
     repo.add_package(get_package("cleo", "0.6.5"))
-
-    command = app.find("debug resolve")
-    tester = CommandTester(command)
 
     tester.execute("git+https://github.com/demo/demo.git")
 

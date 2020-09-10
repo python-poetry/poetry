@@ -1,6 +1,6 @@
 import os
 
-from cleo.testers import CommandTester
+import pytest
 
 from poetry.__version__ import __version__
 from poetry.core.packages.package import Package
@@ -12,12 +12,17 @@ from poetry.utils._compat import Path
 FIXTURES = Path(__file__).parent.joinpath("fixtures")
 
 
+@pytest.fixture()
+def tester(command_tester_factory):
+    return command_tester_factory("self update")
+
+
 def test_self_update_should_install_all_necessary_elements(
-    app, http, mocker, environ, tmp_dir
+    tester, http, mocker, environ, tmp_dir
 ):
     os.environ["POETRY_HOME"] = tmp_dir
 
-    command = app.find("self update")
+    command = tester._command
 
     version = Version.parse(__version__).next_minor.text
     mocker.patch(
@@ -41,7 +46,6 @@ def test_self_update_should_install_all_necessary_elements(
         body=FIXTURES.joinpath("poetry-1.0.5-darwin.tar.gz").read_bytes(),
     )
 
-    tester = CommandTester(command)
     tester.execute()
 
     bin_ = Path(tmp_dir).joinpath("bin")
