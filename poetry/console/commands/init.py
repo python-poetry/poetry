@@ -179,7 +179,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
             dev_requirements = self._format_requirements(
                 self._determine_requirements(self.option("dev-dependency"))
-            ) 
+            )
             if self.io.is_interactive():
                 self.line("")
 
