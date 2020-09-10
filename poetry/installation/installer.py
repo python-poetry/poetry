@@ -43,6 +43,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
+        self._dev_only = False
         self._execute_operations = True
         self._lock = False
 
@@ -96,8 +97,16 @@ class Installer:
 
         return self
 
+    def dev_only(self, dev_only=False): # type: (bool) -> Installer
+        self._dev_only = dev_only
+
+        return self
+
     def is_dev_mode(self):  # type: () -> bool
         return self._dev_mode
+
+    def is_dev_only(self): # type: () -> bool
+        return self._dev_only
 
     def update(self, update=True):  # type: (bool) -> Installer
         self._update = update
@@ -192,10 +201,15 @@ class Installer:
                 # If we are only in lock mode, no need to go any further
                 return 0
 
+        import pdb; pdb.set_trace()
         root = self._package
         if not self.is_dev_mode():
             root = root.clone()
             del root.dev_requires[:]
+
+        elif self.is_dev_only():
+            root = root.clone()
+            del root.requires[:]
 
         with root.with_python_versions(
             ".".join([str(i) for i in self._env.version_info[:3]])

@@ -10,6 +10,7 @@ class InstallCommand(EnvCommand):
 
     options = [
         option("no-dev", None, "Do not install the development dependencies."),
+        option("dev-only", None, "Only install development dependencies."),
         option(
             "no-root", None, "Do not install the root package (the current project)."
         ),
@@ -63,6 +64,7 @@ dependencies and not including the current project, run the command with the
 
         installer.extras(extras)
         installer.dev_mode(not self.option("no-dev"))
+        installer.dev_only(self.option("dev-only"))
         installer.dry_run(self.option("dry-run"))
         installer.verbose(self.option("verbose"))
 
