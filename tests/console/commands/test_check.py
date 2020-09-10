@@ -1,13 +1,15 @@
-from cleo.testers import CommandTester
+import pytest
 
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 
 
-def test_check_valid(app):
-    command = app.find("check")
-    tester = CommandTester(command)
+@pytest.fixture()
+def tester(command_tester_factory):
+    return command_tester_factory("check")
 
+
+def test_check_valid(tester):
     tester.execute()
 
     expected = """\
@@ -17,7 +19,7 @@ All set!
     assert expected == tester.io.fetch_output()
 
 
-def test_check_invalid(app, mocker):
+def test_check_invalid(mocker, tester):
     mocker.patch(
         "poetry.factory.Factory.locate",
         return_value=Path(__file__).parent.parent.parent
@@ -25,9 +27,6 @@ def test_check_invalid(app, mocker):
         / "invalid_pyproject"
         / "pyproject.toml",
     )
-
-    command = app.find("check")
-    tester = CommandTester(command)
 
     tester.execute()
 

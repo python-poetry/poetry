@@ -1,12 +1,13 @@
-from cleo.testers import CommandTester
+import pytest
 
 
-def test_about(app):
-    command = app.find("about")
-    tester = CommandTester(command)
+@pytest.fixture()
+def tester(command_tester_factory):
+    return command_tester_factory("about")
 
+
+def test_about(tester):
     tester.execute()
-
     expected = """\
 Poetry - Package Management for Python
 

@@ -1,13 +1,16 @@
 import pytest
 
-from cleo import CommandTester
-
 from poetry.console.commands import VersionCommand
 
 
 @pytest.fixture()
 def command():
     return VersionCommand()
+
+
+@pytest.fixture
+def tester(command_tester_factory):
+    return command_tester_factory("version")
 
 
 @pytest.mark.parametrize(
@@ -40,15 +43,11 @@ def test_increment_version(version, rule, expected, command):
     assert expected == command.increment_version(version, rule).text
 
 
-def test_version_show(app):
-    command = app.find("version")
-    tester = CommandTester(command)
+def test_version_show(tester):
     tester.execute()
     assert "simple-project 1.2.3\n" == tester.io.fetch_output()
 
 
-def test_short_version_show(app):
-    command = app.find("version")
-    tester = CommandTester(command)
+def test_short_version_show(tester):
     tester.execute("--short")
     assert "1.2.3\n" == tester.io.fetch_output()

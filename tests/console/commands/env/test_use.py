@@ -1,107 +1,25 @@
 import os
-import sys
 
-from typing import Optional
-from typing import Union
-
+import pytest
 import tomlkit
-
-from cleo.testers import CommandTester
 
 from poetry.core.semver import Version
 from poetry.utils._compat import Path
-from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.toml_file import TomlFile
+from tests.console.commands.env.helpers import build_venv
+from tests.console.commands.env.helpers import check_output_wrapper
 
 
-CWD = Path(__file__).parent.parent / "fixtures" / "simple_project"
-
-
-def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()
-    os.mkdir(str(path))
-
-
-def check_output_wrapper(version=Version.parse("3.7.1")):
-    def check_output(cmd, *args, **kwargs):
-        if "sys.version_info[:3]" in cmd:
-            return version.text
-        elif "sys.version_info[:2]" in cmd:
-            return "{}.{}".format(version.major, version.minor)
-        else:
-            return str(Path("/prefix"))
-
-    return check_output
-
-
-def test_activate_activates_non_existing_virtualenv_no_envs_file(app, tmp_dir, mocker):
+@pytest.fixture(autouse=True)
+def setup(mocker):
     mocker.stopall()
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
-    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
-    mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
-        side_effect=check_output_wrapper(),
-    )
-    mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
-        side_effect=[("/prefix", None), ("/prefix", None)],
-    )
-    m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
-
-    command = app.find("env use")
-    tester = CommandTester(command)
-    tester.execute("3.7")
-
-    venv_name = EnvManager.generate_env_name(
-        "simple-project", str(app.poetry.file.parent)
-    )
-
-    m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
-    )
-
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
-    assert envs_file.exists()
-    envs = envs_file.read()
-    assert envs[venv_name]["minor"] == "3.7"
-    assert envs[venv_name]["patch"] == "3.7.1"
-
-    expected = """\
-Creating virtualenv {} in {}
-Using virtualenv: {}
-""".format(
-        "{}-py3.7".format(venv_name),
-        tmp_dir,
-        os.path.join(tmp_dir, "{}-py3.7".format(venv_name)),
-    )
-
-    assert expected == tester.io.fetch_output()
-
-
-def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
-    app, tmp_dir, mocker
-):
-    mocker.stopall()
-    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
-
-    venv_name = EnvManager.generate_env_name(
-        "simple-project", str(app.poetry.file.parent)
-    )
-    current_python = sys.version_info[:3]
-    python_minor = ".".join(str(v) for v in current_python[:2])
-    python_patch = ".".join(str(v) for v in current_python)
-
-    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
-    (Path(tmp_dir) / "{}-py{}".format(venv_name, python_minor)).mkdir()
-
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
-    doc = tomlkit.document()
-    doc[venv_name] = {"minor": python_minor, "patch": python_patch}
-    envs_file.write(doc)
-
+@pytest.fixture(autouse=True)
+def mock_subprocess_calls(setup, current_python, mocker):
     mocker.patch(
         "poetry.utils._compat.subprocess.check_output",
         side_effect=check_output_wrapper(Version(*current_python)),
@@ -111,32 +29,78 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
 
-    command = app.find("env use")
-    tester = CommandTester(command)
+
+@pytest.fixture
+def tester(command_tester_factory):
+    return command_tester_factory("env use")
+
+
+def test_activate_activates_non_existing_virtualenv_no_envs_file(
+    mocker, tester, venv_cache, venv_name, venvs_in_cache_config
+):
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+
+    mock_build_env = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=build_venv
+    )
+
+    tester.execute("3.7")
+
+    venv_py37 = venv_cache / "{}-py3.7".format(venv_name)
+    mock_build_env.assert_called_with(venv_py37, executable="python3.7")
+
+    envs_file = TomlFile(venv_cache / "envs.toml")
+    assert envs_file.exists()
+    envs = envs_file.read()
+    assert envs[venv_name]["minor"] == "3.7"
+    assert envs[venv_name]["patch"] == "3.7.1"
+
+    expected = """\
+Creating virtualenv {} in {}
+Using virtualenv: {}
+""".format(
+        venv_py37.name, venv_py37.parent, venv_py37,
+    )
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
+    tester, current_python, venv_cache, venv_name, venvs_in_cache_config
+):
+    os.environ["VIRTUAL_ENV"] = "/environment/prefix"
+
+    python_minor = ".".join(str(v) for v in current_python[:2])
+    python_patch = ".".join(str(v) for v in current_python[:3])
+    venv_dir = venv_cache / "{}-py{}".format(venv_name, python_minor)
+    venv_dir.mkdir(parents=True, exist_ok=True)
+
+    envs_file = TomlFile(venv_cache / "envs.toml")
+    doc = tomlkit.document()
+    doc[venv_name] = {"minor": python_minor, "patch": python_patch}
+    envs_file.write(doc)
+
     tester.execute(python_minor)
 
     expected = """\
 Using virtualenv: {}
 """.format(
-        os.path.join(tmp_dir, "{}-py{}".format(venv_name, python_minor))
+        venv_dir
     )
 
     assert expected == tester.io.fetch_output()
 
 
 def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
-    app, tmp_dir, mocker
+    mocker, tester, current_python, venv_cache, venv_name, venvs_in_cache_config
 ):
-    mocker.stopall()
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
-    venv_name = EnvManager.generate_env_name(
-        "simple-project", str(app.poetry.file.parent)
-    )
-    current_python = sys.version_info[:3]
     python_minor = ".".join(str(v) for v in current_python[:2])
-
-    app.poetry.config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    venv_dir = venv_cache / "{}-py{}".format(venv_name, python_minor)
 
     mocker.patch(
         "poetry.utils.env.EnvManager._env",
@@ -148,28 +112,15 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
             is_venv=True,
         ),
     )
-
-    mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
-        side_effect=check_output_wrapper(Version(*current_python)),
-    )
-    mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
-        side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
-    )
     mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
-    command = app.find("env use")
-    tester = CommandTester(command)
     tester.execute(python_minor)
 
     expected = """\
 Creating virtualenv {} in {}
 Using virtualenv: {}
 """.format(
-        "{}-py{}".format(venv_name, python_minor),
-        tmp_dir,
-        os.path.join(tmp_dir, "{}-py{}".format(venv_name, python_minor)),
+        venv_dir.name, venv_dir.parent, venv_dir,
     )
 
     assert expected == tester.io.fetch_output()

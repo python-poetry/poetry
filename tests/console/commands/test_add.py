@@ -5,10 +5,7 @@ import sys
 
 import pytest
 
-from cleo.testers import CommandTester
-
 from poetry.core.semver import Version
-from poetry.installation.installer import Installer
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
 from tests.helpers import get_dependency
@@ -16,25 +13,8 @@ from tests.helpers import get_package
 
 
 @pytest.fixture()
-def tester(app, poetry, config, executor, env):
-    tester = CommandTester(app.find("add"))
-
-    executor._io = tester.io
-
-    installer = Installer(
-        tester.io,
-        env,
-        poetry.package,
-        poetry.locker,
-        poetry.pool,
-        config,
-        executor=executor,
-    )
-    installer.use_executor(True)
-    tester._command.set_installer(installer)
-    tester._command.set_env(env)
-
-    return tester
+def tester(command_tester_factory):
+    return command_tester_factory("add")
 
 
 @pytest.fixture()
