@@ -100,7 +100,7 @@ Defaults to one of the following directories:
 
 - macOS:   `~/Library/Caches/pypoetry`
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
-- Unix:    `~/.cache/pypoetry`
+- Unix:    `~/.cache/poetry`
 
 ### `virtualenvs.create`: boolean
 
