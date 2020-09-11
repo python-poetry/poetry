@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from cleo.io import BufferedIO
 
 from poetry.factory import Factory
