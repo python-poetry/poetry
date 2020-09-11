@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "project-with-scripts"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+packages = [{include = "project"}]
+
+[tool.poetry.dependencies]
+python = "*"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+relay = "project.main:relay"

@@ -43,7 +43,7 @@ class RunCommand(EnvCommand):
             "import sys; "
             "from importlib import import_module; "
             "sys.argv = {!r}; {}"
-            "import_module('{}').{}()".format(args, src_in_sys_path, module, callable_)
+            "sys.exit(import_module('{}').{}())".format(args, src_in_sys_path, module, callable_)
         ]
 
         return self.env.execute(*cmd)
