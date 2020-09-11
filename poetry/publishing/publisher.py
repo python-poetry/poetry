@@ -86,7 +86,7 @@ class Publisher:
             "to <info>{}</info>".format(
                 self._package.pretty_name,
                 self._package.pretty_version,
-                {"pypi": "PyPI"}.get(repository_name, "PyPI"),
+                "PyPI" if repository_name == "pypi" else repository_name,
             )
         )
 
