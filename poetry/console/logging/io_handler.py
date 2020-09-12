@@ -5,13 +5,7 @@ class IOHandler(logging.Handler):
     def __init__(self, io):
         self._io = io
 
-        level = logging.WARNING
-        if io.is_debug():
-            level = logging.DEBUG
-        elif io.is_very_verbose() or io.is_verbose():
-            level = logging.INFO
-
-        super(IOHandler, self).__init__(level)
+        super(IOHandler, self).__init__()
 
     def emit(self, record):
         try:

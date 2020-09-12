@@ -30,6 +30,7 @@ class MakeReleaseCommand(Command):
         "3.6": "python3.6",
         "3.7": "python3.7",
         "3.8": "python3.8",
+        "3.9": "python3.9",
     }
 
     def handle(self):
@@ -110,8 +111,8 @@ class MakeReleaseCommand(Command):
                     ).stdout
                 )
                 env = VirtualEnv(Path(prefix.strip()), base=Path(prefix.strip()))
-                with package.with_python_versions("~{}".format(version)):
-                    solver = Solver(package, pool, Repository(), Repository(), self.io)
+                solver = Solver(package, pool, Repository(), Repository(), self.io)
+                with solver.use_environment(env):
                     ops = solver.solve()
                     for op in ops:
                         if not env.is_valid_for_marker(op.package.marker):

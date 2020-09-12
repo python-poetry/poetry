@@ -25,7 +25,7 @@ class DebugResolveCommand(InitCommand):
         option("install", None, "Show what would be installed for the current system."),
     ]
 
-    loggers = ["poetry.repositories.pypi_repository"]
+    loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
     def handle(self):
         from poetry.core.packages.project_package import ProjectPackage

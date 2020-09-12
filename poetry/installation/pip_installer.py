@@ -105,12 +105,6 @@ class PipInstaller(BaseInstaller):
         self.install(target, update=True)
 
     def remove(self, package):
-        # If we have a VCS package, remove its source directory
-        if package.source_type == "git":
-            src_dir = self._env.path / "src" / package.name
-            if src_dir.exists():
-                safe_rmtree(str(src_dir))
-
         try:
             self.run("uninstall", package.name, "-y")
         except CalledProcessError as e:
@@ -118,6 +112,17 @@ class PipInstaller(BaseInstaller):
                 return
 
             raise
+
+        # This is a workaround for https://github.com/pypa/pip/issues/4176
+        nspkg_pth_file = self._env.site_packages / "{}-nspkg.pth".format(package.name)
+        if nspkg_pth_file.exists():
+            nspkg_pth_file.unlink()
+
+        # If we have a VCS package, remove its source directory
+        if package.source_type == "git":
+            src_dir = self._env.path / "src" / package.name
+            if src_dir.exists():
+                safe_rmtree(str(src_dir))
 
     def run(self, *args, **kwargs):  # type: (...) -> str
         return self._env.run_pip(*args, **kwargs)
@@ -139,7 +144,7 @@ class PipInstaller(BaseInstaller):
 
         if package.source_type in ["file", "directory"]:
             if package.root_dir:
-                req = os.path.join(package.root_dir, package.source_url)
+                req = (package.root_dir / package.source_url).as_posix()
             else:
                 req = os.path.realpath(package.source_url)
 
@@ -182,7 +187,7 @@ class PipInstaller(BaseInstaller):
         from poetry.utils.toml_file import TomlFile
 
         if package.root_dir:
-            req = os.path.join(package.root_dir, package.source_url)
+            req = (package.root_dir / package.source_url).as_posix()
         else:
             req = os.path.realpath(package.source_url)
 

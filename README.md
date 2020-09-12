@@ -5,7 +5,10 @@ ensuring you have the right stack everywhere.
 
 ![Poetry Install](https://raw.githubusercontent.com/python-poetry/poetry/master/assets/install.gif)
 
-It supports Python 2.7 and 3.4+.
+It supports Python 2.7 and 3.5+.
+
+**Note**: Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
+You should consider updating your Python version to a supported one.
 
 [![Tests Status](https://github.com/python-poetry/poetry/workflows/Tests/badge.svg?branch=master&event=push)](https://github.com/python-poetry/poetry/actions?query=workflow%3ATests+branch%3Amaster+event%3Apush)
 
@@ -86,17 +89,27 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 # Bash
 poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
-# Bash (macOS/Homebrew)
+# Bash (Homebrew)
 poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
 
+# Fish (Homebrew)
+poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
+
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
 
-# Zsh (macOS/Homebrew)
+# Zsh (Homebrew)
 poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
+
+# Zsh (Oh-My-Zsh)
+mkdir $ZSH_CUSTOM/plugins/poetry
+poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
+
+# Zsh (prezto)
+poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 ```
 
 *Note:* you may need to restart your shell in order for the changes to take

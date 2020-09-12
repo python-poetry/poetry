@@ -38,7 +38,11 @@ The recommended notation for the most common licenses is (alphabetical):
 * MIT
 
 Optional, but it is highly recommended to supply this.
-More identifiers are listed at the [SPDX Open Source License Registry](https://www.spdx.org/licenses/).
+More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
+
+!!!note
+
+    If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
 
 ## authors
 
@@ -109,7 +113,7 @@ packages = [
 ]
 ```
 
-If your package is stored inside a "source" directory, you must specify it:
+If your package is stored inside a "lib" directory, you must specify it:
 
 ```toml
 [tool.poetry]
@@ -127,11 +131,11 @@ it by using `format`:
 # ...
 packages = [
     { include = "my_package" },
-    { include = "tests", format = "sdist" },
+    { include = "my_other_package", format = "sdist" },
 ]
 ```
 
-From now on, only the `sdist` build archive will include the `tests` package.
+From now on, only the `sdist` build archive will include the `my_other_package` package.
 
 !!!note
 
@@ -203,7 +207,7 @@ url = 'http://example.com/simple'
 
 ## `scripts`
 
-This section describe the scripts or executable that will be installed when installing the package
+This section describes the scripts or executables that will be installed when installing the package
 
 ```toml
 [tool.poetry.scripts]
@@ -211,6 +215,10 @@ poetry = 'poetry.console:run'
 ```
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
+
+!!!note
+
+    When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 
 ## `extras`
 

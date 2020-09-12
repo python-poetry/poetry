@@ -8,6 +8,7 @@ from poetry.core.packages import ProjectPackage
 from poetry.core.packages.directory_dependency import DirectoryDependency
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.vcs_dependency import VCSDependency
+from poetry.inspection.info import PackageInfo
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
@@ -118,8 +119,8 @@ def test_search_for_vcs_read_setup_with_extras(provider, mocker):
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
     mocker.patch(
-        "poetry.utils.env.VirtualEnv.run",
-        side_effect=EnvCommandError(CalledProcessError(1, "python", output="")),
+        "poetry.inspection.info.PackageInfo._pep517_metadata",
+        return_value=PackageInfo(name="demo", version=None),
     )
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/no-version.git")
@@ -204,16 +205,13 @@ def test_search_for_directory_setup_with_base(provider, directory):
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
-    assert (
-        package.root_dir
-        == (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / "git"
-            / "github.com"
-            / "demo"
-            / directory
-        ).as_posix()
+    assert package.root_dir == (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / directory
     )
 
 
@@ -272,9 +270,7 @@ def test_search_for_directory_setup_read_setup_with_extras(provider, mocker):
 
 
 @pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
-def test_search_for_directory_setup_read_setup_with_no_dependencies(provider, mocker):
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
-
+def test_search_for_directory_setup_read_setup_with_no_dependencies(provider):
     dependency = DirectoryDependency(
         "demo",
         Path(__file__).parent.parent

@@ -8,6 +8,7 @@ from base64 import urlsafe_b64encode
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
+from poetry.core.masonry.utils.package_include import PackageInclude
 from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
@@ -42,15 +43,23 @@ class EditableBuilder(Builder):
         )
 
         if self._package.build_script:
-            self._debug(
-                "  - <warning>Falling back on using a <b>setup.py</b></warning>"
-            )
-            return self._setup_build()
+            if self._package.build_should_generate_setup():
+                self._debug(
+                    "  - <warning>Falling back on using a <b>setup.py</b></warning>"
+                )
+
+                return self._setup_build()
+
+            self._run_build_script(self._package.build_script)
 
         added_files = []
         added_files += self._add_pth()
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
+
+    def _run_build_script(self, build_script):
+        self._debug("  - Executing build script: <b>{}</b>".format(build_script))
+        self._env.run("python", str(self._path.joinpath(build_script)), call=True)
 
     def _setup_build(self):
         builder = SdistBuilder(self._poetry)
@@ -91,8 +100,17 @@ class EditableBuilder(Builder):
                 pth.name, self._env.site_packages, self._poetry.file.parent
             )
         )
+
+        paths = set()
+        for include in self._module.includes:
+            if isinstance(include, PackageInclude) and (
+                include.is_module() or include.is_package()
+            ):
+                paths.add(include.base.resolve().as_posix())
+
         with pth.open("w", encoding="utf-8") as f:
-            f.write(decode(str(self._poetry.file.parent.resolve())))
+            for path in paths:
+                f.write(decode(path + os.linesep))
 
         return [pth]
 

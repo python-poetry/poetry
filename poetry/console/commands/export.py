@@ -14,7 +14,7 @@ class ExportCommand(Command):
         option(
             "format",
             "f",
-            "Format to export to.",
+            "Format to export to. Currently, only requirements.txt is supported.",
             flag=False,
             default=Exporter.FORMAT_REQUIREMENTS_TXT,
         ),

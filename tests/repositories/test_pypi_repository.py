@@ -75,6 +75,14 @@ def test_find_packages_does_not_select_prereleases_if_not_allowed():
     assert len(packages) == 1
 
 
+@pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
+def test_find_packages_only_prereleases(constraint, count):
+    repo = MockRepository()
+    packages = repo.find_packages("black", constraint=constraint)
+
+    assert len(packages) == count
+
+
 def test_package():
     repo = MockRepository()
 
@@ -215,3 +223,11 @@ def test_urls():
 
     assert "https://pypi.org/simple/" == repository.url
     assert "https://pypi.org/simple/" == repository.authenticated_url
+
+
+def test_use_pypi_pretty_name():
+    repo = MockRepository(fallback=True)
+
+    package = repo.find_packages("twisted")
+    assert len(package) == 1
+    assert package[0].pretty_name == "Twisted"

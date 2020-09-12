@@ -13,6 +13,7 @@ class BuildCommand(EnvCommand):
     ]
 
     loggers = [
+        "poetry.core.masonry.builders.builder",
         "poetry.core.masonry.builders.sdist",
         "poetry.core.masonry.builders.wheel",
     ]

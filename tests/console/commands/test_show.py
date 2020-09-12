@@ -714,7 +714,7 @@ cachy      0.1.0                       0.2.0
 my-package 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 """
     assert expected.rstrip() == "\n".join(
-        l.rstrip() for l in tester.io.fetch_output().splitlines()
+        line.rstrip() for line in tester.io.fetch_output().splitlines()
     )
 
 

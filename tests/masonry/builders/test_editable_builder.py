@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
 import shutil
 
 import pytest
@@ -24,9 +25,29 @@ def simple_poetry():
 
 
 @pytest.fixture()
+def project_with_include():
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent.parent / "fixtures" / "with-include"
+    )
+
+    return poetry
+
+
+@pytest.fixture()
 def extended_poetry():
     poetry = Factory().create_poetry(
         Path(__file__).parent.parent.parent / "fixtures" / "extended_project"
+    )
+
+    return poetry
+
+
+@pytest.fixture()
+def extended_without_setup_poetry():
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent.parent
+        / "fixtures"
+        / "extended_project_without_setup"
     )
 
     return poetry
@@ -56,9 +77,10 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
 
     assert tmp_venv._bin_dir.joinpath("foo").exists()
     assert tmp_venv.site_packages.joinpath("simple_project.pth").exists()
-    assert (
-        str(simple_poetry.file.parent.resolve())
-        == tmp_venv.site_packages.joinpath("simple_project.pth").read_text()
+    assert simple_poetry.file.parent.resolve().as_posix() == tmp_venv.site_packages.joinpath(
+        "simple_project.pth"
+    ).read_text().strip(
+        os.linesep
     )
 
     dist_info = tmp_venv.site_packages.joinpath("simple_project-1.2.3.dist-info")
@@ -94,6 +116,7 @@ Classifier: Programming Language :: Python :: 3.5
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
 Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Project-URL: Documentation, https://python-poetry.org/docs
@@ -158,4 +181,38 @@ def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
             str(extended_poetry.file.parent),
             "--no-deps",
         ]
+    ] == env.executed
+
+
+def test_builder_installs_proper_files_when_packages_configured(
+    project_with_include, tmp_venv
+):
+    builder = EditableBuilder(project_with_include, tmp_venv, NullIO())
+    builder.build()
+
+    pth_file = tmp_venv.site_packages.joinpath("with_include.pth")
+    assert pth_file.is_file()
+
+    paths = set()
+    with pth_file.open() as f:
+        for line in f.readlines():
+            line = line.strip(os.linesep)
+            if line:
+                paths.add(line)
+
+    project_root = project_with_include.file.parent.resolve()
+    expected = {project_root.as_posix(), project_root.joinpath("src").as_posix()}
+
+    assert paths.issubset(expected)
+    assert len(paths) == len(expected)
+
+
+def test_builder_should_execute_build_scripts(extended_without_setup_poetry):
+    env = MockEnv(path=Path("/foo"))
+    builder = EditableBuilder(extended_without_setup_poetry, env, NullIO())
+
+    builder.build()
+
+    assert [
+        ["python", str(extended_without_setup_poetry.file.parent / "build.py")]
     ] == env.executed

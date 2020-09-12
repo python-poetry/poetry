@@ -5,6 +5,7 @@ import pytest
 from poetry.core.packages import Dependency
 from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
 from poetry.utils._compat import PY35
@@ -84,6 +85,9 @@ def test_get_package_information_fallback_read_setup():
 
     package = repo.package("jupyter", "1.0.0")
 
+    assert package.source_type == "legacy"
+    assert package.source_reference == repo.name
+    assert package.source_url == repo.url
     assert package.name == "jupyter"
     assert package.version.text == "1.0.0"
     assert (
@@ -141,6 +145,31 @@ def test_find_packages_no_prereleases():
     packages = repo.find_packages("pyyaml")
 
     assert len(packages) == 1
+
+    assert packages[0].source_type == "legacy"
+    assert packages[0].source_reference == repo.name
+    assert packages[0].source_url == repo.url
+
+
+@pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
+def test_find_packages_only_prereleases(constraint, count):
+    repo = MockRepository()
+    packages = repo.find_packages("black", constraint=constraint)
+
+    assert len(packages) == count
+
+    if count >= 0:
+        for package in packages:
+            assert package.source_type == "legacy"
+            assert package.source_reference == repo.name
+            assert package.source_url == repo.url
+
+
+def test_find_packages_only_prereleases_empty_when_not_any():
+    repo = MockRepository()
+    packages = repo.find_packages("black", constraint=">=1")
+
+    assert len(packages) == 0
 
 
 def test_get_package_information_chooses_correct_distribution():
@@ -271,3 +300,36 @@ def test_username_password_special_chars():
     repo = MockRepository(auth=auth)
 
     assert "http://user%3A:%2F%252Fp%40ssword@legacy.foo.bar" == repo.authenticated_url
+
+
+class MockHttpRepository(LegacyRepository):
+    def __init__(self, endpoint_responses, http):
+        base_url = "http://legacy.foo.bar"
+        super(MockHttpRepository, self).__init__(
+            "legacy", url=base_url, auth=None, disable_cache=True
+        )
+
+        for endpoint, response in endpoint_responses.items():
+            url = base_url + endpoint
+            http.register_uri(http.GET, url, status=response)
+
+
+def test_get_200_returns_page(http):
+    repo = MockHttpRepository({"/foo": 200}, http)
+
+    assert repo._get("/foo")
+
+
+def test_get_404_returns_none(http):
+    repo = MockHttpRepository({"/foo": 404}, http)
+
+    assert repo._get("/foo") is None
+
+
+def test_get_4xx_and_5xx_raises(http):
+    endpoints = {"/{}".format(code): code for code in {401, 403, 500}}
+    repo = MockHttpRepository(endpoints, http)
+
+    for endpoint in endpoints:
+        with pytest.raises(RepositoryError):
+            repo._get(endpoint)

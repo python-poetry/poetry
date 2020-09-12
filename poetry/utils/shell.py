@@ -9,6 +9,7 @@ from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
 from ._compat import WINDOWS
+from ._compat import Path
 from .env import VirtualEnv
 
 
@@ -42,7 +43,17 @@ class Shell:
         try:
             name, path = detect_shell(os.getpid())
         except (RuntimeError, ShellDetectionFailure):
-            raise RuntimeError("Unable to detect the current shell.")
+            shell = None
+
+            if os.name == "posix":
+                shell = os.environ.get("SHELL")
+            elif os.name == "nt":
+                shell = os.environ.get("COMSPEC")
+
+            if not shell:
+                raise RuntimeError("Unable to detect the current shell.")
+
+            name, path = Path(shell).stem, shell
 
         cls._shell = cls(name, path)
 
@@ -83,6 +94,8 @@ class Shell:
             suffix = ".fish"
         elif "csh" == self._name:
             suffix = ".csh"
+        elif "tcsh" == self._name:
+            suffix = ".csh"
         else:
             suffix = ""
 
@@ -92,6 +105,8 @@ class Shell:
         if "fish" == self._name:
             return "source"
         elif "csh" == self._name:
+            return "source"
+        elif "tcsh" == self._name:
             return "source"
 
         return "."

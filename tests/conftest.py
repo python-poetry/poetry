@@ -10,7 +10,11 @@ import pytest
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
+from poetry.inspection.info import PackageInfo
+from poetry.inspection.info import PackageInfoError
 from poetry.utils._compat import Path
+from poetry.utils.env import EnvManager
+from poetry.utils.env import VirtualEnv
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
 
@@ -53,6 +57,7 @@ def auth_config_source():
 @pytest.fixture
 def config(config_source, auth_config_source, mocker):
     import keyring
+
     from keyring.backends.fail import Keyring
 
     keyring.set_keyring(Keyring())
@@ -76,6 +81,21 @@ def download_mock(mocker):
     mocker.patch("poetry.repositories.pypi_repository.download_file", new=mock_download)
 
 
+@pytest.fixture(autouse=True)
+def pep517_metadata_mock(mocker):
+    @classmethod  # noqa
+    def _pep517_metadata(cls, path):
+        try:
+            return PackageInfo.from_setup_files(path)
+        except PackageInfoError:
+            pass
+        return PackageInfo(name="demo", version="0.1.2")
+
+    mocker.patch(
+        "poetry.inspection.info.PackageInfo._pep517_metadata", _pep517_metadata,
+    )
+
+
 @pytest.fixture
 def environ():
     original_environ = dict(os.environ)
@@ -97,11 +117,13 @@ def git_mock(mocker):
 
 @pytest.fixture
 def http():
-    httpretty.enable()
+    httpretty.reset()
+    httpretty.enable(allow_net_connect=False)
 
     yield httpretty
 
-    httpretty.disable()
+    httpretty.activate()
+    httpretty.reset()
 
 
 @pytest.fixture
@@ -134,3 +156,15 @@ def mocked_open_files(mocker):
     mocker.patch("poetry.utils._compat.Path.open", mocked_open)
 
     yield files
+
+
+@pytest.fixture
+def tmp_venv(tmp_dir):
+    venv_path = Path(tmp_dir) / "venv"
+
+    EnvManager.build_venv(str(venv_path))
+
+    venv = VirtualEnv(venv_path)
+    yield venv
+
+    shutil.rmtree(str(venv.path))
