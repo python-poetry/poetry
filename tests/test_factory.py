@@ -146,6 +146,12 @@ def test_poetry_with_default_source():
     assert 1 == len(poetry.pool.repositories)
 
 
+def test_poetry_with_trusted_source():
+    poetry = Factory().create_poetry(fixtures_dir / "with_trusted_source")
+
+    assert 1 == len(poetry.pool.repositories)
+
+
 def test_poetry_with_two_default_sources():
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
