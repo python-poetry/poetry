@@ -152,3 +152,30 @@ def test_requirement_git_develop_true(installer, package_git):
     expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
 
     assert expected == result
+
+
+def test_install_with_trusted_host():
+    pool = Pool()
+    host = "foo.bar"
+
+    default = LegacyRepository("default", f"https://{host}", trusted=True)
+
+    pool.add_repository(default, default=True)
+
+    null_env = NullEnv()
+
+    installer = PipInstaller(null_env, NullIO(), pool)
+
+    foo = Package("foo", "0.0.0")
+    foo.source_type = "legacy"
+    foo.source_reference = default._name
+    foo.source_url = default._url
+
+    installer.install(foo)
+
+    assert len(null_env.executed) == 1
+    cmd = null_env.executed[0]
+    assert "--trusted-host" in cmd
+    trusted_host_index = cmd.index("--trusted-host")
+
+    assert cmd[trusted_host_index + 1] == host
