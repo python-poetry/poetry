@@ -160,7 +160,7 @@ def test_install_with_trusted_host():
     pool = Pool()
     host = "foo.bar"
 
-    default = LegacyRepository("default", f"https://{host}", trusted=True)
+    default = LegacyRepository("default", "https://{}".format(host), trusted=True)
 
     pool.add_repository(default, default=True)
 
