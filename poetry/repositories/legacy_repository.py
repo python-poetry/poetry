@@ -3,6 +3,7 @@ import re
 import warnings
 
 from collections import defaultdict
+from contextlib import contextmanager
 from typing import Generator
 from typing import Optional
 from typing import Union
@@ -384,24 +385,31 @@ class LegacyRepository(PyPiRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint):  # type: (str) -> Union[Page, None]
-        url = self._url + endpoint
-        if self._trusted:
-            import urllib3
+    @contextmanager
+    def _trust_context(self):
+        import urllib3  # Not a direct dependency of poetry, should I use requests.packages.urllib3 instead ?
 
+        if self._trusted:
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
         try:
-            response = self.session.get(url, verify=not self._trusted)
-            if response.status_code == 404:
-                return
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            raise RepositoryError(e)
+            yield
         finally:
             if self._trusted:
-                import urllib3
-
                 urllib3.warnings.simplefilter(
                     "default", urllib3.exceptions.InsecureRequestWarning
                 )
+
+    def _get(self, endpoint):  # type: (str) -> Union[Page, None]
+        url = self._url + endpoint
+
+        with self._trust_context() as _:  # maybe use urllib3.warnings.catch_warnings() instead ?
+            try:
+                response = self.session.get(url, verify=not self._trusted)
+                if response.status_code == 404:
+                    return
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise RepositoryError(e)
+
         return Page(url, response.content, response.headers)
