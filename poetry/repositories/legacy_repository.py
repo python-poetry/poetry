@@ -394,6 +394,7 @@ class LegacyRepository(PyPiRepository):
             response = self.session.get(url, verify=not self._trusted)
             if response.status_code == 404:
                 return
+            response.raise_for_status()
         except requests.HTTPError as e:
             raise RepositoryError(e)
         finally:
