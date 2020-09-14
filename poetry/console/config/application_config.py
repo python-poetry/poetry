@@ -4,6 +4,7 @@ from typing import Any
 
 from cleo.config import ApplicationConfig as BaseApplicationConfig
 from clikit.api.application.application import Application
+from clikit.api.args.exceptions import NoSuchOptionException
 from clikit.api.args.raw_args import RawArgs
 from clikit.api.event import PRE_HANDLE
 from clikit.api.event import PreHandleEvent
@@ -30,6 +31,7 @@ from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.console.logging.io_formatter import IOFormatter
 from poetry.console.logging.io_handler import IOHandler
+from poetry.exceptions import PoetryException
 from poetry.utils._compat import PY36
 
 
@@ -218,7 +220,11 @@ class ApplicationConfig(BaseApplicationConfig):
             Output(error_stream, error_formatter),
         )
 
-        resolved_command = application.resolve_command(args)
+        try:
+            resolved_command = application.resolve_command(args)
+        except NoSuchOptionException as ex:
+            raise PoetryException(str(ex)) from None
+
         # If the current command is the run one, skip option
         # check and interpret them as part of the executed command
         if resolved_command.command.name == "run":
