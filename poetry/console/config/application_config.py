@@ -223,7 +223,15 @@ class ApplicationConfig(BaseApplicationConfig):
         try:
             resolved_command = application.resolve_command(args)
         except NoSuchOptionException as ex:
-            raise PoetryException(str(ex)) from None
+            # according to https://www.python.org/dev/peps/pep-0415/
+            # raise ... from ... overrides __cause__, so do it manually
+            # it should be replaced by raise PoetryException(str(ex)) from None
+            # as soon as python2.7 has been dropped
+
+            new_ex = PoetryException(str(ex))
+            new_ex.__cause__ = None
+            new_ex.__suppress_context__ = True
+            raise new_ex
 
         # If the current command is the run one, skip option
         # check and interpret them as part of the executed command
