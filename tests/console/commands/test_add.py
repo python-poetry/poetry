@@ -725,8 +725,12 @@ def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     tester.execute("foo")
 
     expected = """\
-foo is already in pyproject.toml. Skipping.
-Nothing to add.
+The following packages are already present in the pyproject.toml and will be skipped:
+
+  • foo
+
+If you want to update it to the latest compatible version, you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.
 """
 
     assert expected in tester.io.fetch_output()
@@ -1542,8 +1546,12 @@ def test_add_should_skip_when_adding_existing_package_with_no_constraint_old_ins
     old_tester.execute("foo")
 
     expected = """\
-foo is already in pyproject.toml. Skipping.
-Nothing to add.
+The following packages are already present in the pyproject.toml and will be skipped:
+
+  • foo
+
+If you want to update it to the latest compatible version, you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.
 """
 
     assert expected in old_tester.io.fetch_output()

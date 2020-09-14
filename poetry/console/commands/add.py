@@ -89,13 +89,18 @@ class AddCommand(InstallerCommand, InitCommand):
         if section not in poetry_content:
             poetry_content[section] = {}
 
-        packages = self.remove_existing_packages_from_input(
+        existing_packages = self.get_existing_packages_from_input(
             packages, poetry_content, section
         )
 
+        if existing_packages:
+            self.notify_about_existing_packages(existing_packages)
+
+        packages = [name for name in packages if name not in existing_packages]
+
         if not packages:
             self.poetry.file.write(content)
-            self.line("Nothing to add.", style="info")
+            self.line("Nothing to add.")
             return 0
 
         requirements = self._determine_requirements(
@@ -184,7 +189,7 @@ class AddCommand(InstallerCommand, InitCommand):
 
         return status
 
-    def remove_existing_packages_from_input(
+    def get_existing_packages_from_input(
         self, packages, poetry_content, target_section
     ):  # type: (List[str], Dict, str) -> List[str]
         existing_packages = []
@@ -193,11 +198,18 @@ class AddCommand(InstallerCommand, InitCommand):
             for key in poetry_content[target_section]:
                 if key.lower() == name.lower():
                     existing_packages.append(name)
-                    self.line(
-                        "{name} is already in pyproject.toml. Skipping.".format(
-                            name=name
-                        )
-                    )
-        packages = [name for name in packages if name not in existing_packages]
 
-        return packages
+        return existing_packages
+
+    def notify_about_existing_packages(
+        self, existing_packages
+    ):  # type: (List[str]) -> None
+        self.line(
+            "The following packages are already present in the pyproject.toml and will be skipped:\n"
+        )
+        for name in existing_packages:
+            self.line("  • <c1>{name}</c1>".format(name=name))
+        self.line(
+            "\nIf you want to update it to the latest compatible version, you can use `poetry update package`.\n"
+            "If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.\n"
+        )
