@@ -109,6 +109,13 @@ the `--no-dev` option.
 poetry install --no-dev
 ```
 
+Conversely, you can specify to the command that you only want to install the development dependencies
+by passing the `--dev-only` option. Note that `--no-dev` takes priority if both options are passed.
+
+```bash
+poetry install --dev-only
+```
+
 If you want to remove old dependencies no longer present in the lock file, use the
 `--remove-untracked` option.
 
@@ -142,9 +149,13 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
+Installation of your project's package is also skipped when the `--dev-only`
+option is passed.
+
 ### Options
 
 * `--no-dev`: Do not install dev dependencies.
+* `--dev-only`: Only install dev dependencies.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--remove-untracked`: Remove dependencies not presented in the lock file

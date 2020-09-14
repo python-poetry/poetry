@@ -267,7 +267,10 @@ def test_run_update_after_removing_dependencies(
     assert 1 == installer.executor.removals_count
 
 
-def test_run_install_no_dev(installer, locker, repo, package, installed):
+def _configure_run_install_dev(locker, repo, package, installed):
+    """
+    Perform common test setup for `test_run_install_*dev*()` methods.
+    """
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -323,7 +326,34 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
     package.add_dependency(Factory.create_dependency("C", "~1.2", category="dev"))
 
+
+def test_run_install_no_dev(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
     installer.dev_mode(False)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 1 == installer.executor.removals_count
+
+
+def test_run_install_dev_only(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
+    installer.dev_only(True)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 2 == installer.executor.removals_count
+
+
+def test_run_install_no_dev_and_dev_only(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
+    installer.dev_mode(False)
+    installer.dev_only(True)
     installer.run()
 
     assert 0 == installer.executor.installations_count

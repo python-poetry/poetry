@@ -47,6 +47,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
+        self._dev_only = False
         self._execute_operations = True
         self._lock = False
 
@@ -135,6 +136,14 @@ class Installer:
 
     def is_dev_mode(self):  # type: () -> bool
         return self._dev_mode
+
+    def dev_only(self, dev_only=False):  # type: (bool) -> Installer
+        self._dev_only = dev_only
+
+        return self
+
+    def is_dev_only(self):  # type: () -> bool
+        return self._dev_only
 
     def update(self, update=True):  # type: (bool) -> Installer
         self._update = update
@@ -270,6 +279,9 @@ class Installer:
         if not self.is_dev_mode():
             root = root.clone()
             del root.dev_requires[:]
+        elif self.is_dev_only():
+            root = root.clone()
+            del root.requires[:]
 
         if self._io.is_verbose():
             self._io.write_line("")
