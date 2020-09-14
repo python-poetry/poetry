@@ -1,4 +1,3 @@
-import abc
 import enum
 import time
 
@@ -170,12 +169,7 @@ class Solver:
                     operations.append(Uninstall(installed))
 
         return sorted(
-            operations,
-            key=lambda o: (
-                -o.priority,
-                o.package.name,
-                o.package.version,
-            ),
+            operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
         )
 
     def solve_in_compatibility_mode(self, overrides, use_latest=None):
@@ -239,16 +233,14 @@ class Solver:
         return final_packages, depths
 
 
-class DFSNode(abc.ABC):
+class DFSNode(object):
     def __init__(self, id, name):
         self.id = id
         self.name = name
 
-    @abc.abstractmethod
     def reachable(self):
         return []
 
-    @abc.abstractmethod
     def visit(self, parents):
         pass
 
@@ -334,7 +326,9 @@ class PackageNode(DFSNode):
             self.optional = dep.is_optional() and not dep.is_activated()
         if not is_activated:
             self.optional = True
-        super().__init__((package.name, self.category, self.optional), package.name)
+        super(PackageNode, self).__init__(
+            (package.name, self.category, self.optional), package.name
+        )
 
     def reachable(self):
         children = []  # type: List[PackageNode]
@@ -404,7 +398,7 @@ class PackageNode(DFSNode):
     def visit(self, parents):
         # The root package, which has no parents, is defined as having depth -1
         # So that the root package's top-level dependencies have depth 0.
-        self.depth = 1 + max((parent.depth for parent in parents), default=-2)
+        self.depth = 1 + max([parent.depth for parent in parents] + [-2])
 
 
 def aggregate_package_nodes(nodes, children):
