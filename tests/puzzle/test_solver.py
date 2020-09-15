@@ -746,6 +746,62 @@ def test_solver_circular_dependency(solver, repo, package):
     assert "main" == ops[0].package.category
 
 
+def test_solver_circular_dependency_chain(solver, repo, package):
+    package.add_dependency("A")
+
+    package_a = get_package("A", "1.0")
+    package_a.add_dependency("B", "^1.0")
+
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency("C", "^1.0")
+
+    package_c = get_package("C", "1.0")
+    package_c.add_dependency("D", "^1.0")
+
+    package_d = get_package("D", "1.0")
+    package_d.add_dependency("B", "^1.0")
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": package_d},
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_a},
+        ],
+    )
+
+    assert "main" == ops[0].package.category
+
+
+def test_solver_dense_dependencies(solver, repo, package):
+    # The root package depends on packages A0...An-1,
+    # And package Ai depends  on packages A0...Ai-1
+    # This graph is a transitive tournament
+    packages = []
+    n = 22
+    for i in range(n):
+        package_ai = get_package("a" + str(i), "1.0")
+        repo.add_package(package_ai)
+        packages.append(package_ai)
+        package.add_dependency("a" + str(i), "^1.0")
+        for j in range(i):
+            package_ai.add_dependency("a" + str(j), "^1.0")
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops, [{"job": "install", "package": packages[i]} for i in range(n)]
+    )
+
+
 def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
     package.add_dependency("A")
 
