@@ -417,7 +417,7 @@ class EnvManager(object):
         envs_file = TomlFile(venv_path / self.ENVS_FILE)
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
-        if python.startswith(base_env_name):
+        if python.startswith(base_env_name) or python == ".venv":
             venvs = self.list()
             for venv in venvs:
                 if venv.path.name == python:
