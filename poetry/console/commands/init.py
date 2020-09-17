@@ -142,7 +142,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             python = self.ask(question)
 
-        self.line("")
+        if self.io.is_interactive():
+            self.line("")
 
         requirements = {}
 
