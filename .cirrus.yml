@@ -29,6 +29,12 @@ release_task:
   only_if: $CIRRUS_TAG != ''
   env:
     GITHUB_TOKEN: ENCRYPTED[e637a1887c028ea4e44867715a8a4b7c5e27568559a15c45a3e33739b0d97fc050394c728a44e9bfe7c246179810cad7]
+    PYTHON: python3.8
+    PYTHON27: python2.7
+    PYTHON35: python3.5
+    PYTHON36: python3.6
+    PYTHON37: python3.7
+    PYTHON38: python3.8
   freebsd_instance:
     matrix:
       - image_family: freebsd-12-1-snap
