@@ -3,6 +3,7 @@ import pytest
 from cleo.testers import CommandTester
 from clikit.formatter.ansi_formatter import AnsiFormatter
 
+from poetry.factory import Factory
 from tests.helpers import get_package
 
 
@@ -1067,10 +1068,10 @@ def test_show_tree(app, poetry, installed):
     command = app.find("show")
     tester = CommandTester(command)
 
-    poetry.package.add_dependency("cachy", "^0.2.0")
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
 
     cachy2 = get_package("cachy", "0.2.0")
-    cachy2.add_dependency("msgpack-python", ">=0.5 <0.6")
+    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
     installed.add_package(cachy2)
 

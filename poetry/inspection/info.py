@@ -69,6 +69,9 @@ class PackageInfo:
         self.requires_python = requires_python
         self.files = files or []
         self._cache_version = cache_version
+        self._source_type = None
+        self._source_url = None
+        self._source_reference = None
 
     @property
     def cache_version(self):  # type: () -> Optional[str]
@@ -136,7 +139,13 @@ class PackageInfo:
                 "Unable to retrieve the package version for {}".format(name)
             )
 
-        package = Package(name=name, version=self.version)
+        package = Package(
+            name=name,
+            version=self.version,
+            source_type=self._source_type,
+            source_url=self._source_url,
+            source_reference=self._source_reference,
+        )
         package.description = self.summary
         package.root_dir = root_dir
         package.python_versions = self.requires_python or "*"
@@ -166,14 +175,9 @@ class PackageInfo:
                         # this is the first time we encounter this extra for this package
                         package.extras[extra] = []
 
-                    # Activate extra dependencies if specified
-                    if extras and extra in extras:
-                        dependency.activate()
-
                     package.extras[extra].append(dependency)
 
-            if not dependency.is_optional() or dependency.is_activated():
-                # we skip add only if the dependency is option and was not activated as part of an extra
+            if dependency not in package.requires:
                 package.requires.append(dependency)
 
         return package
@@ -197,7 +201,7 @@ class PackageInfo:
                 with requires.open(encoding="utf-8") as f:
                     requirements = parse_requires(f.read())
 
-        return cls(
+        info = cls(
             name=dist.name,
             version=dist.version,
             summary=dist.summary,
@@ -205,6 +209,11 @@ class PackageInfo:
             requires_dist=requirements,
             requires_python=dist.requires_python,
         )
+
+        info._source_type = "file"
+        info._source_url = Path(dist.filename).resolve().as_posix()
+
+        return info
 
     @classmethod
     def _from_sdist_file(cls, path):  # type: (Path) -> PackageInfo
@@ -501,23 +510,26 @@ class PackageInfo:
         """
         project_package = cls._get_poetry_package(path)
         if project_package:
-            return cls.from_package(project_package)
+            info = cls.from_package(project_package)
+        else:
+            info = cls.from_metadata(path)
 
-        info = cls.from_metadata(path)
+            if not info or info.requires_dist is None:
+                try:
+                    if disable_build:
+                        info = cls.from_setup_files(path)
+                    else:
+                        info = cls._pep517_metadata(path)
+                except PackageInfoError:
+                    if not info:
+                        raise
 
-        if info and info.requires_dist is not None:
-            # return only if requirements are discovered
-            return info
+                    # we discovered PkgInfo but no requirements were listed
 
-        try:
-            if disable_build:
-                return cls.from_setup_files(path)
-            return cls._pep517_metadata(path)
-        except PackageInfoError as e:
-            if info:
-                # we discovered PkgInfo but no requirements were listed
-                return info
-            raise e
+        info._source_type = "directory"
+        info._source_url = path.as_posix()
+
+        return info
 
     @classmethod
     def from_sdist(cls, path):  # type: (Path) -> PackageInfo

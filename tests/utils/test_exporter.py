@@ -8,10 +8,12 @@ from poetry.repositories.auth import Auth
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
 from poetry.utils.exporter import Exporter
+from poetry.utils.toml_file import TomlFile
 
 
 class Locker(BaseLocker):
     def __init__(self):
+        self._lock = TomlFile(Path.cwd().joinpath("poetry.lock"))
         self._locked = True
         self._content_hash = self._get_content_hash()
 

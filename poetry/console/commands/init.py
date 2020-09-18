@@ -388,7 +388,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         pair["extras"] = extras
 
                     package = Provider.get_package_from_vcs(
-                        "git", url.url, reference=pair.get("rev")
+                        "git", url.url, rev=pair.get("rev")
                     )
                     pair["name"] = package.name
                     result.append(pair)

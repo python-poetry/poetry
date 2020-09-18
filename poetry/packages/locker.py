@@ -1,10 +1,12 @@
 import json
 import logging
+import os
 import re
 
 from hashlib import sha256
 from typing import List
 
+from tomlkit import array
 from tomlkit import document
 from tomlkit import inline_table
 from tomlkit import item
@@ -18,6 +20,7 @@ from poetry.core.packages.package import Package
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.version.markers import parse_marker
+from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils.toml_file import TomlFile
 
@@ -75,6 +78,8 @@ class Locker(object):
         """
         Searches and returns a repository of locked packages.
         """
+        from poetry.factory import Factory
+
         if not self.is_locked():
             return poetry.repositories.Repository()
 
@@ -92,7 +97,21 @@ class Locker(object):
             return packages
 
         for info in locked_packages:
-            package = Package(info["name"], info["version"], info["version"])
+            source = info.get("source", {})
+            source_type = source.get("type")
+            url = source.get("url")
+            if source_type in ["directory", "file"]:
+                url = self._lock.path.parent.joinpath(url).resolve().as_posix()
+
+            package = Package(
+                info["name"],
+                info["version"],
+                info["version"],
+                source_type=source_type,
+                source_url=url,
+                source_reference=source.get("reference"),
+                source_resolved_reference=source.get("resolved_reference"),
+            )
             package.description = info.get("description", "")
             package.category = info["category"]
             package.optional = info["optional"]
@@ -137,19 +156,22 @@ class Locker(object):
             for dep_name, constraint in info.get("dependencies", {}).items():
                 if isinstance(constraint, list):
                     for c in constraint:
-                        package.add_dependency(dep_name, c)
+                        package.add_dependency(
+                            Factory.create_dependency(
+                                dep_name, c, root_dir=self._lock.path.parent
+                            )
+                        )
 
                     continue
 
-                package.add_dependency(dep_name, constraint)
+                package.add_dependency(
+                    Factory.create_dependency(
+                        dep_name, constraint, root_dir=self._lock.path.parent
+                    )
+                )
 
             if "develop" in info:
                 package.develop = info["develop"]
-
-            if "source" in info:
-                package.source_type = info["source"].get("type", "")
-                package.source_url = info["source"]["url"]
-                package.source_reference = info["source"]["reference"]
 
             packages.add_package(package)
 
@@ -181,15 +203,17 @@ class Locker(object):
         if root.extras:
             lock["extras"] = {
                 extra: [dep.pretty_name for dep in deps]
-                for extra, deps in root.extras.items()
+                for extra, deps in sorted(root.extras.items())
             }
 
-        lock["metadata"] = {
-            "lock-version": self._VERSION,
-            "python-versions": root.python_versions,
-            "content-hash": self._content_hash,
-            "files": files,
-        }
+        lock["metadata"] = OrderedDict(
+            [
+                ("lock-version", self._VERSION),
+                ("python-versions", root.python_versions),
+                ("content-hash", self._content_hash),
+                ("files", files),
+            ]
+        )
 
         if not self.is_locked() or lock != self.lock_data:
             self._write_lock_data(lock)
@@ -270,9 +294,6 @@ class Locker(object):
     def _dump_package(self, package):  # type: (Package) -> dict
         dependencies = {}
         for dependency in sorted(package.requires, key=lambda d: d.name):
-            if dependency.is_optional() and not dependency.is_activated():
-                continue
-
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
 
@@ -298,15 +319,27 @@ class Locker(object):
                     constraint["version"] for constraint in constraints
                 ]
 
-        data = {
-            "name": package.pretty_name,
-            "version": package.pretty_version,
-            "description": package.description or "",
-            "category": package.category,
-            "optional": package.optional,
-            "python-versions": package.python_versions,
-            "files": sorted(package.files, key=lambda x: x["file"]),
-        }
+        data = OrderedDict(
+            [
+                ("name", package.pretty_name),
+                ("version", package.pretty_version),
+                ("description", package.description or ""),
+                ("category", package.category),
+                ("optional", package.optional),
+                ("python-versions", package.python_versions),
+                ("files", sorted(package.files, key=lambda x: x["file"])),
+            ]
+        )
+
+        if dependencies:
+            data["dependencies"] = table()
+            for k, constraints in dependencies.items():
+                if len(constraints) == 1:
+                    data["dependencies"][k] = constraints[0]
+                else:
+                    data["dependencies"][k] = array().multiline(True)
+                    for constraint in constraints:
+                        data["dependencies"][k].append(constraint)
 
         if package.extras:
             extras = {}
@@ -318,20 +351,29 @@ class Locker(object):
 
             data["extras"] = extras
 
-        if dependencies:
-            for k, constraints in dependencies.items():
-                if len(constraints) == 1:
-                    dependencies[k] = constraints[0]
-
-            data["dependencies"] = dependencies
-
         if package.source_url:
-            data["source"] = {
-                "url": package.source_url,
-                "reference": package.source_reference,
-            }
+            url = package.source_url
+            if package.source_type in ["file", "directory"]:
+                # The lock file should only store paths relative to the root project
+                url = Path(
+                    os.path.relpath(
+                        Path(url).as_posix(), self._lock.path.parent.as_posix()
+                    )
+                ).as_posix()
+
+            data["source"] = OrderedDict()
+
             if package.source_type:
                 data["source"]["type"] = package.source_type
+
+            data["source"]["url"] = url
+
+            if package.source_reference:
+                data["source"]["reference"] = package.source_reference
+
+            if package.source_resolved_reference:
+                data["source"]["resolved_reference"] = package.source_resolved_reference
+
             if package.source_type == "directory":
                 data["develop"] = package.develop
 

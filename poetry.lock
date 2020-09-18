@@ -461,7 +461,7 @@ six = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "more-itertools"
-version = "8.3.0"
+version = "8.4.0"
 description = "More routines for operating on iterables, beyond itertools"
 category = "dev"
 optional = false
@@ -469,7 +469,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "more-itertools"
-version = "8.4.0"
+version = "8.5.0"
 description = "More routines for operating on iterables, beyond itertools"
 category = "dev"
 optional = false
@@ -561,8 +561,8 @@ importlib-metadata = {version = ">=0.12", markers = "python_version < \"3.8\""}
 
 [[package]]
 name = "poetry-core"
-version = "1.0.0a9"
-description = "Core utilities for Poetry"
+version = "1.0.0b1"
+description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
@@ -984,7 +984,7 @@ contextlib2 = {version = "*", markers = "python_version < \"3.4\""}
 [metadata]
 lock-version = "1.1"
 python-versions = "~2.7 || ^3.5"
-content-hash = "9528141e0eb24000c6f245065820732b3977d1c7d14c14fbcedf77e91c4a3e68"
+content-hash = "062aef66c1c37dce14fcb2a66841afe97937ce9150136ff8dfa45e43d796821f"
 
 [metadata.files]
 appdirs = [
@@ -1217,10 +1217,10 @@ more-itertools = [
     {file = "more-itertools-5.0.0.tar.gz", hash = "sha256:38a936c0a6d98a38bcc2d03fdaaedaba9f412879461dd2ceff8d37564d6522e4"},
     {file = "more_itertools-5.0.0-py2-none-any.whl", hash = "sha256:c0a5785b1109a6bd7fac76d6837fd1feca158e54e521ccd2ae8bfe393cc9d4fc"},
     {file = "more_itertools-5.0.0-py3-none-any.whl", hash = "sha256:fe7a7cae1ccb57d33952113ff4fa1bc5f879963600ed74918f1236e212ee50b9"},
-    {file = "more-itertools-8.3.0.tar.gz", hash = "sha256:558bb897a2232f5e4f8e2399089e35aecb746e1f9191b6584a151647e89267be"},
-    {file = "more_itertools-8.3.0-py3-none-any.whl", hash = "sha256:7818f596b1e87be009031c7653d01acc46ed422e6656b394b0f765ce66ed4982"},
     {file = "more-itertools-8.4.0.tar.gz", hash = "sha256:68c70cc7167bdf5c7c9d8f6954a7837089c6a36bf565383919bb595efb8a17e5"},
     {file = "more_itertools-8.4.0-py3-none-any.whl", hash = "sha256:b78134b2063dd214000685165d81c154522c3ee0a1c0d4d113c80361c234c5a2"},
+    {file = "more-itertools-8.5.0.tar.gz", hash = "sha256:6f83822ae94818eae2612063a5101a7311e68ae8002005b5e05f03fd74a86a20"},
+    {file = "more_itertools-8.5.0-py3-none-any.whl", hash = "sha256:9b30f12df9393f0d28af9210ff8efe48d10c94f73e5daf886f10c4b0b0b4f03c"},
 ]
 msgpack = [
     {file = "msgpack-1.0.0-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:cec8bf10981ed70998d98431cd814db0ecf3384e6b113366e7f36af71a0fca08"},
@@ -1270,8 +1270,8 @@ pluggy = [
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
 poetry-core = [
-    {file = "poetry-core-1.0.0a9.tar.gz", hash = "sha256:f08e9829fd06609ca5615faa91739b589eb71e025a6aaf7ddffb698676eb7c8c"},
-    {file = "poetry_core-1.0.0a9-py2.py3-none-any.whl", hash = "sha256:79a63629ae44533ba9aa828e0eff0002c61b3af5fc9bec212e006cc643f4eb19"},
+    {file = "poetry-core-1.0.0b1.tar.gz", hash = "sha256:c7a64770780f6a4998eee1e260fc3b7e22fa1c9b94b05c0faa13aa512f95eaa1"},
+    {file = "poetry_core-1.0.0b1-py2.py3-none-any.whl", hash = "sha256:92d2a33c27c733e746425c6506fdf583909e3ce5de4591deb23a4efb13f1a72c"},
 ]
 pre-commit = [
     {file = "pre_commit-2.6.0-py2.py3-none-any.whl", hash = "sha256:e8b1315c585052e729ab7e99dcca5698266bedce9067d21dc909c23e3ceed626"},
@@ -1371,6 +1371,7 @@ six = [
 ]
 subprocess32 = [
     {file = "subprocess32-3.5.4-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:88e37c1aac5388df41cc8a8456bb49ebffd321a3ad4d70358e3518176de3a56b"},
+    {file = "subprocess32-3.5.4-cp27-cp27mu-manylinux2014_x86_64.whl", hash = "sha256:e45d985aef903c5b7444d34350b05da91a9e0ea015415ab45a21212786c649d0"},
     {file = "subprocess32-3.5.4.tar.gz", hash = "sha256:eb2937c80497978d181efa1b839ec2d9622cf9600a039a79d0e108d1f9aec79d"},
 ]
 termcolor = [

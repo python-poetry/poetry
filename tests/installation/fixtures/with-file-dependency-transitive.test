@@ -14,21 +14,19 @@ bar = ["tomlkit"]
 foo = ["cleo"]
 
 [package.source]
-reference = ""
 type = "file"
 url = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
 
 [[package]]
 category = "main"
 description = "This is a description"
-develop = true
+develop = false
 name = "inner-directory-project"
 optional = false
 python-versions = "*"
 version = "1.2.4"
 
 [package.source]
-reference = ""
 type = "directory"
 url = "project_with_transitive_file_dependencies/inner-directory-project"
 
@@ -43,7 +41,7 @@ version = "1.4.4"
 [[package]]
 category = "main"
 description = "This is a description"
-develop = true
+develop = false
 name = "project-with-transitive-file-dependencies"
 optional = false
 python-versions = "*"
@@ -54,7 +52,6 @@ demo = "0.1.0"
 inner-directory-project = "1.2.4"
 
 [package.source]
-reference = ""
 type = "directory"
 url = "project_with_transitive_file_dependencies"
 

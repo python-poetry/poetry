@@ -55,7 +55,7 @@ def test_create_poetry():
     assert not requests.is_vcs()
     assert not requests.allows_prereleases()
     assert requests.is_optional()
-    assert requests.extras == ["security"]
+    assert requests.extras == frozenset(["security"])
 
     pathlib2 = dependencies["pathlib2"]
     assert pathlib2.pretty_constraint == "^2.2"

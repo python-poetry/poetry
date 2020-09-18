@@ -300,12 +300,13 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 def test_add_directory_constraint(app, repo, tester, mocker):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__) / ".."
+    p.return_value = Path(__file__).parent
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    tester.execute("../git/github.com/demo/demo")
+    path = "../git/github.com/demo/demo"
+    tester.execute("{}".format(path))
 
     expected = """\
 
@@ -317,8 +318,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 ../git/github.com/demo/demo)
-"""
+  • Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == tester.io.fetch_output()
     assert 2 == tester._command.installer.executor.installations_count
@@ -335,7 +338,8 @@ def test_add_directory_with_poetry(app, repo, tester, mocker):
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute("../git/github.com/demo/pyproject-demo")
+    path = "../git/github.com/demo/pyproject-demo"
+    tester.execute("{}".format(path))
 
     expected = """\
 
@@ -347,8 +351,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 ../git/github.com/demo/pyproject-demo)
-"""
+  • Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == tester.io.fetch_output()
     assert 2 == tester._command.installer.executor.installations_count
@@ -360,7 +366,8 @@ def test_add_file_constraint_wheel(app, repo, tester, mocker, poetry):
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute("../distributions/demo-0.1.0-py2.py3-none-any.whl")
+    path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
+    tester.execute("{}".format(path))
 
     expected = """\
 
@@ -372,8 +379,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 ../distributions/demo-0.1.0-py2.py3-none-any.whl)
-"""
+  • Installing demo (0.1.0 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == tester.io.fetch_output()
     assert 2 == tester._command.installer.executor.installations_count
@@ -392,7 +401,8 @@ def test_add_file_constraint_sdist(app, repo, tester, mocker):
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute("../distributions/demo-0.1.0.tar.gz")
+    path = "../distributions/demo-0.1.0.tar.gz"
+    tester.execute("{}".format(path))
 
     expected = """\
 
@@ -404,8 +414,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 ../distributions/demo-0.1.0.tar.gz)
-"""
+  • Installing demo (0.1.0 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == tester.io.fetch_output()
     assert 2 == tester._command.installer.executor.installations_count
@@ -1076,7 +1088,8 @@ def test_add_directory_constraint_old_installer(
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    old_tester.execute("../git/github.com/demo/demo")
+    path = "../git/github.com/demo/demo"
+    old_tester.execute("{}".format(path))
 
     expected = """\
 
@@ -1088,8 +1101,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.2 ../git/github.com/demo/demo)
-"""
+  - Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1109,7 +1124,8 @@ def test_add_directory_with_poetry_old_installer(
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    old_tester.execute("../git/github.com/demo/pyproject-demo")
+    path = "../git/github.com/demo/pyproject-demo"
+    old_tester.execute("{}".format(path))
 
     expected = """\
 
@@ -1121,8 +1137,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.2 ../git/github.com/demo/pyproject-demo)
-"""
+  - Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1137,7 +1155,8 @@ def test_add_file_constraint_wheel_old_installer(
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    old_tester.execute("../distributions/demo-0.1.0-py2.py3-none-any.whl")
+    path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
+    old_tester.execute("{}".format(path))
 
     expected = """\
 
@@ -1149,8 +1168,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0 ../distributions/demo-0.1.0-py2.py3-none-any.whl)
-"""
+  - Installing demo (0.1.0 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1172,7 +1193,8 @@ def test_add_file_constraint_sdist_old_installer(
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    old_tester.execute("../distributions/demo-0.1.0.tar.gz")
+    path = "../distributions/demo-0.1.0.tar.gz"
+    old_tester.execute("{}".format(path))
 
     expected = """\
 
@@ -1184,8 +1206,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0 ../distributions/demo-0.1.0.tar.gz)
-"""
+  - Installing demo (0.1.0 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == old_tester.io.fetch_output()
 

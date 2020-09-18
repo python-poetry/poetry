@@ -183,7 +183,7 @@ class VersionSolver:
             unsatisfied.dependency, not unsatisfied.is_positive(), incompatibility
         )
 
-        return unsatisfied.dependency.name
+        return unsatisfied.dependency.complete_name
 
     def _resolve_conflict(
         self, incompatibility
@@ -371,7 +371,7 @@ class VersionSolver:
                 self._add_incompatibility(
                     Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
                 )
-                return dependency.name
+                return dependency.complete_name
 
             try:
                 version = packages[0]
@@ -387,7 +387,7 @@ class VersionSolver:
                 Incompatibility([Term(dependency, True)], NoVersionsCause())
             )
 
-            return dependency.name
+            return dependency.complete_name
 
         version = self._provider.complete_package(version)
 
@@ -402,7 +402,7 @@ class VersionSolver:
             # unit propagation which will guide us to choose a better version.
             conflict = conflict or all(
                 [
-                    term.dependency.name == dependency.name
+                    term.dependency.complete_name == dependency.complete_name
                     or self._solution.satisfies(term)
                     for term in incompatibility.terms
                 ]
@@ -411,10 +411,12 @@ class VersionSolver:
         if not conflict:
             self._solution.decide(version)
             self._log(
-                "selecting {} ({})".format(version.name, version.full_pretty_version)
+                "selecting {} ({})".format(
+                    version.complete_name, version.full_pretty_version
+                )
             )
 
-        return dependency.name
+        return dependency.complete_name
 
     def _excludes_single_version(self, constraint):  # type: (Any) -> bool
         return isinstance(VersionRange().difference(constraint), Version)
@@ -435,31 +437,29 @@ class VersionSolver:
         self._log("fact: {}".format(incompatibility))
 
         for term in incompatibility.terms:
-            if term.dependency.name not in self._incompatibilities:
-                self._incompatibilities[term.dependency.name] = []
+            if term.dependency.complete_name not in self._incompatibilities:
+                self._incompatibilities[term.dependency.complete_name] = []
 
-            if incompatibility in self._incompatibilities[term.dependency.name]:
+            if (
+                incompatibility
+                in self._incompatibilities[term.dependency.complete_name]
+            ):
                 continue
 
-            self._incompatibilities[term.dependency.name].append(incompatibility)
+            self._incompatibilities[term.dependency.complete_name].append(
+                incompatibility
+            )
 
     def _get_locked(self, dependency):  # type: (Dependency) -> Union[Package, None]
-        if dependency.name in self._use_latest:
+        if dependency.complete_name in self._use_latest:
             return
 
-        locked = self._locked.get(dependency.name)
+        locked = self._locked.get(dependency.complete_name)
         if not locked:
             return
 
-        if dependency.extras:
-            locked.requires_extras = dependency.extras
-
-        if not dependency.transitive_marker.without_extras().is_any():
-            marker_intersection = dependency.transitive_marker.without_extras().intersect(
-                locked.dependency.marker.without_extras()
-            )
-            if not marker_intersection.is_empty():
-                locked.dependency.transitive_marker = marker_intersection
+        if not dependency.is_same_package_as(locked):
+            return
 
         return locked
 

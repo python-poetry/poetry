@@ -36,18 +36,18 @@ class Incompatibility:
             # Short-circuit in the common case of a two-term incompatibility with
             # two different packages (for example, a dependency).
             or len(terms) == 2
-            and terms[0].dependency.name != terms[-1].dependency.name
+            and terms[0].dependency.complete_name != terms[-1].dependency.complete_name
         ):
             pass
         else:
             # Coalesce multiple terms about the same package if possible.
             by_name = {}  # type: Dict[str, Dict[str, Term]]
             for term in terms:
-                if term.dependency.name not in by_name:
-                    by_name[term.dependency.name] = {}
+                if term.dependency.complete_name not in by_name:
+                    by_name[term.dependency.complete_name] = {}
 
-                by_ref = by_name[term.dependency.name]
-                ref = term.dependency.name
+                by_ref = by_name[term.dependency.complete_name]
+                ref = term.dependency.complete_name
 
                 if ref in by_ref:
                     by_ref[ref] = by_ref[ref].intersect(term)
@@ -432,7 +432,7 @@ class Incompatibility:
 
     def _terse(self, term, allow_every=False):
         if allow_every and term.constraint.is_any():
-            return "every version of {}".format(term.dependency.name)
+            return "every version of {}".format(term.dependency.complete_name)
 
         return str(term.dependency)
 

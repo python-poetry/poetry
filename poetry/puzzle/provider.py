@@ -103,7 +103,7 @@ class Provider:
 
         for constraint in self._search_for.keys():
             if (
-                constraint.name == dependency.name
+                constraint.is_same_package_as(dependency)
                 and constraint.constraint.intersect(dependency.constraint)
                 == dependency.constraint
             ):
@@ -132,15 +132,7 @@ class Provider:
         elif dependency.is_url():
             packages = self.search_for_url(dependency)
         else:
-            constraint = dependency.constraint
-
-            packages = self._pool.find_packages(
-                dependency.name,
-                constraint,
-                extras=dependency.extras,
-                allow_prereleases=dependency.allows_prereleases(),
-                repository=dependency.source_name,
-            )
+            packages = self._pool.find_packages(dependency)
 
             packages.sort(
                 key=lambda p: (
@@ -167,16 +159,11 @@ class Provider:
         package = self.get_package_from_vcs(
             dependency.vcs,
             dependency.source,
-            dependency.reference,
+            branch=dependency.branch,
+            tag=dependency.tag,
+            rev=dependency.rev,
             name=dependency.name,
         )
-
-        for extra in dependency.extras:
-            if extra in package.extras:
-                for dep in package.extras[extra]:
-                    dep.activate()
-
-                package.requires += package.extras[extra]
 
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
@@ -187,7 +174,7 @@ class Provider:
 
     @classmethod
     def get_package_from_vcs(
-        cls, vcs, url, reference=None, name=None
+        cls, vcs, url, branch=None, tag=None, rev=None, name=None
     ):  # type: (str, str, Optional[str], Optional[str]) -> Package
         if vcs != "git":
             raise ValueError("Unsupported VCS dependency {}".format(vcs))
@@ -199,6 +186,7 @@ class Provider:
         try:
             git = Git()
             git.clone(url, tmp_dir)
+            reference = branch or tag or rev
             if reference is not None:
                 git.checkout(reference, tmp_dir)
             else:
@@ -207,10 +195,10 @@ class Provider:
             revision = git.rev_parse(reference, tmp_dir).strip()
 
             package = cls.get_package_from_directory(tmp_dir, name=name)
-
-            package.source_type = "git"
-            package.source_url = url
-            package.source_reference = revision
+            package._source_type = "git"
+            package._source_url = url
+            package._source_reference = reference
+            package._source_resolved_reference = revision
         except Exception:
             raise
         finally:
@@ -242,17 +230,9 @@ class Provider:
         if dependency.base is not None:
             package.root_dir = dependency.base
 
-        package.source_url = dependency.path.as_posix()
         package.files = [
             {"file": dependency.path.name, "hash": "sha256:" + dependency.hash()}
         ]
-
-        for extra in dependency.extras:
-            if extra in package.extras:
-                for dep in package.extras[extra]:
-                    dep.activate()
-
-                package.requires += package.extras[extra]
 
         return [package]
 
@@ -266,9 +246,6 @@ class Provider:
             raise RuntimeError(
                 "Unable to determine package info from path: {}".format(file_path)
             )
-
-        package.source_type = "file"
-        package.source_url = file_path.as_posix()
 
         return package
 
@@ -289,18 +266,10 @@ class Provider:
 
             self._deferred_cache[dependency] = (dependency, package)
 
-        package.source_url = dependency.path.as_posix()
         package.develop = dependency.develop
 
         if dependency.base is not None:
             package.root_dir = dependency.base
-
-        for extra in dependency.extras:
-            if extra in package.extras:
-                for dep in package.extras[extra]:
-                    dep.activate()
-
-                package.requires += package.extras[extra]
 
         return [package]
 
@@ -319,9 +288,6 @@ class Provider:
                     name, package.name
                 )
             )
-
-        package.source_type = "directory"
-        package.source_url = directory.as_posix()
 
         return package
 
@@ -362,8 +328,8 @@ class Provider:
 
             package = cls.get_package_from_file(temp_dir / file_name)
 
-        package.source_type = "url"
-        package.source_url = url
+        package._source_type = "url"
+        package._source_url = url
 
         return package
 
@@ -447,6 +413,7 @@ class Provider:
     def complete_package(
         self, package
     ):  # type: (DependencyPackage) -> DependencyPackage
+
         if package.is_root():
             package = package.clone()
             requires = package.all_requires
@@ -461,7 +428,7 @@ class Provider:
                 self._pool.package(
                     package.name,
                     package.version.text,
-                    extras=package.requires_extras,
+                    extras=package.dependency.extras,
                     repository=package.dependency.source_name,
                 ),
             )
@@ -480,13 +447,44 @@ class Provider:
             elif r.is_url():
                 self.search_for_url(r)
 
-        _dependencies = [
-            r
-            for r in requires
-            if self._python_constraint.allows_any(r.python_constraint)
-            and r.name not in self.UNSAFE_PACKAGES
-            and (not self._env or r.marker.validate(self._env.marker_env))
-        ]
+        optional_dependencies = []
+        activated_extras = []
+        for extra in package.dependency.extras:
+            if extra not in package.extras:
+                continue
+
+            activated_extras.append(extra)
+            optional_dependencies += [d.name for d in package.extras[extra]]
+
+        _dependencies = []
+
+        # If some extras/features were required, we need to
+        # add a special dependency representing the base package
+        # to the current package
+        if package.dependency.extras:
+            if activated_extras:
+                package = package.with_features(activated_extras)
+
+            _dependencies.append(package.without_features().to_dependency())
+
+        for dep in requires:
+            if not self._python_constraint.allows_any(dep.python_constraint):
+                continue
+
+            if dep.name in self.UNSAFE_PACKAGES:
+                continue
+
+            if self._env and not dep.marker.validate(self._env.marker_env):
+                continue
+
+            if (
+                dep.is_optional()
+                and dep.name not in optional_dependencies
+                and not package.is_root()
+            ):
+                continue
+
+            _dependencies.append(dep)
 
         overrides = self._overrides.get(package, {})
         dependencies = []
@@ -682,18 +680,6 @@ class Provider:
                     # This dependency is not needed under current python constraint.
                     continue
                 dep.transitive_python_versions = str(python_constraint_intersection)
-
-            if (package.dependency.is_directory() or package.dependency.is_file()) and (
-                dep.is_directory() or dep.is_file()
-            ):
-                relative_path = Path(
-                    os.path.relpath(
-                        dep.full_path.as_posix(), package.root_dir.as_posix()
-                    )
-                )
-
-                # TODO: Improve the way we set the correct relative path for dependencies
-                dep._path = relative_path
 
             clean_dependencies.append(dep)
 
