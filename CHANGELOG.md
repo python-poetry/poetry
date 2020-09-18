@@ -1,5 +1,24 @@
 # Change Log
 
+## [1.1.0b3] - 2020-09-18
+
+### Changed
+
+- Improved the error reporting when HTTP error are encountered for legacy repositories ([#2459](https://github.com/python-poetry/poetry/pull/2459)).
+- When displaying the name of packages retrieved from remote repositories, the original name will now be used ([#2305](https://github.com/python-poetry/poetry/pull/2305)).
+- Failed package downloads will now be retried on connection errors ([#2813](https://github.com/python-poetry/poetry/pull/2813)).
+
+### Fixed
+
+- Fixed the detection of the type of installed packages ([#2722](https://github.com/python-poetry/poetry/pull/2722)).
+- Fixed deadlocks when installing packages on systems not supporting non-ascii characters ([#2721](https://github.com/python-poetry/poetry/pull/2721)).
+- Fixed handling of wildcard constraints for packages with prereleases only ([#2821](https://github.com/python-poetry/poetry/pull/2821)).
+- Fixed dependencies of some packages not being discovered by ensuring we use the PEP-516 backend if specified  ([#2810](https://github.com/python-poetry/poetry/pull/2810)).
+- Fixed recursion errors when retrieving extras ([#2787](https://github.com/python-poetry/poetry/pull/2787)).
+- Fixed `PyPI` always being displayed when publishing even for custom repositories ([#2905](https://github.com/python-poetry/poetry/pull/2905)).
+- Fixed handling of packages extras when resolving dependencies ([#2887](https://github.com/python-poetry/poetry/pull/2887)).
+
+
 ## [1.1.0b2] - 2020-07-24
 
 ### Changed
@@ -961,7 +980,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b2...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b3...master
+[1.1.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b3
 [1.1.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b2
 [1.1.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b1
 [1.1.0a3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0a3
