@@ -26,7 +26,6 @@ test_task:
 
 release_task:
   name: "Release / FreeBSD"
-  only_if: $CIRRUS_TAG != ''
   env:
     GITHUB_TOKEN: ENCRYPTED[e637a1887c028ea4e44867715a8a4b7c5e27568559a15c45a3e33739b0d97fc050394c728a44e9bfe7c246179810cad7]
   freebsd_instance:
