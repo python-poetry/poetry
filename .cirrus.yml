@@ -39,14 +39,14 @@ release_task:
     matrix:
       - image_family: freebsd-12-1-snap
       - image_family: freebsd-11-3-snap
-  python_script: pkg install -y curl python3 python27 python35 python36 python37 python38
+  python_script: pkg install -y curl bash python3 python27 python35 python36 python37 python38
   pip_script:
     - python2.7 -m ensurepip
     - python3.5 -m ensurepip
     - python3.6 -m ensurepip
     - python3.7 -m ensurepip
     - python3.8 -m ensurepip
-  build_script: ./make-nix-release.sh
+  build_script: bash ./make-nix-release.sh
   upload_script: |
     for fpath in releases/*
     do
