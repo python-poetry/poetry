@@ -19,6 +19,6 @@ else
   POETRY="$PYTHON -m poetry"
 fi
 
-$POETRY config virtualenvs.create false
+$POETRY config virtualenvs.in-project true
 $POETRY install --no-dev
 $POETRY run python sonnet make release ${RUNTIMES[@]}
