@@ -57,10 +57,12 @@ release_task:
     do
       echo "Uploading $fpath..."
       name=$(basename "$fpath")
-      url_to_upload="https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/31534974/assets?name=$name"
+      url_to_upload="https://api.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/31534974/assets?name=$name"
+      echo "Uploading to $url_to_upload"
       curl -X POST \
         --data-binary @$fpath \
         --header "Authorization: token $GITHUB_TOKEN" \
+        --header "Accept: application/vnd.github.v3+json" \
         --header "Content-Type: application/octet-stream" \
         $url_to_upload
     done
