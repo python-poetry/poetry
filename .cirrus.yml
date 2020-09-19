@@ -47,11 +47,17 @@ release_task:
     - python3.8 -m ensurepip
   build_script: bash ./make-nix-release.sh
   upload_script: |
+    #!/usr/bin/env bash
+    if [[ "$GITHUB_TOKEN" == "" ]]; then
+      echo "Please provide GitHub access token via GITHUB_TOKEN environment variable!"
+      exit 1
+    fi
+
     for fpath in releases/*
     do
       echo "Uploading $fpath..."
       name=$(basename "$fpath")
-      url_to_upload="https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/1.1.0b3/assets?name=$name"
+      url_to_upload="https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/31534974/assets?name=$name"
       curl -X POST \
         --data-binary @$fpath \
         --header "Authorization: token $GITHUB_TOKEN" \
