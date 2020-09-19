@@ -28,7 +28,7 @@ release_task:
   name: "Release / FreeBSD"
   only_if: $CIRRUS_TAG != ''
   env:
-    GITHUB_TOKEN: ENCRYPTED[e637a1887c028ea4e44867715a8a4b7c5e27568559a15c45a3e33739b0d97fc050394c728a44e9bfe7c246179810cad7]
+    GITHUB_TOKEN: ENCRYPTED[2b573a2d28a03523ac6fb5b3c2f513a41c0a98db81e40e50e1d103b171f85c57e58ae38d957499dbf7fd7635cfcfd7be]
     PYTHON: python3.8
     PYTHON27: python2.7
     PYTHON35: python3.5
@@ -48,11 +48,24 @@ release_task:
     - python3.8 -m ensurepip
   build_script: bash ./make-nix-release.sh
   upload_script: |
+    #!/usr/bin/env bash
+
+    if [[ "$CIRRUS_RELEASE" == "" ]]; then
+      echo "Not a release. No need to deploy!"
+      exit 0
+    fi
+
+    if [[ "$GITHUB_TOKEN" == "" ]]; then
+      echo "Please provide GitHub access token via GITHUB_TOKEN environment variable!"
+      exit 1
+    fi
+
     for fpath in releases/*
     do
       echo "Uploading $fpath..."
       name=$(basename "$fpath")
-      url_to_upload="https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/$CIRRUS_TAG/assets?name=$name"
+      url_to_upload="https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/$CIRRUS_RELEASE/assets?name=$name"
+      echo "Uploading to $url_to_upload"
       curl -X POST \
         --data-binary @$fpath \
         --header "Authorization: token $GITHUB_TOKEN" \
