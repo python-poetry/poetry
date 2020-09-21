@@ -59,10 +59,6 @@ jobs:
         shell: bash
         run: python -m poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
 
-      - name: Upgrade pip
-        shell: bash
-        run: python -m poetry run python -m pip install pip -U
-
       - name: Install dependencies
         shell: bash
         run: python -m poetry install
