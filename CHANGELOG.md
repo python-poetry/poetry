@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.1.0b4] - 2020-09-23
+
+### Changed
+
+- When running under Python 2.7 on Windows, install command will be limited to one worker to mitigate threading issue ([#2941](https://github.com/python-poetry/poetry/pull/2941)).
+
+
 ## [1.1.0b3] - 2020-09-18
 
 ### Changed
