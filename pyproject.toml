@@ -30,7 +30,7 @@ clikit = "^0.6.2"
 crashtest = { version = "^0.3.0", python = "^3.6" }
 requests = "^2.18"
 cachy = "^0.3.0"
-requests-toolbelt = "^0.8.0"
+requests-toolbelt = "^0.9.1"
 cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
 pkginfo = "^1.4"
 html5lib = "^1.0"
