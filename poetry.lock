@@ -298,7 +298,7 @@ six = "*"
 
 [[package]]
 name = "identify"
-version = "1.5.3"
+version = "1.5.4"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -1180,8 +1180,8 @@ httpretty = [
     {file = "httpretty-0.9.7.tar.gz", hash = "sha256:66216f26b9d2c52e81808f3e674a6fb65d4bf719721394a1a9be926177e55fbe"},
 ]
 identify = [
-    {file = "identify-1.5.3-py2.py3-none-any.whl", hash = "sha256:d02d004568c5a01261839a05e91705e3e9f5c57a3551648f9b3fb2b9c62c0f62"},
-    {file = "identify-1.5.3.tar.gz", hash = "sha256:c770074ae1f19e08aadbda1c886bc6d0cb55ffdc503a8c0fe8699af2fc9664ae"},
+    {file = "identify-1.5.4-py2.py3-none-any.whl", hash = "sha256:d7da7de6825568daa4449858ce328ecc0e1ada2554d972a6f4f90e736aaf499a"},
+    {file = "identify-1.5.4.tar.gz", hash = "sha256:e4db4796b3b0cf4f9cb921da51430abffff2d4ba7d7c521184ed5252bd90d461"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
