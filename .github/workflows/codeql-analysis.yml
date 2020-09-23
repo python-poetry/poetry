@@ -1,0 +1,46 @@
+# https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning
+name: "CodeQL"
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '**.py'
+      - '.github/workflows/codeql-analysis.yml'
+      - '.github/codeql/codeql-config.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - '**.py'
+      - '.github/workflows/codeql-analysis.yml'
+      - '.github/codeql/codeql-config.yml'
+  schedule:
+    - cron: '0 15 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['python']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - run: git checkout HEAD^2
+      if: ${{ github.event_name == 'pull_request' }}
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        config-file: ./.github/codeql/codeql-config.yml
+        languages: ${{ matrix.language }}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1

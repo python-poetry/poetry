@@ -1,0 +1,7 @@
+name: "Poetry CodeQL config"
+
+queries:
+  - uses: security-and-quality
+
+paths:
+  - poetry
