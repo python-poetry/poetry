@@ -987,7 +987,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b3...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b4...master
+[1.1.0b4]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b4
 [1.1.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b3
 [1.1.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b2
 [1.1.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b1
