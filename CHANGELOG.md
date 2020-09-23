@@ -14,6 +14,7 @@
 - Improved the error reporting when HTTP error are encountered for legacy repositories ([#2459](https://github.com/python-poetry/poetry/pull/2459)).
 - When displaying the name of packages retrieved from remote repositories, the original name will now be used ([#2305](https://github.com/python-poetry/poetry/pull/2305)).
 - Failed package downloads will now be retried on connection errors ([#2813](https://github.com/python-poetry/poetry/pull/2813)).
+- Path dependencies will now be installed as editable only when `develop` option is set to `true` ([#2887](https://github.com/python-poetry/poetry/pull/2887)).
 
 ### Fixed
 
@@ -987,7 +988,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b3...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b4...master
+[1.1.0b4]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b4
 [1.1.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b3
 [1.1.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b2
 [1.1.0b1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b1
