@@ -714,7 +714,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["pyyaml"] == "^3.13"
 
 
-def test_add_should_display_an_error_when_adding_existing_package_with_no_constraint(
+def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     app, repo, tester
 ):
     content = app.poetry.file.read()
@@ -722,11 +722,18 @@ def test_add_should_display_an_error_when_adding_existing_package_with_no_constr
     app.poetry.file.write(content)
 
     repo.add_package(get_package("foo", "1.1.2"))
+    tester.execute("foo")
 
-    with pytest.raises(ValueError) as e:
-        tester.execute("foo")
+    expected = """\
+The following packages are already present in the pyproject.toml and will be skipped:
 
-    assert "Package foo is already present" == str(e.value)
+  • foo
+
+If you want to update it to the latest compatible version, you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.
+"""
+
+    assert expected in tester.io.fetch_output()
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
@@ -1527,7 +1534,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["pyyaml"] == "^3.13"
 
 
-def test_add_should_display_an_error_when_adding_existing_package_with_no_constraint_old_installer(
+def test_add_should_skip_when_adding_existing_package_with_no_constraint_old_installer(
     app, repo, installer, old_tester
 ):
     content = app.poetry.file.read()
@@ -1536,10 +1543,18 @@ def test_add_should_display_an_error_when_adding_existing_package_with_no_constr
 
     repo.add_package(get_package("foo", "1.1.2"))
 
-    with pytest.raises(ValueError) as e:
-        old_tester.execute("foo")
+    old_tester.execute("foo")
 
-    assert "Package foo is already present" == str(e.value)
+    expected = """\
+The following packages are already present in the pyproject.toml and will be skipped:
+
+  • foo
+
+If you want to update it to the latest compatible version, you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.
+"""
+
+    assert expected in old_tester.io.fetch_output()
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint_old_installer(
