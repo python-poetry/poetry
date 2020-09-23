@@ -3,6 +3,7 @@ freebsd_instance:
 
 test_task:
   name: "Tests / FreeBSD / "
+  only_if: $CIRRUS_TAG == ''
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
     matrix:
