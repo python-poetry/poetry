@@ -39,7 +39,7 @@ release_task:
     matrix:
       - image_family: freebsd-12-1-snap
       - image_family: freebsd-11-3-snap
-  python_script: pkg install -y curl bash python3 python27 python35 python36 python37 python38
+  python_script: pkg install -y curl bash jq python3 python27 python35 python36 python37 python38
   pip_script:
     - python2.7 -m ensurepip
     - python3.5 -m ensurepip
@@ -51,8 +51,11 @@ release_task:
     #!/usr/bin/env bash
 
     if [[ "$CIRRUS_RELEASE" == "" ]]; then
-      echo "Not a release. No need to deploy!"
-      exit 0
+      CIRRUS_RELEASE=$(curl -sL https://api.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/tags/$CIRRUS_TAG | jq -r '.id')
+      if [[ "$CIRRUS_RELEASE" == "null" ]]; then
+        echo "Failed to find a release associated with this tag!"
+        exit 0
+      fi
     fi
 
     if [[ "$GITHUB_TOKEN" == "" ]]; then
