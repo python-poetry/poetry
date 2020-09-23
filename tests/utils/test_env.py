@@ -74,17 +74,27 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, manager
     assert venv.run("python", "-V", shell=True).startswith("Python")
 
 
-def test_env_get_in_project_venv(manager, poetry):
-    if "VIRTUAL_ENV" in os.environ:
-        del os.environ["VIRTUAL_ENV"]
+@pytest.fixture
+def in_project_venv_dir(poetry):
+    os.environ.pop("VIRTUAL_ENV", None)
+    venv_dir = poetry.file.parent.joinpath(".venv")
+    venv_dir.mkdir()
+    try:
+        yield venv_dir
+    finally:
+        venv_dir.rmdir()
 
-    (poetry.file.parent / ".venv").mkdir()
 
+@pytest.mark.parametrize("in_project", [True, False, None])
+def test_env_get_venv_with_venv_folder_present(
+    manager, poetry, in_project_venv_dir, in_project
+):
+    poetry.config.config["virtualenvs"]["in-project"] = in_project
     venv = manager.get()
-
-    assert venv.path == poetry.file.parent / ".venv"
-
-    shutil.rmtree(str(venv.path))
+    if in_project is False:
+        assert venv.path != in_project_venv_dir
+    else:
+        assert venv.path == in_project_venv_dir
 
 
 def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()

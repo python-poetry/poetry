@@ -33,7 +33,7 @@ which will give you something similar to this:
 ```toml
 cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
-virtualenvs.in-project = false
+virtualenvs.in-project = null
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 ```
 
@@ -110,7 +110,12 @@ Defaults to `true`.
 ### `virtualenvs.in-project`: boolean
 
 Create the virtualenv inside the project's root directory.
-Defaults to `false`.
+Defaults to `None`.
+
+If set to `true`, the virtualenv wil be created and expected in a folder named `.venv` within the root directory of the project.
+
+If not set explicitly (default), `poetry` will use the virtualenv from the `.venv` directory when one is available. If set to `false`, `poetry` will ignore any existing `.venv` directory.
+
 
 ### `virtualenvs.path`: string
 
