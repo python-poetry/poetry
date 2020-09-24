@@ -484,3 +484,185 @@ python = "~2.7 || ^3.6"
 """
 
     assert expected in tester.io.fetch_output()
+
+
+def test_predefined_dependency(app, repo, mocker, poetry):
+    repo.add_package(get_package("pendulum", "2.0.0"))
+
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__)
+
+    tester = CommandTester(command)
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+    tester.execute("--dependency pendulum", inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+pendulum = "^2.0.0"
+
+[tool.poetry.dev-dependencies]
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
+def test_predefined_and_interactive_dependencies(app, repo, mocker, poetry):
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pyramid", "1.10"))
+
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__)
+
+    tester = CommandTester(command)
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "",  # Interactive packages
+        "pyramid",  # Search for package
+        "0",  # First option
+        "",  # Do not set constraint
+        "",  # Stop searching for packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute("--dependency pendulum", inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+"""
+    output = tester.io.fetch_output()
+    assert expected in output
+    assert 'pendulum = "^2.0.0"' in output
+    assert 'pyramid = "^1.10"' in output
+
+
+def test_predefined_dev_dependency(app, repo, mocker, poetry):
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__)
+
+    tester = CommandTester(command)
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "n",  # Interactive packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute("--dev-dependency pytest", inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.6.0"
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
+def test_predefined_and_interactive_dev_dependencies(app, repo, mocker, poetry):
+    repo.add_package(get_package("pytest", "3.6.0"))
+    repo.add_package(get_package("pytest-requests", "0.2.0"))
+
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    mocker.patch("poetry.utils._compat.Path.open")
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__)
+
+    tester = CommandTester(command)
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "n",  # Interactive packages
+        "",  # Interactive dev packages
+        "pytest-requests",  # Search for package
+        "0",  # Select first option
+        "",  # Do not set constraint
+        "",  # Stop searching for dev packages
+        "\n",  # Generate
+    ]
+
+    tester.execute("--dev-dependency pytest", inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+
+[tool.poetry.dev-dependencies]
+"""
+
+    output = tester.io.fetch_output()
+    assert expected in output
+    assert 'pytest-requests = "^0.2.0"' in output
+    assert 'pytest = "^3.6.0"' in output
