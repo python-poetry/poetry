@@ -3,6 +3,7 @@ import shutil
 import pytest
 
 from poetry.core.packages import Dependency
+from poetry.factory import Factory
 from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
@@ -117,7 +118,10 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
         package.description == "Python Language Server for the Language Server Protocol"
     )
 
-    assert sorted(package.requires, key=lambda r: r.name) == [
+    assert 19 == len(package.requires)
+    assert sorted(
+        [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
+    ) == [
         Dependency("configparser", "*"),
         Dependency("future", ">=0.14.0"),
         Dependency("futures", "*"),
@@ -142,7 +146,7 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
 def test_find_packages_no_prereleases():
     repo = MockRepository()
 
-    packages = repo.find_packages("pyyaml")
+    packages = repo.find_packages(Factory.create_dependency("pyyaml", "*"))
 
     assert len(packages) == 1
 
@@ -154,7 +158,7 @@ def test_find_packages_no_prereleases():
 @pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
 def test_find_packages_only_prereleases(constraint, count):
     repo = MockRepository()
-    packages = repo.find_packages("black", constraint=constraint)
+    packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
     assert len(packages) == count
 
@@ -167,7 +171,7 @@ def test_find_packages_only_prereleases(constraint, count):
 
 def test_find_packages_only_prereleases_empty_when_not_any():
     repo = MockRepository()
-    packages = repo.find_packages("black", constraint=">=1")
+    packages = repo.find_packages(Factory.create_dependency("black", ">=1"))
 
     assert len(packages) == 0
 
@@ -213,6 +217,7 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
     assert "ipython" == package.name
     assert "5.7.0" == package.version.text
     assert "*" == package.python_versions
+    assert 26 == len(package.requires)
 
     expected = [
         Dependency("appnope", "*"),
@@ -229,16 +234,17 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
         Dependency("traitlets", ">=4.2"),
         Dependency("win-unicode-console", ">=0.5"),
     ]
-    assert expected == package.requires
+    required = [r for r in package.requires if not r.is_optional()]
+    assert expected == required
 
-    assert 'python_version == "2.7"' == str(package.requires[1].marker)
+    assert 'python_version == "2.7"' == str(required[1].marker)
     assert 'sys_platform == "win32" and python_version < "3.6"' == str(
-        package.requires[12].marker
+        required[12].marker
     )
     assert 'python_version == "2.7" or python_version == "3.3"' == str(
-        package.requires[4].marker
+        required[4].marker
     )
-    assert 'sys_platform != "win32"' == str(package.requires[5].marker)
+    assert 'sys_platform != "win32"' == str(required[5].marker)
 
 
 def test_get_package_with_dist_and_universal_py3_wheel():
@@ -265,7 +271,8 @@ def test_get_package_with_dist_and_universal_py3_wheel():
         Dependency("typing", "*"),
         Dependency("win-unicode-console", ">=0.5"),
     ]
-    assert expected == sorted(package.requires, key=lambda dep: dep.name)
+    required = [r for r in package.requires if not r.is_optional()]
+    assert expected == sorted(required, key=lambda dep: dep.name)
 
 
 def test_get_package_retrieves_non_sha256_hashes():

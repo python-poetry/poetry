@@ -55,10 +55,7 @@ class MakeReleaseCommand(Command):
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
         from poetry.utils._compat import Path
-        from poetry.utils._compat import decode
-        from poetry.utils._compat import encode
-        from poetry.utils._compat import subprocess
-        from poetry.utils.env import GET_BASE_PREFIX
+        from poetry.utils.env import EnvManager
         from poetry.utils.env import VirtualEnv
         from poetry.utils.helpers import temporary_directory
 
@@ -100,40 +97,34 @@ class MakeReleaseCommand(Command):
                         version
                     )
                 )
-                prefix = decode(
-                    subprocess.run(
-                        [python],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        input=encode(GET_BASE_PREFIX),
-                        check=True,
-                        shell=WINDOWS,
-                    ).stdout
-                )
-                env = VirtualEnv(Path(prefix.strip()), base=Path(prefix.strip()))
-                solver = Solver(package, pool, Repository(), Repository(), self.io)
-                with solver.use_environment(env):
-                    ops = solver.solve()
-                    for op in ops:
-                        if not env.is_valid_for_marker(op.package.marker):
-                            op.skip("Not needed for the current environment")
 
-                self.vendorize_for_python(
-                    python,
-                    [op.package for op in ops if not op.skipped],
-                    poetry_dir,
-                    version,
-                )
-                vendor_dir = Path(
-                    os.path.join(poetry_dir, "_vendor", "py{}".format(python))
-                )
-                created_files += [
-                    p.relative_to(Path(tmp_dir))
-                    for p in vendor_dir.glob("**/*")
-                    if p.is_file()
-                    and p.suffix != ".pyc"
-                    and str(p.relative_to(Path(tmp_dir))) not in vcs_excluded
-                ]
+                with temporary_directory() as tmp_venv_dir:
+                    venv_dir = Path(tmp_venv_dir) / ".venv"
+                    EnvManager.build_venv(venv_dir.as_posix(), executable=python)
+
+                    env = VirtualEnv(venv_dir, venv_dir)
+                    solver = Solver(package, pool, Repository(), Repository(), self.io)
+                    with solver.use_environment(env):
+                        ops = solver.solve()
+                        for op in ops:
+                            if not env.is_valid_for_marker(op.package.marker):
+                                op.skip("Not needed for the current environment")
+
+                    vendor_dir = Path(
+                        self.vendorize_for_python(
+                            env,
+                            [op.package for op in ops if not op.skipped],
+                            poetry_dir,
+                            version,
+                        )
+                    )
+                    created_files += [
+                        p.relative_to(Path(tmp_dir))
+                        for p in vendor_dir.glob("**/*")
+                        if p.is_file()
+                        and p.suffix != ".pyc"
+                        and str(p.relative_to(Path(tmp_dir))) not in vcs_excluded
+                    ]
 
                 self.line("")
 
@@ -227,7 +218,7 @@ class MakeReleaseCommand(Command):
             except subprocess.CalledProcessError:
                 raise RuntimeError("Python {} is not available".format(version))
 
-    def vendorize_for_python(self, python, packages, dest, python_version):
+    def vendorize_for_python(self, env, packages, dest, python_version):
         vendor_dir = os.path.join(dest, "_vendor", "py{}".format(python_version))
 
         bar = self.progress_bar(max=len(packages))
@@ -239,25 +230,20 @@ class MakeReleaseCommand(Command):
         )
         bar.start()
         for package in packages:
-            subprocess.check_output(
-                [
-                    python,
-                    "-m",
-                    "pip",
-                    "install",
-                    "{}=={}".format(package.name, package.version),
-                    "--no-deps",
-                    "--target",
-                    vendor_dir,
-                ],
-                stderr=subprocess.STDOUT,
-                shell=WINDOWS,
+            env.run_pip(
+                "install",
+                "{}=={}".format(package.name, package.version),
+                "--no-deps",
+                "--target",
+                vendor_dir,
             )
             bar.advance()
 
         bar.finish()
 
         self.line("")
+
+        return vendor_dir
 
 
 class MakeCommand(Command):

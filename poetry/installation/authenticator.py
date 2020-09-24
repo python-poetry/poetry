@@ -40,7 +40,7 @@ class Authenticator(object):
         self, method, url, **kwargs
     ):  # type: (str, str, Any) -> requests.Response
         request = requests.Request(method, url)
-        io = kwargs.get("io", self._io)
+        io = kwargs.get("io") or self._io
 
         username, password = self._get_credentials_for_url(url)
 
@@ -83,9 +83,12 @@ class Authenticator(object):
             if not is_last_attempt:
                 attempt += 1
                 delay = 0.5 * attempt
-                io.write_line(
-                    "<debug>Retrying HTTP request in {} seconds.</debug>".format(delay)
-                )
+                if io is not None:
+                    io.write_line(
+                        "<debug>Retrying HTTP request in {} seconds.</debug>".format(
+                            delay
+                        )
+                    )
                 time.sleep(delay)
                 continue
 

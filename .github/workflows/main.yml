@@ -36,15 +36,16 @@ jobs:
         shell: bash
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
-      - name: Install poetry
+      - name: Bootstrap poetry
         shell: bash
         run: |
-          python get-poetry.py -y --preview
-          echo "::set-env name=PATH::$HOME/.poetry/bin:$PATH"
+          python -m ensurepip
+          python -m pip install --upgrade pip
+          python -m pip install .
 
       - name: Configure poetry
         shell: bash
-        run: poetry config virtualenvs.in-project true
+        run: python -m poetry config virtualenvs.in-project true
 
       - name: Set up cache
         uses: actions/cache@v2
@@ -56,16 +57,12 @@ jobs:
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
         shell: bash
-        run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
-
-      - name: Upgrade pip
-        shell: bash
-        run: poetry run python -m pip install pip -U
+        run: python -m poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
 
       - name: Install dependencies
         shell: bash
-        run: poetry install
+        run: python -m poetry install
 
       - name: Run pytest
         shell: bash
-        run: poetry run python -m pytest -v tests
+        run: python -m poetry run python -m pytest -v tests

@@ -1,3 +1,5 @@
+import os
+
 from typing import Union
 
 from clikit.api.io import IO
@@ -84,18 +86,35 @@ class Exporter(object):
                     package.source_url, package.source_reference, package.name
                 )
             elif package.source_type in ["directory", "file", "url"]:
+                url = package.source_url
                 if package.source_type == "file":
-                    dependency = FileDependency(package.name, Path(package.source_url))
+                    dependency = FileDependency(
+                        package.name,
+                        Path(package.source_url),
+                        base=self._poetry.locker.lock.path.parent,
+                    )
+                    url = Path(
+                        os.path.relpath(
+                            url, self._poetry.locker.lock.path.parent.as_posix()
+                        )
+                    ).as_posix()
                 elif package.source_type == "directory":
                     dependency = DirectoryDependency(
-                        package.name, Path(package.source_url)
+                        package.name,
+                        Path(package.source_url),
+                        base=self._poetry.locker.lock.path.parent,
                     )
+                    url = Path(
+                        os.path.relpath(
+                            url, self._poetry.locker.lock.path.parent.as_posix()
+                        )
+                    ).as_posix()
                 else:
                     dependency = URLDependency(package.name, package.source_url)
 
                 dependency.marker = package.marker
 
-                line = "{}".format(package.source_url)
+                line = "{}".format(url)
                 if package.develop and package.source_type == "directory":
                     line = "-e " + line
             else:

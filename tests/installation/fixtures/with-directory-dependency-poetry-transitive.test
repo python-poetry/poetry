@@ -14,23 +14,21 @@ bar = ["tomlkit"]
 foo = ["cleo"]
 
 [package.source]
-reference = ""
 type = "file"
-url = "../../distributions/demo-0.1.0-py2.py3-none-any.whl"
+url = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
 
 [[package]]
 category = "main"
 description = "This is a description"
-develop = true
+develop = false
 name = "inner-directory-project"
 optional = false
 python-versions = "*"
 version = "1.2.4"
 
 [package.source]
-reference = ""
 type = "directory"
-url = "../project_with_transitive_file_dependencies/inner-directory-project"
+url = "project_with_transitive_file_dependencies/inner-directory-project"
 
 [[package]]
 category = "main"
@@ -43,7 +41,7 @@ version = "1.4.4"
 [[package]]
 category = "main"
 description = "This is a description"
-develop = true
+develop = false
 name = "project-with-extras"
 optional = false
 python-versions = "*"
@@ -54,14 +52,13 @@ extras_a = ["pendulum (>=1.4.4)"]
 extras_b = ["cachy (>=0.2.0)"]
 
 [package.source]
-reference = ""
 type = "directory"
 url = "../project_with_extras"
 
 [[package]]
 category = "main"
 description = "This is a description"
-develop = true
+develop = false
 name = "project-with-transitive-directory-dependencies"
 optional = false
 python-versions = "*"
@@ -72,14 +69,13 @@ project-with-extras = "1.2.3"
 project-with-transitive-file-dependencies = "1.2.3"
 
 [package.source]
-reference = ""
 type = "directory"
 url = "project_with_transitive_directory_dependencies"
 
 [[package]]
 category = "main"
 description = "This is a description"
-develop = true
+develop = false
 name = "project-with-transitive-file-dependencies"
 optional = false
 python-versions = "*"
@@ -90,7 +86,6 @@ demo = "0.1.0"
 inner-directory-project = "1.2.4"
 
 [package.source]
-reference = ""
 type = "directory"
 url = "project_with_transitive_file_dependencies"
 

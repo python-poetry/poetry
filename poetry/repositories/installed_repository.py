@@ -76,9 +76,9 @@ class InstalledRepository(Repository):
         revision = git.rev_parse("HEAD", src).strip()
         url = git.remote_url(src)
 
-        package.source_type = "git"
-        package.source_url = url
-        package.source_reference = revision
+        package._source_type = "git"
+        package._source_url = url
+        package._source_reference = revision
 
     @classmethod
     def set_package_vcs_properties(cls, package, env):  # type: (Package, Env) -> None
@@ -144,15 +144,15 @@ class InstalledRepository(Repository):
                                     break
                             else:
                                 # TODO: handle multiple source directories?
-                                package.source_type = "directory"
-                                package.source_url = paths.pop().as_posix()
+                                package._source_type = "directory"
+                                package._source_url = paths.pop().as_posix()
                     continue
 
                 if cls.is_vcs_package(path, env):
                     cls.set_package_vcs_properties(package, env)
                 else:
                     # If not, it's a path dependency
-                    package.source_type = "directory"
-                    package.source_url = str(path.parent)
+                    package._source_type = "directory"
+                    package._source_url = str(path.parent)
 
         return repo

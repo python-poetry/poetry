@@ -12,6 +12,8 @@ from subprocess import CalledProcessError
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.io.null_io import NullIO
+from poetry.utils._compat import PY2
+from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import cpu_count
@@ -39,7 +41,7 @@ class Executor(object):
         self._chef = Chef(config, self._env)
         self._chooser = Chooser(pool, self._env)
 
-        if parallel:
+        if parallel and not (PY2 and WINDOWS):
             # This should be directly handled by ThreadPoolExecutor
             # however, on some systems the number of CPUs cannot be determined
             # (it raises a NotImplementedError), so, in this case, we assume
@@ -556,7 +558,7 @@ class Executor(object):
         git.checkout(package.source_reference, src_dir)
 
         # Now we just need to install from the source directory
-        package.source_url = str(src_dir)
+        package._source_url = str(src_dir)
 
         return self._install_directory(operation)
 
@@ -599,7 +601,7 @@ class Executor(object):
 
     def _download_archive(self, operation, link):  # type: (Operation, Link) -> Path
         response = self._authenticator.request(
-            "get", link.url, stream=True, io=self._sections.get(id(operation))
+            "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
         )
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)

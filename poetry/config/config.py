@@ -34,7 +34,7 @@ class Config(object):
         "cache-dir": str(CACHE_DIR),
         "virtualenvs": {
             "create": True,
-            "in-project": False,
+            "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
         },
         "experimental": {"new-installer": True},

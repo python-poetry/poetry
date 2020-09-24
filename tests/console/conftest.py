@@ -181,14 +181,11 @@ class Poetry(BasePoetry):
 
 
 class Repository(BaseRepository):
-    def find_packages(
-        self, name, constraint=None, extras=None, allow_prereleases=False
-    ):
-        packages = super(Repository, self).find_packages(
-            name, constraint, extras, allow_prereleases
-        )
+    def find_packages(self, dependency):
+        packages = super(Repository, self).find_packages(dependency)
         if len(packages) == 0:
-            raise PackageNotFound("Package [{}] not found.".format(name))
+            raise PackageNotFound("Package [{}] not found.".format(dependency.name))
+
         return packages
 
     def find_links_for_package(self, package):

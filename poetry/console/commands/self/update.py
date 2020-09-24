@@ -15,6 +15,8 @@ from gzip import GzipFile
 from cleo import argument
 from cleo import option
 
+from poetry.core.packages import Dependency
+
 from ..command import Command
 
 
@@ -89,7 +91,7 @@ class SelfUpdateCommand(Command):
 
         repo = PyPiRepository(fallback=False)
         packages = repo.find_packages(
-            "poetry", version, allow_prereleases=self.option("preview")
+            Dependency("poetry", version, allows_prereleases=self.option("preview"))
         )
         if not packages:
             self.line("No release found for the specified version")

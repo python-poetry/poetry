@@ -65,26 +65,35 @@ def test_execute_executes_a_batch_of_operations(
     env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
 
-    file_package = Package("demo", "0.1.0")
-    file_package.source_type = "file"
-    file_package.source_url = str(
-        Path(__file__)
+    file_package = Package(
+        "demo",
+        "0.1.0",
+        source_type="file",
+        source_url=Path(__file__)
         .parent.parent.joinpath(
             "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
         )
         .resolve()
+        .as_posix(),
     )
 
-    directory_package = Package("simple-project", "1.2.3")
-    directory_package.source_type = "directory"
-    directory_package.source_url = str(
-        Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=Path(__file__)
+        .parent.parent.joinpath("fixtures/simple_project")
+        .resolve()
+        .as_posix(),
     )
 
-    git_package = Package("demo", "0.1.0")
-    git_package.source_type = "git"
-    git_package.source_reference = "master"
-    git_package.source_url = "https://github.com/demo/demo.git"
+    git_package = Package(
+        "demo",
+        "0.1.0",
+        source_type="git",
+        source_reference="master",
+        source_url="https://github.com/demo/demo.git",
+    )
 
     assert 0 == executor.execute(
         [

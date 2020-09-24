@@ -9,7 +9,7 @@ python-versions = "*"
 [[package]]
 name = "my-package"
 version = "0.1.2"
-develop = true
+develop = false
 description = "Demo project."
 category = "main"
 optional = false
@@ -17,7 +17,6 @@ python-versions = "*"
 
 [package.source]
 type = "directory"
-reference = ""
 url = "tests/fixtures/project_with_setup"
 
 [package.dependencies]

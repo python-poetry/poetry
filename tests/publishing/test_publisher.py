@@ -2,6 +2,8 @@ import os
 
 import pytest
 
+from cleo.io import BufferedIO
+
 from poetry.factory import Factory
 from poetry.io.null_io import NullIO
 from poetry.publishing.publisher import Publisher
@@ -38,7 +40,8 @@ def test_publish_can_publish_to_given_repository(fixture_dir, mocker, config):
             "http-basic": {"my-repo": {"username": "foo", "password": "bar"}},
         }
     )
-    publisher = Publisher(poetry, NullIO())
+    io = BufferedIO()
+    publisher = Publisher(poetry, io)
 
     publisher.publish("my-repo", None, None)
 
@@ -47,6 +50,7 @@ def test_publish_can_publish_to_given_repository(fixture_dir, mocker, config):
         ("http://foo.bar",),
         {"cert": None, "client_cert": None, "dry_run": False},
     ] == uploader_upload.call_args
+    assert "Publishing my-package (1.2.3) to my-repo" in io.fetch_output()
 
 
 def test_publish_raises_error_for_undefined_repository(fixture_dir, mocker, config):

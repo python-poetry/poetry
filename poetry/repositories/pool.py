@@ -144,13 +144,9 @@ class Pool(BaseRepository):
         raise PackageNotFound("Package {} ({}) not found.".format(name, version))
 
     def find_packages(
-        self,
-        name,
-        constraint=None,
-        extras=None,
-        allow_prereleases=False,
-        repository=None,
+        self, dependency,
     ):
+        repository = dependency.source_name
         if repository is not None:
             repository = repository.lower()
 
@@ -162,15 +158,11 @@ class Pool(BaseRepository):
             raise ValueError('Repository "{}" does not exist.'.format(repository))
 
         if repository is not None and not self._ignore_repository_names:
-            return self.repository(repository).find_packages(
-                name, constraint, extras=extras, allow_prereleases=allow_prereleases
-            )
+            return self.repository(repository).find_packages(dependency)
 
         packages = []
-        for idx, repo in enumerate(self._repositories):
-            packages += repo.find_packages(
-                name, constraint, extras=extras, allow_prereleases=allow_prereleases
-            )
+        for repo in self._repositories:
+            packages += repo.find_packages(dependency)
 
         return packages
 

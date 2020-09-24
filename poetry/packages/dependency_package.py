@@ -1,18 +1,30 @@
+from typing import List
+
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+
+
 class DependencyPackage(object):
-    def __init__(self, dependency, package):
+    def __init__(self, dependency, package):  # type: (Dependency, Package) -> None
         self._dependency = dependency
         self._package = package
 
     @property
-    def dependency(self):
+    def dependency(self):  # type: () -> Dependency
         return self._dependency
 
     @property
-    def package(self):
+    def package(self):  # type: () -> Package
         return self._package
 
     def clone(self):  # type: () -> DependencyPackage
         return self.__class__(self._dependency, self._package.clone())
+
+    def with_features(self, features):  # type: (List[str]) -> "DependencyPackage"
+        return self.__class__(self._dependency, self._package.with_features(features))
+
+    def without_features(self):  # type: () -> "DependencyPackage"
+        return self.with_features([])
 
     def __getattr__(self, name):
         return getattr(self._package, name)

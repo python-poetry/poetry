@@ -29,25 +29,14 @@ class Repository(BaseRepository):
 
         for package in self.packages:
             if name == package.name and package.version.text == version:
-                # Activate extra dependencies
-                for extra in extras:
-                    if extra in package.extras:
-                        for extra_dep in package.extras[extra]:
-                            for dep in package.requires:
-                                if dep.name == extra_dep.name:
-                                    dep.activate()
+                package = package.with_features(extras)
 
-                return package.clone()
+                return package
 
-    def find_packages(
-        self, name, constraint=None, extras=None, allow_prereleases=False
-    ):
-        name = name.lower()
+    def find_packages(self, dependency):
+        constraint = dependency.constraint
         packages = []
         ignored_pre_release_packages = []
-
-        if extras is None:
-            extras = []
 
         if constraint is None:
             constraint = "*"
@@ -55,6 +44,7 @@ class Repository(BaseRepository):
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        allow_prereleases = dependency.allows_prereleases
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
@@ -65,7 +55,7 @@ class Repository(BaseRepository):
                 allow_prereleases = True
 
         for package in self.packages:
-            if name == package.name:
+            if dependency.name == package.name:
                 if (
                     package.is_prerelease()
                     and not allow_prereleases
@@ -79,19 +69,6 @@ class Repository(BaseRepository):
                     continue
 
                 if constraint.allows(package.version):
-                    for dep in package.requires:
-                        for extra in extras:
-                            if extra not in package.extras:
-                                continue
-
-                            reqs = package.extras[extra]
-                            for req in reqs:
-                                if req.name == dep.name:
-                                    dep.activate()
-
-                    if extras:
-                        package.requires_extras = extras
-
                     packages.append(package)
 
         return packages or ignored_pre_release_packages
