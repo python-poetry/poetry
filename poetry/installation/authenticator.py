@@ -134,7 +134,6 @@ class Authenticator(object):
     def _get_credentials_for_netloc_from_config(
         self, netloc
     ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
-        credentials = (None, None)
         for repository_name in self._config.get("repositories", {}):
             repository_config = self._config.get(
                 "repositories.{}".format(repository_name)
@@ -156,4 +155,4 @@ class Authenticator(object):
 
                 return auth["username"], auth["password"]
 
-        return credentials
+        return (None, None)
