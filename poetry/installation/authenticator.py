@@ -1,3 +1,4 @@
+import os
 import time
 
 from typing import TYPE_CHECKING
@@ -134,8 +135,14 @@ class Authenticator(object):
     def _get_credentials_for_netloc_from_config(
         self, netloc
     ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
-        for repo_name, repo_config in self._config.get("repositories", {}).items():
-            url = repo_config.get("url")
+        environ_repo_names = [
+            v.split("_")[2].lower()
+            for v in os.environ
+            if v.startswith("POETRY_REPOSITORIES_")
+        ]
+        config_repo_names = list(self._config.get("repositories", {}))
+        for repo_name in config_repo_names + environ_repo_names:
+            url = self._config.get("repositories.{}.url".format(repo_name))
             if not url:
                 continue
 

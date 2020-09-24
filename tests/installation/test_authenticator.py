@@ -48,6 +48,21 @@ def test_authenticator_uses_env_provided_credentials(
     assert "Basic YmFyOmJheg==" == request.headers["Authorization"]
 
 
+def test_authenticator_uses_env_provided_credentials_and_repo(
+    config, environ, mock_remote, http
+):
+    os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar/simple/"
+    os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
+    os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"
+
+    authenticator = Authenticator(config, NullIO())
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.last_request()
+
+    assert "Basic YmFyOmJheg==" == request.headers["Authorization"]
+
+
 def test_authenticator_uses_credentials_from_config_if_not_provided(
     config, mock_remote, http
 ):
