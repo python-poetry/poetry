@@ -134,21 +134,15 @@ class Authenticator(object):
     def _get_credentials_for_netloc_from_config(
         self, netloc
     ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
-        for repository_name in self._config.get("repositories", {}):
-            repository_config = self._config.get(
-                "repositories.{}".format(repository_name)
-            )
-            if not repository_config:
-                continue
-
-            url = repository_config.get("url")
+        for repo_name, repo_config in self._config.get("repositories", {}).items():
+            url = repo_config.get("url")
             if not url:
                 continue
 
             parsed_url = urlparse.urlsplit(url)
 
             if netloc == parsed_url.netloc:
-                auth = self._password_manager.get_http_auth(repository_name)
+                auth = self._password_manager.get_http_auth(repo_name)
 
                 if auth is None:
                     continue
