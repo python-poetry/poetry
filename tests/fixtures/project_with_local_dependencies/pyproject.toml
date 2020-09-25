@@ -27,7 +27,7 @@ python = "~2.7 || ^3.4"
 demo = { path = "../distributions/demo-0.1.0-py2.py3-none-any.whl" }
 
 # Dir dependency with setup.py
-my-package = { path = "../project_with_setup/" }
+project-with-setup = { path = "../project_with_setup/" }
 
 
 [tool.poetry.scripts]

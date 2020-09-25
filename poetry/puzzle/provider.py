@@ -67,6 +67,7 @@ class Provider:
         self._in_progress = False
         self._overrides = {}
         self._deferred_cache = {}
+        self._load_deferred = True
 
     @property
     def pool(self):  # type: () -> Pool
@@ -77,6 +78,9 @@ class Provider:
 
     def set_overrides(self, overrides):
         self._overrides = overrides
+
+    def load_deferred(self, load_deferred):  # type: (bool) -> None
+        self._load_deferred = load_deferred
 
     @contextmanager
     def use_environment(self, env):  # type: (Env) -> Provider
@@ -436,16 +440,17 @@ class Provider:
         else:
             requires = package.requires
 
-        # Retrieving constraints for deferred dependencies
-        for r in requires:
-            if r.is_directory():
-                self.search_for_directory(r)
-            elif r.is_file():
-                self.search_for_file(r)
-            elif r.is_vcs():
-                self.search_for_vcs(r)
-            elif r.is_url():
-                self.search_for_url(r)
+        if self._load_deferred:
+            # Retrieving constraints for deferred dependencies
+            for r in requires:
+                if r.is_directory():
+                    self.search_for_directory(r)
+                elif r.is_file():
+                    self.search_for_file(r)
+                elif r.is_vcs():
+                    self.search_for_vcs(r)
+                elif r.is_url():
+                    self.search_for_url(r)
 
         optional_dependencies = []
         activated_extras = []

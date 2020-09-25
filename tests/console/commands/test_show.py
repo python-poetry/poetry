@@ -8,6 +8,11 @@ from tests.helpers import get_package
 
 
 def test_show_basic_with_installed_packages(app, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+    poetry.package.add_dependency(
+        Factory.create_dependency("pytest", "^3.7.3", category="dev")
+    )
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -80,6 +85,9 @@ pytest   3.7.3 Pytest package
 
 
 def test_show_basic_with_not_installed_packages_non_decorated(app, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -134,6 +142,9 @@ pendulum (!) 2.0.0 Pendulum package
 
 
 def test_show_basic_with_not_installed_packages_decorated(app, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -189,6 +200,9 @@ def test_show_basic_with_not_installed_packages_decorated(app, poetry, installed
 
 
 def test_show_latest_non_decorated(app, poetry, installed, repo):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -254,6 +268,9 @@ pendulum 2.0.0 2.0.1 Pendulum package
 
 
 def test_show_latest_decorated(app, poetry, installed, repo):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -320,6 +337,9 @@ def test_show_latest_decorated(app, poetry, installed, repo):
 
 
 def test_show_outdated(app, poetry, installed, repo):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -421,6 +441,9 @@ def test_show_outdated_with_only_up_to_date_packages(app, poetry, installed, rep
 
 
 def test_show_outdated_has_prerelease_but_not_allowed(app, poetry, installed, repo):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -487,6 +510,13 @@ cachy 0.1.0 0.2.0 Cachy package
 
 
 def test_show_outdated_has_prerelease_and_allowed(app, poetry, installed, repo):
+    poetry.package.add_dependency(
+        Factory.create_dependency(
+            "cachy", {"version": "^0.1.0", "allow-prereleases": True}
+        )
+    )
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -553,6 +583,9 @@ cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
 
 
 def test_show_outdated_formatting(app, poetry, installed, repo):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -622,10 +655,10 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
     command = app.find("show")
     tester = CommandTester(command)
 
-    cachy_010 = get_package("cachy", "0.1.0")
-    cachy_010.description = "Cachy package"
     cachy_020 = get_package("cachy", "0.2.0")
     cachy_020.description = "Cachy package"
+    cachy_030 = get_package("cachy", "0.3.0")
+    cachy_030.description = "Cachy package"
 
     pendulum_200 = get_package("pendulum", "2.0.0")
     pendulum_200.description = "Pendulum package"
@@ -633,16 +666,16 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
     demo_010 = get_package("demo", "0.1.0")
     demo_010.description = ""
 
-    my_package_012 = get_package("my-package", "0.1.2")
+    my_package_012 = get_package("project-with-setup", "0.1.2")
     my_package_012.description = "Demo project."
 
-    installed.add_package(cachy_010)
+    installed.add_package(cachy_020)
     installed.add_package(pendulum_200)
     installed.add_package(demo_010)
     installed.add_package(my_package_012)
 
-    repo.add_package(cachy_010)
     repo.add_package(cachy_020)
+    repo.add_package(cachy_030)
     repo.add_package(pendulum_200)
 
     poetry.locker.mock_lock_data(
@@ -650,7 +683,7 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
             "package": [
                 {
                     "name": "cachy",
-                    "version": "0.1.0",
+                    "version": "0.2.0",
                     "description": "Cachy package",
                     "category": "main",
                     "optional": False,
@@ -684,7 +717,7 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
                     },
                 },
                 {
-                    "name": "my-package",
+                    "name": "project-with-setup",
                     "version": "0.1.1",
                     "description": "Demo project.",
                     "category": "main",
@@ -692,6 +725,10 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
                     "platform": "*",
                     "python-versions": "*",
                     "checksum": [],
+                    "dependencies": {
+                        "pendulum": "pendulum>=1.4.4",
+                        "cachy": {"version": ">=0.2.0", "extras": ["msgpack"]},
+                    },
                     "source": {
                         "type": "directory",
                         "reference": "",
@@ -703,7 +740,12 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "demo": [], "my-package": []},
+                "hashes": {
+                    "cachy": [],
+                    "pendulum": [],
+                    "demo": [],
+                    "project-with-setup": [],
+                },
             },
         }
     )
@@ -711,8 +753,8 @@ def test_show_outdated_local_dependencies(app, poetry, installed, repo):
     tester.execute("--outdated")
 
     expected = """\
-cachy      0.1.0                       0.2.0
-my-package 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
+cachy              0.2.0                       0.3.0
+project-with-setup 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 """
     assert expected.rstrip() == "\n".join(
         line.rstrip() for line in tester.io.fetch_output().splitlines()
@@ -723,6 +765,7 @@ my-package 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 def test_show_outdated_git_dev_dependency(app, poetry, installed, repo):
     command = app.find("show")
     tester = CommandTester(command)
+    print(poetry.package.all_requires)
 
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
@@ -735,13 +778,18 @@ def test_show_outdated_git_dev_dependency(app, poetry, installed, repo):
     demo_011 = get_package("demo", "0.1.1")
     demo_011.description = "Demo package"
 
+    pytest = get_package("pytest", "3.4.3")
+    pytest.description = "Pytest"
+
     installed.add_package(cachy_010)
     installed.add_package(pendulum_200)
     installed.add_package(demo_011)
+    installed.add_package(pytest)
 
     repo.add_package(cachy_010)
     repo.add_package(cachy_020)
     repo.add_package(pendulum_200)
+    repo.add_package(pytest)
 
     poetry.locker.mock_lock_data(
         {
@@ -778,15 +826,26 @@ def test_show_outdated_git_dev_dependency(app, poetry, installed, repo):
                     "source": {
                         "type": "git",
                         "reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
-                        "url": "https://github.com/demo/pyproject-demo.git",
+                        "resolved_reference": "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+                        "url": "https://github.com/demo/demo.git",
                     },
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.4.3",
+                    "description": "Pytest",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
                 },
             ],
             "metadata": {
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "demo": []},
+                "hashes": {"cachy": [], "pendulum": [], "demo": [], "pytest": []},
             },
         }
     )
@@ -817,13 +876,18 @@ def test_show_outdated_no_dev_git_dev_dependency(app, poetry, installed, repo):
     demo_011 = get_package("demo", "0.1.1")
     demo_011.description = "Demo package"
 
+    pytest = get_package("pytest", "3.4.3")
+    pytest.description = "Pytest"
+
     installed.add_package(cachy_010)
     installed.add_package(pendulum_200)
     installed.add_package(demo_011)
+    installed.add_package(pytest)
 
     repo.add_package(cachy_010)
     repo.add_package(cachy_020)
     repo.add_package(pendulum_200)
+    repo.add_package(pytest)
 
     poetry.locker.mock_lock_data(
         {
@@ -863,12 +927,22 @@ def test_show_outdated_no_dev_git_dev_dependency(app, poetry, installed, repo):
                         "url": "https://github.com/demo/pyproject-demo.git",
                     },
                 },
+                {
+                    "name": "pytest",
+                    "version": "3.4.3",
+                    "description": "Pytest",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
             ],
             "metadata": {
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"cachy": [], "pendulum": [], "demo": []},
+                "hashes": {"cachy": [], "pendulum": [], "demo": [], "pytest": []},
             },
         }
     )
@@ -883,6 +957,10 @@ cachy 0.1.0 0.2.0 Cachy package
 
 
 def test_show_hides_incompatible_package(app, poetry, installed, repo):
+    poetry.package.add_dependency(
+        Factory.create_dependency("cachy", {"version": "^0.1.0", "python": "< 2.0"})
+    )
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
     command = app.find("show")
     tester = CommandTester(command)
 
@@ -906,7 +984,6 @@ def test_show_hides_incompatible_package(app, poetry, installed, repo):
                     "platform": "*",
                     "python-versions": "*",
                     "checksum": [],
-                    "requirements": {"python": "1.0"},
                 },
                 {
                     "name": "pendulum",

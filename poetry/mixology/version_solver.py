@@ -340,7 +340,12 @@ class VersionSolver:
                 # only has one version to choose from.
                 return 1
 
-            if dependency.name in self._locked:
+            locked = self._get_locked(dependency)
+            if locked and (
+                dependency.constraint.allows(locked.version)
+                or locked.is_prerelease()
+                and dependency.constraint.allows(locked.version.next_patch)
+            ):
                 return 1
 
             # VCS, URL, File or Directory dependencies
@@ -377,17 +382,17 @@ class VersionSolver:
                 version = packages[0]
             except IndexError:
                 version = None
+
+            if version is None:
+                # If there are no versions that satisfy the constraint,
+                # add an incompatibility that indicates that.
+                self._add_incompatibility(
+                    Incompatibility([Term(dependency, True)], NoVersionsCause())
+                )
+
+                return dependency.complete_name
         else:
             version = locked
-
-        if version is None:
-            # If there are no versions that satisfy the constraint,
-            # add an incompatibility that indicates that.
-            self._add_incompatibility(
-                Incompatibility([Term(dependency, True)], NoVersionsCause())
-            )
-
-            return dependency.complete_name
 
         version = self._provider.complete_package(version)
 
@@ -451,10 +456,10 @@ class VersionSolver:
             )
 
     def _get_locked(self, dependency):  # type: (Dependency) -> Union[Package, None]
-        if dependency.complete_name in self._use_latest:
+        if dependency.name in self._use_latest:
             return
 
-        locked = self._locked.get(dependency.complete_name)
+        locked = self._locked.get(dependency.name)
         if not locked:
             return
 
