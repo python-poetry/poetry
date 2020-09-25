@@ -326,7 +326,7 @@ class PackageInfo:
             requires_python=python_requires,
         )
 
-        if not (info.name and info.version) and not info.requires_dist:
+        if not info.name or not info.version:
             # there is nothing useful here
             raise PackageInfoError(path)
 
