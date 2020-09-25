@@ -1,4 +1,5 @@
 import cgi
+import hashlib
 import re
 import urllib.parse
 import warnings
@@ -27,6 +28,8 @@ from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils.helpers import canonicalize_name
+from poetry.utils.helpers import download_file
+from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
 
 from ..config.config import Config
@@ -374,10 +377,37 @@ class LegacyRepository(PyPiRepository):
             ):
                 urls["sdist"].append(link.url)
 
-            h = link.hash
-            if h:
-                h = link.hash_name + ":" + link.hash
-                files.append({"file": link.filename, "hash": h})
+            file_hash = "{}:{}".format(link.hash_name, link.hash) if link.hash else None
+
+            if not link.hash or (
+                link.hash_name not in ("sha256", "sha384", "sha512")
+                and hasattr(hashlib, link.hash_name)
+            ):
+                with temporary_directory() as temp_dir:
+                    filepath = Path(temp_dir) / link.filename
+                    self._download(link.url, str(filepath))
+
+                    known_hash = (
+                        getattr(hashlib, link.hash_name)() if link.hash_name else None
+                    )
+                    required_hash = hashlib.sha256()
+
+                    chunksize = 4096
+                    with filepath.open("rb") as f:
+                        while True:
+                            chunk = f.read(chunksize)
+                            if not chunk:
+                                break
+                            if known_hash:
+                                known_hash.update(chunk)
+                            required_hash.update(chunk)
+
+                    if not known_hash or known_hash.hexdigest() == link.hash:
+                        file_hash = "{}:{}".format(
+                            required_hash.name, required_hash.hexdigest()
+                        )
+
+            files.append({"file": link.filename, "hash": file_hash})
 
         data.files = files
 
@@ -415,3 +445,6 @@ class LegacyRepository(PyPiRepository):
             )
 
         return Page(response.url, response.content, response.headers)
+
+    def _download(self, url, dest):  # type: (str, str) -> None
+        return download_file(url, dest, session=self.session)
