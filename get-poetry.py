@@ -317,7 +317,7 @@ class Installer:
         r"v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
         "("
         "[._-]?"
-        r"(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
+        r"(?:(stable|beta|b|rc|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
         "([.-]?dev)?"
         ")?"
         r"(?:\+[^\s]+)?"
