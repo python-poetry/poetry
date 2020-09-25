@@ -1,13 +1,11 @@
 import json
 import os
+import pkgutil
 
 from io import open
 from typing import List
 
 import jsonschema
-
-
-SCHEMA_DIR = os.path.join(os.path.dirname(__file__), "schemas")
 
 
 class ValidationError(ValueError):
@@ -16,13 +14,17 @@ class ValidationError(ValueError):
 
 
 def validate_object(obj, schema_name):  # type: (dict, str) -> List[str]
-    schema = os.path.join(SCHEMA_DIR, "{}.json".format(schema_name))
 
-    if not os.path.exists(schema):
+    # 'poetry.json.schemas' is not an acceptable package (it is a namespace
+    # package since it does not contain an '__init__.py' initializer). So we
+    # use 'poetry.json' and the rest is part of the resource name.
+    schema_resource_name = "schemas/{}.json".format(schema_name)
+
+    schema_binary = pkgutil.get_data("poetry.json", schema_resource_name)
+    if schema_binary is None:
         raise ValueError("Schema {} does not exist.".format(schema_name))
 
-    with open(schema, encoding="utf-8") as f:
-        schema = json.loads(f.read())
+    schema = json.loads(schema_binary)
 
     validator = jsonschema.Draft7Validator(schema)
     validation_errors = sorted(validator.iter_errors(obj), key=lambda e: e.path)
