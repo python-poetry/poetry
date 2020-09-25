@@ -859,7 +859,7 @@ def test_run_installs_with_local_setuptools_directory(
 ):
     file_path = fixtures_dir / "project_with_setup/"
     package.add_dependency(
-        Factory.create_dependency("my-package", {"path": str(file_path)})
+        Factory.create_dependency("project-with-setup", {"path": str(file_path)})
     )
 
     repo.add_package(get_package("pendulum", "1.4.4"))

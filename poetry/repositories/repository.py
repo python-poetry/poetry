@@ -44,7 +44,7 @@ class Repository(BaseRepository):
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
-        allow_prereleases = dependency.allows_prereleases
+        allow_prereleases = dependency.allows_prereleases()
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
@@ -68,7 +68,10 @@ class Repository(BaseRepository):
                         ignored_pre_release_packages.append(package)
                     continue
 
-                if constraint.allows(package.version):
+                if constraint.allows(package.version) or (
+                    package.is_prerelease()
+                    and constraint.allows(package.version.next_patch)
+                ):
                     packages.append(package)
 
         return packages or ignored_pre_release_packages
