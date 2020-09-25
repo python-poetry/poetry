@@ -20,15 +20,10 @@ jobs:
       run: |
         make linux_release
     - name: Upload release file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
-        name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-    - name: Upload checksum file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
+        name: release-files
+        path: releases/poetry-${{ steps.tag.outputs.tag }}-linux.*
 
   MacOS:
     runs-on: macos-latest
@@ -70,15 +65,10 @@ jobs:
         source $HOME/.poetry/env
         poetry run python sonnet make release --ansi -P "2.7:python-2.7.17/bin/python" -P "3.5:python-3.5.9/bin/python" -P "3.6:python-3.6.8/bin/python" -P "3.7:python-3.7.6/bin/python" -P "3.8:python-3.8.3/bin/python" -P "3.9:python-3.9.0b4/bin/python"
     - name: Upload release file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
-        name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-    - name: Upload checksum file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
+        name: release-files
+        path: releases/poetry-${{ steps.tag.outputs.tag }}-darwin.*
 
   Windows:
     runs-on: windows-latest
@@ -128,15 +118,10 @@ jobs:
         $env:Path += ";$env:Userprofile\.poetry\bin"
         poetry run python sonnet make release --ansi -P "2.7:python-2.7.17\python.exe" -P "3.5:python-3.5.4\python.exe" -P "3.6:python-3.6.8\python.exe" -P "3.7:python-3.7.6\python.exe" -P "3.8:python-3.8.3\python.exe" -P "3.9:python-3.9.0b4\python.exe"
     - name: Upload release file
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
-        name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-    - name: Upload checksum file
-      uses: actions/upload-artifact@v1
-      with:
-        name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
-        path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
+        name: release-files
+        path: releases/poetry-${{ steps.tag.outputs.tag }}-win32.*
 
   Release:
     needs: [Linux, MacOS, Windows]
@@ -149,35 +134,10 @@ jobs:
         id: tag
         run: |
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
-      - name: Download Linux release file
-        uses: actions/download-artifact@master
+      - name: Download release file
+        uses: actions/download-artifact@v2
         with:
-          name: poetry-${{ steps.tag.outputs.tag }}-linux.tar.gz
-          path: releases/
-      - name: Download Linux checksum file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-linux.sha256sum
-          path: releases/
-      - name: Download MacOS release file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-darwin.tar.gz
-          path: releases/
-      - name: Download MacOS checksum file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-darwin.sha256sum
-          path: releases/
-      - name: Download Windows release file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-win32.tar.gz
-          path: releases/
-      - name: Download Windows checksum file
-        uses: actions/download-artifact@master
-        with:
-          name: poetry-${{ steps.tag.outputs.tag }}-win32.sha256sum
+          name: release-files
           path: releases/
       - name: Create Release
         run: gh release create '${{ steps.tag.outputs.tag }}' --title '${{ steps.tag.outputs.tag }}' ./releases/*
