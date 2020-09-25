@@ -2463,3 +2463,36 @@ def test_solver_can_resolve_transitive_extras(solver, repo, package):
             {"job": "install", "package": pyota},
         ],
     )
+
+
+def test_solver_can_resolve_python_restricted_package_dependencies(
+    solver, repo, package, locked
+):
+    package.add_dependency(
+        Factory.create_dependency("futures", {"version": "^3.3.0", "python": "~2.7"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("pre-commit", {"version": "^2.6", "python": "^3.6.1"})
+    )
+
+    futures = Package("futures", "3.3.0")
+    futures.python_versions = ">=2.6, <3"
+
+    pre_commit = Package("pre-commit", "2.7.1")
+    pre_commit.python_versions = ">=3.6.1"
+
+    locked.add_package(futures)
+    locked.add_package(pre_commit)
+
+    repo.add_package(futures)
+    repo.add_package(pre_commit)
+
+    ops = solver.solve(use_latest=["pre-commit"])
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": futures},
+            {"job": "install", "package": pre_commit},
+        ],
+    )
