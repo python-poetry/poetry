@@ -32,18 +32,17 @@ release_task:
     GITHUB_TOKEN: ENCRYPTED[2b573a2d28a03523ac6fb5b3c2f513a41c0a98db81e40e50e1d103b171f85c57e58ae38d957499dbf7fd7635cfcfd7be]
     PYTHON: python3.8
     PYTHON27: python2.7
-    PYTHON35: python3.5
     PYTHON36: python3.6
     PYTHON37: python3.7
     PYTHON38: python3.8
   freebsd_instance:
     matrix:
       - image_family: freebsd-12-1-snap
-      - image_family: freebsd-11-3-snap
-  python_script: pkg install -y curl bash jq python3 python27 python35 python36 python37 python38
+      - image_family: freebsd-13-0-snap
+      - image_family: freebsd-11-4-snap
+  python_script: pkg install -y curl bash jq python3 python27 python36 python37 python38
   pip_script:
     - python2.7 -m ensurepip
-    - python3.5 -m ensurepip
     - python3.6 -m ensurepip
     - python3.7 -m ensurepip
     - python3.8 -m ensurepip
