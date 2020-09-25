@@ -326,7 +326,7 @@ class PackageInfo:
             requires_python=python_requires,
         )
 
-        if not info.name or not info.version:
+        if not (info.name and info.version) and not info.requires_dist:
             # there is nothing useful here
             raise PackageInfoError(path)
 
@@ -436,7 +436,7 @@ class PackageInfo:
         info = None
         try:
             info = cls.from_setup_files(path)
-            if info.requires_dist is not None:
+            if all([info.version, info.name, info.requires_dist]):
                 return info
         except PackageInfoError:
             pass
