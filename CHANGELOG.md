@@ -1,5 +1,21 @@
 # Change Log
 
+## [1.1.0rc1] - 2020-09-25
+
+### Changed
+
+- The `virtualenvs.in-project` setting will now always be honored, if set explicitly, regardless of the presence of a `.venv` directory ([#2771](https://github.com/python-poetry/poetry/pull/2771)).
+- Adding packages already present in the `pyproject.toml` file will no longer raise an error ([#2886](https://github.com/python-poetry/poetry/pull/2886)).
+- Errors when authenticating against custom repositories will now be logged ([#2577](https://github.com/python-poetry/poetry/pull/2577)).
+
+### Fixed
+
+- Fixed an error on Python 3.5 when resolving URL dependencies ([#2954](https://github.com/python-poetry/poetry/pull/2954)).
+- Fixed the `dependency` option of the `init` command being ignored ([#2587](https://github.com/python-poetry/poetry/pull/2587)).
+- Fixed the `show` command displaying erroneous information following the changes in the lock file format ([#2967](https://github.com/python-poetry/poetry/pull/2967)).
+- Fixed dependency resolution errors due to invalid python constraints propagation ([#2968](https://github.com/python-poetry/poetry/pull/2968)).
+
+
 ## [1.1.0b4] - 2020-09-23
 
 ### Changed
@@ -988,7 +1004,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b4...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0rc1...master
+[1.1.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0rc1
 [1.1.0b4]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b4
 [1.1.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b3
 [1.1.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b2
