@@ -140,7 +140,8 @@ jobs:
           name: release-files
           path: releases/
       - name: Create Release
-        run: gh release create '${{ steps.tag.outputs.tag }}' --title '${{ steps.tag.outputs.tag }}' ./releases/*
+        run: |
+          gh release create '${{ steps.tag.outputs.tag }}' --title '${{ steps.tag.outputs.tag }}' ./releases/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Python 3.8
