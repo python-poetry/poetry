@@ -1,16 +1,19 @@
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 from typing import Any
 
 from tomlkit import document
 from tomlkit import table
 
-from poetry.utils.toml_file import TomlFile
-
 from .config_source import ConfigSource
 
 
+if TYPE_CHECKING:
+    from poetry.core.toml.file import TOMLFile  # noqa
+
+
 class FileConfigSource(ConfigSource):
-    def __init__(self, file, auth_config=False):  # type: (TomlFile, bool) -> None
+    def __init__(self, file, auth_config=False):  # type: ("TOMLFile", bool) -> None
         self._file = file
         self._auth_config = auth_config
 
@@ -19,7 +22,7 @@ class FileConfigSource(ConfigSource):
         return str(self._file.path)
 
     @property
-    def file(self):  # type: () -> TomlFile
+    def file(self):  # type: () -> "TOMLFile"
         return self._file
 
     def add_property(self, key, value):  # type: (str, Any) -> None

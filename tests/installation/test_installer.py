@@ -8,6 +8,7 @@ import pytest
 from clikit.io import NullIO
 
 from poetry.core.packages import ProjectPackage
+from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor
@@ -20,7 +21,6 @@ from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
-from poetry.utils.toml_file import TomlFile
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 from tests.repositories.test_legacy_repository import (
@@ -81,7 +81,7 @@ class CustomInstalledRepository(InstalledRepository):
 
 class Locker(BaseLocker):
     def __init__(self):
-        self._lock = TomlFile(Path.cwd().joinpath("poetry.lock"))
+        self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
@@ -91,7 +91,7 @@ class Locker(BaseLocker):
         return self._written_data
 
     def set_lock_path(self, lock):
-        self._lock = TomlFile(Path(lock).joinpath("poetry.lock"))
+        self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
 
         return self
 
@@ -184,7 +184,7 @@ def installer(package, pool, locker, env, installed, config):
 
 
 def fixture(name):
-    file = TomlFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
+    file = TOMLFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
 
     return json.loads(json.dumps(file.read()))
 

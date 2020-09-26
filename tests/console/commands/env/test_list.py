@@ -1,12 +1,12 @@
 import pytest
 import tomlkit
 
-from poetry.utils.toml_file import TomlFile
+from poetry.core.toml.file import TOMLFile
 
 
 @pytest.fixture
 def venv_activate_37(venv_cache, venv_name):
-    envs_file = TomlFile(venv_cache / "envs.toml")
+    envs_file = TOMLFile(venv_cache / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)

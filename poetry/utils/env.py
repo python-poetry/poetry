@@ -29,6 +29,7 @@ from packaging.tags import sys_tags
 
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
+from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import BaseMarker
 from poetry.locations import CACHE_DIR
 from poetry.poetry import Poetry
@@ -38,7 +39,6 @@ from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
-from poetry.utils.toml_file import TomlFile
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -201,7 +201,7 @@ class EnvManager(object):
 
         cwd = self._poetry.file.parent
 
-        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
 
         try:
             python_version = Version.parse(python)
@@ -299,7 +299,7 @@ class EnvManager(object):
         name = self._poetry.package.name
         name = self.generate_env_name(name, str(self._poetry.file.parent))
 
-        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         if envs_file.exists():
             envs = envs_file.read()
             env = envs.get(name)
@@ -326,7 +326,7 @@ class EnvManager(object):
             venv_path = Path(venv_path)
 
         cwd = self._poetry.file.parent
-        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         env = None
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
         if envs_file.exists():
@@ -415,7 +415,7 @@ class EnvManager(object):
             venv_path = Path(venv_path)
 
         cwd = self._poetry.file.parent
-        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
         if python.startswith(base_env_name):

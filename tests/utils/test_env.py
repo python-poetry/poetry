@@ -11,6 +11,7 @@ import tomlkit
 from clikit.io import NullIO
 
 from poetry.core.semver import Version
+from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
@@ -19,7 +20,6 @@ from poetry.utils.env import EnvManager
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
-from poetry.utils.toml_file import TomlFile
 
 
 MINIMAL_SCRIPT = """\
@@ -138,7 +138,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
         Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
     )
 
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     assert envs_file.exists()
     envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
@@ -174,7 +174,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
 
     m.assert_not_called()
 
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     assert envs_file.exists()
     envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
@@ -192,7 +192,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
@@ -231,7 +231,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
         del os.environ["VIRTUAL_ENV"]
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
@@ -272,7 +272,7 @@ def test_activate_activates_recreates_for_different_patch(
         del os.environ["VIRTUAL_ENV"]
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
@@ -326,7 +326,7 @@ def test_activate_does_not_recreate_when_switching_minor(
         del os.environ["VIRTUAL_ENV"]
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
@@ -410,7 +410,7 @@ def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
         / "{}-py{}.{}".format(venv_name, other_version.major, other_version.minor)
     ).mkdir()
 
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {
         "minor": "{}.{}".format(other_version.major, other_version.minor),
@@ -447,7 +447,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
     (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
 
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
@@ -529,7 +529,7 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    envs_file = TomlFile(Path(tmp_dir) / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": "3.6", "patch": "3.6.6"}
     envs_file.write(doc)
@@ -815,7 +815,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
 
     m.assert_called_with(poetry.file.parent / ".venv", executable="python3.7")
 
-    envs_file = TomlFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
+    envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
     assert not envs_file.exists()
 
 

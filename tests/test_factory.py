@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 
 import pytest
 
+from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
-from poetry.utils.toml_file import TomlFile
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
@@ -158,14 +158,14 @@ def test_poetry_with_two_default_sources():
 
 
 def test_validate():
-    complete = TomlFile(fixtures_dir / "complete.toml")
+    complete = TOMLFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
 
     assert Factory.validate(content) == {"errors": [], "warnings": []}
 
 
 def test_validate_fails():
-    complete = TomlFile(fixtures_dir / "complete.toml")
+    complete = TOMLFile(fixtures_dir / "complete.toml")
     content = complete.read()["tool"]["poetry"]
     content["this key is not in the schema"] = ""
 

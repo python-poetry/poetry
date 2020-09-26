@@ -16,6 +16,7 @@ from poetry.core.factory import Factory
 from poetry.core.packages import Package
 from poetry.core.packages import ProjectPackage
 from poetry.core.packages import dependency_from_pep_508
+from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils._compat import PY35
 from poetry.core.utils._compat import Path
 from poetry.core.utils.helpers import parse_requires
@@ -25,7 +26,6 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import VirtualEnv
 from poetry.utils.setup_reader import SetupReader
-from poetry.utils.toml_file import TomlFile
 
 
 logger = logging.getLogger(__name__)
@@ -410,21 +410,10 @@ class PackageInfo:
 
     @staticmethod
     def _get_poetry_package(path):  # type: (Path) -> Optional[ProjectPackage]
-        pyproject = path.joinpath("pyproject.toml")
-        try:
-            # Note: we ignore any setup.py file at this step
-            if pyproject.exists():
-                # TODO: add support for handling non-poetry PEP-517 builds
-                pyproject = TomlFile(pyproject)
-                pyproject_content = pyproject.read()
-                supports_poetry = (
-                    "tool" in pyproject_content
-                    and "poetry" in pyproject_content["tool"]
-                )
-                if supports_poetry:
-                    return Factory().create_poetry(path).package
-        except RuntimeError:
-            pass
+        # Note: we ignore any setup.py file at this step
+        # TODO: add support for handling non-poetry PEP-517 builds
+        if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
+            return Factory().create_poetry(path).package
 
     @classmethod
     def _pep517_metadata(cls, path):  # type (Path) -> PackageInfo
