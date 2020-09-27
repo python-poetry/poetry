@@ -213,6 +213,30 @@ def test_info_setup_complex_disable_build(mocker, demo_setup_complex):
     assert info.requires_dist is None
 
 
+@pytest.mark.skipif(not PY35, reason="Parsing of setup.py is skipped for Python < 3.5")
+@pytest.mark.parametrize("missing", ["version", "name", "install_requires"])
+def test_info_setup_missing_mandatory_should_trigger_pep517(
+    mocker, source_dir, missing
+):
+    setup = "from setuptools import setup; "
+    setup += "setup("
+    setup += 'name="demo", ' if missing != "name" else ""
+    setup += 'version="0.1.0", ' if missing != "version" else ""
+    setup += 'install_requires=["package"]' if missing != "install_requires" else ""
+    setup += ")"
+
+    setup_py = source_dir / "setup.py"
+    setup_py.write_text(decode(setup))
+
+    spy = mocker.spy(VirtualEnv, "run")
+    try:
+        PackageInfo.from_directory(source_dir)
+    except PackageInfoError:
+        assert spy.call_count == 3
+    else:
+        assert spy.call_count == 2
+
+
 def test_info_prefer_poetry_config_over_egg_info():
     info = PackageInfo.from_directory(
         FIXTURE_DIR_INSPECTIONS / "demo_with_obsolete_egg_info"
