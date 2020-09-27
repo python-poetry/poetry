@@ -558,8 +558,9 @@ python = "~2.7 || ^3.6"
     assert 'pytest = "^3.6.0"' in output
 
 
-def test_add_package_with_extras_and_whitespace(init_command):
-    result = init_command._parse_requirements(["databases[postgresql, sqlite]"])
+def test_add_package_with_extras_and_whitespace(app):
+    command = app.find("init")
+    result = command._parse_requirements(["databases[postgresql, sqlite]"])
 
     assert result[0]["name"] == "databases"
     assert len(result[0]["extras"]) == 2
