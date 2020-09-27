@@ -124,7 +124,7 @@ class Executor(object):
 
                 break
 
-        return self._shutdown
+        return 1 if self._shutdown else 0
 
     def _write(self, operation, line):
         if not self.supports_fancy_output() or not self._should_write_operation(
