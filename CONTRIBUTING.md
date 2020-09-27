@@ -12,6 +12,7 @@ The following is a set of guidelines for contributing to Poetry on GitHub. These
   * [Suggesting enhancements](#suggesting-enhancements)
   * [Contributing to code](#contributing-to-code)
   * [Issue triage](#issue-triage)
+  * [Git workflow](#git-workflow)
 
 
 ## How to contribute
@@ -186,3 +187,40 @@ ln -sf $(poetry run which poetry) ~/.local/bin/poetry@local
 ```
 
 > **Hint:** This mechanism can also be used to test pull requests.
+
+### Git Workflow
+
+All development work is performed against Poetry's main branch (`master`). All changes are expected to be submitted and accepted to this
+branch.
+
+#### Release branch
+
+When a release is ready, the following are required before a release is tagged.
+
+1. A release branch with the prefix `release-`, eg: `release-1.1.0rc1`.
+1. A pull request from the release branch to the main branch (`master`) if it's a minor or major release. Otherwise, to the bug fix branch (eg: `1.0`).
+   1. The pull request description MUST include the change log corresponding to the release (eg: [#2971](https://github.com/python-poetry/poetry/pull/2971)).
+   1. The pull request must contain a commit that updates [CHANGELOG.md](CHANGELOG.md) and bumps the project version (eg: [#2971](https://github.com/python-poetry/poetry/pull/2971/commits/824e7b79defca435cf1d765bb633030b71b9a780)).
+   1. The pull request must have the `Release` label specified.
+
+Once the branch pull-request is ready and approved, a member of `@python-poetry/core` will,
+
+1. Tag the branch with the version identifier (eg: `1.1.0rc1`).
+2. Merge the pull request once the release is created and assets are uploaded by the CI.
+
+> **Note:** In this case, we prefer a merge commit instead of squash or rebase merge.
+
+#### Bug fix branch
+
+Once a minor version (eg: `1.1.0`) is released, a new branch for the minor version (eg: `1.1`) is created for the bug fix releases. Changes identified
+or acknowledged by the Poetry team as requiring a bug fix can be submitted as a pull requests against this branch.
+
+At the time of writing only issues meeting the following criteria may be accepted into a bug fix branch. Trivial fixes may be accepted on a
+case-by-case basis.
+
+1. The issue breaks a core functionality and/or is a critical regression.
+1. The change set does not introduce a new feature or changes an existing functionality.
+1. A new minor release is not expected within a reasonable time frame.
+1. If the issue affects the next minor/major release, a corresponding fix has been accepted into the main branch.
+
+> **Note:** This is subject to the interpretation of a maintainer within the context of the issue.
