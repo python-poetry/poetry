@@ -436,7 +436,7 @@ class PackageInfo:
         info = None
         try:
             info = cls.from_setup_files(path)
-            if info.requires_dist is not None:
+            if all([info.version, info.name, info.requires_dist]):
                 return info
         except PackageInfoError:
             pass

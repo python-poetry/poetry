@@ -8,6 +8,8 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from poetry.core.semver import Version
+
 from ._compat import PY35
 from ._compat import Path
 from ._compat import basestring
@@ -109,7 +111,7 @@ class SetupReader(object):
             name = parser.get("metadata", "name")
 
         if parser.has_option("metadata", "version"):
-            version = parser.get("metadata", "version")
+            version = Version.parse(parser.get("metadata", "version")).text
 
         install_requires = []
         extras_require = {}
