@@ -11,6 +11,7 @@ The following is a set of guidelines for contributing to Poetry on GitHub. These
   * [Reporting bugs](#reporting-bugs)
   * [Suggesting enhancements](#suggesting-enhancements)
   * [Contributing to code](#contributing-to-code)
+  * [Issue triage](#issue-triage)
 
 
 ## How to contribute
@@ -76,8 +77,15 @@ Enhancement suggestions are tracked on the [official issue tracker](https://gith
 * **Provide specific examples to demonstrate the steps**..
 * **Describe the current behavior** and **explain which behavior you expected to see instead** and why.
 
-
 ### Contributing to code
+
+#### Picking an issue
+
+> **Note:** If you are a first time contributor, and are looking for an issue to take on, you might want to look for [Good First Issue](https://github.com/python-poetry/poetry/issues?q=is%3Aopen+is%3Aissue+label%3A%22Good+First+Issue%22)
+> labelled issues. We do our best to label such issues, however we might fall behind at times. So, ask us.
+
+If you would like to take on an issue, feel free to comment on the issue tagging `@python-poetry/triage`. We are more than happy to discuss solutions on the issue. If you would like help with navigating
+the code base, join us on our [Discord Server](https://discordapp.com/invite/awxPgve).
 
 #### Local development
 
@@ -89,6 +97,9 @@ You will first need to clone the repository using `git` and place yourself in it
 $ git clone git@github.com:python-poetry/poetry.git
 $ cd poetry
 ```
+
+> **Note:** We recommend that you use a personal [fork](https://docs.github.com/en/free-pro-team@latest/github/getting-started-with-github/fork-a-repo) for this step. If you are new to GitHub collaboration,
+> you can refer to the [Forking Projects Guide](https://guides.github.com/activities/forking/).
 
 Now, you will need to install the required dependency for Poetry and be sure that the current
 tests are passing on your machine:
@@ -125,3 +136,53 @@ will not be merged.
 * Fill in [the required template](https://github.com/python-poetry/poetry/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
 * Be sure that your pull request contains tests that cover the changed or added code.
 * If your changes warrant a documentation change, the pull request must also update the documentation.
+
+> **Note:** Make sure your branch is [rebased](https://docs.github.com/en/free-pro-team@latest/github/using-git/about-git-rebase) against the latest main branch. A maintainer might ask you to ensure the branch is
+> up-to-date prior to merging your Pull Request if changes have conflicts.
+
+All pull requests, unless otherwise instructed, need to be first accepted into the main branch (`master`).
+
+### Issue triage
+
+> **Note:** If you have an issue that hasn't had any attention, you can ping us `@python-poetry/triage` on the issue. Please, give us reasonable time to get to your issue first, spamming us with messages
+> does not help anyone.
+
+If you are helping with the triage of reported issues, this section provides some useful information to assist you in your contribution.
+
+#### Triage steps
+
+1. If `pyproject.toml` is missing or `-vvv` debug logs (with stack trace) is not provided and required, request that the issue author provides it.
+1. Attempt to reproduce the issue with the reported Poetry version or request further clarification from the issue author.
+1. Ensure the issue is not already resolved. You can attempt to reproduce using the latest preview release and/or poetry from the main branch.
+1. If the issue cannot be reproduced,
+   1. clarify with the issue's author,
+   1. close the issue or notify `@python-poetry/triage`.
+1. If the issue can be reproduced,
+   1. comment on the issue confirming so
+   1. notify `@python-poetry/triage`.
+   1. if possible, identify the root cause of the issue.
+   1. if interested, attempt to fix it via a pull request.
+
+#### Multiple versions
+
+Often times you would want to attempt to reproduce issues with multiple versions of `poetry` at the same time. For these use cases, the [pipx project](https://pipxproject.github.io/pipx/) is useful.
+
+You can set your environment up like so.
+
+```sh
+pipx install --suffix @1.0.10 'poetry==1.0.10'
+pipx install --suffix @1.1.0rc1 'poetry==1.1.0rc1'
+pipx install --suffix @master 'poetry @ git+https://github.com/python-poetry/poetry'
+```
+
+> **Hint:** Do not forget to update your `poetry@master` installation in sync with upstream.
+
+For `@local` it is recommended that you do something similar to the following as editable installs are not supported for PEP 517 projects.
+
+```sh
+# note this will not work for Windows, and we assume you have already run `poetry install`
+cd /path/to/python-poetry/poetry
+ln -sf $(poetry run which poetry) ~/.local/bin/poetry@local
+```
+
+> **Hint:** This mechanism can also be used to test pull requests.
