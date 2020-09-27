@@ -4,6 +4,7 @@ import pytest
 
 from cleo import ApplicationTester
 
+from poetry.console.commands import InitCommand
 from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.io.null_io import NullIO
@@ -113,3 +114,10 @@ def new_installer_disabled(config):
 @pytest.fixture()
 def executor(poetry, config, env):
     return TestExecutor(env, poetry.pool, config, NullIO())
+
+
+@pytest.fixture()
+def init_command(app):
+    command = InitCommand()
+    command._application = app
+    return command

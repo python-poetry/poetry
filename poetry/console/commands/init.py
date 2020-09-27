@@ -373,7 +373,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         for requirement in requirements:
             requirement = requirement.strip()
             extras = []
-            extras_m = re.search(r"\[([\w\d,-_]+)\]$", requirement)
+            extras_m = re.search(r"\[([\w\d,-_ ]+)\]$", requirement)
             if extras_m:
                 extras = [e.strip() for e in extras_m.group(1).split(",")]
                 requirement, _ = requirement.split("[")
