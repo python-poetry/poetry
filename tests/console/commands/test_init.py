@@ -556,3 +556,12 @@ python = "~2.7 || ^3.6"
     assert expected in output
     assert 'pytest-requests = "^0.2.0"' in output
     assert 'pytest = "^3.6.0"' in output
+
+
+def test_add_package_with_extras_and_whitespace(tester):
+    result = tester._command._parse_requirements(["databases[postgresql, sqlite]"])
+
+    assert result[0]["name"] == "databases"
+    assert len(result[0]["extras"]) == 2
+    assert "postgresql" in result[0]["extras"]
+    assert "sqlite" in result[0]["extras"]
