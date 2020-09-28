@@ -4,7 +4,6 @@ import pytest
 
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
-from poetry.repositories.auth import Auth
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
 from poetry.utils.exporter import Exporter
@@ -654,11 +653,7 @@ tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 
 def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry):
     poetry.pool.add_repository(
-        LegacyRepository(
-            "custom",
-            "https://example.com/simple",
-            auth=Auth("https://example.com/simple", "foo", "bar"),
-        )
+        LegacyRepository("custom", "https://example.com/simple",)
     )
     poetry.locker.mock_lock_data(
         {
@@ -713,11 +708,7 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
     tmp_dir, poetry
 ):
     poetry.pool.add_repository(
-        LegacyRepository(
-            "custom",
-            "https://example.com/simple",
-            auth=Auth("https://example.com/simple", "foo", "bar"),
-        )
+        LegacyRepository("custom", "https://example.com/simple",)
     )
     poetry.pool.add_repository(LegacyRepository("custom", "https://foobaz.com/simple",))
     poetry.locker.mock_lock_data(
@@ -792,12 +783,14 @@ foo==1.2.3 \\
 def test_exporter_exports_requirements_txt_with_legacy_packages_and_credentials(
     tmp_dir, poetry, config
 ):
+    poetry.config.merge(
+        {
+            "repositories": {"custom": {"url": "https://example.com/simple"}},
+            "http-basic": {"custom": {"username": "foo", "password": "bar"}},
+        }
+    )
     poetry.pool.add_repository(
-        LegacyRepository(
-            "custom",
-            "https://example.com/simple",
-            auth=Auth("https://example.com/simple", "foo", "bar"),
-        )
+        LegacyRepository("custom", "https://example.com/simple", config=poetry.config)
     )
     poetry.locker.mock_lock_data(
         {

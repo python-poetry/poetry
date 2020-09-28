@@ -1,3 +1,4 @@
+import logging
 import time
 
 from typing import TYPE_CHECKING
@@ -21,13 +22,26 @@ if TYPE_CHECKING:
     from poetry.config.config import Config
 
 
+logger = logging.getLogger()
+
+
 class Authenticator(object):
-    def __init__(self, config, io):  # type: (Config, IO) -> None
+    def __init__(self, config, io=None):  # type: (Config, Optional[IO]) -> None
         self._config = config
         self._io = io
         self._session = None
         self._credentials = {}
         self._password_manager = PasswordManager(self._config)
+
+    def _log(self, message, level="debug"):  # type: (str, str) -> None
+        if self._io is not None:
+            self._io.write_line(
+                "<{level:s}>{message:s}</{level:s}>".format(
+                    message=message, level=level
+                )
+            )
+        else:
+            getattr(logger, level, logger.debug)(message)
 
     @property
     def session(self):  # type: () -> requests.Session
@@ -40,9 +54,7 @@ class Authenticator(object):
         self, method, url, **kwargs
     ):  # type: (str, str, Any) -> requests.Response
         request = requests.Request(method, url)
-        io = kwargs.get("io") or self._io
-
-        username, password = self._get_credentials_for_url(url)
+        username, password = self.get_credentials_for_url(url)
 
         if username is not None and password is not None:
             request = requests.auth.HTTPBasicAuth(username, password)(request)
@@ -83,19 +95,16 @@ class Authenticator(object):
             if not is_last_attempt:
                 attempt += 1
                 delay = 0.5 * attempt
-                if io is not None:
-                    io.write_line(
-                        "<debug>Retrying HTTP request in {} seconds.</debug>".format(
-                            delay
-                        )
-                    )
+                self._log(
+                    "Retrying HTTP request in {} seconds.".format(delay), level="debug"
+                )
                 time.sleep(delay)
                 continue
 
         # this should never really be hit under any sane circumstance
         raise PoetryException("Failed HTTP {} request", method.upper())
 
-    def _get_credentials_for_url(
+    def get_credentials_for_url(
         self, url
     ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
         parsed_url = urlparse.urlsplit(url)
