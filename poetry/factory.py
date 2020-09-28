@@ -49,6 +49,16 @@ class Factory(BaseFactory):
 
             config.merge(local_config_file.read())
 
+        # Load local sources
+        repositories = {}
+        for source in base_poetry.pyproject.poetry_config.get("source", []):
+            name = source.get("name")
+            url = source.get("url")
+            if name and url:
+                repositories[name] = {"url": url}
+
+        config.merge({"repositories": repositories})
+
         poetry = Poetry(
             base_poetry.file.path,
             base_poetry.local_config,
@@ -124,11 +134,9 @@ class Factory(BaseFactory):
     def create_legacy_repository(
         self, source, auth_config
     ):  # type: (Dict[str, str], Config) -> LegacyRepository
-        from .repositories.auth import Auth
         from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert
-        from .utils.password_manager import PasswordManager
 
         if "url" in source:
             # PyPI-like repository
@@ -137,19 +145,13 @@ class Factory(BaseFactory):
         else:
             raise RuntimeError("Unsupported source specified")
 
-        password_manager = PasswordManager(auth_config)
         name = source["name"]
         url = source["url"]
-        credentials = password_manager.get_http_auth(name)
-        if credentials:
-            auth = Auth(url, credentials["username"], credentials["password"])
-        else:
-            auth = None
 
         return LegacyRepository(
             name,
             url,
-            auth=auth,
+            config=auth_config,
             cert=get_cert(auth_config, name),
             client_cert=get_client_cert(auth_config, name),
         )

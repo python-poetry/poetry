@@ -8,6 +8,7 @@ from typing import Optional
 from typing import Union
 
 import requests
+import requests.auth
 
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
@@ -24,8 +25,9 @@ from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import wheel_file_re
 
+from ..config.config import Config
 from ..inspection.info import PackageInfo
-from .auth import Auth
+from ..installation.authenticator import Authenticator
 from .exceptions import PackageNotFound
 from .exceptions import RepositoryError
 from .pypi_repository import PyPiRepository
@@ -159,15 +161,14 @@ class Page:
 
 class LegacyRepository(PyPiRepository):
     def __init__(
-        self, name, url, auth=None, disable_cache=False, cert=None, client_cert=None
-    ):  # type: (str, str, Optional[Auth], bool, Optional[Path], Optional[Path]) -> None
+        self, name, url, config=None, disable_cache=False, cert=None, client_cert=None
+    ):  # type: (str, str, Optional[Config], bool, Optional[Path], Optional[Path]) -> None
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
         self._packages = []
         self._name = name
         self._url = url.rstrip("/")
-        self._auth = auth
         self._client_cert = client_cert
         self._cert = cert
         self._cache_dir = REPOSITORY_CACHE_DIR / name
@@ -183,19 +184,25 @@ class LegacyRepository(PyPiRepository):
             }
         )
 
-        self._session = CacheControl(
-            requests.session(), cache=FileCache(str(self._cache_dir / "_http"))
+        self._authenticator = Authenticator(
+            config=config or Config(use_environment=True)
         )
 
-        url_parts = urlparse.urlparse(self._url)
-        if not url_parts.username and self._auth:
-            self._session.auth = self._auth
+        self._session = CacheControl(
+            self._authenticator.session, cache=FileCache(str(self._cache_dir / "_http"))
+        )
+
+        username, password = self._authenticator.get_credentials_for_url(self._url)
+        if username is not None and password is not None:
+            self._authenticator.session.auth = requests.auth.HTTPBasicAuth(
+                username, password
+            )
 
         if self._cert:
-            self._session.verify = str(self._cert)
+            self._authenticator.session.verify = str(self._cert)
 
         if self._client_cert:
-            self._session.cert = str(self._client_cert)
+            self._authenticator.session.cert = str(self._client_cert)
 
         self._disable_cache = disable_cache
 
@@ -209,15 +216,15 @@ class LegacyRepository(PyPiRepository):
 
     @property
     def authenticated_url(self):  # type: () -> str
-        if not self._auth:
+        if not self._session.auth:
             return self.url
 
         parsed = urlparse.urlparse(self.url)
 
         return "{scheme}://{username}:{password}@{netloc}{path}".format(
             scheme=parsed.scheme,
-            username=quote(self._auth.auth.username, safe=""),
-            password=quote(self._auth.auth.password, safe=""),
+            username=quote(self._session.auth.username, safe=""),
+            password=quote(self._session.auth.password, safe=""),
             netloc=parsed.netloc,
             path=parsed.path,
         )

@@ -4,7 +4,6 @@ import pytest
 
 from poetry.core.packages import Dependency
 from poetry.factory import Factory
-from poetry.repositories.auth import Auth
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
@@ -23,9 +22,9 @@ class MockRepository(LegacyRepository):
 
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
-    def __init__(self, auth=None):
+    def __init__(self):
         super(MockRepository, self).__init__(
-            "legacy", url="http://legacy.foo.bar", auth=auth, disable_cache=True
+            "legacy", url="http://legacy.foo.bar", disable_cache=True
         )
 
     def _get(self, endpoint):
@@ -302,18 +301,11 @@ def test_get_package_retrieves_packages_with_no_hashes():
     assert [] == package.files
 
 
-def test_username_password_special_chars():
-    auth = Auth("http://legacy.foo.bar", "user:", "/%2Fp@ssword")
-    repo = MockRepository(auth=auth)
-
-    assert "http://user%3A:%2F%252Fp%40ssword@legacy.foo.bar" == repo.authenticated_url
-
-
 class MockHttpRepository(LegacyRepository):
     def __init__(self, endpoint_responses, http):
         base_url = "http://legacy.foo.bar"
         super(MockHttpRepository, self).__init__(
-            "legacy", url=base_url, auth=None, disable_cache=True
+            "legacy", url=base_url, disable_cache=True
         )
 
         for endpoint, response in endpoint_responses.items():
