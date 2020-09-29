@@ -13,6 +13,7 @@ from cleo.io.buffered_io import BufferedIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
+from poetry.core.utils._compat import PY36
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -69,7 +70,7 @@ def test_execute_executes_a_batch_of_operations(
     mocker, config, pool, io, tmp_dir, mock_file_downloads, env
 ):
     pip_editable_install = mocker.patch(
-        "poetry.installation.executor.pip_editable_install"
+        "poetry.installation.executor.pip_editable_install", unsafe=not PY36
     )
 
     config = Config()

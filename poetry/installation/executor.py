@@ -24,6 +24,7 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.pip import pip_editable_install
 
+from ..utils.pip import pip_install
 from .authenticator import Authenticator
 from .chef import Chef
 from .chooser import Chooser
@@ -475,12 +476,9 @@ class Executor(object):
             )
         )
         self._write(operation, message)
-
-        args = ["install", "--no-deps", str(archive)]
-        if operation.job_type == "update":
-            args.insert(2, "-U")
-
-        return self.run_pip(*args)
+        return pip_install(
+            str(archive), self._env, upgrade=operation.job_type == "update"
+        )
 
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
@@ -538,8 +536,6 @@ class Executor(object):
         else:
             req = os.path.realpath(package.source_url)
 
-        args = ["install", "--no-deps", "-U"]
-
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
         if pyproject.is_poetry_project():
@@ -574,17 +570,12 @@ class Executor(object):
                 with builder.setup_py():
                     if package.develop:
                         return pip_editable_install(req, self._env)
-
-                    args.append(req)
-
-                    return self.run_pip(*args)
+                    return pip_install(req, self._env, upgrade=True)
 
         if package.develop:
             return pip_editable_install(req, self._env)
 
-        args.append(req)
-
-        return self.run_pip(*args)
+        return pip_install(req, self._env, upgrade=True)
 
     def _install_git(self, operation: Union[Install, Update]) -> int:
         from poetry.core.vcs import Git
