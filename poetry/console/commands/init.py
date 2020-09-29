@@ -67,16 +67,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
-        original_toml = PyProjectTOML(Path.cwd() / "pyproject.toml")
+        pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
 
-        if original_toml.file.exists():
-            if original_toml.is_poetry_project():
+        if pyproject.file.exists():
+            if pyproject.is_poetry_project():
                 self.line(
                     "<error>A pyproject.toml file with a poetry section already exists.</error>"
                 )
                 return 1
 
-            if original_toml.data.get("build-system"):
+            if pyproject.data.get("build-system"):
                 self.line(
                     "<error>A pyproject.toml file with a defined build-system already exists.</error>"
                 )
@@ -209,7 +209,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content(original_toml)
+        content = layout_.generate_poetry_content(pyproject)
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")
