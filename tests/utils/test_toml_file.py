@@ -1,3 +1,5 @@
+import io
+
 import pytest
 
 from poetry.utils._compat import Path
@@ -56,3 +58,18 @@ def test_pyproject_parsing(fixture):
 
     assert "dependencies" in content["tool"]["poetry"]
     assert content["tool"]["poetry"]["dependencies"]["python"] == "^3.6"
+
+
+def test_toml_keep_old_eol(tmpdir):
+    toml_path = str(tmpdir / "pyproject.toml")
+    with io.open(toml_path, "wb+") as f:
+        f.write(b"a = 1\r\nb = 2\r\n")
+
+    f = TomlFile(toml_path)
+    content = f.read()
+    assert f._line_ending == "\r\n"
+    content["b"] = 3
+    f.write(content)
+
+    with io.open(toml_path, "rb") as f:
+        assert f.read() == b"a = 1\r\nb = 3\r\n"
