@@ -14,7 +14,6 @@ from cleo import option
 from tomlkit import inline_table
 
 from poetry.core.pyproject.toml import PyProjectTOML
-from poetry.core.toml.file import TOMLFile
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
@@ -68,16 +67,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
-        original_toml = TOMLFile(Path.cwd() / "pyproject.toml")
+        original_toml = PyProjectTOML(Path.cwd() / "pyproject.toml")
 
-        if original_toml.exists():
-            if PyProjectTOML(original_toml.path).is_poetry_project():
+        if original_toml.file.exists():
+            if original_toml.is_poetry_project():
                 self.line(
                     "<error>A pyproject.toml file with a poetry section already exists.</error>"
                 )
                 return 1
 
-            if original_toml.read().get("build-system"):
+            if original_toml.data.get("build-system"):
                 self.line(
                     "<error>A pyproject.toml file with a defined build-system already exists.</error>"
                 )

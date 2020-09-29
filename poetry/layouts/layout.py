@@ -8,7 +8,7 @@ from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
-    from poetry.core.toml.file import TOMLFile
+    from poetry.core.pyproject.toml import PyProjectTOML
 
 TESTS_DEFAULT = u"""from {package_name} import __version__
 
@@ -86,7 +86,7 @@ class Layout(object):
 
         self._write_poetry(path)
 
-    def generate_poetry_content(self, original_toml):  # type: ("TOMLFile") -> str
+    def generate_poetry_content(self, original_toml):  # type: ("PyProjectTOML") -> str
         template = POETRY_DEFAULT
         if self._license:
             template = POETRY_WITH_LICENSE
@@ -121,8 +121,8 @@ class Layout(object):
 
         content = dumps(content)
 
-        if original_toml.exists():
-            content = dumps(original_toml.read()) + "\n" + content
+        if original_toml.file.exists():
+            content = dumps(original_toml.data) + "\n" + content
 
         return content
 
