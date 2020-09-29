@@ -43,6 +43,7 @@ from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
+from poetry.utils.helpers import temporary_directory
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -812,6 +813,8 @@ class EnvManager(object):
         executable: Optional[Union[str, Path]] = None,
         flags: Dict[str, bool] = None,
         with_pip: bool = False,
+        with_wheel: bool = False,
+        with_setuptools: bool = False,
     ) -> virtualenv.run.session.Session:
         flags = flags or {}
 
@@ -826,7 +829,16 @@ class EnvManager(object):
         ]
 
         if not with_pip:
-            args.extend(["--no-pip", "--no-wheel", "--no-setuptools"])
+            args.append("--no-pip")
+        else:
+            if with_wheel is None:
+                with_wheel = True
+
+        if with_wheel is None or not with_wheel:
+            args.append("--no-wheel")
+
+        if with_setuptools is None or not with_setuptools:
+            args.append("--no-setuptools")
 
         for flag, value in flags.items():
             if value is True:
@@ -1427,6 +1439,21 @@ class NullEnv(SystemEnv):
 
     def _bin(self, bin: str) -> str:
         return bin
+
+
+@contextmanager
+def ephemeral_environment(executable=None, pip=False, wheel=None, setuptools=None):
+    with temporary_directory() as tmp_dir:
+        # TODO: cache PEP 517 build environment corresponding to each project venv
+        venv_dir = Path(tmp_dir) / ".venv"
+        EnvManager.build_venv(
+            path=venv_dir.as_posix(),
+            executable=executable,
+            with_pip=pip,
+            with_wheel=wheel,
+            with_setuptools=setuptools,
+        )
+        yield VirtualEnv(venv_dir, venv_dir)
 
 
 class MockEnv(NullEnv):

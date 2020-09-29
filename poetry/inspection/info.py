@@ -22,8 +22,7 @@ from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.utils.env import EnvCommandError
-from poetry.utils.env import EnvManager
-from poetry.utils.env import VirtualEnv
+from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
 
 
@@ -451,13 +450,9 @@ class PackageInfo:
         except PackageInfoError:
             pass
 
-        with temporary_directory() as tmp_dir:
+        with ephemeral_environment(pip=True, wheel=True, setuptools=True) as venv:
             # TODO: cache PEP 517 build environment corresponding to each project venv
-            venv_dir = Path(tmp_dir) / ".venv"
-            EnvManager.build_venv(venv_dir.as_posix(), with_pip=True)
-            venv = VirtualEnv(venv_dir, venv_dir)
-
-            dest_dir = Path(tmp_dir) / "dist"
+            dest_dir = venv.path.parent / "dist"
             dest_dir.mkdir()
 
             try:

@@ -10,15 +10,15 @@ from typing import Union
 
 from cleo.io.io import IO
 
-from poetry.installation.base_installer import BaseInstaller
 from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.installation.base_installer import BaseInstaller
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import encode
 from poetry.utils.env import Env
-from poetry.utils.env import EnvManager
-from poetry.utils.env import VirtualEnv
 from poetry.utils.helpers import safe_rmtree
-from poetry.utils.helpers import temporary_directory
+from poetry.utils.pip import pip_editable_install
+from poetry.utils.pip import pip_install
+
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
@@ -190,12 +190,12 @@ class PipInstaller(BaseInstaller):
 
         from poetry.factory import Factory
 
+        req: Path
+
         if package.root_dir:
             req = (package.root_dir / package.source_url).as_posix()
         else:
-            req = os.path.realpath(package.source_url)
-
-        args = ["install", "--no-deps", "-U", "--root", str(self._env.path)]
+            req = Path(package.source_url).resolve(strict=False)
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
@@ -230,22 +230,16 @@ class PipInstaller(BaseInstaller):
 
                 with builder.setup_py():
                     if package.develop:
-                        args.append("-e")
-
-                    args.append(req)
-
-                    return self.run(*args)
+                        return pip_editable_install(
+                            directory=req, environment=self._env
+                        )
+                    return pip_install(
+                        path=req, environment=self._env, deps=False, upgrade=True
+                    )
 
         if package.develop:
-            args.append("-e")
-
-        args.append(req)
-
-        with temporary_directory() as tmp_dir:
-            venv_dir = Path(tmp_dir) / ".venv"
-            EnvManager.build_venv(venv_dir.as_posix(), with_pip=True)
-            venv = VirtualEnv(venv_dir, venv_dir)
-            return venv.run("pip", *args)
+            return pip_editable_install(directory=req, environment=self._env)
+        return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
 
     def install_git(self, package: "Package") -> None:
         from poetry.core.packages.package import Package

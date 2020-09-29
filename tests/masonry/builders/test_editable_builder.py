@@ -179,16 +179,19 @@ if __name__ == '__main__':
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
-    extended_poetry, tmp_dir
+    mocker, extended_poetry, tmp_dir
 ):
+    pip_editable_install = mocker.patch(
+        "poetry.masonry.builders.editable.pip_editable_install"
+    )
     env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())
 
     builder.build()
-    assert [
-        env.get_pip_command()
-        + ["install", "-e", str(extended_poetry.file.parent), "--no-deps"]
-    ] == env.executed
+    pip_editable_install.assert_called_once_with(
+        extended_poetry.pyproject.file.path.parent, env
+    )
+    assert [] == env.executed
 
 
 def test_builder_installs_proper_files_when_packages_configured(
