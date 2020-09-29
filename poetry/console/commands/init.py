@@ -13,6 +13,7 @@ from typing import Union
 from cleo import option
 from tomlkit import inline_table
 
+from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
@@ -22,7 +23,6 @@ from .env_command import EnvCommand
 
 
 class InitCommand(Command):
-
     name = "init"
     description = (
         "Creates a basic <comment>pyproject.toml</> file in the current directory."
@@ -67,9 +67,20 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
-        if (Path.cwd() / "pyproject.toml").exists():
-            self.line("<error>A pyproject.toml file already exists.</error>")
-            return 1
+        pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
+
+        if pyproject.file.exists():
+            if pyproject.is_poetry_project():
+                self.line(
+                    "<error>A pyproject.toml file with a poetry section already exists.</error>"
+                )
+                return 1
+
+            if pyproject.data.get("build-system"):
+                self.line(
+                    "<error>A pyproject.toml file with a defined build-system already exists.</error>"
+                )
+                return 1
 
         vcs_config = GitConfig()
 
@@ -198,7 +209,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content()
+        content = layout_.generate_poetry_content(pyproject)
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")

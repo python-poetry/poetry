@@ -3,14 +3,19 @@ import sys
 import pytest
 
 from poetry.utils._compat import Path
+from poetry.utils._compat import decode
 from tests.helpers import get_package
 
 
+@pytest.fixture
+def source_dir(tmp_path):  # type: (Path) -> Path
+    yield Path(tmp_path.as_posix())
+
+
 @pytest.fixture(autouse=True)
-def patches(mocker, mocked_open_files):
-    mocked_open_files.append("pyproject.toml")
+def patches(mocker, source_dir):
     patch = mocker.patch("poetry.utils._compat.Path.cwd")
-    patch.return_value = Path(__file__).parent
+    patch.return_value = source_dir
 
 
 @pytest.fixture
@@ -18,21 +23,26 @@ def tester(command_tester_factory):
     return command_tester_factory("init")
 
 
-def test_basic_interactive(tester):
-    inputs = [
-        "my-package",  # Package name
-        "1.2.3",  # Version
-        "This is a description",  # Description
-        "n",  # Author
-        "MIT",  # License
-        "~2.7 || ^3.6",  # Python
-        "n",  # Interactive packages
-        "n",  # Interactive dev packages
-        "\n",  # Generate
-    ]
-    tester.execute(inputs="\n".join(inputs))
+@pytest.fixture
+def init_basic_inputs():
+    return "\n".join(
+        [
+            "my-package",  # Package name
+            "1.2.3",  # Version
+            "This is a description",  # Description
+            "n",  # Author
+            "MIT",  # License
+            "~2.7 || ^3.6",  # Python
+            "n",  # Interactive packages
+            "n",  # Interactive dev packages
+            "\n",  # Generate
+        ]
+    )
 
-    expected = """\
+
+@pytest.fixture()
+def init_basic_toml():
+    return """\
 [tool.poetry]
 name = "my-package"
 version = "1.2.3"
@@ -46,7 +56,10 @@ python = "~2.7 || ^3.6"
 [tool.poetry.dev-dependencies]
 """
 
-    assert expected in tester.io.fetch_output()
+
+def test_basic_interactive(tester, init_basic_inputs, init_basic_toml):
+    tester.execute(inputs=init_basic_inputs)
+    assert init_basic_toml in tester.io.fetch_output()
 
 
 def test_interactive_with_dependencies(tester, repo):
@@ -565,3 +578,36 @@ def test_add_package_with_extras_and_whitespace(tester):
     assert len(result[0]["extras"]) == 2
     assert "postgresql" in result[0]["extras"]
     assert "sqlite" in result[0]["extras"]
+
+
+def test_init_existing_pyproject_simple(
+    tester, source_dir, init_basic_inputs, init_basic_toml
+):
+    pyproject_file = source_dir / "pyproject.toml"
+    existing_section = """
+[tool.black]
+line-length = 88
+"""
+    pyproject_file.write_text(decode(existing_section))
+    tester.execute(inputs=init_basic_inputs)
+    assert (
+        "{}\n{}".format(existing_section, init_basic_toml) in pyproject_file.read_text()
+    )
+
+
+def test_init_existing_pyproject_with_build_system_fails(
+    tester, source_dir, init_basic_inputs
+):
+    pyproject_file = source_dir / "pyproject.toml"
+    existing_section = """
+[build-system]
+requires = ["setuptools >= 40.6.0", "wheel"]
+build-backend = "setuptools.build_meta"
+"""
+    pyproject_file.write_text(decode(existing_section))
+    tester.execute(inputs=init_basic_inputs)
+    assert (
+        tester.io.fetch_output().strip()
+        == "A pyproject.toml file with a defined build-system already exists."
+    )
+    assert "{}".format(existing_section) in pyproject_file.read_text()
