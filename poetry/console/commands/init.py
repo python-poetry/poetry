@@ -23,9 +23,6 @@ from .command import Command
 from .env_command import EnvCommand
 
 
-# import tomlkit
-
-
 class InitCommand(Command):
     name = "init"
     description = (
