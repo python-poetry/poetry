@@ -4,9 +4,9 @@ import pytest
 import tomlkit
 
 from poetry.core.semver import Version
+from poetry.core.toml.file import TOMLFile
 from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
-from poetry.utils.toml_file import TomlFile
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
 
@@ -52,7 +52,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_py37 = venv_cache / "{}-py3.7".format(venv_name)
     mock_build_env.assert_called_with(venv_py37, executable="python3.7")
 
-    envs_file = TomlFile(venv_cache / "envs.toml")
+    envs_file = TOMLFile(venv_cache / "envs.toml")
     assert envs_file.exists()
     envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
@@ -78,7 +78,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     venv_dir = venv_cache / "{}-py{}".format(venv_name, python_minor)
     venv_dir.mkdir(parents=True, exist_ok=True)
 
-    envs_file = TomlFile(venv_cache / "envs.toml")
+    envs_file = TOMLFile(venv_cache / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {"minor": python_minor, "patch": python_patch}
     envs_file.write(doc)

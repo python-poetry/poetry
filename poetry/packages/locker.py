@@ -19,10 +19,10 @@ from poetry.core.packages.package import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
+from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
-from poetry.utils.toml_file import TomlFile
 
 
 logger = logging.getLogger(__name__)
@@ -35,13 +35,13 @@ class Locker(object):
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
     def __init__(self, lock, local_config):  # type: (Path, dict) -> None
-        self._lock = TomlFile(lock)
+        self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
 
     @property
-    def lock(self):  # type: () -> TomlFile
+    def lock(self):  # type: () -> TOMLFile
         return self._lock
 
     @property

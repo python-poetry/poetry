@@ -2,17 +2,17 @@ import sys
 
 import pytest
 
+from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
 from poetry.utils.exporter import Exporter
-from poetry.utils.toml_file import TomlFile
 
 
 class Locker(BaseLocker):
     def __init__(self):
-        self._lock = TomlFile(Path.cwd().joinpath("poetry.lock"))
+        self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
         self._locked = True
         self._content_hash = self._get_content_hash()
 

@@ -4,6 +4,7 @@ import re
 from cleo import argument
 from cleo import option
 
+from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 
 from .command import Command
@@ -71,17 +72,16 @@ To remove a repository (repo is a short alias for repositories):
         from poetry.locations import CONFIG_DIR
         from poetry.utils._compat import Path
         from poetry.utils._compat import basestring
-        from poetry.utils.toml_file import TomlFile
 
         config = Factory.create_config(self.io)
-        config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
+        config_file = TOMLFile(Path(CONFIG_DIR) / "config.toml")
 
         try:
-            local_config_file = TomlFile(self.poetry.file.parent / "poetry.toml")
+            local_config_file = TOMLFile(self.poetry.file.parent / "poetry.toml")
             if local_config_file.exists():
                 config.merge(local_config_file.read())
         except RuntimeError:
-            local_config_file = TomlFile(Path.cwd() / "poetry.toml")
+            local_config_file = TOMLFile(Path.cwd() / "poetry.toml")
 
         if self.option("local"):
             config.set_config_source(FileConfigSource(local_config_file))

@@ -7,7 +7,7 @@ from typing import Optional
 from clikit.api.io.io import IO
 
 from poetry.core.factory import Factory as BaseFactory
-from poetry.core.utils.toml_file import TomlFile
+from poetry.core.toml.file import TOMLFile
 
 from .config.config import Config
 from .config.file_config_source import FileConfigSource
@@ -40,7 +40,7 @@ class Factory(BaseFactory):
         config = self.create_config(io)
 
         # Loading local configuration
-        local_config_file = TomlFile(base_poetry.file.parent / "poetry.toml")
+        local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
                 io.write_line(
@@ -102,7 +102,7 @@ class Factory(BaseFactory):
 
         config = Config()
         # Load global config
-        config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
+        config_file = TOMLFile(Path(CONFIG_DIR) / "config.toml")
         if config_file.exists():
             if io.is_debug():
                 io.write_line(
@@ -116,7 +116,7 @@ class Factory(BaseFactory):
         config.set_config_source(FileConfigSource(config_file))
 
         # Load global auth config
-        auth_config_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
+        auth_config_file = TOMLFile(Path(CONFIG_DIR) / "auth.toml")
         if auth_config_file.exists():
             if io.is_debug():
                 io.write_line(

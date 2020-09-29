@@ -7,6 +7,7 @@ from poetry.core.masonry.utils.helpers import escape_version
 from poetry.core.packages import Dependency
 from poetry.core.packages import Link
 from poetry.core.packages import Package
+from poetry.core.toml.file import TOMLFile
 from poetry.core.vcs.git import ParsedUrl
 from poetry.factory import Factory
 from poetry.installation.executor import Executor
@@ -17,7 +18,6 @@ from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
-from poetry.utils.toml_file import TomlFile
 
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
@@ -153,7 +153,7 @@ class TestApplication(Application):
 
 class TestLocker(Locker):
     def __init__(self, lock, local_config):  # noqa
-        self._lock = TomlFile(lock)
+        self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
