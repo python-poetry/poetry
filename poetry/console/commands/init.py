@@ -10,17 +10,20 @@ from typing import List
 from typing import Tuple
 from typing import Union
 
-import tomlkit
-
 from cleo import option
 from tomlkit import inline_table
 
+from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.core.toml.file import TOMLFile
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
 
 from .command import Command
 from .env_command import EnvCommand
+
+
+# import tomlkit
 
 
 class InitCommand(Command):
@@ -68,23 +71,20 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
-        original_toml = None
+        original_toml = TOMLFile(Path.cwd() / "pyproject.toml")
 
-        if (Path.cwd() / "pyproject.toml").exists():
-            with (Path.cwd() / "pyproject.toml").open() as toml_file:
-                original_toml = tomlkit.loads(toml_file.read())
+        if original_toml.exists():
+            if PyProjectTOML(original_toml.path).is_poetry_project():
+                self.line(
+                    "<error>A pyproject.toml file with a poetry section already exists.</error>"
+                )
+                return 1
 
-                if original_toml.get("tool", {}).get("poetry"):
-                    self.line(
-                        "<error>A pyproject.toml file with a poetry section already exists.</error>"
-                    )
-                    return 1
-
-                if original_toml.get("build-system"):
-                    self.line(
-                        "<error>A pyproject.toml file with a defined build-system already exists.</error>"
-                    )
-                    return 1
+            if original_toml.read().get("build-system"):
+                self.line(
+                    "<error>A pyproject.toml file with a defined build-system already exists.</error>"
+                )
+                return 1
 
         vcs_config = GitConfig()
 
