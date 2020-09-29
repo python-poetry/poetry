@@ -94,13 +94,7 @@ class EditableBuilder(Builder):
                 os.remove(str(setup))
 
     def _add_pth(self):
-        pth = self._env.site_packages.joinpath(self._module.name).with_suffix(".pth")
-        self._debug(
-            "  - Adding <c2>{}</c2> to <b>{}</b> for {}".format(
-                pth.name, self._env.site_packages, self._poetry.file.parent
-            )
-        )
-
+        pth_file = Path(self._module.name).with_suffix(".pth")
         paths = set()
         for include in self._module.includes:
             if isinstance(include, PackageInclude) and (
@@ -108,11 +102,33 @@ class EditableBuilder(Builder):
             ):
                 paths.add(include.base.resolve().as_posix())
 
-        with pth.open("w", encoding="utf-8") as f:
-            for path in paths:
-                f.write(decode(path + os.linesep))
+        content = ""
+        for path in paths:
+            content += decode(path + os.linesep)
 
-        return [pth]
+        for site_package in [self._env.site_packages, self._env.usersite]:
+            if not site_package:
+                continue
+
+            try:
+                site_package.mkdir(parents=True, exist_ok=True)
+                path = site_package.joinpath(pth_file)
+                self._debug(
+                    "  - Adding <c2>{}</c2> to <b>{}</b> for {}".format(
+                        path.name, site_package, self._poetry.file.parent
+                    )
+                )
+                path.write_text(content, encoding="utf-8")
+                return [path]
+            except PermissionError:
+                self._debug("- <b>{}</b> is not writable trying next available site")
+
+        self._io.error_line(
+            "  - Failed to create <c2>{}</c2> for {}".format(
+                pth_file.name, self._poetry.file.parent
+            )
+        )
+        return []
 
     def _add_scripts(self):
         added = []
