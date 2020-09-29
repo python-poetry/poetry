@@ -12,8 +12,8 @@ from cleo.io.io import IO
 from cleo.io.null_io import NullIO
 from cleo.io.outputs.buffered_output import BufferedOutput
 from cleo.io.outputs.output import Verbosity
-
 from deepdiff import DeepDiff
+
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
@@ -833,8 +833,7 @@ def test_installer_with_pypi_repository(package, locker, installed, config):
     installer.run()
 
     expected = fixture("with-pypi-repository")
-
-    assert not DeepDiff(locker.written_data, expected, ignore_order=True)
+    assert not DeepDiff(expected, locker.written_data, ignore_order=True)
 
 
 def test_run_installs_with_local_file(installer, locker, repo, package, fixture_dir):
