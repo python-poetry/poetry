@@ -830,6 +830,17 @@ def test_system_env_has_correct_paths():
     assert env.site_packages == Path(paths["purelib"])
 
 
+@pytest.mark.parametrize(
+    ("enabled",), [(True,), (False,)],
+)
+def test_system_env_usersite(mocker, enabled):
+    mocker.patch("site.check_enableusersite", return_value=enabled)
+    env = SystemEnv(Path(sys.prefix))
+    assert (enabled and env.usersite is not None) or (
+        not enabled and env.usersite is None
+    )
+
+
 def test_venv_has_correct_paths(tmp_venv):
     paths = tmp_venv.paths
 

@@ -812,9 +812,13 @@ class Env(object):
     @property
     def site_packages(self):  # type: () -> Path
         if self._site_packages is None:
-            self._site_packages = Path(self.purelib)
-
+            self._site_packages = self.purelib
         return self._site_packages
+
+    @property
+    def usersite(self):  # type: () -> Optional[Path]
+        if "usersite" in self.paths:
+            return Path(self.paths["usersite"])
 
     @property
     def purelib(self):  # type: () -> Path
@@ -1017,6 +1021,8 @@ class SystemEnv(Env):
         # on some distributions it does not return the proper paths
         # (those used by pip for instance). We go through distutils
         # to get the proper ones.
+        import site
+
         from distutils.command.install import SCHEME_KEYS  # noqa
         from distutils.core import Distribution
 
@@ -1032,6 +1038,9 @@ class SystemEnv(Env):
                 continue
 
             paths[key] = getattr(obj, "install_{}".format(key))
+
+        if site.check_enableusersite() and hasattr(obj, "install_usersite"):
+            paths["usersite"] = getattr(obj, "install_usersite")
 
         return paths
 
