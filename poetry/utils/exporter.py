@@ -1,13 +1,7 @@
-import os
-
 from typing import Union
 
 from clikit.api.io import IO
 
-from poetry.core.packages.directory_dependency import DirectoryDependency
-from poetry.core.packages.file_dependency import FileDependency
-from poetry.core.packages.url_dependency import URLDependency
-from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
@@ -60,75 +54,54 @@ class Exporter(object):
     ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
         indexes = set()
         content = ""
-        packages = self._poetry.locker.locked_repository(dev).packages
+        repository = self._poetry.locker.locked_repository(dev)
 
         # Build a set of all packages required by our selected extras
         extra_package_names = set(
             get_extra_package_names(
-                packages, self._poetry.locker.lock_data.get("extras", {}), extras or ()
+                repository.packages,
+                self._poetry.locker.lock_data.get("extras", {}),
+                extras or (),
             )
         )
 
-        for package in sorted(packages, key=lambda p: p.name):
+        dependency_lines = set()
+
+        for dependency in self._poetry.locker.get_project_dependencies(
+            project_requires=self._poetry.package.requires
+            if not dev
+            else self._poetry.package.all_requires,
+            with_nested=True,
+        ):
+            package = repository.find_packages(dependency=dependency)[0]
+
             # If a package is optional and we haven't opted in to it, continue
             if package.optional and package.name not in extra_package_names:
                 continue
 
-            if package.source_type == "git":
-                dependency = VCSDependency(
-                    package.name,
-                    package.source_type,
-                    package.source_url,
-                    package.source_reference,
-                )
-                dependency.marker = package.marker
-                line = "-e git+{}@{}#egg={}".format(
-                    package.source_url, package.source_reference, package.name
-                )
-            elif package.source_type in ["directory", "file", "url"]:
-                url = package.source_url
-                if package.source_type == "file":
-                    dependency = FileDependency(
-                        package.name,
-                        Path(package.source_url),
-                        base=self._poetry.locker.lock.path.parent,
-                    )
-                    url = Path(
-                        os.path.relpath(
-                            url, self._poetry.locker.lock.path.parent.as_posix()
-                        )
-                    ).as_posix()
-                elif package.source_type == "directory":
-                    dependency = DirectoryDependency(
-                        package.name,
-                        Path(package.source_url),
-                        base=self._poetry.locker.lock.path.parent,
-                    )
-                    url = Path(
-                        os.path.relpath(
-                            url, self._poetry.locker.lock.path.parent.as_posix()
-                        )
-                    ).as_posix()
-                else:
-                    dependency = URLDependency(package.name, package.source_url)
+            line = ""
 
-                dependency.marker = package.marker
+            if package.develop:
+                line += "-e "
 
-                line = "{}".format(url)
-                if package.develop and package.source_type == "directory":
-                    line = "-e " + line
+            requirement = dependency.to_pep_508(with_extras=False)
+            is_direct_reference = (
+                dependency.is_vcs()
+                or dependency.is_url()
+                or dependency.is_file()
+                or dependency.is_directory()
+            )
+
+            if is_direct_reference:
+                line = requirement
             else:
-                dependency = package.to_dependency()
                 line = "{}=={}".format(package.name, package.version)
+                if ";" in requirement:
+                    markers = requirement.split(";", 1)[1].strip()
+                    if markers:
+                        line += "; {}".format(markers)
 
-            requirement = dependency.to_pep_508()
-            if ";" in requirement:
-                line += "; {}".format(requirement.split(";")[1].strip())
-
-            if (
-                package.source_type not in {"git", "directory", "file", "url"}
-                and package.source_url
-            ):
+            if not is_direct_reference and package.source_url:
                 indexes.add(package.source_url)
 
             if package.files and with_hashes:
@@ -150,9 +123,10 @@ class Exporter(object):
                         line += "    --hash={}{}".format(
                             h, " \\\n" if i < len(hashes) - 1 else ""
                         )
+            dependency_lines.add(line)
 
-            line += "\n"
-            content += line
+        content += "\n".join(sorted(dependency_lines))
+        content += "\n"
 
         if indexes:
             # If we have extra indexes, we add them to the beginning of the output

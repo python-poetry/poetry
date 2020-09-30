@@ -34,6 +34,18 @@ class Locker(BaseLocker):
         return "123456789"
 
 
+@pytest.fixture
+def working_directory():
+    return Path(__file__).parent.parent.parent
+
+
+@pytest.fixture(autouse=True)
+def mock_path_cwd(mocker, working_directory):
+    yield mocker.patch(
+        "poetry.core.utils._compat.Path.cwd", return_value=working_directory
+    )
+
+
 @pytest.fixture()
 def locker():
     return Locker()
@@ -47,7 +59,19 @@ def poetry(fixture_dir, locker):
     return p
 
 
-def test_exporter_can_export_requirements_txt_with_standard_packages(tmp_dir, poetry):
+def set_package_requires(poetry):
+    packages = poetry.locker.locked_repository(with_dev_reqs=True).packages
+    poetry.package.requires = [
+        pkg.to_dependency() for pkg in packages if pkg.category == "main"
+    ]
+    poetry.package.dev_requires = [
+        pkg.to_dependency() for pkg in packages if pkg.category == "dev"
+    ]
+
+
+def test_exporter_can_export_requirements_txt_with_standard_packages(
+    tmp_dir, poetry, mocker
+):
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -73,6 +97,8 @@ def test_exporter_can_export_requirements_txt_with_standard_packages(tmp_dir, po
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -110,14 +136,24 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers
                     "python-versions": "*",
                     "marker": "extra =='foo'",
                 },
+                {
+                    "name": "baz",
+                    "version": "7.8.9",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": "sys_platform == 'win32'",
+                },
             ],
             "metadata": {
                 "python-versions": "*",
                 "content-hash": "123456789",
-                "hashes": {"foo": [], "bar": []},
+                "hashes": {"foo": [], "bar": [], "baz": []},
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -126,7 +162,8 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers
         content = f.read()
 
     expected = """\
-bar==4.5.6; extra == "foo"
+bar==4.5.6
+baz==7.8.9; sys_platform == "win32"
 foo==1.2.3; python_version < "3.7"
 """
 
@@ -161,6 +198,8 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -206,6 +245,8 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export(
@@ -251,6 +292,8 @@ def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -294,6 +337,8 @@ def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
@@ -337,6 +382,8 @@ def test_exporter_exports_requirements_txt_without_optional_packages(tmp_dir, po
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
@@ -389,6 +436,8 @@ def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
             "extras": {"feature_bar": ["bar"]},
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export(
@@ -438,6 +487,8 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -446,7 +497,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
         content = f.read()
 
     expected = """\
--e git+https://github.com/foo/foo.git@123456#egg=foo
+foo @ git+https://github.com/foo/foo.git@123456
 """
 
     assert expected == content
@@ -479,6 +530,8 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -487,13 +540,15 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
         content = f.read()
 
     expected = """\
--e git+https://github.com/foo/foo.git@123456#egg=foo; python_version < "3.7"
+foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
 """
 
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, poetry):
+def test_exporter_can_export_requirements_txt_with_directory_packages(
+    tmp_dir, poetry, working_directory
+):
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -517,6 +572,8 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, p
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -525,14 +582,16 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(tmp_dir, p
         content = f.read()
 
     expected = """\
--e tests/fixtures/sample_project
-"""
+foo @ {}/tests/fixtures/sample_project
+""".format(
+        working_directory.as_posix()
+    )
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_directory_packages_and_markers(
-    tmp_dir, poetry
+    tmp_dir, poetry, working_directory
 ):
     poetry.locker.mock_lock_data(
         {
@@ -558,6 +617,8 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -566,13 +627,17 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
         content = f.read()
 
     expected = """\
--e tests/fixtures/sample_project; python_version < "3.7"
-"""
+foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
+""".format(
+        working_directory.as_posix()
+    )
 
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, poetry):
+def test_exporter_can_export_requirements_txt_with_file_packages(
+    tmp_dir, poetry, working_directory
+):
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -596,6 +661,8 @@ def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, poetry
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -604,14 +671,16 @@ def test_exporter_can_export_requirements_txt_with_file_packages(tmp_dir, poetry
         content = f.read()
 
     expected = """\
-tests/fixtures/distributions/demo-0.1.0.tar.gz
-"""
+foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz
+""".format(
+        working_directory.as_uri()
+    )
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
-    tmp_dir, poetry
+    tmp_dir, poetry, working_directory
 ):
     poetry.locker.mock_lock_data(
         {
@@ -637,6 +706,8 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
@@ -645,8 +716,10 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
         content = f.read()
 
     expected = """\
-tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
-"""
+foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
+""".format(
+        working_directory.as_uri()
+    )
 
     assert expected == content
 
@@ -685,6 +758,8 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry)
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
@@ -758,6 +833,8 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
@@ -822,6 +899,8 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_credentials(
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export(
@@ -873,6 +952,8 @@ def test_exporter_exports_requirements_txt_to_standard_output(tmp_dir, poetry, c
             },
         }
     )
+    set_package_requires(poetry)
+
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), sys.stdout)
