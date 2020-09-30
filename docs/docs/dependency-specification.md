@@ -111,12 +111,16 @@ you can use the `path` property:
 ```toml
 [tool.poetry.dependencies]
 # directory
-my-package = { path = "../my-package/" }
+my-package = { path = "../my-package/", develop = false }
 
 # file
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
+!!!note
+
+    Before poetry 1.1 directory path dependencies were installed in editable mode by default. You should set the `develop` attribute explicitly,
+    to make sure the behavior is the same for all poetry versions.
 
 ## `url` dependencies
 
