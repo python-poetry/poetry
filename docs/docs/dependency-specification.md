@@ -111,12 +111,13 @@ you can use the `path` property:
 ```toml
 [tool.poetry.dependencies]
 # directory
-my-package = { path = "../my-package/" }
+my-package = { path = "../my-package/", develop = false }
 
 # file
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
+For directories, set `develop = true` for editable installation.
 
 ## `url` dependencies
 
