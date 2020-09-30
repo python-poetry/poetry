@@ -65,4 +65,4 @@ jobs:
 
       - name: Run pytest
         shell: bash
-        run: python -m poetry run python -m pytest -v tests
+        run: python -m poetry run python -m pytest -p no:sugar -q tests/
