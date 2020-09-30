@@ -117,7 +117,10 @@ my-package = { path = "../my-package/", develop = false }
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
-For directories, set `develop = true` for editable installation.
+!!!note
+
+    Before poetry 1.1 directory path dependencies were installed in editable mode by default. You should set the `develop` attribute explicitly,
+    to make sure the behavior is the same for all poetry versions.
 
 ## `url` dependencies
 
