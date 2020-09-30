@@ -552,7 +552,7 @@ dev = ["pre-commit", "tox"]
 
 [[package]]
 name = "poetry-core"
-version = "1.0.0rc3"
+version = "1.0.0"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
@@ -974,7 +974,7 @@ testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~2.7 || ^3.5"
-content-hash = "d97a19b321b206d7098b165c7285e3a3db28c3ae9b6a17349dd51b605a55223b"
+content-hash = "1e774c9d8b7f6812d721cff08b51554f9a0cd051e2ae0e884421bcb56718d131"
 
 [metadata.files]
 appdirs = [
@@ -1270,8 +1270,8 @@ pluggy = [
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
 poetry-core = [
-    {file = "poetry-core-1.0.0rc3.tar.gz", hash = "sha256:0e3d23a4c5acc14c5f1703b12645692bf24461c8c8e3fff32ca80a5462beccdf"},
-    {file = "poetry_core-1.0.0rc3-py2.py3-none-any.whl", hash = "sha256:2c9ee2b3f7b40047bafdc2239fbb9de73637edc07a9697a3a66ac15fe6b040f5"},
+    {file = "poetry-core-1.0.0.tar.gz", hash = "sha256:6a664ff389b9f45382536f8fa1611a0cb4d2de7c5a5c885db1f0c600cd11fbd5"},
+    {file = "poetry_core-1.0.0-py2.py3-none-any.whl", hash = "sha256:769288e0e1b88dfcceb3185728f0b7388b26d5f93d6c22d2dcae372da51d200d"},
 ]
 pre-commit = [
     {file = "pre_commit-2.7.1-py2.py3-none-any.whl", hash = "sha256:810aef2a2ba4f31eed1941fc270e72696a1ad5590b9751839c90807d0fff6b9a"},
