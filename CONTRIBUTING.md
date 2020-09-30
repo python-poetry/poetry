@@ -10,6 +10,7 @@ The following is a set of guidelines for contributing to Poetry on GitHub. These
 
   * [Reporting bugs](#reporting-bugs)
   * [Suggesting enhancements](#suggesting-enhancements)
+  * [Contributing to documentation](#contributing-to-documentation)
   * [Contributing to code](#contributing-to-code)
   * [Issue triage](#issue-triage)
   * [Git workflow](#git-workflow)
@@ -77,6 +78,17 @@ Enhancement suggestions are tracked on the [official issue tracker](https://gith
 * **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
 * **Provide specific examples to demonstrate the steps**..
 * **Describe the current behavior** and **explain which behavior you expected to see instead** and why.
+
+### Contributing to documentation
+
+One of the simplest ways to get started contributing to a project is through improving documentation. Poetry is constantly evolving, this means that sometimes our documentation has gaps. You can help by
+adding missing sections, editing the existing content so it is more accessible or creating new content (tutorials, FAQs, etc).
+
+> **Note:** A great way to understand Poetry's design and how it all fits together, is to add FAQ entries for commonly
+> asked questions. Poetry members usually mark issues with [candidate/faq](https://github.com/python-poetry/poetry/issues?q=is%3Aissue+label%3Acandidate%2Ffaq+) to indicate that the issue either contains a response
+> that explains how something works or might benefit from an entry in the FAQ.
+
+Issues pertaining to the documentation are usually marked with the [Documentation](https://github.com/python-poetry/poetry/labels/Documentation) label.
 
 ### Contributing to code
 
