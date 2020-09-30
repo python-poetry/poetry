@@ -108,7 +108,7 @@ Create a new virtual environment if one doesn't already exist.
 Defaults to `true`.
 
 !!!note:
-        When setting this configuration to `false`, the Python environment used must have `pip` 
+        When setting this configuration to `false`, the Python environment used must have `pip`
         installed and available.
 
 ### `virtualenvs.in-project`: boolean
