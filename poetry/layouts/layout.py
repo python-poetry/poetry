@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Optional
 
 from tomlkit import dumps
 from tomlkit import loads
@@ -86,7 +87,9 @@ class Layout(object):
 
         self._write_poetry(path)
 
-    def generate_poetry_content(self, original_toml):  # type: ("PyProjectTOML") -> str
+    def generate_poetry_content(
+        self, original=None
+    ):  # type: (Optional["PyProjectTOML"]) -> str
         template = POETRY_DEFAULT
         if self._license:
             template = POETRY_WITH_LICENSE
@@ -121,8 +124,8 @@ class Layout(object):
 
         content = dumps(content)
 
-        if original_toml.file.exists():
-            content = dumps(original_toml.data) + "\n" + content
+        if original and original.file.exists():
+            content = dumps(original.data) + "\n" + content
 
         return content
 
