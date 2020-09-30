@@ -209,7 +209,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content(pyproject)
+        content = layout_.generate_poetry_content(original=pyproject)
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")
