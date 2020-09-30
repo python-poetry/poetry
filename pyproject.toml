@@ -24,7 +24,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
 
-poetry-core = "^1.0.0rc3"
+poetry-core = "^1.0.0"
 cleo = "^0.8.1"
 clikit = "^0.6.2"
 crashtest = { version = "^0.3.0", python = "^3.6" }
@@ -77,7 +77,7 @@ poetry = "poetry.console:main"
 
 
 [build-system]
-requires = ["poetry-core>=1.0.0a3"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 
