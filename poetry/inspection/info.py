@@ -43,9 +43,14 @@ PEP517_META_BUILD_DEPS = ["pep517===0.8.2", "toml==0.10.1"]
 
 
 class PackageInfoError(ValueError):
-    def __init__(self, path):  # type: (Union[Path, str]) -> None
+    def __init__(
+        self, path, *reasons
+    ):  # type: (Union[Path, str], *Union[BaseException, str]) -> None
+        reasons = (
+            "Unable to determine package info for path: {}".format(str(path)),
+        ) + reasons
         super(PackageInfoError, self).__init__(
-            "Unable to determine package info for path: {}".format(str(path))
+            "\n\n".join(str(msg).strip() for msg in reasons if msg)
         )
 
 
@@ -290,12 +295,14 @@ class PackageInfo:
         :param path: Path to `setup.py` file
         """
         if not cls.has_setup_files(path):
-            raise PackageInfoError(path)
+            raise PackageInfoError(
+                path, "No setup files (setup.py, setup.cfg) was found."
+            )
 
         try:
             result = SetupReader.read_from_directory(path)
-        except Exception:
-            raise PackageInfoError(path)
+        except Exception as e:
+            raise PackageInfoError(path, e)
 
         python_requires = result["python_requires"]
         if python_requires is None:
@@ -328,7 +335,10 @@ class PackageInfo:
 
         if not (info.name and info.version) and not info.requires_dist:
             # there is nothing useful here
-            raise PackageInfoError(path)
+            raise PackageInfoError(
+                path,
+                "No core metadata (name, version, requires-dist) could be retrieved.",
+            )
 
         return info
 
@@ -463,15 +473,21 @@ class PackageInfo:
                 cls._log("PEP517 build failed: {}".format(e), level="debug")
                 setup_py = path / "setup.py"
                 if not setup_py.exists():
-                    raise PackageInfoError(path)
+                    raise PackageInfoError(
+                        path,
+                        e,
+                        "No fallback setup.py file was found to generate egg_info.",
+                    )
 
                 cwd = Path.cwd()
                 os.chdir(path.as_posix())
                 try:
                     venv.run("python", "setup.py", "egg_info")
                     return cls.from_metadata(path)
-                except EnvCommandError:
-                    raise PackageInfoError(path)
+                except EnvCommandError as fbe:
+                    raise PackageInfoError(
+                        path, "Fallback egg_info generation failed.", fbe
+                    )
                 finally:
                     os.chdir(cwd.as_posix())
 
@@ -482,7 +498,7 @@ class PackageInfo:
             return info
 
         # if we reach here, everything has failed and all hope is lost
-        raise PackageInfoError(path)
+        raise PackageInfoError(path, "Exhausted all core metadata sources.")
 
     @classmethod
     def from_directory(
@@ -561,8 +577,8 @@ class PackageInfo:
 
         try:
             return cls._from_distribution(pkginfo.BDist(str(path)))
-        except ValueError:
-            raise PackageInfoError(path)
+        except ValueError as e:
+            raise PackageInfoError(path, e)
 
     @classmethod
     def from_path(cls, path):  # type: (Path) -> PackageInfo
