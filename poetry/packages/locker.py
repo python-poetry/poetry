@@ -1,10 +1,14 @@
+import itertools
 import json
 import logging
 import os
 import re
 
+from copy import deepcopy
 from hashlib import sha256
+from typing import Any
 from typing import List
+from typing import Optional
 
 from tomlkit import array
 from tomlkit import document
@@ -176,6 +180,84 @@ class Locker(object):
             packages.add_package(package)
 
         return packages
+
+    def get_project_dependencies(
+        self, project_requires, pinned_versions=False, with_nested=False
+    ):  # type: (List[Dependency], bool, bool) -> Any
+        packages = self.locked_repository().packages
+
+        # group packages entries by name, this is required because requirement might use
+        # different constraints
+        packages_by_name = {}
+        for pkg in packages:
+            if pkg.name not in packages_by_name:
+                packages_by_name[pkg.name] = []
+            packages_by_name[pkg.name].append(pkg)
+
+        def __get_locked_package(
+            _dependency,
+        ):  # type: (Dependency) -> Optional[Package]
+            """
+            Internal helper to identify corresponding locked package using dependency
+            version constraints.
+            """
+            for _package in packages_by_name.get(_dependency.name, []):
+                if _dependency.constraint.allows(_package.version):
+                    return _package
+            return None
+
+        project_level_dependencies = set()
+        dependencies = []
+
+        for dependency in project_requires:
+            dependency = deepcopy(dependency)
+            if pinned_versions:
+                locked_package = __get_locked_package(dependency)
+                if locked_package:
+                    dependency.set_constraint(locked_package.to_dependency().constraint)
+            project_level_dependencies.add(dependency.name)
+            dependencies.append(dependency)
+
+        if not with_nested:
+            # return only with project level dependencies
+            return dependencies
+
+        nested_dependencies = list()
+
+        for pkg in packages:  # type: Package
+            for requirement in pkg.requires:  # type: Dependency
+                if requirement.name in project_level_dependencies:
+                    # project level dependencies take precedence
+                    continue
+
+                if pinned_versions:
+                    requirement.set_constraint(
+                        __get_locked_package(requirement).to_dependency().constraint
+                    )
+
+                # dependencies use extra to indicate that it was activated via parent
+                # package's extras
+                marker = requirement.marker.without_extras()
+                for project_requirement in project_requires:
+                    if (
+                        pkg.name == project_requirement.name
+                        and project_requirement.constraint.allows(pkg.version)
+                    ):
+                        requirement.marker = marker.intersect(
+                            project_requirement.marker
+                        )
+                        break
+                else:
+                    # this dependency was not from a project requirement
+                    requirement.marker = marker.intersect(pkg.marker)
+
+                if requirement not in nested_dependencies:
+                    nested_dependencies.append(requirement)
+
+        return sorted(
+            itertools.chain(dependencies, nested_dependencies),
+            key=lambda x: x.name.lower(),
+        )
 
     def set_lock_data(self, root, packages):  # type: (...) -> bool
         files = table()
