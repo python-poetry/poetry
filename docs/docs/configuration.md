@@ -107,6 +107,8 @@ Defaults to one of the following directories:
 Create a new virtual environment if one doesn't already exist.
 Defaults to `true`.
 
+If set to `false`, poetry will install dependencies into the current python environment.
+
 !!!note:
         When setting this configuration to `false`, the Python environment used must have `pip`
         installed and available.
@@ -116,7 +118,7 @@ Defaults to `true`.
 Create the virtualenv inside the project's root directory.
 Defaults to `None`.
 
-If set to `true`, the virtualenv wil be created and expected in a folder named `.venv` within the root directory of the project.
+If set to `true`, the virtualenv will be created and expected in a folder named `.venv` within the root directory of the project.
 
 If not set explicitly (default), `poetry` will use the virtualenv from the `.venv` directory when one is available. If set to `false`, `poetry` will ignore any existing `.venv` directory.
 
