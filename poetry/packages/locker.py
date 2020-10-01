@@ -182,9 +182,9 @@ class Locker(object):
         return packages
 
     def get_project_dependencies(
-        self, project_requires, pinned_versions=False, with_nested=False
-    ):  # type: (List[Dependency], bool, bool) -> Any
-        packages = self.locked_repository().packages
+        self, project_requires, pinned_versions=False, with_nested=False, with_dev=False
+    ):  # type: (List[Dependency], bool, bool, bool) -> Any
+        packages = self.locked_repository(with_dev).packages
 
         # group packages entries by name, this is required because requirement might use
         # different constraints
@@ -229,6 +229,10 @@ class Locker(object):
                 if requirement.name in project_level_dependencies:
                     # project level dependencies take precedence
                     continue
+
+                # we make a copy to avoid any side-effects
+                requirement = deepcopy(requirement)
+                requirement._category = pkg.category
 
                 if pinned_versions:
                     requirement.set_constraint(
