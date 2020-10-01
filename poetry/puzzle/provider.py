@@ -453,23 +453,19 @@ class Provider:
                     self.search_for_url(r)
 
         optional_dependencies = []
-        activated_extras = []
-        for extra in package.dependency.extras:
-            if extra not in package.extras:
-                continue
-
-            activated_extras.append(extra)
-            optional_dependencies += [d.name for d in package.extras[extra]]
-
         _dependencies = []
 
         # If some extras/features were required, we need to
         # add a special dependency representing the base package
         # to the current package
         if package.dependency.extras:
-            if activated_extras:
-                package = package.with_features(activated_extras)
+            for extra in package.dependency.extras:
+                if extra not in package.extras:
+                    continue
 
+                optional_dependencies += [d.name for d in package.extras[extra]]
+
+            package = package.with_features(list(package.dependency.extras))
             _dependencies.append(package.without_features().to_dependency())
 
         for dep in requires:
