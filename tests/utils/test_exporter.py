@@ -778,10 +778,11 @@ foo==1.2.3 \\
 
     assert expected == content
 
-def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(tmp_dir, poetry):
-    poetry.pool.add_repository(
-        LegacyRepository("custom", "http://example.com/simple",)
-    )
+
+def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
+    tmp_dir, poetry
+):
+    poetry.pool.add_repository(LegacyRepository("custom", "http://example.com/simple",))
     poetry.locker.mock_lock_data(
         {
             "package": [
