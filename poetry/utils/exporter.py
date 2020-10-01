@@ -154,6 +154,8 @@ class Exporter(object):
                 url = (
                     repository.authenticated_url if with_credentials else repository.url
                 )
+                if repository.url.startswith("http://"):
+                    indexes_header += "--trusted-host {}\n".format(url)
                 indexes_header += "--extra-index-url {}\n".format(url)
 
             content = indexes_header + "\n" + content
