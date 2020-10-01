@@ -44,7 +44,7 @@ license = ""
 [tool.poetry.dev-dependencies]
 """
 
-BUILD_SYSTEM_MIN_VERSION = "1.0.0a5"
+BUILD_SYSTEM_MIN_VERSION = "1.0.0"
 BUILD_SYSTEM_MAX_VERSION = None
 
 

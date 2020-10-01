@@ -1,5 +1,24 @@
 # Change Log
 
+## [1.1.0] - 2020-10-01
+
+### Changed
+
+- The `init` command will now use existing `pyproject.toml` if possible ([#2448](https://github.com/python-poetry/poetry/pull/2448)).
+- Error messages when metadata information retrieval fails have been improved  ([#2997](https://github.com/python-poetry/poetry/pull/2997)).
+
+### Fixed
+
+- Fixed parsing of version constraint for `rc` prereleases ([#2978](https://github.com/python-poetry/poetry/pull/2978)).
+- Fixed how some metadata information are extracted from `setup.cfg` files ([#2957](https://github.com/python-poetry/poetry/pull/2957)).
+- Fixed return codes returned by the executor ([#2981](https://github.com/python-poetry/poetry/pull/2981)).
+- Fixed whitespaces not being accepted for the list of extras when adding packages ([#2985](https://github.com/python-poetry/poetry/pull/2985)).
+- Fixed repositories specified in the `pyproject.toml` file not being taken into account for authentication when downloading packages ([#2990](https://github.com/python-poetry/poetry/pull/2990)).
+- Fixed permission errors when installing the root project if the `site-packages` directory is not writeable ([#3002](https://github.com/python-poetry/poetry/pull/3002)).
+- Fixed environment marker propagation when exporting to the `requirements.txt` format  ([#3002](https://github.com/python-poetry/poetry/pull/3002)).
+- Fixed errors when paths in run command contained spaces ([#3015](https://github.com/python-poetry/poetry/pull/3015)).
+
+
 ## [1.1.0rc1] - 2020-09-25
 
 ### Changed
@@ -1004,7 +1023,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0rc1...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0...master
+[1.1.0]: https://github.com/python-poetry/poetry/releases/tag/1.1.0
 [1.1.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0rc1
 [1.1.0b4]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b4
 [1.1.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b3
