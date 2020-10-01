@@ -106,6 +106,7 @@ Defaults to one of the following directories:
 
 Create a new virtual environment if one doesn't already exist.
 Defaults to `true`.
+
 If set to `false`, poetry will install dependencies into the current python environment.
 
 !!!note:
