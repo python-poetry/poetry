@@ -1772,6 +1772,44 @@ def test_installer_uses_prereleases_if_they_are_compatible(
     assert 2 == installer.executor.installations_count
 
 
+def test_installer_can_refresh_old_lock_files(locker, package, repo, installed, config):
+    pool = Pool()
+    pool.add_repository(repo)
+
+    locker.locked(True)
+    locker.mock_lock_data(fixture("old-lock"))
+
+    for pkg in locker.locked_repository(with_dev_reqs=True).packages:
+        dependency = Factory.create_dependency(
+            name=pkg.name,
+            constraint=pkg.to_dependency().constraint,
+            category=pkg.category,
+        )
+        package.add_dependency(dependency)
+        repo.add_package(pkg)
+
+    installer = Installer(
+        NullIO(),
+        MockEnv(),
+        package,
+        locker,
+        pool,
+        config,
+        installed=None,
+        executor=Executor(MockEnv(), pool, config, NullIO()),
+    )
+    installer.use_executor()
+
+    installer.lock(update=False)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 0 == installer.executor.removals_count
+
+    assert locker.written_data == fixture("old-lock-refresh")
+
+
 def test_installer_can_handle_old_lock_files(
     installer, locker, package, repo, installed, config
 ):
