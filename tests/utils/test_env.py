@@ -15,6 +15,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
+from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import NoCompatiblePythonVersionFound
@@ -72,6 +73,26 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, manager
     venv = VirtualEnv(venv_path)
 
     assert venv.run("python", "-V", shell=True).startswith("Python")
+
+
+def test_env_commands_with_spaces_in_their_arg_work_as_expected(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    manager.build_venv(str(venv_path))
+    venv = VirtualEnv(venv_path)
+    assert venv.run("python", venv.pip, "--version", shell=True).startswith(
+        "pip {} from ".format(venv.pip_version)
+    )
+
+
+def test_env_shell_commands_with_stdinput_in_their_arg_work_as_expected(
+    tmp_dir, manager
+):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    manager.build_venv(str(venv_path))
+    venv = VirtualEnv(venv_path)
+    assert venv.run("python", "-", input_=GET_BASE_PREFIX, shell=True).strip() == str(
+        venv.get_base_prefix()
+    )
 
 
 @pytest.fixture
