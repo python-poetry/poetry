@@ -2435,7 +2435,6 @@ def test_solver_can_resolve_transitive_extras(solver, repo, package):
     requests = get_package("requests", "2.24.0")
     requests.add_dependency(Factory.create_dependency("certifi", ">=2017.4.17"))
     dep = get_dependency("PyOpenSSL", ">=0.14")
-    dep.in_extras.append("security")
     requests.add_dependency(
         Factory.create_dependency("PyOpenSSL", {"version": ">=0.14", "optional": True})
     )
@@ -2461,6 +2460,41 @@ def test_solver_can_resolve_transitive_extras(solver, repo, package):
             {"job": "install", "package": get_package("pyopenssl", "0.14")},
             {"job": "install", "package": requests},
             {"job": "install", "package": pyota},
+        ],
+    )
+
+
+def test_solver_can_resolve_for_packages_with_missing_extras(solver, repo, package):
+    package.add_dependency(
+        Factory.create_dependency(
+            "django-anymail", {"version": "^6.0", "extras": ["postmark"]}
+        )
+    )
+
+    django_anymail = get_package("django-anymail", "6.1.0")
+    django_anymail.add_dependency(Factory.create_dependency("django", ">=2.0"))
+    django_anymail.add_dependency(Factory.create_dependency("requests", ">=2.4.3"))
+    django_anymail.add_dependency(
+        Factory.create_dependency("boto3", {"version": "*", "optional": True})
+    )
+    django_anymail.extras["amazon_ses"] = [Factory.create_dependency("boto3", "*")]
+    django = get_package("django", "2.2.0")
+    boto3 = get_package("boto3", "1.0.0")
+    requests = get_package("requests", "2.24.0")
+
+    repo.add_package(django_anymail)
+    repo.add_package(django)
+    repo.add_package(boto3)
+    repo.add_package(requests)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": django},
+            {"job": "install", "package": requests},
+            {"job": "install", "package": django_anymail},
         ],
     )
 

@@ -24,14 +24,9 @@ class Repository(BaseRepository):
     def package(self, name, version, extras=None):
         name = name.lower()
 
-        if extras is None:
-            extras = []
-
         for package in self.packages:
             if name == package.name and package.version.text == version:
-                package = package.with_features(extras)
-
-                return package
+                return package.clone()
 
     def find_packages(self, dependency):
         constraint = dependency.constraint
