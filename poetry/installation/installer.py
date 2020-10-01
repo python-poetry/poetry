@@ -85,6 +85,10 @@ class Installer:
         return self
 
     def run(self):
+        # Check if refresh
+        if not self._update and self._lock and self._locker.is_locked():
+            return self._do_refresh()
+
         # Force update if there is no lock file present
         if not self._update and not self._locker.is_locked():
             self._update = True
@@ -137,11 +141,11 @@ class Installer:
 
         return self
 
-    def lock(self):  # type: () -> Installer
+    def lock(self, update=True):  # type: (bool) -> Installer
         """
         Prepare the installer for locking only.
         """
-        self.update()
+        self.update(update=update)
         self.execute_operations(False)
         self._lock = True
 
@@ -172,6 +176,20 @@ class Installer:
         self._use_executor = use_executor
 
         return self
+
+    def _do_refresh(self):
+        # Checking extras
+        for extra in self._extras:
+            if extra not in self._package.extras:
+                raise ValueError("Extra [{}] is not specified.".format(extra))
+
+        ops = self._get_operations_from_lock(self._locker.locked_repository(True))
+        local_repo = Repository()
+        self._populate_local_repo(local_repo, ops)
+
+        self._write_lock_file(local_repo, force=True)
+
+        return 0
 
     def _do_install(self, local_repo):
         from poetry.puzzle import Solver
@@ -285,8 +303,8 @@ class Installer:
         # Execute operations
         return self._execute(ops)
 
-    def _write_lock_file(self, repo):  # type: (Repository) -> None
-        if self._update and self._write_lock:
+    def _write_lock_file(self, repo, force=True):  # type: (Repository, bool) -> None
+        if force or (self._update and self._write_lock):
             updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
             if updated_lock:
