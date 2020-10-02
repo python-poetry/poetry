@@ -449,6 +449,163 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
     assert ops[0].package.marker.is_any()
 
 
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_only_requested(solver, repo, package, enabled_extra):
+    extras = [enabled_extra] if enabled_extra is not None else []
+
+    package.add_dependency(Factory.create_dependency("A", "*"))
+    package.add_dependency(
+        Factory.create_dependency("B", {"version": "*", "extras": extras})
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c10 = get_package("C", "1.0")
+    package_c20 = get_package("C", "2.0")
+
+    dep10 = get_dependency("C", "1.0", optional=True)
+    dep10._in_extras.append("one")
+    dep10.marker = parse_marker("extra == 'one'")
+
+    dep20 = get_dependency("C", "2.0", optional=True)
+    dep20._in_extras.append("two")
+    dep20.marker = parse_marker("extra == 'two'")
+
+    package_b.extras = {"one": [dep10], "two": [dep20]}
+
+    package_b.requires.append(dep10)
+    package_b.requires.append(dep20)
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c10)
+    repo.add_package(package_c20)
+
+    ops = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_a},
+        {"job": "install", "package": package_b},
+    ]
+
+    if enabled_extra is not None:
+        expected.insert(
+            0,
+            {
+                "job": "install",
+                "package": package_c10 if enabled_extra == "one" else package_c20,
+            },
+        )
+
+    check_solver_result(
+        ops, expected,
+    )
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
+
+
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
+    solver, repo, package, enabled_extra
+):
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+
+    dep = get_dependency("C", "*", optional=True)
+    dep._in_extras.append("one")
+    dep._in_extras.append("two")
+
+    package_b.extras = {"one": [dep], "two": [dep]}
+
+    package_b.requires.append(dep)
+
+    extras = [enabled_extra] if enabled_extra is not None else []
+    package_a.add_dependency(
+        Factory.create_dependency("B", {"version": "*", "extras": extras})
+    )
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    ops = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_b},
+        {"job": "install", "package": package_a},
+    ]
+
+    if enabled_extra is not None:
+        expected.insert(0, {"job": "install", "package": package_c})
+
+    check_solver_result(
+        ops, expected,
+    )
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
+
+
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_only_requested_nested(
+    solver, repo, package, enabled_extra
+):
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c10 = get_package("C", "1.0")
+    package_c20 = get_package("C", "2.0")
+
+    dep10 = get_dependency("C", "1.0", optional=True)
+    dep10._in_extras.append("one")
+    dep10.marker = parse_marker("extra == 'one'")
+
+    dep20 = get_dependency("C", "2.0", optional=True)
+    dep20._in_extras.append("two")
+    dep20.marker = parse_marker("extra == 'two'")
+
+    package_b.extras = {"one": [dep10], "two": [dep20]}
+
+    package_b.requires.append(dep10)
+    package_b.requires.append(dep20)
+
+    extras = [enabled_extra] if enabled_extra is not None else []
+    package_a.add_dependency(
+        Factory.create_dependency("B", {"version": "*", "extras": extras})
+    )
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c10)
+    repo.add_package(package_c20)
+
+    ops = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_b},
+        {"job": "install", "package": package_a},
+    ]
+
+    if enabled_extra is not None:
+        expected.insert(
+            0,
+            {
+                "job": "install",
+                "package": package_c10 if enabled_extra == "one" else package_c20,
+            },
+        )
+
+    check_solver_result(ops, expected)
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
+
+
 def test_solver_returns_prereleases_if_requested(solver, repo, package):
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
