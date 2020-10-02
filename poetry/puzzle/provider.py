@@ -432,7 +432,7 @@ class Provider:
                 self._pool.package(
                     package.name,
                     package.version.text,
-                    extras=package.dependency.extras,
+                    extras=list(package.dependency.extras),
                     repository=package.dependency.source_name,
                 ),
             )
@@ -478,12 +478,12 @@ class Provider:
             if self._env and not dep.marker.validate(self._env.marker_env):
                 continue
 
-            if (
-                dep.is_optional()
-                and dep.name not in optional_dependencies
-                and not package.is_root()
-            ):
-                continue
+            if not package.is_root():
+                if (dep.is_optional() and dep.name not in optional_dependencies) or (
+                    dep.in_extras
+                    and not set(dep.in_extras).intersection(package.dependency.extras)
+                ):
+                    continue
 
             _dependencies.append(dep)
 
