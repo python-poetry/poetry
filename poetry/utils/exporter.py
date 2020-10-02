@@ -68,12 +68,14 @@ class Exporter(object):
         dependency_lines = set()
 
         for dependency in self._poetry.locker.get_project_dependencies(
-            project_requires=self._poetry.package.requires
-            if not dev
-            else self._poetry.package.all_requires,
+            project_requires=self._poetry.package.all_requires,
             with_nested=True,
+            with_dev=dev,
         ):
-            package = repository.find_packages(dependency=dependency)[0]
+            try:
+                package = repository.find_packages(dependency=dependency)[0]
+            except IndexError:
+                continue
 
             # If a package is optional and we haven't opted in to it, continue
             if package.optional and package.name not in extra_package_names:
