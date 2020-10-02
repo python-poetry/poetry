@@ -51,11 +51,13 @@ class Factory(BaseFactory):
 
         # Load local sources
         repositories = {}
+        existing_repositories = config.get("repositories", {})
         for source in base_poetry.pyproject.poetry_config.get("source", []):
             name = source.get("name")
             url = source.get("url")
             if name and url:
-                repositories[name] = {"url": url}
+                if name not in existing_repositories:
+                    repositories[name] = {"url": url}
 
         config.merge({"repositories": repositories})
 
