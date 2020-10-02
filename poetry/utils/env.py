@@ -761,7 +761,7 @@ class EnvManager(object):
             self.build_venv(
                 venv,
                 executable=executable,
-                flags=self._poetry.config.get("virtualenvs.options"),
+                flags=virtualenv_flags()
             )
         else:
             if force:
@@ -778,7 +778,7 @@ class EnvManager(object):
                 self.build_venv(
                     venv,
                     executable=executable,
-                    flags=self._poetry.config.get("virtualenvs.options"),
+                    flags=self.virtualenv_flags()
                 )
             elif io.is_very_verbose():
                 io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
@@ -800,6 +800,11 @@ class EnvManager(object):
             return SystemEnv(Path(sys.prefix), self.get_base_prefix())
 
         return VirtualEnv(venv)
+    def virtualenv_flags(self):
+        flags = self._poetry.config.get("virtualenvs.options")
+        flags["prompt"] = self._poetry.package.name
+        return flags
+
 
     @classmethod
     def build_venv(
