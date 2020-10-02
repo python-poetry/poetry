@@ -51,7 +51,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     venv_py37 = venv_cache / "{}-py3.7".format(venv_name)
     mock_build_env.assert_called_with(
-        venv_py37, executable="python3.7", flags={"always-copy": False}
+        venv_py37, executable="python3.7", flags={"always-copy": False,"prompt":"simple-project"}
     )
 
     envs_file = TOMLFile(venv_cache / "envs.toml")
@@ -114,6 +114,7 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
             is_venv=True,
         ),
     )
+
     mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
     tester.execute(python_minor)
