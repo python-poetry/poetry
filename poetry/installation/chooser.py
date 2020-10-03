@@ -63,7 +63,7 @@ class Chooser:
             ):
                 continue
 
-            if link.ext == ".egg":
+            if link.ext in {".egg", ".exe", ".msi", ".rpm", ".srpm"}:
                 continue
 
             links.append(link)
