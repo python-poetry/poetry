@@ -621,6 +621,42 @@ line-length = 88
     )
 
 
+def test_init_non_interactive_existing_pyproject_add_dependency(
+    tester, source_dir, init_basic_inputs, repo
+):
+    pyproject_file = source_dir / "pyproject.toml"
+    existing_section = """
+[tool.black]
+line-length = 88
+"""
+    pyproject_file.write_text(decode(existing_section))
+
+    repo.add_package(get_package("foo", "1.19.2"))
+
+    tester.execute(
+        "--author 'Your Name <you@example.com>' "
+        "--name 'my-package' "
+        "--python '^3.6' "
+        "--dependency foo",
+        interactive=False,
+    )
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+foo = "^1.19.2"
+
+[tool.poetry.dev-dependencies]
+"""
+    assert "{}\n{}".format(existing_section, expected) in pyproject_file.read_text()
+
+
 def test_init_existing_pyproject_with_build_system_fails(
     tester, source_dir, init_basic_inputs
 ):

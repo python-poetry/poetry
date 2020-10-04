@@ -13,6 +13,7 @@ from typing import Union
 from cleo import option
 from tomlkit import inline_table
 
+from poetry.core.pyproject import PyProjectException
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
@@ -378,7 +379,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         try:
             cwd = self.poetry.file.parent
-        except RuntimeError:
+        except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
 
         for requirement in requirements:
