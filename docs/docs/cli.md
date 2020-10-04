@@ -496,7 +496,7 @@ poetry cache list
 
 The `cache clear` command removes packages from a cached repository.
 
-To clear the whole cache of packages from the `pypi` repository, run:
+For example, to clear the whole cache of packages from the `pypi` repository, run:
 
 ```bash
 poetry cache clear pypi --all
