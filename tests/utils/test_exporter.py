@@ -813,6 +813,7 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
             },
         }
     )
+    set_package_requires(poetry)
     exporter = Exporter(poetry)
 
     exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
