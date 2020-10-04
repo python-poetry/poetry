@@ -36,6 +36,7 @@ virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
+virtualenvs.prompt = "{project_name}-py{python_version}"
 ```
 
 ## Displaying a single configuration setting
@@ -138,11 +139,16 @@ If not set explicitly (default), `poetry` will use the virtualenv from the `.ven
 Directory where virtual environments will be created.
 Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 
+### `virtualenvs.prompt` : string
+
+Name of the command line prompt to be displayed when the virtual enviroment is activated.
+The variables `project_name` and `python_version` are avalible for formatting.
+Defaults to "{project_name}-py{python_version}"
+
 ### `virtualenvs.options.always-copy`: boolean
 
 If set to `true` the `--always-copy` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
 Defaults to `false`.
-
 
 ### `repositories.<name>`: string
 
