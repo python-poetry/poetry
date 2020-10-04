@@ -135,7 +135,9 @@ class Config(object):
             return value
 
         return re.sub(
-            r"{(.+?)}", lambda m: self.get(m.group(1)) or f"{{{m.group(1)}}}", value
+            r"{(.+?)}",
+            lambda m: self.get(m.group(1)) or "{{{key}}}".format(key=m.group(1)),
+            value,
         )
 
     def _get_normalizer(self, name):  # type: (str) -> Callable
