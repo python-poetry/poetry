@@ -143,3 +143,27 @@ def test_publish_read_from_environment_variable(fixture_dir, environ, mocker, co
         ("https://foo.bar",),
         {"cert": None, "client_cert": None, "dry_run": False},
     ] == uploader_upload.call_args
+
+
+def test_build_poetry_with_repository_as_url(fixture_dir, mocker, config):
+    uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
+    uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
+    poetry._config = config
+    poetry.config.merge(
+        {
+            "repositories": "https://testpy.pypi.org/legacy/",
+            "http-basic": {"my-repo": {"username": "foo", "password": "bar"}},
+        }
+    )
+    io = BufferedIO()
+    publisher = Publisher(poetry, io)
+
+    publisher.publish("my-repo", None, None)
+
+    assert [("foo", "bar")] == uploader_auth.call_args
+    assert [
+        ("https://testpy.pypi.org/legacy/",),
+        {"cert": None, "client_cert": None, "dry_run": False},
+    ] == uploader_upload.call_args
+    assert "Publishing my-package (1.2.3) to my-repo" in io.fetch_output()

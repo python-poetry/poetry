@@ -1,6 +1,7 @@
 import logging
 
 from typing import Optional
+from urllib.parse import urlparse
 
 from poetry.utils._compat import Path
 from poetry.utils.helpers import get_cert
@@ -42,12 +43,18 @@ class Publisher:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"
         else:
-            # Retrieving config information
+            # Retrieving config information\
             url = self._poetry.config.get("repositories.{}.url".format(repository_name))
+
             if url is None:
-                raise RuntimeError(
-                    "Repository {} is not defined".format(repository_name)
-                )
+                url = self._poetry.config.get("repositories")
+                result = urlparse(url)
+                if all([result.scheme, result.netloc, result.path]):
+                    url = result.geturl()
+                else:
+                    raise RuntimeError(
+                        "Repository {} is not defined".format(repository_name)
+                    )
 
         if not (username and password):
             # Check if we have a token first
