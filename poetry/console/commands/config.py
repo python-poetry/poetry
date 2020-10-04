@@ -60,6 +60,11 @@ To remove a repository (repo is a short alias for repositories):
                 lambda val: str(Path(val)),
                 str(Path(CACHE_DIR) / "virtualenvs"),
             ),
+            "virtualenvs.prompt": (
+                str,
+                lambda val: str(val),
+                "{project_name}-py{python_version}",
+            ),
             "experimental.new-installer": (
                 boolean_validator,
                 boolean_normalizer,

@@ -743,6 +743,9 @@ class EnvManager(object):
             name = "{}-py{}".format(name, python_minor.strip())
             venv = venv_path / name
 
+        prompt = self._poetry.config.get("virtualenvs.prompt").format(
+            project_name=self._poetry.package.name, python_version=python_minor
+        )
         if not venv.exists():
             if create_venv is False:
                 io.write_line(
@@ -802,7 +805,10 @@ class EnvManager(object):
         return VirtualEnv(venv)
     def virtualenv_flags(self):
         flags = self._poetry.config.get("virtualenvs.options")
-        flags["prompt"] = self._poetry.package.name
+        flags["prompt"] = prompt = self._poetry.config.get("virtualenvs.prompt").format(
+            project_name=self._poetry.package.name, python_version=python_minor
+        )
+
         return flags
 
 

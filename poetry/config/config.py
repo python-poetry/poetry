@@ -36,6 +36,7 @@ class Config(object):
             "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
             "options": {"always-copy": False},
+            "prompt": "{project_name}-py{python_version}",
         },
         "experimental": {"new-installer": True},
         "installer": {"parallel": True},
@@ -133,7 +134,9 @@ class Config(object):
         if not isinstance(value, str):
             return value
 
-        return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)
+        return re.sub(
+            r"{(.+?)}", lambda m: self.get(m.group(1)) or f"{{{m.group(1)}}}", value
+        )
 
     def _get_normalizer(self, name):  # type: (str) -> Callable
         if name in {
