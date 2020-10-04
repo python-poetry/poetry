@@ -798,7 +798,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         config_virtualenvs_path
         / "{}-py{}.{}".format(venv_name, version.major, version.minor - 1),
         executable="python{}.{}".format(version.major, version.minor - 1),
-        flags={"always-copy": False,"prompt":"simple-project-py3.7"},
+        flags={"always-copy": False,"prompt":"simple-project-py{}.{}".format(version.major, version.minor - 1)},
     )
 
 
