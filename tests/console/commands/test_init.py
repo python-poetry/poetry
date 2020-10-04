@@ -1,26 +1,42 @@
+import os
+import shutil
 import sys
 
 import pytest
 
+from cleo import CommandTester
+
+from poetry.repositories import Pool
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from tests.helpers import TestApplication
 from tests.helpers import get_package
 
 
 @pytest.fixture
-def source_dir(tmp_path):  # type: (Path) -> Path
-    yield Path(tmp_path.as_posix())
+def source_dir(tmp_path):  # type: (...) -> Path
+    cwd = os.getcwd()
 
-
-@pytest.fixture(autouse=True)
-def patches(mocker, source_dir):
-    patch = mocker.patch("poetry.utils._compat.Path.cwd")
-    patch.return_value = source_dir
+    try:
+        os.chdir(str(tmp_path))
+        yield Path(tmp_path.as_posix())
+    finally:
+        os.chdir(cwd)
 
 
 @pytest.fixture
-def tester(command_tester_factory):
-    return command_tester_factory("init")
+def patches(mocker, source_dir, repo):
+    mocker.patch("poetry.utils._compat.Path.cwd", return_value=source_dir)
+    mocker.patch(
+        "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
+    )
+
+
+@pytest.fixture
+def tester(patches):
+    # we need a test application without poetry here.
+    app = TestApplication(None)
+    return CommandTester(app.find("init"))
 
 
 @pytest.fixture
@@ -265,9 +281,12 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_directory_dependency(tester, repo):
+def test_interactive_with_directory_dependency(tester, repo, source_dir, fixture_dir):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
+
+    demo = fixture_dir("git") / "github.com" / "demo" / "demo"
+    shutil.copytree(str(demo), str(source_dir / "demo"))
 
     inputs = [
         "my-package",  # Package name
@@ -277,7 +296,7 @@ def test_interactive_with_directory_dependency(tester, repo):
         "MIT",  # License
         "~2.7 || ^3.6",  # Python
         "",  # Interactive packages
-        "../../fixtures/git/github.com/demo/demo",  # Search for package
+        "./demo",  # Search for package
         "",  # Stop searching for packages
         "",  # Interactive dev packages
         "pytest",  # Search for package
@@ -298,7 +317,53 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-demo = {path = "../../fixtures/git/github.com/demo/demo"}
+demo = {path = "demo"}
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.6.0"
+"""
+    assert expected in tester.io.fetch_output()
+
+
+def test_interactive_with_directory_dependency_and_other_name(
+    tester, repo, source_dir, fixture_dir
+):
+    repo.add_package(get_package("pendulum", "2.0.0"))
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    demo = fixture_dir("git") / "github.com" / "demo" / "pyproject-demo"
+    shutil.copytree(str(demo), str(source_dir / "pyproject-demo"))
+
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "",  # Interactive packages
+        "./pyproject-demo",  # Search for package
+        "",  # Stop searching for packages
+        "",  # Interactive dev packages
+        "pytest",  # Search for package
+        "0",
+        "",
+        "",
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+demo = {path = "pyproject-demo"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.6.0"
@@ -307,9 +372,12 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
-def test_interactive_with_directory_dependency_and_other_name(tester, repo):
+def test_interactive_with_file_dependency(tester, repo, source_dir, fixture_dir):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
+
+    demo = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
+    shutil.copyfile(str(demo), str(source_dir / demo.name))
 
     inputs = [
         "my-package",  # Package name
@@ -319,7 +387,7 @@ def test_interactive_with_directory_dependency_and_other_name(tester, repo):
         "MIT",  # License
         "~2.7 || ^3.6",  # Python
         "",  # Interactive packages
-        "../../fixtures/git/github.com/demo/pyproject-demo",  # Search for package
+        "./demo-0.1.0-py2.py3-none-any.whl",  # Search for package
         "",  # Stop searching for packages
         "",  # Interactive dev packages
         "pytest",  # Search for package
@@ -340,49 +408,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-demo = {path = "../../fixtures/git/github.com/demo/pyproject-demo"}
-
-[tool.poetry.dev-dependencies]
-pytest = "^3.6.0"
-"""
-
-    assert expected in tester.io.fetch_output()
-
-
-def test_interactive_with_file_dependency(tester, repo):
-    repo.add_package(get_package("pendulum", "2.0.0"))
-    repo.add_package(get_package("pytest", "3.6.0"))
-
-    inputs = [
-        "my-package",  # Package name
-        "1.2.3",  # Version
-        "This is a description",  # Description
-        "n",  # Author
-        "MIT",  # License
-        "~2.7 || ^3.6",  # Python
-        "",  # Interactive packages
-        "../../fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl",  # Search for package
-        "",  # Stop searching for packages
-        "",  # Interactive dev packages
-        "pytest",  # Search for package
-        "0",
-        "",
-        "",
-        "\n",  # Generate
-    ]
-    tester.execute(inputs="\n".join(inputs))
-
-    expected = """\
-[tool.poetry]
-name = "my-package"
-version = "1.2.3"
-description = "This is a description"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
-
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-demo = {path = "../../fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"}
+demo = {path = "demo-0.1.0-py2.py3-none-any.whl"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.6.0"
