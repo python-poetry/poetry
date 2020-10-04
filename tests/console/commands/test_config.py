@@ -33,6 +33,7 @@ virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.path = {path}  # {virtualenvs}
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """.format(
         cache=json.dumps(str(config_cache_dir)),
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
@@ -54,6 +55,7 @@ virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.path = {path}  # {virtualenvs}
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """.format(
         cache=json.dumps(str(config_cache_dir)),
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
@@ -97,6 +99,7 @@ virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.path = {path}  # {virtualenvs}
+virtualenvs.prompt = "{{project_name}}-py{{python_version}}"
 """.format(
         cache=json.dumps(str(config_cache_dir)),
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
