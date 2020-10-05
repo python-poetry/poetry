@@ -38,6 +38,7 @@ class Config(object):
             "path": os.path.join("{cache-dir}", "virtualenvs"),
         },
         "experimental": {"new-installer": True},
+        "installer": {"parallel": True},
     }
 
     def __init__(
@@ -131,14 +132,22 @@ class Config(object):
         return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)
 
     def _get_validator(self, name):  # type: (str) -> Callable
-        if name in {"virtualenvs.create", "virtualenvs.in-project"}:
+        if name in {
+            "virtualenvs.create",
+            "virtualenvs.in-project",
+            "installer.parallel",
+        }:
             return boolean_validator
 
         if name == "virtualenvs.path":
             return str
 
     def _get_normalizer(self, name):  # type: (str) -> Callable
-        if name in {"virtualenvs.create", "virtualenvs.in-project"}:
+        if name in {
+            "virtualenvs.create",
+            "virtualenvs.in-project",
+            "installer.parallel",
+        }:
             return boolean_normalizer
 
         if name == "virtualenvs.path":
