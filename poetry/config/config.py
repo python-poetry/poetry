@@ -39,6 +39,7 @@ class Config(object):
             "options": {"always-copy": False},
         },
         "experimental": {"new-installer": True},
+        "installer": {"parallel": True},
     }
 
     def __init__(
@@ -140,6 +141,7 @@ class Config(object):
             "virtualenvs.create",
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
+            "installer.parallel",
         }:
             return boolean_validator
 
@@ -151,6 +153,7 @@ class Config(object):
             "virtualenvs.create",
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
+            "installer.parallel",
         }:
             return boolean_normalizer
 
