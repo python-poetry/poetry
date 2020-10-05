@@ -69,6 +69,7 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
                 False,
             ),
+            "installer.parallel": (boolean_validator, boolean_normalizer, True,),
         }
 
         return unique_config_values

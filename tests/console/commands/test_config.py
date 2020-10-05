@@ -6,6 +6,8 @@ import pytest
 from poetry.config.config_source import ConfigSource
 from poetry.core.pyproject import PyProjectException
 from poetry.factory import Factory
+from poetry.utils._compat import PY2
+from poetry.utils._compat import WINDOWS
 
 
 @pytest.fixture()
@@ -28,6 +30,7 @@ def test_list_displays_default_value_if_not_set(tester, config):
 
     expected = """cache-dir = "/foo"
 experimental.new-installer = true
+installer.parallel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -46,6 +49,7 @@ def test_list_displays_set_get_setting(tester, config):
 
     expected = """cache-dir = "/foo"
 experimental.new-installer = true
+installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -86,6 +90,7 @@ def test_list_displays_set_get_local_setting(tester, config):
 
     expected = """cache-dir = "/foo"
 experimental.new-installer = true
+installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
@@ -122,3 +127,25 @@ def test_set_cert(tester, auth_config_source, mocker):
     tester.execute("certificates.foo.cert path/to/ca.pem")
 
     assert "path/to/ca.pem" == auth_config_source.config["certificates"]["foo"]["cert"]
+
+
+def test_config_installer_parallel(tester, command_tester_factory):
+    serial_enforced = PY2 and WINDOWS
+
+    tester.execute("--local installer.parallel")
+    assert tester.io.fetch_output().strip() == "true"
+
+    workers = command_tester_factory(
+        "install"
+    )._command._installer._executor._max_workers
+    assert workers > 1 or (serial_enforced and workers == 1)
+
+    tester.io.clear_output()
+    tester.execute("--local installer.parallel false")
+    tester.execute("--local installer.parallel")
+    assert tester.io.fetch_output().strip() == "false"
+
+    workers = command_tester_factory(
+        "install"
+    )._command._installer._executor._max_workers
+    assert workers == 1
