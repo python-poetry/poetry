@@ -1,4 +1,7 @@
-class SolverProblemError(Exception):
+from clikit.api.exceptions import CliKitException
+
+
+class SolverProblemError(CliKitException):
     def __init__(self, error):
         self._error = error
 
