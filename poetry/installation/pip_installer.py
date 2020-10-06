@@ -113,7 +113,9 @@ class PipInstaller(BaseInstaller):
             raise
 
         # This is a workaround for https://github.com/pypa/pip/issues/4176
-        nspkg_pth_file = self._env.site_packages / "{}-nspkg.pth".format(package.name)
+        nspkg_pth_file = self._env.site_packages.path / "{}-nspkg.pth".format(
+            package.name
+        )
         if nspkg_pth_file.exists():
             nspkg_pth_file.unlink()
 
