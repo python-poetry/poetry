@@ -866,7 +866,7 @@ def test_system_env_has_correct_paths():
     assert paths.get("purelib") is not None
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
-    assert env.site_packages == Path(paths["purelib"])
+    assert env.site_packages.path == Path(paths["purelib"])
 
 
 @pytest.mark.parametrize(
@@ -886,4 +886,4 @@ def test_venv_has_correct_paths(tmp_venv):
     assert paths.get("purelib") is not None
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
-    assert tmp_venv.site_packages == Path(paths["purelib"])
+    assert tmp_venv.site_packages.path == Path(paths["purelib"])

@@ -76,14 +76,14 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
     builder.build()
 
     assert tmp_venv._bin_dir.joinpath("foo").exists()
-    assert tmp_venv.site_packages.joinpath("simple_project.pth").exists()
-    assert simple_poetry.file.parent.resolve().as_posix() == tmp_venv.site_packages.joinpath(
+    assert tmp_venv.site_packages.path.joinpath("simple_project.pth").exists()
+    assert simple_poetry.file.parent.resolve().as_posix() == tmp_venv.site_packages.path.joinpath(
         "simple_project.pth"
     ).read_text().strip(
         os.linesep
     )
 
-    dist_info = tmp_venv.site_packages.joinpath("simple_project-1.2.3.dist-info")
+    dist_info = tmp_venv.site_packages.path.joinpath("simple_project-1.2.3.dist-info")
     assert dist_info.exists()
     assert dist_info.joinpath("INSTALLER").exists()
     assert dist_info.joinpath("METADATA").exists()
@@ -130,7 +130,7 @@ My Package
     assert metadata == dist_info.joinpath("METADATA").read_text(encoding="utf-8")
 
     records = dist_info.joinpath("RECORD").read_text()
-    assert str(tmp_venv.site_packages.joinpath("simple_project.pth")) in records
+    assert str(tmp_venv.site_packages.path.joinpath("simple_project.pth")) in records
     assert str(tmp_venv._bin_dir.joinpath("foo")) in records
     assert str(tmp_venv._bin_dir.joinpath("baz")) in records
     assert str(dist_info.joinpath("METADATA")) in records
@@ -202,7 +202,7 @@ def test_builder_installs_proper_files_when_packages_configured(
     builder = EditableBuilder(project_with_include, tmp_venv, NullIO())
     builder.build()
 
-    pth_file = tmp_venv.site_packages.joinpath("with_include.pth")
+    pth_file = tmp_venv.site_packages.path.joinpath("with_include.pth")
     assert pth_file.is_file()
 
     paths = set()
