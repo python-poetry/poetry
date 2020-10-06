@@ -134,11 +134,14 @@ class Exporter(object):
             # If we have extra indexes, we add them to the beginning of the output
             indexes_header = ""
             for index in sorted(indexes):
-                repository = [
+                repositories = [
                     r
                     for r in self._poetry.pool.repositories
                     if r.url == index.rstrip("/")
-                ][0]
+                ]
+                if not repositories:
+                    continue
+                repository = repositories[0]
                 if (
                     self._poetry.pool.has_default()
                     and repository is self._poetry.pool.repositories[0]
