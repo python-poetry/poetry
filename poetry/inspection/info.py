@@ -156,6 +156,15 @@ class PackageInfo:
         package.python_versions = self.requires_python or "*"
         package.files = self.files
 
+        if root_dir or (self._source_type in {"directory"} and self._source_url):
+            # this is a local poetry project, this means we can extract "richer" requirement information
+            # eg: development requirements etc.
+            poetry_package = self._get_poetry_package(path=root_dir or self._source_url)
+            if poetry_package:
+                package.extras = poetry_package.extras
+                package.requires = poetry_package.requires
+                return package
+
         for req in self.requires_dist or []:
             try:
                 # Attempt to parse the PEP-508 requirement string

@@ -29,9 +29,6 @@ from tests.repositories.test_legacy_repository import (
 from tests.repositories.test_pypi_repository import MockRepository
 
 
-fixtures_dir = Path("tests/fixtures")
-
-
 class Installer(BaseInstaller):
     def _get_installer(self):
         return NoopInstaller()
@@ -779,8 +776,8 @@ def test_installer_with_pypi_repository(package, locker, installed, config):
     assert locker.written_data == expected
 
 
-def test_run_installs_with_local_file(installer, locker, repo, package):
-    file_path = fixtures_dir / "distributions/demo-0.1.0-py2.py3-none-any.whl"
+def test_run_installs_with_local_file(installer, locker, repo, package, fixture_dir):
+    file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -793,9 +790,11 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
     assert 2 == installer.executor.installations_count
 
 
-def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, package):
-    file_path = (
-        fixtures_dir / "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
+def test_run_installs_wheel_with_no_requires_dist(
+    installer, locker, repo, package, fixture_dir
+):
+    file_path = fixture_dir(
+        "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
     )
     package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
 
@@ -809,31 +808,29 @@ def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, packa
 
 
 def test_run_installs_with_local_poetry_directory_and_extras(
-    installer, locker, repo, package, tmpdir
+    installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    file_path = fixtures_dir / "project_with_extras"
+    file_path = fixture_dir("project_with_extras")
     package.add_dependency(
         Factory.create_dependency(
             "project-with-extras", {"path": str(file_path), "extras": ["extras_a"]}
         )
     )
-    print(package.requires[0].develop)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     installer.run()
 
     expected = fixture("with-directory-dependency-poetry")
-
     assert locker.written_data == expected
 
     assert 2 == installer.executor.installations_count
 
 
 def test_run_installs_with_local_poetry_directory_transitive(
-    installer, locker, repo, package, tmpdir
+    installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    root_dir = fixtures_dir.joinpath("directory")
+    root_dir = fixture_dir("directory")
     package.root_dir = root_dir
     locker.set_lock_path(root_dir)
     directory = root_dir.joinpath("project_with_transitive_directory_dependencies")
@@ -858,12 +855,12 @@ def test_run_installs_with_local_poetry_directory_transitive(
 
 
 def test_run_installs_with_local_poetry_file_transitive(
-    installer, locker, repo, package, tmpdir
+    installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    root_dir = fixtures_dir.joinpath("directory")
+    root_dir = fixture_dir("directory")
     package.root_dir = root_dir
     locker.set_lock_path(root_dir)
-    directory = fixtures_dir.joinpath("directory").joinpath(
+    directory = fixture_dir("directory").joinpath(
         "project_with_transitive_file_dependencies"
     )
     package.add_dependency(
@@ -887,9 +884,9 @@ def test_run_installs_with_local_poetry_file_transitive(
 
 
 def test_run_installs_with_local_setuptools_directory(
-    installer, locker, repo, package, tmpdir
+    installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    file_path = fixtures_dir / "project_with_setup/"
+    file_path = fixture_dir("project_with_setup/")
     package.add_dependency(
         Factory.create_dependency("project-with-setup", {"path": str(file_path)})
     )
