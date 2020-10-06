@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.1.2] - 2020-10-06
+
+### Changed
+- Dependency installation of editable packages and all uninstall operations are now performed serially within their corresponding priority groups. ([#3099](https://github.com/python-poetry/poetry/pull/3099))
+- Improved package metadata inspection of nested poetry projects within project path dependencies. ([#3105](https://github.com/python-poetry/poetry/pull/3105))
+
+### Fixed
+
+- Fixed export of `requirements.txt` when project dependency contains git dependencies. ([#3100](https://github.com/python-poetry/poetry/pull/3100))
+
 ## [1.1.1] - 2020-10-05
 
 ### Added
@@ -1039,7 +1049,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.1...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.2...master
+[1.1.2]: https://github.com/python-poetry/poetry/releases/tag/1.1.2
 [1.1.1]: https://github.com/python-poetry/poetry/releases/tag/1.1.1
 [1.1.0]: https://github.com/python-poetry/poetry/releases/tag/1.1.0
 [1.1.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0rc1
