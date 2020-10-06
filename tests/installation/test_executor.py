@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import re
 import shutil
 
+from unittest import mock
+
 import pytest
 
 from clikit.api.formatter.style import Style
@@ -124,6 +126,29 @@ Package operations: 4 installs, 1 update, 1 removal
     output = set(io.fetch_output().splitlines())
     assert expected == output
     assert 5 == len(env.executed)
+
+
+def test_execute_uninstalls_serially(config, io):
+    executor = Executor(None, None, Config(), io)
+    executor._execute_group = mock.Mock()
+
+    assert 0 == executor.execute(
+        [
+            Uninstall(Package("pytest", "3.5.2")),
+            Uninstall(Package("attrs", "17.4.0")),
+            Uninstall(Package("requests", "2.18.3")),
+            Uninstall(Package("clikit", "0.2.3")),
+        ]
+    )
+
+    executed_groups = []
+    for call in executor._execute_group.mock_calls:
+        ops = call.args[0]
+        assert all(op.job_type == "uninstall" for op in ops)
+        executed_groups.append({op.package.name for op in ops})
+
+    # Uninstalls executed serially in separate groups.
+    assert executed_groups == [{"pytest"}, {"attrs"}, {"requests"}, {"clikit"}]
 
 
 def test_execute_shows_skipped_operations_if_verbose(config, pool, io):

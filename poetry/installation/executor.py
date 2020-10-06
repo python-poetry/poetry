@@ -103,29 +103,48 @@ class Executor(object):
             self._display_summary(operations)
 
         # We group operations by priority
-        groups = itertools.groupby(operations, key=lambda o: -o.priority)
+        unique = 0
+
+        def groupkey(op):
+            if op.job_type == "uninstall":
+                # See Github issue https://github.com/python-poetry/poetry/issues/2658
+                # Running uninstalls in parallel is not safe. Therefore, we run each
+                # uninstall in its separate group.
+                nonlocal unique
+                unique += 1
+                return unique
+            else:
+                # We group the rest of the operations by priority.
+                return -op.priority
+
+        groups = itertools.groupby(operations, key=groupkey)
         self._sections = OrderedDict()
         for _, group in groups:
-            tasks = []
-            for operation in group:
-                if self._shutdown:
-                    break
+            if self._execute_group(tuple(group)) == 1:
+                return 1
 
-                tasks.append(self._executor.submit(self._execute_operation, operation))
+        return 0
 
-            try:
-                wait(tasks)
-            except KeyboardInterrupt:
-                self._shutdown = True
-
+    def _execute_group(self, group):  # type: (Operation) -> int
+        tasks = []
+        for operation in group:
             if self._shutdown:
-                # Cancelling further tasks from being executed
-                [task.cancel() for task in tasks]
-                self._executor.shutdown(wait=True)
-
                 break
 
-        return 1 if self._shutdown else 0
+            tasks.append(self._executor.submit(self._execute_operation, operation))
+
+        try:
+            wait(tasks)
+        except KeyboardInterrupt:
+            self._shutdown = True
+
+        if self._shutdown:
+            # Cancelling further tasks from being executed
+            [task.cancel() for task in tasks]
+            self._executor.shutdown(wait=True)
+            return 1
+
+        return 0
 
     def _write(self, operation, line):
         if not self.supports_fancy_output() or not self._should_write_operation(
