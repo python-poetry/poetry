@@ -12,6 +12,11 @@ class LockCommand(InstallerCommand):
         option(
             "no-update", None, "Do not update locked versions, only refresh lock file."
         ),
+        option(
+            "check",
+            description="Check if the <comment>lock</> file is up to "
+            "date with <comment>pyproject.toml</>",
+        ),
     ]
 
     help = """
@@ -28,6 +33,12 @@ file.
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )
+        if self.option("check"):
+            if not self.poetry.locker.is_locked():
+                return 3
+            if not self.poetry.locker.is_fresh():
+                return 5
+            return 0
 
         self._installer.lock(update=not self.option("no-update"))
 
