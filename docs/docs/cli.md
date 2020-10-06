@@ -423,6 +423,10 @@ This command locks (without installing) the dependencies specified in `pyproject
 poetry lock
 ```
 
+### Options
+
+* `--check`: Check if poetry.lock exists and is up to date with pyproject.toml.
+
 ## version
 
 This command shows the current version of the project or bumps the version of
