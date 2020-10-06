@@ -16,7 +16,7 @@ python-versions = "*"
 version = "1.2.3"
 
 [package.dependencies]
-pendulum = {version = ">=1.4.4", optional = true, markers = "extra == \"extras_a\""}
+pendulum = {version = ">=1.4.4", optional = true}
 
 [package.extras]
 extras_a = ["pendulum (>=1.4.4)"]

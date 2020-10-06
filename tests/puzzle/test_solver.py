@@ -1672,6 +1672,60 @@ def test_solver_can_resolve_directory_dependencies(solver, repo, package):
     assert op.package.source_url == path
 
 
+def test_solver_can_resolve_directory_dependencies_nested_editable(
+    solver, repo, pool, installed, locked, io
+):
+    base = Path(__file__).parent.parent / "fixtures" / "project_with_nested_local"
+    poetry = Factory().create_poetry(cwd=base)
+    package = poetry.package
+
+    solver = Solver(
+        package, pool, installed, locked, io, provider=Provider(package, pool, io)
+    )
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {
+                "job": "install",
+                "package": Package(
+                    "quix",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "quix").as_posix(),
+                ),
+                "skipped": False,
+            },
+            {
+                "job": "install",
+                "package": Package(
+                    "bar",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "bar").as_posix(),
+                ),
+                "skipped": False,
+            },
+            {
+                "job": "install",
+                "package": Package(
+                    "foo",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "foo").as_posix(),
+                ),
+                "skipped": False,
+            },
+        ],
+    )
+
+    for op in ops:
+        assert op.package.source_type == "directory"
+        assert op.package.develop is True
+
+
 def test_solver_can_resolve_directory_dependencies_with_extras(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
