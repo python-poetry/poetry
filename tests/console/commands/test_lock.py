@@ -1,3 +1,4 @@
+import os
 import shutil
 import sys
 
@@ -55,3 +56,25 @@ def test_lock_no_update(command_tester_factory, poetry_with_old_lockfile, http):
 
     for package in packages:
         assert locked_repository.find_packages(package.to_dependency())
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="does not work on windows under ci environments"
+)
+def test_lock_command(command_tester_factory, poetry_with_old_lockfile, http):
+    http.disable()
+
+    tester = command_tester_factory("lock", poetry=poetry_with_old_lockfile)
+    status_code = tester.execute("--check")
+    assert status_code == 0
+
+    lock_from = poetry_with_old_lockfile.locker.lock.path.parent / "wrong_hash.lock"
+    lock_to = poetry_with_old_lockfile.locker.lock.path
+    shutil.copyfile(lock_from.as_posix(), lock_to.as_posix())
+    tester = command_tester_factory("lock", poetry=poetry_with_old_lockfile)
+    status_code = tester.execute("--check")
+    assert status_code == 5
+
+    os.remove(poetry_with_old_lockfile.locker.lock.path.as_posix())
+    status_code = tester.execute("--check")
+    assert status_code == 3
