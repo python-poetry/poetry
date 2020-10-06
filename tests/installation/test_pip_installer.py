@@ -189,7 +189,9 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
     )
 
     # we do this here because the virtual env might not be usable if failure case is triggered
-    pth_file_candidate = tmp_venv.site_packages / "{}-nspkg.pth".format(package.name)
+    pth_file_candidate = tmp_venv.site_packages.path / "{}-nspkg.pth".format(
+        package.name
+    )
 
     # in order to reproduce the scenario where the git source is removed prior to proper
     # clean up of nspkg.pth file, we need to make sure the fixture is copied and not

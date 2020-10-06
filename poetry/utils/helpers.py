@@ -5,6 +5,7 @@ import stat
 import tempfile
 
 from contextlib import contextmanager
+from typing import List
 from typing import Optional
 
 import requests
@@ -113,3 +114,7 @@ def get_package_version_display_string(
         )
 
     return package.full_pretty_version
+
+
+def paths_csv(paths):  # type: (List[Path]) -> str
+    return ", ".join('"{}"'.format(str(c)) for c in paths)

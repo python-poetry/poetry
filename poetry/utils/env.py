@@ -7,6 +7,7 @@ import re
 import shutil
 import sys
 import sysconfig
+import tempfile
 import textwrap
 
 from contextlib import contextmanager
@@ -39,6 +40,7 @@ from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
+from poetry.utils.helpers import paths_csv
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -141,6 +143,125 @@ import sysconfig
 
 print(json.dumps(sysconfig.get_paths()))
 """
+
+
+class SitePackages:
+    def __init__(
+        self, path, fallbacks=None, skip_write_checks=False
+    ):  # type: (Path, List[Path], bool) -> None
+        self._path = path
+        self._fallbacks = fallbacks or []
+        self._skip_write_checks = skip_write_checks
+        self._candidates = [self._path] + self._fallbacks
+        self._writable_candidates = None if not skip_write_checks else self._candidates
+
+    @property
+    def path(self):  # type: () -> Path
+        return self._path
+
+    @property
+    def candidates(self):  # type: () -> List[Path]
+        return self._candidates
+
+    @property
+    def writable_candidates(self):  # type: () -> List[Path]
+        if self._writable_candidates is not None:
+            return self._writable_candidates
+
+        self._writable_candidates = []
+        for candidate in self._candidates:
+            try:
+                if not candidate.exists():
+                    continue
+
+                with tempfile.TemporaryFile(dir=str(candidate)):
+                    self._writable_candidates.append(candidate)
+            except (IOError, OSError):
+                pass
+
+        return self._writable_candidates
+
+    def make_candidates(
+        self, path, writable_only=False
+    ):  # type: (Path, bool) -> List[Path]
+        candidates = self._candidates if not writable_only else self.writable_candidates
+        if path.is_absolute():
+            for candidate in candidates:
+                try:
+                    path.relative_to(candidate)
+                    return [path]
+                except ValueError:
+                    pass
+            else:
+                raise ValueError(
+                    "{} is not relative to any discovered {}sites".format(
+                        path, "writable " if writable_only else ""
+                    )
+                )
+
+        return [candidate / path for candidate in candidates if candidate]
+
+    def _path_method_wrapper(
+        self, path, method, *args, **kwargs
+    ):  # type: (Path, str, *Any, **Any) -> Union[Tuple[Path, Any], List[Tuple[Path, Any]]]
+
+        # TODO: Move to parameters after dropping Python 2.7
+        return_first = kwargs.pop("return_first", True)
+        writable_only = kwargs.pop("writable_only", False)
+
+        candidates = self.make_candidates(path, writable_only=writable_only)
+
+        if not candidates:
+            raise RuntimeError(
+                'Unable to find a suitable destination for "{}" in {}'.format(
+                    str(path), paths_csv(self._candidates)
+                )
+            )
+
+        results = []
+
+        for candidate in candidates:
+            try:
+                result = candidate, getattr(candidate, method)(*args, **kwargs)
+                if return_first:
+                    return result
+                else:
+                    results.append(result)
+            except (IOError, OSError):
+                # TODO: Replace with PermissionError
+                pass
+
+        if results:
+            return results
+
+        raise OSError("Unable to access any of {}".format(paths_csv(candidates)))
+
+    def write_text(self, path, *args, **kwargs):  # type: (Path, *Any, **Any) -> Path
+        return self._path_method_wrapper(path, "write_text", *args, **kwargs)[0]
+
+    def mkdir(self, path, *args, **kwargs):  # type: (Path, *Any, **Any) -> Path
+        return self._path_method_wrapper(path, "mkdir", *args, **kwargs)[0]
+
+    def exists(self, path):  # type: (Path) -> bool
+        return any(
+            value[-1]
+            for value in self._path_method_wrapper(path, "exists", return_first=False)
+        )
+
+    def find(self, path, writable_only=False):  # type: (Path, bool) -> List[Path]
+        return [
+            value[0]
+            for value in self._path_method_wrapper(
+                path, "exists", return_first=False, writable_only=writable_only
+            )
+            if value[-1] is True
+        ]
+
+    def __getattr__(self, item):
+        try:
+            return super(SitePackages, self).__getattribute__(item)
+        except AttributeError:
+            return getattr(self.path, item)
 
 
 class EnvError(Exception):
@@ -825,9 +946,13 @@ class Env(object):
         return self._pip_version
 
     @property
-    def site_packages(self):  # type: () -> Path
+    def site_packages(self):  # type: () -> SitePackages
         if self._site_packages is None:
-            self._site_packages = self.purelib
+            # we disable write checks if no user site exist
+            fallbacks = [self.usersite] if self.usersite else []
+            self._site_packages = SitePackages(
+                self.purelib, fallbacks, skip_write_checks=False if fallbacks else True
+            )
         return self._site_packages
 
     @property
