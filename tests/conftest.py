@@ -141,9 +141,14 @@ def http():
 
 
 @pytest.fixture
-def fixture_dir():
+def fixture_base():
+    return Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture
+def fixture_dir(fixture_base):
     def _fixture_dir(name):
-        return Path(__file__).parent / "fixtures" / name
+        return fixture_base / name
 
     return _fixture_dir
 
