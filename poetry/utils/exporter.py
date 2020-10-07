@@ -83,7 +83,8 @@ class Exporter(object):
 
             line = ""
 
-            if package.develop:
+            supports_editable_install = dependency.is_vcs() or dependency.is_directory()
+            if package.develop and supports_editable_install:
                 line += "-e "
 
             requirement = dependency.to_pep_508(with_extras=False)
