@@ -59,13 +59,18 @@ def poetry(fixture_dir, locker):
     return p
 
 
-def set_package_requires(poetry):
+def set_package_requires(poetry, skip=None):
+    skip = skip or set()
     packages = poetry.locker.locked_repository(with_dev_reqs=True).packages
     poetry.package.requires = [
-        pkg.to_dependency() for pkg in packages if pkg.category == "main"
+        pkg.to_dependency()
+        for pkg in packages
+        if pkg.category == "main" and pkg.name not in skip
     ]
     poetry.package.dev_requires = [
-        pkg.to_dependency() for pkg in packages if pkg.category == "dev"
+        pkg.to_dependency()
+        for pkg in packages
+        if pkg.category == "dev" and pkg.name not in skip
     ]
 
 
@@ -497,6 +502,55 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
         content = f.read()
 
     expected = """\
+foo @ git+https://github.com/foo/foo.git@123456
+"""
+
+    assert expected == content
+
+
+def test_exporter_can_export_requirements_txt_with_nested_packages(tmp_dir, poetry):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "git",
+                        "url": "https://github.com/foo/foo.git",
+                        "reference": "123456",
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"foo": "rev 123456"},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": []},
+            },
+        }
+    )
+    set_package_requires(poetry, skip={"foo"})
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar==4.5.6
 foo @ git+https://github.com/foo/foo.git@123456
 """
 
