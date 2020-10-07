@@ -391,8 +391,9 @@ class LegacyRepository(PyPiRepository):
 
         if response.status_code in (401, 403):
             self._log(
-                "Authorization error accessing {url}".format(url=url), level="warn"
+                "Authorization error accessing {url}".format(url=response.url),
+                level="warn",
             )
             return
 
-        return Page(url, response.content, response.headers)
+        return Page(response.url, response.content, response.headers)

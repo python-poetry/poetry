@@ -310,25 +310,45 @@ class MockHttpRepository(LegacyRepository):
 
         for endpoint, response in endpoint_responses.items():
             url = base_url + endpoint
-            http.register_uri(http.GET, url, status=response)
+            http.register_uri(
+                http.GET,
+                url,
+                status=response.status,
+                adding_headers=response.adding_headers,
+            )
+
+
+class MockHttpResponse(object):
+    def __init__(self, status=200, adding_headers=None):
+        self.status = status
+        self.adding_headers = adding_headers
 
 
 def test_get_200_returns_page(http):
-    repo = MockHttpRepository({"/foo": 200}, http)
+    repo = MockHttpRepository({"/foo": MockHttpResponse(200)}, http)
 
     assert repo._get("/foo")
 
 
 def test_get_404_returns_none(http):
-    repo = MockHttpRepository({"/foo": 404}, http)
+    repo = MockHttpRepository({"/foo": MockHttpResponse(404)}, http)
 
     assert repo._get("/foo") is None
 
 
 def test_get_4xx_and_5xx_raises(http):
-    endpoints = {"/{}".format(code): code for code in {401, 403, 500}}
+    endpoints = {"/{}".format(code): MockHttpResponse(code) for code in {401, 403, 500}}
     repo = MockHttpRepository(endpoints, http)
 
     for endpoint in endpoints:
         with pytest.raises(RepositoryError):
             repo._get(endpoint)
+
+
+def test_get_302_redirect(http):
+    endpoints = {
+        "/foo": MockHttpResponse(302, {"Location": "/bar"}),
+        "/bar": MockHttpResponse(200),
+    }
+    repo = MockHttpRepository(endpoints, http)
+    assert repo._get("/foo")._url == "{}/bar/".format(repo.url)
