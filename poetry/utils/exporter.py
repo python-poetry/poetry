@@ -95,9 +95,12 @@ class Exporter(object):
             if is_direct_remote_reference:
                 line = requirement
             elif is_direct_local_reference:
-                line = requirement.replace("@ ", "@ file://")
+                dependency_uri = Path(dependency.source_url).resolve().as_uri()
+                line = "{} @ {}".format(dependency.name, dependency_uri)
             else:
                 line = "{}=={}".format(package.name, package.version)
+
+            if not is_direct_remote_reference:
                 if ";" in requirement:
                     markers = requirement.split(";", 1)[1].strip()
                     if markers:

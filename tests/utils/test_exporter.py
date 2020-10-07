@@ -582,9 +582,9 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
         content = f.read()
 
     expected = """\
-foo @ file://{}/tests/fixtures/sample_project
+foo @ {}/tests/fixtures/sample_project
 """.format(
-        working_directory.as_posix()
+        working_directory.as_uri()
     )
 
     assert expected == content
@@ -627,9 +627,9 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
         content = f.read()
 
     expected = """\
-foo @ file://{}/tests/fixtures/sample_project; python_version < "3.7"
+foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
 """.format(
-        working_directory.as_posix()
+        working_directory.as_uri()
     )
 
     assert expected == content
@@ -671,7 +671,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages(
         content = f.read()
 
     expected = """\
-foo @ file://{}/tests/fixtures/distributions/demo-0.1.0.tar.gz
+foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz
 """.format(
         working_directory.as_uri()
     )
@@ -716,7 +716,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
         content = f.read()
 
     expected = """\
-foo @ file://{}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
+foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 """.format(
         working_directory.as_uri()
     )
