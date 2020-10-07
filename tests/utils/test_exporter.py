@@ -107,8 +107,8 @@ def test_exporter_can_export_requirements_txt_with_standard_packages(
         content = f.read()
 
     expected = """\
-bar==4.5.6
-foo==1.2.3
+-e bar==4.5.6
+-e foo==1.2.3
 """
 
     assert expected == content
@@ -162,9 +162,9 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers
         content = f.read()
 
     expected = """\
-bar==4.5.6
-baz==7.8.9; sys_platform == "win32"
-foo==1.2.3; python_version < "3.7"
+-e bar==4.5.6
+-e baz==7.8.9; sys_platform == "win32"
+-e foo==1.2.3; python_version < "3.7"
 """
 
     assert expected == content
@@ -208,9 +208,9 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
         content = f.read()
 
     expected = """\
-bar==4.5.6 \\
+-e bar==4.5.6 \\
     --hash=sha256:67890
-foo==1.2.3 \\
+-e foo==1.2.3 \\
     --hash=sha256:12345
 """
 
@@ -257,8 +257,8 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_
         content = f.read()
 
     expected = """\
-bar==4.5.6
-foo==1.2.3
+-e bar==4.5.6
+-e foo==1.2.3
 """
 
     assert expected == content
@@ -302,7 +302,7 @@ def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
         content = f.read()
 
     expected = """\
-foo==1.2.3 \\
+-e foo==1.2.3 \\
     --hash=sha256:12345
 """
 
@@ -347,9 +347,9 @@ def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
         content = f.read()
 
     expected = """\
-bar==4.5.6 \\
+-e bar==4.5.6 \\
     --hash=sha256:67890
-foo==1.2.3 \\
+-e foo==1.2.3 \\
     --hash=sha256:12345
 """
 
@@ -392,7 +392,7 @@ def test_exporter_exports_requirements_txt_without_optional_packages(tmp_dir, po
         content = f.read()
 
     expected = """\
-foo==1.2.3 \\
+-e foo==1.2.3 \\
     --hash=sha256:12345
 """
 
@@ -452,11 +452,11 @@ def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
         content = f.read()
 
     expected = """\
-bar==4.5.6 \\
+-e bar==4.5.6 \\
     --hash=sha256:67890
-foo==1.2.3 \\
+-e foo==1.2.3 \\
     --hash=sha256:12345
-spam==0.1.0 \\
+-e spam==0.1.0 \\
     --hash=sha256:abcde
 """
 
@@ -497,7 +497,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
         content = f.read()
 
     expected = """\
-foo @ git+https://github.com/foo/foo.git@123456
+-e foo @ git+https://github.com/foo/foo.git@123456
 """
 
     assert expected == content
@@ -540,7 +540,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
         content = f.read()
 
     expected = """\
-foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
+-e foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
 """
 
     assert expected == content
@@ -582,7 +582,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
         content = f.read()
 
     expected = """\
-foo @ {}/tests/fixtures/sample_project
+-e foo @ {}/tests/fixtures/sample_project
 """.format(
         working_directory.as_posix()
     )
@@ -627,7 +627,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
         content = f.read()
 
     expected = """\
-foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
+-e foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
 """.format(
         working_directory.as_posix()
     )
@@ -671,7 +671,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages(
         content = f.read()
 
     expected = """\
-foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz
+-e foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz
 """.format(
         working_directory.as_uri()
     )
@@ -716,7 +716,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
         content = f.read()
 
     expected = """\
-foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
+-e foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 """.format(
         working_directory.as_uri()
     )
@@ -770,9 +770,9 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry)
     expected = """\
 --extra-index-url https://example.com/simple
 
-bar==4.5.6 \\
+-e bar==4.5.6 \\
     --hash=sha256:67890
-foo==1.2.3 \\
+-e foo==1.2.3 \\
     --hash=sha256:12345
 """
 
@@ -782,8 +782,8 @@ foo==1.2.3 \\
 @pytest.mark.parametrize(
     ("dev", "expected"),
     [
-        (True, ["bar==1.2.2", "baz==1.2.3", "foo==1.2.1"]),
-        (False, ["bar==1.2.2", "foo==1.2.1"]),
+        (True, ["-e bar==1.2.2", "-e baz==1.2.3", "-e foo==1.2.1"]),
+        (False, ["-e bar==1.2.2", "-e foo==1.2.1"]),
     ],
 )
 def test_exporter_exports_requirements_txt_with_dev_extras(
@@ -908,11 +908,11 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
 --extra-index-url https://example.com/simple
 --extra-index-url https://foobaz.com/simple
 
-bar==4.5.6 \\
+-e bar==4.5.6 \\
     --hash=sha256:67890
-baz==7.8.9 \\
+-e baz==7.8.9 \\
     --hash=sha256:24680
-foo==1.2.3 \\
+-e foo==1.2.3 \\
     --hash=sha256:12345
 """
 
@@ -979,9 +979,9 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_credentials(
     expected = """\
 --extra-index-url https://foo:bar@example.com/simple
 
-bar==4.5.6 \\
+-e bar==4.5.6 \\
     --hash=sha256:67890
-foo==1.2.3 \\
+-e foo==1.2.3 \\
     --hash=sha256:12345
 """
 
@@ -1022,8 +1022,8 @@ def test_exporter_exports_requirements_txt_to_standard_output(tmp_dir, poetry, c
 
     out, err = capsys.readouterr()
     expected = """\
-bar==4.5.6
-foo==1.2.3
+-e bar==4.5.6
+-e foo==1.2.3
 """
 
     assert out == expected

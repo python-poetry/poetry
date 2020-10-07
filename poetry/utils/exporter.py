@@ -95,9 +95,9 @@ class Exporter(object):
             )
 
             if is_direct_reference:
-                line = requirement
+                line += requirement
             else:
-                line = "{}=={}".format(package.name, package.version)
+                line += "{}=={}".format(package.name, package.version)
                 if ";" in requirement:
                     markers = requirement.split(";", 1)[1].strip()
                     if markers:

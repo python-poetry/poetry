@@ -68,7 +68,7 @@ def _export_requirements(tester, poetry):
     assert poetry.locker.lock.exists()
 
     expected = """\
-foo==1.0.0
+-e foo==1.0.0
 """
 
     assert expected == content
@@ -93,7 +93,7 @@ def test_export_fails_on_invalid_format(tester, do_lock):
 def test_export_prints_to_stdout_by_default(tester, do_lock):
     tester.execute("--format requirements.txt")
     expected = """\
-foo==1.0.0
+-e foo==1.0.0
 """
     assert expected == tester.io.fetch_output()
 
@@ -101,7 +101,7 @@ foo==1.0.0
 def test_export_uses_requirements_txt_format_by_default(tester, do_lock):
     tester.execute()
     expected = """\
-foo==1.0.0
+-e foo==1.0.0
 """
     assert expected == tester.io.fetch_output()
 
@@ -109,7 +109,7 @@ foo==1.0.0
 def test_export_includes_extras_by_flag(tester, do_lock):
     tester.execute("--format requirements.txt --extras feature_bar")
     expected = """\
-bar==1.1.0
-foo==1.0.0
+-e bar==1.1.0
+-e foo==1.0.0
 """
     assert expected == tester.io.fetch_output()
