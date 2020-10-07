@@ -6,9 +6,11 @@ import re
 
 from copy import deepcopy
 from hashlib import sha256
-from typing import Any
+from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Sequence
+from typing import Union
 
 from tomlkit import array
 from tomlkit import document
@@ -25,8 +27,10 @@ from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
+from poetry.packages import DependencyPackage
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
+from poetry.utils.extras import get_extra_package_names
 
 
 logger = logging.getLogger(__name__)
@@ -183,7 +187,7 @@ class Locker(object):
 
     def get_project_dependencies(
         self, project_requires, pinned_versions=False, with_nested=False, with_dev=False
-    ):  # type: (List[Dependency], bool, bool, bool) -> Any
+    ):  # type: (List[Dependency], bool, bool, bool) -> List[Dependency]
         packages = self.locked_repository(with_dev).packages
 
         # group packages entries by name, this is required because requirement might use
@@ -262,6 +266,42 @@ class Locker(object):
             itertools.chain(dependencies, nested_dependencies),
             key=lambda x: x.name.lower(),
         )
+
+    def get_project_dependency_packages(
+        self, project_requires, dev=False, extras=None
+    ):  # type: (List[Dependency], bool, Optional[Union[bool, Sequence[str]]]) -> Iterator[DependencyPackage]
+        repository = self.locked_repository(with_dev_reqs=dev)
+
+        # Build a set of all packages required by our selected extras
+        extra_package_names = (
+            None if (isinstance(extras, bool) and extras is True) else ()
+        )
+
+        if extra_package_names is not None:
+            extra_package_names = set(
+                get_extra_package_names(
+                    repository.packages, self.lock_data.get("extras", {}), extras or (),
+                )
+            )
+
+        for dependency in self.get_project_dependencies(
+            project_requires=project_requires, with_nested=True, with_dev=dev,
+        ):
+            try:
+                package = repository.find_packages(dependency=dependency)[0]
+            except IndexError:
+                continue
+
+            # If a package is optional and we haven't opted in to it, continue
+            if extra_package_names is not None and (
+                package.optional and package.name not in extra_package_names
+            ):
+                continue
+
+            for extra in dependency.extras:
+                package.requires_extras.append(extra)
+
+            yield DependencyPackage(dependency=dependency, package=package)
 
     def set_lock_data(self, root, packages):  # type: (...) -> bool
         files = table()
