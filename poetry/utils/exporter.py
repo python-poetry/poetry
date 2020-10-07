@@ -94,14 +94,16 @@ class Exporter(object):
                 or dependency.is_directory()
             )
 
-            if is_direct_reference:
-                line += requirement
-            else:
+            if not is_direct_reference:
                 line += "{}=={}".format(package.name, package.version)
                 if ";" in requirement:
                     markers = requirement.split(";", 1)[1].strip()
                     if markers:
                         line += "; {}".format(markers)
+            elif dependency.is_directory():  # pip doesn't support ` @ ` for directories
+                line += requirement.split(" @ ", 1)[1].strip()
+            else:
+                line += requirement
 
             if not is_direct_reference and package.source_url:
                 indexes.add(package.source_url)

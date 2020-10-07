@@ -582,7 +582,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
         content = f.read()
 
     expected = """\
--e foo @ {}/tests/fixtures/sample_project
+-e {}/tests/fixtures/sample_project
 """.format(
         working_directory.as_posix()
     )
@@ -627,7 +627,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
         content = f.read()
 
     expected = """\
--e foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
+-e {}/tests/fixtures/sample_project; python_version < "3.7"
 """.format(
         working_directory.as_posix()
     )
