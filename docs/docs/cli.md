@@ -423,6 +423,12 @@ This command locks (without installing) the dependencies specified in `pyproject
 poetry lock
 ```
 
+To avoid updating pinned dependencies, you can use the `--no-update` option.
+
+```bash
+poetry lock --no-update
+```
+
 ## version
 
 This command shows the current version of the project or bumps the version of
