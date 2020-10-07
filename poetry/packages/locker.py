@@ -234,8 +234,15 @@ class Locker(object):
                     # project level dependencies take precedence
                     continue
 
-                # we make a copy to avoid any side-effects
-                requirement = deepcopy(requirement)
+                locked_package = __get_locked_package(requirement)
+                if locked_package:
+                    # create dependency from locked package to retain dependency metadata
+                    # if this is not done, we can end-up with incorrect nested dependencies
+                    requirement = locked_package.to_dependency()
+                else:
+                    # we make a copy to avoid any side-effects
+                    requirement = deepcopy(requirement)
+
                 requirement._category = pkg.category
 
                 if pinned_versions:
