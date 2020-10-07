@@ -231,7 +231,7 @@ class Locker(object):
                     continue
 
                 # we make a copy to avoid any side-effects
-                requirement = deepcopy(requirement)
+                requirement = deepcopy(packages_by_name[requirement.name].to_dependency())
                 requirement._category = pkg.category
 
                 if pinned_versions:
