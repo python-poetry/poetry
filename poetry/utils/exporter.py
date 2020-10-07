@@ -87,15 +87,15 @@ class Exporter(object):
                 line += "-e "
 
             requirement = dependency.to_pep_508(with_extras=False)
-            is_direct_reference = (
-                dependency.is_vcs()
-                or dependency.is_url()
-                or dependency.is_file()
-                or dependency.is_directory()
+            is_direct_local_reference = (
+                dependency.is_file() or dependency.is_directory()
             )
+            is_direct_remote_reference = dependency.is_vcs() or dependency.is_url()
 
-            if is_direct_reference:
+            if is_direct_remote_reference:
                 line = requirement
+            elif is_direct_local_reference:
+                line = requirement.replace("@ ", "@ file://")
             else:
                 line = "{}=={}".format(package.name, package.version)
                 if ";" in requirement:
@@ -103,7 +103,11 @@ class Exporter(object):
                     if markers:
                         line += "; {}".format(markers)
 
-            if not is_direct_reference and package.source_url:
+            if (
+                not is_direct_remote_reference
+                and not is_direct_local_reference
+                and package.source_url
+            ):
                 indexes.add(package.source_url)
 
             if package.files and with_hashes:
