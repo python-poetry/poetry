@@ -112,7 +112,7 @@ class Executor(object):
                 if self._shutdown:
                     break
 
-                # Some operations are unsafe, we mus execute them serially in a group
+                # Some operations are unsafe, we must execute them serially in a group
                 # https://github.com/python-poetry/poetry/issues/3086
                 # https://github.com/python-poetry/poetry/issues/2658
                 #
