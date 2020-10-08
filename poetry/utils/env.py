@@ -1212,7 +1212,7 @@ class VirtualEnv(Env):
             del os.environ[key]
 
     def _updated_path(self):
-        return os.pathsep.join([str(self._bin_dir), os.environ["PATH"]])
+        return os.pathsep.join([str(self._bin_dir), os.environ.get("PATH", "")])
 
 
 class NullEnv(SystemEnv):
