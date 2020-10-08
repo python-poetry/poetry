@@ -2,6 +2,7 @@ from typing import Union
 
 from clikit.api.io import IO
 
+from poetry.core.packages.utils.utils import path_to_url
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
@@ -95,7 +96,7 @@ class Exporter(object):
             if is_direct_remote_reference:
                 line = requirement
             elif is_direct_local_reference:
-                dependency_uri = Path(dependency.source_url).resolve().as_uri()
+                dependency_uri = path_to_url(dependency.source_url)
                 line = "{} @ {}".format(dependency.name, dependency_uri)
             else:
                 line = "{}=={}".format(package.name, package.version)
