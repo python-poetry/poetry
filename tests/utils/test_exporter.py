@@ -497,7 +497,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
         content = f.read()
 
     expected = """\
--e foo @ git+https://github.com/foo/foo.git@123456
+foo @ git+https://github.com/foo/foo.git@123456
 """
 
     assert expected == content
@@ -540,7 +540,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
         content = f.read()
 
     expected = """\
--e foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
+foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
 """
 
     assert expected == content
@@ -582,7 +582,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
         content = f.read()
 
     expected = """\
--e foo @ {}/tests/fixtures/sample_project
+foo @ {}/tests/fixtures/sample_project
 """.format(
         working_directory.as_posix()
     )
@@ -627,7 +627,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
         content = f.read()
 
     expected = """\
--e foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
+foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
 """.format(
         working_directory.as_posix()
     )
