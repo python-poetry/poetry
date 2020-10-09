@@ -2,6 +2,7 @@ import sys
 
 import pytest
 
+from poetry.core.packages import dependency_from_pep_508
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
@@ -173,6 +174,145 @@ foo==1.2.3; python_version < "3.7"
 """
 
     assert expected == content
+
+
+def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": "python_version < '3.7'",
+                    "dependencies": {"b": ">=0.0.0", "c": ">=0.0.0"},
+                },
+                {
+                    "name": "b",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": "platform_system == 'Windows'",
+                    "dependencies": {"d": ">=0.0.0"},
+                },
+                {
+                    "name": "c",
+                    "version": "7.8.9",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": "sys_platform == 'win32'",
+                    "dependencies": {"d": ">=0.0.0"},
+                },
+                {
+                    "name": "d",
+                    "version": "0.0.1",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"a": [], "b": [], "c": [], "d": []},
+            },
+        }
+    )
+    set_package_requires(poetry, skip={"b", "c", "d"})
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = {
+        "a": dependency_from_pep_508("a==1.2.3; python_version < '3.7'"),
+        "b": dependency_from_pep_508(
+            "b==4.5.6; platform_system == 'Windows' and python_version < '3.7'"
+        ),
+        "c": dependency_from_pep_508(
+            "c==7.8.9; sys_platform == 'win32' and python_version < '3.7'"
+        ),
+        "d": dependency_from_pep_508(
+            "d==0.0.1; python_version < '3.7' and platform_system == 'Windows' and sys_platform == 'win32'"
+        ),
+    }
+
+    for line in content.strip().split("\n"):
+        dependency = dependency_from_pep_508(line)
+        assert dependency.name in expected
+        expected_dependency = expected.pop(dependency.name)
+        assert dependency == expected_dependency
+        assert dependency.marker == expected_dependency.marker
+
+    assert expected == {}
+
+
+def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_any(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "b",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"a": ">=1.2.3"},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"a": [], "b": []},
+            },
+        }
+    )
+
+    poetry.package.requires = [
+        Factory.create_dependency(
+            name="a", constraint=dict(version="^1.2.3", python="<3.8")
+        ),
+    ]
+    poetry.package.dev_requires = [
+        Factory.create_dependency(
+            name="b", constraint=dict(version="^4.5.6"), category="dev"
+        ),
+        Factory.create_dependency(name="a", constraint=dict(version="^1.2.3")),
+    ]
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert (
+        content
+        == """\
+a==1.2.3
+a==1.2.3; python_version < "3.8"
+b==4.5.6
+"""
+    )
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(

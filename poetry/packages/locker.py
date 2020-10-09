@@ -215,10 +215,18 @@ class Locker(object):
 
         for dependency in project_requires:
             dependency = deepcopy(dependency)
-            if pinned_versions:
-                locked_package = __get_locked_package(dependency)
-                if locked_package:
-                    dependency.set_constraint(locked_package.to_dependency().constraint)
+            locked_package = __get_locked_package(dependency)
+            if locked_package:
+                locked_dependency = locked_package.to_dependency()
+                locked_dependency.marker = dependency.marker.intersect(
+                    locked_package.marker
+                )
+
+                if not pinned_versions:
+                    locked_dependency.set_constraint(dependency.constraint)
+
+                dependency = locked_dependency
+
             project_level_dependencies.add(dependency.name)
             dependencies.append(dependency)
 
@@ -226,19 +234,43 @@ class Locker(object):
             # return only with project level dependencies
             return dependencies
 
-        nested_dependencies = list()
+        nested_dependencies = dict()
 
-        for pkg in packages:  # type: Package
-            for requirement in pkg.requires:  # type: Dependency
-                if requirement.name in project_level_dependencies:
+        def __walk_level(
+            __dependencies, __level
+        ):  # type: (List[Dependency], int) -> None
+            if not __dependencies:
+                return
+
+            __next_level = []
+
+            for requirement in __dependencies:
+                __locked_package = __get_locked_package(requirement)
+
+                if __locked_package:
+                    for require in __locked_package.requires:
+                        if require.marker.is_empty():
+                            require.marker = requirement.marker
+                        else:
+                            require.marker = require.marker.intersect(
+                                requirement.marker
+                            )
+
+                        require.marker = require.marker.intersect(
+                            __locked_package.marker
+                        )
+                        __next_level.append(require)
+
+                if requirement.name in project_level_dependencies and __level == 0:
                     # project level dependencies take precedence
                     continue
 
-                locked_package = __get_locked_package(requirement)
-                if locked_package:
+                if __locked_package:
                     # create dependency from locked package to retain dependency metadata
                     # if this is not done, we can end-up with incorrect nested dependencies
-                    requirement = locked_package.to_dependency()
+                    marker = requirement.marker
+                    requirement = __locked_package.to_dependency()
+                    requirement.marker = requirement.marker.intersect(marker)
                 else:
                     # we make a copy to avoid any side-effects
                     requirement = deepcopy(requirement)
@@ -251,26 +283,26 @@ class Locker(object):
                     )
 
                 # dependencies use extra to indicate that it was activated via parent
-                # package's extras
-                marker = requirement.marker.without_extras()
-                for project_requirement in project_requires:
-                    if (
-                        pkg.name == project_requirement.name
-                        and project_requirement.constraint.allows(pkg.version)
-                    ):
-                        requirement.marker = marker.intersect(
-                            project_requirement.marker
-                        )
-                        break
-                else:
-                    # this dependency was not from a project requirement
-                    requirement.marker = marker.intersect(pkg.marker)
+                # package's extras, this is not required for nested exports as we assume
+                # the resolver already selected this dependency
+                requirement.marker = requirement.marker.without_extras().intersect(
+                    pkg.marker
+                )
 
-                if requirement not in nested_dependencies:
-                    nested_dependencies.append(requirement)
+                key = (requirement.name, requirement.pretty_constraint)
+                if key not in nested_dependencies:
+                    nested_dependencies[key] = requirement
+                else:
+                    nested_dependencies[key].marker = nested_dependencies[
+                        key
+                    ].marker.intersect(requirement.marker)
+
+            return __walk_level(__next_level, __level + 1)
+
+        __walk_level(dependencies, 0)
 
         return sorted(
-            itertools.chain(dependencies, nested_dependencies),
+            itertools.chain(dependencies, nested_dependencies.values()),
             key=lambda x: x.name.lower(),
         )
 
