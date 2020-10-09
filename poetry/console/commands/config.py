@@ -63,6 +63,11 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
                 True,
             ),
+            "virtualenvs.options.always-copy": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
         }
 
         return unique_config_values

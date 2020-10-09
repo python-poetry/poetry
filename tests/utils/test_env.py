@@ -118,7 +118,9 @@ def test_env_get_venv_with_venv_folder_present(
         assert venv.path == in_project_venv_dir
 
 
-def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()
+def build_venv(
+    path, executable=None, flags=None
+):  # type: (Union[Path,str], Optional[str], bool) -> ()
     os.mkdir(str(path))
 
 
@@ -156,7 +158,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
 
     m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
+        Path(tmp_dir) / "{}-py3.7".format(venv_name),
+        executable="python3.7",
+        flags={"always-copy": False},
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -274,7 +278,9 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = manager.activate("python3.6", NullIO())
 
     m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.6".format(venv_name), executable="python3.6"
+        Path(tmp_dir) / "{}-py3.6".format(venv_name),
+        executable="python3.6",
+        flags={"always-copy": False},
     )
 
     assert envs_file.exists()
@@ -326,7 +332,9 @@ def test_activate_activates_recreates_for_different_patch(
     env = manager.activate("python3.7", NullIO())
 
     build_venv_m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
+        Path(tmp_dir) / "{}-py3.7".format(venv_name),
+        executable="python3.7",
+        flags={"always-copy": False},
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / "{}-py3.7".format(venv_name))
 
@@ -654,7 +662,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        Path("/foo/virtualenvs/{}-py3.7".format(venv_name)), executable="python3"
+        Path("/foo/virtualenvs/{}-py3.7".format(venv_name)),
+        executable="python3",
+        flags={"always-copy": False},
     )
 
 
@@ -678,7 +688,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        Path("/foo/virtualenvs/{}-py3.9".format(venv_name)), executable="python3.9"
+        Path("/foo/virtualenvs/{}-py3.9".format(venv_name)),
+        executable="python3.9",
+        flags={"always-copy": False},
     )
 
 
@@ -767,6 +779,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
             )
         ),
         executable=None,
+        flags={"always-copy": False},
     )
 
 
@@ -804,6 +817,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
             )
         ),
         executable="python{}.{}".format(version.major, version.minor - 1),
+        flags={"always-copy": False},
     )
 
 
@@ -834,7 +848,11 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
 
     manager.activate("python3.7", NullIO())
 
-    m.assert_called_with(poetry.file.parent / ".venv", executable="python3.7")
+    m.assert_called_with(
+        poetry.file.parent / ".venv",
+        executable="python3.7",
+        flags={"always-copy": False},
+    )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
     assert not envs_file.exists()

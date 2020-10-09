@@ -642,7 +642,11 @@ class EnvManager(object):
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
             )
 
-            self.build_venv(venv, executable=executable)
+            self.build_venv(
+                venv,
+                executable=executable,
+                flags=self._poetry.config.get("virtualenvs.options"),
+            )
         else:
             if force:
                 if not env.is_sane():
@@ -655,7 +659,11 @@ class EnvManager(object):
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
                 self.remove_venv(venv)
-                self.build_venv(venv, executable=executable)
+                self.build_venv(
+                    venv,
+                    executable=executable,
+                    flags=self._poetry.config.get("virtualenvs.options"),
+                )
             elif io.is_very_verbose():
                 io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
 
@@ -679,19 +687,26 @@ class EnvManager(object):
 
     @classmethod
     def build_venv(
-        cls, path, executable=None
-    ):  # type: (Union[Path,str], Optional[Union[str, Path]]) -> virtualenv.run.session.Session
+        cls, path, executable=None, flags=None
+    ):  # type: (Union[Path,str], Optional[Union[str, Path]], Dict[str, bool]) -> virtualenv.run.session.Session
+        flags = flags or {}
+
         if isinstance(executable, Path):
             executable = executable.resolve().as_posix()
-        return virtualenv.cli_run(
-            [
-                "--no-download",
-                "--no-periodic-update",
-                "--python",
-                executable or sys.executable,
-                str(path),
-            ]
-        )
+
+        args = [
+            "--no-download",
+            "--no-periodic-update",
+            "--python",
+            executable or sys.executable,
+            str(path),
+        ]
+
+        for flag, value in flags.items():
+            if value is True:
+                args.insert(0, "--{}".format(flag))
+
+        return virtualenv.cli_run(args)
 
     @classmethod
     def remove_venv(cls, path):  # type: (Union[Path,str]) -> None
