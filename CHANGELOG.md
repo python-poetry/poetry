@@ -1,5 +1,21 @@
 # Change Log
 
+## [1.1.1] - 2020-10-05
+
+### Added
+
+- Added `--no-update` option to `lock` command. ([#3034](https://github.com/python-poetry/poetry/pull/3034)).
+
+### Fixed
+
+- Fixed resolution of packages with missing required extras. ([#3035](https://github.com/python-poetry/poetry/pull/3035))
+- Fixed export of `requirements.txt` dependencies to include development dependencies. ([#3024](https://github.com/python-poetry/poetry/pull/3024))
+- Fixed incorrect selection of unsupported binary distribution formats when selecting a package artifact to install. ([#3058](https://github.com/python-poetry/poetry/pull/3058))
+- Fixed incorrect use of system executable when building package distributions via `build` command. ([#3056](https://github.com/python-poetry/poetry/pull/3056))
+- Fixed errors in `init` command when specifying `--dependency` in non-interactive mode when a `pyproject.toml` file already exists. ([#3076](https://github.com/python-poetry/poetry/pull/3076))
+- Fixed incorrect selection of configured source url when a publish repository url configuration with the same name already exists. ([#3047](https://github.com/python-poetry/poetry/pull/3047))
+- Fixed dependency resolution issues when the same package is specified in multiple dependency extras. ([#3046](https://github.com/python-poetry/poetry/pull/3046))
+
 ## [1.1.0] - 2020-10-01
 
 ### Changed
@@ -1023,7 +1039,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.1...master
+[1.1.1]: https://github.com/python-poetry/poetry/releases/tag/1.1.1
 [1.1.0]: https://github.com/python-poetry/poetry/releases/tag/1.1.0
 [1.1.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0rc1
 [1.1.0b4]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b4
