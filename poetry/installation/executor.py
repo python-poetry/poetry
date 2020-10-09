@@ -261,13 +261,16 @@ class Executor(object):
 
             return 0
 
-        if not self._enabled or self._dry_run:
+        if not self._enabled:
             self._io.write_line(
                 "  <fg=blue;options=bold>•</> {message}".format(
                     message=operation_message,
                 )
             )
 
+            return 0
+
+        if self._dry_run:
             return 0
 
         result = getattr(self, "_execute_{}".format(method))(operation)
