@@ -239,10 +239,23 @@ mandatory = "^1.0"
 # below `extras`. They can be opted into by apps.
 psycopg2 = { version = "^2.7", optional = true }
 mysqlclient = { version = "^1.3", optional = true }
+rich = { version = "^8.0", optional = true }
+emoji = { version = "^0.6", optional = true }
 
 [tool.poetry.extras]
 mysql = ["mysqlclient"]
 pgsql = ["psycopg2"]
+styles = ["rich", "emoji"]
+```
+
+`extras` can only be used with packages defined in the `dependencies` section.
+
+When pip installing the package, the dependencies specified in the `extras` section can be installed by providing
+the key between `[]` along with the package name. For example, from the above toml file, to install the extras 
+under the `styles` key use the command
+
+```bash
+pip install awesome[styles]
 ```
 
 When installing packages, you can specify extras by using the `-E|--extras` option:
