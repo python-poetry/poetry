@@ -787,13 +787,6 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
         {
             "package": [
                 {
-                    "name": "foo",
-                    "version": "1.2.3",
-                    "category": "main",
-                    "optional": False,
-                    "python-versions": "*",
-                },
-                {
                     "name": "bar",
                     "version": "4.5.6",
                     "category": "dev",
@@ -809,7 +802,7 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
             "metadata": {
                 "python-versions": "*",
                 "content-hash": "123456789",
-                "hashes": {"foo": ["12345"], "bar": ["67890"]},
+                "hashes": {"bar": ["67890"]},
             },
         }
     )
@@ -827,8 +820,6 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
 
 bar==4.5.6 \\
     --hash=sha256:67890
-foo==1.2.3 \\
-    --hash=sha256:12345
 """
 
     assert expected == content
