@@ -239,8 +239,6 @@ mandatory = "^1.0"
 # below `extras`. They can be opted into by apps.
 psycopg2 = { version = "^2.7", optional = true }
 mysqlclient = { version = "^1.3", optional = true }
-rich = { version = "^8.0", optional = true }
-emoji = { version = "^0.6", optional = true }
 
 [tool.poetry.extras]
 mysql = ["mysqlclient"]
