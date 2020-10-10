@@ -245,20 +245,23 @@ emoji = { version = "^0.6", optional = true }
 [tool.poetry.extras]
 mysql = ["mysqlclient"]
 pgsql = ["psycopg2"]
-styles = ["rich", "emoji"]
+databases = ["mysqlclient", "psycopg2"]
 ```
 
 `extras` can only be used with packages defined in the `dependencies` section.
 
-When pip installing the package, the dependencies specified in the `extras` section can be installed by providing
-the key between `[]` along with the package name. For example, from the above toml file, to install the extras 
-under the `styles` key use the command
+
+When using build front-ends that comply with [PEP-517](https://www.python.org/dev/peps/pep-0517/), the dependencies 
+specified in the `extras` section, can be installed by providing the key between `[]` along with the package name 
+(as prescribed in [PEP-508](https://www.python.org/dev/peps/pep-0508/#extras)). 
+
+For example, from the above toml file, to install the extras under the `databases` key using `pip` as the build front-end
 
 ```bash
-pip install awesome[styles]
+pip install awesome[databases]
 ```
 
-When installing packages, you can specify extras by using the `-E|--extras` option:
+When installing packages with poetry, you can specify extras by using the `-E|--extras` option:
 
 ```bash
 poetry install --extras "mysql pgsql"
