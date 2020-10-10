@@ -727,9 +727,6 @@ class Installer:
 
         profiles = self.get_unix_profiles()
         for profile in profiles:
-            if not os.path.exists(profile):
-                continue
-
             with open(profile, "r") as f:
                 content = f.read()
 
@@ -870,9 +867,6 @@ class Installer:
 
         profiles = self.get_unix_profiles()
         for profile in profiles:
-            if not os.path.exists(profile):
-                continue
-
             with open(profile, "r") as f:
                 content = f.readlines()
 
@@ -909,7 +903,8 @@ class Installer:
         if os.path.exists(bash_profile):
             profiles.append(bash_profile)
 
-        return profiles
+        existing = [p for p in profiles if os.path.exists(p)]
+        return existing
 
     def display_pre_message(self):
         if WINDOWS:
