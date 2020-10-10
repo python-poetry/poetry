@@ -822,7 +822,7 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
         content = f.read()
 
     expected = """\
---trusted-host http://example.com/simple
+--trusted-host example.com
 --extra-index-url http://example.com/simple
 
 bar==4.5.6 \\

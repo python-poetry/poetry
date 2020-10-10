@@ -157,7 +157,7 @@ class Exporter(object):
                 )
                 parsed_url = urlparse.urlsplit(url)
                 if parsed_url.scheme == "http":
-                    indexes_header += "--trusted-host {}\n".format(url)
+                    indexes_header += "--trusted-host {}\n".format(parsed_url.netloc)
                 indexes_header += "--extra-index-url {}\n".format(url)
 
             content = indexes_header + "\n" + content
