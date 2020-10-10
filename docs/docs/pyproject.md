@@ -248,8 +248,6 @@ pgsql = ["psycopg2"]
 databases = ["mysqlclient", "psycopg2"]
 ```
 
-`extras` can only be used with packages defined in the `dependencies` section.
-
 
 When using build front-ends that comply with [PEP-517](https://www.python.org/dev/peps/pep-0517/), the dependencies 
 specified in the `extras` section, can be installed by providing the key between `[]` along with the package name 
@@ -267,6 +265,11 @@ When installing packages with poetry, you can specify extras by using the `-E|--
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
+
+!!!note
+
+    `extras` can only be used with packages defined in the `dependencies` section.
+
 
 ## `plugins`
 
