@@ -903,7 +903,7 @@ class Installer:
 
         if "zsh" in SHELL:
             zdotdir = os.getenv("ZDOTDIR", HOME)
-            profiles.append(os.path.join(zdotdir, ".zprofile"))
+            profiles.append(os.path.join(zdotdir, ".zshrc"))
 
         bash_profile = os.path.join(HOME, ".bash_profile")
         if os.path.exists(bash_profile):
