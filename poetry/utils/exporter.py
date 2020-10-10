@@ -5,6 +5,7 @@ from clikit.api.io import IO
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from poetry.utils._compat import urlparse
 from poetry.utils.extras import get_extra_package_names
 
 
@@ -154,7 +155,8 @@ class Exporter(object):
                 url = (
                     repository.authenticated_url if with_credentials else repository.url
                 )
-                if repository.url.startswith("http://"):
+                parsed_url = urlparse.urlsplit(url)
+                if parsed_url.scheme == "http":
                     indexes_header += "--trusted-host {}\n".format(url)
                 indexes_header += "--extra-index-url {}\n".format(url)
 
