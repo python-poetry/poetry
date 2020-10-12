@@ -14,8 +14,8 @@ def test_name_and_path_properties(Shell):
     """
     Given a Shell object,
     Check that the name and path propterites
-    match the _name and _path attributes,
-    as well as the values passed in.
+        match the _name and _path attributes,
+        as well as the values passed in.
     """
     s = Shell(name="name", path="path")
     assert s.name == s._name == "name"
@@ -24,7 +24,8 @@ def test_name_and_path_properties(Shell):
 
 def test_default_shell_is_None(Shell):
     """
-    Given the Shell class, check that _shell is None
+    Given the Shell class,
+    Check that _shell is None
     """
     assert Shell._shell is None
 
