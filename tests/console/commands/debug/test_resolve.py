@@ -11,11 +11,11 @@ def tester(command_tester_factory):
 
 @pytest.fixture(autouse=True)
 def __add_packages(repo):
-    cachy2 = get_package("cachy", "0.2.0")
-    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
+    cachy020 = get_package("cachy", "0.2.0")
+    cachy020.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
     repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
+    repo.add_package(cachy020)
     repo.add_package(get_package("msgpack-python", "0.5.3"))
 
     repo.add_package(get_package("pendulum", "2.0.3"))
