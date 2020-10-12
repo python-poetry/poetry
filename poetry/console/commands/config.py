@@ -4,6 +4,7 @@ import re
 from cleo import argument
 from cleo import option
 
+from poetry.core.pyproject import PyProjectException
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 
@@ -80,7 +81,7 @@ To remove a repository (repo is a short alias for repositories):
             local_config_file = TOMLFile(self.poetry.file.parent / "poetry.toml")
             if local_config_file.exists():
                 config.merge(local_config_file.read())
-        except RuntimeError:
+        except (RuntimeError, PyProjectException):
             local_config_file = TOMLFile(Path.cwd() / "poetry.toml")
 
         if self.option("local"):
