@@ -446,7 +446,7 @@ The table below illustrates the effect of these rules with concrete examples.
 | prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
 | prerelease |  1.0.3-beta.0 | 1.0.3-beta.1  |
 
-## Options
+### Options
 
 * `--short (-s)`: Output the version number only.
 

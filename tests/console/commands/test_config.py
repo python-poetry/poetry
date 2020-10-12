@@ -4,12 +4,23 @@ import os
 import pytest
 
 from poetry.config.config_source import ConfigSource
+from poetry.core.pyproject import PyProjectException
 from poetry.factory import Factory
 
 
 @pytest.fixture()
 def tester(command_tester_factory):
     return command_tester_factory("config")
+
+
+def test_show_config_with_local_config_file_empty(tester, mocker):
+    mocker.patch(
+        "poetry.factory.Factory.create_poetry",
+        side_effect=PyProjectException("[tool.poetry] section not found"),
+    )
+    tester.execute()
+
+    assert "" == tester.io.fetch_output()
 
 
 def test_list_displays_default_value_if_not_set(tester, config):
