@@ -89,3 +89,21 @@ def test_get_when_detect_shell_raises_error_and_os_environ_get_returns_None(
 
     excinfo = pytest.raises(RuntimeError, Shell.get)
     assert "Unable to detect the current shell." in str(excinfo)
+
+
+@pytest.mark.parametrize(
+    "s_name,suffix",
+    [
+        pytest.param("fish", ".fish", id="fish"),
+        pytest.param("csh", ".csh", id="csh"),
+        pytest.param("tcsh", ".csh", id="tcsh"),
+        pytest.param("Anything Else", "", id="Default Case"),
+    ],
+)
+def test__get_activate_script(s_name, suffix, Shell):
+    """
+    Given a Shell,
+    Check that s._get_activate_script() returns the correct script.
+    """
+    s = Shell(name=s_name, path="path")
+    assert s._get_activate_script() == "activate" + suffix
