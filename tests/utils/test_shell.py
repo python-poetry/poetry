@@ -121,7 +121,7 @@ def test__get_activate_script(s_name, suffix, Shell):
 def test__get_source_command(s_name, command, Shell):
     """
     Given a Shell,
-    Check that s._get_activate_script() returns the correct script.
+    Check that s._get_source_command returns the correct command.
     """
     s = Shell(name=s_name, path="path")
     assert s._get_source_command() == command
