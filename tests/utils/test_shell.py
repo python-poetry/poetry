@@ -93,3 +93,20 @@ def test_get_when_detect_shell_raises_error_nt(Shell, mocker):
     assert s.name == "name"
     assert s.path == r"\blah\blah\blah\name"
     assert Shell._shell == s
+
+
+def test_get_when_detect_shell_raises_error_and_os_environ_get_returns_None(
+    Shell, mocker
+):
+    """
+    Given the Shell Class.
+    When Shell.get() is called, shellingham.detect_shell() raises
+        an error, and os.environ.get returns None (i.e. SHELL or
+        COMSPEC environment variable isn't set).
+    Check that RuntimeError is raised.
+    """
+    mocker.patch("poetry.utils.shell.detect_shell", side_effect=RuntimeError)
+    mocker.patch("poetry.utils.shell.os.environ.get", return_value=None)
+
+    excinfo = pytest.raises(RuntimeError, Shell.get)
+    assert "Unable to detect the current shell." in str(excinfo)
