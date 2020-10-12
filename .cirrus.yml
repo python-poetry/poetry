@@ -50,12 +50,19 @@ release_task:
   upload_script: |
     #!/usr/bin/env bash
 
-    if [[ "$CIRRUS_RELEASE" == "" ]]; then
+    NUM_TRIES=0
+    until [ $NUM_TRIES -eq 5 ]
+    do
+      echo "Retrying to find a release associated with this tag"
       CIRRUS_RELEASE=$(curl -sL https://api.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/tags/$CIRRUS_TAG | jq -r '.id')
-      if [[ "$CIRRUS_RELEASE" == "null" ]]; then
+      [[ "$CIRRUS_RELEASE" != "null" ]] && break
+      NUM_TRIES=$((NUM_TRIES+1)) 
+      sleep 3
+    done
+
+    if [[ "$CIRRUS_RELEASE" == "null" ]]; then
         echo "Failed to find a release associated with this tag!"
         exit 0
-      fi
     fi
 
     if [[ "$GITHUB_TOKEN" == "" ]]; then
