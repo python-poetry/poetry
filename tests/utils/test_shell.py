@@ -1,7 +1,6 @@
 import pytest
 
 from poetry.utils.shell import Shell as _Shell
-from poetry.utils.shell import os
 
 
 @pytest.fixture
@@ -57,12 +56,11 @@ def test_get_when_detect_shell_works(Shell, mocker):
     assert Shell._shell == s
 
 
-@pytest.mark.skipif(os.name != "posix", reason="TODO")
-def test_get_when_detect_shell_raises_error_posix(Shell, mocker):
+def test_get_when_detect_shell_raises_error(Shell, mocker):
     """
     Given the Shell Class running on a posix system.
     When Shell.get() is called, and shellingham.detect_shell()
-        raises an error.
+        raises an error, but os.environ.get is not None.
     Check that the resulting shell is as expected.
     """
     mocker.patch("poetry.utils.shell.detect_shell", side_effect=RuntimeError)
@@ -73,25 +71,6 @@ def test_get_when_detect_shell_raises_error_posix(Shell, mocker):
     s = Shell.get()
     assert s.name == "name"
     assert s.path == "/blah/blah/blah/name"
-    assert Shell._shell == s
-
-
-@pytest.mark.skipif(os.name != "nt", reason="TODO")
-def test_get_when_detect_shell_raises_error_nt(Shell, mocker):
-    """
-    Given the Shell Class running on a nt system.
-    When Shell.get() is called, and shellingham.detect_shell()
-        raises an error.
-    Check that the resulting shell is as expected.
-    """
-    mocker.patch("poetry.utils.shell.detect_shell", side_effect=RuntimeError)
-    mocker.patch(
-        "poetry.utils.shell.os.environ.get", return_value=r"\blah\blah\blah\name"
-    )
-
-    s = Shell.get()
-    assert s.name == "name"
-    assert s.path == r"\blah\blah\blah\name"
     assert Shell._shell == s
 
 
