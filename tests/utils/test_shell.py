@@ -107,3 +107,21 @@ def test__get_activate_script(s_name, suffix, Shell):
     """
     s = Shell(name=s_name, path="path")
     assert s._get_activate_script() == "activate" + suffix
+
+
+@pytest.mark.parametrize(
+    "s_name,command",
+    [
+        pytest.param("fish", "source", id="fish"),
+        pytest.param("csh", "source", id="csh"),
+        pytest.param("tcsh", "source", id="tcsh"),
+        pytest.param("Anything Else", ".", id="Default Case"),
+    ],
+)
+def test__get_source_command(s_name, command, Shell):
+    """
+    Given a Shell,
+    Check that s._get_activate_script() returns the correct script.
+    """
+    s = Shell(name=s_name, path="path")
+    assert s._get_source_command() == command
