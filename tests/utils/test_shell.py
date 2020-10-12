@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from poetry.utils.shell import Shell as _Shell
@@ -7,6 +9,18 @@ from poetry.utils.shell import Shell as _Shell
 def Shell():
     _Shell._shell = None
     return _Shell
+
+
+@pytest.fixture
+def set_SHELL_environment_variable():
+    VAR = "SHELL" if os.name == "posix" else "COMSPEC"
+    real_value = os.environ.get(VAR)
+    os.environ[VAR] = "/blah/blah/blah/name"
+    yield
+    if real_value:
+        os.environ[VAR] = real_value
+    elif os.environ.get(VAR):
+        del os.environ[VAR]
 
 
 def test_name_and_path_properties(Shell):
@@ -56,7 +70,9 @@ def test_get_when_detect_shell_works(Shell, mocker):
     assert Shell._shell == s
 
 
-def test_get_when_detect_shell_raises_error(Shell, mocker):
+def test_get_when_detect_shell_raises_error(
+    Shell, mocker, set_SHELL_environment_variable
+):
     """
     Given the Shell Class running on a posix system.
     When Shell.get() is called, and shellingham.detect_shell()
@@ -64,9 +80,6 @@ def test_get_when_detect_shell_raises_error(Shell, mocker):
     Check that the resulting shell is as expected.
     """
     mocker.patch("poetry.utils.shell.detect_shell", side_effect=RuntimeError)
-    mocker.patch(
-        "poetry.utils.shell.os.environ.get", return_value="/blah/blah/blah/name"
-    )
 
     s = Shell.get()
     assert s.name == "name"
@@ -75,7 +88,7 @@ def test_get_when_detect_shell_raises_error(Shell, mocker):
 
 
 def test_get_when_detect_shell_raises_error_and_os_environ_get_returns_None(
-    Shell, mocker
+    Shell, mocker, set_SHELL_environment_variable
 ):
     """
     Given the Shell Class.
@@ -85,7 +98,8 @@ def test_get_when_detect_shell_raises_error_and_os_environ_get_returns_None(
     Check that RuntimeError is raised.
     """
     mocker.patch("poetry.utils.shell.detect_shell", side_effect=RuntimeError)
-    mocker.patch("poetry.utils.shell.os.environ.get", return_value=None)
+
+    del os.environ["SHELL" if os.name == "posix" else "COMSPEC"]
 
     excinfo = pytest.raises(RuntimeError, Shell.get)
     assert "Unable to detect the current shell." in str(excinfo)
