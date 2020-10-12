@@ -125,3 +125,8 @@ def test__get_source_command(s_name, command, Shell):
     """
     s = Shell(name=s_name, path="path")
     assert s._get_source_command() == command
+
+
+def test___repr__(Shell):
+    s = Shell(name="NAME", path="PATH")
+    assert repr(s) == 'Shell("NAME", "PATH")'
