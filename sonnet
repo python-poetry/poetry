@@ -25,8 +25,6 @@ class MakeReleaseCommand(Command):
     """
 
     PYTHON = {
-        "2.7": "python2.7",
-        "3.5": "python3.5",
         "3.6": "python3.6",
         "3.7": "python3.7",
         "3.8": "python3.8",
