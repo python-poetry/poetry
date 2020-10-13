@@ -395,4 +395,4 @@ class LegacyRepository(PyPiRepository):
             )
             return
 
-        return Page(url, response.content, response.headers)
+        return Page(response.url, response.content, response.headers)
