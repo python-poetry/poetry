@@ -185,15 +185,14 @@ class Locker(object):
 
         return packages
 
+    @classmethod
     def get_project_dependencies(
-        self, project_requires, pinned_versions=False, with_nested=False, with_dev=False
-    ):  # type: (List[Dependency], bool, bool, bool) -> List[Dependency]
-        packages = self.locked_repository(with_dev).packages
-
+        cls, project_requires, locked_packages, pinned_versions=False, with_nested=False
+    ):  # type: (List[Dependency], List[Package], bool, bool) -> List[Dependency]
         # group packages entries by name, this is required because requirement might use
         # different constraints
         packages_by_name = {}
-        for pkg in packages:
+        for pkg in locked_packages:
             if pkg.name not in packages_by_name:
                 packages_by_name[pkg.name] = []
             packages_by_name[pkg.name].append(pkg)
@@ -275,8 +274,6 @@ class Locker(object):
                     # we make a copy to avoid any side-effects
                     requirement = deepcopy(requirement)
 
-                requirement._category = pkg.category
-
                 if pinned_versions:
                     requirement.set_constraint(
                         __get_locked_package(requirement).to_dependency().constraint
@@ -285,9 +282,7 @@ class Locker(object):
                 # dependencies use extra to indicate that it was activated via parent
                 # package's extras, this is not required for nested exports as we assume
                 # the resolver already selected this dependency
-                requirement.marker = requirement.marker.without_extras().intersect(
-                    pkg.marker
-                )
+                requirement.marker = requirement.marker.without_extras()
 
                 key = (requirement.name, requirement.pretty_constraint)
                 if key not in nested_dependencies:
@@ -324,7 +319,9 @@ class Locker(object):
             )
 
         for dependency in self.get_project_dependencies(
-            project_requires=project_requires, with_nested=True, with_dev=dev,
+            project_requires=project_requires,
+            locked_packages=repository.packages,
+            with_nested=True,
         ):
             try:
                 package = repository.find_packages(dependency=dependency)[0]
