@@ -256,8 +256,12 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
     assert expected == {}
 
 
+@pytest.mark.parametrize(
+    "dev,lines",
+    [(False, ['a==1.2.3; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
+)
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_any(
-    tmp_dir, poetry
+    tmp_dir, poetry, dev, lines
 ):
     poetry.locker.mock_lock_data(
         {
@@ -295,24 +299,16 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_a
         Factory.create_dependency(
             name="b", constraint=dict(version="^4.5.6"), category="dev"
         ),
-        Factory.create_dependency(name="a", constraint=dict(version="^1.2.3")),
     ]
 
     exporter = Exporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=dev)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    assert (
-        content
-        == """\
-a==1.2.3
-a==1.2.3; python_version < "3.8"
-b==4.5.6
-"""
-    )
+    assert content.strip() == "\n".join(lines)
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
