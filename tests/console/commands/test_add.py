@@ -24,10 +24,18 @@ def old_tester(tester):
     return tester
 
 
-def test_add_no_constraint(app, repo, tester):
+@pytest.fixture()
+def repo_with_packages(repo):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+    repo.add_package(get_package("tomlkit", "0.5.5"))
+    repo.add_package(get_package("pyyaml", "3.13"))
+    repo.add_package(get_package("pyyaml", "4.2b2"))
 
+
+def test_add_no_constraint(app, repo_with_packages, tester):
     tester.execute("cachy")
 
     expected = """\
@@ -52,10 +60,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["cachy"] == "^0.2.0"
 
 
-def test_add_equal_constraint(app, repo, tester):
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_equal_constraint(repo_with_packages, tester):
     tester.execute("cachy==0.1.0")
 
     expected = """\
@@ -74,10 +79,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert 1 == tester._command.installer.executor.installations_count
 
 
-def test_add_greater_constraint(app, repo, tester):
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_greater_constraint(repo_with_packages, tester):
     tester.execute("cachy>=0.1.0")
 
     expected = """\
@@ -96,7 +98,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert 1 == tester._command.installer.executor.installations_count
 
 
-def test_add_constraint_with_extras(app, repo, tester):
+def test_add_constraint_with_extras(repo, tester):
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -125,7 +127,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert 2 == tester._command.installer.executor.installations_count
 
 
-def test_add_constraint_dependencies(app, repo, tester):
+def test_add_constraint_dependencies(repo, tester):
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
     cachy2.requires = [msgpack_dep]
@@ -153,11 +155,8 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert 2 == tester._command.installer.executor.installations_count
 
 
-def test_add_git_constraint(app, repo, tester, tmp_venv):
+def test_add_git_constraint(app, repo_with_packages, tester, tmp_venv):
     tester._command.set_env(tmp_venv)
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
 
     tester.execute("git+https://github.com/demo/demo.git")
 
@@ -185,10 +184,8 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
-def test_add_git_constraint_with_poetry(app, repo, tester, tmp_venv):
+def test_add_git_constraint_with_poetry(repo_with_packages, tester, tmp_venv):
     tester._command.set_env(tmp_venv)
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     tester.execute("git+https://github.com/demo/pyproject-demo.git")
 
@@ -209,12 +206,8 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert 2 == tester._command.installer.executor.installations_count
 
 
-def test_add_git_constraint_with_extras(app, repo, tester, tmp_venv):
+def test_add_git_constraint_with_extras(app, repo_with_packages, tester, tmp_venv):
     tester._command.set_env(tmp_venv)
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-    repo.add_package(get_package("tomlkit", "0.5.5"))
 
     tester.execute("git+https://github.com/demo/demo.git[foo,bar]")
 
@@ -245,11 +238,8 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
-def test_add_git_ssh_constraint(app, repo, tester, tmp_venv):
+def test_add_git_ssh_constraint(app, repo_with_packages, tester, tmp_venv):
     tester._command.set_env(tmp_venv)
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
 
     tester.execute("git+ssh://git@github.com/demo/demo.git@develop")
 
@@ -278,12 +268,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
-def test_add_directory_constraint(app, repo, tester, mocker):
+def test_add_directory_constraint(app, repo_with_packages, tester, mocker):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
 
     path = "../git/github.com/demo/demo"
     tester.execute("{}".format(path))
@@ -312,11 +299,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert content["dependencies"]["demo"] == {"path": "../git/github.com/demo/demo"}
 
 
-def test_add_directory_with_poetry(app, repo, tester, mocker):
+def test_add_directory_with_poetry(app, repo_with_packages, tester, mocker):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
     tester.execute("{}".format(path))
@@ -340,11 +325,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert 2 == tester._command.installer.executor.installations_count
 
 
-def test_add_file_constraint_wheel(app, repo, tester, mocker, poetry):
+def test_add_file_constraint_wheel(app, repo_with_packages, tester, mocker, poetry):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = poetry.file.parent
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
     tester.execute("{}".format(path))
@@ -375,11 +358,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
-def test_add_file_constraint_sdist(app, repo, tester, mocker):
+def test_add_file_constraint_sdist(app, repo_with_packages, tester, mocker):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
     tester.execute("{}".format(path))
@@ -447,11 +428,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
-def test_add_url_constraint_wheel(app, repo, tester, mocker):
+def test_add_url_constraint_wheel(app, repo_with_packages, tester, mocker):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     tester.execute(
         "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -481,11 +460,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
-def test_add_url_constraint_wheel_with_extras(app, repo, tester, mocker):
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-    repo.add_package(get_package("tomlkit", "0.5.5"))
-
+def test_add_url_constraint_wheel_with_extras(app, repo_with_packages, tester):
     tester.execute(
         "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
     )
@@ -519,12 +494,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
-def test_add_constraint_with_python(app, repo, tester):
-    cachy2 = get_package("cachy", "0.2.0")
-
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
-
+def test_add_constraint_with_python(app, repo_with_packages, tester):
     tester.execute("cachy=0.2.0 --python >=2.7")
 
     expected = """\
@@ -548,14 +518,9 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["cachy"] == {"version": "0.2.0", "python": ">=2.7"}
 
 
-def test_add_constraint_with_platform(app, repo, tester, env):
+def test_add_constraint_with_platform(app, repo_with_packages, tester, env):
     platform = sys.platform
     env._platform = platform
-
-    cachy2 = get_package("cachy", "0.2.0")
-
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
 
     tester.execute("cachy=0.2.0 --platform {} -vvv".format(platform))
 
@@ -583,7 +548,7 @@ Package operations: 1 install, 0 updates, 0 removals
     }
 
 
-def test_add_constraint_with_source(app, poetry, tester):
+def test_add_constraint_with_source(app, repo, poetry, tester):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
     repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
@@ -616,14 +581,14 @@ Package operations: 1 install, 0 updates, 0 removals
     }
 
 
-def test_add_constraint_with_source_that_does_not_exist(app, tester):
+def test_add_constraint_with_source_that_does_not_exist(tester):
     with pytest.raises(ValueError) as e:
         tester.execute("foo --source i-dont-exist")
 
     assert 'Repository "i-dont-exist" does not exist.' == str(e.value)
 
 
-def test_add_constraint_not_found_with_source(app, poetry, mocker, tester):
+def test_add_constraint_not_found_with_source(poetry, mocker, tester):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     mocker.patch.object(repo, "find_packages", return_value=[])
 
@@ -638,10 +603,7 @@ def test_add_constraint_not_found_with_source(app, poetry, mocker, tester):
     assert "Could not find a matching version of package cachy" == str(e.value)
 
 
-def test_add_to_section_that_does_no_exist_yet(app, repo, tester):
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_to_section_that_does_no_exist_yet(app, repo_with_packages, tester):
     tester.execute("cachy --dev")
 
     expected = """\
@@ -666,10 +628,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dev-dependencies"]["cachy"] == "^0.2.0"
 
 
-def test_add_should_not_select_prereleases(app, repo, tester):
-    repo.add_package(get_package("pyyaml", "3.13"))
-    repo.add_package(get_package("pyyaml", "4.2b2"))
-
+def test_add_should_not_select_prereleases(app, repo_with_packages, tester):
     tester.execute("pyyaml")
 
     expected = """\
@@ -748,7 +707,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["foo"] == "^1.1.2"
 
 
-def test_add_chooses_prerelease_if_only_prereleases_are_available(app, repo, tester):
+def test_add_chooses_prerelease_if_only_prereleases_are_available(repo, tester):
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
 
@@ -770,7 +729,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected in tester.io.fetch_output()
 
 
-def test_add_prefers_stable_releases(app, repo, tester):
+def test_add_prefers_stable_releases(repo, tester):
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
 
@@ -792,9 +751,8 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected in tester.io.fetch_output()
 
 
-def test_add_with_lock(app, repo, tester):
+def test_add_with_lock(app, repo_with_packages, tester):
     content_hash = app.poetry.locker._get_content_hash()
-    repo.add_package(get_package("cachy", "0.2.0"))
 
     tester.execute("cachy --lock")
 
@@ -811,10 +769,9 @@ Writing lock file
     assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
 
 
-def test_add_no_constraint_old_installer(app, repo, installer, old_tester):
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_no_constraint_old_installer(
+    app, repo_with_packages, installer, old_tester
+):
     old_tester.execute("cachy")
 
     expected = """\
@@ -840,10 +797,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["cachy"] == "^0.2.0"
 
 
-def test_add_equal_constraint_old_installer(app, repo, installer, old_tester):
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_equal_constraint_old_installer(repo_with_packages, installer, old_tester):
     old_tester.execute("cachy==0.1.0")
 
     expected = """\
@@ -863,10 +817,9 @@ Package operations: 1 install, 0 updates, 0 removals
     assert len(installer.installs) == 1
 
 
-def test_add_greater_constraint_old_installer(app, repo, installer, old_tester):
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_greater_constraint_old_installer(
+    repo_with_packages, installer, old_tester
+):
     old_tester.execute("cachy>=0.1.0")
 
     expected = """\
@@ -886,7 +839,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert len(installer.installs) == 1
 
 
-def test_add_constraint_with_extras_old_installer(app, repo, installer, old_tester):
+def test_add_constraint_with_extras_old_installer(repo, installer, old_tester):
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
@@ -916,7 +869,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert len(installer.installs) == 2
 
 
-def test_add_constraint_dependencies_old_installer(app, repo, installer, old_tester):
+def test_add_constraint_dependencies_old_installer(repo, installer, old_tester):
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
     cachy2.requires = [msgpack_dep]
@@ -945,10 +898,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert len(installer.installs) == 2
 
 
-def test_add_git_constraint_old_installer(app, repo, installer, old_tester):
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-
+def test_add_git_constraint_old_installer(
+    app, repo_with_packages, installer, old_tester
+):
     old_tester.execute("git+https://github.com/demo/demo.git")
 
     expected = """\
@@ -976,9 +928,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
-def test_add_git_constraint_with_poetry_old_installer(app, repo, installer, old_tester):
-    repo.add_package(get_package("pendulum", "1.4.4"))
-
+def test_add_git_constraint_with_poetry_old_installer(
+    repo_with_packages, installer, old_tester
+):
     old_tester.execute("git+https://github.com/demo/pyproject-demo.git")
 
     expected = """\
@@ -999,11 +951,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     assert len(installer.installs) == 2
 
 
-def test_add_git_constraint_with_extras_old_installer(app, repo, installer, old_tester):
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-    repo.add_package(get_package("tomlkit", "0.5.5"))
-
+def test_add_git_constraint_with_extras_old_installer(
+    app, repo_with_packages, installer, old_tester
+):
     old_tester.execute("git+https://github.com/demo/demo.git[foo,bar]")
 
     expected = """\
@@ -1034,10 +984,9 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
-def test_add_git_ssh_constraint_old_installer(app, repo, installer, old_tester):
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-
+def test_add_git_ssh_constraint_old_installer(
+    app, repo_with_packages, installer, old_tester
+):
     old_tester.execute("git+ssh://git@github.com/demo/demo.git@develop")
 
     expected = """\
@@ -1067,13 +1016,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_directory_constraint_old_installer(
-    app, repo, installer, mocker, old_tester
+    app, repo_with_packages, installer, mocker, old_tester
 ):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
 
     path = "../git/github.com/demo/demo"
     old_tester.execute("{}".format(path))
@@ -1104,12 +1050,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_directory_with_poetry_old_installer(
-    app, repo, installer, mocker, old_tester
+    app, repo_with_packages, installer, mocker, old_tester
 ):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
     old_tester.execute("{}".format(path))
@@ -1135,12 +1079,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_file_constraint_wheel_old_installer(
-    app, repo, installer, mocker, old_tester
+    app, repo_with_packages, installer, mocker, old_tester
 ):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
     old_tester.execute("{}".format(path))
@@ -1173,12 +1115,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_file_constraint_sdist_old_installer(
-    app, repo, installer, mocker, old_tester
+    app, repo_with_packages, installer, mocker, old_tester
 ):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
     old_tester.execute("{}".format(path))
@@ -1251,12 +1191,10 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_url_constraint_wheel_old_installer(
-    app, repo, installer, mocker, old_tester
+    app, repo_with_packages, installer, mocker, old_tester
 ):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__) / ".."
-
-    repo.add_package(get_package("pendulum", "1.4.4"))
 
     old_tester.execute(
         "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -1288,12 +1226,8 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_url_constraint_wheel_with_extras_old_installer(
-    app, repo, installer, old_tester
+    app, repo_with_packages, installer, old_tester
 ):
-    repo.add_package(get_package("pendulum", "1.4.4"))
-    repo.add_package(get_package("cleo", "0.6.5"))
-    repo.add_package(get_package("tomlkit", "0.5.5"))
-
     old_tester.execute(
         "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl[foo,bar]"
     )
@@ -1326,12 +1260,9 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
-def test_add_constraint_with_python_old_installer(app, repo, installer, old_tester):
-    cachy2 = get_package("cachy", "0.2.0")
-
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
-
+def test_add_constraint_with_python_old_installer(
+    app, repo_with_packages, installer, old_tester
+):
     old_tester.execute("cachy=0.2.0 --python >=2.7")
 
     expected = """\
@@ -1357,15 +1288,10 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_constraint_with_platform_old_installer(
-    app, repo, installer, env, old_tester
+    app, repo_with_packages, installer, env, old_tester
 ):
     platform = sys.platform
     env._platform = platform
-
-    cachy2 = get_package("cachy", "0.2.0")
-
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(cachy2)
 
     old_tester.execute("cachy=0.2.0 --platform {} -vvv".format(platform))
 
@@ -1394,7 +1320,9 @@ Package operations: 1 install, 0 updates, 0 removals
     }
 
 
-def test_add_constraint_with_source_old_installer(app, poetry, installer, old_tester):
+def test_add_constraint_with_source_old_installer(
+    app, repo, poetry, installer, old_tester
+):
     repo = LegacyRepository(name="my-index", url="https://my-index.fake")
     repo.add_package(get_package("cachy", "0.2.0"))
     repo._cache.store("matches").put("cachy:0.2.0", [Version.parse("0.2.0")], 5)
@@ -1428,7 +1356,7 @@ Package operations: 1 install, 0 updates, 0 removals
     }
 
 
-def test_add_constraint_with_source_that_does_not_exist_old_installer(app, old_tester):
+def test_add_constraint_with_source_that_does_not_exist_old_installer(old_tester):
     with pytest.raises(ValueError) as e:
         old_tester.execute("foo --source i-dont-exist")
 
@@ -1453,11 +1381,8 @@ def test_add_constraint_not_found_with_source_old_installer(
 
 
 def test_add_to_section_that_does_no_exist_yet_old_installer(
-    app, repo, installer, old_tester
+    app, repo_with_packages, installer, old_tester
 ):
-    repo.add_package(get_package("cachy", "0.1.0"))
-    repo.add_package(get_package("cachy", "0.2.0"))
-
     old_tester.execute("cachy --dev")
 
     expected = """\
@@ -1484,11 +1409,8 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_should_not_select_prereleases_old_installer(
-    app, repo, installer, old_tester
+    app, repo_with_packages, installer, old_tester
 ):
-    repo.add_package(get_package("pyyaml", "3.13"))
-    repo.add_package(get_package("pyyaml", "4.2b2"))
-
     old_tester.execute("pyyaml")
 
     expected = """\
@@ -1515,7 +1437,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_should_skip_when_adding_existing_package_with_no_constraint_old_installer(
-    app, repo, installer, old_tester
+    app, repo, old_tester
 ):
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
@@ -1538,7 +1460,7 @@ If you prefer to upgrade it to the latest available version, you can use `poetry
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint_old_installer(
-    app, repo, installer, old_tester
+    app, repo, old_tester
 ):
     content = app.poetry.file.read()
     content["tool"]["poetry"]["dependencies"]["foo"] = "^1.0"
@@ -1570,7 +1492,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_add_chooses_prerelease_if_only_prereleases_are_available_old_installer(
-    app, repo, installer, old_tester
+    repo, old_tester
 ):
     repo.add_package(get_package("foo", "1.2.3b0"))
     repo.add_package(get_package("foo", "1.2.3b1"))
@@ -1593,7 +1515,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected in old_tester.io.fetch_output()
 
 
-def test_add_preferes_stable_releases_old_installer(app, repo, installer, old_tester):
+def test_add_preferes_stable_releases_old_installer(repo, old_tester):
     repo.add_package(get_package("foo", "1.2.3"))
     repo.add_package(get_package("foo", "1.2.4b1"))
 
@@ -1615,9 +1537,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected in old_tester.io.fetch_output()
 
 
-def test_add_with_lock_old_installer(app, repo, installer, old_tester):
-    repo.add_package(get_package("cachy", "0.2.0"))
-
+def test_add_with_lock_old_installer(repo_with_packages, old_tester):
     old_tester.execute("cachy --lock")
 
     expected = """\
