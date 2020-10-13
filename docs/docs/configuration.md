@@ -91,7 +91,6 @@ This also works for secret settings, like credentials:
 export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 ```
 
-
 ## Available settings
 
 ### `cache-dir`: string
@@ -120,7 +119,8 @@ Defaults to `true`.
 
 If set to `false`, poetry will install dependencies into the current python environment.
 
-!!!note:
+!!!note
+
         When setting this configuration to `false`, the Python environment used must have `pip`
         installed and available.
 
@@ -129,10 +129,12 @@ If set to `false`, poetry will install dependencies into the current python envi
 Create the virtualenv inside the project's root directory.
 Defaults to `None`.
 
-If set to `true`, the virtualenv will be created and expected in a folder named `.venv` within the root directory of the project.
+If set to `true`, the virtualenv will be created and expected in a folder named
+`.venv` within the root directory of the project.
 
-If not set explicitly (default), `poetry` will use the virtualenv from the `.venv` directory when one is available. If set to `false`, `poetry` will ignore any existing `.venv` directory.
-
+If not set explicitly (default), `poetry` will use the virtualenv from the `.venv`
+directory when one is available. If set to `false`, `poetry` will ignore any
+existing `.venv` directory.
 
 ### `virtualenvs.path`: string
 
