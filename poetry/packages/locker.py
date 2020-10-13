@@ -1,4 +1,3 @@
-import itertools
 import json
 import logging
 import os
@@ -6,6 +5,7 @@ import re
 
 from copy import deepcopy
 from hashlib import sha256
+from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -188,7 +188,7 @@ class Locker(object):
     @classmethod
     def get_project_dependencies(
         cls, project_requires, locked_packages, pinned_versions=False, with_nested=False
-    ):  # type: (List[Dependency], List[Package], bool, bool) -> List[Dependency]
+    ):  # type: (List[Dependency], List[Package], bool, bool) -> Iterable[Dependency]
         # group packages entries by name, this is required because requirement might use
         # different constraints
         packages_by_name = {}
@@ -296,10 +296,17 @@ class Locker(object):
 
         __walk_level(dependencies, 0)
 
-        return sorted(
-            itertools.chain(dependencies, nested_dependencies.values()),
-            key=lambda x: x.name.lower(),
-        )
+        # Merge same dependencies using marker union
+        for requirement in dependencies:
+            key = (requirement.name, requirement.pretty_constraint)
+            if key not in nested_dependencies:
+                nested_dependencies[key] = requirement
+            else:
+                nested_dependencies[key].marker = nested_dependencies[key].marker.union(
+                    requirement.marker
+                )
+
+        return sorted(nested_dependencies.values(), key=lambda x: x.name.lower())
 
     def get_project_dependency_packages(
         self, project_requires, dev=False, extras=None
