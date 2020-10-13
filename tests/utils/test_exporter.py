@@ -544,8 +544,17 @@ foo==1.2.3 \\
     assert expected == content
 
 
-def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
-    tmp_dir, poetry
+@pytest.mark.parametrize(
+    "extras,lines",
+    [
+        (None, ["foo==1.2.3"]),
+        (False, ["foo==1.2.3"]),
+        (True, ["bar==4.5.6", "foo==1.2.3", "spam==0.1.0"]),
+        (["feature_bar"], ["bar==4.5.6", "foo==1.2.3", "spam==0.1.0"]),
+    ],
+)
+def test_exporter_exports_requirements_txt_with_optional_packages(
+    tmp_dir, poetry, extras, lines
 ):
     poetry.locker.mock_lock_data(
         {
@@ -590,22 +599,16 @@ def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
         Path(tmp_dir),
         "requirements.txt",
         dev=True,
-        extras=["feature_bar"],
+        with_hashes=False,
+        extras=extras,
     )
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
-bar==4.5.6 \\
-    --hash=sha256:67890
-foo==1.2.3 \\
-    --hash=sha256:12345
-spam==0.1.0 \\
-    --hash=sha256:abcde
-"""
+    expected = "\n".join(lines)
 
-    assert expected == content
+    assert content.strip() == expected
 
 
 def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry):
