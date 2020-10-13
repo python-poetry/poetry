@@ -51,13 +51,13 @@ release_task:
     #!/usr/bin/env bash
 
     NUM_TRIES=0
-    until [ $NUM_TRIES -eq 5 ]
+    until [ $NUM_TRIES -eq 20 ]
     do
       echo "Retrying to find a release associated with this tag"
       CIRRUS_RELEASE=$(curl -sL https://api.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/tags/$CIRRUS_TAG | jq -r '.id')
       [[ "$CIRRUS_RELEASE" != "null" ]] && break
       NUM_TRIES=$((NUM_TRIES+1))
-      sleep 3
+      sleep 30
     done
 
     if [[ "$CIRRUS_RELEASE" == "null" ]]; then
