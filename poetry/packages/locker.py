@@ -318,20 +318,30 @@ class Locker(object):
                 )
             )
 
+        # If a package is optional and we haven't opted in to it, do not select
+        selected = []
+        for dependency in project_requires:
+            try:
+                package = repository.find_packages(dependency=dependency)[0]
+            except IndexError:
+                continue
+
+            if extra_package_names is not None and (
+                package.optional and package.name not in extra_package_names
+            ):
+                # a package is locked as optional, but is not activated via extras
+                continue
+
+            selected.append(dependency)
+
         for dependency in self.get_project_dependencies(
-            project_requires=project_requires,
+            project_requires=selected,
             locked_packages=repository.packages,
             with_nested=True,
         ):
             try:
                 package = repository.find_packages(dependency=dependency)[0]
             except IndexError:
-                continue
-
-            # If a package is optional and we haven't opted in to it, continue
-            if extra_package_names is not None and (
-                package.optional and package.name not in extra_package_names
-            ):
                 continue
 
             for extra in dependency.extras:
