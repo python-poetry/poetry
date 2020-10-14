@@ -1,5 +1,19 @@
 # Change Log
 
+## [1.1.3] - 2020-10-14
+
+### Changed
+
+- Python version support deprecation warning is now written to `stderr`. ([#3131](https://github.com/python-poetry/poetry/pull/3131))
+
+### Fixed
+
+- Fixed `KeyError` when `PATH` is not defined in environment variables. ([#3159](https://github.com/python-poetry/poetry/pull/3159))
+- Fixed error when using `config` command in a directory with an existing `pyproject.toml` without any Poetry configuration. ([#3172](https://github.com/python-poetry/poetry/pull/3172))
+- Fixed incorrect inspection of package requirements when same dependency is specified multiple times with unique markers. ([#3147](https://github.com/python-poetry/poetry/pull/3147))
+- Fixed `show` command to use already resolved package metadata. ([#3117](https://github.com/python-poetry/poetry/pull/3117))
+- Fixed multiple issues with `export` command output when using `requirements.txt` format. ([#3119](https://github.com/python-poetry/poetry/pull/3119))
+
 ## [1.1.2] - 2020-10-06
 
 ### Changed
@@ -1049,7 +1063,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.2...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.3...master
+[1.1.3]: https://github.com/python-poetry/poetry/compare/1.1.3
 [1.1.2]: https://github.com/python-poetry/poetry/releases/tag/1.1.2
 [1.1.1]: https://github.com/python-poetry/poetry/releases/tag/1.1.1
 [1.1.0]: https://github.com/python-poetry/poetry/releases/tag/1.1.0
