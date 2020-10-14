@@ -2,6 +2,7 @@ import sys
 
 import pytest
 
+from poetry.core.packages import dependency_from_pep_508
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
@@ -59,13 +60,18 @@ def poetry(fixture_dir, locker):
     return p
 
 
-def set_package_requires(poetry):
+def set_package_requires(poetry, skip=None):
+    skip = skip or set()
     packages = poetry.locker.locked_repository(with_dev_reqs=True).packages
     poetry.package.requires = [
-        pkg.to_dependency() for pkg in packages if pkg.category == "main"
+        pkg.to_dependency()
+        for pkg in packages
+        if pkg.category == "main" and pkg.name not in skip
     ]
     poetry.package.dev_requires = [
-        pkg.to_dependency() for pkg in packages if pkg.category == "dev"
+        pkg.to_dependency()
+        for pkg in packages
+        if pkg.category == "dev" and pkg.name not in skip
     ]
 
 
@@ -168,6 +174,141 @@ foo==1.2.3; python_version < "3.7"
 """
 
     assert expected == content
+
+
+def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": "python_version < '3.7'",
+                    "dependencies": {"b": ">=0.0.0", "c": ">=0.0.0"},
+                },
+                {
+                    "name": "b",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": "platform_system == 'Windows'",
+                    "dependencies": {"d": ">=0.0.0"},
+                },
+                {
+                    "name": "c",
+                    "version": "7.8.9",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "marker": "sys_platform == 'win32'",
+                    "dependencies": {"d": ">=0.0.0"},
+                },
+                {
+                    "name": "d",
+                    "version": "0.0.1",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"a": [], "b": [], "c": [], "d": []},
+            },
+        }
+    )
+    set_package_requires(poetry, skip={"b", "c", "d"})
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = {
+        "a": dependency_from_pep_508("a==1.2.3; python_version < '3.7'"),
+        "b": dependency_from_pep_508(
+            "b==4.5.6; platform_system == 'Windows' and python_version < '3.7'"
+        ),
+        "c": dependency_from_pep_508(
+            "c==7.8.9; sys_platform == 'win32' and python_version < '3.7'"
+        ),
+        "d": dependency_from_pep_508(
+            "d==0.0.1; python_version < '3.7' and platform_system == 'Windows' and sys_platform == 'win32'"
+        ),
+    }
+
+    for line in content.strip().split("\n"):
+        dependency = dependency_from_pep_508(line)
+        assert dependency.name in expected
+        expected_dependency = expected.pop(dependency.name)
+        assert dependency == expected_dependency
+        assert dependency.marker == expected_dependency.marker
+
+    assert expected == {}
+
+
+@pytest.mark.parametrize(
+    "dev,lines",
+    [(False, ['a==1.2.3; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
+)
+def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_any(
+    tmp_dir, poetry, dev, lines
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "a",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "b",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"a": ">=1.2.3"},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"a": [], "b": []},
+            },
+        }
+    )
+
+    poetry.package.requires = [
+        Factory.create_dependency(
+            name="a", constraint=dict(version="^1.2.3", python="<3.8")
+        ),
+    ]
+    poetry.package.dev_requires = [
+        Factory.create_dependency(
+            name="b", constraint=dict(version="^4.5.6"), category="dev"
+        ),
+    ]
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=dev)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert content.strip() == "\n".join(lines)
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
@@ -399,8 +540,17 @@ foo==1.2.3 \\
     assert expected == content
 
 
-def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
-    tmp_dir, poetry
+@pytest.mark.parametrize(
+    "extras,lines",
+    [
+        (None, ["foo==1.2.3"]),
+        (False, ["foo==1.2.3"]),
+        (True, ["bar==4.5.6", "foo==1.2.3", "spam==0.1.0"]),
+        (["feature_bar"], ["bar==4.5.6", "foo==1.2.3", "spam==0.1.0"]),
+    ],
+)
+def test_exporter_exports_requirements_txt_with_optional_packages(
+    tmp_dir, poetry, extras, lines
 ):
     poetry.locker.mock_lock_data(
         {
@@ -445,22 +595,16 @@ def test_exporter_exports_requirements_txt_with_optional_packages_if_opted_in(
         Path(tmp_dir),
         "requirements.txt",
         dev=True,
-        extras=["feature_bar"],
+        with_hashes=False,
+        extras=extras,
     )
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
-    expected = """\
-bar==4.5.6 \\
-    --hash=sha256:67890
-foo==1.2.3 \\
-    --hash=sha256:12345
-spam==0.1.0 \\
-    --hash=sha256:abcde
-"""
+    expected = "\n".join(lines)
 
-    assert expected == content
+    assert content.strip() == expected
 
 
 def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry):
@@ -497,6 +641,55 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
         content = f.read()
 
     expected = """\
+foo @ git+https://github.com/foo/foo.git@123456
+"""
+
+    assert expected == content
+
+
+def test_exporter_can_export_requirements_txt_with_nested_packages(tmp_dir, poetry):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "git",
+                        "url": "https://github.com/foo/foo.git",
+                        "reference": "123456",
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"foo": "rev 123456"},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": []},
+            },
+        }
+    )
+    set_package_requires(poetry, skip={"foo"})
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar==4.5.6
 foo @ git+https://github.com/foo/foo.git@123456
 """
 

@@ -1,3 +1,5 @@
+from typing import Optional
+from typing import Sequence
 from typing import Union
 
 from clikit.api.io import IO
@@ -6,7 +8,6 @@ from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils._compat import urlparse
-from poetry.utils.extras import get_extra_package_names
 
 
 class Exporter(object):
@@ -31,7 +32,7 @@ class Exporter(object):
         dev=False,
         extras=None,
         with_credentials=False,
-    ):  # type: (str, Path, Union[IO, str], bool, bool, bool) -> None
+    ):  # type: (str, Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
 
@@ -52,37 +53,18 @@ class Exporter(object):
         dev=False,
         extras=None,
         with_credentials=False,
-    ):  # type: (Path, Union[IO, str], bool, bool, bool) -> None
+    ):  # type: (Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
         indexes = set()
         content = ""
-        repository = self._poetry.locker.locked_repository(dev)
-
-        # Build a set of all packages required by our selected extras
-        extra_package_names = set(
-            get_extra_package_names(
-                repository.packages,
-                self._poetry.locker.lock_data.get("extras", {}),
-                extras or (),
-            )
-        )
-
         dependency_lines = set()
 
-        for dependency in self._poetry.locker.get_project_dependencies(
-            project_requires=self._poetry.package.all_requires,
-            with_nested=True,
-            with_dev=dev,
+        for dependency_package in self._poetry.locker.get_project_dependency_packages(
+            project_requires=self._poetry.package.all_requires, dev=dev, extras=extras
         ):
-            try:
-                package = repository.find_packages(dependency=dependency)[0]
-            except IndexError:
-                continue
-
-            # If a package is optional and we haven't opted in to it, continue
-            if package.optional and package.name not in extra_package_names:
-                continue
-
             line = ""
+
+            dependency = dependency_package.dependency
+            package = dependency_package.package
 
             if package.develop:
                 line += "-e "
@@ -135,11 +117,14 @@ class Exporter(object):
             # If we have extra indexes, we add them to the beginning of the output
             indexes_header = ""
             for index in sorted(indexes):
-                repository = [
+                repositories = [
                     r
                     for r in self._poetry.pool.repositories
                     if r.url == index.rstrip("/")
-                ][0]
+                ]
+                if not repositories:
+                    continue
+                repository = repositories[0]
                 if (
                     self._poetry.pool.has_default()
                     and repository is self._poetry.pool.repositories[0]

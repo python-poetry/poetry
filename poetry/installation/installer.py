@@ -178,12 +178,24 @@ class Installer:
         return self
 
     def _do_refresh(self):
+        from poetry.puzzle import Solver
+
         # Checking extras
         for extra in self._extras:
             if extra not in self._package.extras:
                 raise ValueError("Extra [{}] is not specified.".format(extra))
 
-        ops = self._get_operations_from_lock(self._locker.locked_repository(True))
+        locked_repository = self._locker.locked_repository(True)
+        solver = Solver(
+            self._package,
+            self._pool,
+            locked_repository,
+            locked_repository,
+            self._io,  # noqa
+        )
+
+        ops = solver.solve(use_latest=[])
+
         local_repo = Repository()
         self._populate_local_repo(local_repo, ops)
 

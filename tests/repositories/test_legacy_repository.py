@@ -117,7 +117,7 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
         package.description == "Python Language Server for the Language Server Protocol"
     )
 
-    assert 19 == len(package.requires)
+    assert 25 == len(package.requires)
     assert sorted(
         [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
     ) == [
@@ -216,7 +216,7 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
     assert "ipython" == package.name
     assert "5.7.0" == package.version.text
     assert "*" == package.python_versions
-    assert 26 == len(package.requires)
+    assert 41 == len(package.requires)
 
     expected = [
         Dependency("appnope", "*"),
