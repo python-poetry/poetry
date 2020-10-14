@@ -26,6 +26,7 @@ INSTALLED_RESULTS = [
         zipp.Path(str(SITE_PURELIB / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
     ),
     metadata.PathDistribution(VENDOR_DIR / "attrs-19.3.0.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "standard-1.2.3.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "editable-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "editable-with-import-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "lib64-2.3.4.dist-info"),
@@ -158,3 +159,13 @@ def test_load_editable_with_import_package(repository):
     assert editable.version.text == "2.3.4"
     assert editable.source_type is None
     assert editable.source_url is None
+
+
+def test_load_standard_package_with_pth_file(repository):
+    # test standard packages with .pth file is not treated as editable
+    standard = get_package_from_repository("standard", repository)
+    assert standard is not None
+    assert standard.name == "standard"
+    assert standard.version.text == "1.2.3"
+    assert standard.source_type is None
+    assert standard.source_url is None
