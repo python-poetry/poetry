@@ -13,14 +13,15 @@ def Shell():
 
 @pytest.fixture
 def set_SHELL_environment_variable():
+    environ = dict(os.environ)
+
     VAR = "SHELL" if os.name == "posix" else "COMSPEC"
-    real_value = os.environ.get(VAR)
     os.environ[VAR] = "/blah/blah/blah/name"
+
     yield
-    if real_value:
-        os.environ[VAR] = real_value
-    elif os.environ.get(VAR):
-        del os.environ[VAR]
+
+    os.environ.clear()
+    os.environ.update(environ)
 
 
 def test_name_and_path_properties(Shell):
