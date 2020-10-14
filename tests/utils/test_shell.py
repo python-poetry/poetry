@@ -1,7 +1,11 @@
 import os
 
+from pathlib import Path
+
 import pytest
 
+from poetry.utils.env import MockEnv
+from poetry.utils.shell import WINDOWS
 from poetry.utils.shell import Shell as _Shell
 
 
@@ -22,6 +26,11 @@ def set_SHELL_environment_variable():
 
     os.environ.clear()
     os.environ.update(environ)
+
+
+@pytest.fixture
+def env():
+    return MockEnv(path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True)
 
 
 def test_name_and_path_properties(Shell):
@@ -140,6 +149,27 @@ def test__get_source_command(s_name, command, Shell):
     """
     s = Shell(name=s_name, path="path")
     assert s._get_source_command() == command
+
+
+@pytest.mark.skipif(not WINDOWS, reason="Windows specific path")
+def test_activate_if_windows(env):
+    """
+    Given a Shell object on windows,
+    When shell.activate(env) is called,
+    Check that env.execute(shell.path) is called.
+    """
+    assert False
+
+
+@pytest.mark.skipif(WINDOWS, reason="Non-Windows specifif path")
+def test_activate_if_not_windows(env):
+    """
+    Given a Shell object on a non-windows system,
+    When shell.activate(env) is called,
+    Check that the correct methods are called on
+    the mocked object returned by pexpect.spawn()
+    """
+    assert False
 
 
 def test___repr__(Shell):
