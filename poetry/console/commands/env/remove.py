@@ -1,4 +1,5 @@
-from cleo import argument, option
+from cleo import argument
+from cleo import option
 
 from ..command import Command
 
