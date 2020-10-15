@@ -1,10 +1,11 @@
 import os
 
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
-from poetry.utils.env import MockEnv
+from poetry.utils.env import VirtualEnv
 from poetry.utils.shell import WINDOWS
 from poetry.utils.shell import Shell as _Shell
 
@@ -30,7 +31,37 @@ def set_SHELL_environment_variable():
 
 @pytest.fixture
 def env():
-    return MockEnv(path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True)
+    return VirtualEnv(path=Path("/prefix"), base=Path("/base/prefix"))
+
+
+@pytest.fixture
+def MockedSpawn():
+    class _Spawn:
+        def __init__(self, command, args=[], dimensions=None):
+            self.exitstatus = 42
+            self._log = {
+                "sendline": [],
+                "setwinsize": [],
+                "interact": [],
+                "close": [],
+            }
+
+        def setecho(self, *args, **kwargs):
+            self._log["setecho"].append((args, kwargs))
+
+        def sendline(self, *args, **kwargs):
+            self._log["sendline"].append((args, kwargs))
+
+        def setwinsize(self, *args, **kwargs):
+            self._log["setwinsize"].append((args, kwargs))
+
+        def interact(self, *args, **kwargs):
+            self._log["interact"].append((args, kwargs))
+
+        def close(self, *args, **kwargs):
+            self._log["close"].append((args, kwargs))
+
+    return _Spawn
 
 
 def test_name_and_path_properties(Shell):
@@ -152,24 +183,43 @@ def test__get_source_command(s_name, command, Shell):
 
 
 @pytest.mark.skipif(not WINDOWS, reason="Windows specific path")
-def test_activate_if_windows(env):
+def test_activate_if_windows(env, Shell, mocker):
     """
     Given a Shell object on windows,
     When shell.activate(env) is called,
     Check that env.execute(shell.path) is called.
     """
-    assert False
+    s = Shell("name", "path")
+
+    with mock.patch.object(env, "execute", return_value=None) as env_execute:
+        s.activate(env)
+    assert env_execute.called_with("path")
 
 
-@pytest.mark.skipif(WINDOWS, reason="Non-Windows specifif path")
-def test_activate_if_not_windows(env):
+@pytest.mark.skipif(WINDOWS, reason="Non-Windows specific path")
+def test_activate_if_not_windows(env, Shell, mocker, MockedSpawn):
     """
     Given a Shell object on a non-windows system,
     When shell.activate(env) is called,
     Check that the correct methods are called on
     the mocked object returned by pexpect.spawn()
     """
-    assert False
+    s = Shell("name", "path")
+    spawn = MockedSpawn("command")
+    mocker.patch("pexpect.spawn", return_value=spawn)
+
+    with pytest.raises(SystemExit) as exeinfo:
+        s.activate(env)
+
+    expected = {
+        "sendline": [((". /prefix/bin/activate",), {})],
+        "setwinsize": [],
+        "interact": [((), {"escape_character": None})],
+        "close": [((), {})],
+    }
+
+    assert spawn._log == expected
+    assert exeinfo.value.code == 42
 
 
 def test___repr__(Shell):
