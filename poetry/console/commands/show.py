@@ -68,7 +68,7 @@ lists all packages available."""
         table = self.table(style="compact")
         # table.style.line_vc_char = ""
         locked_packages = locked_repo.packages
-        pool = Pool()
+        pool = Pool(ignore_repository_names=True)
         pool.add_repository(locked_repo)
         solver = Solver(
             self.poetry.package,

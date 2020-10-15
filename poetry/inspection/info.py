@@ -165,6 +165,8 @@ class PackageInfo:
                 package.requires = poetry_package.requires
                 return package
 
+        seen_requirements = set()
+
         for req in self.requires_dist or []:
             try:
                 # Attempt to parse the PEP-508 requirement string
@@ -191,8 +193,11 @@ class PackageInfo:
 
                     package.extras[extra].append(dependency)
 
-            if dependency not in package.requires:
+            req = dependency.to_pep_508(with_extras=True)
+
+            if req not in seen_requirements:
                 package.requires.append(dependency)
+                seen_requirements.add(req)
 
         return package
 
