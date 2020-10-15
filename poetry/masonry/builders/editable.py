@@ -139,7 +139,7 @@ class EditableBuilder(Builder):
         for script in scripts:
             name, script = script.split(" = ")
             module, callable_ = script.split(":")
-            callable_holder = callable_.rsplit(".", 1)[0]
+            callable_holder = callable_.split(".", 1)[0]
 
             script_file = scripts_path.joinpath(name)
             self._debug(

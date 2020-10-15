@@ -92,7 +92,7 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
 
     assert "poetry" == dist_info.joinpath("INSTALLER").read_text()
     assert (
-        "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\n\n"
+        "[console_scripts]\nbaz=bar:baz.boom.bim\nfoo=foo:bar\nfox=fuz.foo:bar.baz\n\n"
         == dist_info.joinpath("entry_points.txt").read_text()
     )
 
@@ -140,7 +140,7 @@ My Package
 
     baz_script = """\
 #!{python}
-from bar import baz.boom
+from bar import baz
 
 if __name__ == '__main__':
     baz.boom.bim()
@@ -161,6 +161,18 @@ if __name__ == '__main__':
     )
 
     assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text()
+
+    fox_script = """\
+#!{python}
+from fuz.foo import bar
+
+if __name__ == '__main__':
+    bar.baz()
+""".format(
+        python=tmp_venv._bin("python")
+    )
+
+    assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text()
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
