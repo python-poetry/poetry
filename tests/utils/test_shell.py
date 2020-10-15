@@ -40,6 +40,7 @@ def MockedSpawn():
         def __init__(self, command, args=[], dimensions=None):
             self.exitstatus = 42
             self._log = {
+                "setecho": [],
                 "sendline": [],
                 "setwinsize": [],
                 "interact": [],
@@ -204,7 +205,7 @@ def test_activate_if_not_windows(env, Shell, mocker, MockedSpawn):
     Check that the correct methods are called on
     the mocked object returned by pexpect.spawn()
     """
-    s = Shell("name", "path")
+    s = Shell("zsh", "path")
     spawn = MockedSpawn("command")
     mocker.patch("pexpect.spawn", return_value=spawn)
 
@@ -214,6 +215,7 @@ def test_activate_if_not_windows(env, Shell, mocker, MockedSpawn):
     expected = {
         "sendline": [((". /prefix/bin/activate",), {})],
         "setwinsize": [],
+        "setecho": [((False,), {})],
         "interact": [((), {"escape_character": None})],
         "close": [((), {})],
     }
