@@ -5,7 +5,9 @@ from poetry.core.semver import Version
 from poetry.utils._compat import Path
 
 
-def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()
+def build_venv(
+    path, executable=None, flags=None
+):  # type: (Union[Path,str], Optional[str], bool) -> ()
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
