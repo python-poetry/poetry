@@ -639,6 +639,35 @@ def test_run_with_dependencies_extras(installer, locker, repo, package):
     assert locker.written_data == expected
 
 
+def test_run_with_dependencies_nested_extras(installer, locker, repo, package):
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+
+    dependency_c = Factory.create_dependency("C", {"version": "^1.0", "optional": True})
+    dependency_b = Factory.create_dependency(
+        "B", {"version": "^1.0", "optional": True, "extras": ["C"]}
+    )
+    dependency_a = Factory.create_dependency("A", {"version": "^1.0", "extras": ["B"]})
+
+    package_b.extras = {"C": [dependency_c]}
+    package_b.add_dependency(dependency_c)
+
+    package_a.add_dependency(dependency_b)
+    package_a.extras = {"B": [dependency_b]}
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    package.add_dependency(dependency_a)
+
+    installer.run()
+    expected = fixture("with-dependencies-nested-extras")
+
+    assert locker.written_data == expected
+
+
 def test_run_does_not_install_extras_if_not_requested(installer, locker, repo, package):
     package.extras["foo"] = [get_dependency("D")]
     package_a = get_package("A", "1.0")

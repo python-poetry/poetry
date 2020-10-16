@@ -24,12 +24,14 @@ from tomlkit.exceptions import TOMLKitError
 
 import poetry.repositories
 
+from poetry.core.packages import dependency_from_pep_508
 from poetry.core.packages.package import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
+from poetry.core.version.requirements import InvalidRequirement
 from poetry.packages import DependencyPackage
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
@@ -142,11 +144,18 @@ class Locker(object):
                     package.extras[name] = []
 
                     for dep in deps:
-                        m = re.match(r"^(.+?)(?:\s+\((.+)\))?$", dep)
-                        dep_name = m.group(1)
-                        constraint = m.group(2) or "*"
-
-                        package.extras[name].append(Dependency(dep_name, constraint))
+                        try:
+                            dependency = dependency_from_pep_508(dep)
+                        except InvalidRequirement:
+                            # handle lock files with invalid PEP 508
+                            m = re.match(r"^(.+?)(?:\[(.+?)])?(?:\s+\((.+)\))?$", dep)
+                            dep_name = m.group(1)
+                            extras = m.group(2) or ""
+                            constraint = m.group(3) or "*"
+                            dependency = Dependency(
+                                dep_name, constraint, extras=extras.split(",")
+                            )
+                        package.extras[name].append(dependency)
 
             if "marker" in info:
                 package.marker = parse_marker(info["marker"])
@@ -543,8 +552,10 @@ class Locker(object):
         if package.extras:
             extras = {}
             for name, deps in package.extras.items():
+                # TODO: This should use dep.to_pep_508() once this is fixed
+                # https://github.com/python-poetry/poetry-core/pull/102
                 extras[name] = [
-                    str(dep) if not dep.constraint.is_any() else dep.name
+                    dep.base_pep_508_name if not dep.constraint.is_any() else dep.name
                     for dep in deps
                 ]
 
