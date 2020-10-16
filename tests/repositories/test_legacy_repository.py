@@ -1,6 +1,8 @@
 import shutil
 
+import httpretty
 import pytest
+import requests
 
 from poetry.core.packages import Dependency
 from poetry.factory import Factory
@@ -332,3 +334,16 @@ def test_get_4xx_and_5xx_raises(http):
     for endpoint in endpoints:
         with pytest.raises(RepositoryError):
             repo._get(endpoint)
+
+
+def test_get_redirect_has_redirect(http, monkeypatch):
+    repo = MockHttpRepository({"/foo": 200}, http)
+    redirect_url = "http://legacy.redirect.bar"
+
+    def get_mock(url):
+        response = requests.Response()
+        response.status_code = 200
+        response.url = redirect_url + "/foo"
+        return response
+    monkeypatch.setattr(repo.session, 'get', get_mock)
+    assert repo._get("/foo")._url == "http://legacy.redirect.bar/foo/"
