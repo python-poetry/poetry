@@ -1,6 +1,5 @@
 import shutil
 
-import httpretty
 import pytest
 import requests
 
