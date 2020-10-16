@@ -6,6 +6,12 @@ category = "main"
 optional = false
 python-versions = "*"
 
+[package.dependencies]
+B = {version = "^1.0", optional = true, extras = ["C"]}
+
+[package.extras]
+B = ["B[C] (>=1.0,<2.0)"]
+
 [[package]]
 name = "B"
 version = "1.0"
@@ -18,7 +24,7 @@ python-versions = "*"
 C = {version = "^1.0", optional = true}
 
 [package.extras]
-foo = ["C (>=1.0,<2.0)"]
+C = ["C (>=1.0,<2.0)"]
 
 [[package]]
 name = "C"

@@ -142,6 +142,136 @@ cachecontrol = []
     assert lockfile_dep.name == "lockfile"
 
 
+def test_locker_properly_loads_nested_extras(locker):
+    content = """\
+[[package]]
+name = "a"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+b = {version = "^1.0", optional = true, extras = "c"}
+
+[package.extras]
+b = ["b[c] (>=1.0,<2.0)"]
+
+[[package]]
+name = "b"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+c = {version = "^1.0", optional = true}
+
+[package.extras]
+c = ["c (>=1.0,<2.0)"]
+
+[[package]]
+name = "c"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+python-versions = "*"
+lock-version = "1.1"
+content-hash = "123456789"
+
+[metadata.files]
+"a" = []
+"b" = []
+"c" = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert 3 == len(repository.packages)
+
+    packages = repository.find_packages(get_dependency("a", "1.0"))
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_b = package.extras["b"][0]
+    assert dependency_b.name == "b"
+    assert dependency_b.extras == frozenset({"c"})
+
+    packages = repository.find_packages(dependency_b)
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_c = package.extras["c"][0]
+    assert dependency_c.name == "c"
+    assert dependency_c.extras == frozenset()
+
+    packages = repository.find_packages(dependency_c)
+    assert len(packages) == 1
+
+
+def test_locker_properly_loads_extras_legacy(locker):
+    content = """\
+[[package]]
+name = "a"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+b = {version = "^1.0", optional = true}
+
+[package.extras]
+b = ["b (^1.0)"]
+
+[[package]]
+name = "b"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+python-versions = "*"
+lock-version = "1.1"
+content-hash = "123456789"
+
+[metadata.files]
+"a" = []
+"b" = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert 2 == len(repository.packages)
+
+    packages = repository.find_packages(get_dependency("a", "1.0"))
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_b = package.extras["b"][0]
+    assert dependency_b.name == "b"
+
+
 def test_lock_packages_with_null_description(locker, root):
     package_a = get_package("A", "1.0.0")
     package_a.description = None
