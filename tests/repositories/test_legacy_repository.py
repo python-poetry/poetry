@@ -345,5 +345,6 @@ def test_get_redirect_has_redirect(http, monkeypatch):
         response.status_code = 200
         response.url = redirect_url + "/foo"
         return response
-    monkeypatch.setattr(repo.session, 'get', get_mock)
+
+    monkeypatch.setattr(repo.session, "get", get_mock)
     assert repo._get("/foo")._url == "http://legacy.redirect.bar/foo/"
