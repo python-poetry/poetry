@@ -184,11 +184,11 @@ So, `poetry` can be installed globally and used everywhere.
 
 `poetry` also comes with a full fledged dependency resolution library.
 
-## Why?
+## Why use Poetry?
 
 Packaging systems and dependency management in Python are rather convoluted and hard to understand for newcomers.
 Even for seasoned developers it might be cumbersome at times to create all files needed in a Python project: `setup.py`,
-`requirements.txt`, `setup.cfg`, `MANIFEST.in` and the newly added `Pipfile`.
+`requirements.txt`, `setup.cfg`, `MANIFEST.in` and the newly added `Pipfile`. 
 
 So I wanted a tool that would limit everything to a single configuration file to do:
 dependency management, packaging and publishing.
