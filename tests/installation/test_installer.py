@@ -76,15 +76,10 @@ class CustomInstalledRepository(InstalledRepository):
         return cls()
 
 
-@pytest.fixture
-def working_directory():
-    return Path(__file__).parent.parent.parent
-
-
 @pytest.fixture(autouse=True)
-def mock_path_cwd(mocker, working_directory):
+def mock_path_cwd(mocker, poetry_root_dir):
     yield mocker.patch(
-        "poetry.core.utils._compat.Path.cwd", return_value=working_directory
+        "poetry.core.utils._compat.Path.cwd", return_value=poetry_root_dir
     )
 
 

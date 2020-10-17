@@ -154,6 +154,11 @@ def fixture_dir(fixture_base):
 
 
 @pytest.fixture
+def poetry_root_dir():
+    return Path(__file__).parent.parent
+
+
+@pytest.fixture
 def tmp_dir():
     dir_ = tempfile.mkdtemp(prefix="poetry_")
 
