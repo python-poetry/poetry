@@ -70,15 +70,11 @@ class PyPiRepository(RemoteRepository):
         )
 
         self._cache_control_cache = FileCache(str(release_cache_dir / "_http"))
-        self._session = CacheControl(
-            requests.session(), cache=self._cache_control_cache
-        )
-
         self._name = "PyPI"
 
     @property
     def session(self):
-        return self._session
+        return CacheControl(requests.session(), cache=self._cache_control_cache)
 
     def find_packages(self, dependency):  # type: (Dependency) -> List[Package]
         """
