@@ -76,6 +76,18 @@ class CustomInstalledRepository(InstalledRepository):
         return cls()
 
 
+@pytest.fixture
+def working_directory():
+    return Path(__file__).parent.parent.parent
+
+
+@pytest.fixture(autouse=True)
+def mock_path_cwd(mocker, working_directory):
+    yield mocker.patch(
+        "poetry.core.utils._compat.Path.cwd", return_value=working_directory
+    )
+
+
 class Locker(BaseLocker):
     def __init__(self):
         self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))

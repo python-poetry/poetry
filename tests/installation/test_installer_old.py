@@ -27,6 +27,18 @@ from tests.repositories.test_legacy_repository import (
 from tests.repositories.test_pypi_repository import MockRepository
 
 
+@pytest.fixture
+def working_directory():
+    return Path(__file__).parent.parent.parent
+
+
+@pytest.fixture(autouse=True)
+def mock_path_cwd(mocker, working_directory):
+    yield mocker.patch(
+        "poetry.core.utils._compat.Path.cwd", return_value=working_directory
+    )
+
+
 class Installer(BaseInstaller):
     def _get_installer(self):
         return NoopInstaller()
