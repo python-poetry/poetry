@@ -696,6 +696,62 @@ foo @ git+https://github.com/foo/foo.git@123456
     assert expected == content
 
 
+def test_exporter_can_export_requirements_txt_with_nested_packages_cyclic(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"bar": {"version": "4.5.6"}},
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"baz": {"version": "7.8.9"}},
+                },
+                {
+                    "name": "baz",
+                    "version": "7.8.9",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"foo": {"version": "1.2.3"}},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": [], "baz": []},
+            },
+        }
+    )
+    set_package_requires(poetry, skip={"bar", "baz"})
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar==4.5.6
+baz==7.8.9
+foo==1.2.3
+"""
+
+    assert expected == content
+
+
 def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
     tmp_dir, poetry
 ):
