@@ -18,7 +18,7 @@ class EnvRemoveCommand(Command):
         )
     ]
     options = [
-        option("all", description="Remove all virtualenv associated with the project."),
+        option("all", description="Remove all managed virtual environments associated with the project."),
     ]
 
     def handle(self):
