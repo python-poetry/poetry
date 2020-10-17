@@ -12,7 +12,7 @@ class EnvRemoveCommand(Command):
     arguments = [
         argument(
             "python",
-            "The python executables to remove the virtualenv for.",
+            "The python executable(s) to remove the virtual environment for.",
             optional=True,
             multiple=True,
         )
