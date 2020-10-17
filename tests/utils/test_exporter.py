@@ -35,15 +35,10 @@ class Locker(BaseLocker):
         return "123456789"
 
 
-@pytest.fixture
-def working_directory():
-    return Path(__file__).parent.parent.parent
-
-
 @pytest.fixture(autouse=True)
-def mock_path_cwd(mocker, working_directory):
+def mock_path_cwd(mocker, poetry_root_dir):
     yield mocker.patch(
-        "poetry.core.utils._compat.Path.cwd", return_value=working_directory
+        "poetry.core.utils._compat.Path.cwd", return_value=poetry_root_dir
     )
 
 
@@ -740,7 +735,7 @@ foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
 
 
 def test_exporter_can_export_requirements_txt_with_directory_packages(
-    tmp_dir, poetry, working_directory
+    tmp_dir, poetry, poetry_root_dir
 ):
     poetry.locker.mock_lock_data(
         {
@@ -777,14 +772,14 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
     expected = """\
 foo @ {}/tests/fixtures/sample_project
 """.format(
-        working_directory.as_posix()
+        poetry_root_dir.as_posix()
     )
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_directory_packages_and_markers(
-    tmp_dir, poetry, working_directory
+    tmp_dir, poetry, poetry_root_dir
 ):
     poetry.locker.mock_lock_data(
         {
@@ -822,14 +817,14 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
     expected = """\
 foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
 """.format(
-        working_directory.as_posix()
+        poetry_root_dir.as_posix()
     )
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_file_packages(
-    tmp_dir, poetry, working_directory
+    tmp_dir, poetry, poetry_root_dir
 ):
     poetry.locker.mock_lock_data(
         {
@@ -866,14 +861,14 @@ def test_exporter_can_export_requirements_txt_with_file_packages(
     expected = """\
 foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz
 """.format(
-        working_directory.as_uri()
+        poetry_root_dir.as_uri()
     )
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
-    tmp_dir, poetry, working_directory
+    tmp_dir, poetry, poetry_root_dir
 ):
     poetry.locker.mock_lock_data(
         {
@@ -911,7 +906,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
     expected = """\
 foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 """.format(
-        working_directory.as_uri()
+        poetry_root_dir.as_uri()
     )
 
     assert expected == content
