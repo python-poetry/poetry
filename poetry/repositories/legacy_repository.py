@@ -187,22 +187,10 @@ class LegacyRepository(PyPiRepository):
         self._authenticator = Authenticator(
             config=config or Config(use_environment=True)
         )
-
-        self._session = CacheControl(
-            self._authenticator.session, cache=FileCache(str(self._cache_dir / "_http"))
-        )
-
+        self._basic_auth = None
         username, password = self._authenticator.get_credentials_for_url(self._url)
         if username is not None and password is not None:
-            self._authenticator.session.auth = requests.auth.HTTPBasicAuth(
-                username, password
-            )
-
-        if self._cert:
-            self._authenticator.session.verify = str(self._cert)
-
-        if self._client_cert:
-            self._authenticator.session.cert = str(self._client_cert)
+            self._basic_auth = requests.auth.HTTPBasicAuth(username, password)
 
         self._disable_cache = disable_cache
 
@@ -215,16 +203,31 @@ class LegacyRepository(PyPiRepository):
         return self._client_cert
 
     @property
+    def session(self):
+        session = self._authenticator.session
+
+        if self._basic_auth:
+            session.auth = self._basic_auth
+
+        if self._cert:
+            session.verify = str(self._cert)
+
+        if self._client_cert:
+            session.cert = str(self._client_cert)
+
+        return CacheControl(session, cache=FileCache(str(self._cache_dir / "_http")))
+
+    @property
     def authenticated_url(self):  # type: () -> str
-        if not self._session.auth:
+        if not self._basic_auth:
             return self.url
 
         parsed = urlparse.urlparse(self.url)
 
         return "{scheme}://{username}:{password}@{netloc}{path}".format(
             scheme=parsed.scheme,
-            username=quote(self._session.auth.username, safe=""),
-            password=quote(self._session.auth.password, safe=""),
+            username=quote(self._basic_auth.username, safe=""),
+            password=quote(self._basic_auth.password, safe=""),
             netloc=parsed.netloc,
             path=parsed.path,
         )

@@ -29,7 +29,6 @@ class Authenticator(object):
     def __init__(self, config, io=None):  # type: (Config, Optional[IO]) -> None
         self._config = config
         self._io = io
-        self._session = None
         self._credentials = {}
         self._password_manager = PasswordManager(self._config)
 
@@ -45,10 +44,7 @@ class Authenticator(object):
 
     @property
     def session(self):  # type: () -> requests.Session
-        if self._session is None:
-            self._session = requests.Session()
-
-        return self._session
+        return requests.Session()
 
     def request(
         self, method, url, **kwargs
