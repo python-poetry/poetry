@@ -226,21 +226,8 @@ class Locker(object):
         next_level_dependencies = []
 
         for requirement in dependencies:
+            key = (requirement.name, requirement.pretty_constraint)
             locked_package = cls.__get_locked_package(requirement, packages_by_name)
-
-            if locked_package:
-                for require in locked_package.requires:
-                    if require.marker.is_empty():
-                        require.marker = requirement.marker
-                    else:
-                        require.marker = require.marker.intersect(requirement.marker)
-
-                    require.marker = require.marker.intersect(locked_package.marker)
-                    next_level_dependencies.append(require)
-
-            if requirement.name in project_level_dependencies and level == 0:
-                # project level dependencies take precedence
-                continue
 
             if locked_package:
                 # create dependency from locked package to retain dependency metadata
@@ -248,23 +235,34 @@ class Locker(object):
                 marker = requirement.marker
                 requirement = locked_package.to_dependency()
                 requirement.marker = requirement.marker.intersect(marker)
-            else:
+
+                key = (requirement.name, requirement.pretty_constraint)
+
+                if pinned_versions:
+                    requirement.set_constraint(
+                        locked_package.to_dependency().constraint
+                    )
+
+                if key not in nested_dependencies:
+                    for require in locked_package.requires:
+                        if require.marker.is_empty():
+                            require.marker = requirement.marker
+                        else:
+                            require.marker = require.marker.intersect(
+                                requirement.marker
+                            )
+
+                        require.marker = require.marker.intersect(locked_package.marker)
+                        next_level_dependencies.append(require)
+
+            if requirement.name in project_level_dependencies and level == 0:
+                # project level dependencies take precedence
+                continue
+
+            if not locked_package:
                 # we make a copy to avoid any side-effects
                 requirement = deepcopy(requirement)
 
-            if pinned_versions:
-                requirement.set_constraint(
-                    cls.__get_locked_package(requirement, packages_by_name)
-                    .to_dependency()
-                    .constraint
-                )
-
-            # dependencies use extra to indicate that it was activated via parent
-            # package's extras, this is not required for nested exports as we assume
-            # the resolver already selected this dependency
-            requirement.marker = requirement.marker.without_extras()
-
-            key = (requirement.name, requirement.pretty_constraint)
             if key not in nested_dependencies:
                 nested_dependencies[key] = requirement
             else:
