@@ -5,6 +5,7 @@ import sys
 
 import pytest
 
+from clikit.io import BufferedIO
 from clikit.io import NullIO
 
 from poetry.core.packages import ProjectPackage
@@ -1831,3 +1832,28 @@ def test_installer_can_handle_old_lock_files(
 
     # colorama will be added
     assert 8 == installer.executor.installations_count
+
+
+def test_quiet(package, pool, locker, env, installed, config, repo):
+    io = BufferedIO()
+    io.set_quiet(True)
+
+    installer = Installer(
+        io,
+        env,
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(env, pool, config, io),
+    )
+    installer.use_executor(True)
+
+    package_a = get_package("A", "1.0")
+    repo.add_package(package_a)
+    package.add_dependency(Factory.create_dependency("A", "~1.0"))
+
+    installer.run()
+
+    assert io.fetch_output() == ""
