@@ -155,7 +155,6 @@ class AddCommand(InstallerCommand, InitCommand):
         try:
             # Write new content
             self.poetry.file.write(content)
-            raise KeyboardInterrupt("ops")
 
             # Cosmetic new line
             self.line("")
@@ -171,15 +170,11 @@ class AddCommand(InstallerCommand, InitCommand):
                 self._installer.lock()
 
             self._installer.whitelist([r["name"] for r in requirements])
-            try:
-                status = self._installer.run()
-                raise KeyboardInterrupt("opsssss")
-            except Exception:
-                self.poetry.file.write(original_content)
-                raise
 
-        except KeyboardInterrupt:
+            status = self._installer.run()
+        except BaseException:
             self.poetry.file.write(original_content)
+            raise
 
         if status != 0 or self.option("dry-run"):
             # Revert changes
