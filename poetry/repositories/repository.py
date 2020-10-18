@@ -24,14 +24,9 @@ class Repository(BaseRepository):
     def package(self, name, version, extras=None):
         name = name.lower()
 
-        if extras is None:
-            extras = []
-
         for package in self.packages:
             if name == package.name and package.version.text == version:
-                package = package.with_features(extras)
-
-                return package
+                return package.clone()
 
     def find_packages(self, dependency):
         constraint = dependency.constraint
@@ -44,7 +39,7 @@ class Repository(BaseRepository):
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
-        allow_prereleases = dependency.allows_prereleases
+        allow_prereleases = dependency.allows_prereleases()
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
@@ -68,7 +63,10 @@ class Repository(BaseRepository):
                         ignored_pre_release_packages.append(package)
                     continue
 
-                if constraint.allows(package.version):
+                if constraint.allows(package.version) or (
+                    package.is_prerelease()
+                    and constraint.allows(package.version.next_patch)
+                ):
                     packages.append(package)
 
         return packages or ignored_pre_release_packages

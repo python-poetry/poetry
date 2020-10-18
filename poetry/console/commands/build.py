@@ -33,4 +33,4 @@ class BuildCommand(EnvCommand):
         )
 
         builder = Builder(self.poetry)
-        builder.build(fmt)
+        builder.build(fmt, executable=self.env.python)

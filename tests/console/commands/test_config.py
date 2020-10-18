@@ -1,21 +1,36 @@
 import json
 import os
 
-from cleo.testers import CommandTester
+import pytest
 
 from poetry.config.config_source import ConfigSource
+from poetry.core.pyproject import PyProjectException
 from poetry.factory import Factory
 
 
-def test_list_displays_default_value_if_not_set(app, config):
-    command = app.find("config")
-    tester = CommandTester(command)
+@pytest.fixture()
+def tester(command_tester_factory):
+    return command_tester_factory("config")
+
+
+def test_show_config_with_local_config_file_empty(tester, mocker):
+    mocker.patch(
+        "poetry.factory.Factory.create_poetry",
+        side_effect=PyProjectException("[tool.poetry] section not found"),
+    )
+    tester.execute()
+
+    assert "" == tester.io.fetch_output()
+
+
+def test_list_displays_default_value_if_not_set(tester, config):
     tester.execute("--list")
 
     expected = """cache-dir = "/foo"
 experimental.new-installer = true
 virtualenvs.create = true
 virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
 """.format(
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
@@ -24,10 +39,7 @@ virtualenvs.path = {path}  # /foo{sep}virtualenvs
     assert expected == tester.io.fetch_output()
 
 
-def test_list_displays_set_get_setting(app, config):
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_list_displays_set_get_setting(tester, config):
     tester.execute("virtualenvs.create false")
 
     tester.execute("--list")
@@ -36,6 +48,7 @@ def test_list_displays_set_get_setting(app, config):
 experimental.new-installer = true
 virtualenvs.create = false
 virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
 """.format(
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
@@ -45,10 +58,7 @@ virtualenvs.path = {path}  # /foo{sep}virtualenvs
     assert expected == tester.io.fetch_output()
 
 
-def test_display_single_setting(app, config):
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_display_single_setting(tester, config):
     tester.execute("virtualenvs.create")
 
     expected = """true
@@ -57,13 +67,10 @@ def test_display_single_setting(app, config):
     assert expected == tester.io.fetch_output()
 
 
-def test_display_single_local_setting(app, config, fixture_dir):
-    poetry = Factory().create_poetry(fixture_dir("with_local_config"))
-    app._poetry = poetry
-
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_display_single_local_setting(command_tester_factory, fixture_dir):
+    tester = command_tester_factory(
+        "config", poetry=Factory().create_poetry(fixture_dir("with_local_config"))
+    )
     tester.execute("virtualenvs.create")
 
     expected = """false
@@ -72,10 +79,7 @@ def test_display_single_local_setting(app, config, fixture_dir):
     assert expected == tester.io.fetch_output()
 
 
-def test_list_displays_set_get_local_setting(app, config):
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_list_displays_set_get_local_setting(tester, config):
     tester.execute("virtualenvs.create false --local")
 
     tester.execute("--list")
@@ -84,6 +88,7 @@ def test_list_displays_set_get_local_setting(app, config):
 experimental.new-installer = true
 virtualenvs.create = false
 virtualenvs.in-project = null
+virtualenvs.options.always-copy = false
 virtualenvs.path = {path}  # /foo{sep}virtualenvs
 """.format(
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
@@ -93,21 +98,15 @@ virtualenvs.path = {path}  # /foo{sep}virtualenvs
     assert expected == tester.io.fetch_output()
 
 
-def test_set_pypi_token(app, config, config_source, auth_config_source):
-    command = app.find("config")
-    tester = CommandTester(command)
-
+def test_set_pypi_token(tester, auth_config_source):
     tester.execute("pypi-token.pypi mytoken")
-
     tester.execute("--list")
 
     assert "mytoken" == auth_config_source.config["pypi-token"]["pypi"]
 
 
-def test_set_client_cert(app, config_source, auth_config_source, mocker):
+def test_set_client_cert(tester, auth_config_source, mocker):
     mocker.spy(ConfigSource, "__init__")
-    command = app.find("config")
-    tester = CommandTester(command)
 
     tester.execute("certificates.foo.client-cert path/to/cert.pem")
 
@@ -117,10 +116,8 @@ def test_set_client_cert(app, config_source, auth_config_source, mocker):
     )
 
 
-def test_set_cert(app, config_source, auth_config_source, mocker):
+def test_set_cert(tester, auth_config_source, mocker):
     mocker.spy(ConfigSource, "__init__")
-    command = app.find("config")
-    tester = CommandTester(command)
 
     tester.execute("certificates.foo.cert path/to/ca.pem")
 

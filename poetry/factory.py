@@ -7,7 +7,7 @@ from typing import Optional
 from clikit.api.io.io import IO
 
 from poetry.core.factory import Factory as BaseFactory
-from poetry.core.utils.toml_file import TomlFile
+from poetry.core.toml.file import TOMLFile
 
 from .config.config import Config
 from .config.file_config_source import FileConfigSource
@@ -40,7 +40,7 @@ class Factory(BaseFactory):
         config = self.create_config(io)
 
         # Loading local configuration
-        local_config_file = TomlFile(base_poetry.file.parent / "poetry.toml")
+        local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
                 io.write_line(
@@ -48,6 +48,18 @@ class Factory(BaseFactory):
                 )
 
             config.merge(local_config_file.read())
+
+        # Load local sources
+        repositories = {}
+        existing_repositories = config.get("repositories", {})
+        for source in base_poetry.pyproject.poetry_config.get("source", []):
+            name = source.get("name")
+            url = source.get("url")
+            if name and url:
+                if name not in existing_repositories:
+                    repositories[name] = {"url": url}
+
+        config.merge({"repositories": repositories})
 
         poetry = Poetry(
             base_poetry.file.path,
@@ -92,7 +104,7 @@ class Factory(BaseFactory):
 
         config = Config()
         # Load global config
-        config_file = TomlFile(Path(CONFIG_DIR) / "config.toml")
+        config_file = TOMLFile(Path(CONFIG_DIR) / "config.toml")
         if config_file.exists():
             if io.is_debug():
                 io.write_line(
@@ -106,7 +118,7 @@ class Factory(BaseFactory):
         config.set_config_source(FileConfigSource(config_file))
 
         # Load global auth config
-        auth_config_file = TomlFile(Path(CONFIG_DIR) / "auth.toml")
+        auth_config_file = TOMLFile(Path(CONFIG_DIR) / "auth.toml")
         if auth_config_file.exists():
             if io.is_debug():
                 io.write_line(
@@ -124,11 +136,9 @@ class Factory(BaseFactory):
     def create_legacy_repository(
         self, source, auth_config
     ):  # type: (Dict[str, str], Config) -> LegacyRepository
-        from .repositories.auth import Auth
         from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert
-        from .utils.password_manager import PasswordManager
 
         if "url" in source:
             # PyPI-like repository
@@ -137,19 +147,13 @@ class Factory(BaseFactory):
         else:
             raise RuntimeError("Unsupported source specified")
 
-        password_manager = PasswordManager(auth_config)
         name = source["name"]
         url = source["url"]
-        credentials = password_manager.get_http_auth(name)
-        if credentials:
-            auth = Auth(url, credentials["username"], credentials["password"])
-        else:
-            auth = None
 
         return LegacyRepository(
             name,
             url,
-            auth=auth,
+            config=auth_config,
             cert=get_cert(auth_config, name),
             client_cert=get_client_cert(auth_config, name),
         )

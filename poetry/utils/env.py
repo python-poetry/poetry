@@ -29,6 +29,7 @@ from packaging.tags import sys_tags
 
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
+from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import BaseMarker
 from poetry.locations import CACHE_DIR
 from poetry.poetry import Poetry
@@ -38,7 +39,6 @@ from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
-from poetry.utils.toml_file import TomlFile
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -201,7 +201,7 @@ class EnvManager(object):
 
         cwd = self._poetry.file.parent
 
-        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
 
         try:
             python_version = Version.parse(python)
@@ -299,7 +299,7 @@ class EnvManager(object):
         name = self._poetry.package.name
         name = self.generate_env_name(name, str(self._poetry.file.parent))
 
-        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         if envs_file.exists():
             envs = envs_file.read()
             env = envs.get(name)
@@ -326,7 +326,7 @@ class EnvManager(object):
             venv_path = Path(venv_path)
 
         cwd = self._poetry.file.parent
-        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         env = None
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
         if envs_file.exists():
@@ -415,7 +415,7 @@ class EnvManager(object):
             venv_path = Path(venv_path)
 
         cwd = self._poetry.file.parent
-        envs_file = TomlFile(venv_path / self.ENVS_FILE)
+        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
         if python.startswith(base_env_name):
@@ -642,7 +642,11 @@ class EnvManager(object):
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
             )
 
-            self.build_venv(venv, executable=executable)
+            self.build_venv(
+                venv,
+                executable=executable,
+                flags=self._poetry.config.get("virtualenvs.options"),
+            )
         else:
             if force:
                 if not env.is_sane():
@@ -655,7 +659,11 @@ class EnvManager(object):
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
                 self.remove_venv(venv)
-                self.build_venv(venv, executable=executable)
+                self.build_venv(
+                    venv,
+                    executable=executable,
+                    flags=self._poetry.config.get("virtualenvs.options"),
+                )
             elif io.is_very_verbose():
                 io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
 
@@ -679,19 +687,26 @@ class EnvManager(object):
 
     @classmethod
     def build_venv(
-        cls, path, executable=None
-    ):  # type: (Union[Path,str], Optional[Union[str, Path]]) -> virtualenv.run.session.Session
+        cls, path, executable=None, flags=None
+    ):  # type: (Union[Path,str], Optional[Union[str, Path]], Dict[str, bool]) -> virtualenv.run.session.Session
+        flags = flags or {}
+
         if isinstance(executable, Path):
             executable = executable.resolve().as_posix()
-        return virtualenv.cli_run(
-            [
-                "--no-download",
-                "--no-periodic-update",
-                "--python",
-                executable or sys.executable,
-                str(path),
-            ]
-        )
+
+        args = [
+            "--no-download",
+            "--no-periodic-update",
+            "--python",
+            executable or sys.executable,
+            str(path),
+        ]
+
+        for flag, value in flags.items():
+            if value is True:
+                args.insert(0, "--{}".format(flag))
+
+        return virtualenv.cli_run(args)
 
     @classmethod
     def remove_venv(cls, path):  # type: (Union[Path,str]) -> None
@@ -812,9 +827,13 @@ class Env(object):
     @property
     def site_packages(self):  # type: () -> Path
         if self._site_packages is None:
-            self._site_packages = Path(self.purelib)
-
+            self._site_packages = self.purelib
         return self._site_packages
+
+    @property
+    def usersite(self):  # type: () -> Optional[Path]
+        if "usersite" in self.paths:
+            return Path(self.paths["usersite"])
 
     @property
     def purelib(self):  # type: () -> Path
@@ -1017,6 +1036,8 @@ class SystemEnv(Env):
         # on some distributions it does not return the proper paths
         # (those used by pip for instance). We go through distutils
         # to get the proper ones.
+        import site
+
         from distutils.command.install import SCHEME_KEYS  # noqa
         from distutils.core import Distribution
 
@@ -1032,6 +1053,9 @@ class SystemEnv(Env):
                 continue
 
             paths[key] = getattr(obj, "install_{}".format(key))
+
+        if site.check_enableusersite() and hasattr(obj, "install_usersite"):
+            paths["usersite"] = getattr(obj, "install_usersite")
 
         return paths
 
@@ -1203,7 +1227,7 @@ class VirtualEnv(Env):
             del os.environ[key]
 
     def _updated_path(self):
-        return os.pathsep.join([str(self._bin_dir), os.environ["PATH"]])
+        return os.pathsep.join([str(self._bin_dir), os.environ.get("PATH", "")])
 
 
 class NullEnv(SystemEnv):

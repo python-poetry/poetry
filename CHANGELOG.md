@@ -1,5 +1,80 @@
 # Change Log
 
+## [1.1.3] - 2020-10-14
+
+### Changed
+
+- Python version support deprecation warning is now written to `stderr`. ([#3131](https://github.com/python-poetry/poetry/pull/3131))
+
+### Fixed
+
+- Fixed `KeyError` when `PATH` is not defined in environment variables. ([#3159](https://github.com/python-poetry/poetry/pull/3159))
+- Fixed error when using `config` command in a directory with an existing `pyproject.toml` without any Poetry configuration. ([#3172](https://github.com/python-poetry/poetry/pull/3172))
+- Fixed incorrect inspection of package requirements when same dependency is specified multiple times with unique markers. ([#3147](https://github.com/python-poetry/poetry/pull/3147))
+- Fixed `show` command to use already resolved package metadata. ([#3117](https://github.com/python-poetry/poetry/pull/3117))
+- Fixed multiple issues with `export` command output when using `requirements.txt` format. ([#3119](https://github.com/python-poetry/poetry/pull/3119))
+
+## [1.1.2] - 2020-10-06
+
+### Changed
+- Dependency installation of editable packages and all uninstall operations are now performed serially within their corresponding priority groups. ([#3099](https://github.com/python-poetry/poetry/pull/3099))
+- Improved package metadata inspection of nested poetry projects within project path dependencies. ([#3105](https://github.com/python-poetry/poetry/pull/3105))
+
+### Fixed
+
+- Fixed export of `requirements.txt` when project dependency contains git dependencies. ([#3100](https://github.com/python-poetry/poetry/pull/3100))
+
+## [1.1.1] - 2020-10-05
+
+### Added
+
+- Added `--no-update` option to `lock` command. ([#3034](https://github.com/python-poetry/poetry/pull/3034))
+
+### Fixed
+
+- Fixed resolution of packages with missing required extras. ([#3035](https://github.com/python-poetry/poetry/pull/3035))
+- Fixed export of `requirements.txt` dependencies to include development dependencies. ([#3024](https://github.com/python-poetry/poetry/pull/3024))
+- Fixed incorrect selection of unsupported binary distribution formats when selecting a package artifact to install. ([#3058](https://github.com/python-poetry/poetry/pull/3058))
+- Fixed incorrect use of system executable when building package distributions via `build` command. ([#3056](https://github.com/python-poetry/poetry/pull/3056))
+- Fixed errors in `init` command  when specifying `--dependency` in non-interactive mode when a `pyproject.toml` file already exists. ([#3076](https://github.com/python-poetry/poetry/pull/3076))
+- Fixed incorrect selection of configured source url when a publish repository url configuration with the same name already exists. ([#3047](https://github.com/python-poetry/poetry/pull/3047))
+- Fixed dependency resolution issues when the same package is specified in multiple dependency extras. ([#3046](https://github.com/python-poetry/poetry/pull/3046))
+
+## [1.1.0] - 2020-10-01
+
+### Changed
+
+- The `init` command will now use existing `pyproject.toml` if possible ([#2448](https://github.com/python-poetry/poetry/pull/2448)).
+- Error messages when metadata information retrieval fails have been improved  ([#2997](https://github.com/python-poetry/poetry/pull/2997)).
+
+### Fixed
+
+- Fixed parsing of version constraint for `rc` prereleases ([#2978](https://github.com/python-poetry/poetry/pull/2978)).
+- Fixed how some metadata information are extracted from `setup.cfg` files ([#2957](https://github.com/python-poetry/poetry/pull/2957)).
+- Fixed return codes returned by the executor ([#2981](https://github.com/python-poetry/poetry/pull/2981)).
+- Fixed whitespaces not being accepted for the list of extras when adding packages ([#2985](https://github.com/python-poetry/poetry/pull/2985)).
+- Fixed repositories specified in the `pyproject.toml` file not being taken into account for authentication when downloading packages ([#2990](https://github.com/python-poetry/poetry/pull/2990)).
+- Fixed permission errors when installing the root project if the `site-packages` directory is not writeable ([#3002](https://github.com/python-poetry/poetry/pull/3002)).
+- Fixed environment marker propagation when exporting to the `requirements.txt` format  ([#3002](https://github.com/python-poetry/poetry/pull/3002)).
+- Fixed errors when paths in run command contained spaces ([#3015](https://github.com/python-poetry/poetry/pull/3015)).
+
+
+## [1.1.0rc1] - 2020-09-25
+
+### Changed
+
+- The `virtualenvs.in-project` setting will now always be honored, if set explicitly, regardless of the presence of a `.venv` directory ([#2771](https://github.com/python-poetry/poetry/pull/2771)).
+- Adding packages already present in the `pyproject.toml` file will no longer raise an error ([#2886](https://github.com/python-poetry/poetry/pull/2886)).
+- Errors when authenticating against custom repositories will now be logged ([#2577](https://github.com/python-poetry/poetry/pull/2577)).
+
+### Fixed
+
+- Fixed an error on Python 3.5 when resolving URL dependencies ([#2954](https://github.com/python-poetry/poetry/pull/2954)).
+- Fixed the `dependency` option of the `init` command being ignored ([#2587](https://github.com/python-poetry/poetry/pull/2587)).
+- Fixed the `show` command displaying erroneous information following the changes in the lock file format ([#2967](https://github.com/python-poetry/poetry/pull/2967)).
+- Fixed dependency resolution errors due to invalid python constraints propagation ([#2968](https://github.com/python-poetry/poetry/pull/2968)).
+
+
 ## [1.1.0b4] - 2020-09-23
 
 ### Changed
@@ -988,7 +1063,12 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.0b4...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.3...master
+[1.1.3]: https://github.com/python-poetry/poetry/compare/1.1.3
+[1.1.2]: https://github.com/python-poetry/poetry/releases/tag/1.1.2
+[1.1.1]: https://github.com/python-poetry/poetry/releases/tag/1.1.1
+[1.1.0]: https://github.com/python-poetry/poetry/releases/tag/1.1.0
+[1.1.0rc1]: https://github.com/python-poetry/poetry/releases/tag/1.1.0rc1
 [1.1.0b4]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b4
 [1.1.0b3]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b3
 [1.1.0b2]: https://github.com/python-poetry/poetry/releases/tag/1.1.0b2

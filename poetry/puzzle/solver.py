@@ -386,9 +386,11 @@ class PackageNode(DFSNode):
                 continue
 
             for pkg in self.packages:
-                if (
-                    pkg.complete_name == dependency.complete_name
-                    and dependency.constraint.allows(pkg.version)
+                if pkg.complete_name == dependency.complete_name and (
+                    dependency.constraint.allows(pkg.version)
+                    or dependency.allows_prereleases()
+                    and pkg.version.is_prerelease()
+                    and dependency.constraint.allows(pkg.version.stable)
                 ):
                     # If there is already a child with this name
                     # we merge the requirements

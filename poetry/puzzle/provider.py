@@ -67,6 +67,7 @@ class Provider:
         self._in_progress = False
         self._overrides = {}
         self._deferred_cache = {}
+        self._load_deferred = True
 
     @property
     def pool(self):  # type: () -> Pool
@@ -77,6 +78,9 @@ class Provider:
 
     def set_overrides(self, overrides):
         self._overrides = overrides
+
+    def load_deferred(self, load_deferred):  # type: (bool) -> None
+        self._load_deferred = load_deferred
 
     @contextmanager
     def use_environment(self, env):  # type: (Env) -> Provider
@@ -428,7 +432,7 @@ class Provider:
                 self._pool.package(
                     package.name,
                     package.version.text,
-                    extras=package.dependency.extras,
+                    extras=list(package.dependency.extras),
                     repository=package.dependency.source_name,
                 ),
             )
@@ -436,35 +440,32 @@ class Provider:
         else:
             requires = package.requires
 
-        # Retrieving constraints for deferred dependencies
-        for r in requires:
-            if r.is_directory():
-                self.search_for_directory(r)
-            elif r.is_file():
-                self.search_for_file(r)
-            elif r.is_vcs():
-                self.search_for_vcs(r)
-            elif r.is_url():
-                self.search_for_url(r)
+        if self._load_deferred:
+            # Retrieving constraints for deferred dependencies
+            for r in requires:
+                if r.is_directory():
+                    self.search_for_directory(r)
+                elif r.is_file():
+                    self.search_for_file(r)
+                elif r.is_vcs():
+                    self.search_for_vcs(r)
+                elif r.is_url():
+                    self.search_for_url(r)
 
         optional_dependencies = []
-        activated_extras = []
-        for extra in package.dependency.extras:
-            if extra not in package.extras:
-                continue
-
-            activated_extras.append(extra)
-            optional_dependencies += [d.name for d in package.extras[extra]]
-
         _dependencies = []
 
         # If some extras/features were required, we need to
         # add a special dependency representing the base package
         # to the current package
         if package.dependency.extras:
-            if activated_extras:
-                package = package.with_features(activated_extras)
+            for extra in package.dependency.extras:
+                if extra not in package.extras:
+                    continue
 
+                optional_dependencies += [d.name for d in package.extras[extra]]
+
+            package = package.with_features(list(package.dependency.extras))
             _dependencies.append(package.without_features().to_dependency())
 
         for dep in requires:
@@ -477,12 +478,12 @@ class Provider:
             if self._env and not dep.marker.validate(self._env.marker_env):
                 continue
 
-            if (
-                dep.is_optional()
-                and dep.name not in optional_dependencies
-                and not package.is_root()
-            ):
-                continue
+            if not package.is_root():
+                if (dep.is_optional() and dep.name not in optional_dependencies) or (
+                    dep.in_extras
+                    and not set(dep.in_extras).intersection(package.dependency.extras)
+                ):
+                    continue
 
             _dependencies.append(dep)
 

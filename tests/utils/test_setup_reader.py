@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+from poetry.core.semver.exceptions import ParseVersionError
 from poetry.utils._compat import PY35
 from poetry.utils.setup_reader import SetupReader
 
@@ -115,6 +116,11 @@ def test_setup_reader_read_setup_cfg(setup):
     assert expected_install_requires == result["install_requires"]
     assert expected_extras_require == result["extras_require"]
     assert expected_python_requires == result["python_requires"]
+
+
+def test_setup_reader_read_setup_cfg_with_attr(setup):
+    with pytest.raises(ParseVersionError):
+        SetupReader.read_from_directory(setup("with-setup-cfg-attr"))
 
 
 @pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")

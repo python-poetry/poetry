@@ -159,15 +159,15 @@ def colorize(style, text):
 def temporary_directory(*args, **kwargs):
     try:
         from tempfile import TemporaryDirectory
-
-        with TemporaryDirectory(*args, **kwargs) as name:
-            yield name
     except ImportError:
         name = tempfile.mkdtemp(*args, **kwargs)
 
         yield name
 
         shutil.rmtree(name)
+    else:
+        with TemporaryDirectory(*args, **kwargs) as name:
+            yield name
 
 
 def string_to_bool(value):
@@ -317,7 +317,7 @@ class Installer:
         r"v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
         "("
         "[._-]?"
-        r"(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
+        r"(?:(stable|beta|b|rc|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
         "([.-]?dev)?"
         ")?"
         r"(?:\+[^\s]+)?"

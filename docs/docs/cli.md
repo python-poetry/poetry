@@ -230,15 +230,17 @@ poetry add ../my-package/dist/my-package-0.1.0.tar.gz
 poetry add ../my-package/dist/my_package-0.1.0.whl
 ```
 
-Path dependencies pointing to a local directory will be installed in editable mode (i.e. setuptools "develop mode").
-It means that changes in the local directory will be reflected directly in environment.
-
-If you don't want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file:
+If you want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
 
 ```toml
 [tool.poetry.dependencies]
-my-package = {path = "../my/path", develop = false}
+my-package = {path = "../my/path", develop = true}
 ```
+
+!!!note
+
+    Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
+    to make sure the behavior is the same for all poetry versions.
 
 If the package(s) you want to install provide extras, you can specify them
 when adding the package:
@@ -444,7 +446,7 @@ The table below illustrates the effect of these rules with concrete examples.
 | prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
 | prerelease |  1.0.3-beta.0 | 1.0.3-beta.1  |
 
-## Options
+### Options
 
 * `--short (-s)`: Output the version number only.
 
@@ -488,4 +490,20 @@ The `cache list` command lists Poetry's available caches.
 
 ```bash
 poetry cache list
+```
+
+### cache clear
+
+The `cache clear` command removes packages from a cached repository.
+
+For example, to clear the whole cache of packages from the `pypi` repository, run:
+
+```bash
+poetry cache clear pypi --all
+```
+
+To only remove a specific package from a cache, you have to specify the cache entry in the following form `cache:package:version`:
+
+```bash
+poetry cache clear pypi:requests:2.24.0
 ```

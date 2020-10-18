@@ -180,3 +180,22 @@ def test_authenticator_request_retries_on_status_code(
     assert excinfo.value.response.text == content
 
     assert sleep.call_count == attempts
+
+
+@pytest.fixture
+def environment_repository_credentials(monkeypatch):
+    monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_USERNAME", "bar")
+    monkeypatch.setenv("POETRY_HTTP_BASIC_FOO_PASSWORD", "baz")
+
+
+def test_authenticator_uses_env_provided_credentials(
+    config, environ, mock_remote, http, environment_repository_credentials
+):
+    config.merge({"repositories": {"foo": {"url": "https://foo.bar/simple/"}}})
+
+    authenticator = Authenticator(config, NullIO())
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.last_request()
+
+    assert "Basic YmFyOmJheg==" == request.headers["Authorization"]

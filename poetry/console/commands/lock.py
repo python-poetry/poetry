@@ -1,3 +1,5 @@
+from cleo import option
+
 from .installer_command import InstallerCommand
 
 
@@ -5,6 +7,12 @@ class LockCommand(InstallerCommand):
 
     name = "lock"
     description = "Locks the project dependencies."
+
+    options = [
+        option(
+            "no-update", None, "Do not update locked versions, only refresh lock file."
+        ),
+    ]
 
     help = """
 The <info>lock</info> command reads the <comment>pyproject.toml</> file from the
@@ -21,6 +29,6 @@ file.
             self.poetry.config.get("experimental.new-installer", False)
         )
 
-        self._installer.lock()
+        self._installer.lock(update=not self.option("no-update"))
 
         return self._installer.run()

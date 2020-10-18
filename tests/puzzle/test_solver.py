@@ -449,6 +449,163 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
     assert ops[0].package.marker.is_any()
 
 
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_only_requested(solver, repo, package, enabled_extra):
+    extras = [enabled_extra] if enabled_extra is not None else []
+
+    package.add_dependency(Factory.create_dependency("A", "*"))
+    package.add_dependency(
+        Factory.create_dependency("B", {"version": "*", "extras": extras})
+    )
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c10 = get_package("C", "1.0")
+    package_c20 = get_package("C", "2.0")
+
+    dep10 = get_dependency("C", "1.0", optional=True)
+    dep10._in_extras.append("one")
+    dep10.marker = parse_marker("extra == 'one'")
+
+    dep20 = get_dependency("C", "2.0", optional=True)
+    dep20._in_extras.append("two")
+    dep20.marker = parse_marker("extra == 'two'")
+
+    package_b.extras = {"one": [dep10], "two": [dep20]}
+
+    package_b.requires.append(dep10)
+    package_b.requires.append(dep20)
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c10)
+    repo.add_package(package_c20)
+
+    ops = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_a},
+        {"job": "install", "package": package_b},
+    ]
+
+    if enabled_extra is not None:
+        expected.insert(
+            0,
+            {
+                "job": "install",
+                "package": package_c10 if enabled_extra == "one" else package_c20,
+            },
+        )
+
+    check_solver_result(
+        ops, expected,
+    )
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
+
+
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
+    solver, repo, package, enabled_extra
+):
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+
+    dep = get_dependency("C", "*", optional=True)
+    dep._in_extras.append("one")
+    dep._in_extras.append("two")
+
+    package_b.extras = {"one": [dep], "two": [dep]}
+
+    package_b.requires.append(dep)
+
+    extras = [enabled_extra] if enabled_extra is not None else []
+    package_a.add_dependency(
+        Factory.create_dependency("B", {"version": "*", "extras": extras})
+    )
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    ops = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_b},
+        {"job": "install", "package": package_a},
+    ]
+
+    if enabled_extra is not None:
+        expected.insert(0, {"job": "install", "package": package_c})
+
+    check_solver_result(
+        ops, expected,
+    )
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
+
+
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_only_requested_nested(
+    solver, repo, package, enabled_extra
+):
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c10 = get_package("C", "1.0")
+    package_c20 = get_package("C", "2.0")
+
+    dep10 = get_dependency("C", "1.0", optional=True)
+    dep10._in_extras.append("one")
+    dep10.marker = parse_marker("extra == 'one'")
+
+    dep20 = get_dependency("C", "2.0", optional=True)
+    dep20._in_extras.append("two")
+    dep20.marker = parse_marker("extra == 'two'")
+
+    package_b.extras = {"one": [dep10], "two": [dep20]}
+
+    package_b.requires.append(dep10)
+    package_b.requires.append(dep20)
+
+    extras = [enabled_extra] if enabled_extra is not None else []
+    package_a.add_dependency(
+        Factory.create_dependency("B", {"version": "*", "extras": extras})
+    )
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c10)
+    repo.add_package(package_c20)
+
+    ops = solver.solve()
+
+    expected = [
+        {"job": "install", "package": package_b},
+        {"job": "install", "package": package_a},
+    ]
+
+    if enabled_extra is not None:
+        expected.insert(
+            0,
+            {
+                "job": "install",
+                "package": package_c10 if enabled_extra == "one" else package_c20,
+            },
+        )
+
+    check_solver_result(ops, expected)
+
+    assert ops[-1].package.marker.is_any()
+    assert ops[0].package.marker.is_any()
+
+
 def test_solver_returns_prereleases_if_requested(solver, repo, package):
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
@@ -1515,6 +1672,60 @@ def test_solver_can_resolve_directory_dependencies(solver, repo, package):
     assert op.package.source_url == path
 
 
+def test_solver_can_resolve_directory_dependencies_nested_editable(
+    solver, repo, pool, installed, locked, io
+):
+    base = Path(__file__).parent.parent / "fixtures" / "project_with_nested_local"
+    poetry = Factory().create_poetry(cwd=base)
+    package = poetry.package
+
+    solver = Solver(
+        package, pool, installed, locked, io, provider=Provider(package, pool, io)
+    )
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {
+                "job": "install",
+                "package": Package(
+                    "quix",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "quix").as_posix(),
+                ),
+                "skipped": False,
+            },
+            {
+                "job": "install",
+                "package": Package(
+                    "bar",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "bar").as_posix(),
+                ),
+                "skipped": False,
+            },
+            {
+                "job": "install",
+                "package": Package(
+                    "foo",
+                    "1.2.3",
+                    source_type="directory",
+                    source_url=(base / "foo").as_posix(),
+                ),
+                "skipped": False,
+            },
+        ],
+    )
+
+    for op in ops:
+        assert op.package.source_type == "directory"
+        assert op.package.develop is True
+
+
 def test_solver_can_resolve_directory_dependencies_with_extras(solver, repo, package):
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
@@ -2435,7 +2646,6 @@ def test_solver_can_resolve_transitive_extras(solver, repo, package):
     requests = get_package("requests", "2.24.0")
     requests.add_dependency(Factory.create_dependency("certifi", ">=2017.4.17"))
     dep = get_dependency("PyOpenSSL", ">=0.14")
-    dep.in_extras.append("security")
     requests.add_dependency(
         Factory.create_dependency("PyOpenSSL", {"version": ">=0.14", "optional": True})
     )
@@ -2461,5 +2671,73 @@ def test_solver_can_resolve_transitive_extras(solver, repo, package):
             {"job": "install", "package": get_package("pyopenssl", "0.14")},
             {"job": "install", "package": requests},
             {"job": "install", "package": pyota},
+        ],
+    )
+
+
+def test_solver_can_resolve_for_packages_with_missing_extras(solver, repo, package):
+    package.add_dependency(
+        Factory.create_dependency(
+            "django-anymail", {"version": "^6.0", "extras": ["postmark"]}
+        )
+    )
+
+    django_anymail = get_package("django-anymail", "6.1.0")
+    django_anymail.add_dependency(Factory.create_dependency("django", ">=2.0"))
+    django_anymail.add_dependency(Factory.create_dependency("requests", ">=2.4.3"))
+    django_anymail.add_dependency(
+        Factory.create_dependency("boto3", {"version": "*", "optional": True})
+    )
+    django_anymail.extras["amazon_ses"] = [Factory.create_dependency("boto3", "*")]
+    django = get_package("django", "2.2.0")
+    boto3 = get_package("boto3", "1.0.0")
+    requests = get_package("requests", "2.24.0")
+
+    repo.add_package(django_anymail)
+    repo.add_package(django)
+    repo.add_package(boto3)
+    repo.add_package(requests)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": django},
+            {"job": "install", "package": requests},
+            {"job": "install", "package": django_anymail},
+        ],
+    )
+
+
+def test_solver_can_resolve_python_restricted_package_dependencies(
+    solver, repo, package, locked
+):
+    package.add_dependency(
+        Factory.create_dependency("futures", {"version": "^3.3.0", "python": "~2.7"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("pre-commit", {"version": "^2.6", "python": "^3.6.1"})
+    )
+
+    futures = Package("futures", "3.3.0")
+    futures.python_versions = ">=2.6, <3"
+
+    pre_commit = Package("pre-commit", "2.7.1")
+    pre_commit.python_versions = ">=3.6.1"
+
+    locked.add_package(futures)
+    locked.add_package(pre_commit)
+
+    repo.add_package(futures)
+    repo.add_package(pre_commit)
+
+    ops = solver.solve(use_latest=["pre-commit"])
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": futures},
+            {"job": "install", "package": pre_commit},
         ],
     )

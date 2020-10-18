@@ -3,8 +3,17 @@ import logging
 import os
 import re
 
+from copy import deepcopy
 from hashlib import sha256
+from typing import Dict
+from typing import Iterable
+from typing import Iterator
 from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Set
+from typing import Tuple
+from typing import Union
 
 from tomlkit import array
 from tomlkit import document
@@ -19,10 +28,12 @@ from poetry.core.packages.package import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
+from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
+from poetry.packages import DependencyPackage
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
-from poetry.utils.toml_file import TomlFile
+from poetry.utils.extras import get_extra_package_names
 
 
 logger = logging.getLogger(__name__)
@@ -35,13 +46,13 @@ class Locker(object):
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
     def __init__(self, lock, local_config):  # type: (Path, dict) -> None
-        self._lock = TomlFile(lock)
+        self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
 
     @property
-    def lock(self):  # type: () -> TomlFile
+    def lock(self):  # type: () -> TOMLFile
         return self._lock
 
     @property
@@ -176,6 +187,194 @@ class Locker(object):
             packages.add_package(package)
 
         return packages
+
+    @staticmethod
+    def __get_locked_package(
+        _dependency, packages_by_name
+    ):  # type: (Dependency, Dict[str, List[Package]]) -> Optional[Package]
+        """
+        Internal helper to identify corresponding locked package using dependency
+        version constraints.
+        """
+        for _package in packages_by_name.get(_dependency.name, []):
+            if _dependency.constraint.allows(_package.version):
+                return _package
+        return None
+
+    @classmethod
+    def __walk_dependency_level(
+        cls,
+        dependencies,
+        level,
+        pinned_versions,
+        packages_by_name,
+        project_level_dependencies,
+        nested_dependencies,
+    ):  # type: (List[Dependency], int,  bool, Dict[str, List[Package]], Set[str], Dict[Tuple[str, str], Dependency]) -> Dict[Tuple[str, str], Dependency]
+        if not dependencies:
+            return nested_dependencies
+
+        next_level_dependencies = []
+
+        for requirement in dependencies:
+            locked_package = cls.__get_locked_package(requirement, packages_by_name)
+
+            if locked_package:
+                for require in locked_package.requires:
+                    if require.marker.is_empty():
+                        require.marker = requirement.marker
+                    else:
+                        require.marker = require.marker.intersect(requirement.marker)
+
+                    require.marker = require.marker.intersect(locked_package.marker)
+                    next_level_dependencies.append(require)
+
+            if requirement.name in project_level_dependencies and level == 0:
+                # project level dependencies take precedence
+                continue
+
+            if locked_package:
+                # create dependency from locked package to retain dependency metadata
+                # if this is not done, we can end-up with incorrect nested dependencies
+                marker = requirement.marker
+                requirement = locked_package.to_dependency()
+                requirement.marker = requirement.marker.intersect(marker)
+            else:
+                # we make a copy to avoid any side-effects
+                requirement = deepcopy(requirement)
+
+            if pinned_versions:
+                requirement.set_constraint(
+                    cls.__get_locked_package(requirement, packages_by_name)
+                    .to_dependency()
+                    .constraint
+                )
+
+            # dependencies use extra to indicate that it was activated via parent
+            # package's extras, this is not required for nested exports as we assume
+            # the resolver already selected this dependency
+            requirement.marker = requirement.marker.without_extras()
+
+            key = (requirement.name, requirement.pretty_constraint)
+            if key not in nested_dependencies:
+                nested_dependencies[key] = requirement
+            else:
+                nested_dependencies[key].marker = nested_dependencies[
+                    key
+                ].marker.intersect(requirement.marker)
+
+        return cls.__walk_dependency_level(
+            dependencies=next_level_dependencies,
+            level=level + 1,
+            pinned_versions=pinned_versions,
+            packages_by_name=packages_by_name,
+            project_level_dependencies=project_level_dependencies,
+            nested_dependencies=nested_dependencies,
+        )
+
+    @classmethod
+    def get_project_dependencies(
+        cls, project_requires, locked_packages, pinned_versions=False, with_nested=False
+    ):  # type: (List[Dependency], List[Package], bool, bool) -> Iterable[Dependency]
+        # group packages entries by name, this is required because requirement might use different constraints
+        packages_by_name = {}
+        for pkg in locked_packages:
+            if pkg.name not in packages_by_name:
+                packages_by_name[pkg.name] = []
+            packages_by_name[pkg.name].append(pkg)
+
+        project_level_dependencies = set()
+        dependencies = []
+
+        for dependency in project_requires:
+            dependency = deepcopy(dependency)
+            locked_package = cls.__get_locked_package(dependency, packages_by_name)
+            if locked_package:
+                locked_dependency = locked_package.to_dependency()
+                locked_dependency.marker = dependency.marker.intersect(
+                    locked_package.marker
+                )
+
+                if not pinned_versions:
+                    locked_dependency.set_constraint(dependency.constraint)
+
+                dependency = locked_dependency
+
+            project_level_dependencies.add(dependency.name)
+            dependencies.append(dependency)
+
+        if not with_nested:
+            # return only with project level dependencies
+            return dependencies
+
+        nested_dependencies = cls.__walk_dependency_level(
+            dependencies=dependencies,
+            level=0,
+            pinned_versions=pinned_versions,
+            packages_by_name=packages_by_name,
+            project_level_dependencies=project_level_dependencies,
+            nested_dependencies=dict(),
+        )
+
+        # Merge same dependencies using marker union
+        for requirement in dependencies:
+            key = (requirement.name, requirement.pretty_constraint)
+            if key not in nested_dependencies:
+                nested_dependencies[key] = requirement
+            else:
+                nested_dependencies[key].marker = nested_dependencies[key].marker.union(
+                    requirement.marker
+                )
+
+        return sorted(nested_dependencies.values(), key=lambda x: x.name.lower())
+
+    def get_project_dependency_packages(
+        self, project_requires, dev=False, extras=None
+    ):  # type: (List[Dependency], bool, Optional[Union[bool, Sequence[str]]]) -> Iterator[DependencyPackage]
+        repository = self.locked_repository(with_dev_reqs=dev)
+
+        # Build a set of all packages required by our selected extras
+        extra_package_names = (
+            None if (isinstance(extras, bool) and extras is True) else ()
+        )
+
+        if extra_package_names is not None:
+            extra_package_names = set(
+                get_extra_package_names(
+                    repository.packages, self.lock_data.get("extras", {}), extras or (),
+                )
+            )
+
+        # If a package is optional and we haven't opted in to it, do not select
+        selected = []
+        for dependency in project_requires:
+            try:
+                package = repository.find_packages(dependency=dependency)[0]
+            except IndexError:
+                continue
+
+            if extra_package_names is not None and (
+                package.optional and package.name not in extra_package_names
+            ):
+                # a package is locked as optional, but is not activated via extras
+                continue
+
+            selected.append(dependency)
+
+        for dependency in self.get_project_dependencies(
+            project_requires=selected,
+            locked_packages=repository.packages,
+            with_nested=True,
+        ):
+            try:
+                package = repository.find_packages(dependency=dependency)[0]
+            except IndexError:
+                continue
+
+            for extra in dependency.extras:
+                package.requires_extras.append(extra)
+
+            yield DependencyPackage(dependency=dependency, package=package)
 
     def set_lock_data(self, root, packages):  # type: (...) -> bool
         files = table()

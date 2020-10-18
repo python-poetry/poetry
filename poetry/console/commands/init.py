@@ -13,6 +13,8 @@ from typing import Union
 from cleo import option
 from tomlkit import inline_table
 
+from poetry.core.pyproject import PyProjectException
+from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import OrderedDict
 from poetry.utils._compat import Path
 from poetry.utils._compat import urlparse
@@ -22,7 +24,6 @@ from .env_command import EnvCommand
 
 
 class InitCommand(Command):
-
     name = "init"
     description = (
         "Creates a basic <comment>pyproject.toml</> file in the current directory."
@@ -67,9 +68,20 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
-        if (Path.cwd() / "pyproject.toml").exists():
-            self.line("<error>A pyproject.toml file already exists.</error>")
-            return 1
+        pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
+
+        if pyproject.file.exists():
+            if pyproject.is_poetry_project():
+                self.line(
+                    "<error>A pyproject.toml file with a poetry section already exists.</error>"
+                )
+                return 1
+
+            if pyproject.data.get("build-system"):
+                self.line(
+                    "<error>A pyproject.toml file with a defined build-system already exists.</error>"
+                )
+                return 1
 
         vcs_config = GitConfig()
 
@@ -146,6 +158,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             self.line("")
 
         requirements = {}
+        if self.option("dependency"):
+            requirements = self._format_requirements(
+                self._determine_requirements(self.option("dependency"))
+            )
 
         question = "Would you like to define your main dependencies interactively?"
         help_message = (
@@ -163,13 +179,17 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if self.io.is_interactive():
                 self.line(help_message)
                 help_displayed = True
-            requirements = self._format_requirements(
-                self._determine_requirements(self.option("dependency"))
+            requirements.update(
+                self._format_requirements(self._determine_requirements([]))
             )
             if self.io.is_interactive():
                 self.line("")
 
         dev_requirements = {}
+        if self.option("dev-dependency"):
+            dev_requirements = self._format_requirements(
+                self._determine_requirements(self.option("dev-dependency"))
+            )
 
         question = (
             "Would you like to define your development dependencies interactively?"
@@ -178,8 +198,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if self.io.is_interactive() and not help_displayed:
                 self.line(help_message)
 
-            dev_requirements = self._format_requirements(
-                self._determine_requirements(self.option("dev-dependency"))
+            dev_requirements.update(
+                self._format_requirements(self._determine_requirements([]))
             )
             if self.io.is_interactive():
                 self.line("")
@@ -195,7 +215,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content()
+        content = layout_.generate_poetry_content(original=pyproject)
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")
@@ -365,13 +385,13 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         try:
             cwd = self.poetry.file.parent
-        except RuntimeError:
+        except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
 
         for requirement in requirements:
             requirement = requirement.strip()
             extras = []
-            extras_m = re.search(r"\[([\w\d,-_]+)\]$", requirement)
+            extras_m = re.search(r"\[([\w\d,-_ ]+)\]$", requirement)
             if extras_m:
                 extras = [e.strip() for e in extras_m.group(1).split(",")]
                 requirement, _ = requirement.split("[")

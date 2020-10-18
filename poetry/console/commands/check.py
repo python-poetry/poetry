@@ -1,6 +1,6 @@
+from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.factory import Factory
 from poetry.utils._compat import Path
-from poetry.utils.toml_file import TomlFile
 
 from .command import Command
 
@@ -13,7 +13,7 @@ class CheckCommand(Command):
     def handle(self):
         # Load poetry config and display errors, if any
         poetry_file = Factory.locate(Path.cwd())
-        config = TomlFile(str(poetry_file)).read()["tool"]["poetry"]
+        config = PyProjectTOML(poetry_file).poetry_config
         check_result = Factory.validate(config, strict=True)
         if not check_result["errors"] and not check_result["warnings"]:
             self.info("All set!")

@@ -165,7 +165,7 @@ def test_pypi_repository_supports_reading_bz2_files():
     package = repo.package("twisted", "18.9.0")
 
     assert package.name == "twisted"
-    assert 28 == len(package.requires)
+    assert 71 == len(package.requires)
     assert sorted(
         [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
     ) == [

@@ -16,6 +16,7 @@ from poetry.core.factory import Factory
 from poetry.core.packages import Package
 from poetry.core.packages import ProjectPackage
 from poetry.core.packages import dependency_from_pep_508
+from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils._compat import PY35
 from poetry.core.utils._compat import Path
 from poetry.core.utils.helpers import parse_requires
@@ -25,7 +26,6 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
 from poetry.utils.env import VirtualEnv
 from poetry.utils.setup_reader import SetupReader
-from poetry.utils.toml_file import TomlFile
 
 
 logger = logging.getLogger(__name__)
@@ -43,9 +43,14 @@ PEP517_META_BUILD_DEPS = ["pep517===0.8.2", "toml==0.10.1"]
 
 
 class PackageInfoError(ValueError):
-    def __init__(self, path):  # type: (Union[Path, str]) -> None
+    def __init__(
+        self, path, *reasons
+    ):  # type: (Union[Path, str], *Union[BaseException, str]) -> None
+        reasons = (
+            "Unable to determine package info for path: {}".format(str(path)),
+        ) + reasons
         super(PackageInfoError, self).__init__(
-            "Unable to determine package info for path: {}".format(str(path))
+            "\n\n".join(str(msg).strip() for msg in reasons if msg)
         )
 
 
@@ -151,6 +156,17 @@ class PackageInfo:
         package.python_versions = self.requires_python or "*"
         package.files = self.files
 
+        if root_dir or (self._source_type in {"directory"} and self._source_url):
+            # this is a local poetry project, this means we can extract "richer" requirement information
+            # eg: development requirements etc.
+            poetry_package = self._get_poetry_package(path=root_dir or self._source_url)
+            if poetry_package:
+                package.extras = poetry_package.extras
+                package.requires = poetry_package.requires
+                return package
+
+        seen_requirements = set()
+
         for req in self.requires_dist or []:
             try:
                 # Attempt to parse the PEP-508 requirement string
@@ -177,8 +193,11 @@ class PackageInfo:
 
                     package.extras[extra].append(dependency)
 
-            if dependency not in package.requires:
+            req = dependency.to_pep_508(with_extras=True)
+
+            if req not in seen_requirements:
                 package.requires.append(dependency)
+                seen_requirements.add(req)
 
         return package
 
@@ -290,12 +309,14 @@ class PackageInfo:
         :param path: Path to `setup.py` file
         """
         if not cls.has_setup_files(path):
-            raise PackageInfoError(path)
+            raise PackageInfoError(
+                path, "No setup files (setup.py, setup.cfg) was found."
+            )
 
         try:
             result = SetupReader.read_from_directory(path)
-        except Exception:
-            raise PackageInfoError(path)
+        except Exception as e:
+            raise PackageInfoError(path, e)
 
         python_requires = result["python_requires"]
         if python_requires is None:
@@ -328,7 +349,10 @@ class PackageInfo:
 
         if not (info.name and info.version) and not info.requires_dist:
             # there is nothing useful here
-            raise PackageInfoError(path)
+            raise PackageInfoError(
+                path,
+                "No core metadata (name, version, requires-dist) could be retrieved.",
+            )
 
         return info
 
@@ -410,21 +434,10 @@ class PackageInfo:
 
     @staticmethod
     def _get_poetry_package(path):  # type: (Path) -> Optional[ProjectPackage]
-        pyproject = path.joinpath("pyproject.toml")
-        try:
-            # Note: we ignore any setup.py file at this step
-            if pyproject.exists():
-                # TODO: add support for handling non-poetry PEP-517 builds
-                pyproject = TomlFile(pyproject)
-                pyproject_content = pyproject.read()
-                supports_poetry = (
-                    "tool" in pyproject_content
-                    and "poetry" in pyproject_content["tool"]
-                )
-                if supports_poetry:
-                    return Factory().create_poetry(path).package
-        except RuntimeError:
-            pass
+        # Note: we ignore any setup.py file at this step
+        # TODO: add support for handling non-poetry PEP-517 builds
+        if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
+            return Factory().create_poetry(path).package
 
     @classmethod
     def _pep517_metadata(cls, path):  # type (Path) -> PackageInfo
@@ -436,7 +449,7 @@ class PackageInfo:
         info = None
         try:
             info = cls.from_setup_files(path)
-            if info.requires_dist is not None:
+            if all([info.version, info.name, info.requires_dist]):
                 return info
         except PackageInfoError:
             pass
@@ -474,15 +487,21 @@ class PackageInfo:
                 cls._log("PEP517 build failed: {}".format(e), level="debug")
                 setup_py = path / "setup.py"
                 if not setup_py.exists():
-                    raise PackageInfoError(path)
+                    raise PackageInfoError(
+                        path,
+                        e,
+                        "No fallback setup.py file was found to generate egg_info.",
+                    )
 
                 cwd = Path.cwd()
                 os.chdir(path.as_posix())
                 try:
                     venv.run("python", "setup.py", "egg_info")
                     return cls.from_metadata(path)
-                except EnvCommandError:
-                    raise PackageInfoError(path)
+                except EnvCommandError as fbe:
+                    raise PackageInfoError(
+                        path, "Fallback egg_info generation failed.", fbe
+                    )
                 finally:
                     os.chdir(cwd.as_posix())
 
@@ -493,7 +512,7 @@ class PackageInfo:
             return info
 
         # if we reach here, everything has failed and all hope is lost
-        raise PackageInfoError(path)
+        raise PackageInfoError(path, "Exhausted all core metadata sources.")
 
     @classmethod
     def from_directory(
@@ -572,8 +591,8 @@ class PackageInfo:
 
         try:
             return cls._from_distribution(pkginfo.BDist(str(path)))
-        except ValueError:
-            raise PackageInfoError(path)
+        except ValueError as e:
+            raise PackageInfoError(path, e)
 
     @classmethod
     def from_path(cls, path):  # type: (Path) -> PackageInfo

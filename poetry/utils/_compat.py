@@ -46,15 +46,11 @@ PY36 = sys.version_info >= (3, 6)
 
 WINDOWS = sys.platform == "win32"
 
-if PY2:
-    import pipes
-
-    shell_quote = pipes.quote
-else:
-    import shlex
-
-    shell_quote = shlex.quote
-
+try:
+    from shlex import quote
+except ImportError:
+    # PY2
+    from pipes import quote  # noqa
 
 if PY34:
     from importlib.machinery import EXTENSION_SUFFIXES
@@ -288,10 +284,7 @@ def to_str(string):
 
 
 def list_to_shell_command(cmd):
-    executable = cmd[0]
-
-    if " " in executable:
-        executable = '"{}"'.format(executable)
-        cmd[0] = executable
-
-    return " ".join(cmd)
+    return " ".join(
+        '"{}"'.format(token) if " " in token and token[0] not in {"'", '"'} else token
+        for token in cmd
+    )
