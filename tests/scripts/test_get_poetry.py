@@ -8,8 +8,12 @@ try:
 except ImportError:
     # Python 2.7
     import imp
-
-from pathlib import Path
+try:
+    # Python 2
+    from pathlib2 import Path
+except ImportError:
+    # Python 3
+    from pathlib import Path
 
 import pytest
 
@@ -31,7 +35,6 @@ try:
     spec.loader.exec_module(getpoetry)
 except ImportError:
     # Python 2.7
-
     getpoetry = imp.load_source("getpoetry", str(GET_POETRY_PATH))
 
 
