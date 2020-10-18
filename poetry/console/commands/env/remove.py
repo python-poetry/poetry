@@ -18,11 +18,15 @@ class EnvRemoveCommand(Command):
         )
     ]
     options = [
-        option("all", description="Remove all managed virtual environments associated with the project."),
+        option(
+            "all",
+            description="Remove all managed virtual environments associated with the project.",
+        ),
     ]
 
     def handle(self):
         from poetry.utils.env import EnvManager
+
         pythons = self.argument("python")
         all = self.option("all")
         if not (pythons or all):
