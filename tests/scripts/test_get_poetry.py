@@ -33,7 +33,7 @@ try:
     spec = importlib.util.spec_from_file_location("getpoetry", GET_POETRY_PATH)
     getpoetry = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(getpoetry)
-except ImportError:
+except NameError:
     # Python 2.7
     getpoetry = imp.load_source("getpoetry", str(GET_POETRY_PATH))
 
@@ -44,10 +44,10 @@ def tmp_dir():
     Use this in tests to actually set up and tear down the directory.
     """
     if TMP_DIR.exists():
-        shutil.rmtree(TMP_DIR)
+        shutil.rmtree(str(TMP_DIR))
     TMP_DIR.mkdir(exist_ok=True, parents=False)
     yield TMP_DIR
-    shutil.rmtree(TMP_DIR)
+    shutil.rmtree(str(TMP_DIR))
 
 
 @pytest.fixture()
