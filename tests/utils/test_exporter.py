@@ -35,6 +35,13 @@ class Locker(BaseLocker):
         return "123456789"
 
 
+@pytest.fixture(autouse=True)
+def mock_path_cwd(mocker, poetry_root_dir):
+    yield mocker.patch(
+        "poetry.core.utils._compat.Path.cwd", return_value=poetry_root_dir
+    )
+
+
 @pytest.fixture()
 def locker():
     return Locker()
