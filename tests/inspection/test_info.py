@@ -12,23 +12,19 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.env import VirtualEnv
 
 
-FIXTURE_DIR_BASE = Path(__file__).parent.parent / "fixtures"
-FIXTURE_DIR_INSPECTIONS = FIXTURE_DIR_BASE / "inspection"
-
-
 @pytest.fixture(autouse=True)
 def pep517_metadata_mock():
     pass
 
 
 @pytest.fixture
-def demo_sdist():  # type: () -> Path
-    return FIXTURE_DIR_BASE / "distributions" / "demo-0.1.0.tar.gz"
+def demo_sdist(fixture_dir):  # type: () -> Path
+    return fixture_dir("distributions/demo-0.1.0.tar.gz")
 
 
 @pytest.fixture
-def demo_wheel():  # type: () -> Path
-    return FIXTURE_DIR_BASE / "distributions" / "demo-0.1.0-py2.py3-none-any.whl"
+def demo_wheel(fixture_dir):  # type: () -> Path
+    return fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
 
 
 @pytest.fixture
@@ -120,16 +116,16 @@ def test_info_from_bdist(demo_wheel):
     demo_check_info(info)
 
 
-def test_info_from_poetry_directory():
+def test_info_from_poetry_directory(fixture_dir):
     info = PackageInfo.from_directory(
-        FIXTURE_DIR_INSPECTIONS / "demo", disable_build=True
+        fixture_dir("inspection/demo"), disable_build=True
     )
     demo_check_info(info)
 
 
-def test_info_from_requires_txt():
+def test_info_from_requires_txt(fixture_dir):
     info = PackageInfo.from_metadata(
-        FIXTURE_DIR_INSPECTIONS / "demo_only_requires_txt.egg-info"
+        fixture_dir("inspection/demo_only_requires_txt.egg-info")
     )
     demo_check_info(info)
 
@@ -146,9 +142,9 @@ def test_info_from_setup_cfg(demo_setup_cfg):
     demo_check_info(info, requires_dist={"package"})
 
 
-def test_info_no_setup_pkg_info_no_deps():
+def test_info_no_setup_pkg_info_no_deps(fixture_dir):
     info = PackageInfo.from_directory(
-        FIXTURE_DIR_INSPECTIONS / "demo_no_setup_pkg_info_no_deps", disable_build=True,
+        fixture_dir("inspection/demo_no_setup_pkg_info_no_deps"), disable_build=True,
     )
     assert info.name == "demo"
     assert info.version == "0.1.0"
@@ -237,8 +233,8 @@ def test_info_setup_missing_mandatory_should_trigger_pep517(
         assert spy.call_count == 2
 
 
-def test_info_prefer_poetry_config_over_egg_info():
+def test_info_prefer_poetry_config_over_egg_info(fixture_dir):
     info = PackageInfo.from_directory(
-        FIXTURE_DIR_INSPECTIONS / "demo_with_obsolete_egg_info"
+        fixture_dir("inspection/demo_with_obsolete_egg_info")
     )
     demo_check_info(info)
