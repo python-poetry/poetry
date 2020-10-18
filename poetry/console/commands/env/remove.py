@@ -23,14 +23,16 @@ class EnvRemoveCommand(Command):
 
     def handle(self):
         from poetry.utils.env import EnvManager
-
-        manager = EnvManager(self.poetry)
         pythons = self.argument("python")
         all = self.option("all")
-        if all:
-            pythons = [x.path.name for x in manager.list()]
-        if not pythons:
+        if not (pythons or all):
             self.line("No virtualenv provided.")
+
+        manager = EnvManager(self.poetry)
         for python in pythons:
             venv = manager.remove(python)
             self.line("Deleted virtualenv: <comment>{}</comment>".format(venv.path))
+        if all:
+            for venv in manager.list():
+                manager.remove_venv(venv.path)
+                self.line("Deleted virtualenv: <comment>{}</comment>".format(venv.path))
