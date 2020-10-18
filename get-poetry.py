@@ -17,6 +17,7 @@ What this means is that one Poetry installation can serve for multiple
 Python versions.
 """
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -635,6 +636,20 @@ class Installer:
                 f.extractall(POETRY_LIB)
         finally:
             gz.close()
+        # Make sure that poetry is in the poetry lib. The file structure is different for an sdist vs github.
+        lib_poetry = os.path.join(POETRY_LIB, "poetry")
+        if not os.path.exists(lib_poetry):
+            for dir in os.listdir(POETRY_LIB):
+                dir_abs = os.path.join(POETRY_LIB, dir)
+                dir_poetry = os.path.join(dir_abs, "poetry")
+                if os.path.exists(dir_poetry):
+                    shutil.move(dir_poetry, lib_poetry)
+                    shutil.rmtree(dir_abs)
+                    break
+            else:
+                raise FileNotFoundError(
+                    errno.ENOENT, os.strerror(errno.ENOENT), str(POETRY_LIB)
+                )
 
     def _which_python(self):
         """Decides which python executable we'll embed in the launcher script."""
