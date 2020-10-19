@@ -100,7 +100,6 @@ class AddCommand(InstallerCommand, InitCommand):
         packages = [name for name in packages if name not in existing_packages]
 
         if not packages:
-            self.poetry.file.write(content)
             self.line("Nothing to add.")
             return 0
 
@@ -152,29 +151,29 @@ class AddCommand(InstallerCommand, InitCommand):
 
             poetry_content[section][_constraint["name"]] = constraint
 
-        # Write new content
-        self.poetry.file.write(content)
-
-        # Cosmetic new line
-        self.line("")
-
-        # Update packages
-        self.reset_poetry()
-
-        self._installer.set_package(self.poetry.package)
-        self._installer.dry_run(self.option("dry-run"))
-        self._installer.verbose(self._io.is_verbose())
-        self._installer.update(True)
-        if self.option("lock"):
-            self._installer.lock()
-
-        self._installer.whitelist([r["name"] for r in requirements])
-
         try:
-            status = self._installer.run()
-        except Exception:
-            self.poetry.file.write(original_content)
+            # Write new content
+            self.poetry.file.write(content)
 
+            # Cosmetic new line
+            self.line("")
+
+            # Update packages
+            self.reset_poetry()
+
+            self._installer.set_package(self.poetry.package)
+            self._installer.dry_run(self.option("dry-run"))
+            self._installer.verbose(self._io.is_verbose())
+            self._installer.update(True)
+            if self.option("lock"):
+                self._installer.lock()
+
+            self._installer.whitelist([r["name"] for r in requirements])
+
+            status = self._installer.run()
+        except BaseException:
+            # Using BaseException here as some exceptions, eg: KeyboardInterrupt, do not inherit from Exception
+            self.poetry.file.write(original_content)
             raise
 
         if status != 0 or self.option("dry-run"):
