@@ -7,14 +7,10 @@ import pytest
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.utils._compat import PY2
-from poetry.utils._compat import Path
 
 
-fixtures_dir = Path(__file__).parent / "fixtures"
-
-
-def test_create_poetry():
-    poetry = Factory().create_poetry(fixtures_dir / "sample_project")
+def test_create_poetry(fixture_base, fixture_dir):
+    poetry = Factory().create_poetry(fixture_dir("sample_project"))
 
     package = poetry.package
 
@@ -24,7 +20,7 @@ def test_create_poetry():
     assert package.authors == ["Sébastien Eustace <sebastien@eustace.io>"]
     assert package.license.id == "MIT"
     assert (
-        package.readme.relative_to(fixtures_dir).as_posix()
+        package.readme.relative_to(fixture_base).as_posix()
         == "sample_project/README.rst"
     )
     assert package.homepage == "https://python-poetry.org"
@@ -113,8 +109,8 @@ def test_create_poetry():
     ]
 
 
-def test_create_poetry_with_packages_and_includes():
-    poetry = Factory().create_poetry(fixtures_dir / "with-include")
+def test_create_poetry_with_packages_and_includes(fixture_dir):
+    poetry = Factory().create_poetry(fixture_dir("with-include"))
 
     package = poetry.package
 
@@ -134,9 +130,9 @@ def test_create_poetry_with_packages_and_includes():
     ]
 
 
-def test_create_poetry_with_multi_constraints_dependency():
+def test_create_poetry_with_multi_constraints_dependency(fixture_dir):
     poetry = Factory().create_poetry(
-        fixtures_dir / "project_with_multi_constraints_dependency"
+        fixture_dir("project_with_multi_constraints_dependency")
     )
 
     package = poetry.package
@@ -144,28 +140,28 @@ def test_create_poetry_with_multi_constraints_dependency():
     assert len(package.requires) == 2
 
 
-def test_poetry_with_default_source():
-    poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
+def test_poetry_with_default_source(fixture_dir):
+    poetry = Factory().create_poetry(fixture_dir("with_default_source"))
 
     assert 1 == len(poetry.pool.repositories)
 
 
-def test_poetry_with_two_default_sources():
+def test_poetry_with_two_default_sources(fixture_dir):
     with pytest.raises(ValueError) as e:
-        Factory().create_poetry(fixtures_dir / "with_two_default_sources")
+        Factory().create_poetry(fixture_dir("with_two_default_sources"))
 
     assert "Only one repository can be the default" == str(e.value)
 
 
-def test_validate():
-    complete = TOMLFile(fixtures_dir / "complete.toml")
+def test_validate(fixture_dir):
+    complete = TOMLFile(fixture_dir("complete.toml"))
     content = complete.read()["tool"]["poetry"]
 
     assert Factory.validate(content) == {"errors": [], "warnings": []}
 
 
-def test_validate_fails():
-    complete = TOMLFile(fixtures_dir / "complete.toml")
+def test_validate_fails(fixture_dir):
+    complete = TOMLFile(fixture_dir("complete.toml"))
     content = complete.read()["tool"]["poetry"]
     content["this key is not in the schema"] = ""
 
@@ -183,11 +179,9 @@ def test_validate_fails():
     assert Factory.validate(content) == {"errors": [expected], "warnings": []}
 
 
-def test_create_poetry_fails_on_invalid_configuration():
+def test_create_poetry_fails_on_invalid_configuration(fixture_dir):
     with pytest.raises(RuntimeError) as e:
-        Factory().create_poetry(
-            Path(__file__).parent / "fixtures" / "invalid_pyproject" / "pyproject.toml"
-        )
+        Factory().create_poetry(fixture_dir("invalid_pyproject/pyproject.toml"))
 
     if PY2:
         expected = """\
