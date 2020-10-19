@@ -1028,6 +1028,52 @@ foo==1.2.3 \\
     assert expected == content
 
 
+def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
+    tmp_dir, poetry
+):
+    poetry.pool.add_repository(LegacyRepository("custom", "http://example.com/simple",))
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "http://example.com/simple",
+                        "reference": "",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"bar": ["67890"]},
+            },
+        }
+    )
+    set_package_requires(poetry)
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+--trusted-host example.com
+--extra-index-url http://example.com/simple
+
+bar==4.5.6 \\
+    --hash=sha256:67890
+"""
+
+    assert expected == content
+
+
 @pytest.mark.parametrize(
     ("dev", "expected"),
     [
