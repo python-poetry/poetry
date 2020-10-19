@@ -172,7 +172,7 @@ class AddCommand(InstallerCommand, InitCommand):
 
             status = self._installer.run()
         except BaseException:
-            # Catch all exception including KeyboardInterrupt in order to restore the original content
+            # Using BaseException here as some exceptions, eg: KeyboardInterrupt, do not inherit from Exception
             self.poetry.file.write(original_content)
             raise
 
