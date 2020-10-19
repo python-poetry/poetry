@@ -50,6 +50,7 @@ class AddCommand(InstallerCommand, InitCommand):
             "Output the operations but do not execute anything (implicitly enables --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
+        option("develop", None, "Add as dependency in editable mode."),
     ]
     help = (
         "The add command adds required packages to your <comment>pyproject.toml</> and installs them.\n\n"
@@ -145,6 +146,9 @@ class AddCommand(InstallerCommand, InitCommand):
 
             if self.option("source"):
                 constraint["source"] = self.option("source")
+
+            if self.option("develop"):
+                constraint["develop"] = True
 
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
