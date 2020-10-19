@@ -100,7 +100,6 @@ class AddCommand(InstallerCommand, InitCommand):
         packages = [name for name in packages if name not in existing_packages]
 
         if not packages:
-            self.poetry.file.write(original_content)
             self.line("Nothing to add.")
             return 0
 
