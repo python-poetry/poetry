@@ -1630,3 +1630,26 @@ Writing lock file
 """
 
     assert expected == old_tester.io.fetch_output()
+
+
+def test_add_keyboard_interrupt_restore_content(app, repo, installer, tester, mocker):
+    mocker.patch(
+        "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
+    )
+    original_content = app.poetry.file.read()
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy --dry-run")
+
+    assert original_content == app.poetry.file.read()
+
+
+def test_dry_run_restore_original_content(app, repo, installer, tester):
+    original_content = app.poetry.file.read()
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy --dry-run")
+
+    assert original_content == app.poetry.file.read()
