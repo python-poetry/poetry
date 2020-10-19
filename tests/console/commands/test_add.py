@@ -811,6 +811,61 @@ Writing lock file
     assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
 
 
+def test_add_with_develop_fails_for_schema_without_develop(app, repo, tester):
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    with pytest.raises(RuntimeError) as e:
+        tester.execute("cachy --develop")
+    # TODO: Provide better error message.
+    # `Develop` attribute is only supported by directory
+    # https://github.com/python-poetry/poetry-core/blob/master/poetry/core/packages/directory_dependency.py
+    # and vcs https://github.com/python-poetry/poetry-core/blob/master/poetry/core/packages/directory_dependency.py
+    # dependencies. There should be an explicit error message raised, stating that `develop` is
+    # inappropriate for other source types.
+    assert """\
+The Poetry configuration is invalid:
+  - [dependencies.cachy] {'version': '^0.2.0', 'develop': True} is not valid under any of the given schemas
+""" in str(
+        e.value
+    )
+
+
+def test_add_with_develop(app, repo, tester, mocker):
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__).parent
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+
+    path = "../git/github.com/demo/demo"
+    tester.execute("{} --develop".format(path))
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  • Installing pendulum (1.4.4)
+  • Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
+
+    assert expected == tester.io.fetch_output()
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "path": "../git/github.com/demo/demo",
+        "develop": True,
+    }
+
+
 def test_add_no_constraint_old_installer(app, repo, installer, old_tester):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -1653,3 +1708,39 @@ def test_dry_run_restore_original_content(app, repo, installer, tester):
     tester.execute("cachy --dry-run")
 
     assert original_content == app.poetry.file.read()
+
+
+def test_add_with_develop_old_installer(app, repo, old_tester, mocker):
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = Path(__file__).parent
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+    repo.add_package(get_package("cleo", "0.6.5"))
+
+    path = "../git/github.com/demo/demo"
+    old_tester.execute("{} --develop".format(path))
+
+    expected = """\
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 2 installs, 0 updates, 0 removals
+
+  - Installing pendulum (1.4.4)
+  - Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
+
+    assert expected == old_tester.io.fetch_output()
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "demo" in content["dependencies"]
+    assert content["dependencies"]["demo"] == {
+        "path": "../git/github.com/demo/demo",
+        "develop": True,
+    }
