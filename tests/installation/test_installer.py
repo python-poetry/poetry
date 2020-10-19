@@ -1834,9 +1834,28 @@ def test_installer_can_handle_old_lock_files(
     assert 8 == installer.executor.installations_count
 
 
-def test_quiet(package, pool, locker, env, installed, config, repo):
+@pytest.mark.parametrize(
+    "quiet,lines",
+    [
+        (True, []),
+        (
+            False,
+            [
+                "Updating dependencies",
+                "Resolving dependencies...",
+                "",
+                "Writing lock file",
+                "",
+                "Package operations: 1 install, 0 updates, 0 removals",
+                "",
+                "  • Installing a (1.0)",
+            ],
+        ),
+    ],
+)
+def test_quiet(package, pool, locker, env, installed, config, repo, quiet, lines):
     io = BufferedIO()
-    io.set_quiet(True)
+    io.set_quiet(quiet)
 
     installer = Installer(
         io,
@@ -1856,4 +1875,4 @@ def test_quiet(package, pool, locker, env, installed, config, repo):
 
     installer.run()
 
-    assert io.fetch_output() == ""
+    assert io.fetch_output().splitlines() == lines
