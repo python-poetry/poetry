@@ -1,5 +1,4 @@
 import shutil
-import sys
 
 import pytest
 
@@ -26,9 +25,6 @@ def poetry_with_old_lockfile(fixture_dir, source_dir):
     return poetry
 
 
-@pytest.mark.skipif(
-    sys.platform == "win32", reason="does not work on windows under ci environments"
-)
 def test_lock_no_update(command_tester_factory, poetry_with_old_lockfile, http):
     http.disable()
 
