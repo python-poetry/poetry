@@ -10,6 +10,7 @@ import sysconfig
 import textwrap
 
 from contextlib import contextmanager
+from copy import deepcopy
 from typing import Any
 from typing import Dict
 from typing import List
@@ -1077,15 +1078,13 @@ class Env(object):
 
     def execute(self, bin, *args, **kwargs):
         bin = self._bin(bin)
+        env = kwargs.pop("env", {k: v for k, v in os.environ.items()})
 
         if not self._is_windows:
             args = [bin] + list(args)
-            if "env" in kwargs:
-                return os.execvpe(bin, args, kwargs["env"])
-            else:
-                return os.execvp(bin, args)
+            return os.execvpe(bin, args, env=env)
         else:
-            exe = subprocess.Popen([bin] + list(args), **kwargs)
+            exe = subprocess.Popen([bin] + list(args), env=env, **kwargs)
             exe.communicate()
             return exe.returncode
 
@@ -1322,24 +1321,32 @@ class VirtualEnv(Env):
         return os.path.exists(self.python) and os.path.exists(self._bin("pip"))
 
     def _run(self, cmd, **kwargs):
-        with self.temp_environ():
-            os.environ["PATH"] = self._updated_path()
-            os.environ["VIRTUAL_ENV"] = str(self._path)
+        kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
+        return super(VirtualEnv, self)._run(cmd, **kwargs)
 
-            self.unset_env("PYTHONHOME")
-            self.unset_env("__PYVENV_LAUNCHER__")
+    def get_temp_environ(
+        self, environ=None, exclude=None, **kwargs
+    ):  # type: (Optional[Dict[str, str]], Optional[List[str]], **str) -> Dict[str, str]
+        exclude = exclude or []
+        exclude.extend(["PYTHONHOME", "__PYVENV_LAUNCHER__"])
 
-            return super(VirtualEnv, self)._run(cmd, **kwargs)
+        if environ:
+            environ = deepcopy(environ)
+            for key in exclude:
+                environ.pop(key, None)
+        else:
+            environ = {k: v for k, v in os.environ.items() if k not in exclude}
+
+        environ.update(kwargs)
+
+        environ["PATH"] = self._updated_path()
+        environ["VIRTUAL_ENV"] = str(self._path)
+
+        return environ
 
     def execute(self, bin, *args, **kwargs):
-        with self.temp_environ():
-            os.environ["PATH"] = self._updated_path()
-            os.environ["VIRTUAL_ENV"] = str(self._path)
-
-            self.unset_env("PYTHONHOME")
-            self.unset_env("__PYVENV_LAUNCHER__")
-
-            return super(VirtualEnv, self).execute(bin, *args, **kwargs)
+        kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
+        return super(VirtualEnv, self).execute(bin, *args, **kwargs)
 
     @contextmanager
     def temp_environ(self):
@@ -1349,10 +1356,6 @@ class VirtualEnv(Env):
         finally:
             os.environ.clear()
             os.environ.update(environ)
-
-    def unset_env(self, key):
-        if key in os.environ:
-            del os.environ[key]
 
     def _updated_path(self):
         return os.pathsep.join([str(self._bin_dir), os.environ.get("PATH", "")])
