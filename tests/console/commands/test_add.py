@@ -811,11 +811,11 @@ Writing lock file
     assert content_hash != app.poetry.locker.lock_data["metadata"]["content-hash"]
 
 
-def test_add_with_develop_fails_for_schema_without_develop(app, repo, tester):
+def test_add_with_editable_fails_for_schema_without_develop(app, repo, tester):
     repo.add_package(get_package("cachy", "0.2.0"))
 
     with pytest.raises(RuntimeError) as e:
-        tester.execute("cachy --develop")
+        tester.execute("cachy --editable")
     # TODO: Provide better error message.
     # `Develop` attribute is only supported by directory
     # https://github.com/python-poetry/poetry-core/blob/master/poetry/core/packages/directory_dependency.py
@@ -830,7 +830,7 @@ The Poetry configuration is invalid:
     )
 
 
-def test_add_with_develop(app, repo, tester, mocker):
+def test_add_with_editable(app, repo, tester, mocker):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -838,7 +838,7 @@ def test_add_with_develop(app, repo, tester, mocker):
     repo.add_package(get_package("cleo", "0.6.5"))
 
     path = "../git/github.com/demo/demo"
-    tester.execute("{} --develop".format(path))
+    tester.execute("{} --editable".format(path))
 
     expected = """\
 
@@ -1710,7 +1710,7 @@ def test_dry_run_restore_original_content(app, repo, installer, tester):
     assert original_content == app.poetry.file.read()
 
 
-def test_add_with_develop_old_installer(app, repo, old_tester, mocker):
+def test_add_with_editable_old_installer(app, repo, old_tester, mocker):
     p = mocker.patch("poetry.utils._compat.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -1718,7 +1718,7 @@ def test_add_with_develop_old_installer(app, repo, old_tester, mocker):
     repo.add_package(get_package("cleo", "0.6.5"))
 
     path = "../git/github.com/demo/demo"
-    old_tester.execute("{} --develop".format(path))
+    old_tester.execute("{} --editable".format(path))
 
     expected = """\
 
