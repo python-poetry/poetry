@@ -101,7 +101,7 @@ def test_execute_executes_a_batch_of_operations(
         source_url="https://github.com/demo/demo.git",
     )
 
-    assert 0 == executor.execute(
+    return_code = executor.execute(
         [
             Install(Package("pytest", "3.5.2")),
             Uninstall(Package("attrs", "17.4.0")),
@@ -130,6 +130,7 @@ Package operations: 4 installs, 1 update, 1 removal
     output = set(io.fetch_output().splitlines())
     assert expected == output
     assert 5 == len(env.executed)
+    assert 0 == return_code
 
 
 def test_execute_shows_skipped_operations_if_verbose(
