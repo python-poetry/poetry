@@ -60,7 +60,7 @@ def test_get_cached_archives_for_link(config, mocker):
     }
 
 
-def test_get_cache_directory_for_link(config):
+def test_get_cache_directory_for_link(config, config_cache_dir):
     chef = Chef(
         config,
         MockEnv(
@@ -71,8 +71,11 @@ def test_get_cache_directory_for_link(config):
     directory = chef.get_cache_directory_for_link(
         Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
     )
+
     expected = Path(
-        "/foo/artifacts/ba/63/13/283a3b3b7f95f05e9e6f84182d276f7bb0951d5b0cc24422b33f7a4648"
+        "{}/artifacts/ba/63/13/283a3b3b7f95f05e9e6f84182d276f7bb0951d5b0cc24422b33f7a4648".format(
+            config_cache_dir.as_posix()
+        )
     )
 
     assert expected == directory

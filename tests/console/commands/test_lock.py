@@ -1,10 +1,8 @@
-import shutil
-
 import pytest
 
-from poetry.factory import Factory
 from poetry.packages import Locker
 from poetry.utils._compat import Path
+from tests.helpers import get_package
 
 
 @pytest.fixture
@@ -18,15 +16,26 @@ def tester(command_tester_factory):
 
 
 @pytest.fixture
-def poetry_with_old_lockfile(fixture_dir, source_dir):
-    project_dir = source_dir / "project"
-    shutil.copytree(str(fixture_dir("old_lock")), str(project_dir))
-    poetry = Factory().create_poetry(cwd=project_dir)
-    return poetry
+def poetry_with_old_lockfile(project_factory, fixture_dir, source_dir):
+    source = fixture_dir("old_lock")
+    pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
+    poetry_lock_content = (source / "poetry.lock").read_text(encoding="utf-8")
+    return project_factory(
+        name="foobar",
+        pyproject_content=pyproject_content,
+        poetry_lock_content=poetry_lock_content,
+    )
 
 
-def test_lock_no_update(command_tester_factory, poetry_with_old_lockfile, http):
-    http.disable()
+def test_lock_no_update(command_tester_factory, poetry_with_old_lockfile, repo):
+    repo.add_package(get_package("sampleproject", "1.3.1"))
+    repo.add_package(get_package("sampleproject", "2.0.0"))
+
+    locker = Locker(
+        lock=poetry_with_old_lockfile.pyproject.file.path.parent / "poetry.lock",
+        local_config=poetry_with_old_lockfile.locker._local_config,
+    )
+    poetry_with_old_lockfile.set_locker(locker)
 
     locked_repository = poetry_with_old_lockfile.locker.locked_repository(
         with_dev_reqs=True

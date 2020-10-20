@@ -176,9 +176,9 @@ if __name__ == '__main__':
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
-    extended_poetry,
+    extended_poetry, tmp_dir
 ):
-    env = MockEnv(path=Path("/foo"))
+    env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())
 
     builder.build()
@@ -219,8 +219,8 @@ def test_builder_installs_proper_files_when_packages_configured(
     assert len(paths) == len(expected)
 
 
-def test_builder_should_execute_build_scripts(extended_without_setup_poetry):
-    env = MockEnv(path=Path("/foo"))
+def test_builder_should_execute_build_scripts(extended_without_setup_poetry, tmp_dir):
+    env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_without_setup_poetry, env, NullIO())
 
     builder.build()

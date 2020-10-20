@@ -54,9 +54,21 @@ class Config(BaseConfig):
 
 
 @pytest.fixture
-def config_source():
+def config_cache_dir(tmp_dir):
+    path = Path(tmp_dir) / ".cache" / "pypoetry"
+    path.mkdir(parents=True)
+    return path
+
+
+@pytest.fixture
+def config_virtualenvs_path(config_cache_dir):
+    return config_cache_dir / "virtualenvs"
+
+
+@pytest.fixture
+def config_source(config_cache_dir):
     source = DictConfigSource()
-    source.add_property("cache-dir", "/foo")
+    source.add_property("cache-dir", str(config_cache_dir))
 
     return source
 
@@ -226,6 +238,7 @@ def project_factory(tmp_dir, config, repo, installed, default_python):
         dependencies=None,
         dev_dependencies=None,
         pyproject_content=None,
+        poetry_lock_content=None,
         install_deps=True,
     ):
         project_dir = workspace / "poetry-fixture-{}".format(name)
@@ -248,6 +261,10 @@ def project_factory(tmp_dir, config, repo, installed, default_python):
                 dependencies=dependencies,
                 dev_dependencies=dev_dependencies,
             ).create(project_dir, with_tests=False)
+
+        if poetry_lock_content:
+            lock_file = project_dir / "poetry.lock"
+            lock_file.write_text(data=poetry_lock_content, encoding="utf-8")
 
         poetry = Factory().create_poetry(project_dir)
 

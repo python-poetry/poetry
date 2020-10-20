@@ -126,9 +126,11 @@ Package operations: 4 installs, 1 update, 1 removal
     assert 5 == len(env.executed)
 
 
-def test_execute_shows_skipped_operations_if_verbose(config, pool, io):
+def test_execute_shows_skipped_operations_if_verbose(
+    config, pool, io, config_cache_dir
+):
     config = Config()
-    config.merge({"cache-dir": "/foo"})
+    config.merge({"cache-dir": config_cache_dir.as_posix()})
 
     env = MockEnv()
     executor = Executor(env, pool, config, io)
