@@ -41,6 +41,11 @@ python = "*"
 pytest = "^3.4"
 ```
 
+Make sure that `tool.peotry.name` matches the module name or otherwise specified within
+`tool.peotry.packages`.
+
+See [Packages](/docs/pyproject#packages) for more information.
+
 ### Initialising a pre-existing project
 
 Instead of creating a new project, Poetry can be used to 'initialise' a pre-populated
