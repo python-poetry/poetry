@@ -50,7 +50,11 @@ class AddCommand(InstallerCommand, InitCommand):
             "Output the operations but do not execute anything (implicitly enables --verbose).",
         ),
         option("lock", None, "Do not perform operations (only update the lockfile)."),
-        option("editable", None, "Add as dependency in editable mode."),
+        option(
+            "editable",
+            None,
+            "Add as dependency in editable mode. Will cause command to fail for non path or VCS dependencies!",
+        ),
     ]
     help = (
         "The add command adds required packages to your <comment>pyproject.toml</> and installs them.\n\n"

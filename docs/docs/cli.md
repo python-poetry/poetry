@@ -174,6 +174,7 @@ update the constraint, for example `^2.3`. You can do this using the `add` comma
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 * `--no-dev` : Do not install dev dependencies.
 * `--lock` : Do not perform install (only update the lockfile).
+* `--editable`: "Add as dependency in editable mode. Only permissible for non path or VCS dependencies!"
 
 ## add
 
@@ -230,7 +231,13 @@ poetry add ../my-package/dist/my-package-0.1.0.tar.gz
 poetry add ../my-package/dist/my_package-0.1.0.whl
 ```
 
-If you want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
+If you want the dependency to be installed in editable mode you can pass the `--editable` flag or specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
+
+```bash
+poetry add --editable ../my/path
+```
+
+or
 
 ```toml
 [tool.poetry.dependencies]
@@ -241,6 +248,14 @@ my-package = {path = "../my/path", develop = true}
 
     Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
     to make sure the behavior is the same for all poetry versions.
+
+!!!note
+
+    We are working on resolving the inconsistency in the naming of the `--editable` flag and the `develop` attribute. In future the `develop` attribute will be deprecated!
+
+!!!note
+
+    Currently passing the `--editable` flag with a non path or VCS dependency will result in a nonintuitive runtime error. We are currently working on providing a better error message.
 
 If the package(s) you want to install provide extras, you can specify them
 when adding the package:
