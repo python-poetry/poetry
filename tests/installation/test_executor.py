@@ -22,6 +22,13 @@ from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
 
 
+@pytest.fixture
+def env(tmp_dir):
+    path = Path(tmp_dir) / ".venv"
+    path.mkdir(parents=True)
+    return MockEnv(path=path, is_venv=True)
+
+
 @pytest.fixture()
 def io():
     io = BufferedIO()
@@ -57,12 +64,11 @@ def mock_file_downloads(http):
 
 
 def test_execute_executes_a_batch_of_operations(
-    config, pool, io, tmp_dir, mock_file_downloads
+    config, pool, io, tmp_dir, mock_file_downloads, env
 ):
     config = Config()
     config.merge({"cache-dir": tmp_dir})
 
-    env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
 
     file_package = Package(
@@ -127,12 +133,11 @@ Package operations: 4 installs, 1 update, 1 removal
 
 
 def test_execute_shows_skipped_operations_if_verbose(
-    config, pool, io, config_cache_dir
+    config, pool, io, config_cache_dir, env
 ):
     config = Config()
     config.merge({"cache-dir": config_cache_dir.as_posix()})
 
-    env = MockEnv()
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -152,8 +157,7 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
 @pytest.mark.skipif(
     not PY36, reason="Improved error rendering is only available on Python >=3.6"
 )
-def test_execute_should_show_errors(config, mocker, io):
-    env = MockEnv()
+def test_execute_should_show_errors(config, mocker, io, env):
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -175,9 +179,8 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_interrupt(
-    config, mocker, io
+    config, mocker, io, env
 ):
-    env = MockEnv()
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -196,8 +199,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected == io.fetch_output()
 
 
-def test_execute_should_gracefully_handle_io_error(config, mocker, io):
-    env = MockEnv()
+def test_execute_should_gracefully_handle_io_error(config, mocker, io, env):
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -223,7 +225,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_executor_should_delete_incomplete_downloads(
-    config, io, tmp_dir, mocker, pool, mock_file_downloads
+    config, io, tmp_dir, mocker, pool, mock_file_downloads, env
 ):
     fixture = Path(__file__).parent.parent.joinpath(
         "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -246,7 +248,6 @@ def test_executor_should_delete_incomplete_downloads(
     config = Config()
     config.merge({"cache-dir": tmp_dir})
 
-    env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
 
     with pytest.raises(Exception, match="Download error"):

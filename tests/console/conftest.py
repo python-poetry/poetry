@@ -22,8 +22,10 @@ def installer():
 
 
 @pytest.fixture
-def env():
-    return MockEnv(path=Path("/prefix"), base=Path("/base/prefix"), is_venv=True)
+def env(tmp_dir):
+    path = Path(tmp_dir) / ".venv"
+    path.mkdir(parents=True)
+    return MockEnv(path=path, is_venv=True)
 
 
 @pytest.fixture(autouse=True)
