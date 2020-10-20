@@ -10,8 +10,8 @@ def test_config_get_default_value(config, name, value):
     assert config.get(name) is value
 
 
-def test_config_get_processes_depended_on_values(config):
-    assert os.path.join("/foo", "virtualenvs") == config.get("virtualenvs.path")
+def test_config_get_processes_depended_on_values(config, config_cache_dir):
+    assert str(config_cache_dir / "virtualenvs") == config.get("virtualenvs.path")
 
 
 @pytest.mark.parametrize(

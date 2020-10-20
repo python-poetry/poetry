@@ -25,37 +25,41 @@ def test_show_config_with_local_config_file_empty(tester, mocker):
     assert "" == tester.io.fetch_output()
 
 
-def test_list_displays_default_value_if_not_set(tester, config):
+def test_list_displays_default_value_if_not_set(tester, config, config_cache_dir):
     tester.execute("--list")
 
-    expected = """cache-dir = "/foo"
+    expected = """cache-dir = {cache}
 experimental.new-installer = true
 installer.parallel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
-virtualenvs.path = {path}  # /foo{sep}virtualenvs
+virtualenvs.path = {path}  # {virtualenvs}
 """.format(
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
+        cache=json.dumps(str(config_cache_dir)),
+        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
+        virtualenvs=str(config_cache_dir / "virtualenvs"),
     )
 
     assert expected == tester.io.fetch_output()
 
 
-def test_list_displays_set_get_setting(tester, config):
+def test_list_displays_set_get_setting(tester, config, config_cache_dir):
     tester.execute("virtualenvs.create false")
 
     tester.execute("--list")
 
-    expected = """cache-dir = "/foo"
+    expected = """cache-dir = {cache}
 experimental.new-installer = true
 installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
-virtualenvs.path = {path}  # /foo{sep}virtualenvs
+virtualenvs.path = {path}  # {virtualenvs}
 """.format(
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
+        cache=json.dumps(str(config_cache_dir)),
+        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
+        virtualenvs=str(config_cache_dir / "virtualenvs"),
     )
 
     assert 0 == config.set_config_source.call_count
@@ -83,20 +87,22 @@ def test_display_single_local_setting(command_tester_factory, fixture_dir):
     assert expected == tester.io.fetch_output()
 
 
-def test_list_displays_set_get_local_setting(tester, config):
+def test_list_displays_set_get_local_setting(tester, config, config_cache_dir):
     tester.execute("virtualenvs.create false --local")
 
     tester.execute("--list")
 
-    expected = """cache-dir = "/foo"
+    expected = """cache-dir = {cache}
 experimental.new-installer = true
 installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
-virtualenvs.path = {path}  # /foo{sep}virtualenvs
+virtualenvs.path = {path}  # {virtualenvs}
 """.format(
-        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")), sep=os.path.sep
+        cache=json.dumps(str(config_cache_dir)),
+        path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
+        virtualenvs=str(config_cache_dir / "virtualenvs"),
     )
 
     assert 1 == config.set_config_source.call_count

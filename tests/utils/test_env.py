@@ -642,7 +642,7 @@ def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
 
 
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(
-    manager, poetry, config, mocker
+    manager, poetry, config, mocker, config_virtualenvs_path
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -662,14 +662,14 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        Path("/foo/virtualenvs/{}-py3.7".format(venv_name)),
+        config_virtualenvs_path / "{}-py3.7".format(venv_name),
         executable="python3",
         flags={"always-copy": False},
     )
 
 
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific_ones(
-    manager, poetry, config, mocker
+    manager, poetry, config, mocker, config_virtualenvs_path
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -688,7 +688,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        Path("/foo/virtualenvs/{}-py3.9".format(venv_name)),
+        config_virtualenvs_path / "{}-py3.9".format(venv_name),
         executable="python3.9",
         flags={"always-copy": False},
     )
@@ -749,7 +749,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
 
 
 def test_create_venv_uses_patch_version_to_detect_compatibility(
-    manager, poetry, config, mocker
+    manager, poetry, config, mocker, config_virtualenvs_path
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -773,18 +773,15 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     assert not check_output.called
     m.assert_called_with(
-        Path(
-            "/foo/virtualenvs/{}-py{}.{}".format(
-                venv_name, version.major, version.minor
-            )
-        ),
+        config_virtualenvs_path
+        / "{}-py{}.{}".format(venv_name, version.major, version.minor),
         executable=None,
         flags={"always-copy": False},
     )
 
 
 def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
-    manager, poetry, config, mocker
+    manager, poetry, config, mocker, config_virtualenvs_path
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -811,11 +808,8 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
 
     assert check_output.called
     m.assert_called_with(
-        Path(
-            "/foo/virtualenvs/{}-py{}.{}".format(
-                venv_name, version.major, version.minor - 1
-            )
-        ),
+        config_virtualenvs_path
+        / "{}-py{}.{}".format(venv_name, version.major, version.minor - 1),
         executable="python{}.{}".format(version.major, version.minor - 1),
         flags={"always-copy": False},
     )
