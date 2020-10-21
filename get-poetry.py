@@ -324,7 +324,8 @@ class Installer:
     )
 
     REPOSITORY_URL = "https://github.com/python-poetry/poetry"
-    BASE_URL = REPOSITORY_URL + "/releases/download/"
+    USER_BASE_URL = REPOSITORY_URL + "/releases"
+    BASE_URL = USER_BASE_URL + "/download/"
     FALLBACK_BASE_URL = "https://github.com/sdispater/poetry/releases/download/"
 
     def __init__(
@@ -1048,7 +1049,9 @@ def main():
         dest="file",
         action="store",
         help="Install from a local file instead of fetching the latest version "
-        "of Poetry available online.",
+        "of Poetry available online.  File shall be downloaded from the poetry source repository: {}.  ".format(
+            Installer.USER_BASE_URL
+        ),
     )
 
     args = parser.parse_args()
