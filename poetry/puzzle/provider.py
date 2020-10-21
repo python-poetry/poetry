@@ -168,6 +168,7 @@ class Provider:
             rev=dependency.rev,
             name=dependency.name,
         )
+        package.develop = dependency.develop
 
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
