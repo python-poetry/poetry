@@ -1,72 +1,73 @@
+import importlib.util
 import os
 import shutil
+import tarfile
 
-
-try:
-    # Python 3.5+
-    import importlib.util
-except ImportError:
-    # Python 2.7
-    import imp
-try:
-    # Python 2
-    from pathlib2 import Path
-except ImportError:
-    # Python 3
-    from pathlib import Path
+from pathlib import Path
 
 import pytest
 
-from poetry.core.masonry.builder import Builder
-from poetry.factory import Factory
+
+@pytest.fixture()
+def poetry_home(tmp_dir) -> Path:
+    pth = Path(tmp_dir) / ".poetry"
+    return pth
 
 
-# We need to set the poetry home environment variable prior to importing the script since it gets set once at import
-# time.
-SOURCE_HOME = Path(__file__).parent.parent.parent
-GET_POETRY_PATH = SOURCE_HOME / "get-poetry.py"
-TMP_DIR = Path(__file__).parent / "tmp"
-POETRY_HOME = TMP_DIR / ".poetry"
-os.environ["POETRY_HOME"] = str(POETRY_HOME)
-try:
-    # Python 3.5+
-    spec = importlib.util.spec_from_file_location("getpoetry", GET_POETRY_PATH)
+@pytest.fixture()
+def get_poetry(poetry_home):
+    os.environ["POETRY_HOME"] = str(poetry_home)
+    source_home = Path(__file__).parent.parent.parent
+    get_poetry_path = source_home / "get-poetry.py"
+    spec = importlib.util.spec_from_file_location("getpoetry", get_poetry_path)
     getpoetry = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(getpoetry)
-except NameError:
-    # Python 2.7
-    getpoetry = imp.load_source("getpoetry", str(GET_POETRY_PATH))
+    return getpoetry
 
 
 @pytest.fixture()
-def tmp_dir():
-    """
-    Use this in tests to actually set up and tear down the directory.
-    """
-    if TMP_DIR.exists():
-        shutil.rmtree(str(TMP_DIR))
-    TMP_DIR.mkdir(exist_ok=True, parents=False)
-    yield TMP_DIR
-    shutil.rmtree(str(TMP_DIR))
+def poetry_source_file(tmp_dir):
+    source = Path(tmp_dir) / "fake-source"
+    source.mkdir()
+    poetry_dir = source / "poetry"
+    poetry_dir.mkdir()
+    (poetry_dir / "poetry.py").touch()
+    (poetry_dir / "__init__.py").touch()
+    (poetry_dir / "__main__.py").touch()
+    (poetry_dir / "__version__.py").touch()
+    source_tar = Path(tmp_dir) / "fake-source.tar.gz"
+    tar = tarfile.open(source_tar, "w:gz")
+    tar.add(poetry_dir, arcname="poetry")
+    tar.close()
+    shutil.rmtree(source)
+    return source_tar
 
 
 @pytest.fixture()
-def poetry_home(tmp_dir):
-    return POETRY_HOME
+def poetry_source_file_bad(tmp_dir):
+    source = Path(tmp_dir) / "fake-source"
+    source.mkdir()
+    poetry_dir = source / "poetry"
+    poetry_dir.mkdir()
+    source_tar = Path(tmp_dir) / "fake-source-bad.tar.gz"
+    tar = tarfile.open(source_tar, "w:gz")
+    tar.add(poetry_dir, arcname="foo")
+    tar.close()
+    shutil.rmtree(source)
+    return source_tar
 
 
-@pytest.fixture()
-def poetry_sdist_file(tmp_dir):
-    poetry = Factory().create_poetry(cwd=SOURCE_HOME)
-    builder = Builder(poetry)
-    builder.build("sdist")
-    dist_dir = SOURCE_HOME / "dist"
-    yield Path(next(dist_dir.glob("*.tar.gz")))
-
-
-def test_installer_file_sdist(poetry_home, poetry_sdist_file):
-    installer = getpoetry.Installer(file=str(poetry_sdist_file), accept_all=True)
+def test_installer_file_run(poetry_home, poetry_source_file, get_poetry):
+    installer = get_poetry.Installer(file=str(poetry_source_file), accept_all=True)
     installer.run()
     assert poetry_home.is_dir()
     assert (poetry_home / "bin" / "poetry").is_file()
     assert (poetry_home / "lib" / "poetry" / "__init__.py").is_file()
+
+
+def test_installer_file_run_raises_file_not_found(
+    poetry_home, poetry_source_file_bad, get_poetry
+):
+    installer = get_poetry.Installer(file=str(poetry_source_file_bad), accept_all=True)
+    with pytest.raises(FileNotFoundError):
+        installer.run()
