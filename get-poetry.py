@@ -1058,12 +1058,10 @@ def main():
         "--file",
         dest="file",
         action="store",
-        help="Install from a local file instead of fetching the latest version "
-        "of Poetry available online.  File shall be downloaded from the poetry source repository: {}.  ".format(
-            Installer.USER_BASE_URL
-        ),
+        help="Install from a local file instead of fetching the latest "
+        "version of Poetry available online.  File shall be downloaded "
+        f"from the poetry source repository: {Installer.USER_BASE_URL}",
     )
-
     args = parser.parse_args()
 
     base_url = Installer.BASE_URL
