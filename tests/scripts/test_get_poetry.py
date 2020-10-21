@@ -47,7 +47,7 @@ def poetry_source_file(tmp_dir):
 def poetry_source_file_bad(tmp_dir):
     source = Path(tmp_dir) / "fake-source"
     source.mkdir()
-    poetry_dir = source / "poetry"
+    poetry_dir = source / "foo"
     poetry_dir.mkdir()
     source_tar = Path(tmp_dir) / "fake-source-bad.tar.gz"
     tar = tarfile.open(source_tar, "w:gz")
@@ -65,9 +65,9 @@ def test_installer_file_run(poetry_home, poetry_source_file, get_poetry):
     assert (poetry_home / "lib" / "poetry" / "__init__.py").is_file()
 
 
-def test_installer_file_run_raises_file_not_found(
+def test_installer_file_run_raises_source_file_error(
     poetry_home, poetry_source_file_bad, get_poetry
 ):
     installer = get_poetry.Installer(file=str(poetry_source_file_bad), accept_all=True)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(get_poetry.SourceFileError):
         installer.run()

@@ -308,6 +308,10 @@ environment variable. This has not been done automatically.
 """
 
 
+class SourceFileError(Exception):
+    ...
+
+
 class Installer:
 
     CURRENT_PYTHON = sys.executable
@@ -565,8 +569,10 @@ class Installer:
             try:
                 self.extract_lib(self._offline_file)
                 return
-            except Exception:
-                raise RuntimeError("Could not install from offline file.")
+            except SourceFileError as e:
+                raise e
+            except Exception as e:
+                raise SourceFileError("Could not install from offline file.", e)
 
         # We get the payload from the remote host
         platform = sys.platform
@@ -633,6 +639,10 @@ class Installer:
         gz = GzipFile(filename, mode="rb")
         try:
             with tarfile.TarFile(filename, fileobj=gz, format=tarfile.PAX_FORMAT) as f:
+                if "poetry" not in [x.name for x in f.members]:
+                    raise SourceFileError(
+                        f'File {filename} contains no directory "poetry"'
+                    )
                 f.extractall(POETRY_LIB)
         finally:
             gz.close()
@@ -825,7 +835,7 @@ class Installer:
             HWND_BROADCAST,
             WM_SETTINGCHANGE,
             0,
-            u"Environment",
+            "Environment",
             SMTO_ABORTIFHUNG,
             5000,
             ctypes.byref(result),
