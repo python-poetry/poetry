@@ -47,6 +47,15 @@ def provider(root, pool):
     return Provider(root, pool, NullIO())
 
 
+@pytest.mark.parametrize("value", [True, False])
+def test_search_for_vcs_retains_develop_flag(provider, value):
+    dependency = VCSDependency(
+        "demo", "git", "https://github.com/demo/demo.git", develop=value
+    )
+    package = provider.search_for_vcs(dependency)[0]
+    assert package.develop == value
+
+
 def test_search_for_vcs_setup_egg_info(provider):
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
 
