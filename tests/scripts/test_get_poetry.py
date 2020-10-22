@@ -58,7 +58,9 @@ def poetry_source_file_bad(tmp_dir):
 
 
 def test_installer_file_make_lib(poetry_home, poetry_source_file, get_poetry):
-    installer = get_poetry.Installer(file=str(poetry_source_file), accept_all=True)
+    installer = get_poetry.Installer(
+        version=None, file=str(poetry_source_file), accept_all=True
+    )
     installer.make_lib(None)
     assert poetry_home.is_dir()
     assert (poetry_home / "lib" / "poetry" / "__init__.py").is_file()
@@ -67,6 +69,8 @@ def test_installer_file_make_lib(poetry_home, poetry_source_file, get_poetry):
 def test_installer_file_make_lib_raises_source_file_error(
     poetry_home, poetry_source_file_bad, get_poetry
 ):
-    installer = get_poetry.Installer(file=str(poetry_source_file_bad), accept_all=True)
+    installer = get_poetry.Installer(
+        version=None, file=str(poetry_source_file_bad), accept_all=True
+    )
     with pytest.raises(get_poetry.SourceFileError):
         installer.make_lib(None)
