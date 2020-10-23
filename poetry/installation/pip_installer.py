@@ -229,7 +229,7 @@ class PipInstaller(BaseInstaller):
 
                     args.append(req)
 
-                    return self.run_pip(*args)
+                    return self.run(*args)
 
         if package.develop:
             args.append("-e")
