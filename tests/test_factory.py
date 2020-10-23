@@ -6,6 +6,8 @@ import pytest
 
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
+from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import PY2
 from poetry.utils._compat import Path
 
@@ -148,6 +150,31 @@ def test_poetry_with_default_source():
     poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
 
     assert 1 == len(poetry.pool.repositories)
+
+
+def test_poetry_with_non_default_source():
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_source")
+
+    assert len(poetry.pool.repositories) == 2
+
+    assert not poetry.pool.has_default()
+
+    assert poetry.pool.repositories[0].name == "foo"
+    assert isinstance(poetry.pool.repositories[0], LegacyRepository)
+
+    assert poetry.pool.repositories[1].name == "PyPI"
+    assert isinstance(poetry.pool.repositories[1], PyPiRepository)
+
+
+def test_poetry_with_no_default_source():
+    poetry = Factory().create_poetry(fixtures_dir / "sample_project")
+
+    assert len(poetry.pool.repositories) == 1
+
+    assert poetry.pool.has_default()
+
+    assert poetry.pool.repositories[0].name == "PyPI"
+    assert isinstance(poetry.pool.repositories[0], PyPiRepository)
 
 
 def test_poetry_with_two_default_sources():

@@ -70,7 +70,8 @@ class Factory(BaseFactory):
         )
 
         # Configuring sources
-        for source in poetry.local_config.get("source", []):
+        sources = poetry.local_config.get("source", [])
+        for source in sources:
             repository = self.create_legacy_repository(source, config)
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)
@@ -90,7 +91,8 @@ class Factory(BaseFactory):
         # Always put PyPI last to prefer private repositories
         # but only if we have no other default source
         if not poetry.pool.has_default():
-            poetry.pool.add_repository(PyPiRepository(), True)
+            has_sources = bool(sources)
+            poetry.pool.add_repository(PyPiRepository(), not has_sources, has_sources)
         else:
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
