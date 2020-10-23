@@ -247,11 +247,11 @@ databases = ["mysqlclient", "psycopg2"]
 ```
 
 
-When using build front-ends that comply with [PEP-517](https://www.python.org/dev/peps/pep-0517/), the dependencies 
-specified in the `extras` section, can be installed by providing the key between `[]` along with the package name 
-(as prescribed in [PEP-508](https://www.python.org/dev/peps/pep-0508/#extras)). 
+When installing or specifying poetry built packages, the extras defined in this section can be activated 
+as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
 
-For example, from the above toml file, to install the extras under the `databases` key using `pip` as the build front-end
+For example, the dependencies required by the `databases` extra can be activated when installing the 
+package using `pip` as shown below.
 
 ```bash
 pip install awesome[databases]
