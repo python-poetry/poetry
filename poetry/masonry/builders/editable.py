@@ -131,7 +131,7 @@ class EditableBuilder(Builder):
         entry_points = self.convert_entry_points()
 
         for scripts_path in self._env.script_dirs:
-            if is_dir_writable(scripts_path):
+            if is_dir_writable(path=scripts_path, create=True):
                 break
         else:
             self._io.error_line(
