@@ -13,6 +13,7 @@ from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from poetry.utils.helpers import is_dir_writable
 
 
 SCRIPT_TEMPLATE = """\
@@ -94,7 +95,6 @@ class EditableBuilder(Builder):
                 os.remove(str(setup))
 
     def _add_pth(self):
-        pth_file = Path(self._module.name).with_suffix(".pth")
         paths = set()
         for include in self._module.includes:
             if isinstance(include, PackageInclude) and (
@@ -106,34 +106,40 @@ class EditableBuilder(Builder):
         for path in paths:
             content += decode(path + os.linesep)
 
-        for site_package in [self._env.site_packages, self._env.usersite]:
-            if not site_package:
-                continue
-
-            try:
-                site_package.mkdir(parents=True, exist_ok=True)
-                path = site_package.joinpath(pth_file)
-                self._debug(
-                    "  - Adding <c2>{}</c2> to <b>{}</b> for {}".format(
-                        path.name, site_package, self._poetry.file.parent
-                    )
-                )
-                path.write_text(content, encoding="utf-8")
-                return [path]
-            except PermissionError:
-                self._debug("- <b>{}</b> is not writable trying next available site")
-
-        self._io.error_line(
-            "  - Failed to create <c2>{}</c2> for {}".format(
-                pth_file.name, self._poetry.file.parent
+        pth_file = Path(self._module.name).with_suffix(".pth")
+        try:
+            pth_file = self._env.site_packages.write_text(
+                pth_file, content, encoding="utf-8"
             )
-        )
-        return []
+            self._debug(
+                "  - Adding <c2>{}</c2> to <b>{}</b> for {}".format(
+                    pth_file.name, pth_file.parent, self._poetry.file.parent
+                )
+            )
+            return [pth_file]
+        except OSError:
+            # TODO: Replace with PermissionError
+            self._io.error_line(
+                "  - Failed to create <c2>{}</c2> for {}".format(
+                    pth_file.name, self._poetry.file.parent
+                )
+            )
+            return []
 
     def _add_scripts(self):
         added = []
         entry_points = self.convert_entry_points()
-        scripts_path = Path(self._env.paths["scripts"])
+
+        for scripts_path in self._env.script_dirs:
+            if is_dir_writable(path=scripts_path, create=True):
+                break
+        else:
+            self._io.error_line(
+                "  - Failed to find a suitable script installation directory for {}".format(
+                    self._poetry.file.parent
+                )
+            )
+            return []
 
         scripts = entry_points.get("console_scripts", [])
         for script in scripts:
@@ -151,7 +157,7 @@ class EditableBuilder(Builder):
                 f.write(
                     decode(
                         SCRIPT_TEMPLATE.format(
-                            python=self._env._bin("python"),
+                            python=self._env.python,
                             module=module,
                             callable_holder=callable_holder,
                             callable_=callable_,
@@ -165,9 +171,7 @@ class EditableBuilder(Builder):
 
             if WINDOWS:
                 cmd_script = script_file.with_suffix(".cmd")
-                cmd = WINDOWS_CMD_TEMPLATE.format(
-                    python=self._env._bin("python"), script=name
-                )
+                cmd = WINDOWS_CMD_TEMPLATE.format(python=self._env.python, script=name)
                 self._debug(
                     "  - Adding the <c2>{}</c2> script wrapper to <b>{}</b>".format(
                         cmd_script.name, scripts_path
@@ -187,18 +191,26 @@ class EditableBuilder(Builder):
         added_files = added_files[:]
 
         builder = WheelBuilder(self._poetry)
-        dist_info = self._env.site_packages.joinpath(builder.dist_info)
+
+        dist_info_path = Path(builder.dist_info)
+        for dist_info in self._env.site_packages.find(
+            dist_info_path, writable_only=True
+        ):
+            if dist_info.exists():
+                self._debug(
+                    "  - Removing existing <c2>{}</c2> directory from <b>{}</b>".format(
+                        dist_info.name, dist_info.parent
+                    )
+                )
+                shutil.rmtree(str(dist_info))
+
+        dist_info = self._env.site_packages.mkdir(dist_info_path)
 
         self._debug(
             "  - Adding the <c2>{}</c2> directory to <b>{}</b>".format(
-                dist_info.name, self._env.site_packages
+                dist_info.name, dist_info.parent
             )
         )
-
-        if dist_info.exists():
-            shutil.rmtree(str(dist_info))
-
-        dist_info.mkdir()
 
         with dist_info.joinpath("METADATA").open("w", encoding="utf-8") as f:
             builder._write_metadata_file(f)
