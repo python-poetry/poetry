@@ -13,6 +13,7 @@ from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
+from poetry.utils.helpers import is_dir_writable
 
 
 SCRIPT_TEMPLATE = """\
@@ -128,7 +129,17 @@ class EditableBuilder(Builder):
     def _add_scripts(self):
         added = []
         entry_points = self.convert_entry_points()
-        scripts_path = Path(self._env.paths["scripts"])
+
+        for scripts_path in self._env.script_dirs:
+            if is_dir_writable(scripts_path):
+                break
+        else:
+            self._io.error_line(
+                "  - Failed to find a suitable script installation directory for {}".format(
+                    self._poetry.file.parent
+                )
+            )
+            return []
 
         scripts = entry_points.get("console_scripts", [])
         for script in scripts:
@@ -146,7 +157,7 @@ class EditableBuilder(Builder):
                 f.write(
                     decode(
                         SCRIPT_TEMPLATE.format(
-                            python=self._env._bin("python"),
+                            python=self._env.python,
                             module=module,
                             callable_holder=callable_holder,
                             callable_=callable_,
@@ -160,9 +171,7 @@ class EditableBuilder(Builder):
 
             if WINDOWS:
                 cmd_script = script_file.with_suffix(".cmd")
-                cmd = WINDOWS_CMD_TEMPLATE.format(
-                    python=self._env._bin("python"), script=name
-                )
+                cmd = WINDOWS_CMD_TEMPLATE.format(python=self._env.python, script=name)
                 self._debug(
                     "  - Adding the <c2>{}</c2> script wrapper to <b>{}</b>".format(
                         cmd_script.name, scripts_path
