@@ -7,7 +7,6 @@ import re
 import shutil
 import sys
 import sysconfig
-import tempfile
 import textwrap
 
 from contextlib import contextmanager
@@ -40,6 +39,7 @@ from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import subprocess
+from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
 
 
@@ -170,14 +170,9 @@ class SitePackages:
 
         self._writable_candidates = []
         for candidate in self._candidates:
-            try:
-                if not candidate.exists():
-                    continue
-
-                with tempfile.TemporaryFile(dir=str(candidate)):
-                    self._writable_candidates.append(candidate)
-            except (IOError, OSError):
-                pass
+            if not is_dir_writable(candidate):
+                continue
+            self._writable_candidates.append(candidate)
 
         return self._writable_candidates
 
@@ -892,6 +887,7 @@ class Env(object):
         self._supported_tags = None
         self._purelib = None
         self._platlib = None
+        self._script_dirs = None
 
     @property
     def path(self):  # type: () -> Path
@@ -959,6 +955,11 @@ class Env(object):
     def usersite(self):  # type: () -> Optional[Path]
         if "usersite" in self.paths:
             return Path(self.paths["usersite"])
+
+    @property
+    def userbase(self):  # type: () -> Optional[Path]
+        if "userbase" in self.paths:
+            return Path(self.paths["userbase"])
 
     @property
     def purelib(self):  # type: () -> Path
@@ -1106,6 +1107,18 @@ class Env(object):
     def is_venv(self):  # type: () -> bool
         raise NotImplementedError()
 
+    @property
+    def script_dirs(self):  # type: () -> List[Path]
+        if self._script_dirs is None:
+            self._script_dirs = (
+                [Path(self.paths["scripts"])]
+                if "scripts" in self.paths
+                else self._bin_dir
+            )
+            if self.userbase:
+                self._script_dirs.append(self.userbase / self._script_dirs[0].name)
+        return self._script_dirs
+
     def _bin(self, bin):  # type: (str) -> str
         """
         Return path to the given executable.
@@ -1140,6 +1153,10 @@ class SystemEnv(Env):
     """
     A system (i.e. not a virtualenv) Python environment.
     """
+
+    @property
+    def python(self):  # type: () -> str
+        return sys.executable
 
     @property
     def sys_path(self):  # type: () -> List[str]
@@ -1181,6 +1198,7 @@ class SystemEnv(Env):
 
         if site.check_enableusersite() and hasattr(obj, "install_usersite"):
             paths["usersite"] = getattr(obj, "install_usersite")
+            paths["userbase"] = getattr(obj, "install_userbase")
 
         return paths
 
@@ -1316,7 +1334,7 @@ class VirtualEnv(Env):
 
     def is_sane(self):
         # A virtualenv is considered sane if both "python" and "pip" exist.
-        return os.path.exists(self._bin("python")) and os.path.exists(self._bin("pip"))
+        return os.path.exists(self.python) and os.path.exists(self._bin("pip"))
 
     def _run(self, cmd, **kwargs):
         with self.temp_environ():
