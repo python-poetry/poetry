@@ -138,14 +138,22 @@ class InstalledRepository(Repository):
                     if path.name.endswith(".dist-info"):
                         paths = cls.get_package_paths(env=env, name=package.pretty_name)
                         if paths:
+                            is_editable_package = False
                             for src in paths:
                                 if cls.is_vcs_package(src, env):
                                     cls.set_package_vcs_properties(package, env)
                                     break
+
+                                if not (
+                                    is_editable_package
+                                    or env.is_path_relative_to_lib(src)
+                                ):
+                                    is_editable_package = True
                             else:
                                 # TODO: handle multiple source directories?
-                                package._source_type = "directory"
-                                package._source_url = paths.pop().as_posix()
+                                if is_editable_package:
+                                    package._source_type = "directory"
+                                    package._source_url = paths.pop().as_posix()
                     continue
 
                 if cls.is_vcs_package(path, env):
