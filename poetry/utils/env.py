@@ -170,7 +170,7 @@ class SitePackages:
 
         self._writable_candidates = []
         for candidate in self._candidates:
-            if not is_dir_writable(candidate):
+            if not is_dir_writable(path=candidate, create=True):
                 continue
             self._writable_candidates.append(candidate)
 
