@@ -31,3 +31,6 @@ def test_update(tester, poetry_with_old_lockfile, http):
     assert (
         poetry_with_old_lockfile.locker.lock_data["metadata"]["lock-version"] == "1.1"
     )
+    assert "Updating dependencies" in tester.io.fetch_output()
+    assert "Resolving dependencies" in tester.io.fetch_output()
+    assert "Writing lock file" in tester.io.fetch_output()
