@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from pathlib import Path
 
@@ -12,27 +13,27 @@ def tester(command_tester_factory):
 
 
 @pytest.fixture()
-def cd_root(tmp_dir):
+def project_root(tmp_dir):
+    dir = Path(tmp_dir) / "project_root"
+    dir.mkdir()
     cwd = Path().cwd()
-    dir = Path(tmp_dir).root
-    yield os.chdir(dir)
+    os.chdir(dir)
+    yield dir
     os.chdir(cwd)
+    shutil.rmtree(dir)
 
 
-def test_new(tmp_dir, tester, cd_root):
+def test_new(tmp_dir, tester, project_root):
     name = "foo_boo_bar"
-    tester.execute(f"{Path(tmp_dir).relative_to(Path().cwd())} --name {name}")
-    pyproject = Path(tmp_dir) / "pyproject.toml"
+    tester.execute(f"{project_root.relative_to(Path().cwd())} --name {name}")
+    pyproject = Path(project_root) / "pyproject.toml"
     assert pyproject.is_file()
-    assert (Path(tmp_dir) / name).is_dir()
-    assert (Path(tmp_dir) / name / "__init__.py").is_file()
-    assert (Path(tmp_dir) / "tests").is_dir()
-    assert (Path(tmp_dir) / "README.rst").is_file()
+    assert (Path(project_root) / name).is_dir()
+    assert (Path(project_root) / name / "__init__.py").is_file()
+    assert (Path(project_root) / "tests").is_dir()
+    assert (Path(project_root) / "README.rst").is_file()
     with pyproject.open() as f:
         pyproject_data = toml.load(f)
     assert pyproject_data["tool"]["poetry"]["name"] == name
     assert pyproject_data["tool"]["poetry"]["version"] == "0.1.0"
     assert "pytest" in pyproject_data["tool"]["poetry"]["dev-dependencies"]
-
-
-#
