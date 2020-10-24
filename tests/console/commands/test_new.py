@@ -14,13 +14,14 @@ def tester(command_tester_factory):
 @pytest.fixture()
 def cd_root(tmp_dir):
     cwd = Path().cwd()
-    yield os.chdir(Path(tmp_dir).parent)
+    dir = Path(tmp_dir).root
+    yield os.chdir(dir)
     os.chdir(cwd)
 
 
 def test_new(tmp_dir, tester, cd_root):
     name = "foo_boo_bar"
-    tester.execute(f"{tmp_dir} --name {name}")
+    tester.execute(f"{Path(tmp_dir).relative_to(Path().cwd())} --name {name}")
     pyproject = Path(tmp_dir) / "pyproject.toml"
     assert pyproject.is_file()
     assert (Path(tmp_dir) / name).is_dir()
