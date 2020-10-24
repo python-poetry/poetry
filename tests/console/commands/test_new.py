@@ -25,13 +25,13 @@ def project_root(tmp_dir):
 
 def test_new(tmp_dir, tester, project_root):
     name = "foo_boo_bar"
-    tester.execute(f"{project_root.relative_to(Path().cwd())} --name {name}")
-    pyproject = Path(project_root) / "pyproject.toml"
+    tester.execute(f" . --name {name}")
+    pyproject = project_root / "pyproject.toml"
     assert pyproject.is_file()
-    assert (Path(project_root) / name).is_dir()
-    assert (Path(project_root) / name / "__init__.py").is_file()
-    assert (Path(project_root) / "tests").is_dir()
-    assert (Path(project_root) / "README.rst").is_file()
+    assert (project_root / name).is_dir()
+    assert (project_root / name / "__init__.py").is_file()
+    assert (project_root / "tests").is_dir()
+    assert (project_root / "README.rst").is_file()
     with pyproject.open() as f:
         pyproject_data = toml.load(f)
     assert pyproject_data["tool"]["poetry"]["name"] == name
