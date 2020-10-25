@@ -730,7 +730,7 @@ class EnvManager(object):
 
                 if supported_python.allows(Version.parse(python_patch)):
                     io.write_line("Using <c1>{}</c1> ({})".format(python, python_patch))
-                    executable = python
+                    executable = shutil.which(python)
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
 

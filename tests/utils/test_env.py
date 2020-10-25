@@ -652,6 +652,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.7.5")),
     )
+    mocker.patch("shutil.which", return_value="/opt/bin/python3")
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -660,7 +661,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
 
     m.assert_called_with(
         config_virtualenvs_path / "{}-py3.7".format(venv_name),
-        executable="python3",
+        executable="/opt/bin/python3",
         flags={"always-copy": False},
     )
 
@@ -676,6 +677,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
 
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch("subprocess.check_output", side_effect=["3.5.3", "3.9.0"])
+    mocker.patch("shutil.which", return_value="/opt/bin/python3.9")
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -684,7 +686,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
 
     m.assert_called_with(
         config_virtualenvs_path / "{}-py3.9".format(venv_name),
-        executable="python3.9",
+        executable="/opt/bin/python3.9",
         flags={"always-copy": False},
     )
 
