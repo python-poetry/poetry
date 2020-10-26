@@ -14,4 +14,5 @@ def test_overwrite_exception_in_case_of_invalid_command(app):
         conf.create_io(app, args)
 
     stacktrace_files = [str(stack_frame.path) for stack_frame in cm.traceback]
-    assert all(("poetry" in path for path in stacktrace_files))
+    stacktrace_files_without_the_test_file = stacktrace_files[1:]
+    assert all(("poetry" in path for path in stacktrace_files_without_the_test_file))
