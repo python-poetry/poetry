@@ -4,7 +4,6 @@ from typing import Any
 
 from cleo.config import ApplicationConfig as BaseApplicationConfig
 from clikit.api.application.application import Application
-from clikit.api.args.exceptions import NoSuchOptionException
 from clikit.api.args.raw_args import RawArgs
 from clikit.api.event import PRE_HANDLE
 from clikit.api.event import PreHandleEvent
@@ -222,7 +221,7 @@ class ApplicationConfig(BaseApplicationConfig):
 
         try:
             resolved_command = application.resolve_command(args)
-        except NoSuchOptionException as ex:
+        except RuntimeError as ex:
             raise PoetryException(str(ex)) from None
 
         # If the current command is the run one, skip option
