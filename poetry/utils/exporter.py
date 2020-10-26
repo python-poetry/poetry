@@ -32,6 +32,7 @@ class Exporter(object):
         dev=False,
         extras=None,
         with_credentials=False,
+        with_indexes=False,
     ):  # type: (str, Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
@@ -43,6 +44,7 @@ class Exporter(object):
             dev=dev,
             extras=extras,
             with_credentials=with_credentials,
+            with_indexes=with_indexes,
         )
 
     def _export_requirements_txt(
@@ -53,6 +55,7 @@ class Exporter(object):
         dev=False,
         extras=None,
         with_credentials=False,
+        with_indexes=False,
     ):  # type: (Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
         indexes = set()
         content = ""
@@ -87,6 +90,8 @@ class Exporter(object):
                         line += "; {}".format(markers)
 
             if not is_direct_reference and package.source_url:
+                if with_indexes:
+                    line = f"--index-url {package.source_url} " + line
                 indexes.add(package.source_url)
 
             if package.files and with_hashes:
