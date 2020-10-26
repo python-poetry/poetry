@@ -24,7 +24,7 @@ recommended way of installing `poetry`.
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 ```
 
-Alternatively, you can download the `get-poetry.py` file and execute it separately.
+Alternatively, the `get-poetry.py` file can be downloaded and can be executed separately.
 
 The setup script must be able to find one of following executables in your shell's path environment:
 
