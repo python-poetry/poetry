@@ -25,7 +25,6 @@ from poetry.core.semver.exceptions import ParseVersionError
 from poetry.core.version.markers import parse_marker
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils._compat import Path
-from poetry.utils._compat import to_str
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
@@ -181,7 +180,7 @@ class PyPiRepository(RemoteRepository):
 
             try:
                 result = Package(name, version, description)
-                result.description = to_str(description.strip())
+                result.description = str(description.strip())
                 results.append(result)
             except ParseVersionError:
                 self._log(
