@@ -232,6 +232,7 @@ class Application(BaseApplication):  # type: ignore[misc]
         io = event.io
 
         loggers = [
+            "poetry.installation.chef",
             "poetry.packages.locker",
             "poetry.packages.package",
             "poetry.utils.password_manager",

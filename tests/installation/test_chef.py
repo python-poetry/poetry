@@ -8,6 +8,7 @@ from poetry.core.packages.utils.link import Link
 
 from poetry.installation.chef import Chef
 from poetry.utils.env import MockEnv
+from poetry.utils.helpers import get_file_hash
 
 
 if TYPE_CHECKING:
@@ -62,14 +63,33 @@ def test_get_cached_archives_for_link(config: Config, mocker: MockerFixture):
         return_value=distributions,
     )
 
-    archives = chef.get_cached_archives_for_link(
-        Link("https://files.python-poetry.org/demo-0.1.0.tar.gz")
-    )
+    demo_file = "demo-0.1.0.tar.gz"
+    demo_file_hash_name = "md5"
+    demo_file_hash = get_file_hash(distributions / demo_file, demo_file_hash_name)
 
-    assert archives
-    assert set(archives) == {
+    no_hash_link = f"https://files.python-poetry.org/{demo_file}"
+    cached_archives_for_no_hash_link = {  # all packages
         Link(path.as_uri()) for path in distributions.glob("demo-0.1.0*")
     }
+
+    # link with correct hash
+    correct_link = f"{no_hash_link}#{demo_file_hash_name}={demo_file_hash}"
+    cached_archives_for_correct_link = {  # only one file with target hash
+        Link((distributions / demo_file).as_uri()),
+    }
+
+    # link with incorrect hash
+    incorrect_link = f"{no_hash_link}#{demo_file_hash_name}={'0'*32}"
+    cached_archives_for_incorrect_link = set()  # no files
+
+    for url, answer in [
+        (no_hash_link, cached_archives_for_no_hash_link),
+        (correct_link, cached_archives_for_correct_link),
+        (incorrect_link, cached_archives_for_incorrect_link),
+    ]:
+        link = Link(url)
+        archives = chef.get_cached_archives_for_link(link)
+        assert set(archives) == answer
 
 
 def test_get_cache_directory_for_link(config: Config, config_cache_dir: Path):

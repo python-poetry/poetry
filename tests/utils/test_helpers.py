@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+import io
+import tempfile
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -10,6 +14,7 @@ from poetry.core.utils.helpers import parse_requires
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
+from poetry.utils.helpers import get_file_hash
 
 
 if TYPE_CHECKING:
@@ -100,3 +105,18 @@ test_canonicalize_name_cases = [
 def test_canonicalize_name(test: str, expected: str):
     canonicalized_name = canonicalize_name(test)
     assert canonicalized_name == expected
+
+
+def test_get_file_hash():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        test_data = [
+            b"",
+            b"12345",
+            b"0"
+            * (io.DEFAULT_BUFFER_SIZE + 1),  # larger than buffer size in get_file_hash
+        ]
+        for i, data in enumerate(test_data):
+            tmp_file = Path(tmp_dir) / f"file{i}"
+            tmp_file.write_bytes(data)
+            real_hash = hashlib.md5(data).hexdigest()
+            assert get_file_hash(tmp_file, "md5") == real_hash
