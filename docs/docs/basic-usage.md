@@ -42,7 +42,7 @@ pytest = "^3.4"
 ```
 
 Make sure that `tool.poetry.name` matches the module name or otherwise specified within
-`tool.peotry.packages`.
+`tool.poetry.packages`.
 
 See [Packages](/docs/pyproject#packages) for more information.
 
