@@ -1152,3 +1152,70 @@ cachy 0.2.0
 """
 
     assert expected == tester.io.fetch_output()
+
+
+def test_show_tree_no_dev(tester, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
+    poetry.package.add_dependency(
+        Factory.create_dependency("pytest", "^6.1.0", category="dev")
+    )
+
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
+    installed.add_package(cachy2)
+
+    pytest = get_package("pytest", "6.1.1")
+    installed.add_package(pytest)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
+                },
+                {
+                    "name": "msgpack-python",
+                    "version": "0.5.1",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pytest",
+                    "version": "6.1.1",
+                    "description": "",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "msgpack-python": [], "pytest": []},
+            },
+        }
+    )
+
+    tester.execute("--tree --no-dev")
+
+    expected = """\
+cachy 0.2.0
+`-- msgpack-python >=0.5 <0.6
+"""
+
+    assert expected == tester.io.fetch_output()
