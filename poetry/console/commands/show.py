@@ -55,7 +55,9 @@ lists all packages available."""
 
         # Show tree view if requested
         if self.option("tree") and not package:
-            requires = self.poetry.package.requires + self.poetry.package.dev_requires
+            requires = self.poetry.package.requires
+            if include_dev:
+                requires += self.poetry.package.dev_requires
             packages = locked_repo.packages
             for package in packages:
                 for require in requires:
