@@ -12,7 +12,6 @@ class EnvRemoveCommand(Command):
         argument(
             "python",
             "The python executable to remove the virtualenv for.",
-            default=".venv",
             optional=True,
         )
     ]
@@ -22,5 +21,4 @@ class EnvRemoveCommand(Command):
 
         manager = EnvManager(self.poetry)
         venv = manager.remove(self.argument("python"))
-
         self.line("Deleted virtualenv: <comment>{}</comment>".format(venv.path))

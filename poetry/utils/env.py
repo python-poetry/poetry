@@ -305,6 +305,11 @@ class EnvManager(object):
 
     ENVS_FILE = "envs.toml"
 
+    @property
+    def venv_path(self):  # type: () -> Path
+        venv_path = self._poetry.config.get("virtualenvs.path")
+        return Path(CACHE_DIR) / "virtualenvs" if venv_path is None else Path(venv_path)
+
     def __init__(self, poetry):  # type: (Poetry) -> None
         self._poetry = poetry
 
@@ -523,65 +528,35 @@ class EnvManager(object):
             env_list.insert(0, VirtualEnv(venv))
         return env_list
 
-    def remove(self, python):  # type: (str) -> Env
+    def find(self, python):  # type: (str) -> Env
         cwd = self._poetry.file.parent
-
-        # check python value to allow for removal of other environments even
-        # though virtualenvs.in-project is used
-        if self._poetry.config.get("virtualenvs.in-project") and python == ".venv":
-            env = cwd / ".venv"
-            if not env.exists():
-                raise ValueError(
-                    '<warning>Environment "{}" does not exist.</warning>'.format(
-                        env.name
-                    )
-                )
-            self.remove_venv(env)
-
-            return VirtualEnv(env)
-
-        venv_path = self._poetry.config.get("virtualenvs.path")
-        if venv_path is None:
-            venv_path = Path(CACHE_DIR) / "virtualenvs"
-        else:
-            venv_path = Path(venv_path)
-
-        cwd = self._poetry.file.parent
-        envs_file = TOMLFile(venv_path / self.ENVS_FILE)
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
         if python.startswith(base_env_name):
-            venvs = self.list()
-            for venv in venvs:
-                if venv.path.name == python:
-                    # Exact virtualenv name
-                    if not envs_file.exists():
-                        self.remove_venv(venv.path)
+            venv = self._find_with_base_name(python)
+            if venv:
+                return venv
 
-                        return venv
+        python_version = self._resolve_python_version(python)
+        minor = "{}.{}".format(python_version.major, python_version.minor)
 
-                    venv_minor = ".".join(str(v) for v in venv.version_info[:2])
-                    base_env_name = self.generate_env_name(cwd.name, str(cwd))
-                    envs = envs_file.read()
+        name = "{}-py{}".format(base_env_name, minor)
+        venv = self.venv_path / name
 
-                    current_env = envs.get(base_env_name)
-                    if not current_env:
-                        self.remove_venv(venv.path)
-
-                        return venv
-
-                    if current_env["minor"] == venv_minor:
-                        del envs[base_env_name]
-                        envs_file.write(envs)
-
-                    self.remove_venv(venv.path)
-
-                    return venv
-
+        if not venv.exists():
             raise ValueError(
-                '<warning>Environment "{}" does not exist.</warning>'.format(python)
+                '<warning>Environment "{}" does not exist.</warning>'.format(name)
             )
 
+        return VirtualEnv(venv)
+
+    def _find_with_base_name(self, python):  # type: (str) -> Env
+        for venv in self.list():
+            if venv.path.name == python:
+                return venv
+        return None
+
+    def _resolve_python_version(self, python):  # type: (str) -> Version
         try:
             python_version = Version.parse(python)
             python = "python{}".format(python_version.major)
@@ -606,31 +581,27 @@ class EnvManager(object):
             )
         except CalledProcessError as e:
             raise EnvCommandError(e)
+        return Version.parse(python_version.strip())
 
-        python_version = Version.parse(python_version.strip())
-        minor = "{}.{}".format(python_version.major, python_version.minor)
+    def remove(self, python):  # type: (Optional[str]) -> Env
+        venv = self.get() if not python else self.find(python)
+        self._remove_from_venv_file(venv)
+        self.remove_venv(venv.path)
+        return venv
 
-        name = "{}-py{}".format(base_env_name, minor)
-        venv = venv_path / name
+    def _remove_from_venv_file(self, venv):  # type: (Env) -> None
+        cwd = self._poetry.file.parent
+        envs_file = TOMLFile(self.venv_path / self.ENVS_FILE)
 
-        if not venv.exists():
-            raise ValueError(
-                '<warning>Environment "{}" does not exist.</warning>'.format(name)
-            )
+        venv_minor = ".".join(str(v) for v in venv.version_info[:2])
+        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+        envs = envs_file.read()
 
-        if envs_file.exists():
-            envs = envs_file.read()
-            current_env = envs.get(base_env_name)
-            if current_env is not None:
-                current_minor = current_env["minor"]
+        current_env = envs.get(base_env_name)
 
-                if current_minor == minor:
-                    del envs[base_env_name]
-                    envs_file.write(envs)
-
-        self.remove_venv(venv)
-
-        return VirtualEnv(venv)
+        if current_env["minor"] == venv_minor:
+            del envs[base_env_name]
+            envs_file.write(envs)
 
     def create_venv(
         self, io, name=None, executable=None, force=False
