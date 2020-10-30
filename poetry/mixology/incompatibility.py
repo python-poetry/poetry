@@ -1,6 +1,8 @@
 from typing import Dict
 from typing import Generator
 from typing import List
+from typing import Optional
+from typing import Union
 
 from .incompatibility_cause import ConflictCause
 from .incompatibility_cause import DependencyCause
@@ -82,11 +84,15 @@ class Incompatibility:
         return self._terms
 
     @property
-    def cause(self):  # type: () -> IncompatibilityCause
+    def cause(
+        self,
+    ):  # type: () -> Union[RootCause, NoVersionsCause, DependencyCause, ConflictCause, PythonCause, PlatformCause, PackageNotFoundCause]
         return self._cause
 
     @property
-    def external_incompatibilities(self):  # type: () -> Generator[Incompatibility]
+    def external_incompatibilities(
+        self,
+    ):  # type: () -> Generator[Union[ConflictCause, Incompatibility]]
         """
         Returns all external incompatibilities in this incompatibility's
         derivation graph.
@@ -106,7 +112,7 @@ class Incompatibility:
             len(self._terms) == 1 and self._terms[0].dependency.is_root
         )
 
-    def __str__(self):
+    def __str__(self):  # type: () -> str
         if isinstance(self._cause, DependencyCause):
             assert len(self._terms) == 2
 
@@ -222,7 +228,7 @@ class Incompatibility:
 
     def and_to_string(
         self, other, details, this_line, other_line
-    ):  # type: (Incompatibility, dict, int, int) -> str
+    ):  # type: (Incompatibility, dict, Optional[int], Optional[int]) -> str
         requires_both = self._try_requires_both(other, details, this_line, other_line)
         if requires_both is not None:
             return requires_both
@@ -241,18 +247,18 @@ class Incompatibility:
 
         buffer = [str(self)]
         if this_line is not None:
-            buffer.append(" " + this_line)
+            buffer.append(" " + str(this_line))
 
         buffer.append(" and {}".format(str(other)))
 
         if other_line is not None:
-            buffer.append(" " + other_line)
+            buffer.append(" " + str(other_line))
 
         return "\n".join(buffer)
 
     def _try_requires_both(
         self, other, details, this_line, other_line
-    ):  # type: (Incompatibility, dict, int, int) -> str
+    ):  # type: (Incompatibility, dict, Optional[int], Optional[int]) -> Optional[str]
         if len(self._terms) == 1 or len(other.terms) == 1:
             return
 
@@ -298,7 +304,7 @@ class Incompatibility:
 
     def _try_requires_through(
         self, other, details, this_line, other_line
-    ):  # type: (Incompatibility, dict, int, int) -> str
+    ):  # type: (Incompatibility, dict, int, int) -> Optional[str]
         if len(self._terms) == 1 or len(other.terms) == 1:
             return
 
@@ -376,7 +382,7 @@ class Incompatibility:
 
     def _try_requires_forbidden(
         self, other, details, this_line, other_line
-    ):  # type: (Incompatibility, dict, int, int) -> str
+    ):  # type: (Incompatibility, dict, int, int) -> Optional[str]
         if len(self._terms) != 1 and len(other.terms) != 1:
             return None
 
@@ -430,13 +436,13 @@ class Incompatibility:
 
         return "".join(buffer)
 
-    def _terse(self, term, allow_every=False):
+    def _terse(self, term, allow_every=False):  # type: (Term, bool) -> str
         if allow_every and term.constraint.is_any():
             return "every version of {}".format(term.dependency.complete_name)
 
         return str(term.dependency)
 
-    def _single_term_where(self, callable):  # type: (callable) -> Term
+    def _single_term_where(self, callable):  # type: (callable) -> Optional[Term]
         found = None
         for term in self._terms:
             if not callable(term):
@@ -449,5 +455,5 @@ class Incompatibility:
 
         return found
 
-    def __repr__(self):
+    def __repr__(self):  # type: () -> str
         return "<Incompatibility {}>".format(str(self))

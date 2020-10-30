@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Union
@@ -23,11 +25,17 @@ from .operations.operation import Operation
 from .pip_installer import PipInstaller
 
 
+if TYPE_CHECKING:
+    from poetry.utils.env import Env  # noqa
+
+    from .operations import OperationTypes  # noqa
+
+
 class Installer:
     def __init__(
         self,
         io,  # type: IO
-        env,
+        env,  # type: "Env"
         package,  # type: ProjectPackage
         locker,  # type: Locker
         pool,  # type: Pool
@@ -67,11 +75,11 @@ class Installer:
         self._installed_repository = installed
 
     @property
-    def executor(self):
+    def executor(self):  # type: () -> Executor
         return self._executor
 
     @property
-    def installer(self):
+    def installer(self):  # type: () -> BaseInstaller
         return self._installer
 
     def set_package(self, package):  # type: (ProjectPackage) -> Installer
@@ -84,7 +92,7 @@ class Installer:
 
         return self
 
-    def run(self):
+    def run(self):  # type: () -> int
         # Check if refresh
         if not self._update and self._lock and self._locker.is_locked():
             return self._do_refresh()
@@ -162,7 +170,7 @@ class Installer:
 
         return self
 
-    def whitelist(self, packages):  # type: (dict) -> Installer
+    def whitelist(self, packages):  # type: (Iterable[str]) -> Installer
         self._whitelist = [canonicalize_name(p) for p in packages]
 
         return self
@@ -177,7 +185,7 @@ class Installer:
 
         return self
 
-    def _do_refresh(self):
+    def _do_refresh(self):  # type: () -> int
         from poetry.puzzle import Solver
 
         # Checking extras
@@ -203,7 +211,7 @@ class Installer:
 
         return 0
 
-    def _do_install(self, local_repo):
+    def _do_install(self, local_repo):  # type: (Repository) -> int
         from poetry.puzzle import Solver
 
         locked_repository = Repository()
@@ -323,7 +331,7 @@ class Installer:
                 self._io.write_line("")
                 self._io.write_line("<info>Writing lock file</>")
 
-    def _execute(self, operations):
+    def _execute(self, operations):  # type: (List["OperationTypes"]) -> int
         if self._use_executor:
             return self._executor.execute(operations)
 
@@ -459,7 +467,9 @@ class Installer:
 
         self._installer.remove(operation.package)
 
-    def _populate_local_repo(self, local_repo, ops):
+    def _populate_local_repo(
+        self, local_repo, ops
+    ):  # type: (Repository, List[Operation]) -> None
         for op in ops:
             if isinstance(op, Uninstall):
                 continue
@@ -472,8 +482,8 @@ class Installer:
                 local_repo.add_package(package)
 
     def _get_operations_from_lock(
-        self, locked_repository  # type: Repository
-    ):  # type: (...) -> List[Operation]
+        self, locked_repository
+    ):  # type: (Repository) -> List[Operation]
         installed_repo = self._installed_repository
         ops = []
 

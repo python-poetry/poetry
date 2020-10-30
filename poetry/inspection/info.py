@@ -120,7 +120,7 @@ class PackageInfo:
         return cls(cache_version=cache_version, **data)
 
     @classmethod
-    def _log(cls, msg, level="info"):
+    def _log(cls, msg, level="info"):  # type: (str, str) -> None
         """Internal helper method to log information."""
         getattr(logger, level)("<debug>{}:</debug> {}".format(cls.__name__, msg))
 
@@ -436,7 +436,7 @@ class PackageInfo:
             return Factory().create_poetry(path).package
 
     @classmethod
-    def _pep517_metadata(cls, path):  # type (Path) -> PackageInfo
+    def _pep517_metadata(cls, path):  # type: (Path) -> PackageInfo
         """
         Helper method to use PEP-517 library to build and read package metadata.
 

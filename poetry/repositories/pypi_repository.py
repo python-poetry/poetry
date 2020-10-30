@@ -45,7 +45,9 @@ class PyPiRepository(RemoteRepository):
 
     CACHE_VERSION = parse_constraint("1.0.0")
 
-    def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
+    def __init__(
+        self, url="https://pypi.org/", disable_cache=False, fallback=True
+    ):  # type: (str, bool, bool) -> None
         super(PyPiRepository, self).__init__(url.rstrip("/") + "/simple/")
 
         self._base_url = url
@@ -72,7 +74,7 @@ class PyPiRepository(RemoteRepository):
         self._name = "PyPI"
 
     @property
-    def session(self):
+    def session(self):  # type: () -> CacheControl
         return self._session
 
     def find_packages(self, dependency):  # type: (Dependency) -> List[Package]
@@ -156,7 +158,7 @@ class PyPiRepository(RemoteRepository):
     ):  # type: (...) -> Package
         return self.get_release_info(name, version).to_package(name=name, extras=extras)
 
-    def search(self, query):
+    def search(self, query):  # type: (str) -> List[Package]
         results = []
 
         search = {"q": query}
@@ -236,7 +238,7 @@ class PyPiRepository(RemoteRepository):
 
         return PackageInfo.load(cached)
 
-    def find_links_for_package(self, package):
+    def find_links_for_package(self, package):  # type: (Package) -> List[Link]
         json_data = self._get("pypi/{}/{}/json".format(package.name, package.version))
         if json_data is None:
             return []
@@ -452,5 +454,5 @@ class PyPiRepository(RemoteRepository):
     def _download(self, url, dest):  # type: (str, str) -> None
         return download_file(url, dest, session=self.session)
 
-    def _log(self, msg, level="info"):
+    def _log(self, msg, level="info"):  # type: (str, str) -> None
         getattr(logger, level)("<debug>{}:</debug> {}".format(self._name, msg))

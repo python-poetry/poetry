@@ -1,19 +1,25 @@
+from typing import TYPE_CHECKING
+from typing import Optional
 from typing import Union
 
 from poetry.core.packages import Package
 from poetry.core.semver import Version
 
 
+if TYPE_CHECKING:
+    from poetry.repositories import Pool  # noqa
+
+
 class VersionSelector(object):
-    def __init__(self, pool):
+    def __init__(self, pool):  # type: ("Pool") -> None
         self._pool = pool
 
     def find_best_candidate(
         self,
         package_name,  # type: str
-        target_package_version=None,  # type:  Union[str, None]
+        target_package_version=None,  # type:  Optional[str]
         allow_prereleases=False,  # type: bool
-        source=None,  # type: str
+        source=None,  # type: Optional[str]
     ):  # type: (...) -> Union[Package, bool]
         """
         Given a package name and optional version,
@@ -52,12 +58,12 @@ class VersionSelector(object):
             return False
         return package
 
-    def find_recommended_require_version(self, package):
+    def find_recommended_require_version(self, package):  # type: (Package) -> str
         version = package.version
 
         return self._transform_version(version.text, package.pretty_version)
 
-    def _transform_version(self, version, pretty_version):
+    def _transform_version(self, version, pretty_version):  # type: (str, str) -> str
         try:
             parsed = Version.parse(version)
             parts = [parsed.major, parsed.minor, parsed.patch]

@@ -1,8 +1,22 @@
 # -*- coding: utf-8 -*-
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Optional
+from typing import Union
+
 from cleo import argument
 from cleo import option
 
 from .env_command import EnvCommand
+
+
+if TYPE_CHECKING:
+    from clikit.api.io import IO  # noqa
+
+    from poetry.core.packages import Dependency  # noqa
+    from poetry.core.packages import Package  # noqa
+    from poetry.repositories import Repository
+    from poetry.repositories.installed_repository import InstalledRepository
 
 
 class ShowCommand(EnvCommand):
@@ -32,7 +46,7 @@ lists all packages available."""
 
     colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    def handle(self):
+    def handle(self):  # type: () -> Optional[int]
         from clikit.utils.terminal import Terminal
 
         from poetry.io.null_io import NullIO
@@ -257,7 +271,9 @@ lists all packages available."""
 
             self.line(line)
 
-    def display_package_tree(self, io, package, installed_repo):
+    def display_package_tree(
+        self, io, package, installed_repo
+    ):  # type: ("IO", "Package", "Repository") -> None
         io.write("<c1>{}</c1>".format(package.pretty_name))
         description = ""
         if package.description:
@@ -294,13 +310,13 @@ lists all packages available."""
 
     def _display_tree(
         self,
-        io,
-        dependency,
-        installed_repo,
-        packages_in_tree,
-        previous_tree_bar="├",
-        level=1,
-    ):
+        io,  # type: "IO"
+        dependency,  # type: "Dependency"
+        installed_repo,  # type: "Repository"
+        packages_in_tree,  # type: List[str]
+        previous_tree_bar="├",  # type: str
+        level=1,  # type: int
+    ):  # type: (...) -> None
         previous_tree_bar = previous_tree_bar.replace("├", "│")
 
         dependencies = []
@@ -345,7 +361,7 @@ lists all packages available."""
                     io, dependency, installed_repo, current_tree, tree_bar, level + 1
                 )
 
-    def _write_tree_line(self, io, line):
+    def _write_tree_line(self, io, line):  # type: ("IO", str) -> None
         if not io.output.supports_ansi():
             line = line.replace("└", "`-")
             line = line.replace("├", "|-")
@@ -354,7 +370,7 @@ lists all packages available."""
 
         io.write_line(line)
 
-    def init_styles(self, io):
+    def init_styles(self, io):  # type: ("IO") -> None
         from clikit.api.formatter import Style
 
         for color in self.colors:
@@ -362,7 +378,9 @@ lists all packages available."""
             io.output.formatter.add_style(style)
             io.error_output.formatter.add_style(style)
 
-    def find_latest_package(self, package, include_dev):
+    def find_latest_package(
+        self, package, include_dev
+    ):  # type: ("Package", bool) -> Union["Package", bool]
         from clikit.io import NullIO
 
         from poetry.puzzle.provider import Provider
@@ -390,7 +408,7 @@ lists all packages available."""
 
         return selector.find_best_candidate(name, ">={}".format(package.pretty_version))
 
-    def get_update_status(self, latest, package):
+    def get_update_status(self, latest, package):  # type: ("Package", "Package") -> str
         from poetry.core.semver import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
@@ -405,7 +423,9 @@ lists all packages available."""
         # it needs an upgrade but has potential BC breaks so is not urgent
         return "update-possible"
 
-    def get_installed_status(self, locked, installed_repo):
+    def get_installed_status(
+        self, locked, installed_repo
+    ):  # type: ("Package", "InstalledRepository") -> str
         for package in installed_repo.packages:
             if locked.name == package.name:
                 return "installed"

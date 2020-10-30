@@ -1,6 +1,7 @@
 import re
 
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 from packaging.tags import Tag
@@ -34,12 +35,12 @@ class Wheel(object):
             Tag(x, y, z) for x in self.pyversions for y in self.abis for z in self.plats
         }
 
-    def get_minimum_supported_index(self, tags):
+    def get_minimum_supported_index(self, tags):  # type: (List[Tag]) -> Optional[int]
         indexes = [tags.index(t) for t in self.tags if t in tags]
 
         return min(indexes) if indexes else None
 
-    def is_supported_by_environment(self, env):
+    def is_supported_by_environment(self, env):  # type: (Env) -> bool
         return bool(set(env.supported_tags).intersection(self.tags))
 
 

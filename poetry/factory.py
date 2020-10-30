@@ -137,7 +137,7 @@ class Factory(BaseFactory):
 
     def create_legacy_repository(
         self, source, auth_config
-    ):  # type: (Dict[str, str], Config) -> LegacyRepository
+    ):  # type: (Dict[str, str], Config) -> "LegacyRepository"
         from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert

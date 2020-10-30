@@ -10,7 +10,7 @@ class EnvUseCommand(Command):
 
     arguments = [argument("python", "The python executable to use.")]
 
-    def handle(self):
+    def handle(self):  # type: () -> None
         from poetry.utils.env import EnvManager
 
         manager = EnvManager(self.poetry)

@@ -1,13 +1,21 @@
 import logging
 
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from logging import LogRecord  # noqa
+
+    from clikit.api.io import IO  # noqa
+
 
 class IOHandler(logging.Handler):
-    def __init__(self, io):
+    def __init__(self, io):  # type: ("IO") -> None
         self._io = io
 
         super(IOHandler, self).__init__()
 
-    def emit(self, record):
+    def emit(self, record):  # type: ("LogRecord") -> None
         try:
             msg = self.format(record)
             level = record.levelname.lower()

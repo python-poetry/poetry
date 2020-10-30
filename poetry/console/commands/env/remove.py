@@ -12,7 +12,7 @@ class EnvRemoveCommand(Command):
         argument("python", "The python executable to remove the virtualenv for.")
     ]
 
-    def handle(self):
+    def handle(self):  # type: () -> None
         from poetry.utils.env import EnvManager
 
         manager = EnvManager(self.poetry)

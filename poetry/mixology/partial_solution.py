@@ -1,13 +1,17 @@
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
-
-from poetry.core.packages import Dependency
-from poetry.core.packages import Package
 
 from .assignment import Assignment
 from .incompatibility import Incompatibility
 from .set_relation import SetRelation
 from .term import Term
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages import Dependency  # noqa
+    from poetry.core.packages import Package  # noqa
+    from poetry.packages import DependencyPackage  # noqa
 
 
 class PartialSolution:
@@ -19,13 +23,13 @@ class PartialSolution:
     # See https://github.com/dart-lang/mixology/tree/master/doc/solver.md#partial-solution.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: () -> None
         # The assignments that have been made so far, in the order they were
         # assigned.
         self._assignments = []  # type: List[Assignment]
 
         # The decisions made for each package.
-        self._decisions = dict()  # type: Dict[str, Package]
+        self._decisions = dict()  # type: Dict[str, "Package"]
 
         # The intersection of all positive Assignments for each package, minus any
         # negative Assignments that refer to that package.
@@ -48,7 +52,7 @@ class PartialSolution:
         self._backtracking = False
 
     @property
-    def decisions(self):  # type: () -> List[Package]
+    def decisions(self):  # type: () -> List["Package"]
         return list(self._decisions.values())
 
     @property
@@ -60,14 +64,14 @@ class PartialSolution:
         return self._attempted_solutions
 
     @property
-    def unsatisfied(self):  # type: () -> List[Dependency]
+    def unsatisfied(self):  # type: () -> List["Dependency"]
         return [
             term.dependency
             for term in self._positive.values()
             if term.dependency.complete_name not in self._decisions
         ]
 
-    def decide(self, package):  # type: (Package) -> None
+    def decide(self, package):  # type: ("Package") -> None
         """
         Adds an assignment of package as a decision
         and increments the decision level.
@@ -88,7 +92,7 @@ class PartialSolution:
 
     def derive(
         self, dependency, is_positive, cause
-    ):  # type: (Dependency, bool, Incompatibility) -> None
+    ):  # type: ("Dependency", bool, Incompatibility) -> None
         """
         Adds an assignment of package as a derivation.
         """
@@ -170,7 +174,7 @@ class PartialSolution:
         Returns the first Assignment in this solution such that the sublist of
         assignments up to and including that entry collectively satisfies term.
         """
-        assigned_term = None  # type: Term
+        assigned_term = None
 
         for assignment in self._assignments:
             if assignment.dependency.complete_name != term.dependency.complete_name:

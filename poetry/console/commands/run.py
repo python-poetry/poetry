@@ -1,3 +1,6 @@
+from typing import Any
+from typing import Union
+
 from cleo import argument
 
 from .env_command import EnvCommand
@@ -19,7 +22,7 @@ class RunCommand(EnvCommand):
 
         self.config.set_args_parser(RunArgsParser())
 
-    def handle(self):
+    def handle(self):  # type: () -> Any
         args = self.argument("args")
         script = args[0]
         scripts = self.poetry.local_config.get("scripts")
@@ -29,7 +32,7 @@ class RunCommand(EnvCommand):
 
         return self.env.execute(*args)
 
-    def run_script(self, script, args):
+    def run_script(self, script, args):  # type: (Union[str, dict], str) -> Any
         if isinstance(script, dict):
             script = script["callable"]
 

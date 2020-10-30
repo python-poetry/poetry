@@ -16,7 +16,7 @@ class ShellCommand(EnvCommand):
 If one doesn't exist yet, it will be created.
 """
 
-    def handle(self):
+    def handle(self):  # type: () -> None
         from poetry.utils.shell import Shell
 
         # Check if it's already activated or doesn't exist and won't be created

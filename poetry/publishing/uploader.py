@@ -2,10 +2,12 @@ import hashlib
 import io
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 import requests
@@ -26,11 +28,17 @@ from poetry.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 
 
+if TYPE_CHECKING:
+    from cleo.io import ConsoleIO  # noqa
+    from clikit.io import NullIO  # noqa
+
+    from poetry.poetry import Poetry  # noqa
+
 _has_blake2 = hasattr(hashlib, "blake2b")
 
 
 class UploadError(Exception):
-    def __init__(self, error):  # type: (Union[ConnectionError, HTTPError]) -> None
+    def __init__(self, error):  # type: (Union[ConnectionError, HTTPError, str]) -> None
         if isinstance(error, HTTPError):
             message = "HTTP Error {}: {}".format(
                 error.response.status_code, error.response.reason
@@ -46,7 +54,9 @@ class UploadError(Exception):
 
 
 class Uploader:
-    def __init__(self, poetry, io):
+    def __init__(
+        self, poetry, io
+    ):  # type: ("Poetry", Union["ConsoleIO", "NullIO"]) -> None
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
@@ -54,11 +64,11 @@ class Uploader:
         self._password = None
 
     @property
-    def user_agent(self):
+    def user_agent(self):  # type: () -> str
         return user_agent("poetry", __version__)
 
     @property
-    def adapter(self):
+    def adapter(self):  # type: () -> adapters.HTTPAdapter
         retry = util.Retry(
             connect=5,
             total=10,
@@ -86,7 +96,7 @@ class Uploader:
 
         return sorted(wheels + tars)
 
-    def auth(self, username, password):
+    def auth(self, username, password):  # type: (str, str) -> None
         self._username = username
         self._password = password
 
@@ -101,7 +111,7 @@ class Uploader:
 
         return session
 
-    def is_authenticated(self):
+    def is_authenticated(self):  # type: () -> bool
         return self._username is not None and self._password is not None
 
     def upload(
@@ -326,7 +336,7 @@ class Uploader:
 
         return resp
 
-    def _prepare_data(self, data):
+    def _prepare_data(self, data):  # type: (Dict) -> List[Tuple[str, str]]
         data_to_send = []
         for key, value in data.items():
             if not isinstance(value, (list, tuple)):
@@ -337,7 +347,7 @@ class Uploader:
 
         return data_to_send
 
-    def _get_type(self, file):
+    def _get_type(self, file):  # type: (Path) -> str
         exts = file.suffixes
         if exts[-1] == ".whl":
             return "bdist_wheel"

@@ -27,7 +27,7 @@ list of installed packages
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         packages = self.argument("packages")
         is_dev = self.option("dev")
 

@@ -24,7 +24,7 @@ file.
 
     loggers = ["poetry.repositories.pypi_repository"]
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )

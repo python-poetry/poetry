@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Generator
 
 from tomlkit import document
 from tomlkit import table
@@ -9,6 +10,8 @@ from .config_source import ConfigSource
 
 
 if TYPE_CHECKING:
+    from tomlkit.toml_document import TOMLDocument  # noqa
+
     from poetry.core.toml.file import TOMLFile  # noqa
 
 
@@ -56,7 +59,7 @@ class FileConfigSource(ConfigSource):
                 current_config = current_config[key]
 
     @contextmanager
-    def secure(self):
+    def secure(self):  # type: () -> Generator["TOMLDocument"]
         if self.file.exists():
             initial_config = self.file.read()
             config = self.file.read()

@@ -7,7 +7,7 @@ class AboutCommand(Command):
 
     description = "Shows information about Poetry."
 
-    def handle(self):
+    def handle(self):  # type: () -> None
         self.line(
             """<info>Poetry - Package Management for Python</info>
 

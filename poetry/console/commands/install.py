@@ -47,7 +47,7 @@ dependencies and not including the current project, run the command with the
 
     _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
         from poetry.masonry.builders import EditableBuilder
 

@@ -1,3 +1,4 @@
+from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Mapping
@@ -36,7 +37,7 @@ def get_extra_package_names(
     # keep record of packages seen during recursion in order to avoid recursion error
     seen_package_names = set()
 
-    def _extra_packages(package_names):
+    def _extra_packages(package_names):  # type: (Iterable[str]) -> Iterator[str]
         """Recursively find dependencies for packages names"""
         # for each extra pacakge name
         for package_name in package_names:

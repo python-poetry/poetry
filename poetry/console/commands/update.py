@@ -27,7 +27,7 @@ class UpdateCommand(InstallerCommand):
 
     loggers = ["poetry.repositories.pypi_repository"]
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         packages = self.argument("packages")
 
         self._installer.use_executor(

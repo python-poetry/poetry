@@ -1,5 +1,7 @@
 import sys
 
+from typing import TYPE_CHECKING
+
 from cleo import Application as BaseApplication
 
 from poetry.__version__ import __version__
@@ -29,8 +31,12 @@ from .commands.version import VersionCommand
 from .config import ApplicationConfig
 
 
+if TYPE_CHECKING:
+    from poetry.poetry import Poetry  # noqa
+
+
 class Application(BaseApplication):
-    def __init__(self):
+    def __init__(self):  # type: () -> None
         super(Application, self).__init__(
             "poetry", __version__, config=ApplicationConfig("poetry", __version__)
         )
@@ -59,7 +65,7 @@ class Application(BaseApplication):
             self._preliminary_io.error_line("<fg=yellow>{}</>\n".format(message))
 
     @property
-    def poetry(self):
+    def poetry(self):  # type: () -> "Poetry"
         from pathlib import Path
 
         from poetry.factory import Factory

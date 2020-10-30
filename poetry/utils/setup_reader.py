@@ -356,7 +356,9 @@ class SetupReader(object):
                 if target.id == name:
                     return elem.value
 
-    def _find_in_dict(self, dict_, name):  # type: (ast.Call, str) -> Optional[Any]
+    def _find_in_dict(
+        self, dict_, name
+    ):  # type: (Union[ast.Dict, ast.Call], str) -> Optional[Any]
         for key, val in zip(dict_.keys, dict_.values):
             if isinstance(key, ast.Str) and key.s == name:
                 return val

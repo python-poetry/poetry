@@ -11,6 +11,8 @@ import tarfile
 
 from functools import cmp_to_key
 from gzip import GzipFile
+from typing import TYPE_CHECKING
+from typing import Any
 
 from cleo import argument
 from cleo import option
@@ -18,6 +20,12 @@ from cleo import option
 from poetry.core.packages import Dependency
 
 from ..command import Command
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages import Package  # noqa
+    from poetry.core.semver import Version
+    from poetry.utils._compat import Path
 
 
 try:
@@ -61,24 +69,24 @@ class SelfUpdateCommand(Command):
     BASE_URL = REPOSITORY_URL + "/releases/download"
 
     @property
-    def home(self):
+    def home(self):  # type: () -> Path
         from pathlib import Path
 
         return Path(os.environ.get("POETRY_HOME", "~/.poetry")).expanduser()
 
     @property
-    def bin(self):
+    def bin(self):  # type: () -> Path
         return self.home / "bin"
 
     @property
-    def lib(self):
+    def lib(self):  # type: () -> Path
         return self.home / "lib"
 
     @property
-    def lib_backup(self):
+    def lib_backup(self):  # type: () -> Path
         return self.home / "lib-backup"
 
-    def handle(self):
+    def handle(self):  # type: () -> None
         from poetry.__version__ import __version__
         from poetry.core.semver import Version
         from poetry.repositories.pypi_repository import PyPiRepository
@@ -129,7 +137,7 @@ class SelfUpdateCommand(Command):
 
         self.update(release)
 
-    def update(self, release):
+    def update(self, release):  # type: ("Package") -> None
         version = release.version
         self.line("Updating to <info>{}</info>".format(version))
 
@@ -165,7 +173,7 @@ class SelfUpdateCommand(Command):
             )
         )
 
-    def _update(self, version):
+    def _update(self, version):  # type: ("Version") -> None
         from poetry.utils.helpers import temporary_directory
 
         release_name = self._get_release_name(version)
@@ -235,10 +243,10 @@ class SelfUpdateCommand(Command):
             finally:
                 gz.close()
 
-    def process(self, *args):
+    def process(self, *args):  # type: (*Any) -> str
         return subprocess.check_output(list(args), stderr=subprocess.STDOUT)
 
-    def _check_recommended_installation(self):
+    def _check_recommended_installation(self):  # type: () -> None
         from pathlib import Path
 
         current = Path(__file__)
@@ -250,14 +258,14 @@ class SelfUpdateCommand(Command):
                 "Cannot update automatically."
             )
 
-    def _get_release_name(self, version):
+    def _get_release_name(self, version):  # type: ("Version") -> str
         platform = sys.platform
         if platform == "linux2":
             platform = "linux"
 
         return "poetry-{}-{}".format(version, platform)
 
-    def make_bin(self):
+    def make_bin(self):  # type: () -> None
         from poetry.utils._compat import WINDOWS
 
         self.bin.mkdir(0o755, parents=True, exist_ok=True)
@@ -286,7 +294,7 @@ class SelfUpdateCommand(Command):
             st = os.stat(str(self.bin.joinpath("poetry")))
             os.chmod(str(self.bin.joinpath("poetry")), st.st_mode | stat.S_IEXEC)
 
-    def _which_python(self):
+    def _which_python(self):  # type: () -> str
         """
         Decides which python executable we'll embed in the launcher script.
         """

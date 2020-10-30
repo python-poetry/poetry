@@ -34,7 +34,7 @@ from poetry.mixology.solutions.providers import PythonRequirementSolutionProvide
 
 
 class ApplicationConfig(BaseApplicationConfig):
-    def configure(self):
+    def configure(self):  # type: () -> None
         super(ApplicationConfig, self).configure()
 
         self.add_style(Style("c1").fg("cyan"))

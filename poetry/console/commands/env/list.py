@@ -10,7 +10,7 @@ class EnvListCommand(Command):
 
     options = [option("full-path", None, "Output the full paths of the virtualenvs.")]
 
-    def handle(self):
+    def handle(self):  # type: () -> None
         from poetry.utils.env import EnvManager
 
         manager = EnvManager(self.poetry)

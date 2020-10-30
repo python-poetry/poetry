@@ -15,6 +15,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Any
 from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -252,7 +253,7 @@ class SitePackages:
             if value[-1] is True
         ]
 
-    def __getattr__(self, item):
+    def __getattr__(self, item):  # type: (str) -> Any
         try:
             return super(SitePackages, self).__getattribute__(item)
         except AttributeError:
@@ -265,7 +266,9 @@ class EnvError(Exception):
 
 
 class EnvCommandError(EnvError):
-    def __init__(self, e, input=None):  # type: (CalledProcessError) -> None
+    def __init__(
+        self, e, input=None
+    ):  # type: (CalledProcessError, Optional[str]) -> None
         self.e = e
 
         message = "Command {} errored with the following return code {}, and output: \n{}".format(
@@ -277,7 +280,7 @@ class EnvCommandError(EnvError):
 
 
 class NoCompatiblePythonVersionFound(EnvError):
-    def __init__(self, expected, given=None):
+    def __init__(self, expected, given=None):  # type: (str, Optional[str]) -> None
         if given:
             message = (
                 "The specified Python version ({}) "
@@ -618,7 +621,7 @@ class EnvManager(object):
 
     def create_venv(
         self, io, name=None, executable=None, force=False
-    ):  # type: (IO, Optional[str], Optional[str], bool) -> Env
+    ):  # type: (IO, Optional[str], Optional[str], bool) -> VirtualEnv
         if self._env is not None and not force:
             return self._env
 
@@ -849,12 +852,12 @@ class EnvManager(object):
 
     def get_base_prefix(self):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
-            return sys.real_prefix
+            return Path(sys.real_prefix)
 
         if hasattr(sys, "base_prefix"):
-            return sys.base_prefix
+            return Path(sys.base_prefix)
 
-        return sys.prefix
+        return Path(sys.prefix)
 
     @classmethod
     def generate_env_name(cls, name, cwd):  # type: (str, str) -> str
@@ -913,7 +916,7 @@ class Env(object):
         return self._bin("python")
 
     @property
-    def marker_env(self):
+    def marker_env(self):  # type: () -> Dict[str, Any]
         if self._marker_env is None:
             self._marker_env = self.get_marker_env()
 
@@ -935,7 +938,7 @@ class Env(object):
         return os.name
 
     @property
-    def pip_version(self):
+    def pip_version(self):  # type: () -> Version
         if self._pip_version is None:
             self._pip_version = self.get_pip_version()
 
@@ -1009,12 +1012,12 @@ class Env(object):
     @classmethod
     def get_base_prefix(cls):  # type: () -> Path
         if hasattr(sys, "real_prefix"):
-            return sys.real_prefix
+            return Path(sys.real_prefix)
 
         if hasattr(sys, "base_prefix"):
-            return sys.base_prefix
+            return Path(sys.base_prefix)
 
-        return sys.prefix
+        return Path(sys.prefix)
 
     def get_version_info(self):  # type: () -> Tuple[int]
         raise NotImplementedError()
@@ -1046,17 +1049,17 @@ class Env(object):
         """
         return True
 
-    def run(self, bin, *args, **kwargs):
+    def run(self, bin, *args, **kwargs):  # type: (str, *str, **Any) -> Union[str, int]
         bin = self._bin(bin)
         cmd = [bin] + list(args)
         return self._run(cmd, **kwargs)
 
-    def run_pip(self, *args, **kwargs):
+    def run_pip(self, *args, **kwargs):  # type: (*str, **Any) -> Union[int, str]
         pip = self.get_pip_command()
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
-    def _run(self, cmd, **kwargs):
+    def _run(self, cmd, **kwargs):  # type: (List[str], **Any) -> Union[int, str]
         """
         Run a command inside the Python environment.
         """
@@ -1077,7 +1080,7 @@ class Env(object):
                     stderr=subprocess.STDOUT,
                     input=encode(input_),
                     check=True,
-                    **kwargs
+                    **kwargs,
                 ).stdout
             elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
@@ -1090,7 +1093,9 @@ class Env(object):
 
         return decode(output)
 
-    def execute(self, bin, *args, **kwargs):
+    def execute(
+        self, bin, *args, **kwargs
+    ):  # type: (str, *str, **Any) -> Optional[int]
         bin = self._bin(bin)
 
         if not self._is_windows:
@@ -1145,7 +1150,7 @@ class Env(object):
     def __eq__(self, other):  # type: (Env) -> bool
         return other.__class__ == self.__class__ and other.path == self.path
 
-    def __repr__(self):
+    def __repr__(self):  # type: () -> str
         return '{}("{}")'.format(self.__class__.__name__, self._path)
 
 
@@ -1332,11 +1337,11 @@ class VirtualEnv(Env):
     def is_venv(self):  # type: () -> bool
         return True
 
-    def is_sane(self):
+    def is_sane(self):  # type: () -> bool
         # A virtualenv is considered sane if both "python" and "pip" exist.
         return os.path.exists(self.python) and os.path.exists(self._bin("pip"))
 
-    def _run(self, cmd, **kwargs):
+    def _run(self, cmd, **kwargs):  # type: (List[str], **Any) -> Optional[int]
         with self.temp_environ():
             os.environ["PATH"] = self._updated_path()
             os.environ["VIRTUAL_ENV"] = str(self._path)
@@ -1346,7 +1351,9 @@ class VirtualEnv(Env):
 
             return super(VirtualEnv, self)._run(cmd, **kwargs)
 
-    def execute(self, bin, *args, **kwargs):
+    def execute(
+        self, bin, *args, **kwargs
+    ):  # type: (str, *str, **Any) -> Optional[int]
         with self.temp_environ():
             os.environ["PATH"] = self._updated_path()
             os.environ["VIRTUAL_ENV"] = str(self._path)
@@ -1357,7 +1364,7 @@ class VirtualEnv(Env):
             return super(VirtualEnv, self).execute(bin, *args, **kwargs)
 
     @contextmanager
-    def temp_environ(self):
+    def temp_environ(self):  # type: () -> Iterator[None]
         environ = dict(os.environ)
         try:
             yield
@@ -1365,16 +1372,18 @@ class VirtualEnv(Env):
             os.environ.clear()
             os.environ.update(environ)
 
-    def unset_env(self, key):
+    def unset_env(self, key):  # type: (str) -> None
         if key in os.environ:
             del os.environ[key]
 
-    def _updated_path(self):
+    def _updated_path(self):  # type: () -> str
         return os.pathsep.join([str(self._bin_dir), os.environ.get("PATH", "")])
 
 
 class NullEnv(SystemEnv):
-    def __init__(self, path=None, base=None, execute=False):
+    def __init__(
+        self, path=None, base=None, execute=False
+    ):  # type: (Path, Optional[Path], bool) -> None
         if path is None:
             path = Path(sys.prefix)
 
@@ -1386,35 +1395,37 @@ class NullEnv(SystemEnv):
     def get_pip_command(self):  # type: () -> List[str]
         return [self._bin("python"), "-m", "pip"]
 
-    def _run(self, cmd, **kwargs):
+    def _run(self, cmd, **kwargs):  # type: (List[str], **Any) -> int
         self.executed.append(cmd)
 
         if self._execute:
             return super(NullEnv, self)._run(cmd, **kwargs)
 
-    def execute(self, bin, *args, **kwargs):
+    def execute(
+        self, bin, *args, **kwargs
+    ):  # type: (str, *str, **Any) -> Optional[int]
         self.executed.append([bin] + list(args))
 
         if self._execute:
             return super(NullEnv, self).execute(bin, *args, **kwargs)
 
-    def _bin(self, bin):
+    def _bin(self, bin):  # type: (str) -> str
         return bin
 
 
 class MockEnv(NullEnv):
     def __init__(
         self,
-        version_info=(3, 7, 0),
-        python_implementation="CPython",
-        platform="darwin",
-        os_name="posix",
-        is_venv=False,
-        pip_version="19.1",
-        sys_path=None,
-        marker_env=None,
-        supported_tags=None,
-        **kwargs
+        version_info=(3, 7, 0),  # type: Tuple[int, int, int]
+        python_implementation="CPython",  # type: str
+        platform="darwin",  # type: str
+        os_name="posix",  # type: str
+        is_venv=False,  # type: bool
+        pip_version="19.1",  # type: str
+        sys_path=None,  # type: Optional[List[str]]
+        marker_env=None,  # type: Dict[str, Any]
+        supported_tags=None,  # type: List[Tag]
+        **kwargs,  # type: Any
     ):
         super(MockEnv, self).__init__(**kwargs)
 
@@ -1437,11 +1448,11 @@ class MockEnv(NullEnv):
         return self._os_name
 
     @property
-    def pip_version(self):
+    def pip_version(self):  # type: () -> Version
         return self._pip_version
 
     @property
-    def sys_path(self):
+    def sys_path(self):  # type: () -> List[str]
         if self._sys_path is None:
             return super(MockEnv, self).sys_path
 
