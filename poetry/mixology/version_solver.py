@@ -2,7 +2,6 @@
 import time
 
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Dict
 from typing import List
 from typing import Union
@@ -10,8 +9,6 @@ from typing import Union
 from poetry.core.packages import Dependency
 from poetry.core.packages import Package
 from poetry.core.packages import ProjectPackage
-from poetry.core.semver import Version
-from poetry.core.semver import VersionRange
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility
@@ -422,9 +419,6 @@ class VersionSolver:
             )
 
         return dependency.complete_name
-
-    def _excludes_single_version(self, constraint):  # type: (Any) -> bool
-        return isinstance(VersionRange().difference(constraint), Version)
 
     def _result(self):  # type: () -> SolverResult
         """

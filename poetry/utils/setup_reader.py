@@ -59,14 +59,6 @@ class SetupReader(object):
 
         return result
 
-    @classmethod
-    def _is_empty_result(cls, result):  # type: (Dict[str, Any]) -> bool
-        return (
-            not result["install_requires"]
-            and not result["extras_require"]
-            and not result["python_requires"]
-        )
-
     def read_setup_py(
         self, filepath
     ):  # type: (Union[basestring, Path]) -> Dict[str, Union[List, Dict]]
