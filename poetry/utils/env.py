@@ -585,19 +585,29 @@ class EnvManager(object):
 
     def remove(self, python):  # type: (Optional[str]) -> Env
         venv = self.get() if not python else self.find(python)
-        self._remove_from_venv_file(venv)
+        self._remove_from_venv_file(python, venv)
         self.remove_venv(venv.path)
         return venv
 
-    def _remove_from_venv_file(self, venv):  # type: (Env) -> None
+    def _remove_from_venv_file(self, python, venv):  # type: (str, Env) -> None
         cwd = self._poetry.file.parent
         envs_file = TOMLFile(self.venv_path / self.ENVS_FILE)
+        if not envs_file.exists():
+            return
 
-        venv_minor = ".".join(str(v) for v in venv.version_info[:2])
-        base_env_name = self.generate_env_name(cwd.name, str(cwd))
+        if venv.path.name == python:
+            venv_minor = ".".join(str(v) for v in venv.version_info[:2])
+        else:
+            python_version = self._resolve_python_version(python)
+            venv_minor = "{}.{}".format(python_version.major, python_version.minor)
+        base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
         envs = envs_file.read()
+        if base_env_name not in envs:
+            base_env_name = self.generate_env_name(cwd.name, str(cwd))
 
         current_env = envs.get(base_env_name)
+        if not current_env:
+            return
 
         if current_env["minor"] == venv_minor:
             del envs[base_env_name]
@@ -1064,7 +1074,7 @@ class Env(object):
                     stderr=subprocess.STDOUT,
                     input=encode(input_),
                     check=True,
-                    **kwargs
+                    **kwargs,
                 ).stdout
             elif call:
                 return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
@@ -1401,7 +1411,7 @@ class MockEnv(NullEnv):
         sys_path=None,
         marker_env=None,
         supported_tags=None,
-        **kwargs
+        **kwargs,
     ):
         super(MockEnv, self).__init__(**kwargs)
 
