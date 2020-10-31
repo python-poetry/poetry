@@ -92,7 +92,7 @@ def user_data_dir(appname, roaming=False):
     That means, by default "~/.local/share/<AppName>".
     """
     if WINDOWS:
-        const = roaming and "CSIDL_APPDATA" or "CSIDL_LOCAL_APPDATA"
+        const = "CSIDL_APPDATA" if roaming else "CSIDL_LOCAL_APPDATA"
         path = os.path.join(os.path.normpath(_get_win_folder(const)), appname)
     elif sys.platform == "darwin":
         path = os.path.join(expanduser("~/Library/Application Support/"), appname)
