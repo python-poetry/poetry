@@ -116,7 +116,10 @@ poetry env remove /full/path/to/python
 poetry env remove python3.7
 poetry env remove 3.7
 poetry env remove test-O3eWbxRl-py3.7
-poetry env remove .venv
+poetry env remove
 ```
+
+If an argument for the python virtual environment to remove is not passed to the command, the currently activated virtual environment will be removed.
+This includes any virtual environment created in-project.
 
 If you remove the currently activated virtual environment, it will be automatically deactivated.
