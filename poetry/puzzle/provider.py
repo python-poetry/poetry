@@ -101,7 +101,7 @@ class Provider:
         if dependency.is_root:
             return PackageCollection(dependency, [self._package])
 
-        for constraint in self._search_for.keys():
+        for constraint in self._search_for:
             if (
                 constraint.is_same_package_as(dependency)
                 and constraint.constraint.intersect(dependency.constraint)
