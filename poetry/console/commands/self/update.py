@@ -257,14 +257,6 @@ class SelfUpdateCommand(Command):
 
         return "poetry-{}-{}".format(version, platform)
 
-    def _bin_path(self, base_path, bin):
-        from poetry.utils._compat import WINDOWS
-
-        if WINDOWS:
-            return (base_path / "Scripts" / bin).with_suffix(".exe")
-
-        return base_path / "bin" / bin
-
     def make_bin(self):
         from poetry.utils._compat import WINDOWS
 

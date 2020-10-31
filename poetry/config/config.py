@@ -136,18 +136,6 @@ class Config(object):
 
         return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)
 
-    def _get_validator(self, name):  # type: (str) -> Callable
-        if name in {
-            "virtualenvs.create",
-            "virtualenvs.in-project",
-            "virtualenvs.options.always-copy",
-            "installer.parallel",
-        }:
-            return boolean_validator
-
-        if name == "virtualenvs.path":
-            return str
-
     def _get_normalizer(self, name):  # type: (str) -> Callable
         if name in {
             "virtualenvs.create",

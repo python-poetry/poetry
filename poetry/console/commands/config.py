@@ -302,14 +302,6 @@ To remove a repository (repo is a short alias for repositories):
 
             self.line(message)
 
-    def _list_setting(self, contents, setting=None, k=None, default=None):
-        values = self._get_setting(contents, setting, k, default)
-
-        for value in values:
-            self.line(
-                "<comment>{}</comment> = <info>{}</info>".format(value[0], value[1])
-            )
-
     def _get_setting(self, contents, setting=None, k=None, default=None):
         orig_k = k
 
@@ -351,11 +343,3 @@ To remove a repository (repo is a short alias for repositories):
                 values.append(((k or "") + key, value))
 
             return values
-
-    def _get_formatted_value(self, value):
-        if isinstance(value, list):
-            value = [json.dumps(val) if isinstance(val, list) else val for val in value]
-
-            value = "[{}]".format(", ".join(value))
-
-        return json.dumps(value)

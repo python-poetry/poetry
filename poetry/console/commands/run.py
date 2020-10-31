@@ -47,14 +47,3 @@ class RunCommand(EnvCommand):
         ]
 
         return self.env.execute(*cmd)
-
-    @property
-    def _module(self):
-        from poetry.core.masonry.utils.module import Module
-
-        poetry = self.poetry
-        package = poetry.package
-        path = poetry.file.parent
-        module = Module(package.name, path.as_posix(), package.packages)
-
-        return module

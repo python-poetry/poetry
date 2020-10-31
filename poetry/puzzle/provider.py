@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import time
 
 from contextlib import contextmanager
 from tempfile import mkdtemp
@@ -44,10 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):
-    def _formatter_elapsed(self):
-        elapsed = time.time() - self._start_time
-
-        return "{:.1f}s".format(elapsed)
+    pass
 
 
 class Provider:
