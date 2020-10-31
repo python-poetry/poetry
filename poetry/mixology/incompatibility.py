@@ -23,7 +23,7 @@ class Incompatibility:
         if (
             len(terms) != 1
             and isinstance(cause, ConflictCause)
-            and any([term.is_positive() and term.dependency.is_root for term in terms])
+            and any(term.is_positive() and term.dependency.is_root for term in terms)
         ):
             terms = [
                 term

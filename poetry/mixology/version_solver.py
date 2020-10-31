@@ -403,11 +403,9 @@ class VersionSolver:
             # We'll continue adding its dependencies, then go back to
             # unit propagation which will guide us to choose a better version.
             conflict = conflict or all(
-                [
-                    term.dependency.complete_name == dependency.complete_name
-                    or self._solution.satisfies(term)
-                    for term in incompatibility.terms
-                ]
+                term.dependency.complete_name == dependency.complete_name
+                or self._solution.satisfies(term)
+                for term in incompatibility.terms
             )
 
         if not conflict:

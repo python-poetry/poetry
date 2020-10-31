@@ -101,11 +101,9 @@ class KeyRing:
                 backends = keyring.backend.get_all_keyring()
 
                 self._is_available = any(
-                    [
-                        b.name.split(" ")[0] not in ["chainer", "fail"]
-                        and "plaintext" not in b.name.lower()
-                        for b in backends
-                    ]
+                    b.name.split(" ")[0] not in ["chainer", "fail"]
+                    and "plaintext" not in b.name.lower()
+                    for b in backends
                 )
             except Exception:
                 self._is_available = False
