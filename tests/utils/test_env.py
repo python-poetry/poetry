@@ -572,20 +572,11 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     assert venv_name not in envs
 
 
-# TODO rewrite after implementing
-# def test_remove_in_project(config, manager, monkeypatch, tmp_path):
-#     config.merge({"virtualenvs": {"in-project": True}})
-#     monkeypatch.setattr(manager._poetry.file, "parent", tmp_path)
-
-#     venv_path = tmp_path / ".venv"
-#     venv_path.mkdir()
-
-#     manager.remove(".venv")
-#     assert not venv_path.exists()
-
-#     with pytest.raises(ValueError) as excinfo:
-#         manager.remove(".venv")
-#     assert venv_path.name in str(excinfo.value)
+def test_remove_in_project(tmp_venv, config, manager, monkeypatch):
+    config.merge({"virtualenvs": {"in-project": True}})
+    monkeypatch.setattr(manager, "get", lambda: tmp_venv)
+    manager.remove(None)
+    assert not tmp_venv.path.exists()
 
 
 def test_remove_in_project_external(

@@ -585,7 +585,9 @@ class EnvManager(object):
 
     def remove(self, python):  # type: (Optional[str]) -> Env
         venv = self.get() if not python else self.find(python)
-        self._remove_from_venv_file(python, venv)
+        if venv.path.name != ".venv":
+            # skip removing from venv file when it in the project
+            self._remove_from_venv_file(python, venv)
         self.remove_venv(venv.path)
         return venv
 

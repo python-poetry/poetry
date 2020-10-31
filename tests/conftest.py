@@ -198,7 +198,10 @@ def tmp_venv(tmp_dir):
     venv = VirtualEnv(venv_path)
     yield venv
 
-    shutil.rmtree(str(venv.path))
+    try:
+        shutil.rmtree(str(venv.path))
+    except FileNotFoundError:
+        pass  # was deleted during a test
 
 
 @pytest.fixture
