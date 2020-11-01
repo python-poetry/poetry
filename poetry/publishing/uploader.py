@@ -272,7 +272,7 @@ class Uploader:
                         )
                     )
                     bar.finish()
-                elif resp.status_code == 301:
+                elif resp.status_code in (301, 308):
                     if self._io.output.supports_ansi():
                         self._io.overwrite(
                             " - Uploading <c1>{0}</c1> <error>{1}</>".format(
