@@ -253,7 +253,7 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
-When installing or specifying poetry built packages, the extras defined in this section can be activated 
+When installing or specifying poetry-built packages, the extras defined in this section can be activated 
 as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
 
 For example, the dependencies required by the `databases` extra can be activated when installing the 
@@ -265,8 +265,8 @@ pip install awesome[databases]
 
 !!!note
 
-    The dependencies specified for each extra must be already defined as project dependencies.
-    Using any dependency from the dev dependencies section is not supported.
+    The dependencies specified for each `extra` must be already defined as project dependencies.
+    Using any dependency from the `dev-dependencies` section is not supported.
 
 
 ## `plugins`
