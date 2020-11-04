@@ -10,7 +10,12 @@ class BuildCommand(EnvCommand):
 
     options = [
         option("format", "f", "Limit the format to either sdist or wheel.", flag=False),
-        option("lock", "l", "Add all dependencies as locked dependencies in the distributed pyproject.toml", flag=True)
+        option(
+            "lock",
+            "l",
+            "Add all dependencies as locked dependencies in the distributed pyproject.toml",
+            flag=True,
+        ),
     ]
 
     loggers = [
