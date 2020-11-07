@@ -63,6 +63,14 @@ hooks:
     verbose: true
 ```
 
+Or to put the `dev` dependencies into the `requirements.txt` also use this:
+
+```yaml
+hooks:
+  - id: poetry-export
+    args: ["--dev", "-f", "requirements.txt", "-o", "requirements.txt"]
+```
+
 
 ## Usage
 
