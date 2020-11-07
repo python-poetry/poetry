@@ -1100,6 +1100,7 @@ class Env(object):
             else:
                 return os.execvp(bin, args)
         else:
+            kwargs["shell"] = True
             exe = subprocess.Popen([bin] + list(args), **kwargs)
             exe.communicate()
             return exe.returncode
