@@ -320,6 +320,7 @@ Note that, at the moment, only pure python wheels are supported.
 ### Options
 
 * `--format (-f)`: Limit the format to either `wheel` or `sdist`.
+* `--lock (-l)`: Add all pinned dependencies from `poetry.lock` to `pyproject.toml` of source and wheels archive
 
 ## publish
 
