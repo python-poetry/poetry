@@ -25,7 +25,7 @@ class BuildCommand(EnvCommand):
     ]
 
     def handle(self):
-        from poetry.core.masonry import Builder
+        from poetry.core.masonry import builder
 
         fmt = "all"
         if self.option("format"):
@@ -49,15 +49,18 @@ class BuildCommand(EnvCommand):
             if section not in poetry_content:
                 poetry_content[section] = {}
 
-            for dependency_package in self._poetry.locker.lock_data["package"]:
+            for dependency_package in self.poetry.locker.lock_data["package"]:
                 name = dependency_package["name"]
                 version = dependency_package["version"]
                 poetry_content[section][name] = version
 
-            self.poetry.file.write(content)
+            self._write_pyproject_toml(content)
 
-        builder = Builder(self.poetry)
+        builder = builder.Builder(self.poetry)
         builder.build(fmt, executable=self.env.python)
 
         if lock:
-            self.poetry.file.write(original_content)
+            self._write_pyproject_toml(original_content)
+
+    def _write_pyproject_toml(self, content):
+        self.poetry.file.write(content)
