@@ -584,9 +584,10 @@ class Executor(object):
 
         archive = self._chef.get_cached_archive_for_link(link)
         if archive is link:
+            repository = self._chooser._get_repository(operation.package)
             # No cached distributions was found, so we download and prepare it
             try:
-                archive = self._download_archive(operation, link)
+                archive = self._download_archive(operation, link, repository)
             except BaseException:
                 cache_directory = self._chef.get_cache_directory_for_link(link)
                 cached_file = cache_directory.joinpath(link.filename)
@@ -611,9 +612,13 @@ class Executor(object):
 
         return archive
 
-    def _download_archive(self, operation, link):  # type: (Operation, Link) -> Path
+    def _download_archive(self, operation, link, repository):  # type: (Operation, Link, LegacyRepository) -> Path
         response = self._authenticator.request(
-            "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
+            "get",
+            link.url,
+            stream=True,
+            io=self._sections.get(id(operation), self._io),
+            verify=getattr(repository, 'cert'),
         )
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)

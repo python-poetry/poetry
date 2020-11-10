@@ -82,7 +82,7 @@ class Chooser:
 
         return chosen
 
-    def _get_links(self, package):  # type: (Package) -> List[Link]
+    def _get_repository(self, package):
         if not package.source_type:
             if not self._pool.has_repository("pypi"):
                 repository = self._pool.repositories[0]
@@ -90,6 +90,10 @@ class Chooser:
                 repository = self._pool.repository("pypi")
         else:
             repository = self._pool.repository(package.source_reference)
+        return repository
+
+    def _get_links(self, package):  # type: (Package) -> List[Link]
+        repository = self._get_repository(package)
 
         links = repository.find_links_for_package(package)
 
