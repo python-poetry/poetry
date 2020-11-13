@@ -142,8 +142,8 @@ Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 ### `virtualenvs.prompt` : string
 
 Name of the command line prompt to be displayed when the virtual enviroment is activated.
-The variables `project_name` and `python_version` are avalible for formatting.
-Defaults to "{project_name}-py{python_version}"
+The variables `project_name` and `python_version` are available for formatting.
+Defaults to "{project_name}-py{python_version}".
 
 ### `virtualenvs.options.always-copy`: boolean
 
