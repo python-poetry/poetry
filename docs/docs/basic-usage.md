@@ -120,7 +120,7 @@ To deactivate this virtual environment simply use `deactivate`.
 |-------------------|------------------------------------------------|---------------------------------------------|-----------------|
 | New Shell         | `poetry shell`                                 | `poetry shell`                              | `exit`          |
 | Manual Activation | `source {path_to_venv}/bin/activate`           | `source {path_to_venv}\Scripts\activate.bat`| `deactivate`    |
-| One-liner         | ```source`poetry env info --path`/bin/activate```|                                             | `deactivate`    |
+| One-liner         | ```source `poetry env info --path`/bin/activate```|                                             | `deactivate`    |
 
 
 ### Version constraints
