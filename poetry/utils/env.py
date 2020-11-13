@@ -743,9 +743,6 @@ class EnvManager(object):
             name = "{}-py{}".format(name, python_minor.strip())
             venv = venv_path / name
 
-        prompt = self._poetry.config.get("virtualenvs.prompt").format(
-            project_name=self._poetry.package.name, python_version=python_minor
-        )
         if not venv.exists():
             if create_venv is False:
                 io.write_line(
@@ -762,9 +759,7 @@ class EnvManager(object):
             )
 
             self.build_venv(
-                venv,
-                executable=executable,
-                flags=virtualenv_flags()
+                venv, executable=executable, flags=self.__virtualenv_flags(python_minor)
             )
         else:
             if force:
@@ -781,7 +776,7 @@ class EnvManager(object):
                 self.build_venv(
                     venv,
                     executable=executable,
-                    flags=self.virtualenv_flags()
+                    flags=self.__virtualenv_flags(python_minor),
                 )
             elif io.is_very_verbose():
                 io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
@@ -803,14 +798,15 @@ class EnvManager(object):
             return SystemEnv(Path(sys.prefix), self.get_base_prefix())
 
         return VirtualEnv(venv)
-    def virtualenv_flags(self):
+
+    def __virtualenv_flags(self, python_minor):
+        """Extra flags to be passed to virtualenv"""
         flags = self._poetry.config.get("virtualenvs.options")
-        flags["prompt"] = prompt = self._poetry.config.get("virtualenvs.prompt").format(
+        flags["prompt"] = self._poetry.config.get("virtualenvs.prompt").format(
             project_name=self._poetry.package.name, python_version=python_minor
         )
 
         return flags
-
 
     @classmethod
     def build_venv(
