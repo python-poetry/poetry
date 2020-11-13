@@ -131,14 +131,20 @@ class Config(object):
         return self.process(value)
 
     def process(self, value):  # type: (Any) -> Any
+        """Resolve any configuration values that depend on other configuration values."""
         if not isinstance(value, str):
             return value
 
-        return re.sub(
-            r"{(.+?)}",
-            lambda m: self.get(m.group(1)) or "{{{key}}}".format(key=m.group(1)),
-            value,
-        )
+        def resolve_from_config(match):
+            key = match.group(1)
+            config_value = self.get(key)
+            if config_value:
+                return config_value
+
+            # The key doesn't exist in the config but might be resolved later, so we keep it as a format variable.
+            return "{{{key}}}".format(key=key)
+
+        return re.sub(r"{(.+?)}", resolve_from_config, value)
 
     def _get_normalizer(self, name):  # type: (str) -> Callable
         if name in {
