@@ -41,19 +41,10 @@ def test_remove_by_name(tester, venvs_in_cache_dirs, venv_name, venv_cache):
     assert expected == tester.io.fetch_output()
 
 
-# TODO rewrite after implementing
-# @pytest.mark.parametrize("python_arg", ["", ".venv"])
-# def test_remove_in_project(python_arg, app, tmp_path, monkeypatch):
-#     app.poetry.config.merge({"virtualenvs": {"in-project": True}})
-#     monkeypatch.setattr(app.poetry.file, "_path_", tmp_path / "pyproject.toml")
-
-#     venv_path = tmp_path / ".venv"
-#     venv_path.mkdir()
-#     command = app.find("env remove")
-#     tester = CommandTester(command)
-#     tester.execute(python_arg)
-
-#     expected = "Deleted virtualenv: {}\n".format(venv_path)
-
-#     assert not venv_path.exists()
-#     assert expected == tester.io.fetch_output()
+def test_remove_in_project(app, mocker, tester, tmp_venv):
+    app.poetry.config.merge({"virtualenvs": {"in-project": True}})
+    mock_manager = mocker.patch("poetry.utils.env.EnvManager")
+    mock_manager.return_value = mock_manager
+    mock_manager.remove.return_value = tmp_venv
+    tester.execute()
+    assert tester.io.fetch_output() == "Deleted virtualenv: {}\n".format(tmp_venv.path)

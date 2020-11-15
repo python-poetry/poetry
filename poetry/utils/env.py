@@ -533,7 +533,7 @@ class EnvManager(object):
         base_env_name = self.generate_env_name(self._poetry.package.name, str(cwd))
 
         if python.startswith(base_env_name):
-            venv = self._find_with_base_name(python)
+            venv = self._find_by_exact_name(python)
             if venv:
                 return venv
 
@@ -550,7 +550,7 @@ class EnvManager(object):
 
         return VirtualEnv(venv)
 
-    def _find_with_base_name(self, python):  # type: (str) -> Env
+    def _find_by_exact_name(self, python):  # type: (str) -> Env
         for venv in self.list():
             if venv.path.name == python:
                 return venv

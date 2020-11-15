@@ -466,6 +466,51 @@ def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
     assert len(envs) == 0
 
 
+def test_find_by_exact_name(config, manager, poetry, tmp_dir):
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    expected = Path(tmp_dir) / "{}-py3.7".format(venv_name)
+    expected.mkdir()
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    assert manager.find("{}-py3.7".format(venv_name)).path == expected
+
+
+def test_find_by_python_version(config, manager, mocker, poetry, tmp_dir):
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    expected = Path(tmp_dir) / "{}-py3.7".format(venv_name)
+    expected.mkdir()
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.7.9")),
+    )
+
+    assert manager.find("{}-py3.7".format(venv_name)).path == expected
+
+
+def test_find_not_exist(config, manager, mocker, poetry, tmp_dir):
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.7.9")),
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        manager.find(venv_name)
+    assert str(
+        excinfo.value
+    ) == '<warning>Environment "{}-py3.7" does not exist.</warning>'.format(venv_name)
+
+
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     tmp_dir, manager, poetry, config, mocker
 ):
@@ -572,18 +617,16 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     assert venv_name not in envs
 
 
-def test_remove_in_project(tmp_venv, config, manager, monkeypatch):
+def test_remove_in_project(tmp_venv, config, manager, mocker):
     config.merge({"virtualenvs": {"in-project": True}})
-    monkeypatch.setattr(manager, "get", lambda: tmp_venv)
+    mocker.patch.object(manager, "get", return_value=tmp_venv)
     manager.remove(None)
     assert not tmp_venv.path.exists()
 
 
-def test_remove_in_project_external(
-    config, manager, mocker, monkeypatch, poetry, tmp_path
-):
+def test_remove_in_project_external(config, manager, mocker, poetry, tmp_path):
     config.merge({"virtualenvs": {"in-project": True, "path": str(tmp_path)}})
-    monkeypatch.setattr(manager._poetry.file, "parent", tmp_path)
+    mocker.patch.object(manager._poetry.file, "parent", tmp_path)
 
     dot_venv_path = tmp_path / ".venv"
     dot_venv_path.mkdir()
