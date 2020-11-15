@@ -11,7 +11,10 @@ class EnvRemoveCommand(Command):
     arguments = [
         argument(
             "python",
-            "The python executable to remove the virtualenv for.",
+            "The python executable to remove the virtualenv for."
+            "If not provided, defaults to removing the virtualenv that is currently active. "
+            'If "virtualenvs.in-project = True", defaults to removing ".venv/" in the '
+            "current working directory if it exists.",
             optional=True,
         )
     ]
