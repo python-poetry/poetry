@@ -572,7 +572,9 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     assert venv_name not in envs
 
 
-def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mocker):
+def test_remove_keeps_dir_if_not_deleteable_os_err_16(
+    tmp_dir, manager, poetry, config, mocker
+):
     # Ensure we empty rather than delete folder if its is an active mount point.
     # See https://github.com/python-poetry/poetry/pull/2064
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
@@ -600,6 +602,55 @@ def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mo
     def err_on_rm_venv_only(path, *args, **kwargs):
         if path == str(venv_path):
             raise OSError(16, "Test error")  # ERRNO 16: Device or resource busy
+        else:
+            original_rmtree(path)
+
+    m = mocker.patch("shutil.rmtree", side_effect=err_on_rm_venv_only)
+
+    venv = manager.remove("{}-py3.6".format(venv_name))
+
+    m.assert_any_call(str(venv_path))
+
+    assert venv_path == venv.path
+    assert venv_path.exists()
+
+    assert not folder1_path.exists()
+    assert not file1_path.exists()
+    assert not file2_path.exists()
+
+    m.side_effect = original_rmtree  # Avoid teardown using `err_on_rm_venv_only`
+
+
+def test_remove_keeps_dir_if_not_deleteable_os_err_20(
+    tmp_dir, manager, poetry, config, mocker
+):
+    # Ensure we empty rather than delete folder if its is an active mount point.
+    # See https://github.com/python-poetry/poetry/pull/2064
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    venv_path = Path(tmp_dir) / "{}-py3.6".format(venv_name)
+    venv_path.mkdir()
+
+    folder1_path = venv_path / "folder1"
+    folder1_path.mkdir()
+
+    file1_path = folder1_path / "file1"
+    file1_path.touch(exist_ok=False)
+
+    file2_path = venv_path / "file2"
+    file2_path.touch(exist_ok=False)
+
+    mocker.patch(
+        "poetry.utils._compat.subprocess.check_output",
+        side_effect=check_output_wrapper(Version.parse("3.6.6")),
+    )
+
+    original_rmtree = shutil.rmtree
+
+    def err_on_rm_venv_only(path, *args, **kwargs):
+        if path == str(venv_path):
+            raise OSError(20, "Test error")  # ERRNO 16: Device or resource busy
         else:
             original_rmtree(path)
 
