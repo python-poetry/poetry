@@ -834,13 +834,16 @@ class EnvManager(object):
             return
         except OSError as e:
             # Continue only if e.errno == 16
-            if e.errno != 16:  # ERRNO 16: Device or resource busy
+            if (
+                e.errno != 16 and e.errno != 20
+            ):  # ERRNO 16: Device or resource busy, # ERRNO 20: Not a directory
                 raise e
 
         # Delete all files and folders but the toplevel one. This is because sometimes
-        # the venv folder is mounted by the OS, such as in a docker volume. In such
+        # the venv folder is mounted or symlinked by the OS, such as in a docker volume, codebuild, etc. In such
         # cases, an attempt to delete the folder itself will result in an `OSError`.
         # See https://github.com/python-poetry/poetry/pull/2064
+        # See https://bugs.python.org/issue1669
         for file_path in path.iterdir():
             if file_path.is_file() or file_path.is_symlink():
                 file_path.unlink()
