@@ -453,20 +453,18 @@ The table below illustrates the effect of these rules with concrete examples.
 
 ## export
 
-This command exports the lock file to other formats.
+The `export` command groups sub commands that exports the lock file to other formats.
+
+### export requirements.txt
+
+The `export requirements.txt` command exports the lock file to the `requirements.txt` format.
 
 ```bash
-poetry export -f requirements.txt --output requirements.txt
+poetry export requirements.txt --output requirements.txt
 ```
 
-!!!note
+#### Options
 
-    Only the `requirements.txt` format is currently supported.
-
-### Options
-
-* `--format (-f)`: The format to export to (default: `requirements.txt`).
-  Currently, only `requirements.txt` is supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
 * `--dev`: Include development dependencies.

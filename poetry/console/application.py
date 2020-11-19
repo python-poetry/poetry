@@ -109,6 +109,40 @@ class Application(BaseApplication):
 
         return commands
 
+    def handle_deprecated_commands(self):
+        import sys
+
+        if sys.argv and sys.argv[1] == "export":
+            # TODO: Remove in 1.3 release
+            if "--help" not in sys.argv and "-h" not in sys.argv:
+                for export_sub_command in ExportCommand.commands:
+                    if export_sub_command.name in sys.argv:
+                        break
+                else:
+                    sys.argv.insert(2, "requirements.txt")
+                    message = (
+                        "\n"
+                        "The top level <info>export</info> command and the <info>--format</info> option has been "
+                        "deprecated. It is recommended that the use which be replaced with format specific "
+                        "sub-commands.\n\n"
+                        ""
+                        "Deprecated usage:\n"
+                        "<fg=red>poetry export --format requirements.txt --without-hashes</>\n"
+                        "<fg=red>poetry export --without-hashes</>\n"
+                        "\n"
+                        "Updated usage:\n"
+                        "<info>poetry export requirements.txt --without-hashes</info>"
+                    )
+                    self._preliminary_io.error_line(
+                        "<fg=yellow>{}</>\n".format(message)
+                    )
+
+    def run(self, args=None, input_stream=None, output_stream=None, error_stream=None):
+        self.handle_deprecated_commands()
+        return super(Application, self).run(
+            args, input_stream, output_stream, error_stream
+        )
+
 
 if __name__ == "__main__":
     Application().run()

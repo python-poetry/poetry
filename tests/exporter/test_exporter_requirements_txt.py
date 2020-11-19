@@ -4,11 +4,11 @@ import pytest
 
 from poetry.core.packages import dependency_from_pep_508
 from poetry.core.toml.file import TOMLFile
+from poetry.exporter.requirements_txt import RequirementsTxtExporter
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils._compat import Path
-from poetry.utils.exporter import Exporter
 
 
 class Locker(BaseLocker):
@@ -105,9 +105,9 @@ def test_exporter_can_export_requirements_txt_with_standard_packages(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -160,9 +160,9 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -226,9 +226,9 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
     )
     set_package_requires(poetry, skip={"b", "c", "d"})
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -301,9 +301,9 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_a
         ),
     ]
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=dev)
+    exporter.export(Path(tmp_dir), "requirements.txt", dev=dev)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -341,9 +341,9 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -388,11 +388,9 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export(
-        "requirements.txt", Path(tmp_dir), "requirements.txt", with_hashes=False
-    )
+    exporter.export(Path(tmp_dir), "requirements.txt", with_hashes=False)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -435,9 +433,9 @@ def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -480,9 +478,9 @@ def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+    exporter.export(Path(tmp_dir), "requirements.txt", dev=True)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -525,9 +523,9 @@ def test_exporter_exports_requirements_txt_without_optional_packages(tmp_dir, po
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+    exporter.export(Path(tmp_dir), "requirements.txt", dev=True)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -588,15 +586,10 @@ def test_exporter_exports_requirements_txt_with_optional_packages(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
     exporter.export(
-        "requirements.txt",
-        Path(tmp_dir),
-        "requirements.txt",
-        dev=True,
-        with_hashes=False,
-        extras=extras,
+        Path(tmp_dir), "requirements.txt", dev=True, with_hashes=False, extras=extras,
     )
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
@@ -633,9 +626,9 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -681,9 +674,9 @@ def test_exporter_can_export_requirements_txt_with_nested_packages(tmp_dir, poet
     )
     set_package_requires(poetry, skip={"foo"})
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -736,9 +729,9 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_cyclic(
     )
     set_package_requires(poetry, skip={"bar", "baz"})
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -781,9 +774,9 @@ def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -823,9 +816,9 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -868,9 +861,9 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -912,9 +905,9 @@ def test_exporter_can_export_requirements_txt_with_file_packages(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -957,9 +950,9 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+    exporter.export(Path(tmp_dir), "requirements.txt")
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -1009,9 +1002,9 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry)
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+    exporter.export(Path(tmp_dir), "requirements.txt", dev=True)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -1056,9 +1049,9 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
         }
     )
     set_package_requires(poetry)
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+    exporter.export(Path(tmp_dir), "requirements.txt", dev=True)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -1126,9 +1119,9 @@ def test_exporter_exports_requirements_txt_with_dev_extras(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=dev)
+    exporter.export(Path(tmp_dir), "requirements.txt", dev=dev)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -1192,9 +1185,9 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", dev=True)
+    exporter.export(Path(tmp_dir), "requirements.txt", dev=True)
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -1258,14 +1251,10 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_credentials(
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
     exporter.export(
-        "requirements.txt",
-        Path(tmp_dir),
-        "requirements.txt",
-        dev=True,
-        with_credentials=True,
+        Path(tmp_dir), "requirements.txt", dev=True, with_credentials=True,
     )
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
@@ -1311,9 +1300,9 @@ def test_exporter_exports_requirements_txt_to_standard_output(tmp_dir, poetry, c
     )
     set_package_requires(poetry)
 
-    exporter = Exporter(poetry)
+    exporter = RequirementsTxtExporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), sys.stdout)
+    exporter.export(Path(tmp_dir), sys.stdout)
 
     out, err = capsys.readouterr()
     expected = """\

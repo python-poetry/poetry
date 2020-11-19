@@ -53,7 +53,7 @@ def poetry(project_factory):
 
 @pytest.fixture
 def tester(command_tester_factory, poetry):
-    return command_tester_factory("export", poetry=poetry)
+    return command_tester_factory("export requirements.txt", poetry=poetry)
 
 
 def _export_requirements(tester, poetry):
@@ -83,11 +83,6 @@ def test_export_exports_requirements_txt_file_locks_if_no_lock_file(tester, poet
 def test_export_exports_requirements_txt_uses_lock_file(tester, poetry, do_lock):
     _export_requirements(tester, poetry)
     assert "The lock file does not exist. Locking." not in tester.io.fetch_output()
-
-
-def test_export_fails_on_invalid_format(tester, do_lock):
-    with pytest.raises(ValueError):
-        tester.execute("--format invalid")
 
 
 def test_export_prints_to_stdout_by_default(tester, do_lock):

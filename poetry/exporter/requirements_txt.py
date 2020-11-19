@@ -2,58 +2,20 @@ from typing import Optional
 from typing import Sequence
 from typing import Union
 
-from clikit.api.io import IO
-
-from poetry.poetry import Poetry
-from poetry.utils._compat import Path
-from poetry.utils._compat import decode
+from poetry.exporter.base import Exporter
 from poetry.utils._compat import urlparse
 
 
-class Exporter(object):
+class RequirementsTxtExporter(Exporter):
     """
     Exporter class to export a lock file to alternative formats.
     """
 
-    FORMAT_REQUIREMENTS_TXT = "requirements.txt"
-    #: The names of the supported export formats.
-    ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
-    def __init__(self, poetry):  # type: (Poetry) -> None
-        self._poetry = poetry
-
-    def export(
-        self,
-        fmt,
-        cwd,
-        output,
-        with_hashes=True,
-        dev=False,
-        extras=None,
-        with_credentials=False,
-    ):  # type: (str, Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
-        if fmt not in self.ACCEPTED_FORMATS:
-            raise ValueError("Invalid export format: {}".format(fmt))
-
-        getattr(self, "_export_{}".format(fmt.replace(".", "_")))(
-            cwd,
-            output,
-            with_hashes=with_hashes,
-            dev=dev,
-            extras=extras,
-            with_credentials=with_credentials,
-        )
-
-    def _export_requirements_txt(
-        self,
-        cwd,
-        output,
-        with_hashes=True,
-        dev=False,
-        extras=None,
-        with_credentials=False,
-    ):  # type: (Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
+    def _export(
+        self, with_hashes=True, dev=False, extras=None, with_credentials=False,
+    ):  # type: (bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> str
         indexes = set()
         content = ""
         dependency_lines = set()
@@ -147,15 +109,4 @@ class Exporter(object):
 
             content = indexes_header + "\n" + content
 
-        self._output(content, cwd, output)
-
-    def _output(
-        self, content, cwd, output
-    ):  # type: (str, Path, Union[IO, str]) -> None
-        decoded = decode(content)
-        try:
-            output.write(decoded)
-        except AttributeError:
-            filepath = cwd / output
-            with filepath.open("w", encoding="utf-8") as f:
-                f.write(decoded)
+        return content

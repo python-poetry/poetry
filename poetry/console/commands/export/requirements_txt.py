@@ -1,23 +1,17 @@
 from cleo import option
 
-from poetry.utils.exporter import Exporter
+from poetry.console.commands.command import Command
+from poetry.exporter.requirements_txt import RequirementsTxtExporter
 
-from .command import Command
 
+class RequirementsTxtExportCommand(Command):
 
-class ExportCommand(Command):
-
-    name = "export"
-    description = "Exports the lock file to alternative formats."
+    name = "requirements.txt"
+    description = "Exports the lock as a requirements.txt file."
 
     options = [
-        option(
-            "format",
-            "f",
-            "Format to export to. Currently, only requirements.txt is supported.",
-            flag=False,
-            default=Exporter.FORMAT_REQUIREMENTS_TXT,
-        ),
+        # The --output option should be global, however due to a testing limitation we keep this
+        # per format sub-command for now
         option("output", "o", "The name of the output file.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
         option("dev", None, "Include development dependencies."),
@@ -29,14 +23,16 @@ class ExportCommand(Command):
             multiple=True,
         ),
         option("with-credentials", None, "Include credentials for extra indices."),
+        option(
+            "format",
+            "f",
+            "Format to export to. Currently, only requirements.txt is supported. (Deprecated)",
+            flag=False,
+            default=name,
+        ),
     ]
 
     def handle(self):
-        fmt = self.option("format")
-
-        if fmt not in Exporter.ACCEPTED_FORMATS:
-            raise ValueError("Invalid export format: {}".format(fmt))
-
         output = self.option("output")
 
         locker = self.poetry.locker
@@ -62,9 +58,8 @@ class ExportCommand(Command):
                 "</warning>"
             )
 
-        exporter = Exporter(self.poetry)
+        exporter = RequirementsTxtExporter(self.poetry)
         exporter.export(
-            fmt,
             self.poetry.file.parent,
             output or self.io,
             with_hashes=not self.option("without-hashes"),
