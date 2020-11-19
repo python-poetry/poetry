@@ -48,7 +48,8 @@ def temporary_directory(*args, **kwargs):
 
     yield name
 
-    shutil.rmtree(name, onerror=_del_ro)
+    if os.path.exists(name):
+        shutil.rmtree(name, onerror=_del_ro)
 
 
 def get_cert(config, repository_name):  # type: (Config, str) -> Optional[Path]
