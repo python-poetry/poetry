@@ -534,16 +534,20 @@ class PackageInfo:
             info = cls.from_metadata(path)
 
             if not info or info.requires_dist is None:
+                new_info = None
                 try:
                     if disable_build:
-                        info = cls.from_setup_files(path)
+                        new_info = cls.from_setup_files(path)
                     else:
-                        info = cls._pep517_metadata(path)
+                        new_info = cls._pep517_metadata(path)
                 except PackageInfoError:
                     if not info:
                         raise
 
-                    # we discovered PkgInfo but no requirements were listed
+                if new_info:
+                    info = new_info
+                elif not info:
+                    raise PackageInfoError(path, "Exhausted all metadata sources.")
 
         info._source_type = "directory"
         info._source_url = path.as_posix()
