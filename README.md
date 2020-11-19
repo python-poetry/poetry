@@ -268,4 +268,4 @@ At this point the rest of the resolution is straightforward since there is no mo
 
 * [Official Website](https://python-poetry.org)
 * [Issue Tracker](https://github.com/python-poetry/poetry/issues)
-* [Discord](https://discordapp.com/invite/awxPgve)
+* [Discord](https://discord.com/invite/awxPgve)
