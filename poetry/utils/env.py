@@ -1123,24 +1123,32 @@ class Env(object):
         """
         Return path to the given executable.
         """
-        bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._is_windows else "")
-        if not bin_path.exists():
-            # On Windows, some executables can be in the base path
-            # This is especially true when installing Python with
-            # the official installer, where python.exe will be at
-            # the root of the env path.
-            # This is an edge case and should not be encountered
-            # in normal uses but this happens in the sonnet script
-            # that creates a fake virtual environment pointing to
-            # a base Python install.
-            if self._is_windows:
-                bin_path = (self._path / bin).with_suffix(".exe")
-                if bin_path.exists():
-                    return str(bin_path)
+        bin_path = self._bin_dir / bin
 
-            return bin
+        # Special case for Windows needing to find “.exe” and “.cmd”
+        # files first (not the extension-less file).
+        if self._is_windows:
+            for suffix in (".exe", ".cmd"):
+                win_bin_path = bin_path.with_suffix(suffix)
+                if win_bin_path.exists():
+                    return str(win_bin_path)
+                # On Windows, some executables can be in the base path
+                # This is especially true when installing Python with
+                # the official installer, where python.exe will be at
+                # the root of the env path.
+                # This is an edge case and should not be encountered
+                # in normal uses but this happens in the sonnet script
+                # that creates a fake virtual environment pointing to
+                # a base Python install.
+                win_bin_path = (self._path / bin).with_suffix(suffix)
+                if win_bin_path.exists():
+                    return str(win_bin_path)
 
-        return str(bin_path)
+        if bin_path.exists():
+            return str(bin_path)
+
+        # Return original path if our search failed.
+        return bin
 
     def __eq__(self, other):  # type: (Env) -> bool
         return other.__class__ == self.__class__ and other.path == self.path
