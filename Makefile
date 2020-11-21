@@ -34,8 +34,6 @@ setup: setup-python
 test:
 	@poetry run pytest --cov=poetry --cov-config .coveragerc tests/ -sq
 
-release: build linux_release osx_release
-
 build:
 	@poetry build
 	@python sonnet make release
@@ -45,18 +43,6 @@ publish:
 
 wheel:
 	@poetry build -v
-
-linux_release:
-	docker pull quay.io/pypa/manylinux2010_x86_64
-	docker run --rm -i -v `pwd`:/io \
-		-e PYTHON=/opt/python/cp38-cp38/bin/python \
-		-e PYTHON27=/opt/python/cp27-cp27m/bin/python \
-		-e PYTHON35=/opt/python/cp35-cp35m/bin/python \
-		-e PYTHON36=/opt/python/cp36-cp36m/bin/python \
-		-e PYTHON37=/opt/python/cp37-cp37m/bin/python \
-		-e PYTHON38=/opt/python/cp38-cp38/bin/python \
-		-e PYTHON39=/opt/python/cp39-cp39/bin/python \
-		quay.io/pypa/manylinux2010_x86_64 sh -c "cd /io && ./make-nix-release.sh"
 
 # run tests against all supported python versions
 tox:
