@@ -34,16 +34,18 @@ release_task:
     PYTHON36: python3.6
     PYTHON37: python3.7
     PYTHON38: python3.8
+    PYTHON39: python3.9
   freebsd_instance:
     matrix:
       - image_family: freebsd-12-1-snap
       - image_family: freebsd-13-0-snap
       - image_family: freebsd-11-4-snap
-  python_script: pkg install -y curl bash jq python3 python36 python37 python38
+  python_script: pkg install -y curl bash jq python3 python36 python37 python38 python39
   pip_script:
     - python3.6 -m ensurepip
     - python3.7 -m ensurepip
     - python3.8 -m ensurepip
+    - python3.9 -m ensurepip
   build_script: bash ./make-nix-release.sh
   upload_script: |
     #!/usr/bin/env bash
