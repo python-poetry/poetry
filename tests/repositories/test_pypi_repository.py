@@ -2,6 +2,7 @@ import json
 import shutil
 
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -11,8 +12,6 @@ from requests.models import Response
 from poetry.core.packages import Dependency
 from poetry.factory import Factory
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import PY35
-from poetry.utils._compat import Path
 from poetry.utils._compat import encode
 
 
@@ -136,7 +135,6 @@ def test_fallback_inspects_sdist_first_if_no_matching_wheels_can_be_found():
     assert dep.python_versions == "~2.7"
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_fallback_can_read_setup_to_get_dependencies():
     repo = MockRepository(fallback=True)
 

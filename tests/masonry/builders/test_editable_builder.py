@@ -4,12 +4,13 @@ from __future__ import unicode_literals
 import os
 import shutil
 
+from pathlib import Path
+
 import pytest
 
 from poetry.factory import Factory
 from poetry.io.null_io import NullIO
 from poetry.masonry.builders.editable import EditableBuilder
-from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv

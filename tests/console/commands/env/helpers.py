@@ -1,8 +1,8 @@
+from pathlib import Path
 from typing import Optional
 from typing import Union
 
 from poetry.core.semver import Version
-from poetry.utils._compat import Path
 
 
 def build_venv(

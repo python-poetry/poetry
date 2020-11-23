@@ -1,5 +1,7 @@
 import re
 
+from pathlib import Path
+
 import pytest
 
 from packaging.tags import Tag
@@ -9,7 +11,6 @@ from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 
 

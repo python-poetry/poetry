@@ -1,5 +1,7 @@
 import os
 
+from pathlib import Path
+
 import pytest
 
 from cleo.io import BufferedIO
@@ -7,7 +9,6 @@ from cleo.io import BufferedIO
 from poetry.factory import Factory
 from poetry.io.null_io import NullIO
 from poetry.publishing.publisher import Publisher
-from poetry.utils._compat import Path
 
 
 def test_publish_publishes_to_pypi_by_default(fixture_dir, mocker, config):

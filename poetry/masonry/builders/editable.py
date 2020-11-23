@@ -5,13 +5,13 @@ import os
 import shutil
 
 from base64 import urlsafe_b64encode
+from pathlib import Path
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.masonry.utils.package_include import PackageInclude
 from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from poetry.utils.helpers import is_dir_writable
 

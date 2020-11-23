@@ -1,5 +1,6 @@
 import os
 import tempfile
+import urllib.parse
 
 from subprocess import CalledProcessError
 
@@ -12,12 +13,6 @@ from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
 
 from .base_installer import BaseInstaller
-
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
 
 
 class PipInstaller(BaseInstaller):
@@ -44,7 +39,7 @@ class PipInstaller(BaseInstaller):
             and package.source_url
         ):
             repository = self._pool.repository(package.source_reference)
-            parsed = urlparse.urlparse(package.source_url)
+            parsed = urllib.parse.urlparse(package.source_url)
             if parsed.scheme == "http":
                 self._io.error(
                     "    <warning>Installing from unsecure host: {}</warning>".format(

@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from typing import Dict
 from typing import List
 
@@ -26,13 +25,13 @@ class PartialSolution:
         self._assignments = []  # type: List[Assignment]
 
         # The decisions made for each package.
-        self._decisions = OrderedDict()  # type: Dict[str, Package]
+        self._decisions = dict()  # type: Dict[str, Package]
 
         # The intersection of all positive Assignments for each package, minus any
         # negative Assignments that refer to that package.
         #
         # This is derived from self._assignments.
-        self._positive = OrderedDict()  # type: Dict[str, Term]
+        self._positive = dict()  # type: Dict[str, Term]
 
         # The union of all negative Assignments for each package.
         #
@@ -40,7 +39,7 @@ class PartialSolution:
         # map.
         #
         # This is derived from self._assignments.
-        self._negative = OrderedDict()  # type: Dict[str, Dict[str, Term]]
+        self._negative = dict()  # type: Dict[str, Dict[str, Term]]
 
         # The number of distinct solutions that have been attempted so far.
         self._attempted_solutions = 1

@@ -1,8 +1,8 @@
 import shutil
 
-import pytest
+from pathlib import Path
 
-from poetry.utils._compat import Path
+import pytest
 
 
 try:

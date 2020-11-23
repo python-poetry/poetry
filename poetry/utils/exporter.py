@@ -1,3 +1,6 @@
+import urllib.parse
+
+from pathlib import Path
 from typing import Optional
 from typing import Sequence
 from typing import Union
@@ -5,9 +8,7 @@ from typing import Union
 from clikit.api.io import IO
 
 from poetry.poetry import Poetry
-from poetry.utils._compat import Path
 from poetry.utils._compat import decode
-from poetry.utils._compat import urlparse
 
 
 class Exporter(object):
@@ -140,7 +141,7 @@ class Exporter(object):
                 url = (
                     repository.authenticated_url if with_credentials else repository.url
                 )
-                parsed_url = urlparse.urlsplit(url)
+                parsed_url = urllib.parse.urlsplit(url)
                 if parsed_url.scheme == "http":
                     indexes_header += "--trusted-host {}\n".format(parsed_url.netloc)
                 indexes_header += "--extra-index-url {}\n".format(url)

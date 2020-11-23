@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import json
 import sys
 
+from pathlib import Path
+
 import pytest
 
 from clikit.io import NullIO
@@ -17,8 +19,6 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import PY2
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import get_dependency
@@ -112,15 +112,6 @@ class Locker(BaseLocker):
     def _write_lock_data(self, data):
         for package in data["package"]:
             python_versions = str(package["python-versions"])
-            if PY2:
-                python_versions = python_versions.decode()
-                if "requirements" in package:
-                    requirements = {}
-                    for key, value in package["requirements"].items():
-                        requirements[key.decode()] = value.decode()
-
-                    package["requirements"] = requirements
-
             package["python-versions"] = python_versions
 
         self._written_data = json.loads(json.dumps(data))
@@ -1583,7 +1574,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.whitelist(["pytest"])
     installer.run()
 
-    assert (6 if not PY2 else 7) == installer.executor.installations_count
+    assert 6 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
     assert 0 == installer.executor.removals_count
 

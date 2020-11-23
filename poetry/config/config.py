@@ -4,14 +4,13 @@ import os
 import re
 
 from copy import deepcopy
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Optional
 
 from poetry.locations import CACHE_DIR
-from poetry.utils._compat import Path
-from poetry.utils._compat import basestring
 
 from .config_source import ConfigSource
 from .dict_config_source import DictConfigSource
@@ -131,7 +130,7 @@ class Config(object):
         return self.process(value)
 
     def process(self, value):  # type: (Any) -> Any
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             return value
 
         return re.sub(r"{(.+?)}", lambda m: self.get(m.group(1)), value)

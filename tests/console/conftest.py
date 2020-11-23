@@ -1,5 +1,7 @@
 import os
 
+from pathlib import Path
+
 import pytest
 
 from cleo import ApplicationTester
@@ -8,7 +10,6 @@ from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.io.null_io import NullIO
 from poetry.repositories import Pool
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from tests.helpers import TestApplication
 from tests.helpers import TestExecutor
