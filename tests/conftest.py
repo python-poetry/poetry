@@ -4,6 +4,7 @@ import shutil
 import sys
 import tempfile
 
+from pathlib import Path
 from typing import Any
 from typing import Dict
 
@@ -21,7 +22,6 @@ from poetry.installation import Installer
 from poetry.layouts import layout
 from poetry.repositories import Pool
 from poetry.repositories import Repository
-from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -184,7 +184,7 @@ def mocked_open_files(mocker):
             return mocker.MagicMock()
         return original(self, *args, **kwargs)
 
-    mocker.patch("poetry.utils._compat.Path.open", mocked_open)
+    mocker.patch("pathlib.Path.open", mocked_open)
 
     yield files
 

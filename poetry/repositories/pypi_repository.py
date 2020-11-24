@@ -1,7 +1,9 @@
 import logging
 import os
+import urllib.parse
 
 from collections import defaultdict
+from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Union
@@ -24,7 +26,6 @@ from poetry.core.semver import parse_constraint
 from poetry.core.semver.exceptions import ParseVersionError
 from poetry.core.version.markers import parse_marker
 from poetry.locations import REPOSITORY_CACHE_DIR
-from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
@@ -33,12 +34,6 @@ from poetry.utils.patterns import wheel_file_re
 from ..inspection.info import PackageInfo
 from .exceptions import PackageNotFound
 from .remote_repository import RemoteRepository
-
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
 
 
 cache_control_logger.setLevel(logging.ERROR)
@@ -424,11 +419,13 @@ class PyPiRepository(RemoteRepository):
 
     def _get_info_from_wheel(self, url):  # type: (str) -> PackageInfo
         self._log(
-            "Downloading wheel: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
+            "Downloading wheel: {}".format(
+                urllib.parse.urlparse(url).path.rsplit("/")[-1]
+            ),
             level="debug",
         )
 
-        filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
+        filename = os.path.basename(urllib.parse.urlparse(url).path.rsplit("/")[-1])
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
@@ -438,11 +435,13 @@ class PyPiRepository(RemoteRepository):
 
     def _get_info_from_sdist(self, url):  # type: (str) -> PackageInfo
         self._log(
-            "Downloading sdist: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
+            "Downloading sdist: {}".format(
+                urllib.parse.urlparse(url).path.rsplit("/")[-1]
+            ),
             level="debug",
         )
 
-        filename = os.path.basename(urlparse.urlparse(url).path)
+        filename = os.path.basename(urllib.parse.urlparse(url).path)
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename

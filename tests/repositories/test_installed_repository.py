@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 import pytest
@@ -6,11 +7,9 @@ from pytest_mock.plugin import MockFixture
 
 from poetry.core.packages import Package
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import PY36
-from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
-from poetry.utils._compat import zipp
 from poetry.utils.env import MockEnv as BaseMockEnv
+from tests.compat import zipp
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -135,9 +134,6 @@ def test_load_platlib_package(repository):
     assert lib64.version.text == "2.3.4"
 
 
-@pytest.mark.skipif(
-    not PY36, reason="pathlib.resolve() does not support strict argument"
-)
 def test_load_editable_package(repository):
     # test editable package with text .pth file
     editable = get_package_from_repository("editable", repository)

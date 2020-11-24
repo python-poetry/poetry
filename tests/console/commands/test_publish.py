@@ -1,14 +1,10 @@
-import pytest
+from pathlib import Path
+
 import requests
 
 from poetry.publishing.uploader import UploadError
-from poetry.utils._compat import PY36
-from poetry.utils._compat import Path
 
 
-@pytest.mark.skipif(
-    not PY36, reason="Improved error rendering is only available on Python >=3.6"
-)
 def test_publish_returns_non_zero_code_for_upload_errors(app, app_tester, http):
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=400, body="Bad Request"
@@ -45,32 +41,6 @@ def test_publish_returns_non_zero_code_for_connection_errors(app, app_tester, ht
     expected = str(UploadError(error=requests.ConnectionError()))
 
     assert expected in app_tester.io.fetch_output()
-
-
-@pytest.mark.skipif(
-    PY36, reason="Improved error rendering is not available on Python <3.6"
-)
-def test_publish_returns_non_zero_code_for_upload_errors_older_python(
-    app, app_tester, http
-):
-    http.register_uri(
-        http.POST, "https://upload.pypi.org/legacy/", status=400, body="Bad Request"
-    )
-
-    exit_code = app_tester.execute("publish --username foo --password bar")
-
-    assert 1 == exit_code
-
-    expected = """
-Publishing simple-project (1.2.3) to PyPI
-
-
-UploadError
-
-HTTP Error 400: Bad Request
-"""
-
-    assert app_tester.io.fetch_output() == expected
 
 
 def test_publish_with_cert(app_tester, mocker):

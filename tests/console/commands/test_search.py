@@ -1,6 +1,6 @@
-import pytest
+from pathlib import Path
 
-from poetry.utils._compat import Path
+import pytest
 
 
 TESTS_DIRECTORY = Path(__file__).parent.parent.parent

@@ -1,8 +1,10 @@
 import logging
 import os
 import re
+import urllib.parse
 
 from contextlib import contextmanager
+from pathlib import Path
 from tempfile import mkdtemp
 from typing import Any
 from typing import List
@@ -30,9 +32,6 @@ from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories import Pool
-from poetry.utils._compat import OrderedDict
-from poetry.utils._compat import Path
-from poetry.utils._compat import urlparse
 from poetry.utils.env import Env
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
@@ -324,7 +323,7 @@ class Provider:
     def get_package_from_url(cls, url):  # type: (str) -> Package
         with temporary_directory() as temp_dir:
             temp_dir = Path(temp_dir)
-            file_name = os.path.basename(urlparse.urlparse(url).path)
+            file_name = os.path.basename(urllib.parse.urlparse(url).path)
             download_file(url, str(temp_dir / file_name))
 
             package = cls.get_package_from_file(temp_dir / file_name)
@@ -517,7 +516,7 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates = OrderedDict()
+        duplicates = dict()
         for dep in dependencies:
             if dep.name not in duplicates:
                 duplicates[dep.name] = []
@@ -533,7 +532,7 @@ class Provider:
             self.debug("<debug>Duplicate dependencies for {}</debug>".format(dep_name))
 
             # Regrouping by constraint
-            by_constraint = OrderedDict()
+            by_constraint = dict()
             for dep in deps:
                 if dep.constraint not in by_constraint:
                     by_constraint[dep.constraint] = []

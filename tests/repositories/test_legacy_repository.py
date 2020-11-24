@@ -1,5 +1,7 @@
 import shutil
 
+from pathlib import Path
+
 import pytest
 
 from poetry.core.packages import Dependency
@@ -8,8 +10,6 @@ from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
-from poetry.utils._compat import PY35
-from poetry.utils._compat import Path
 
 
 try:
@@ -94,16 +94,6 @@ def test_get_package_information_fallback_read_setup():
         package.description
         == "Jupyter metapackage. Install all the Jupyter components in one go."
     )
-
-    if PY35:
-        assert package.requires == [
-            Dependency("notebook", "*"),
-            Dependency("qtconsole", "*"),
-            Dependency("jupyter-console", "*"),
-            Dependency("nbconvert", "*"),
-            Dependency("ipykernel", "*"),
-            Dependency("ipywidgets", "*"),
-        ]
 
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints():

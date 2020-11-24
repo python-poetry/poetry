@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import re
 import shutil
 
+from pathlib import Path
+
 import pytest
 
 from clikit.api.formatter.style import Style
@@ -16,8 +18,6 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.repositories.pool import Pool
-from poetry.utils._compat import PY36
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
 
@@ -155,9 +155,6 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
     assert 0 == len(env.executed)
 
 
-@pytest.mark.skipif(
-    not PY36, reason="Improved error rendering is only available on Python >=3.6"
-)
 def test_execute_should_show_errors(config, mocker, io, env):
     executor = Executor(env, pool, config, io)
     executor.verbose()

@@ -1,10 +1,11 @@
+from pathlib import Path
+
 import pytest
 
 from poetry.factory import Factory
 from poetry.io.null_io import NullIO
 from poetry.publishing.uploader import Uploader
 from poetry.publishing.uploader import UploadError
-from poetry.utils._compat import Path
 
 
 fixtures_dir = Path(__file__).parent.parent / "fixtures"

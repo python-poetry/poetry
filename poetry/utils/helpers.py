@@ -5,6 +5,7 @@ import stat
 import tempfile
 
 from contextlib import contextmanager
+from pathlib import Path
 from typing import List
 from typing import Optional
 
@@ -13,7 +14,6 @@ import requests
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
 from poetry.core.version import Version
-from poetry.utils._compat import Path
 
 
 try:

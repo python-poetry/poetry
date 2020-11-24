@@ -1,5 +1,7 @@
 import sys
 
+from pathlib import Path
+
 import pytest
 
 from poetry.core.packages import dependency_from_pep_508
@@ -7,7 +9,6 @@ from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.utils._compat import Path
 from poetry.utils.exporter import Exporter
 
 
@@ -42,9 +43,7 @@ def working_directory():
 
 @pytest.fixture(autouse=True)
 def mock_path_cwd(mocker, working_directory):
-    yield mocker.patch(
-        "poetry.core.utils._compat.Path.cwd", return_value=working_directory
-    )
+    yield mocker.patch("pathlib.Path.cwd", return_value=working_directory)
 
 
 @pytest.fixture()

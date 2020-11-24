@@ -20,10 +20,11 @@ class NewCommand(Command):
     ]
 
     def handle(self):
+        from pathlib import Path
+
         from poetry.core.semver import parse_constraint
         from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
-        from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
         if self.option("src"):

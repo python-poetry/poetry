@@ -41,10 +41,11 @@ To remove a repository (repo is a short alias for repositories):
 
     @property
     def unique_config_values(self):
+        from pathlib import Path
+
         from poetry.config.config import boolean_normalizer
         from poetry.config.config import boolean_validator
         from poetry.locations import CACHE_DIR
-        from poetry.utils._compat import Path
 
         unique_config_values = {
             "cache-dir": (
@@ -75,10 +76,10 @@ To remove a repository (repo is a short alias for repositories):
         return unique_config_values
 
     def handle(self):
+        from pathlib import Path
+
         from poetry.config.file_config_source import FileConfigSource
         from poetry.locations import CONFIG_DIR
-        from poetry.utils._compat import Path
-        from poetry.utils._compat import basestring
 
         config = Factory.create_config(self.io)
         config_file = TOMLFile(Path(CONFIG_DIR) / "config.toml")
@@ -134,7 +135,7 @@ To remove a repository (repo is a short alias for repositories):
 
                 value = config.get(setting_key)
 
-                if not isinstance(value, basestring):
+                if not isinstance(value, str):
                     value = json.dumps(value)
 
                 self.line(value)
@@ -267,8 +268,6 @@ To remove a repository (repo is a short alias for repositories):
         return 0
 
     def _list_configuration(self, config, raw, k=""):
-        from poetry.utils._compat import basestring
-
         orig_k = k
         for key, value in sorted(config.items()):
             if k + key in self.LIST_PROHIBITED_SETTINGS:
@@ -293,7 +292,7 @@ To remove a repository (repo is a short alias for repositories):
                 message = "<c1>{}</c1> = <c2>{}</c2>".format(
                     k + key, json.dumps(raw_val)
                 )
-            elif isinstance(raw_val, basestring) and raw_val != value:
+            elif isinstance(raw_val, str) and raw_val != value:
                 message = "<c1>{}</c1> = <c2>{}</c2>  # {}".format(
                     k + key, json.dumps(raw_val), value
                 )

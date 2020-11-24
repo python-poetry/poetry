@@ -1,8 +1,9 @@
 import os
 
+from pathlib import Path
+
 import pytest
 
-from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 
 

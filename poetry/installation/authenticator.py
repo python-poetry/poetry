@@ -1,5 +1,6 @@
 import logging
 import time
+import urllib.parse
 
 from typing import TYPE_CHECKING
 
@@ -8,7 +9,6 @@ import requests.auth
 import requests.exceptions
 
 from poetry.exceptions import PoetryException
-from poetry.utils._compat import urlparse
 from poetry.utils.password_manager import PasswordManager
 
 
@@ -107,7 +107,7 @@ class Authenticator(object):
     def get_credentials_for_url(
         self, url
     ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
-        parsed_url = urlparse.urlsplit(url)
+        parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
 
@@ -130,7 +130,7 @@ class Authenticator(object):
                     credentials = auth, None
 
                 credentials = tuple(
-                    None if x is None else urlparse.unquote(x) for x in credentials
+                    None if x is None else urllib.parse.unquote(x) for x in credentials
                 )
 
         if credentials[0] is not None or credentials[1] is not None:
@@ -156,7 +156,7 @@ class Authenticator(object):
             if not url:
                 continue
 
-            parsed_url = urlparse.urlsplit(url)
+            parsed_url = urllib.parse.urlsplit(url)
 
             if netloc == parsed_url.netloc:
                 auth = self._password_manager.get_http_auth(repository_name)

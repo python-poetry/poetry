@@ -1,11 +1,12 @@
 import os
 
+from pathlib import Path
+
 import pytest
 import tomlkit
 
 from poetry.core.semver import Version
 from poetry.core.toml.file import TOMLFile
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
@@ -21,11 +22,11 @@ def setup(mocker):
 @pytest.fixture(autouse=True)
 def mock_subprocess_calls(setup, current_python, mocker):
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version(*current_python)),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
 
@@ -39,8 +40,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     mocker, tester, venv_cache, venv_name, venvs_in_cache_config
 ):
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
-        side_effect=check_output_wrapper(),
+        "subprocess.check_output", side_effect=check_output_wrapper(),
     )
 
     mock_build_env = mocker.patch(

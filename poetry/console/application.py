@@ -60,8 +60,9 @@ class Application(BaseApplication):
 
     @property
     def poetry(self):
+        from pathlib import Path
+
         from poetry.factory import Factory
-        from poetry.utils._compat import Path
 
         if self._poetry is not None:
             return self._poetry

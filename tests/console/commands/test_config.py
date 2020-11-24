@@ -6,8 +6,6 @@ import pytest
 from poetry.config.config_source import ConfigSource
 from poetry.core.pyproject import PyProjectException
 from poetry.factory import Factory
-from poetry.utils._compat import PY2
-from poetry.utils._compat import WINDOWS
 
 
 @pytest.fixture()
@@ -136,15 +134,13 @@ def test_set_cert(tester, auth_config_source, mocker):
 
 
 def test_config_installer_parallel(tester, command_tester_factory):
-    serial_enforced = PY2 and WINDOWS
-
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "true"
 
     workers = command_tester_factory(
         "install"
     )._command._installer._executor._max_workers
-    assert workers > 1 or (serial_enforced and workers == 1)
+    assert workers > 1
 
     tester.io.clear_output()
     tester.execute("--local installer.parallel false")

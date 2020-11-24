@@ -62,7 +62,7 @@ class SelfUpdateCommand(Command):
 
     @property
     def home(self):
-        from poetry.utils._compat import Path
+        from pathlib import Path
 
         return Path(os.environ.get("POETRY_HOME", "~/.poetry")).expanduser()
 
@@ -239,7 +239,7 @@ class SelfUpdateCommand(Command):
         return subprocess.check_output(list(args), stderr=subprocess.STDOUT)
 
     def _check_recommended_installation(self):
-        from poetry.utils._compat import Path
+        from pathlib import Path
 
         current = Path(__file__)
         try:

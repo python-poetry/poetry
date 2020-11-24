@@ -1,8 +1,10 @@
 import cgi
 import re
+import urllib.parse
 import warnings
 
 from collections import defaultdict
+from pathlib import Path
 from typing import Generator
 from typing import Optional
 from typing import Union
@@ -21,7 +23,6 @@ from poetry.core.semver import VersionConstraint
 from poetry.core.semver import VersionRange
 from poetry.core.semver import parse_constraint
 from poetry.locations import REPOSITORY_CACHE_DIR
-from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import wheel_file_re
 
@@ -32,11 +33,6 @@ from .exceptions import PackageNotFound
 from .exceptions import RepositoryError
 from .pypi_repository import PyPiRepository
 
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
 
 try:
     from html import unescape
@@ -115,7 +111,7 @@ class Page:
         for anchor in self._parsed.findall(".//a"):
             if anchor.get("href"):
                 href = anchor.get("href")
-                url = self.clean_link(urlparse.urljoin(self._url, href))
+                url = self.clean_link(urllib.parse.urljoin(self._url, href))
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
 
@@ -219,7 +215,7 @@ class LegacyRepository(PyPiRepository):
         if not self._session.auth:
             return self.url
 
-        parsed = urlparse.urlparse(self.url)
+        parsed = urllib.parse.urlparse(self.url)
 
         return "{scheme}://{username}:{password}@{netloc}{path}".format(
             scheme=parsed.scheme,

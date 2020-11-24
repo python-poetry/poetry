@@ -3,11 +3,12 @@ from __future__ import unicode_literals
 
 import sys
 
+from pathlib import Path
+
 import pytest
 
 from poetry.core.semver import Version
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.utils._compat import Path
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
@@ -279,7 +280,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_directory_constraint(app, repo, tester, mocker):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__).parent
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -313,7 +314,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_directory_with_poetry(app, repo, tester, mocker):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -341,7 +342,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_file_constraint_wheel(app, repo, tester, mocker, poetry):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = poetry.file.parent
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -376,7 +377,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_file_constraint_sdist(app, repo, tester, mocker):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -448,7 +449,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_url_constraint_wheel(app, repo, tester, mocker):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1069,7 +1070,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_directory_constraint_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1106,7 +1107,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_directory_with_poetry_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1137,7 +1138,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_file_constraint_wheel_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1175,7 +1176,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_file_constraint_sdist_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1253,7 +1254,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_url_constraint_wheel_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
