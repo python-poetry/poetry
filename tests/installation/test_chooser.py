@@ -8,6 +8,7 @@ from packaging.tags import Tag
 
 from poetry.core.packages.package import Package
 from poetry.installation.chooser import Chooser
+from poetry.installation.chooser import Wheel
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.pypi_repository import PyPiRepository
@@ -196,3 +197,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     link = chooser.choose_for(package)
 
     assert "isort-4.3.4.tar.gz" == link.filename
+
+
+def test_wheel_handles_no_version(env, pool):
+    Wheel("tiamat-6-py3-none-any.whl")

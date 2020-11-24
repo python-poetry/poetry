@@ -24,7 +24,9 @@ class Wheel(object):
 
         self.filename = filename
         self.name = wheel_info.group("name").replace("_", "-")
-        self.version = wheel_info.group("ver").replace("_", "-")
+        self.version = wheel_info.group("ver")
+        if self.version:
+            self.version = self.version.replace("_", "-")
         self.build_tag = wheel_info.group("build")
         self.pyversions = wheel_info.group("pyver").split(".")
         self.abis = wheel_info.group("abi").split(".")
