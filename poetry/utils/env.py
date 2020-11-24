@@ -1125,10 +1125,10 @@ class Env(object):
         """
         bin_path = self._bin_dir / bin
 
-        # Special case for Windows needing to find “.exe” and “.cmd”
-        # files first (not the extension-less file).
+        # Special case for Windows needing to find executable files
+        # first by extension (and not the extension-less file).
         if self._is_windows:
-            for suffix in (".exe", ".cmd"):
+            for suffix in os.environ.get("PATHEXT", ".exe").split(os.pathsep):
                 win_bin_path = bin_path.with_suffix(suffix)
                 if win_bin_path.exists():
                     return str(win_bin_path)
