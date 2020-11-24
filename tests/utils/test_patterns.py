@@ -4,42 +4,38 @@ from poetry.utils import patterns
 
 
 @pytest.mark.parametrize(
-    ["filename", "expected"],
+    ["filename", "namever", "name", "ver", "build", "pyver", "abi", "plat"],
     [
         (
             "markdown_captions-2-py3-none-any.whl",
-            {
-                "namever": "markdown_captions-2",
-                "name": "markdown_captions",
-                "ver": "2",
-                "build": None,
-                "pyver": "py3",
-                "abi": "none",
-                "plat": "any",
-            },
+            "markdown_captions-2",
+            "markdown_captions",
+            "2",
+            None,
+            "py3",
+            "none",
+            "any",
         ),
         (
             "SQLAlchemy-1.3.20-cp27-cp27mu-manylinux2010_x86_64.whl",
-            {
-                "namever": "SQLAlchemy-1.3.20",
-                "name": "SQLAlchemy",
-                "ver": "1.3.20",
-                "build": None,
-                "pyver": "cp27",
-                "abi": "cp27mu",
-                "plat": "manylinux2010_x86_64",
-            },
+            "SQLAlchemy-1.3.20",
+            "SQLAlchemy",
+            "1.3.20",
+            None,
+            "cp27",
+            "cp27mu",
+            "manylinux2010_x86_64",
         ),
     ],
 )
-def test_wheel_file_re(filename, expected):
+def test_wheel_file_re(filename, namever, name, ver, build, pyver, abi, plat):
     match = patterns.wheel_file_re.match(filename)
     groups = match.groupdict()
 
-    assert groups["namever"] == expected["namever"]
-    assert groups["name"] == expected["name"]
-    assert groups["ver"] == expected["ver"]
-    assert groups["build"] == expected["build"]
-    assert groups["pyver"] == expected["pyver"]
-    assert groups["abi"] == expected["abi"]
-    assert groups["plat"] == expected["plat"]
+    assert groups["namever"] == namever
+    assert groups["name"] == name
+    assert groups["ver"] == ver
+    assert groups["build"] == build
+    assert groups["pyver"] == pyver
+    assert groups["abi"] == abi
+    assert groups["plat"] == plat
