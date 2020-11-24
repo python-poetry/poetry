@@ -173,14 +173,14 @@ If a VCS is being used for a package, the exclude field will be seeded with the 
 include = ["CHANGELOG.md"]
 ```
 
-You can also use inline tables for `include`:
+You can also specify the formats for which these patterns have to be included, as shown here:
 
 ```toml
 [tool.poetry]
 # ...
 include = [
     { path = "tests", format = "sdist" },
-    { path = "for_wheel.txt", format = "wheel" }
+    { path = "for_wheel.txt", format = ["sdist", "wheel"] }
 ]
 ```
 
