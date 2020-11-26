@@ -104,13 +104,6 @@ class Chooser:
         Returns a tuple such that tuples sorting as greater using Python's
         default comparison operator are more preferred.
         The preference is as follows:
-        First and foremost, candidates with allowed (matching) hashes are
-        always preferred over candidates without matching hashes. This is
-        because e.g. if the only candidate with an allowed hash is yanked,
-        we still want to use that candidate.
-        Second, excepting hash considerations, candidates that have been
-        yanked (in the sense of PEP 592) are always less preferred than
-        candidates that haven't been yanked. Then:
         If not finding wheels, they are sorted by version only.
         If finding wheels, then the sort order is by version, then:
           1. existing installs
@@ -141,14 +134,7 @@ class Chooser:
         else:  # sdist
             pri = -support_num
 
-        has_allowed_hash = int(self._is_link_hash_allowed_for_package(link, package))
-
-        # TODO: Proper yank value
-        yank_value = 0
-
         return (
-            has_allowed_hash,
-            yank_value,
             binary_preference,
             package.version,
             build_tag,
