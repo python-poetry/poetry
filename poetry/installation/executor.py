@@ -599,8 +599,17 @@ class Executor(object):
                 archive = self._chef.prepare(archive)
 
         if package.files:
-            archive_hash = "sha256:" + FileDependency(package.name, archive).hash()
-            if archive_hash not in {f["hash"] for f in package.files}:
+            for f in package.files:
+                if source["file"] == link.filename:
+                    hash_type, reference_hash = source["hash"].split(":")
+                    break
+            else:
+                raise RuntimeError(
+                    "Filename {} not found in lock".format(link.filename)
+            )
+            
+            archive_hash = FileDependency(package.name, archive).hash(hash_type)
+            if archive_hash != reference_hash:
                 raise RuntimeError(
                     "Invalid hash for {} using archive {}".format(package, archive.name)
                 )

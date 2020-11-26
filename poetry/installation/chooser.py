@@ -1,5 +1,5 @@
 import re
-
+import logging
 from typing import List
 from typing import Tuple
 
@@ -10,6 +10,9 @@ from poetry.core.packages.utils.link import Link
 from poetry.repositories.pool import Pool
 from poetry.utils.env import Env
 from poetry.utils.patterns import wheel_file_re
+
+
+logger = logging.getLogger(__name__)
 
 
 class InvalidWheelName(Exception):
@@ -175,6 +178,13 @@ class Chooser:
         if not link.hash:
             return True
 
-        h = link.hash_name + ":" + link.hash
+        named_hash = link.hash_name + ":" + link.hash
 
-        return h in {f["hash"] for f in package.files}
+        for source in package.files:
+            if source["file"] == link.filename:
+                if named_hash == source["hash"]:
+                    return True
+                else:
+                    logger.warn("Disregarding download url %s because of mismatching hash with stored hash", link)
+        
+        return False
