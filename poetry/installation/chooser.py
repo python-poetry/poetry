@@ -95,24 +95,7 @@ class Chooser:
             repository = self._pool.repository(package.source_reference)
 
         links = repository.find_links_for_package(package)
-
-        hashes = [f["hash"] for f in package.files]
-        if not hashes:
-            return links
-
-        selected_links = []
-        for link in links:
-            if not link.hash:
-                selected_links.append(link)
-                continue
-
-            h = link.hash_name + ":" + link.hash
-            if h not in hashes:
-                continue
-
-            selected_links.append(link)
-
-        return selected_links
+        return [link for link in links if self._is_link_hash_allowed_for_package(link, package)]
 
     def _sort_key(self, package, link):  # type: (Package, Link) -> Tuple
         """
