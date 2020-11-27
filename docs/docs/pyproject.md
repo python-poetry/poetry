@@ -184,7 +184,7 @@ include = [
 ]
 ```
 
-If no format is specified, it will default to include to a `wheel` only.
+If no format is specified, it will default to include both `sdist` and `wheel`.
 
 ```toml
 exclude = ["my_package/excluded.py"]
