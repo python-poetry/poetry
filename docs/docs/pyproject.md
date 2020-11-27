@@ -184,6 +184,8 @@ include = [
 ]
 ```
 
+If no format is specified, it will default to include to a `wheel` only.
+
 ```toml
 exclude = ["my_package/excluded.py"]
 ```
