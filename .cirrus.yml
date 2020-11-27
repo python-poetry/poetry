@@ -7,18 +7,20 @@ test_task:
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
     matrix:
-      - PYTHON: python3.6
-      - PYTHON: python3.9
+      - PY: 3.6
+      - PY: 3.9
   python_script:
-    - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
-    - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
-    - pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
+    - PY=$(printf '%s' $PY | tr -d '.')
+    - pkg install -y git-lite python${PY} py${PY}-sqlite3
   pip_script:
+    - PYTHON=$(printf 'python%s' $PY)
     - $PYTHON -m ensurepip
     - $PYTHON -m pip install -U pip tox
     - $PYTHON -m pip install -U --pre poetry
     - $PYTHON -m poetry config virtualenvs.in-project true
-  tox_script: $PYTHON -m tox -e py -- -q --junitxml=junit.xml tests
+  tox_script:
+    - PYTHON=$(printf 'python%s' $PY)
+    - $PYTHON -m tox -e py -- -q --junitxml=junit.xml tests
   on_failure:
     annotate_failure_artifacts:
       path: junit.xml
