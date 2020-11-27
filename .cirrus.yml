@@ -9,7 +9,7 @@ test_task:
     matrix:
       - PY: 3.6
       - PY: 3.9
-  python_script:
+  pkg_script:
     - PY=$(printf '%s' $PY | tr -d '.')
     - pkg install -y git-lite python${PY} py${PY}-sqlite3
   pip_script:
@@ -37,17 +37,17 @@ release_task:
       - image_family: freebsd-11-4
       - image_family: freebsd-12-1
       - image_family: freebsd-13-0-snap
-  python_script: pkg install -y curl jq python python36 python37 python38 python39
-  pip_script:
+  pkg_script: pkg install -y curl jq python python36 python37 python38 python39
+  ensurepip_script:
     - python3.6 -m ensurepip
     - python3.7 -m ensurepip
     - python3.8 -m ensurepip
     - python3.9 -m ensurepip
-  install_script: python get-poetry.py --preview -y
-  dependency_script:
+  get_poetry_script: python get-poetry.py --preview -y
+  install_script:
     - source $HOME/.poetry/env
     - poetry install --no-dev
-  build_script:
+  release_script:
     - source $HOME/.poetry/env
     - poetry run python sonnet make release --ansi -P "3.6:python3.6" -P "3.7:python3.7" -P "3.8:python3.8" -P "3.9:python3.9"
   upload_script: |
