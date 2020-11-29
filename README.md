@@ -129,6 +129,8 @@ poetry completions zsh > ~/.zfunc/_poetry
 # Zsh (Oh-My-Zsh)
 mkdir $ZSH_CUSTOM/plugins/poetry
 poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
+rm ~/.zcompdump*
+# add `poetry` in the `plugins` list (https://github.com/ohmyzsh/ohmyzsh#enabling-plugins)
 
 # Zsh (prezto)
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
