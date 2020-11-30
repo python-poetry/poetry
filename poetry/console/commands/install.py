@@ -102,6 +102,8 @@ dependencies and not including the current project, run the command with the
             self.line("")
             return 0
 
+        builder.extras(extras)
+
         builder.build()
 
         if self._io.supports_ansi() and not self.io.is_debug():

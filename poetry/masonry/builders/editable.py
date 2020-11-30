@@ -36,6 +36,8 @@ class EditableBuilder(Builder):
         self._env = env
         self._io = io
 
+        self._extras = []
+
     def build(self):
         self._debug(
             "  - Building package <c1>{}</c1> in <info>editable</info> mode".format(
@@ -143,6 +145,12 @@ class EditableBuilder(Builder):
 
         scripts = entry_points.get("console_scripts", [])
         for script in scripts:
+            if script.endswith("]"):
+                script, extras = script[:-1].split("[")
+                extras = set(extras.split(","))
+                if extras - set(self._extras):
+                    continue
+
             name, script = script.split(" = ")
             module, callable_ = script.split(":")
             callable_holder = callable_.split(".", 1)[0]
@@ -255,3 +263,8 @@ class EditableBuilder(Builder):
     def _debug(self, msg):
         if self._io.is_debug():
             self._io.write_line(msg)
+
+    def extras(self, extras):  # type: (list) -> EditableBuilder
+        self._extras = extras
+
+        return self

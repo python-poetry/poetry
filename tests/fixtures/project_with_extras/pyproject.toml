@@ -14,4 +14,7 @@ cachy = { version = ">=0.2.0", optional = true }
 extras_a = [ "pendulum" ]
 extras_b = [ "cachy" ]
 
+[tool.poetry.scripts]
+foo = { callable = "project_with_extras:foo", extras = ["extras_a"]}
+
 [tool.poetry.dev-dependencies]

@@ -54,6 +54,15 @@ def extended_without_setup_poetry():
 
 
 @pytest.fixture()
+def project_with_extras():
+    poetry = Factory().create_poetry(
+        Path(__file__).parent.parent.parent / "fixtures" / "project_with_extras"
+    )
+
+    return poetry
+
+
+@pytest.fixture()
 def env_manager(simple_poetry):
     return EnvManager(simple_poetry)
 
@@ -228,3 +237,30 @@ def test_builder_should_execute_build_scripts(extended_without_setup_poetry):
     assert [
         ["python", str(extended_without_setup_poetry.file.parent / "build.py")]
     ] == env.executed
+
+
+def test_builder_doesnt_install_extra_scripts(project_with_extras, tmp_venv):
+    builder = EditableBuilder(project_with_extras, tmp_venv, NullIO())
+
+    builder.build()
+
+    assert not tmp_venv._bin_dir.joinpath("foo").is_file()
+
+
+def test_builder_does_install_extra_scripts(project_with_extras, tmp_venv):
+    builder = EditableBuilder(project_with_extras, tmp_venv, NullIO())
+
+    builder.extras(["extras_a"])
+    builder.build()
+
+    foo_script = """\
+#!{python}
+from project_with_extras import foo
+
+if __name__ == '__main__':
+    foo()
+""".format(
+        python=tmp_venv._bin("python")
+    )
+
+    assert tmp_venv._bin_dir.joinpath("foo").read_text() == foo_script
