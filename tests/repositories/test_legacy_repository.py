@@ -1,4 +1,5 @@
 import shutil
+import urllib.parse
 
 from pathlib import Path
 
@@ -11,12 +12,6 @@ from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
-
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
 
 
 class MockRepository(LegacyRepository):
@@ -40,7 +35,7 @@ class MockRepository(LegacyRepository):
             return Page(self._url + endpoint, f.read(), {})
 
     def _download(self, url, dest):
-        filename = urlparse.urlparse(url).path.rsplit("/")[-1]
+        filename = urllib.parse.urlparse(url).path.rsplit("/")[-1]
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 
         shutil.copyfile(str(filepath), dest)

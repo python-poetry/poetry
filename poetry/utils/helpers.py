@@ -4,6 +4,7 @@ import shutil
 import stat
 import tempfile
 
+from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -17,12 +18,6 @@ import requests
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
-
-
-try:
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping
 
 
 _canonicalize_regex = re.compile("[-_]+")

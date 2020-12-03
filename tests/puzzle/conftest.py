@@ -1,19 +1,14 @@
 import shutil
+import urllib.parse
 
 from pathlib import Path
 
 import pytest
 
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
-
-
 def mock_clone(self, source, dest):
     # Checking source to determine which folder we need to copy
-    parts = urlparse.urlparse(source)
+    parts = urllib.parse.urlparse(source)
 
     folder = (
         Path(__file__).parent.parent

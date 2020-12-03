@@ -5,6 +5,7 @@ import urllib.parse
 import warnings
 
 from collections import defaultdict
+from html import unescape
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -12,6 +13,7 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Optional
+from urllib.parse import quote
 
 import requests
 import requests.auth
@@ -42,23 +44,6 @@ from .pypi_repository import PyPiRepository
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
-
-try:
-    from html import unescape
-except ImportError:
-    try:
-        from html.parser import HTMLParser
-    except ImportError:
-        from HTMLParser import HTMLParser
-
-    unescape = HTMLParser().unescape
-
-
-try:
-    from urllib.parse import quote
-except ImportError:
-    from urllib import quote
-
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")

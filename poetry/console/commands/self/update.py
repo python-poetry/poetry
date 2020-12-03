@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import hashlib
 import os
 import re
@@ -28,7 +26,7 @@ if TYPE_CHECKING:
     from poetry.core.semver.version import Version
 
 
-BIN = """# -*- coding: utf-8 -*-
+BIN = """\
 import glob
 import sys
 import os

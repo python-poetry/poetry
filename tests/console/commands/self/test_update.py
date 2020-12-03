@@ -57,7 +57,6 @@ def test_self_update_should_install_all_necessary_elements(
     assert script.exists()
 
     expected_script = """\
-# -*- coding: utf-8 -*-
 import glob
 import sys
 import os

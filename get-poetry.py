@@ -27,7 +27,6 @@ import stat
 import subprocess
 import sys
 import tarfile
-import tempfile
 
 from contextlib import closing
 from contextlib import contextmanager
@@ -35,35 +34,15 @@ from functools import cmp_to_key
 from gzip import GzipFile
 from io import UnsupportedOperation
 from io import open
+from urllib.error import HTTPError
+from urllib.request import Request
+from urllib.request import urlopen
 
 
 try:
-    from urllib.error import HTTPError
-    from urllib.request import Request
-    from urllib.request import urlopen
-except ImportError:
-    from urllib2 import HTTPError
-    from urllib2 import Request
-    from urllib2 import urlopen
-
-try:
-    input = raw_input
-except NameError:
-    pass
-
-
-try:
-    try:
-        import winreg
-    except ImportError:
-        import _winreg as winreg
+    import winreg
 except ImportError:
     winreg = None
-
-try:
-    u = unicode
-except NameError:
-    u = str
 
 SHELL = os.getenv("SHELL", "")
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
@@ -157,17 +136,10 @@ def colorize(style, text):
 
 @contextmanager
 def temporary_directory(*args, **kwargs):
-    try:
-        from tempfile import TemporaryDirectory
-    except ImportError:
-        name = tempfile.mkdtemp(*args, **kwargs)
+    from tempfile import TemporaryDirectory
 
+    with TemporaryDirectory(*args, **kwargs) as name:
         yield name
-
-        shutil.rmtree(name)
-    else:
-        with TemporaryDirectory(*args, **kwargs) as name:
-            yield name
 
 
 def string_to_bool(value):
@@ -197,7 +169,7 @@ POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
 
-BIN = """# -*- coding: utf-8 -*-
+BIN = """\
 import glob
 import sys
 import os
@@ -217,7 +189,7 @@ if __name__ == "__main__":
     main()
 """
 
-BAT = u('@echo off\r\n{python_executable} "{poetry_bin}" %*\r\n')
+BAT = '@echo off\r\n{python_executable} "{poetry_bin}" %*\r\n'
 
 
 PRE_MESSAGE = """# Welcome to {poetry}!
@@ -678,13 +650,11 @@ class Installer:
         if WINDOWS:
             with open(os.path.join(POETRY_BIN, "poetry.bat"), "w") as f:
                 f.write(
-                    u(
-                        BAT.format(
-                            python_executable=python_executable,
-                            poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
-                                os.environ["USERPROFILE"], "%USERPROFILE%"
-                            ),
-                        )
+                    BAT.format(
+                        python_executable=python_executable,
+                        poetry_bin=os.path.join(POETRY_BIN, "poetry").replace(
+                            os.environ["USERPROFILE"], "%USERPROFILE%"
+                        ),
                     )
                 )
 
@@ -692,8 +662,8 @@ class Installer:
             if WINDOWS:
                 python_executable = "python"
 
-            f.write(u("#!/usr/bin/env {}\n".format(python_executable)))
-            f.write(u(BIN))
+            f.write("#!/usr/bin/env {}\n".format(python_executable))
+            f.write(BIN)
 
         if not WINDOWS:
             # Making the file executable
@@ -705,7 +675,7 @@ class Installer:
             return
 
         with open(os.path.join(POETRY_HOME, "env"), "w") as f:
-            f.write(u(self.get_export_string()))
+            f.write(self.get_export_string())
 
     def update_path(self):
         """
@@ -735,7 +705,7 @@ class Installer:
 
             if addition not in content:
                 with open(profile, "a") as f:
-                    f.write(u(addition))
+                    f.write(addition)
 
     def add_to_fish_path(self):
         """
@@ -824,7 +794,7 @@ class Installer:
             HWND_BROADCAST,
             WM_SETTINGCHANGE,
             0,
-            u"Environment",
+            "Environment",
             SMTO_ABORTIFHUNG,
             5000,
             ctypes.byref(result),
