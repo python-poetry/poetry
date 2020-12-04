@@ -571,6 +571,11 @@ class Installer:
         platform = sys.platform
         if platform == "linux2":
             platform = "linux"
+        
+        # msys defines the platform as msys, even though it's still windows
+        # so we define it back to win32
+        if platform == "msys":
+            platform = "win32"
 
         url = self._base_url + "{}/".format(version)
         name = "poetry-{}-{}.tar.gz".format(version, platform)
