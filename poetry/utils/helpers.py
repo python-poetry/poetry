@@ -116,11 +116,7 @@ def download_file(
                 }
             )
 
-    with get(
-        url,
-        headers=headers,
-        stream=True,  # Save RAM.
-    ) as response:
+    with get(url, headers=headers, stream=True) as response:
         response.raise_for_status()
         if response.status_code == 206:
             mode = "ab"
