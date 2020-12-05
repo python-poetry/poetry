@@ -3,6 +3,7 @@ import re
 import shutil
 import stat
 import tempfile
+import time
 
 from contextlib import contextmanager
 from pathlib import Path
@@ -95,10 +96,32 @@ def download_file(
 ):  # type: (str, str, Optional[requests.Session], int) -> None
     get = requests.get if not session else session.get
 
-    with get(url, stream=True) as response:
-        response.raise_for_status()
+    resume_byte_pos = 0
+    mtime = None
+    try:
+        resume_byte_pos = os.path.getsize(dest)
+        mtime = os.path.getmtime(dest)
+    except: pass
 
-        with open(dest, "wb") as f:
+    headers = {}
+    if resume_byte_pos:
+        headers.update(Range='bytes=%d-' % resume_byte_pos)
+        if mtime: headers.update({"If-Unmodified-Since": time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime(mtime))})
+
+    with get(
+            url,
+            headers=headers,
+            stream=True,  # Save RAM.
+    ) as response:
+        response.raise_for_status()
+        if response.status_code == 206:
+            mode = 'ab'
+        elif response.status_code == 200:
+            mode = 'wb'
+        else:
+            raise Exception("Unexpected HTTP status in", response)
+
+        with open(dest, mode) as f:
             for chunk in response.iter_content(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)
