@@ -101,23 +101,31 @@ def download_file(
     try:
         resume_byte_pos = os.path.getsize(dest)
         mtime = os.path.getmtime(dest)
-    except: pass
+    except Exception:
+        pass
 
     headers = {}
     if resume_byte_pos:
-        headers.update(Range='bytes=%d-' % resume_byte_pos)
-        if mtime: headers.update({"If-Unmodified-Since": time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime(mtime))})
+        headers.update(Range="bytes=%d-" % resume_byte_pos)
+        if mtime:
+            headers.update(
+                {
+                    "If-Unmodified-Since": time.strftime(
+                        "%a, %d %b %Y %H:%M:%S GMT", time.gmtime(mtime)
+                    )
+                }
+            )
 
     with get(
-            url,
-            headers=headers,
-            stream=True,  # Save RAM.
+        url,
+        headers=headers,
+        stream=True,  # Save RAM.
     ) as response:
         response.raise_for_status()
         if response.status_code == 206:
-            mode = 'ab'
+            mode = "ab"
         elif response.status_code == 200:
-            mode = 'wb'
+            mode = "wb"
         else:
             raise Exception("Unexpected HTTP status in", response)
 
