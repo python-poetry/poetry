@@ -3,7 +3,7 @@ from typing import Optional
 
 import pytest
 
-from pytest_mock.plugin import MockFixture
+from pytest_mock import MockFixture
 
 from poetry.core.packages import Package
 from poetry.repositories.installed_repository import InstalledRepository
