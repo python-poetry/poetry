@@ -255,18 +255,15 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 else:
                     choices = []
                     matches_names = [p.name for p in matches]
-                    exact_match = constraint["name"] in matches_names
+                    exact_match = constraint["name"].lower() in matches_names
                     if exact_match:
                         choices.append(
-                            matches[matches_names.index(constraint["name"])].pretty_name
+                            matches[matches_names.index(constraint["name"].lower())].pretty_name
                         )
 
                     for found_package in matches:
                         if len(choices) >= 10:
                             break
-
-                        if found_package.name.lower() == constraint["name"].lower():
-                            continue
 
                         choices.append(found_package.pretty_name)
 
