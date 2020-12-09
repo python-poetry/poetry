@@ -258,7 +258,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     exact_match = constraint["name"].lower() in matches_names
                     if exact_match:
                         choices.append(
-                            matches[matches_names.index(constraint["name"].lower())].pretty_name
+                            matches[
+                                matches_names.index(constraint["name"].lower())
+                            ].pretty_name
                         )
 
                     for found_package in matches:
