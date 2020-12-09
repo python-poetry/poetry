@@ -102,7 +102,7 @@ class Repository(BaseRepository):
         results = []
 
         for package in self.packages:
-            if query in package.name:
+            if query.lower() in package.name:
                 results.append(package)
 
         return results
