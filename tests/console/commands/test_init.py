@@ -124,6 +124,44 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+def test_interactive_with_dependencies_case_sensitivity(tester, repo):
+    repo.add_package(get_package("pygithub", "1.54.0"))
+
+    inputs = [
+        "my-package",  # Package name
+        "1.2.3",  # Version
+        "This is a description",  # Description
+        "n",  # Author
+        "MIT",  # License
+        "~2.7 || ^3.6",  # Python
+        "",  # Interactive packages
+        "PyGithub",  # Search for a package using capital letters
+        "0",  # First (and only) option is pygithub
+        "",  # Do not set constraint
+        "",  # Stop searching for packages
+        "n",  # Interactive dev packages
+        "\n",  # Generate
+    ]
+    tester.execute(inputs="\n".join(inputs))
+
+    expected = """\
+[tool.poetry]
+name = "my-package"
+version = "1.2.3"
+description = "This is a description"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+pygithub = "^1.54.0"
+
+[tool.poetry.dev-dependencies]
+"""
+
+    assert expected in tester.io.fetch_output()
+
+
 def test_empty_license(tester):
     inputs = [
         "my-package",  # Package name
