@@ -1093,3 +1093,35 @@ def test_env_finds_fallback_executables_for_generic_env(tmp_dir, manager):
 
     assert Path(venv.python).name == expected_executable
     assert Path(venv.pip).name == expected_pip_executable
+
+
+def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
+    manager, poetry, config, mocker, config_virtualenvs_path
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "~3.5.1"
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+
+    check_output = mocker.patch(
+        "subprocess.check_output",
+        side_effect=lambda cmd, *args, **kwargs: str(
+            "3.5.12" if "python3.5" in cmd else "3.7.1"
+        ),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    assert check_output.called
+    m.assert_called_with(
+        config_virtualenvs_path / "{}-py3.5".format(venv_name),
+        executable="python3.5",
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
+    )

@@ -847,7 +847,7 @@ class EnvManager:
                         supported_python
                     ):
                         continue
-                elif not supported_python.allows_all(
+                elif not supported_python.allows_any(
                     parse_constraint(python_to_try + ".*")
                 ):
                     continue
