@@ -265,6 +265,7 @@ pip install awesome[databases]
 
 !!!note
 
+    The dependencies specified for each `extra` must already be defined as project dependencies.
     Dependencies listed in the `dev-dependencies` section cannot be specified as extras.
 
 
