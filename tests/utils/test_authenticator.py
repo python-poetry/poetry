@@ -1,3 +1,4 @@
+import pathlib
 import re
 import uuid
 
@@ -308,3 +309,52 @@ def test_authenticator_uses_env_provided_credentials(
     request = http.last_request()
 
     assert request.headers["Authorization"] == "Basic YmFyOmJheg=="
+
+
+def test_authenticator_uses_certs_from_config_if_not_provided(
+    config, mock_remote, http, mocker
+):
+    config.merge(
+        {
+            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
+            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
+            "certificates": {"foo": {
+                "cert": "/path/to/cert",
+                "client-cert": "/path/to/client-cert",
+            }},
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    session_send = mocker.patch.object(authenticator.session, "send")
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+    call_args = session_send.call_args
+    call_args.kwargs["verify"] == pathlib.Path("/path/to/cert")
+    call_args.kwargs["cert"] == pathlib.Path("/path/to/client-cert")
+
+
+def test_authenticator_uses_provided_certs_instead_of_config_certs(
+    config, mock_remote, http, mocker
+):
+    config.merge(
+        {
+            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
+            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
+            "certificates": {"foo": {
+                "cert": "/path/to/cert",
+                "client-cert": "/path/to/client-cert",
+            }},
+        }
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    session_send = mocker.patch.object(authenticator.session, "send")
+    authenticator.request(
+        "get",
+        "https://foo.bar/files/foo-0.1.0.tar.gz",
+        verify="/path/to/provided/cert",
+        cert="/path/to/provided/client-cert",
+    )
+    call_args = session_send.call_args
+    call_args.kwargs["verify"] == pathlib.Path("/path/to/provided/cert")
+    call_args.kwargs["cert"] == pathlib.Path("/path/to/provided/client-cert")

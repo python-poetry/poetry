@@ -1,4 +1,5 @@
 import logging
+import pathlib
 import time
 import urllib.parse
 
@@ -7,6 +8,8 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
+from typing import Dict
+from typing import Generator
 
 import requests
 import requests.auth
@@ -14,6 +17,7 @@ import requests.exceptions
 
 from poetry.exceptions import PoetryException
 from poetry.utils.password_manager import PasswordManager
+from poetry.utils.helpers import get_cert, get_client_cert
 
 
 if TYPE_CHECKING:
@@ -31,6 +35,7 @@ class Authenticator:
         self._io = io
         self._session = None
         self._credentials = {}
+        self._certs = {}
         self._password_manager = PasswordManager(self._config)
 
     def _log(self, message: str, level: str = "debug") -> None:
@@ -62,8 +67,10 @@ class Authenticator:
 
         proxies = kwargs.get("proxies", {})
         stream = kwargs.get("stream")
-        verify = kwargs.get("verify")
-        cert = kwargs.get("cert")
+
+        certs = self.get_certs_for_url(url)
+        verify = kwargs.get("verify", certs.get("verify"))
+        cert = kwargs.get("cert", certs.get("cert"))
 
         settings = session.merge_environment_settings(
             prepared_request.url, proxies, stream, verify, cert
@@ -168,6 +175,31 @@ class Authenticator:
     ) -> Tuple[Optional[str], Optional[str]]:
         credentials = (None, None)
 
+        for (repository_name, repository_netloc) in self._get_repository_netlocs():
+            if netloc == repository_netloc:
+                auth = self._password_manager.get_http_auth(repository_name)
+
+                if auth is None:
+                    continue
+
+                credentials = (auth["username"], auth["password"])
+                break
+
+        return credentials
+
+    def get_certs_for_url(
+        self, url: str
+    ) -> Dict[str, pathlib.PosixPath]:
+        parsed_url = urllib.parse.urlsplit(url)
+
+        netloc = parsed_url.netloc
+
+        return self._certs.setdefault(
+            netloc,
+            self._get_certs_for_netloc_from_config(netloc),
+        )
+
+    def _get_repository_netlocs(self) -> Generator[[str, str], None, None]:
         for repository_name in self._config.get("repositories", []):
             auth = self._get_http_auth(repository_name, netloc)
 
@@ -204,3 +236,16 @@ class Authenticator:
             }
 
         return None
+
+    def _get_certs_for_netloc_from_config(
+        self, netloc: str
+    ) -> Dict[str, pathlib.PosixPath]:
+        certs = dict(cert=None, verify=None)
+
+        for (repository_name, repository_netloc) in self._get_repository_netlocs():
+            if netloc == repository_netloc:
+                certs['cert'] = get_client_cert(self._config, repository_name)
+                certs['verify'] = get_cert(self._config, repository_name)
+                break
+
+        return certs
