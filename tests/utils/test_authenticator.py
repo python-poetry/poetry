@@ -1,4 +1,3 @@
-import pathlib
 import re
 import uuid
 
@@ -327,9 +326,9 @@ def test_authenticator_uses_certs_from_config_if_not_provided(
     authenticator = Authenticator(config, NullIO())
     session_send = mocker.patch.object(authenticator.session, "send")
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
-    call_args = session_send.call_args
-    call_args.kwargs["verify"] == pathlib.Path("/path/to/cert")
-    call_args.kwargs["cert"] == pathlib.Path("/path/to/client-cert")
+    kwargs = session_send.call_args[1]
+    assert str(kwargs["verify"]) == "/path/to/cert"
+    assert str(kwargs["cert"]) == "/path/to/client-cert"
 
 
 def test_authenticator_uses_provided_certs_instead_of_config_certs(
@@ -353,6 +352,6 @@ def test_authenticator_uses_provided_certs_instead_of_config_certs(
         verify="/path/to/provided/cert",
         cert="/path/to/provided/client-cert",
     )
-    call_args = session_send.call_args
-    call_args.kwargs["verify"] == pathlib.Path("/path/to/provided/cert")
-    call_args.kwargs["cert"] == pathlib.Path("/path/to/provided/client-cert")
+    kwargs = session_send.call_args[1]
+    assert str(kwargs["verify"]) == "/path/to/provided/cert"
+    assert str(kwargs["cert"]) == "/path/to/provided/client-cert"
