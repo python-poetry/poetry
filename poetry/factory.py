@@ -142,15 +142,15 @@ class Factory(BaseFactory):
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert
 
-        if "url" in source:
-            # PyPI-like repository
-            if "name" not in source:
-                raise RuntimeError("Missing [name] in source.")
-        else:
-            raise RuntimeError("Unsupported source specified")
+        if "name" not in source:
+            raise RuntimeError("Missing [name] in source.")
 
         name = source["name"]
-        url = source["url"]
+        fallback_url = auth_config.get("repositories.{name}.url".format(name=name))
+        url = source.get("url", fallback_url)
+
+        if url is None:
+            raise RuntimeError("Unsupported source specified")
 
         return LegacyRepository(
             name,
