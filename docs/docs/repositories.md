@@ -97,6 +97,13 @@ name = "foo"
 url = "https://foo.bar/simple/"
 ```
 
+Alternatively, if you've already configured your repository with `poetry config repositories.foo`, you can remove the `url` key from your `pyproject.toml`.
+
+```toml
+[[tool.poetry.source]]
+name = "foo"
+```
+
 From now on, Poetry will also look for packages in your private repository.
 
 !!!note
