@@ -119,7 +119,9 @@ foo==1.0.0
 
 
 def test_export_includes_multiple_extras_in_multiple_flags(tester, do_lock):
-    tester.execute("--format requirements.txt --extras feature_bar --extras feature_baz")
+    tester.execute(
+        "--format requirements.txt --extras feature_bar --extras feature_baz"
+    )
     expected = """\
 bar==1.1.0
 baz==1.2.0
