@@ -30,7 +30,7 @@ from poetry.console.commands.env_command import EnvCommand
 from poetry.console.commands.installer_command import InstallerCommand
 from poetry.console.logging.io_formatter import IOFormatter
 from poetry.console.logging.io_handler import IOHandler
-from poetry.utils._compat import PY36
+from poetry.mixology.solutions.providers import PythonRequirementSolutionProvider
 
 
 class ApplicationConfig(BaseApplicationConfig):
@@ -55,14 +55,9 @@ class ApplicationConfig(BaseApplicationConfig):
         self.add_event_listener(PRE_HANDLE, self.set_env)
         self.add_event_listener(PRE_HANDLE, self.set_installer)
 
-        if PY36:
-            from poetry.mixology.solutions.providers import (
-                PythonRequirementSolutionProvider,
-            )
-
-            self._solution_provider_repository.register_solution_providers(
-                [PythonRequirementSolutionProvider]
-            )
+        self._solution_provider_repository.register_solution_providers(
+            [PythonRequirementSolutionProvider]
+        )
 
     def register_command_loggers(
         self, event, event_name, _

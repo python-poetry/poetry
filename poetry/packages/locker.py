@@ -5,6 +5,7 @@ import re
 
 from copy import deepcopy
 from hashlib import sha256
+from pathlib import Path
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
@@ -33,8 +34,6 @@ from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
 from poetry.core.version.requirements import InvalidRequirement
 from poetry.packages import DependencyPackage
-from poetry.utils._compat import OrderedDict
-from poetry.utils._compat import Path
 from poetry.utils.extras import get_extra_package_names
 
 
@@ -412,7 +411,7 @@ class Locker(object):
                 for extra, deps in sorted(root.extras.items())
             }
 
-        lock["metadata"] = OrderedDict(
+        lock["metadata"] = dict(
             [
                 ("lock-version", self._VERSION),
                 ("python-versions", root.python_versions),
@@ -525,7 +524,7 @@ class Locker(object):
                     constraint["version"] for constraint in constraints
                 ]
 
-        data = OrderedDict(
+        data = dict(
             [
                 ("name", package.pretty_name),
                 ("version", package.pretty_version),
@@ -569,7 +568,7 @@ class Locker(object):
                     )
                 ).as_posix()
 
-            data["source"] = OrderedDict()
+            data["source"] = dict()
 
             if package.source_type:
                 data["source"]["type"] = package.source_type

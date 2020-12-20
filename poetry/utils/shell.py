@@ -2,6 +2,8 @@ import os
 import signal
 import sys
 
+from pathlib import Path
+
 import pexpect
 
 from clikit.utils.terminal import Terminal
@@ -9,7 +11,6 @@ from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
 from ._compat import WINDOWS
-from ._compat import Path
 from .env import VirtualEnv
 
 

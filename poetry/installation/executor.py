@@ -7,17 +7,13 @@ import threading
 
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
+from pathlib import Path
 from subprocess import CalledProcessError
 
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.io.null_io import NullIO
-from poetry.utils._compat import PY2
-from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import OrderedDict
-from poetry.utils._compat import Path
-from poetry.utils._compat import cpu_count
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
@@ -45,13 +41,13 @@ class Executor(object):
         if parallel is None:
             parallel = config.get("installer.parallel", True)
 
-        if parallel and not (PY2 and WINDOWS):
+        if parallel:
             # This should be directly handled by ThreadPoolExecutor
             # however, on some systems the number of CPUs cannot be determined
             # (it raises a NotImplementedError), so, in this case, we assume
             # that the system only has one CPU.
             try:
-                self._max_workers = cpu_count() + 4
+                self._max_workers = os.cpu_count() + 4
             except NotImplementedError:
                 self._max_workers = 5
         else:
@@ -62,7 +58,7 @@ class Executor(object):
         self._executed_operations = 0
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
-        self._sections = OrderedDict()
+        self._sections = dict()
         self._lock = threading.Lock()
         self._shutdown = False
 
@@ -107,7 +103,7 @@ class Executor(object):
 
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
-        self._sections = OrderedDict()
+        self._sections = dict()
         for _, group in groups:
             tasks = []
             serial_operations = []

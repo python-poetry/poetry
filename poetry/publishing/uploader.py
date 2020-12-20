@@ -1,6 +1,7 @@
 import hashlib
 import io
 
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -21,7 +22,6 @@ from poetry.__version__ import __version__
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.utils._compat import Path
 from poetry.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 

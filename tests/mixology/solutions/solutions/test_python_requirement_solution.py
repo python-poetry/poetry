@@ -1,5 +1,3 @@
-import pytest
-
 from clikit.io.buffered_io import BufferedIO
 
 from poetry.core.packages.dependency import Dependency
@@ -8,12 +6,8 @@ from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import PythonCause
 from poetry.mixology.term import Term
 from poetry.puzzle.exceptions import SolverProblemError
-from poetry.utils._compat import PY36
 
 
-@pytest.mark.skipif(
-    not PY36, reason="Error solutions are only available for Python ^3.6"
-)
 def test_it_provides_the_correct_solution():
     from poetry.mixology.solutions.solutions import PythonRequirementSolution
 

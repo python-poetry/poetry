@@ -1,6 +1,7 @@
+from pathlib import Path
+
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.factory import Factory
-from poetry.utils._compat import Path
 
 from .command import Command
 

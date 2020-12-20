@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from pathlib import Path
 from typing import Dict
 from typing import Optional
 
@@ -16,7 +17,6 @@ from .locations import CONFIG_DIR
 from .packages.locker import Locker
 from .poetry import Poetry
 from .repositories.pypi_repository import PyPiRepository
-from .utils._compat import Path
 
 
 class Factory(BaseFactory):

@@ -1,7 +1,8 @@
+from pathlib import Path
+
 import pytest
 
 from poetry.packages import Locker
-from poetry.utils._compat import Path
 from tests.helpers import get_package
 
 

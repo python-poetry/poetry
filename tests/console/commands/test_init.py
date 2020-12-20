@@ -2,12 +2,13 @@ import os
 import shutil
 import sys
 
+from pathlib import Path
+
 import pytest
 
 from cleo import CommandTester
 
 from poetry.repositories import Pool
-from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from tests.helpers import TestApplication
 from tests.helpers import get_package
@@ -26,7 +27,7 @@ def source_dir(tmp_path):  # type: (...) -> Path
 
 @pytest.fixture
 def patches(mocker, source_dir, repo):
-    mocker.patch("poetry.utils._compat.Path.cwd", return_value=source_dir)
+    mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
     )

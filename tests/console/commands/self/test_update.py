@@ -1,12 +1,13 @@
 import os
 
+from pathlib import Path
+
 import pytest
 
 from poetry.__version__ import __version__
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import Path
 
 
 FIXTURES = Path(__file__).parent.joinpath("fixtures")

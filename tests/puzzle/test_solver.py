@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from clikit.io import NullIO
@@ -13,7 +15,6 @@ from poetry.puzzle.provider import Provider as BaseProvider
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from tests.helpers import get_dependency
 from tests.helpers import get_package

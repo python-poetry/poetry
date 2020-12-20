@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 import os
 import re
 import sys
+import urllib.parse
 
+from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Tuple
@@ -15,9 +17,6 @@ from tomlkit import inline_table
 
 from poetry.core.pyproject import PyProjectException
 from poetry.core.pyproject.toml import PyProjectTOML
-from poetry.utils._compat import OrderedDict
-from poetry.utils._compat import Path
-from poetry.utils._compat import urlparse
 
 from .command import Command
 from .env_command import EnvCommand
@@ -63,9 +62,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         self._pool = None
 
     def handle(self):
+        from pathlib import Path
+
         from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
-        from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
         pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
@@ -390,7 +390,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 extras = [e.strip() for e in extras_m.group(1).split(",")]
                 requirement, _ = requirement.split("[")
 
-            url_parsed = urlparse.urlparse(requirement)
+            url_parsed = urllib.parse.urlparse(requirement)
             if url_parsed.scheme and url_parsed.netloc:
                 # Url
                 if url_parsed.scheme in ["git+https", "git+ssh"]:
@@ -400,7 +400,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     parsed = ParsedUrl.parse(requirement)
                     url = Git.normalize_url(requirement)
 
-                    pair = OrderedDict([("name", parsed.name), ("git", url.url)])
+                    pair = dict([("name", parsed.name), ("git", url.url)])
                     if parsed.rev:
                         pair["rev"] = url.revision
 
@@ -417,9 +417,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 elif url_parsed.scheme in ["http", "https"]:
                     package = Provider.get_package_from_url(requirement)
 
-                    pair = OrderedDict(
-                        [("name", package.name), ("url", package.source_url)]
-                    )
+                    pair = dict([("name", package.name), ("url", package.source_url)])
                     if extras:
                         pair["extras"] = extras
 
@@ -435,7 +433,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     package = Provider.get_package_from_directory(path)
 
                 result.append(
-                    OrderedDict(
+                    dict(
                         [
                             ("name", package.name),
                             ("path", path.relative_to(cwd).as_posix()),
@@ -451,7 +449,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             pair = pair.strip()
 
-            require = OrderedDict()
+            require = dict()
             if " " in pair:
                 name, version = pair.split(" ", 2)
                 extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)

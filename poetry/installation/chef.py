@@ -1,10 +1,10 @@
 import hashlib
 import json
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.utils.link import Link
-from poetry.utils._compat import Path
 
 from .chooser import InvalidWheelName
 from .chooser import Wheel

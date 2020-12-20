@@ -4,6 +4,7 @@ import os
 import tarfile
 import zipfile
 
+from pathlib import Path
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -17,8 +18,6 @@ from poetry.core.packages import Package
 from poetry.core.packages import ProjectPackage
 from poetry.core.packages import dependency_from_pep_508
 from poetry.core.pyproject.toml import PyProjectTOML
-from poetry.core.utils._compat import PY35
-from poetry.core.utils._compat import Path
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
@@ -364,13 +363,10 @@ class PackageInfo:
         :param path: Path to search.
         """
         pattern = "**/*.*-info"
-        if PY35:
-            # Sometimes pathlib will fail on recursive symbolic links, so we need to workaround it
-            # and use the glob module instead. Note that this does not happen with pathlib2
-            # so it's safe to use it for Python < 3.4.
-            directories = glob.iglob(path.joinpath(pattern).as_posix(), recursive=True)
-        else:
-            directories = path.glob(pattern)
+        # Sometimes pathlib will fail on recursive symbolic links, so we need to workaround it
+        # and use the glob module instead. Note that this does not happen with pathlib2
+        # so it's safe to use it for Python < 3.4.
+        directories = glob.iglob(path.joinpath(pattern).as_posix(), recursive=True)
 
         for d in directories:
             yield Path(d)

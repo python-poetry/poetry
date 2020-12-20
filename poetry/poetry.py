@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from pathlib import Path
+
 from poetry.core.packages import ProjectPackage
 from poetry.core.poetry import Poetry as BasePoetry
 
@@ -8,7 +10,6 @@ from .__version__ import __version__
 from .config.config import Config
 from .packages import Locker
 from .repositories.pool import Pool
-from .utils._compat import Path
 
 
 class Poetry(BasePoetry):
