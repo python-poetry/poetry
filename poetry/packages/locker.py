@@ -219,11 +219,12 @@ class Locker(object):
         packages_by_name,
         project_level_dependencies,
         nested_dependencies,
-    ):  # type: (List[Dependency], int,  bool, Dict[str, List[Package]], Set[str], Dict[Tuple[str, str], Dependency]) -> Dict[Tuple[str, str], Dependency]
+        current_project_level_dependency=None,
+    ):  # type: (List[Dependency], int,  bool, Dict[str, List[Package]], Set[str], Dict[Tuple[str, str], Dependency], Union[None, str]) -> Dict[Tuple[str, str], Dependency]
         if not dependencies:
             return nested_dependencies
 
-        next_level_dependencies = []
+        next_level_dependencies = {}
 
         for requirement in dependencies:
             key = (requirement.name, requirement.pretty_constraint)
@@ -243,20 +244,25 @@ class Locker(object):
                         locked_package.to_dependency().constraint
                     )
 
-                if key not in nested_dependencies:
-                    for require in locked_package.requires:
-                        if require.marker.is_empty():
-                            require.marker = requirement.marker
-                        else:
-                            require.marker = require.marker.intersect(
+                for require in locked_package.requires:
+
+                    if requirement.name == current_project_level_dependency:
+                        continue
+
+                    require_key = (requirement.name, require.name, require.pretty_constraint)
+                    if require.marker.is_empty():
+                        require.marker = requirement.marker
+                    else:
+                        require.marker = require.marker.intersect(
                                 requirement.marker
                             )
 
-                        require.marker = require.marker.intersect(locked_package.marker)
-                        next_level_dependencies.append(require)
+                    require.marker = require.marker.intersect(locked_package.marker)
+                    next_level_dependencies[require_key] = require
 
             if requirement.name in project_level_dependencies and level == 0:
                 # project level dependencies take precedence
+                current_project_level_dependency = requirement.name
                 continue
 
             if not locked_package:
@@ -271,13 +277,15 @@ class Locker(object):
                 ].marker.intersect(requirement.marker)
 
         return cls.__walk_dependency_level(
-            dependencies=next_level_dependencies,
+            dependencies=list(next_level_dependencies.values()),
             level=level + 1,
             pinned_versions=pinned_versions,
             packages_by_name=packages_by_name,
             project_level_dependencies=project_level_dependencies,
             nested_dependencies=nested_dependencies,
+            current_project_level_dependency=current_project_level_dependency
         )
+
 
     @classmethod
     def get_project_dependencies(
