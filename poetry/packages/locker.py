@@ -244,23 +244,23 @@ class Locker(object):
                         locked_package.to_dependency().constraint
                     )
 
-                for require in locked_package.requires:
+                if requirement.name != current_project_level_dependency:
+                    for require in locked_package.requires:
 
-                    if requirement.name == current_project_level_dependency:
-                        continue
+                        require_key = (
+                            requirement.name,
+                            require.name,
+                            require.pretty_constraint,
+                        )
+                        if require.marker.is_empty():
+                            require.marker = requirement.marker
+                        else:
+                            require.marker = require.marker.intersect(
+                                requirement.marker
+                            )
 
-                    require_key = (
-                        requirement.name,
-                        require.name,
-                        require.pretty_constraint,
-                    )
-                    if require.marker.is_empty():
-                        require.marker = requirement.marker
-                    else:
-                        require.marker = require.marker.intersect(requirement.marker)
-
-                    require.marker = require.marker.intersect(locked_package.marker)
-                    next_level_dependencies[require_key] = require
+                        require.marker = require.marker.intersect(locked_package.marker)
+                        next_level_dependencies[require_key] = require
 
             if requirement.name in project_level_dependencies and level == 0:
                 # project level dependencies take precedence
