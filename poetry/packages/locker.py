@@ -561,12 +561,11 @@ class Locker(object):
         if package.source_url:
             url = package.source_url
             if package.source_type in ["file", "directory"]:
-                # The lock file should only store paths relative to the root project
-                url = Path(
-                    os.path.relpath(
-                        Path(url).as_posix(), self._lock.path.parent.as_posix()
-                    )
-                ).as_posix()
+                # For all local paths, the lock file should store the relative path from the root folder
+                url = Path(url).as_posix()
+                package_root = self._lock.path.parent
+                if url.startswith(".") or Path(url).anchor == package_root.anchor:
+                    url = Path(os.path.relpath(url, package_root.as_posix())).as_posix()
 
             data["source"] = dict()
 

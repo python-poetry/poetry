@@ -529,3 +529,34 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     _ = locker.lock_data
 
     assert 0 == len(caplog.records)
+
+
+@pytest.mark.parametrize(
+    "source_type, source_url, expected_url",
+    [
+        ("file", "{lock_dir}/../A.whl", "../A.whl"),
+        ("file", "P:/A.whl", "P:/A.whl"),
+        ("file", "share:/home/A.tar.gz", "share:/home/A.tar.gz"),
+        ("directory", "{lock_dir}/../A/", "../A"),
+        ("directory", "P:/A", "P:/A"),
+    ],
+)
+def test_lock_path_dependencies(locker, root, source_type, source_url, expected_url):
+    package_a = Package(
+        "A",
+        "1.0.0",
+        source_type=source_type,
+        source_url=source_url.format(lock_dir=locker._lock.path.parent),
+    )
+    package_a.description = None
+
+    locker.set_lock_data(root, [package_a])
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    lock = tomlkit.parse(content)
+    assert lock["package"][0]["name"] == "A"
+    assert lock["package"][0]["source"]["type"] == source_type
+    assert lock["package"][0]["source"]["url"] == expected_url
+    assert len(lock["metadata"]["files"]["A"]) == 0
