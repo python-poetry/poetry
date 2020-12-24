@@ -249,13 +249,15 @@ class Locker(object):
                     if requirement.name == current_project_level_dependency:
                         continue
 
-                    require_key = (requirement.name, require.name, require.pretty_constraint)
+                    require_key = (
+                        requirement.name,
+                        require.name,
+                        require.pretty_constraint,
+                    )
                     if require.marker.is_empty():
                         require.marker = requirement.marker
                     else:
-                        require.marker = require.marker.intersect(
-                                requirement.marker
-                            )
+                        require.marker = require.marker.intersect(requirement.marker)
 
                     require.marker = require.marker.intersect(locked_package.marker)
                     next_level_dependencies[require_key] = require
@@ -283,9 +285,8 @@ class Locker(object):
             packages_by_name=packages_by_name,
             project_level_dependencies=project_level_dependencies,
             nested_dependencies=nested_dependencies,
-            current_project_level_dependency=current_project_level_dependency
+            current_project_level_dependency=current_project_level_dependency,
         )
-
 
     @classmethod
     def get_project_dependencies(
@@ -356,7 +357,7 @@ class Locker(object):
         if extra_package_names is not None:
             extra_package_names = set(
                 get_extra_package_names(
-                    repository.packages, self.lock_data.get("extras", {}), extras or (),
+                    repository.packages, self.lock_data.get("extras", {}), extras or ()
                 )
             )
 

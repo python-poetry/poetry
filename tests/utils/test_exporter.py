@@ -293,12 +293,12 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_a
     poetry.package.requires = [
         Factory.create_dependency(
             name="a", constraint=dict(version="^1.2.3", python="<3.8")
-        ),
+        )
     ]
     poetry.package.dev_requires = [
         Factory.create_dependency(
             name="b", constraint=dict(version="^4.5.6"), category="dev"
-        ),
+        )
     ]
 
     exporter = Exporter(poetry)
@@ -752,7 +752,9 @@ foo==1.2.3
     assert expected == content
 
 
-def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_markers(tmp_dir, poetry):
+def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_markers(
+    tmp_dir, poetry
+):
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -762,12 +764,18 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_
                     "category": "main",
                     "optional": False,
                     "python-versions": "*",
-                    "dependencies": {"bar":
-                    [
-                        {"version": ">=1.2.3,<7.8.10", "markers": "platform_system != \"Windows\""},
-                        {"version": ">=4.5.6,<7.8.10", "markers": "platform_system == \"Windows\""},
-                    ]
-                    }
+                    "dependencies": {
+                        "bar": [
+                            {
+                                "version": ">=1.2.3,<7.8.10",
+                                "markers": 'platform_system != "Windows"',
+                            },
+                            {
+                                "version": ">=4.5.6,<7.8.10",
+                                "markers": 'platform_system == "Windows"',
+                            },
+                        ]
+                    },
                 },
                 {
                     "name": "bar",
@@ -778,30 +786,32 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_
                     "dependencies": {
                         "baz": {
                             "version": "!=10.11.12",
-                            "markers": "platform_system == \"Windows\""
+                            "markers": 'platform_system == "Windows"',
                         }
-                    }
+                    },
                 },
                 {
                     "name": "baz",
                     "version": "10.11.13",
                     "category": "main",
                     "optional": True,
-                    "python-versions": "*"
+                    "python-versions": "*",
                 },
             ],
             "metadata": {
                 "python-versions": "*",
                 "content-hash": "123456789",
                 "hashes": {"foo": [], "bar": [], "baz": []},
-            }
+            },
         }
     )
     set_package_requires(poetry)
 
     exporter = Exporter(poetry)
 
-    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", with_hashes=False)
+    exporter.export(
+        "requirements.txt", Path(tmp_dir), "requirements.txt", with_hashes=False
+    )
 
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
@@ -1037,9 +1047,7 @@ foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 
 
 def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry):
-    poetry.pool.add_repository(
-        LegacyRepository("custom", "https://example.com/simple",)
-    )
+    poetry.pool.add_repository(LegacyRepository("custom", "https://example.com/simple"))
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1094,7 +1102,7 @@ foo==1.2.3 \\
 def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
     tmp_dir, poetry
 ):
-    poetry.pool.add_repository(LegacyRepository("custom", "http://example.com/simple",))
+    poetry.pool.add_repository(LegacyRepository("custom", "http://example.com/simple"))
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1109,7 +1117,7 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
                         "url": "http://example.com/simple",
                         "reference": "",
                     },
-                },
+                }
             ],
             "metadata": {
                 "python-versions": "*",
@@ -1202,10 +1210,8 @@ def test_exporter_exports_requirements_txt_with_dev_extras(
 def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(
     tmp_dir, poetry
 ):
-    poetry.pool.add_repository(
-        LegacyRepository("custom", "https://example.com/simple",)
-    )
-    poetry.pool.add_repository(LegacyRepository("custom", "https://foobaz.com/simple",))
+    poetry.pool.add_repository(LegacyRepository("custom", "https://example.com/simple"))
+    poetry.pool.add_repository(LegacyRepository("custom", "https://foobaz.com/simple"))
     poetry.locker.mock_lock_data(
         {
             "package": [
