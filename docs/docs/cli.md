@@ -146,6 +146,8 @@ poetry install --no-root
 
 * `--no-dev`: Do not install dev dependencies.
 * `--no-root`: Do not install the root package (your project).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--remove-untracked`: Remove dependencies not presented in the lock file
 * `--extras (-E)`: Features to install (multiple values allowed).
 
 ## update
