@@ -43,7 +43,6 @@ class Executor(object):
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            # Trigger build
             self._max_workers = get_default_max_workers()
 
             if max_workers is None:
