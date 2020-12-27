@@ -112,6 +112,13 @@ Defaults to `true`.
         This configuration will be ignored, and parallel execution disabled when running
         Python 2.7 under Windows.
 
+### `installer.max-workers`: int
+
+Set the maximum number of workers while using the parallel installer. Defaults to `number_of_cores + 4`.
+
+!!!note:
+        This configuration will be ignored when `installer.parallel` is set to false.
+
 ### `virtualenvs.create`: boolean
 
 Create a new virtual environment if one doesn't already exist.

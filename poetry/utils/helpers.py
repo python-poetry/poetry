@@ -133,3 +133,16 @@ def is_dir_writable(path, create=False):  # type: (Path, bool) -> bool
         return False
     else:
         return True
+
+
+def get_default_max_workers():
+    # This should be directly handled by ThreadPoolExecutor
+    # however, on some systems the number of CPUs cannot be determined
+    # (it raises a NotImplementedError), so, in this case, we assume
+    # that the system only has one CPU.
+    try:
+        default_max_workers = os.cpu_count() + 4
+    except NotImplementedError:
+        default_max_workers = 5
+
+    return default_max_workers

@@ -16,6 +16,7 @@ from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.io.null_io import NullIO
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
+from poetry.utils.helpers import get_default_max_workers
 from poetry.utils.helpers import safe_rmtree
 
 from .authenticator import Authenticator
@@ -28,7 +29,7 @@ from .operations.update import Update
 
 
 class Executor(object):
-    def __init__(self, env, pool, config, io, parallel=None):
+    def __init__(self, env, pool, config, io, parallel=None, max_workers=None):
         self._env = env
         self._io = io
         self._dry_run = False
@@ -42,14 +43,12 @@ class Executor(object):
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            # This should be directly handled by ThreadPoolExecutor
-            # however, on some systems the number of CPUs cannot be determined
-            # (it raises a NotImplementedError), so, in this case, we assume
-            # that the system only has one CPU.
-            try:
-                self._max_workers = os.cpu_count() + 4
-            except NotImplementedError:
-                self._max_workers = 5
+            self._max_workers = get_default_max_workers()
+
+            if max_workers is None:
+                max_workers = config.get("installer.max-workers", self._max_workers)
+
+            self._max_workers = min(max_workers, self._max_workers)
         else:
             self._max_workers = 1
 
