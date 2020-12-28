@@ -19,11 +19,15 @@ def test_config_get_processes_depended_on_values(config, config_cache_dir):
     [
         ("installer.parallel", "true", True),
         ("installer.parallel", "false", False),
+        ("installer.max-workers", "4", "4"),
+        ("installer.max-workers", "2", "2"),
         ("virtualenvs.create", "true", True),
         ("virtualenvs.create", "false", False),
     ],
 )
 def test_config_get_from_environment_variable(config, environ, name, env_value, value):
-    env_var = "POETRY_{}".format("_".join(k.upper() for k in name.split(".")))
+    env_var = "POETRY_{}".format(
+        "_".join(k.upper().replace("-", "_") for k in name.split("."))
+    )
     os.environ[env_var] = env_value
     assert config.get(name) is value
