@@ -98,6 +98,13 @@ flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
 ```
 
+To use an SSH connection, for example in the case of private repositories, use the following example syntax:
+
+```toml
+[tool.poetry.dependencies]
+requests = { git = "git@github.com:requests/requests.git" }
+```
+
 ## `path` dependencies
 
 To depend on a library located in a local directory or file,
