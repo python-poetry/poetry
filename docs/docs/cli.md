@@ -266,10 +266,14 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ### Options
 
 * `--dev (-D)`: Add package as development dependency.
-* `--path`: The path to a dependency.
-* `--optional` : Add as an optional dependency.
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--lock` : Do not perform install (only update the lockfile).
+* `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
+* `--optional`: Add as an optional dependency.
+* `--python`: Python version for which the dependency must be installed.
+* `--platform`: Platforms for which the dependency must be installed.
+* `--source`: Name of the source to use to install the package.
+* `---allow-prereleases`: Accept prereleases.
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--lock`: Do not perform install (only update the lockfile).
 
 
 ## remove
