@@ -335,7 +335,7 @@ def test_get_4xx_and_5xx_raises(http):
             repo._get(endpoint)
 
 
-def test_get_redirect_has_redirect(http, monkeypatch):
+def test_get_redirected_response_url(http, monkeypatch):
     repo = MockHttpRepository({"/foo": 200}, http)
     redirect_url = "http://legacy.redirect.bar"
 
