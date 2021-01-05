@@ -257,7 +257,7 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ### Options
 
 * `--dev (-D)`: Add package as development dependency.
-* `--extras (-E)`: Extras to activate for the dependency.
+* `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
