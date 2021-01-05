@@ -396,4 +396,11 @@ class LegacyRepository(PyPiRepository):
             )
             return
 
+        if response.url != url:
+            self._log(
+                "Response URL {response_url} differs from request URL {url}".format(
+                    response_url=response.url, url=url
+                )
+            )
+
         return Page(response.url, response.content, response.headers)
