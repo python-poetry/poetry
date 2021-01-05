@@ -59,6 +59,8 @@ class AddCommand(InstallerCommand, InitCommand):
         "  - A name and a constraint (<b>requests@^2.23.0</b>)\n"
         "  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)\n"
         "  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n"
+        "  - A git SSH url (<b>git+ssh://github.com/python-poetry/poetry.git</b>)\n"
+        "  - A git SSH url with a revision (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)\n"
         "  - A file path (<b>../my-package/my-package.whl</b>)\n"
         "  - A directory (<b>../my-package/</b>)\n"
         "  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
