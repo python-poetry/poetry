@@ -300,4 +300,4 @@ build-backend = "poetry.core.masonry.api"
 !!!note
 
     If your `pyproject.toml` file still references `poetry` directly as a build backend,
-    you should update it to reference `poetry_core` instead.
+    you should update it to reference `poetry-core` instead.
