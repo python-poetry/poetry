@@ -400,7 +400,8 @@ class LegacyRepository(PyPiRepository):
             self._log(
                 "Response URL {response_url} differs from request URL {url}".format(
                     response_url=response.url, url=url
-                )
+                ),
+                level="debug",
             )
 
         return Page(response.url, response.content, response.headers)
