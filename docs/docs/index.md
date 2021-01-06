@@ -60,11 +60,12 @@ python install-poetry.py --uninstall
 POETRY_UNINSTALL=1 python install-poetry.py
 ```
 
-By default, Poetry is installed into the user's platform-specific home directory.
-If you wish to change this, you may define the `POETRY_HOME` environment variable:
+By default, Poetry is installed into the user's platform-specific home directory. If you wish to change this, you may define the `POETRY_HOME` environment variable. In Linux, this variable can also be used with `poetry` command to substitute `XDG_CACHE_HOME`, `XDG_CONFIG_HOME` and `XDG_DATA_HOME` variables.
 
 ```bash
 POETRY_HOME=/etc/poetry python install-poetry.py
+POETRY_HOME=/tmp/poetry poetry config --list
+POETRY_HOME=/tmp/poetry poetry env info
 ```
 
 If you want to install prerelease versions, you can do so by passing `--preview` option to `install-poetry.py`

@@ -37,7 +37,9 @@ def user_cache_dir(appname: str) -> str:
 
     Typical user cache directories are:
         macOS:      ~/Library/Caches/<AppName>
-        Unix:       ~/.cache/<AppName> (XDG default)
+        Unix:       ${POETRY_HOME}/.cache/<AppName> or
+                    ${XDG_CACHE_HOME}/<AppName> or
+                    ~/.cache/<AppName>
         Windows:    C:\Users\<username>\AppData\Local\<AppName>\Cache
 
     On Windows the only suggestion in the MSDN docs is that local settings go
@@ -64,7 +66,11 @@ def user_cache_dir(appname: str) -> str:
         path = os.path.join(path, appname)
     else:
         # Get the base path
-        path = os.getenv("XDG_CACHE_HOME", expanduser("~/.cache"))
+        path = os.getenv("POETRY_HOME")
+        if path is not None:
+            path = os.path.join(path, ".cache")
+        else:
+            path = os.getenv("XDG_CACHE_HOME", expanduser("~/.cache"))
 
         # Add our app name to it
         path = os.path.join(path, appname)
@@ -87,8 +93,9 @@ def user_data_dir(appname: str, roaming: bool = False) -> str:
 
     Typical user data directories are:
         macOS:                  ~/Library/Application Support/<AppName>
-        Unix:                   ~/.local/share/<AppName>    # or in
-                                $XDG_DATA_HOME, if defined
+        Unix:                   ${POETRY_HOME}/.local/share/<AppName> or
+                                ${XDG_DATA_HOME}/<AppName> or
+                                ~/.local/share/<AppName>
         Win XP (not roaming):   C:\Documents and Settings\<username>\ ...
                                 ...Application Data\<AppName>
         Win XP (roaming):       C:\Documents and Settings\<username>\Local ...
@@ -105,9 +112,15 @@ def user_data_dir(appname: str, roaming: bool = False) -> str:
     elif sys.platform == "darwin":
         path = os.path.join(expanduser("~/Library/Application Support/"), appname)
     else:
-        path = os.path.join(
-            os.getenv("XDG_DATA_HOME", expanduser("~/.local/share")), appname
-        )
+        # Get the base path
+        path = os.getenv("POETRY_HOME")
+        if path is not None:
+            path = os.path.join(path, ".local/share")
+        else:
+            path = os.getenv("XDG_DATA_HOME", expanduser("~/.local/share"))
+
+        # Add our app name to it
+        path = os.path.join(path, appname)
 
     return path
 
@@ -126,7 +139,9 @@ def user_config_dir(appname: str, roaming: bool = True) -> str:
 
     Typical user data directories are:
         macOS:                  same as user_data_dir
-        Unix:                   ~/.config/<AppName>
+        Unix:                   ${POETRY_HOME}/.config/<AppName> or
+                                ${XDG_CONFIG_HOME}/<AppName> or
+                                ~/.config/<AppName>
         Win *:                  same as user_data_dir
 
     For Unix, we follow the XDG spec and support $XDG_CONFIG_HOME.
@@ -137,7 +152,14 @@ def user_config_dir(appname: str, roaming: bool = True) -> str:
     elif sys.platform == "darwin":
         path = user_data_dir(appname)
     else:
-        path = os.getenv("XDG_CONFIG_HOME", expanduser("~/.config"))
+        # Get the base path
+        path = os.getenv("POETRY_HOME")
+        if path is not None:
+            path = os.path.join(path, ".config")
+        else:
+            path = os.getenv("XDG_CONFIG_HOME", expanduser("~/.config"))
+
+        # Add our app name to it
         path = os.path.join(path, appname)
 
     return path
