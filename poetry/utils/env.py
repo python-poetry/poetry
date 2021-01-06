@@ -1125,24 +1125,39 @@ class Env(object):
         """
         bin_path = self._bin_dir / bin
 
+        def find_file(file, paths, suffixes):
+            """
+            find file:str in paths:Iterable[Path or str], if file has no suffix
+            then all of suffixes:Iterable[str] will be checked
+            """
+            file = Path(file)
+            if file.suffix:
+                suffixes = (file.suffix,)
+            for path in paths:
+                for suffix in suffixes:
+                    found = Path(path) / file.with_suffix(suffix)
+                    if found.exists():
+                        return found
+            return None
+
         # Special case for Windows needing to find executable files
         # first by extension (and not the extension-less file).
         if self._is_windows:
-            for suffix in os.environ.get("PATHEXT", ".exe").split(os.pathsep):
-                win_bin_path = bin_path.with_suffix(suffix)
-                if win_bin_path.exists():
-                    return str(win_bin_path)
-                # On Windows, some executables can be in the base path
-                # This is especially true when installing Python with
-                # the official installer, where python.exe will be at
-                # the root of the env path.
-                # This is an edge case and should not be encountered
-                # in normal uses but this happens in the sonnet script
-                # that creates a fake virtual environment pointing to
-                # a base Python install.
-                win_bin_path = (self._path / bin).with_suffix(suffix)
-                if win_bin_path.exists():
-                    return str(win_bin_path)
+            suffixes = os.environ.get("PATHEXT", ".exe").split(os.pathsep)
+            # On Windows, some executables can be in the base path
+            # This is especially true when installing Python with
+            # the official installer, where python.exe will be at
+            # the root of the env path.
+            # This is an edge case and should not be encountered
+            # in normal uses but this happens in the sonnet script
+            # that creates a fake virtual environment pointing to
+            # a base Python install.
+            found = find_file(bin, (self._bin_dir, self._path), suffixes)
+            if not found:
+                # search system path
+                found = find_file(bin, os.environ["PATH"].split(os.pathsep), suffixes)
+            if found:
+                return str(found)
 
         if bin_path.exists():
             return str(bin_path)
