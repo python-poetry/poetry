@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from poetry.utils._compat import WINDOWS
@@ -47,7 +49,17 @@ def test_run_console_scripts_on_windows(tmp_venv, command_tester_factory):
     common use case).
 
     """
-    tester = command_tester_factory("run", environment=tmp_venv)
-    script = tmp_venv._bin_dir / "console_script.cmd"
-    script.write_text("exit 123")
-    assert tester.execute("console_script") == 123
+    path_ext_start = os.environ["PATHEXT"]
+    try:
+        os.environ["PATHEXT"] = ".BAT;.CMD"  # ensure environ vars are deterministic
+        tester = command_tester_factory("run", environment=tmp_venv)
+        bat_script = tmp_venv._bin_dir / "console_script.bat"
+        cmd_script = tmp_venv._bin_dir / "console_script.cmd"
+
+        cmd_script.write_text("exit 15")
+        bat_script.write_text("exit 30")
+        assert tester.execute("console_script") == 30
+        assert tester.execute("console_script.bat") == 30
+        assert tester.execute("console_script.cmd") == 15
+    finally:
+        os.environ["PATHEXT"] = path_ext_start
