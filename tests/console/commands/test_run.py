@@ -1,8 +1,10 @@
 import os
+import tempfile
 
 import pytest
 
 from poetry.utils._compat import WINDOWS
+from poetry.utils._compat import Path
 
 
 @pytest.fixture
@@ -63,3 +65,33 @@ def test_run_console_scripts_on_windows(tmp_venv, command_tester_factory):
         assert tester.execute("console_script.cmd") == 15
     finally:
         os.environ["PATHEXT"] = path_ext_start
+
+
+@pytest.mark.skipif(
+    not WINDOWS, reason="This test asserts Windows-specific compatibility",
+)
+def test_script_external_to_env(tmp_venv, command_tester_factory):
+    """
+    If a script exists on the path outside poetry, poetry run should
+    still work
+    """
+    path_ext_start = os.environ["PATHEXT"]
+    path_at_start = os.environ["PATH"]
+    try:
+        os.environ["PATHEXT"] = ".BAT;.CMD"
+        tester = command_tester_factory("run", environment=tmp_venv)
+
+        # create directory and add it to the PATH
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            os.environ["PATH"] = path_at_start + os.pathsep + tmpdirname
+
+            # add script to the new directory
+            script = Path(tmpdirname) / "console_script.cmd"
+            script.write_text("exit 15")
+
+            # poetry run will find it as it searched the path
+            assert tester.execute("console_script") == 15
+
+    finally:
+        os.environ["PATHEXT"] = path_ext_start
+        os.environ["PATH"] = path_at_start
