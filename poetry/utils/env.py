@@ -1123,27 +1123,7 @@ class Env(object):
         """
         Return path to the given executable.
         """
-        bin_path = self._bin_dir / bin
-
-        def find_file(file, paths, suffixes):
-            """
-            find file:str in paths:Iterable[Path or str], if file has no suffix
-            then all of suffixes:Iterable[str] will be checked
-            """
-            file = Path(file)
-            if file.suffix:
-                suffixes = (file.suffix,)
-            for path in paths:
-                for suffix in suffixes:
-                    found = Path(path) / file.with_suffix(suffix)
-                    if found.exists():
-                        return found
-            return None
-
-        # Special case for Windows needing to find executable files
-        # first by extension (and not the extension-less file).
         if self._is_windows:
-            suffixes = os.environ.get("PATHEXT", ".exe").split(os.pathsep)
             # On Windows, some executables can be in the base path
             # This is especially true when installing Python with
             # the official installer, where python.exe will be at
@@ -1152,12 +1132,19 @@ class Env(object):
             # in normal uses but this happens in the sonnet script
             # that creates a fake virtual environment pointing to
             # a base Python install.
-            found = find_file(bin, (self._bin_dir, self._path), suffixes)
-            if not found:
-                # search system path
-                found = find_file(bin, os.environ["PATH"].split(os.pathsep), suffixes)
+            # On windows we also need to manually search the %PATH%
+            # as the OS won't do it for us.
+            # Note: shutil.which always searches the current
+            # directory first on windows, This is the behavior
+            # windows users will expect.
+            search_path = os.pathsep.join(
+                (str(self._bin_dir), str(self._path), os.environ["PATH"])
+            )
+            found = shutil.which(bin, path=search_path)
             if found:
-                return str(found)
+                return found
+
+        bin_path = self._bin_dir / bin
 
         if bin_path.exists():
             return str(bin_path)

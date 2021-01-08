@@ -25,7 +25,7 @@ def test_run_passes_all_args(tester, env):
 @pytest.mark.skipif(
     not WINDOWS, reason="This test asserts Windows-specific compatibility",
 )
-def test_run_console_scripts_on_windows(tmp_venv, command_tester_factory):
+def test_run_console_scripts_on_windows(tmp_venv, command_tester_factory, mocker):
     """Test that `poetry run` on Windows finds console scripts.
 
     On Windows, Poetry installs console scripts of editable
@@ -51,47 +51,58 @@ def test_run_console_scripts_on_windows(tmp_venv, command_tester_factory):
     common use case).
 
     """
-    path_ext_start = os.environ["PATHEXT"]
-    try:
-        os.environ["PATHEXT"] = ".BAT;.CMD"  # ensure environ vars are deterministic
-        tester = command_tester_factory("run", environment=tmp_venv)
-        bat_script = tmp_venv._bin_dir / "console_script.bat"
-        cmd_script = tmp_venv._bin_dir / "console_script.cmd"
+    new_environ = {}
+    new_environ.update(os.environ)
+    new_environ["PATHEXT"] = ".BAT;.CMD"  # ensure environ vars are deterministic
+    mocker.patch("os.environ", new_environ)
 
-        cmd_script.write_text("exit 15")
-        bat_script.write_text("exit 30")
-        assert tester.execute("console_script") == 30
-        assert tester.execute("console_script.bat") == 30
-        assert tester.execute("console_script.cmd") == 15
-    finally:
-        os.environ["PATHEXT"] = path_ext_start
+    tester = command_tester_factory("run", environment=tmp_venv)
+    bat_script = tmp_venv._bin_dir / "console_script.bat"
+    cmd_script = tmp_venv._bin_dir / "console_script.cmd"
+
+    cmd_script.write_text("exit 15")
+    bat_script.write_text("exit 30")
+    assert tester.execute("console_script") == 30
+    assert tester.execute("console_script.bat") == 30
+    assert tester.execute("console_script.cmd") == 15
 
 
 @pytest.mark.skipif(
     not WINDOWS, reason="This test asserts Windows-specific compatibility",
 )
-def test_script_external_to_env(tmp_venv, command_tester_factory):
+def test_script_external_to_env(tmp_venv, command_tester_factory, mocker):
     """
-    If a script exists on the path outside poetry, poetry run should
-    still work
+    If a script exists on the path outside poetry, or in the current directory,
+    poetry run should still work
     """
-    path_ext_start = os.environ["PATHEXT"]
-    path_at_start = os.environ["PATH"]
-    try:
-        os.environ["PATHEXT"] = ".BAT;.CMD"
-        tester = command_tester_factory("run", environment=tmp_venv)
+    new_environ = {}
+    new_environ.update(os.environ)
 
-        # create directory and add it to the PATH
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            os.environ["PATH"] = path_at_start + os.pathsep + tmpdirname
+    tester = command_tester_factory("run", environment=tmp_venv)
 
+    # create directory and add it to the PATH
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        # add script to current directory
+        script_in_cur_dir = tempfile.NamedTemporaryFile(
+            "w", dir=".", suffix=".CMD", delete=False
+        )
+        script_in_cur_dir.write("exit 30")
+        script_in_cur_dir.close()
+
+        try:
             # add script to the new directory
-            script = Path(tmpdirname) / "console_script.cmd"
+            script = Path(tmp_dir_name) / "console_script.cmd"
             script.write_text("exit 15")
+
+            new_environ[
+                "PATHEXT"
+            ] = ".BAT;.CMD"  # ensure environ vars are deterministic
+            new_environ["PATH"] = os.environ["PATH"] + os.pathsep + tmp_dir_name
+            mocker.patch("os.environ", new_environ)
 
             # poetry run will find it as it searched the path
             assert tester.execute("console_script") == 15
+            assert tester.execute(script_in_cur_dir.name) == 30
 
-    finally:
-        os.environ["PATHEXT"] = path_ext_start
-        os.environ["PATH"] = path_at_start
+        finally:
+            os.unlink(script_in_cur_dir.name)
