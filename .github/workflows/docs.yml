@@ -27,3 +27,5 @@ jobs:
         run: pip install tox
       - name: Build documentation
         run: tox -e doc
+      - name: cat
+        run: cat site/basic-usage/index.html
