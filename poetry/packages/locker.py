@@ -525,6 +525,18 @@ class Locker(object):
             if not dependency.marker.is_any():
                 constraint["markers"] = str(dependency.marker)
 
+            if dependency.is_vcs():
+                # vcs constarint doesn't need version
+                del constraint["version"]
+
+                constraint["git"] = dependency.source
+                if dependency.branch:
+                    constraint["branch"] = dependency.branch
+                elif dependency.tag:
+                    constraint["tag"] = dependency.tag
+                else:
+                    constraint["rev"] = dependency.rev
+
             dependencies[dependency.pretty_name].append(constraint)
 
         # All the constraints should have the same type,
