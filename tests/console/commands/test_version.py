@@ -51,3 +51,13 @@ def test_version_show(tester):
 def test_short_version_show(tester):
     tester.execute("--short")
     assert "1.2.3\n" == tester.io.fetch_output()
+
+
+def test_version_update(tester):
+    tester.execute("2.0.0")
+    assert "Bumping version from 1.2.3 to 2.0.0\n" == tester.io.fetch_output()
+
+
+def test_short_version_update(tester):
+    tester.execute("--short 2.0.0")
+    assert "2.0.0\n" == tester.io.fetch_output()
