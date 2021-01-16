@@ -48,11 +48,14 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 self.poetry.package.pretty_version, version
             )
 
-            self.line(
-                "Bumping version from <b>{}</> to <fg=green>{}</>".format(
-                    self.poetry.package.pretty_version, version
+            if self.option("short"):
+                self.line("{}".format(version))
+            else:
+                self.line(
+                    "Bumping version from <b>{}</> to <fg=green>{}</>".format(
+                        self.poetry.package.pretty_version, version
+                    )
                 )
-            )
 
             content = self.poetry.file.read()
             poetry_content = content["tool"]["poetry"]
