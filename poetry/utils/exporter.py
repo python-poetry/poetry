@@ -9,6 +9,8 @@ from clikit.api.io import IO
 
 from poetry.poetry import Poetry
 from poetry.utils._compat import decode
+from poetry.core.packages.utils.utils import get_python_constraint_from_marker, group_markers
+from poetry.core.version.markers import MultiMarker
 
 
 class Exporter(object):
@@ -36,7 +38,11 @@ class Exporter(object):
         with_credentials=False,
     ):  # type: (str, Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
         if fmt not in self.ACCEPTED_FORMATS:
-            raise ValueError("Invalid export format: {}".format(fmt))
+            raise ValueError(
+                "Invalid export format: {}. Valid formats are: {}".format(
+                    fmt, self.ACCEPTED_FORMATS
+                )
+            )
 
         getattr(self, "_export_{}".format(fmt.replace(".", "_")))(
             cwd,
@@ -57,7 +63,7 @@ class Exporter(object):
         with_credentials=False,
     ):  # type: (Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
         # json/dumps
-        depenencies_list = []
+        dependencies_list = []
         for dependency_package in self._poetry.locker.get_project_dependency_packages(
             project_requires=self._poetry.package.all_requires, dev=dev, extras=extras
         ):
@@ -69,8 +75,8 @@ class Exporter(object):
                 or dependency.is_file()
                 or dependency.is_directory()
             )
-
-            hashes = []
+            
+            hashes = {}
             if package.files and with_hashes:
                 for f in package.files:
                     h = f["hash"]
@@ -81,23 +87,27 @@ class Exporter(object):
                         if algorithm not in self.ALLOWED_HASH_ALGORITHMS:
                             continue
 
-                    hashes.append("{}:{}".format(algorithm, h))
+                    hashes[f["file"]] = "{}:{}".format(algorithm, h)
+            
+            sys_platform_marker = dependency.marker.only("sys_platform")
+            sys_platform_constraint =None
+            if type(sys_platform_marker) is MultiMarker:
+                for m in sys_platform_marker.markers:
+                    sys_platform_constraint = m.value
 
-            requirement = dependency.to_pep_508(with_extras=False)
-            depenencies_list.append(
+            
+            dependencies_list.append(
                 {
                     "name": package.name,
-                    "version": package.version,
-                    "requirement": dependency.to_pep_508(with_extras=False),
+                    "version": str(package.version),
                     "dev": package.develop,
-                    "direct": is_direct_reference,
-                    "markers": requirement.split(";", 1)[1].strip(),
-                    "source_rul": package.source_url,
+                    "source_url": package.source_url,
+                    "sys_platform": sys_platform_constraint,
+                    "python_version": str(get_python_constraint_from_marker(dependency.marker)),
                     "hashes": hashes,
                 }
             )
-
-        self._output(json.dumps({"dependencies": depenencies_list}), cwd, output)
+        self._output(json.dumps({"dependencies": dependencies_list}, sort_keys=True), cwd, output)
 
     def _export_requirements_txt(
         self,

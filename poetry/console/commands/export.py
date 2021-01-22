@@ -35,7 +35,11 @@ class ExportCommand(Command):
         fmt = self.option("format")
 
         if fmt not in Exporter.ACCEPTED_FORMATS:
-            raise ValueError("Invalid export format: {}".format(fmt))
+            raise ValueError(
+                "Invalid export format: {}. Valid formats are: {}".format(
+                    fmt, Exporter.ACCEPTED_FORMATS
+                )
+            )
 
         output = self.option("output")
 
