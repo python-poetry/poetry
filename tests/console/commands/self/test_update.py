@@ -23,7 +23,7 @@ def test_self_update_should_install_all_necessary_elements(
 ):
     os.environ["POETRY_HOME"] = tmp_dir
 
-    command = tester._command
+    command = tester.command
 
     version = Version.parse(__version__).next_minor.text
     mocker.patch(

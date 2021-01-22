@@ -1,7 +1,7 @@
 import sys
 
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from poetry.utils.helpers import module_name
 

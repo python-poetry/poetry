@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from typing import Optional
     from typing import Tuple
 
-    from clikit.api.io import IO
+    from cleo.io.io import IO
 
     from poetry.config.config import Config
 

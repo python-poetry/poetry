@@ -25,8 +25,7 @@ classifiers = [
 python = "^3.6"
 
 poetry-core = "^1.0.0"
-cleo = "^0.8.1"
-clikit = "^0.6.2"
+cleo = "^1.0.0a1"
 crashtest = "^0.3.0"
 requests = "^2.18"
 cachy = "^0.3.0"
@@ -55,7 +54,7 @@ zipp = { version = "^3.4", python = "<3.8"}
 urllib3 = "1.25.10"
 
 [tool.poetry.scripts]
-poetry = "poetry.console:main"
+poetry = "poetry.console.application:main"
 
 
 [build-system]

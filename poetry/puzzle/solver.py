@@ -11,7 +11,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from clikit.api.io import IO
+from cleo.io.io import IO
 
 from poetry.core.packages import Package
 from poetry.core.packages.project_package import ProjectPackage
@@ -201,7 +201,12 @@ class Solver:
                     operations.append(Uninstall(installed))
 
         return sorted(
-            operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
+            operations,
+            key=lambda o: (
+                -o.priority,
+                o.package.name,
+                o.package.version,
+            ),
         )
 
     def solve_in_compatibility_mode(

@@ -974,7 +974,10 @@ foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 
 def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry):
     poetry.pool.add_repository(
-        LegacyRepository("custom", "https://example.com/simple",)
+        LegacyRepository(
+            "custom",
+            "https://example.com/simple",
+        )
     )
     poetry.locker.mock_lock_data(
         {
@@ -1030,7 +1033,12 @@ foo==1.2.3 \\
 def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
     tmp_dir, poetry
 ):
-    poetry.pool.add_repository(LegacyRepository("custom", "http://example.com/simple",))
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "http://example.com/simple",
+        )
+    )
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1139,9 +1147,17 @@ def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_so
     tmp_dir, poetry
 ):
     poetry.pool.add_repository(
-        LegacyRepository("custom", "https://example.com/simple",)
+        LegacyRepository(
+            "custom",
+            "https://example.com/simple",
+        )
     )
-    poetry.pool.add_repository(LegacyRepository("custom", "https://foobaz.com/simple",))
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "https://foobaz.com/simple",
+        )
+    )
     poetry.locker.mock_lock_data(
         {
             "package": [

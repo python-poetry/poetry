@@ -239,6 +239,8 @@ class Uploader:
     def _upload_file(
         self, session, url, file, dry_run=False
     ):  # type: (requests.Session, str, Path, Optional[bool]) -> requests.Response
+        from cleo.ui.progress_bar import ProgressBar
+
         data = self.post_data(file)
         data.update(
             {
@@ -255,7 +257,7 @@ class Uploader:
                 ("content", (file.name, fp, "application/octet-stream"))
             )
             encoder = MultipartEncoder(data_to_send)
-            bar = self._io.progress_bar(encoder.len)
+            bar = ProgressBar(self._io, max=encoder.len)
             bar.set_format(
                 " - Uploading <c1>{0}</c1> <b>%percent%%</b>".format(file.name)
             )
@@ -283,7 +285,7 @@ class Uploader:
                     )
                     bar.finish()
                 elif resp.status_code == 301:
-                    if self._io.output.supports_ansi():
+                    if self._io.output.is_decorated():
                         self._io.overwrite(
                             " - Uploading <c1>{0}</c1> <error>{1}</>".format(
                                 file.name, "FAILED"
@@ -294,7 +296,7 @@ class Uploader:
                         "Is the URL missing a trailing slash?"
                     )
             except (requests.ConnectionError, requests.HTTPError) as e:
-                if self._io.output.supports_ansi():
+                if self._io.output.is_decorated():
                     self._io.overwrite(
                         " - Uploading <c1>{0}</c1> <error>{1}</>".format(
                             file.name, "FAILED"

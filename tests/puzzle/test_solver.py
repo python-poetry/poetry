@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
 from poetry.core.packages import Package
 from poetry.core.packages import ProjectPackage
@@ -499,7 +499,8 @@ def test_solver_returns_extras_only_requested(solver, repo, package, enabled_ext
         )
 
     check_solver_result(
-        ops, expected,
+        ops,
+        expected,
     )
 
     assert ops[-1].package.marker.is_any()
@@ -544,7 +545,8 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
         expected.insert(0, {"job": "install", "package": package_c})
 
     check_solver_result(
-        ops, expected,
+        ops,
+        expected,
     )
 
     assert ops[-1].package.marker.is_any()
@@ -2353,7 +2355,8 @@ def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package)
     ops = solver.solve()
 
     check_solver_result(
-        ops, [{"job": "install", "package": pytest}],
+        ops,
+        [{"job": "install", "package": pytest}],
     )
 
 
@@ -2570,7 +2573,8 @@ def test_solver_should_use_the_python_constraint_from_the_environment_if_availab
         ops = solver.solve()
 
     check_solver_result(
-        ops, [{"job": "install", "package": b}, {"job": "install", "package": a}],
+        ops,
+        [{"job": "install", "package": b}, {"job": "install", "package": a}],
     )
 
 

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from cleo import Command as BaseCommand
+from cleo.commands.command import Command as BaseCommand
 
 
 if TYPE_CHECKING:

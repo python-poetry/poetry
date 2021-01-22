@@ -351,7 +351,9 @@ class Locker(object):
         if extra_package_names is not None:
             extra_package_names = set(
                 get_extra_package_names(
-                    repository.packages, self.lock_data.get("extras", {}), extras or (),
+                    repository.packages,
+                    self.lock_data.get("extras", {}),
+                    extras or (),
                 )
             )
 

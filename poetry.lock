@@ -95,27 +95,15 @@ python-versions = "*"
 
 [[package]]
 name = "cleo"
-version = "0.8.1"
+version = "1.0.0a1"
 description = "Cleo allows you to create beautiful and testable command-line interfaces."
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
-clikit = ">=0.6.0,<0.7.0"
-
-[[package]]
-name = "clikit"
-version = "0.6.2"
-description = "CliKit is a group of utilities to build beautiful and testable command line interfaces."
-category = "main"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-
-[package.dependencies]
-crashtest = {version = ">=0.3.0,<0.4.0", markers = "python_version >= \"3.6\" and python_version < \"4.0\""}
-pastel = ">=0.2.0,<0.3.0"
-pylev = ">=1.3,<2.0"
+crashtest = ">=0.3.1,<0.4.0"
+pylev = ">=1.3.0,<2.0.0"
 
 [[package]]
 name = "colorama"
@@ -325,14 +313,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 [package.dependencies]
 pyparsing = ">=2.0.2"
 six = "*"
-
-[[package]]
-name = "pastel"
-version = "0.2.1"
-description = "Bring colors to your terminal."
-category = "main"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "pexpect"
@@ -688,7 +668,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "077bd512e57f2e31d9f8b72b9a8b3a918f6844afdd3c7e25c2babc7f95fdfc4e"
+content-hash = "c495920c853f794d4046d2d4cc47410ea076d4647e54fd3364e46051d5f18da3"
 
 [metadata.files]
 appdirs = [
@@ -762,12 +742,8 @@ chardet = [
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
 ]
 cleo = [
-    {file = "cleo-0.8.1-py2.py3-none-any.whl", hash = "sha256:141cda6dc94a92343be626bb87a0b6c86ae291dfc732a57bf04310d4b4201753"},
-    {file = "cleo-0.8.1.tar.gz", hash = "sha256:3d0e22d30117851b45970b6c14aca4ab0b18b1b53c8af57bed13208147e4069f"},
-]
-clikit = [
-    {file = "clikit-0.6.2-py2.py3-none-any.whl", hash = "sha256:71268e074e68082306e23d7369a7b99f824a0ef926e55ba2665e911f7208489e"},
-    {file = "clikit-0.6.2.tar.gz", hash = "sha256:442ee5db9a14120635c5990bcdbfe7c03ada5898291f0c802f77be71569ded59"},
+    {file = "cleo-1.0.0a1-py3-none-any.whl", hash = "sha256:e4a45adc6b56a04d350e7b4893352fdcc07d89d35991e5df16753e05a7c78c2b"},
+    {file = "cleo-1.0.0a1.tar.gz", hash = "sha256:45bc5f04278c2f183c7ab77b3ec20f5204711fecb37ae688424c39ea8badf3fe"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
@@ -911,10 +887,6 @@ nodeenv = [
 packaging = [
     {file = "packaging-20.4-py2.py3-none-any.whl", hash = "sha256:998416ba6962ae7fbd6596850b80e17859a5753ba17c32284f67bfff33784181"},
     {file = "packaging-20.4.tar.gz", hash = "sha256:4357f74f47b9c12db93624a82154e9b120fa8293699949152b22065d556079f8"},
-]
-pastel = [
-    {file = "pastel-0.2.1-py2.py3-none-any.whl", hash = "sha256:4349225fcdf6c2bb34d483e523475de5bb04a5c10ef711263452cb37d7dd4364"},
-    {file = "pastel-0.2.1.tar.gz", hash = "sha256:e6581ac04e973cac858828c6202c1e1e81fee1dc7de7683f3e1ffe0bfd8a573d"},
 ]
 pexpect = [
     {file = "pexpect-4.8.0-py2.py3-none-any.whl", hash = "sha256:0b48a55dcb3c05f3329815901ea4fc1537514d6ba867a152b581d69ae3710937"},

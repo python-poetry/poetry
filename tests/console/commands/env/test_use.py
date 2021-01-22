@@ -40,7 +40,8 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     mocker, tester, venv_cache, venv_name, venvs_in_cache_config
 ):
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
 
     mock_build_env = mocker.patch(
@@ -64,7 +65,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 Creating virtualenv {} in {}
 Using virtualenv: {}
 """.format(
-        venv_py37.name, venv_py37.parent, venv_py37,
+        venv_py37.name,
+        venv_py37.parent,
+        venv_py37,
     )
 
     assert expected == tester.io.fetch_output()
@@ -122,7 +125,9 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
 Creating virtualenv {} in {}
 Using virtualenv: {}
 """.format(
-        venv_dir.name, venv_dir.parent, venv_dir,
+        venv_dir.name,
+        venv_dir.parent,
+        venv_dir,
     )
 
     assert expected == tester.io.fetch_output()

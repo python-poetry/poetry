@@ -4,11 +4,11 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from clikit.api.io import IO
+from cleo.io.io import IO
+from cleo.io.null_io import NullIO
 
 from poetry.config.config import Config
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.io.null_io import NullIO
 from poetry.packages import Locker
 from poetry.repositories import Pool
 from poetry.repositories import Repository

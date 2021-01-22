@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from cleo import CommandTester
+from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
@@ -599,7 +599,7 @@ python = "~2.7 || ^3.6"
 
 
 def test_add_package_with_extras_and_whitespace(tester):
-    result = tester._command._parse_requirements(["databases[postgresql, sqlite]"])
+    result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
 
     assert result[0]["name"] == "databases"
     assert len(result[0]["extras"]) == 2

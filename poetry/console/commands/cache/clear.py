@@ -1,14 +1,14 @@
 import os
 
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from ..command import Command
 
 
 class CacheClearCommand(Command):
 
-    name = "clear"
+    name = "cache clear"
     description = "Clears Poetry's cache."
 
     arguments = [argument("cache", description="The name of the cache to clear.")]

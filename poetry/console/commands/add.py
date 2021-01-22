@@ -2,8 +2,8 @@
 from typing import Dict
 from typing import List
 
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from .init import InitCommand
 from .installer_command import InstallerCommand

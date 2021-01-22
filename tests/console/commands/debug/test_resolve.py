@@ -10,7 +10,7 @@ def tester(command_tester_factory):
 
 
 @pytest.fixture(autouse=True)
-def __add_packages(repo):
+def _add_packages(repo):
     cachy020 = get_package("cachy", "0.2.0")
     cachy020.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 
@@ -30,8 +30,8 @@ Resolving dependencies...
 
 Resolution results:
 
-msgpack-python 0.5.3
-cachy          0.2.0
+msgpack-python 0.5.3 
+cachy          0.2.0 
 """
 
     assert expected == tester.io.fetch_output()
@@ -46,7 +46,7 @@ Resolving dependencies...
 Resolution results:
 
 cachy 0.2.0
-`-- msgpack-python >=0.5 <0.6
+└── msgpack-python >=0.5 <0.6
 """
 
     assert expected == tester.io.fetch_output()
@@ -60,8 +60,8 @@ Resolving dependencies...
 
 Resolution results:
 
-pendulum 2.0.3
-demo     0.1.2
+pendulum 2.0.3 
+demo     0.1.2 
 """
 
     assert expected == tester.io.fetch_output()

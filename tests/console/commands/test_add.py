@@ -20,7 +20,7 @@ def tester(command_tester_factory):
 
 @pytest.fixture()
 def old_tester(tester):
-    tester._command.installer.use_executor(False)
+    tester.command.installer.use_executor(False)
 
     return tester
 
@@ -45,7 +45,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -72,7 +72,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
 
 def test_add_greater_constraint(app, repo, tester):
@@ -94,7 +94,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
 
 def test_add_constraint_with_extras(app, repo, tester):
@@ -123,7 +123,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
 
 def test_add_constraint_dependencies(app, repo, tester):
@@ -151,11 +151,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
 
 def test_add_git_constraint(app, repo, tester, tmp_venv):
-    tester._command.set_env(tmp_venv)
+    tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -176,7 +176,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -187,7 +187,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_git_constraint_with_poetry(app, repo, tester, tmp_venv):
-    tester._command.set_env(tmp_venv)
+    tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
@@ -207,11 +207,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
 
 def test_add_git_constraint_with_extras(app, repo, tester, tmp_venv):
-    tester._command.set_env(tmp_venv)
+    tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -235,7 +235,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 """
 
     assert expected.strip() == tester.io.fetch_output().strip()
-    assert 4 == tester._command.installer.executor.installations_count
+    assert 4 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -247,7 +247,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 
 
 def test_add_git_ssh_constraint(app, repo, tester, tmp_venv):
-    tester._command.set_env(tmp_venv)
+    tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -268,7 +268,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -305,7 +305,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -338,7 +338,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
 
 def test_add_file_constraint_wheel(app, repo, tester, mocker, poetry):
@@ -366,7 +366,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -401,7 +401,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -437,7 +437,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -472,7 +472,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -509,7 +509,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     expected = set(expected.splitlines())
     output = set(tester.io.fetch_output().splitlines())
     assert expected == output
-    assert 4 == tester._command.installer.executor.installations_count
+    assert 4 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -541,7 +541,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -573,7 +573,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -606,7 +606,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -659,7 +659,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -687,7 +687,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 

@@ -2,8 +2,9 @@ from pathlib import Path
 
 import pytest
 
+from cleo.io.null_io import NullIO
+
 from poetry.factory import Factory
-from poetry.io.null_io import NullIO
 from poetry.publishing.uploader import Uploader
 from poetry.publishing.uploader import UploadError
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
 from poetry.core.packages import ProjectPackage
 from poetry.core.toml.file import TOMLFile

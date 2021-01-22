@@ -9,7 +9,7 @@ from typing import Union
 import pytest
 import tomlkit
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
 from poetry.core.semver import Version
 from poetry.core.toml.file import TOMLFile
@@ -144,7 +144,8 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
     mocker.patch(
         "subprocess.Popen.communicate",
@@ -184,10 +185,12 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "subprocess.Popen.communicate", side_effect=[("/prefix", None)],
+        "subprocess.Popen.communicate",
+        side_effect=[("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
 
@@ -223,10 +226,12 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "subprocess.Popen.communicate", side_effect=[("/prefix", None)],
+        "subprocess.Popen.communicate",
+        side_effect=[("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.create_venv")
 
@@ -303,7 +308,8 @@ def test_activate_activates_recreates_for_different_patch(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
     mocker.patch(
         "subprocess.Popen.communicate",
@@ -404,7 +410,8 @@ def test_deactivate_non_activated_but_existing(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
 
     manager.deactivate(NullIO())
@@ -442,7 +449,8 @@ def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
 
     manager.deactivate(NullIO())
@@ -473,10 +481,12 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     envs_file.write(doc)
 
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "subprocess.Popen.communicate", side_effect=[("/prefix", None)],
+        "subprocess.Popen.communicate",
+        side_effect=[("/prefix", None)],
     )
 
     env = manager.get()
@@ -814,7 +824,8 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     )
 
     mocker.patch(
-        "subprocess.check_output", side_effect=check_output_wrapper(),
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
     )
     mocker.patch(
         "subprocess.Popen.communicate",
@@ -846,7 +857,8 @@ def test_system_env_has_correct_paths():
 
 
 @pytest.mark.parametrize(
-    ("enabled",), [(True,), (False,)],
+    ("enabled",),
+    [(True,), (False,)],
 )
 def test_system_env_usersite(mocker, enabled):
     mocker.patch("site.check_enableusersite", return_value=enabled)
