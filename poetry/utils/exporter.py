@@ -1,5 +1,5 @@
 import urllib.parse
-
+import json
 from pathlib import Path
 from typing import Optional
 from typing import Sequence
@@ -17,8 +17,9 @@ class Exporter(object):
     """
 
     FORMAT_REQUIREMENTS_TXT = "requirements.txt"
+    FORMAT_JSON = "json"
     #: The names of the supported export formats.
-    ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
+    ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT, FORMAT_JSON)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
     def __init__(self, poetry):  # type: (Poetry) -> None
@@ -45,6 +46,58 @@ class Exporter(object):
             extras=extras,
             with_credentials=with_credentials,
         )
+
+    def _export_json(
+        self,
+        cwd,
+        output,
+        with_hashes=True,
+        dev=False,
+        extras=None,
+        with_credentials=False,
+    ):  # type: (Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
+        # json/dumps
+        depenencies_list = []
+        for dependency_package in self._poetry.locker.get_project_dependency_packages(
+            project_requires=self._poetry.package.all_requires, dev=dev, extras=extras
+        ):
+            dependency = dependency_package.dependency
+            package = dependency_package.package
+            is_direct_reference = (
+                dependency.is_vcs()
+                or dependency.is_url()
+                or dependency.is_file()
+                or dependency.is_directory()
+            )
+
+            hashes = []
+            if package.files and with_hashes:
+                for f in package.files:
+                    h = f["hash"]
+                    algorithm = "sha256"
+                    if ":" in h:
+                        algorithm, h = h.split(":")
+
+                        if algorithm not in self.ALLOWED_HASH_ALGORITHMS:
+                            continue
+
+                    hashes.append("{}:{}".format(algorithm, h))
+
+            requirement = dependency.to_pep_508(with_extras=False)
+            depenencies_list.append(
+                {
+                    "name": package.name,
+                    "version": package.version,
+                    "requirement": dependency.to_pep_508(with_extras=False),
+                    "dev": package.develop,
+                    "direct": is_direct_reference,
+                    "markers": requirement.split(";", 1)[1].strip(),
+                    "source_rul": package.source_url,
+                    "hashes": hashes,
+                }
+            )
+
+        self._output(json.dumps({"dependencies": depenencies_list}), cwd, output)
 
     def _export_requirements_txt(
         self,
