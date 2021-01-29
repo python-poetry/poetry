@@ -569,6 +569,8 @@ class Installer:
 
         # We get the payload from the remote host
         platform = sys.platform
+        if platform == "cygwin":
+            platform = "win32"
         if platform == "linux2":
             platform = "linux"
 
