@@ -63,6 +63,8 @@ class Installer:
 
         self._extras = []
 
+        self._dev_dependencies = []
+
         if executor is None:
             executor = Executor(self._env, self._pool, config, self._io)
 
@@ -147,6 +149,11 @@ class Installer:
 
     def dev_only(self, dev_only=False):  # type: (bool) -> Installer
         self._dev_only = dev_only
+
+        return self
+
+    def dev_dependencies(self, dev_dependencies):  # type: (List[str]) -> Installer
+        self._dev_dependencies = dev_dependencies
 
         return self
 
@@ -290,6 +297,13 @@ class Installer:
         elif self.is_dev_only():
             root = root.clone()
             del root.requires[:]
+
+        if self._dev_dependencies:
+            root.dev_requires = [
+                package
+                for package in root.dev_requires
+                if package.name in self._dev_dependencies
+            ]
 
         if self._io.is_verbose():
             self._io.write_line("")

@@ -116,6 +116,16 @@ by passing the `--dev-only` option. Note that `--no-dev` takes priority if both 
 poetry install --dev-only
 ```
 
+If not all development dependencies should be installed, but only a specific list, you can do this py passing
+ the `--dev` option. This option can be used multiple times. If only development dependencies should be used, you
+can use this option together with the `--dev-only` option.
+
+```bash
+poetry install --dev black
+poetry install --dev black --dev isort
+poetry install --dev-only --dev black
+```
+
 If you want to remove old dependencies no longer present in the lock file, use the
 `--remove-untracked` option.
 
@@ -156,6 +166,7 @@ option is passed.
 
 * `--no-dev`: Do not install dev dependencies.
 * `--dev-only`: Only install dev dependencies.
+* `--dev`: Only install listed development dependencies.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--remove-untracked`: Remove dependencies not presented in the lock file

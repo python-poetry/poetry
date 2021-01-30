@@ -12,6 +12,13 @@ class InstallCommand(InstallerCommand):
         option("no-dev", None, "Do not install the development dependencies."),
         option("dev-only", None, "Only install the development dependencies."),
         option(
+            "dev",
+            None,
+            "Only install listed development dependencies.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
             "no-root", None, "Do not install the root package (the current project)."
         ),
         option(
@@ -66,6 +73,7 @@ dependencies and not including the current project, run the command with the
         self._installer.extras(extras)
         self._installer.dev_mode(not self.option("no-dev"))
         self._installer.dev_only(self.option("dev-only"))
+        self._installer.dev_dependencies(self.option("dev"))
         self._installer.dry_run(self.option("dry-run"))
         self._installer.remove_untracked(self.option("remove-untracked"))
         self._installer.verbose(self._io.is_verbose())
