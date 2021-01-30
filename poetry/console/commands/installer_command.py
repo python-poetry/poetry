@@ -9,12 +9,12 @@ if TYPE_CHECKING:
 
 
 class InstallerCommand(EnvCommand):
-    def __init__(self):
+    def __init__(self):  # type: () -> None
         self._installer = None  # type: Optional[Installer]
 
         super(InstallerCommand, self).__init__()
 
-    def reset_poetry(self):
+    def reset_poetry(self):  # type: () -> None
         super(InstallerCommand, self).reset_poetry()
 
         self._installer.set_package(self.poetry.package)

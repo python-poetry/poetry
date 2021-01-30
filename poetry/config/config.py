@@ -19,11 +19,11 @@ from .dict_config_source import DictConfigSource
 _NOT_SET = object()
 
 
-def boolean_validator(val):
+def boolean_validator(val):  # type: (str) -> bool
     return val in {"true", "false", "1", "0"}
 
 
-def boolean_normalizer(val):
+def boolean_normalizer(val):  # type: (str) -> bool
     return val in ["true", "1"]
 
 
@@ -51,11 +51,11 @@ class Config(object):
         self._auth_config_source = DictConfigSource()
 
     @property
-    def name(self):
+    def name(self):  # type: () -> str
         return str(self._file.path)
 
     @property
-    def config(self):
+    def config(self):  # type: () -> Dict
         return self._config
 
     @property
@@ -82,7 +82,7 @@ class Config(object):
         merge_dicts(self._config, config)
 
     def all(self):  # type: () -> Dict[str, Any]
-        def _all(config, parent_key=""):
+        def _all(config, parent_key=""):  # type: (Dict, str) -> Dict
             all_ = {}
 
             for key in config:

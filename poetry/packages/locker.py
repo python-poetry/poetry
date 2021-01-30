@@ -6,6 +6,7 @@ import re
 from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
@@ -26,7 +27,7 @@ from tomlkit.exceptions import TOMLKitError
 import poetry.repositories
 
 from poetry.core.packages import dependency_from_pep_508
-from poetry.core.packages.package import Dependency
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
@@ -37,6 +38,9 @@ from poetry.packages import DependencyPackage
 from poetry.utils.extras import get_extra_package_names
 
 
+if TYPE_CHECKING:
+    from ptomlkit.toml_document import TOMLDocument  # noqa
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +50,7 @@ class Locker(object):
 
     _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
 
-    def __init__(self, lock, local_config):  # type: (Path, dict) -> None
+    def __init__(self, lock, local_config):  # type: (Union[str, Path], dict) -> None
         self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None
@@ -57,7 +61,7 @@ class Locker(object):
         return self._lock
 
     @property
-    def lock_data(self):
+    def lock_data(self):  # type: () -> TOMLDocument
         if self._lock_data is None:
             self._lock_data = self._get_lock_data()
 
@@ -382,7 +386,7 @@ class Locker(object):
 
             yield DependencyPackage(dependency=dependency, package=package)
 
-    def set_lock_data(self, root, packages):  # type: (...) -> bool
+    def set_lock_data(self, root, packages):  # type: (Package, List[Package]) -> bool
         files = table()
         packages = self._lock_packages(packages)
         # Retrieving hashes
@@ -427,7 +431,7 @@ class Locker(object):
 
         return False
 
-    def _write_lock_data(self, data):
+    def _write_lock_data(self, data):  # type: ("TOMLDocument") -> None
         self.lock.write(data)
 
         # Checking lock file data consistency
@@ -452,7 +456,7 @@ class Locker(object):
 
         return content_hash
 
-    def _get_lock_data(self):  # type: () -> dict
+    def _get_lock_data(self):  # type: () -> "TOMLDocument"
         if not self._lock.exists():
             raise RuntimeError("No lockfile found. Unable to read locked packages")
 
@@ -484,9 +488,7 @@ class Locker(object):
 
         return lock_data
 
-    def _lock_packages(
-        self, packages
-    ):  # type: (List['poetry.packages.Package']) -> list
+    def _lock_packages(self, packages):  # type: (List[Package]) -> list
         locked = []
 
         for package in sorted(packages, key=lambda x: x.name):

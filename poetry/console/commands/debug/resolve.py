@@ -1,3 +1,5 @@
+from typing import Optional
+
 from cleo import argument
 from cleo import option
 
@@ -27,7 +29,7 @@ class DebugResolveCommand(InitCommand):
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
+    def handle(self):  # type: () -> Optional[int]
         from poetry.core.packages.project_package import ProjectPackage
         from poetry.factory import Factory
         from poetry.io.null_io import NullIO

@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from typing import Union
+from typing import TYPE_CHECKING
+from typing import Optional
+
+
+if TYPE_CHECKING:
+    from poetry.core.packages import Package  # noqa
 
 
 class Operation(object):
-    def __init__(
-        self, reason=None, priority=0
-    ):  # type: (Union[str, None], int) -> None
+    def __init__(self, reason=None, priority=0):  # type: (Optional[str], int) -> None
         self._reason = reason
 
         self._skipped = False
@@ -26,7 +29,7 @@ class Operation(object):
         return self._skipped
 
     @property
-    def skip_reason(self):  # type: () -> Union[str, None]
+    def skip_reason(self):  # type: () -> Optional[str]
         return self._skip_reason
 
     @property
@@ -34,10 +37,10 @@ class Operation(object):
         return self._priority
 
     @property
-    def package(self):
+    def package(self):  # type: () -> "Package"
         raise NotImplementedError()
 
-    def format_version(self, package):  # type: (...) -> str
+    def format_version(self, package):  # type: ("Package") -> str
         return package.full_pretty_version
 
     def skip(self, reason):  # type: (str) -> Operation

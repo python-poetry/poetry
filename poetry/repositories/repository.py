@@ -1,3 +1,7 @@
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Optional
+
 from poetry.core.semver import VersionConstraint
 from poetry.core.semver import VersionRange
 from poetry.core.semver import parse_constraint
@@ -5,8 +9,16 @@ from poetry.core.semver import parse_constraint
 from .base_repository import BaseRepository
 
 
+if TYPE_CHECKING:
+    from poetry.core.packages import Dependency  # noqa
+    from poetry.core.packages import Link  # noqa
+    from poetry.core.packages import Package  # noqa
+
+
 class Repository(BaseRepository):
-    def __init__(self, packages=None, name=None):
+    def __init__(
+        self, packages=None, name=None
+    ):  # type: (List["Package"], str) -> None
         super(Repository, self).__init__()
 
         self._name = name
@@ -18,17 +30,19 @@ class Repository(BaseRepository):
             self.add_package(package)
 
     @property
-    def name(self):
+    def name(self):  # type: () -> str
         return self._name
 
-    def package(self, name, version, extras=None):
+    def package(
+        self, name, version, extras=None
+    ):  # type: (str, str, Optional[List[str]]) -> "Package"
         name = name.lower()
 
         for package in self.packages:
             if name == package.name and package.version.text == version:
                 return package.clone()
 
-    def find_packages(self, dependency):
+    def find_packages(self, dependency):  # type: ("Dependency") -> List["Package"]
         constraint = dependency.constraint
         packages = []
         ignored_pre_release_packages = []
@@ -71,7 +85,7 @@ class Repository(BaseRepository):
 
         return packages or ignored_pre_release_packages
 
-    def has_package(self, package):
+    def has_package(self, package):  # type: ("Package") -> bool
         package_id = package.unique_name
 
         for repo_package in self.packages:
@@ -80,10 +94,10 @@ class Repository(BaseRepository):
 
         return False
 
-    def add_package(self, package):
+    def add_package(self, package):  # type: ("Package") -> None
         self._packages.append(package)
 
-    def remove_package(self, package):
+    def remove_package(self, package):  # type: ("Package") -> None
         package_id = package.unique_name
 
         index = None
@@ -95,10 +109,10 @@ class Repository(BaseRepository):
         if index is not None:
             del self._packages[index]
 
-    def find_links_for_package(self, package):
+    def find_links_for_package(self, package):  # type: ("Package") -> List["Link"]
         return []
 
-    def search(self, query):
+    def search(self, query):  # type: (str) -> List["Package"]
         results = []
 
         for package in self.packages:
@@ -107,5 +121,5 @@ class Repository(BaseRepository):
 
         return results
 
-    def __len__(self):
+    def __len__(self):  # type: () -> int
         return len(self._packages)

@@ -6,6 +6,10 @@ import tempfile
 
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Optional
 
@@ -37,13 +41,13 @@ def normalize_version(version):  # type: (str) -> str
     return str(Version(version))
 
 
-def _del_ro(action, name, exc):
+def _del_ro(action, name, exc):  # type: (Callable, str, Exception) -> None
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
 
 
 @contextmanager
-def temporary_directory(*args, **kwargs):
+def temporary_directory(*args, **kwargs):  # type: (*Any, **Any) -> Iterator[str]
     name = tempfile.mkdtemp(*args, **kwargs)
 
     yield name
@@ -67,7 +71,7 @@ def get_client_cert(config, repository_name):  # type: (Config, str) -> Optional
         return None
 
 
-def _on_rm_error(func, path, exc_info):
+def _on_rm_error(func, path, exc_info):  # type: (Callable, str, Exception) -> None
     if not os.path.exists(path):
         return
 
@@ -75,14 +79,14 @@ def _on_rm_error(func, path, exc_info):
     func(path)
 
 
-def safe_rmtree(path):
+def safe_rmtree(path):  # type: (str) -> None
     if Path(path).is_symlink():
         return os.unlink(str(path))
 
     shutil.rmtree(path, onerror=_on_rm_error)
 
 
-def merge_dicts(d1, d2):
+def merge_dicts(d1, d2):  # type: (Dict, Dict) -> None
     for k, v in d2.items():
         if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])

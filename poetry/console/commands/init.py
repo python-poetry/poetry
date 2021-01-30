@@ -9,6 +9,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -56,12 +57,12 @@ class InitCommand(Command):
 The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the current directory.
 """
 
-    def __init__(self):
+    def __init__(self):  # type: () -> None
         super(InitCommand, self).__init__()
 
         self._pool = None
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         from pathlib import Path
 
         from poetry.core.vcs.git import GitConfig
@@ -227,7 +228,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
     def _determine_requirements(
         self, requires, allow_prereleases=False, source=None
-    ):  # type: (List[str], bool) -> List[Dict[str, str]]
+    ):  # type: (List[str], bool, Optional[str]) -> List[Dict[str, Union[str, List[str]]]]
         if not requires:
             requires = []
 
@@ -354,7 +355,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
     def _find_best_version_for_package(
         self, name, required_version=None, allow_prereleases=False, source=None
-    ):  # type: (...) -> Tuple[str, str]
+    ):  # type: (str, Optional[str], bool, Optional[str]) -> Tuple[str, str]
         from poetry.version.version_selector import VersionSelector
 
         selector = VersionSelector(self._get_pool())
@@ -505,7 +506,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return requires
 
-    def _validate_author(self, author, default):
+    def _validate_author(self, author, default):  # type: (str, str) -> Optional[str]
         from poetry.core.packages.package import AUTHOR_REGEX
 
         author = author or default
@@ -522,7 +523,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return author
 
-    def _validate_license(self, license):
+    def _validate_license(self, license):  # type: (str) -> str
         from poetry.core.spdx import license_by_id
 
         if license:
@@ -530,7 +531,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return license
 
-    def _get_pool(self):
+    def _get_pool(self):  # type: () -> "Pool"
         from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 

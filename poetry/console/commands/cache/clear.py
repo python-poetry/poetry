@@ -14,7 +14,7 @@ class CacheClearCommand(Command):
     arguments = [argument("cache", description="The name of the cache to clear.")]
     options = [option("all", description="Clear all entries in the cache.")]
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         from cachy import CacheManager
 
         from poetry.locations import REPOSITORY_CACHE_DIR

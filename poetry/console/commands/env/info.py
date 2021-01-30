@@ -1,6 +1,13 @@
+from typing import TYPE_CHECKING
+from typing import Optional
+
 from cleo import option
 
 from ..command import Command
+
+
+if TYPE_CHECKING:
+    from poetry.utils.env import Env  # noqa
 
 
 class EnvInfoCommand(Command):
@@ -10,7 +17,7 @@ class EnvInfoCommand(Command):
 
     options = [option("path", "p", "Only display the environment's path.")]
 
-    def handle(self):
+    def handle(self):  # type: () -> Optional[int]
         from poetry.utils.env import EnvManager
 
         env = EnvManager(self.poetry).get()
@@ -25,7 +32,7 @@ class EnvInfoCommand(Command):
 
         self._display_complete_info(env)
 
-    def _display_complete_info(self, env):
+    def _display_complete_info(self, env):  # type: ("Env") -> None
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
         self.line("")
         self.line("<b>Virtualenv</b>")

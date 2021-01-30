@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-from typing import Union
+from typing import TYPE_CHECKING
+from typing import Optional
 
 from poetry.core.packages import Dependency
 
 from .set_relation import SetRelation
+
+
+if TYPE_CHECKING:
+    from poetry.core.semver import VersionTypes  # noqa
 
 
 class Term(object):
@@ -23,11 +28,11 @@ class Term(object):
         return Term(self._dependency, not self.is_positive())
 
     @property
-    def dependency(self):
+    def dependency(self):  # type: () -> Dependency
         return self._dependency
 
     @property
-    def constraint(self):
+    def constraint(self):  # type: () -> "VersionTypes"
         return self._dependency.constraint
 
     def is_positive(self):  # type: () -> bool
@@ -106,7 +111,7 @@ class Term(object):
                 # not foo ^1.5.0 is a superset of not foo ^1.0.0
                 return SetRelation.OVERLAPPING
 
-    def intersect(self, other):  # type: (Term) -> Union[Term, None]
+    def intersect(self, other):  # type: (Term) -> Optional[Term]
         """
         Returns a Term that represents the packages
         allowed by both this term and another
@@ -147,21 +152,23 @@ class Term(object):
         """
         return self.intersect(other.inverse)
 
-    def _compatible_dependency(self, other):
+    def _compatible_dependency(self, other):  # type: (Term) -> bool
         return (
             self.dependency.is_root
             or other.is_root
             or other.is_same_package_as(self.dependency)
         )
 
-    def _non_empty_term(self, constraint, is_positive):
+    def _non_empty_term(
+        self, constraint, is_positive
+    ):  # type: ("VersionTypes", bool) -> Optional[Term]
         if constraint.is_empty():
             return
 
         return Term(self.dependency.with_constraint(constraint), is_positive)
 
-    def __str__(self):
+    def __str__(self):  # type: () -> str
         return "{}{}".format("not " if not self.is_positive() else "", self._dependency)
 
-    def __repr__(self):
+    def __repr__(self):  # type: () -> str
         return "<Term {}>".format(str(self))

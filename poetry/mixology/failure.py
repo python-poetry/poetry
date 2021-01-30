@@ -1,5 +1,6 @@
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 from poetry.core.semver import parse_constraint
@@ -14,10 +15,10 @@ class SolveFailure(Exception):
         self._incompatibility = incompatibility
 
     @property
-    def message(self):
+    def message(self):  # type: () -> str
         return str(self)
 
-    def __str__(self):
+    def __str__(self):  # type: () -> str
         return _Writer(self._incompatibility).write()
 
 
@@ -25,12 +26,12 @@ class _Writer:
     def __init__(self, root):  # type: (Incompatibility) -> None
         self._root = root
         self._derivations = {}  # type: Dict[Incompatibility, int]
-        self._lines = []  # type: List[Tuple[str, int]]
+        self._lines = []  # type: List[Tuple[str, Optional[int]]]
         self._line_numbers = {}  # type: Dict[Incompatibility, int]
 
         self._count_derivations(self._root)
 
-    def write(self):
+    def write(self):  # type: () -> str
         buffer = []
 
         required_python_version_notification = False
@@ -113,7 +114,7 @@ class _Writer:
         conjunction = "So," if conclusion or incompatibility == self._root else "And"
         incompatibility_string = str(incompatibility)
 
-        cause = incompatibility.cause  # type: ConflictCause
+        cause = incompatibility.cause
         details_for_cause = {}
         if isinstance(cause.conflict.cause, ConflictCause) and isinstance(
             cause.other.cause, ConflictCause

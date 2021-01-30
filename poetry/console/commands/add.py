@@ -68,7 +68,7 @@ class AddCommand(InstallerCommand, InitCommand):
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         from tomlkit import inline_table
 
         from poetry.core.semver import parse_constraint

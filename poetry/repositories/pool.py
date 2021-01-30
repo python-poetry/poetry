@@ -9,7 +9,8 @@ from .repository import Repository
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
+    from poetry.core.packages import Dependency  # noqa
+    from poetry.core.packages import Package  # noqa
 
 
 class Pool(BaseRepository):
@@ -108,12 +109,12 @@ class Pool(BaseRepository):
 
         return self
 
-    def has_package(self, package):
+    def has_package(self, package):  # type: ("Package") -> bool
         raise NotImplementedError()
 
     def package(
         self, name, version, extras=None, repository=None
-    ):  # type: (str, str, List[str], str) -> Package
+    ):  # type: (str, str, List[str], str) -> "Package"
         if repository is not None:
             repository = repository.lower()
 
@@ -143,9 +144,7 @@ class Pool(BaseRepository):
 
         raise PackageNotFound("Package {} ({}) not found.".format(name, version))
 
-    def find_packages(
-        self, dependency,
-    ):
+    def find_packages(self, dependency):  # type: ("Dependency") -> List["Package"]
         repository = dependency.source_name
         if repository is not None:
             repository = repository.lower()
@@ -166,7 +165,7 @@ class Pool(BaseRepository):
 
         return packages
 
-    def search(self, query):
+    def search(self, query):  # type: (str) -> List["Package"]
         from .legacy_repository import LegacyRepository
 
         results = []

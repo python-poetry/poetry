@@ -11,5 +11,5 @@ class CacheCommand(Command):
 
     commands = [CacheClearCommand(), CacheListCommand()]
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         return self.call("help", self._config.name)

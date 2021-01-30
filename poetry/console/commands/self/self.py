@@ -9,5 +9,5 @@ class SelfCommand(Command):
 
     commands = [SelfUpdateCommand()]
 
-    def handle(self):
+    def handle(self):  # type: () -> int
         return self.call("help", self._config.name)

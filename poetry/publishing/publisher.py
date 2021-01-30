@@ -1,7 +1,10 @@
 import logging
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import List
 from typing import Optional
+from typing import Union
 
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
@@ -9,6 +12,13 @@ from poetry.utils.password_manager import PasswordManager
 
 from .uploader import Uploader
 
+
+if TYPE_CHECKING:
+    from cleo.io import BufferedIO  # noqa
+    from cleo.io import ConsoleIO  # noqa
+    from clikit.io import NullIO  # noqa
+
+    from ..poetry import Poetry  # noqa
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +28,9 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(self, poetry, io):
+    def __init__(
+        self, poetry, io
+    ):  # type: ("Poetry", Union["ConsoleIO", "BufferedIO", "NullIO"]) -> None
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
@@ -26,7 +38,7 @@ class Publisher:
         self._password_manager = PasswordManager(poetry.config)
 
     @property
-    def files(self):
+    def files(self):  # type: () -> List[Path]
         return self._uploader.files
 
     def publish(

@@ -6,6 +6,8 @@ import shutil
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import List
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
@@ -15,6 +17,12 @@ from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils.helpers import is_dir_writable
 
+
+if TYPE_CHECKING:
+    from clikit.api.io import IO  # noqa
+
+    from poetry.core.poetry import Poetry  # noqa
+    from poetry.utils.env import Env  # noqa
 
 SCRIPT_TEMPLATE = """\
 #!{python}
@@ -30,13 +38,13 @@ WINDOWS_CMD_TEMPLATE = """\
 
 
 class EditableBuilder(Builder):
-    def __init__(self, poetry, env, io):
+    def __init__(self, poetry, env, io):  # type: ("Poetry", "Env", "IO") -> None
         super(EditableBuilder, self).__init__(poetry)
 
         self._env = env
         self._io = io
 
-    def build(self):
+    def build(self):  # type: () -> None
         self._debug(
             "  - Building package <c1>{}</c1> in <info>editable</info> mode".format(
                 self._package.name
@@ -58,11 +66,11 @@ class EditableBuilder(Builder):
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-    def _run_build_script(self, build_script):
+    def _run_build_script(self, build_script):  # type: (Path) -> None
         self._debug("  - Executing build script: <b>{}</b>".format(build_script))
         self._env.run("python", str(self._path.joinpath(build_script)), call=True)
 
-    def _setup_build(self):
+    def _setup_build(self):  # type: () -> None
         builder = SdistBuilder(self._poetry)
         setup = self._path / "setup.py"
         has_setup = setup.exists()
@@ -94,7 +102,7 @@ class EditableBuilder(Builder):
             if not has_setup:
                 os.remove(str(setup))
 
-    def _add_pth(self):
+    def _add_pth(self):  # type: () -> List[Path]
         paths = set()
         for include in self._module.includes:
             if isinstance(include, PackageInclude) and (
@@ -126,7 +134,7 @@ class EditableBuilder(Builder):
             )
             return []
 
-    def _add_scripts(self):
+    def _add_scripts(self):  # type: () -> List[Path]
         added = []
         entry_points = self.convert_entry_points()
 
@@ -185,7 +193,7 @@ class EditableBuilder(Builder):
 
         return added
 
-    def _add_dist_info(self, added_files):
+    def _add_dist_info(self, added_files):  # type: (List[Path]) -> None
         from poetry.core.masonry.builders.wheel import WheelBuilder
 
         added_files = added_files[:]
@@ -239,7 +247,7 @@ class EditableBuilder(Builder):
             # RECORD itself is recorded with no hash or size
             f.write("{},,\n".format(dist_info.joinpath("RECORD")))
 
-    def _get_file_hash(self, filepath):
+    def _get_file_hash(self, filepath):  # type: (Path) -> str
         hashsum = hashlib.sha256()
         with filepath.open("rb") as src:
             while True:
@@ -252,6 +260,6 @@ class EditableBuilder(Builder):
 
         return urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
 
-    def _debug(self, msg):
+    def _debug(self, msg):  # type: (str) -> None
         if self._io.is_debug():
             self._io.write_line(msg)

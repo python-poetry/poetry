@@ -1,4 +1,6 @@
+from typing import Any
 from typing import List
+from typing import Union
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
@@ -17,7 +19,7 @@ class DependencyPackage(object):
     def package(self):  # type: () -> Package
         return self._package
 
-    def clone(self):  # type: () -> DependencyPackage
+    def clone(self):  # type: () -> "DependencyPackage"
         return self.__class__(self._dependency, self._package.clone())
 
     def with_features(self, features):  # type: (List[str]) -> "DependencyPackage"
@@ -26,25 +28,25 @@ class DependencyPackage(object):
     def without_features(self):  # type: () -> "DependencyPackage"
         return self.with_features([])
 
-    def __getattr__(self, name):
+    def __getattr__(self, name):  # type: (str) -> Any
         return getattr(self._package, name)
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key, value):  # type: (str, Any) -> None
         if key in {"_dependency", "_package"}:
             return super(DependencyPackage, self).__setattr__(key, value)
 
         setattr(self._package, key, value)
 
-    def __str__(self):
+    def __str__(self):  # type: () -> str
         return str(self._package)
 
-    def __repr__(self):
+    def __repr__(self):  # type: () -> str
         return repr(self._package)
 
-    def __hash__(self):
+    def __hash__(self):  # type: () -> int
         return hash(self._package)
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # type: (Union[Package, "DependencyPackage"]) -> bool
         if isinstance(other, DependencyPackage):
             other = other.package
 

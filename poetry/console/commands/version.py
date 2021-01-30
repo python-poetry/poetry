@@ -40,7 +40,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         "prerelease",
     }
 
-    def handle(self):
+    def handle(self):  # type: () -> None
         version = self.argument("version")
 
         if version:
@@ -72,7 +72,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                     )
                 )
 
-    def increment_version(self, version, rule):
+    def increment_version(self, version, rule):  # type: (str, str) -> "Version"
         from poetry.core.semver import Version
 
         try:

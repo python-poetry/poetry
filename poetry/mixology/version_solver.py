@@ -4,7 +4,7 @@ import time
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
-from typing import Union
+from typing import Optional
 
 from poetry.core.packages import Dependency
 from poetry.core.packages import Package
@@ -130,7 +130,7 @@ class VersionSolver:
 
     def _propagate_incompatibility(
         self, incompatibility
-    ):  # type: (Incompatibility) -> Union[str, _conflict, None]
+    ):  # type: (Incompatibility) -> Optional[str, _conflict]
         """
         If incompatibility is almost satisfied by _solution, adds the
         negation of the unsatisfied term to _solution.
@@ -317,7 +317,7 @@ class VersionSolver:
 
         raise SolveFailure(incompatibility)
 
-    def _choose_package_version(self):  # type: () -> Union[str, None]
+    def _choose_package_version(self):  # type: () -> Optional[str]
         """
         Tries to select a version of a required package.
 
@@ -331,7 +331,7 @@ class VersionSolver:
 
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
-        def _get_min(dependency):
+        def _get_min(dependency):  # type: (Dependency) -> int
             if dependency.name in self._use_latest:
                 # If we're forced to use the latest version of a package, it effectively
                 # only has one version to choose from.
@@ -447,7 +447,7 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency):  # type: (Dependency) -> Union[Package, None]
+    def _get_locked(self, dependency):  # type: (Dependency) -> Optional[Package]
         if dependency.name in self._use_latest:
             return
 
@@ -460,5 +460,5 @@ class VersionSolver:
 
         return locked
 
-    def _log(self, text):
+    def _log(self, text):  # type: (str) -> None
         self._provider.debug(text, self._solution.attempted_solutions)
