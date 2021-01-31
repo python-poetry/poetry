@@ -134,3 +134,15 @@ default = true
 ```
 
 A default source will also be the fallback source if you add other sources.
+
+## Using a repository mirror
+
+Sometimes you may be unable to connect to PyPI for several reasons, behind a firewall for example.
+
+Poetry supports using a repository mirror by setting `repositories.<repo-name>.mirror` to the mirror's url. Use `pypi` to replace <repo-name> if you want to use a PyPI mirror.
+
+```bash
+poetry config repositories.foo.mirror https://mirror.foo.bar/simple/
+# A more realistic example: set PyPI mirror to OpenTUNA (run by Tsinghua University in China)
+poetry config repositories.pypi.mirror https://opentuna.cn/pypi/web/simple/
+```
