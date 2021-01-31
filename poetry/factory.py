@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
 
@@ -17,11 +16,8 @@ from .config.file_config_source import FileConfigSource
 from .locations import CONFIG_DIR
 from .packages.locker import Locker
 from .poetry import Poetry
+from .repositories.legacy_repository import LegacyRepository
 from .repositories.pypi_repository import PyPiRepository
-
-
-if TYPE_CHECKING:
-    from .repositories.legacy_repository import LegacyRepository
 
 
 class Factory(BaseFactory):
@@ -77,7 +73,22 @@ class Factory(BaseFactory):
         # Configuring sources
         sources = poetry.local_config.get("source", [])
         for source in sources:
+            # If a source has an mirror, use it.
+            mirror_url = (
+                existing_repositories.get(source["name"], {})
+                .get("mirror", {})
+                .get("url")
+            )
+            if mirror_url:
+                if io.is_debug():
+                    io.write_line(
+                        "A mirror exists for repository {} in the config, using it.".format(
+                            source["name"]
+                        )
+                    )
+                source["url"] = mirror_url
             repository = self.create_legacy_repository(source, config)
+
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)
             if io.is_debug():
@@ -97,7 +108,24 @@ class Factory(BaseFactory):
         # but only if we have no other default source
         if not poetry.pool.has_default():
             has_sources = bool(sources)
-            poetry.pool.add_repository(PyPiRepository(), not has_sources, has_sources)
+            # If there is a PyPI mirror, use it.
+            pypi_mirror_url = (
+                existing_repositories.get("pypi", {}).get("mirror", {}).get("url")
+            )
+            if pypi_mirror_url:
+                if io.is_debug():
+                    io.write_line("A mirror exists for PyPI in the config, using it.")
+                # Often, a PyPI mirror only has a "simple" index, without other APIs.
+                # Here we use LegacyRepository instead of PyPiRepository.
+                poetry.pool.add_repository(
+                    LegacyRepository("PyPI", pypi_mirror_url),
+                    not has_sources,
+                    has_sources,
+                )
+            else:
+                poetry.pool.add_repository(
+                    PyPiRepository(), not has_sources, has_sources
+                )
         else:
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
@@ -143,7 +171,6 @@ class Factory(BaseFactory):
     def create_legacy_repository(
         self, source: Dict[str, str], auth_config: Config
     ) -> "LegacyRepository":
-        from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert
 
