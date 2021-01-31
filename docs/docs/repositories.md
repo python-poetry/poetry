@@ -146,3 +146,5 @@ poetry config repositories.foo.mirror https://mirror.foo.bar/simple/
 # A more realistic example: set PyPI mirror to OpenTUNA (run by Tsinghua University in China)
 poetry config repositories.pypi.mirror https://opentuna.cn/pypi/web/simple/
 ```
+
+To be clear, however, if you use a PyPI mirror, poetry won't connect to PyPI's API to get details, but use the "simple" index to get as many details as possible. This is because most mirrors only mirror PyPI's "simple" index. As a result, some functions of poetry may lack, while some others' performance may decrease.
