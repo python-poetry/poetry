@@ -170,6 +170,7 @@ class LegacyRepository(PyPiRepository):
         disable_cache: bool = False,
         cert: Optional[Path] = None,
         client_cert: Optional[Path] = None,
+        mirror: bool = False,
     ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
@@ -179,7 +180,10 @@ class LegacyRepository(PyPiRepository):
         self._url = url.rstrip("/")
         self._client_cert = client_cert
         self._cert = cert
-        self._cache_dir = REPOSITORY_CACHE_DIR / name
+        if name == "PyPI" and mirror:
+            self._cache_dir = REPOSITORY_CACHE_DIR / "pypi"
+        else:
+            self._cache_dir = REPOSITORY_CACHE_DIR / name
         self._cache = CacheManager(
             {
                 "default": "releases",
@@ -213,6 +217,7 @@ class LegacyRepository(PyPiRepository):
             self._authenticator.session.cert = str(self._client_cert)
 
         self._disable_cache = disable_cache
+        self._mirror = mirror
 
     @property
     def cert(self) -> Optional[Path]:

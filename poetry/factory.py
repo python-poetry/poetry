@@ -87,7 +87,9 @@ class Factory(BaseFactory):
                         )
                     )
                 source["url"] = mirror_url
-            repository = self.create_legacy_repository(source, config)
+                repository = self.create_legacy_repository(source, config, mirror=True)
+            else:
+                repository = self.create_legacy_repository(source, config, mirror=False)
 
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)
@@ -118,7 +120,7 @@ class Factory(BaseFactory):
                 # Often, a PyPI mirror only has a "simple" index, without other APIs.
                 # Here we use LegacyRepository instead of PyPiRepository.
                 poetry.pool.add_repository(
-                    LegacyRepository("PyPI", pypi_mirror_url),
+                    LegacyRepository("PyPI", pypi_mirror_url, mirror=True),
                     not has_sources,
                     has_sources,
                 )
@@ -169,7 +171,7 @@ class Factory(BaseFactory):
         return config
 
     def create_legacy_repository(
-        self, source: Dict[str, str], auth_config: Config
+        self, source: Dict[str, str], auth_config: Config, mirror: bool
     ) -> "LegacyRepository":
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert
@@ -190,4 +192,5 @@ class Factory(BaseFactory):
             config=auth_config,
             cert=get_cert(auth_config, name),
             client_cert=get_client_cert(auth_config, name),
+            mirror=mirror,
         )

@@ -8,6 +8,7 @@ import pytest
 
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
+from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 
@@ -225,7 +226,12 @@ def test_create_poetry_with_local_config(fixture_dir):
 
 
 def test_create_poetry_using_repository_mirrors(fixture_dir):
-    poetry = Factory().create_poetry(fixture_dir("using_repository_mirrors"))
+    poetry = Factory().create_poetry(fixture_dir("with_repository_mirrors"))
 
     assert poetry.pool.repositories[0].url == "https://mirror.foo.bar/simple"
-    assert poetry.pool.repositories[1].url == "https://pypi.mirrors.example.com/simple"
+    assert poetry.pool.repositories[0]._mirror is True
+    assert poetry.pool.repositories[1].url == "https://no.mirror.foo.bar/simple"
+    assert poetry.pool.repositories[1]._mirror is False
+    assert poetry.pool.repositories[2].url == "https://pypi.mirror.foo.bar/simple"
+    assert poetry.pool.repositories[2]._mirror is True
+    assert poetry.pool.repositories[2]._cache_dir == REPOSITORY_CACHE_DIR / "pypi"

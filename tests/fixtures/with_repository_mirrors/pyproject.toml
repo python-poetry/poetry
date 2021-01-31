@@ -15,4 +15,8 @@ python = "~2.7 || ^3.6"
 
 [[tool.poetry.source]]
 name = "foo"
-url = "https://foo.bar/simple/"
+url = "https://foo.bar/simple"
+
+[[tool.poetry.source]]
+name = "no_mirror"
+url = "https://no.mirror.foo.bar/simple"
