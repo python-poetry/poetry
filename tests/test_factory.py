@@ -222,3 +222,10 @@ def test_create_poetry_with_local_config(fixture_dir):
 
     assert not poetry.config.get("virtualenvs.in-project")
     assert not poetry.config.get("virtualenvs.create")
+
+
+def test_create_poetry_using_repository_mirrors(fixture_dir):
+    poetry = Factory().create_poetry(fixture_dir("using_repository_mirrors"))
+
+    assert poetry.pool.repositories[0].url == "https://mirror.foo.bar/simple"
+    assert poetry.pool.repositories[1].url == "https://pypi.mirrors.example.com/simple"

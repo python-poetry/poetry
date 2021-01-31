@@ -1,0 +1,8 @@
+[repositories]
+[repositories.pypi]
+[repositories.pypi.mirror]
+url = "https://pypi.mirrors.example.com/simple"
+
+[repositories.foo]
+[repositories.foo.mirror]
+url = "https://mirror.foo.bar/simple"
