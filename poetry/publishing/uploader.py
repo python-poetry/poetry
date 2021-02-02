@@ -29,8 +29,7 @@ from poetry.utils.patterns import wheel_file_re
 
 
 if TYPE_CHECKING:
-    from cleo.io import ConsoleIO  # noqa
-    from clikit.io import NullIO  # noqa
+    from cleo.io.null_io import NullIO  # noqa
 
     from poetry.poetry import Poetry  # noqa
 
@@ -54,9 +53,7 @@ class UploadError(Exception):
 
 
 class Uploader:
-    def __init__(
-        self, poetry, io
-    ):  # type: ("Poetry", Union["ConsoleIO", "NullIO"]) -> None
+    def __init__(self, poetry, io):  # type: ("Poetry", "NullIO") -> None
         self._poetry = poetry
         self._package = poetry.package
         self._io = io

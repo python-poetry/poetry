@@ -19,7 +19,7 @@ from poetry.utils.helpers import is_dir_writable
 
 
 if TYPE_CHECKING:
-    from clikit.api.io import IO  # noqa
+    from cleo.io.io import IO  # noqa
 
     from poetry.core.poetry import Poetry  # noqa
     from poetry.utils.env import Env  # noqa

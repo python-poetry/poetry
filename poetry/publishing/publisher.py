@@ -14,9 +14,8 @@ from .uploader import Uploader
 
 
 if TYPE_CHECKING:
-    from cleo.io import BufferedIO  # noqa
-    from cleo.io import ConsoleIO  # noqa
-    from clikit.io import NullIO  # noqa
+    from cleo.io.buffered_io import BufferedIO  # noqa
+    from cleo.io.null_io import NullIO  # noqa
 
     from ..poetry import Poetry  # noqa
 
@@ -30,7 +29,7 @@ class Publisher:
 
     def __init__(
         self, poetry, io
-    ):  # type: ("Poetry", Union["ConsoleIO", "BufferedIO", "NullIO"]) -> None
+    ):  # type: ("Poetry", Union["BufferedIO", "NullIO"]) -> None
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
