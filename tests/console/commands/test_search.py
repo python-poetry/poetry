@@ -21,7 +21,8 @@ def tester(command_tester_factory):
 
 
 def test_search(
-    tester, http,
+    tester,
+    http,
 ):
     tester.execute("sqlalchemy")
 

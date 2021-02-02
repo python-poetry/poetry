@@ -44,7 +44,8 @@ class InstalledRepository(Repository):
         # where the pth file for foo-bar might have been installed as either foo-bar.pth or
         # foo_bar.pth (expected) in either pure or platform lib directories.
         candidates = itertools.product(
-            {env.purelib, env.platlib}, {name, module_name(name)},
+            {env.purelib, env.platlib},
+            {name, module_name(name)},
         )
 
         for lib, module in candidates:
@@ -110,7 +111,8 @@ class InstalledRepository(Repository):
 
         for entry in reversed(env.sys_path):
             for distribution in sorted(
-                metadata.distributions(path=[entry]), key=lambda d: str(d._path),
+                metadata.distributions(path=[entry]),
+                key=lambda d: str(d._path),
             ):
                 name = distribution.metadata["name"]
                 path = Path(str(distribution._path))

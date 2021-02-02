@@ -1,7 +1,7 @@
 from typing import Any
 from typing import Union
 
-from cleo import argument
+from cleo.helpers import argument
 
 from .env_command import EnvCommand
 
@@ -15,13 +15,6 @@ class RunCommand(EnvCommand):
         argument("args", "The command and arguments/options to run.", multiple=True)
     ]
 
-    def __init__(self):  # type: () -> None
-        from poetry.console.args.run_args_parser import RunArgsParser
-
-        super(RunCommand, self).__init__()
-
-        self.config.set_args_parser(RunArgsParser())
-
     def handle(self):  # type: () -> Any
         args = self.argument("args")
         script = args[0]
@@ -31,6 +24,17 @@ class RunCommand(EnvCommand):
             return self.run_script(scripts[script], args)
 
         return self.env.execute(*args)
+
+    @property
+    def _module(self):
+        from poetry.core.masonry.utils.module import Module
+
+        poetry = self.poetry
+        package = poetry.package
+        path = poetry.file.parent
+        module = Module(package.name, path.as_posix(), package.packages)
+
+        return module
 
     def run_script(self, script, args):  # type: (Union[str, dict], str) -> Any
         if isinstance(script, dict):

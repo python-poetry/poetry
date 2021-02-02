@@ -25,7 +25,7 @@ import packaging.tags
 import tomlkit
 import virtualenv
 
-from clikit.api.io import IO
+from cleo.io.io import IO
 from packaging.tags import Tag
 from packaging.tags import interpreter_name
 from packaging.tags import interpreter_version

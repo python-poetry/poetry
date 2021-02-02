@@ -8,8 +8,8 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from poetry.core.pyproject import PyProjectException
 from poetry.core.toml.file import TOMLFile
@@ -81,7 +81,11 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_normalizer,
                 False,
             ),
-            "installer.parallel": (boolean_validator, boolean_normalizer, True,),
+            "installer.parallel": (
+                boolean_validator,
+                boolean_normalizer,
+                True,
+            ),
         }
 
         return unique_config_values

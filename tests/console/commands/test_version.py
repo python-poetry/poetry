@@ -1,6 +1,6 @@
 import pytest
 
-from poetry.console.commands import VersionCommand
+from poetry.console.commands.version import VersionCommand
 
 
 @pytest.fixture()

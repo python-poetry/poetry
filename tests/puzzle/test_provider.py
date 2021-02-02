@@ -3,7 +3,7 @@ from subprocess import CalledProcessError
 
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
 from poetry.core.packages import ProjectPackage
 from poetry.core.packages.directory_dependency import DirectoryDependency

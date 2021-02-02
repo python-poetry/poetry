@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from clikit.api.formatter.style import Style
-from clikit.io.buffered_io import BufferedIO
+from cleo.formatters.style import Style
+from cleo.io.buffered_io import BufferedIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
@@ -32,10 +32,10 @@ def env(tmp_dir):
 @pytest.fixture()
 def io():
     io = BufferedIO()
-    io.formatter.add_style(Style("c1_dark").fg("cyan").dark())
-    io.formatter.add_style(Style("c2_dark").fg("default").bold().dark())
-    io.formatter.add_style(Style("success_dark").fg("green").dark())
-    io.formatter.add_style(Style("warning").fg("yellow"))
+    io.output.formatter.set_style("c1_dark", Style("cyan", options=["dark"]))
+    io.output.formatter.set_style("c2_dark", Style("default", options=["bold", "dark"]))
+    io.output.formatter.set_style("success_dark", Style("green", options=["dark"]))
+    io.output.formatter.set_style("warning", Style("yellow"))
 
     return io
 
@@ -59,7 +59,9 @@ def mock_file_downloads(http):
             return [200, headers, f.read()]
 
     http.register_uri(
-        http.GET, re.compile("^https://files.pythonhosted.org/.*$"), body=callback,
+        http.GET,
+        re.compile("^https://files.pythonhosted.org/.*$"),
+        body=callback,
     )
 
 
@@ -203,10 +205,10 @@ def test_execute_should_gracefully_handle_io_error(config, mocker, io, env):
 
     original_write_line = executor._io.write_line
 
-    def write_line(string, flags=None):
+    def write_line(string, **kwargs):
         # Simulate UnicodeEncodeError
         string.encode("ascii")
-        original_write_line(string, flags)
+        original_write_line(string, **kwargs)
 
     mocker.patch.object(io, "write_line", side_effect=write_line)
 

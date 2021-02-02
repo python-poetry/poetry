@@ -1,13 +1,11 @@
 import sys
 
-from clikit.args import StringArgs
-
 from ..command import Command
 
 
 class DebugInfoCommand(Command):
 
-    name = "info"
+    name = "debug info"
     description = "Shows debug information."
 
     def handle(self):  # type: () -> int
@@ -25,7 +23,6 @@ class DebugInfoCommand(Command):
                 ]
             )
         )
-        args = StringArgs("")
-        command = self.application.get_command("env").get_sub_command("info")
+        command = self.application.get("env info")
 
-        return command.run(args, self._io)
+        return command.run(self._io)

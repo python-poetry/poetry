@@ -1,4 +1,4 @@
-from cleo import option
+from cleo.helpers import option
 
 from .installer_command import InstallerCommand
 

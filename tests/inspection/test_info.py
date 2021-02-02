@@ -145,7 +145,8 @@ def test_info_from_setup_cfg(demo_setup_cfg):
 
 def test_info_no_setup_pkg_info_no_deps():
     info = PackageInfo.from_directory(
-        FIXTURE_DIR_INSPECTIONS / "demo_no_setup_pkg_info_no_deps", disable_build=True,
+        FIXTURE_DIR_INSPECTIONS / "demo_no_setup_pkg_info_no_deps",
+        disable_build=True,
     )
     assert info.name == "demo"
     assert info.version == "0.1.0"

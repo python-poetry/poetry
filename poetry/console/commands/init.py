@@ -13,7 +13,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from cleo import option
+from cleo.helpers import option
 from tomlkit import inline_table
 
 from poetry.core.pyproject import PyProjectException

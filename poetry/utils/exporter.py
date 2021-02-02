@@ -5,7 +5,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Union
 
-from clikit.api.io import IO
+from cleo.io.io import IO
 
 from poetry.poetry import Poetry
 from poetry.utils._compat import decode

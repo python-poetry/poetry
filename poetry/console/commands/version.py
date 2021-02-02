@@ -1,5 +1,5 @@
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from .command import Command
 

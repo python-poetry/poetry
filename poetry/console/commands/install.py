@@ -1,4 +1,4 @@
-from cleo import option
+from cleo.helpers import option
 
 from .installer_command import InstallerCommand
 
@@ -21,7 +21,9 @@ class InstallCommand(InstallerCommand):
             "(implicitly enables --verbose).",
         ),
         option(
-            "remove-untracked", None, "Removes packages not present in the lock file.",
+            "remove-untracked",
+            None,
+            "Removes packages not present in the lock file.",
         ),
         option(
             "extras",
@@ -87,7 +89,7 @@ dependencies and not including the current project, run the command with the
             return 0
 
         self.line("")
-        if not self._io.supports_ansi() or self.io.is_debug():
+        if not self._io.output.is_decorated() or self.io.is_debug():
             self.line(
                 "<b>Installing</> the current project: <c1>{}</c1> (<c2>{}</c2>)".format(
                     self.poetry.package.pretty_name, self.poetry.package.pretty_version
@@ -106,7 +108,7 @@ dependencies and not including the current project, run the command with the
 
         builder.build()
 
-        if self._io.supports_ansi() and not self.io.is_debug():
+        if self._io.output.is_decorated() and not self.io.is_debug():
             self.overwrite(
                 "<b>Installing</> the current project: <c1>{}</c1> (<success>{}</success>)".format(
                     self.poetry.package.pretty_name, self.poetry.package.pretty_version

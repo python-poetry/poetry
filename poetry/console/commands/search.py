@@ -1,4 +1,4 @@
-from cleo import argument
+from cleo.helpers import argument
 
 from .command import Command
 

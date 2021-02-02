@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from cleo import option
+from cleo.helpers import option
 
 from .command import Command
 

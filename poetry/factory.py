@@ -5,14 +5,14 @@ from pathlib import Path
 from typing import Dict
 from typing import Optional
 
-from clikit.api.io.io import IO
+from cleo.io.io import IO
+from cleo.io.null_io import NullIO
 
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.toml.file import TOMLFile
 
 from .config.config import Config
 from .config.file_config_source import FileConfigSource
-from .io.null_io import NullIO
 from .locations import CONFIG_DIR
 from .packages.locker import Locker
 from .poetry import Poetry

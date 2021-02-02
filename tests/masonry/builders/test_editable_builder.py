@@ -8,8 +8,9 @@ from pathlib import Path
 
 import pytest
 
+from cleo.io.null_io import NullIO
+
 from poetry.factory import Factory
-from poetry.io.null_io import NullIO
 from poetry.masonry.builders.editable import EditableBuilder
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
@@ -78,10 +79,11 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
 
     assert tmp_venv._bin_dir.joinpath("foo").exists()
     assert tmp_venv.site_packages.path.joinpath("simple_project.pth").exists()
-    assert simple_poetry.file.parent.resolve().as_posix() == tmp_venv.site_packages.path.joinpath(
-        "simple_project.pth"
-    ).read_text().strip(
-        os.linesep
+    assert (
+        simple_poetry.file.parent.resolve().as_posix()
+        == tmp_venv.site_packages.path.joinpath("simple_project.pth")
+        .read_text()
+        .strip(os.linesep)
     )
 
     dist_info = tmp_venv.site_packages.path.joinpath("simple_project-1.2.3.dist-info")

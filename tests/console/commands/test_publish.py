@@ -14,16 +14,17 @@ def test_publish_returns_non_zero_code_for_upload_errors(app, app_tester, http):
 
     assert 1 == exit_code
 
-    expected = """
+    expected_output = """
 Publishing simple-project (1.2.3) to PyPI
-
-
+"""
+    expected_error_output = """\
   UploadError
 
   HTTP Error 400: Bad Request
 """
 
-    assert expected in app_tester.io.fetch_output()
+    assert expected_output in app_tester.io.fetch_output()
+    assert expected_error_output in app_tester.io.fetch_error()
 
 
 def test_publish_returns_non_zero_code_for_connection_errors(app, app_tester, http):
@@ -40,7 +41,7 @@ def test_publish_returns_non_zero_code_for_connection_errors(app, app_tester, ht
 
     expected = str(UploadError(error=requests.ConnectionError()))
 
-    assert expected in app_tester.io.fetch_output()
+    assert expected in app_tester.io.fetch_error()
 
 
 def test_publish_with_cert(app_tester, mocker):

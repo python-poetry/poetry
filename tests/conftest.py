@@ -11,7 +11,7 @@ from typing import Dict
 import httpretty
 import pytest
 
-from cleo import CommandTester
+from cleo.testers.command_tester import CommandTester
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
@@ -118,7 +118,8 @@ def pep517_metadata_mock(mocker):
         return PackageInfo(name="demo", version="0.1.2")
 
     mocker.patch(
-        "poetry.inspection.info.PackageInfo._pep517_metadata", _pep517_metadata,
+        "poetry.inspection.info.PackageInfo._pep517_metadata",
+        _pep517_metadata,
     )
 
 
@@ -224,7 +225,8 @@ def default_python(current_python):
 @pytest.fixture
 def repo(http):
     http.register_uri(
-        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
     )
     return TestRepository(name="foo")
 
@@ -298,6 +300,13 @@ def command_tester_factory(app, env):
     def _tester(command, poetry=None, installer=None, executor=None, environment=None):
         command = app.find(command)
         tester = CommandTester(command)
+
+        # Setting the formatter from the application
+        # TODO: Find a better way to do this in Cleo
+        app_io = app.create_io()
+        formatter = app_io.output.formatter
+        tester.io.output.set_formatter(formatter)
+        tester.io.error_output.set_formatter(formatter)
 
         if poetry:
             app._poetry = poetry

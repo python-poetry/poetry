@@ -7,7 +7,7 @@ from ..command import Command
 
 class CacheListCommand(Command):
 
-    name = "list"
+    name = "cache list"
     description = "List Poetry's caches."
 
     def handle(self):  # type: () -> Optional[int]
