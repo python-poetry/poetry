@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from logging import LogRecord  # noqa
 
-    from clikit.api.io import IO  # noqa
+    from cleo.io.io import IO  # noqa
 
 
 class IOHandler(logging.Handler):
@@ -21,7 +21,7 @@ class IOHandler(logging.Handler):
             level = record.levelname.lower()
             err = level in ("warning", "error", "exception", "critical")
             if err:
-                self._io.error_line(msg)
+                self._io.write_error_line(msg)
             else:
                 self._io.write_line(msg)
         except Exception:

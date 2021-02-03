@@ -33,7 +33,7 @@ from .operations.update import Update
 
 
 if TYPE_CHECKING:
-    from clikit.api.io import IO  # noqa
+    from cleo.io.io import IO  # noqa
 
     from poetry.config.config import Config  # noqa
     from poetry.repositories import Pool  # noqa

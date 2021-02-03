@@ -11,7 +11,7 @@ from .env_command import EnvCommand
 
 
 if TYPE_CHECKING:
-    from clikit.api.io import IO  # noqa
+    from cleo.io.io import IO  # noqa
 
     from poetry.core.packages import Dependency  # noqa
     from poetry.core.packages import Package  # noqa
