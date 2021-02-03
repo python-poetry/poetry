@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
 
@@ -19,14 +20,18 @@ from .poetry import Poetry
 from .repositories.pypi_repository import PyPiRepository
 
 
+if TYPE_CHECKING:
+    from .repositories.legacy_repository import LegacyRepository
+
+
 class Factory(BaseFactory):
     """
     Factory class to create various elements needed by Poetry.
     """
 
     def create_poetry(
-        self, cwd=None, io=None
-    ):  # type: (Optional[Path], Optional[IO]) -> Poetry
+        self, cwd: Optional[Path] = None, io: Optional[IO] = None
+    ) -> Poetry:
         if io is None:
             io = NullIO()
 
@@ -100,7 +105,7 @@ class Factory(BaseFactory):
         return poetry
 
     @classmethod
-    def create_config(cls, io=None):  # type: (Optional[IO]) -> Config
+    def create_config(cls, io: Optional[IO] = None) -> Config:
         if io is None:
             io = NullIO()
 
@@ -136,8 +141,8 @@ class Factory(BaseFactory):
         return config
 
     def create_legacy_repository(
-        self, source, auth_config
-    ):  # type: (Dict[str, str], Config) -> "LegacyRepository"
+        self, source: Dict[str, str], auth_config: Config
+    ) -> "LegacyRepository":
         from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert

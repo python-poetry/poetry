@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from poetry.mixology.incompatibility import Incompatibility  # noqa
+    from poetry.mixology.incompatibility import Incompatibility
 
 
 class IncompatibilityCause(Exception):
@@ -32,21 +32,19 @@ class ConflictCause(IncompatibilityCause):
     during conflict resolution.
     """
 
-    def __init__(
-        self, conflict, other
-    ):  # type: ("Incompatibility", "Incompatibility") -> None
+    def __init__(self, conflict: "Incompatibility", other: "Incompatibility") -> None:
         self._conflict = conflict
         self._other = other
 
     @property
-    def conflict(self):  # type: () -> "Incompatibility"
+    def conflict(self) -> "Incompatibility":
         return self._conflict
 
     @property
-    def other(self):  # type: () -> "Incompatibility"
+    def other(self) -> "Incompatibility":
         return self._other
 
-    def __str__(self):  # type: () -> str
+    def __str__(self) -> str:
         return str(self._conflict)
 
 
@@ -57,16 +55,16 @@ class PythonCause(IncompatibilityCause):
     with the current python version.
     """
 
-    def __init__(self, python_version, root_python_version):  # type: (str, str) -> None
+    def __init__(self, python_version: str, root_python_version: str) -> None:
         self._python_version = python_version
         self._root_python_version = root_python_version
 
     @property
-    def python_version(self):  # type: () -> str
+    def python_version(self) -> str:
         return self._python_version
 
     @property
-    def root_python_version(self):  # type: () -> str
+    def root_python_version(self) -> str:
         return self._root_python_version
 
 
@@ -76,11 +74,11 @@ class PlatformCause(IncompatibilityCause):
     (OS most likely) being incompatible with the current platform.
     """
 
-    def __init__(self, platform):  # type: (str) -> None
+    def __init__(self, platform: str) -> None:
         self._platform = platform
 
     @property
-    def platform(self):  # type: () -> str
+    def platform(self) -> str:
         return self._platform
 
 
@@ -90,9 +88,9 @@ class PackageNotFoundCause(IncompatibilityCause):
     source.
     """
 
-    def __init__(self, error):  # type: (Exception) -> None
+    def __init__(self, error: Exception) -> None:
         self._error = error
 
     @property
-    def error(self):  # type: () -> Exception
+    def error(self) -> Exception:
         return self._error

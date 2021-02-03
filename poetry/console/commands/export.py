@@ -31,7 +31,7 @@ class ExportCommand(Command):
         option("with-credentials", None, "Include credentials for extra indices."),
     ]
 
-    def handle(self):  # type: () -> None
+    def handle(self) -> None:
         fmt = self.option("format")
 
         if fmt not in Exporter.ACCEPTED_FORMATS:

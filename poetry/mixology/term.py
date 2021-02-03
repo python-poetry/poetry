@@ -8,7 +8,7 @@ from .set_relation import SetRelation
 
 
 if TYPE_CHECKING:
-    from poetry.core.semver import VersionTypes  # noqa
+    from poetry.core.semver import VersionTypes
 
 
 class Term(object):
@@ -19,26 +19,26 @@ class Term(object):
     See https://github.com/dart-lang/pub/tree/master/doc/solver.md#term.
     """
 
-    def __init__(self, dependency, is_positive):  # type: (Dependency, bool)  -> None
+    def __init__(self, dependency: Dependency, is_positive: bool) -> None:
         self._dependency = dependency
         self._positive = is_positive
 
     @property
-    def inverse(self):  # type: () -> Term
+    def inverse(self) -> "Term":
         return Term(self._dependency, not self.is_positive())
 
     @property
-    def dependency(self):  # type: () -> Dependency
+    def dependency(self) -> Dependency:
         return self._dependency
 
     @property
-    def constraint(self):  # type: () -> "VersionTypes"
+    def constraint(self) -> "VersionTypes":
         return self._dependency.constraint
 
-    def is_positive(self):  # type: () -> bool
+    def is_positive(self) -> bool:
         return self._positive
 
-    def satisfies(self, other):  # type: (Term) -> bool
+    def satisfies(self, other: "Term") -> bool:
         """
         Returns whether this term satisfies another.
         """
@@ -47,7 +47,7 @@ class Term(object):
             and self.relation(other) == SetRelation.SUBSET
         )
 
-    def relation(self, other):  # type: (Term) -> int
+    def relation(self, other: "Term") -> int:
         """
         Returns the relationship between the package versions
         allowed by this term and another.
@@ -111,7 +111,7 @@ class Term(object):
                 # not foo ^1.5.0 is a superset of not foo ^1.0.0
                 return SetRelation.OVERLAPPING
 
-    def intersect(self, other):  # type: (Term) -> Optional[Term]
+    def intersect(self, other: "Term") -> Optional["Term"]:
         """
         Returns a Term that represents the packages
         allowed by both this term and another
@@ -145,14 +145,14 @@ class Term(object):
         else:
             return
 
-    def difference(self, other):  # type: (Term) -> Term
+    def difference(self, other: "Term") -> "Term":
         """
         Returns a Term that represents packages
         allowed by this term and not by the other
         """
         return self.intersect(other.inverse)
 
-    def _compatible_dependency(self, other):  # type: (Term) -> bool
+    def _compatible_dependency(self, other: "Dependency") -> bool:
         return (
             self.dependency.is_root
             or other.is_root
@@ -160,15 +160,15 @@ class Term(object):
         )
 
     def _non_empty_term(
-        self, constraint, is_positive
-    ):  # type: ("VersionTypes", bool) -> Optional[Term]
+        self, constraint: "VersionTypes", is_positive: bool
+    ) -> Optional["Term"]:
         if constraint.is_empty():
             return
 
         return Term(self.dependency.with_constraint(constraint), is_positive)
 
-    def __str__(self):  # type: () -> str
+    def __str__(self) -> str:
         return "{}{}".format("not " if not self.is_positive() else "", self._dependency)
 
-    def __repr__(self):  # type: () -> str
+    def __repr__(self) -> str:
         return "<Term {}>".format(str(self))

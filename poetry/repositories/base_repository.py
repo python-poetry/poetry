@@ -4,28 +4,28 @@ from typing import Optional
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency  # noqa
-    from poetry.core.packages import Package  # noqa
+    from poetry.core.packages import Dependency
+    from poetry.core.packages import Package
 
 
 class BaseRepository(object):
-    def __init__(self):  # type: () -> None
+    def __init__(self) -> None:
         self._packages = []
 
     @property
-    def packages(self):  # type: () -> List["Package"]
+    def packages(self) -> List["Package"]:
         return self._packages
 
-    def has_package(self, package):  # type: ("Package") -> None
+    def has_package(self, package: "Package") -> None:
         raise NotImplementedError()
 
     def package(
-        self, name, version, extras=None
-    ):  # type: (str, str, Optional[List[str]]) -> None
+        self, name: str, version: str, extras: Optional[List[str]] = None
+    ) -> None:
         raise NotImplementedError()
 
-    def find_packages(self, dependency):  # type: ("Dependency") -> None
+    def find_packages(self, dependency: "Dependency") -> None:
         raise NotImplementedError()
 
-    def search(self, query):  # type: (str) -> None
+    def search(self, query: str) -> None:
         raise NotImplementedError()

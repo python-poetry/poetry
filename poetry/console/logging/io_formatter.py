@@ -6,7 +6,7 @@ from .formatters import FORMATTERS
 
 
 if TYPE_CHECKING:
-    from logging import LogRecord  # noqa
+    from logging import LogRecord
 
 
 class IOFormatter(logging.Formatter):
@@ -18,7 +18,7 @@ class IOFormatter(logging.Formatter):
         "info": "fg=blue",
     }
 
-    def format(self, record):  # type: ("LogRecord") -> str
+    def format(self, record: "LogRecord") -> str:
         if not record.exc_info:
             level = record.levelname.lower()
             msg = record.msg

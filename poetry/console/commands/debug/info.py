@@ -8,7 +8,7 @@ class DebugInfoCommand(Command):
     name = "debug info"
     description = "Shows debug information."
 
-    def handle(self):  # type: () -> int
+    def handle(self) -> int:
         poetry_python_version = ".".join(str(s) for s in sys.version_info[:3])
 
         self.line("")

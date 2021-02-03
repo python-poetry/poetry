@@ -21,8 +21,8 @@ from poetry.utils.helpers import is_dir_writable
 if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
 
-    from poetry.core.poetry import Poetry  # noqa
-    from poetry.utils.env import Env  # noqa
+    from poetry.core.poetry import Poetry
+    from poetry.utils.env import Env
 
 SCRIPT_TEMPLATE = """\
 #!{python}
@@ -38,13 +38,13 @@ WINDOWS_CMD_TEMPLATE = """\
 
 
 class EditableBuilder(Builder):
-    def __init__(self, poetry, env, io):  # type: ("Poetry", "Env", "IO") -> None
+    def __init__(self, poetry: "Poetry", env: "Env", io: "IO") -> None:
         super(EditableBuilder, self).__init__(poetry)
 
         self._env = env
         self._io = io
 
-    def build(self):  # type: () -> None
+    def build(self) -> None:
         self._debug(
             "  - Building package <c1>{}</c1> in <info>editable</info> mode".format(
                 self._package.name
@@ -66,11 +66,11 @@ class EditableBuilder(Builder):
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-    def _run_build_script(self, build_script):  # type: (Path) -> None
+    def _run_build_script(self, build_script: Path) -> None:
         self._debug("  - Executing build script: <b>{}</b>".format(build_script))
         self._env.run("python", str(self._path.joinpath(build_script)), call=True)
 
-    def _setup_build(self):  # type: () -> None
+    def _setup_build(self) -> None:
         builder = SdistBuilder(self._poetry)
         setup = self._path / "setup.py"
         has_setup = setup.exists()
@@ -102,7 +102,7 @@ class EditableBuilder(Builder):
             if not has_setup:
                 os.remove(str(setup))
 
-    def _add_pth(self):  # type: () -> List[Path]
+    def _add_pth(self) -> List[Path]:
         paths = set()
         for include in self._module.includes:
             if isinstance(include, PackageInclude) and (
@@ -127,14 +127,14 @@ class EditableBuilder(Builder):
             return [pth_file]
         except OSError:
             # TODO: Replace with PermissionError
-            self._io.error_line(
+            self._io.write_error_line(
                 "  - Failed to create <c2>{}</c2> for {}".format(
                     pth_file.name, self._poetry.file.parent
                 )
             )
             return []
 
-    def _add_scripts(self):  # type: () -> List[Path]
+    def _add_scripts(self) -> List[Path]:
         added = []
         entry_points = self.convert_entry_points()
 
@@ -142,7 +142,7 @@ class EditableBuilder(Builder):
             if is_dir_writable(path=scripts_path, create=True):
                 break
         else:
-            self._io.error_line(
+            self._io.write_error_line(
                 "  - Failed to find a suitable script installation directory for {}".format(
                     self._poetry.file.parent
                 )
@@ -193,7 +193,7 @@ class EditableBuilder(Builder):
 
         return added
 
-    def _add_dist_info(self, added_files):  # type: (List[Path]) -> None
+    def _add_dist_info(self, added_files: List[Path]) -> None:
         from poetry.core.masonry.builders.wheel import WheelBuilder
 
         added_files = added_files[:]
@@ -247,7 +247,7 @@ class EditableBuilder(Builder):
             # RECORD itself is recorded with no hash or size
             f.write("{},,\n".format(dist_info.joinpath("RECORD")))
 
-    def _get_file_hash(self, filepath):  # type: (Path) -> str
+    def _get_file_hash(self, filepath: Path) -> str:
         hashsum = hashlib.sha256()
         with filepath.open("rb") as src:
             while True:
@@ -260,6 +260,6 @@ class EditableBuilder(Builder):
 
         return urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
 
-    def _debug(self, msg):  # type: (str) -> None
+    def _debug(self, msg: str) -> None:
         if self._io.is_debug():
             self._io.write_line(msg)

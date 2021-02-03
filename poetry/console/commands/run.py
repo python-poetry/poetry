@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Union
 
 from cleo.helpers import argument
 
 from .env_command import EnvCommand
+
+
+if TYPE_CHECKING:
+    from poetry.core.masonry.utils.module import Module
 
 
 class RunCommand(EnvCommand):
@@ -15,7 +20,7 @@ class RunCommand(EnvCommand):
         argument("args", "The command and arguments/options to run.", multiple=True)
     ]
 
-    def handle(self):  # type: () -> Any
+    def handle(self) -> Any:
         args = self.argument("args")
         script = args[0]
         scripts = self.poetry.local_config.get("scripts")
@@ -26,7 +31,7 @@ class RunCommand(EnvCommand):
         return self.env.execute(*args)
 
     @property
-    def _module(self):
+    def _module(self) -> "Module":
         from poetry.core.masonry.utils.module import Module
 
         poetry = self.poetry
@@ -36,7 +41,7 @@ class RunCommand(EnvCommand):
 
         return module
 
-    def run_script(self, script, args):  # type: (Union[str, dict], str) -> Any
+    def run_script(self, script: Union[str, dict], args: str) -> Any:
         if isinstance(script, dict):
             script = script["callable"]
 

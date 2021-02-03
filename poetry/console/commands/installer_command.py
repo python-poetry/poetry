@@ -9,20 +9,20 @@ if TYPE_CHECKING:
 
 
 class InstallerCommand(EnvCommand):
-    def __init__(self):  # type: () -> None
-        self._installer = None  # type: Optional[Installer]
+    def __init__(self) -> None:
+        self._installer: Optional["Installer"] = None
 
         super(InstallerCommand, self).__init__()
 
-    def reset_poetry(self):  # type: () -> None
+    def reset_poetry(self) -> None:
         super(InstallerCommand, self).reset_poetry()
 
         self._installer.set_package(self.poetry.package)
         self._installer.set_locker(self.poetry.locker)
 
     @property
-    def installer(self):  # type: () -> Installer
+    def installer(self) -> "Installer":
         return self._installer
 
-    def set_installer(self, installer):  # type: (Installer) -> None
+    def set_installer(self, installer: "Installer") -> None:
         self._installer = installer

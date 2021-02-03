@@ -118,8 +118,8 @@ def test_env_get_venv_with_venv_folder_present(
 
 
 def build_venv(
-    path, executable=None, flags=None
-):  # type: (Union[Path,str], Optional[str], bool) -> ()
+    path: Union[Path, str], executable: Optional[str] = None, flags: bool = None
+) -> ():
     os.mkdir(str(path))
 
 

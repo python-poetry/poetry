@@ -3,6 +3,9 @@ import time
 import urllib.parse
 
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Optional
+from typing import Tuple
 
 import requests
 import requests.auth
@@ -13,10 +16,6 @@ from poetry.utils.password_manager import PasswordManager
 
 
 if TYPE_CHECKING:
-    from typing import Any
-    from typing import Optional
-    from typing import Tuple
-
     from cleo.io.io import IO
 
     from poetry.config.config import Config
@@ -26,14 +25,14 @@ logger = logging.getLogger()
 
 
 class Authenticator(object):
-    def __init__(self, config, io=None):  # type: (Config, Optional[IO]) -> None
+    def __init__(self, config: "Config", io: Optional["IO"] = None) -> None:
         self._config = config
         self._io = io
         self._session = None
         self._credentials = {}
         self._password_manager = PasswordManager(self._config)
 
-    def _log(self, message, level="debug"):  # type: (str, str) -> None
+    def _log(self, message: str, level: str = "debug") -> None:
         if self._io is not None:
             self._io.write_line(
                 "<{level:s}>{message:s}</{level:s}>".format(
@@ -44,15 +43,13 @@ class Authenticator(object):
             getattr(logger, level, logger.debug)(message)
 
     @property
-    def session(self):  # type: () -> requests.Session
+    def session(self) -> requests.Session:
         if self._session is None:
             self._session = requests.Session()
 
         return self._session
 
-    def request(
-        self, method, url, **kwargs
-    ):  # type: (str, str, Any) -> requests.Response
+    def request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
         request = requests.Request(method, url)
         username, password = self.get_credentials_for_url(url)
 
@@ -104,9 +101,7 @@ class Authenticator(object):
         # this should never really be hit under any sane circumstance
         raise PoetryException("Failed HTTP {} request", method.upper())
 
-    def get_credentials_for_url(
-        self, url
-    ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
+    def get_credentials_for_url(self, url: str) -> Tuple[Optional[str], Optional[str]]:
         parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
@@ -141,8 +136,8 @@ class Authenticator(object):
         return credentials[0], credentials[1]
 
     def _get_credentials_for_netloc_from_config(
-        self, netloc
-    ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
+        self, netloc: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         credentials = (None, None)
 
         for repository_name in self._config.get("repositories", []):

@@ -31,24 +31,24 @@ from .provider import Provider
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency  # noqa
-    from poetry.core.packages import DirectoryDependency  # noqa
-    from poetry.core.packages import FileDependency  # noqa
-    from poetry.core.packages import URLDependency  # noqa
-    from poetry.core.packages import VCSDependency  # noqa
-    from poetry.installation.operations import OperationTypes  # noqa
+    from poetry.core.packages import Dependency
+    from poetry.core.packages import DirectoryDependency
+    from poetry.core.packages import FileDependency
+    from poetry.core.packages import URLDependency
+    from poetry.core.packages import VCSDependency
+    from poetry.installation.operations import OperationTypes
 
 
 class Solver:
     def __init__(
         self,
-        package,  # type: ProjectPackage
-        pool,  # type: Pool
-        installed,  # type: Repository
-        locked,  # type: Repository
-        io,  # type: IO
-        remove_untracked=False,  # type: bool
-        provider=None,  # type: Optional[Provider]
+        package: ProjectPackage,
+        pool: Pool,
+        installed: Repository,
+        locked: Repository,
+        io: IO,
+        remove_untracked: bool = False,
+        provider: Optional[Provider] = None,
     ):
         self._package = package
         self._pool = pool
@@ -64,15 +64,15 @@ class Solver:
         self._remove_untracked = remove_untracked
 
     @property
-    def provider(self):  # type: () -> Provider
+    def provider(self) -> Provider:
         return self._provider
 
     @contextmanager
-    def use_environment(self, env):  # type: (Env) -> None
+    def use_environment(self, env: Env) -> None:
         with self.provider.use_environment(env):
             yield
 
-    def solve(self, use_latest=None):  # type: (List[str]) -> List["OperationTypes"]
+    def solve(self, use_latest: List[str] = None) -> List["OperationTypes"]:
         with self._provider.progress():
             start = time.time()
             packages, depths = self._solve(use_latest=use_latest)
@@ -210,8 +210,8 @@ class Solver:
         )
 
     def solve_in_compatibility_mode(
-        self, overrides, use_latest=None
-    ):  # type: (Tuple[Dict], List[str]) -> Tuple[List["Package"], List[int]]
+        self, overrides: Tuple[Dict], use_latest: List[str] = None
+    ) -> Tuple[List["Package"], List[int]]:
         locked = {}
         for package in self._locked.packages:
             locked[package.name] = DependencyPackage(package.to_dependency(), package)
@@ -241,9 +241,7 @@ class Solver:
 
         return packages, depths
 
-    def _solve(
-        self, use_latest=None
-    ):  # type: (List[str]) -> Tuple[List[Package], List[int]]
+    def _solve(self, use_latest: List[str] = None) -> Tuple[List[Package], List[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
@@ -296,20 +294,18 @@ class Solver:
 
 
 class DFSNode(object):
-    def __init__(
-        self, id, name, base_name
-    ):  # type: (Tuple[str, str, bool], str, str) -> None
+    def __init__(self, id: Tuple[str, str, bool], name: str, base_name: str) -> None:
         self.id = id
         self.name = name
         self.base_name = base_name
 
-    def reachable(self):  # type: () -> List
+    def reachable(self) -> List:
         return []
 
-    def visit(self, parents):  # type: (List[PackageNode]) -> None
+    def visit(self, parents: List["PackageNode"]) -> None:
         pass
 
-    def __str__(self):  # type: () -> str
+    def __str__(self) -> str:
         return str(self.id)
 
 
@@ -320,8 +316,8 @@ class VisitedState(enum.Enum):
 
 
 def depth_first_search(
-    source, aggregator
-):  # type: (PackageNode, Callable) -> List[Tuple[Package, int]]
+    source: "PackageNode", aggregator: Callable
+) -> List[Tuple[Package, int]]:
     back_edges = defaultdict(list)
     visited = {}
     topo_sorted_nodes = []
@@ -349,8 +345,11 @@ def depth_first_search(
 
 
 def dfs_visit(
-    node, back_edges, visited, sorted_nodes
-):  # type: (PackageNode, Dict[str, List[PackageNode]], Dict[str, VisitedState], List[PackageNode]) -> bool
+    node: "PackageNode",
+    back_edges: Dict[str, List["PackageNode"]],
+    visited: Dict[str, VisitedState],
+    sorted_nodes: List["PackageNode"],
+) -> bool:
     if visited.get(node.id, VisitedState.Unvisited) == VisitedState.Visited:
         return True
     if visited.get(node.id, VisitedState.Unvisited) == VisitedState.PartiallyVisited:
@@ -372,12 +371,28 @@ def dfs_visit(
 class PackageNode(DFSNode):
     def __init__(
         self,
-        package,  # type: Package
-        packages,  # type: List[Package]
-        previous=None,  # type: Optional[PackageNode]
-        previous_dep=None,  # type: Optional[Union["DirectoryDependency", "FileDependency", "URLDependency", "VCSDependency", "Dependency"]]
-        dep=None,  # type: Optional[Union["DirectoryDependency", "FileDependency", "URLDependency", "VCSDependency", "Dependency"]]
-    ):  # type: (...) -> None
+        package: Package,
+        packages: List[Package],
+        previous: Optional["PackageNode"] = None,
+        previous_dep: Optional[
+            Union[
+                "DirectoryDependency",
+                "FileDependency",
+                "URLDependency",
+                "VCSDependency",
+                "Dependency",
+            ]
+        ] = None,
+        dep: Optional[
+            Union[
+                "DirectoryDependency",
+                "FileDependency",
+                "URLDependency",
+                "VCSDependency",
+                "Dependency",
+            ]
+        ] = None,
+    ) -> None:
         self.package = package
         self.packages = packages
 
@@ -399,8 +414,8 @@ class PackageNode(DFSNode):
             package.name,
         )
 
-    def reachable(self):  # type: () -> List[PackageNode]
-        children = []  # type: List[PackageNode]
+    def reachable(self) -> List["PackageNode"]:
+        children: List[PackageNode] = []
 
         if (
             self.previous_dep
@@ -446,7 +461,7 @@ class PackageNode(DFSNode):
 
         return children
 
-    def visit(self, parents):  # type: (PackageNode) -> None
+    def visit(self, parents: "PackageNode") -> None:
         # The root package, which has no parents, is defined as having depth -1
         # So that the root package's top-level dependencies have depth 0.
         self.depth = 1 + max(
@@ -459,8 +474,8 @@ class PackageNode(DFSNode):
 
 
 def aggregate_package_nodes(
-    nodes, children
-):  # type: (List[PackageNode], List[PackageNode]) -> Tuple[Package, int]
+    nodes: List[PackageNode], children: List[PackageNode]
+) -> Tuple[Package, int]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
     category = (

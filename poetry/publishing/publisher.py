@@ -14,10 +14,10 @@ from .uploader import Uploader
 
 
 if TYPE_CHECKING:
-    from cleo.io.buffered_io import BufferedIO  # noqa
-    from cleo.io.null_io import NullIO  # noqa
+    from cleo.io import BufferedIO
+    from cleo.io import ConsoleIO
 
-    from ..poetry import Poetry  # noqa
+    from ..poetry import Poetry
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +27,7 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(
-        self, poetry, io
-    ):  # type: ("Poetry", Union["BufferedIO", "NullIO"]) -> None
+    def __init__(self, poetry: "Poetry", io: Union["BufferedIO", "ConsoleIO"]) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
@@ -37,18 +35,18 @@ class Publisher:
         self._password_manager = PasswordManager(poetry.config)
 
     @property
-    def files(self):  # type: () -> List[Path]
+    def files(self) -> List[Path]:
         return self._uploader.files
 
     def publish(
         self,
-        repository_name,
-        username,
-        password,
-        cert=None,
-        client_cert=None,
-        dry_run=False,
-    ):  # type: (Optional[str], Optional[str], Optional[str], Optional[Path], Optional[Path], Optional[bool]) -> None
+        repository_name: Optional[str],
+        username: Optional[str],
+        password: Optional[str],
+        cert: Optional[Path] = None,
+        client_cert: Optional[Path] = None,
+        dry_run: Optional[bool] = False,
+    ) -> None:
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"

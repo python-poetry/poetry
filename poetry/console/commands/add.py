@@ -68,7 +68,7 @@ class AddCommand(InstallerCommand, InitCommand):
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):  # type: () -> int
+    def handle(self) -> int:
         from tomlkit import inline_table
 
         from poetry.core.semver import parse_constraint
@@ -192,8 +192,8 @@ class AddCommand(InstallerCommand, InitCommand):
         return status
 
     def get_existing_packages_from_input(
-        self, packages, poetry_content, target_section
-    ):  # type: (List[str], Dict, str) -> List[str]
+        self, packages: List[str], poetry_content: Dict, target_section: str
+    ) -> List[str]:
         existing_packages = []
 
         for name in packages:
@@ -203,9 +203,7 @@ class AddCommand(InstallerCommand, InitCommand):
 
         return existing_packages
 
-    def notify_about_existing_packages(
-        self, existing_packages
-    ):  # type: (List[str]) -> None
+    def notify_about_existing_packages(self, existing_packages: List[str]) -> None:
         self.line(
             "The following packages are already present in the pyproject.toml and will be skipped:\n"
         )

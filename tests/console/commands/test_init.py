@@ -15,7 +15,7 @@ from tests.helpers import get_package
 
 
 @pytest.fixture
-def source_dir(tmp_path):  # type: (...) -> Path
+def source_dir(tmp_path) -> Path:
     cwd = os.getcwd()
 
     try:

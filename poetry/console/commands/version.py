@@ -1,7 +1,13 @@
+from typing import TYPE_CHECKING
+
 from cleo.helpers import argument
 from cleo.helpers import option
 
 from .command import Command
+
+
+if TYPE_CHECKING:
+    from poetry.core.semver import Version
 
 
 class VersionCommand(Command):
@@ -40,7 +46,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         "prerelease",
     }
 
-    def handle(self):  # type: () -> None
+    def handle(self) -> None:
         version = self.argument("version")
 
         if version:
@@ -72,7 +78,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                     )
                 )
 
-    def increment_version(self, version, rule):  # type: (str, str) -> "Version"
+    def increment_version(self, version: str, rule: str) -> "Version":
         from poetry.core.semver import Version
 
         try:

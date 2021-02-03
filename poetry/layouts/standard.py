@@ -6,13 +6,13 @@ from .layout import Layout
 
 
 if TYPE_CHECKING:
-    from poetry.utils._compat import Path  # noqa
+    from pathlib import Path
 DEFAULT = u"""__version__ = '{version}'
 """
 
 
 class StandardLayout(Layout):
-    def _create_default(self, path):  # type: ("Path") -> None
+    def _create_default(self, path: "Path") -> None:
         package_path = path / self._package_name
 
         package_init = package_path / "__init__.py"

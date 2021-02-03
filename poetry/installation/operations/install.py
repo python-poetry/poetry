@@ -5,31 +5,31 @@ from .operation import Operation
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package  # noqa
+    from poetry.core.packages import Package
 
 
 class Install(Operation):
     def __init__(
-        self, package, reason=None, priority=0
-    ):  # type: ("Package", Optional[str], int) -> None
+        self, package: "Package", reason: Optional[str] = None, priority: int = 0
+    ) -> None:
         super(Install, self).__init__(reason, priority=priority)
 
         self._package = package
 
     @property
-    def package(self):  # type: () -> "Package"
+    def package(self) -> "Package":
         return self._package
 
     @property
-    def job_type(self):  # type: () -> str
+    def job_type(self) -> str:
         return "install"
 
-    def __str__(self):  # type: () -> str
+    def __str__(self) -> str:
         return "Installing {} ({})".format(
             self.package.pretty_name, self.format_version(self.package)
         )
 
-    def __repr__(self):  # type: () -> str
+    def __repr__(self) -> str:
         return "<Install {} ({})>".format(
             self.package.pretty_name, self.format_version(self.package)
         )

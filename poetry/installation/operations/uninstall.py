@@ -5,31 +5,34 @@ from .operation import Operation
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package  # noqa
+    from poetry.core.packages import Package
 
 
 class Uninstall(Operation):
     def __init__(
-        self, package, reason=None, priority=float("inf")
-    ):  # type: ("Package", Optional[str], int) -> None
+        self,
+        package: "Package",
+        reason: Optional[str] = None,
+        priority: int = float("inf"),
+    ) -> None:
         super(Uninstall, self).__init__(reason, priority=priority)
 
         self._package = package
 
     @property
-    def package(self):  # type: () -> "Package"
+    def package(self) -> "Package":
         return self._package
 
     @property
-    def job_type(self):  # type: () -> str
+    def job_type(self) -> str:
         return "uninstall"
 
-    def __str__(self):  # type: () -> str
+    def __str__(self) -> str:
         return "Uninstalling {} ({})".format(
             self.package.pretty_name, self.format_version(self._package)
         )
 
-    def __repr__(self):  # type: () -> str
+    def __repr__(self) -> str:
         return "<Uninstall {} ({})>".format(
             self.package.pretty_name, self.format_version(self.package)
         )

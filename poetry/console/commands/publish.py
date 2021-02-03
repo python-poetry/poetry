@@ -41,7 +41,7 @@ the config command.
 
     loggers = ["poetry.masonry.publishing.publisher"]
 
-    def handle(self):  # type: () -> Optional[int]
+    def handle(self) -> Optional[int]:
         from poetry.publishing.publisher import Publisher
 
         publisher = Publisher(self.poetry, self.io)

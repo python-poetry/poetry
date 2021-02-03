@@ -4,18 +4,18 @@ from .command import Command
 
 
 if TYPE_CHECKING:
-    from poetry.utils.env import VirtualEnv  # noqa
+    from poetry.utils.env import VirtualEnv
 
 
 class EnvCommand(Command):
-    def __init__(self):  # type: () -> None
+    def __init__(self) -> None:
         self._env = None
 
         super(EnvCommand, self).__init__()
 
     @property
-    def env(self):  # type: () -> "VirtualEnv"
+    def env(self) -> "VirtualEnv":
         return self._env
 
-    def set_env(self, env):  # type: ("VirtualEnv") -> None
+    def set_env(self, env: "VirtualEnv") -> None:
         self._env = env
