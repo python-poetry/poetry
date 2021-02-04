@@ -200,7 +200,8 @@ class Authenticator:
         netloc = parsed_url.netloc
 
         return self._certs.setdefault(
-            netloc, self._get_certs_for_netloc_from_config(netloc),
+            netloc,
+            self._get_certs_for_netloc_from_config(netloc),
         )
 
     def _get_repository_netlocs(self) -> Generator[[str, str], None, None]:
