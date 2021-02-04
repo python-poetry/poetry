@@ -73,6 +73,12 @@ class Authenticator:
         verify = kwargs.get("verify", certs.get("verify"))
         cert = kwargs.get("cert", certs.get("cert"))
 
+        if isinstance(cert, pathlib.PurePath):
+            cert = str(cert)
+
+        if isinstance(verify, pathlib.PurePath):
+            verify = str(verify)
+
         settings = session.merge_environment_settings(
             prepared_request.url, proxies, stream, verify, cert
         )
