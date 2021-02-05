@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 from typing import TYPE_CHECKING
 from typing import Optional
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
+    from poetry.core.packages.package import Package
 
 
 class Operation(object):

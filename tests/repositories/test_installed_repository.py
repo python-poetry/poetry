@@ -5,7 +5,7 @@ import pytest
 
 from pytest_mock.plugin import MockFixture
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import metadata
 from poetry.utils.env import MockEnv as BaseMockEnv

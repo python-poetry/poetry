@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import time
 
 from typing import TYPE_CHECKING
@@ -7,9 +6,9 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from poetry.core.packages import Dependency
-from poetry.core.packages import Package
-from poetry.core.packages import ProjectPackage
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility

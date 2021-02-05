@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 from typing import TYPE_CHECKING
 from typing import Optional
 
-from poetry.core.packages import Dependency
+from poetry.core.packages.dependency import Dependency
 
 from .set_relation import SetRelation
 
 
 if TYPE_CHECKING:
-    from poetry.core.semver import VersionTypes
+    from poetry.core.semver.helpers import VersionTypes
 
 
 class Term(object):

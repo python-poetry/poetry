@@ -5,7 +5,7 @@ from .operation import Operation
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
+    from poetry.core.packages.package import Package
 
 
 class Update(Operation):

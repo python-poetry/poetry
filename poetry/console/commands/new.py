@@ -22,7 +22,7 @@ class NewCommand(Command):
     def handle(self) -> None:
         from pathlib import Path
 
-        from poetry.core.semver import parse_constraint
+        from poetry.core.semver.helpers import parse_constraint
         from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv

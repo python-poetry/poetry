@@ -13,7 +13,7 @@ from typing import Union
 
 from cleo.io.io import IO
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -31,11 +31,11 @@ from .provider import Provider
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import DirectoryDependency
-    from poetry.core.packages import FileDependency
-    from poetry.core.packages import URLDependency
-    from poetry.core.packages import VCSDependency
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.installation.operations import OperationTypes
 
 

@@ -14,9 +14,9 @@ from typing import Union
 import pkginfo
 
 from poetry.core.factory import Factory
-from poetry.core.packages import Package
-from poetry.core.packages import ProjectPackage
-from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
@@ -170,11 +170,11 @@ class PackageInfo:
         for req in self.requires_dist or []:
             try:
                 # Attempt to parse the PEP-508 requirement string
-                dependency = dependency_from_pep_508(req, relative_to=root_dir)
+                dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except InvalidMarker:
                 # Invalid marker, We strip the markers hoping for the best
                 req = req.split(";")[0]
-                dependency = dependency_from_pep_508(req, relative_to=root_dir)
+                dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except ValueError:
                 # Likely unable to parse constraint so we skip it
                 self._log(

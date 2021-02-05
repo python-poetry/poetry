@@ -7,7 +7,7 @@ from .command import Command
 
 
 if TYPE_CHECKING:
-    from poetry.core.semver import Version
+    from poetry.core.semver.version import Version
 
 
 class VersionCommand(Command):
@@ -79,7 +79,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 )
 
     def increment_version(self, version: str, rule: str) -> "Version":
-        from poetry.core.semver import Version
+        from poetry.core.semver.version import Version
 
         try:
             version = Version.parse(version)

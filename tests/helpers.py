@@ -7,9 +7,9 @@ from pathlib import Path
 from poetry.console.application import Application
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.packages import Dependency
-from poetry.core.packages import Link
-from poetry.core.packages import Package
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 from poetry.core.toml.file import TOMLFile
 from poetry.core.vcs.git import ParsedUrl
 from poetry.factory import Factory

@@ -2,17 +2,13 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
-from poetry.core.semver import VersionConstraint
-from poetry.core.semver import VersionRange
-from poetry.core.semver import parse_constraint
-
 from .base_repository import BaseRepository
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import Link
-    from poetry.core.packages import Package
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.utils.link import Link
 
 
 class Repository(BaseRepository):
@@ -41,6 +37,10 @@ class Repository(BaseRepository):
                 return package.clone()
 
     def find_packages(self, dependency: "Dependency") -> List["Package"]:
+        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.semver.version_constraint import VersionConstraint
+        from poetry.core.semver.version_range import VersionRange
+
         constraint = dependency.constraint
         packages = []
         ignored_pre_release_packages = []

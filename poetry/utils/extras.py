@@ -1,15 +1,17 @@
+from typing import TYPE_CHECKING
 from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import Sequence
 
-from poetry.core.packages import Package
-from poetry.utils.helpers import canonicalize_name
+
+if TYPE_CHECKING:
+    from poetry.core.packages.package import Package  # noqa
 
 
 def get_extra_package_names(
-    packages: Sequence[Package],
+    packages: Sequence["Package"],
     extras: Mapping[str, List[str]],
     extra_names: Sequence[str],
 ) -> Iterator[str]:
@@ -21,6 +23,9 @@ def get_extra_package_names(
         in the `extras` section of `poetry.lock`.
     :param extra_names: A list of strings specifying names of extra groups to resolve.
     """
+    from poetry.core.packages.package import Package  # noqa
+    from poetry.utils.helpers import canonicalize_name
+
     if not extra_names:
         return []
 

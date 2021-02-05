@@ -19,7 +19,7 @@ from .base_installer import BaseInstaller
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
+    from poetry.core.packages.package import Package
 
 
 class PipInstaller(BaseInstaller):
@@ -242,8 +242,8 @@ class PipInstaller(BaseInstaller):
         return self.run(*args)
 
     def install_git(self, package: "Package") -> None:
-        from poetry.core.packages import Package
-        from poetry.core.vcs import Git
+        from poetry.core.packages.package import Package
+        from poetry.core.vcs.git import Git
 
         src_dir = self._env.path / "src" / package.name
         if src_dir.exists():

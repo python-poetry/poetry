@@ -10,7 +10,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from poetry.core.semver import Version
+from poetry.core.semver.version import Version
 
 
 class SetupReader(object):
