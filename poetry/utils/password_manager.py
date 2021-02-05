@@ -65,6 +65,28 @@ class KeyRing:
                 )
             )
 
+    def get_credential(
+        self, service_name: str, username: Optional[str]
+    ) -> Optional[Dict[str, str]]:
+        if not self.is_available():
+            return
+
+        import keyring
+        import keyring.errors
+
+        try:
+            creds = keyring.get_credential(service_name, username)
+            return {
+                "username": creds.username,
+                "password": creds.password,
+            }
+        except (RuntimeError, keyring.errors.KeyringError):
+            raise KeyRingError(
+                "Unable to retrieve the password for {} from the key ring".format(
+                    service_name
+                )
+            )
+
     def delete_password(self, name: str, username: str) -> None:
         if not self.is_available():
             return
@@ -143,7 +165,7 @@ class PasswordManager:
         else:
             self.keyring.set_password(name, "__token__", token)
 
-    def get_pypi_token(self, name: str) -> str:
+    def get_pypi_token(self, name: str) -> Optional[str]:
         if not self.keyring.is_available():
             return self._config.get("pypi-token.{}".format(name))
 
@@ -157,22 +179,30 @@ class PasswordManager:
 
         self.keyring.delete_password(name, "__token__")
 
-    def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
+    def get_http_auth(
+        self, name: str, repo_url: Optional[str] = None
+    ) -> Optional[Dict[str, str]]:
+        return self.get_http_auth_from_poetry_config(
+            name
+        ) or self.get_http_auth_from_keyring(name, repo_url)
+
+    def get_http_auth_from_poetry_config(self, name: str) -> Optional[Dict[str, str]]:
         auth = self._config.get("http-basic.{}".format(name))
-        if not auth:
-            username = self._config.get("http-basic.{}.username".format(name))
-            password = self._config.get("http-basic.{}.password".format(name))
-            if not username and not password:
-                return None
-        else:
-            username, password = auth["username"], auth.get("password")
+        if auth:
+            username, password = auth.get("username"), auth.get("password")
             if password is None:
                 password = self.keyring.get_password(name, username)
 
-        return {
-            "username": username,
-            "password": password,
-        }
+            return {
+                "username": username,
+                "password": password,
+            }
+
+    def get_http_auth_from_keyring(
+        self, name: str, repo_url: Optional[str] = None
+    ) -> Optional[Dict[str, str]]:
+        if repo_url:
+            return self.keyring.get_credential(repo_url, None)
 
     def set_http_password(self, name: str, username: str, password: str) -> None:
         auth = {"username": username}

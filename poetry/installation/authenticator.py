@@ -152,9 +152,8 @@ class Authenticator(object):
                 continue
 
             parsed_url = urllib.parse.urlsplit(url)
-
             if netloc == parsed_url.netloc:
-                auth = self._password_manager.get_http_auth(repository_name)
+                auth = self._password_manager.get_http_auth(repository_name, url)
 
                 if auth is None:
                     continue

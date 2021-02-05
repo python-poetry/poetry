@@ -45,7 +45,7 @@ class Publisher:
         password: Optional[str],
         cert: Optional[Path] = None,
         client_cert: Optional[Path] = None,
-        dry_run: Optional[bool] = False,
+        dry_run: bool = False,
     ) -> None:
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"
@@ -66,7 +66,7 @@ class Publisher:
                 username = "__token__"
                 password = token
             else:
-                auth = self._password_manager.get_http_auth(repository_name)
+                auth = self._password_manager.get_http_auth(repository_name, url)
                 if auth:
                     logger.debug(
                         "Found authentication information for {}.".format(
