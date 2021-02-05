@@ -176,7 +176,8 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 
 ```bash
 # Bash
-poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
+mkdir -p ${BASH_COMPLETION_USER_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions
+poetry completions bash > ${BASH_COMPLETION_USER_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions/poetry.bash-completions
 
 # Bash (Homebrew)
 poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
@@ -197,6 +198,16 @@ poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
 # prezto
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 
+```
+
+The commands above create static completions that need to be manually updated when
+Poetry is updated. Alternatly, you can dynamically create the completions each time
+you open a terminal. However, this doesn't happen instantly, so it will add some
+delay before the terminal is ready.
+
+```
+# Bash
+echo '. <(poetry completions bash) >> ~/.bashrc
 ```
 
 !!! note
