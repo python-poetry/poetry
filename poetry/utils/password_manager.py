@@ -81,11 +81,12 @@ class KeyRing:
 
         try:
             creds = keyring.get_credential(service_name, username)
-            self._credential_cache[(service_name, username)] = {
-                "username": creds.username,
-                "password": creds.password,
-            }
-            return self._credential_cache[(service_name, username)]
+            if creds:
+                self._credential_cache[(service_name, username)] = {
+                    "username": creds.username,
+                    "password": creds.password,
+                }
+                return self._credential_cache[(service_name, username)]
         except (RuntimeError, keyring.errors.KeyringError):
             raise KeyRingError(
                 "Unable to retrieve the password for {} from the key ring".format(
@@ -194,15 +195,20 @@ class PasswordManager:
 
     def get_http_auth_from_poetry_config(self, name: str) -> Optional[Dict[str, str]]:
         auth = self._config.get("http-basic.{}".format(name))
-        if auth:
-            username, password = auth.get("username"), auth.get("password")
+        if not auth:
+            username = self._config.get("http-basic.{}.username".format(name))
+            password = self._config.get("http-basic.{}.password".format(name))
+            if not username and not password:
+                return None
+        else:
+            username, password = auth["username"], auth.get("password")
             if password is None:
                 password = self.keyring.get_password(name, username)
 
-            return {
-                "username": username,
-                "password": password,
-            }
+        return {
+            "username": username,
+            "password": password,
+        }
 
     def get_http_auth_from_keyring(
         self, name: str, repo_url: Optional[str] = None
