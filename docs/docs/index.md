@@ -177,7 +177,7 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 ```bash
 # Bash
 mkdir -p ${BASH_COMPLETION_USER_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions
-poetry completions bash > ${BASH_COMPLETION_USER_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions/poetry.bash-completions
+poetry completions bash > ${BASH_COMPLETION_USER_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions/poetry
 
 # Bash (Homebrew)
 poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
