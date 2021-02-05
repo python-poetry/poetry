@@ -152,11 +152,20 @@ poetry install --no-root
 Installation of your project's package is also skipped when the `--dev-only`
 option is passed.
 
+
+If you only want to install your project's package, without resolving any
+dependencies, use the `--root-only` option.
+
+```bash
+poetry install --root-only
+```
+
 ### Options
 
 * `--no-dev`: Do not install dev dependencies.
 * `--dev-only`: Only install dev dependencies.
 * `--no-root`: Do not install the root package (your project).
+* `--root-only`: Only install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--remove-untracked`: Remove dependencies not presented in the lock file
 * `--extras (-E)`: Features to install (multiple values allowed).

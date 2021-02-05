@@ -15,6 +15,9 @@ class InstallCommand(InstallerCommand):
             "no-root", None, "Do not install the root package (the current project)."
         ),
         option(
+            "root-only", None, "Only install the root package (the current project)."
+        ),
+        option(
             "dry-run",
             None,
             "Output the operations but do not execute anything "
@@ -54,28 +57,29 @@ dependencies and not including the current project, run the command with the
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
         from poetry.masonry.builders import EditableBuilder
 
-        self._installer.use_executor(
-            self.poetry.config.get("experimental.new-installer", False)
-        )
+        if not self.option("root-only"):
+            self._installer.use_executor(
+                self.poetry.config.get("experimental.new-installer", False)
+            )
 
-        extras = []
-        for extra in self.option("extras"):
-            if " " in extra:
-                extras += [e.strip() for e in extra.split(" ")]
-            else:
-                extras.append(extra)
+            extras = []
+            for extra in self.option("extras"):
+                if " " in extra:
+                    extras += [e.strip() for e in extra.split(" ")]
+                else:
+                    extras.append(extra)
 
-        self._installer.extras(extras)
-        self._installer.dev_mode(not self.option("no-dev"))
-        self._installer.dev_only(self.option("dev-only"))
-        self._installer.dry_run(self.option("dry-run"))
-        self._installer.remove_untracked(self.option("remove-untracked"))
-        self._installer.verbose(self._io.is_verbose())
+            self._installer.extras(extras)
+            self._installer.dev_mode(not self.option("no-dev"))
+            self._installer.dev_only(self.option("dev-only"))
+            self._installer.dry_run(self.option("dry-run"))
+            self._installer.remove_untracked(self.option("remove-untracked"))
+            self._installer.verbose(self._io.is_verbose())
 
-        return_code = self._installer.run()
+            return_code = self._installer.run()
 
-        if return_code != 0:
-            return return_code
+            if return_code != 0:
+                return return_code
 
         if self.option("no-root") or self.option("dev-only"):
             return 0

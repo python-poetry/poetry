@@ -203,6 +203,15 @@ If you want to install the dependencies only, run the `install` command with the
 poetry install --no-root
 ```
 
+### Installing root package only
+
+If you want to install the current project only, without resolving any
+dependencies, run the `install` command with the `--root-only` flag:
+
+```bash
+poetry install --root-only
+```
+
 ## Updating dependencies to their latest versions
 
 As mentioned above, the `poetry.lock` file prevents you from automatically getting the latest versions
