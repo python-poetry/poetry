@@ -3,6 +3,7 @@ import logging
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
+from typing import Tuple
 
 
 if TYPE_CHECKING:
@@ -27,6 +28,7 @@ class KeyRing:
         self._is_available = True
 
         self._check()
+        self._credential_cache: Dict[Tuple[str, Optional[str]], Dict[str, str]] = {}
 
     def is_available(self) -> bool:
         return self._is_available
@@ -71,15 +73,19 @@ class KeyRing:
         if not self.is_available():
             return
 
+        if (service_name, username) in self._credential_cache:
+            return self._credential_cache[(service_name, username)]
+
         import keyring
         import keyring.errors
 
         try:
             creds = keyring.get_credential(service_name, username)
-            return {
+            self._credential_cache[(service_name, username)] = {
                 "username": creds.username,
                 "password": creds.password,
             }
+            return self._credential_cache[(service_name, username)]
         except (RuntimeError, keyring.errors.KeyringError):
             raise KeyRingError(
                 "Unable to retrieve the password for {} from the key ring".format(
