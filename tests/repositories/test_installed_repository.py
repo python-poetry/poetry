@@ -47,12 +47,12 @@ class MockEnv(BaseMockEnv):
 
 
 @pytest.fixture
-def env():  # type: () -> MockEnv
+def env() -> MockEnv:
     return MockEnv(path=ENV_DIR)
 
 
 @pytest.fixture
-def repository(mocker, env):  # type: (MockFixture, MockEnv) -> InstalledRepository
+def repository(mocker: MockFixture, env: MockEnv) -> InstalledRepository:
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,
@@ -73,8 +73,8 @@ def repository(mocker, env):  # type: (MockFixture, MockEnv) -> InstalledReposit
 
 
 def get_package_from_repository(
-    name, repository
-):  # type: (str, InstalledRepository) -> Optional[Package]
+    name: str, repository: InstalledRepository
+) -> Optional[Package]:
     for pkg in repository.packages:
         if pkg.name == name:
             return pkg

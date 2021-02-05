@@ -21,19 +21,19 @@ class Exporter(object):
     ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
-    def __init__(self, poetry):  # type: (Poetry) -> None
+    def __init__(self, poetry: Poetry) -> None:
         self._poetry = poetry
 
     def export(
         self,
-        fmt,
-        cwd,
-        output,
-        with_hashes=True,
-        dev=False,
-        extras=None,
-        with_credentials=False,
-    ):  # type: (str, Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
+        fmt: str,
+        cwd: Path,
+        output: Union[IO, str],
+        with_hashes: bool = True,
+        dev: bool = False,
+        extras: Optional[Union[bool, Sequence[str]]] = None,
+        with_credentials: bool = False,
+    ) -> None:
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError("Invalid export format: {}".format(fmt))
 
@@ -48,13 +48,13 @@ class Exporter(object):
 
     def _export_requirements_txt(
         self,
-        cwd,
-        output,
-        with_hashes=True,
-        dev=False,
-        extras=None,
-        with_credentials=False,
-    ):  # type: (Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
+        cwd: Path,
+        output: Union[IO, str],
+        with_hashes: bool = True,
+        dev: bool = False,
+        extras: Optional[Union[bool, Sequence[str]]] = None,
+        with_credentials: bool = False,
+    ) -> None:
         indexes = set()
         content = ""
         dependency_lines = set()
@@ -150,9 +150,7 @@ class Exporter(object):
 
         self._output(content, cwd, output)
 
-    def _output(
-        self, content, cwd, output
-    ):  # type: (str, Path, Union[IO, str]) -> None
+    def _output(self, content: str, cwd: Path, output: Union[IO, str]) -> None:
         decoded = decode(content)
         try:
             output.write(decoded)

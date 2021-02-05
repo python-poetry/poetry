@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Optional
+from typing import Type
 from typing import cast
 
 from cleo.application import Application as BaseApplication
@@ -26,7 +27,7 @@ from .commands.command import Command
 
 
 def load_command(name: str) -> Callable:
-    def _load():
+    def _load() -> Type[Command]:
         module = import_module(
             "poetry.console.commands.{}".format(".".join(name.split(" ")))
         )
@@ -75,7 +76,7 @@ COMMANDS = [
 
 
 if TYPE_CHECKING:
-    from poetry.poetry import Poetry  # noqa
+    from poetry.poetry import Poetry
 
 
 class Application(BaseApplication):
@@ -220,7 +221,7 @@ class Application(BaseApplication):
 
             logger.setLevel(level)
 
-    def set_env(self, event: ConsoleCommandEvent, event_name: str, _: Any):
+    def set_env(self, event: ConsoleCommandEvent, event_name: str, _: Any) -> None:
         from .commands.env_command import EnvCommand
 
         command: EnvCommand = cast(EnvCommand, event.command)
@@ -272,7 +273,7 @@ class Application(BaseApplication):
         command.set_installer(installer)
 
 
-def main():
+def main() -> int:
     return Application().run()
 
 

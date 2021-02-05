@@ -11,7 +11,7 @@ class CheckCommand(Command):
     name = "check"
     description = "Checks the validity of the <comment>pyproject.toml</comment> file."
 
-    def handle(self):  # type: () -> int
+    def handle(self) -> int:
         # Load poetry config and display errors, if any
         poetry_file = Factory.locate(Path.cwd())
         config = PyProjectTOML(poetry_file).poetry_config

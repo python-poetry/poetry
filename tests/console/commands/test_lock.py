@@ -7,7 +7,7 @@ from tests.helpers import get_package
 
 
 @pytest.fixture
-def source_dir(tmp_path):  # type: (Path) -> Path
+def source_dir(tmp_path: Path) -> Path:
     yield Path(tmp_path.as_posix())
 
 

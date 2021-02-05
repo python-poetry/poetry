@@ -6,14 +6,16 @@ from .dependency_package import DependencyPackage
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency  # noqa
-    from poetry.core.packages import Package  # noqa
+    from poetry.core.packages import Dependency
+    from poetry.core.packages import Package
 
 
 class PackageCollection(list):
     def __init__(
-        self, dependency, packages=None
-    ):  # type: (Dependency, List[Union["Package", DependencyPackage]]) -> None
+        self,
+        dependency: "Dependency",
+        packages: List[Union["Package", DependencyPackage]] = None,
+    ) -> None:
         self._dependency = dependency
 
         if packages is None:
@@ -24,7 +26,7 @@ class PackageCollection(list):
         for package in packages:
             self.append(package)
 
-    def append(self, package):  # type: (Union["Package", DependencyPackage]) -> None
+    def append(self, package: Union["Package", DependencyPackage]) -> None:
         if isinstance(package, DependencyPackage):
             package = package.package
 

@@ -19,7 +19,7 @@ class NewCommand(Command):
         option("src", None, "Use the src layout for the project."),
     ]
 
-    def handle(self):  # type: () -> None
+    def handle(self) -> None:
         from pathlib import Path
 
         from poetry.core.semver import parse_constraint

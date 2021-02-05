@@ -34,19 +34,19 @@ from tests.helpers import mock_download
 
 
 class Config(BaseConfig):
-    def get(self, setting_name, default=None):  # type: (str, Any) -> Any
+    def get(self, setting_name: str, default: Any = None) -> Any:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).get(setting_name, default=default)
 
-    def raw(self):  # type: () -> Dict[str, Any]
+    def raw(self) -> Dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).raw()
 
-    def all(self):  # type: () -> Dict[str, Any]
+    def all(self) -> Dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 

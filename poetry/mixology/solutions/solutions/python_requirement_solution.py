@@ -5,11 +5,11 @@ from crashtest.contracts.solution import Solution
 
 
 if TYPE_CHECKING:
-    from poetry.mixology.incompatibility_cause import PackageNotFoundCause  # noqa
+    from poetry.mixology.incompatibility_cause import PackageNotFoundCause
 
 
 class PythonRequirementSolution(Solution):
-    def __init__(self, exception):  # type: ("PackageNotFoundCause") -> None
+    def __init__(self, exception: "PackageNotFoundCause") -> None:
         from poetry.core.semver import parse_constraint
         from poetry.mixology.incompatibility_cause import PythonCause
 
@@ -44,15 +44,15 @@ class PythonRequirementSolution(Solution):
         self._description = description
 
     @property
-    def solution_title(self):  # type: () -> str
+    def solution_title(self) -> str:
         return self._title
 
     @property
-    def solution_description(self):  # type: () -> str
+    def solution_description(self) -> str:
         return self._description
 
     @property
-    def documentation_links(self):  # type: () -> List[str]
+    def documentation_links(self) -> List[str]:
         return [
             "https://python-poetry.org/docs/dependency-specification/#python-restricted-dependencies",
             "https://python-poetry.org/docs/dependency-specification/#using-environment-markers",

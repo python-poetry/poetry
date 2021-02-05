@@ -5,35 +5,39 @@ from .operation import Operation
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package  # noqa
+    from poetry.core.packages import Package
 
 
 class Update(Operation):
     def __init__(
-        self, initial, target, reason=None, priority=0
-    ):  # type: ("Package", "Package", Optional[str], int) -> None
+        self,
+        initial: "Package",
+        target: "Package",
+        reason: Optional[str] = None,
+        priority: int = 0,
+    ) -> None:
         self._initial_package = initial
         self._target_package = target
 
         super(Update, self).__init__(reason, priority=priority)
 
     @property
-    def initial_package(self):  # type: () -> "Package"
+    def initial_package(self) -> "Package":
         return self._initial_package
 
     @property
-    def target_package(self):  # type: () -> "Package"
+    def target_package(self) -> "Package":
         return self._target_package
 
     @property
-    def package(self):  # type: () -> "Package"
+    def package(self) -> "Package":
         return self._target_package
 
     @property
-    def job_type(self):  # type: () -> str
+    def job_type(self) -> str:
         return "update"
 
-    def __str__(self):  # type: () -> str
+    def __str__(self) -> str:
         return "Updating {} ({}) to {} ({})".format(
             self.initial_package.pretty_name,
             self.format_version(self.initial_package),
@@ -41,7 +45,7 @@ class Update(Operation):
             self.format_version(self.target_package),
         )
 
-    def __repr__(self):  # type: () -> str
+    def __repr__(self) -> str:
         return "<Update {} ({}) to {} ({})>".format(
             self.initial_package.pretty_name,
             self.format_version(self.initial_package),

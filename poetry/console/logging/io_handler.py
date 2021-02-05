@@ -4,18 +4,18 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from logging import LogRecord  # noqa
+    from logging import LogRecord
 
     from cleo.io.io import IO  # noqa
 
 
 class IOHandler(logging.Handler):
-    def __init__(self, io):  # type: ("IO") -> None
+    def __init__(self, io: "IO") -> None:
         self._io = io
 
         super(IOHandler, self).__init__()
 
-    def emit(self, record):  # type: ("LogRecord") -> None
+    def emit(self, record: "LogRecord") -> None:
         try:
             msg = self.format(record)
             level = record.levelname.lower()

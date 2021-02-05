@@ -21,22 +21,22 @@ def pep517_metadata_mock():
 
 
 @pytest.fixture
-def demo_sdist():  # type: () -> Path
+def demo_sdist() -> Path:
     return FIXTURE_DIR_BASE / "distributions" / "demo-0.1.0.tar.gz"
 
 
 @pytest.fixture
-def demo_wheel():  # type: () -> Path
+def demo_wheel() -> Path:
     return FIXTURE_DIR_BASE / "distributions" / "demo-0.1.0-py2.py3-none-any.whl"
 
 
 @pytest.fixture
-def source_dir(tmp_path):  # type: (Path) -> Path
+def source_dir(tmp_path: Path) -> Path:
     yield Path(tmp_path.as_posix())
 
 
 @pytest.fixture
-def demo_setup(source_dir):  # type: (Path) -> Path
+def demo_setup(source_dir: Path) -> Path:
     setup_py = source_dir / "setup.py"
     setup_py.write_text(
         decode(
@@ -50,7 +50,7 @@ def demo_setup(source_dir):  # type: (Path) -> Path
 
 
 @pytest.fixture
-def demo_setup_cfg(source_dir):  # type: (Path) -> Path
+def demo_setup_cfg(source_dir: Path) -> Path:
     setup_cfg = source_dir / "setup.cfg"
     setup_cfg.write_text(
         decode(
@@ -69,7 +69,7 @@ def demo_setup_cfg(source_dir):  # type: (Path) -> Path
 
 
 @pytest.fixture
-def demo_setup_complex(source_dir):  # type: (Path) -> Path
+def demo_setup_complex(source_dir: Path) -> Path:
     setup_py = source_dir / "setup.py"
     setup_py.write_text(
         decode(
@@ -83,7 +83,7 @@ def demo_setup_complex(source_dir):  # type: (Path) -> Path
 
 
 @pytest.fixture
-def demo_setup_complex_pep517_legacy(demo_setup_complex):  # type: (Path) -> Path
+def demo_setup_complex_pep517_legacy(demo_setup_complex: Path) -> Path:
     pyproject_toml = demo_setup_complex / "pyproject.toml"
     pyproject_toml.write_text(
         decode("[build-system]\n" 'requires = ["setuptools", "wheel"]')
@@ -91,7 +91,7 @@ def demo_setup_complex_pep517_legacy(demo_setup_complex):  # type: (Path) -> Pat
     yield demo_setup_complex
 
 
-def demo_check_info(info, requires_dist=None):  # type: (PackageInfo, Set[str]) -> None
+def demo_check_info(info: PackageInfo, requires_dist: Set[str] = None) -> None:
     assert info.name == "demo"
     assert info.version == "0.1.0"
     assert info.requires_dist

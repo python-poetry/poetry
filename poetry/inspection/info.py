@@ -43,8 +43,8 @@ PEP517_META_BUILD_DEPS = ["pep517===0.8.2", "toml==0.10.1"]
 
 class PackageInfoError(ValueError):
     def __init__(
-        self, path, *reasons
-    ):  # type: (Union[Path, str], *Union[BaseException, str]) -> None
+        self, path: Union[Path, str], *reasons: Union[BaseException, str]
+    ) -> None:
         reasons = (
             "Unable to determine package info for path: {}".format(str(path)),
         ) + reasons
@@ -56,14 +56,14 @@ class PackageInfoError(ValueError):
 class PackageInfo:
     def __init__(
         self,
-        name=None,  # type: Optional[str]
-        version=None,  # type: Optional[str]
-        summary=None,  # type: Optional[str]
-        platform=None,  # type: Optional[str]
-        requires_dist=None,  # type: Optional[List[str]]
-        requires_python=None,  # type: Optional[str]
-        files=None,  # type: Optional[List[str]]
-        cache_version=None,  # type: Optional[str]
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        summary: Optional[str] = None,
+        platform: Optional[str] = None,
+        requires_dist: Optional[List[str]] = None,
+        requires_python: Optional[str] = None,
+        files: Optional[List[str]] = None,
+        cache_version: Optional[str] = None,
     ):
         self.name = name
         self.version = version
@@ -78,10 +78,10 @@ class PackageInfo:
         self._source_reference = None
 
     @property
-    def cache_version(self):  # type: () -> Optional[str]
+    def cache_version(self) -> Optional[str]:
         return self._cache_version
 
-    def update(self, other):  # type: (PackageInfo) -> PackageInfo
+    def update(self, other: "PackageInfo") -> "PackageInfo":
         self.name = other.name or self.name
         self.version = other.version or self.version
         self.summary = other.summary or self.summary
@@ -92,7 +92,7 @@ class PackageInfo:
         self._cache_version = other.cache_version or self._cache_version
         return self
 
-    def asdict(self):  # type: () -> Dict[str, Optional[Union[str, List[str]]]]
+    def asdict(self) -> Dict[str, Optional[Union[str, List[str]]]]:
         """
         Helper method to convert package info into a dictionary used for caching.
         """
@@ -108,9 +108,7 @@ class PackageInfo:
         }
 
     @classmethod
-    def load(
-        cls, data
-    ):  # type: (Dict[str, Optional[Union[str, List[str]]]]) -> PackageInfo
+    def load(cls, data: Dict[str, Optional[Union[str, List[str]]]]) -> "PackageInfo":
         """
         Helper method to load data from a dictionary produced by `PackageInfo.asdict()`.
 
@@ -120,13 +118,16 @@ class PackageInfo:
         return cls(cache_version=cache_version, **data)
 
     @classmethod
-    def _log(cls, msg, level="info"):  # type: (str, str) -> None
+    def _log(cls, msg: str, level: str = "info") -> None:
         """Internal helper method to log information."""
         getattr(logger, level)("<debug>{}:</debug> {}".format(cls.__name__, msg))
 
     def to_package(
-        self, name=None, extras=None, root_dir=None
-    ):  # type: (Optional[str], Optional[List[str]], Optional[Path]) -> Package
+        self,
+        name: Optional[str] = None,
+        extras: Optional[List[str]] = None,
+        root_dir: Optional[Path] = None,
+    ) -> Package:
         """
         Create a new `poetry.core.packages.package.Package` instance using metadata from this instance.
 
@@ -202,8 +203,8 @@ class PackageInfo:
 
     @classmethod
     def _from_distribution(
-        cls, dist
-    ):  # type: (Union[pkginfo.BDist, pkginfo.SDist, pkginfo.Wheel]) -> PackageInfo
+        cls, dist: Union[pkginfo.BDist, pkginfo.SDist, pkginfo.Wheel]
+    ) -> "PackageInfo":
         """
         Helper method to parse package information from a `pkginfo.Distribution` instance.
 
@@ -234,7 +235,7 @@ class PackageInfo:
         return info
 
     @classmethod
-    def _from_sdist_file(cls, path):  # type: (Path) -> PackageInfo
+    def _from_sdist_file(cls, path: Path) -> "PackageInfo":
         """
         Helper method to parse package information from an sdist file. We attempt to first inspect the
         file using `pkginfo.SDist`. If this does not provide us with package requirements, we extract the
@@ -295,11 +296,11 @@ class PackageInfo:
         return info.update(new_info)
 
     @staticmethod
-    def has_setup_files(path):  # type: (Path) -> bool
+    def has_setup_files(path: Path) -> bool:
         return any((path / f).exists() for f in SetupReader.FILES)
 
     @classmethod
-    def from_setup_files(cls, path):  # type: (Path) -> PackageInfo
+    def from_setup_files(cls, path: Path) -> "PackageInfo":
         """
         Mechanism to parse package information from a `setup.[py|cfg]` file. This uses the implementation
         at `poetry.utils.setup_reader.SetupReader` in order to parse the file. This is not reliable for
@@ -356,7 +357,7 @@ class PackageInfo:
         return info
 
     @staticmethod
-    def _find_dist_info(path):  # type: (Path) -> Iterator[Path]
+    def _find_dist_info(path: Path) -> Iterator[Path]:
         """
         Discover all `*.*-info` directories in a given path.
 
@@ -372,7 +373,7 @@ class PackageInfo:
             yield Path(d)
 
     @classmethod
-    def from_metadata(cls, path):  # type: (Path) -> Optional[PackageInfo]
+    def from_metadata(cls, path: Path) -> Optional["PackageInfo"]:
         """
         Helper method to parse package information from an unpacked metadata directory.
 
@@ -406,7 +407,7 @@ class PackageInfo:
             return info
 
     @classmethod
-    def from_package(cls, package):  # type: (Package) -> PackageInfo
+    def from_package(cls, package: Package) -> "PackageInfo":
         """
         Helper method to inspect a `Package` object, in order to generate package info.
 
@@ -429,14 +430,14 @@ class PackageInfo:
         )
 
     @staticmethod
-    def _get_poetry_package(path):  # type: (Path) -> Optional[ProjectPackage]
+    def _get_poetry_package(path: Path) -> Optional[ProjectPackage]:
         # Note: we ignore any setup.py file at this step
         # TODO: add support for handling non-poetry PEP-517 builds
         if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
             return Factory().create_poetry(path).package
 
     @classmethod
-    def _pep517_metadata(cls, path):  # type: (Path) -> PackageInfo
+    def _pep517_metadata(cls, path: Path) -> "PackageInfo":
         """
         Helper method to use PEP-517 library to build and read package metadata.
 
@@ -511,9 +512,7 @@ class PackageInfo:
         raise PackageInfoError(path, "Exhausted all core metadata sources.")
 
     @classmethod
-    def from_directory(
-        cls, path, disable_build=False
-    ):  # type: (Path, bool) -> PackageInfo
+    def from_directory(cls, path: Path, disable_build: bool = False) -> "PackageInfo":
         """
         Generate package information from a package source directory. If `disable_build` is not `True` and
         introspection of all available metadata fails, the package is attempted to be build in an isolated
@@ -547,7 +546,7 @@ class PackageInfo:
         return info
 
     @classmethod
-    def from_sdist(cls, path):  # type: (Path) -> PackageInfo
+    def from_sdist(cls, path: Path) -> "PackageInfo":
         """
         Gather package information from an sdist file, packed or unpacked.
 
@@ -561,7 +560,7 @@ class PackageInfo:
         return cls.from_directory(path=path)
 
     @classmethod
-    def from_wheel(cls, path):  # type: (Path) -> PackageInfo
+    def from_wheel(cls, path: Path) -> "PackageInfo":
         """
         Gather package information from a wheel.
 
@@ -573,7 +572,7 @@ class PackageInfo:
             return PackageInfo()
 
     @classmethod
-    def from_bdist(cls, path):  # type: (Path) -> PackageInfo
+    def from_bdist(cls, path: Path) -> "PackageInfo":
         """
         Gather package information from a bdist (wheel etc.).
 
@@ -591,7 +590,7 @@ class PackageInfo:
             raise PackageInfoError(path, e)
 
     @classmethod
-    def from_path(cls, path):  # type: (Path) -> PackageInfo
+    def from_path(cls, path: Path) -> "PackageInfo":
         """
         Gather package information from a given path (bdist, sdist, directory).
 

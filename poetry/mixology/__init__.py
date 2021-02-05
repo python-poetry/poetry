@@ -6,16 +6,19 @@ from .version_solver import VersionSolver
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import DependencyPackage  # noqa
-    from poetry.core.packages import ProjectPackage  # noqa
-    from poetry.puzzle.provider import Provider  # noqa
+    from poetry.core.packages import ProjectPackage
+    from poetry.packages import DependencyPackage
+    from poetry.puzzle.provider import Provider
 
-    from .result import SolverResult  # noqa
+    from .result import SolverResult
 
 
 def resolve_version(
-    root, provider, locked=None, use_latest=None
-):  # type: ("ProjectPackage", "Provider", Dict[str, "DependencyPackage"],List[str])  -> "SolverResult"
+    root: "ProjectPackage",
+    provider: "Provider",
+    locked: Dict[str, "DependencyPackage"] = None,
+    use_latest: List[str] = None,
+) -> "SolverResult":
     solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
 
     return solver.solve()

@@ -18,7 +18,7 @@ class BuildCommand(EnvCommand):
         "poetry.core.masonry.builders.wheel",
     ]
 
-    def handle(self):  # type: () -> None
+    def handle(self) -> None:
         from poetry.core.masonry import Builder
 
         fmt = "all"

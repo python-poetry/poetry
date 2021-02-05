@@ -19,7 +19,7 @@ from .command import Command
 
 
 if TYPE_CHECKING:
-    from poetry.config.config_source import ConfigSource  # noqa
+    from poetry.config.config_source import ConfigSource
 
 
 class ConfigCommand(Command):
@@ -51,7 +51,7 @@ To remove a repository (repo is a short alias for repositories):
     LIST_PROHIBITED_SETTINGS = {"http-basic", "pypi-token"}
 
     @property
-    def unique_config_values(self):  # type: () -> Dict[str, Tuple[Any, Any, Any]]
+    def unique_config_values(self) -> Dict[str, Tuple[Any, Any, Any]]:
         from pathlib import Path
 
         from poetry.config.config import boolean_normalizer
@@ -90,7 +90,7 @@ To remove a repository (repo is a short alias for repositories):
 
         return unique_config_values
 
-    def handle(self):  # type: () -> Optional[int]
+    def handle(self) -> Optional[int]:
         from pathlib import Path
 
         from poetry.config.file_config_source import FileConfigSource
@@ -269,8 +269,12 @@ To remove a repository (repo is a short alias for repositories):
         raise ValueError("Setting {} does not exist".format(self.argument("key")))
 
     def _handle_single_value(
-        self, source, key, callbacks, values
-    ):  # type: ("ConfigSource", str, Tuple[Any, Any, Any], List[Any]) -> int
+        self,
+        source: "ConfigSource",
+        key: str,
+        callbacks: Tuple[Any, Any, Any],
+        values: List[Any],
+    ) -> int:
         validator, normalizer, _ = callbacks
 
         if len(values) > 1:
@@ -284,7 +288,7 @@ To remove a repository (repo is a short alias for repositories):
 
         return 0
 
-    def _list_configuration(self, config, raw, k=""):  # type: (Dict, Dict, str) -> None
+    def _list_configuration(self, config: Dict, raw: Dict, k: str = "") -> None:
         orig_k = k
         for key, value in sorted(config.items()):
             if k + key in self.LIST_PROHIBITED_SETTINGS:
@@ -319,8 +323,12 @@ To remove a repository (repo is a short alias for repositories):
             self.line(message)
 
     def _get_setting(
-        self, contents, setting=None, k=None, default=None
-    ):  # type: (Dict, Optional[str], Optional[str], Optional[Any]) -> List[Tuple[str, str]]
+        self,
+        contents: Dict,
+        setting: Optional[str] = None,
+        k: Optional[str] = None,
+        default: Optional[Any] = None,
+    ) -> List[Tuple[str, str]]:
         orig_k = k
 
         if setting and setting.split(".")[0] not in contents:

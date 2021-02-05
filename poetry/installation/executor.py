@@ -35,17 +35,22 @@ from .operations.update import Update
 if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
 
-    from poetry.config.config import Config  # noqa
-    from poetry.repositories import Pool  # noqa
-    from poetry.utils.env import Env  # noqa
+    from poetry.config.config import Config
+    from poetry.repositories import Pool
+    from poetry.utils.env import Env
 
-    from .operations import OperationTypes  # noqa
+    from .operations import OperationTypes
 
 
 class Executor(object):
     def __init__(
-        self, env, pool, config, io, parallel=None
-    ):  # type: ("Env", "Pool", "Config", "IO", bool) -> None
+        self,
+        env: "Env",
+        pool: "Pool",
+        config: "Config",
+        io: "IO",
+        parallel: bool = None,
+    ) -> None:
         self._env = env
         self._io = io
         self._dry_run = False
@@ -80,36 +85,36 @@ class Executor(object):
         self._shutdown = False
 
     @property
-    def installations_count(self):  # type: () -> int
+    def installations_count(self) -> int:
         return self._executed["install"]
 
     @property
-    def updates_count(self):  # type: () -> int
+    def updates_count(self) -> int:
         return self._executed["update"]
 
     @property
-    def removals_count(self):  # type: () -> int
+    def removals_count(self) -> int:
         return self._executed["uninstall"]
 
-    def supports_fancy_output(self):  # type: () -> bool
+    def supports_fancy_output(self) -> bool:
         return self._io.output.is_decorated() and not self._dry_run
 
-    def disable(self):  # type: () -> "Executor"
+    def disable(self) -> "Executor":
         self._enabled = False
 
         return self
 
-    def dry_run(self, dry_run=True):  # type: (bool) -> Executor
+    def dry_run(self, dry_run: bool = True) -> "Executor":
         self._dry_run = dry_run
 
         return self
 
-    def verbose(self, verbose=True):  # type: (bool) -> Executor
+    def verbose(self, verbose: bool = True) -> "Executor":
         self._verbose = verbose
 
         return self
 
-    def execute(self, operations):  # type: (List["OperationTypes"]) -> int
+    def execute(self, operations: List["OperationTypes"]) -> int:
         self._total_operations = len(operations)
         for job_type in self._executed:
             self._executed[job_type] = 0
@@ -162,7 +167,7 @@ class Executor(object):
 
         return 1 if self._shutdown else 0
 
-    def _write(self, operation, line):  # type: ("OperationTypes", str) -> None
+    def _write(self, operation: "OperationTypes", line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(
             operation
         ):
@@ -180,7 +185,7 @@ class Executor(object):
             section.clear()
             section.write(line)
 
-    def _execute_operation(self, operation):  # type: ("OperationTypes") -> None
+    def _execute_operation(self, operation: "OperationTypes") -> None:
         try:
             if self.supports_fancy_output():
                 if id(operation) not in self._sections:
@@ -259,7 +264,7 @@ class Executor(object):
                 with self._lock:
                     self._shutdown = True
 
-    def _do_execute_operation(self, operation):  # type: ("OperationTypes") -> int
+    def _do_execute_operation(self, operation: "OperationTypes") -> int:
         method = operation.job_type
 
         operation_message = self.get_operation_message(operation)
@@ -304,8 +309,8 @@ class Executor(object):
         return result
 
     def _increment_operations_count(
-        self, operation, executed
-    ):  # type: ("OperationTypes", bool) -> None
+        self, operation: "OperationTypes", executed: bool
+    ) -> None:
         with self._lock:
             if executed:
                 self._executed_operations += 1
@@ -313,7 +318,7 @@ class Executor(object):
             else:
                 self._skipped[operation.job_type] += 1
 
-    def run_pip(self, *args, **kwargs):  # type: (*Any, **Any) -> int
+    def run_pip(self, *args: Any, **kwargs: Any) -> int:
         try:
             self._env.run_pip(*args, **kwargs)
         except EnvCommandError as e:
@@ -329,8 +334,12 @@ class Executor(object):
         return 0
 
     def get_operation_message(
-        self, operation, done=False, error=False, warning=False
-    ):  # type: ("OperationTypes", bool, bool, bool) -> str
+        self,
+        operation: "OperationTypes",
+        done: bool = False,
+        error: bool = False,
+        warning: bool = False,
+    ) -> str:
         base_tag = "fg=default"
         operation_color = "c2"
         source_operation_color = "c2"
@@ -384,7 +393,7 @@ class Executor(object):
 
         return ""
 
-    def _display_summary(self, operations):  # type: (List["OperationTypes"]) -> None
+    def _display_summary(self, operations: List["OperationTypes"]) -> None:
         installs = 0
         updates = 0
         uninstalls = 0
@@ -427,13 +436,13 @@ class Executor(object):
         )
         self._io.write_line("")
 
-    def _execute_install(self, operation):  # type: (Union[Install, Update]) -> int
+    def _execute_install(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
 
-    def _execute_update(self, operation):  # type: (Union[Install, Update]) -> int
+    def _execute_update(self, operation: Union[Install, Update]) -> int:
         return self._update(operation)
 
-    def _execute_uninstall(self, operation):  # type: (Uninstall) -> int
+    def _execute_uninstall(self, operation: Uninstall) -> int:
         message = (
             "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
                 message=self.get_operation_message(operation),
@@ -443,7 +452,7 @@ class Executor(object):
 
         return self._remove(operation)
 
-    def _install(self, operation):  # type: (Union[Install, Update]) -> int
+    def _install(self, operation: Union[Install, Update]) -> int:
         package = operation.package
         if package.source_type == "directory":
             return self._install_directory(operation)
@@ -472,10 +481,10 @@ class Executor(object):
 
         return self.run_pip(*args)
 
-    def _update(self, operation):  # type: (Union[Install, Update]) -> int
+    def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
 
-    def _remove(self, operation):  # type: (Uninstall) -> int
+    def _remove(self, operation: Uninstall) -> int:
         package = operation.package
 
         # If we have a VCS package, remove its source directory
@@ -492,7 +501,7 @@ class Executor(object):
 
             raise
 
-    def _prepare_file(self, operation):  # type: (Union[Install, Update]) -> Path
+    def _prepare_file(self, operation: Union[Install, Update]) -> Path:
         package = operation.package
 
         message = (
@@ -510,7 +519,7 @@ class Executor(object):
 
         return archive
 
-    def _install_directory(self, operation):  # type: (Union[Install, Update]) -> int
+    def _install_directory(self, operation: Union[Install, Update]) -> int:
         from poetry.factory import Factory
 
         package = operation.package
@@ -576,7 +585,7 @@ class Executor(object):
 
         return self.run_pip(*args)
 
-    def _install_git(self, operation):  # type: (Union[Install, Update]) -> int
+    def _install_git(self, operation: Union[Install, Update]) -> int:
         from poetry.core.vcs import Git
 
         package = operation.package
@@ -604,14 +613,12 @@ class Executor(object):
 
         return self._install_directory(operation)
 
-    def _download(self, operation):  # type: (Union[Install, Update]) -> Link
+    def _download(self, operation: Union[Install, Update]) -> Link:
         link = self._chooser.choose_for(operation.package)
 
         return self._download_link(operation, link)
 
-    def _download_link(
-        self, operation, link
-    ):  # type: (Union[Install, Update], Link) -> Link
+    def _download_link(self, operation: Union[Install, Update], link: Link) -> Link:
         package = operation.package
 
         archive = self._chef.get_cached_archive_for_link(link)
@@ -643,9 +650,7 @@ class Executor(object):
 
         return archive
 
-    def _download_archive(
-        self, operation, link
-    ):  # type: (Union[Install, Update], Link) -> Path
+    def _download_archive(self, operation: Union[Install, Update], link: Link) -> Path:
         response = self._authenticator.request(
             "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
         )
@@ -694,7 +699,7 @@ class Executor(object):
 
         return archive
 
-    def _should_write_operation(self, operation):  # type: (Operation) -> bool
+    def _should_write_operation(self, operation: Operation) -> bool:
         if not operation.skipped:
             return True
 
