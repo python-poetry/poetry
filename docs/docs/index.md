@@ -207,7 +207,7 @@ delay before the terminal is ready.
 
 ```
 # Bash
-echo '. <(poetry completions bash) >> ~/.bashrc
+echo '. <(poetry completions bash)' >> ~/.bashrc
 ```
 
 !!! note
