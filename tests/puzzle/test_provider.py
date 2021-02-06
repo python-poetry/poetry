@@ -1,18 +1,18 @@
+from pathlib import Path
 from subprocess import CalledProcessError
 
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
 from poetry.core.packages import ProjectPackage
 from poetry.core.packages.directory_dependency import DirectoryDependency
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.vcs_dependency import VCSDependency
+from poetry.inspection.info import PackageInfo
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
-from poetry.utils._compat import PY35
-from poetry.utils._compat import Path
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import MockEnv as BaseMockEnv
 from tests.helpers import get_dependency
@@ -46,6 +46,15 @@ def provider(root, pool):
     return Provider(root, pool, NullIO())
 
 
+@pytest.mark.parametrize("value", [True, False])
+def test_search_for_vcs_retains_develop_flag(provider, value):
+    dependency = VCSDependency(
+        "demo", "git", "https://github.com/demo/demo.git", develop=value
+    )
+    package = provider.search_for_vcs(dependency)[0]
+    assert package.develop == value
+
+
 def test_search_for_vcs_setup_egg_info(provider):
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
 
@@ -53,7 +62,11 @@ def test_search_for_vcs_setup_egg_info(provider):
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -61,24 +74,25 @@ def test_search_for_vcs_setup_egg_info(provider):
 
 
 def test_search_for_vcs_setup_egg_info_with_extras(provider):
-    dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
-    dependency.extras.append("foo")
+    dependency = VCSDependency(
+        "demo", "git", "https://github.com/demo/demo.git", extras=["foo"]
+    )
 
     package = provider.search_for_vcs(dependency)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [
-        get_dependency("pendulum", ">=1.4.4"),
-        get_dependency("cleo", optional=True),
-    ]
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_search_for_vcs_read_setup(provider, mocker):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
@@ -88,38 +102,39 @@ def test_search_for_vcs_read_setup(provider, mocker):
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_search_for_vcs_read_setup_with_extras(provider, mocker):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
-    dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
-    dependency.extras.append("foo")
+    dependency = VCSDependency(
+        "demo", "git", "https://github.com/demo/demo.git", extras=["foo"]
+    )
 
     package = provider.search_for_vcs(dependency)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [
-        get_dependency("pendulum", ">=1.4.4"),
-        get_dependency("cleo", optional=True),
-    ]
-    assert package.extras == {
-        "foo": [get_dependency("cleo")],
-        "bar": [get_dependency("tomlkit")],
-    }
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
 
 
 def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
     mocker.patch(
-        "poetry.utils.env.VirtualEnv.run",
-        side_effect=EnvCommandError(CalledProcessError(1, "python", output="")),
+        "poetry.inspection.info.PackageInfo._pep517_metadata",
+        return_value=PackageInfo(name="demo", version=None),
     )
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/no-version.git")
@@ -144,7 +159,11 @@ def test_search_for_directory_setup_egg_info(provider, directory):
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -160,17 +179,18 @@ def test_search_for_directory_setup_egg_info_with_extras(provider):
         / "github.com"
         / "demo"
         / "demo",
+        extras=["foo"],
     )
-    dependency.extras.append("foo")
 
     package = provider.search_for_directory(dependency)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [
-        get_dependency("pendulum", ">=1.4.4"),
-        get_dependency("cleo", optional=True),
-    ]
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -199,25 +219,25 @@ def test_search_for_directory_setup_with_base(provider, directory):
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
-    assert (
-        package.root_dir
-        == (
-            Path(__file__).parent.parent
-            / "fixtures"
-            / "git"
-            / "github.com"
-            / "demo"
-            / directory
-        ).as_posix()
+    assert package.root_dir == (
+        Path(__file__).parent.parent
+        / "fixtures"
+        / "git"
+        / "github.com"
+        / "demo"
+        / directory
     )
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_search_for_directory_setup_read_setup(provider, mocker):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
@@ -235,14 +255,17 @@ def test_search_for_directory_setup_read_setup(provider, mocker):
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_search_for_directory_setup_read_setup_with_extras(provider, mocker):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
@@ -254,27 +277,25 @@ def test_search_for_directory_setup_read_setup_with_extras(provider, mocker):
         / "github.com"
         / "demo"
         / "demo",
+        extras=["foo"],
     )
-    dependency.extras.append("foo")
 
     package = provider.search_for_directory(dependency)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
-    assert package.requires == [
-        get_dependency("pendulum", ">=1.4.4"),
-        get_dependency("cleo", optional=True),
-    ]
+
+    required = [r for r in package.requires if not r.is_optional()]
+    optional = [r for r in package.requires if r.is_optional()]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
-def test_search_for_directory_setup_read_setup_with_no_dependencies(provider, mocker):
-    mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
-
+def test_search_for_directory_setup_read_setup_with_no_dependencies(provider):
     dependency = DirectoryDependency(
         "demo",
         Path(__file__).parent.parent
@@ -303,7 +324,18 @@ def test_search_for_directory_poetry(provider):
 
     assert package.name == "project-with-extras"
     assert package.version.text == "1.2.3"
-    assert package.requires == []
+
+    required = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
+    ]
+    optional = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
+    ]
+    assert required == []
+    assert optional == [
+        get_dependency("cachy", ">=0.2.0"),
+        get_dependency("pendulum", ">=1.4.4"),
+    ]
     assert package.extras == {
         "extras_a": [get_dependency("pendulum", ">=1.4.4")],
         "extras_b": [get_dependency("cachy", ">=0.2.0")],
@@ -314,14 +346,25 @@ def test_search_for_directory_poetry_with_extras(provider):
     dependency = DirectoryDependency(
         "project-with-extras",
         Path(__file__).parent.parent / "fixtures" / "project_with_extras",
+        extras=["extras_a"],
     )
-    dependency.extras.append("extras_a")
 
     package = provider.search_for_directory(dependency)[0]
 
     assert package.name == "project-with-extras"
     assert package.version.text == "1.2.3"
-    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+
+    required = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
+    ]
+    optional = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
+    ]
+    assert required == []
+    assert optional == [
+        get_dependency("cachy", ">=0.2.0"),
+        get_dependency("pendulum", ">=1.4.4"),
+    ]
     assert package.extras == {
         "extras_a": [get_dependency("pendulum", ">=1.4.4")],
         "extras_b": [get_dependency("cachy", ">=0.2.0")],
@@ -341,7 +384,18 @@ def test_search_for_file_sdist(provider):
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
-    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+
+    required = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
+    ]
+    optional = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
+    ]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [
+        get_dependency("cleo"),
+        get_dependency("tomlkit"),
+    ]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -355,16 +409,24 @@ def test_search_for_file_sdist_with_extras(provider):
         / "fixtures"
         / "distributions"
         / "demo-0.1.0.tar.gz",
+        extras=["foo"],
     )
-    dependency.extras.append("foo")
 
     package = provider.search_for_file(dependency)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
-    assert package.requires == [
-        get_dependency("pendulum", ">=1.4.4"),
-        get_dependency("cleo", optional=True),
+
+    required = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
+    ]
+    optional = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
+    ]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [
+        get_dependency("cleo"),
+        get_dependency("tomlkit"),
     ]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
@@ -385,7 +447,18 @@ def test_search_for_file_wheel(provider):
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
-    assert package.requires == [get_dependency("pendulum", ">=1.4.4")]
+
+    required = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
+    ]
+    optional = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
+    ]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [
+        get_dependency("cleo"),
+        get_dependency("tomlkit"),
+    ]
     assert package.extras == {
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
@@ -399,16 +472,24 @@ def test_search_for_file_wheel_with_extras(provider):
         / "fixtures"
         / "distributions"
         / "demo-0.1.0-py2.py3-none-any.whl",
+        extras=["foo"],
     )
-    dependency.extras.append("foo")
 
     package = provider.search_for_file(dependency)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.0"
-    assert package.requires == [
-        get_dependency("pendulum", ">=1.4.4"),
-        get_dependency("cleo", optional=True),
+
+    required = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if not r.is_optional()
+    ]
+    optional = [
+        r for r in sorted(package.requires, key=lambda r: r.name) if r.is_optional()
+    ]
+    assert required == [get_dependency("pendulum", ">=1.4.4")]
+    assert optional == [
+        get_dependency("cleo"),
+        get_dependency("tomlkit"),
     ]
     assert package.extras == {
         "foo": [get_dependency("cleo")],

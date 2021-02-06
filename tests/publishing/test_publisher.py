@@ -1,11 +1,14 @@
 import os
 
+from pathlib import Path
+
 import pytest
 
+from cleo.io.buffered_io import BufferedIO
+from cleo.io.null_io import NullIO
+
 from poetry.factory import Factory
-from poetry.io.null_io import NullIO
 from poetry.publishing.publisher import Publisher
-from poetry.utils._compat import Path
 
 
 def test_publish_publishes_to_pypi_by_default(fixture_dir, mocker, config):
@@ -27,26 +30,36 @@ def test_publish_publishes_to_pypi_by_default(fixture_dir, mocker, config):
     ] == uploader_upload.call_args
 
 
-def test_publish_can_publish_to_given_repository(fixture_dir, mocker, config):
+@pytest.mark.parametrize(
+    ("fixture_name",), [("sample_project",), ("with_default_source",)]
+)
+def test_publish_can_publish_to_given_repository(
+    fixture_dir, mocker, config, fixture_name
+):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
-    poetry = Factory().create_poetry(fixture_dir("sample_project"))
-    poetry._config = config
-    poetry.config.merge(
+
+    config.merge(
         {
-            "repositories": {"my-repo": {"url": "http://foo.bar"}},
-            "http-basic": {"my-repo": {"username": "foo", "password": "bar"}},
+            "repositories": {"foo": {"url": "http://foo.bar"}},
+            "http-basic": {"foo": {"username": "foo", "password": "bar"}},
         }
     )
-    publisher = Publisher(poetry, NullIO())
 
-    publisher.publish("my-repo", None, None)
+    mocker.patch("poetry.factory.Factory.create_config", return_value=config)
+    poetry = Factory().create_poetry(fixture_dir(fixture_name))
+
+    io = BufferedIO()
+    publisher = Publisher(poetry, io)
+
+    publisher.publish("foo", None, None)
 
     assert [("foo", "bar")] == uploader_auth.call_args
     assert [
         ("http://foo.bar",),
         {"cert": None, "client_cert": None, "dry_run": False},
     ] == uploader_upload.call_args
+    assert "Publishing my-package (1.2.3) to foo" in io.fetch_output()
 
 
 def test_publish_raises_error_for_undefined_repository(fixture_dir, mocker, config):

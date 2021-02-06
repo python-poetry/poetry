@@ -92,7 +92,7 @@ poetry env info --path
 
 ## Listing the environments associated with the project
 
-You can also list all the virtual environments associated with the current virtual environment
+You can also list all the virtual environments associated with the current project
 with the `env list` command:
 
 ```bash
@@ -118,4 +118,4 @@ poetry env remove 3.7
 poetry env remove test-O3eWbxRl-py3.7
 ```
 
-If your remove the currently activated virtual environment, it will be automatically deactivated.
+If you remove the currently activated virtual environment, it will be automatically deactivated.

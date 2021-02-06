@@ -33,7 +33,8 @@ which will give you something similar to this:
 ```toml
 cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
-virtualenvs.in-project = false
+virtualenvs.in-project = null
+virtualenvs.options.always-copy = true
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 ```
 
@@ -102,20 +103,46 @@ Defaults to one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
 - Unix:    `~/.cache/pypoetry`
 
+### `installer.parallel`: boolean
+
+Use parallel execution when using the new (`>=1.1.0`) installer.
+Defaults to `true`.
+
+!!!note:
+        This configuration will be ignored, and parallel execution disabled when running
+        Python 2.7 under Windows.
+
 ### `virtualenvs.create`: boolean
 
 Create a new virtual environment if one doesn't already exist.
 Defaults to `true`.
 
+If set to `false`, poetry will install dependencies into the current python environment.
+
+!!!note:
+        When setting this configuration to `false`, the Python environment used must have `pip`
+        installed and available.
+
 ### `virtualenvs.in-project`: boolean
 
 Create the virtualenv inside the project's root directory.
-Defaults to `false`.
+Defaults to `None`.
+
+If set to `true`, the virtualenv will be created and expected in a folder named `.venv` within the root directory of the project.
+
+If not set explicitly (default), `poetry` will use the virtualenv from the `.venv` directory when one is available. If set to `false`, `poetry` will ignore any existing `.venv` directory.
+
 
 ### `virtualenvs.path`: string
 
 Directory where virtual environments will be created.
 Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
+
+### `virtualenvs.options.always-copy`: boolean
+
+If set to `true` the `--always-copy` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
+Defaults to `false`.
+
 
 ### `repositories.<name>`: string
 

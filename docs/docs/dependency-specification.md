@@ -7,12 +7,7 @@ of the dependency and on the optional constraints that might be needed for it to
 
 ### Caret requirements
 
-**Caret requirements** allow SemVer compatible updates to a specified version.
-An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping.
-In this case, if we ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available,
-but would not update us to `3.0.0`.
-If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`.
-`0.0.x` is not considered compatible with any other version.
+**Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
 
 Here are some more examples of caret requirements and the versions that would be allowed with them:
 
@@ -42,7 +37,7 @@ If you only specify a major version, then minor- and patch-level changes are all
 
 ### Wildcard requirements
 
-**Wildcard requirements** allow for any version where the wildcard is positioned.
+**Wildcard requirements** allow for the latest (dependency dependent) version where the wildcard is positioned.
 
 `*`, `1.*` and `1.2.*` are examples of wildcard requirements.
 
@@ -103,6 +98,13 @@ flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
 ```
 
+To use an SSH connection, for example in the case of private repositories, use the following example syntax:
+
+```toml
+[tool.poetry.dependencies]
+requests = { git = "git@github.com:requests/requests.git" }
+```
+
 ## `path` dependencies
 
 To depend on a library located in a local directory or file,
@@ -111,12 +113,16 @@ you can use the `path` property:
 ```toml
 [tool.poetry.dependencies]
 # directory
-my-package = { path = "../my-package/" }
+my-package = { path = "../my-package/", develop = false }
 
 # file
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
+!!!note
+
+    Before poetry 1.1 directory path dependencies were installed in editable mode by default. You should set the `develop` attribute explicitly,
+    to make sure the behavior is the same for all poetry versions.
 
 ## `url` dependencies
 
@@ -178,6 +184,34 @@ foo = [
     {version = "^2.0", python = "^3.4"}
 ]
 ```
+
+## Expanded dependency specification syntax
+
+In the case of more complex dependency specifications, you may find that you
+end up with lines which are very long and difficult to read. In these cases,
+you can shift from using "inline table" syntax, to the "standard table" syntax.
+
+An example where this might be useful is the following:
+
+```toml
+[tool.poetry.dev-dependencies]
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.6", markers = "platform_python_implementation == 'CPython'"}
+```
+
+As a single line, this is a lot to digest. To make this a little bit easier to
+work with, you can do the following:
+
+```toml
+[tool.poetry.dev-dependencies.black]
+version = "19.10b0"
+allow-prereleases = true
+python = "^3.6"
+markers = "platform_python_implementation == 'CPython'"
+```
+
+All of the same information is still present, and ends up providing the exact
+same specification. It's simply split into multiple, slightly more readable,
+lines.
 
 !!!note
 

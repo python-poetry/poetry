@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from poetry.utils._compat import PY35
+from poetry.core.semver.exceptions import ParseVersionError
 from poetry.utils.setup_reader import SetupReader
 
 
@@ -14,7 +14,6 @@ def setup():
     return _setup
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_setup_reader_read_first_level_setup_call_with_direct_types(setup):
     result = SetupReader.read_from_directory(setup("flask"))
 
@@ -47,7 +46,6 @@ def test_setup_reader_read_first_level_setup_call_with_direct_types(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_setup_reader_read_first_level_setup_call_with_variables(setup):
     result = SetupReader.read_from_directory(setup("requests"))
 
@@ -73,7 +71,6 @@ def test_setup_reader_read_first_level_setup_call_with_variables(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_setup_reader_read_sub_level_setup_call_with_direct_types(setup):
     result = SetupReader.read_from_directory(setup("sqlalchemy"))
 
@@ -117,7 +114,11 @@ def test_setup_reader_read_setup_cfg(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
+def test_setup_reader_read_setup_cfg_with_attr(setup):
+    with pytest.raises(ParseVersionError):
+        SetupReader.read_from_directory(setup("with-setup-cfg-attr"))
+
+
 def test_setup_reader_read_setup_kwargs(setup):
     result = SetupReader.read_from_directory(setup("pendulum"))
 
@@ -134,7 +135,6 @@ def test_setup_reader_read_setup_kwargs(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_setup_reader_read_setup_call_in_main(setup):
     result = SetupReader.read_from_directory(setup("pyyaml"))
 
@@ -151,7 +151,6 @@ def test_setup_reader_read_setup_call_in_main(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_setup_reader_read_extras_require_with_variables(setup):
     result = SetupReader.read_from_directory(setup("extras_require_with_vars"))
 
@@ -168,7 +167,6 @@ def test_setup_reader_read_extras_require_with_variables(setup):
     assert expected_python_requires == result["python_requires"]
 
 
-@pytest.mark.skipif(not PY35, reason="AST parsing does not work for Python <3.4")
 def test_setup_reader_setuptools(setup):
     result = SetupReader.read_from_directory(setup("setuptools_setup"))
 

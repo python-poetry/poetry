@@ -1,8 +1,7 @@
+from pathlib import Path
+
 import pytest
 
-from cleo.testers import CommandTester
-
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 
 
@@ -16,10 +15,12 @@ def setup(mocker):
     )
 
 
-def test_env_info_displays_complete_info(app):
-    command = app.find("env info")
-    tester = CommandTester(command)
+@pytest.fixture
+def tester(command_tester_factory):
+    return command_tester_factory("env info")
 
+
+def test_env_info_displays_complete_info(tester):
     tester.execute()
 
     expected = """
@@ -40,12 +41,7 @@ Python:   {base_prefix}
     assert expected == tester.io.fetch_output()
 
 
-def test_env_info_displays_path_only(app):
-    command = app.find("env info")
-    tester = CommandTester(command)
-
+def test_env_info_displays_path_only(tester):
     tester.execute("--path")
-
     expected = str(Path("/prefix"))
-
-    assert expected == tester.io.fetch_output()
+    assert expected + "\n" == tester.io.fetch_output()

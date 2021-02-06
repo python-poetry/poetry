@@ -43,6 +43,7 @@ def mock_available_backend(backend):
 @pytest.fixture()
 def mock_unavailable_backend():
     import keyring
+
     from keyring.backends.fail import Keyring
 
     keyring.set_keyring(Keyring())
@@ -54,6 +55,7 @@ def mock_chainer_backend(mocker):
 
     mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
     import keyring
+
     from keyring.backends.chainer import ChainerBackend
 
     keyring.set_keyring(ChainerBackend())

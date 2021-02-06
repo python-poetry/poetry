@@ -1,10 +1,12 @@
+from pathlib import Path
+
 import pytest
 
+from cleo.io.null_io import NullIO
+
 from poetry.factory import Factory
-from poetry.io.null_io import NullIO
 from poetry.publishing.uploader import Uploader
 from poetry.publishing.uploader import UploadError
-from poetry.utils._compat import Path
 
 
 fixtures_dir = Path(__file__).parent.parent / "fixtures"
@@ -32,6 +34,18 @@ def test_uploader_properly_handles_403_errors(http):
         uploader.upload("https://foo.com")
 
     assert "HTTP Error 403: Forbidden" == str(e.value)
+
+
+def test_uploader_properly_handles_301_redirects(http):
+    http.register_uri(http.POST, "https://foo.com", status=301, body="Redirect")
+    uploader = Uploader(Factory().create_poetry(project("simple_project")), NullIO())
+
+    with pytest.raises(UploadError) as e:
+        uploader.upload("https://foo.com")
+
+    assert "Redirects are not supported. Is the URL missing a trailing slash?" == str(
+        e.value
+    )
 
 
 def test_uploader_registers_for_appropriate_400_errors(mocker, http):

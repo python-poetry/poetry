@@ -1,6 +1,14 @@
-from cleo import argument
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Union
+
+from cleo.helpers import argument
 
 from .env_command import EnvCommand
+
+
+if TYPE_CHECKING:
+    from poetry.core.masonry.utils.module import Module
 
 
 class RunCommand(EnvCommand):
@@ -12,14 +20,7 @@ class RunCommand(EnvCommand):
         argument("args", "The command and arguments/options to run.", multiple=True)
     ]
 
-    def __init__(self):  # type: () -> None
-        from poetry.console.args.run_args_parser import RunArgsParser
-
-        super(RunCommand, self).__init__()
-
-        self.config.set_args_parser(RunArgsParser())
-
-    def handle(self):
+    def handle(self) -> Any:
         args = self.argument("args")
         script = args[0]
         scripts = self.poetry.local_config.get("scripts")
@@ -29,7 +30,18 @@ class RunCommand(EnvCommand):
 
         return self.env.execute(*args)
 
-    def run_script(self, script, args):
+    @property
+    def _module(self) -> "Module":
+        from poetry.core.masonry.utils.module import Module
+
+        poetry = self.poetry
+        package = poetry.package
+        path = poetry.file.parent
+        module = Module(package.name, path.as_posix(), package.packages)
+
+        return module
+
+    def run_script(self, script: Union[str, dict], args: str) -> Any:
         if isinstance(script, dict):
             script = script["callable"]
 
@@ -47,14 +59,3 @@ class RunCommand(EnvCommand):
         ]
 
         return self.env.execute(*cmd)
-
-    @property
-    def _module(self):
-        from poetry.core.masonry.utils.module import Module
-
-        poetry = self.poetry
-        package = poetry.package
-        path = poetry.file.parent
-        module = Module(package.name, path.as_posix(), package.packages)
-
-        return module

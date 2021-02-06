@@ -1,4 +1,4 @@
-from cleo import option
+from cleo.helpers import option
 
 from poetry.utils.exporter import Exporter
 
@@ -14,7 +14,7 @@ class ExportCommand(Command):
         option(
             "format",
             "f",
-            "Format to export to.",
+            "Format to export to. Currently, only requirements.txt is supported.",
             flag=False,
             default=Exporter.FORMAT_REQUIREMENTS_TXT,
         ),
@@ -31,7 +31,7 @@ class ExportCommand(Command):
         option("with-credentials", None, "Include credentials for extra indices."),
     ]
 
-    def handle(self):
+    def handle(self) -> None:
         fmt = self.option("format")
 
         if fmt not in Exporter.ACCEPTED_FORMATS:
@@ -50,7 +50,7 @@ class ExportCommand(Command):
             elif self.io.is_verbose():
                 options.append(("-v", None))
 
-            self.call("lock", options)
+            self.call("lock", " ".join(options))
 
         if not locker.is_fresh():
             self.line(

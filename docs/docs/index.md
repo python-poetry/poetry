@@ -6,8 +6,13 @@ It allows you to declare the libraries your project depends on and it will manag
 
 ## System requirements
 
-Poetry requires Python 2.7 or 3.4+. It is multi-platform and the goal is to make it work equally well
+Poetry requires Python 2.7 or 3.5+. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
+
+!!! note
+
+    Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
+    You should consider updating your Python version to a supported one.
 
 
 ## Installation
@@ -18,24 +23,27 @@ recommended way of installing `poetry`.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 ```
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
+(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
 ```
 
 !!! note
 
     You only need to install Poetry once. It will automatically pick up the current
-    Python version and use it to [create virtualenvs](/docs/basic-usage/#poetry-and-virtualenvs) accordingly.
+    Python version and use it to [create virtualenvs](/docs/managing-environments) accordingly.
 
 The installer installs the `poetry` tool to Poetry's `bin` directory.
 On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
 
-This directory will be in your `$PATH` environment variable,
-which means you can run them from the shell without further configuration.
-Open a new shell and type the following:
+This directory will be automatically added to your `$PATH` environment variable,
+by appending a statement to your `$HOME/.profile` configuration (or equivalent files).
+If you do not feel comfortable with this, please pass the `--no-modify-path` flag to
+the installer and manually add the Poetry's `bin` directory to your path.
+
+Finally, open a new shell and type the following:
 
 ```bash
 poetry --version
@@ -76,6 +84,15 @@ POETRY_VERSION=0.12.0 python get-poetry.py
 !!!note
 
     Note that the installer does not support Poetry releases < 0.12.0.
+
+!!!note
+
+    The setup script must be able to find one of following executables in your shell's path environment:
+
+    - `python` (which can be a py3 or py2 interpreter)
+    - `python3`
+    - `py.exe -3` (Windows)
+    - `py.exe -2` (Windows)
 
 ### Alternative installation methods (not recommended)
 
@@ -161,18 +178,24 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 # Bash
 poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
-# Bash (macOS/Homebrew)
+# Bash (Homebrew)
 poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
 
+# Fish (Homebrew)
+poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
+
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
 
 # Oh-My-Zsh
-mkdir $ZSH/plugins/poetry
-poetry completions zsh > $ZSH/plugins/poetry/_poetry
+mkdir $ZSH_CUSTOM/plugins/poetry
+poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
+
+# prezto
+poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 
 ```
 

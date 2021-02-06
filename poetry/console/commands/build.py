@@ -1,4 +1,4 @@
-from cleo import option
+from cleo.helpers import option
 
 from .env_command import EnvCommand
 
@@ -13,11 +13,12 @@ class BuildCommand(EnvCommand):
     ]
 
     loggers = [
+        "poetry.core.masonry.builders.builder",
         "poetry.core.masonry.builders.sdist",
         "poetry.core.masonry.builders.wheel",
     ]
 
-    def handle(self):
+    def handle(self) -> None:
         from poetry.core.masonry import Builder
 
         fmt = "all"
@@ -32,4 +33,4 @@ class BuildCommand(EnvCommand):
         )
 
         builder = Builder(self.poetry)
-        builder.build(fmt)
+        builder.build(fmt, executable=self.env.python)

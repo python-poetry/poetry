@@ -159,15 +159,15 @@ def colorize(style, text):
 def temporary_directory(*args, **kwargs):
     try:
         from tempfile import TemporaryDirectory
-
-        with TemporaryDirectory(*args, **kwargs) as name:
-            yield name
     except ImportError:
         name = tempfile.mkdtemp(*args, **kwargs)
 
         yield name
 
         shutil.rmtree(name)
+    else:
+        with TemporaryDirectory(*args, **kwargs) as name:
+            yield name
 
 
 def string_to_bool(value):
@@ -317,7 +317,7 @@ class Installer:
         r"v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
         "("
         "[._-]?"
-        r"(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
+        r"(?:(stable|beta|b|rc|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
         "([.-]?dev)?"
         ")?"
         r"(?:\+[^\s]+)?"
@@ -448,6 +448,26 @@ class Installer:
                 version = release
 
                 break
+
+        current_version = None
+        if os.path.exists(POETRY_LIB):
+            with open(
+                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
+            ) as f:
+                version_content = f.read()
+
+            current_version_re = re.match(
+                '(?ms).*__version__ = "(.+)".*', version_content
+            )
+            if not current_version_re:
+                print(
+                    colorize(
+                        "warning",
+                        "Unable to get the current Poetry version. Assuming None",
+                    )
+                )
+            else:
+                current_version = current_version_re.group(1)
 
         if current_version == version and not self._force:
             print("Latest version already installed.")
@@ -634,9 +654,9 @@ class Installer:
                 continue
 
             match = version_matcher.match(raw_version.strip())
-            if match and tuple(map(int, match.groups())) >= (3, 0):
-                # favor the first py3 executable we can find.
+            if match:
                 return executable
+
             if fallback is None:
                 # keep this one as the fallback; it was the first valid executable we found.
                 fallback = executable
@@ -669,8 +689,10 @@ class Installer:
                 )
 
         with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
-            if not WINDOWS:
-                f.write(u("#!/usr/bin/env {}\n".format(python_executable)))
+            if WINDOWS:
+                python_executable = "python"
+
+            f.write(u("#!/usr/bin/env {}\n".format(python_executable)))
             f.write(u(BIN))
 
         if not WINDOWS:
@@ -881,7 +903,7 @@ class Installer:
 
         if "zsh" in SHELL:
             zdotdir = os.getenv("ZDOTDIR", HOME)
-            profiles.append(os.path.join(zdotdir, ".zprofile"))
+            profiles.append(os.path.join(zdotdir, ".zshrc"))
 
         bash_profile = os.path.join(HOME, ".bash_profile")
         if os.path.exists(bash_profile):

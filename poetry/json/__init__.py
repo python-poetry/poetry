@@ -15,7 +15,7 @@ class ValidationError(ValueError):
     pass
 
 
-def validate_object(obj, schema_name):  # type: (dict, str) -> List[str]
+def validate_object(obj: dict, schema_name: str) -> List[str]:
     schema = os.path.join(SCHEMA_DIR, "{}.json".format(schema_name))
 
     if not os.path.exists(schema):

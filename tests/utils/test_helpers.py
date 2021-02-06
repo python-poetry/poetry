@@ -1,5 +1,6 @@
+from pathlib import Path
+
 from poetry.core.utils.helpers import parse_requires
-from poetry.utils._compat import Path
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
 
@@ -29,6 +30,9 @@ pathlib2>=2.3.0.0,<3.0.0.0
 
 [:python_version >= "3.4.0.0" and python_version < "3.6.0.0"]
 zipfile36>=0.1.0.0,<0.2.0.0
+
+[dev]
+isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort
 """
     result = parse_requires(requires)
     expected = [
@@ -45,10 +49,11 @@ zipfile36>=0.1.0.0,<0.2.0.0
         "msgpack-python>=0.5.0.0,<0.6.0.0",
         "pyparsing>=2.2.0.0,<3.0.0.0",
         "requests-toolbelt>=0.8.0.0,<0.9.0.0",
-        'typing>=3.6.0.0,<4.0.0.0; (python_version >= "2.7.0.0" and python_version < "2.8.0.0") or (python_version >= "3.4.0.0" and python_version < "3.5.0.0")',
-        'virtualenv>=15.2.0.0,<16.0.0.0; python_version >= "2.7.0.0" and python_version < "2.8.0.0"',
-        'pathlib2>=2.3.0.0,<3.0.0.0; python_version >= "2.7.0.0" and python_version < "2.8.0.0"',
-        'zipfile36>=0.1.0.0,<0.2.0.0; python_version >= "3.4.0.0" and python_version < "3.6.0.0"',
+        'typing>=3.6.0.0,<4.0.0.0 ; (python_version >= "2.7.0.0" and python_version < "2.8.0.0") or (python_version >= "3.4.0.0" and python_version < "3.5.0.0")',
+        'virtualenv>=15.2.0.0,<16.0.0.0 ; python_version >= "2.7.0.0" and python_version < "2.8.0.0"',
+        'pathlib2>=2.3.0.0,<3.0.0.0 ; python_version >= "2.7.0.0" and python_version < "2.8.0.0"',
+        'zipfile36>=0.1.0.0,<0.2.0.0 ; python_version >= "3.4.0.0" and python_version < "3.6.0.0"',
+        'isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e528357650281a3d3ec22#egg=isort ; extra == "dev"',
     ]
     assert result == expected
 

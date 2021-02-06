@@ -2,13 +2,12 @@ import uuid
 
 import pytest
 
-from cleo.testers import CommandTester
-
 
 @pytest.fixture
 def repository_cache_dir(monkeypatch, tmpdir):
+    from pathlib import Path
+
     import poetry.locations
-    from poetry.utils._compat import Path
 
     path = Path(str(tmpdir))
     monkeypatch.setattr(poetry.locations, "REPOSITORY_CACHE_DIR", path)
@@ -31,10 +30,12 @@ def mock_caches(repository_cache_dir, repository_one, repository_two):
     (repository_cache_dir / repository_two).mkdir()
 
 
-def test_cache_list(app, mock_caches, repository_one, repository_two):
-    command = app.find("cache list")
-    tester = CommandTester(command)
+@pytest.fixture
+def tester(command_tester_factory):
+    return command_tester_factory("cache list")
 
+
+def test_cache_list(tester, mock_caches, repository_one, repository_two):
     tester.execute()
 
     expected = """\
@@ -47,10 +48,7 @@ def test_cache_list(app, mock_caches, repository_one, repository_two):
     assert expected == tester.io.fetch_output()
 
 
-def test_cache_list_empty(app, repository_cache_dir):
-    command = app.find("cache list")
-    tester = CommandTester(command)
-
+def test_cache_list_empty(tester, repository_cache_dir):
     tester.execute()
 
     expected = """\
