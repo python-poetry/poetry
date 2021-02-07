@@ -106,7 +106,7 @@ To deactivate the virtual environment without leaving the shell use `deactivate`
 	that an activated virtual environment remains active after the Poetry command
 	has completed execution.
 
-	Therefore, Poetry has to create a sub-shell with the virtual envrionment activated
+	Therefore, Poetry has to create a sub-shell with the virtual environment activated
 	in order for the subsequent commands to run from within the virtual environment.
 
 
