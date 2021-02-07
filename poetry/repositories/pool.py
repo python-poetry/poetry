@@ -1,3 +1,5 @@
+import logging
+
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
@@ -5,12 +7,16 @@ from typing import Optional
 
 from .base_repository import BaseRepository
 from .exceptions import PackageNotFound
+from .exceptions import RepositoryError
 from .repository import Repository
 
 
 if TYPE_CHECKING:
     from poetry.core.packages import Dependency
     from poetry.core.packages import Package
+
+
+logger = logging.getLogger(__name__)
 
 
 class Pool(BaseRepository):
@@ -162,8 +168,16 @@ class Pool(BaseRepository):
             return self.repository(repository).find_packages(dependency)
 
         packages = []
-        for repo in self._repositories:
-            packages += repo.find_packages(dependency)
+        for (idx, repo) in enumerate(self._repositories):
+            try:
+                packages += repo.find_packages(dependency)
+            except RepositoryError:
+                if idx < self._secondary_start_idx:
+                    raise
+                self._log(
+                    "error checking secondary repository {}".format(repo.name),
+                    level="warning",
+                )
 
         return packages
 
@@ -178,3 +192,7 @@ class Pool(BaseRepository):
             results += repository.search(query)
 
         return results
+
+    @classmethod
+    def _log(cls, msg, level="info"):
+        getattr(logger, level)("<debug>{}:</debug> {}".format(cls.__name__, msg))

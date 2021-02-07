@@ -120,6 +120,10 @@ a custom certificate authority or client certificates, similarly refer to the ex
 `certificates` section. Poetry will use these values to authenticate to your private repository when downloading or
 looking for packages.
 
+401 or 403 responses from secondary repositories will generate a warning
+message but are not considered as fatal, as some types of private repository
+servers may return a 403 if a request is made for a package not present on the
+server.
 
 ### Disabling the PyPI repository
 
