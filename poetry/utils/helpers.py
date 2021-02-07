@@ -71,6 +71,14 @@ def get_client_cert(config: Config, repository_name: str) -> Optional[Path]:
         return None
 
 
+def get_truested(config: Config, repository_name: str) -> Optional[bool]:
+    trusted = config.get("certificates.{}.trusted".format(repository_name))
+    if trusted:
+        return trusted.lower() == "true"
+    else:
+        return None
+
+
 def _on_rm_error(func: Callable, path: str, exc_info: Exception) -> None:
     if not os.path.exists(path):
         return

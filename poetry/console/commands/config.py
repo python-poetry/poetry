@@ -247,20 +247,33 @@ To remove a repository (repo is a short alias for repositories):
 
         # handle certs
         m = re.match(
-            r"(?:certificates)\.([^.]+)\.(cert|client-cert)", self.argument("key")
+            r"(?:certificates)\.([^.]+)\.(cert|client-cert|trusted)",
+            self.argument("key"),
         )
         if m:
+            key = "certificates.{}.{}".format(m.group(1), m.group(2))
             if self.option("unset"):
-                config.auth_config_source.remove_property(
-                    "certificates.{}.{}".format(m.group(1), m.group(2))
-                )
+                config.auth_config_source.remove_property(key)
 
                 return 0
 
-            if len(values) == 1:
-                config.auth_config_source.add_property(
-                    "certificates.{}.{}".format(m.group(1), m.group(2)), values[0]
+            if m.group(2) == "trusted":
+                from poetry.config.config import boolean_normalizer
+                from poetry.config.config import boolean_validator
+
+                self._handle_single_value(
+                    config.auth_config_source,
+                    key,
+                    (
+                        boolean_validator,
+                        boolean_normalizer,
+                        False,
+                    ),
+                    values,
                 )
+
+            if len(values) == 1:
+                config.auth_config_source.add_property(key, values[0])
             else:
                 raise ValueError("You must pass exactly 1 value")
 

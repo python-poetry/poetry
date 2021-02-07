@@ -189,10 +189,13 @@ def test_install_with_trusted_host():
 
     installer = PipInstaller(null_env, NullIO(), pool)
 
-    foo = Package("foo", "0.0.0")
-    foo.source_type = "legacy"
-    foo.source_reference = default._name
-    foo.source_url = default._url
+    foo = Package(
+        "foo",
+        "0.0.0",
+        source_type="legacy",
+        source_reference=default._name,
+        source_url=default._url,
+    )
 
     installer.install(foo)
 

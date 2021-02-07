@@ -133,6 +133,14 @@ def test_set_cert(tester, auth_config_source, mocker):
     assert "path/to/ca.pem" == auth_config_source.config["certificates"]["foo"]["cert"]
 
 
+def test_set_trusted(tester, auth_config_source, mocker):
+    mocker.spy(ConfigSource, "__init__")
+
+    tester.execute("certificates.foo.trusted true")
+
+    assert "true" == auth_config_source.config["certificates"]["foo"]["trusted"]
+
+
 def test_config_installer_parallel(tester, command_tester_factory):
     tester.execute("--local installer.parallel")
     assert tester.io.fetch_output().strip() == "true"

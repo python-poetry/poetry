@@ -3,6 +3,7 @@ from pathlib import Path
 from poetry.core.utils.helpers import parse_requires
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
+from poetry.utils.helpers import get_truested
 
 
 def test_parse_requires():
@@ -70,3 +71,10 @@ def test_get_client_cert(config):
     config.merge({"certificates": {"foo": {"client-cert": client_cert}}})
 
     assert get_client_cert(config, "foo") == Path(client_cert)
+
+
+def test_get_trusted(config):
+    trusted = "true"
+    config.merge({"certificates": {"foo": {"trusted": trusted}}})
+
+    assert get_truested(config, "foo")

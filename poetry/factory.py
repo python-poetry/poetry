@@ -146,6 +146,7 @@ class Factory(BaseFactory):
         from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert
+        from .utils.helpers import get_truested
 
         if "url" in source:
             # PyPI-like repository
@@ -163,5 +164,5 @@ class Factory(BaseFactory):
             config=auth_config,
             cert=get_cert(auth_config, name),
             client_cert=get_client_cert(auth_config, name),
-            trusted=source.get("trusted", False),
+            trusted=source.get("trusted", False) or get_truested(auth_config, name),
         )
