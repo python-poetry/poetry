@@ -271,8 +271,7 @@ To remove a repository (repo is a short alias for repositories):
                     ),
                     values,
                 )
-
-            if len(values) == 1:
+            elif len(values) == 1:
                 config.auth_config_source.add_property(key, values[0])
             else:
                 raise ValueError("You must pass exactly 1 value")
