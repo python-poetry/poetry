@@ -269,9 +269,9 @@ class Locker(object):
             if key not in nested_dependencies:
                 nested_dependencies[key] = requirement
             else:
-                nested_dependencies[key].marker = nested_dependencies[
-                    key
-                ].marker.intersect(requirement.marker)
+                nested_dependencies[key].marker = nested_dependencies[key].marker.union(
+                    requirement.marker
+                )
 
         return cls.__walk_dependency_level(
             dependencies=next_level_dependencies,
