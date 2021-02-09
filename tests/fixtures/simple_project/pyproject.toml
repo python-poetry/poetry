@@ -23,6 +23,7 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
+cachy = {version = "0.2.0", source = "my-index"}
 
 [tool.poetry.scripts]
 foo = "foo:bar"

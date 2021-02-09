@@ -39,7 +39,7 @@ class PipInstaller(BaseInstaller):
 
             return
 
-        args = ["install", "--no-deps"]
+        args = ["install", "--no-deps", "--use-pep517"]
 
         if (
             package.source_type not in {"git", "directory", "file", "url"}
@@ -193,7 +193,7 @@ class PipInstaller(BaseInstaller):
         else:
             req = os.path.realpath(package.source_url)
 
-        args = ["install", "--no-deps", "-U"]
+        args = ["install", "--no-deps", "--use-pep517", "-U"]
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 

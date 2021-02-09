@@ -1505,7 +1505,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.whitelist(["pytest"])
     installer.run()
 
-    assert len(installer.installer.installs) == 6
+    assert len(installer.installer.installs) == 7
     assert len(installer.installer.updates) == 0
     assert len(installer.installer.removals) == 0
 

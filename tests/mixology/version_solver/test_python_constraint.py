@@ -15,7 +15,7 @@ is not compatible with some of the required packages Python requirement:
   - foo requires Python <3.5, so it will not be satisfied for Python >=3.6,<4.0
 
 Because no versions of foo match !=1.0.0
- and foo (1.0.0) requires Python <3.5, foo is forbidden.
-So, because myapp depends on foo (*), version solving failed."""
+ and foo (==1.0.0) requires Python <3.5, foo is forbidden.
+So, because myapp depends on foo, version solving failed."""
 
     check_solver_result(root, provider, error=error)
