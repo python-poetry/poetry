@@ -710,7 +710,7 @@ class Provider:
 
         if message.startswith("fact:"):
             if "depends on" in message:
-                m = re.match(r"fact: (.+?) depends on (.+?)( \((.+?)\))?", message)
+                m = re.match(r"fact: (.+?) depends on ([^( ]+)(?: \((.+?)\))?", message)
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
@@ -722,7 +722,7 @@ class Provider:
                 message = (
                     "<fg=blue>fact</>: <c1>{}</c1>{} "
                     "depends on <c1>{}</c1> (<c2>{}</c2>)".format(
-                        name, version, m.group(2), m.group(3)
+                        name, version, m.group(2), m.group(3) or "*"
                     )
                 )
             elif " is " in message:
