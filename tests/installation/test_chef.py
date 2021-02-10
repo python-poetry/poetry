@@ -1,8 +1,9 @@
+from pathlib import Path
+
 from packaging.tags import Tag
 
 from poetry.core.packages.utils.link import Link
 from poetry.installation.chef import Chef
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 
 
@@ -47,7 +48,9 @@ def test_get_cached_archives_for_link(config, mocker):
 
     distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
     mocker.patch.object(
-        chef, "get_cache_directory_for_link", return_value=distributions,
+        chef,
+        "get_cache_directory_for_link",
+        return_value=distributions,
     )
 
     archives = chef.get_cached_archives_for_link(

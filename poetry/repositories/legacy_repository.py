@@ -1,11 +1,16 @@
 import cgi
 import re
+import urllib.parse
 import warnings
 
 from collections import defaultdict
-from typing import Generator
+from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import List
 from typing import Optional
-from typing import Union
 
 import requests
 import requests.auth
@@ -21,7 +26,6 @@ from poetry.core.semver import VersionConstraint
 from poetry.core.semver import VersionRange
 from poetry.core.semver import parse_constraint
 from poetry.locations import REPOSITORY_CACHE_DIR
-from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import wheel_file_re
 
@@ -33,10 +37,8 @@ from .exceptions import RepositoryError
 from .pypi_repository import PyPiRepository
 
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+if TYPE_CHECKING:
+    from poetry.core.packages import Dependency
 
 try:
     from html import unescape
@@ -73,7 +75,7 @@ class Page:
         ".tar",
     ]
 
-    def __init__(self, url, content, headers):
+    def __init__(self, url: str, content: str, headers: Dict[str, Any]) -> None:
         if not url.endswith("/"):
             url += "/"
 
@@ -95,7 +97,7 @@ class Page:
             )
 
     @property
-    def versions(self):  # type: () -> Generator[Version]
+    def versions(self) -> Iterator[Version]:
         seen = set()
         for link in self.links:
             version = self.link_version(link)
@@ -111,11 +113,11 @@ class Page:
             yield version
 
     @property
-    def links(self):  # type: () -> Generator[Link]
+    def links(self) -> Iterator[Link]:
         for anchor in self._parsed.findall(".//a"):
             if anchor.get("href"):
                 href = anchor.get("href")
-                url = self.clean_link(urlparse.urljoin(self._url, href))
+                url = self.clean_link(urllib.parse.urljoin(self._url, href))
                 pyrequire = anchor.get("data-requires-python")
                 pyrequire = unescape(pyrequire) if pyrequire else None
 
@@ -126,12 +128,12 @@ class Page:
 
                 yield link
 
-    def links_for_version(self, version):  # type: (Version) -> Generator[Link]
+    def links_for_version(self, version: Version) -> Iterator[Link]:
         for link in self.links:
             if self.link_version(link) == version:
                 yield link
 
-    def link_version(self, link):  # type: (Link) -> Union[Version, None]
+    def link_version(self, link: Link) -> Optional[Version]:
         m = wheel_file_re.match(link.filename)
         if m:
             version = m.group("ver")
@@ -152,7 +154,7 @@ class Page:
 
     _clean_re = re.compile(r"[^a-z0-9$&+,/:;=?@.#%_\\|-]", re.I)
 
-    def clean_link(self, url):
+    def clean_link(self, url: str) -> str:
         """Makes sure a link is fully encoded.  That is, if a ' ' shows up in
         the link, it will be rewritten to %20 (while not over-quoting
         % or other characters)."""
@@ -161,8 +163,14 @@ class Page:
 
 class LegacyRepository(PyPiRepository):
     def __init__(
-        self, name, url, config=None, disable_cache=False, cert=None, client_cert=None
-    ):  # type: (str, str, Optional[Config], bool, Optional[Path], Optional[Path]) -> None
+        self,
+        name: str,
+        url: str,
+        config: Optional[Config] = None,
+        disable_cache: bool = False,
+        cert: Optional[Path] = None,
+        client_cert: Optional[Path] = None,
+    ) -> None:
         if name == "pypi":
             raise ValueError("The name [pypi] is reserved for repositories")
 
@@ -207,19 +215,19 @@ class LegacyRepository(PyPiRepository):
         self._disable_cache = disable_cache
 
     @property
-    def cert(self):  # type: () -> Optional[Path]
+    def cert(self) -> Optional[Path]:
         return self._cert
 
     @property
-    def client_cert(self):  # type: () -> Optional[Path]
+    def client_cert(self) -> Optional[Path]:
         return self._client_cert
 
     @property
-    def authenticated_url(self):  # type: () -> str
+    def authenticated_url(self) -> str:
         if not self._session.auth:
             return self.url
 
-        parsed = urlparse.urlparse(self.url)
+        parsed = urllib.parse.urlparse(self.url)
 
         return "{scheme}://{username}:{password}@{netloc}{path}".format(
             scheme=parsed.scheme,
@@ -229,7 +237,7 @@ class LegacyRepository(PyPiRepository):
             path=parsed.path,
         )
 
-    def find_packages(self, dependency):
+    def find_packages(self, dependency: "Dependency") -> List[Package]:
         packages = []
 
         constraint = dependency.constraint
@@ -300,7 +308,9 @@ class LegacyRepository(PyPiRepository):
 
         return packages
 
-    def package(self, name, version, extras=None):  # type: (...) -> Package
+    def package(
+        self, name: str, version: str, extras: Optional[List[str]] = None
+    ) -> Package:
         """
         Retrieve the release information.
 
@@ -324,14 +334,14 @@ class LegacyRepository(PyPiRepository):
 
             return package
 
-    def find_links_for_package(self, package):
+    def find_links_for_package(self, package: Package) -> List[Link]:
         page = self._get("/{}/".format(package.name.replace(".", "-")))
         if page is None:
             return []
 
         return list(page.links_for_version(package.version))
 
-    def _get_release_info(self, name, version):  # type: (str, str) -> dict
+    def _get_release_info(self, name: str, version: str) -> dict:
         page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:
             raise PackageNotFound('No package named "{}"'.format(name))
@@ -379,7 +389,7 @@ class LegacyRepository(PyPiRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint):  # type: (str) -> Union[Page, None]
+    def _get(self, endpoint: str) -> Optional[Page]:
         url = self._url + endpoint
         try:
             response = self.session.get(url)
@@ -391,8 +401,17 @@ class LegacyRepository(PyPiRepository):
 
         if response.status_code in (401, 403):
             self._log(
-                "Authorization error accessing {url}".format(url=url), level="warn"
+                "Authorization error accessing {url}".format(url=response.url),
+                level="warn",
             )
             return
 
-        return Page(url, response.content, response.headers)
+        if response.url != url:
+            self._log(
+                "Response URL {response_url} differs from request URL {url}".format(
+                    response_url=response.url, url=url
+                ),
+                level="debug",
+            )
+
+        return Page(response.url, response.content, response.headers)

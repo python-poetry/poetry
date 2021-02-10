@@ -4,10 +4,12 @@ from __future__ import unicode_literals
 import re
 import shutil
 
+from pathlib import Path
+
 import pytest
 
-from clikit.api.formatter.style import Style
-from clikit.io.buffered_io import BufferedIO
+from cleo.formatters.style import Style
+from cleo.io.buffered_io import BufferedIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
@@ -16,8 +18,6 @@ from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.repositories.pool import Pool
-from poetry.utils._compat import PY36
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
 
@@ -32,10 +32,10 @@ def env(tmp_dir):
 @pytest.fixture()
 def io():
     io = BufferedIO()
-    io.formatter.add_style(Style("c1_dark").fg("cyan").dark())
-    io.formatter.add_style(Style("c2_dark").fg("default").bold().dark())
-    io.formatter.add_style(Style("success_dark").fg("green").dark())
-    io.formatter.add_style(Style("warning").fg("yellow"))
+    io.output.formatter.set_style("c1_dark", Style("cyan", options=["dark"]))
+    io.output.formatter.set_style("c2_dark", Style("default", options=["bold", "dark"]))
+    io.output.formatter.set_style("success_dark", Style("green", options=["dark"]))
+    io.output.formatter.set_style("warning", Style("yellow"))
 
     return io
 
@@ -59,7 +59,9 @@ def mock_file_downloads(http):
             return [200, headers, f.read()]
 
     http.register_uri(
-        http.GET, re.compile("^https://files.pythonhosted.org/.*$"), body=callback,
+        http.GET,
+        re.compile("^https://files.pythonhosted.org/.*$"),
+        body=callback,
     )
 
 
@@ -155,9 +157,6 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
     assert 0 == len(env.executed)
 
 
-@pytest.mark.skipif(
-    not PY36, reason="Improved error rendering is only available on Python >=3.6"
-)
 def test_execute_should_show_errors(config, mocker, io, env):
     executor = Executor(env, pool, config, io)
     executor.verbose()
@@ -206,10 +205,10 @@ def test_execute_should_gracefully_handle_io_error(config, mocker, io, env):
 
     original_write_line = executor._io.write_line
 
-    def write_line(string, flags=None):
+    def write_line(string, **kwargs):
         # Simulate UnicodeEncodeError
         string.encode("ascii")
-        original_write_line(string, flags)
+        original_write_line(string, **kwargs)
 
     mocker.patch.object(io, "write_line", side_effect=write_line)
 

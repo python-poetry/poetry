@@ -1,4 +1,4 @@
-from cleo import option
+from cleo.helpers import option
 
 from .env_command import EnvCommand
 
@@ -18,7 +18,7 @@ class BuildCommand(EnvCommand):
         "poetry.core.masonry.builders.wheel",
     ]
 
-    def handle(self):
+    def handle(self) -> None:
         from poetry.core.masonry import Builder
 
         fmt = "all"

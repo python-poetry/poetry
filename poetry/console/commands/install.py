@@ -1,4 +1,4 @@
-from cleo import option
+from cleo.helpers import option
 
 from .installer_command import InstallerCommand
 
@@ -10,6 +10,7 @@ class InstallCommand(InstallerCommand):
 
     options = [
         option("no-dev", None, "Do not install the development dependencies."),
+        option("dev-only", None, "Only install the development dependencies."),
         option(
             "no-root", None, "Do not install the root package (the current project)."
         ),
@@ -20,7 +21,9 @@ class InstallCommand(InstallerCommand):
             "(implicitly enables --verbose).",
         ),
         option(
-            "remove-untracked", None, "Removes packages not present in the lock file.",
+            "remove-untracked",
+            None,
+            "Removes packages not present in the lock file.",
         ),
         option(
             "extras",
@@ -47,7 +50,7 @@ dependencies and not including the current project, run the command with the
 
     _loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
+    def handle(self) -> int:
         from poetry.core.masonry.utils.module import ModuleOrPackageNotFound
         from poetry.masonry.builders import EditableBuilder
 
@@ -64,6 +67,7 @@ dependencies and not including the current project, run the command with the
 
         self._installer.extras(extras)
         self._installer.dev_mode(not self.option("no-dev"))
+        self._installer.dev_only(self.option("dev-only"))
         self._installer.dry_run(self.option("dry-run"))
         self._installer.remove_untracked(self.option("remove-untracked"))
         self._installer.verbose(self._io.is_verbose())
@@ -73,7 +77,7 @@ dependencies and not including the current project, run the command with the
         if return_code != 0:
             return return_code
 
-        if self.option("no-root"):
+        if self.option("no-root") or self.option("dev-only"):
             return 0
 
         try:
@@ -85,7 +89,7 @@ dependencies and not including the current project, run the command with the
             return 0
 
         self.line("")
-        if not self._io.supports_ansi() or self.io.is_debug():
+        if not self._io.output.is_decorated() or self.io.is_debug():
             self.line(
                 "<b>Installing</> the current project: <c1>{}</c1> (<c2>{}</c2>)".format(
                     self.poetry.package.pretty_name, self.poetry.package.pretty_version
@@ -104,7 +108,7 @@ dependencies and not including the current project, run the command with the
 
         builder.build()
 
-        if self._io.supports_ansi() and not self.io.is_debug():
+        if self._io.output.is_decorated() and not self.io.is_debug():
             self.overwrite(
                 "<b>Installing</> the current project: <c1>{}</c1> (<success>{}</success>)".format(
                     self.poetry.package.pretty_name, self.poetry.package.pretty_version

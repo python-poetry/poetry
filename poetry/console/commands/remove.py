@@ -1,5 +1,5 @@
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from .installer_command import InstallerCommand
 
@@ -27,7 +27,7 @@ list of installed packages
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
+    def handle(self) -> int:
         packages = self.argument("packages")
         is_dev = self.option("dev")
 

@@ -1,5 +1,7 @@
 import re
 
+from pathlib import Path
+
 import pytest
 
 from packaging.tags import Tag
@@ -9,7 +11,6 @@ from poetry.installation.chooser import Chooser
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.repositories.pypi_repository import PyPiRepository
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 
 
@@ -49,7 +50,9 @@ def mock_pypi(http):
             return [200, headers, f.read()]
 
     http.register_uri(
-        http.GET, re.compile("^https://pypi.org/(.+?)/(.+?)/json$"), body=callback,
+        http.GET,
+        re.compile("^https://pypi.org/(.+?)/(.+?)/json$"),
+        body=callback,
     )
 
 
@@ -65,7 +68,9 @@ def mock_legacy(http):
             return [200, headers, f.read()]
 
     http.register_uri(
-        http.GET, re.compile("^https://foo.bar/simple/(.+?)$"), body=callback,
+        http.GET,
+        re.compile("^https://foo.bar/simple/(.+?)$"),
+        body=callback,
     )
 
 
@@ -149,7 +154,11 @@ def test_chooser_chooses_system_specific_wheel_link_if_available(
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
-    env, mock_pypi, mock_legacy, source_type, pool,
+    env,
+    mock_pypi,
+    mock_legacy,
+    source_type,
+    pool,
 ):
     chooser = Chooser(pool, env)
 
@@ -170,7 +179,11 @@ def test_chooser_chooses_sdist_if_no_compatible_wheel_link_is_available(
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_chooses_distributions_that_match_the_package_hashes(
-    env, mock_pypi, mock_legacy, source_type, pool,
+    env,
+    mock_pypi,
+    mock_legacy,
+    source_type,
+    pool,
 ):
     chooser = Chooser(pool, env)
 

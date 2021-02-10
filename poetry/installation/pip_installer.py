@@ -1,9 +1,13 @@
 import os
 import tempfile
+import urllib.parse
 
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Union
 
-from clikit.api.io import IO
+from cleo.io.io import IO
 
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.repositories.pool import Pool
@@ -14,19 +18,17 @@ from poetry.utils.helpers import safe_rmtree
 from .base_installer import BaseInstaller
 
 
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+if TYPE_CHECKING:
+    from poetry.core.packages import Package
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env, io, pool):  # type: (Env, IO, Pool) -> None
+    def __init__(self, env: Env, io: IO, pool: Pool) -> None:
         self._env = env
         self._io = io
         self._pool = pool
 
-    def install(self, package, update=False):
+    def install(self, package: "Package", update: bool = False) -> None:
         if package.source_type == "directory":
             self.install_directory(package)
 
@@ -44,9 +46,9 @@ class PipInstaller(BaseInstaller):
             and package.source_url
         ):
             repository = self._pool.repository(package.source_reference)
-            parsed = urlparse.urlparse(package.source_url)
+            parsed = urllib.parse.urlparse(package.source_url)
             if parsed.scheme == "http":
-                self._io.error(
+                self._io.write_error(
                     "    <warning>Installing from unsecure host: {}</warning>".format(
                         parsed.hostname
                     )
@@ -95,7 +97,7 @@ class PipInstaller(BaseInstaller):
 
             self.run(*args)
 
-    def update(self, package, target):
+    def update(self, package: "Package", target: "Package") -> None:
         if package.source_type != target.source_type:
             # If the source type has changed, we remove the current
             # package to avoid perpetual updates in some cases
@@ -103,7 +105,7 @@ class PipInstaller(BaseInstaller):
 
         self.install(target, update=True)
 
-    def remove(self, package):
+    def remove(self, package: "Package") -> None:
         try:
             self.run("uninstall", package.name, "-y")
         except CalledProcessError as e:
@@ -125,10 +127,10 @@ class PipInstaller(BaseInstaller):
             if src_dir.exists():
                 safe_rmtree(str(src_dir))
 
-    def run(self, *args, **kwargs):  # type: (...) -> str
+    def run(self, *args: Any, **kwargs: Any) -> str:
         return self._env.run_pip(*args, **kwargs)
 
-    def requirement(self, package, formatted=False):
+    def requirement(self, package: "Package", formatted: bool = False) -> str:
         if formatted and not package.source_type:
             req = "{}=={}".format(package.name, package.version)
             for f in package.files:
@@ -169,7 +171,7 @@ class PipInstaller(BaseInstaller):
 
         return "{}=={}".format(package.name, package.version)
 
-    def create_temporary_requirement(self, package):
+    def create_temporary_requirement(self, package: "Package") -> str:
         fd, name = tempfile.mkstemp(
             "reqs.txt", "{}-{}".format(package.name, package.version)
         )
@@ -181,9 +183,10 @@ class PipInstaller(BaseInstaller):
 
         return name
 
-    def install_directory(self, package):
+    def install_directory(self, package: "Package") -> Union[str, int]:
+        from cleo.io.null_io import NullIO
+
         from poetry.factory import Factory
-        from poetry.io.null_io import NullIO
 
         if package.root_dir:
             req = (package.root_dir / package.source_url).as_posix()
@@ -238,7 +241,7 @@ class PipInstaller(BaseInstaller):
 
         return self.run(*args)
 
-    def install_git(self, package):
+    def install_git(self, package: "Package") -> None:
         from poetry.core.packages import Package
         from poetry.core.vcs import Git
 

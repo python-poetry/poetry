@@ -1,11 +1,11 @@
 import itertools
 
+from pathlib import Path
 from typing import Set
 from typing import Union
 
 from poetry.core.packages import Package
 from poetry.core.utils.helpers import module_name
-from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
 from poetry.utils.env import Env
 
@@ -23,7 +23,7 @@ except NameError:
 
 class InstalledRepository(Repository):
     @classmethod
-    def get_package_paths(cls, env, name):  # type: (Env, str) -> Set[Path]
+    def get_package_paths(cls, env: Env, name: str) -> Set[Path]:
         """
         Process a .pth file within the site-packages directories, and return any valid
         paths. We skip executable .pth files as there is no reliable means to do this
@@ -44,7 +44,8 @@ class InstalledRepository(Repository):
         # where the pth file for foo-bar might have been installed as either foo-bar.pth or
         # foo_bar.pth (expected) in either pure or platform lib directories.
         candidates = itertools.product(
-            {env.purelib, env.platlib}, {name, module_name(name)},
+            {env.purelib, env.platlib},
+            {name, module_name(name)},
         )
 
         for lib, module in candidates:
@@ -67,9 +68,7 @@ class InstalledRepository(Repository):
         return paths
 
     @classmethod
-    def set_package_vcs_properties_from_path(
-        cls, src, package
-    ):  # type: (Path, Package) -> None
+    def set_package_vcs_properties_from_path(cls, src: Path, package: Package) -> None:
         from poetry.core.vcs.git import Git
 
         git = Git()
@@ -81,12 +80,12 @@ class InstalledRepository(Repository):
         package._source_reference = revision
 
     @classmethod
-    def set_package_vcs_properties(cls, package, env):  # type: (Package, Env) -> None
+    def set_package_vcs_properties(cls, package: Package, env: Env) -> None:
         src = env.path / "src" / package.name
         cls.set_package_vcs_properties_from_path(src, package)
 
     @classmethod
-    def is_vcs_package(cls, package, env):  # type: (Union[Path, Package], Env) -> bool
+    def is_vcs_package(cls, package: Union[Path, Package], env: Env) -> bool:
         # A VCS dependency should have been installed
         # in the src directory.
         src = env.path / "src"
@@ -101,7 +100,7 @@ class InstalledRepository(Repository):
             return True
 
     @classmethod
-    def load(cls, env):  # type: (Env) -> InstalledRepository
+    def load(cls, env: Env) -> "InstalledRepository":
         """
         Load installed packages.
         """
@@ -110,7 +109,8 @@ class InstalledRepository(Repository):
 
         for entry in reversed(env.sys_path):
             for distribution in sorted(
-                metadata.distributions(path=[entry]), key=lambda d: str(d._path),
+                metadata.distributions(path=[entry]),
+                key=lambda d: str(d._path),
             ):
                 name = distribution.metadata["name"]
                 path = Path(str(distribution._path))

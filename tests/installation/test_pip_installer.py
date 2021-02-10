@@ -1,13 +1,15 @@
 import shutil
 
+from pathlib import Path
+
 import pytest
+
+from cleo.io.null_io import NullIO
 
 from poetry.core.packages.package import Package
 from poetry.installation.pip_installer import PipInstaller
-from poetry.io.null_io import NullIO
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
-from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
 
 

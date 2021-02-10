@@ -1,12 +1,14 @@
+from typing import TYPE_CHECKING
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Union
 
-from clikit.api.io import IO
+from cleo.io.io import IO
+from cleo.io.null_io import NullIO
 
 from poetry.config.config import Config
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.io.null_io import NullIO
 from poetry.packages import Locker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
@@ -23,17 +25,23 @@ from .operations.operation import Operation
 from .pip_installer import PipInstaller
 
 
+if TYPE_CHECKING:
+    from poetry.utils.env import Env
+
+    from .operations import OperationTypes
+
+
 class Installer:
     def __init__(
         self,
-        io,  # type: IO
-        env,
-        package,  # type: ProjectPackage
-        locker,  # type: Locker
-        pool,  # type: Pool
-        config,  # type: Config
-        installed=None,  # type: Union[InstalledRepository, None]
-        executor=None,  # type: Optional[Executor]
+        io: IO,
+        env: "Env",
+        package: ProjectPackage,
+        locker: Locker,
+        pool: Pool,
+        config: Config,
+        installed: Union[InstalledRepository, None] = None,
+        executor: Optional[Executor] = None,
     ):
         self._io = io
         self._env = env
@@ -47,6 +55,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
+        self._dev_only = False
         self._execute_operations = True
         self._lock = False
 
@@ -67,24 +76,24 @@ class Installer:
         self._installed_repository = installed
 
     @property
-    def executor(self):
+    def executor(self) -> Executor:
         return self._executor
 
     @property
-    def installer(self):
+    def installer(self) -> BaseInstaller:
         return self._installer
 
-    def set_package(self, package):  # type: (ProjectPackage) -> Installer
+    def set_package(self, package: ProjectPackage) -> "Installer":
         self._package = package
 
         return self
 
-    def set_locker(self, locker):  # type: (Locker) -> Installer
+    def set_locker(self, locker: Locker) -> "Installer":
         self._locker = locker
 
         return self
 
-    def run(self):
+    def run(self) -> int:
         # Check if refresh
         if not self._update and self._lock and self._locker.is_locked():
             return self._do_refresh()
@@ -102,46 +111,54 @@ class Installer:
 
         return self._do_install(local_repo)
 
-    def dry_run(self, dry_run=True):  # type: (bool) -> Installer
+    def dry_run(self, dry_run: bool = True) -> "Installer":
         self._dry_run = dry_run
         self._executor.dry_run(dry_run)
 
         return self
 
-    def is_dry_run(self):  # type: () -> bool
+    def is_dry_run(self) -> bool:
         return self._dry_run
 
-    def remove_untracked(self, remove_untracked=True):  # type: (bool) -> Installer
+    def remove_untracked(self, remove_untracked: bool = True) -> "Installer":
         self._remove_untracked = remove_untracked
 
         return self
 
-    def is_remove_untracked(self):  # type: () -> bool
+    def is_remove_untracked(self) -> bool:
         return self._remove_untracked
 
-    def verbose(self, verbose=True):  # type: (bool) -> Installer
+    def verbose(self, verbose: bool = True) -> "Installer":
         self._verbose = verbose
         self._executor.verbose(verbose)
 
         return self
 
-    def is_verbose(self):  # type: () -> bool
+    def is_verbose(self) -> bool:
         return self._verbose
 
-    def dev_mode(self, dev_mode=True):  # type: (bool) -> Installer
+    def dev_mode(self, dev_mode: bool = True) -> "Installer":
         self._dev_mode = dev_mode
 
         return self
 
-    def is_dev_mode(self):  # type: () -> bool
+    def is_dev_mode(self) -> bool:
         return self._dev_mode
 
-    def update(self, update=True):  # type: (bool) -> Installer
+    def dev_only(self, dev_only: bool = False) -> "Installer":
+        self._dev_only = dev_only
+
+        return self
+
+    def is_dev_only(self) -> bool:
+        return self._dev_only
+
+    def update(self, update: bool = True) -> "Installer":
         self._update = update
 
         return self
 
-    def lock(self, update=True):  # type: (bool) -> Installer
+    def lock(self, update: bool = True) -> "Installer":
         """
         Prepare the installer for locking only.
         """
@@ -151,10 +168,10 @@ class Installer:
 
         return self
 
-    def is_updating(self):  # type: () -> bool
+    def is_updating(self) -> bool:
         return self._update
 
-    def execute_operations(self, execute=True):  # type: (bool) -> Installer
+    def execute_operations(self, execute: bool = True) -> "Installer":
         self._execute_operations = execute
 
         if not execute:
@@ -162,22 +179,22 @@ class Installer:
 
         return self
 
-    def whitelist(self, packages):  # type: (dict) -> Installer
+    def whitelist(self, packages: Iterable[str]) -> "Installer":
         self._whitelist = [canonicalize_name(p) for p in packages]
 
         return self
 
-    def extras(self, extras):  # type: (list) -> Installer
+    def extras(self, extras: list) -> "Installer":
         self._extras = extras
 
         return self
 
-    def use_executor(self, use_executor=True):  # type: (bool) -> Installer
+    def use_executor(self, use_executor: bool = True) -> "Installer":
         self._use_executor = use_executor
 
         return self
 
-    def _do_refresh(self):
+    def _do_refresh(self) -> int:
         from poetry.puzzle import Solver
 
         # Checking extras
@@ -191,7 +208,7 @@ class Installer:
             self._pool,
             locked_repository,
             locked_repository,
-            self._io,  # noqa
+            self._io,
         )
 
         ops = solver.solve(use_latest=[])
@@ -203,7 +220,7 @@ class Installer:
 
         return 0
 
-    def _do_install(self, local_repo):
+    def _do_install(self, local_repo: Repository) -> int:
         from poetry.puzzle import Solver
 
         locked_repository = Repository()
@@ -270,6 +287,9 @@ class Installer:
         if not self.is_dev_mode():
             root = root.clone()
             del root.dev_requires[:]
+        elif self.is_dev_only():
+            root = root.clone()
+            del root.requires[:]
 
         if self._io.is_verbose():
             self._io.write_line("")
@@ -315,7 +335,7 @@ class Installer:
         # Execute operations
         return self._execute(ops)
 
-    def _write_lock_file(self, repo, force=True):  # type: (Repository, bool) -> None
+    def _write_lock_file(self, repo: Repository, force: bool = True) -> None:
         if force or (self._update and self._write_lock):
             updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
@@ -323,7 +343,7 @@ class Installer:
                 self._io.write_line("")
                 self._io.write_line("<info>Writing lock file</>")
 
-    def _execute(self, operations):
+    def _execute(self, operations: List["OperationTypes"]) -> int:
         if self._use_executor:
             return self._executor.execute(operations)
 
@@ -371,7 +391,7 @@ class Installer:
 
         return 0
 
-    def _execute_operation(self, operation):  # type: (Operation) -> None
+    def _execute_operation(self, operation: Operation) -> None:
         """
         Execute a given operation.
         """
@@ -379,7 +399,7 @@ class Installer:
 
         getattr(self, "_execute_{}".format(method))(operation)
 
-    def _execute_install(self, operation):  # type: (Install) -> None
+    def _execute_install(self, operation: Install) -> None:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
@@ -404,7 +424,7 @@ class Installer:
 
         self._installer.install(operation.package)
 
-    def _execute_update(self, operation):  # type: (Update) -> None
+    def _execute_update(self, operation: Update) -> None:
         source = operation.initial_package
         target = operation.target_package
 
@@ -434,7 +454,7 @@ class Installer:
 
         self._installer.update(source, target)
 
-    def _execute_uninstall(self, operation):  # type: (Uninstall) -> None
+    def _execute_uninstall(self, operation: Uninstall) -> None:
         if operation.skipped:
             if self.is_verbose() and (self._execute_operations or self.is_dry_run()):
                 self._io.write_line(
@@ -459,7 +479,9 @@ class Installer:
 
         self._installer.remove(operation.package)
 
-    def _populate_local_repo(self, local_repo, ops):
+    def _populate_local_repo(
+        self, local_repo: Repository, ops: List[Operation]
+    ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):
                 continue
@@ -472,8 +494,8 @@ class Installer:
                 local_repo.add_package(package)
 
     def _get_operations_from_lock(
-        self, locked_repository  # type: Repository
-    ):  # type: (...) -> List[Operation]
+        self, locked_repository: Repository
+    ) -> List[Operation]:
         installed_repo = self._installed_repository
         ops = []
 
@@ -504,9 +526,7 @@ class Installer:
 
         return ops
 
-    def _filter_operations(
-        self, ops, repo
-    ):  # type: (List[Operation], Repository) -> None
+    def _filter_operations(self, ops: List[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
             if isinstance(op, Update):
@@ -541,7 +561,7 @@ class Installer:
             if package.category == "dev" and not self.is_dev_mode():
                 op.skip("Dev dependencies not requested")
 
-    def _get_extra_packages(self, repo):  # type: (Repository) -> List[str]
+    def _get_extra_packages(self, repo: Repository) -> List[str]:
         """
         Returns all package names required by extras.
 
@@ -554,8 +574,8 @@ class Installer:
 
         return list(get_extra_package_names(repo.packages, extras, self._extras))
 
-    def _get_installer(self):  # type: () -> BaseInstaller
+    def _get_installer(self) -> BaseInstaller:
         return PipInstaller(self._env, self._io, self._pool)
 
-    def _get_installed(self):  # type: () -> InstalledRepository
+    def _get_installed(self) -> InstalledRepository:
         return InstalledRepository.load(self._env)

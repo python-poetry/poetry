@@ -1,7 +1,5 @@
 import pytest
 
-from clikit.formatter.ansi_formatter import AnsiFormatter
-
 from poetry.factory import Factory
 from tests.helpers import get_package
 
@@ -186,12 +184,11 @@ def test_show_basic_with_not_installed_packages_decorated(tester, poetry, instal
         }
     )
 
-    tester.io.set_formatter(AnsiFormatter(forced=True))
-    tester.execute()
+    tester.execute(decorated=True)
 
     expected = """\
-\033[36mcachy   \033[0m \033[1m0.1.0\033[0m Cachy package
-\033[31mpendulum\033[0m \033[1m2.0.0\033[0m Pendulum package
+\033[36mcachy   \033[39m \033[39;1m0.1.0\033[39;22m Cachy package
+\033[31mpendulum\033[39m \033[39;1m2.0.0\033[39;22m Pendulum package
 """
 
     assert expected == tester.io.fetch_output()
@@ -317,12 +314,11 @@ def test_show_latest_decorated(tester, poetry, installed, repo):
         }
     )
 
-    tester.io.set_formatter(AnsiFormatter(forced=True))
-    tester.execute("--latest")
+    tester.execute("--latest", decorated=True)
 
     expected = """\
-\033[36mcachy   \033[0m \033[1m0.1.0\033[0m \033[33m0.2.0\033[0m Cachy package
-\033[36mpendulum\033[0m \033[1m2.0.0\033[0m \033[31m2.0.1\033[0m Pendulum package
+\033[36mcachy   \033[39m \033[39;1m0.1.0\033[39;22m \033[33m0.2.0\033[39m Cachy package
+\033[36mpendulum\033[39m \033[39;1m2.0.0\033[39;22m \033[31m2.0.1\033[39m Pendulum package
 """
 
     assert expected == tester.io.fetch_output()
@@ -1144,7 +1140,7 @@ def test_show_tree(tester, poetry, installed):
         }
     )
 
-    tester.execute("--tree")
+    tester.execute("--tree", supports_utf8=False)
 
     expected = """\
 cachy 0.2.0
@@ -1215,7 +1211,7 @@ def test_show_tree_no_dev(tester, poetry, installed):
 
     expected = """\
 cachy 0.2.0
-`-- msgpack-python >=0.5 <0.6
+└── msgpack-python >=0.5 <0.6
 """
 
     assert expected == tester.io.fetch_output()

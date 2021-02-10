@@ -3,17 +3,21 @@ import time
 
 from collections import defaultdict
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
+from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
+from typing import Union
 
-from clikit.io import ConsoleIO
+from cleo.io.io import IO
 
 from poetry.core.packages import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
-from poetry.installation.operations.operation import Operation
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
@@ -26,16 +30,25 @@ from .exceptions import SolverProblemError
 from .provider import Provider
 
 
+if TYPE_CHECKING:
+    from poetry.core.packages import Dependency
+    from poetry.core.packages import DirectoryDependency
+    from poetry.core.packages import FileDependency
+    from poetry.core.packages import URLDependency
+    from poetry.core.packages import VCSDependency
+    from poetry.installation.operations import OperationTypes
+
+
 class Solver:
     def __init__(
         self,
-        package,  # type: ProjectPackage
-        pool,  # type: Pool
-        installed,  # type: Repository
-        locked,  # type: Repository
-        io,  # type: ConsoleIO
-        remove_untracked=False,  # type: bool
-        provider=None,  # type: Optional[Provider]
+        package: ProjectPackage,
+        pool: Pool,
+        installed: Repository,
+        locked: Repository,
+        io: IO,
+        remove_untracked: bool = False,
+        provider: Optional[Provider] = None,
     ):
         self._package = package
         self._pool = pool
@@ -51,15 +64,15 @@ class Solver:
         self._remove_untracked = remove_untracked
 
     @property
-    def provider(self):  # type: () -> Provider
+    def provider(self) -> Provider:
         return self._provider
 
     @contextmanager
-    def use_environment(self, env):  # type: (Env) -> None
+    def use_environment(self, env: Env) -> None:
         with self.provider.use_environment(env):
             yield
 
-    def solve(self, use_latest=None):  # type: (...) -> List[Operation]
+    def solve(self, use_latest: List[str] = None) -> List["OperationTypes"]:
         with self._provider.progress():
             start = time.time()
             packages, depths = self._solve(use_latest=use_latest)
@@ -188,10 +201,17 @@ class Solver:
                     operations.append(Uninstall(installed))
 
         return sorted(
-            operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
+            operations,
+            key=lambda o: (
+                -o.priority,
+                o.package.name,
+                o.package.version,
+            ),
         )
 
-    def solve_in_compatibility_mode(self, overrides, use_latest=None):
+    def solve_in_compatibility_mode(
+        self, overrides: Tuple[Dict], use_latest: List[str] = None
+    ) -> Tuple[List["Package"], List[int]]:
         locked = {}
         for package in self._locked.packages:
             locked[package.name] = DependencyPackage(package.to_dependency(), package)
@@ -221,7 +241,7 @@ class Solver:
 
         return packages, depths
 
-    def _solve(self, use_latest=None):
+    def _solve(self, use_latest: List[str] = None) -> Tuple[List[Package], List[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
@@ -274,18 +294,18 @@ class Solver:
 
 
 class DFSNode(object):
-    def __init__(self, id, name, base_name):
+    def __init__(self, id: Tuple[str, str, bool], name: str, base_name: str) -> None:
         self.id = id
         self.name = name
         self.base_name = base_name
 
-    def reachable(self):
+    def reachable(self) -> List:
         return []
 
-    def visit(self, parents):
+    def visit(self, parents: List["PackageNode"]) -> None:
         pass
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.id)
 
 
@@ -295,7 +315,9 @@ class VisitedState(enum.Enum):
     Visited = 2
 
 
-def depth_first_search(source, aggregator):
+def depth_first_search(
+    source: "PackageNode", aggregator: Callable
+) -> List[Tuple[Package, int]]:
     back_edges = defaultdict(list)
     visited = {}
     topo_sorted_nodes = []
@@ -322,7 +344,12 @@ def depth_first_search(source, aggregator):
     return results
 
 
-def dfs_visit(node, back_edges, visited, sorted_nodes):
+def dfs_visit(
+    node: "PackageNode",
+    back_edges: Dict[str, List["PackageNode"]],
+    visited: Dict[str, VisitedState],
+    sorted_nodes: List["PackageNode"],
+) -> bool:
     if visited.get(node.id, VisitedState.Unvisited) == VisitedState.Visited:
         return True
     if visited.get(node.id, VisitedState.Unvisited) == VisitedState.PartiallyVisited:
@@ -343,8 +370,29 @@ def dfs_visit(node, back_edges, visited, sorted_nodes):
 
 class PackageNode(DFSNode):
     def __init__(
-        self, package, packages, previous=None, previous_dep=None, dep=None,
-    ):
+        self,
+        package: Package,
+        packages: List[Package],
+        previous: Optional["PackageNode"] = None,
+        previous_dep: Optional[
+            Union[
+                "DirectoryDependency",
+                "FileDependency",
+                "URLDependency",
+                "VCSDependency",
+                "Dependency",
+            ]
+        ] = None,
+        dep: Optional[
+            Union[
+                "DirectoryDependency",
+                "FileDependency",
+                "URLDependency",
+                "VCSDependency",
+                "Dependency",
+            ]
+        ] = None,
+    ) -> None:
         self.package = package
         self.packages = packages
 
@@ -366,8 +414,8 @@ class PackageNode(DFSNode):
             package.name,
         )
 
-    def reachable(self):
-        children = []  # type: List[PackageNode]
+    def reachable(self) -> List["PackageNode"]:
+        children: List[PackageNode] = []
 
         if (
             self.previous_dep
@@ -413,7 +461,7 @@ class PackageNode(DFSNode):
 
         return children
 
-    def visit(self, parents):
+    def visit(self, parents: "PackageNode") -> None:
         # The root package, which has no parents, is defined as having depth -1
         # So that the root package's top-level dependencies have depth 0.
         self.depth = 1 + max(
@@ -425,7 +473,9 @@ class PackageNode(DFSNode):
         )
 
 
-def aggregate_package_nodes(nodes, children):
+def aggregate_package_nodes(
+    nodes: List[PackageNode], children: List[PackageNode]
+) -> Tuple[Package, int]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
     category = (

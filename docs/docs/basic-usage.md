@@ -106,20 +106,20 @@ To deactivate the virtual environment without leaving the shell use `deactivate`
 	that an activated virtual environment remains active after the Poetry command
 	has completed execution.
 
-	Therefore, Poetry has to create a sub-shell with the virtual envrionment activated
+	Therefore, Poetry has to create a sub-shell with the virtual environment activated
 	in order for the subsequent commands to run from within the virtual environment.
 
 
 Alternatively, to avoid creating a new shell, you can manually activate the
-virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
+virtual environment by running `source {path_to_venv}/bin/activate` (`{path_to_venv}\Scripts\activate.bat` on Windows).
 To get the path to your virtual environment run `poetry env info --path`.
 You can also combine these into a nice one-liner, `source $(poetry env info --path)/bin/activate`
 To deactivate this virtual environment simply use `deactivate`.
 
-|                   | POSIX Shell                                      | Windows                                     | Exit/Deactivate |
-|-------------------|------------------------------------------------|---------------------------------------------|-----------------|
-| New Shell         | `poetry shell`                                 | `poetry shell`                              | `exit`          |
-| Manual Activation | `source {path_to_venv}/bin/activate`           | `source {path_to_venv}\Scripts\activate.bat`| `deactivate`    |
+|                   | POSIX Shell                                       | Windows                                     | Exit/Deactivate |
+|-------------------|---------------------------------------------------|---------------------------------------------|-----------------|
+| New Shell         | `poetry shell`                                    | `poetry shell`                              | `exit`          |
+| Manual Activation | `source {path_to_venv}/bin/activate`              | `{path_to_venv}\Scripts\activate.bat`       | `deactivate`    |
 | One-liner         | ```source `poetry env info --path`/bin/activate```|                                             | `deactivate`    |
 
 

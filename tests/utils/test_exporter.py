@@ -1,5 +1,7 @@
 import sys
 
+from pathlib import Path
+
 import pytest
 
 from poetry.core.packages import dependency_from_pep_508
@@ -7,7 +9,6 @@ from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.utils._compat import Path
 from poetry.utils.exporter import Exporter
 
 
@@ -42,9 +43,7 @@ def working_directory():
 
 @pytest.fixture(autouse=True)
 def mock_path_cwd(mocker, working_directory):
-    yield mocker.patch(
-        "poetry.core.utils._compat.Path.cwd", return_value=working_directory
-    )
+    yield mocker.patch("pathlib.Path.cwd", return_value=working_directory)
 
 
 @pytest.fixture()
@@ -176,6 +175,200 @@ foo==1.2.3; python_version < "3.7"
     assert expected == content
 
 
+def test_exporter_can_export_requirements_txt_poetry(tmp_dir, poetry):
+    """Regression test for #3254"""
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "poetry",
+                    "version": "1.1.4",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"keyring": "*"},
+                },
+                {
+                    "name": "junit-xml",
+                    "version": "1.9",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"six": "*"},
+                },
+                {
+                    "name": "keyring",
+                    "version": "21.8.0",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {
+                        "SecretStorage": {
+                            "version": "*",
+                            "markers": "sys_platform == 'linux'",
+                        }
+                    },
+                },
+                {
+                    "name": "secretstorage",
+                    "version": "3.3.0",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"cryptography": "*"},
+                },
+                {
+                    "name": "cryptography",
+                    "version": "3.2",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"six": "*"},
+                },
+                {
+                    "name": "six",
+                    "version": "1.15.0",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {
+                    "poetry": [],
+                    "keyring": [],
+                    "secretstorage": [],
+                    "cryptography": [],
+                    "six": [],
+                    "junit-xml": [],
+                },
+            },
+        }
+    )
+    set_package_requires(
+        poetry, skip={"keyring", "secretstorage", "cryptography", "six"}
+    )
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    # The dependency graph:
+    # junit-xml 1.9 Creates JUnit XML test result documents that can be read by tools such as Jenkins
+    # └── six *
+    # poetry 1.1.4 Python dependency management and packaging made easy.
+    # ├── keyring >=21.2.0,<22.0.0
+    # │   ├── importlib-metadata >=1
+    # │   │   └── zipp >=0.5
+    # │   ├── jeepney >=0.4.2
+    # │   ├── pywin32-ctypes <0.1.0 || >0.1.0,<0.1.1 || >0.1.1
+    # │   └── secretstorage >=3.2 -- On linux only
+    # │       ├── cryptography >=2.0
+    # │       │   └── six >=1.4.1
+    # │       └── jeepney >=0.6 (circular dependency aborted here)
+    expected = {
+        "poetry": dependency_from_pep_508("poetry==1.1.4"),
+        "junit-xml": dependency_from_pep_508("junit-xml==1.9"),
+        "keyring": dependency_from_pep_508("keyring==21.8.0"),
+        "secretstorage": dependency_from_pep_508(
+            "secretstorage==3.3.0; sys_platform=='linux'"
+        ),
+        "cryptography": dependency_from_pep_508(
+            "cryptography==3.2; sys_platform=='linux'"
+        ),
+        "six": dependency_from_pep_508("six==1.15.0"),
+    }
+
+    for line in content.strip().split("\n"):
+        dependency = dependency_from_pep_508(line)
+        assert dependency.name in expected
+        expected_dependency = expected.pop(dependency.name)
+        assert dependency == expected_dependency
+        print(dependency.marker)
+        print(expected_dependency.marker)
+        assert dependency.marker == expected_dependency.marker
+
+
+def test_exporter_can_export_requirements_txt_pyinstaller(tmp_dir, poetry):
+    """Regression test for #3254"""
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "pyinstaller",
+                    "version": "4.0",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {
+                        "altgraph": "*",
+                        "macholib": {
+                            "version": "*",
+                            "markers": "sys_platform == 'darwin'",
+                        },
+                    },
+                },
+                {
+                    "name": "altgraph",
+                    "version": "0.17",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "macholib",
+                    "version": "1.8",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {"altgraph": ">=0.15"},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"pyinstaller": [], "altgraph": [], "macholib": []},
+            },
+        }
+    )
+    set_package_requires(poetry, skip={"altgraph", "macholib"})
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    # Rationale for the results:
+    #  * PyInstaller has an explicit dependency on altgraph, so it must always be installed.
+    #  * PyInstaller requires macholib on Darwin, which in turn requires altgraph.
+    # The dependency graph:
+    # pyinstaller 4.0 PyInstaller bundles a Python application and all its dependencies into a single package.
+    # ├── altgraph *
+    # ├── macholib >=1.8 -- only on Darwin
+    # │   └── altgraph >=0.15
+    expected = {
+        "pyinstaller": dependency_from_pep_508("pyinstaller==4.0"),
+        "altgraph": dependency_from_pep_508("altgraph==0.17"),
+        "macholib": dependency_from_pep_508("macholib==1.8; sys_platform == 'darwin'"),
+    }
+
+    for line in content.strip().split("\n"):
+        dependency = dependency_from_pep_508(line)
+        assert dependency.name in expected
+        expected_dependency = expected.pop(dependency.name)
+        assert dependency == expected_dependency
+        assert dependency.marker == expected_dependency.marker
+
+
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
     tmp_dir, poetry
 ):
@@ -242,7 +435,7 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
             "c==7.8.9; sys_platform == 'win32' and python_version < '3.7'"
         ),
         "d": dependency_from_pep_508(
-            "d==0.0.1; python_version < '3.7' and platform_system == 'Windows' and sys_platform == 'win32'"
+            "d==0.0.1; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
         ),
     }
 
@@ -1047,7 +1240,12 @@ foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
 
 
 def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry):
-    poetry.pool.add_repository(LegacyRepository("custom", "https://example.com/simple"))
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "https://example.com/simple",
+        )
+    )
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1102,7 +1300,12 @@ foo==1.2.3 \\
 def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
     tmp_dir, poetry
 ):
-    poetry.pool.add_repository(LegacyRepository("custom", "http://example.com/simple"))
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "http://example.com/simple",
+        )
+    )
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -1210,8 +1413,18 @@ def test_exporter_exports_requirements_txt_with_dev_extras(
 def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(
     tmp_dir, poetry
 ):
-    poetry.pool.add_repository(LegacyRepository("custom", "https://example.com/simple"))
-    poetry.pool.add_repository(LegacyRepository("custom", "https://foobaz.com/simple"))
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "https://example.com/simple",
+        )
+    )
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "https://foobaz.com/simple",
+        )
+    )
     poetry.locker.mock_lock_data(
         {
             "package": [

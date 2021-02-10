@@ -1,20 +1,26 @@
+from typing import TYPE_CHECKING
+from typing import Optional
 from typing import Union
 
 from poetry.core.packages import Package
 from poetry.core.semver import Version
 
 
+if TYPE_CHECKING:
+    from poetry.repositories import Pool
+
+
 class VersionSelector(object):
-    def __init__(self, pool):
+    def __init__(self, pool: "Pool") -> None:
         self._pool = pool
 
     def find_best_candidate(
         self,
-        package_name,  # type: str
-        target_package_version=None,  # type:  Union[str, None]
-        allow_prereleases=False,  # type: bool
-        source=None,  # type: str
-    ):  # type: (...) -> Union[Package, bool]
+        package_name: str,
+        target_package_version: Optional[str] = None,
+        allow_prereleases: bool = False,
+        source: Optional[str] = None,
+    ) -> Union[Package, bool]:
         """
         Given a package name and optional version,
         returns the latest Package that matches
@@ -52,12 +58,12 @@ class VersionSelector(object):
             return False
         return package
 
-    def find_recommended_require_version(self, package):
+    def find_recommended_require_version(self, package: Package) -> str:
         version = package.version
 
         return self._transform_version(version.text, package.pretty_version)
 
-    def _transform_version(self, version, pretty_version):
+    def _transform_version(self, version: str, pretty_version: str) -> str:
         try:
             parsed = Version.parse(version)
             parts = [parsed.major, parsed.minor, parsed.patch]

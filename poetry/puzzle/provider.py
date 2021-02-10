@@ -1,14 +1,20 @@
 import logging
 import os
 import re
+import time
+import urllib.parse
 
 from contextlib import contextmanager
+from pathlib import Path
 from tempfile import mkdtemp
 from typing import Any
+from typing import Dict
+from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Union
 
-from clikit.ui.components import ProgressIndicator
+from cleo.ui.progress_indicator import ProgressIndicator
 
 from poetry.core.packages import Dependency
 from poetry.core.packages import DirectoryDependency
@@ -30,9 +36,6 @@ from poetry.packages import DependencyPackage
 from poetry.packages.package_collection import PackageCollection
 from poetry.puzzle.exceptions import OverrideNeeded
 from poetry.repositories import Pool
-from poetry.utils._compat import OrderedDict
-from poetry.utils._compat import Path
-from poetry.utils._compat import urlparse
 from poetry.utils.env import Env
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
@@ -43,7 +46,10 @@ logger = logging.getLogger(__name__)
 
 
 class Indicator(ProgressIndicator):
-    pass
+    def _formatter_elapsed(self) -> str:
+        elapsed = time.time() - self._start_time
+
+        return "{:.1f}s".format(elapsed)
 
 
 class Provider:
@@ -51,8 +57,8 @@ class Provider:
     UNSAFE_PACKAGES = {"setuptools", "distribute", "pip", "wheel"}
 
     def __init__(
-        self, package, pool, io, env=None
-    ):  # type: (Package, Pool, Any, Optional[Env]) -> None
+        self, package: Package, pool: Pool, io: Any, env: Optional[Env] = None
+    ) -> None:
         self._package = package
         self._pool = pool
         self._io = io
@@ -66,20 +72,20 @@ class Provider:
         self._load_deferred = True
 
     @property
-    def pool(self):  # type: () -> Pool
+    def pool(self) -> Pool:
         return self._pool
 
-    def is_debugging(self):
+    def is_debugging(self) -> bool:
         return self._is_debugging
 
-    def set_overrides(self, overrides):
+    def set_overrides(self, overrides: Dict) -> None:
         self._overrides = overrides
 
-    def load_deferred(self, load_deferred):  # type: (bool) -> None
+    def load_deferred(self, load_deferred: bool) -> None:
         self._load_deferred = load_deferred
 
     @contextmanager
-    def use_environment(self, env):  # type: (Env) -> Provider
+    def use_environment(self, env: Env) -> "Provider":
         original_env = self._env
         original_python_constraint = self._python_constraint
 
@@ -91,7 +97,16 @@ class Provider:
         self._env = original_env
         self._python_constraint = original_python_constraint
 
-    def search_for(self, dependency):  # type: (Dependency) -> List[Package]
+    def search_for(
+        self,
+        dependency: Union[
+            Dependency,
+            VCSDependency,
+            FileDependency,
+            DirectoryDependency,
+            URLDependency,
+        ],
+    ) -> List[DependencyPackage]:
         """
         Search for the specifications that match the given dependency.
 
@@ -146,7 +161,7 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
-    def search_for_vcs(self, dependency):  # type: (VCSDependency) -> List[Package]
+    def search_for_vcs(self, dependency: VCSDependency) -> List[Package]:
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -175,8 +190,14 @@ class Provider:
 
     @classmethod
     def get_package_from_vcs(
-        cls, vcs, url, branch=None, tag=None, rev=None, name=None
-    ):  # type: (str, str, Optional[str], Optional[str]) -> Package
+        cls,
+        vcs: str,
+        url: str,
+        branch: Optional[str] = None,
+        tag: Optional[str] = None,
+        rev: Optional[str] = None,
+        name: Optional[str] = None,
+    ) -> Package:
         if vcs != "git":
             raise ValueError("Unsupported VCS dependency {}".format(vcs))
 
@@ -207,7 +228,7 @@ class Provider:
 
         return package
 
-    def search_for_file(self, dependency):  # type: (FileDependency) -> List[Package]
+    def search_for_file(self, dependency: FileDependency) -> List[Package]:
         if dependency in self._deferred_cache:
             dependency, _package = self._deferred_cache[dependency]
 
@@ -238,7 +259,7 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_file(cls, file_path):  # type: (Path) -> Package
+    def get_package_from_file(cls, file_path: Path) -> Package:
         try:
             package = PackageInfo.from_path(path=file_path).to_package(
                 root_dir=file_path
@@ -250,9 +271,7 @@ class Provider:
 
         return package
 
-    def search_for_directory(
-        self, dependency
-    ):  # type: (DirectoryDependency) -> List[Package]
+    def search_for_directory(self, dependency: DirectoryDependency) -> List[Package]:
         if dependency in self._deferred_cache:
             dependency, _package = self._deferred_cache[dependency]
 
@@ -276,8 +295,8 @@ class Provider:
 
     @classmethod
     def get_package_from_directory(
-        cls, directory, name=None
-    ):  # type: (Path, Optional[str]) -> Package
+        cls, directory: Path, name: Optional[str] = None
+    ) -> Package:
         package = PackageInfo.from_directory(path=directory).to_package(
             root_dir=directory
         )
@@ -292,7 +311,7 @@ class Provider:
 
         return package
 
-    def search_for_url(self, dependency):  # type: (URLDependency) -> List[Package]
+    def search_for_url(self, dependency: URLDependency) -> List[Package]:
         if dependency in self._deferred_cache:
             return [self._deferred_cache[dependency]]
 
@@ -321,10 +340,10 @@ class Provider:
         return [package]
 
     @classmethod
-    def get_package_from_url(cls, url):  # type: (str) -> Package
+    def get_package_from_url(cls, url: str) -> Package:
         with temporary_directory() as temp_dir:
             temp_dir = Path(temp_dir)
-            file_name = os.path.basename(urlparse.urlparse(url).path)
+            file_name = os.path.basename(urllib.parse.urlparse(url).path)
             download_file(url, str(temp_dir / file_name))
 
             package = cls.get_package_from_file(temp_dir / file_name)
@@ -335,8 +354,8 @@ class Provider:
         return package
 
     def incompatibilities_for(
-        self, package
-    ):  # type: (DependencyPackage) -> List[Incompatibility]
+        self, package: DependencyPackage
+    ) -> List[Incompatibility]:
         """
         Returns incompatibilities that encapsulate a given package's dependencies,
         or that it can't be safely selected.
@@ -411,9 +430,7 @@ class Provider:
             for dep in dependencies
         ]
 
-    def complete_package(
-        self, package
-    ):  # type: (DependencyPackage) -> DependencyPackage
+    def complete_package(self, package: DependencyPackage) -> DependencyPackage:
 
         if package.is_root():
             package = package.clone()
@@ -517,7 +534,7 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates = OrderedDict()
+        duplicates = dict()
         for dep in dependencies:
             if dep.name not in duplicates:
                 duplicates[dep.name] = []
@@ -533,7 +550,7 @@ class Provider:
             self.debug("<debug>Duplicate dependencies for {}</debug>".format(dep_name))
 
             # Regrouping by constraint
-            by_constraint = OrderedDict()
+            by_constraint = dict()
             for dep in deps:
                 if dep.constraint not in by_constraint:
                     by_constraint[dep.constraint] = []
@@ -659,8 +676,10 @@ class Provider:
         clean_dependencies = []
         for dep in dependencies:
             if not package.dependency.transitive_marker.without_extras().is_any():
-                marker_intersection = package.dependency.transitive_marker.without_extras().intersect(
-                    dep.marker.without_extras()
+                marker_intersection = (
+                    package.dependency.transitive_marker.without_extras().intersect(
+                        dep.marker.without_extras()
+                    )
                 )
                 if marker_intersection.is_empty():
                     # The dependency is not needed, since the markers specified
@@ -685,7 +704,7 @@ class Provider:
 
         return package
 
-    def debug(self, message, depth=0):
+    def debug(self, message: str, depth: int = 0) -> None:
         if not (self._io.is_very_verbose() or self._io.is_debug()):
             return
 
@@ -772,8 +791,8 @@ class Provider:
             self._io.write(debug_info)
 
     @contextmanager
-    def progress(self):
-        if not self._io.output.supports_ansi() or self.is_debugging():
+    def progress(self) -> Iterator[None]:
+        if not self._io.output.is_decorated() or self.is_debugging():
             self._io.write_line("Resolving dependencies...")
             yield
         else:

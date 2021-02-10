@@ -109,6 +109,13 @@ the `--no-dev` option.
 poetry install --no-dev
 ```
 
+Conversely, you can specify to the command that you only want to install the development dependencies
+by passing the `--dev-only` option. Note that `--no-dev` takes priority if both options are passed.
+
+```bash
+poetry install --dev-only
+```
+
 If you want to remove old dependencies no longer present in the lock file, use the
 `--remove-untracked` option.
 
@@ -142,10 +149,16 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
+Installation of your project's package is also skipped when the `--dev-only`
+option is passed.
+
 ### Options
 
 * `--no-dev`: Do not install dev dependencies.
+* `--dev-only`: Only install dev dependencies.
 * `--no-root`: Do not install the root package (your project).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--remove-untracked`: Remove dependencies not presented in the lock file
 * `--extras (-E)`: Features to install (multiple values allowed).
 
 ## update
@@ -213,6 +226,10 @@ or use ssh instead of https:
 
 ```bash
 poetry add git+ssh://git@github.com/sdispater/pendulum.git
+
+or alternatively:
+
+poetry add git+ssh://git@github.com:sdispater/pendulum.git
 ```
 
 If you need to checkout a specific branch, tag or revision,
@@ -221,6 +238,11 @@ you can specify it when using `add`:
 ```bash
 poetry add git+https://github.com/sdispater/pendulum.git#develop
 poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
+
+or using SSH instead:
+
+poetry add git+ssh://github.com/sdispater/pendulum.git#develop
+poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
 
 or make them point to a local directory or file:
@@ -255,10 +277,14 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ### Options
 
 * `--dev (-D)`: Add package as development dependency.
-* `--path`: The path to a dependency.
-* `--optional` : Add as an optional dependency.
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--lock` : Do not perform install (only update the lockfile).
+* `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
+* `--optional`: Add as an optional dependency.
+* `--python`: Python version for which the dependency must be installed.
+* `--platform`: Platforms for which the dependency must be installed.
+* `--source`: Name of the source to use to install the package.
+* `---allow-prereleases`: Accept prereleases.
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--lock`: Do not perform install (only update the lockfile).
 
 
 ## remove

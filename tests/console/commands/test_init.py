@@ -2,19 +2,20 @@ import os
 import shutil
 import sys
 
+from pathlib import Path
+
 import pytest
 
-from cleo import CommandTester
+from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
-from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from tests.helpers import TestApplication
 from tests.helpers import get_package
 
 
 @pytest.fixture
-def source_dir(tmp_path):  # type: (...) -> Path
+def source_dir(tmp_path) -> Path:
     cwd = os.getcwd()
 
     try:
@@ -26,7 +27,7 @@ def source_dir(tmp_path):  # type: (...) -> Path
 
 @pytest.fixture
 def patches(mocker, source_dir, repo):
-    mocker.patch("poetry.utils._compat.Path.cwd", return_value=source_dir)
+    mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
     )
@@ -598,7 +599,7 @@ python = "~2.7 || ^3.6"
 
 
 def test_add_package_with_extras_and_whitespace(tester):
-    result = tester._command._parse_requirements(["databases[postgresql, sqlite]"])
+    result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
 
     assert result[0]["name"] == "databases"
     assert len(result[0]["extras"]) == 2
