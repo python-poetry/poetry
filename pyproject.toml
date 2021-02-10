@@ -31,7 +31,7 @@ requests = "^2.18"
 cachy = "^0.3.0"
 requests-toolbelt = "^0.9.1"
 cachecontrol = { version = "^0.12.4", extras = ["filecache"] }
-pkginfo = "^1.4"
+pkginfo = "^1.5"
 html5lib = "^1.0"
 shellingham = "^1.1"
 tomlkit = ">=0.7.0,<1.0.0"
