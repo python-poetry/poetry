@@ -145,3 +145,8 @@ name = "foo"
 url = "https://foo.bar/simple/"
 trusted = true
 ```
+
+You can also change it in your local configuration using the `config` command:
+```bash
+poetry config certificates.foo.trusted true
+```
