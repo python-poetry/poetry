@@ -402,18 +402,21 @@ class LegacyRepository(PyPiRepository):
                 import urllib3
 
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                response = self.session.get(url, verify=False)
-                urllib3.warnings.simplefilter(
-                    "default", urllib3.exceptions.InsecureRequestWarning
-                )
-            else:
-                response = self.session.get(url)
+
+            response = self.session.get(url)
 
             if response.status_code == 404:
                 return
             response.raise_for_status()
         except requests.HTTPError as e:
             raise RepositoryError(e)
+        finally:
+            if self._trusted:
+                import urllib3
+
+                urllib3.warnings.simplefilter(
+                    "default", urllib3.exceptions.InsecureRequestWarning
+                )
 
         if response.status_code in (401, 403):
             self._log(
