@@ -24,7 +24,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.6"
 
-poetry-core = "^1.0.0"
+poetry-core = "^1.0.2"
 cleo = "^1.0.0a1"
 crashtest = "^0.3.0"
 requests = "^2.18"
