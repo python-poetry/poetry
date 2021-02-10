@@ -46,6 +46,35 @@ def provider(root, pool):
     return Provider(root, pool, NullIO())
 
 
+@pytest.fixture
+def mock_io(mocker):
+    mock_io = mocker.MagicMock()
+    mock_io.is_very_verbose.return_value = True
+    mock_io.is_debug.return_value = True
+    return mock_io
+
+
+@pytest.fixture
+def provider_with_mock_io(root, pool, mock_io):
+    return Provider(root, pool, mock_io)
+
+
+@pytest.mark.parametrize(
+    "version_info_in,version_info_out", [("(0.0.2)", "0.0.2"), ("", "*")]
+)
+def test_debug_fact_depends_on(
+    provider_with_mock_io, mock_io, version_info_in, version_info_out
+):
+    provider_with_mock_io.debug(
+        "fact: foo (0.0.1) depends on bar {}".format(version_info_in)
+    )
+    mock_io.write.assert_called_once_with(
+        "<debug>   0:</debug> <fg=blue>fact</>: <c1>foo</c1> (<c2>0.0.1</c2>) depends on <c1>bar</c1> (<c2>{}</c2>)\n".format(
+            version_info_out
+        )
+    )
+
+
 @pytest.mark.parametrize("value", [True, False])
 def test_search_for_vcs_retains_develop_flag(provider, value):
     dependency = VCSDependency(
