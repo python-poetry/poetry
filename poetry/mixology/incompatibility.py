@@ -434,7 +434,12 @@ class Incompatibility:
         if allow_every and term.constraint.is_any():
             return "every version of {}".format(term.dependency.complete_name)
 
-        return str(term.dependency)
+        if term.dependency.is_root:
+            return term.dependency.pretty_name
+
+        return "{} ({})".format(
+            term.dependency.pretty_name, term.dependency.pretty_constraint
+        )
 
     def _single_term_where(self, callable):  # type: (callable) -> Term
         found = None
