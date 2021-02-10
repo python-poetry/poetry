@@ -279,7 +279,7 @@ class Locker(object):
                 ].marker.intersect(requirement.marker)
 
         return cls.__walk_dependency_level(
-            dependencies=list(next_level_dependencies.values()),
+            dependencies=next_level_dependencies.values(),
             level=level + 1,
             pinned_versions=pinned_versions,
             packages_by_name=packages_by_name,
