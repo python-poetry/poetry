@@ -1,5 +1,5 @@
 freebsd_instance:
-  image_family: freebsd-12-1-snap
+  image_family: freebsd-12-2
 
 test_task:
   name: "Tests / FreeBSD / "
