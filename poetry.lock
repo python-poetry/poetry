@@ -95,7 +95,7 @@ python-versions = "*"
 
 [[package]]
 name = "cleo"
-version = "1.0.0a1"
+version = "1.0.0a2"
 description = "Cleo allows you to create beautiful and testable command-line interfaces."
 category = "main"
 optional = false
@@ -668,7 +668,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "3061627bdc17958f2b0d1dfc86e448e167ff3e97639e6f3c8f67bf0b06d9995c"
+content-hash = "1f73c9ec5eb9eab75a5d4008f44e7d7bf7f31f5ac395ebb4c59518e3033aa083"
 
 [metadata.files]
 appdirs = [
@@ -742,8 +742,8 @@ chardet = [
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
 ]
 cleo = [
-    {file = "cleo-1.0.0a1-py3-none-any.whl", hash = "sha256:e4a45adc6b56a04d350e7b4893352fdcc07d89d35991e5df16753e05a7c78c2b"},
-    {file = "cleo-1.0.0a1.tar.gz", hash = "sha256:45bc5f04278c2f183c7ab77b3ec20f5204711fecb37ae688424c39ea8badf3fe"},
+    {file = "cleo-1.0.0a2-py3-none-any.whl", hash = "sha256:fa4c9ed94deba0f286bb9f2efbd3d6b4d0237b99b93a7dae6b55d473e1d8339c"},
+    {file = "cleo-1.0.0a2.tar.gz", hash = "sha256:1028cc0585e510e74ceaa73f4b7da8586911b7cc3e4aba03f0540c7d9415701b"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
