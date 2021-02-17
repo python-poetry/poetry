@@ -25,7 +25,7 @@ from tomlkit.exceptions import TOMLKitError
 import poetry.repositories
 
 from poetry.core.packages import dependency_from_pep_508
-from poetry.core.packages.package import Dependency
+from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver import parse_constraint
 from poetry.core.semver.version import Version
