@@ -19,7 +19,6 @@ import os
 import re
 import shutil
 import site
-import stat
 import subprocess
 import sys
 import tempfile
@@ -30,7 +29,6 @@ from functools import cmp_to_key
 from io import UnsupportedOperation
 from pathlib import Path
 from typing import Optional
-from typing import Tuple
 from urllib.request import Request
 from urllib.request import urlopen
 
@@ -238,24 +236,6 @@ def temporary_directory(*args, **kwargs):
             yield name
 
 
-BIN = """# -*- coding: utf-8 -*-
-import glob
-import sys
-import os
-
-site_packages = "{site_packages}"
-
-sys.path.insert(0, site_packages)
-
-if __name__ == "__main__":
-    from {main_module} import main
-
-    main()
-"""
-
-BAT = '@echo off\r\n{python_executable} "{poetry_bin}" %*\r\n'
-
-
 PRE_MESSAGE = """# Welcome to {poetry}!
 
 This will download and install the latest version of {poetry},
@@ -458,9 +438,9 @@ class Installer:
             )
         )
 
-        env_path, site_packages = self.make_env(version)
+        env_path = self.make_env(version)
         self.install_poetry(version, env_path)
-        self.make_bin(site_packages, version)
+        self.make_bin(version)
 
         self._overwrite(
             "Installing {} ({}): {}".format(
@@ -497,11 +477,12 @@ class Installer:
 
         shutil.rmtree(str(self._data_dir))
         for script in ["poetry", "poetry.bat"]:
-            self._bin_dir.joinpath(script).unlink(missing_ok=True)
+            if self._bin_dir.joinpath(script).exists():
+                self._bin_dir.joinpath(script).unlink()
 
         return 0
 
-    def make_env(self, version: str) -> Tuple[Path, Path]:
+    def make_env(self, version: str) -> Path:
         self._overwrite(
             "Installing {} ({}): {}".format(
                 colorize("info", "Poetry"),
@@ -525,12 +506,9 @@ class Installer:
 
             virtualenv.cli_run([str(env_path), "--clear"])
 
-        if WINDOWS:
-            return env_path, list(env_path.glob("Lib/site-packages"))[0]
+        return env_path
 
-        return env_path, list(env_path.glob("lib/python*/site-packages"))[0]
-
-    def make_bin(self, site_packages: Path, version: str) -> None:
+    def make_bin(self, version: str) -> None:
         self._overwrite(
             "Installing {} ({}): {}".format(
                 colorize("info", "Poetry"),
@@ -541,69 +519,18 @@ class Installer:
 
         self._bin_dir.mkdir(parents=True, exist_ok=True)
 
-        python_executable = sys.executable
-
+        script = "poetry"
+        target_script = "venv/bin/poetry"
         if WINDOWS:
-            with self._bin_dir.joinpath("poetry.bat").open("w") as f:
-                f.write(
-                    BAT.format(
-                        python_executable=python_executable,
-                        poetry_bin=self._bin_dir.joinpath("poetry"),
-                    )
-                )
+            script = "poetry.exe"
+            target_script = "venv/Scripts/poetry.exe"
 
-        # Versions of Poetry prior to 1.2.0 did not have the main()
-        # function at the poetry.console.application level but et he poetry.console one.
-        main_module = "poetry.console.application"
-        version_content = site_packages.joinpath("poetry/__version__.py").read_text(
-            encoding="utf-8"
+        if self._bin_dir.joinpath(script).exists():
+            self._bin_dir.joinpath(script).unlink()
+
+        self._bin_dir.joinpath(script).symlink_to(
+            self._data_dir.joinpath(target_script)
         )
-
-        current_version_re = re.match('(?ms).*__version__ = "(.+)".*', version_content)
-        if not current_version_re:
-            self._write(
-                colorize(
-                    "warning",
-                    "Unable to get the current Poetry version. Assuming None",
-                )
-            )
-            if is_decorated():
-                self._write("")
-
-            current_version = "1.2.0"
-        else:
-            current_version = current_version_re.group(1)
-
-        m = self.VERSION_REGEX.match(current_version)
-        if tuple(int(p) for p in m.groups()[:2]) < (1, 2):
-            main_module = "poetry.console"
-
-        with self._bin_dir.joinpath("poetry").open("w", encoding="utf-8") as f:
-            f.write("#!/usr/bin/env {}\n".format(python_executable))
-
-            if WINDOWS:
-                f.write(
-                    BIN.format(
-                        site_packages=str(site_packages.resolve()).replace(
-                            "\\", "\\\\"
-                        ),
-                        main_module=main_module,
-                    )
-                )
-            else:
-                f.write(
-                    BIN.format(
-                        site_packages=str(site_packages.resolve()),
-                        main_module=main_module,
-                    )
-                )
-
-        if not WINDOWS:
-            # Making the file executable
-            st = os.stat(self._bin_dir.joinpath("poetry").as_posix())
-            os.chmod(
-                self._bin_dir.joinpath("poetry").as_posix(), st.st_mode | stat.S_IEXEC
-            )
 
     def install_poetry(self, version: str, env_path: Path) -> None:
         self._overwrite(
