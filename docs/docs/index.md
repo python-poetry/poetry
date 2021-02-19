@@ -18,109 +18,84 @@ on Windows, Linux and OSX.
 ## Installation
 
 Poetry provides a custom installer that will install `poetry` isolated
-from the rest of your system by vendorizing its dependencies. This is the
-recommended way of installing `poetry`.
+from the rest of your system.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
 ```
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
 ```
 
-!!! note
+The installer installs the `poetry` tool to Poetry's `bin` directory. This location depends on you system:
 
-    You only need to install Poetry once. It will automatically pick up the current
-    Python version and use it to [create virtualenvs](/docs/managing-environments) accordingly.
+- `$HOME/.local/bin` for Unix
+- `%APPDATA%\Python\Scripts` on Windows
 
-The installer installs the `poetry` tool to Poetry's `bin` directory.
-On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
+If this directory is not on you `PATH`, you will need to add it manually
+if you want to invoke Poetry with simply `poetry`.
 
-This directory will be automatically added to your `$PATH` environment variable,
-by appending a statement to your `$HOME/.profile` configuration (or equivalent files).
-If you do not feel comfortable with this, please pass the `--no-modify-path` flag to
-the installer and manually add the Poetry's `bin` directory to your path.
+Alternatively, you can use the full path to `poetry` to use it.
 
-Finally, open a new shell and type the following:
+Once Poetry is installed you can execute the following:
 
 ```bash
 poetry --version
 ```
 
-If you see something like `Poetry 0.12.0` then you are ready to use Poetry.
+If you see something like `Poetry (version 1.2.0)` then you are ready to use Poetry.
 If you decide Poetry isn't your thing, you can completely remove it from your system
 by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
 
 ```bash
-python get-poetry.py --uninstall
-POETRY_UNINSTALL=1 python get-poetry.py
+python install-poetry.py --uninstall
+POETRY_UNINSTALL=1 python install-poetry.py
 ```
 
-By default, Poetry is installed into the user's platform-specific home directory. If you wish to change this, you may define the `POETRY_HOME` environment variable:
+By default, Poetry is installed into the user's platform-specific home directory.
+If you wish to change this, you may define the `POETRY_HOME` environment variable:
 
 ```bash
-POETRY_HOME=/etc/poetry python get-poetry.py
+POETRY_HOME=/etc/poetry python install-poetry.py
 ```
 
-If you want to install prerelease versions, you can do so by passing `--preview` to `get-poetry.py`
+If you want to install prerelease versions, you can do so by passing `--preview` option to `install-poetry.py`
 or by using the `POETRY_PREVIEW` environment variable:
 
 ```bash
-python get-poetry.py --preview
-POETRY_PREVIEW=1 python get-poetry.py
+python install-poetry.py --preview
+POETRY_PREVIEW=1 python install-poetry.py
 ```
 
-Similarly, if you want to install a specific version, you can use `--version` or the `POETRY_VERSION`
+Similarly, if you want to install a specific version, you can use `--version` option or the `POETRY_VERSION`
 environment variable:
 
 ```bash
-python get-poetry.py --version 0.12.0
-POETRY_VERSION=0.12.0 python get-poetry.py
+python install-poetry.py --version 1.2.0
+POETRY_VERSION=1.2.0 python install-poetry.py
 ```
 
-!!!note
-
-    Note that the installer does not support Poetry releases < 0.12.0.
-
-!!!note
-
-    The setup script must be able to find one of following executables in your shell's path environment:
-
-    - `python` (which can be a py3 or py2 interpreter)
-    - `python3`
-    - `py.exe -3` (Windows)
-    - `py.exe -2` (Windows)
-
-### Alternative installation methods (not recommended)
-
-!!!note
-
-    Using alternative installation methods will make Poetry always
-    use the Python version for which it has been installed to create
-    virtualenvs.
-
-    So, you will need to install Poetry for each Python version you
-    want to use and switch between them.
-
-#### Installing with `pip`
-
-Using `pip` to install Poetry is possible.
+You can also install Poetry for a `git` repository by using the `--git` option:
 
 ```bash
-pip install --user poetry
-```
+python install-poetry.py --git https://github.com/python-poetry/poetry.git@master
+````
 
-!!!warning
+!!!note
 
-    Be aware that it will also install Poetry's dependencies
-    which might cause conflicts with other packages.
+    Note that the installer does not support Python < 3.6.
+
+
+### Alternative installation methods
 
 #### Installing with `pipx`
 
-Using [`pipx`](https://github.com/cs01/pipx) to install Poetry is also possible. `pipx` is used to install Python CLI applications globally while still isolating them in virtual environments. This allows for clean upgrades and uninstalls. `pipx` supports Python 3.6 and later. If using an earlier version of Python, consider [`pipsi`](https://github.com/mitsuhiko/pipsi).
+Using [`pipx`](https://github.com/pipxproject/pipx) to install Poetry is also possible.
+`pipx` is used to install Python CLI applications globally while still isolating them in virtual environments.
+This allows for clean upgrades and uninstalls.
 
 ```bash
 pipx install poetry
@@ -134,7 +109,19 @@ pipx upgrade poetry
 pipx uninstall poetry
 ```
 
-[Github repository](https://github.com/cs01/pipx).
+
+#### Installing with `pip`
+
+Using `pip` to install Poetry is possible.
+
+```bash
+pip install --user poetry
+```
+
+!!!warning
+
+    Be aware that it will also install Poetry's dependencies
+    which might cause conflicts with other packages.
 
 
 ## Updating `poetry`
@@ -155,17 +142,8 @@ And finally, if you want to install a specific version, you can pass it as an ar
 to `self update`.
 
 ```bash
-poetry self update 0.8.0
+poetry self update 1.2.0
 ```
-
-!!!note
-
-    The `self update` command will only work if you used the recommended
-    installer to install Poetry.
-
-!!!note
-
-    If you are still on poetry version < 1.0 use `poetry self:update` instead.
 
 
 ## Enable tab completion for Bash, Fish, or Zsh
