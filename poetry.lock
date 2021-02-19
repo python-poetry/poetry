@@ -974,7 +974,7 @@ testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~2.7 || ^3.5"
-content-hash = "8c83ff77ac7763f13d4d0f73723b2cffe9236f8eb0a56e571c4e04cd3dc39f5a"
+content-hash = "70e35c602ca490dcb9a13e83f8d9403990491b6ea258e4e4d44eecbc06bb8bff"
 
 [metadata.files]
 appdirs = [
