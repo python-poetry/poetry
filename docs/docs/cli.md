@@ -485,14 +485,10 @@ This command exports the lock file to other formats.
 poetry export -f requirements.txt --output requirements.txt
 ```
 
-!!!note
-
-    Only the `requirements.txt` format is currently supported.
-
 ### Options
 
 * `--format (-f)`: The format to export to (default: `requirements.txt`).
-  Currently, only `requirements.txt` is supported.
+  Currently, only `requirements.txt` and `setup.py` are supported.
 * `--output (-o)`: The name of the output file.  If omitted, print to standard
   output.
 * `--dev`: Include development dependencies.
