@@ -476,7 +476,7 @@ class Installer:
         return version, current_version
 
     def customize_install(self):
-        if not self._accept_all:
+        if self._modify_path and not self._accept_all:
             print("Before we start, please answer the following questions.")
             print("You may simply press the Enter key to leave unchanged.")
 
