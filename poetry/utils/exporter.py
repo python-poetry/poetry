@@ -51,10 +51,7 @@ class Exporter(object):
         self,
         cwd: Path,
         output: Union[IO, str],
-        with_hashes: bool = True,
-        dev: bool = False,
-        extras: Optional[Union[bool, Sequence[str]]] = None,
-        with_credentials: bool = False,
+        **_  # Cannot use any of the extra kwargs with the SdistBuilder
     ) -> None:
         from poetry.core.masonry.builders.sdist import SdistBuilder
 
