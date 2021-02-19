@@ -17,8 +17,9 @@ class Exporter(object):
     """
 
     FORMAT_REQUIREMENTS_TXT = "requirements.txt"
+    FORMAT_SETUP_PY = "setup.py"
     #: The names of the supported export formats.
-    ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
+    ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT, FORMAT_SETUP_PY)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
     def __init__(self, poetry: Poetry) -> None:
@@ -45,6 +46,22 @@ class Exporter(object):
             extras=extras,
             with_credentials=with_credentials,
         )
+
+    def _export_setup_py(
+        self,
+        cwd: Path,
+        output: Union[IO, str],
+        with_hashes: bool = True,
+        dev: bool = False,
+        extras: Optional[Union[bool, Sequence[str]]] = None,
+        with_credentials: bool = False,
+    ) -> None:
+        from poetry.core.masonry.builders.sdist import SdistBuilder
+
+        builder = SdistBuilder(self._poetry)
+        content = builder.build_setup()
+
+        self._output(content, cwd, output)
 
     def _export_requirements_txt(
         self,
