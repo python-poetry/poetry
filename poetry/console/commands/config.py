@@ -62,6 +62,16 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "virtualenvs.create": (boolean_validator, boolean_normalizer, True),
             "virtualenvs.in-project": (boolean_validator, boolean_normalizer, False),
+            "virtualenvs.options.always-copy": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
+            "virtualenvs.options.system-site-packages": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
             "virtualenvs.path": (
                 str,
                 lambda val: str(Path(val)),
@@ -71,11 +81,6 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_validator,
                 boolean_normalizer,
                 True,
-            ),
-            "virtualenvs.options.always-copy": (
-                boolean_validator,
-                boolean_normalizer,
-                False,
             ),
             "installer.parallel": (
                 boolean_validator,

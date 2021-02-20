@@ -222,3 +222,5 @@ def test_create_poetry_with_local_config(fixture_dir):
 
     assert not poetry.config.get("virtualenvs.in-project")
     assert not poetry.config.get("virtualenvs.create")
+    assert not poetry.config.get("virtualenvs.options.always-copy")
+    assert not poetry.config.get("virtualenvs.options.system-site-packages")
