@@ -637,8 +637,8 @@ class EnvManager(object):
 
         create_venv = self._poetry.config.get("virtualenvs.create")
         root_venv = self._poetry.config.get("virtualenvs.in-project")
-
         venv_path = self._poetry.config.get("virtualenvs.path")
+
         if root_venv:
             venv_path = cwd / ".venv"
         elif venv_path is None:
