@@ -10,9 +10,11 @@ import pytest
 
 from cleo.formatters.style import Style
 from cleo.io.buffered_io import BufferedIO
+from cleo.io.null_io import NullIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
+from poetry.core.semver.version import Version
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -254,3 +256,66 @@ def test_executor_should_delete_incomplete_downloads(
         executor._download(Install(Package("tomlkit", "0.5.3")))
 
     assert not destination_fixture.exists()
+
+
+def test_executor_should_pip_run_direct_ref(
+    config, pool, tmp_dir, mock_file_downloads, env, mocker
+):
+    config = Config()
+    config.merge({"cache-dir": tmp_dir})
+
+    package = Package(
+        "demo",
+        "0.1.0",
+        source_type="file",
+        source_url=Path(__file__)
+        .parent.parent.joinpath("fixtures/distributions/demo-0.1.0.tar.gz")
+        .resolve()
+        .as_posix(),
+    )
+
+    type(env).pip_version = mocker.PropertyMock(return_value=Version(19, 1, 0))
+
+    executor = Executor(env, pool, config, NullIO())
+    executor.execute([Install(package)])
+
+    assert env.executed[0] == [
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "--no-deps",
+        "demo @ {}".format(Path(package.source_url).as_uri()),
+    ]
+
+
+def test_executor_should_pip_run_path(
+    config, pool, tmp_dir, mock_file_downloads, env, mocker
+):
+    config = Config()
+    config.merge({"cache-dir": tmp_dir})
+
+    package = Package(
+        "demo",
+        "0.1.0",
+        source_type="file",
+        source_url=Path(__file__)
+        .parent.parent.joinpath("fixtures/distributions/demo-0.1.0.tar.gz")
+        .resolve()
+        .as_posix(),
+    )
+
+    type(env).pip_version = mocker.PropertyMock(return_value=Version(19, 0, 0))
+
+    executor = Executor(env, pool, config, NullIO())
+
+    executor.execute([Install(package)])
+
+    assert env.executed[0] == [
+        "python",
+        "-m",
+        "pip",
+        "install",
+        "--no-deps",
+        str(Path(package.source_url)),
+    ]

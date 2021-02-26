@@ -19,6 +19,7 @@ from cleo.io.null_io import NullIO
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.core.semver.version import Version
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
@@ -475,7 +476,15 @@ class Executor(object):
         )
         self._write(operation, message)
 
-        args = ["install", "--no-deps", str(archive)]
+        if self._env.pip_version >= Version(19, 1, 0):
+            archive_path = str(archive)
+            if not archive_path.startswith("file://"):
+                archive_path = Path(archive_path).resolve().as_uri()
+
+            ref = "{} @ {}".format(package.name, archive_path)
+        else:
+            ref = str(archive)
+        args = ["install", "--no-deps", ref]
         if operation.job_type == "update":
             args.insert(2, "-U")
 
