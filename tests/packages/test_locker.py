@@ -1,5 +1,8 @@
 import logging
+import os
 import tempfile
+
+from pathlib import Path
 
 import pytest
 import tomlkit
@@ -58,7 +61,7 @@ git_package = {git = "https://github.com/ota42y/dummy.git", rev = "abcdefg"}
 
 [package.source]
 type = "directory"
-url = "../dummy"
+url = "%s"
 
 [metadata]
 lock-version = "1.1"
@@ -128,7 +131,7 @@ def test_saving_lock_file_with_git_package(locker, root):
         "local_package",
         "0.1.0",
         source_type="directory",
-        source_url="/dummy",
+        source_url="./dummy",
     )
     package_local.add_dependency(
         Factory.create_dependency(
@@ -140,14 +143,25 @@ def test_saving_lock_file_with_git_package(locker, root):
 
     packages = [package_absl, package_local]
 
-    locker.set_lock_data(root, packages)
+    previous_dir = os.getcwd()
+    os.chdir(locker.lock.path.parent)
+    try:
+        locker.set_lock_data(root, packages)
 
-    expected = tomlkit.parse(LOCK_FILE_WITH_GIT_PACKAGE)
-    assert expected == locker.lock.read()
+        relative_path = Path(
+            os.path.relpath(
+                Path("./dummy").as_posix(), locker.lock.path.parent.as_posix()
+            )
+        ).as_posix()
+        expected = tomlkit.parse(LOCK_FILE_WITH_GIT_PACKAGE % relative_path)
+        assert expected == locker.lock.read()
+
+    finally:
+        os.chdir(previous_dir)
 
 
 def test_locker_properly_loads_rev_package(locker):
-    locker.lock.write(tomlkit.parse(LOCK_FILE_WITH_GIT_PACKAGE))
+    locker.lock.write(tomlkit.parse(LOCK_FILE_WITH_GIT_PACKAGE % "dummy"))
 
     packages = locker.locked_repository().packages
 
@@ -157,7 +171,7 @@ def test_locker_properly_loads_rev_package(locker):
     assert "local-package" == package.name
     assert 1 == len(package.requires)
 
-    git_package_dependency = package.requires[0]  # this is Dependency not VCSDependency
+    git_package_dependency = package.requires[0]  # this is VCSDependency
     assert git_package_dependency.is_vcs()
     assert "rev abcdefg" == git_package_dependency.pretty_constraint
     assert "abcdefg" == git_package_dependency.rev
@@ -176,7 +190,7 @@ def test_locker_properly_loads_rev_package_for_old_version(locker):
     assert 1 == len(package.requires)
 
     git_package_dependency = package.requires[0]  # this is Dependency not VCSDependency
-    assert False == git_package_dependency.is_vcs()
+    assert not git_package_dependency.is_vcs()
     assert "rev abcdefg" == git_package_dependency.pretty_constraint
 
 
