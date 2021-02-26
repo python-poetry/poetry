@@ -28,6 +28,97 @@ def root():
     return ProjectPackage("root", "1.2.3")
 
 
+LOCK_FILE_WITH_GIT_PACKAGE = """
+[[package]]
+name = "git_package"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = true
+
+[package.source]
+type = "git"
+url = "https://github.com/ota42y/dummy.git"
+reference = "abcdefg"
+resolved_reference = "abcdefg"
+
+[[package]]
+name = "local_package"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = true
+
+[package.dependencies]
+git_package = "rev abcdefg"
+
+[package.source]
+type = "directory"
+url = "../dummy"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+git_package = []
+local_package = []
+"""
+
+
+def test_saving_lock_file_with_git_package(locker, root):
+    package_absl = Package(
+        "git_package",
+        "0.1.0",
+        source_type="git",
+        source_url="https://github.com/ota42y/dummy.git",
+        source_reference="abcdefg",
+        source_resolved_reference="abcdefg",
+    )
+
+    package_local = Package(
+        "local_package",
+        "0.1.0",
+        source_type="directory",
+        source_url="/dummy",
+    )
+    package_local.add_dependency(
+        Factory.create_dependency(
+            "git_package",
+            {"git": "https://github.com/ota42y/dummy.git", "rev": "abcdefg"}
+            # VCSDependency doesn't use root_dir
+        )
+    )
+
+    packages = [package_absl, package_local]
+
+    locker.set_lock_data(root, packages)
+
+    expected = tomlkit.parse(LOCK_FILE_WITH_GIT_PACKAGE)
+    assert expected == locker.lock.read()
+
+
+def test_locker_properly_loads_rev_package(locker):
+    locker.lock.write(tomlkit.parse(LOCK_FILE_WITH_GIT_PACKAGE))
+
+    packages = locker.locked_repository().packages
+
+    assert 2 == len(packages)
+
+    package = packages[1]
+    assert "local-package" == package.name
+    assert 1 == len(package.requires)
+
+    git_package_dependency = package.requires[0]  # this is Dependency not VCSDependency
+    assert False == git_package_dependency.is_vcs()
+    assert "rev abcdefg" == git_package_dependency.pretty_constraint
+
+
 def test_lock_file_data_is_ordered(locker, root):
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
