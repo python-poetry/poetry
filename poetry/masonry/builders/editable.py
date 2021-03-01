@@ -197,21 +197,27 @@ class EditableBuilder(Builder):
         from poetry.core.masonry.builders.wheel import WheelBuilder
 
         added_files = added_files[:]
-
         builder = WheelBuilder(self._poetry)
 
-        dist_info_path = Path(builder.dist_info)
-        for dist_info in self._env.site_packages.find(
-            dist_info_path, writable_only=True
-        ):
-            if dist_info.exists():
-                self._debug(
-                    "  - Removing existing <c2>{}</c2> directory from <b>{}</b>".format(
-                        dist_info.name, dist_info.parent
+        # remove dist_info for all existing versions, in all candidate directories we can modify
+        dist_info_paths = [
+            Path(dist_info)
+            for site_package_dir in self._env.site_packages.writable_candidates
+            for dist_info in site_package_dir.glob(builder.dist_info_glob)
+        ]
+        for dist_info_path in dist_info_paths:
+            for dist_info in self._env.site_packages.find(
+                dist_info_path, writable_only=True
+            ):
+                if dist_info.exists():
+                    self._debug(
+                        "  - Removing existing <c2>{}</c2> directory from <b>{}</b>".format(
+                            dist_info.name, dist_info.parent
+                        )
                     )
-                )
-                shutil.rmtree(str(dist_info))
+                    shutil.rmtree(str(dist_info))
 
+        dist_info_path = Path(builder.dist_info)
         dist_info = self._env.site_packages.mkdir(dist_info_path)
 
         self._debug(

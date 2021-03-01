@@ -231,3 +231,29 @@ def test_builder_should_execute_build_scripts(extended_without_setup_poetry, tmp
     assert [
         ["python", str(extended_without_setup_poetry.file.parent / "build.py")]
     ] == env.executed
+
+
+def test_builder_removes_previous_dist_info(simple_poetry, tmp_venv):
+    builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
+
+    builder.build()
+
+    # this is the file we want removed
+    original_dist_info = tmp_venv.site_packages.path.joinpath(
+        "simple_project-1.2.3.dist-info"
+    )
+    assert original_dist_info.exists()
+
+    # change version, install
+    from poetry.core.semver import Version
+
+    simple_poetry.package._version = Version(1, 2, 4)
+
+    builder.build()
+
+    # expect: old dist_info is gone, new dist_info is there
+    new_dist_info = tmp_venv.site_packages.path.joinpath(
+        "simple_project-1.2.4.dist-info"
+    )
+    assert new_dist_info.exists()
+    assert not original_dist_info.exists()
