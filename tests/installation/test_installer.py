@@ -3,12 +3,16 @@ from __future__ import unicode_literals
 import json
 import sys
 
+from io import StringIO
 from pathlib import Path
 
 import pytest
 
+from cleo.io.inputs.input import Input
+from cleo.io.io import IO
 from cleo.io.null_io import NullIO
-from clikit.io import BufferedIO
+from cleo.io.outputs.buffered_output import BufferedOutput
+from cleo.io.outputs.output import Verbosity
 
 from poetry.core.packages import ProjectPackage
 from poetry.core.toml.file import TOMLFile
@@ -1892,46 +1896,26 @@ def test_installer_can_handle_old_lock_files(
     assert 8 == installer.executor.installations_count
 
 
-@pytest.mark.parametrize(
-    "quiet,lines",
-    [
-        (True, []),
-        (
-            False,
-            [
-                "Updating dependencies",
-                "Resolving dependencies...",
-                "",
-                "Writing lock file",
-                "",
-                "Package operations: 1 install, 0 updates, 0 removals",
-                "",
-                "  • Installing a (1.0)",
-            ],
-        ),
-    ],
-)
-def test_quiet(package, pool, locker, env, installed, config, repo, quiet, lines):
-    io = BufferedIO()
-    io.set_quiet(quiet)
-
-    installer = Installer(
-        io,
-        env,
-        package,
-        locker,
-        pool,
-        config,
-        installed=installed,
-        executor=Executor(env, pool, config, io),
-    )
-    installer.use_executor(True)
-
+@pytest.mark.parametrize("quiet", [True, False])
+def test_run_with_dependencies_quiet(installer, locker, repo, package, quiet):
     package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
     repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    installer._io = IO(Input(), BufferedOutput(), BufferedOutput())
+    installer._io.set_verbosity(Verbosity.QUIET if quiet else Verbosity.NORMAL)
+
     package.add_dependency(Factory.create_dependency("A", "~1.0"))
+    package.add_dependency(Factory.create_dependency("B", "^1.0"))
 
     installer.run()
+    expected = fixture("with-dependencies")
 
-    output = io.fetch_output().strip()
-    assert (not output and quiet) or (output and not queit)
+    assert locker.written_data == expected
+
+    installer._io.output._buffer.seek(0)
+    if not quiet:
+        assert installer._io.output._buffer.read() == ""
+    else:
+        assert installer._io.output._buffer.read() != ""
