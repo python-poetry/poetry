@@ -1915,7 +1915,7 @@ def test_run_with_dependencies_quiet(installer, locker, repo, package, quiet):
     assert locker.written_data == expected
 
     installer._io.output._buffer.seek(0)
-    if not quiet:
+    if quiet:
         assert installer._io.output._buffer.read() == ""
     else:
         assert installer._io.output._buffer.read() != ""
