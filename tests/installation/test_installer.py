@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from cleo.io.null_io import NullIO
+from clikit.io import BufferedIO
 
 from poetry.core.packages import ProjectPackage
 from poetry.core.toml.file import TOMLFile
@@ -1889,3 +1890,48 @@ def test_installer_can_handle_old_lock_files(
 
     # colorama will be added
     assert 8 == installer.executor.installations_count
+
+
+@pytest.mark.parametrize(
+    "quiet,lines",
+    [
+        (True, []),
+        (
+            False,
+            [
+                "Updating dependencies",
+                "Resolving dependencies...",
+                "",
+                "Writing lock file",
+                "",
+                "Package operations: 1 install, 0 updates, 0 removals",
+                "",
+                "  • Installing a (1.0)",
+            ],
+        ),
+    ],
+)
+def test_quiet(package, pool, locker, env, installed, config, repo, quiet, lines):
+    io = BufferedIO()
+    io.set_quiet(quiet)
+
+    installer = Installer(
+        io,
+        env,
+        package,
+        locker,
+        pool,
+        config,
+        installed=installed,
+        executor=Executor(env, pool, config, io),
+    )
+    installer.use_executor(True)
+
+    package_a = get_package("A", "1.0")
+    repo.add_package(package_a)
+    package.add_dependency(Factory.create_dependency("A", "~1.0"))
+
+    installer.run()
+
+    output = io.fetch_output().strip()
+    assert (not output and quiet) or (output and not queit)
