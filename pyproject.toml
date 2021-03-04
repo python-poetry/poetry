@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.1.4"
+version = "1.1.5"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -71,6 +71,10 @@ pre-commit = { version = "^2.6", python = "^3.6.1" }
 tox = "^3.0"
 pytest-sugar = "^0.9.2"
 httpretty = "^0.9.6"
+# We need to restrict the version of urllib3 to avoid
+# httpretty breaking. This is fixed in httpretty >= 1.0.3
+# but it's not compatible with Python 2.7 and 3.5.
+urllib3 = "~1.25.10"
 
 [tool.poetry.scripts]
 poetry = "poetry.console:main"
