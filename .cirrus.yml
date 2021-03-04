@@ -37,7 +37,7 @@ release_task:
     PYTHON38: python3.8
   freebsd_instance:
     matrix:
-      - image_family: freebsd-12-1-snap
+      - image_family: freebsd-12-2
       - image_family: freebsd-13-0-snap
       - image_family: freebsd-11-4-snap
   python_script: pkg install -y curl bash jq python3 python27 python36 python37 python38
