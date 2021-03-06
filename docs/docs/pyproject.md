@@ -305,7 +305,7 @@ it in the `build-system` section of the `pyproject.toml` file like so:
 
 ```toml
 [build-system]
-requires = ["poetry_core>=1.0.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 ```
 
@@ -317,4 +317,4 @@ build-backend = "poetry.core.masonry.api"
 !!!note
 
     If your `pyproject.toml` file still references `poetry` directly as a build backend,
-    you should update it to reference `poetry_core` instead.
+    you should update it to reference `poetry-core` instead.
