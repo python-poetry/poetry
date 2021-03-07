@@ -3,6 +3,7 @@ import sys
 from cleo.helpers import argument
 from cleo.helpers import option
 
+from poetry.core.vcs.git import GitConfig
 from poetry.utils.helpers import module_name
 
 from .command import Command
@@ -14,8 +15,25 @@ class NewCommand(Command):
     description = "Creates a new Python project at <path>."
 
     arguments = [argument("path", "The path to create the project at.")]
+
+    _config = GitConfig()
+
     options = [
         option("name", None, "Set the resulting package name.", flag=False),
+        option(
+            "author-name",
+            None,
+            "Author name of the package.",
+            flag=False,
+            default=_config.get("user.name"),
+        ),
+        option(
+            "author-email",
+            None,
+            "Author email of the package.",
+            flag=False,
+            default=_config.get("user.email"),
+        ),
         option("src", None, "Use the src layout for the project."),
     ]
 
@@ -23,7 +41,6 @@ class NewCommand(Command):
         from pathlib import Path
 
         from poetry.core.semver import parse_constraint
-        from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
 
@@ -47,13 +64,19 @@ class NewCommand(Command):
 
         readme_format = "rst"
 
-        config = GitConfig()
         author = None
-        if config.get("user.name"):
-            author = config["user.name"]
-            author_email = config.get("user.email")
-            if author_email:
-                author += " <{}>".format(author_email)
+        author_name = self.option("author-name")
+        author_email = self.option("author-email")
+
+        if bool(author_email) != bool(author_name):
+            raise ValueError(
+                "`--author-name` and `--author-email` must either both be defined or undefined. "
+                "If one is defined, either by passing the CLI option or by having a defined "
+                "default value (see `poetry new --help` for default values), the other must also "
+                "be defined."
+            )
+        elif author_name:
+            author = "{name} <{email}>".format(name=author_name, email=author_email)
 
         current_env = SystemEnv(Path(sys.executable))
         default_python = "^{}".format(
