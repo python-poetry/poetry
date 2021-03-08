@@ -72,6 +72,7 @@ COMMANDS = [
     "env use",
     # Plugin commands
     "plugin add",
+    "plugin show",
     # Self commands
     "self update",
 ]

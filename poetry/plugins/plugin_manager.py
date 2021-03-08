@@ -1,5 +1,7 @@
 import logging
 
+from typing import List
+
 import entrypoints
 
 from .application_plugin import ApplicationPlugin
@@ -23,10 +25,13 @@ class PluginManager(object):
         if self._disable_plugins:
             return
 
-        plugin_entrypoints = entrypoints.get_group_all("poetry.{}".format(self._type))
+        plugin_entrypoints = self.get_plugin_entry_points()
 
         for entrypoint in plugin_entrypoints:
             self._load_plugin_entrypoint(entrypoint)
+
+    def get_plugin_entry_points(self) -> List[entrypoints.EntryPoint]:
+        return entrypoints.get_group_all("poetry.{}".format(self._type))
 
     def add_plugin(self, plugin):  # type: (Plugin) -> None
         if not isinstance(plugin, (Plugin, ApplicationPlugin)):
