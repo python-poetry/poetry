@@ -566,12 +566,12 @@ poetry plugin add poetry-plugin --dry-run
 
 * `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
 
-### `plugin list`
+### `plugin show`
 
-The `plugin list` command lists all the currently installed plugins.
+The `plugin show` command lists all the currently installed plugins.
 
 ```bash
-poetry plugin list
+poetry plugin show
 ```
 
 ### `plugin remove`

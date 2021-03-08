@@ -199,7 +199,7 @@ poetry plugin remove poetry-plugin
 You can also list all currently installed plugins by running:
 
 ```shell
-poetry plugin list
+poetry plugin show
 ```
 
 ### With `pipx inject`
