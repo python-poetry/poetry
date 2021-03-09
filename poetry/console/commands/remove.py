@@ -1,6 +1,7 @@
 from cleo.helpers import argument
 from cleo.helpers import option
 
+from ...utils.helpers import canonicalize_name
 from .installer_command import InstallerCommand
 
 
@@ -54,12 +55,17 @@ list of installed packages
         for key in requirements:
             del poetry_content[section][key]
 
-        # Write the new content back
-        self.poetry.file.write(content)
+            dependencies = (
+                self.poetry.package.requires
+                if section == "dependencies"
+                else self.poetry.package.dev_requires
+            )
+
+            for i, dependency in enumerate(reversed(dependencies)):
+                if dependency.name == canonicalize_name(key):
+                    del dependencies[-i]
 
         # Update packages
-        self.reset_poetry()
-
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )
@@ -76,15 +82,7 @@ list of installed packages
 
             raise
 
-        if status != 0 or self.option("dry-run"):
-            # Revert changes
-            if not self.option("dry-run"):
-                self.line_error(
-                    "\n"
-                    "Removal failed, reverting pyproject.toml "
-                    "to its original content."
-                )
-
-            self.poetry.file.write(original_content)
+        if not self.option("dry-run"):
+            self.poetry.file.write(content)
 
         return status
