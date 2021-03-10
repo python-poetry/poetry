@@ -355,7 +355,7 @@ class Installer:
         # Execute operations
         return self._execute(ops)
 
-    def _write_lock_file(self, repo: Repository, force: bool = True) -> None:
+    def _write_lock_file(self, repo: Repository, force: bool = False) -> None:
         if force or (self._update and self._write_lock):
             updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
