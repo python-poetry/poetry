@@ -383,10 +383,9 @@ class Installer:
 
     def get_version(self):
         current_version = None
-        if os.path.exists(POETRY_LIB):
-            with open(
-                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
-            ) as f:
+        version_file = os.path.join(POETRY_LIB, "poetry", "__version__.py")
+        if os.path.exists(version_file):
+            with open(version_file, encoding="utf-8") as f:
                 version_content = f.read()
 
             current_version_re = re.match(
@@ -450,10 +449,9 @@ class Installer:
                 break
 
         current_version = None
-        if os.path.exists(POETRY_LIB):
-            with open(
-                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
-            ) as f:
+        version_file = os.path.join(POETRY_LIB, "poetry", "__version__.py")
+        if os.path.exists(version_file):
+            with open(version_file, encoding="utf-8") as f:
                 version_content = f.read()
 
             current_version_re = re.match(
