@@ -450,6 +450,10 @@ This command locks (without installing) the dependencies specified in `pyproject
 poetry lock
 ```
 
+### Options
+
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+
 ## version
 
 This command shows the current version of the project or bumps the version of
