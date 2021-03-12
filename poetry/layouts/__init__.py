@@ -8,7 +8,7 @@ from .standard import StandardLayout
 _LAYOUTS = {"src": SrcLayout, "standard": StandardLayout}
 
 
-def layout(name):  # type: (str) -> Type[Layout]
+def layout(name: str) -> Type[Layout]:
     if name not in _LAYOUTS:
         raise ValueError("Invalid layout")
 

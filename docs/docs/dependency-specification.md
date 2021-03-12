@@ -7,12 +7,7 @@ of the dependency and on the optional constraints that might be needed for it to
 
 ### Caret requirements
 
-**Caret requirements** allow SemVer compatible updates to a specified version.
-An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping.
-In this case, if we ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available,
-but would not update us to `3.0.0`.
-If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`.
-`0.0.x` is not considered compatible with any other version.
+**Caret requirements** allow [SemVer](https://semver.org/) compatible updates to a specified version. An update is allowed if the new version number does not modify the left-most non-zero digit in the major, minor, patch grouping. For instance, if we previously ran `poetry add requests@^2.13.0` and wanted to update the library and ran `poetry update requests`, poetry would update us to version `2.14.0` if it was available, but would not update us to `3.0.0`. If instead we had specified the version string as `^0.1.13`, poetry would update to `0.1.14` but not `0.2.0`. `0.0.x` is not considered compatible with any other version.
 
 Here are some more examples of caret requirements and the versions that would be allowed with them:
 
@@ -101,6 +96,13 @@ requests = { git = "https://github.com/kennethreitz/requests.git", branch = "nex
 flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 # Get a revision by its tag
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
+```
+
+To use an SSH connection, for example in the case of private repositories, use the following example syntax:
+
+```toml
+[tool.poetry.dependencies]
+requests = { git = "git@github.com:requests/requests.git" }
 ```
 
 ## `path` dependencies

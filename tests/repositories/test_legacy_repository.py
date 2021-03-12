@@ -1,6 +1,9 @@
 import shutil
 
+from pathlib import Path
+
 import pytest
+import requests
 
 from poetry.core.packages import Dependency
 from poetry.factory import Factory
@@ -8,8 +11,6 @@ from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.legacy_repository import Page
-from poetry.utils._compat import PY35
-from poetry.utils._compat import Path
 
 
 try:
@@ -94,16 +95,6 @@ def test_get_package_information_fallback_read_setup():
         package.description
         == "Jupyter metapackage. Install all the Jupyter components in one go."
     )
-
-    if PY35:
-        assert package.requires == [
-            Dependency("notebook", "*"),
-            Dependency("qtconsole", "*"),
-            Dependency("jupyter-console", "*"),
-            Dependency("nbconvert", "*"),
-            Dependency("ipykernel", "*"),
-            Dependency("ipywidgets", "*"),
-        ]
 
 
 def test_get_package_information_skips_dependencies_with_invalid_constraints():
@@ -332,3 +323,17 @@ def test_get_4xx_and_5xx_raises(http):
     for endpoint in endpoints:
         with pytest.raises(RepositoryError):
             repo._get(endpoint)
+
+
+def test_get_redirected_response_url(http, monkeypatch):
+    repo = MockHttpRepository({"/foo": 200}, http)
+    redirect_url = "http://legacy.redirect.bar"
+
+    def get_mock(url):
+        response = requests.Response()
+        response.status_code = 200
+        response.url = redirect_url + "/foo"
+        return response
+
+    monkeypatch.setattr(repo.session, "get", get_mock)
+    assert repo._get("/foo")._url == "http://legacy.redirect.bar/foo/"

@@ -1,22 +1,27 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
 
-from clikit.api.io.io import IO
+from cleo.io.io import IO
+from cleo.io.null_io import NullIO
 
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.toml.file import TOMLFile
 
 from .config.config import Config
 from .config.file_config_source import FileConfigSource
-from .io.null_io import NullIO
 from .locations import CONFIG_DIR
 from .packages.locker import Locker
 from .poetry import Poetry
 from .repositories.pypi_repository import PyPiRepository
-from .utils._compat import Path
+
+
+if TYPE_CHECKING:
+    from .repositories.legacy_repository import LegacyRepository
 
 
 class Factory(BaseFactory):
@@ -25,8 +30,8 @@ class Factory(BaseFactory):
     """
 
     def create_poetry(
-        self, cwd=None, io=None
-    ):  # type: (Optional[Path], Optional[IO]) -> Poetry
+        self, cwd: Optional[Path] = None, io: Optional[IO] = None
+    ) -> Poetry:
         if io is None:
             io = NullIO()
 
@@ -70,7 +75,8 @@ class Factory(BaseFactory):
         )
 
         # Configuring sources
-        for source in poetry.local_config.get("source", []):
+        sources = poetry.local_config.get("source", [])
+        for source in sources:
             repository = self.create_legacy_repository(source, config)
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)
@@ -90,7 +96,8 @@ class Factory(BaseFactory):
         # Always put PyPI last to prefer private repositories
         # but only if we have no other default source
         if not poetry.pool.has_default():
-            poetry.pool.add_repository(PyPiRepository(), True)
+            has_sources = bool(sources)
+            poetry.pool.add_repository(PyPiRepository(), not has_sources, has_sources)
         else:
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
@@ -98,7 +105,7 @@ class Factory(BaseFactory):
         return poetry
 
     @classmethod
-    def create_config(cls, io=None):  # type: (Optional[IO]) -> Config
+    def create_config(cls, io: Optional[IO] = None) -> Config:
         if io is None:
             io = NullIO()
 
@@ -134,8 +141,8 @@ class Factory(BaseFactory):
         return config
 
     def create_legacy_repository(
-        self, source, auth_config
-    ):  # type: (Dict[str, str], Config) -> LegacyRepository
+        self, source: Dict[str, str], auth_config: Config
+    ) -> "LegacyRepository":
         from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
         from .utils.helpers import get_client_cert

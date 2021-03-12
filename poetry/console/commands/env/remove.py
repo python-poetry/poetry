@@ -1,13 +1,13 @@
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from ..command import Command
 
 
 class EnvRemoveCommand(Command):
 
-    name = "remove"
-    description = "Removes specific virtual environments associated with the project."
+    name = "env remove"
+    description = "Removes a specific virtualenv associated with the project."
 
     arguments = [
         argument(
@@ -20,11 +20,12 @@ class EnvRemoveCommand(Command):
     options = [
         option(
             "all",
-            description="Remove all managed virtual environments associated with the project.",
+            description="Remove all managed virtual environments associated with the "
+            "project.",
         ),
     ]
 
-    def handle(self):
+    def handle(self) -> None:
         from poetry.utils.env import EnvManager
 
         pythons = self.argument("python")

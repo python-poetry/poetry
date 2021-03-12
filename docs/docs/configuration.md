@@ -34,6 +34,7 @@ which will give you something similar to this:
 cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
 virtualenvs.in-project = null
+virtualenvs.options.always-copy = true
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 ```
 
@@ -102,6 +103,15 @@ Defaults to one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
 - Unix:    `~/.cache/pypoetry`
 
+### `installer.parallel`: boolean
+
+Use parallel execution when using the new (`>=1.1.0`) installer.
+Defaults to `true`.
+
+!!!note:
+        This configuration will be ignored, and parallel execution disabled when running
+        Python 2.7 under Windows.
+
 ### `virtualenvs.create`: boolean
 
 Create a new virtual environment if one doesn't already exist.
@@ -127,6 +137,12 @@ If not set explicitly (default), `poetry` will use the virtualenv from the `.ven
 
 Directory where virtual environments will be created.
 Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
+
+### `virtualenvs.options.always-copy`: boolean
+
+If set to `true` the `--always-copy` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
+Defaults to `false`.
+
 
 ### `repositories.<name>`: string
 

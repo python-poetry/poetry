@@ -2,14 +2,16 @@ import os
 import signal
 import sys
 
+from pathlib import Path
+from typing import Any
+
 import pexpect
 
-from clikit.utils.terminal import Terminal
+from cleo.terminal import Terminal
 from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
 from ._compat import WINDOWS
-from ._compat import Path
 from .env import VirtualEnv
 
 
@@ -20,20 +22,20 @@ class Shell:
 
     _shell = None
 
-    def __init__(self, name, path):  # type: (str, str) -> None
+    def __init__(self, name: str, path: str) -> None:
         self._name = name
         self._path = path
 
     @property
-    def name(self):  # type: () -> str
+    def name(self) -> str:
         return self._name
 
     @property
-    def path(self):  # type: () -> str
+    def path(self) -> str:
         return self._path
 
     @classmethod
-    def get(cls):  # type: () -> Shell
+    def get(cls) -> "Shell":
         """
         Retrieve the current shell.
         """
@@ -59,9 +61,11 @@ class Shell:
 
         return cls._shell
 
-    def activate(self, env):  # type: (VirtualEnv) -> None
+    def activate(self, env: VirtualEnv) -> None:
         if WINDOWS:
             return env.execute(self.path)
+
+        import shlex
 
         terminal = Terminal()
         with env.temp_environ():
@@ -75,9 +79,11 @@ class Shell:
         activate_script = self._get_activate_script()
         bin_dir = "Scripts" if WINDOWS else "bin"
         activate_path = env.path / bin_dir / activate_script
-        c.sendline("{} {}".format(self._get_source_command(), activate_path))
+        c.sendline(
+            "{} {}".format(self._get_source_command(), shlex.quote(str(activate_path)))
+        )
 
-        def resize(sig, data):
+        def resize(sig: Any, data: Any) -> None:
             terminal = Terminal()
             c.setwinsize(terminal.height, terminal.width)
 
@@ -89,7 +95,7 @@ class Shell:
 
         sys.exit(c.exitstatus)
 
-    def _get_activate_script(self):
+    def _get_activate_script(self) -> str:
         if "fish" == self._name:
             suffix = ".fish"
         elif "csh" == self._name:
@@ -101,7 +107,7 @@ class Shell:
 
         return "activate" + suffix
 
-    def _get_source_command(self):
+    def _get_source_command(self) -> str:
         if "fish" == self._name:
             return "source"
         elif "csh" == self._name:
@@ -111,5 +117,5 @@ class Shell:
 
         return "."
 
-    def __repr__(self):  # type: () -> str
+    def __repr__(self) -> str:
         return '{}("{}", "{}")'.format(self.__class__.__name__, self._name, self._path)

@@ -2,12 +2,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from pathlib import Path
+
 import pytest
 
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
-from poetry.utils._compat import PY2
-from poetry.utils._compat import Path
+from poetry.repositories.legacy_repository import LegacyRepository
+from poetry.repositories.pypi_repository import PyPiRepository
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
@@ -150,6 +152,31 @@ def test_poetry_with_default_source():
     assert 1 == len(poetry.pool.repositories)
 
 
+def test_poetry_with_non_default_source():
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_source")
+
+    assert len(poetry.pool.repositories) == 2
+
+    assert not poetry.pool.has_default()
+
+    assert poetry.pool.repositories[0].name == "foo"
+    assert isinstance(poetry.pool.repositories[0], LegacyRepository)
+
+    assert poetry.pool.repositories[1].name == "PyPI"
+    assert isinstance(poetry.pool.repositories[1], PyPiRepository)
+
+
+def test_poetry_with_no_default_source():
+    poetry = Factory().create_poetry(fixtures_dir / "sample_project")
+
+    assert len(poetry.pool.repositories) == 1
+
+    assert poetry.pool.has_default()
+
+    assert poetry.pool.repositories[0].name == "PyPI"
+    assert isinstance(poetry.pool.repositories[0], PyPiRepository)
+
+
 def test_poetry_with_two_default_sources():
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
@@ -169,16 +196,10 @@ def test_validate_fails():
     content = complete.read()["tool"]["poetry"]
     content["this key is not in the schema"] = ""
 
-    if PY2:
-        expected = (
-            "Additional properties are not allowed "
-            "(u'this key is not in the schema' was unexpected)"
-        )
-    else:
-        expected = (
-            "Additional properties are not allowed "
-            "('this key is not in the schema' was unexpected)"
-        )
+    expected = (
+        "Additional properties are not allowed "
+        "('this key is not in the schema' was unexpected)"
+    )
 
     assert Factory.validate(content) == {"errors": [expected], "warnings": []}
 
@@ -189,13 +210,7 @@ def test_create_poetry_fails_on_invalid_configuration():
             Path(__file__).parent / "fixtures" / "invalid_pyproject" / "pyproject.toml"
         )
 
-    if PY2:
-        expected = """\
-The Poetry configuration is invalid:
-  - u'description' is a required property
-"""
-    else:
-        expected = """\
+    expected = """\
 The Poetry configuration is invalid:
   - 'description' is a required property
 """

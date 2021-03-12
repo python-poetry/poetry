@@ -3,9 +3,11 @@ from __future__ import unicode_literals
 import json
 import sys
 
+from pathlib import Path
+
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
 from poetry.core.packages import ProjectPackage
 from poetry.core.toml.file import TOMLFile
@@ -17,8 +19,6 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import PY2
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import get_dependency
@@ -112,15 +112,6 @@ class Locker(BaseLocker):
     def _write_lock_data(self, data):
         for package in data["package"]:
             python_versions = str(package["python-versions"])
-            if PY2:
-                python_versions = python_versions.decode()
-                if "requirements" in package:
-                    requirements = {}
-                    for key, value in package["requirements"].items():
-                        requirements[key.decode()] = value.decode()
-
-                    package["requirements"] = requirements
-
             package["python-versions"] = python_versions
 
         self._written_data = json.loads(json.dumps(data))
@@ -276,7 +267,10 @@ def test_run_update_after_removing_dependencies(
     assert 1 == installer.executor.removals_count
 
 
-def test_run_install_no_dev(installer, locker, repo, package, installed):
+def _configure_run_install_dev(locker, repo, package, installed):
+    """
+    Perform common test setup for `test_run_install_*dev*()` methods.
+    """
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -332,7 +326,34 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
     package.add_dependency(Factory.create_dependency("C", "~1.2", category="dev"))
 
+
+def test_run_install_no_dev(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
     installer.dev_mode(False)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 1 == installer.executor.removals_count
+
+
+def test_run_install_dev_only(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
+    installer.dev_only(True)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 2 == installer.executor.removals_count
+
+
+def test_run_install_no_dev_and_dev_only(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
+    installer.dev_mode(False)
+    installer.dev_only(True)
     installer.run()
 
     assert 0 == installer.executor.installations_count
@@ -635,6 +656,35 @@ def test_run_with_dependencies_extras(installer, locker, repo, package):
 
     installer.run()
     expected = fixture("with-dependencies-extras")
+
+    assert locker.written_data == expected
+
+
+def test_run_with_dependencies_nested_extras(installer, locker, repo, package):
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.0")
+    package_c = get_package("C", "1.0")
+
+    dependency_c = Factory.create_dependency("C", {"version": "^1.0", "optional": True})
+    dependency_b = Factory.create_dependency(
+        "B", {"version": "^1.0", "optional": True, "extras": ["C"]}
+    )
+    dependency_a = Factory.create_dependency("A", {"version": "^1.0", "extras": ["B"]})
+
+    package_b.extras = {"C": [dependency_c]}
+    package_b.add_dependency(dependency_c)
+
+    package_a.add_dependency(dependency_b)
+    package_a.extras = {"B": [dependency_b]}
+
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+
+    package.add_dependency(dependency_a)
+
+    installer.run()
+    expected = fixture("with-dependencies-nested-extras")
 
     assert locker.written_data == expected
 
@@ -1554,7 +1604,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.whitelist(["pytest"])
     installer.run()
 
-    assert (6 if not PY2 else 7) == installer.executor.installations_count
+    assert 6 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
     assert 0 == installer.executor.removals_count
 
@@ -1804,7 +1854,12 @@ def test_installer_can_handle_old_lock_files(
         pool,
         config,
         installed=installed,
-        executor=Executor(MockEnv(version_info=(2, 7, 18)), pool, config, NullIO(),),
+        executor=Executor(
+            MockEnv(version_info=(2, 7, 18)),
+            pool,
+            config,
+            NullIO(),
+        ),
     )
     installer.use_executor()
 
@@ -1822,7 +1877,10 @@ def test_installer_can_handle_old_lock_files(
         config,
         installed=installed,
         executor=Executor(
-            MockEnv(version_info=(2, 7, 18), platform="win32"), pool, config, NullIO(),
+            MockEnv(version_info=(2, 7, 18), platform="win32"),
+            pool,
+            config,
+            NullIO(),
         ),
     )
     installer.use_executor()

@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Dict
 from typing import Optional
 
 from tomlkit import dumps
@@ -9,6 +10,8 @@ from poetry.utils.helpers import module_name
 
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from poetry.core.pyproject.toml import PyProjectTOML
 
 TESTS_DEFAULT = u"""from {package_name} import __version__
@@ -45,21 +48,21 @@ license = ""
 """
 
 BUILD_SYSTEM_MIN_VERSION = "1.0.0"
-BUILD_SYSTEM_MAX_VERSION = None
+BUILD_SYSTEM_MAX_VERSION: Optional[str] = None
 
 
 class Layout(object):
     def __init__(
         self,
-        project,
-        version="0.1.0",
-        description="",
-        readme_format="md",
-        author=None,
-        license=None,
-        python="*",
-        dependencies=None,
-        dev_dependencies=None,
+        project: str,
+        version: str = "0.1.0",
+        description: str = "",
+        readme_format: str = "md",
+        author: Optional[str] = None,
+        license: Optional[str] = None,
+        python: str = "*",
+        dependencies: Optional[Dict[str, str]] = None,
+        dev_dependencies: Optional[Dict[str, str]] = None,
     ):
         self._project = project
         self._package_name = module_name(project)
@@ -76,7 +79,7 @@ class Layout(object):
 
         self._author = author
 
-    def create(self, path, with_tests=True):
+    def create(self, path: "Path", with_tests: bool = True) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         self._create_default(path)
@@ -88,8 +91,8 @@ class Layout(object):
         self._write_poetry(path)
 
     def generate_poetry_content(
-        self, original=None
-    ):  # type: (Optional["PyProjectTOML"]) -> str
+        self, original: Optional["PyProjectTOML"] = None
+    ) -> str:
         template = POETRY_DEFAULT
         if self._license:
             template = POETRY_WITH_LICENSE
@@ -129,10 +132,10 @@ class Layout(object):
 
         return content
 
-    def _create_default(self, path, src=True):
+    def _create_default(self, path: "Path", src: bool = True) -> None:
         raise NotImplementedError()
 
-    def _create_readme(self, path):
+    def _create_readme(self, path: "Path") -> None:
         if self._readme_format == "rst":
             readme_file = path / "README.rst"
         else:
@@ -140,7 +143,7 @@ class Layout(object):
 
         readme_file.touch()
 
-    def _create_tests(self, path):
+    def _create_tests(self, path: "Path") -> None:
         tests = path / "tests"
         tests_init = tests / "__init__.py"
         tests_default = tests / "test_{}.py".format(self._package_name)
@@ -155,7 +158,7 @@ class Layout(object):
                 )
             )
 
-    def _write_poetry(self, path):
+    def _write_poetry(self, path: "Path") -> None:
         content = self.generate_poetry_content()
 
         poetry = path / "pyproject.toml"

@@ -4,13 +4,14 @@ import shutil
 import sys
 import tempfile
 
+from pathlib import Path
 from typing import Any
 from typing import Dict
 
 import httpretty
 import pytest
 
-from cleo import CommandTester
+from cleo.testers.command_tester import CommandTester
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
@@ -21,7 +22,6 @@ from poetry.installation import Installer
 from poetry.layouts import layout
 from poetry.repositories import Pool
 from poetry.repositories import Repository
-from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -34,19 +34,19 @@ from tests.helpers import mock_download
 
 
 class Config(BaseConfig):
-    def get(self, setting_name, default=None):  # type: (str, Any) -> Any
+    def get(self, setting_name: str, default: Any = None) -> Any:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).get(setting_name, default=default)
 
-    def raw(self):  # type: () -> Dict[str, Any]
+    def raw(self) -> Dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).raw()
 
-    def all(self):  # type: () -> Dict[str, Any]
+    def all(self) -> Dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
@@ -54,9 +54,21 @@ class Config(BaseConfig):
 
 
 @pytest.fixture
-def config_source():
+def config_cache_dir(tmp_dir):
+    path = Path(tmp_dir) / ".cache" / "pypoetry"
+    path.mkdir(parents=True)
+    return path
+
+
+@pytest.fixture
+def config_virtualenvs_path(config_cache_dir):
+    return config_cache_dir / "virtualenvs"
+
+
+@pytest.fixture
+def config_source(config_cache_dir):
     source = DictConfigSource()
-    source.add_property("cache-dir", "/foo")
+    source.add_property("cache-dir", str(config_cache_dir))
 
     return source
 
@@ -106,7 +118,8 @@ def pep517_metadata_mock(mocker):
         return PackageInfo(name="demo", version="0.1.2")
 
     mocker.patch(
-        "poetry.inspection.info.PackageInfo._pep517_metadata", _pep517_metadata,
+        "poetry.inspection.info.PackageInfo._pep517_metadata",
+        _pep517_metadata,
     )
 
 
@@ -172,7 +185,7 @@ def mocked_open_files(mocker):
             return mocker.MagicMock()
         return original(self, *args, **kwargs)
 
-    mocker.patch("poetry.utils._compat.Path.open", mocked_open)
+    mocker.patch("pathlib.Path.open", mocked_open)
 
     yield files
 
@@ -212,7 +225,8 @@ def default_python(current_python):
 @pytest.fixture
 def repo(http):
     http.register_uri(
-        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
     )
     return TestRepository(name="foo")
 
@@ -226,6 +240,7 @@ def project_factory(tmp_dir, config, repo, installed, default_python):
         dependencies=None,
         dev_dependencies=None,
         pyproject_content=None,
+        poetry_lock_content=None,
         install_deps=True,
     ):
         project_dir = workspace / "poetry-fixture-{}".format(name)
@@ -248,6 +263,10 @@ def project_factory(tmp_dir, config, repo, installed, default_python):
                 dependencies=dependencies,
                 dev_dependencies=dev_dependencies,
             ).create(project_dir, with_tests=False)
+
+        if poetry_lock_content:
+            lock_file = project_dir / "poetry.lock"
+            lock_file.write_text(data=poetry_lock_content, encoding="utf-8")
 
         poetry = Factory().create_poetry(project_dir)
 
@@ -281,6 +300,13 @@ def command_tester_factory(app, env):
     def _tester(command, poetry=None, installer=None, executor=None, environment=None):
         command = app.find(command)
         tester = CommandTester(command)
+
+        # Setting the formatter from the application
+        # TODO: Find a better way to do this in Cleo
+        app_io = app.create_io()
+        formatter = app_io.output.formatter
+        tester.io.output.set_formatter(formatter)
+        tester.io.error_output.set_formatter(formatter)
 
         if poetry:
             app._poetry = poetry

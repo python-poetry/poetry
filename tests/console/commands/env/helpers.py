@@ -1,11 +1,13 @@
+from pathlib import Path
 from typing import Optional
 from typing import Union
 
 from poetry.core.semver import Version
-from poetry.utils._compat import Path
 
 
-def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()
+def build_venv(
+    path: Union[Path, str], executable: Optional[str] = None, flags: bool = None
+) -> ():
     Path(path).mkdir(parents=True, exist_ok=True)
 
 

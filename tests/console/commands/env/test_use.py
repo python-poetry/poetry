@@ -1,11 +1,12 @@
 import os
 
+from pathlib import Path
+
 import pytest
 import tomlkit
 
 from poetry.core.semver import Version
 from poetry.core.toml.file import TOMLFile
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
@@ -21,11 +22,11 @@ def setup(mocker):
 @pytest.fixture(autouse=True)
 def mock_subprocess_calls(setup, current_python, mocker):
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version(*current_python)),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
 
@@ -39,7 +40,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     mocker, tester, venv_cache, venv_name, venvs_in_cache_config
 ):
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
 
@@ -50,7 +51,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     tester.execute("3.7")
 
     venv_py37 = venv_cache / "{}-py3.7".format(venv_name)
-    mock_build_env.assert_called_with(venv_py37, executable="python3.7")
+    mock_build_env.assert_called_with(
+        venv_py37, executable="python3.7", flags={"always-copy": False}
+    )
 
     envs_file = TOMLFile(venv_cache / "envs.toml")
     assert envs_file.exists()
@@ -62,7 +65,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 Creating virtualenv {} in {}
 Using virtualenv: {}
 """.format(
-        venv_py37.name, venv_py37.parent, venv_py37,
+        venv_py37.name,
+        venv_py37.parent,
+        venv_py37,
     )
 
     assert expected == tester.io.fetch_output()
@@ -120,7 +125,9 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
 Creating virtualenv {} in {}
 Using virtualenv: {}
 """.format(
-        venv_dir.name, venv_dir.parent, venv_dir,
+        venv_dir.name,
+        venv_dir.parent,
+        venv_dir,
     )
 
     assert expected == tester.io.fetch_output()

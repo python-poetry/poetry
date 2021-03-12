@@ -7,17 +7,18 @@ import threading
 
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
+from pathlib import Path
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import List
+from typing import Union
+
+from cleo.io.null_io import NullIO
 
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
-from poetry.io.null_io import NullIO
-from poetry.utils._compat import PY2
-from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import OrderedDict
-from poetry.utils._compat import Path
-from poetry.utils._compat import cpu_count
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
@@ -31,8 +32,25 @@ from .operations.uninstall import Uninstall
 from .operations.update import Update
 
 
+if TYPE_CHECKING:
+    from cleo.io.io import IO  # noqa
+
+    from poetry.config.config import Config
+    from poetry.repositories import Pool
+    from poetry.utils.env import Env
+
+    from .operations import OperationTypes
+
+
 class Executor(object):
-    def __init__(self, env, pool, config, io, parallel=True):
+    def __init__(
+        self,
+        env: "Env",
+        pool: "Pool",
+        config: "Config",
+        io: "IO",
+        parallel: bool = None,
+    ) -> None:
         self._env = env
         self._io = io
         self._dry_run = False
@@ -42,13 +60,16 @@ class Executor(object):
         self._chef = Chef(config, self._env)
         self._chooser = Chooser(pool, self._env)
 
-        if parallel and not (PY2 and WINDOWS):
+        if parallel is None:
+            parallel = config.get("installer.parallel", True)
+
+        if parallel:
             # This should be directly handled by ThreadPoolExecutor
             # however, on some systems the number of CPUs cannot be determined
             # (it raises a NotImplementedError), so, in this case, we assume
             # that the system only has one CPU.
             try:
-                self._max_workers = cpu_count() + 4
+                self._max_workers = os.cpu_count() + 4
             except NotImplementedError:
                 self._max_workers = 5
         else:
@@ -59,41 +80,41 @@ class Executor(object):
         self._executed_operations = 0
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
-        self._sections = OrderedDict()
+        self._sections = dict()
         self._lock = threading.Lock()
         self._shutdown = False
 
     @property
-    def installations_count(self):  # type: () -> int
+    def installations_count(self) -> int:
         return self._executed["install"]
 
     @property
-    def updates_count(self):  # type: () -> int
+    def updates_count(self) -> int:
         return self._executed["update"]
 
     @property
-    def removals_count(self):  # type: () -> int
+    def removals_count(self) -> int:
         return self._executed["uninstall"]
 
-    def supports_fancy_output(self):  # type: () -> bool
-        return self._io.supports_ansi() and not self._dry_run
+    def supports_fancy_output(self) -> bool:
+        return self._io.output.is_decorated() and not self._dry_run
 
-    def disable(self):
+    def disable(self) -> "Executor":
         self._enabled = False
 
         return self
 
-    def dry_run(self, dry_run=True):
+    def dry_run(self, dry_run: bool = True) -> "Executor":
         self._dry_run = dry_run
 
         return self
 
-    def verbose(self, verbose=True):
+    def verbose(self, verbose: bool = True) -> "Executor":
         self._verbose = verbose
 
         return self
 
-    def execute(self, operations):  # type: (Operation) -> int
+    def execute(self, operations: List["OperationTypes"]) -> int:
         self._total_operations = len(operations)
         for job_type in self._executed:
             self._executed[job_type] = 0
@@ -104,7 +125,7 @@ class Executor(object):
 
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
-        self._sections = OrderedDict()
+        self._sections = dict()
         for _, group in groups:
             tasks = []
             serial_operations = []
@@ -146,7 +167,7 @@ class Executor(object):
 
         return 1 if self._shutdown else 0
 
-    def _write(self, operation, line):
+    def _write(self, operation: "OperationTypes", line: str) -> None:
         if not self.supports_fancy_output() or not self._should_write_operation(
             operation
         ):
@@ -161,10 +182,10 @@ class Executor(object):
 
         with self._lock:
             section = self._sections[id(operation)]
-            section.output.clear()
+            section.clear()
             section.write(line)
 
-    def _execute_operation(self, operation):
+    def _execute_operation(self, operation: "OperationTypes") -> None:
         try:
             if self.supports_fancy_output():
                 if id(operation) not in self._sections:
@@ -210,13 +231,15 @@ class Executor(object):
                 raise KeyboardInterrupt
         except Exception as e:
             try:
-                from clikit.ui.components.exception_trace import ExceptionTrace
+                from cleo.ui.exception_trace import ExceptionTrace
 
                 if not self.supports_fancy_output():
                     io = self._io
                 else:
-                    message = "  <error>•</error> {message}: <error>Failed</error>".format(
-                        message=self.get_operation_message(operation, error=True),
+                    message = (
+                        "  <error>•</error> {message}: <error>Failed</error>".format(
+                            message=self.get_operation_message(operation, error=True),
+                        )
                     )
                     self._write(operation, message)
                     io = self._sections.get(id(operation), self._io)
@@ -241,7 +264,7 @@ class Executor(object):
                 with self._lock:
                     self._shutdown = True
 
-    def _do_execute_operation(self, operation):
+    def _do_execute_operation(self, operation: "OperationTypes") -> int:
         method = operation.job_type
 
         operation_message = self.get_operation_message(operation)
@@ -253,7 +276,8 @@ class Executor(object):
                     "<fg=default;options=bold,dark>Skipped</> "
                     "<fg=default;options=dark>for the following reason:</> "
                     "<fg=default;options=bold,dark>{reason}</>".format(
-                        message=operation_message, reason=operation.skip_reason,
+                        message=operation_message,
+                        reason=operation.skip_reason,
                     ),
                 )
 
@@ -284,7 +308,9 @@ class Executor(object):
 
         return result
 
-    def _increment_operations_count(self, operation, executed):
+    def _increment_operations_count(
+        self, operation: "OperationTypes", executed: bool
+    ) -> None:
         with self._lock:
             if executed:
                 self._executed_operations += 1
@@ -292,7 +318,7 @@ class Executor(object):
             else:
                 self._skipped[operation.job_type] += 1
 
-    def run_pip(self, *args, **kwargs):  # type: (...) -> int
+    def run_pip(self, *args: Any, **kwargs: Any) -> int:
         try:
             self._env.run_pip(*args, **kwargs)
         except EnvCommandError as e:
@@ -307,7 +333,13 @@ class Executor(object):
 
         return 0
 
-    def get_operation_message(self, operation, done=False, error=False, warning=False):
+    def get_operation_message(
+        self,
+        operation: "OperationTypes",
+        done: bool = False,
+        error: bool = False,
+        warning: bool = False,
+    ) -> str:
         base_tag = "fg=default"
         operation_color = "c2"
         source_operation_color = "c2"
@@ -361,7 +393,7 @@ class Executor(object):
 
         return ""
 
-    def _display_summary(self, operations):
+    def _display_summary(self, operations: List["OperationTypes"]) -> None:
         installs = 0
         updates = 0
         uninstalls = 0
@@ -404,21 +436,23 @@ class Executor(object):
         )
         self._io.write_line("")
 
-    def _execute_install(self, operation):  # type: (Install) -> None
+    def _execute_install(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
 
-    def _execute_update(self, operation):  # type: (Update) -> None
+    def _execute_update(self, operation: Union[Install, Update]) -> int:
         return self._update(operation)
 
-    def _execute_uninstall(self, operation):  # type: (Uninstall) -> None
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
-            message=self.get_operation_message(operation),
+    def _execute_uninstall(self, operation: Uninstall) -> int:
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
+                message=self.get_operation_message(operation),
+            )
         )
         self._write(operation, message)
 
         return self._remove(operation)
 
-    def _install(self, operation):
+    def _install(self, operation: Union[Install, Update]) -> int:
         package = operation.package
         if package.source_type == "directory":
             return self._install_directory(operation)
@@ -434,8 +468,10 @@ class Executor(object):
             archive = self._download(operation)
 
         operation_message = self.get_operation_message(operation)
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
-            message=operation_message,
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
+                message=operation_message,
+            )
         )
         self._write(operation, message)
 
@@ -445,10 +481,10 @@ class Executor(object):
 
         return self.run_pip(*args)
 
-    def _update(self, operation):
+    def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
 
-    def _remove(self, operation):
+    def _remove(self, operation: Uninstall) -> int:
         package = operation.package
 
         # If we have a VCS package, remove its source directory
@@ -465,11 +501,13 @@ class Executor(object):
 
             raise
 
-    def _prepare_file(self, operation):
+    def _prepare_file(self, operation: Union[Install, Update]) -> Path:
         package = operation.package
 
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Preparing...</info>".format(
-            message=self.get_operation_message(operation),
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Preparing...</info>".format(
+                message=self.get_operation_message(operation),
+            )
         )
         self._write(operation, message)
 
@@ -481,14 +519,16 @@ class Executor(object):
 
         return archive
 
-    def _install_directory(self, operation):
+    def _install_directory(self, operation: Union[Install, Update]) -> int:
         from poetry.factory import Factory
 
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Building...</info>".format(
-            message=operation_message,
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Building...</info>".format(
+                message=operation_message,
+            )
         )
         self._write(operation, message)
 
@@ -545,14 +585,16 @@ class Executor(object):
 
         return self.run_pip(*args)
 
-    def _install_git(self, operation):
+    def _install_git(self, operation: Union[Install, Update]) -> int:
         from poetry.core.vcs import Git
 
         package = operation.package
         operation_message = self.get_operation_message(operation)
 
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Cloning...</info>".format(
-            message=operation_message,
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Cloning...</info>".format(
+                message=operation_message,
+            )
         )
         self._write(operation, message)
 
@@ -571,12 +613,12 @@ class Executor(object):
 
         return self._install_directory(operation)
 
-    def _download(self, operation):  # type: (Operation) -> Path
+    def _download(self, operation: Union[Install, Update]) -> Link:
         link = self._chooser.choose_for(operation.package)
 
         return self._download_link(operation, link)
 
-    def _download_link(self, operation, link):
+    def _download_link(self, operation: Union[Install, Update], link: Link) -> Link:
         package = operation.package
 
         archive = self._chef.get_cached_archive_for_link(link)
@@ -608,24 +650,26 @@ class Executor(object):
 
         return archive
 
-    def _download_archive(self, operation, link):  # type: (Operation, Link) -> Path
+    def _download_archive(self, operation: Union[Install, Update], link: Link) -> Path:
         response = self._authenticator.request(
             "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
         )
         wheel_size = response.headers.get("content-length")
         operation_message = self.get_operation_message(operation)
-        message = "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</>".format(
-            message=operation_message,
+        message = (
+            "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</>".format(
+                message=operation_message,
+            )
         )
         progress = None
         if self.supports_fancy_output():
             if wheel_size is None:
                 self._write(operation, message)
             else:
-                from clikit.ui.components.progress_bar import ProgressBar
+                from cleo.ui.progress_bar import ProgressBar
 
                 progress = ProgressBar(
-                    self._sections[id(operation)].output, max=int(wheel_size)
+                    self._sections[id(operation)], max=int(wheel_size)
                 )
                 progress.set_format(message + " <b>%percent%%</b>")
 
@@ -655,7 +699,7 @@ class Executor(object):
 
         return archive
 
-    def _should_write_operation(self, operation):  # type: (Operation) -> bool
+    def _should_write_operation(self, operation: Operation) -> bool:
         if not operation.skipped:
             return True
 

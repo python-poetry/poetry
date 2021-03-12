@@ -1,4 +1,4 @@
-from cleo import argument
+from cleo.helpers import argument
 
 from .command import Command
 
@@ -10,7 +10,7 @@ class SearchCommand(Command):
 
     arguments = [argument("tokens", "The tokens to search for.", multiple=True)]
 
-    def handle(self):
+    def handle(self) -> None:
         from poetry.repositories.pypi_repository import PyPiRepository
 
         results = PyPiRepository().search(self.argument("tokens"))

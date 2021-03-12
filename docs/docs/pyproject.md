@@ -243,14 +243,31 @@ mysqlclient = { version = "^1.3", optional = true }
 [tool.poetry.extras]
 mysql = ["mysqlclient"]
 pgsql = ["psycopg2"]
+databases = ["mysqlclient", "psycopg2"]
 ```
 
-When installing packages, you can specify extras by using the `-E|--extras` option:
+When installing packages with Poetry, you can specify extras by using the `-E|--extras` option:
 
 ```bash
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
+
+When installing or specifying Poetry-built packages, the extras defined in this section can be activated 
+as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
+
+For example, when installing the package using `pip`, the dependencies required by 
+the `databases` extra can be installed as shown below.
+
+```bash
+pip install awesome[databases]
+```
+
+!!!note
+
+    The dependencies specified for each `extra` must already be defined as project dependencies.
+    Dependencies listed in the `dev-dependencies` section cannot be specified as extras.
+
 
 ## `plugins`
 

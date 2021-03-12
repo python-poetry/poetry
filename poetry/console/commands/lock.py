@@ -1,4 +1,4 @@
-from cleo import option
+from cleo.helpers import option
 
 from .installer_command import InstallerCommand
 
@@ -24,7 +24,7 @@ file.
 
     loggers = ["poetry.repositories.pypi_repository"]
 
-    def handle(self):
+    def handle(self) -> int:
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )

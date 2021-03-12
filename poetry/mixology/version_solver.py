@@ -2,16 +2,14 @@
 import time
 
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Union
 
 from poetry.core.packages import Dependency
 from poetry.core.packages import Package
 from poetry.core.packages import ProjectPackage
-from poetry.core.semver import Version
-from poetry.core.semver import VersionRange
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility
@@ -43,10 +41,10 @@ class VersionSolver:
 
     def __init__(
         self,
-        root,  # type: ProjectPackage
-        provider,  # type: Provider
-        locked=None,  # type: Dict[str, Package]
-        use_latest=None,  # type: List[str]
+        root: ProjectPackage,
+        provider: "Provider",
+        locked: Dict[str, Package] = None,
+        use_latest: List[str] = None,
     ):
         self._root = root
         self._provider = provider
@@ -57,14 +55,14 @@ class VersionSolver:
 
         self._use_latest = use_latest
 
-        self._incompatibilities = {}  # type: Dict[str, List[Incompatibility]]
+        self._incompatibilities: Dict[str, List[Incompatibility]] = {}
         self._solution = PartialSolution()
 
     @property
-    def solution(self):  # type: () -> PartialSolution
+    def solution(self) -> PartialSolution:
         return self._solution
 
-    def solve(self):  # type: () -> SolverResult
+    def solve(self) -> SolverResult:
         """
         Finds a set of dependencies that match the root package's constraints,
         or raises an error if no such set is available.
@@ -94,7 +92,7 @@ class VersionSolver:
                 )
             )
 
-    def _propagate(self, package):  # type: (str) -> None
+    def _propagate(self, package: str) -> None:
         """
         Performs unit propagation on incompatibilities transitively
         related to package to derive new assignments for _solution.
@@ -132,8 +130,8 @@ class VersionSolver:
                     changed.add(result)
 
     def _propagate_incompatibility(
-        self, incompatibility
-    ):  # type: (Incompatibility) -> Union[str, _conflict, None]
+        self, incompatibility: Incompatibility
+    ) -> Optional[Union[str, object]]:
         """
         If incompatibility is almost satisfied by _solution, adds the
         negation of the unsatisfied term to _solution.
@@ -185,9 +183,7 @@ class VersionSolver:
 
         return unsatisfied.dependency.complete_name
 
-    def _resolve_conflict(
-        self, incompatibility
-    ):  # type: (Incompatibility) -> Incompatibility
+    def _resolve_conflict(self, incompatibility: Incompatibility) -> Incompatibility:
         """
         Given an incompatibility that's satisfied by _solution,
         The `conflict resolution`_ constructs a new incompatibility that encapsulates the root
@@ -320,7 +316,7 @@ class VersionSolver:
 
         raise SolveFailure(incompatibility)
 
-    def _choose_package_version(self):  # type: () -> Union[str, None]
+    def _choose_package_version(self) -> Optional[str]:
         """
         Tries to select a version of a required package.
 
@@ -334,7 +330,7 @@ class VersionSolver:
 
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
-        def _get_min(dependency):
+        def _get_min(dependency: Dependency) -> int:
             if dependency.name in self._use_latest:
                 # If we're forced to use the latest version of a package, it effectively
                 # only has one version to choose from.
@@ -406,11 +402,9 @@ class VersionSolver:
             # We'll continue adding its dependencies, then go back to
             # unit propagation which will guide us to choose a better version.
             conflict = conflict or all(
-                [
-                    term.dependency.complete_name == dependency.complete_name
-                    or self._solution.satisfies(term)
-                    for term in incompatibility.terms
-                ]
+                term.dependency.complete_name == dependency.complete_name
+                or self._solution.satisfies(term)
+                for term in incompatibility.terms
             )
 
         if not conflict:
@@ -423,10 +417,7 @@ class VersionSolver:
 
         return dependency.complete_name
 
-    def _excludes_single_version(self, constraint):  # type: (Any) -> bool
-        return isinstance(VersionRange().difference(constraint), Version)
-
-    def _result(self):  # type: () -> SolverResult
+    def _result(self) -> SolverResult:
         """
         Creates a #SolverResult from the decisions in _solution
         """
@@ -438,7 +429,7 @@ class VersionSolver:
             self._solution.attempted_solutions,
         )
 
-    def _add_incompatibility(self, incompatibility):  # type: (Incompatibility) -> None
+    def _add_incompatibility(self, incompatibility: Incompatibility) -> None:
         self._log("fact: {}".format(incompatibility))
 
         for term in incompatibility.terms:
@@ -455,7 +446,7 @@ class VersionSolver:
                 incompatibility
             )
 
-    def _get_locked(self, dependency):  # type: (Dependency) -> Union[Package, None]
+    def _get_locked(self, dependency: Dependency) -> Optional[Package]:
         if dependency.name in self._use_latest:
             return
 
@@ -468,5 +459,5 @@ class VersionSolver:
 
         return locked
 
-    def _log(self, text):
+    def _log(self, text: str) -> None:
         self._provider.debug(text, self._solution.attempted_solutions)

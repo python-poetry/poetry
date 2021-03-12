@@ -1,12 +1,13 @@
 import os
 
+from pathlib import Path
+
 import pytest
 
 from poetry.__version__ import __version__
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import Path
 
 
 FIXTURES = Path(__file__).parent.joinpath("fixtures")
@@ -22,7 +23,7 @@ def test_self_update_should_install_all_necessary_elements(
 ):
     os.environ["POETRY_HOME"] = tmp_dir
 
-    command = tester._command
+    command = tester.command
 
     version = Version.parse(__version__).next_minor.text
     mocker.patch(
