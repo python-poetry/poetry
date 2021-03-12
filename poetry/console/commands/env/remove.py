@@ -12,7 +12,8 @@ class EnvRemoveCommand(Command):
     arguments = [
         argument(
             "python",
-            "The python executable(s) to remove the virtual environment for.",
+            "The python executables of the virtual environments which are to be "
+            "removed.",
             optional=True,
             multiple=True,
         )
