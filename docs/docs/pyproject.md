@@ -253,10 +253,10 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
-When installing or specifying Poetry-built packages, the extras defined in this section can be activated 
+When installing or specifying Poetry-built packages, the extras defined in this section can be activated
 as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
 
-For example, when installing the package using `pip`, the dependencies required by 
+For example, when installing the package using `pip`, the dependencies required by
 the `databases` extra can be installed as shown below.
 
 ```bash
