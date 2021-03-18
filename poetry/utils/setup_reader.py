@@ -293,41 +293,47 @@ class SetupReader(object):
             kwargs = self._find_call_kwargs(call)
 
             if kwargs is None or not isinstance(kwargs, ast.Name):
-                return
+                return None
 
             variable = self._find_variable_in_body(body, kwargs.id)
             if not isinstance(variable, (ast.Dict, ast.Call)):
-                return
+                return None
 
             if isinstance(variable, ast.Call):
                 if not isinstance(variable.func, ast.Name):
-                    return
+                    return None
 
                 if variable.func.id != "dict":
-                    return
+                    return None
 
                 value = self._find_in_call(variable, name)
             else:
                 value = self._find_in_dict(variable, name)
 
         if value is None:
-            return
+            return None
 
         if isinstance(value, ast.Str):
             return value.s
-        elif isinstance(value, ast.Name):
+
+        if isinstance(value, ast.Name):
             variable = self._find_variable_in_body(body, value.id)
 
-            if variable is not None and isinstance(variable, ast.Str):
+            if variable and isinstance(variable, ast.Str):
                 return variable.s
 
+        return None
+
     def _find_in_call(self, call: ast.Call, name: str) -> Optional[Any]:
+        found: Optional[Any] = None
         for keyword in call.keywords:
             if keyword.arg == name:
-                return keyword.value
+                found = keyword.value
+
+        return found
 
     def _find_call_kwargs(self, call: ast.Call) -> Optional[Any]:
-        kwargs = None
+        kwargs: Optional[Any] = None
         for keyword in call.keywords:
             if keyword.arg is None:
                 kwargs = keyword.value
@@ -335,7 +341,7 @@ class SetupReader(object):
         return kwargs
 
     def _find_variable_in_body(self, body: Iterable[Any], name: str) -> Optional[Any]:
-        found = None
+        found: Optional[Any] = None
         for elem in body:
             if found:
                 break
@@ -348,11 +354,18 @@ class SetupReader(object):
                     continue
 
                 if target.id == name:
-                    return elem.value
+                    found = elem.value
+                    break
+
+        return found
 
     def _find_in_dict(
         self, dict_: Union[ast.Dict, ast.Call], name: str
     ) -> Optional[Any]:
+        found: Optional[Any] = None
         for key, val in zip(dict_.keys, dict_.values):
             if isinstance(key, ast.Str) and key.s == name:
-                return val
+                found = val
+                break
+
+        return found

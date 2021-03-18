@@ -962,10 +962,14 @@ class Env(object):
         if "usersite" in self.paths:
             return Path(self.paths["usersite"])
 
+        return None
+
     @property
     def userbase(self) -> Optional[Path]:
         if "userbase" in self.paths:
             return Path(self.paths["userbase"])
+
+        return None
 
     @property
     def purelib(self) -> Path:
@@ -1394,17 +1398,21 @@ class NullEnv(SystemEnv):
     def get_pip_command(self) -> List[str]:
         return [self._bin("python"), "-m", "pip"]
 
-    def _run(self, cmd: List[str], **kwargs: Any) -> int:
+    def _run(self, cmd: List[str], **kwargs: Any) -> Optional[int]:
         self.executed.append(cmd)
 
         if self._execute:
             return super(NullEnv, self)._run(cmd, **kwargs)
+
+        return None
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
         self.executed.append([bin] + list(args))
 
         if self._execute:
             return super(NullEnv, self).execute(bin, *args, **kwargs)
+
+        return None
 
     def _bin(self, bin: str) -> str:
         return bin

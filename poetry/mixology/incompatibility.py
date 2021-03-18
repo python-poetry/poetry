@@ -274,18 +274,18 @@ class Incompatibility:
         other_line: Optional[int],
     ) -> Optional[str]:
         if len(self._terms) == 1 or len(other.terms) == 1:
-            return
+            return None
 
         this_positive = self._single_term_where(lambda term: term.is_positive())
         if this_positive is None:
-            return
+            return None
 
         other_positive = other._single_term_where(lambda term: term.is_positive())
         if other_positive is None:
-            return
+            return None
 
         if this_positive.dependency != other_positive.dependency:
-            return
+            return None
 
         this_negatives = " or ".join(
             [self._terse(term) for term in self._terms if not term.is_positive()]
@@ -320,13 +320,13 @@ class Incompatibility:
         self, other: "Incompatibility", details: dict, this_line: int, other_line: int
     ) -> Optional[str]:
         if len(self._terms) == 1 or len(other.terms) == 1:
-            return
+            return None
 
         this_negative = self._single_term_where(lambda term: not term.is_positive())
         other_negative = other._single_term_where(lambda term: not term.is_positive())
 
         if this_negative is None and other_negative is None:
-            return
+            return None
 
         this_positive = self._single_term_where(lambda term: term.is_positive())
         other_positive = self._single_term_where(lambda term: term.is_positive())
@@ -354,7 +354,7 @@ class Incompatibility:
             latter = self
             latter_line = this_line
         else:
-            return
+            return None
 
         prior_positives = [term for term in prior.terms if term.is_positive()]
 
@@ -413,10 +413,10 @@ class Incompatibility:
 
         negative = prior._single_term_where(lambda term: not term.is_positive())
         if negative is None:
-            return
+            return None
 
         if not negative.inverse.satisfies(latter.terms[0]):
-            return
+            return None
 
         positives = [t for t in prior.terms if t.is_positive()]
 
@@ -467,10 +467,9 @@ class Incompatibility:
             if not callable(term):
                 continue
 
-            if found is not None:
-                return
-
-            found = term
+            if term is not None:
+                found = term
+                break
 
         return found
 

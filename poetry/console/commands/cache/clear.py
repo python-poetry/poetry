@@ -82,3 +82,5 @@ class CacheClearCommand(Command):
             cache.forget("{}:{}".format(package, version))
         else:
             raise ValueError("Invalid cache key")
+
+        return 0

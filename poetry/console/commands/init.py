@@ -231,6 +231,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         with (Path.cwd() / "pyproject.toml").open("w", encoding="utf-8") as f:
             f.write(content)
 
+        return 0
+
     def _determine_requirements(
         self,
         requires: List[str],
@@ -522,7 +524,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         author = author or default
 
         if author in ["n", "no"]:
-            return
+            return None
 
         m = AUTHOR_REGEX.match(author)
         if not m:

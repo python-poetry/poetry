@@ -10,7 +10,7 @@ class CacheListCommand(Command):
     name = "cache list"
     description = "List Poetry's caches."
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int:
         from poetry.locations import REPOSITORY_CACHE_DIR
 
         if os.path.exists(str(REPOSITORY_CACHE_DIR)):
@@ -21,3 +21,4 @@ class CacheListCommand(Command):
                 return 0
 
         self.line("<warning>No caches found</>")
+        return 0

@@ -33,7 +33,7 @@ class KeyRing:
 
     def get_password(self, name: str, username: str) -> Optional[str]:
         if not self.is_available():
-            return
+            return None
 
         import keyring
         import keyring.errors

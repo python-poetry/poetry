@@ -35,7 +35,7 @@ class DebugResolveCommand(InitCommand):
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int:
         from cleo.io.null_io import NullIO
 
         from poetry.core.packages.project_package import ProjectPackage
@@ -143,3 +143,4 @@ class DebugResolveCommand(InitCommand):
 
         table.set_rows(rows)
         table.render()
+        return 0

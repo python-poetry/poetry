@@ -46,7 +46,7 @@ lists all packages available."""
 
     colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int:
         from cleo.io.null_io import NullIO
         from cleo.terminal import Terminal
 
@@ -269,6 +269,8 @@ lists all packages available."""
                 line += " " + description
 
             self.line(line)
+
+        return 0
 
     def display_package_tree(
         self, io: "IO", package: "Package", installed_repo: "Repository"

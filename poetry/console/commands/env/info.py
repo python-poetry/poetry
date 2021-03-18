@@ -17,7 +17,7 @@ class EnvInfoCommand(Command):
 
     options = [option("path", "p", "Only display the environment's path.")]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int:
         from poetry.utils.env import EnvManager
 
         env = EnvManager(self.poetry).get()
@@ -27,10 +27,10 @@ class EnvInfoCommand(Command):
                 return 1
 
             self.line(str(env.path))
-
-            return
+            return 0
 
         self._display_complete_info(env)
+        return 0
 
     def _display_complete_info(self, env: "Env") -> None:
         env_python_version = ".".join(str(s) for s in env.version_info[:3])

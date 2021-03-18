@@ -41,7 +41,7 @@ the config command.
 
     loggers = ["poetry.masonry.publishing.publisher"]
 
-    def handle(self) -> Optional[int]:
+    def handle(self) -> int:
         from poetry.publishing.publisher import Publisher
 
         publisher = Publisher(self.poetry, self.io)
@@ -83,3 +83,5 @@ the config command.
             client_cert,
             self.option("dry-run"),
         )
+
+        return 0
