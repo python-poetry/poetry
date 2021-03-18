@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from cleo.helpers import option
 

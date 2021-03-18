@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from typing import TYPE_CHECKING
 from typing import List
-from typing import Optional
 from typing import Union
 
 from cleo.helpers import argument
