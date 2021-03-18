@@ -120,7 +120,7 @@ pip install --user poetry
 
 #### Installing with `pipx`
 
-Using [`pipx`](https://github.com/cs01/pipx) to install Poetry is also possible. [pipx] is used to install Python CLI applications globally while still isolating them in virtual environments. This allows for clean upgrades and uninstalls. pipx supports Python 3.6 and later. If using an earlier version of Python, consider [pipsi](https://github.com/mitsuhiko/pipsi).
+Using [`pipx`](https://github.com/cs01/pipx) to install Poetry is also possible. `pipx` is used to install Python CLI applications globally while still isolating them in virtual environments. This allows for clean upgrades and uninstalls. `pipx` supports Python 3.6 and later. If using an earlier version of Python, consider [`pipsi`](https://github.com/mitsuhiko/pipsi).
 
 ```bash
 pipx install poetry
