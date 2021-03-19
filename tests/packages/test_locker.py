@@ -73,7 +73,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
-develop = true
+develop = false
 
 [package.source]
 type = "git"
