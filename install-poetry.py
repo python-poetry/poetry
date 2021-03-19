@@ -141,8 +141,6 @@ def data_dir(version: Optional[str] = None) -> Path:
         path = os.path.join(path, "pypoetry")
     elif MACOS:
         path = os.path.expanduser("~/Library/Application Support/pypoetry")
-        if not os.path.isdir(path):
-            path = os.path.expanduser("~/.config/pypoetry")
     else:
         path = os.getenv("XDG_DATA_HOME", os.path.expanduser("~/.local/share"))
         path = os.path.join(path, "pypoetry")
