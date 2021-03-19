@@ -131,7 +131,7 @@ Package operations: 4 installs, 1 update, 1 removal
     expected = set(expected.splitlines())
     output = set(io.fetch_output().splitlines())
     assert expected == output
-    assert 5 == len(env.executed)
+    assert 6 == len(env.executed)
     assert 0 == return_code
 
 
