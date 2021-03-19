@@ -29,6 +29,11 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-
 (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
 ```
 
+!!!warning
+
+    The previous `get-poetry.py` installer is now deprecated, if you are currently using it
+    you should migrate to the new, supported, `install-poetry.py` installer.
+
 The installer installs the `poetry` tool to Poetry's `bin` directory. This location depends on you system:
 
 - `$HOME/.local/bin` for Unix
