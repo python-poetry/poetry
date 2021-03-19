@@ -528,9 +528,16 @@ class Installer:
         if self._bin_dir.joinpath(script).exists():
             self._bin_dir.joinpath(script).unlink()
 
-        self._bin_dir.joinpath(script).symlink_to(
-            self._data_dir.joinpath(target_script)
-        )
+        try:
+            self._bin_dir.joinpath(script).symlink_to(
+                self._data_dir.joinpath(target_script)
+            )
+        except OSError:
+            # This can happen if the user
+            # does not have the correct permission on Windows
+            shutil.copy(
+                self._data_dir.joinpath(target_script), self._bin_dir.joinpath(script)
+            )
 
     def install_poetry(self, version: str, env_path: Path) -> None:
         self._overwrite(
@@ -553,7 +560,7 @@ class Installer:
         else:
             specification = f"poetry=={version}"
 
-        subprocess.call(
+        subprocess.run(
             [str(python), "-m", "pip", "install", specification],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
