@@ -99,3 +99,9 @@ exclude = '''
   | tests/.*/setup.py
 )/
 '''
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:"
+]
