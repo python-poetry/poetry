@@ -3,8 +3,8 @@ from typing import List
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
-    from poetry.core.packages import ProjectPackage
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.project_package import ProjectPackage
 
 
 class SolverResult:

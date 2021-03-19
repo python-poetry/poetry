@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import sys
 
 from pathlib import Path
 
 import pytest
 
-from poetry.core.semver import Version
+from poetry.core.semver.version import Version
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import get_dependency
 from tests.helpers import get_package

@@ -8,7 +8,7 @@ import pytest
 
 from cleo.io.null_io import NullIO
 
-from poetry.core.packages import ProjectPackage
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller

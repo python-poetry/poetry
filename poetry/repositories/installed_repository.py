@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Set
 from typing import Union
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.core.utils.helpers import module_name
 from poetry.utils._compat import metadata
 from poetry.utils.env import Env

@@ -26,10 +26,9 @@ from tomlkit.exceptions import TOMLKitError
 
 import poetry.repositories
 
-from poetry.core.packages import dependency_from_pep_508
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
-from poetry.core.semver import parse_constraint
+from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import parse_marker
@@ -148,7 +147,7 @@ class Locker(object):
 
                     for dep in deps:
                         try:
-                            dependency = dependency_from_pep_508(dep)
+                            dependency = Dependency.create_from_pep_508(dep)
                         except InvalidRequirement:
                             # handle lock files with invalid PEP 508
                             m = re.match(r"^(.+?)(?:\[(.+?)])?(?:\s+\((.+)\))?$", dep)

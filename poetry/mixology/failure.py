@@ -3,7 +3,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from poetry.core.semver import parse_constraint
+from poetry.core.semver.helpers import parse_constraint
 
 from .incompatibility import Incompatibility
 from .incompatibility_cause import ConflictCause

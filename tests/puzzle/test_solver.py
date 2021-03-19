@@ -4,9 +4,9 @@ import pytest
 
 from cleo.io.null_io import NullIO
 
-from poetry.core.packages import Package
-from poetry.core.packages import ProjectPackage
-from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.version.markers import parse_marker
 from poetry.factory import Factory
 from poetry.puzzle import Solver
@@ -1362,9 +1362,9 @@ def test_solver_finds_compatible_package_for_dependency_python_not_fully_compati
 def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(
     solver, repo, package
 ):
-    dep1 = dependency_from_pep_508('B (>=1.0); extra == "foo"')
+    dep1 = Dependency.create_from_pep_508('B (>=1.0); extra == "foo"')
     dep1.activate()
-    dep2 = dependency_from_pep_508('B (>=2.0); extra == "bar"')
+    dep2 = Dependency.create_from_pep_508('B (>=2.0); extra == "bar"')
     dep2.activate()
 
     package.add_dependency(
@@ -1496,7 +1496,7 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
 
     package_a = get_package("A", "1.0.0")
     package_a.requires.append(
-        dependency_from_pep_508(
+        Dependency.create_from_pep_508(
             'B (<2.0); platform_python_implementation == "PyPy" and python_full_version < "2.7.9"'
         )
     )

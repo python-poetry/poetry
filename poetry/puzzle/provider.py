@@ -16,13 +16,13 @@ from typing import Union
 
 from cleo.ui.progress_indicator import ProgressIndicator
 
-from poetry.core.packages import Dependency
-from poetry.core.packages import DirectoryDependency
-from poetry.core.packages import FileDependency
-from poetry.core.packages import Package
-from poetry.core.packages import URLDependency
-from poetry.core.packages import VCSDependency
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.version import Version
 from poetry.core.vcs.git import Git
 from poetry.core.version.markers import MarkerUnion

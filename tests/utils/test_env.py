@@ -11,7 +11,7 @@ import tomlkit
 
 from cleo.io.null_io import NullIO
 
-from poetry.core.semver import Version
+from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.utils.env import GET_BASE_PREFIX

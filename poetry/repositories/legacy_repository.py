@@ -19,12 +19,12 @@ from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.semver import Version
-from poetry.core.semver import VersionConstraint
-from poetry.core.semver import VersionRange
-from poetry.core.semver import parse_constraint
+from poetry.core.semver.helpers import parse_constraint
+from poetry.core.semver.version import Version
+from poetry.core.semver.version_constraint import VersionConstraint
+from poetry.core.semver.version_range import VersionRange
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import wheel_file_re
@@ -38,7 +38,7 @@ from .pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
+    from poetry.core.packages.dependency import Dependency
 
 try:
     from html import unescape

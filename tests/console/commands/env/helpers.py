@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 from typing import Union
 
-from poetry.core.semver import Version
+from poetry.core.semver.version import Version
 
 
 def build_venv(

@@ -14,27 +14,18 @@ from gzip import GzipFile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from urllib.error import HTTPError
+from urllib.request import urlopen
 
 from cleo.helpers import argument
 from cleo.helpers import option
-
-from poetry.console.exceptions import PoetrySimpleConsoleException
-from poetry.core.packages import Dependency
 
 from ..command import Command
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
-    from poetry.core.semver import Version
-
-
-try:
-    from urllib.error import HTTPError
-    from urllib.request import urlopen
-except ImportError:
-    from urllib2 import HTTPError
-    from urllib2 import urlopen
+    from poetry.core.packages.package import Package
+    from poetry.core.semver.version import Version
 
 
 BIN = """# -*- coding: utf-8 -*-
@@ -89,7 +80,8 @@ class SelfUpdateCommand(Command):
 
     def handle(self) -> None:
         from poetry.__version__ import __version__
-        from poetry.core.semver import Version
+        from poetry.core.packages.dependency import Dependency
+        from poetry.core.semver.version import Version
         from poetry.repositories.pypi_repository import PyPiRepository
 
         self._check_recommended_installation()
@@ -249,6 +241,8 @@ class SelfUpdateCommand(Command):
 
     def _check_recommended_installation(self) -> None:
         from pathlib import Path
+
+        from poetry.console.exceptions import PoetrySimpleConsoleException
 
         current = Path(__file__)
         try:

@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Union
 
-from poetry.core.packages import Package
-from poetry.core.semver import Version
+from poetry.core.packages.package import Package
+from poetry.core.semver.version import Version
 
 
 if TYPE_CHECKING:

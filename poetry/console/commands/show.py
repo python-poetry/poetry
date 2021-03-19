@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
@@ -13,8 +12,8 @@ from .env_command import EnvCommand
 if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
 
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import Package
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
     from poetry.repositories import Repository
     from poetry.repositories.installed_repository import InstalledRepository
 
@@ -408,7 +407,7 @@ lists all packages available."""
         return selector.find_best_candidate(name, ">={}".format(package.pretty_version))
 
     def get_update_status(self, latest: "Package", package: "Package") -> str:
-        from poetry.core.semver import parse_constraint
+        from poetry.core.semver.helpers import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
             return "up-to-date"
