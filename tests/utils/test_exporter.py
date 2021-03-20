@@ -833,7 +833,79 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
     expected = """\
 foo @ {}/tests/fixtures/sample_project
 """.format(
-        working_directory.as_posix()
+        working_directory.as_uri()
+    )
+
+    assert expected == content
+
+
+def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
+    tmp_dir, poetry, working_directory
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "directory",
+                        "url": "tests/fixtures/sample_project",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "directory",
+                        "url": "tests/fixtures/sample_project/../project_with_nested_local/bar",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "baz",
+                    "version": "7.8.9",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "directory",
+                        "url": "tests/fixtures/sample_project/../project_with_nested_local/bar/..",
+                        "reference": "",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": [], "baz": []},
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar @ {}/tests/fixtures/project_with_nested_local/bar
+baz @ {}/tests/fixtures/project_with_nested_local
+foo @ {}/tests/fixtures/sample_project
+""".format(
+        working_directory.as_uri(),
+        working_directory.as_uri(),
+        working_directory.as_uri(),
     )
 
     assert expected == content
@@ -878,7 +950,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
     expected = """\
 foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
 """.format(
-        working_directory.as_posix()
+        working_directory.as_uri()
     )
 
     assert expected == content

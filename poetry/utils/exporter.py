@@ -4,6 +4,7 @@ from typing import Union
 
 from clikit.api.io import IO
 
+from poetry.core.packages.utils.utils import path_to_url
 from poetry.poetry import Poetry
 from poetry.utils._compat import Path
 from poetry.utils._compat import decode
@@ -70,23 +71,30 @@ class Exporter(object):
                 line += "-e "
 
             requirement = dependency.to_pep_508(with_extras=False)
-            is_direct_reference = (
-                dependency.is_vcs()
-                or dependency.is_url()
-                or dependency.is_file()
-                or dependency.is_directory()
+            is_direct_local_reference = (
+                dependency.is_file() or dependency.is_directory()
             )
+            is_direct_remote_reference = dependency.is_vcs() or dependency.is_url()
 
-            if is_direct_reference:
+            if is_direct_remote_reference:
                 line = requirement
+            elif is_direct_local_reference:
+                dependency_uri = path_to_url(dependency.source_url)
+                line = "{} @ {}".format(dependency.name, dependency_uri)
             else:
                 line = "{}=={}".format(package.name, package.version)
+
+            if not is_direct_remote_reference:
                 if ";" in requirement:
                     markers = requirement.split(";", 1)[1].strip()
                     if markers:
                         line += "; {}".format(markers)
 
-            if not is_direct_reference and package.source_url:
+            if (
+                not is_direct_remote_reference
+                and not is_direct_local_reference
+                and package.source_url
+            ):
                 indexes.add(package.source_url)
 
             if package.files and with_hashes:
