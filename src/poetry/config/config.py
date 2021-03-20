@@ -132,6 +132,7 @@ class Config:
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
+            "experimental.new-installer",
             "installer.parallel",
         }:
             return boolean_normalizer
