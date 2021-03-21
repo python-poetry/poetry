@@ -112,6 +112,8 @@ class InstalledRepository(Repository):
                 metadata.distributions(path=[entry]),
                 key=lambda d: str(d._path),
             ):
+                if not distribution.metadata:
+                    continue
                 name = distribution.metadata["name"]
                 path = Path(str(distribution._path))
                 version = distribution.metadata["version"]
