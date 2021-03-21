@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Any
+from typing import ContextManager
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -813,8 +814,8 @@ class EnvManager(object):
         executable: Optional[Union[str, Path]] = None,
         flags: Dict[str, bool] = None,
         with_pip: bool = False,
-        with_wheel: bool = False,
-        with_setuptools: bool = False,
+        with_wheel: Optional[bool] = None,
+        with_setuptools: Optional[bool] = None,
     ) -> virtualenv.run.session.Session:
         flags = flags or {}
 
@@ -832,6 +833,8 @@ class EnvManager(object):
             args.append("--no-pip")
         else:
             if with_wheel is None:
+                # we want wheels to be enabled when pip is required and it has
+                # not been explicitly disabled
                 with_wheel = True
 
         if with_wheel is None or not with_wheel:
@@ -1442,7 +1445,12 @@ class NullEnv(SystemEnv):
 
 
 @contextmanager
-def ephemeral_environment(executable=None, pip=False, wheel=None, setuptools=None):
+def ephemeral_environment(
+    executable=None,
+    pip: bool = False,
+    wheel: Optional[bool] = None,
+    setuptools: Optional[bool] = None,
+) -> ContextManager[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
         venv_dir = Path(tmp_dir) / ".venv"
