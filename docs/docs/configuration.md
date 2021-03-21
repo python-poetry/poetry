@@ -35,6 +35,7 @@ cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
+virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 ```
 
@@ -143,6 +144,11 @@ Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 If set to `true` the `--always-copy` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
 Defaults to `false`.
 
+### `virtualenvs.options.system-site-packages`: boolean
+
+Give the virtual environment access to the system site-packages directory.
+Applies on virtualenv creation.
+Defaults to `false`.
 
 ### `repositories.<name>`: string
 
