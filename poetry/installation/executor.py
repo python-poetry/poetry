@@ -532,9 +532,9 @@ class Executor(object):
         self._write(operation, message)
 
         if package.root_dir:
-            req = os.path.join(str(package.root_dir), package.source_url)
+            req = package.root_dir / package.source_url
         else:
-            req = os.path.realpath(package.source_url)
+            req = Path(package.source_url).resolve(strict=False)
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
