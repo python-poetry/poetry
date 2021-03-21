@@ -175,7 +175,7 @@ def test_throw_on_invalid_package():
             sorted(
                 metadata.distributions(path=[str(SITE_PURELIB)]),
                 key=lambda d: str(d._path),
-            )
+            ),
         )
     )
     name = invalid.metadata["name"]
