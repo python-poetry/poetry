@@ -30,6 +30,7 @@ INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PURELIB / "editable-with-import-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "lib64-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "bender-2.0.5.dist-info"),
+    metadata.PathDistribution(SITE_PLATLIB / "invalid-0.0.1.dist-info"),
 ]
 
 
@@ -82,7 +83,8 @@ def get_package_from_repository(
 
 
 def test_load_successful(repository):
-    assert len(repository.packages) == len(INSTALLED_RESULTS) - 1
+    # skip invalid-0.0.1
+    assert len(repository.packages) == len(INSTALLED_RESULTS) - 2
 
 
 def test_load_ensure_isolation(repository):
@@ -165,3 +167,19 @@ def test_load_standard_package_with_pth_file(repository):
     assert standard.version.text == "1.2.3"
     assert standard.source_type is None
     assert standard.source_url is None
+
+def test_throw_on_invalid_package():
+    invalid = next(
+        filter(
+            lambda e: str(e._path).endswith("invalid-0.0.1.dist-info"),
+            sorted(
+                metadata.distributions(path=[str(SITE_PURELIB)]),
+                key=lambda d: str(d._path),
+            )
+        )
+    )
+    name = invalid.metadata["name"]
+    version = invalid.metadata["version"]
+    with pytest.raises(TypeError) as error:
+        Package(name, version, version)
+    assert str(error.value) == 'expected string or bytes-like object'
