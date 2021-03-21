@@ -168,6 +168,7 @@ def test_load_standard_package_with_pth_file(repository):
     assert standard.source_type is None
     assert standard.source_url is None
 
+
 def test_throw_on_invalid_package():
     invalid = next(
         filter(
