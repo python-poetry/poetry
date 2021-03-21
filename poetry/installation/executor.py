@@ -700,7 +700,4 @@ class Executor(object):
         return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
-        if not operation.skipped:
-            return True
-
-        return self._dry_run or self._verbose
+        return not operation.skipped or self._dry_run or self._verbose

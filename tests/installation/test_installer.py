@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
+from cleo.io.inputs.input import Input
+from cleo.io.io import IO
 from cleo.io.null_io import NullIO
+from cleo.io.outputs.buffered_output import BufferedOutput
+from cleo.io.outputs.output import Verbosity
 
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
@@ -1889,3 +1893,28 @@ def test_installer_can_handle_old_lock_files(
 
     # colorama will be added
     assert 8 == installer.executor.installations_count
+
+
+@pytest.mark.parametrize("quiet", [True, False])
+def test_run_with_dependencies_quiet(installer, locker, repo, package, quiet):
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    installer._io = IO(Input(), BufferedOutput(), BufferedOutput())
+    installer._io.set_verbosity(Verbosity.QUIET if quiet else Verbosity.NORMAL)
+
+    package.add_dependency(Factory.create_dependency("A", "~1.0"))
+    package.add_dependency(Factory.create_dependency("B", "^1.0"))
+
+    installer.run()
+    expected = fixture("with-dependencies")
+
+    assert locker.written_data == expected
+
+    installer._io.output._buffer.seek(0)
+    if quiet:
+        assert installer._io.output._buffer.read() == ""
+    else:
+        assert installer._io.output._buffer.read() != ""
