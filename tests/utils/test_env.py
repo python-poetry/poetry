@@ -159,7 +159,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / "{}-py3.7".format(venv_name),
         executable="python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={"always-copy": False},
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -279,7 +279,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / "{}-py3.6".format(venv_name),
         executable="python3.6",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={"always-copy": False},
     )
 
     assert envs_file.exists()
@@ -333,7 +333,7 @@ def test_activate_activates_recreates_for_different_patch(
     build_venv_m.assert_called_with(
         Path(tmp_dir) / "{}-py3.7".format(venv_name),
         executable="python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={"always-copy": False},
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / "{}-py3.7".format(venv_name))
 
@@ -661,7 +661,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     m.assert_called_with(
         config_virtualenvs_path / "{}-py3.7".format(venv_name),
         executable="python3",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={"always-copy": False},
     )
 
 
@@ -685,7 +685,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     m.assert_called_with(
         config_virtualenvs_path / "{}-py3.9".format(venv_name),
         executable="python3.9",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={"always-copy": False},
     )
 
 
@@ -769,7 +769,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
         config_virtualenvs_path
         / "{}-py{}.{}".format(venv_name, version.major, version.minor),
         executable=None,
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={"always-copy": False},
     )
 
 
@@ -804,7 +804,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         config_virtualenvs_path
         / "{}-py{}.{}".format(venv_name, version.major, version.minor - 1),
         executable="python{}.{}".format(version.major, version.minor - 1),
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={"always-copy": False},
     )
 
 
@@ -838,7 +838,7 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     m.assert_called_with(
         poetry.file.parent / ".venv",
         executable="python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={"always-copy": False},
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
@@ -875,17 +875,3 @@ def test_venv_has_correct_paths(tmp_venv):
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
     assert tmp_venv.site_packages.path == Path(paths["purelib"])
-
-
-def test_env_system_packages(tmp_path, config):
-    venv_path = tmp_path / "venv"
-    pyvenv_cfg = venv_path / "pyvenv.cfg"
-
-    EnvManager(config).build_venv(path=venv_path, flags={"system-site-packages": True})
-
-    if sys.version_info >= (3, 3):
-        assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
-    elif (2, 6) < sys.version_info < (3, 0):
-        assert not venv_path.joinpath(
-            "lib", "python2.7", "no-global-site-packages.txt"
-        ).exists()
