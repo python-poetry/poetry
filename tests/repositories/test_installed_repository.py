@@ -182,4 +182,4 @@ def test_throw_on_invalid_package():
     version = invalid.metadata["version"]
     with pytest.raises(TypeError) as error:
         Package(name, version, version)
-    assert str(error.value) == 'expected string or bytes-like object'
+    assert str(error.value) == "expected string or bytes-like object"
