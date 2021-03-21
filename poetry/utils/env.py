@@ -1087,6 +1087,9 @@ class Env(object):
         return True
 
     def run(self, bin: str, *args: str, **kwargs: Any) -> Union[str, int]:
+        if bin == "pip":
+            return self.run_pip(*args, **kwargs)
+
         bin = self._bin(bin)
         cmd = [bin] + list(args)
         return self._run(cmd, **kwargs)
@@ -1131,6 +1134,9 @@ class Env(object):
         return decode(output)
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
+        if bin == "pip":
+            return self.run_pip(*args, **kwargs)
+
         bin = self._bin(bin)
 
         if not self._is_windows:
