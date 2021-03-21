@@ -35,7 +35,7 @@ class Config(object):
             "create": True,
             "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
-            "options": {"always-copy": False},
+            "options": {"always-copy": False, "system-site-packages": False},
         },
         "experimental": {"new-installer": True},
         "installer": {"parallel": True},
@@ -140,6 +140,7 @@ class Config(object):
             "virtualenvs.create",
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
+            "virtualenvs.options.system-site-packages",
             "installer.parallel",
         }:
             return boolean_normalizer
