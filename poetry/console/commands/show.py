@@ -124,7 +124,7 @@ lists all packages available."""
             ]
 
             table.add_rows(rows)
-            table.render(self.io)
+            table.render()
 
             if pkg.requires:
                 self.line("")
