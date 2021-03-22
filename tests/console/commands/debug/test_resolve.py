@@ -41,8 +41,8 @@ Resolving dependencies...
 
 Resolution results:
 
-msgpack-python 0.5.3
-cachy          0.2.0
+msgpack-python 0.5.3 
+cachy          0.2.0 
 """
 
     assert tester.io.fetch_output() == expected
@@ -71,8 +71,8 @@ Resolving dependencies...
 
 Resolution results:
 
-pendulum 2.0.3
-demo     0.1.2
+pendulum 2.0.3 
+demo     0.1.2 
 """
 
     assert tester.io.fetch_output() == expected
