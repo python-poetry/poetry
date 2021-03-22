@@ -94,7 +94,6 @@ def test_execute_executes_a_batch_of_operations(
         .resolve()
         .as_posix(),
     )
-    directory_package.develop = True
 
     git_package = Package(
         "demo",
