@@ -20,6 +20,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
+[tool.poetry.build]
+generate-setup-file = false
+
 # Requirements
 [tool.poetry.dependencies]
 python = "^3.6"
