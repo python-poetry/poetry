@@ -201,7 +201,7 @@ poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 ```
 
 The commands above create static completions that need to be manually updated when
-Poetry is updated. Alternatly, you can dynamically create the completions each time
+Poetry is updated. Alternatively, you can dynamically create the completions each time
 you open a terminal. However, this doesn't happen instantly, so it will add some
 delay before the terminal is ready.
 
