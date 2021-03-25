@@ -23,7 +23,7 @@ def setup(mocker):
 def mock_subprocess_calls(setup, current_python, mocker):
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version(*current_python)),
+        side_effect=check_output_wrapper(Version.from_parts(*current_python)),
     )
     mocker.patch(
         "subprocess.Popen.communicate",

@@ -339,7 +339,7 @@ class VersionSolver:
             if locked and (
                 dependency.constraint.allows(locked.version)
                 or locked.is_prerelease()
-                and dependency.constraint.allows(locked.version.next_patch)
+                and dependency.constraint.allows(locked.version.next_patch())
             ):
                 return 1
 

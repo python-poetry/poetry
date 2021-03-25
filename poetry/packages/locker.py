@@ -478,7 +478,7 @@ class Locker(object):
         # We expect the locker to be able to read lock files
         # from the same semantic versioning range
         accepted_versions = parse_constraint(
-            "^{}".format(Version(current_version.major, 0))
+            "^{}".format(Version.from_parts(current_version.major, 0))
         )
         lock_version_allowed = accepted_versions.allows(lock_version)
         if lock_version_allowed and current_version < lock_version:

@@ -36,7 +36,7 @@ class VersionSelector(object):
             },
         )
         candidates = self._pool.find_packages(dependency)
-        only_prereleases = all([c.version.is_prerelease() for c in candidates])
+        only_prereleases = all([c.version.is_unstable() for c in candidates])
 
         if not candidates:
             return False
@@ -77,7 +77,7 @@ class VersionSelector(object):
             version = pretty_version
         else:
             version = ".".join(str(p) for p in parts)
-            if parsed.is_prerelease():
-                version += "-{}".format(".".join(str(p) for p in parsed.prerelease))
+            if parsed.is_unstable():
+                version += "-{}".format(parsed.pre.to_string())
 
         return "^{}".format(version)

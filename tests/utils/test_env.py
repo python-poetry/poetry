@@ -429,7 +429,7 @@ def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
-    other_version = Version.parse("3.4") if version.major == 2 else version.next_minor
+    other_version = Version.parse("3.4") if version.major == 2 else version.next_minor()
     (
         Path(tmp_dir) / "{}-py{}.{}".format(venv_name, version.major, version.minor)
     ).mkdir()

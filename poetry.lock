@@ -152,6 +152,14 @@ ssh = ["bcrypt (>=3.1.5)"]
 test = ["pytest (>=6.0)", "pytest-cov", "pytest-subtests", "pytest-xdist", "pretend", "iso8601", "pytz", "hypothesis (>=1.11.4,!=3.79.2)"]
 
 [[package]]
+name = "dataclasses"
+version = "0.8"
+description = "A backport of the dataclasses module for Python 3.6"
+category = "main"
+optional = false
+python-versions = ">=3.6, <3.7"
+
+[[package]]
 name = "deepdiff"
 version = "5.2.3"
 description = "Deep Difference and Search of any Python object/data."
@@ -390,13 +398,14 @@ python-versions = "^3.6"
 develop = false
 
 [package.dependencies]
+dataclasses = {version = "^0.8", markers = "python_version >= \"3.6\" and python_version < \"3.7\""}
 importlib-metadata = {version = "^1.7.0", markers = "python_version >= \"3.5\" and python_version < \"3.8\""}
 
 [package.source]
 type = "git"
-url = "https://github.com/python-poetry/poetry-core"
+url = "https://github.com/python-poetry/poetry-core.git"
 reference = "master"
-resolved_reference = "5d5251c427aacedcf54f9743635a8124e5a26151"
+resolved_reference = "c11cb9a6ebdda53d45dae78b45f6f73f5368e793"
 
 [[package]]
 name = "pre-commit"
@@ -705,7 +714,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "c72b0807603d4902cff83901d0e65165e243937b5be90b05c17d3c92a06b4fc8"
+content-hash = "8442060c68d80744b05aac3a07818a1e04e457c05b0e481d717cb44721009566"
 
 [metadata.files]
 appdirs = [
@@ -858,6 +867,10 @@ cryptography = [
     {file = "cryptography-3.4.6-pp37-pypy37_pp73-manylinux2010_x86_64.whl", hash = "sha256:0923ba600d00718d63a3976f23cab19aef10c1765038945628cd9be047ad0336"},
     {file = "cryptography-3.4.6-pp37-pypy37_pp73-manylinux2014_x86_64.whl", hash = "sha256:9e98b452132963678e3ac6c73f7010fe53adf72209a32854d55690acac3f6724"},
     {file = "cryptography-3.4.6.tar.gz", hash = "sha256:2d32223e5b0ee02943f32b19245b61a62db83a882f0e76cc564e1cec60d48f87"},
+]
+dataclasses = [
+    {file = "dataclasses-0.8-py3-none-any.whl", hash = "sha256:0201d89fa866f68c8ebd9d08ee6ff50c0b255f8ec63a71c16fda7af82bb887bf"},
+    {file = "dataclasses-0.8.tar.gz", hash = "sha256:8479067f342acf957dc82ec415d355ab5edb7e7646b90dc6e2fd1d96ad084c97"},
 ]
 deepdiff = [
     {file = "deepdiff-5.2.3-py3-none-any.whl", hash = "sha256:3d3da4bd7e01fb5202088658ed26427104c748dda56a0ecfac9ce9a1d2d00844"},

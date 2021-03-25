@@ -55,9 +55,9 @@ class Repository(BaseRepository):
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
-                and constraint.max.is_prerelease()
+                and constraint.max.is_unstable()
                 or constraint.min is not None
-                and constraint.min.is_prerelease()
+                and constraint.min.is_unstable()
             ):
                 allow_prereleases = True
 
@@ -77,7 +77,7 @@ class Repository(BaseRepository):
 
                 if constraint.allows(package.version) or (
                     package.is_prerelease()
-                    and constraint.allows(package.version.next_patch)
+                    and constraint.allows(package.version.next_patch())
                 ):
                     packages.append(package)
 

@@ -17,7 +17,6 @@ import requests
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
-from poetry.core.version import Version
 
 
 try:
@@ -35,10 +34,6 @@ def canonicalize_name(name: str) -> str:
 
 def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
-
-
-def normalize_version(version: str) -> str:
-    return str(Version(version))
 
 
 def _del_ro(action: Callable, name: str, exc: Exception) -> None:

@@ -20,10 +20,10 @@ from html5lib.html5parser import parse
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.semver.exceptions import ParseVersionError
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
+from poetry.core.version.exceptions import InvalidVersion
 from poetry.core.version.markers import parse_marker
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils._compat import to_str
@@ -98,9 +98,9 @@ class PyPiRepository(RemoteRepository):
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
-                and constraint.max.is_prerelease()
+                and constraint.max.is_unstable()
                 or constraint.min is not None
-                and constraint.min.is_prerelease()
+                and constraint.min.is_unstable()
             ):
                 allow_prereleases = True
 
@@ -129,7 +129,7 @@ class PyPiRepository(RemoteRepository):
 
             try:
                 package = Package(info["info"]["name"], version)
-            except ParseVersionError:
+            except InvalidVersion:
                 self._log(
                     'Unable to parse version "{}" for the {} package, skipping'.format(
                         version, dependency.name
@@ -186,7 +186,7 @@ class PyPiRepository(RemoteRepository):
                 result = Package(name, version, description)
                 result.description = to_str(description.strip())
                 results.append(result)
-            except ParseVersionError:
+            except InvalidVersion:
                 self._log(
                     'Unable to parse version "{}" for the {} package, skipping'.format(
                         version, name
