@@ -428,7 +428,9 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
 [metadata.files]
 """.format(
-        version=".".join(Version.parse(Locker._VERSION).next_minor.text.split(".")[:2])
+        version=".".join(
+            Version.parse(Locker._VERSION).next_minor().text.split(".")[:2]
+        )
     )
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 

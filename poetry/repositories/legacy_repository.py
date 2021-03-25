@@ -254,9 +254,9 @@ class LegacyRepository(PyPiRepository):
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
-                and constraint.max.is_prerelease()
+                and constraint.max.is_unstable()
                 or constraint.min is not None
-                and constraint.min.is_prerelease()
+                and constraint.min.is_unstable()
             ):
                 allow_prereleases = True
 
@@ -275,7 +275,7 @@ class LegacyRepository(PyPiRepository):
 
             versions = []
             for version in page.versions:
-                if version.is_prerelease() and not allow_prereleases:
+                if version.is_unstable() and not allow_prereleases:
                     if constraint.is_any():
                         # we need this when all versions of the package are pre-releases
                         ignored_pre_release_versions.append(version)

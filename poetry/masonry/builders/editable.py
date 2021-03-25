@@ -84,7 +84,7 @@ class EditableBuilder(Builder):
                 f.write(decode(builder.build_setup()))
 
         try:
-            if self._env.pip_version < Version(19, 0):
+            if self._env.pip_version < Version.from_parts(19, 0):
                 pip_editable_install(self._path, self._env)
             else:
                 # Temporarily rename pyproject.toml

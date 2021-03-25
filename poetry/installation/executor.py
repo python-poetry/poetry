@@ -543,8 +543,9 @@ class Executor(object):
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
-            legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
-                19, 0, 0
+            legacy_pip = (
+                self._env.pip_version
+                < self._env.pip_version.__class__.from_parts(19, 0, 0)
             )
             package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 

@@ -437,7 +437,7 @@ class PackageNode(DFSNode):
                 if pkg.complete_name == dependency.complete_name and (
                     dependency.constraint.allows(pkg.version)
                     or dependency.allows_prereleases()
-                    and pkg.version.is_prerelease()
+                    and pkg.version.is_unstable()
                     and dependency.constraint.allows(pkg.version.stable)
                 ):
                     # If there is already a child with this name

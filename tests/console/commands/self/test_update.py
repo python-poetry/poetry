@@ -25,7 +25,7 @@ def test_self_update_should_install_all_necessary_elements(
 
     command = tester.command
 
-    version = Version.parse(__version__).next_minor.text
+    version = Version.parse(__version__).next_minor().text
     mocker.patch(
         "poetry.repositories.pypi_repository.PyPiRepository.find_packages",
         return_value=[Package("poetry", version)],

@@ -24,7 +24,7 @@ from poetry.__version__ import __version__
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.utils.helpers import normalize_version
+from poetry.core.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 
 
