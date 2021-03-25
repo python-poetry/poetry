@@ -304,19 +304,7 @@ class Application(BaseApplication):
         if self._plugins_loaded:
             return
 
-        from cleo.exceptions import CommandNotFoundException
-
-        name = self._get_command_name(io)
-        command_name = ""
-        if name:
-            try:
-                command_name = self.find(name).name
-            except CommandNotFoundException:
-                pass
-
-        self._disable_plugins = (
-            io.input.has_parameter_option("--no-plugins") or command_name == "new"
-        )
+        self._disable_plugins = io.input.has_parameter_option("--no-plugins")
 
         if not self._disable_plugins:
             from poetry.plugins.plugin_manager import PluginManager
