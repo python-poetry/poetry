@@ -20,7 +20,10 @@ def pip_install(
     path = Path(path) if isinstance(path, str) else path
     is_wheel = path.suffix == ".whl"
 
-    args = ["install", "--prefix", str(environment.path)]
+    # We disable version check here as we are already pinning to version available in either the
+    # virtual environment or the virtualenv package embedded wheel. Version checks are a wasteful
+    # network call that adds a lot of wait time when installing a lot of packages.
+    args = ["install", "--disable-pip-version-check", "--prefix", str(environment.path)]
 
     if not is_wheel:
         args.insert(1, "--use-pep517")
