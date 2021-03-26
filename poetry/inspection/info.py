@@ -450,7 +450,9 @@ class PackageInfo:
         except PackageInfoError:
             pass
 
-        with ephemeral_environment(pip=True, wheel=True, setuptools=True) as venv:
+        with ephemeral_environment(
+            with_pip=True, with_wheel=True, with_setuptools=True
+        ) as venv:
             # TODO: cache PEP 517 build environment corresponding to each project venv
             dest_dir = venv.path.parent / "dist"
             dest_dir.mkdir()

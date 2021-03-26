@@ -47,7 +47,7 @@ def pip_install(
             # Under certain Python3.6 installs vendored pip wheel does not contain zip-safe
             # pep517 lib. In this cases we create an isolated ephemeral virtual environment.
             with ephemeral_environment(
-                executable=environment.python, pip=True, setuptools=True
+                executable=environment.python, with_pip=True, with_setuptools=True
             ) as env:
                 return environment.run(
                     env._bin("pip"),

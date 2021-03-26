@@ -1458,9 +1458,10 @@ class NullEnv(SystemEnv):
 @contextmanager
 def ephemeral_environment(
     executable=None,
-    pip: bool = False,
-    wheel: Optional[bool] = None,
-    setuptools: Optional[bool] = None,
+    flags: Dict[str, bool] = None,
+    with_pip: bool = False,
+    with_wheel: Optional[bool] = None,
+    with_setuptools: Optional[bool] = None,
 ) -> ContextManager[VirtualEnv]:
     with temporary_directory() as tmp_dir:
         # TODO: cache PEP 517 build environment corresponding to each project venv
@@ -1468,9 +1469,10 @@ def ephemeral_environment(
         EnvManager.build_venv(
             path=venv_dir.as_posix(),
             executable=executable,
-            with_pip=pip,
-            with_wheel=wheel,
-            with_setuptools=setuptools,
+            flags=flags,
+            with_pip=with_pip,
+            with_wheel=with_wheel,
+            with_setuptools=with_setuptools,
         )
         yield VirtualEnv(venv_dir, venv_dir)
 
