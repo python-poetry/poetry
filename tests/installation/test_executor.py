@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
 import re
 import shutil
 
@@ -27,6 +28,7 @@ from tests.repositories.test_pypi_repository import MockRepository
 def env(tmp_dir):
     path = Path(tmp_dir) / ".venv"
     path.mkdir(parents=True)
+
     return MockEnv(path=path, is_venv=True)
 
 
@@ -261,3 +263,142 @@ def test_executor_should_delete_incomplete_downloads(
         executor._download(Install(Package("tomlkit", "0.5.3")))
 
     assert not destination_fixture.exists()
+
+
+def test_executor_should_write_pep610_url_references_for_files(
+    tmp_venv, pool, config, io
+):
+    url = (
+        Path(__file__)
+        .parent.parent.joinpath(
+            "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
+        )
+        .resolve()
+    )
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+
+    dist_info = tmp_venv.site_packages.path.joinpath("demo-0.1.0.dist-info")
+    assert dist_info.exists()
+
+    direct_url_file = dist_info.joinpath("direct_url.json")
+
+    assert direct_url_file.exists()
+
+    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
+
+    assert url_reference == {"archive_info": {}, "url": url.as_uri()}
+
+
+def test_executor_should_write_pep610_url_references_for_directories(
+    tmp_venv, pool, config, io
+):
+    url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    package = Package(
+        "simple-project", "1.2.3", source_type="directory", source_url=url.as_posix()
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+
+    dist_info = tmp_venv.site_packages.path.joinpath("simple_project-1.2.3.dist-info")
+    assert dist_info.exists()
+
+    direct_url_file = dist_info.joinpath("direct_url.json")
+
+    assert direct_url_file.exists()
+
+    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
+
+    assert url_reference == {"dir_info": {}, "url": url.as_uri()}
+
+
+def test_executor_should_write_pep610_url_references_for_editable_directories(
+    tmp_venv, pool, config, io
+):
+    url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=url.as_posix(),
+        develop=True,
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+
+    dist_info = tmp_venv.site_packages.path.joinpath("simple_project-1.2.3.dist-info")
+    assert dist_info.exists()
+
+    direct_url_file = dist_info.joinpath("direct_url.json")
+
+    assert direct_url_file.exists()
+
+    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
+
+    assert url_reference == {"dir_info": {"editable": True}, "url": url.as_uri()}
+
+
+def test_executor_should_write_pep610_url_references_for_urls(
+    tmp_venv, pool, config, io, mock_file_downloads
+):
+    package = Package(
+        "demo",
+        "0.1.0",
+        source_type="url",
+        source_url="https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+
+    dist_info = tmp_venv.site_packages.path.joinpath("demo-0.1.0.dist-info")
+    assert dist_info.exists()
+
+    direct_url_file = dist_info.joinpath("direct_url.json")
+
+    assert direct_url_file.exists()
+
+    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
+
+    assert url_reference == {
+        "archive_info": {},
+        "url": "https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
+    }
+
+
+def test_executor_should_write_pep610_url_references_for_git(
+    tmp_venv, pool, config, io, mock_file_downloads
+):
+    package = Package(
+        "demo",
+        "0.1.2",
+        source_type="git",
+        source_reference="master",
+        source_resolved_reference="123456",
+        source_url="https://github.com/demo/demo.git",
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+
+    dist_info = tmp_venv.site_packages.path.joinpath("demo-0.1.2.dist-info")
+    assert dist_info.exists()
+
+    direct_url_file = dist_info.joinpath("direct_url.json")
+
+    assert direct_url_file.exists()
+
+    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
+
+    assert url_reference == {
+        "vcs_info": {
+            "vcs": "git",
+            "requested_revision": "master",
+            "commit_id": "123456",
+        },
+        "url": "https://github.com/demo/demo.git",
+    }

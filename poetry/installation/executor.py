@@ -1,4 +1,5 @@
 import itertools
+import json
 import os
 import threading
 
@@ -8,6 +9,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Union
 
@@ -35,6 +37,7 @@ if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
 
     from poetry.config.config import Config
+    from poetry.core.packages.package import Package
     from poetry.repositories import Pool
     from poetry.utils.env import Env
 
@@ -82,6 +85,7 @@ class Executor:
         self._sections = dict()
         self._lock = threading.Lock()
         self._shutdown = False
+        self._hashes: Dict[str, str] = {}
 
     @property
     def installations_count(self) -> int:
@@ -434,10 +438,18 @@ class Executor:
         self._io.write_line("")
 
     def _execute_install(self, operation: Union[Install, Update]) -> int:
-        return self._install(operation)
+        status_code = self._install(operation)
+
+        self._save_url_reference(operation)
+
+        return status_code
 
     def _execute_update(self, operation: Union[Install, Update]) -> int:
-        return self._update(operation)
+        status_code = self._update(operation)
+
+        self._save_url_reference(operation)
+
+        return status_code
 
     def _execute_uninstall(self, operation: Uninstall) -> int:
         message = (
@@ -594,12 +606,17 @@ class Executor:
 
         git = Git()
         git.clone(package.source_url, src_dir)
-        git.checkout(package.source_reference, src_dir)
+        git.checkout(package.source_resolved_reference, src_dir)
 
         # Now we just need to install from the source directory
+        original_url = package.source_url
         package._source_url = str(src_dir)
 
-        return self._install_directory(operation)
+        status_code = self._install_directory(operation)
+
+        package._source_url = original_url
+
+        return status_code
 
     def _download(self, operation: Union[Install, Update]) -> Link:
         link = self._chooser.choose_for(operation.package)
@@ -635,6 +652,8 @@ class Executor:
                 raise RuntimeError(
                     f"Invalid hash for {package} using archive {archive.name}"
                 )
+
+            self._hashes[package.name] = archive_hash
 
         return archive
 
@@ -689,3 +708,111 @@ class Executor:
 
     def _should_write_operation(self, operation: Operation) -> bool:
         return not operation.skipped or self._dry_run or self._verbose
+
+    def _save_url_reference(self, operation: "OperationTypes") -> None:
+        """
+        Create and store a PEP-610 `direct_url.json` file, if needed.
+        """
+        if operation.job_type not in {"install", "update"}:
+            return
+
+        from poetry.core.masonry.utils.helpers import escape_name
+        from poetry.core.masonry.utils.helpers import escape_version
+
+        package = operation.package
+
+        if not package.source_url:
+            # Since we are installing from our own distribution cache
+            # pip will write a `direct_url.json` file pointing to the cache
+            # distribution.
+            # That's not what we want so we remove the direct_url.json file,
+            # if it exists.
+            dist_info = self._env.site_packages.path.joinpath(
+                "{}-{}.dist-info".format(
+                    escape_name(package.pretty_name),
+                    escape_version(package.version.text),
+                )
+            )
+            if dist_info.exists() and dist_info.joinpath("direct_url.json").exists():
+                dist_info.joinpath("direct_url.json").unlink()
+
+            return
+
+        url_reference = None
+
+        if package.source_type == "git":
+            url_reference = self._create_git_url_reference(package)
+        elif package.source_type == "url":
+            url_reference = self._create_url_url_reference(package)
+        elif package.source_type == "directory":
+            url_reference = self._create_directory_url_reference(package)
+        elif package.source_type == "file":
+            url_reference = self._create_file_url_reference(package)
+
+        if url_reference:
+            dist_info = self._env.site_packages.path.joinpath(
+                "{}-{}.dist-info".format(
+                    escape_name(package.name), escape_version(package.version.text)
+                )
+            )
+
+            if dist_info.exists():
+                dist_info.joinpath("direct_url.json").write_text(
+                    json.dumps(url_reference), encoding="utf-8"
+                )
+
+    def _create_git_url_reference(
+        self, package: "Package"
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        reference = {
+            "url": package.source_url,
+            "vcs_info": {
+                "vcs": "git",
+                "requested_revision": package.source_reference,
+                "commit_id": package.source_resolved_reference,
+            },
+        }
+
+        return reference
+
+    def _create_url_url_reference(
+        self, package: "Package"
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        archive_info = {}
+
+        if package.name in self._hashes:
+            archive_info["hash"] = self._hashes[package.name]
+
+        reference = {"url": package.source_url, "archive_info": archive_info}
+
+        return reference
+
+    def _create_file_url_reference(
+        self, package: "Package"
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        archive_info = {}
+
+        if package.name in self._hashes:
+            archive_info["hash"] = self._hashes[package.name]
+
+        reference = {
+            "url": Path(package.source_url).as_uri(),
+            "archive_info": archive_info,
+        }
+
+        return reference
+
+    def _create_directory_url_reference(
+        self, package: "Package"
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        dir_info = {}
+
+        if package.develop:
+            dir_info["editable"] = True
+
+        reference = {
+            "url": Path(package.source_url).as_uri(),
+            "dir_info": dir_info,
+        }
+
+        return reference
