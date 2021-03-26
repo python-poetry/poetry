@@ -405,3 +405,8 @@ def command_tester_factory(app, env):
 def do_lock(command_tester_factory, poetry):
     command_tester_factory("lock").execute()
     assert poetry.locker.lock.exists()
+
+
+@pytest.fixture
+def venv_flags_default():
+    return {"always-copy": False, "system-site-packages": False}
