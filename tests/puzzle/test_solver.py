@@ -815,21 +815,21 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     check_solver_result(
         ops,
         [
-            {"job": "install", "package": package_b},
-            {"job": "install", "package": package_a},
-            {"job": "install", "package": package_c},
             {"job": "install", "package": package_d},
+            {"job": "install", "package": package_b},
+            {"job": "install", "package": package_c},
+            {"job": "install", "package": package_a},
         ],
     )
 
-    b = ops[0].package
-    a = ops[1].package
+    d = ops[0].package
+    b = ops[1].package
     c = ops[2].package
-    d = ops[3].package
+    a = ops[3].package
 
     assert d.category == "dev"
-    assert c.category == "dev"
     assert b.category == "main"
+    assert c.category == "dev"
     assert a.category == "main"
 
 
@@ -872,24 +872,24 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     check_solver_result(
         ops,
         [
-            {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
-            {"job": "install", "package": package_c},
             {"job": "install", "package": package_d},
+            {"job": "install", "package": package_a},
+            {"job": "install", "package": package_c},
             {"job": "install", "package": package_e},
         ],
     )
 
-    a = ops[0].package
-    b = ops[1].package
-    c = ops[2].package
-    d = ops[3].package
+    b = ops[0].package
+    d = ops[1].package
+    a = ops[2].package
+    c = ops[3].package
     e = ops[4].package
 
-    assert d.category == "dev"
-    assert c.category == "dev"
     assert b.category == "main"
+    assert d.category == "dev"
     assert a.category == "main"
+    assert c.category == "dev"
     assert e.category == "main"
 
 
