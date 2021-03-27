@@ -1,7 +1,7 @@
 import sys
 
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from poetry.utils.helpers import module_name
 
@@ -19,11 +19,12 @@ class NewCommand(Command):
         option("src", None, "Use the src layout for the project."),
     ]
 
-    def handle(self):
-        from poetry.core.semver import parse_constraint
+    def handle(self) -> None:
+        from pathlib import Path
+
+        from poetry.core.semver.helpers import parse_constraint
         from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
-        from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
         if self.option("src"):

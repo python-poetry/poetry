@@ -4,8 +4,10 @@ import tempfile
 import pytest
 import tomlkit
 
+from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.semver.version import Version
+from poetry.factory import Factory
 from poetry.packages.locker import Locker
 
 from ..helpers import get_dependency
@@ -28,9 +30,17 @@ def root():
 
 def test_lock_file_data_is_ordered(locker, root):
     package_a = get_package("A", "1.0.0")
-    package_a.add_dependency("B", "^1.0")
+    package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_a.files = [{"file": "foo", "hash": "456"}, {"file": "bar", "hash": "123"}]
-    packages = [package_a, get_package("B", "1.2")]
+    package_git = Package(
+        "git-package",
+        "1.2.3",
+        source_type="git",
+        source_url="https://github.com/python-poetry/poetry.git",
+        source_reference="develop",
+        source_resolved_reference="123456",
+    )
+    packages = [package_a, get_package("B", "1.2"), package_git]
 
     locker.set_lock_data(root, packages)
 
@@ -38,28 +48,43 @@ def test_lock_file_data_is_ordered(locker, root):
         content = f.read()
 
     expected = """[[package]]
-category = "main"
-description = ""
 name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
 optional = false
 python-versions = "*"
-version = "1.0.0"
 
 [package.dependencies]
 B = "^1.0"
 
 [[package]]
-category = "main"
-description = ""
 name = "B"
+version = "1.2"
+description = ""
+category = "main"
 optional = false
 python-versions = "*"
-version = "1.2"
+
+[[package]]
+name = "git-package"
+version = "1.2.3"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/python-poetry/poetry.git"
+reference = "develop"
+resolved_reference = "123456"
 
 [metadata]
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 lock-version = "1.1"
 python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = [
@@ -67,6 +92,7 @@ A = [
     {file = "foo", hash = "456"},
 ]
 B = []
+git-package = []
 """
 
     assert expected == content
@@ -75,12 +101,12 @@ B = []
 def test_locker_properly_loads_extras(locker):
     content = """\
 [[package]]
-category = "main"
-description = "httplib2 caching for requests"
 name = "cachecontrol"
+version = "0.12.5"
+description = "httplib2 caching for requests"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.12.5"
 
 [package.dependencies]
 msgpack = "*"
@@ -95,9 +121,9 @@ filecache = ["lockfile (>=0.9)"]
 redis = ["redis (>=2.10.5)"]
 
 [metadata]
-content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 lock-version = "1.1"
 python-versions = "~2.7 || ^3.4"
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
 cachecontrol = []
@@ -117,6 +143,136 @@ cachecontrol = []
     assert lockfile_dep.name == "lockfile"
 
 
+def test_locker_properly_loads_nested_extras(locker):
+    content = """\
+[[package]]
+name = "a"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+b = {version = "^1.0", optional = true, extras = "c"}
+
+[package.extras]
+b = ["b[c] (>=1.0,<2.0)"]
+
+[[package]]
+name = "b"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+c = {version = "^1.0", optional = true}
+
+[package.extras]
+c = ["c (>=1.0,<2.0)"]
+
+[[package]]
+name = "c"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+python-versions = "*"
+lock-version = "1.1"
+content-hash = "123456789"
+
+[metadata.files]
+"a" = []
+"b" = []
+"c" = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert 3 == len(repository.packages)
+
+    packages = repository.find_packages(get_dependency("a", "1.0"))
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_b = package.extras["b"][0]
+    assert dependency_b.name == "b"
+    assert dependency_b.extras == frozenset({"c"})
+
+    packages = repository.find_packages(dependency_b)
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_c = package.extras["c"][0]
+    assert dependency_c.name == "c"
+    assert dependency_c.extras == frozenset()
+
+    packages = repository.find_packages(dependency_c)
+    assert len(packages) == 1
+
+
+def test_locker_properly_loads_extras_legacy(locker):
+    content = """\
+[[package]]
+name = "a"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+b = {version = "^1.0", optional = true}
+
+[package.extras]
+b = ["b (^1.0)"]
+
+[[package]]
+name = "b"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+python-versions = "*"
+lock-version = "1.1"
+content-hash = "123456789"
+
+[metadata.files]
+"a" = []
+"b" = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert 2 == len(repository.packages)
+
+    packages = repository.find_packages(get_dependency("a", "1.0"))
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_b = package.extras["b"][0]
+    assert dependency_b.name == "b"
+
+
 def test_lock_packages_with_null_description(locker, root):
     package_a = get_package("A", "1.0.0")
     package_a.description = None
@@ -127,17 +283,17 @@ def test_lock_packages_with_null_description(locker, root):
         content = f.read()
 
     expected = """[[package]]
-category = "main"
-description = ""
 name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
 optional = false
 python-versions = "*"
-version = "1.0.0"
 
 [metadata]
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 lock-version = "1.1"
 python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -148,36 +304,36 @@ A = []
 
 def test_lock_file_should_not_have_mixed_types(locker, root):
     package_a = get_package("A", "1.0.0")
-    package_a.add_dependency("B", "^1.0.0")
-    package_a.add_dependency("B", {"version": ">=1.0.0", "optional": True})
+    package_a.add_dependency(Factory.create_dependency("B", "^1.0.0"))
+    package_a.add_dependency(
+        Factory.create_dependency("B", {"version": ">=1.0.0", "optional": True})
+    )
     package_a.requires[-1].activate()
     package_a.extras["foo"] = [get_dependency("B", ">=1.0.0")]
 
     locker.set_lock_data(root, [package_a])
 
     expected = """[[package]]
-category = "main"
-description = ""
 name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
 optional = false
 python-versions = "*"
-version = "1.0.0"
 
 [package.dependencies]
-[[package.dependencies.B]]
-version = "^1.0.0"
-
-[[package.dependencies.B]]
-optional = true
-version = ">=1.0.0"
+B = [
+    {version = "^1.0.0"},
+    {version = ">=1.0.0", optional = true},
+]
 
 [package.extras]
 foo = ["B (>=1.0.0)"]
 
 [metadata]
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 lock-version = "1.1"
 python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -191,12 +347,12 @@ A = []
 
 def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
     content = u"""[[package]]
-category = "main"
-description = ""
 name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
 optional = false
 python-versions = "*"
-version = "1.0.0"
 
 [package.extras]
 foo = ["bar"]
@@ -205,9 +361,9 @@ foo = ["bar"]
 foo = ["bar"]
 
 [metadata]
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 lock-version = "1.1"
 python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -222,9 +378,13 @@ A = []
 
 
 def test_locking_legacy_repository_package_should_include_source_section(root, locker):
-    package_a = get_package("A", "1.0.0")
-    package_a.source_url = "https://foo.bar"
-    package_a.source_reference = "legacy"
+    package_a = Package(
+        "A",
+        "1.0.0",
+        source_type="legacy",
+        source_url="https://foo.bar",
+        source_reference="legacy",
+    )
     packages = [package_a]
 
     locker.set_lock_data(root, packages)
@@ -233,21 +393,22 @@ def test_locking_legacy_repository_package_should_include_source_section(root, l
         content = f.read()
 
     expected = """[[package]]
-category = "main"
-description = ""
 name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
 optional = false
 python-versions = "*"
-version = "1.0.0"
 
 [package.source]
-reference = "legacy"
+type = "legacy"
 url = "https://foo.bar"
+reference = "legacy"
 
 [metadata]
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 lock-version = "1.1"
 python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -261,9 +422,9 @@ def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
 ):
     content = """\
 [metadata]
-content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 lock-version = "{version}"
 python-versions = "~2.7 || ^3.4"
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
 """.format(
@@ -293,9 +454,9 @@ def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
 ):
     content = """\
 [metadata]
-content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 lock-version = "2.0"
 python-versions = "~2.7 || ^3.4"
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
 """
@@ -310,27 +471,29 @@ python-versions = "~2.7 || ^3.4"
 def test_extras_dependencies_are_ordered(locker, root):
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
-        "B", {"version": "^1.0.0", "optional": True, "extras": ["c", "a", "b"]}
+        Factory.create_dependency(
+            "B", {"version": "^1.0.0", "optional": True, "extras": ["c", "a", "b"]}
+        )
     )
     package_a.requires[-1].activate()
 
     locker.set_lock_data(root, [package_a])
 
     expected = """[[package]]
-category = "main"
-description = ""
 name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
 optional = false
 python-versions = "*"
-version = "1.0.0"
 
 [package.dependencies]
 B = {version = "^1.0.0", extras = ["a", "b", "c"], optional = true}
 
 [metadata]
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 lock-version = "1.1"
 python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
 
 [metadata.files]
 A = []
@@ -351,9 +514,9 @@ def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatibl
     )
     content = """\
 [metadata]
-content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 lock-version = "{version}"
 python-versions = "~2.7 || ^3.4"
+content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
 """.format(

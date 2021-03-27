@@ -1,16 +1,16 @@
-from cleo import option
+from cleo.helpers import option
 
 from ..command import Command
 
 
 class EnvListCommand(Command):
 
-    name = "list"
+    name = "env list"
     description = "Lists all virtualenvs associated with the current project."
 
     options = [option("full-path", None, "Output the full paths of the virtualenvs.")]
 
-    def handle(self):
+    def handle(self) -> None:
         from poetry.utils.env import EnvManager
 
         manager = EnvManager(self.poetry)

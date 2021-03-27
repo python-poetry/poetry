@@ -1,49 +1,60 @@
-from typing import TYPE_CHECKING
+import logging
+import time
+import urllib.parse
 
-from poetry.utils._compat import urlparse
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Optional
+from typing import Tuple
+
+import requests
+import requests.auth
+import requests.exceptions
+
+from poetry.exceptions import PoetryException
 from poetry.utils.password_manager import PasswordManager
 
 
 if TYPE_CHECKING:
-    from typing import Any
-    from typing import Optional
-    from typing import Tuple
-
-    from clikit.api.io import IO
-    from requests import Request  # noqa
-    from requests import Response  # noqa
-    from requests import Session  # noqa
+    from cleo.io.io import IO
 
     from poetry.config.config import Config
 
 
+logger = logging.getLogger()
+
+
 class Authenticator(object):
-    def __init__(self, config, io):  # type: (Config, IO) -> None
+    def __init__(self, config: "Config", io: Optional["IO"] = None) -> None:
         self._config = config
         self._io = io
         self._session = None
         self._credentials = {}
         self._password_manager = PasswordManager(self._config)
 
-    @property
-    def session(self):  # type: () -> Session
-        from requests import Session  # noqa
+    def _log(self, message: str, level: str = "debug") -> None:
+        if self._io is not None:
+            self._io.write_line(
+                "<{level:s}>{message:s}</{level:s}>".format(
+                    message=message, level=level
+                )
+            )
+        else:
+            getattr(logger, level, logger.debug)(message)
 
+    @property
+    def session(self) -> requests.Session:
         if self._session is None:
-            self._session = Session()
+            self._session = requests.Session()
 
         return self._session
 
-    def request(self, method, url, **kwargs):  # type: (str, str, Any) -> Response
-        from requests import Request  # noqa
-        from requests.auth import HTTPBasicAuth
-
-        request = Request(method, url)
-
-        username, password = self._get_credentials_for_url(url)
+    def request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
+        request = requests.Request(method, url)
+        username, password = self.get_credentials_for_url(url)
 
         if username is not None and password is not None:
-            request = HTTPBasicAuth(username, password)(request)
+            request = requests.auth.HTTPBasicAuth(username, password)(request)
 
         session = self.session
         prepared_request = session.prepare_request(request)
@@ -63,16 +74,35 @@ class Authenticator(object):
             "allow_redirects": kwargs.get("allow_redirects", True),
         }
         send_kwargs.update(settings)
-        resp = session.send(prepared_request, **send_kwargs)
 
-        resp.raise_for_status()
+        attempt = 0
 
-        return resp
+        while True:
+            is_last_attempt = attempt >= 5
+            try:
+                resp = session.send(prepared_request, **send_kwargs)
+            except (requests.exceptions.ConnectionError, OSError) as e:
+                if is_last_attempt:
+                    raise e
+            else:
+                if resp.status_code not in [502, 503, 504] or is_last_attempt:
+                    resp.raise_for_status()
+                    return resp
 
-    def _get_credentials_for_url(
-        self, url
-    ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
-        parsed_url = urlparse.urlsplit(url)
+            if not is_last_attempt:
+                attempt += 1
+                delay = 0.5 * attempt
+                self._log(
+                    "Retrying HTTP request in {} seconds.".format(delay), level="debug"
+                )
+                time.sleep(delay)
+                continue
+
+        # this should never really be hit under any sane circumstance
+        raise PoetryException("Failed HTTP {} request", method.upper())
+
+    def get_credentials_for_url(self, url: str) -> Tuple[Optional[str], Optional[str]]:
+        parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
 
@@ -95,7 +125,7 @@ class Authenticator(object):
                     credentials = auth, None
 
                 credentials = tuple(
-                    None if x is None else urlparse.unquote(x) for x in credentials
+                    None if x is None else urllib.parse.unquote(x) for x in credentials
                 )
 
         if credentials[0] is not None or credentials[1] is not None:
@@ -106,10 +136,11 @@ class Authenticator(object):
         return credentials[0], credentials[1]
 
     def _get_credentials_for_netloc_from_config(
-        self, netloc
-    ):  # type: (str) -> Tuple[Optional[str], Optional[str]]
+        self, netloc: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         credentials = (None, None)
-        for repository_name in self._config.get("http-basic", {}):
+
+        for repository_name in self._config.get("repositories", []):
             repository_config = self._config.get(
                 "repositories.{}".format(repository_name)
             )
@@ -120,7 +151,7 @@ class Authenticator(object):
             if not url:
                 continue
 
-            parsed_url = urlparse.urlsplit(url)
+            parsed_url = urllib.parse.urlsplit(url)
 
             if netloc == parsed_url.netloc:
                 auth = self._password_manager.get_http_auth(repository_name)

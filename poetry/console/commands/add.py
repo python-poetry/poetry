@@ -1,5 +1,9 @@
-from cleo import argument
-from cleo import option
+# -*- coding: utf-8 -*-
+from typing import Dict
+from typing import List
+
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from .init import InitCommand
 from .installer_command import InstallerCommand
@@ -55,6 +59,8 @@ class AddCommand(InstallerCommand, InitCommand):
         "  - A name and a constraint (<b>requests@^2.23.0</b>)\n"
         "  - A git url (<b>git+https://github.com/python-poetry/poetry.git</b>)\n"
         "  - A git url with a revision (<b>git+https://github.com/python-poetry/poetry.git#develop</b>)\n"
+        "  - A git SSH url (<b>git+ssh://github.com/python-poetry/poetry.git</b>)\n"
+        "  - A git SSH url with a revision (<b>git+ssh://github.com/python-poetry/poetry.git#develop</b>)\n"
         "  - A file path (<b>../my-package/my-package.whl</b>)\n"
         "  - A directory (<b>../my-package/</b>)\n"
         "  - A url (<b>https://example.com/packages/my-package-0.1.0.tar.gz</b>)\n"
@@ -62,10 +68,10 @@ class AddCommand(InstallerCommand, InitCommand):
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
+    def handle(self) -> int:
         from tomlkit import inline_table
 
-        from poetry.core.semver import parse_constraint
+        from poetry.core.semver.helpers import parse_constraint
 
         packages = self.argument("name")
         is_dev = self.option("dev")
@@ -86,18 +92,18 @@ class AddCommand(InstallerCommand, InitCommand):
         if section not in poetry_content:
             poetry_content[section] = {}
 
-        for name in packages:
-            for key in poetry_content[section]:
-                if key.lower() == name.lower():
-                    pair = self._parse_requirements([name])[0]
-                    if (
-                        "git" in pair
-                        or "url" in pair
-                        or pair.get("version") == "latest"
-                    ):
-                        continue
+        existing_packages = self.get_existing_packages_from_input(
+            packages, poetry_content, section
+        )
 
-                    raise ValueError("Package {} is already present".format(name))
+        if existing_packages:
+            self.notify_about_existing_packages(existing_packages)
+
+        packages = [name for name in packages if name not in existing_packages]
+
+        if not packages:
+            self.line("Nothing to add.")
+            return 0
 
         requirements = self._determine_requirements(
             packages,
@@ -147,29 +153,29 @@ class AddCommand(InstallerCommand, InitCommand):
 
             poetry_content[section][_constraint["name"]] = constraint
 
-        # Write new content
-        self.poetry.file.write(content)
-
-        # Cosmetic new line
-        self.line("")
-
-        # Update packages
-        self.reset_poetry()
-
-        self._installer.set_package(self.poetry.package)
-        self._installer.dry_run(self.option("dry-run"))
-        self._installer.verbose(self._io.is_verbose())
-        self._installer.update(True)
-        if self.option("lock"):
-            self._installer.lock()
-
-        self._installer.whitelist([r["name"] for r in requirements])
-
         try:
-            status = self._installer.run()
-        except Exception:
-            self.poetry.file.write(original_content)
+            # Write new content
+            self.poetry.file.write(content)
 
+            # Cosmetic new line
+            self.line("")
+
+            # Update packages
+            self.reset_poetry()
+
+            self._installer.set_package(self.poetry.package)
+            self._installer.dry_run(self.option("dry-run"))
+            self._installer.verbose(self._io.is_verbose())
+            self._installer.update(True)
+            if self.option("lock"):
+                self._installer.lock()
+
+            self._installer.whitelist([r["name"] for r in requirements])
+
+            status = self._installer.run()
+        except BaseException:
+            # Using BaseException here as some exceptions, eg: KeyboardInterrupt, do not inherit from Exception
+            self.poetry.file.write(original_content)
             raise
 
         if status != 0 or self.option("dry-run"):
@@ -184,3 +190,26 @@ class AddCommand(InstallerCommand, InitCommand):
             self.poetry.file.write(original_content)
 
         return status
+
+    def get_existing_packages_from_input(
+        self, packages: List[str], poetry_content: Dict, target_section: str
+    ) -> List[str]:
+        existing_packages = []
+
+        for name in packages:
+            for key in poetry_content[target_section]:
+                if key.lower() == name.lower():
+                    existing_packages.append(name)
+
+        return existing_packages
+
+    def notify_about_existing_packages(self, existing_packages: List[str]) -> None:
+        self.line(
+            "The following packages are already present in the pyproject.toml and will be skipped:\n"
+        )
+        for name in existing_packages:
+            self.line("  • <c1>{name}</c1>".format(name=name))
+        self.line(
+            "\nIf you want to update it to the latest compatible version, you can use `poetry update package`.\n"
+            "If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.\n"
+        )

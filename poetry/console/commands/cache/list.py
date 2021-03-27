@@ -1,14 +1,16 @@
 import os
 
+from typing import Optional
+
 from ..command import Command
 
 
 class CacheListCommand(Command):
 
-    name = "list"
+    name = "cache list"
     description = "List Poetry's caches."
 
-    def handle(self):
+    def handle(self) -> Optional[int]:
         from poetry.locations import REPOSITORY_CACHE_DIR
 
         if os.path.exists(str(REPOSITORY_CACHE_DIR)):

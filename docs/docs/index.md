@@ -23,11 +23,11 @@ recommended way of installing `poetry`.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 ```
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
+(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
 ```
 
 !!! note
@@ -38,9 +38,12 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 The installer installs the `poetry` tool to Poetry's `bin` directory.
 On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
 
-This directory will be in your `$PATH` environment variable,
-which means you can run them from the shell without further configuration.
-Open a new shell and type the following:
+This directory will be automatically added to your `$PATH` environment variable,
+by appending a statement to your `$HOME/.profile` configuration (or equivalent files).
+If you do not feel comfortable with this, please pass the `--no-modify-path` flag to
+the installer and manually add the Poetry's `bin` directory to your path.
+
+Finally, open a new shell and type the following:
 
 ```bash
 poetry --version
@@ -117,7 +120,7 @@ pip install --user poetry
 
 #### Installing with `pipx`
 
-Using [`pipx`](https://github.com/cs01/pipx) to install Poetry is also possible. [pipx] is used to install Python CLI applications globally while still isolating them in virtual environments. This allows for clean upgrades and uninstalls. pipx supports Python 3.6 and later. If using an earlier version of Python, consider [pipsi](https://github.com/mitsuhiko/pipsi).
+Using [`pipx`](https://github.com/cs01/pipx) to install Poetry is also possible. `pipx` is used to install Python CLI applications globally while still isolating them in virtual environments. This allows for clean upgrades and uninstalls. `pipx` supports Python 3.6 and later. If using an earlier version of Python, consider [`pipsi`](https://github.com/mitsuhiko/pipsi).
 
 ```bash
 pipx install poetry
@@ -188,8 +191,8 @@ poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry
 poetry completions zsh > ~/.zfunc/_poetry
 
 # Oh-My-Zsh
-mkdir $ZSH/plugins/poetry
-poetry completions zsh > $ZSH/plugins/poetry/_poetry
+mkdir $ZSH_CUSTOM/plugins/poetry
+poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
 
 # prezto
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry

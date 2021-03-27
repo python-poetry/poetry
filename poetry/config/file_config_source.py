@@ -1,28 +1,34 @@
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import Iterator
 
 from tomlkit import document
 from tomlkit import table
 
-from poetry.utils.toml_file import TomlFile
-
 from .config_source import ConfigSource
 
 
+if TYPE_CHECKING:
+    from tomlkit.toml_document import TOMLDocument
+
+    from poetry.core.toml.file import TOMLFile
+
+
 class FileConfigSource(ConfigSource):
-    def __init__(self, file, auth_config=False):  # type: (TomlFile, bool) -> None
+    def __init__(self, file: "TOMLFile", auth_config: bool = False) -> None:
         self._file = file
         self._auth_config = auth_config
 
     @property
-    def name(self):  # type: () -> str
+    def name(self) -> str:
         return str(self._file.path)
 
     @property
-    def file(self):  # type: () -> TomlFile
+    def file(self) -> "TOMLFile":
         return self._file
 
-    def add_property(self, key, value):  # type: (str, Any) -> None
+    def add_property(self, key: str, value: Any) -> None:
         with self.secure() as config:
             keys = key.split(".")
 
@@ -36,7 +42,7 @@ class FileConfigSource(ConfigSource):
 
                 config = config[key]
 
-    def remove_property(self, key):  # type: (str) -> None
+    def remove_property(self, key: str) -> None:
         with self.secure() as config:
             keys = key.split(".")
 
@@ -53,7 +59,7 @@ class FileConfigSource(ConfigSource):
                 current_config = current_config[key]
 
     @contextmanager
-    def secure(self):
+    def secure(self) -> Iterator["TOMLDocument"]:
         if self.file.exists():
             initial_config = self.file.read()
             config = self.file.read()

@@ -1,6 +1,7 @@
-from cleo import option
+from pathlib import Path
+from typing import Optional
 
-from poetry.utils._compat import Path
+from cleo.helpers import option
 
 from .command import Command
 
@@ -40,7 +41,7 @@ the config command.
 
     loggers = ["poetry.masonry.publishing.publisher"]
 
-    def handle(self):
+    def handle(self) -> Optional[int]:
         from poetry.publishing.publisher import Publisher
 
         publisher = Publisher(self.poetry, self.io)

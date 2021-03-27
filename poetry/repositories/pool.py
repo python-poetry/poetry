@@ -9,18 +9,21 @@ from .repository import Repository
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
 
 
 class Pool(BaseRepository):
     def __init__(
-        self, repositories=None, ignore_repository_names=False
-    ):  # type: (Optional[List[Repository]], bool) -> None
+        self,
+        repositories: Optional[List[Repository]] = None,
+        ignore_repository_names: bool = False,
+    ) -> None:
         if repositories is None:
             repositories = []
 
-        self._lookup = {}  # type: Dict[str, int]
-        self._repositories = []  # type: List[Repository]
+        self._lookup: Dict[str, int] = {}
+        self._repositories: List[Repository] = []
         self._default = False
         self._secondary_start_idx = None
 
@@ -32,18 +35,18 @@ class Pool(BaseRepository):
         super(Pool, self).__init__()
 
     @property
-    def repositories(self):  # type: () -> List[Repository]
+    def repositories(self) -> List[Repository]:
         return self._repositories
 
-    def has_default(self):  # type: () -> bool
+    def has_default(self) -> bool:
         return self._default
 
-    def has_repository(self, name):  # type: (str) -> bool
+    def has_repository(self, name: str) -> bool:
         name = name.lower() if name is not None else None
 
         return name in self._lookup
 
-    def repository(self, name):  # type: (str) -> Repository
+    def repository(self, name: str) -> Repository:
         if name is not None:
             name = name.lower()
 
@@ -53,8 +56,8 @@ class Pool(BaseRepository):
         raise ValueError('Repository "{}" does not exist.'.format(name))
 
     def add_repository(
-        self, repository, default=False, secondary=False
-    ):  # type: (Repository, bool, bool) -> Pool
+        self, repository: Repository, default: bool = False, secondary: bool = False
+    ) -> "Pool":
         """
         Adds a repository to the pool.
         """
@@ -98,7 +101,7 @@ class Pool(BaseRepository):
 
         return self
 
-    def remove_repository(self, repository_name):  # type: (str) -> Pool
+    def remove_repository(self, repository_name: str) -> "Pool":
         if repository_name is not None:
             repository_name = repository_name.lower()
 
@@ -108,12 +111,12 @@ class Pool(BaseRepository):
 
         return self
 
-    def has_package(self, package):
+    def has_package(self, package: "Package") -> bool:
         raise NotImplementedError()
 
     def package(
-        self, name, version, extras=None, repository=None
-    ):  # type: (str, str, List[str], str) -> Package
+        self, name: str, version: str, extras: List[str] = None, repository: str = None
+    ) -> "Package":
         if repository is not None:
             repository = repository.lower()
 
@@ -143,14 +146,8 @@ class Pool(BaseRepository):
 
         raise PackageNotFound("Package {} ({}) not found.".format(name, version))
 
-    def find_packages(
-        self,
-        name,
-        constraint=None,
-        extras=None,
-        allow_prereleases=False,
-        repository=None,
-    ):
+    def find_packages(self, dependency: "Dependency") -> List["Package"]:
+        repository = dependency.source_name
         if repository is not None:
             repository = repository.lower()
 
@@ -162,19 +159,15 @@ class Pool(BaseRepository):
             raise ValueError('Repository "{}" does not exist.'.format(repository))
 
         if repository is not None and not self._ignore_repository_names:
-            return self.repository(repository).find_packages(
-                name, constraint, extras=extras, allow_prereleases=allow_prereleases
-            )
+            return self.repository(repository).find_packages(dependency)
 
         packages = []
-        for idx, repo in enumerate(self._repositories):
-            packages += repo.find_packages(
-                name, constraint, extras=extras, allow_prereleases=allow_prereleases
-            )
+        for repo in self._repositories:
+            packages += repo.find_packages(dependency)
 
         return packages
 
-    def search(self, query):
+    def search(self, query: str) -> List["Package"]:
         from .legacy_repository import LegacyRepository
 
         results = []

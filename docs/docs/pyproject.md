@@ -173,6 +173,19 @@ If a VCS is being used for a package, the exclude field will be seeded with the 
 include = ["CHANGELOG.md"]
 ```
 
+You can also specify the formats for which these patterns have to be included, as shown here:
+
+```toml
+[tool.poetry]
+# ...
+include = [
+    { path = "tests", format = "sdist" },
+    { path = "for_wheel.txt", format = ["sdist", "wheel"] }
+]
+```
+
+If no format is specified, it will default to include both `sdist` and `wheel`.
+
 ```toml
 exclude = ["my_package/excluded.py"]
 ```
@@ -207,7 +220,7 @@ url = 'http://example.com/simple'
 
 ## `scripts`
 
-This section describe the scripts or executable that will be installed when installing the package
+This section describes the scripts or executables that will be installed when installing the package
 
 ```toml
 [tool.poetry.scripts]
@@ -243,14 +256,31 @@ mysqlclient = { version = "^1.3", optional = true }
 [tool.poetry.extras]
 mysql = ["mysqlclient"]
 pgsql = ["psycopg2"]
+databases = ["mysqlclient", "psycopg2"]
 ```
 
-When installing packages, you can specify extras by using the `-E|--extras` option:
+When installing packages with Poetry, you can specify extras by using the `-E|--extras` option:
 
 ```bash
 poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
+
+When installing or specifying Poetry-built packages, the extras defined in this section can be activated
+as described in [PEP 508](https://www.python.org/dev/peps/pep-0508/#extras).
+
+For example, when installing the package using `pip`, the dependencies required by
+the `databases` extra can be installed as shown below.
+
+```bash
+pip install awesome[databases]
+```
+
+!!!note
+
+    The dependencies specified for each `extra` must already be defined as project dependencies.
+    Dependencies listed in the `dev-dependencies` section cannot be specified as extras.
+
 
 ## `plugins`
 
@@ -288,7 +318,7 @@ it in the `build-system` section of the `pyproject.toml` file like so:
 
 ```toml
 [build-system]
-requires = ["poetry_core>=1.0.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 ```
 
@@ -300,4 +330,4 @@ build-backend = "poetry.core.masonry.api"
 !!!note
 
     If your `pyproject.toml` file still references `poetry` directly as a build backend,
-    you should update it to reference `poetry_core` instead.
+    you should update it to reference `poetry-core` instead.

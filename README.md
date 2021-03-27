@@ -105,8 +105,8 @@ poetry completions zsh > ~/.zfunc/_poetry
 poetry completions zsh > $(brew --prefix)/share/zsh/site-functions/_poetry
 
 # Zsh (Oh-My-Zsh)
-mkdir $ZSH/plugins/poetry
-poetry completions zsh > $ZSH/plugins/poetry/_poetry
+mkdir $ZSH_CUSTOM/plugins/poetry
+poetry completions zsh > $ZSH_CUSTOM/plugins/poetry/_poetry
 
 # Zsh (prezto)
 poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
@@ -195,8 +195,8 @@ dependency management, packaging and publishing.
 
 It takes inspiration in tools that exist in other languages, like `composer` (PHP) or `cargo` (Rust).
 
-And, finally, there is no reliable tool to properly resolve dependencies in Python, so I started `poetry`
-to bring an exhaustive dependency resolver to the Python community.
+And, finally, I started `poetry` to bring another exhaustive dependency resolver to the Python community apart from
+[Conda's](https://conda.io).
 
 ### What about Pipenv?
 

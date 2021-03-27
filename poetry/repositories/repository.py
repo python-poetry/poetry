@@ -1,12 +1,18 @@
-from poetry.core.semver import VersionConstraint
-from poetry.core.semver import VersionRange
-from poetry.core.semver import parse_constraint
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Optional
 
 from .base_repository import BaseRepository
 
 
+if TYPE_CHECKING:
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.utils.link import Link
+
+
 class Repository(BaseRepository):
-    def __init__(self, packages=None, name=None):
+    def __init__(self, packages: List["Package"] = None, name: str = None) -> None:
         super(Repository, self).__init__()
 
         self._name = name
@@ -18,34 +24,26 @@ class Repository(BaseRepository):
             self.add_package(package)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
-    def package(self, name, version, extras=None):
+    def package(
+        self, name: str, version: str, extras: Optional[List[str]] = None
+    ) -> "Package":
         name = name.lower()
-
-        if extras is None:
-            extras = []
 
         for package in self.packages:
             if name == package.name and package.version.text == version:
-                # Activate extra dependencies
-                for extra in extras:
-                    if extra in package.extras:
-                        for extra_dep in package.extras[extra]:
-                            for dep in package.requires:
-                                if dep.name == extra_dep.name:
-                                    dep.activate()
-
                 return package.clone()
 
-    def find_packages(
-        self, name, constraint=None, extras=None, allow_prereleases=False
-    ):
-        name = name.lower()
+    def find_packages(self, dependency: "Dependency") -> List["Package"]:
+        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.semver.version_constraint import VersionConstraint
+        from poetry.core.semver.version_range import VersionRange
+
+        constraint = dependency.constraint
         packages = []
-        if extras is None:
-            extras = []
+        ignored_pre_release_packages = []
 
         if constraint is None:
             constraint = "*"
@@ -53,6 +51,7 @@ class Repository(BaseRepository):
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        allow_prereleases = dependency.allows_prereleases()
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
@@ -63,7 +62,7 @@ class Repository(BaseRepository):
                 allow_prereleases = True
 
         for package in self.packages:
-            if name == package.name:
+            if dependency.name == package.name:
                 if (
                     package.is_prerelease()
                     and not allow_prereleases
@@ -71,27 +70,20 @@ class Repository(BaseRepository):
                 ):
                     # If prereleases are not allowed and the package is a prerelease
                     # and is a standard package then we skip it
+                    if constraint.is_any():
+                        # we need this when all versions of the package are pre-releases
+                        ignored_pre_release_packages.append(package)
                     continue
 
-                if constraint.allows(package.version):
-                    for dep in package.requires:
-                        for extra in extras:
-                            if extra not in package.extras:
-                                continue
-
-                            reqs = package.extras[extra]
-                            for req in reqs:
-                                if req.name == dep.name:
-                                    dep.activate()
-
-                    if extras:
-                        package.requires_extras = extras
-
+                if constraint.allows(package.version) or (
+                    package.is_prerelease()
+                    and constraint.allows(package.version.next_patch)
+                ):
                     packages.append(package)
 
-        return packages
+        return packages or ignored_pre_release_packages
 
-    def has_package(self, package):
+    def has_package(self, package: "Package") -> bool:
         package_id = package.unique_name
 
         for repo_package in self.packages:
@@ -100,10 +92,10 @@ class Repository(BaseRepository):
 
         return False
 
-    def add_package(self, package):
+    def add_package(self, package: "Package") -> None:
         self._packages.append(package)
 
-    def remove_package(self, package):
+    def remove_package(self, package: "Package") -> None:
         package_id = package.unique_name
 
         index = None
@@ -115,10 +107,10 @@ class Repository(BaseRepository):
         if index is not None:
             del self._packages[index]
 
-    def find_links_for_package(self, package):
+    def find_links_for_package(self, package: "Package") -> List["Link"]:
         return []
 
-    def search(self, query):
+    def search(self, query: str) -> List["Package"]:
         results = []
 
         for package in self.packages:
@@ -127,5 +119,5 @@ class Repository(BaseRepository):
 
         return results
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._packages)

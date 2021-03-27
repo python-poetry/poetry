@@ -4,31 +4,39 @@ from __future__ import unicode_literals
 import re
 import shutil
 
+from pathlib import Path
+
 import pytest
 
-from clikit.api.formatter.style import Style
-from clikit.io.buffered_io import BufferedIO
+from cleo.formatters.style import Style
+from cleo.io.buffered_io import BufferedIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
+from poetry.core.utils._compat import PY36
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.repositories.pool import Pool
-from poetry.utils._compat import PY36
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
+
+
+@pytest.fixture
+def env(tmp_dir):
+    path = Path(tmp_dir) / ".venv"
+    path.mkdir(parents=True)
+    return MockEnv(path=path, is_venv=True)
 
 
 @pytest.fixture()
 def io():
     io = BufferedIO()
-    io.formatter.add_style(Style("c1_dark").fg("cyan").dark())
-    io.formatter.add_style(Style("c2_dark").fg("default").bold().dark())
-    io.formatter.add_style(Style("success_dark").fg("green").dark())
-    io.formatter.add_style(Style("warning").fg("yellow"))
+    io.output.formatter.set_style("c1_dark", Style("cyan", options=["dark"]))
+    io.output.formatter.set_style("c2_dark", Style("default", options=["bold", "dark"]))
+    io.output.formatter.set_style("success_dark", Style("green", options=["dark"]))
+    io.output.formatter.set_style("warning", Style("yellow"))
 
     return io
 
@@ -52,41 +60,56 @@ def mock_file_downloads(http):
             return [200, headers, f.read()]
 
     http.register_uri(
-        http.GET, re.compile("^https://files.pythonhosted.org/.*$"), body=callback,
+        http.GET,
+        re.compile("^https://files.pythonhosted.org/.*$"),
+        body=callback,
     )
 
 
 def test_execute_executes_a_batch_of_operations(
-    config, pool, io, tmp_dir, mock_file_downloads
+    mocker, config, pool, io, tmp_dir, mock_file_downloads, env
 ):
+    pip_editable_install = mocker.patch(
+        "poetry.installation.executor.pip_editable_install", unsafe=not PY36
+    )
+
     config = Config()
     config.merge({"cache-dir": tmp_dir})
 
-    env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
 
-    file_package = Package("demo", "0.1.0")
-    file_package.source_type = "file"
-    file_package.source_url = str(
-        Path(__file__)
+    file_package = Package(
+        "demo",
+        "0.1.0",
+        source_type="file",
+        source_url=Path(__file__)
         .parent.parent.joinpath(
             "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
         )
         .resolve()
+        .as_posix(),
     )
 
-    directory_package = Package("simple-project", "1.2.3")
-    directory_package.source_type = "directory"
-    directory_package.source_url = str(
-        Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    directory_package = Package(
+        "simple-project",
+        "1.2.3",
+        source_type="directory",
+        source_url=Path(__file__)
+        .parent.parent.joinpath("fixtures/simple_project")
+        .resolve()
+        .as_posix(),
     )
 
-    git_package = Package("demo", "0.1.0")
-    git_package.source_type = "git"
-    git_package.source_reference = "master"
-    git_package.source_url = "https://github.com/demo/demo.git"
+    git_package = Package(
+        "demo",
+        "0.1.0",
+        source_type="git",
+        source_reference="master",
+        source_url="https://github.com/demo/demo.git",
+        develop=True,
+    )
 
-    assert 0 == executor.execute(
+    return_code = executor.execute(
         [
             Install(Package("pytest", "3.5.2")),
             Uninstall(Package("attrs", "17.4.0")),
@@ -115,13 +138,16 @@ Package operations: 4 installs, 1 update, 1 removal
     output = set(io.fetch_output().splitlines())
     assert expected == output
     assert 5 == len(env.executed)
+    assert 0 == return_code
+    pip_editable_install.assert_called_once()
 
 
-def test_execute_shows_skipped_operations_if_verbose(config, pool, io):
+def test_execute_shows_skipped_operations_if_verbose(
+    config, pool, io, config_cache_dir, env
+):
     config = Config()
-    config.merge({"cache-dir": "/foo"})
+    config.merge({"cache-dir": config_cache_dir.as_posix()})
 
-    env = MockEnv()
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -138,11 +164,7 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
     assert 0 == len(env.executed)
 
 
-@pytest.mark.skipif(
-    not PY36, reason="Improved error rendering is only available on Python >=3.6"
-)
-def test_execute_should_show_errors(config, mocker, io):
-    env = MockEnv()
+def test_execute_should_show_errors(config, mocker, io, env):
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -164,9 +186,8 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_interrupt(
-    config, mocker, io
+    config, mocker, io, env
 ):
-    env = MockEnv()
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -185,8 +206,33 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected == io.fetch_output()
 
 
+def test_execute_should_gracefully_handle_io_error(config, mocker, io, env):
+    executor = Executor(env, pool, config, io)
+    executor.verbose()
+
+    original_write_line = executor._io.write_line
+
+    def write_line(string, **kwargs):
+        # Simulate UnicodeEncodeError
+        string.encode("ascii")
+        original_write_line(string, **kwargs)
+
+    mocker.patch.object(io, "write_line", side_effect=write_line)
+
+    assert 1 == executor.execute([Install(Package("clikit", "0.2.3"))])
+
+    expected = r"""
+Package operations: 1 install, 0 updates, 0 removals
+
+
+\s*Unicode\w+Error
+"""
+
+    assert re.match(expected, io.fetch_output())
+
+
 def test_executor_should_delete_incomplete_downloads(
-    config, io, tmp_dir, mocker, pool, mock_file_downloads
+    config, io, tmp_dir, mocker, pool, mock_file_downloads, env
 ):
     fixture = Path(__file__).parent.parent.joinpath(
         "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -209,7 +255,6 @@ def test_executor_should_delete_incomplete_downloads(
     config = Config()
     config.merge({"cache-dir": tmp_dir})
 
-    env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
 
     with pytest.raises(Exception, match="Download error"):

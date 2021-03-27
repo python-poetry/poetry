@@ -1,7 +1,13 @@
-from cleo import argument
-from cleo import option
+from typing import TYPE_CHECKING
+
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from .command import Command
+
+
+if TYPE_CHECKING:
+    from poetry.core.semver.version import Version
 
 
 class VersionCommand(Command):
@@ -40,7 +46,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         "prerelease",
     }
 
-    def handle(self):
+    def handle(self) -> None:
         version = self.argument("version")
 
         if version:
@@ -48,11 +54,14 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 self.poetry.package.pretty_version, version
             )
 
-            self.line(
-                "Bumping version from <b>{}</> to <fg=green>{}</>".format(
-                    self.poetry.package.pretty_version, version
+            if self.option("short"):
+                self.line("{}".format(version))
+            else:
+                self.line(
+                    "Bumping version from <b>{}</> to <fg=green>{}</>".format(
+                        self.poetry.package.pretty_version, version
+                    )
                 )
-            )
 
             content = self.poetry.file.read()
             poetry_content = content["tool"]["poetry"]
@@ -69,8 +78,8 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                     )
                 )
 
-    def increment_version(self, version, rule):
-        from poetry.core.semver import Version
+    def increment_version(self, version: str, rule: str) -> "Version":
+        from poetry.core.semver.version import Version
 
         try:
             version = Version.parse(version)

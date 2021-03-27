@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
-from typing import Union
+from typing import TYPE_CHECKING
+from typing import Optional
 
-from poetry.core.packages import Dependency
+from poetry.core.packages.dependency import Dependency
 
 from .set_relation import SetRelation
+
+
+if TYPE_CHECKING:
+    from poetry.core.semver.helpers import VersionTypes
 
 
 class Term(object):
@@ -14,42 +18,42 @@ class Term(object):
     See https://github.com/dart-lang/pub/tree/master/doc/solver.md#term.
     """
 
-    def __init__(self, dependency, is_positive):  # type: (Dependency, bool)  -> None
+    def __init__(self, dependency: Dependency, is_positive: bool) -> None:
         self._dependency = dependency
         self._positive = is_positive
 
     @property
-    def inverse(self):  # type: () -> Term
+    def inverse(self) -> "Term":
         return Term(self._dependency, not self.is_positive())
 
     @property
-    def dependency(self):
+    def dependency(self) -> Dependency:
         return self._dependency
 
     @property
-    def constraint(self):
+    def constraint(self) -> "VersionTypes":
         return self._dependency.constraint
 
-    def is_positive(self):  # type: () -> bool
+    def is_positive(self) -> bool:
         return self._positive
 
-    def satisfies(self, other):  # type: (Term) -> bool
+    def satisfies(self, other: "Term") -> bool:
         """
         Returns whether this term satisfies another.
         """
         return (
-            self.dependency.name == other.dependency.name
+            self.dependency.complete_name == other.dependency.complete_name
             and self.relation(other) == SetRelation.SUBSET
         )
 
-    def relation(self, other):  # type: (Term) -> int
+    def relation(self, other: "Term") -> int:
         """
         Returns the relationship between the package versions
         allowed by this term and another.
         """
-        if self.dependency.name != other.dependency.name:
+        if self.dependency.complete_name != other.dependency.complete_name:
             raise ValueError(
-                "{} should refer to {}".format(other, self.dependency.name)
+                "{} should refer to {}".format(other, self.dependency.complete_name)
             )
 
         other_constraint = other.constraint
@@ -106,14 +110,14 @@ class Term(object):
                 # not foo ^1.5.0 is a superset of not foo ^1.0.0
                 return SetRelation.OVERLAPPING
 
-    def intersect(self, other):  # type: (Term) -> Union[Term, None]
+    def intersect(self, other: "Term") -> Optional["Term"]:
         """
         Returns a Term that represents the packages
         allowed by both this term and another
         """
-        if self.dependency.name != other.dependency.name:
+        if self.dependency.complete_name != other.dependency.complete_name:
             raise ValueError(
-                "{} should refer to {}".format(other, self.dependency.name)
+                "{} should refer to {}".format(other, self.dependency.complete_name)
             )
 
         if self._compatible_dependency(other.dependency):
@@ -140,31 +144,30 @@ class Term(object):
         else:
             return
 
-    def difference(self, other):  # type: (Term) -> Term
+    def difference(self, other: "Term") -> "Term":
         """
         Returns a Term that represents packages
         allowed by this term and not by the other
         """
         return self.intersect(other.inverse)
 
-    def _compatible_dependency(self, other):
+    def _compatible_dependency(self, other: "Dependency") -> bool:
         return (
             self.dependency.is_root
             or other.is_root
-            or other.name == self.dependency.name
+            or other.is_same_package_as(self.dependency)
         )
 
-    def _non_empty_term(self, constraint, is_positive):
+    def _non_empty_term(
+        self, constraint: "VersionTypes", is_positive: bool
+    ) -> Optional["Term"]:
         if constraint.is_empty():
             return
 
-        dep = Dependency(self.dependency.name, constraint)
-        dep.python_versions = str(self.dependency.python_versions)
+        return Term(self.dependency.with_constraint(constraint), is_positive)
 
-        return Term(dep, is_positive)
-
-    def __str__(self):
+    def __str__(self) -> str:
         return "{}{}".format("not " if not self.is_positive() else "", self._dependency)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Term {}>".format(str(self))

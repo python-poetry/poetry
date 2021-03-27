@@ -1,19 +1,23 @@
+import enum
 import time
 
+from collections import defaultdict
 from contextlib import contextmanager
-from typing import Any
+from typing import TYPE_CHECKING
+from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
+from typing import Union
 
-from clikit.io import ConsoleIO
+from cleo.io.io import IO
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
-from poetry.installation.operations.operation import Operation
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
@@ -26,16 +30,25 @@ from .exceptions import SolverProblemError
 from .provider import Provider
 
 
+if TYPE_CHECKING:
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
+    from poetry.installation.operations import OperationTypes
+
+
 class Solver:
     def __init__(
         self,
-        package,  # type: ProjectPackage
-        pool,  # type: Pool
-        installed,  # type: Repository
-        locked,  # type: Repository
-        io,  # type: ConsoleIO
-        remove_untracked=False,  # type: bool,
-        provider=None,  # type: Optional[Provider]
+        package: ProjectPackage,
+        pool: Pool,
+        installed: Repository,
+        locked: Repository,
+        io: IO,
+        remove_untracked: bool = False,
+        provider: Optional[Provider] = None,
     ):
         self._package = package
         self._pool = pool
@@ -51,15 +64,15 @@ class Solver:
         self._remove_untracked = remove_untracked
 
     @property
-    def provider(self):  # type: () -> Provider
+    def provider(self) -> Provider:
         return self._provider
 
     @contextmanager
-    def use_environment(self, env):  # type: (Env) -> None
+    def use_environment(self, env: Env) -> None:
         with self.provider.use_environment(env):
             yield
 
-    def solve(self, use_latest=None):  # type: (...) -> List[Operation]
+    def solve(self, use_latest: List[str] = None) -> List["OperationTypes"]:
         with self._provider.progress():
             start = time.time()
             packages, depths = self._solve(use_latest=use_latest)
@@ -100,17 +113,36 @@ class Solver:
                                 and locked.source_type == pkg.source_type
                                 and locked_source_url == pkg_source_url
                                 and locked.source_reference == pkg.source_reference
+                                and locked.source_resolved_reference
+                                == pkg.source_resolved_reference
                             ):
-                                pkg = Package(pkg.name, locked.version)
-                                pkg.source_type = "git"
-                                pkg.source_url = locked.source_url
-                                pkg.source_reference = locked.source_reference
+                                pkg = Package(
+                                    pkg.name,
+                                    locked.version,
+                                    source_type="git",
+                                    source_url=locked.source_url,
+                                    source_reference=locked.source_reference,
+                                    source_resolved_reference=locked.source_resolved_reference,
+                                )
                                 break
 
                         if pkg_source_url != package_source_url or (
-                            pkg.source_reference != package.source_reference
+                            (
+                                not pkg.source_resolved_reference
+                                or not package.source_resolved_reference
+                            )
+                            and pkg.source_reference != package.source_reference
                             and not pkg.source_reference.startswith(
                                 package.source_reference
+                            )
+                            or (
+                                pkg.source_resolved_reference
+                                and package.source_resolved_reference
+                                and pkg.source_resolved_reference
+                                != package.source_resolved_reference
+                                and not pkg.source_resolved_reference.startswith(
+                                    package.source_resolved_reference
+                                )
                             )
                         ):
                             operations.append(Update(pkg, package, priority=depths[i]))
@@ -169,10 +201,17 @@ class Solver:
                     operations.append(Uninstall(installed))
 
         return sorted(
-            operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
+            operations,
+            key=lambda o: (
+                -o.priority,
+                o.package.name,
+                o.package.version,
+            ),
         )
 
-    def solve_in_compatibility_mode(self, overrides, use_latest=None):
+    def solve_in_compatibility_mode(
+        self, overrides: Tuple[Dict], use_latest: List[str] = None
+    ) -> Tuple[List["Package"], List[int]]:
         locked = {}
         for package in self._locked.packages:
             locked[package.name] = DependencyPackage(package.to_dependency(), package)
@@ -202,7 +241,7 @@ class Solver:
 
         return packages, depths
 
-    def _solve(self, use_latest=None):
+    def _solve(self, use_latest: List[str] = None) -> Tuple[List[Package], List[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
@@ -221,136 +260,242 @@ class Solver:
         except SolveFailure as e:
             raise SolverProblemError(e)
 
-        # TODO why is there a lingering variable state / stack during install when invoked via `poetry update`?
         # NOTE passing explicit empty array for seen to reset between invocations during update + install cycle
-        graph = self._build_graph(self._package, packages, seen=[])
+        results = dict(
+            depth_first_search(
+                PackageNode(self._package, packages), aggregate_package_nodes, seen=[]
+            )
+        )
 
-        depths = []
+        # Merging feature packages with base packages
         final_packages = []
+        depths = []
         for package in packages:
-            category, optional, depth = self._get_tags_for_package(package, graph)
+            if package.features:
+                for _package in packages:
+                    if (
+                        _package.name == package.name
+                        and not _package.is_same_package_as(package)
+                        and _package.version == package.version
+                    ):
+                        for dep in package.requires:
+                            if dep.is_same_package_as(_package):
+                                continue
 
-            package.category = category
-            package.optional = optional
+                            if dep not in _package.requires:
+                                _package.requires.append(dep)
 
-            depths.append(depth)
+                continue
+
             final_packages.append(package)
+            depths.append(results[package])
 
+        # Return the packages in their original order with associated depths
         return final_packages, depths
 
-    def _build_graph(
-        self, package, packages, previous=None, previous_dep=None, dep=None, seen=[]
-    ):  # type: (...) -> Dict[str, Any]
-        if not previous:
-            category = "dev"
-            optional = True
-        else:
-            category = dep.category
-            optional = dep.is_optional() and not dep.is_activated()
 
-        childrens = []  # type: List[Dict[str, Any]]
-        graph = {
-            "name": package.name,
-            "category": category,
-            "optional": optional,
-            "children": childrens,
-        }
+class DFSNode(object):
+    def __init__(self, id: Tuple[str, str, bool], name: str, base_name: str) -> None:
+        self.id = id
+        self.name = name
+        self.base_name = base_name
+
+    def reachable(self) -> List:
+        return []
+
+    def visit(self, parents: List["PackageNode"]) -> None:
+        pass
+
+    def __str__(self) -> str:
+        return str(self.id)
+
+
+class VisitedState(enum.Enum):
+    Unvisited = 0
+    PartiallyVisited = 1
+    Visited = 2
+
+
+def depth_first_search(
+    source: "PackageNode", aggregator: Callable
+) -> List[Tuple[Package, int]]:
+    back_edges = defaultdict(list)
+    visited = {}
+    topo_sorted_nodes = []
+
+    dfs_visit(source, back_edges, visited, topo_sorted_nodes)
+
+    # Combine the nodes by name
+    combined_nodes = defaultdict(list)
+    name_children = defaultdict(list)
+    for node in topo_sorted_nodes:
+        node.visit(back_edges[node.id])
+        name_children[node.name].extend(node.reachable())
+        combined_nodes[node.name].append(node)
+
+    combined_topo_sorted_nodes = []
+    for node in topo_sorted_nodes:
+        if node.name in combined_nodes:
+            combined_topo_sorted_nodes.append(combined_nodes.pop(node.name))
+
+    results = [
+        aggregator(nodes, name_children[nodes[0].name])
+        for nodes in combined_topo_sorted_nodes
+    ]
+    return results
+
+
+def dfs_visit(
+    node: "PackageNode",
+    back_edges: Dict[str, List["PackageNode"]],
+    visited: Dict[str, VisitedState],
+    sorted_nodes: List["PackageNode"],
+) -> bool:
+    if visited.get(node.id, VisitedState.Unvisited) == VisitedState.Visited:
+        return True
+    if visited.get(node.id, VisitedState.Unvisited) == VisitedState.PartiallyVisited:
+        # We have a circular dependency.
+        # Since the dependencies are resolved we can
+        # simply skip it because we already have it
+        return True
+
+    visited[node.id] = VisitedState.PartiallyVisited
+    for neighbor in node.reachable():
+        back_edges[neighbor.id].append(node)
+        if not dfs_visit(neighbor, back_edges, visited, sorted_nodes):
+            return False
+    visited[node.id] = VisitedState.Visited
+    sorted_nodes.insert(0, node)
+    return True
+
+
+class PackageNode(DFSNode):
+    def __init__(
+        self,
+        package: Package,
+        packages: List[Package],
+        previous: Optional["PackageNode"] = None,
+        previous_dep: Optional[
+            Union[
+                "DirectoryDependency",
+                "FileDependency",
+                "URLDependency",
+                "VCSDependency",
+                "Dependency",
+            ]
+        ] = None,
+        dep: Optional[
+            Union[
+                "DirectoryDependency",
+                "FileDependency",
+                "URLDependency",
+                "VCSDependency",
+                "Dependency",
+            ]
+        ] = None,
+        seen: seen,
+    ) -> None:
+        self.package = package
+        self.packages = packages
+
+        self.previous = previous
+        self.previous_dep = previous_dep
+        self.dep = dep
+        self.depth = -1
+
+        if not previous:
+            self.category = "dev"
+            self.optional = True
+        else:
+            self.category = dep.category
+            self.optional = dep.is_optional()
+
+        super(PackageNode, self).__init__(
+            (package.complete_name, self.category, self.optional),
+            package.complete_name,
+            package.name,
+        )
+
+    def reachable(self) -> List["PackageNode"]:
+        children: List[PackageNode] = []
 
         # skip already traversed packages
-        if package in seen:
-            return graph
+        if self.package in seen:
+            return []
         else:
-            seen.append(package)
+            seen.append(self.package)
 
-        if previous_dep and previous_dep is not dep and previous_dep.name == dep.name:
-            return graph
 
-        for dependency in package.all_requires:
-            is_activated = True
-            if dependency.is_optional():
-                if not package.is_root() and (
-                    not previous_dep or not previous_dep.extras
-                ):
-                    continue
+        if (
+            self.previous_dep
+            and self.previous_dep is not self.dep
+            and self.previous_dep.name == self.dep.name
+        ):
+            return []
 
-                is_activated = False
-                for group, extra_deps in package.extras.items():
-                    if dep:
-                        extras = previous_dep.extras
-                    elif package.is_root():
-                        extras = package.extras
-                    else:
-                        extras = []
-
-                    if group in extras and dependency.name in (
-                        d.name for d in package.extras[group]
-                    ):
-                        is_activated = True
-                        break
-
-            if previous and previous["name"] == dependency.name:
+        for dependency in self.package.all_requires:
+            if self.previous and self.previous.name == dependency.name:
                 # We have a circular dependency.
                 # Since the dependencies are resolved we can
                 # simply skip it because we already have it
+                # N.B. this only catches cycles of length 2;
+                # dependency cycles in general are handled by the DFS traversal
                 continue
 
-            for pkg in packages:
-                if pkg.name == dependency.name and dependency.constraint.allows(
-                    pkg.version
+            for pkg in self.packages:
+                if pkg.complete_name == dependency.complete_name and (
+                    dependency.constraint.allows(pkg.version)
+                    or dependency.allows_prereleases()
+                    and pkg.version.is_prerelease()
+                    and dependency.constraint.allows(pkg.version.stable)
                 ):
                     # If there is already a child with this name
                     # we merge the requirements
-                    existing = None
-                    for child in childrens:
-                        if (
-                            child["name"] == pkg.name
-                            and child["category"] == dependency.category
-                        ):
-                            existing = child
-                            continue
-
-                    child_graph = self._build_graph(
-                        pkg, packages, graph, dependency, dep or dependency, seen=seen
-                    )
-
-                    if not is_activated:
-                        child_graph["optional"] = True
-
-                    if existing:
+                    if any(
+                        child.package.name == pkg.name
+                        and child.category == dependency.category
+                        for child in children
+                    ):
                         continue
 
-                    childrens.append(child_graph)
+                    children.append(
+                        PackageNode(
+                            pkg,
+                            self.packages,
+                            self,
+                            dependency,
+                            self.dep or dependency,
+                            seen
+                        )
+                    )
 
-        return graph
+        return children
 
-    def _get_tags_for_package(self, package, graph, depth=0):
-        categories = ["dev"]
-        optionals = [True]
-        _depths = [0]
+    def visit(self, parents: "PackageNode") -> None:
+        # The root package, which has no parents, is defined as having depth -1
+        # So that the root package's top-level dependencies have depth 0.
+        self.depth = 1 + max(
+            [
+                parent.depth if parent.base_name != self.base_name else parent.depth - 1
+                for parent in parents
+            ]
+            + [-2]
+        )
 
-        children = graph["children"]
-        for child in children:
-            if child["name"] == package.name:
-                category = child["category"]
-                optional = child["optional"]
-                _depths.append(depth)
-            else:
-                (category, optional, _depth) = self._get_tags_for_package(
-                    package, child, depth=depth + 1
-                )
 
-                _depths.append(_depth)
-
-            categories.append(category)
-            optionals.append(optional)
-
-        if "main" in categories:
-            category = "main"
-        else:
-            category = "dev"
-
-        optional = all(optionals)
-
-        depth = max(*(_depths + [0]))
-
-        return category, optional, depth
+def aggregate_package_nodes(
+    nodes: List[PackageNode], children: List[PackageNode]
+) -> Tuple[Package, int]:
+    package = nodes[0].package
+    depth = max(node.depth for node in nodes)
+    category = (
+        "main" if any(node.category == "main" for node in children + nodes) else "dev"
+    )
+    optional = all(node.optional for node in children + nodes)
+    for node in nodes:
+        node.depth = depth
+        node.category = category
+        node.optional = optional
+    package.category = category
+    package.optional = optional
+    return package, depth

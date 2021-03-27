@@ -1,4 +1,5 @@
-from .utils._compat import Path
+from pathlib import Path
+
 from .utils.appdirs import user_cache_dir
 from .utils.appdirs import user_config_dir
 

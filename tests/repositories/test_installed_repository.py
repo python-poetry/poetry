@@ -1,16 +1,15 @@
+from pathlib import Path
 from typing import Optional
 
 import pytest
 
 from pytest_mock.plugin import MockFixture
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import PY36
-from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
-from poetry.utils._compat import zipp
 from poetry.utils.env import MockEnv as BaseMockEnv
+from tests.compat import zipp
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -26,6 +25,7 @@ INSTALLED_RESULTS = [
         zipp.Path(str(SITE_PURELIB / "foo-0.1.0-py3.8.egg"), "EGG-INFO")
     ),
     metadata.PathDistribution(VENDOR_DIR / "attrs-19.3.0.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "standard-1.2.3.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "editable-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PURELIB / "editable-with-import-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "lib64-2.3.4.dist-info"),
@@ -47,12 +47,12 @@ class MockEnv(BaseMockEnv):
 
 
 @pytest.fixture
-def env():  # type: () -> MockEnv
+def env() -> MockEnv:
     return MockEnv(path=ENV_DIR)
 
 
 @pytest.fixture
-def repository(mocker, env):  # type: (MockFixture, MockEnv) -> InstalledRepository
+def repository(mocker: MockFixture, env: MockEnv) -> InstalledRepository:
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,
@@ -73,8 +73,8 @@ def repository(mocker, env):  # type: (MockFixture, MockEnv) -> InstalledReposit
 
 
 def get_package_from_repository(
-    name, repository
-):  # type: (str, InstalledRepository) -> Optional[Package]
+    name: str, repository: InstalledRepository
+) -> Optional[Package]:
     for pkg in repository.packages:
         if pkg.name == name:
             return pkg
@@ -134,9 +134,6 @@ def test_load_platlib_package(repository):
     assert lib64.version.text == "2.3.4"
 
 
-@pytest.mark.skipif(
-    not PY36, reason="pathlib.resolve() does not support strict argument"
-)
 def test_load_editable_package(repository):
     # test editable package with text .pth file
     editable = get_package_from_repository("editable", repository)
@@ -156,5 +153,15 @@ def test_load_editable_with_import_package(repository):
     assert editable is not None
     assert editable.name == "editable-with-import"
     assert editable.version.text == "2.3.4"
-    assert editable.source_type == ""
-    assert editable.source_url == ""
+    assert editable.source_type is None
+    assert editable.source_url is None
+
+
+def test_load_standard_package_with_pth_file(repository):
+    # test standard packages with .pth file is not treated as editable
+    standard = get_package_from_repository("standard", repository)
+    assert standard is not None
+    assert standard.name == "standard"
+    assert standard.version.text == "1.2.3"
+    assert standard.source_type is None
+    assert standard.source_url is None

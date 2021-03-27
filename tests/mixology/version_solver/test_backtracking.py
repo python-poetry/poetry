@@ -1,9 +1,11 @@
+from poetry.factory import Factory
+
 from ..helpers import add_to_repo
 from ..helpers import check_solver_result
 
 
 def test_circular_dependency_on_older_version(root, provider, repo):
-    root.add_dependency("a", ">=1.0.0")
+    root.add_dependency(Factory.create_dependency("a", ">=1.0.0"))
 
     add_to_repo(repo, "a", "1.0.0")
     add_to_repo(repo, "a", "2.0.0", deps={"b": "1.0.0"})
@@ -13,8 +15,8 @@ def test_circular_dependency_on_older_version(root, provider, repo):
 
 
 def test_diamond_dependency_graph(root, provider, repo):
-    root.add_dependency("a", "*")
-    root.add_dependency("b", "*")
+    root.add_dependency(Factory.create_dependency("a", "*"))
+    root.add_dependency(Factory.create_dependency("b", "*"))
 
     add_to_repo(repo, "a", "2.0.0", deps={"c": "^1.0.0"})
     add_to_repo(repo, "a", "1.0.0")
@@ -33,8 +35,8 @@ def test_backjumps_after_partial_satisfier(root, provider, repo):
     # c 2.0.0 is incompatible with y 2.0.0 because it requires x 1.0.0, but that
     # requirement only exists because of both a and b. The solver should be able
     # to deduce c 2.0.0's incompatibility and select c 1.0.0 instead.
-    root.add_dependency("c", "*")
-    root.add_dependency("y", "^2.0.0")
+    root.add_dependency(Factory.create_dependency("c", "*"))
+    root.add_dependency(Factory.create_dependency("y", "^2.0.0"))
 
     add_to_repo(repo, "a", "1.0.0", deps={"x": ">=1.0.0"})
     add_to_repo(repo, "b", "1.0.0", deps={"x": "<2.0.0"})
@@ -56,7 +58,7 @@ def test_rolls_back_leaf_versions_first(root, provider, repo):
     # The latest versions of a and b disagree on c. An older version of either
     # will resolve the problem. This test validates that b, which is farther
     # in the dependency graph from myapp is downgraded first.
-    root.add_dependency("a", "*")
+    root.add_dependency(Factory.create_dependency("a", "*"))
 
     add_to_repo(repo, "a", "1.0.0", deps={"b": "*"})
     add_to_repo(repo, "a", "2.0.0", deps={"b": "*", "c": "2.0.0"})
@@ -71,7 +73,7 @@ def test_rolls_back_leaf_versions_first(root, provider, repo):
 def test_simple_transitive(root, provider, repo):
     # Only one version of baz, so foo and bar will have to downgrade
     # until they reach it
-    root.add_dependency("foo", "*")
+    root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
     add_to_repo(repo, "foo", "2.0.0", deps={"bar": "2.0.0"})
@@ -93,8 +95,8 @@ def test_backjump_to_nearer_unsatisfied_package(root, provider, repo):
     # a-2.0.0 whose dependency on c-2.0.0-nonexistent led to the problem. We
     # make sure b has more versions than a so that the solver tries a first
     # since it sorts sibling dependencies by number of versions.
-    root.add_dependency("a", "*")
-    root.add_dependency("b", "*")
+    root.add_dependency(Factory.create_dependency("a", "*"))
+    root.add_dependency(Factory.create_dependency("b", "*"))
 
     add_to_repo(repo, "a", "1.0.0", deps={"c": "1.0.0"})
     add_to_repo(repo, "a", "2.0.0", deps={"c": "2.0.0-nonexistent"})
@@ -114,8 +116,8 @@ def test_traverse_into_package_with_fewer_versions_first(root, provider, repo):
     # downgraded once). The chosen one depends on which dep is traversed first.
     # Since b has fewer versions, it will be traversed first, which means a will
     # come later. Since later selections are revised first, a gets downgraded.
-    root.add_dependency("a", "*")
-    root.add_dependency("b", "*")
+    root.add_dependency(Factory.create_dependency("a", "*"))
+    root.add_dependency(Factory.create_dependency("b", "*"))
 
     add_to_repo(repo, "a", "1.0.0", deps={"c": "*"})
     add_to_repo(repo, "a", "2.0.0", deps={"c": "*"})
@@ -133,8 +135,8 @@ def test_traverse_into_package_with_fewer_versions_first(root, provider, repo):
 
 
 def test_backjump_past_failed_package_on_disjoint_constraint(root, provider, repo):
-    root.add_dependency("a", "*")
-    root.add_dependency("foo", ">2.0.0")
+    root.add_dependency(Factory.create_dependency("a", "*"))
+    root.add_dependency(Factory.create_dependency("foo", ">2.0.0"))
 
     add_to_repo(repo, "a", "1.0.0", deps={"foo": "*"})  # ok
     add_to_repo(

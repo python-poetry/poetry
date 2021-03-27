@@ -1,28 +1,28 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import os
 import re
 import sys
+import urllib.parse
 
+from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from cleo import option
+from cleo.helpers import option
 from tomlkit import inline_table
-
-from poetry.utils._compat import OrderedDict
-from poetry.utils._compat import Path
-from poetry.utils._compat import urlparse
 
 from .command import Command
 from .env_command import EnvCommand
 
 
-class InitCommand(Command):
+if TYPE_CHECKING:
+    from poetry.repositories import Pool
 
+
+class InitCommand(Command):
     name = "init"
     description = (
         "Creates a basic <comment>pyproject.toml</> file in the current directory."
@@ -56,20 +56,33 @@ class InitCommand(Command):
 The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the current directory.
 """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(InitCommand, self).__init__()
 
         self._pool = None
 
-    def handle(self):
+    def handle(self) -> int:
+        from pathlib import Path
+
+        from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
-        from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
-        if (Path.cwd() / "pyproject.toml").exists():
-            self.line("<error>A pyproject.toml file already exists.</error>")
-            return 1
+        pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
+
+        if pyproject.file.exists():
+            if pyproject.is_poetry_project():
+                self.line(
+                    "<error>A pyproject.toml file with a poetry section already exists.</error>"
+                )
+                return 1
+
+            if pyproject.data.get("build-system"):
+                self.line(
+                    "<error>A pyproject.toml file with a defined build-system already exists.</error>"
+                )
+                return 1
 
         vcs_config = GitConfig()
 
@@ -144,6 +157,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         self.line("")
 
         requirements = {}
+        if self.option("dependency"):
+            requirements = self._format_requirements(
+                self._determine_requirements(self.option("dependency"))
+            )
 
         question = "Would you like to define your main dependencies interactively?"
         help_message = (
@@ -160,12 +177,16 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if self.confirm(question, True):
             self.line(help_message)
             help_displayed = True
-            requirements = self._format_requirements(
-                self._determine_requirements(self.option("dependency"))
+            requirements.update(
+                self._format_requirements(self._determine_requirements([]))
             )
             self.line("")
 
         dev_requirements = {}
+        if self.option("dev-dependency"):
+            dev_requirements = self._format_requirements(
+                self._determine_requirements(self.option("dev-dependency"))
+            )
 
         question = (
             "Would you like to define your development dependencies interactively?"
@@ -174,8 +195,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             if not help_displayed:
                 self.line(help_message)
 
-            dev_requirements = self._format_requirements(
-                self._determine_requirements(self.option("dev-dependency"))
+            dev_requirements.update(
+                self._format_requirements(self._determine_requirements([]))
             )
             self.line("")
 
@@ -190,7 +211,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             dev_dependencies=dev_requirements,
         )
 
-        content = layout_.generate_poetry_content()
+        content = layout_.generate_poetry_content(original=pyproject)
         if self.io.is_interactive():
             self.line("<info>Generated file</info>")
             self.line("")
@@ -206,8 +227,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             f.write(content)
 
     def _determine_requirements(
-        self, requires, allow_prereleases=False, source=None
-    ):  # type: (List[str], bool) -> List[Dict[str, str]]
+        self,
+        requires: List[str],
+        allow_prereleases: bool = False,
+        source: Optional[str] = None,
+    ) -> List[Dict[str, Union[str, List[str]]]]:
         if not requires:
             requires = []
 
@@ -333,8 +357,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return result
 
     def _find_best_version_for_package(
-        self, name, required_version=None, allow_prereleases=False, source=None
-    ):  # type: (...) -> Tuple[str, str]
+        self,
+        name: str,
+        required_version: Optional[str] = None,
+        allow_prereleases: bool = False,
+        source: Optional[str] = None,
+    ) -> Tuple[str, str]:
         from poetry.version.version_selector import VersionSelector
 
         selector = VersionSelector(self._get_pool())
@@ -350,27 +378,26 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return package.pretty_name, selector.find_recommended_require_version(package)
 
-    def _parse_requirements(
-        self, requirements
-    ):  # type: (List[str]) -> List[Dict[str, str]]
+    def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, str]]:
+        from poetry.core.pyproject.exceptions import PyProjectException
         from poetry.puzzle.provider import Provider
 
         result = []
 
         try:
             cwd = self.poetry.file.parent
-        except RuntimeError:
+        except (PyProjectException, RuntimeError):
             cwd = Path.cwd()
 
         for requirement in requirements:
             requirement = requirement.strip()
             extras = []
-            extras_m = re.search(r"\[([\w\d,-_]+)\]$", requirement)
+            extras_m = re.search(r"\[([\w\d,-_ ]+)\]$", requirement)
             if extras_m:
                 extras = [e.strip() for e in extras_m.group(1).split(",")]
                 requirement, _ = requirement.split("[")
 
-            url_parsed = urlparse.urlparse(requirement)
+            url_parsed = urllib.parse.urlparse(requirement)
             if url_parsed.scheme and url_parsed.netloc:
                 # Url
                 if url_parsed.scheme in ["git+https", "git+ssh"]:
@@ -380,7 +407,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     parsed = ParsedUrl.parse(requirement)
                     url = Git.normalize_url(requirement)
 
-                    pair = OrderedDict([("name", parsed.name), ("git", url.url)])
+                    pair = dict([("name", parsed.name), ("git", url.url)])
                     if parsed.rev:
                         pair["rev"] = url.revision
 
@@ -388,7 +415,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         pair["extras"] = extras
 
                     package = Provider.get_package_from_vcs(
-                        "git", url.url, reference=pair.get("rev")
+                        "git", url.url, rev=pair.get("rev")
                     )
                     pair["name"] = package.name
                     result.append(pair)
@@ -397,9 +424,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 elif url_parsed.scheme in ["http", "https"]:
                     package = Provider.get_package_from_url(requirement)
 
-                    pair = OrderedDict(
-                        [("name", package.name), ("url", package.source_url)]
-                    )
+                    pair = dict([("name", package.name), ("url", package.source_url)])
                     if extras:
                         pair["extras"] = extras
 
@@ -415,7 +440,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     package = Provider.get_package_from_directory(path)
 
                 result.append(
-                    OrderedDict(
+                    dict(
                         [
                             ("name", package.name),
                             ("path", path.relative_to(cwd).as_posix()),
@@ -431,7 +456,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             pair = pair.strip()
 
-            require = OrderedDict()
+            require = dict()
             if " " in pair:
                 name, version = pair.split(" ", 2)
                 extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
@@ -471,8 +496,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return result
 
     def _format_requirements(
-        self, requirements
-    ):  # type: (List[Dict[str, str]]) -> Dict[str, Union[str, Dict[str, str]]]
+        self, requirements: List[Dict[str, str]]
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
         requires = {}
         for requirement in requirements:
             name = requirement.pop("name")
@@ -487,7 +512,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return requires
 
-    def _validate_author(self, author, default):
+    def _validate_author(self, author: str, default: str) -> Optional[str]:
         from poetry.core.packages.package import AUTHOR_REGEX
 
         author = author or default
@@ -504,15 +529,15 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return author
 
-    def _validate_license(self, license):
-        from poetry.core.spdx import license_by_id
+    def _validate_license(self, license: str) -> str:
+        from poetry.core.spdx.helpers import license_by_id
 
         if license:
             license_by_id(license)
 
         return license
 
-    def _get_pool(self):
+    def _get_pool(self) -> "Pool":
         from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 
