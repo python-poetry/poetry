@@ -48,7 +48,6 @@ def check_solver_result(
         locked = {k: DependencyPackage(l.to_dependency(), l) for k, l in locked.items()}
 
     solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
-
     try:
         solution = solver.solve()
     except SolveFailure as e:
@@ -60,6 +59,11 @@ def check_solver_result(
 
             return
 
+        raise
+    except AssertionError as e:
+        if error:
+            assert str(e) == error
+            return
         raise
 
     packages = {}
