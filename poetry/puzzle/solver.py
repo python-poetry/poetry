@@ -426,7 +426,6 @@ class PackageNode(DFSNode):
         else:
             self.seen.append(self.package)
 
-
         if (
             self.previous_dep
             and self.previous_dep is not self.dep
