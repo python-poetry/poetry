@@ -26,7 +26,7 @@ name = "my-poetry-plugin"
 version = "1.0.0"
 
 # ...
-[tool.poetry.dependency]
+[tool.poetry.dependencies]
 python = "~2.7 || ^3.7"
 poetry = "^1.0"
 
