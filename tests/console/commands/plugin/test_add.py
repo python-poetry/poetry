@@ -1,11 +1,7 @@
 import pytest
 
-from poetry.__version__ import __version__
 from poetry.core.packages.package import Package
 from poetry.factory import Factory
-from poetry.repositories.installed_repository import InstalledRepository
-from poetry.repositories.pool import Pool
-from poetry.utils.env import EnvManager
 
 
 @pytest.fixture()
@@ -13,31 +9,17 @@ def tester(command_tester_factory):
     return command_tester_factory("plugin add")
 
 
-@pytest.fixture()
-def installed():
-    repository = InstalledRepository()
+def assert_plugin_add_result(tester, app, env, expected, constraint):
+    assert tester.io.fetch_output() == expected
 
-    repository.add_package(Package("poetry", __version__))
+    update_command = app.find("update")
+    assert update_command.poetry.file.parent == env.path
+    assert update_command.poetry.locker.lock.parent == env.path
+    assert update_command.poetry.locker.lock.exists()
 
-    return repository
-
-
-def configure_sources_factory(repo):
-    def _configure_sources(poetry, sources, config, io):
-        pool = Pool()
-        pool.add_repository(repo)
-        poetry.set_pool(pool)
-
-    return _configure_sources
-
-
-@pytest.fixture(autouse=True)
-def setup_mocks(mocker, env, repo, installed):
-    mocker.patch.object(EnvManager, "get_system_env", return_value=env)
-    mocker.patch.object(InstalledRepository, "load", return_value=installed)
-    mocker.patch.object(
-        Factory, "configure_sources", side_effect=configure_sources_factory(repo)
-    )
+    content = update_command.poetry.file.read()["tool"]["poetry"]
+    assert "poetry-plugin" in content["dependencies"]
+    assert content["dependencies"]["poetry-plugin"] == constraint
 
 
 def test_add_no_constraint(app, repo, tester, env, installed):
@@ -56,17 +38,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
   • Installing poetry-plugin (0.1.0)
 """
-
-    assert tester.io.fetch_output() == expected
-
-    update_command = app.find("update")
-    assert update_command.poetry.file.parent == env.path
-    assert update_command.poetry.locker.lock.parent == env.path
-    assert update_command.poetry.locker.lock.exists()
-
-    content = update_command.poetry.file.read()["tool"]["poetry"]
-    assert "poetry-plugin" in content["dependencies"]
-    assert content["dependencies"]["poetry-plugin"] == "^0.1.0"
+    assert_plugin_add_result(tester, app, env, expected, "^0.1.0")
 
 
 def test_add_with_constraint(app, repo, tester, env, installed):
@@ -86,15 +58,7 @@ Package operations: 1 install, 0 updates, 0 removals
   • Installing poetry-plugin (0.2.0)
 """
 
-    assert tester.io.fetch_output() == expected
-
-    update_command = app.find("update")
-    assert update_command.poetry.file.parent == env.path
-    assert update_command.poetry.locker.lock.parent == env.path
-
-    content = update_command.poetry.file.read()["tool"]["poetry"]
-    assert "poetry-plugin" in content["dependencies"]
-    assert content["dependencies"]["poetry-plugin"] == "^0.2.0"
+    assert_plugin_add_result(tester, app, env, expected, "^0.2.0")
 
 
 def test_add_with_git_constraint(app, repo, tester, env, installed):
@@ -114,17 +78,9 @@ Package operations: 2 installs, 0 updates, 0 removals
   • Installing poetry-plugin (0.1.2 9cf87a2)
 """
 
-    assert tester.io.fetch_output() == expected
-
-    update_command = app.find("update")
-    assert update_command.poetry.file.parent == env.path
-    assert update_command.poetry.locker.lock.parent == env.path
-
-    content = update_command.poetry.file.read()["tool"]["poetry"]
-    assert "poetry-plugin" in content["dependencies"]
-    assert content["dependencies"]["poetry-plugin"] == {
-        "git": "https://github.com/demo/poetry-plugin.git"
-    }
+    assert_plugin_add_result(
+        tester, app, env, expected, {"git": "https://github.com/demo/poetry-plugin.git"}
+    )
 
 
 def test_add_with_git_constraint_with_extras(app, repo, tester, env, installed):
@@ -146,18 +102,16 @@ Package operations: 3 installs, 0 updates, 0 removals
   • Installing poetry-plugin (0.1.2 9cf87a2)
 """
 
-    assert tester.io.fetch_output() == expected
-
-    update_command = app.find("update")
-    assert update_command.poetry.file.parent == env.path
-    assert update_command.poetry.locker.lock.parent == env.path
-
-    content = update_command.poetry.file.read()["tool"]["poetry"]
-    assert "poetry-plugin" in content["dependencies"]
-    assert content["dependencies"]["poetry-plugin"] == {
-        "git": "https://github.com/demo/poetry-plugin.git",
-        "extras": ["foo"],
-    }
+    assert_plugin_add_result(
+        tester,
+        app,
+        env,
+        expected,
+        {
+            "git": "https://github.com/demo/poetry-plugin.git",
+            "extras": ["foo"],
+        },
+    )
 
 
 def test_add_existing_plugin_warns_about_no_operation(
@@ -242,16 +196,7 @@ Package operations: 0 installs, 1 update, 0 removals
   • Updating poetry-plugin (1.2.3 -> 2.3.4)
 """
 
-    assert tester.io.fetch_output() == expected
-
-    update_command = app.find("update")
-    assert update_command.poetry.file.parent == env.path
-    assert update_command.poetry.locker.lock.parent == env.path
-    assert update_command.poetry.locker.lock.exists()
-
-    content = update_command.poetry.file.read()["tool"]["poetry"]
-    assert "poetry-plugin" in content["dependencies"]
-    assert content["dependencies"]["poetry-plugin"] == "^2.3.4"
+    assert_plugin_add_result(tester, app, env, expected, "^2.3.4")
 
 
 def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
@@ -285,13 +230,4 @@ Package operations: 1 install, 1 update, 0 removals
   • Installing poetry-plugin (1.2.3)
 """
 
-    assert tester.io.fetch_output() == expected
-
-    update_command = app.find("update")
-    assert update_command.poetry.file.parent == env.path
-    assert update_command.poetry.locker.lock.parent == env.path
-    assert update_command.poetry.locker.lock.exists()
-
-    content = update_command.poetry.file.read()["tool"]["poetry"]
-    assert "poetry-plugin" in content["dependencies"]
-    assert content["dependencies"]["poetry-plugin"] == "^1.2.3"
+    assert_plugin_add_result(tester, app, env, expected, "^1.2.3")
