@@ -76,8 +76,11 @@ COMMANDS = [
     "plugin show",
     # Self commands
     "self update",
+    # Source commands
+    "source add",
+    "source remove",
+    "source show",
 ]
-
 
 if TYPE_CHECKING:
     from cleo.io.inputs.definition import Definition
