@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from poetry.core.semver.helpers import VersionTypes
 
 
-class Term(object):
+class Term:
     """
     A statement about a package which is true or false for a given selection of
     package versions.
@@ -53,7 +53,7 @@ class Term(object):
         """
         if self.dependency.complete_name != other.dependency.complete_name:
             raise ValueError(
-                "{} should refer to {}".format(other, self.dependency.complete_name)
+                f"{other} should refer to {self.dependency.complete_name}"
             )
 
         other_constraint = other.constraint
@@ -117,7 +117,7 @@ class Term(object):
         """
         if self.dependency.complete_name != other.dependency.complete_name:
             raise ValueError(
-                "{} should refer to {}".format(other, self.dependency.complete_name)
+                f"{other} should refer to {self.dependency.complete_name}"
             )
 
         if self._compatible_dependency(other.dependency):

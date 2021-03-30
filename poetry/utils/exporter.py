@@ -12,7 +12,7 @@ from poetry.poetry import Poetry
 from poetry.utils._compat import decode
 
 
-class Exporter(object):
+class Exporter:
     """
     Exporter class to export a lock file to alternative formats.
     """
@@ -36,7 +36,7 @@ class Exporter(object):
         with_credentials: bool = False,
     ) -> None:
         if fmt not in self.ACCEPTED_FORMATS:
-            raise ValueError("Invalid export format: {}".format(fmt))
+            raise ValueError(f"Invalid export format: {fmt}")
 
         getattr(self, "_export_{}".format(fmt.replace(".", "_")))(
             cwd,
@@ -81,15 +81,15 @@ class Exporter(object):
                 line = requirement
             elif is_direct_local_reference:
                 dependency_uri = path_to_url(dependency.source_url)
-                line = "{} @ {}".format(dependency.name, dependency_uri)
+                line = f"{dependency.name} @ {dependency_uri}"
             else:
-                line = "{}=={}".format(package.name, package.version)
+                line = f"{package.name}=={package.version}"
 
             if not is_direct_remote_reference:
                 if ";" in requirement:
                     markers = requirement.split(";", 1)[1].strip()
                     if markers:
-                        line += "; {}".format(markers)
+                        line += f"; {markers}"
 
             if (
                 not is_direct_remote_reference
@@ -109,7 +109,7 @@ class Exporter(object):
                         if algorithm not in self.ALLOWED_HASH_ALGORITHMS:
                             continue
 
-                    hashes.append("{}:{}".format(algorithm, h))
+                    hashes.append(f"{algorithm}:{h}")
 
                 if hashes:
                     line += " \\\n"
@@ -143,7 +143,7 @@ class Exporter(object):
                         if with_credentials
                         else repository.url
                     )
-                    indexes_header = "--index-url {}\n".format(url)
+                    indexes_header = f"--index-url {url}\n"
                     continue
 
                 url = (
@@ -151,8 +151,8 @@ class Exporter(object):
                 )
                 parsed_url = urllib.parse.urlsplit(url)
                 if parsed_url.scheme == "http":
-                    indexes_header += "--trusted-host {}\n".format(parsed_url.netloc)
-                indexes_header += "--extra-index-url {}\n".format(url)
+                    indexes_header += f"--trusted-host {parsed_url.netloc}\n"
+                indexes_header += f"--extra-index-url {url}\n"
 
             content = indexes_header + "\n" + content
 

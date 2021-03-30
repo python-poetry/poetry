@@ -25,7 +25,7 @@ class Assignment(Term):
         index: int,
         cause: Optional["Incompatibility"] = None,
     ) -> None:
-        super(Assignment, self).__init__(dependency, is_positive)
+        super().__init__(dependency, is_positive)
 
         self._decision_level = decision_level
         self._index = index

@@ -13,7 +13,7 @@ from typing import Union
 from poetry.core.semver.version import Version
 
 
-class SetupReader(object):
+class SetupReader:
     """
     Class that reads a setup.py file without executing it.
     """

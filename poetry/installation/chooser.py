@@ -17,11 +17,11 @@ class InvalidWheelName(Exception):
     pass
 
 
-class Wheel(object):
+class Wheel:
     def __init__(self, filename: str) -> None:
         wheel_info = wheel_file_re.match(filename)
         if not wheel_info:
-            raise InvalidWheelName("{} is not a valid wheel filename.".format(filename))
+            raise InvalidWheelName(f"{filename} is not a valid wheel filename.")
 
         self.filename = filename
         self.name = wheel_info.group("name").replace("_", "-")
@@ -71,14 +71,14 @@ class Chooser:
 
         if not links:
             raise RuntimeError(
-                "Unable to find installation candidates for {}".format(package)
+                f"Unable to find installation candidates for {package}"
             )
 
         # Get the best link
         chosen = max(links, key=lambda link: self._sort_key(package, link))
         if not chosen:
             raise RuntimeError(
-                "Unable to find installation candidates for {}".format(package)
+                f"Unable to find installation candidates for {package}"
             )
 
         return chosen

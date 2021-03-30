@@ -47,7 +47,7 @@ class PackageInfoError(ValueError):
         reasons = (
             "Unable to determine package info for path: {}".format(str(path)),
         ) + reasons
-        super(PackageInfoError, self).__init__(
+        super().__init__(
             "\n\n".join(str(msg).strip() for msg in reasons if msg)
         )
 
@@ -119,7 +119,7 @@ class PackageInfo:
     @classmethod
     def _log(cls, msg: str, level: str = "info") -> None:
         """Internal helper method to log information."""
-        getattr(logger, level)("<debug>{}:</debug> {}".format(cls.__name__, msg))
+        getattr(logger, level)(f"<debug>{cls.__name__}:</debug> {msg}")
 
     def to_package(
         self,
@@ -140,7 +140,7 @@ class PackageInfo:
         if not self.version:
             # The version could not be determined, so we raise an error since it is mandatory.
             raise RuntimeError(
-                "Unable to retrieve the package version for {}".format(name)
+                f"Unable to retrieve the package version for {name}"
             )
 
         package = Package(
@@ -329,7 +329,7 @@ class PackageInfo:
             requires += "\n"
 
         for extra_name, deps in result["extras_require"].items():
-            requires += "[{}]\n".format(extra_name)
+            requires += f"[{extra_name}]\n"
 
             for dep in deps:
                 requires += dep + "\n"
@@ -475,7 +475,7 @@ class PackageInfo:
             except EnvCommandError as e:
                 # something went wrong while attempting pep517 metadata build
                 # fallback to egg_info if setup.py available
-                cls._log("PEP517 build failed: {}".format(e), level="debug")
+                cls._log(f"PEP517 build failed: {e}", level="debug")
                 setup_py = path / "setup.py"
                 if not setup_py.exists():
                     raise PackageInfoError(
@@ -498,7 +498,7 @@ class PackageInfo:
 
         if info:
             cls._log(
-                "Falling back to parsed setup.py file for {}".format(path), "debug"
+                f"Falling back to parsed setup.py file for {path}", "debug"
             )
             return info
 

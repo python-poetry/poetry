@@ -32,7 +32,7 @@ class Pool(BaseRepository):
 
         self._ignore_repository_names = ignore_repository_names
 
-        super(Pool, self).__init__()
+        super().__init__()
 
     @property
     def repositories(self) -> List[Repository]:
@@ -53,7 +53,7 @@ class Pool(BaseRepository):
         if name in self._lookup:
             return self._repositories[self._lookup[name]]
 
-        raise ValueError('Repository "{}" does not exist.'.format(name))
+        raise ValueError(f'Repository "{name}" does not exist.')
 
     def add_repository(
         self, repository: Repository, default: bool = False, secondary: bool = False
@@ -125,7 +125,7 @@ class Pool(BaseRepository):
             and repository not in self._lookup
             and not self._ignore_repository_names
         ):
-            raise ValueError('Repository "{}" does not exist.'.format(repository))
+            raise ValueError(f'Repository "{repository}" does not exist.')
 
         if repository is not None and not self._ignore_repository_names:
             try:
@@ -144,7 +144,7 @@ class Pool(BaseRepository):
 
                     return package
 
-        raise PackageNotFound("Package {} ({}) not found.".format(name, version))
+        raise PackageNotFound(f"Package {name} ({version}) not found.")
 
     def find_packages(self, dependency: "Dependency") -> List["Package"]:
         repository = dependency.source_name
@@ -156,7 +156,7 @@ class Pool(BaseRepository):
             and repository not in self._lookup
             and not self._ignore_repository_names
         ):
-            raise ValueError('Repository "{}" does not exist.'.format(repository))
+            raise ValueError(f'Repository "{repository}" does not exist.')
 
         if repository is not None and not self._ignore_repository_names:
             return self.repository(repository).find_packages(dependency)

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     from poetry.core.pyproject.toml import PyProjectTOML
 
-TESTS_DEFAULT = u"""from {package_name} import __version__
+TESTS_DEFAULT = """from {package_name} import __version__
 
 
 def test_version():
@@ -51,7 +51,7 @@ BUILD_SYSTEM_MIN_VERSION = "1.0.0"
 BUILD_SYSTEM_MAX_VERSION: Optional[str] = None
 
 
-class Layout(object):
+class Layout:
     def __init__(
         self,
         project: str,
@@ -146,7 +146,7 @@ class Layout(object):
     def _create_tests(self, path: "Path") -> None:
         tests = path / "tests"
         tests_init = tests / "__init__.py"
-        tests_default = tests / "test_{}.py".format(self._package_name)
+        tests_default = tests / f"test_{self._package_name}.py"
 
         tests.mkdir()
         tests_init.touch(exist_ok=False)

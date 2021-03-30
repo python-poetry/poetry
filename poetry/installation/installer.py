@@ -200,7 +200,7 @@ class Installer:
         # Checking extras
         for extra in self._extras:
             if extra not in self._package.extras:
-                raise ValueError("Extra [{}] is not specified.".format(extra))
+                raise ValueError(f"Extra [{extra}] is not specified.")
 
         locked_repository = self._locker.locked_repository(True)
         solver = Solver(
@@ -237,7 +237,7 @@ class Installer:
             # Checking extras
             for extra in self._extras:
                 if extra not in self._package.extras:
-                    raise ValueError("Extra [{}] is not specified.".format(extra))
+                    raise ValueError(f"Extra [{extra}] is not specified.")
 
             self._io.write_line("<info>Updating dependencies</>")
             solver = Solver(
@@ -267,7 +267,7 @@ class Installer:
 
             for extra in self._extras:
                 if extra not in self._locker.lock_data.get("extras", {}):
-                    raise ValueError("Extra [{}] is not specified.".format(extra))
+                    raise ValueError(f"Extra [{extra}] is not specified.")
 
             # If we are installing from lock
             # Filter the operations by comparing it with what is
@@ -378,7 +378,7 @@ class Installer:
                     "" if updates == 1 else "s",
                     uninstalls,
                     "" if uninstalls == 1 else "s",
-                    ", <info>{}</> skipped".format(skipped)
+                    f", <info>{skipped}</> skipped"
                     if skipped and self.is_verbose()
                     else "",
                 )
@@ -397,7 +397,7 @@ class Installer:
         """
         method = operation.job_type
 
-        getattr(self, "_execute_{}".format(method))(operation)
+        getattr(self, f"_execute_{method}")(operation)
 
     def _execute_install(self, operation: Install) -> None:
         if operation.skipped:
