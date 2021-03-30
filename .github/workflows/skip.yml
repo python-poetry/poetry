@@ -29,15 +29,9 @@ jobs:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
     # we do not need os specific runners here, using linux is quicker
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         os: [Ubuntu, MacOS, Windows]
         python-version: [3.6, 3.7, 3.8, 3.9]
-        experimental: [false]
-        include:
-          - os: Ubuntu
-            python-version: "3.10.0-alpha - 3.10.0"
-            experimental: true
     steps:
       - run: exit 0

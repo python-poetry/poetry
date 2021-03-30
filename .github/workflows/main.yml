@@ -18,7 +18,7 @@ on:
 jobs:
   tests:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
@@ -45,7 +45,7 @@ jobs:
 
       - name: Bootstrap poetry
         shell: bash
-        run: pip install poetry
+        run: python install-poetry.py -y
 
       - name: Update PATH
         if: ${{ matrix.os != 'Windows' }}
