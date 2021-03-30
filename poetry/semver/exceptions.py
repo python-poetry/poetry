@@ -1,2 +1,0 @@
-class ParseVersionError(ValueError):
-    pass

@@ -1,46 +1,51 @@
+from typing import TYPE_CHECKING
+from typing import Optional
 from typing import Union
 
-from poetry.packages import Dependency
-from poetry.packages import Package
-from poetry.semver import Version
-from poetry.semver import parse_constraint
+from poetry.core.packages.package import Package
+from poetry.core.semver.version import Version
+
+
+if TYPE_CHECKING:
+    from poetry.repositories import Pool
 
 
 class VersionSelector(object):
-    def __init__(self, pool):
+    def __init__(self, pool: "Pool") -> None:
         self._pool = pool
 
     def find_best_candidate(
         self,
-        package_name,  # type: str
-        target_package_version=None,  # type:  Union[str, None]
-        allow_prereleases=False,  # type: bool
-    ):  # type: (...) -> Union[Package, bool]
+        package_name: str,
+        target_package_version: Optional[str] = None,
+        allow_prereleases: bool = False,
+        source: Optional[str] = None,
+    ) -> Union[Package, bool]:
         """
         Given a package name and optional version,
         returns the latest Package that matches
         """
-        if target_package_version:
-            constraint = parse_constraint(target_package_version)
-        else:
-            constraint = parse_constraint("*")
+        from poetry.factory import Factory
 
-        candidates = self._pool.find_packages(
-            package_name, constraint, allow_prereleases=True
+        dependency = Factory.create_dependency(
+            package_name,
+            {
+                "version": target_package_version or "*",
+                "allow_prereleases": allow_prereleases,
+                "source": source,
+            },
         )
-        only_prereleases = all([c.version.is_prerelease() for c in candidates])
+        candidates = self._pool.find_packages(dependency)
+        only_prereleases = all([c.version.is_unstable() for c in candidates])
 
         if not candidates:
             return False
-
-        dependency = Dependency(package_name, constraint)
 
         package = None
         for candidate in candidates:
             if (
                 candidate.is_prerelease()
                 and not dependency.allows_prereleases()
-                and not allow_prereleases
                 and not only_prereleases
             ):
                 continue
@@ -53,12 +58,12 @@ class VersionSelector(object):
             return False
         return package
 
-    def find_recommended_require_version(self, package):
+    def find_recommended_require_version(self, package: Package) -> str:
         version = package.version
 
         return self._transform_version(version.text, package.pretty_version)
 
-    def _transform_version(self, version, pretty_version):
+    def _transform_version(self, version: str, pretty_version: str) -> str:
         try:
             parsed = Version.parse(version)
             parts = [parsed.major, parsed.minor, parsed.patch]
@@ -72,7 +77,7 @@ class VersionSelector(object):
             version = pretty_version
         else:
             version = ".".join(str(p) for p in parts)
-            if parsed.is_prerelease():
-                version += "-{}".format(".".join(str(p) for p in parsed.prerelease))
+            if parsed.is_unstable():
+                version += "-{}".format(parsed.pre.to_string())
 
         return "^{}".format(version)

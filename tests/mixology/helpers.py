@@ -1,7 +1,8 @@
+from poetry.core.packages.package import Package
+from poetry.factory import Factory
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.version_solver import VersionSolver
 from poetry.packages import DependencyPackage
-from poetry.packages import Package
 
 
 def add_to_repo(repository, name, version, deps=None, python=None):
@@ -11,7 +12,7 @@ def add_to_repo(repository, name, version, deps=None, python=None):
 
     if deps:
         for dep_name, dep_constraint in deps.items():
-            package.add_dependency(dep_name, dep_constraint)
+            package.add_dependency(Factory.create_dependency(dep_name, dep_constraint))
 
     repository.add_package(package)
 

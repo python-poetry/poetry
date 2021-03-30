@@ -1,0 +1,21 @@
+name: Code Quality
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '.cirrus.yml'
+  push:
+    branches: [master]
+    paths-ignore:
+      - 'docs/**'
+      - '.cirrus.yml'
+
+jobs:
+  pre-commit:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - uses: pre-commit/action@v2.0.0

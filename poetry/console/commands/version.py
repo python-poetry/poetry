@@ -1,6 +1,13 @@
-from cleo import argument
+from typing import TYPE_CHECKING
+
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from .command import Command
+
+
+if TYPE_CHECKING:
+    from poetry.core.semver.version import Version
 
 
 class VersionCommand(Command):
@@ -18,6 +25,7 @@ class VersionCommand(Command):
             optional=True,
         )
     ]
+    options = [option("short", "s", "Output the version number only")]
 
     help = """\
 The version command shows the current version of the project or bumps the version of
@@ -38,7 +46,7 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
         "prerelease",
     }
 
-    def handle(self):
+    def handle(self) -> None:
         version = self.argument("version")
 
         if version:
@@ -46,11 +54,14 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
                 self.poetry.package.pretty_version, version
             )
 
-            self.line(
-                "Bumping version from <b>{}</> to <fg=green>{}</>".format(
-                    self.poetry.package.pretty_version, version
+            if self.option("short"):
+                self.line("{}".format(version))
+            else:
+                self.line(
+                    "Bumping version from <b>{}</> to <fg=green>{}</>".format(
+                        self.poetry.package.pretty_version, version
+                    )
                 )
-            )
 
             content = self.poetry.file.read()
             poetry_content = content["tool"]["poetry"]
@@ -58,14 +69,17 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
 
             self.poetry.file.write(content)
         else:
-            self.line(
-                "<comment>{}</> <info>{}</>".format(
-                    self.poetry.package.name, self.poetry.package.pretty_version
+            if self.option("short"):
+                self.line("{}".format(self.poetry.package.pretty_version))
+            else:
+                self.line(
+                    "<comment>{}</> <info>{}</>".format(
+                        self.poetry.package.name, self.poetry.package.pretty_version
+                    )
                 )
-            )
 
-    def increment_version(self, version, rule):
-        from poetry.semver import Version
+    def increment_version(self, version: str, rule: str) -> "Version":
+        from poetry.core.semver.version import Version
 
         try:
             version = Version.parse(version)
@@ -73,31 +87,22 @@ patch, minor, major, prepatch, preminor, premajor, prerelease.
             raise ValueError("The project's version doesn't seem to follow semver")
 
         if rule in {"major", "premajor"}:
-            new = version.next_major
+            new = version.next_major()
             if rule == "premajor":
-                new = new.first_prerelease
+                new = new.first_prerelease()
         elif rule in {"minor", "preminor"}:
-            new = version.next_minor
+            new = version.next_minor()
             if rule == "preminor":
-                new = new.first_prerelease
+                new = new.first_prerelease()
         elif rule in {"patch", "prepatch"}:
-            new = version.next_patch
+            new = version.next_patch()
             if rule == "prepatch":
-                new = new.first_prerelease
+                new = new.first_prerelease()
         elif rule == "prerelease":
-            if version.is_prerelease():
-                pre = version.prerelease
-                new_prerelease = int(pre[1]) + 1
-                new = Version.parse(
-                    "{}.{}.{}-{}".format(
-                        version.major,
-                        version.minor,
-                        version.patch,
-                        ".".join([pre[0], str(new_prerelease)]),
-                    )
-                )
+            if version.is_unstable():
+                new = Version(version.epoch, version.release, version.pre.next())
             else:
-                new = version.next_patch.first_prerelease
+                new = version.next_patch().first_prerelease()
         else:
             new = Version.parse(rule)
 

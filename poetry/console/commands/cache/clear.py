@@ -1,34 +1,33 @@
 import os
 
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from ..command import Command
 
 
 class CacheClearCommand(Command):
 
-    name = "clear"
+    name = "cache clear"
     description = "Clears Poetry's cache."
 
     arguments = [argument("cache", description="The name of the cache to clear.")]
     options = [option("all", description="Clear all entries in the cache.")]
 
-    def handle(self):
+    def handle(self) -> int:
         from cachy import CacheManager
-        from poetry.locations import CACHE_DIR
-        from poetry.utils._compat import Path
+
+        from poetry.locations import REPOSITORY_CACHE_DIR
 
         cache = self.argument("cache")
 
         parts = cache.split(":")
         root = parts[0]
 
-        base_cache = Path(CACHE_DIR) / "cache" / "repositories"
-        cache_dir = base_cache / root
+        cache_dir = REPOSITORY_CACHE_DIR / root
 
         try:
-            cache_dir.relative_to(base_cache)
+            cache_dir.relative_to(REPOSITORY_CACHE_DIR)
         except ValueError:
             raise ValueError("{} is not a valid repository cache".format(root))
 

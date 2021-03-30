@@ -1,6 +1,6 @@
-from cleo.testers import CommandTester
+from pathlib import Path
 
-from poetry.utils._compat import Path
+import pytest
 
 
 TESTS_DIRECTORY = Path(__file__).parent.parent.parent
@@ -9,15 +9,21 @@ FIXTURES_DIRECTORY = (
 )
 
 
-def test_search(app, http):
+@pytest.fixture(autouse=True)
+def mock_search_http_response(http):
     with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
-        search_results = f.read()
+        http.register_uri("GET", "https://pypi.org/search", f.read())
 
-    http.register_uri("GET", "https://pypi.org/search", search_results)
 
-    command = app.find("search")
-    tester = CommandTester(command)
+@pytest.fixture
+def tester(command_tester_factory):
+    return command_tester_factory("search")
 
+
+def test_search(
+    tester,
+    http,
+):
     tester.execute("sqlalchemy")
 
     expected = """

@@ -1,10 +1,11 @@
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
-from .env_command import EnvCommand
+from ...utils.helpers import canonicalize_name
+from .installer_command import InstallerCommand
 
 
-class RemoveCommand(EnvCommand):
+class RemoveCommand(InstallerCommand):
 
     name = "remove"
     description = "Removes a package from the project dependencies."
@@ -25,11 +26,9 @@ list of installed packages
 
 <info>poetry remove</info>"""
 
-    loggers = ["poetry.repositories.pypi_repository"]
+    loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
-        from poetry.installation.installer import Installer
-
+    def handle(self) -> int:
         packages = self.argument("packages")
         is_dev = self.option("dev")
 
@@ -56,36 +55,34 @@ list of installed packages
         for key in requirements:
             del poetry_content[section][key]
 
-        # Write the new content back
-        self.poetry.file.write(content)
+            dependencies = (
+                self.poetry.package.requires
+                if section == "dependencies"
+                else self.poetry.package.dev_requires
+            )
+
+            for i, dependency in enumerate(reversed(dependencies)):
+                if dependency.name == canonicalize_name(key):
+                    del dependencies[-i]
 
         # Update packages
-        self.reset_poetry()
-
-        installer = Installer(
-            self.io, self.env, self.poetry.package, self.poetry.locker, self.poetry.pool
+        self._installer.use_executor(
+            self.poetry.config.get("experimental.new-installer", False)
         )
 
-        installer.dry_run(self.option("dry-run"))
-        installer.update(True)
-        installer.whitelist(requirements)
+        self._installer.dry_run(self.option("dry-run"))
+        self._installer.verbose(self._io.is_verbose())
+        self._installer.update(True)
+        self._installer.whitelist(requirements)
 
         try:
-            status = installer.run()
+            status = self._installer.run()
         except Exception:
             self.poetry.file.write(original_content)
 
             raise
 
-        if status != 0 or self.option("dry-run"):
-            # Revert changes
-            if not self.option("dry-run"):
-                self.error(
-                    "\n"
-                    "Removal failed, reverting pyproject.toml "
-                    "to its original content."
-                )
-
-            self.poetry.file.write(original_content)
+        if not self.option("dry-run"):
+            self.poetry.file.write(content)
 
         return status

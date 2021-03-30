@@ -23,3 +23,8 @@ classifiers = [
 # Requirements
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.4"
+
+[tool.poetry.scripts]
+foo = "foo:bar"
+baz = "bar:baz.boom.bim"
+fox = "fuz.foo:bar.baz"

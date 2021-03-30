@@ -3,15 +3,7 @@ from __future__ import unicode_literals
 
 import pytest
 
-from cleo.testers import CommandTester
-
-from poetry.factory import Factory
-from poetry.repositories.pool import Pool
 from tests.helpers import get_package
-
-from ..conftest import Application
-from ..conftest import Locker
-from ..conftest import Path
 
 
 PYPROJECT_CONTENT = """\
@@ -48,144 +40,76 @@ feature_bar = ["bar"]
 """
 
 
-@pytest.fixture
-def poetry(repo, tmp_dir):
-    with (Path(tmp_dir) / "pyproject.toml").open("w", encoding="utf-8") as f:
-        f.write(PYPROJECT_CONTENT)
-
-    p = Factory().create_poetry(Path(tmp_dir))
-
-    locker = Locker(p.locker.lock.path, p.locker._local_config)
-    locker.write()
-    p.set_locker(locker)
-
-    pool = Pool()
-    pool.add_repository(repo)
-    p.set_pool(pool)
-
-    yield p
-
-
-@pytest.fixture
-def app(poetry):
-    return Application(poetry)
-
-
-def test_export_exports_requirements_txt_file_locks_if_no_lock_file(app, repo):
-    command = app.find("export")
-    tester = CommandTester(command)
-
-    assert not app.poetry.locker.lock.exists()
-
+@pytest.fixture(autouse=True)
+def setup(repo):
     repo.add_package(get_package("foo", "1.0.0"))
     repo.add_package(get_package("bar", "1.1.0"))
 
+
+@pytest.fixture
+def poetry(project_factory):
+    return project_factory(name="export", pyproject_content=PYPROJECT_CONTENT)
+
+
+@pytest.fixture
+def tester(command_tester_factory, poetry):
+    return command_tester_factory("export", poetry=poetry)
+
+
+def _export_requirements(tester, poetry):
     tester.execute("--format requirements.txt --output requirements.txt")
 
-    requirements = app.poetry.file.parent / "requirements.txt"
+    requirements = poetry.file.parent / "requirements.txt"
     assert requirements.exists()
 
     with requirements.open(encoding="utf-8") as f:
         content = f.read()
 
-    assert app.poetry.locker.lock.exists()
+    assert poetry.locker.lock.exists()
 
     expected = """\
 foo==1.0.0
 """
 
     assert expected == content
+
+
+def test_export_exports_requirements_txt_file_locks_if_no_lock_file(tester, poetry):
+    assert not poetry.locker.lock.exists()
+    _export_requirements(tester, poetry)
     assert "The lock file does not exist. Locking." in tester.io.fetch_output()
 
 
-def test_export_exports_requirements_txt_uses_lock_file(app, repo):
-    repo.add_package(get_package("foo", "1.0.0"))
-    repo.add_package(get_package("bar", "1.1.0"))
-
-    command = app.find("lock")
-    tester = CommandTester(command)
-    tester.execute()
-
-    assert app.poetry.locker.lock.exists()
-
-    command = app.find("export")
-    tester = CommandTester(command)
-
-    tester.execute("--format requirements.txt --output requirements.txt")
-
-    requirements = app.poetry.file.parent / "requirements.txt"
-    assert requirements.exists()
-
-    with requirements.open(encoding="utf-8") as f:
-        content = f.read()
-
-    assert app.poetry.locker.lock.exists()
-
-    expected = """\
-foo==1.0.0
-"""
-
-    assert expected == content
+def test_export_exports_requirements_txt_uses_lock_file(tester, poetry, do_lock):
+    _export_requirements(tester, poetry)
     assert "The lock file does not exist. Locking." not in tester.io.fetch_output()
 
 
-def test_export_fails_on_invalid_format(app, repo):
-    repo.add_package(get_package("foo", "1.0.0"))
-    repo.add_package(get_package("bar", "1.1.0"))
-
-    command = app.find("lock")
-    tester = CommandTester(command)
-    tester.execute()
-
-    assert app.poetry.locker.lock.exists()
-
-    command = app.find("export")
-    tester = CommandTester(command)
-
+def test_export_fails_on_invalid_format(tester, do_lock):
     with pytest.raises(ValueError):
         tester.execute("--format invalid")
 
 
-def test_export_prints_to_stdout_by_default(app, repo):
-    repo.add_package(get_package("foo", "1.0.0"))
-    repo.add_package(get_package("bar", "1.1.0"))
-
-    command = app.find("lock")
-    tester = CommandTester(command)
-    tester.execute()
-
-    assert app.poetry.locker.lock.exists()
-
-    command = app.find("export")
-    tester = CommandTester(command)
-
+def test_export_prints_to_stdout_by_default(tester, do_lock):
     tester.execute("--format requirements.txt")
-
     expected = """\
 foo==1.0.0
 """
-
     assert expected == tester.io.fetch_output()
 
 
-def test_export_includes_extras_by_flag(app, repo):
-    repo.add_package(get_package("foo", "1.0.0"))
-    repo.add_package(get_package("bar", "1.1.0"))
-
-    command = app.find("lock")
-    tester = CommandTester(command)
+def test_export_uses_requirements_txt_format_by_default(tester, do_lock):
     tester.execute()
+    expected = """\
+foo==1.0.0
+"""
+    assert expected == tester.io.fetch_output()
 
-    assert app.poetry.locker.lock.exists()
 
-    command = app.find("export")
-    tester = CommandTester(command)
-
+def test_export_includes_extras_by_flag(tester, do_lock):
     tester.execute("--format requirements.txt --extras feature_bar")
-
     expected = """\
 bar==1.1.0
 foo==1.0.0
 """
-
     assert expected == tester.io.fetch_output()

@@ -1,11 +1,17 @@
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
-from poetry.packages.project_package import ProjectPackage
-from poetry.puzzle.provider import Provider
+from poetry.core.packages.project_package import ProjectPackage
+from poetry.puzzle.provider import Provider as BaseProvider
 from poetry.repositories import Pool
 from poetry.repositories import Repository
+
+
+class Provider(BaseProvider):
+    def set_package_python_versions(self, python_versions):
+        self._package.python_versions = python_versions
+        self._python_constraint = self._package.python_constraint
 
 
 @pytest.fixture

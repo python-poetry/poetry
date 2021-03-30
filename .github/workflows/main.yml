@@ -1,35 +1,34 @@
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '.cirrus.yml'
+    branches:
+      - master
+      - develop
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '.cirrus.yml'
+    branches:
+      - '**'
 
 jobs:
-  Linting:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
-      - name: Linting
-        run: |
-          pip install pre-commit
-          pre-commit run --all-files
-
-  Tests:
-    needs: Linting
+  tests:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
         os: [Ubuntu, MacOS, Windows]
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -38,12 +37,19 @@ jobs:
         shell: bash
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
-      - name: Install poetry
+      - name: Bootstrap poetry
         shell: bash
-        run: |
-          curl -fsS -o get-poetry.py https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
-          python get-poetry.py --preview -y
-          echo "::set-env name=PATH::$HOME/.poetry/bin:$PATH"
+        run: python install-poetry.py -y
+
+      - name: Update PATH
+        if: ${{ matrix.os != 'Windows' }}
+        shell: bash
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Update Path for Windows
+        if: ${{ matrix.os == 'Windows' }}
+        shell: bash
+        run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
       - name: Configure poetry
         shell: bash
@@ -59,7 +65,7 @@ jobs:
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
         shell: bash
-        run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
+        run: timeout 10s poetry run pip --version || rm -rf .venv
 
       - name: Install dependencies
         shell: bash
@@ -67,4 +73,4 @@ jobs:
 
       - name: Run pytest
         shell: bash
-        run: poetry run pytest -q tests
+        run: poetry run python -m pytest -p no:sugar -q tests/

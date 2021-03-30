@@ -1,4 +1,4 @@
-from cleo import option
+from cleo.helpers import option
 
 from .env_command import EnvCommand
 
@@ -12,8 +12,14 @@ class BuildCommand(EnvCommand):
         option("format", "f", "Limit the format to either sdist or wheel.", flag=False)
     ]
 
-    def handle(self):
-        from poetry.masonry import Builder
+    loggers = [
+        "poetry.core.masonry.builders.builder",
+        "poetry.core.masonry.builders.sdist",
+        "poetry.core.masonry.builders.wheel",
+    ]
+
+    def handle(self) -> None:
+        from poetry.core.masonry.builder import Builder
 
         fmt = "all"
         if self.option("format"):
@@ -21,10 +27,10 @@ class BuildCommand(EnvCommand):
 
         package = self.poetry.package
         self.line(
-            "Building <c1>{}</c1> (<b>{}</b>)".format(
+            "Building <c1>{}</c1> (<c2>{}</c2>)".format(
                 package.pretty_name, package.version
             )
         )
 
-        builder = Builder(self.poetry, self.env, self.io)
-        builder.build(fmt)
+        builder = Builder(self.poetry)
+        builder.build(fmt, executable=self.env.python)

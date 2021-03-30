@@ -1,25 +1,27 @@
 import logging
 
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from logging import LogRecord
+
+    from cleo.io.io import IO  # noqa
+
 
 class IOHandler(logging.Handler):
-    def __init__(self, io):
+    def __init__(self, io: "IO") -> None:
         self._io = io
 
-        level = logging.WARNING
-        if io.is_debug():
-            level = logging.DEBUG
-        elif io.is_very_verbose() or io.is_verbose():
-            level = logging.INFO
+        super(IOHandler, self).__init__()
 
-        super(IOHandler, self).__init__(level)
-
-    def emit(self, record):
+    def emit(self, record: "LogRecord") -> None:
         try:
             msg = self.format(record)
             level = record.levelname.lower()
             err = level in ("warning", "error", "exception", "critical")
             if err:
-                self._io.error_line(msg)
+                self._io.write_error_line(msg)
             else:
                 self._io.write_line(msg)
         except Exception:

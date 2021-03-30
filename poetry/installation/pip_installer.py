@@ -1,33 +1,36 @@
 import os
 import tempfile
+import urllib.parse
 
-from io import open
+from pathlib import Path
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Union
 
-from clikit.api.io import IO
-from clikit.io import NullIO
+from cleo.io.io import IO
 
+from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.installation.base_installer import BaseInstaller
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import encode
 from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
+from poetry.utils.pip import pip_editable_install
+from poetry.utils.pip import pip_install
 
-from .base_installer import BaseInstaller
 
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
+if TYPE_CHECKING:
+    from poetry.core.packages.package import Package
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env, io, pool):  # type: (Env, IO, Pool) -> None
+    def __init__(self, env: Env, io: IO, pool: Pool) -> None:
         self._env = env
         self._io = io
         self._pool = pool
 
-    def install(self, package, update=False):
+    def install(self, package: "Package", update: bool = False) -> None:
         if package.source_type == "directory":
             self.install_directory(package)
 
@@ -45,9 +48,9 @@ class PipInstaller(BaseInstaller):
             and package.source_url
         ):
             repository = self._pool.repository(package.source_reference)
-            parsed = urlparse.urlparse(package.source_url)
+            parsed = urllib.parse.urlparse(package.source_url)
             if parsed.scheme == "http":
-                self._io.error(
+                self._io.write_error(
                     "    <warning>Installing from unsecure host: {}</warning>".format(
                         parsed.hostname
                     )
@@ -96,7 +99,7 @@ class PipInstaller(BaseInstaller):
 
             self.run(*args)
 
-    def update(self, package, target):
+    def update(self, package: "Package", target: "Package") -> None:
         if package.source_type != target.source_type:
             # If the source type has changed, we remove the current
             # package to avoid perpetual updates in some cases
@@ -104,7 +107,7 @@ class PipInstaller(BaseInstaller):
 
         self.install(target, update=True)
 
-    def remove(self, package):
+    def remove(self, package: "Package") -> None:
         try:
             self.run("uninstall", package.name, "-y")
         except CalledProcessError as e:
@@ -114,7 +117,9 @@ class PipInstaller(BaseInstaller):
             raise
 
         # This is a workaround for https://github.com/pypa/pip/issues/4176
-        nspkg_pth_file = self._env.site_packages / "{}-nspkg.pth".format(package.name)
+        nspkg_pth_file = self._env.site_packages.path / "{}-nspkg.pth".format(
+            package.name
+        )
         if nspkg_pth_file.exists():
             nspkg_pth_file.unlink()
 
@@ -124,10 +129,10 @@ class PipInstaller(BaseInstaller):
             if src_dir.exists():
                 safe_rmtree(str(src_dir))
 
-    def run(self, *args, **kwargs):  # type: (...) -> str
+    def run(self, *args: Any, **kwargs: Any) -> str:
         return self._env.run_pip(*args, **kwargs)
 
-    def requirement(self, package, formatted=False):
+    def requirement(self, package: "Package", formatted: bool = False) -> str:
         if formatted and not package.source_type:
             req = "{}=={}".format(package.name, package.version)
             for f in package.files:
@@ -144,7 +149,7 @@ class PipInstaller(BaseInstaller):
 
         if package.source_type in ["file", "directory"]:
             if package.root_dir:
-                req = os.path.join(package.root_dir, package.source_url)
+                req = (package.root_dir / package.source_url).as_posix()
             else:
                 req = os.path.realpath(package.source_url)
 
@@ -168,7 +173,7 @@ class PipInstaller(BaseInstaller):
 
         return "{}=={}".format(package.name, package.version)
 
-    def create_temporary_requirement(self, package):
+    def create_temporary_requirement(self, package: "Package") -> str:
         fd, name = tempfile.mkstemp(
             "reqs.txt", "{}-{}".format(package.name, package.version)
         )
@@ -180,62 +185,65 @@ class PipInstaller(BaseInstaller):
 
         return name
 
-    def install_directory(self, package):
-        from poetry.masonry.builder import SdistBuilder
+    def install_directory(self, package: "Package") -> Union[str, int]:
+        from cleo.io.null_io import NullIO
+
         from poetry.factory import Factory
-        from poetry.utils._compat import decode
-        from poetry.utils.env import NullEnv
-        from poetry.utils.toml_file import TomlFile
+
+        req: Path
 
         if package.root_dir:
-            req = os.path.join(package.root_dir, package.source_url)
+            req = (package.root_dir / package.source_url).as_posix()
         else:
-            req = os.path.realpath(package.source_url)
+            req = Path(package.source_url).resolve(strict=False)
 
-        args = ["install", "--no-deps", "-U"]
+        pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
-        pyproject = TomlFile(os.path.join(req, "pyproject.toml"))
-
-        has_poetry = False
-        has_build_system = False
-        if pyproject.exists():
-            pyproject_content = pyproject.read()
-            has_poetry = (
-                "tool" in pyproject_content and "poetry" in pyproject_content["tool"]
-            )
+        if pyproject.is_poetry_project():
             # Even if there is a build system specified
-            # pip as of right now does not support it fully
-            # TODO: Check for pip version when proper PEP-517 support lands
-            # has_build_system = ("build-system" in pyproject_content)
-
-        setup = os.path.join(req, "setup.py")
-        has_setup = os.path.exists(setup)
-        if not has_setup and has_poetry and (package.develop or not has_build_system):
-            # We actually need to rely on creating a temporary setup.py
-            # file since pip, as of this comment, does not support
-            # build-system for editable packages
-            # We also need it for non-PEP-517 packages
-            builder = SdistBuilder(
-                Factory().create_poetry(pyproject.parent), NullEnv(), NullIO()
+            # some versions of pip (< 19.0.0) don't understand it
+            # so we need to check the version of pip to know
+            # if we can rely on the build system
+            legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
+                19, 0, 0
             )
+            package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
-            with open(setup, "w", encoding="utf-8") as f:
-                f.write(decode(builder.build_setup()))
+            if package.develop and not package_poetry.package.build_script:
+                from poetry.masonry.builders.editable import EditableBuilder
+
+                # This is a Poetry package in editable mode
+                # we can use the EditableBuilder without going through pip
+                # to install it, unless it has a build script.
+                builder = EditableBuilder(package_poetry, self._env, NullIO())
+                builder.build()
+
+                return 0
+            elif legacy_pip or package_poetry.package.build_script:
+                from poetry.core.masonry.builders.sdist import SdistBuilder
+
+                # We need to rely on creating a temporary setup.py
+                # file since the version of pip does not support
+                # build-systems
+                # We also need it for non-PEP-517 packages
+                builder = SdistBuilder(package_poetry)
+
+                with builder.setup_py():
+                    if package.develop:
+                        return pip_editable_install(
+                            directory=req, environment=self._env
+                        )
+                    return pip_install(
+                        path=req, environment=self._env, deps=False, upgrade=True
+                    )
 
         if package.develop:
-            args.append("-e")
+            return pip_editable_install(directory=req, environment=self._env)
+        return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
 
-        args.append(req)
-
-        try:
-            return self.run(*args)
-        finally:
-            if not has_setup and os.path.exists(setup):
-                os.remove(setup)
-
-    def install_git(self, package):
-        from poetry.packages import Package
-        from poetry.vcs import Git
+    def install_git(self, package: "Package") -> None:
+        from poetry.core.packages.package import Package
+        from poetry.core.vcs.git import Git
 
         src_dir = self._env.path / "src" / package.name
         if src_dir.exists():
@@ -249,8 +257,8 @@ class PipInstaller(BaseInstaller):
 
         # Now we just need to install from the source directory
         pkg = Package(package.name, package.version)
-        pkg.source_type = "directory"
-        pkg.source_url = str(src_dir)
+        pkg._source_type = "directory"
+        pkg._source_url = str(src_dir)
         pkg.develop = package.develop
 
         self.install_directory(pkg)

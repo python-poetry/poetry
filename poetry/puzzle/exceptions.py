@@ -1,18 +1,22 @@
-class CompatibilityError(Exception):
-    def __init__(self, *constraints):
-        self._constraints = list(constraints)
-
-    @property
-    def constraints(self):
-        return self._constraints
+from typing import Dict
+from typing import Tuple
 
 
 class SolverProblemError(Exception):
-    def __init__(self, error):
+    def __init__(self, error: Exception) -> None:
         self._error = error
 
         super(SolverProblemError, self).__init__(str(error))
 
     @property
-    def error(self):
+    def error(self) -> Exception:
         return self._error
+
+
+class OverrideNeeded(Exception):
+    def __init__(self, *overrides: Dict) -> None:
+        self._overrides = overrides
+
+    @property
+    def overrides(self) -> Tuple[Dict]:
+        return self._overrides

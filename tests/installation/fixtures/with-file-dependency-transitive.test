@@ -14,9 +14,21 @@ bar = ["tomlkit"]
 foo = ["cleo"]
 
 [package.source]
-reference = ""
 type = "file"
-url = "tests/fixtures/directory/project_with_transitive_file_dependencies/../../distributions/demo-0.1.0-py2.py3-none-any.whl"
+url = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
+
+[[package]]
+category = "main"
+description = "This is a description"
+develop = false
+name = "inner-directory-project"
+optional = false
+python-versions = "*"
+version = "1.2.4"
+
+[package.source]
+type = "directory"
+url = "project_with_transitive_file_dependencies/inner-directory-project"
 
 [[package]]
 category = "main"
@@ -28,28 +40,30 @@ version = "1.4.4"
 
 [[package]]
 category = "main"
-description = ""
-develop = true
+description = "This is a description"
+develop = false
 name = "project-with-transitive-file-dependencies"
 optional = false
 python-versions = "*"
 version = "1.2.3"
 
 [package.dependencies]
-demo = "*"
+demo = "0.1.0"
+inner-directory-project = "1.2.4"
 
 [package.source]
-reference = ""
 type = "directory"
-url = "tests/fixtures/directory/project_with_transitive_file_dependencies"
+url = "project_with_transitive_file_dependencies"
 
 [metadata]
 content-hash = "123456789"
+lock-version = "1.1"
 python-versions = "*"
 
 [metadata.files]
 demo = [
     {file = "demo-0.1.0-py2.py3-none-any.whl", hash = "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"},
 ]
+inner-directory-project = []
 pendulum = []
 project-with-transitive-file-dependencies = []

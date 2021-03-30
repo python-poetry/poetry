@@ -1,10 +1,12 @@
+from poetry.factory import Factory
+
 from ...helpers import get_package
 from ..helpers import add_to_repo
 from ..helpers import check_solver_result
 
 
 def test_with_compatible_locked_dependencies(root, provider, repo):
-    root.add_dependency("foo", "*")
+    root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
     add_to_repo(repo, "foo", "1.0.1", deps={"bar": "1.0.1"})
@@ -22,7 +24,7 @@ def test_with_compatible_locked_dependencies(root, provider, repo):
 
 
 def test_with_incompatible_locked_dependencies(root, provider, repo):
-    root.add_dependency("foo", ">1.0.1")
+    root.add_dependency(Factory.create_dependency("foo", ">1.0.1"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
     add_to_repo(repo, "foo", "1.0.1", deps={"bar": "1.0.1"})
@@ -40,7 +42,7 @@ def test_with_incompatible_locked_dependencies(root, provider, repo):
 
 
 def test_with_unrelated_locked_dependencies(root, provider, repo):
-    root.add_dependency("foo", "*")
+    root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
     add_to_repo(repo, "foo", "1.0.1", deps={"bar": "1.0.1"})
@@ -61,8 +63,8 @@ def test_with_unrelated_locked_dependencies(root, provider, repo):
 def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_statisfied(
     root, provider, repo
 ):
-    root.add_dependency("foo")
-    root.add_dependency("newdep", "2.0.0")
+    root.add_dependency(Factory.create_dependency("foo", "*"))
+    root.add_dependency(Factory.create_dependency("newdep", "2.0.0"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "<2.0.0"})
     add_to_repo(repo, "bar", "1.0.0", deps={"baz": "<2.0.0"})
@@ -94,8 +96,8 @@ def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_st
 
 
 def test_with_compatible_locked_dependencies_use_latest(root, provider, repo):
-    root.add_dependency("foo", "*")
-    root.add_dependency("baz", "*")
+    root.add_dependency(Factory.create_dependency("foo", "*"))
+    root.add_dependency(Factory.create_dependency("baz", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
     add_to_repo(repo, "foo", "1.0.1", deps={"bar": "1.0.1"})

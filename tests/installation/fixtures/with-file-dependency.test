@@ -8,7 +8,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.source]
 type = "file"
-reference = ""
 url = "tests/fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
 
 [package.dependencies]
@@ -28,6 +27,7 @@ python-versions = "*"
 
 [metadata]
 python-versions = "*"
+lock-version = "1.1"
 content-hash = "123456789"
 
 [metadata.files]

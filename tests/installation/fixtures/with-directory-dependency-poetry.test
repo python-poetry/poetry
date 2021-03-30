@@ -8,8 +8,8 @@ version = "1.4.4"
 
 [[package]]
 category = "main"
-description = ""
-develop = true
+description = "This is a description"
+develop = false
 name = "project-with-extras"
 optional = false
 python-versions = "*"
@@ -23,12 +23,12 @@ extras_a = ["pendulum (>=1.4.4)"]
 extras_b = ["cachy (>=0.2.0)"]
 
 [package.source]
-reference = ""
 type = "directory"
 url = "tests/fixtures/project_with_extras"
 
 [metadata]
 content-hash = "123456789"
+lock-version = "1.1"
 python-versions = "*"
 
 [metadata.files]

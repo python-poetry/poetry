@@ -5,11 +5,19 @@ to suit our purposes.
 import os
 import sys
 
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Union
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
 
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
 
 
-def expanduser(path):
+def expanduser(path: Union[str, "Path"]) -> str:
     """
     Expand ~ and ~user constructions.
 
@@ -21,7 +29,7 @@ def expanduser(path):
     return expanded
 
 
-def user_cache_dir(appname):
+def user_cache_dir(appname: str) -> str:
     r"""
     Return full path to the user-specific cache dir for this application.
 
@@ -64,7 +72,7 @@ def user_cache_dir(appname):
     return path
 
 
-def user_data_dir(appname, roaming=False):
+def user_data_dir(appname: str, roaming: bool = False) -> str:
     r"""
     Return full path to the user-specific data dir for this application.
 
@@ -92,7 +100,7 @@ def user_data_dir(appname, roaming=False):
     That means, by default "~/.local/share/<AppName>".
     """
     if WINDOWS:
-        const = roaming and "CSIDL_APPDATA" or "CSIDL_LOCAL_APPDATA"
+        const = "CSIDL_APPDATA" if roaming else "CSIDL_LOCAL_APPDATA"
         path = os.path.join(os.path.normpath(_get_win_folder(const)), appname)
     elif sys.platform == "darwin":
         path = os.path.join(expanduser("~/Library/Application Support/"), appname)
@@ -104,7 +112,7 @@ def user_data_dir(appname, roaming=False):
     return path
 
 
-def user_config_dir(appname, roaming=True):
+def user_config_dir(appname: str, roaming: bool = True) -> str:
     """Return full path to the user-specific config dir for this application.
 
         "appname" is the name of application.
@@ -137,7 +145,7 @@ def user_config_dir(appname, roaming=True):
 
 # for the discussion regarding site_config_dirs locations
 # see <https://github.com/pypa/pip/issues/1733>
-def site_config_dirs(appname):
+def site_config_dirs(appname: str) -> List[str]:
     r"""Return a list of potential user-shared config dirs for this application.
 
         "appname" is the name of application.
@@ -178,7 +186,7 @@ def site_config_dirs(appname):
 # -- Windows support functions --
 
 
-def _get_win_folder_from_registry(csidl_name):
+def _get_win_folder_from_registry(csidl_name: str) -> str:
     """
     This is a fallback technique at best. I'm not sure if using the
     registry for this guarantees us the correct answer for all CSIDL_*
@@ -200,7 +208,7 @@ def _get_win_folder_from_registry(csidl_name):
     return directory
 
 
-def _get_win_folder_with_ctypes(csidl_name):
+def _get_win_folder_with_ctypes(csidl_name: str) -> str:
     csidl_const = {
         "CSIDL_APPDATA": 26,
         "CSIDL_COMMON_APPDATA": 35,
@@ -234,7 +242,7 @@ if WINDOWS:
         _get_win_folder = _get_win_folder_from_registry
 
 
-def _win_path_to_bytes(path):
+def _win_path_to_bytes(path: str) -> Union[str, bytes]:
     """Encode Windows paths to bytes. Only used on Python 2.
 
     Motivation is to be consistent with other operating systems where paths
