@@ -87,9 +87,7 @@ class Uploader:
                 )
             )
         )
-        tars = list(
-            dist.glob(f"{self._package.pretty_name}-{version}.tar.gz")
-        )
+        tars = list(dist.glob(f"{self._package.pretty_name}-{version}.tar.gz"))
 
         return sorted(wheels + tars)
 
@@ -263,9 +261,7 @@ class Uploader:
             )
             encoder = MultipartEncoder(data_to_send)
             bar = ProgressBar(self._io, max=encoder.len)
-            bar.set_format(
-                f" - Uploading <c1>{file.name}</c1> <b>%percent%%</b>"
-            )
+            bar.set_format(f" - Uploading <c1>{file.name}</c1> <b>%percent%%</b>")
             monitor = MultipartEncoderMonitor(
                 encoder, lambda monitor: bar.set_progress(monitor.bytes_read)
             )

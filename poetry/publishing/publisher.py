@@ -54,9 +54,7 @@ class Publisher:
             # Retrieving config information
             url = self._poetry.config.get(f"repositories.{repository_name}.url")
             if url is None:
-                raise RuntimeError(
-                    f"Repository {repository_name} is not defined"
-                )
+                raise RuntimeError(f"Repository {repository_name} is not defined")
 
         if not (username and password):
             # Check if we have a token first

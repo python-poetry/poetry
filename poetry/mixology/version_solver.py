@@ -308,9 +308,7 @@ class VersionSolver:
                     bang, most_recent_term, partially, most_recent_satisfier
                 )
             )
-            self._log(
-                f'{bang} which is caused by "{most_recent_satisfier.cause}"'
-            )
+            self._log(f'{bang} which is caused by "{most_recent_satisfier.cause}"')
             self._log(f"{bang} thus: {incompatibility}")
 
         raise SolveFailure(incompatibility)

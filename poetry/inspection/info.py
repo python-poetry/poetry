@@ -47,9 +47,7 @@ class PackageInfoError(ValueError):
         reasons = (
             "Unable to determine package info for path: {}".format(str(path)),
         ) + reasons
-        super().__init__(
-            "\n\n".join(str(msg).strip() for msg in reasons if msg)
-        )
+        super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
 
 class PackageInfo:
@@ -139,9 +137,7 @@ class PackageInfo:
 
         if not self.version:
             # The version could not be determined, so we raise an error since it is mandatory.
-            raise RuntimeError(
-                f"Unable to retrieve the package version for {name}"
-            )
+            raise RuntimeError(f"Unable to retrieve the package version for {name}")
 
         package = Package(
             name=name,
@@ -462,7 +458,7 @@ class PackageInfo:
                     "install",
                     "--disable-pip-version-check",
                     "--ignore-installed",
-                    *PEP517_META_BUILD_DEPS
+                    *PEP517_META_BUILD_DEPS,
                 )
                 venv.run(
                     "python",
@@ -497,9 +493,7 @@ class PackageInfo:
                     os.chdir(cwd.as_posix())
 
         if info:
-            cls._log(
-                f"Falling back to parsed setup.py file for {path}", "debug"
-            )
+            cls._log(f"Falling back to parsed setup.py file for {path}", "debug")
             return info
 
         # if we reach here, everything has failed and all hope is lost

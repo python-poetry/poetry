@@ -174,9 +174,7 @@ class PipInstaller(BaseInstaller):
         return f"{package.name}=={package.version}"
 
     def create_temporary_requirement(self, package: "Package") -> str:
-        fd, name = tempfile.mkstemp(
-            "reqs.txt", f"{package.name}-{package.version}"
-        )
+        fd, name = tempfile.mkstemp("reqs.txt", f"{package.name}-{package.version}")
 
         try:
             os.write(fd, encode(self.requirement(package, formatted=True)))

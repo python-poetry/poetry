@@ -428,9 +428,7 @@ class Executor:
                 "" if updates == 1 else "s",
                 uninstalls,
                 "" if uninstalls == 1 else "s",
-                f", <info>{skipped}</> skipped"
-                if skipped and self._verbose
-                else "",
+                f", <info>{skipped}</> skipped" if skipped and self._verbose else "",
             )
         )
         self._io.write_line("")

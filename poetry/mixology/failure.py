@@ -65,9 +65,7 @@ class _Writer:
         if isinstance(self._root.cause, ConflictCause):
             self._visit(self._root, {})
         else:
-            self._write(
-                self._root, f"Because {self._root}, version solving failed."
-            )
+            self._write(self._root, f"Because {self._root}, version solving failed.")
 
         padding = (
             0

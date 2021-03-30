@@ -70,16 +70,12 @@ class Chooser:
             links.append(link)
 
         if not links:
-            raise RuntimeError(
-                f"Unable to find installation candidates for {package}"
-            )
+            raise RuntimeError(f"Unable to find installation candidates for {package}")
 
         # Get the best link
         chosen = max(links, key=lambda link: self._sort_key(package, link))
         if not chosen:
-            raise RuntimeError(
-                f"Unable to find installation candidates for {package}"
-            )
+            raise RuntimeError(f"Unable to find installation candidates for {package}")
 
         return chosen
 

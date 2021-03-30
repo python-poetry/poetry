@@ -52,9 +52,7 @@ class Term:
         allowed by this term and another.
         """
         if self.dependency.complete_name != other.dependency.complete_name:
-            raise ValueError(
-                f"{other} should refer to {self.dependency.complete_name}"
-            )
+            raise ValueError(f"{other} should refer to {self.dependency.complete_name}")
 
         other_constraint = other.constraint
 
@@ -116,9 +114,7 @@ class Term:
         allowed by both this term and another
         """
         if self.dependency.complete_name != other.dependency.complete_name:
-            raise ValueError(
-                f"{other} should refer to {self.dependency.complete_name}"
-            )
+            raise ValueError(f"{other} should refer to {self.dependency.complete_name}")
 
         if self._compatible_dependency(other.dependency):
             if self.is_positive() != other.is_positive():

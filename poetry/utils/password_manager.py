@@ -137,9 +137,7 @@ class PasswordManager:
 
     def set_pypi_token(self, name: str, token: str) -> None:
         if not self.keyring.is_available():
-            self._config.auth_config_source.add_property(
-                f"pypi-token.{name}", token
-            )
+            self._config.auth_config_source.add_property(f"pypi-token.{name}", token)
         else:
             self.keyring.set_password(name, "__token__", token)
 
@@ -151,9 +149,7 @@ class PasswordManager:
 
     def delete_pypi_token(self, name: str) -> None:
         if not self.keyring.is_available():
-            return self._config.auth_config_source.remove_property(
-                f"pypi-token.{name}"
-            )
+            return self._config.auth_config_source.remove_property(f"pypi-token.{name}")
 
         self.keyring.delete_password(name, "__token__")
 

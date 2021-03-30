@@ -513,8 +513,7 @@ class EnvManager:
             venv_path = Path(venv_path)
 
         env_list = [
-            VirtualEnv(Path(p))
-            for p in sorted(venv_path.glob(f"{venv_name}-py*"))
+            VirtualEnv(Path(p)) for p in sorted(venv_path.glob(f"{venv_name}-py*"))
         ]
 
         venv = self._poetry.file.parent / ".venv"
@@ -601,9 +600,7 @@ class EnvManager:
         venv = venv_path / name
 
         if not venv.exists():
-            raise ValueError(
-                f'<warning>Environment "{name}" does not exist.</warning>'
-            )
+            raise ValueError(f'<warning>Environment "{name}" does not exist.</warning>')
 
         if envs_file.exists():
             envs = envs_file.read()
