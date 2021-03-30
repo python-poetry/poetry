@@ -1043,7 +1043,8 @@ def main():
         default=False,
     )
     parser.add_argument(
-        "-n", "--no",
+        "-n",
+        "--no",
         dest="accept_none",
         action="store_true",
         default=False,
