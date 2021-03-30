@@ -581,3 +581,56 @@ The `plugin remove` command removes installed plugins.
 ```bash
 poetry plugin remove poetry-plugin
 ```
+
+## source
+
+The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
+
+### `source add`
+
+The `source add` command adds source configuration to the project.
+
+For example, to add the `pypi-test` source, you can run:
+
+```bash
+poetry source add pypi-test https://test.pypi.org/simple/
+```
+
+!!!note
+
+    You cannot use the name `pypi` as it is reserved for use by the default PyPI source.
+
+#### Options
+
+* `--default`: Set this source as the [default](/docs/repositories/#disabling-the-pypi-repository) (disable PyPI).
+* `--secondary`: Set this source as a [secondary](/docs/repositories/#install-dependencies-from-a-private-repository) source.
+
+!!!note
+
+    You cannot set a source as both `default` and `secondary`.
+
+### `source show`
+
+The `source show` command displays information on all configured sources for the project.
+
+```bash
+poetry source show
+```
+
+Optionally, you can show information of one or more sources by specifying their names.
+
+```bash
+poetry source show pypi-test
+```
+
+!!!note
+
+    This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+
+### `source remove`
+
+The `source remove` command removes a configured source from your `pyproject.toml`.
+
+```bash
+poetry source remove pypi-test
+```

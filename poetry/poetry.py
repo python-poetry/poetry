@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import List
 
+from poetry.__version__ import __version__
+from poetry.config.source import Source
 from poetry.core.poetry import Poetry as BasePoetry
-
-from .__version__ import __version__
 
 
 if TYPE_CHECKING:
@@ -67,3 +68,9 @@ class Poetry(BasePoetry):
         self._plugin_manager = plugin_manager
 
         return self
+
+    def get_sources(self) -> List[Source]:
+        return [
+            Source(**source)
+            for source in self.pyproject.poetry_config.get("source", [])
+        ]
