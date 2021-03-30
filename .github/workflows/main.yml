@@ -46,7 +46,7 @@ jobs:
 
       - name: Bootstrap poetry
         shell: bash
-        run: python install-poetry.py -y
+        run: pip install poetry
 
       - name: Update PATH
         if: ${{ matrix.os != 'Windows' }}
