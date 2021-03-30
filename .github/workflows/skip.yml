@@ -10,7 +10,6 @@ on:
     branches:
       - master
       - develop
-      - add-python-3-10-to-ci
   pull_request:
     paths:
       - '!**'
