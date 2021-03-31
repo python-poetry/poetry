@@ -39,8 +39,8 @@ _has_blake2 = hasattr(hashlib, "blake2b")
 class UploadError(Exception):
     def __init__(self, error: Union[ConnectionError, HTTPError, str]) -> None:
         if isinstance(error, HTTPError):
-            message = "HTTP Error {}: {}".format(
-                error.response.status_code, error.response.reason
+            message = (
+                f"HTTP Error {error.response.status_code}: {error.response.reason}"
             )
         elif isinstance(error, ConnectionError):
             message = (
@@ -82,9 +82,7 @@ class Uploader:
 
         wheels = list(
             dist.glob(
-                "{}-{}-*.whl".format(
-                    escape_name(self._package.pretty_name), escape_version(version)
-                )
+                f"{escape_name(self._package.pretty_name)}-{escape_version(version)}-*.whl"
             )
         )
         tars = list(dist.glob(f"{self._package.pretty_name}-{version}.tar.gz"))
@@ -280,17 +278,13 @@ class Uploader:
                     )
                 if dry_run or 200 <= resp.status_code < 300:
                     bar.set_format(
-                        " - Uploading <c1>{}</c1> <fg=green>%percent%%</>".format(
-                            file.name
-                        )
+                        f" - Uploading <c1>{file.name}</c1> <fg=green>%percent%%</>"
                     )
                     bar.finish()
                 elif resp.status_code == 301:
                     if self._io.output.is_decorated():
                         self._io.overwrite(
-                            " - Uploading <c1>{}</c1> <error>{}</>".format(
-                                file.name, "FAILED"
-                            )
+                            f" - Uploading <c1>{file.name}</c1> <error>FAILED</>"
                         )
                     raise UploadError(
                         "Redirects are not supported. "
@@ -299,9 +293,7 @@ class Uploader:
             except (requests.ConnectionError, requests.HTTPError) as e:
                 if self._io.output.is_decorated():
                     self._io.overwrite(
-                        " - Uploading <c1>{}</c1> <error>{}</>".format(
-                            file.name, "FAILED"
-                        )
+                        f" - Uploading <c1>{file.name}</c1> <error>FAILED</>"
                     )
                 raise UploadError(e)
             finally:
@@ -314,8 +306,9 @@ class Uploader:
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / "dist"
-        file = dist / "{}-{}.tar.gz".format(
-            self._package.name, normalize_version(self._package.version.text)
+        file = (
+            dist
+            / f"{self._package.name}-{normalize_version(self._package.version.text)}.tar.gz"
         )
 
         if not file.exists():

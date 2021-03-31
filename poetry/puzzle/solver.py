@@ -85,9 +85,7 @@ class Solver:
                     )
                 )
                 self._provider.debug(
-                    "Resolved with overrides: {}".format(
-                        ", ".join(f"({b})" for b in self._overrides)
-                    )
+                    f"Resolved with overrides: {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
         operations = []
@@ -221,7 +219,7 @@ class Solver:
         for override in overrides:
             self._provider.debug(
                 "<comment>Retrying dependency resolution "
-                "with the following overrides ({}).</comment>".format(override)
+                f"with the following overrides ({override}).</comment>"
             )
             self._provider.set_overrides(override)
             _packages, _depths = self._solve(use_latest=use_latest)
