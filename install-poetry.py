@@ -267,7 +267,7 @@ You can test that everything is set up by executing:
 """
 
 POST_MESSAGE_CONFIGURE_UNIX = """
-Add `export PATH="{poetry_home_bin}:$PATH` to your shell configuration file.
+Add `export PATH="{poetry_home_bin}:$PATH"` to your shell configuration file.
 """
 
 POST_MESSAGE_CONFIGURE_FISH = """
