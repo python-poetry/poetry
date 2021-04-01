@@ -30,6 +30,13 @@ INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PURELIB / "editable-with-import-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "lib64-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "bender-2.0.5.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "git_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "url_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "file_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "directory_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(
+        SITE_PURELIB / "editable_directory_pep_610-1.2.3.dist-info"
+    ),
 ]
 
 
@@ -165,3 +172,60 @@ def test_load_standard_package_with_pth_file(repository):
     assert standard.version.text == "1.2.3"
     assert standard.source_type is None
     assert standard.source_url is None
+
+
+def test_load_pep_610_compliant_git_packages(repository):
+    package = get_package_from_repository("git-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "git-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "git"
+    assert package.source_url == "https://github.com/demo/git-pep-610.git"
+    assert package.source_reference == "my-branch"
+    assert package.source_resolved_reference == "123456"
+
+
+def test_load_pep_610_compliant_url_packages(repository):
+    package = get_package_from_repository("url-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "url-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "url"
+    assert (
+        package.source_url
+        == "https://python-poetry.org/distributions/url-pep-610-1.2.3.tar.gz"
+    )
+
+
+def test_load_pep_610_compliant_file_packages(repository):
+    package = get_package_from_repository("file-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "file-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "file"
+    assert package.source_url == "/path/to/distributions/file-pep-610-1.2.3.tar.gz"
+
+
+def test_load_pep_610_compliant_directory_packages(repository):
+    package = get_package_from_repository("directory-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "directory-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "directory"
+    assert package.source_url == "/path/to/distributions/directory-pep-610"
+    assert not package.develop
+
+
+def test_load_pep_610_compliant_editable_directory_packages(repository):
+    package = get_package_from_repository("editable-directory-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "editable-directory-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "directory"
+    assert package.source_url == "/path/to/distributions/directory-pep-610"
+    assert package.develop
