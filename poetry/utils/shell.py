@@ -118,4 +118,4 @@ class Shell:
         return "."
 
     def __repr__(self) -> str:
-        return '{}("{}", "{}")'.format(self.__class__.__name__, self._name, self._path)
+        return f'{self.__class__.__name__}("{self._name}", "{self._path}")'

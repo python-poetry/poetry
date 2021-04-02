@@ -21,7 +21,7 @@ class PackageCollection(list):
         if packages is None:
             packages = []
 
-        super(PackageCollection, self).__init__()
+        super().__init__()
 
         for package in packages:
             self.append(package)
@@ -32,4 +32,4 @@ class PackageCollection(list):
 
         package = DependencyPackage(self._dependency, package)
 
-        return super(PackageCollection, self).append(package)
+        return super().append(package)

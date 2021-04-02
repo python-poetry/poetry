@@ -11,7 +11,7 @@ from .plugin import Plugin
 logger = logging.getLogger(__name__)
 
 
-class PluginManager(object):
+class PluginManager:
     """
     This class registers and activates plugins.
     """
@@ -31,7 +31,7 @@ class PluginManager(object):
             self._load_plugin_entrypoint(entrypoint)
 
     def get_plugin_entry_points(self) -> List[entrypoints.EntryPoint]:
-        return entrypoints.get_group_all("poetry.{}".format(self._type))
+        return entrypoints.get_group_all(f"poetry.{self._type}")
 
     def add_plugin(self, plugin):  # type: (Plugin) -> None
         if not isinstance(plugin, (Plugin, ApplicationPlugin)):
@@ -48,7 +48,7 @@ class PluginManager(object):
     def _load_plugin_entrypoint(
         self, entrypoint
     ):  # type: (entrypoints.EntryPoint) -> None
-        logger.debug("Loading the {} plugin".format(entrypoint.name))
+        logger.debug(f"Loading the {entrypoint.name} plugin")
 
         plugin = entrypoint.load()
 

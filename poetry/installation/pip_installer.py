@@ -134,14 +134,14 @@ class PipInstaller(BaseInstaller):
 
     def requirement(self, package: "Package", formatted: bool = False) -> str:
         if formatted and not package.source_type:
-            req = "{}=={}".format(package.name, package.version)
+            req = f"{package.name}=={package.version}"
             for f in package.files:
                 hash_type = "sha256"
                 h = f["hash"]
                 if ":" in h:
                     hash_type, h = h.split(":")
 
-                req += " --hash {}:{}".format(hash_type, h)
+                req += f" --hash {hash_type}:{h}"
 
             req += "\n"
 
@@ -169,14 +169,12 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "url":
-            return "{}#egg={}".format(package.source_url, package.name)
+            return f"{package.source_url}#egg={package.name}"
 
-        return "{}=={}".format(package.name, package.version)
+        return f"{package.name}=={package.version}"
 
     def create_temporary_requirement(self, package: "Package") -> str:
-        fd, name = tempfile.mkstemp(
-            "reqs.txt", "{}-{}".format(package.name, package.version)
-        )
+        fd, name = tempfile.mkstemp("reqs.txt", f"{package.name}-{package.version}")
 
         try:
             os.write(fd, encode(self.requirement(package, formatted=True)))

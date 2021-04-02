@@ -44,7 +44,7 @@ class KeyRing:
             return keyring.get_password(name, username)
         except (RuntimeError, keyring.errors.KeyringError):
             raise KeyRingError(
-                "Unable to retrieve the password for {} from the key ring".format(name)
+                f"Unable to retrieve the password for {name} from the key ring"
             )
 
     def set_password(self, name: str, username: str, password: str) -> None:
@@ -78,11 +78,11 @@ class KeyRing:
             keyring.delete_password(name, username)
         except (RuntimeError, keyring.errors.KeyringError):
             raise KeyRingError(
-                "Unable to delete the password for {} from the key ring".format(name)
+                f"Unable to delete the password for {name} from the key ring"
             )
 
     def get_entry_name(self, name: str) -> str:
-        return "{}-{}".format(self._namespace, name)
+        return f"{self._namespace}-{name}"
 
     def _check(self) -> None:
         try:
@@ -137,31 +137,27 @@ class PasswordManager:
 
     def set_pypi_token(self, name: str, token: str) -> None:
         if not self.keyring.is_available():
-            self._config.auth_config_source.add_property(
-                "pypi-token.{}".format(name), token
-            )
+            self._config.auth_config_source.add_property(f"pypi-token.{name}", token)
         else:
             self.keyring.set_password(name, "__token__", token)
 
     def get_pypi_token(self, name: str) -> str:
         if not self.keyring.is_available():
-            return self._config.get("pypi-token.{}".format(name))
+            return self._config.get(f"pypi-token.{name}")
 
         return self.keyring.get_password(name, "__token__")
 
     def delete_pypi_token(self, name: str) -> None:
         if not self.keyring.is_available():
-            return self._config.auth_config_source.remove_property(
-                "pypi-token.{}".format(name)
-            )
+            return self._config.auth_config_source.remove_property(f"pypi-token.{name}")
 
         self.keyring.delete_password(name, "__token__")
 
     def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
-        auth = self._config.get("http-basic.{}".format(name))
+        auth = self._config.get(f"http-basic.{name}")
         if not auth:
-            username = self._config.get("http-basic.{}.username".format(name))
-            password = self._config.get("http-basic.{}.password".format(name))
+            username = self._config.get(f"http-basic.{name}.username")
+            password = self._config.get(f"http-basic.{name}.password")
             if not username and not password:
                 return None
         else:
@@ -182,7 +178,7 @@ class PasswordManager:
         else:
             self.keyring.set_password(name, username, password)
 
-        self._config.auth_config_source.add_property("http-basic.{}".format(name), auth)
+        self._config.auth_config_source.add_property(f"http-basic.{name}", auth)
 
     def delete_http_password(self, name: str) -> None:
         auth = self.get_http_auth(name)
@@ -194,4 +190,4 @@ class PasswordManager:
         except KeyRingError:
             pass
 
-        self._config.auth_config_source.remove_property("http-basic.{}".format(name))
+        self._config.auth_config_source.remove_property(f"http-basic.{name}")

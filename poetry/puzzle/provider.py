@@ -49,7 +49,7 @@ class Indicator(ProgressIndicator):
     def _formatter_elapsed(self) -> str:
         elapsed = time.time() - self._start_time
 
-        return "{:.1f}s".format(elapsed)
+        return f"{elapsed:.1f}s"
 
 
 class Provider:
@@ -199,7 +199,7 @@ class Provider:
         name: Optional[str] = None,
     ) -> Package:
         if vcs != "git":
-            raise ValueError("Unsupported VCS dependency {}".format(vcs))
+            raise ValueError(f"Unsupported VCS dependency {vcs}")
 
         tmp_dir = Path(
             mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
@@ -266,7 +266,7 @@ class Provider:
             )
         except PackageInfoError:
             raise RuntimeError(
-                "Unable to determine package info from path: {}".format(file_path)
+                f"Unable to determine package info from path: {file_path}"
             )
 
         return package
@@ -546,7 +546,7 @@ class Provider:
                 dependencies.append(deps[0])
                 continue
 
-            self.debug("<debug>Duplicate dependencies for {}</debug>".format(dep_name))
+            self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # Regrouping by constraint
             by_constraint = dict()

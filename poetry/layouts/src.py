@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from typing import TYPE_CHECKING
 
 from .layout import Layout
@@ -8,7 +6,7 @@ from .layout import Layout
 if TYPE_CHECKING:
     from pathlib import Path
 
-DEFAULT = u"""__version__ = '{version}'
+DEFAULT = """__version__ = '{version}'
 """
 
 

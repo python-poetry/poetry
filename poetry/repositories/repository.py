@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class Repository(BaseRepository):
     def __init__(self, packages: List["Package"] = None, name: str = None) -> None:
-        super(Repository, self).__init__()
+        super().__init__()
 
         self._name = name
 

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from poetry.repositories import Pool
 
 
-class VersionSelector(object):
+class VersionSelector:
     def __init__(self, pool: "Pool") -> None:
         self._pool = pool
 
@@ -78,6 +78,6 @@ class VersionSelector(object):
         else:
             version = ".".join(str(p) for p in parts)
             if parsed.is_unstable():
-                version += "-{}".format(parsed.pre.to_string())
+                version += f"-{parsed.pre.to_string()}"
 
-        return "^{}".format(version)
+        return f"^{version}"

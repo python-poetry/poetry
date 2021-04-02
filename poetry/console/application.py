@@ -88,7 +88,7 @@ if TYPE_CHECKING:
 
 class Application(BaseApplication):
     def __init__(self) -> None:
-        super(Application, self).__init__("poetry", __version__)
+        super().__init__("poetry", __version__)
 
         self._poetry = None
         self._io: Optional[IO] = None
@@ -132,7 +132,7 @@ class Application(BaseApplication):
         output: Optional[Output] = None,
         error_output: Optional[Output] = None,
     ) -> IO:
-        io = super(Application, self).create_io(input, output, error_output)
+        io = super().create_io(input, output, error_output)
 
         # Set our own CLI styles
         formatter = io.output.formatter
@@ -265,7 +265,7 @@ class Application(BaseApplication):
         env = env_manager.create_venv(io)
 
         if env.is_venv() and io.is_verbose():
-            io.write_line("Using virtualenv: <comment>{}</>".format(env.path))
+            io.write_line(f"Using virtualenv: <comment>{env.path}</>")
 
         command.set_env(env)
 

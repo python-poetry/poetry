@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger()
 
 
-class Authenticator(object):
+class Authenticator:
     def __init__(self, config: "Config", io: Optional["IO"] = None) -> None:
         self._config = config
         self._io = io
@@ -92,9 +92,7 @@ class Authenticator(object):
             if not is_last_attempt:
                 attempt += 1
                 delay = 0.5 * attempt
-                self._log(
-                    "Retrying HTTP request in {} seconds.".format(delay), level="debug"
-                )
+                self._log(f"Retrying HTTP request in {delay} seconds.", level="debug")
                 time.sleep(delay)
                 continue
 
@@ -141,9 +139,7 @@ class Authenticator(object):
         credentials = (None, None)
 
         for repository_name in self._config.get("repositories", []):
-            repository_config = self._config.get(
-                "repositories.{}".format(repository_name)
-            )
+            repository_config = self._config.get(f"repositories.{repository_name}")
             if not repository_config:
                 continue
 

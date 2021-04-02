@@ -225,7 +225,7 @@ class SitePackages:
                     return result
                 else:
                     results.append(result)
-            except (IOError, OSError):
+            except OSError:
                 # TODO: Replace with PermissionError
                 pass
 
@@ -257,7 +257,7 @@ class SitePackages:
 
     def __getattr__(self, item: str) -> Any:
         try:
-            return super(SitePackages, self).__getattribute__(item)
+            return super().__getattribute__(item)
         except AttributeError:
             return getattr(self.path, item)
 
@@ -275,8 +275,8 @@ class EnvCommandError(EnvError):
             e.cmd, e.returncode, decode(e.output)
         )
         if input:
-            message += "input was : {}".format(input)
-        super(EnvCommandError, self).__init__(message)
+            message += f"input was : {input}"
+        super().__init__(message)
 
 
 class NoCompatiblePythonVersionFound(EnvError):
@@ -296,10 +296,10 @@ class NoCompatiblePythonVersionFound(EnvError):
                 'via the "env use" command.'
             )
 
-        super(NoCompatiblePythonVersionFound, self).__init__(message)
+        super().__init__(message)
 
 
-class EnvManager(object):
+class EnvManager:
     """
     Environments manager
     """
@@ -324,9 +324,9 @@ class EnvManager(object):
 
         try:
             python_version = Version.parse(python)
-            python = "python{}".format(python_version.major)
+            python = f"python{python_version.major}"
             if python_version.precision > 1:
-                python += ".{}".format(python_version.minor)
+                python += f".{python_version.minor}"
         except ValueError:
             # Executable in PATH or full executable path
             pass
@@ -348,7 +348,7 @@ class EnvManager(object):
             raise EnvCommandError(e)
 
         python_version = Version.parse(python_version.strip())
-        minor = "{}.{}".format(python_version.major, python_version.minor)
+        minor = f"{python_version.major}.{python_version.minor}"
         patch = python_version.text
 
         create = False
@@ -383,7 +383,7 @@ class EnvManager(object):
                     # We need to recreate
                     create = True
 
-        name = "{}-py{}".format(base_env_name, minor)
+        name = f"{base_env_name}-py{minor}"
         venv = venv_path / name
 
         # Create if needed
@@ -482,7 +482,7 @@ class EnvManager(object):
             else:
                 venv_path = Path(venv_path)
 
-            name = "{}-py{}".format(base_env_name, python_minor.strip())
+            name = f"{base_env_name}-py{python_minor.strip()}"
 
             venv = venv_path / name
 
@@ -513,8 +513,7 @@ class EnvManager(object):
             venv_path = Path(venv_path)
 
         env_list = [
-            VirtualEnv(Path(p))
-            for p in sorted(venv_path.glob("{}-py*".format(venv_name)))
+            VirtualEnv(Path(p)) for p in sorted(venv_path.glob(f"{venv_name}-py*"))
         ]
 
         venv = self._poetry.file.parent / ".venv"
@@ -566,14 +565,14 @@ class EnvManager(object):
                     return venv
 
             raise ValueError(
-                '<warning>Environment "{}" does not exist.</warning>'.format(python)
+                f'<warning>Environment "{python}" does not exist.</warning>'
             )
 
         try:
             python_version = Version.parse(python)
-            python = "python{}".format(python_version.major)
+            python = f"python{python_version.major}"
             if python_version.precision > 1:
-                python += ".{}".format(python_version.minor)
+                python += f".{python_version.minor}"
         except ValueError:
             # Executable in PATH or full executable path
             pass
@@ -595,15 +594,13 @@ class EnvManager(object):
             raise EnvCommandError(e)
 
         python_version = Version.parse(python_version.strip())
-        minor = "{}.{}".format(python_version.major, python_version.minor)
+        minor = f"{python_version.major}.{python_version.minor}"
 
-        name = "{}-py{}".format(base_env_name, minor)
+        name = f"{base_env_name}-py{minor}"
         venv = venv_path / name
 
         if not venv.exists():
-            raise ValueError(
-                '<warning>Environment "{}" does not exist.</warning>'.format(name)
-            )
+            raise ValueError(f'<warning>Environment "{name}" does not exist.</warning>')
 
         if envs_file.exists():
             envs = envs_file.read()
@@ -698,7 +695,7 @@ class EnvManager(object):
                 )
             ):
                 if len(python_to_try) == 1:
-                    if not parse_constraint("^{}.0".format(python_to_try)).allows_any(
+                    if not parse_constraint(f"^{python_to_try}.0").allows_any(
                         supported_python
                     ):
                         continue
@@ -710,7 +707,7 @@ class EnvManager(object):
                 python = "python" + python_to_try
 
                 if io.is_debug():
-                    io.write_line("<debug>Trying {}</debug>".format(python))
+                    io.write_line(f"<debug>Trying {python}</debug>")
 
                 try:
                     python_patch = decode(
@@ -733,7 +730,7 @@ class EnvManager(object):
                     continue
 
                 if supported_python.allows(Version.parse(python_patch)):
-                    io.write_line("Using <c1>{}</c1> ({})".format(python, python_patch))
+                    io.write_line(f"Using <c1>{python}</c1> ({python_patch})")
                     executable = python
                     python_minor = ".".join(python_patch.split(".")[:2])
                     break
@@ -747,7 +744,7 @@ class EnvManager(object):
             venv = venv_path
         else:
             name = self.generate_env_name(name, str(cwd))
-            name = "{}-py{}".format(name, python_minor.strip())
+            name = f"{name}-py{python_minor.strip()}"
             venv = venv_path / name
 
         if not venv.exists():
@@ -788,7 +785,7 @@ class EnvManager(object):
                     flags=self._poetry.config.get("virtualenvs.options"),
                 )
             elif io.is_very_verbose():
-                io.write_line("Virtualenv <c1>{}</> already exists.".format(name))
+                io.write_line(f"Virtualenv <c1>{name}</> already exists.")
 
         # venv detection:
         # stdlib venv may symlink sys.executable, so we can't use realpath.
@@ -846,7 +843,7 @@ class EnvManager(object):
 
         for flag, value in flags.items():
             if value is True:
-                args.append("--{}".format(flag))
+                args.append(f"--{flag}")
 
         args.append(str(path))
 
@@ -896,10 +893,10 @@ class EnvManager(object):
         h = hashlib.sha256(encode(cwd)).digest()
         h = base64.urlsafe_b64encode(h).decode()[:8]
 
-        return "{}-{}".format(sanitized_name, h)
+        return f"{sanitized_name}-{h}"
 
 
-class Env(object):
+class Env:
     """
     An abstract Python environment.
     """
@@ -1196,7 +1193,7 @@ class Env(object):
         return other.__class__ == self.__class__ and other.path == self.path
 
     def __repr__(self) -> str:
-        return '{}("{}")'.format(self.__class__.__name__, self._path)
+        return f'{self.__class__.__name__}("{self._path}")'
 
 
 class SystemEnv(Env):
@@ -1244,7 +1241,7 @@ class SystemEnv(Env):
                 # headers is not a path returned by sysconfig.get_paths()
                 continue
 
-            paths[key] = getattr(obj, "install_{}".format(key))
+            paths[key] = getattr(obj, f"install_{key}")
 
         if site.check_enableusersite() and hasattr(obj, "install_usersite"):
             paths["usersite"] = getattr(obj, "install_usersite")
@@ -1303,7 +1300,7 @@ class VirtualEnv(Env):
     """
 
     def __init__(self, path: Path, base: Optional[Path] = None) -> None:
-        super(VirtualEnv, self).__init__(path, base)
+        super().__init__(path, base)
 
         # If base is None, it probably means this is
         # a virtualenv created from VIRTUAL_ENV.
@@ -1388,7 +1385,7 @@ class VirtualEnv(Env):
 
     def _run(self, cmd: List[str], **kwargs: Any) -> Optional[int]:
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
-        return super(VirtualEnv, self)._run(cmd, **kwargs)
+        return super()._run(cmd, **kwargs)
 
     def get_temp_environ(
         self,
@@ -1415,7 +1412,7 @@ class VirtualEnv(Env):
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
-        return super(VirtualEnv, self).execute(bin, *args, **kwargs)
+        return super().execute(bin, *args, **kwargs)
 
     @contextmanager
     def temp_environ(self) -> Iterator[None]:
@@ -1437,7 +1434,7 @@ class NullEnv(SystemEnv):
         if path is None:
             path = Path(sys.prefix)
 
-        super(NullEnv, self).__init__(path, base=base)
+        super().__init__(path, base=base)
 
         self._execute = execute
         self.executed = []
@@ -1449,13 +1446,13 @@ class NullEnv(SystemEnv):
         self.executed.append(cmd)
 
         if self._execute:
-            return super(NullEnv, self)._run(cmd, **kwargs)
+            return super()._run(cmd, **kwargs)
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
         self.executed.append([bin] + list(args))
 
         if self._execute:
-            return super(NullEnv, self).execute(bin, *args, **kwargs)
+            return super().execute(bin, *args, **kwargs)
 
     def _bin(self, bin: str) -> str:
         return bin
@@ -1497,7 +1494,7 @@ class MockEnv(NullEnv):
         supported_tags: List[Tag] = None,
         **kwargs: Any,
     ):
-        super(MockEnv, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._version_info = version_info
         self._python_implementation = python_implementation
@@ -1524,7 +1521,7 @@ class MockEnv(NullEnv):
     @property
     def sys_path(self) -> List[str]:
         if self._sys_path is None:
-            return super(MockEnv, self).sys_path
+            return super().sys_path
 
         return self._sys_path
 
@@ -1532,7 +1529,7 @@ class MockEnv(NullEnv):
         if self._mock_marker_env is not None:
             return self._mock_marker_env
 
-        marker_env = super(MockEnv, self).get_marker_env()
+        marker_env = super().get_marker_env()
         marker_env["python_implementation"] = self._python_implementation
         marker_env["version_info"] = self._version_info
         marker_env["python_version"] = ".".join(str(v) for v in self._version_info[:2])

@@ -1,4 +1,4 @@
-class BasePlugin(object):
+class BasePlugin:
     """
     Base class for all plugin types
     """

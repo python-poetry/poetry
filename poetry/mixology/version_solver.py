@@ -193,7 +193,7 @@ class VersionSolver:
 
         .. _conflict resolution: https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
         """
-        self._log("conflict: {}".format(incompatibility))
+        self._log(f"conflict: {incompatibility}")
 
         new_incompatibility = False
         while not incompatibility.is_failure():
@@ -308,10 +308,8 @@ class VersionSolver:
                     bang, most_recent_term, partially, most_recent_satisfier
                 )
             )
-            self._log(
-                '{} which is caused by "{}"'.format(bang, most_recent_satisfier.cause)
-            )
-            self._log("{} thus: {}".format(bang, incompatibility))
+            self._log(f'{bang} which is caused by "{most_recent_satisfier.cause}"')
+            self._log(f"{bang} thus: {incompatibility}")
 
         raise SolveFailure(incompatibility)
 
@@ -429,7 +427,7 @@ class VersionSolver:
         )
 
     def _add_incompatibility(self, incompatibility: Incompatibility) -> None:
-        self._log("fact: {}".format(incompatibility))
+        self._log(f"fact: {incompatibility}")
 
         for term in incompatibility.terms:
             if term.dependency.complete_name not in self._incompatibilities:

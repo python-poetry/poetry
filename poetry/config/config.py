@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import re
 
@@ -27,7 +25,7 @@ def boolean_normalizer(val: str) -> bool:
     return val in ["true", "1"]
 
 
-class Config(object):
+class Config:
 
     default_config = {
         "cache-dir": str(CACHE_DIR),
