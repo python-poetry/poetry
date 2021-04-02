@@ -1,4 +1,5 @@
 import urllib.parse
+import warnings
 
 from pathlib import Path
 from typing import Optional
@@ -10,6 +11,10 @@ from cleo.io.io import IO
 from poetry.core.packages.utils.utils import path_to_url
 from poetry.poetry import Poetry
 from poetry.utils._compat import decode
+
+
+class VCSHashesDisabledWarning(Warning):
+    pass
 
 
 class Exporter:
@@ -62,10 +67,23 @@ class Exporter:
         indexes = set()
         content = ""
         dependency_lines = set()
+        vcs_hashes_disabled = False
+        dependency_packages = list(
+            self._poetry.locker.get_project_dependency_packages(
+                project_requires=self._poetry.package.all_requires,
+                dev=dev,
+                extras=extras,
+            )
+        )
 
-        for dependency_package in self._poetry.locker.get_project_dependency_packages(
-            project_requires=self._poetry.package.all_requires, dev=dev, extras=extras
-        ):
+        if any(x.dependency.is_vcs() for x in dependency_packages):
+            # pip does not support hashes for VCS dependencies, but we cannot add
+            # hashes for some dependencies and leave them out for others, so we'll
+            # just disable hashes entirely if a VCS dependency is encountered.
+            with_hashes = False
+            vcs_hashes_disabled = True
+
+        for dependency_package in dependency_packages:
             line = ""
 
             dependency = dependency_package.dependency
@@ -160,6 +178,11 @@ class Exporter:
             content = indexes_header + "\n" + content
 
         self._output(content, cwd, output)
+
+        if vcs_hashes_disabled:
+            warnings.warn(
+                "Hashes disabled due to VCS dependency", VCSHashesDisabledWarning
+            )
 
     def _output(self, content: str, cwd: Path, output: Union[IO, str]) -> None:
         decoded = decode(content)

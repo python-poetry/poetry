@@ -1,6 +1,9 @@
+import warnings
+
 from cleo.helpers import option
 
 from poetry.utils.exporter import Exporter
+from poetry.utils.exporter import VCSHashesDisabledWarning
 
 from .command import Command
 
@@ -68,13 +71,24 @@ class ExportCommand(Command):
             )
 
         exporter = Exporter(self.poetry)
-        exporter.export(
-            fmt,
-            self.poetry.file.parent,
-            output or self.io,
-            with_hashes=not self.option("without-hashes"),
-            dev=self.option("dev"),
-            extras=self.option("extras"),
-            with_credentials=self.option("with-credentials"),
-            with_urls=not self.option("without-urls"),
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=VCSHashesDisabledWarning)
+            try:
+                exporter.export(
+                    fmt,
+                    self.poetry.file.parent,
+                    output or self.io,
+                    with_hashes=not self.option("without-hashes"),
+                    dev=self.option("dev"),
+                    extras=self.option("extras"),
+                    with_credentials=self.option("with-credentials"),
+                    with_urls=not self.option("without-urls"),
+                )
+            except VCSHashesDisabledWarning:
+                self.line(
+                    "<warning>"
+                    "Warning: Hashes have been disabled because "
+                    "a VCS dependency was encountered which "
+                    "does not support hashes."
+                    "</warning>"
+                )
