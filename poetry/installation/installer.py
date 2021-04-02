@@ -289,12 +289,6 @@ class Installer:
 
         pool.add_repository(repo)
 
-        # We whitelist all packages to be sure
-        # that the latest ones are picked up
-        whitelist = []
-        for pkg in locked_repository.packages:
-            whitelist.append(pkg.name)
-
         solver = Solver(
             root,
             pool,
@@ -303,9 +297,12 @@ class Installer:
             NullIO(),
             remove_untracked=self._remove_untracked,
         )
+        # Everything is resolved at this point, so we no longer need
+        # to load deferred dependencies (i.e. VCS, URL and path dependencies)
+        solver.provider.load_deferred(False)
 
         with solver.use_environment(self._env):
-            ops = solver.solve(use_latest=whitelist)
+            ops = solver.solve(use_latest=self._whitelist)
 
         # We need to filter operations so that packages
         # not compatible with the current system,

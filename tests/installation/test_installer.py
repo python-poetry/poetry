@@ -8,6 +8,7 @@ import pytest
 from clikit.io import NullIO
 
 from poetry.core.packages import ProjectPackage
+from poetry.core.packages.package import Package
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
@@ -1860,3 +1861,66 @@ def test_installer_can_handle_old_lock_files(
 
     # colorama will be added
     assert 8 == installer.executor.installations_count
+
+
+def test_installer_should_use_the_locked_version_of_git_dependencies(
+    installer, locker, package, repo
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"pendulum": ">=1.4.4"},
+                    "source": {
+                        "type": "git",
+                        "url": "https://github.com/demo/demo.git",
+                        "reference": "master",
+                        "resolved_reference": "123456",
+                    },
+                },
+                {
+                    "name": "pendulum",
+                    "version": "1.4.4",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"demo": [], "pendulum": []},
+            },
+        }
+    )
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"git": "https://github.com/demo/demo.git", "branch": "master"}
+        )
+    )
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    installer.run()
+
+    assert installer.executor.installations[-1] == Package(
+        "demo",
+        "0.1.1",
+        source_type="git",
+        source_url="https://github.com/demo/demo.git",
+        source_reference="master",
+        source_resolved_reference="123456",
+    )
