@@ -567,7 +567,12 @@ class Executor(object):
 
         git = Git()
         git.clone(package.source_url, src_dir)
-        git.checkout(package.source_reference, src_dir)
+
+        reference = package.source_resolved_reference
+        if not reference:
+            reference = package.source_reference
+
+        git.checkout(reference, src_dir)
 
         # Now we just need to install from the source directory
         package._source_url = str(src_dir)
