@@ -117,7 +117,11 @@ def download_mock(mocker):
 
 
 @pytest.fixture(autouse=True)
-def pep517_metadata_mock(mocker):
+def pep517_metadata_mock(request, mocker):
+    marker = request.node.get_closest_marker("execute_setup_py")
+    if marker:
+        return
+
     @classmethod  # noqa
     def _pep517_metadata(cls, path):
         try:

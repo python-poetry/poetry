@@ -2841,3 +2841,21 @@ def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constra
             {"job": "install", "package": virtualenv},
         ],
     )
+
+
+@pytest.mark.execute_setup_py
+def test_solver_git_dependencies_with_relative_path(solver, package):
+    package.add_dependency(
+        Factory.create_dependency("relative_dependency", {"git": "https://github.com/demo/relative_dependency.git"})
+    )
+
+    ops = solver.solve()
+
+    expecteds = [
+        {"job": "install", "package": {"name": "subdir-package", "version": "0.1.0"}},
+        {"job": "install", "package": {"name": "relative-dependency", "version": "0.1.0"}},
+    ]
+
+    op_list = [{"job": op.job_type, "package": {"name": op.package.name, "version": str(op.package.version)}} for op in ops]
+    assert expecteds == op_list
+
