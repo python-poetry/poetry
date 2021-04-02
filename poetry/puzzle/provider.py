@@ -171,14 +171,16 @@ class Provider:
         if dependency in self._deferred_cache:
             return [self._deferred_cache[dependency]]
 
-        package = self.get_package_from_vcs(
-            dependency.vcs,
-            dependency.source,
-            branch=dependency.branch,
-            tag=dependency.tag,
-            rev=dependency.rev,
-            name=dependency.name,
-        )
+        with self.build_tmp_dir_for_vcs(dependency.source) as tmp_dir:
+            package = self.get_package_from_vcs(
+                dependency.vcs,
+                dependency.source,
+                tmp_dir,
+                branch=dependency.branch,
+                tag=dependency.tag,
+                rev=dependency.rev,
+                name=dependency.name,
+            )
         package.develop = dependency.develop
 
         dependency._constraint = package.version
@@ -189,10 +191,24 @@ class Provider:
         return [package]
 
     @classmethod
+    @contextmanager
+    def build_tmp_dir_for_vcs(cls, url):
+        tmp_dir = Path(
+            mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
+        )
+        try:        
+            yield(tmp_dir)
+        except Exception:
+            raise
+        finally:
+            safe_rmtree(str(tmp_dir))
+
+    @classmethod
     def get_package_from_vcs(
         cls,
         vcs: str,
         url: str,
+        tmp_dir: Path,
         branch: Optional[str] = None,
         tag: Optional[str] = None,
         rev: Optional[str] = None,
@@ -201,30 +217,21 @@ class Provider:
         if vcs != "git":
             raise ValueError(f"Unsupported VCS dependency {vcs}")
 
-        tmp_dir = Path(
-            mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
-        )
+        git = Git()
+        git.clone(url, tmp_dir)
+        reference = branch or tag or rev
+        if reference is not None:
+            git.checkout(reference, tmp_dir)
+        else:
+            reference = "HEAD"
 
-        try:
-            git = Git()
-            git.clone(url, tmp_dir)
-            reference = branch or tag or rev
-            if reference is not None:
-                git.checkout(reference, tmp_dir)
-            else:
-                reference = "HEAD"
+        revision = git.rev_parse(reference, tmp_dir).strip()
 
-            revision = git.rev_parse(reference, tmp_dir).strip()
-
-            package = cls.get_package_from_directory(tmp_dir, name=name)
-            package._source_type = "git"
-            package._source_url = url
-            package._source_reference = reference
-            package._source_resolved_reference = revision
-        except Exception:
-            raise
-        finally:
-            safe_rmtree(str(tmp_dir))
+        package = cls.get_package_from_directory(tmp_dir, name=name)
+        package._source_type = "git"
+        package._source_url = url
+        package._source_reference = reference
+        package._source_resolved_reference = revision
 
         return package
 

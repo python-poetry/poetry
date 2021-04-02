@@ -414,9 +414,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     if extras:
                         pair["extras"] = extras
 
-                    package = Provider.get_package_from_vcs(
-                        "git", url.url, rev=pair.get("rev")
-                    )
+                    with Provider.build_tmp_dir_for_vcs(url.url) as tmp_dir:
+                        package = Provider.get_package_from_vcs(
+                            "git", url.url, tmp_dir, rev=pair.get("rev")
+                        )
                     pair["name"] = package.name
                     result.append(pair)
 
