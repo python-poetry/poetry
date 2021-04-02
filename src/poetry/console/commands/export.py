@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import warnings
+
 from cleo.helpers import option
 
 from poetry.console.commands.command import Command
-from poetry.utils.exporter import Exporter
+from poetry.utils.exporter import Exporter, VCSHashesNotSupportedError
 
 
 class ExportCommand(Command):
@@ -68,13 +70,17 @@ class ExportCommand(Command):
             )
 
         exporter = Exporter(self.poetry)
-        exporter.export(
-            fmt,
-            self.poetry.file.parent,
-            output or self.io,
-            with_hashes=not self.option("without-hashes"),
-            dev=self.option("dev"),
-            extras=self.option("extras"),
-            with_credentials=self.option("with-credentials"),
-            with_urls=not self.option("without-urls"),
-        )
+        try:
+            exporter.export(
+                fmt,
+                self.poetry.file.parent,
+                output or self.io,
+                with_hashes=not self.option("without-hashes"),
+                dev=self.option("dev"),
+                extras=self.option("extras"),
+                with_credentials=self.option("with-credentials"),
+                with_urls=not self.option("without-urls"),
+            )
+        except VCSHashesNotSupportedError as e:
+            self.line_error(f"<error>Error: {e}</error>")
+            return 1

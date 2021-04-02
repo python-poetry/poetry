@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import urllib.parse
+import warnings
 
 from typing import TYPE_CHECKING
 from typing import Sequence
@@ -17,6 +18,10 @@ if TYPE_CHECKING:
     from cleo.io.io import IO
 
     from poetry.poetry import Poetry
+
+
+class VCSHashesNotSupportedError(Exception):
+    pass
 
 
 class Exporter:
@@ -79,8 +84,16 @@ class Exporter:
             lambda dependency_package: dependency_package.package,
         ):
             line = ""
+
             dependency_packages = list(groups)
             dependency = dependency_packages[0].dependency
+
+            if dependency.is_vcs() and with_hashes:
+                raise VCSHashesNotSupportedError(
+                    "Hashes are not supported by pip when VCS dependencies are present. "
+                    "Use --without-hashes to export anyway."
+                )
+
             marker = dependency.marker
             for dep_package in dependency_packages[1:]:
                 marker = marker.union(dep_package.dependency.marker)
