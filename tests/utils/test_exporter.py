@@ -16,7 +16,7 @@ from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.utils.exporter import Exporter
+from poetry.utils.exporter import Exporter, VCSHashesNotSupportedError
 
 
 if TYPE_CHECKING:
@@ -614,6 +614,59 @@ foo==1.2.3
 """
 
     assert content == expected
+
+
+def test_exporter_can_export_requirements_txt_with_standard_and_git_packages(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "git",
+                        "url": "https://github.com/bar/bar.git",
+                        "reference": "123456",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": ["12345"], "bar": []},
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    with pytest.raises(VCSHashesNotSupportedError):
+        exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", with_hashes=False)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar @ git+https://github.com/bar/bar.git@123456
+foo==1.2.3
+"""
+
+    assert expected == content
 
 
 def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
