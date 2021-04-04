@@ -2,6 +2,7 @@ import os
 import tempfile
 import urllib.parse
 
+from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
@@ -10,16 +11,17 @@ from typing import Union
 from cleo.io.io import IO
 
 from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.installation.base_installer import BaseInstaller
 from poetry.repositories.pool import Pool
 from poetry.utils._compat import encode
 from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
-
-from .base_installer import BaseInstaller
+from poetry.utils.pip import pip_editable_install
+from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
+    from poetry.core.packages.package import Package
 
 
 class PipInstaller(BaseInstaller):
@@ -132,14 +134,14 @@ class PipInstaller(BaseInstaller):
 
     def requirement(self, package: "Package", formatted: bool = False) -> str:
         if formatted and not package.source_type:
-            req = "{}=={}".format(package.name, package.version)
+            req = f"{package.name}=={package.version}"
             for f in package.files:
                 hash_type = "sha256"
                 h = f["hash"]
                 if ":" in h:
                     hash_type, h = h.split(":")
 
-                req += " --hash {}:{}".format(hash_type, h)
+                req += f" --hash {hash_type}:{h}"
 
             req += "\n"
 
@@ -167,14 +169,12 @@ class PipInstaller(BaseInstaller):
             return req
 
         if package.source_type == "url":
-            return "{}#egg={}".format(package.source_url, package.name)
+            return f"{package.source_url}#egg={package.name}"
 
-        return "{}=={}".format(package.name, package.version)
+        return f"{package.name}=={package.version}"
 
     def create_temporary_requirement(self, package: "Package") -> str:
-        fd, name = tempfile.mkstemp(
-            "reqs.txt", "{}-{}".format(package.name, package.version)
-        )
+        fd, name = tempfile.mkstemp("reqs.txt", f"{package.name}-{package.version}")
 
         try:
             os.write(fd, encode(self.requirement(package, formatted=True)))
@@ -188,12 +188,12 @@ class PipInstaller(BaseInstaller):
 
         from poetry.factory import Factory
 
+        req: Path
+
         if package.root_dir:
             req = (package.root_dir / package.source_url).as_posix()
         else:
-            req = os.path.realpath(package.source_url)
-
-        args = ["install", "--no-deps", "-U"]
+            req = Path(package.source_url).resolve(strict=False)
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
@@ -228,22 +228,20 @@ class PipInstaller(BaseInstaller):
 
                 with builder.setup_py():
                     if package.develop:
-                        args.append("-e")
-
-                    args.append(req)
-
-                    return self.run(*args)
+                        return pip_editable_install(
+                            directory=req, environment=self._env
+                        )
+                    return pip_install(
+                        path=req, environment=self._env, deps=False, upgrade=True
+                    )
 
         if package.develop:
-            args.append("-e")
-
-        args.append(req)
-
-        return self.run(*args)
+            return pip_editable_install(directory=req, environment=self._env)
+        return pip_install(path=req, environment=self._env, deps=False, upgrade=True)
 
     def install_git(self, package: "Package") -> None:
-        from poetry.core.packages import Package
-        from poetry.core.vcs import Git
+        from poetry.core.packages.package import Package
+        from poetry.core.vcs.git import Git
 
         src_dir = self._env.path / "src" / package.name
         if src_dir.exists():

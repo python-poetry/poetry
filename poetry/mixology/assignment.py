@@ -6,8 +6,8 @@ from .term import Term
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import Package
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
 
     from .incompatibility import Incompatibility
 
@@ -25,7 +25,7 @@ class Assignment(Term):
         index: int,
         cause: Optional["Incompatibility"] = None,
     ) -> None:
-        super(Assignment, self).__init__(dependency, is_positive)
+        super().__init__(dependency, is_positive)
 
         self._decision_level = decision_level
         self._index = index

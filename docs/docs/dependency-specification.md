@@ -185,6 +185,11 @@ foo = [
 ]
 ```
 
+!!!note
+
+    The constraints **must** have different requirements (like `python`)
+    otherwise it will cause an error when resolving dependencies.
+
 ## Expanded dependency specification syntax
 
 In the case of more complex dependency specifications, you may find that you
@@ -212,8 +217,3 @@ markers = "platform_python_implementation == 'CPython'"
 All of the same information is still present, and ends up providing the exact
 same specification. It's simply split into multiple, slightly more readable,
 lines.
-
-!!!note
-
-    The constraints **must** have different requirements (like `python`)
-    otherwise it will cause an error when resolving dependencies.

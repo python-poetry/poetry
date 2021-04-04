@@ -4,11 +4,11 @@ from typing import Optional
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import Package
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
 
 
-class BaseRepository(object):
+class BaseRepository:
     def __init__(self) -> None:
         self._packages = []
 

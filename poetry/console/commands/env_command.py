@@ -4,7 +4,7 @@ from .command import Command
 
 
 if TYPE_CHECKING:
-    from poetry.utils.env import VirtualEnv
+    from poetry.utils.env import Env
 
 
 class EnvCommand(Command):
@@ -14,8 +14,8 @@ class EnvCommand(Command):
         super(EnvCommand, self).__init__()
 
     @property
-    def env(self) -> "VirtualEnv":
+    def env(self) -> "Env":
         return self._env
 
-    def set_env(self, env: "VirtualEnv") -> None:
+    def set_env(self, env: "Env") -> None:
         self._env = env

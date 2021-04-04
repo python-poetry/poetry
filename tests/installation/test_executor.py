@@ -13,6 +13,7 @@ from cleo.io.buffered_io import BufferedIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
+from poetry.core.utils._compat import PY36
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -66,8 +67,12 @@ def mock_file_downloads(http):
 
 
 def test_execute_executes_a_batch_of_operations(
-    config, pool, io, tmp_dir, mock_file_downloads, env
+    mocker, config, pool, io, tmp_dir, mock_file_downloads, env
 ):
+    pip_editable_install = mocker.patch(
+        "poetry.installation.executor.pip_editable_install", unsafe=not PY36
+    )
+
     config = Config()
     config.merge({"cache-dir": tmp_dir})
 
@@ -101,6 +106,7 @@ def test_execute_executes_a_batch_of_operations(
         source_type="git",
         source_reference="master",
         source_url="https://github.com/demo/demo.git",
+        develop=True,
     )
 
     return_code = executor.execute(
@@ -133,6 +139,7 @@ Package operations: 4 installs, 1 update, 1 removal
     assert expected == output
     assert 5 == len(env.executed)
     assert 0 == return_code
+    pip_editable_install.assert_called_once()
 
 
 def test_execute_shows_skipped_operations_if_verbose(

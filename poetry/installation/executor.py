@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import division
-
 import itertools
 import os
 import threading
@@ -22,7 +19,9 @@ from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
+from poetry.utils.pip import pip_editable_install
 
+from ..utils.pip import pip_install
 from .authenticator import Authenticator
 from .chef import Chef
 from .chooser import Chooser
@@ -42,7 +41,7 @@ if TYPE_CHECKING:
     from .operations import OperationTypes
 
 
-class Executor(object):
+class Executor:
     def __init__(
         self,
         env: "Env",
@@ -294,7 +293,7 @@ class Executor(object):
 
             return 0
 
-        result = getattr(self, "_execute_{}".format(method))(operation)
+        result = getattr(self, f"_execute_{method}")(operation)
 
         if result != 0:
             return result
@@ -429,9 +428,7 @@ class Executor(object):
                 "" if updates == 1 else "s",
                 uninstalls,
                 "" if uninstalls == 1 else "s",
-                ", <info>{}</> skipped".format(skipped)
-                if skipped and self._verbose
-                else "",
+                f", <info>{skipped}</> skipped" if skipped and self._verbose else "",
             )
         )
         self._io.write_line("")
@@ -474,12 +471,9 @@ class Executor(object):
             )
         )
         self._write(operation, message)
-
-        args = ["install", "--no-deps", str(archive)]
-        if operation.job_type == "update":
-            args.insert(2, "-U")
-
-        return self.run_pip(*args)
+        return pip_install(
+            str(archive), self._env, upgrade=operation.job_type == "update"
+        )
 
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
@@ -533,11 +527,9 @@ class Executor(object):
         self._write(operation, message)
 
         if package.root_dir:
-            req = os.path.join(str(package.root_dir), package.source_url)
+            req = package.root_dir / package.source_url
         else:
-            req = os.path.realpath(package.source_url)
-
-        args = ["install", "--no-deps", "-U"]
+            req = Path(package.source_url).resolve(strict=False)
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
@@ -546,8 +538,9 @@ class Executor(object):
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
-            legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
-                19, 0, 0
+            legacy_pip = (
+                self._env.pip_version
+                < self._env.pip_version.__class__.from_parts(19, 0, 0)
             )
             package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
@@ -572,18 +565,13 @@ class Executor(object):
 
                 with builder.setup_py():
                     if package.develop:
-                        args.append("-e")
-
-                    args.append(req)
-
-                    return self.run_pip(*args)
+                        return pip_editable_install(req, self._env)
+                    return pip_install(req, self._env, upgrade=True)
 
         if package.develop:
-            args.append("-e")
+            return pip_editable_install(req, self._env)
 
-        args.append(req)
-
-        return self.run_pip(*args)
+        return pip_install(req, self._env, upgrade=True)
 
     def _install_git(self, operation: Union[Install, Update]) -> int:
         from poetry.core.vcs import Git
@@ -645,7 +633,7 @@ class Executor(object):
             archive_hash = "sha256:" + FileDependency(package.name, archive).hash()
             if archive_hash not in {f["hash"] for f in package.files}:
                 raise RuntimeError(
-                    "Invalid hash for {} using archive {}".format(package, archive.name)
+                    f"Invalid hash for {package} using archive {archive.name}"
                 )
 
         return archive
@@ -700,7 +688,4 @@ class Executor(object):
         return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
-        if not operation.skipped:
-            return True
-
-        return self._dry_run or self._verbose
+        return not operation.skipped or self._dry_run or self._verbose

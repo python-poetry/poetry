@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Set
 from typing import Union
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.core.utils.helpers import module_name
 from poetry.utils._compat import metadata
 from poetry.utils.env import Env
@@ -100,10 +100,12 @@ class InstalledRepository(Repository):
             return True
 
     @classmethod
-    def load(cls, env: Env) -> "InstalledRepository":
+    def load(cls, env: Env, with_dependencies: bool = False) -> "InstalledRepository":
         """
         Load installed packages.
         """
+        from poetry.core.packages.dependency import Dependency
+
         repo = cls()
         seen = set()
 
@@ -117,6 +119,11 @@ class InstalledRepository(Repository):
                 version = distribution.metadata["version"]
                 package = Package(name, version, version)
                 package.description = distribution.metadata.get("summary", "")
+
+                if with_dependencies:
+                    for require in distribution.metadata.get_all("requires-dist", []):
+                        dep = Dependency.create_from_pep_508(require)
+                        package.add_dependency(dep)
 
                 if package.name in seen:
                     continue

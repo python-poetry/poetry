@@ -71,7 +71,7 @@ class AddCommand(InstallerCommand, InitCommand):
     def handle(self) -> int:
         from tomlkit import inline_table
 
-        from poetry.core.semver import parse_constraint
+        from poetry.core.semver.helpers import parse_constraint
 
         packages = self.argument("name")
         is_dev = self.option("dev")

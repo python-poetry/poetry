@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.dependency import Dependency
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
@@ -273,25 +273,23 @@ def test_exporter_can_export_requirements_txt_poetry(tmp_dir, poetry):
     # │       │   └── six >=1.4.1
     # │       └── jeepney >=0.6 (circular dependency aborted here)
     expected = {
-        "poetry": dependency_from_pep_508("poetry==1.1.4"),
-        "junit-xml": dependency_from_pep_508("junit-xml==1.9"),
-        "keyring": dependency_from_pep_508("keyring==21.8.0"),
-        "secretstorage": dependency_from_pep_508(
+        "poetry": Dependency.create_from_pep_508("poetry==1.1.4"),
+        "junit-xml": Dependency.create_from_pep_508("junit-xml==1.9"),
+        "keyring": Dependency.create_from_pep_508("keyring==21.8.0"),
+        "secretstorage": Dependency.create_from_pep_508(
             "secretstorage==3.3.0; sys_platform=='linux'"
         ),
-        "cryptography": dependency_from_pep_508(
+        "cryptography": Dependency.create_from_pep_508(
             "cryptography==3.2; sys_platform=='linux'"
         ),
-        "six": dependency_from_pep_508("six==1.15.0"),
+        "six": Dependency.create_from_pep_508("six==1.15.0"),
     }
 
     for line in content.strip().split("\n"):
-        dependency = dependency_from_pep_508(line)
+        dependency = Dependency.create_from_pep_508(line)
         assert dependency.name in expected
         expected_dependency = expected.pop(dependency.name)
         assert dependency == expected_dependency
-        print(dependency.marker)
-        print(expected_dependency.marker)
         assert dependency.marker == expected_dependency.marker
 
 
@@ -356,13 +354,15 @@ def test_exporter_can_export_requirements_txt_pyinstaller(tmp_dir, poetry):
     # ├── macholib >=1.8 -- only on Darwin
     # │   └── altgraph >=0.15
     expected = {
-        "pyinstaller": dependency_from_pep_508("pyinstaller==4.0"),
-        "altgraph": dependency_from_pep_508("altgraph==0.17"),
-        "macholib": dependency_from_pep_508("macholib==1.8; sys_platform == 'darwin'"),
+        "pyinstaller": Dependency.create_from_pep_508("pyinstaller==4.0"),
+        "altgraph": Dependency.create_from_pep_508("altgraph==0.17"),
+        "macholib": Dependency.create_from_pep_508(
+            "macholib==1.8; sys_platform == 'darwin'"
+        ),
     }
 
     for line in content.strip().split("\n"):
-        dependency = dependency_from_pep_508(line)
+        dependency = Dependency.create_from_pep_508(line)
         assert dependency.name in expected
         expected_dependency = expected.pop(dependency.name)
         assert dependency == expected_dependency
@@ -427,20 +427,20 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
         content = f.read()
 
     expected = {
-        "a": dependency_from_pep_508("a==1.2.3; python_version < '3.7'"),
-        "b": dependency_from_pep_508(
+        "a": Dependency.create_from_pep_508("a==1.2.3; python_version < '3.7'"),
+        "b": Dependency.create_from_pep_508(
             "b==4.5.6; platform_system == 'Windows' and python_version < '3.7'"
         ),
-        "c": dependency_from_pep_508(
+        "c": Dependency.create_from_pep_508(
             "c==7.8.9; sys_platform == 'win32' and python_version < '3.7'"
         ),
-        "d": dependency_from_pep_508(
+        "d": Dependency.create_from_pep_508(
             "d==0.0.1; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
         ),
     }
 
     for line in content.strip().split("\n"):
-        dependency = dependency_from_pep_508(line)
+        dependency = Dependency.create_from_pep_508(line)
         assert dependency.name in expected
         expected_dependency = expected.pop(dependency.name)
         assert dependency == expected_dependency
@@ -1026,7 +1026,79 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
     expected = """\
 foo @ {}/tests/fixtures/sample_project
 """.format(
-        working_directory.as_posix()
+        working_directory.as_uri()
+    )
+
+    assert expected == content
+
+
+def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
+    tmp_dir, poetry, working_directory
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "directory",
+                        "url": "tests/fixtures/sample_project",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "directory",
+                        "url": "tests/fixtures/sample_project/../project_with_nested_local/bar",
+                        "reference": "",
+                    },
+                },
+                {
+                    "name": "baz",
+                    "version": "7.8.9",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "directory",
+                        "url": "tests/fixtures/sample_project/../project_with_nested_local/bar/..",
+                        "reference": "",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": [], "baz": []},
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt")
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar @ {}/tests/fixtures/project_with_nested_local/bar
+baz @ {}/tests/fixtures/project_with_nested_local
+foo @ {}/tests/fixtures/sample_project
+""".format(
+        working_directory.as_uri(),
+        working_directory.as_uri(),
+        working_directory.as_uri(),
     )
 
     assert expected == content
@@ -1071,7 +1143,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
     expected = """\
 foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
 """.format(
-        working_directory.as_posix()
+        working_directory.as_uri()
     )
 
     assert expected == content

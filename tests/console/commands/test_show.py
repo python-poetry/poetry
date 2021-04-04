@@ -84,6 +84,46 @@ pytest   3.7.3 Pytest package
     assert expected == tester.io.fetch_output()
 
 
+def test_show_basic_with_installed_packages_single(tester, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+
+    installed.add_package(cachy_010)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": []},
+            },
+        }
+    )
+
+    tester.execute("cachy")
+
+    assert [
+        "name         : cachy",
+        "version      : 0.1.0",
+        "description  : Cachy package",
+    ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
+
+
 def test_show_basic_with_not_installed_packages_non_decorated(
     tester, poetry, installed
 ):

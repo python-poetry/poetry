@@ -14,16 +14,15 @@ from typing import Union
 import pkginfo
 
 from poetry.core.factory import Factory
-from poetry.core.packages import Package
-from poetry.core.packages import ProjectPackage
-from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.core.utils.helpers import parse_requires
 from poetry.core.utils.helpers import temporary_directory
 from poetry.core.version.markers import InvalidMarker
 from poetry.utils.env import EnvCommandError
-from poetry.utils.env import EnvManager
-from poetry.utils.env import VirtualEnv
+from poetry.utils.env import ephemeral_environment
 from poetry.utils.setup_reader import SetupReader
 
 
@@ -48,9 +47,7 @@ class PackageInfoError(ValueError):
         reasons = (
             "Unable to determine package info for path: {}".format(str(path)),
         ) + reasons
-        super(PackageInfoError, self).__init__(
-            "\n\n".join(str(msg).strip() for msg in reasons if msg)
-        )
+        super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
 
 class PackageInfo:
@@ -120,7 +117,7 @@ class PackageInfo:
     @classmethod
     def _log(cls, msg: str, level: str = "info") -> None:
         """Internal helper method to log information."""
-        getattr(logger, level)("<debug>{}:</debug> {}".format(cls.__name__, msg))
+        getattr(logger, level)(f"<debug>{cls.__name__}:</debug> {msg}")
 
     def to_package(
         self,
@@ -140,9 +137,7 @@ class PackageInfo:
 
         if not self.version:
             # The version could not be determined, so we raise an error since it is mandatory.
-            raise RuntimeError(
-                "Unable to retrieve the package version for {}".format(name)
-            )
+            raise RuntimeError(f"Unable to retrieve the package version for {name}")
 
         package = Package(
             name=name,
@@ -170,11 +165,11 @@ class PackageInfo:
         for req in self.requires_dist or []:
             try:
                 # Attempt to parse the PEP-508 requirement string
-                dependency = dependency_from_pep_508(req, relative_to=root_dir)
+                dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except InvalidMarker:
                 # Invalid marker, We strip the markers hoping for the best
                 req = req.split(";")[0]
-                dependency = dependency_from_pep_508(req, relative_to=root_dir)
+                dependency = Dependency.create_from_pep_508(req, relative_to=root_dir)
             except ValueError:
                 # Likely unable to parse constraint so we skip it
                 self._log(
@@ -330,7 +325,7 @@ class PackageInfo:
             requires += "\n"
 
         for extra_name, deps in result["extras_require"].items():
-            requires += "[{}]\n".format(extra_name)
+            requires += f"[{extra_name}]\n"
 
             for dep in deps:
                 requires += dep + "\n"
@@ -451,24 +446,19 @@ class PackageInfo:
         except PackageInfoError:
             pass
 
-        with temporary_directory() as tmp_dir:
+        with ephemeral_environment(
+            with_pip=True, with_wheel=True, with_setuptools=True
+        ) as venv:
             # TODO: cache PEP 517 build environment corresponding to each project venv
-            venv_dir = Path(tmp_dir) / ".venv"
-            EnvManager.build_venv(venv_dir.as_posix())
-            venv = VirtualEnv(venv_dir, venv_dir)
-
-            dest_dir = Path(tmp_dir) / "dist"
+            dest_dir = venv.path.parent / "dist"
             dest_dir.mkdir()
 
             try:
-                venv.run(
-                    "python",
-                    "-m",
-                    "pip",
+                venv.run_pip(
                     "install",
                     "--disable-pip-version-check",
                     "--ignore-installed",
-                    *PEP517_META_BUILD_DEPS
+                    *PEP517_META_BUILD_DEPS,
                 )
                 venv.run(
                     "python",
@@ -481,7 +471,7 @@ class PackageInfo:
             except EnvCommandError as e:
                 # something went wrong while attempting pep517 metadata build
                 # fallback to egg_info if setup.py available
-                cls._log("PEP517 build failed: {}".format(e), level="debug")
+                cls._log(f"PEP517 build failed: {e}", level="debug")
                 setup_py = path / "setup.py"
                 if not setup_py.exists():
                     raise PackageInfoError(
@@ -503,9 +493,7 @@ class PackageInfo:
                     os.chdir(cwd.as_posix())
 
         if info:
-            cls._log(
-                "Falling back to parsed setup.py file for {}".format(path), "debug"
-            )
+            cls._log(f"Falling back to parsed setup.py file for {path}", "debug")
             return info
 
         # if we reach here, everything has failed and all hope is lost

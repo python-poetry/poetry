@@ -17,7 +17,6 @@ import requests
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
-from poetry.core.version import Version
 
 
 try:
@@ -37,10 +36,6 @@ def module_name(name: str) -> str:
     return canonicalize_name(name).replace(".", "_").replace("-", "_")
 
 
-def normalize_version(version: str) -> str:
-    return str(Version(version))
-
-
 def _del_ro(action: Callable, name: str, exc: Exception) -> None:
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
@@ -56,7 +51,7 @@ def temporary_directory(*args: Any, **kwargs: Any) -> Iterator[str]:
 
 
 def get_cert(config: Config, repository_name: str) -> Optional[Path]:
-    cert = config.get("certificates.{}.cert".format(repository_name))
+    cert = config.get(f"certificates.{repository_name}.cert")
     if cert:
         return Path(cert)
     else:
@@ -64,7 +59,7 @@ def get_cert(config: Config, repository_name: str) -> Optional[Path]:
 
 
 def get_client_cert(config: Config, repository_name: str) -> Optional[Path]:
-    client_cert = config.get("certificates.{}.client-cert".format(repository_name))
+    client_cert = config.get(f"certificates.{repository_name}.client-cert")
     if client_cert:
         return Path(client_cert)
     else:
@@ -136,7 +131,7 @@ def is_dir_writable(path: Path, create: bool = False) -> bool:
 
         with tempfile.TemporaryFile(dir=str(path)):
             pass
-    except (IOError, OSError):
+    except OSError:
         return False
     else:
         return True
