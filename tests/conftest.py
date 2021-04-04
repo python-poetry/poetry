@@ -13,6 +13,7 @@ import pytest
 
 from cleo.testers.command_tester import CommandTester
 
+from poetry.utils.helpers import with_temp_directory_manager
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
 from poetry.factory import Factory
@@ -187,6 +188,10 @@ def tmp_dir():
 
     shutil.rmtree(dir_)
 
+@pytest.fixture
+def temp_dir_manager():
+    with with_temp_directory_manager() as m:
+        yield m
 
 @pytest.fixture
 def mocked_open_files(mocker):

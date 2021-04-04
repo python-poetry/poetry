@@ -135,3 +135,28 @@ def is_dir_writable(path: Path, create: bool = False) -> bool:
         return False
     else:
         return True
+
+@contextmanager
+def with_temp_directory_manager():
+    m = TempDirManager()
+    try:        
+        yield(m)
+    except Exception:
+        raise
+    finally:
+        m.release()
+
+class TempDirManager():
+    def __init__(self) -> None:
+        self._tmp_dirs = []
+
+    def release(self):
+        for d in self._tmp_dirs:
+            safe_rmtree(str(d))
+
+    def build_tmp_dir_for_vcs(self, url):
+        tmp_dir = Path(
+            tempfile.mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
+        )
+        self._tmp_dirs.append(tmp_dir)
+        return tmp_dir

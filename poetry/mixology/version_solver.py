@@ -10,6 +10,7 @@ from typing import Union
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
+from poetry.puzzle.provider import TempDirManager
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility
@@ -43,12 +44,14 @@ class VersionSolver:
         self,
         root: ProjectPackage,
         provider: "Provider",
+        temp_dir_manager: TempDirManager,
         locked: Dict[str, Package] = None,
         use_latest: List[str] = None,
     ):
         self._root = root
         self._provider = provider
         self._locked = locked or {}
+        self._temp_dir_manager = temp_dir_manager
 
         if use_latest is None:
             use_latest = []
@@ -355,8 +358,9 @@ class VersionSolver:
             try:
                 return (
                     not dependency.marker.is_any(),
-                    len(self._provider.search_for(dependency)),
+                    len(self._provider.search_for(dependency, self._temp_dir_manager)),
                 )
+
             except ValueError:
                 return not dependency.marker.is_any(), 0
 
@@ -368,7 +372,7 @@ class VersionSolver:
         locked = self._get_locked(dependency)
         if locked is None or not dependency.constraint.allows(locked.version):
             try:
-                packages = self._provider.search_for(dependency)
+                packages = self._provider.search_for(dependency, self._temp_dir_manager)
             except ValueError as e:
                 self._add_incompatibility(
                     Incompatibility([Term(dependency, True)], PackageNotFoundCause(e))
@@ -391,7 +395,7 @@ class VersionSolver:
         else:
             version = locked
 
-        version = self._provider.complete_package(version)
+        version = self._provider.complete_package(version, self._temp_dir_manager)
 
         conflict = False
         for incompatibility in self._provider.incompatibilities_for(version):

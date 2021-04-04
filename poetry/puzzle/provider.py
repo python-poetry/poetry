@@ -6,7 +6,6 @@ import urllib.parse
 
 from contextlib import contextmanager
 from pathlib import Path
-from tempfile import mkdtemp
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -40,7 +39,7 @@ from poetry.utils.env import Env
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.helpers import temporary_directory
-
+from poetry.utils.helpers import TempDirManager
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +105,7 @@ class Provider:
             DirectoryDependency,
             URLDependency,
         ],
+        temp_dir_manager: TempDirManager,
     ) -> List[DependencyPackage]:
         """
         Search for the specifications that match the given dependency.
@@ -139,7 +139,7 @@ class Provider:
                 return PackageCollection(dependency, packages)
 
         if dependency.is_vcs():
-            packages = self.search_for_vcs(dependency)
+            packages = self.search_for_vcs(dependency, temp_dir_manager)
         elif dependency.is_file():
             packages = self.search_for_file(dependency)
         elif dependency.is_directory():
@@ -161,7 +161,7 @@ class Provider:
 
         return PackageCollection(dependency, packages)
 
-    def search_for_vcs(self, dependency: VCSDependency) -> List[Package]:
+    def search_for_vcs(self, dependency: VCSDependency, temp_dir_manager: TempDirManager) -> List[Package]:
         """
         Search for the specifications that match the given VCS dependency.
 
@@ -171,16 +171,16 @@ class Provider:
         if dependency in self._deferred_cache:
             return [self._deferred_cache[dependency]]
 
-        with self.build_tmp_dir_for_vcs(dependency.source) as tmp_dir:
-            package = self.get_package_from_vcs(
-                dependency.vcs,
-                dependency.source,
-                tmp_dir,
-                branch=dependency.branch,
-                tag=dependency.tag,
-                rev=dependency.rev,
-                name=dependency.name,
-            )
+        tmp_dir = temp_dir_manager.build_tmp_dir_for_vcs(dependency.source)
+        package = self.get_package_from_vcs(
+            dependency.vcs,
+            dependency.source,
+            tmp_dir,
+            branch=dependency.branch,
+            tag=dependency.tag,
+            rev=dependency.rev,
+            name=dependency.name,
+        )
         package.develop = dependency.develop
 
         dependency._constraint = package.version
@@ -189,19 +189,6 @@ class Provider:
         self._deferred_cache[dependency] = package
 
         return [package]
-
-    @classmethod
-    @contextmanager
-    def build_tmp_dir_for_vcs(cls, url):
-        tmp_dir = Path(
-            mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
-        )
-        try:        
-            yield(tmp_dir)
-        except Exception:
-            raise
-        finally:
-            safe_rmtree(str(tmp_dir))
 
     @classmethod
     def get_package_from_vcs(
@@ -437,7 +424,7 @@ class Provider:
             for dep in dependencies
         ]
 
-    def complete_package(self, package: DependencyPackage) -> DependencyPackage:
+    def complete_package(self, package: DependencyPackage, temp_dir_manager: TempDirManager) -> DependencyPackage:
         if package.is_root():
             package = package.clone()
             requires = package.all_requires
@@ -468,7 +455,7 @@ class Provider:
                 elif r.is_file():
                     self.search_for_file(r)
                 elif r.is_vcs():
-                    self.search_for_vcs(r)
+                    self.search_for_vcs(r, temp_dir_manager)
                 elif r.is_url():
                     self.search_for_url(r)
 

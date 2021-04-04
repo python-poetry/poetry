@@ -16,7 +16,7 @@ from tomlkit import inline_table
 
 from .command import Command
 from .env_command import EnvCommand
-
+from poetry.utils.helpers import with_temp_directory_manager
 
 if TYPE_CHECKING:
     from poetry.repositories import Pool
@@ -414,7 +414,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     if extras:
                         pair["extras"] = extras
 
-                    with Provider.build_tmp_dir_for_vcs(url.url) as tmp_dir:
+                    with with_temp_directory_manager() as m:
+                        tmp_dir = m.build_tmp_dir_for_vcs(url.url)
                         package = Provider.get_package_from_vcs(
                             "git", url.url, tmp_dir, rev=pair.get("rev")
                         )

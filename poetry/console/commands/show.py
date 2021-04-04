@@ -7,7 +7,7 @@ from cleo.helpers import argument
 from cleo.helpers import option
 
 from .env_command import EnvCommand
-
+from poetry.utils.helpers import with_temp_directory_manager
 
 if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
@@ -395,7 +395,9 @@ lists all packages available."""
                     provider = Provider(self.poetry.package, self.poetry.pool, NullIO())
 
                     if dep.is_vcs():
-                        return provider.search_for_vcs(dep)[0]
+                        with with_temp_directory_manager() as m:
+                            ret = provider.search_for_vcs(dep, m)[0]
+                        return ret
                     if dep.is_file():
                         return provider.search_for_file(dep)[0]
                     if dep.is_directory():

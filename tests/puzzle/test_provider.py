@@ -47,18 +47,18 @@ def provider(root, pool):
 
 
 @pytest.mark.parametrize("value", [True, False])
-def test_search_for_vcs_retains_develop_flag(provider, value):
+def test_search_for_vcs_retains_develop_flag(provider, value, temp_dir_manager):
     dependency = VCSDependency(
         "demo", "git", "https://github.com/demo/demo.git", develop=value
     )
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_vcs(dependency, temp_dir_manager)[0]
     assert package.develop == value
 
 
-def test_search_for_vcs_setup_egg_info(provider):
+def test_search_for_vcs_setup_egg_info(provider, temp_dir_manager):
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
 
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_vcs(dependency, temp_dir_manager)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -73,12 +73,12 @@ def test_search_for_vcs_setup_egg_info(provider):
     }
 
 
-def test_search_for_vcs_setup_egg_info_with_extras(provider):
+def test_search_for_vcs_setup_egg_info_with_extras(provider, temp_dir_manager):
     dependency = VCSDependency(
         "demo", "git", "https://github.com/demo/demo.git", extras=["foo"]
     )
 
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_vcs(dependency, temp_dir_manager)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -93,12 +93,12 @@ def test_search_for_vcs_setup_egg_info_with_extras(provider):
     }
 
 
-def test_search_for_vcs_read_setup(provider, mocker):
+def test_search_for_vcs_read_setup(provider, mocker, temp_dir_manager):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
 
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_vcs(dependency, temp_dir_manager)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -113,14 +113,14 @@ def test_search_for_vcs_read_setup(provider, mocker):
     }
 
 
-def test_search_for_vcs_read_setup_with_extras(provider, mocker):
+def test_search_for_vcs_read_setup_with_extras(provider, mocker, temp_dir_manager):
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = VCSDependency(
         "demo", "git", "https://github.com/demo/demo.git", extras=["foo"]
     )
 
-    package = provider.search_for_vcs(dependency)[0]
+    package = provider.search_for_vcs(dependency, temp_dir_manager)[0]
 
     assert package.name == "demo"
     assert package.version.text == "0.1.2"
@@ -131,7 +131,7 @@ def test_search_for_vcs_read_setup_with_extras(provider, mocker):
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
 
 
-def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
+def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker, temp_dir_manager):
     mocker.patch(
         "poetry.inspection.info.PackageInfo._pep517_metadata",
         return_value=PackageInfo(name="demo", version=None),
@@ -140,7 +140,7 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
     dependency = VCSDependency("demo", "git", "https://github.com/demo/no-version.git")
 
     with pytest.raises(RuntimeError):
-        provider.search_for_vcs(dependency)
+        provider.search_for_vcs(dependency, temp_dir_manager)
 
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])

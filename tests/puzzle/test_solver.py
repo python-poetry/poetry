@@ -2850,7 +2850,7 @@ def test_solver_git_dependencies_with_relative_path(solver, package):
     )
 
     ops = solver.solve()
-
+    
     expecteds = [
         {"job": "install", "package": {"name": "subdir-package", "version": "0.1.0"}},
         {"job": "install", "package": {"name": "relative-dependency", "version": "0.1.0"}},

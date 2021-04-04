@@ -3,7 +3,7 @@ from poetry.factory import Factory
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.version_solver import VersionSolver
 from poetry.packages import DependencyPackage
-
+from poetry.utils.helpers import with_temp_directory_manager
 
 def add_to_repo(repository, name, version, deps=None, python=None):
     package = Package(name, version)
@@ -23,20 +23,22 @@ def check_solver_result(
     if locked is not None:
         locked = {k: DependencyPackage(l.to_dependency(), l) for k, l in locked.items()}
 
-    solver = VersionSolver(root, provider, locked=locked, use_latest=use_latest)
+    with with_temp_directory_manager() as m:
 
-    try:
-        solution = solver.solve()
-    except SolveFailure as e:
-        if error:
-            assert str(e) == error
+        solver = VersionSolver(root, provider, m, locked=locked, use_latest=use_latest)
 
-            if tries is not None:
-                assert solver.solution.attempted_solutions == tries
+        try:
+            solution = solver.solve()
+        except SolveFailure as e:
+            if error:
+                assert str(e) == error
 
-            return
+                if tries is not None:
+                    assert solver.solution.attempted_solutions == tries
 
-        raise
+                return
+
+            raise
 
     packages = {}
     for package in solution.packages:
