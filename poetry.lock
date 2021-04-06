@@ -390,7 +390,7 @@ dev = ["pre-commit", "tox"]
 
 [[package]]
 name = "poetry-core"
-version = "1.1.0a0"
+version = "1.1.0a1"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
@@ -405,7 +405,7 @@ importlib-metadata = {version = "^1.7.0", markers = "python_version >= \"3.5\" a
 type = "git"
 url = "https://github.com/python-poetry/poetry-core.git"
 reference = "master"
-resolved_reference = "c11cb9a6ebdda53d45dae78b45f6f73f5368e793"
+resolved_reference = "8d5e5c5d070940736ab72c5dec09cd7deab07cf3"
 
 [[package]]
 name = "pre-commit"
