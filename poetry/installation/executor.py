@@ -714,15 +714,25 @@ class Executor:
     def _should_write_operation(self, operation: Operation) -> bool:
         return not operation.skipped or self._dry_run or self._verbose
 
+    @staticmethod
+    def _package_dist_info_path(package: "Package") -> Path:
+        from poetry.core.masonry.utils.helpers import escape_name
+        from poetry.core.masonry.utils.helpers import escape_version
+
+        return Path(
+            f"{escape_name(package.pretty_name)}-{escape_version(package.version.text)}.dist-info"
+        )
+
+    @classmethod
+    def _direct_url_json_path(cls, package: "Package") -> Path:
+        return cls._package_dist_info_path(package) / "direct_url.json"
+
     def _save_url_reference(self, operation: "OperationTypes") -> None:
         """
         Create and store a PEP-610 `direct_url.json` file, if needed.
         """
         if operation.job_type not in {"install", "update"}:
             return
-
-        from poetry.core.masonry.utils.helpers import escape_name
-        from poetry.core.masonry.utils.helpers import escape_version
 
         package = operation.package
 
@@ -732,14 +742,10 @@ class Executor:
             # distribution.
             # That's not what we want so we remove the direct_url.json file,
             # if it exists.
-            dist_info = self._env.site_packages.path.joinpath(
-                "{}-{}.dist-info".format(
-                    escape_name(package.pretty_name),
-                    escape_version(package.version.text),
-                )
-            )
-            if dist_info.exists() and dist_info.joinpath("direct_url.json").exists():
-                dist_info.joinpath("direct_url.json").unlink()
+            for direct_url in self._env.site_packages.find(
+                self._direct_url_json_path(package), True
+            ):
+                direct_url.unlink()
 
             return
 
@@ -755,16 +761,15 @@ class Executor:
             url_reference = self._create_file_url_reference(package)
 
         if url_reference:
-            dist_info = self._env.site_packages.path.joinpath(
-                "{}-{}.dist-info".format(
-                    escape_name(package.name), escape_version(package.version.text)
+            for path in self._env.site_packages.find(
+                self._package_dist_info_path(package), writable_only=True
+            ):
+                self._env.site_packages.write_text(
+                    path / "direct_url.json",
+                    json.dumps(url_reference),
+                    encoding="utf-8",
                 )
-            )
-
-            if dist_info.exists():
-                dist_info.joinpath("direct_url.json").write_text(
-                    json.dumps(url_reference), encoding="utf-8"
-                )
+                break
 
     def _create_git_url_reference(
         self, package: "Package"

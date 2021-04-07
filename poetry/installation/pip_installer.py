@@ -117,10 +117,7 @@ class PipInstaller(BaseInstaller):
             raise
 
         # This is a workaround for https://github.com/pypa/pip/issues/4176
-        nspkg_pth_file = self._env.site_packages.path / "{}-nspkg.pth".format(
-            package.name
-        )
-        if nspkg_pth_file.exists():
+        for nspkg_pth_file in self._env.site_packages.find(f"{package.name}-nspkg.pth"):
             nspkg_pth_file.unlink()
 
         # If we have a VCS package, remove its source directory

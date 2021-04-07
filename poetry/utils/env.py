@@ -152,17 +152,34 @@ print(json.dumps(sysconfig.get_paths()))
 
 class SitePackages:
     def __init__(
-        self, path: Path, fallbacks: List[Path] = None, skip_write_checks: bool = False
+        self,
+        purelib: Path,
+        platlib: Optional[Path] = None,
+        fallbacks: List[Path] = None,
+        skip_write_checks: bool = False,
     ) -> None:
-        self._path = path
+        self._purelib = purelib
+        self._platlib = platlib or purelib
+
+        if platlib and platlib.resolve() == purelib.resolve():
+            self._platlib = purelib
+
         self._fallbacks = fallbacks or []
         self._skip_write_checks = skip_write_checks
-        self._candidates = [self._path] + self._fallbacks
+        self._candidates = list({self._purelib, self._platlib}) + self._fallbacks
         self._writable_candidates = None if not skip_write_checks else self._candidates
 
     @property
     def path(self) -> Path:
-        return self._path
+        return self._purelib
+
+    @property
+    def purelib(self) -> Path:
+        return self._purelib
+
+    @property
+    def platlib(self) -> Path:
+        return self._platlib
 
     @property
     def candidates(self) -> List[Path]:
@@ -200,12 +217,16 @@ class SitePackages:
         return [candidate / path for candidate in candidates if candidate]
 
     def _path_method_wrapper(
-        self, path: Path, method: str, *args: Any, **kwargs: Any
+        self,
+        path: Union[str, Path],
+        method: str,
+        *args: Any,
+        return_first: bool = True,
+        writable_only: bool = False,
+        **kwargs: Any,
     ) -> Union[Tuple[Path, Any], List[Tuple[Path, Any]]]:
-
-        # TODO: Move to parameters after dropping Python 2.7
-        return_first = kwargs.pop("return_first", True)
-        writable_only = kwargs.pop("writable_only", False)
+        if isinstance(path, str):
+            path = Path(path)
 
         candidates = self.make_candidates(path, writable_only=writable_only)
 
@@ -234,19 +255,19 @@ class SitePackages:
 
         raise OSError("Unable to access any of {}".format(paths_csv(candidates)))
 
-    def write_text(self, path: Path, *args: Any, **kwargs: Any) -> Path:
+    def write_text(self, path: Union[str, Path], *args: Any, **kwargs: Any) -> Path:
         return self._path_method_wrapper(path, "write_text", *args, **kwargs)[0]
 
-    def mkdir(self, path: Path, *args: Any, **kwargs: Any) -> Path:
+    def mkdir(self, path: Union[str, Path], *args: Any, **kwargs: Any) -> Path:
         return self._path_method_wrapper(path, "mkdir", *args, **kwargs)[0]
 
-    def exists(self, path: Path) -> bool:
+    def exists(self, path: Union[str, Path]) -> bool:
         return any(
             value[-1]
             for value in self._path_method_wrapper(path, "exists", return_first=False)
         )
 
-    def find(self, path: Path, writable_only: bool = False) -> List[Path]:
+    def find(self, path: Union[str, Path], writable_only: bool = False) -> List[Path]:
         return [
             value[0]
             for value in self._path_method_wrapper(
@@ -990,7 +1011,10 @@ class Env:
             # we disable write checks if no user site exist
             fallbacks = [self.usersite] if self.usersite else []
             self._site_packages = SitePackages(
-                self.purelib, fallbacks, skip_write_checks=False if fallbacks else True
+                self.purelib,
+                self.platlib,
+                fallbacks,
+                skip_write_checks=False if fallbacks else True,
             )
         return self._site_packages
 

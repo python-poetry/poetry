@@ -280,9 +280,10 @@ def test_executor_should_write_pep610_url_references_for_files(
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
 
-    dist_info = tmp_venv.site_packages.path.joinpath("demo-0.1.0.dist-info")
-    assert dist_info.exists()
+    dist_info = "demo-0.1.0.dist-info"
+    assert tmp_venv.site_packages.exists(dist_info)
 
+    dist_info = tmp_venv.site_packages.find(dist_info)[0]
     direct_url_file = dist_info.joinpath("direct_url.json")
 
     assert direct_url_file.exists()
@@ -303,9 +304,10 @@ def test_executor_should_write_pep610_url_references_for_directories(
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
 
-    dist_info = tmp_venv.site_packages.path.joinpath("simple_project-1.2.3.dist-info")
-    assert dist_info.exists()
+    dist_info = "simple_project-1.2.3.dist-info"
+    assert tmp_venv.site_packages.exists(dist_info)
 
+    dist_info = tmp_venv.site_packages.find(dist_info)[0]
     direct_url_file = dist_info.joinpath("direct_url.json")
 
     assert direct_url_file.exists()
@@ -330,9 +332,10 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
 
-    dist_info = tmp_venv.site_packages.path.joinpath("simple_project-1.2.3.dist-info")
-    assert dist_info.exists()
+    dist_info_dir = "simple_project-1.2.3.dist-info"
+    assert tmp_venv.site_packages.exists(dist_info_dir)
 
+    dist_info = tmp_venv.site_packages.find(dist_info_dir)[0]
     direct_url_file = dist_info.joinpath("direct_url.json")
 
     assert direct_url_file.exists()
@@ -355,9 +358,10 @@ def test_executor_should_write_pep610_url_references_for_urls(
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
 
-    dist_info = tmp_venv.site_packages.path.joinpath("demo-0.1.0.dist-info")
-    assert dist_info.exists()
+    dist_info = "demo-0.1.0.dist-info"
+    assert tmp_venv.site_packages.exists(dist_info)
 
+    dist_info = tmp_venv.site_packages.find(dist_info)[0]
     direct_url_file = dist_info.joinpath("direct_url.json")
 
     assert direct_url_file.exists()
@@ -385,9 +389,10 @@ def test_executor_should_write_pep610_url_references_for_git(
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
 
-    dist_info = tmp_venv.site_packages.path.joinpath("demo-0.1.2.dist-info")
-    assert dist_info.exists()
+    dist_info = "demo-0.1.2.dist-info"
+    assert tmp_venv.site_packages.exists(dist_info)
 
+    dist_info = tmp_venv.site_packages.find(dist_info)[0]
     direct_url_file = dist_info.joinpath("direct_url.json")
 
     assert direct_url_file.exists()
