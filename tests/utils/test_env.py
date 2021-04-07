@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 import sys
 
 from pathlib import Path
@@ -636,6 +637,58 @@ def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
         tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
 
     assert processError.value.e.returncode == 1
+
+
+def test_run_with_keyboard_interrupt(tmp_dir, tmp_venv, mocker):
+    mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
+    with pytest.raises(KeyboardInterrupt):
+        tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
+    subprocess.run.assert_called_once()
+
+
+def test_call_with_input_and_keyboard_interrupt(tmp_dir, tmp_venv, mocker):
+    mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
+    kwargs = {"call": True}
+    with pytest.raises(KeyboardInterrupt):
+        tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT, **kwargs)
+    subprocess.run.assert_called_once()
+
+
+def test_call_no_input_with_keyboard_interrupt(tmp_dir, tmp_venv, mocker):
+    mocker.patch("subprocess.call", side_effect=KeyboardInterrupt())
+    kwargs = {"call": True}
+    with pytest.raises(KeyboardInterrupt):
+        tmp_venv.run("python", "-", **kwargs)
+    subprocess.call.assert_called_once()
+
+
+def test_run_with_called_process_error(tmp_dir, tmp_venv, mocker):
+    mocker.patch(
+        "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
+    )
+    with pytest.raises(EnvCommandError):
+        tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
+    subprocess.run.assert_called_once()
+
+
+def test_call_with_input_and_called_process_error(tmp_dir, tmp_venv, mocker):
+    mocker.patch(
+        "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
+    )
+    kwargs = {"call": True}
+    with pytest.raises(EnvCommandError):
+        tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT, **kwargs)
+    subprocess.run.assert_called_once()
+
+
+def test_call_no_input_with_called_process_error(tmp_dir, tmp_venv, mocker):
+    mocker.patch(
+        "subprocess.call", side_effect=subprocess.CalledProcessError(42, "some_command")
+    )
+    kwargs = {"call": True}
+    with pytest.raises(EnvCommandError):
+        tmp_venv.run("python", "-", **kwargs)
+    subprocess.call.assert_called_once()
 
 
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(
