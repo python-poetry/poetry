@@ -31,11 +31,7 @@ class RunCommand(EnvCommand):
         try:
             return self.env.execute(*args)
         except FileNotFoundError:
-            self.line_error("")
-            self.line_error(
-                "<error>Error: Command {} is not found.</error>".format(script)
-            )
-            self.line_error("")
+            self.line_error(f "<error><c1>{script}</c1>: command not found.</error>")
             return 1
 
     @property
