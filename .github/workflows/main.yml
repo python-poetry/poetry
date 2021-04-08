@@ -43,7 +43,13 @@ jobs:
         shell: bash
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
+      - name: Bootstrap poetry (experimental)
+        if: ${{ matrix.experimental == true }}
+        shell: bash
+        run: python install-poetry.py -y --path .
+
       - name: Bootstrap poetry
+        if: ${{ matrix.experimental == false }}
         shell: bash
         run: python install-poetry.py -y
 
