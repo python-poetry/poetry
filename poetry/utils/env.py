@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import itertools
 import json
 import os
 import platform
@@ -17,6 +18,7 @@ from subprocess import CalledProcessError
 from typing import Any
 from typing import ContextManager
 from typing import Dict
+from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -43,6 +45,7 @@ from poetry.poetry import Poetry
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
 from poetry.utils._compat import list_to_shell_command
+from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
 from poetry.utils.helpers import temporary_directory
@@ -166,7 +169,12 @@ class SitePackages:
 
         self._fallbacks = fallbacks or []
         self._skip_write_checks = skip_write_checks
-        self._candidates = list({self._purelib, self._platlib}) + self._fallbacks
+
+        self._candidates: List[Path] = []
+        for path in itertools.chain([self._purelib, self._platlib], self._fallbacks):
+            if path not in self._candidates:
+                self._candidates.append(path)
+
         self._writable_candidates = None if not skip_write_checks else self._candidates
 
     @property
@@ -198,7 +206,9 @@ class SitePackages:
 
         return self._writable_candidates
 
-    def make_candidates(self, path: Path, writable_only: bool = False) -> List[Path]:
+    def make_candidates(
+        self, path: Path, writable_only: bool = False, strict: bool = False
+    ) -> List[Path]:
         candidates = self._candidates if not writable_only else self.writable_candidates
         if path.is_absolute():
             for candidate in candidates:
@@ -214,7 +224,94 @@ class SitePackages:
                     )
                 )
 
-        return [candidate / path for candidate in candidates if candidate]
+        results = [candidate / path for candidate in candidates if candidate]
+
+        if not results and strict:
+            raise RuntimeError(
+                'Unable to find a suitable destination for "{}" in {}'.format(
+                    str(path), paths_csv(self._candidates)
+                )
+            )
+
+        return results
+
+    def distributions(
+        self, name: Optional[str] = None, writable_only: bool = False
+    ) -> Iterable[metadata.PathDistribution]:
+        path = list(
+            map(
+                str, self._candidates if not writable_only else self.writable_candidates
+            )
+        )
+        for distribution in metadata.PathDistribution.discover(
+            name=name, path=path
+        ):  # type: metadata.PathDistribution
+            yield distribution
+
+    def find_distribution(
+        self, name: str, writable_only: bool = False
+    ) -> Optional[metadata.PathDistribution]:
+        for distribution in self.distributions(name=name, writable_only=writable_only):
+            return distribution
+        else:
+            return None
+
+    def find_distribution_files_with_suffix(
+        self, distribution_name: str, suffix: str, writable_only: bool = False
+    ) -> Iterable[Path]:
+        for distribution in self.distributions(
+            name=distribution_name, writable_only=writable_only
+        ):
+            for file in distribution.files:
+                if file.name.endswith(suffix):
+                    yield Path(distribution.locate_file(file))
+
+    def find_distribution_files_with_name(
+        self, distribution_name: str, name: str, writable_only: bool = False
+    ) -> Iterable[Path]:
+        for distribution in self.distributions(
+            name=distribution_name, writable_only=writable_only
+        ):
+            for file in distribution.files:
+                if file.name == name:
+                    yield Path(distribution.locate_file(file))
+
+    def find_distribution_nspkg_pth_files(
+        self, distribution_name: str, writable_only: bool = False
+    ) -> Iterable[Path]:
+        return self.find_distribution_files_with_suffix(
+            distribution_name=distribution_name,
+            suffix="-nspkg.pth",
+            writable_only=writable_only,
+        )
+
+    def find_distribution_direct_url_json_files(
+        self, distribution_name: str, writable_only: bool = False
+    ) -> Iterable[Path]:
+        return self.find_distribution_files_with_name(
+            distribution_name=distribution_name,
+            name="direct_url.json",
+            writable_only=writable_only,
+        )
+
+    def remove_distribution_files(self, distribution_name: str) -> List[Path]:
+        paths = []
+
+        for distribution in self.distributions(
+            name=distribution_name, writable_only=True
+        ):
+            for file in distribution.files:
+                file = Path(distribution.locate_file(file))
+                # We can't use unlink(missing_ok=True) because it's not always available
+                if file.exists():
+                    file.unlink()
+
+            if distribution._path.exists():
+                shutil.rmtree(str(distribution._path))
+
+            paths.append(distribution._path)
+
+        return paths
 
     def _path_method_wrapper(
         self,
@@ -228,14 +325,9 @@ class SitePackages:
         if isinstance(path, str):
             path = Path(path)
 
-        candidates = self.make_candidates(path, writable_only=writable_only)
-
-        if not candidates:
-            raise RuntimeError(
-                'Unable to find a suitable destination for "{}" in {}'.format(
-                    str(path), paths_csv(self._candidates)
-                )
-            )
+        candidates = self.make_candidates(
+            path, writable_only=writable_only, strict=True
+        )
 
         results = []
 
@@ -244,8 +336,7 @@ class SitePackages:
                 result = candidate, getattr(candidate, method)(*args, **kwargs)
                 if return_first:
                     return result
-                else:
-                    results.append(result)
+                results.append(result)
             except OSError:
                 # TODO: Replace with PermissionError
                 pass
@@ -267,7 +358,11 @@ class SitePackages:
             for value in self._path_method_wrapper(path, "exists", return_first=False)
         )
 
-    def find(self, path: Union[str, Path], writable_only: bool = False) -> List[Path]:
+    def find(
+        self,
+        path: Union[str, Path],
+        writable_only: bool = False,
+    ) -> List[Path]:
         return [
             value[0]
             for value in self._path_method_wrapper(

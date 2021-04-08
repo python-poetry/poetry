@@ -714,19 +714,6 @@ class Executor:
     def _should_write_operation(self, operation: Operation) -> bool:
         return not operation.skipped or self._dry_run or self._verbose
 
-    @staticmethod
-    def _package_dist_info_path(package: "Package") -> Path:
-        from poetry.core.masonry.utils.helpers import escape_name
-        from poetry.core.masonry.utils.helpers import escape_version
-
-        return Path(
-            f"{escape_name(package.pretty_name)}-{escape_version(package.version.text)}.dist-info"
-        )
-
-    @classmethod
-    def _direct_url_json_path(cls, package: "Package") -> Path:
-        return cls._package_dist_info_path(package) / "direct_url.json"
-
     def _save_url_reference(self, operation: "OperationTypes") -> None:
         """
         Create and store a PEP-610 `direct_url.json` file, if needed.
@@ -742,11 +729,14 @@ class Executor:
             # distribution.
             # That's not what we want so we remove the direct_url.json file,
             # if it exists.
-            for direct_url in self._env.site_packages.find(
-                self._direct_url_json_path(package), True
+            for (
+                direct_url_json
+            ) in self._env.site_packages.find_distribution_direct_url_json_files(
+                distribution_name=package.name, writable_only=True
             ):
-                direct_url.unlink()
-
+                # We can't use unlink(missing_ok=True) because it's not always available
+                if direct_url_json.exists():
+                    direct_url_json.unlink()
             return
 
         url_reference = None
@@ -761,15 +751,13 @@ class Executor:
             url_reference = self._create_file_url_reference(package)
 
         if url_reference:
-            for path in self._env.site_packages.find(
-                self._package_dist_info_path(package), writable_only=True
+            for dist in self._env.site_packages.distributions(
+                name=package.name, writable_only=True
             ):
-                self._env.site_packages.write_text(
-                    path / "direct_url.json",
+                dist._path.joinpath("direct_url.json").write_text(
                     json.dumps(url_reference),
                     encoding="utf-8",
                 )
-                break
 
     def _create_git_url_reference(
         self, package: "Package"

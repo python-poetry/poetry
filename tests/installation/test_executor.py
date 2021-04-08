@@ -265,6 +265,24 @@ def test_executor_should_delete_incomplete_downloads(
     assert not destination_fixture.exists()
 
 
+def verify_installed_distribution(venv, package, url_reference=None):
+    distributions = list(venv.site_packages.distributions(name=package.name))
+    assert len(distributions) == 1
+
+    distribution = distributions[0]
+    metadata = distribution.metadata
+    assert metadata["Name"] == package.name
+    assert metadata["Version"] == package.version.text
+
+    direct_url_file = distribution._path.joinpath("direct_url.json")
+
+    if url_reference is not None:
+        assert direct_url_file.exists()
+        assert json.loads(direct_url_file.read_text(encoding="utf-8")) == url_reference
+    else:
+        assert not direct_url_file.exists()
+
+
 def test_executor_should_write_pep610_url_references_for_files(
     tmp_venv, pool, config, io
 ):
@@ -279,18 +297,9 @@ def test_executor_should_write_pep610_url_references_for_files(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
-
-    dist_info = "demo-0.1.0.dist-info"
-    assert tmp_venv.site_packages.exists(dist_info)
-
-    dist_info = tmp_venv.site_packages.find(dist_info)[0]
-    direct_url_file = dist_info.joinpath("direct_url.json")
-
-    assert direct_url_file.exists()
-
-    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
-
-    assert url_reference == {"archive_info": {}, "url": url.as_uri()}
+    verify_installed_distribution(
+        tmp_venv, package, {"archive_info": {}, "url": url.as_uri()}
+    )
 
 
 def test_executor_should_write_pep610_url_references_for_directories(
@@ -303,18 +312,9 @@ def test_executor_should_write_pep610_url_references_for_directories(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
-
-    dist_info = "simple_project-1.2.3.dist-info"
-    assert tmp_venv.site_packages.exists(dist_info)
-
-    dist_info = tmp_venv.site_packages.find(dist_info)[0]
-    direct_url_file = dist_info.joinpath("direct_url.json")
-
-    assert direct_url_file.exists()
-
-    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
-
-    assert url_reference == {"dir_info": {}, "url": url.as_uri()}
+    verify_installed_distribution(
+        tmp_venv, package, {"dir_info": {}, "url": url.as_uri()}
+    )
 
 
 def test_executor_should_write_pep610_url_references_for_editable_directories(
@@ -331,18 +331,9 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
-
-    dist_info_dir = "simple_project-1.2.3.dist-info"
-    assert tmp_venv.site_packages.exists(dist_info_dir)
-
-    dist_info = tmp_venv.site_packages.find(dist_info_dir)[0]
-    direct_url_file = dist_info.joinpath("direct_url.json")
-
-    assert direct_url_file.exists()
-
-    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
-
-    assert url_reference == {"dir_info": {"editable": True}, "url": url.as_uri()}
+    verify_installed_distribution(
+        tmp_venv, package, {"dir_info": {"editable": True}, "url": url.as_uri()}
+    )
 
 
 def test_executor_should_write_pep610_url_references_for_urls(
@@ -357,21 +348,9 @@ def test_executor_should_write_pep610_url_references_for_urls(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
-
-    dist_info = "demo-0.1.0.dist-info"
-    assert tmp_venv.site_packages.exists(dist_info)
-
-    dist_info = tmp_venv.site_packages.find(dist_info)[0]
-    direct_url_file = dist_info.joinpath("direct_url.json")
-
-    assert direct_url_file.exists()
-
-    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
-
-    assert url_reference == {
-        "archive_info": {},
-        "url": "https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
-    }
+    verify_installed_distribution(
+        tmp_venv, package, {"archive_info": {}, "url": package.source_url}
+    )
 
 
 def test_executor_should_write_pep610_url_references_for_git(
@@ -388,22 +367,15 @@ def test_executor_should_write_pep610_url_references_for_git(
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
-
-    dist_info = "demo-0.1.2.dist-info"
-    assert tmp_venv.site_packages.exists(dist_info)
-
-    dist_info = tmp_venv.site_packages.find(dist_info)[0]
-    direct_url_file = dist_info.joinpath("direct_url.json")
-
-    assert direct_url_file.exists()
-
-    url_reference = json.loads(direct_url_file.read_text(encoding="utf-8"))
-
-    assert url_reference == {
-        "vcs_info": {
-            "vcs": "git",
-            "requested_revision": "master",
-            "commit_id": "123456",
+    verify_installed_distribution(
+        tmp_venv,
+        package,
+        {
+            "vcs_info": {
+                "vcs": "git",
+                "requested_revision": "master",
+                "commit_id": "123456",
+            },
+            "url": package.source_url,
         },
-        "url": "https://github.com/demo/demo.git",
-    }
+    )

@@ -61,6 +61,15 @@ class EditableBuilder(Builder):
 
             self._run_build_script(self._package.build_script)
 
+        for removed in self._env.site_packages.remove_distribution_files(
+            distribution_name=self._package.name
+        ):
+            self._debug(
+                "  - Removed <c2>{}</c2> directory from <b>{}</b>".format(
+                    removed.name, removed.parent
+                )
+            )
+
         added_files = []
         added_files += self._add_pth()
         added_files += self._add_scripts()
@@ -115,6 +124,18 @@ class EditableBuilder(Builder):
             content += decode(path + os.linesep)
 
         pth_file = Path(self._module.name).with_suffix(".pth")
+
+        # remove any pre-existing pth files for this package
+        for file in self._env.site_packages.find(path=pth_file, writable_only=True):
+            self._debug(
+                "  - Removing existing <c2>{}</c2> from <b>{}</b> for {}".format(
+                    file.name, file.parent, self._poetry.file.parent
+                )
+            )
+            # We can't use unlink(missing_ok=True) because it's not always available
+            if file.exists():
+                file.unlink()
+
         try:
             pth_file = self._env.site_packages.write_text(
                 pth_file, content, encoding="utf-8"
@@ -199,20 +220,7 @@ class EditableBuilder(Builder):
         added_files = added_files[:]
 
         builder = WheelBuilder(self._poetry)
-
-        dist_info_path = Path(builder.dist_info)
-        for dist_info in self._env.site_packages.find(
-            dist_info_path, writable_only=True
-        ):
-            if dist_info.exists():
-                self._debug(
-                    "  - Removing existing <c2>{}</c2> directory from <b>{}</b>".format(
-                        dist_info.name, dist_info.parent
-                    )
-                )
-                shutil.rmtree(str(dist_info))
-
-        dist_info = self._env.site_packages.mkdir(dist_info_path)
+        dist_info = self._env.site_packages.mkdir(Path(builder.dist_info))
 
         self._debug(
             "  - Adding the <c2>{}</c2> directory to <b>{}</b>".format(
