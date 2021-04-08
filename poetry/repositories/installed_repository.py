@@ -2,7 +2,6 @@ import itertools
 import json
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 from typing import Set
 from typing import Tuple
 from typing import Union
@@ -18,9 +17,6 @@ from .repository import Repository
 
 
 _VENDORS = Path(__file__).parent.parent.joinpath("_vendor")
-
-if TYPE_CHECKING:
-    from importlib.metadata import Distribution
 
 
 try:
@@ -102,7 +98,7 @@ class InstalledRepository(Repository):
 
     @classmethod
     def create_package_from_distribution(
-        cls, distribution: "Distribution", env: "Env"
+        cls, distribution: metadata.Distribution, env: "Env"
     ) -> Package:
         # We first check for a direct_url.json file to determine
         # the type of package.
@@ -172,7 +168,7 @@ class InstalledRepository(Repository):
         return package
 
     @classmethod
-    def create_package_from_pep610(cls, distribution: "Distribution") -> Package:
+    def create_package_from_pep610(cls, distribution: metadata.Distribution) -> Package:
         path = Path(str(distribution._path))
         source_type = None
         source_url = None
