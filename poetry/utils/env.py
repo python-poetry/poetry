@@ -1126,6 +1126,9 @@ class Env:
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
+    def run_python_script(self, content: str, **kwargs: Any) -> str:
+        return self.run("python", "-W", "ignore", "-", input_=content, **kwargs)
+
     def _run(self, cmd: List[str], **kwargs: Any) -> Union[int, str]:
         """
         Run a command inside the Python environment.
@@ -1331,16 +1334,15 @@ class VirtualEnv(Env):
         # In this case we need to get sys.base_prefix
         # from inside the virtualenv.
         if base is None:
-            self._base = Path(self.run("python", "-", input_=GET_BASE_PREFIX).strip())
+            self._base = Path(self.run_python_script(GET_BASE_PREFIX).strip())
 
     @property
     def sys_path(self) -> List[str]:
-        output = self.run("python", "-", input_=GET_SYS_PATH)
-
+        output = self.run_python_script(GET_SYS_PATH)
         return json.loads(output)
 
     def get_version_info(self) -> Tuple[int]:
-        output = self.run("python", "-", input_=GET_PYTHON_VERSION)
+        output = self.run_python_script(GET_PYTHON_VERSION)
 
         return tuple([int(s) for s in output.strip().split(".")])
 
@@ -1378,12 +1380,12 @@ class VirtualEnv(Env):
             """
         )
 
-        output = self.run("python", "-", input_=script)
+        output = self.run_python_script(script)
 
         return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self) -> Dict[str, Any]:
-        output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)
+        output = self.run_python_script(GET_ENVIRONMENT_INFO)
 
         return json.loads(output)
 
@@ -1396,8 +1398,7 @@ class VirtualEnv(Env):
         return Version.parse(m.group(1))
 
     def get_paths(self) -> Dict[str, str]:
-        output = self.run("python", "-", input_=GET_PATHS)
-
+        output = self.run_python_script(GET_PATHS)
         return json.loads(output)
 
     def is_venv(self) -> bool:
