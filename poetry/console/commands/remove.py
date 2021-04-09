@@ -32,7 +32,6 @@ list of installed packages
         packages = self.argument("packages")
         is_dev = self.option("dev")
 
-        original_content = self.poetry.file.read()
         content = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
         section = "dependencies"
@@ -75,14 +74,9 @@ list of installed packages
         self._installer.update(True)
         self._installer.whitelist(requirements)
 
-        try:
-            status = self._installer.run()
-        except Exception:
-            self.poetry.file.write(original_content)
+        status = self._installer.run()
 
-            raise
-
-        if not self.option("dry-run"):
+        if not self.option("dry-run") and status == 0:
             self.poetry.file.write(content)
 
         return status
