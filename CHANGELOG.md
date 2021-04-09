@@ -1,5 +1,18 @@
 # Change Log
 
+## [1.1.6] - 2021-04-14
+
+### Fixed
+
+- Fixed export format for path dependencies. ([#3121](https://github.com/python-poetry/poetry/pull/3121))
+- Fixed errors caused by environment modification when executing some commands. ([#3253](https://github.com/python-poetry/poetry/pull/3253))
+- Fixed handling of wheel files with single-digit versions. ([#3338](https://github.com/python-poetry/poetry/pull/3338))
+- Fixed an error when handling single-digit Python markers. ([poetry-core#156](https://github.com/python-poetry/poetry-core/pull/156))
+- Fixed dependency markers not being properly copied when changing the constraint leading to resolution errors. ([poetry-core#163](https://github.com/python-poetry/poetry-core/pull/163))
+- Fixed an error where VCS dependencies were always updated. ([#3947](https://github.com/python-poetry/poetry/pull/3947))
+- Fixed an error where the incorrect version of a package was locked when using environment markers. ([#3945](https://github.com/python-poetry/poetry/pull/3945))
+
+
 ## [1.1.5] - 2021-03-03
 
 ### Fixed
@@ -1095,7 +1108,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.5...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.6...master
+[1.1.6]: https://github.com/python-poetry/poetry/compare/1.1.6
 [1.1.5]: https://github.com/python-poetry/poetry/compare/1.1.5
 [1.1.4]: https://github.com/python-poetry/poetry/compare/1.1.4
 [1.1.3]: https://github.com/python-poetry/poetry/compare/1.1.3
