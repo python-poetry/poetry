@@ -780,6 +780,50 @@ def test_solver_sub_dependencies_with_not_supported_python_version(
     check_solver_result(ops, [{"job": "install", "package": package_a}])
 
 
+def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
+    solver, repo, package
+):
+    solver.provider.set_package_python_versions("^3.4")
+
+    package.add_dependency(
+        Factory.create_dependency("httpx", {"version": "^0.17.1", "python": "^3.6"})
+    )
+
+    httpx = get_package("httpx", "0.17.1")
+    httpx.python_versions = ">=3.6"
+
+    httpcore = get_package("httpcore", "0.12.3")
+    httpcore.python_versions = ">=3.6"
+
+    sniffio_1_1_0 = get_package("sniffio", "1.1.0")
+    sniffio_1_1_0.python_versions = ">=3.5"
+
+    sniffio = get_package("sniffio", "1.2.0")
+    sniffio.python_versions = ">=3.5"
+
+    httpx.add_dependency(
+        Factory.create_dependency("httpcore", {"version": ">=0.12.1,<0.13"})
+    )
+    httpx.add_dependency(Factory.create_dependency("sniffio", {"version": "*"}))
+    httpcore.add_dependency(Factory.create_dependency("sniffio", {"version": "==1.*"}))
+
+    repo.add_package(httpx)
+    repo.add_package(httpcore)
+    repo.add_package(sniffio)
+    repo.add_package(sniffio_1_1_0)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": sniffio, "skipped": False},
+            {"job": "install", "package": httpcore, "skipped": False},
+            {"job": "install", "package": httpx, "skipped": False},
+        ],
+    )
+
+
 def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     solver, repo, package
 ):
