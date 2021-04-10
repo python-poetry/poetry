@@ -29,7 +29,7 @@ jobs:
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Build project for distribution
-        run: poetry run poetry build
+        run: poetry build
 
       - name: Check Version
         id: check-version
@@ -48,4 +48,4 @@ jobs:
       - name: Publish to PyPI
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        run: poetry run poetry publish
+        run: poetry publish
