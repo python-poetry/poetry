@@ -25,10 +25,12 @@ jobs:
         os: [Ubuntu, MacOS, Windows]
         python-version: [3.6, 3.7, 3.8, 3.9]
         experimental: [false]
+        bootstrap-args: [""]
         include:
           - os: Ubuntu
             python-version: "3.10.0-alpha - 3.10.0"
             experimental: true
+            bootstrap-args: "--git https://github.com/python-poetry/poetry.git"
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
@@ -43,15 +45,11 @@ jobs:
         shell: bash
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
-      - name: Bootstrap poetry (experimental)
-        if: ${{ matrix.experimental == true }}
-        shell: bash
-        run: python install-poetry.py -y --path .
-
       - name: Bootstrap poetry
-        if: ${{ matrix.experimental == false }}
         shell: bash
-        run: python install-poetry.py -y
+        run: |
+          curl -sL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py \
+            | python - -y ${{ matrix.bootstrap-args }}
 
       - name: Update PATH
         if: ${{ matrix.os != 'Windows' }}
