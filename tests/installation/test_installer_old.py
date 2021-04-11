@@ -292,7 +292,16 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
     assert len(removals) == 1
 
 
-def test_run_install_remove_untracked(installer, locker, repo, package, installed):
+@pytest.mark.parametrize("bare_venv", [True, False])
+def test_run_install_remove_untracked(
+    bare_venv, installer, locker, repo, package, installed
+):
+    installer._poetry_config._config["virtualenvs"]["options"]["no-pip"] = bare_venv
+    installer._poetry_config._config["virtualenvs"]["options"][
+        "no-setuptools"
+    ] = bare_venv
+    installer._poetry_config._config["virtualenvs"]["options"]["no-wheel"] = bare_venv
+
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -345,8 +354,13 @@ def test_run_install_remove_untracked(installer, locker, repo, package, installe
     updates = installer.installer.updates
     assert len(updates) == 0
 
+    expected_removals = {"b", "c"}
+    if bare_venv:
+        expected_removals.add("pip")
+        expected_removals.add("setuptools")
+
     removals = installer.installer.removals
-    assert set(r.name for r in removals) == {"b", "c", "pip", "setuptools"}
+    assert set(r.name for r in removals) == expected_removals
 
 
 def test_run_whitelist_add(installer, locker, repo, package):

@@ -160,7 +160,13 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / "{}-py3.7".format(venv_name),
         executable="python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+            "no-wheel": False,
+        },
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -280,7 +286,13 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     m.assert_called_with(
         Path(tmp_dir) / "{}-py3.6".format(venv_name),
         executable="python3.6",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+            "no-wheel": False,
+        },
     )
 
     assert envs_file.exists()
@@ -334,7 +346,13 @@ def test_activate_activates_recreates_for_different_patch(
     build_venv_m.assert_called_with(
         Path(tmp_dir) / "{}-py3.7".format(venv_name),
         executable="python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+            "no-wheel": False,
+        },
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / "{}-py3.7".format(venv_name))
 
@@ -714,7 +732,13 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     m.assert_called_with(
         config_virtualenvs_path / "{}-py3.7".format(venv_name),
         executable="python3",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+            "no-wheel": False,
+        },
     )
 
 
@@ -738,7 +762,13 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     m.assert_called_with(
         config_virtualenvs_path / "{}-py3.9".format(venv_name),
         executable="python3.9",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+            "no-wheel": False,
+        },
     )
 
 
@@ -822,7 +852,13 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
         config_virtualenvs_path
         / "{}-py{}.{}".format(venv_name, version.major, version.minor),
         executable=None,
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+            "no-wheel": False,
+        },
     )
 
 
@@ -857,7 +893,13 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         config_virtualenvs_path
         / "{}-py{}.{}".format(venv_name, version.major, version.minor - 1),
         executable="python{}.{}".format(version.major, version.minor - 1),
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+            "no-wheel": False,
+        },
     )
 
 
@@ -891,7 +933,13 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     m.assert_called_with(
         poetry.file.parent / ".venv",
         executable="python3.7",
-        flags={"always-copy": False, "system-site-packages": False},
+        flags={
+            "always-copy": False,
+            "system-site-packages": False,
+            "no-pip": False,
+            "no-setuptools": False,
+            "no-wheel": False,
+        },
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")

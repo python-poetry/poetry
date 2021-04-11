@@ -32,6 +32,9 @@ installer.parallel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.no-wheel = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
 """.format(
@@ -54,6 +57,9 @@ installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.no-wheel = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
 """.format(
@@ -98,6 +104,9 @@ installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.no-pip = false
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.no-wheel = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
 """.format(

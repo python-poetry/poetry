@@ -35,6 +35,9 @@ cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = true
+virtualenvs.options.no-pip = true
+virtualenvs.options.no-setuptools = false
+virtualenvs.options.no-wheel = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
 ```
@@ -144,6 +147,25 @@ Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 ### `virtualenvs.options.always-copy`: boolean
 
 If set to `true` the `--always-copy` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
+Defaults to `false`.
+
+### `virtualenvs.options.no-pip`: boolean
+
+If set to `true` the `--no-pip` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
+Defaults to `false`.
+
+!!!note
+
+    If set to `true`, `poetry run pip` will use pip embedded in poetry's virtualenv dependency.
+
+### `virtualenvs.options.no-setuptools`: boolean
+
+If set to `true` the `--no-setuptools` parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
+Defaults to `false`.
+
+### `virtualenvs.options.no-wheel`: boolean
+
+If set to `true` the `--no-wheel parameter is passed to `virtualenv` on creation of the venv. Thus all needed files are copied into the venv instead of symlinked.
 Defaults to `false`.
 
 ### `virtualenvs.options.system-site-packages`: boolean

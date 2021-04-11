@@ -31,6 +31,7 @@ from .provider import Provider
 
 
 if TYPE_CHECKING:
+    from poetry.config.config import Config
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.directory_dependency import DirectoryDependency
     from poetry.core.packages.file_dependency import FileDependency
@@ -49,6 +50,7 @@ class Solver:
         io: IO,
         remove_untracked: bool = False,
         provider: Optional[Provider] = None,
+        config: Optional["Config"] = None,
     ):
         self._package = package
         self._pool = pool
@@ -63,9 +65,29 @@ class Solver:
         self._overrides = []
         self._remove_untracked = remove_untracked
 
+        self._poetry_config = config
+        self._preserved_package_names = None
+
     @property
     def provider(self) -> Provider:
         return self._provider
+
+    @property
+    def preserved_package_names(self):
+        if self._preserved_package_names is None:
+            self._preserved_package_names = {
+                self._package.name,
+                *Provider.UNSAFE_PACKAGES,
+            }
+            if self._poetry_config is not None:
+                deps = {package.name for package in self._locked.packages}
+
+                for name in {"pip", "wheel", "setuptools"}:
+                    if not self._poetry_config.get(f"virtualenvs.options.no-{name}"):
+                        if name not in deps:
+                            self._preserved_package_names.add(name)
+
+        return self._preserved_package_names
 
     @contextmanager
     def use_environment(self, env: Env) -> None:
@@ -190,11 +212,9 @@ class Solver:
             locked_names = {locked.name for locked in self._locked.packages}
 
             for installed in self._installed.packages:
-                if installed.name == self._package.name:
+                if installed.name in self.preserved_package_names:
                     continue
-                if installed.name in Provider.UNSAFE_PACKAGES:
-                    # Never remove pip, setuptools etc.
-                    continue
+
                 if installed.name not in locked_names:
                     operations.append(Uninstall(installed))
 

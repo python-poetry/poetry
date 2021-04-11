@@ -84,7 +84,14 @@ class DebugResolveCommand(InitCommand):
 
         pool = self.poetry.pool
 
-        solver = Solver(package, pool, Repository(), Repository(), self._io)
+        solver = Solver(
+            package,
+            pool,
+            Repository(),
+            Repository(),
+            self._io,
+            config=self.poetry.config,
+        )
 
         ops = solver.solve()
 
@@ -121,7 +128,9 @@ class DebugResolveCommand(InitCommand):
 
             pool.add_repository(locked_repository)
 
-            solver = Solver(package, pool, Repository(), Repository(), NullIO())
+            solver = Solver(
+                package, pool, Repository(), Repository(), NullIO(), poetry=self.poetry
+            )
             with solver.use_environment(env):
                 ops = solver.solve()
 

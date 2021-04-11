@@ -90,6 +90,7 @@ lists all packages available."""
             installed=Repository(),
             locked=locked_repo,
             io=NullIO(),
+            config=self.poetry.config,
         )
         solver.provider.load_deferred(False)
         with solver.use_environment(self.env):

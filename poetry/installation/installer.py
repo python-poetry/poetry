@@ -74,6 +74,7 @@ class Installer:
             installed = self._get_installed()
 
         self._installed_repository = installed
+        self._poetry_config = config
 
     @property
     def executor(self) -> Executor:
@@ -209,6 +210,7 @@ class Installer:
             locked_repository,
             locked_repository,
             self._io,
+            config=self._poetry_config,
         )
 
         ops = solver.solve(use_latest=[])
@@ -247,6 +249,7 @@ class Installer:
                 locked_repository,
                 self._io,
                 remove_untracked=self._remove_untracked,
+                config=self._poetry_config,
             )
 
             ops = solver.solve(use_latest=self._whitelist)
@@ -316,6 +319,7 @@ class Installer:
             locked_repository,
             NullIO(),
             remove_untracked=self._remove_untracked,
+            config=self._poetry_config,
         )
         # Everything is resolved at this point, so we no longer need
         # to load deferred dependencies (i.e. VCS, URL and path dependencies)

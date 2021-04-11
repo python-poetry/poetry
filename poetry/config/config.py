@@ -33,7 +33,13 @@ class Config:
             "create": True,
             "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
-            "options": {"always-copy": False, "system-site-packages": False},
+            "options": {
+                "always-copy": False,
+                "system-site-packages": False,
+                "no-pip": False,
+                "no-setuptools": False,
+                "no-wheel": False,
+            },
         },
         "experimental": {"new-installer": True},
         "installer": {"parallel": True},
@@ -139,6 +145,9 @@ class Config:
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
+            "virtualenvs.options.no-pip",
+            "virtualenvs.options.no-setuptools",
+            "virtualenvs.options.no-wheel",
             "installer.parallel",
         }:
             return boolean_normalizer
