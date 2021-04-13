@@ -419,7 +419,9 @@ poetry search requests pendulum
 
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
 
-By default, it will update all dependencies within their version constraints.
+!!!note
+
+     By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
 
 ```bash
 poetry lock
