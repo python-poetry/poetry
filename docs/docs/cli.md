@@ -427,7 +427,7 @@ poetry lock
 
 ### Options
 
-* `--no-update`: Avoid updating dependencies that already satisfy their version constraints.
+* `--no-update`: Do not update locked versions, only refresh lock file.
 
 ## version
 
