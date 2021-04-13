@@ -1230,6 +1230,7 @@ class Env:
         """
         call = kwargs.pop("call", False)
         input_ = kwargs.pop("input_", None)
+        env = kwargs.pop("env", {k: v for k, v in os.environ.items()})
 
         try:
             if self._is_windows:
@@ -1248,10 +1249,10 @@ class Env:
                     **kwargs,
                 ).stdout
             elif call:
-                return subprocess.call(cmd, stderr=subprocess.STDOUT, **kwargs)
+                return subprocess.call(cmd, stderr=subprocess.STDOUT, env=env, **kwargs)
             else:
                 output = subprocess.check_output(
-                    cmd, stderr=subprocess.STDOUT, **kwargs
+                    cmd, stderr=subprocess.STDOUT, env=env, **kwargs
                 )
         except CalledProcessError as e:
             raise EnvCommandError(e, input=input_)
