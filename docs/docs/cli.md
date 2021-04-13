@@ -272,7 +272,14 @@ poetry add ../my-package/dist/my-package-0.1.0.tar.gz
 poetry add ../my-package/dist/my_package-0.1.0.whl
 ```
 
-If you want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
+If you want the dependency to be installed in editable mode you can use the `--editable` option.
+
+```bash
+poetry add --editable ./my-package/
+poetry add --editable git+ssh://github.com/sdispater/pendulum.git#develop
+```
+
+Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
 
 ```toml
 [tool.poetry.dependencies]
@@ -296,6 +303,7 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ### Options
 
 * `--dev (-D)`: Add package as development dependency.
+* `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency.
 * `--python`: Python version for which the dependency must be installed.
