@@ -6,10 +6,9 @@ import urllib.parse
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
+from typing import Generator
 from typing import Optional
 from typing import Tuple
-from typing import Dict
-from typing import Generator
 
 import requests
 import requests.auth
