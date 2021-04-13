@@ -50,6 +50,24 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["cachy"] == "^0.2.0"
 
 
+def test_add_no_constraint_editable_error(app, repo, tester):
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("-e cachy")
+
+    expected = """
+Failed to add packages. Only vcs/path dependencies support editable installs. cachy is neither.
+
+No changes were applied.
+"""
+    assert 1 == tester.status_code
+    assert expected == tester.io.fetch_error()
+    assert 0 == tester.command.installer.executor.installations_count
+    assert content == app.poetry.file.read()["tool"]["poetry"]
+
+
 def test_add_equal_constraint(app, repo, tester):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
@@ -243,13 +261,15 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
-def test_add_git_ssh_constraint(app, repo, tester, tmp_venv):
+@pytest.mark.parametrize("editable", [False, True])
+def test_add_git_ssh_constraint(editable, app, repo, tester, tmp_venv):
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    tester.execute("git+ssh://git@github.com/demo/demo.git@develop")
+    url = "git+ssh://git@github.com/demo/demo.git@develop"
+    tester.execute(f"{url}" if not editable else f"-e {url}")
 
     expected = """\
 
@@ -270,13 +290,19 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {
+
+    expected = {
         "git": "ssh://git@github.com/demo/demo.git",
         "rev": "develop",
     }
+    if editable:
+        expected["develop"] = True
+
+    assert content["dependencies"]["demo"] == expected
 
 
-def test_add_directory_constraint(app, repo, tester, mocker):
+@pytest.mark.parametrize("editable", [False, True])
+def test_add_directory_constraint(editable, app, repo, tester, mocker):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -284,7 +310,7 @@ def test_add_directory_constraint(app, repo, tester, mocker):
     repo.add_package(get_package("cleo", "0.6.5"))
 
     path = "../git/github.com/demo/demo"
-    tester.execute("{}".format(path))
+    tester.execute(f"{path}" if not editable else f"-e {path}")
 
     expected = """\
 
@@ -307,7 +333,12 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {"path": "../git/github.com/demo/demo"}
+
+    expected = {"path": "../git/github.com/demo/demo"}
+    if editable:
+        expected["develop"] = True
+
+    assert content["dependencies"]["demo"] == expected
 
 
 def test_add_directory_with_poetry(app, repo, tester, mocker):
