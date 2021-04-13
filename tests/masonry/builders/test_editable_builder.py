@@ -153,7 +153,7 @@ from bar import baz
 if __name__ == '__main__':
     baz.boom.bim()
 """.format(
-        python=tmp_venv._bin("python")
+        python=tmp_venv.python
     )
 
     assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text()
@@ -165,7 +165,7 @@ from foo import bar
 if __name__ == '__main__':
     bar()
 """.format(
-        python=tmp_venv._bin("python")
+        python=tmp_venv.python
     )
 
     assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text()
@@ -177,7 +177,7 @@ from fuz.foo import bar
 if __name__ == '__main__':
     bar.baz()
 """.format(
-        python=tmp_venv._bin("python")
+        python=tmp_venv.python
     )
 
     assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text()
