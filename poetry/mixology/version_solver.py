@@ -338,7 +338,7 @@ class VersionSolver:
             if dependency.name in self._use_latest:
                 # If we're forced to use the latest version of a package, it effectively
                 # only has one version to choose from.
-                return 1
+                return not dependency.marker.is_any(), 1
 
             locked = self._get_locked(dependency)
             if locked and (
@@ -346,7 +346,7 @@ class VersionSolver:
                 or locked.is_prerelease()
                 and dependency.constraint.allows(locked.version.next_patch)
             ):
-                return 1
+                return not dependency.marker.is_any(), 1
 
             # VCS, URL, File or Directory dependencies
             # represent a single version
@@ -356,12 +356,15 @@ class VersionSolver:
                 or dependency.is_file()
                 or dependency.is_directory()
             ):
-                return 1
+                return not dependency.marker.is_any(), 1
 
             try:
-                return len(self._provider.search_for(dependency))
+                return (
+                    not dependency.marker.is_any(),
+                    len(self._provider.search_for(dependency)),
+                )
             except ValueError:
-                return 0
+                return not dependency.marker.is_any(), 0
 
         if len(unsatisfied) == 1:
             dependency = unsatisfied[0]

@@ -2741,3 +2741,53 @@ def test_solver_can_resolve_python_restricted_package_dependencies(
             {"job": "install", "package": pre_commit},
         ],
     )
+
+
+def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constraints(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.5"
+    solver.provider.set_package_python_versions("~2.7 || ^3.5")
+    package.add_dependency(Factory.create_dependency("virtualenv", "^20.4.3"))
+    package.add_dependency(
+        Factory.create_dependency("pre-commit", {"version": "^2.6", "python": "^3.6.1"})
+    )
+
+    virtualenv = get_package("virtualenv", "20.4.3")
+    virtualenv.python_versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
+    virtualenv.add_dependency(
+        Factory.create_dependency(
+            "importlib-resources", {"version": "*", "markers": 'python_version < "3.7"'}
+        )
+    )
+
+    pre_commit = Package("pre-commit", "2.7.1")
+    pre_commit.python_versions = ">=3.6.1"
+    pre_commit.add_dependency(
+        Factory.create_dependency(
+            "importlib-resources", {"version": "*", "markers": 'python_version < "3.7"'}
+        )
+    )
+
+    importlib_resources = get_package("importlib-resources", "5.1.2")
+    importlib_resources.python_versions = ">=3.6"
+
+    importlib_resources_3_2_1 = get_package("importlib-resources", "3.2.1")
+    importlib_resources_3_2_1.python_versions = (
+        "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+    )
+
+    repo.add_package(virtualenv)
+    repo.add_package(pre_commit)
+    repo.add_package(importlib_resources)
+    repo.add_package(importlib_resources_3_2_1)
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": importlib_resources_3_2_1},
+            {"job": "install", "package": pre_commit},
+            {"job": "install", "package": virtualenv},
+        ],
+    )
