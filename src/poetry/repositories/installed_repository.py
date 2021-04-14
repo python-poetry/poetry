@@ -234,7 +234,10 @@ class InstalledRepository(Repository):
                 metadata.distributions(path=[entry]),
                 key=lambda d: str(d._path),
             ):
-                name = canonicalize_name(distribution.metadata["name"])
+                name = distribution.metadata["name"]
+                if name is None:
+                    raise RuntimeError(f"Corrupted lib at {distribution._path}")
+                name = canonicalize_name(name)
 
                 if name in seen:
                     continue
