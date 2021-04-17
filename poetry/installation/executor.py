@@ -777,8 +777,9 @@ class Executor:
                     encoding="utf-8",
                 )
 
-                with dist._path.joinpath("RECORD").open(mode="a") as record:
-                    record.write(str(dist._path.joinpath("direct_url.json")))
+                if dist._path.joinpath("RECORD").exists():
+                    with dist._path.joinpath("RECORD").open(mode="a") as record:
+                        record.write(str(dist._path.joinpath("direct_url.json")))
 
     def _create_git_url_reference(
         self, package: "Package"
