@@ -319,7 +319,7 @@ poetry remove pendulum
 
 * `--dev (-D)`: Removes a package from the development dependencies.
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-
+* `--lock`: Do not perform install (only update the lockfile).
 
 ## show
 
