@@ -44,6 +44,22 @@ def io():
 
 
 @pytest.fixture()
+def io_decorated():
+    io = BufferedIO(decorated=True)
+    io.output.formatter.set_style("c1", Style("cyan"))
+    io.output.formatter.set_style("success", Style("green"))
+
+    return io
+
+
+@pytest.fixture()
+def io_not_decorated():
+    io = BufferedIO(decorated=False)
+
+    return io
+
+
+@pytest.fixture()
 def pool():
     pool = Pool()
     pool.add_repository(MockRepository())
@@ -185,6 +201,70 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected in io.fetch_output()
+
+
+def test_execute_works_with_ansi_output(
+    mocker, config, pool, io_decorated, tmp_dir, mock_file_downloads, env
+):
+    config = Config()
+    config.merge({"cache-dir": tmp_dir})
+
+    executor = Executor(env, pool, config, io_decorated)
+
+    install_output = (
+        "some string that does not contain a keyb0ard !nterrupt or cance11ed by u$er"
+    )
+    mocker.patch.object(env, "_run", return_value=install_output)
+    return_code = executor.execute(
+        [
+            Install(Package("pytest", "3.5.2")),
+        ]
+    )
+    env._run.assert_called_once()
+
+    expected = [
+        "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
+        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[32m3.5.2\x1b[39m\x1b[39m)\x1b[39m",  # finished
+    ]
+    output = io_decorated.fetch_output()
+    # hint: use print(repr(output)) if you need to debug this
+
+    for line in expected:
+        assert line in output
+    assert 0 == return_code
+
+
+def test_execute_works_with_no_ansi_output(
+    mocker, config, pool, io_not_decorated, tmp_dir, mock_file_downloads, env
+):
+    config = Config()
+    config.merge({"cache-dir": tmp_dir})
+
+    executor = Executor(env, pool, config, io_not_decorated)
+
+    install_output = (
+        "some string that does not contain a keyb0ard !nterrupt or cance11ed by u$er"
+    )
+    mocker.patch.object(env, "_run", return_value=install_output)
+    return_code = executor.execute(
+        [
+            Install(Package("pytest", "3.5.2")),
+        ]
+    )
+    env._run.assert_called_once()
+
+    expected = """
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing pytest (3.5.2)
+"""
+    expected = set(expected.splitlines())
+    output = set(io_not_decorated.fetch_output().splitlines())
+    assert expected == output
+    assert 0 == return_code
 
 
 def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_interrupt(

@@ -117,6 +117,26 @@ class Executor:
 
         return self
 
+    def pip_install(
+        self, req: Union[Path, str], upgrade: bool = False, editable: bool = False
+    ) -> int:
+        func = pip_install
+        if editable:
+            func = pip_editable_install
+
+        try:
+            func(req, self._env, upgrade=upgrade)
+        except EnvCommandError as e:
+            output = decode(e.e.output)
+            if (
+                "KeyboardInterrupt" in output
+                or "ERROR: Operation cancelled by user" in output
+            ):
+                return -2
+            raise
+
+        return 0
+
     def execute(self, operations: List["OperationTypes"]) -> int:
         self._total_operations = len(operations)
         for job_type in self._executed:
@@ -483,9 +503,7 @@ class Executor:
             )
         )
         self._write(operation, message)
-        return pip_install(
-            str(archive), self._env, upgrade=operation.job_type == "update"
-        )
+        return self.pip_install(str(archive), upgrade=operation.job_type == "update")
 
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
@@ -577,13 +595,13 @@ class Executor:
 
                 with builder.setup_py():
                     if package.develop:
-                        return pip_editable_install(req, self._env)
-                    return pip_install(req, self._env, upgrade=True)
+                        return self.pip_install(req, editable=True)
+                    return self.pip_install(req, upgrade=True)
 
         if package.develop:
-            return pip_editable_install(req, self._env)
+            return self.pip_install(req, editable=True)
 
-        return pip_install(req, self._env, upgrade=True)
+        return self.pip_install(req, upgrade=True)
 
     def _install_git(self, operation: Union[Install, Update]) -> int:
         from poetry.core.vcs import Git
