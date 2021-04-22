@@ -28,3 +28,9 @@ repos:
       - id: end-of-file-fixer
         exclude: ^tests/.*/fixtures/.*
       - id: debug-statements
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.13.0
+    hooks:
+      - id: pyupgrade
+        args:
+          - --py36-plus
