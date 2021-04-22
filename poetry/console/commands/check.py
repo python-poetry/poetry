@@ -22,9 +22,9 @@ class CheckCommand(Command):
             return 0
 
         for error in check_result["errors"]:
-            self.line("<error>Error: {}</error>".format(error))
+            self.line(f"<error>Error: {error}</error>")
 
         for error in check_result["warnings"]:
-            self.line("<warning>Warning: {}</warning>".format(error))
+            self.line(f"<warning>Warning: {error}</warning>")
 
         return 1

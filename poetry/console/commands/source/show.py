@@ -41,8 +41,8 @@ class SourceShowCommand(Command):
 
             table = self.table(style="compact")
             rows = [
-                ["<info>name</>", " : <c1>{}</>".format(source.name)],
-                ["<info>url</>", " : {}".format(source.url)],
+                ["<info>name</>", f" : <c1>{source.name}</>"],
+                ["<info>url</>", f" : {source.url}"],
                 [
                     "<info>default</>",
                     " : {}".format(bool_string.get(source.default, False)),

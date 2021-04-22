@@ -29,7 +29,7 @@ class CacheClearCommand(Command):
         try:
             cache_dir.relative_to(REPOSITORY_CACHE_DIR)
         except ValueError:
-            raise ValueError("{} is not a valid repository cache".format(root))
+            raise ValueError(f"{root} is not a valid repository cache")
 
         cache = CacheManager(
             {
@@ -55,9 +55,7 @@ class CacheClearCommand(Command):
             for path, dirs, files in os.walk(str(cache_dir)):
                 entries_count += len(files)
 
-            delete = self.confirm(
-                "<question>Delete {} entries?</>".format(entries_count)
-            )
+            delete = self.confirm(f"<question>Delete {entries_count} entries?</>")
             if not delete:
                 return 0
 
@@ -71,14 +69,14 @@ class CacheClearCommand(Command):
             package = parts[1]
             version = parts[2]
 
-            if not cache.has("{}:{}".format(package, version)):
-                self.line("No cache entries for {}:{}".format(package, version))
+            if not cache.has(f"{package}:{version}"):
+                self.line(f"No cache entries for {package}:{version}")
                 return 0
 
-            delete = self.confirm("Delete cache entry {}:{}".format(package, version))
+            delete = self.confirm(f"Delete cache entry {package}:{version}")
             if not delete:
                 return 0
 
-            cache.forget("{}:{}".format(package, version))
+            cache.forget(f"{package}:{version}")
         else:
             raise ValueError("Invalid cache key")

@@ -282,27 +282,27 @@ class Cursor:
         self._output = sys.stdout
 
     def move_up(self, lines: int = 1) -> "Cursor":
-        self._output.write("\x1b[{}A".format(lines))
+        self._output.write(f"\x1b[{lines}A")
 
         return self
 
     def move_down(self, lines: int = 1) -> "Cursor":
-        self._output.write("\x1b[{}B".format(lines))
+        self._output.write(f"\x1b[{lines}B")
 
         return self
 
     def move_right(self, columns: int = 1) -> "Cursor":
-        self._output.write("\x1b[{}C".format(columns))
+        self._output.write(f"\x1b[{columns}C")
 
         return self
 
     def move_left(self, columns: int = 1) -> "Cursor":
-        self._output.write("\x1b[{}D".format(columns))
+        self._output.write(f"\x1b[{columns}D")
 
         return self
 
     def move_to_column(self, column: int) -> "Cursor":
-        self._output.write("\x1b[{}G".format(column))
+        self._output.write(f"\x1b[{column}G")
 
         return self
 
@@ -684,9 +684,7 @@ class Installer:
         )
 
         if self._version and self._version not in releases:
-            self._write(
-                colorize("error", "Version {} does not exist.".format(self._version))
-            )
+            self._write(colorize("error", f"Version {self._version} does not exist."))
 
             return None, None
 

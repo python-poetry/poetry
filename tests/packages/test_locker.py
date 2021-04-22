@@ -346,7 +346,7 @@ A = []
 
 
 def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
-    content = u"""[[package]]
+    content = """[[package]]
 name = "A"
 version = "1.0.0"
 description = ""

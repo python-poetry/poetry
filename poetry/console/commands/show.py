@@ -95,7 +95,7 @@ lists all packages available."""
         with solver.use_environment(self.env):
             ops = solver.solve()
 
-        required_locked_packages = set([op.package for op in ops if not op.skipped])
+        required_locked_packages = {op.package for op in ops if not op.skipped}
 
         if self.option("no-dev"):
             required_locked_packages = [
@@ -110,7 +110,7 @@ lists all packages available."""
                     break
 
             if not pkg:
-                raise ValueError("Package {} not found".format(package))
+                raise ValueError(f"Package {package} not found")
 
             if self.option("tree"):
                 self.display_package_tree(self.io, pkg, locked_repo)
@@ -118,9 +118,9 @@ lists all packages available."""
                 return 0
 
             rows = [
-                ["<info>name</>", " : <c1>{}</>".format(pkg.pretty_name)],
-                ["<info>version</>", " : <b>{}</b>".format(pkg.pretty_version)],
-                ["<info>description</>", " : {}".format(pkg.description)],
+                ["<info>name</>", f" : <c1>{pkg.pretty_name}</>"],
+                ["<info>version</>", f" : <b>{pkg.pretty_version}</b>"],
+                ["<info>description</>", f" : {pkg.description}"],
             ]
 
             table.add_rows(rows)
@@ -272,12 +272,12 @@ lists all packages available."""
     def display_package_tree(
         self, io: "IO", package: "Package", installed_repo: "Repository"
     ) -> None:
-        io.write("<c1>{}</c1>".format(package.pretty_name))
+        io.write(f"<c1>{package.pretty_name}</c1>")
         description = ""
         if package.description:
             description = " " + package.description
 
-        io.write_line(" <b>{}</b>{}".format(package.pretty_version, description))
+        io.write_line(f" <b>{package.pretty_version}</b>{description}")
 
         dependencies = package.requires
         dependencies = sorted(dependencies, key=lambda x: x.name)
@@ -404,7 +404,7 @@ lists all packages available."""
         name = package.name
         selector = VersionSelector(self.poetry.pool)
 
-        return selector.find_best_candidate(name, ">={}".format(package.pretty_version))
+        return selector.find_best_candidate(name, f">={package.pretty_version}")
 
     def get_update_status(self, latest: "Package", package: "Package") -> str:
         from poetry.core.semver.helpers import parse_constraint

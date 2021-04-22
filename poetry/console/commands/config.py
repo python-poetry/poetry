@@ -150,7 +150,7 @@ To remove a repository (repo is a short alias for repositories):
             else:
                 values = self.unique_config_values
                 if setting_key not in values:
-                    raise ValueError("There is no {} setting.".format(setting_key))
+                    raise ValueError(f"There is no {setting_key} setting.")
 
                 value = config.get(setting_key)
 
@@ -286,7 +286,7 @@ To remove a repository (repo is a short alias for repositories):
 
         value = values[0]
         if not validator(value):
-            raise RuntimeError('"{}" is an invalid value for {}'.format(value, key))
+            raise RuntimeError(f'"{value}" is an invalid value for {key}')
 
         source.add_property(key, normalizer(value))
 
@@ -301,7 +301,7 @@ To remove a repository (repo is a short alias for repositories):
             raw_val = raw.get(key)
 
             if isinstance(value, dict):
-                k += "{}.".format(key)
+                k += f"{key}."
                 self._list_configuration(value, raw_val, k=k)
                 k = orig_k
 

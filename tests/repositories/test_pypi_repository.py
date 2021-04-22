@@ -21,9 +21,7 @@ class MockRepository(PyPiRepository):
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
     def __init__(self, fallback=False):
-        super(MockRepository, self).__init__(
-            url="http://foo.bar", disable_cache=True, fallback=fallback
-        )
+        super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
     def _get(self, url):
         parts = url.split("/")[1:]

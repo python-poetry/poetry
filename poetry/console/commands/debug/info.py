@@ -16,7 +16,7 @@ class DebugInfoCommand(Command):
         self.line(
             "\n".join(
                 [
-                    "<info>Version</info>: <comment>{}</>".format(self.poetry.VERSION),
+                    f"<info>Version</info>: <comment>{self.poetry.VERSION}</>",
                     "<info>Python</info>:  <comment>{}</>".format(
                         poetry_python_version
                     ),

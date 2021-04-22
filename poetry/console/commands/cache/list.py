@@ -17,7 +17,7 @@ class CacheListCommand(Command):
             caches = list(sorted(REPOSITORY_CACHE_DIR.iterdir()))
             if caches:
                 for cache in caches:
-                    self.line("<info>{}</>".format(cache.name))
+                    self.line(f"<info>{cache.name}</>")
                 return 0
 
         self.line("<warning>No caches found</>")

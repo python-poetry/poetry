@@ -30,4 +30,4 @@ class IOFormatter(logging.Formatter):
 
             return msg
 
-        return super(IOFormatter, self).format(record)
+        return super().format(record)

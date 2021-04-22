@@ -49,7 +49,7 @@ list of installed packages
                     break
 
             if not found:
-                raise ValueError("Package {} not found".format(name))
+                raise ValueError(f"Package {name} not found")
 
         for key in requirements:
             del poetry_content[section][key]

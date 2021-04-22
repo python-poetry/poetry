@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import hashlib
 import os
 import re
@@ -132,7 +130,7 @@ class SelfUpdateCommand(Command):
 
     def update(self, release: "Package") -> None:
         version = release.version
-        self.line("Updating to <info>{}</info>".format(version))
+        self.line(f"Updating to <info>{version}</info>")
 
         if self.lib_backup.exists():
             shutil.rmtree(str(self.lib_backup))
@@ -171,27 +169,27 @@ class SelfUpdateCommand(Command):
 
         release_name = self._get_release_name(version)
 
-        checksum = "{}.sha256sum".format(release_name)
+        checksum = f"{release_name}.sha256sum"
 
         base_url = self.BASE_URL
 
         try:
-            r = urlopen(base_url + "/{}/{}".format(version, checksum))
+            r = urlopen(base_url + f"/{version}/{checksum}")
         except HTTPError as e:
             if e.code == 404:
-                raise RuntimeError("Could not find {} file".format(checksum))
+                raise RuntimeError(f"Could not find {checksum} file")
 
             raise
 
         checksum = r.read().decode().strip()
 
         # We get the payload from the remote host
-        name = "{}.tar.gz".format(release_name)
+        name = f"{release_name}.tar.gz"
         try:
-            r = urlopen(base_url + "/{}/{}".format(version, name))
+            r = urlopen(base_url + f"/{version}/{name}")
         except HTTPError as e:
             if e.code == 404:
-                raise RuntimeError("Could not find {} file".format(name))
+                raise RuntimeError(f"Could not find {name} file")
 
             raise
 
@@ -201,7 +199,7 @@ class SelfUpdateCommand(Command):
         block_size = 8192
 
         bar = self.progress_bar(max=size)
-        bar.set_format(" - Downloading <info>{}</> <comment>%percent%%</>".format(name))
+        bar.set_format(f" - Downloading <info>{name}</> <comment>%percent%%</>")
         bar.start()
 
         sha = hashlib.sha256()
@@ -258,7 +256,7 @@ class SelfUpdateCommand(Command):
         if platform == "linux2":
             platform = "linux"
 
-        return "poetry-{}-{}".format(version, platform)
+        return f"poetry-{version}-{platform}"
 
     def make_bin(self) -> None:
         from poetry.utils._compat import WINDOWS
@@ -280,7 +278,7 @@ class SelfUpdateCommand(Command):
 
         bin_content = BIN
         if not WINDOWS:
-            bin_content = "#!/usr/bin/env {}\n".format(python_executable) + bin_content
+            bin_content = f"#!/usr/bin/env {python_executable}\n" + bin_content
 
         self.bin.joinpath("poetry").write_text(bin_content, encoding="utf-8")
 

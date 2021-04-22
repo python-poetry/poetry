@@ -96,7 +96,7 @@ def mock_download(url, dest, **__):
 
 class TestExecutor(Executor):
     def __init__(self, *args, **kwargs):
-        super(TestExecutor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self._installs = []
         self._updates = []
@@ -115,10 +115,10 @@ class TestExecutor(Executor):
         return self._uninstalls
 
     def _do_execute_operation(self, operation):
-        super(TestExecutor, self)._do_execute_operation(operation)
+        super()._do_execute_operation(operation)
 
         if not operation.skipped:
-            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
+            getattr(self, f"_{operation.job_type}s").append(operation.package)
 
     def _execute_install(self, operation):
         return 0
@@ -132,7 +132,7 @@ class TestExecutor(Executor):
 
 class TestApplication(Application):
     def __init__(self, poetry):
-        super(TestApplication, self).__init__()
+        super().__init__()
         self._poetry = poetry
 
     def reset_poetry(self):
@@ -176,7 +176,7 @@ class TestLocker(Locker):
 
     def _write_lock_data(self, data):
         if self._write:
-            super(TestLocker, self)._write_lock_data(data)
+            super()._write_lock_data(data)
             self._locked = True
             return
 
@@ -185,9 +185,9 @@ class TestLocker(Locker):
 
 class TestRepository(Repository):
     def find_packages(self, dependency):
-        packages = super(TestRepository, self).find_packages(dependency)
+        packages = super().find_packages(dependency)
         if len(packages) == 0:
-            raise PackageNotFound("Package [{}] not found.".format(dependency.name))
+            raise PackageNotFound(f"Package [{dependency.name}] not found.")
 
         return packages
 

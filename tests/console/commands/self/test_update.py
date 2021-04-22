@@ -32,18 +32,18 @@ def test_self_update_should_install_all_necessary_elements(
     )
     mocker.patch.object(command, "_check_recommended_installation", return_value=None)
     mocker.patch.object(
-        command, "_get_release_name", return_value="poetry-{}-darwin".format(version)
+        command, "_get_release_name", return_value=f"poetry-{version}-darwin"
     )
     mocker.patch("subprocess.check_output", return_value=b"Python 3.8.2")
 
     http.register_uri(
         "GET",
-        command.BASE_URL + "/{}/poetry-{}-darwin.sha256sum".format(version, version),
+        command.BASE_URL + f"/{version}/poetry-{version}-darwin.sha256sum",
         body=FIXTURES.joinpath("poetry-1.0.5-darwin.sha256sum").read_bytes(),
     )
     http.register_uri(
         "GET",
-        command.BASE_URL + "/{}/poetry-{}-darwin.tar.gz".format(version, version),
+        command.BASE_URL + f"/{version}/poetry-{version}-darwin.tar.gz",
         body=FIXTURES.joinpath("poetry-1.0.5-darwin.tar.gz").read_bytes(),
     )
 

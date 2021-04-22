@@ -243,10 +243,7 @@ class SitePackages:
                 str, self._candidates if not writable_only else self.writable_candidates
             )
         )
-        for distribution in metadata.PathDistribution.discover(
-            name=name, path=path
-        ):  # type: metadata.PathDistribution
-            yield distribution
+        yield from metadata.PathDistribution.discover(name=name, path=path)
 
     def find_distribution(
         self, name: str, writable_only: bool = False
