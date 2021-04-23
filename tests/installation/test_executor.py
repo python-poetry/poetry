@@ -355,7 +355,7 @@ def verify_installed_distribution(venv, package, url_reference=None):
     assert metadata["Version"] == package.version.text
 
     direct_url_file = distribution._path.joinpath("direct_url.json")
-    
+
     record_file = distribution._path.joinpath("RECORD")
     with open(record_file, "r") as f:
         record_file_contents = f.read().splitlines()
