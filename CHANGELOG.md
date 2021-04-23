@@ -1,5 +1,35 @@
 # Change Log
 
+## [1.2.0a1] - 2021-05-21
+
+This release is the first testing release of the upcoming 1.2.0 version.
+
+It **drops** support for Python 2.7 and 3.5.
+
+### Added
+
+- Poetry now supports a plugin system to alter or expand Poetry's functionality. ([#3733](https://github.com/python-poetry/poetry/pull/3733))
+- Poetry now supports [PEP 610](https://www.python.org/dev/peps/pep-0610/). ([#3876](https://github.com/python-poetry/poetry/pull/3876))
+- Several configuration options to better control the way virtual environments are created are now available. ([#3157](https://github.com/python-poetry/poetry/pull/3157), [#3711](https://github.com/python-poetry/poetry/pull/3711)).
+- The `new` command now supports namespace packages. ([#2768](https://github.com/python-poetry/poetry/pull/2768))
+- The `add` command now supports the `--editable` option to add packages in editable mode. ([#3940](https://github.com/python-poetry/poetry/pull/3940))
+
+### Changed
+
+- Python 2.7 and 3.5 are no longer supported. ([#3405](https://github.com/python-poetry/poetry/pull/3405))
+- The usage of the `get-poetry.py` script is now deprecated and is replaced by the `install-poetry.py` script. ([#3706](https://github.com/python-poetry/poetry/pull/3706))
+- Directory dependencies are now in non-develop mode by default. ([poetry-core#98](https://github.com/python-poetry/poetry-core/pull/98))
+- Improved support for PEP 440 specific versions that do not abide by semantic versioning. ([poetry-core#140](https://github.com/python-poetry/poetry-core/pull/140))
+- Improved the CLI experience and performance by migrating to the latest version of Cleo. ([#3618](https://github.com/python-poetry/poetry/pull/3618))
+- Packages previously considered as unsafe (`pip`, `setuptools`, `wheels` and `distribute`) can now be managed as any other package. ([#2826](https://github.com/python-poetry/poetry/pull/2826))
+- The `new` command now defaults to the Markdown format for README files. ([#2768](https://github.com/python-poetry/poetry/pull/2768))
+
+### Fixed
+
+- Fixed an error where command line options were not taken into account when using the `run` command. ([#3618](https://github.com/python-poetry/poetry/pull/3618))
+- Fixed an error in the way custom repositories were resolved. ([#3406](https://github.com/python-poetry/poetry/pull/3406))
+
+
 ## [1.1.5] - 2021-03-04
 
 ### Fixed
@@ -1093,7 +1123,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.4...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0a1...master
+[1.2.0a1]: https://github.com/python-poetry/poetry/compare/1.2.0a1
 [1.1.4]: https://github.com/python-poetry/poetry/compare/1.1.4
 [1.1.3]: https://github.com/python-poetry/poetry/compare/1.1.3
 [1.1.2]: https://github.com/python-poetry/poetry/releases/tag/1.1.2
