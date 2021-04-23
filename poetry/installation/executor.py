@@ -783,7 +783,15 @@ class Executor:
                     with record.open(mode="a") as f:
                         writer = csv.writer(f)
                         writer.writerow(
-                            [str(dist._path.joinpath("direct_url.json").relative_to(record.parent.parent)), "", ""]
+                            [
+                                str(
+                                    dist._path.joinpath("direct_url.json").relative_to(
+                                        record.parent.parent
+                                    )
+                                ),
+                                "",
+                                "",
+                            ]
                         )
 
     def _create_git_url_reference(
