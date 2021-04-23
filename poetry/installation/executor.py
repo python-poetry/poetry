@@ -777,9 +777,13 @@ class Executor:
                     encoding="utf-8",
                 )
 
-                if dist._path.joinpath("RECORD").exists():
-                    with dist._path.joinpath("RECORD").open(mode="a") as record:
-                        record.write(str(dist._path.joinpath("direct_url.json")))
+                record = dist._path.joinpath("RECORD")
+                if record.exists():
+                    with record.open(mode="a") as f:
+                        writer = csv.writer(f)
+                        writer.writerow(
+                            [str(dist._path.joinpath("direct_url.json").relative_to(record.parent.parent)), "", ""]
+                        )
 
     def _create_git_url_reference(
         self, package: "Package"
