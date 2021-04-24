@@ -58,6 +58,7 @@ class Locker:
         self._local_config = local_config
         self._lock_data: dict[str, Any] | None = None
         self._content_hash = self._get_content_hash()
+        self.contains_credential = False
 
     @property
     def lock(self) -> Path:
@@ -285,6 +286,10 @@ class Locker:
         return do_write
 
     def _write_lock_data(self, data: TOMLDocument) -> None:
+        if self.contains_credential:
+            logger.warning(
+                "Credential was provided in packages list. It's included in the lock file."
+            )
         lockfile = TOMLFile(self.lock)
         lockfile.write(data)
 
@@ -455,6 +460,7 @@ class Locker:
 
         if package.source_url:
             url = package.source_url
+            self.contains_credential |= bool(re.match("[a-z]+://.*:.*@.*", url))
             if package.source_type in ["file", "directory"]:
                 # The lock file should only store paths relative to the root project
                 url = Path(

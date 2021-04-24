@@ -1054,12 +1054,13 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
     ],
 )
 def test_content_hash_with_legacy_is_compatible(
-    local_config: dict[str, list[str]], fresh: bool, locker: Locker
+    local_config: dict[str, list[str]], fresh: bool, locker: Locker, caplog: LogCaptureFixture
 ) -> None:
     # old hash generation
     relevant_content = {}
     for key in locker._legacy_keys:
         relevant_content[key] = local_config.get(key)
+    caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
     locker = locker.__class__(
         lock=locker.lock,
@@ -1185,3 +1186,35 @@ content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8
         content = f.read()
 
     assert content == old_content
+
+
+def test_credentials_in_lock_file(
+    locker: Locker, root: ProjectPackage
+) -> None:
+    package = Package(
+        "A",
+        "1.0.0",
+        source_type="legacy",
+        source_url="https://user:password@foo.bar",
+        source_reference="legacy",
+    )
+
+    locker.set_lock_data(root, [package])
+
+    assert locker.contains_credential is True
+
+
+def test_no_credentials_in_lock_file(
+    locker: Locker, root: ProjectPackage
+) -> None:
+    package = Package(
+        "A",
+        "1.0.0",
+        source_type="legacy",
+        source_url="https://foo.bar",
+        source_reference="legacy",
+    )
+
+    locker.set_lock_data(root, [package])
+
+    assert locker.contains_credential is False
