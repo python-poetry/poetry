@@ -17,6 +17,7 @@ class AddCommand(InstallerCommand, InitCommand):
     arguments = [argument("name", "The packages to add.", multiple=True)]
     options = [
         option("dev", "D", "Add as a development dependency."),
+        option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
             "extras",
             "E",
@@ -71,7 +72,7 @@ class AddCommand(InstallerCommand, InitCommand):
     def handle(self) -> int:
         from tomlkit import inline_table
 
-        from poetry.core.semver import parse_constraint
+        from poetry.core.semver.helpers import parse_constraint
 
         packages = self.argument("name")
         is_dev = self.option("dev")
@@ -138,6 +139,19 @@ class AddCommand(InstallerCommand, InitCommand):
                         extras.append(extra)
 
                 constraint["extras"] = self.option("extras")
+
+            if self.option("editable"):
+                if "git" in _constraint or "path" in _constraint:
+                    constraint["develop"] = True
+                else:
+                    self.line_error(
+                        "\n"
+                        "<error>Failed to add packages. "
+                        "Only vcs/path dependencies support editable installs. "
+                        f"<c1>{_constraint['name']}</c1> is neither."
+                    )
+                    self.line_error("\nNo changes were applied.")
+                    return 1
 
             if self.option("python"):
                 constraint["python"] = self.option("python")

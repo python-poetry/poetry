@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.1.5] - 2021-03-04
+
+### Fixed
+- Fixed an error in the export command when no lock file existed and a verbose flag was passed to the command. (#3310)
+- Fixed an error where the pyproject.toml was not reverted when using the add command. (#3622)
+- Fixed errors when using non-HTTPS indices. (#3622)
+- Fixed errors when handling simple indices redirection. (#3622)
+- Fixed errors when trying to handle newer wheels by using the latest version of poetry-core and packaging. (#3677)
+- Fixed an error when using some versions of poetry-core due to an incorrect import. (#3696)
+
 ## [1.1.4] - 2020-10-23
 
 ### Added

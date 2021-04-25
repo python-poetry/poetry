@@ -66,6 +66,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -112,6 +114,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -144,6 +148,8 @@ name = "my-package"
 version = "1.2.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
@@ -152,7 +158,6 @@ python = "^{python}"
 """.format(
         python=".".join(str(c) for c in sys.version_info[:2])
     )
-
     assert expected in tester.io.fetch_output()
 
 
@@ -186,6 +191,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -228,6 +235,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -270,6 +279,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -315,6 +326,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -361,6 +374,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -406,6 +421,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -438,6 +455,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -471,6 +490,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -511,6 +532,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -545,6 +568,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -585,11 +610,15 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 
 [tool.poetry.dev-dependencies]
+pytest = "^3.6.0"
+pytest-requests = "^0.2.0"
 """
 
     output = tester.io.fetch_output()
@@ -648,6 +677,8 @@ name = "my-package"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.6"

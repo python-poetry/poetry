@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import requests
 
-from poetry.core.packages import Dependency
+from poetry.core.packages.dependency import Dependency
 from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
@@ -273,11 +273,34 @@ def test_get_package_retrieves_non_sha256_hashes():
     expected = [
         {
             "file": "ipython-7.5.0-py3-none-any.whl",
-            "hash": "md5:dbdc53e3918f28fa335a173432402a00",
+            "hash": "sha256:78aea20b7991823f6a32d55f4e963a61590820e43f666ad95ad07c7f0c704efa",
         },
         {
             "file": "ipython-7.5.0.tar.gz",
             "hash": "sha256:e840810029224b56cd0d9e7719dc3b39cf84d577f8ac686547c8ba7a06eeab26",
+        },
+    ]
+
+    assert expected == package.files
+
+
+def test_get_package_retrieves_non_sha256_hashes_mismatching_known_hash():
+    repo = MockRepository()
+
+    package = repo.package("ipython", "5.7.0")
+
+    expected = [
+        {
+            "file": "ipython-5.7.0-py2-none-any.whl",
+            "hash": "md5:a10a802ef98da741cd6f4f6289d47ba7",
+        },
+        {
+            "file": "ipython-5.7.0-py3-none-any.whl",
+            "hash": "sha256:fc0464e68f9c65cd8c453474b4175432cc29ecb6c83775baedf6dbfcee9275ab",
+        },
+        {
+            "file": "ipython-5.7.0.tar.gz",
+            "hash": "sha256:8db43a7fb7619037c98626613ff08d03dda9d5d12c84814a4504c78c0da8323c",
         },
     ]
 
@@ -289,7 +312,12 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
     package = repo.package("jupyter", "1.0.0")
 
-    assert [] == package.files
+    assert [
+        {
+            "file": "jupyter-1.0.0.tar.gz",
+            "hash": "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f",
+        }
+    ] == package.files
 
 
 class MockHttpRepository(LegacyRepository):
@@ -310,19 +338,18 @@ def test_get_200_returns_page(http):
     assert repo._get("/foo")
 
 
-def test_get_404_returns_none(http):
-    repo = MockHttpRepository({"/foo": 404}, http)
+@pytest.mark.parametrize("status_code", [401, 403, 404])
+def test_get_40x_and_returns_none(http, status_code):
+    repo = MockHttpRepository({"/foo": status_code}, http)
 
     assert repo._get("/foo") is None
 
 
-def test_get_4xx_and_5xx_raises(http):
-    endpoints = {"/{}".format(code): code for code in {401, 403, 500}}
-    repo = MockHttpRepository(endpoints, http)
+def test_get_5xx_raises(http):
+    repo = MockHttpRepository({"/foo": 500}, http)
 
-    for endpoint in endpoints:
-        with pytest.raises(RepositoryError):
-            repo._get(endpoint)
+    with pytest.raises(RepositoryError):
+        repo._get("/foo")
 
 
 def test_get_redirected_response_url(http, monkeypatch):

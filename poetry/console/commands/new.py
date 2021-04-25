@@ -3,8 +3,6 @@ import sys
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from poetry.utils.helpers import module_name
-
 from .command import Command
 
 
@@ -17,12 +15,17 @@ class NewCommand(Command):
     options = [
         option("name", None, "Set the resulting package name.", flag=False),
         option("src", None, "Use the src layout for the project."),
+        option(
+            "readme",
+            None,
+            "Specify the readme file format. One of md (default) or rst",
+            flag=False,
+        ),
     ]
 
     def handle(self) -> None:
         from pathlib import Path
 
-        from poetry.core.semver import parse_constraint
         from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
@@ -32,7 +35,11 @@ class NewCommand(Command):
         else:
             layout_ = layout("standard")
 
-        path = Path.cwd() / Path(self.argument("path"))
+        path = Path(self.argument("path"))
+        if not path.is_absolute():
+            # we do not use resolve here due to compatibility issues for path.resolve(strict=False)
+            path = Path.cwd().joinpath(path)
+
         name = self.option("name")
         if not name:
             name = path.name
@@ -45,7 +52,7 @@ class NewCommand(Command):
                     "exists and is not empty".format(path)
                 )
 
-        readme_format = "rst"
+        readme_format = self.option("readme") or "md"
 
         config = GitConfig()
         author = None
@@ -60,25 +67,24 @@ class NewCommand(Command):
             ".".join(str(v) for v in current_env.version_info[:2])
         )
 
-        dev_dependencies = {}
-        python_constraint = parse_constraint(default_python)
-        if parse_constraint("<3.5").allows_any(python_constraint):
-            dev_dependencies["pytest"] = "^4.6"
-        if parse_constraint(">=3.5").allows_all(python_constraint):
-            dev_dependencies["pytest"] = "^5.2"
-
         layout_ = layout_(
             name,
             "0.1.0",
             author=author,
             readme_format=readme_format,
             python=default_python,
-            dev_dependencies=dev_dependencies,
         )
         layout_.create(path)
 
+        path = path.resolve()
+
+        try:
+            path = path.relative_to(Path.cwd())
+        except ValueError:
+            pass
+
         self.line(
             "Created package <info>{}</> in <fg=blue>{}</>".format(
-                module_name(name), path.relative_to(Path.cwd())
+                layout_._package_name, path.as_posix()  # noqa
             )
         )

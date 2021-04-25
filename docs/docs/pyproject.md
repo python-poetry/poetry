@@ -173,6 +173,19 @@ If a VCS is being used for a package, the exclude field will be seeded with the 
 include = ["CHANGELOG.md"]
 ```
 
+You can also specify the formats for which these patterns have to be included, as shown here:
+
+```toml
+[tool.poetry]
+# ...
+include = [
+    { path = "tests", format = "sdist" },
+    { path = "for_wheel.txt", format = ["sdist", "wheel"] }
+]
+```
+
+If no format is specified, it will default to include both `sdist` and `wheel`.
+
 ```toml
 exclude = ["my_package/excluded.py"]
 ```
@@ -305,7 +318,7 @@ it in the `build-system` section of the `pyproject.toml` file like so:
 
 ```toml
 [build-system]
-requires = ["poetry_core>=1.0.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 ```
 
@@ -317,4 +330,4 @@ build-backend = "poetry.core.masonry.api"
 !!!note
 
     If your `pyproject.toml` file still references `poetry` directly as a build backend,
-    you should update it to reference `poetry_core` instead.
+    you should update it to reference `poetry-core` instead.

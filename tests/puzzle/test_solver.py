@@ -4,9 +4,9 @@ import pytest
 
 from cleo.io.null_io import NullIO
 
-from poetry.core.packages import Package
-from poetry.core.packages import ProjectPackage
-from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.version.markers import parse_marker
 from poetry.factory import Factory
 from poetry.puzzle import Solver
@@ -780,6 +780,50 @@ def test_solver_sub_dependencies_with_not_supported_python_version(
     check_solver_result(ops, [{"job": "install", "package": package_a}])
 
 
+def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
+    solver, repo, package
+):
+    solver.provider.set_package_python_versions("^3.4")
+
+    package.add_dependency(
+        Factory.create_dependency("httpx", {"version": "^0.17.1", "python": "^3.6"})
+    )
+
+    httpx = get_package("httpx", "0.17.1")
+    httpx.python_versions = ">=3.6"
+
+    httpcore = get_package("httpcore", "0.12.3")
+    httpcore.python_versions = ">=3.6"
+
+    sniffio_1_1_0 = get_package("sniffio", "1.1.0")
+    sniffio_1_1_0.python_versions = ">=3.5"
+
+    sniffio = get_package("sniffio", "1.2.0")
+    sniffio.python_versions = ">=3.5"
+
+    httpx.add_dependency(
+        Factory.create_dependency("httpcore", {"version": ">=0.12.1,<0.13"})
+    )
+    httpx.add_dependency(Factory.create_dependency("sniffio", {"version": "*"}))
+    httpcore.add_dependency(Factory.create_dependency("sniffio", {"version": "==1.*"}))
+
+    repo.add_package(httpx)
+    repo.add_package(httpcore)
+    repo.add_package(sniffio)
+    repo.add_package(sniffio_1_1_0)
+
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": sniffio, "skipped": False},
+            {"job": "install", "package": httpcore, "skipped": False},
+            {"job": "install", "package": httpx, "skipped": False},
+        ],
+    )
+
+
 def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     solver, repo, package
 ):
@@ -1362,9 +1406,9 @@ def test_solver_finds_compatible_package_for_dependency_python_not_fully_compati
 def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(
     solver, repo, package
 ):
-    dep1 = dependency_from_pep_508('B (>=1.0); extra == "foo"')
+    dep1 = Dependency.create_from_pep_508('B (>=1.0); extra == "foo"')
     dep1.activate()
-    dep2 = dependency_from_pep_508('B (>=2.0); extra == "bar"')
+    dep2 = Dependency.create_from_pep_508('B (>=2.0); extra == "bar"')
     dep2.activate()
 
     package.add_dependency(
@@ -1496,7 +1540,7 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
 
     package_a = get_package("A", "1.0.0")
     package_a.requires.append(
-        dependency_from_pep_508(
+        Dependency.create_from_pep_508(
             'B (<2.0); platform_python_implementation == "PyPy" and python_full_version < "2.7.9"'
         )
     )
@@ -2403,11 +2447,12 @@ def test_solver_remove_untracked_single(package, pool, installed, locked, io):
     check_solver_result(ops, [{"job": "remove", "package": package_a}])
 
 
+@pytest.mark.skip(reason="Poetry no longer has critical package requirements")
 def test_solver_remove_untracked_keeps_critical_package(
     package, pool, installed, locked, io
 ):
     solver = Solver(package, pool, installed, locked, io, remove_untracked=True)
-    package_pip = get_package("pip", "1.0")
+    package_pip = get_package("setuptools", "1.0")
     installed.add_package(package_pip)
 
     ops = solver.solve()
@@ -2744,5 +2789,55 @@ def test_solver_can_resolve_python_restricted_package_dependencies(
         [
             {"job": "install", "package": futures},
             {"job": "install", "package": pre_commit},
+        ],
+    )
+
+
+def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constraints(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.5"
+    solver.provider.set_package_python_versions("~2.7 || ^3.5")
+    package.add_dependency(Factory.create_dependency("virtualenv", "^20.4.3"))
+    package.add_dependency(
+        Factory.create_dependency("pre-commit", {"version": "^2.6", "python": "^3.6.1"})
+    )
+
+    virtualenv = get_package("virtualenv", "20.4.3")
+    virtualenv.python_versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
+    virtualenv.add_dependency(
+        Factory.create_dependency(
+            "importlib-resources", {"version": "*", "markers": 'python_version < "3.7"'}
+        )
+    )
+
+    pre_commit = Package("pre-commit", "2.7.1")
+    pre_commit.python_versions = ">=3.6.1"
+    pre_commit.add_dependency(
+        Factory.create_dependency(
+            "importlib-resources", {"version": "*", "markers": 'python_version < "3.7"'}
+        )
+    )
+
+    importlib_resources = get_package("importlib-resources", "5.1.2")
+    importlib_resources.python_versions = ">=3.6"
+
+    importlib_resources_3_2_1 = get_package("importlib-resources", "3.2.1")
+    importlib_resources_3_2_1.python_versions = (
+        "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+    )
+
+    repo.add_package(virtualenv)
+    repo.add_package(pre_commit)
+    repo.add_package(importlib_resources)
+    repo.add_package(importlib_resources_3_2_1)
+    ops = solver.solve()
+
+    check_solver_result(
+        ops,
+        [
+            {"job": "install", "package": importlib_resources_3_2_1},
+            {"job": "install", "package": pre_commit},
+            {"job": "install", "package": virtualenv},
         ],
     )

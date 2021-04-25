@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import division
-
 import itertools
+import json
 import os
 import threading
 
@@ -11,6 +9,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Union
 
@@ -22,7 +21,9 @@ from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
+from poetry.utils.pip import pip_editable_install
 
+from ..utils.pip import pip_install
 from .authenticator import Authenticator
 from .chef import Chef
 from .chooser import Chooser
@@ -36,13 +37,14 @@ if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
 
     from poetry.config.config import Config
+    from poetry.core.packages.package import Package
     from poetry.repositories import Pool
     from poetry.utils.env import Env
 
     from .operations import OperationTypes
 
 
-class Executor(object):
+class Executor:
     def __init__(
         self,
         env: "Env",
@@ -83,6 +85,7 @@ class Executor(object):
         self._sections = dict()
         self._lock = threading.Lock()
         self._shutdown = False
+        self._hashes: Dict[str, str] = {}
 
     @property
     def installations_count(self) -> int:
@@ -113,6 +116,26 @@ class Executor(object):
         self._verbose = verbose
 
         return self
+
+    def pip_install(
+        self, req: Union[Path, str], upgrade: bool = False, editable: bool = False
+    ) -> int:
+        func = pip_install
+        if editable:
+            func = pip_editable_install
+
+        try:
+            func(req, self._env, upgrade=upgrade)
+        except EnvCommandError as e:
+            output = decode(e.e.output)
+            if (
+                "KeyboardInterrupt" in output
+                or "ERROR: Operation cancelled by user" in output
+            ):
+                return -2
+            raise
+
+        return 0
 
     def execute(self, operations: List["OperationTypes"]) -> int:
         self._total_operations = len(operations)
@@ -294,7 +317,7 @@ class Executor(object):
 
             return 0
 
-        result = getattr(self, "_execute_{}".format(method))(operation)
+        result = getattr(self, f"_execute_{method}")(operation)
 
         if result != 0:
             return result
@@ -429,18 +452,24 @@ class Executor(object):
                 "" if updates == 1 else "s",
                 uninstalls,
                 "" if uninstalls == 1 else "s",
-                ", <info>{}</> skipped".format(skipped)
-                if skipped and self._verbose
-                else "",
+                f", <info>{skipped}</> skipped" if skipped and self._verbose else "",
             )
         )
         self._io.write_line("")
 
     def _execute_install(self, operation: Union[Install, Update]) -> int:
-        return self._install(operation)
+        status_code = self._install(operation)
+
+        self._save_url_reference(operation)
+
+        return status_code
 
     def _execute_update(self, operation: Union[Install, Update]) -> int:
-        return self._update(operation)
+        status_code = self._update(operation)
+
+        self._save_url_reference(operation)
+
+        return status_code
 
     def _execute_uninstall(self, operation: Uninstall) -> int:
         message = (
@@ -474,12 +503,7 @@ class Executor(object):
             )
         )
         self._write(operation, message)
-
-        args = ["install", "--no-deps", str(archive)]
-        if operation.job_type == "update":
-            args.insert(2, "-U")
-
-        return self.run_pip(*args)
+        return self.pip_install(str(archive), upgrade=operation.job_type == "update")
 
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
@@ -533,11 +557,9 @@ class Executor(object):
         self._write(operation, message)
 
         if package.root_dir:
-            req = os.path.join(str(package.root_dir), package.source_url)
+            req = package.root_dir / package.source_url
         else:
-            req = os.path.realpath(package.source_url)
-
-        args = ["install", "--no-deps", "-U"]
+            req = Path(package.source_url).resolve(strict=False)
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
@@ -546,8 +568,9 @@ class Executor(object):
             # some versions of pip (< 19.0.0) don't understand it
             # so we need to check the version of pip to know
             # if we can rely on the build system
-            legacy_pip = self._env.pip_version < self._env.pip_version.__class__(
-                19, 0, 0
+            legacy_pip = (
+                self._env.pip_version
+                < self._env.pip_version.__class__.from_parts(19, 0, 0)
             )
             package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
@@ -572,18 +595,13 @@ class Executor(object):
 
                 with builder.setup_py():
                     if package.develop:
-                        args.append("-e")
-
-                    args.append(req)
-
-                    return self.run_pip(*args)
+                        return self.pip_install(req, editable=True)
+                    return self.pip_install(req, upgrade=True)
 
         if package.develop:
-            args.append("-e")
+            return self.pip_install(req, editable=True)
 
-        args.append(req)
-
-        return self.run_pip(*args)
+        return self.pip_install(req, upgrade=True)
 
     def _install_git(self, operation: Union[Install, Update]) -> int:
         from poetry.core.vcs import Git
@@ -606,12 +624,22 @@ class Executor(object):
 
         git = Git()
         git.clone(package.source_url, src_dir)
-        git.checkout(package.source_reference, src_dir)
+
+        reference = package.source_resolved_reference
+        if not reference:
+            reference = package.source_reference
+
+        git.checkout(reference, src_dir)
 
         # Now we just need to install from the source directory
+        original_url = package.source_url
         package._source_url = str(src_dir)
 
-        return self._install_directory(operation)
+        status_code = self._install_directory(operation)
+
+        package._source_url = original_url
+
+        return status_code
 
     def _download(self, operation: Union[Install, Update]) -> Link:
         link = self._chooser.choose_for(operation.package)
@@ -645,8 +673,10 @@ class Executor(object):
             archive_hash = "sha256:" + FileDependency(package.name, archive).hash()
             if archive_hash not in {f["hash"] for f in package.files}:
                 raise RuntimeError(
-                    "Invalid hash for {} using archive {}".format(package, archive.name)
+                    f"Invalid hash for {package} using archive {archive.name}"
                 )
+
+            self._hashes[package.name] = archive_hash
 
         return archive
 
@@ -700,7 +730,105 @@ class Executor(object):
         return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
-        if not operation.skipped:
-            return True
+        return not operation.skipped or self._dry_run or self._verbose
 
-        return self._dry_run or self._verbose
+    def _save_url_reference(self, operation: "OperationTypes") -> None:
+        """
+        Create and store a PEP-610 `direct_url.json` file, if needed.
+        """
+        if operation.job_type not in {"install", "update"}:
+            return
+
+        package = operation.package
+
+        if not package.source_url:
+            # Since we are installing from our own distribution cache
+            # pip will write a `direct_url.json` file pointing to the cache
+            # distribution.
+            # That's not what we want so we remove the direct_url.json file,
+            # if it exists.
+            for (
+                direct_url_json
+            ) in self._env.site_packages.find_distribution_direct_url_json_files(
+                distribution_name=package.name, writable_only=True
+            ):
+                # We can't use unlink(missing_ok=True) because it's not always available
+                if direct_url_json.exists():
+                    direct_url_json.unlink()
+            return
+
+        url_reference = None
+
+        if package.source_type == "git":
+            url_reference = self._create_git_url_reference(package)
+        elif package.source_type == "url":
+            url_reference = self._create_url_url_reference(package)
+        elif package.source_type == "directory":
+            url_reference = self._create_directory_url_reference(package)
+        elif package.source_type == "file":
+            url_reference = self._create_file_url_reference(package)
+
+        if url_reference:
+            for dist in self._env.site_packages.distributions(
+                name=package.name, writable_only=True
+            ):
+                dist._path.joinpath("direct_url.json").write_text(
+                    json.dumps(url_reference),
+                    encoding="utf-8",
+                )
+
+    def _create_git_url_reference(
+        self, package: "Package"
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        reference = {
+            "url": package.source_url,
+            "vcs_info": {
+                "vcs": "git",
+                "requested_revision": package.source_reference,
+                "commit_id": package.source_resolved_reference,
+            },
+        }
+
+        return reference
+
+    def _create_url_url_reference(
+        self, package: "Package"
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        archive_info = {}
+
+        if package.name in self._hashes:
+            archive_info["hash"] = self._hashes[package.name]
+
+        reference = {"url": package.source_url, "archive_info": archive_info}
+
+        return reference
+
+    def _create_file_url_reference(
+        self, package: "Package"
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        archive_info = {}
+
+        if package.name in self._hashes:
+            archive_info["hash"] = self._hashes[package.name]
+
+        reference = {
+            "url": Path(package.source_url).as_uri(),
+            "archive_info": archive_info,
+        }
+
+        return reference
+
+    def _create_directory_url_reference(
+        self, package: "Package"
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
+        dir_info = {}
+
+        if package.develop:
+            dir_info["editable"] = True
+
+        reference = {
+            "url": Path(package.source_url).as_uri(),
+            "dir_info": dir_info,
+        }
+
+        return reference
