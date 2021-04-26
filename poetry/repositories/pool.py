@@ -22,6 +22,7 @@ class Pool(BaseRepository):
         self._lookup = {}  # type: Dict[str, int]
         self._repositories = []  # type: List[Repository]
         self._default = False
+        self._has_primary_repositories = False
         self._secondary_start_idx = None
 
         for repository in repositories:
@@ -37,6 +38,9 @@ class Pool(BaseRepository):
 
     def has_default(self):  # type: () -> bool
         return self._default
+
+    def has_primary_repositories(self):  # type: () -> bool
+        return self._has_primary_repositories
 
     def has_repository(self, name):  # type: (str) -> bool
         name = name.lower() if name is not None else None
@@ -81,6 +85,7 @@ class Pool(BaseRepository):
             self._repositories.append(repository)
             self._lookup[repository_name] = len(self._repositories) - 1
         else:
+            self._has_primary_repositories = True
             if self._secondary_start_idx is None:
                 self._repositories.append(repository)
                 self._lookup[repository_name] = len(self._repositories) - 1
