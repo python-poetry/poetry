@@ -88,14 +88,15 @@ class Factory(BaseFactory):
 
             poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
 
-        # Always put PyPI last to prefer private repositories
-        # but only if we have no other default source
-        if not poetry.pool.has_default():
-            has_sources = bool(sources)
-            poetry.pool.add_repository(PyPiRepository(), not has_sources, has_sources)
-        else:
+        # Put PyPI last to prefer private repositories
+        # unless we have no default source AND no primary sources
+        # (default = false, secondary = false)
+        if poetry.pool.has_default():
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
+        else:
+            default = not poetry.pool.has_primary_repositories()
+            poetry.pool.add_repository(PyPiRepository(), default, not default)
 
         return poetry
 

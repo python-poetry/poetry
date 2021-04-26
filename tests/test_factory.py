@@ -166,6 +166,64 @@ def test_poetry_with_non_default_source():
     assert isinstance(poetry.pool.repositories[1], PyPiRepository)
 
 
+def test_poetry_with_non_default_secondary_source():
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_secondary_source")
+
+    assert len(poetry.pool.repositories) == 2
+
+    assert poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+
+def test_poetry_with_non_default_multiple_secondary_sources():
+    poetry = Factory().create_poetry(
+        fixtures_dir / "with_non_default_multiple_secondary_sources"
+    )
+
+    assert len(poetry.pool.repositories) == 3
+
+    assert poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[2]
+    assert repository.name == "bar"
+    assert isinstance(repository, LegacyRepository)
+
+
+def test_poetry_with_non_default_multiple_sources():
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_multiple_sources")
+
+    assert len(poetry.pool.repositories) == 3
+
+    assert not poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "bar"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[2]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
+
+
 def test_poetry_with_no_default_source():
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
