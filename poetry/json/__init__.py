@@ -1,7 +1,6 @@
 import json
 import os
 
-from io import open
 from typing import List
 
 import jsonschema
@@ -15,11 +14,11 @@ class ValidationError(ValueError):
     pass
 
 
-def validate_object(obj, schema_name):  # type: (dict, str) -> List[str]
-    schema = os.path.join(SCHEMA_DIR, "{}.json".format(schema_name))
+def validate_object(obj: dict, schema_name: str) -> List[str]:
+    schema = os.path.join(SCHEMA_DIR, f"{schema_name}.json")
 
     if not os.path.exists(schema):
-        raise ValueError("Schema {} does not exist.".format(schema_name))
+        raise ValueError(f"Schema {schema_name} does not exist.")
 
     with open(schema, encoding="utf-8") as f:
         schema = json.loads(f.read())

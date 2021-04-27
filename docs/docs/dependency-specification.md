@@ -98,6 +98,13 @@ flask = { git = "https://github.com/pallets/flask.git", rev = "38eb5d3b" }
 numpy = { git = "https://github.com/numpy/numpy.git", tag = "v0.13.2" }
 ```
 
+To use an SSH connection, for example in the case of private repositories, use the following example syntax:
+
+```toml
+[tool.poetry.dependencies]
+requests = { git = "git@github.com:requests/requests.git" }
+```
+
 ## `path` dependencies
 
 To depend on a library located in a local directory or file,
@@ -178,6 +185,11 @@ foo = [
 ]
 ```
 
+!!!note
+
+    The constraints **must** have different requirements (like `python`)
+    otherwise it will cause an error when resolving dependencies.
+
 ## Expanded dependency specification syntax
 
 In the case of more complex dependency specifications, you may find that you
@@ -205,8 +217,3 @@ markers = "platform_python_implementation == 'CPython'"
 All of the same information is still present, and ends up providing the exact
 same specification. It's simply split into multiple, slightly more readable,
 lines.
-
-!!!note
-
-    The constraints **must** have different requirements (like `python`)
-    otherwise it will cause an error when resolving dependencies.

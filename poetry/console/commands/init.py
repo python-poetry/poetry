@@ -1,26 +1,25 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import os
 import re
 import sys
+import urllib.parse
 
+from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from cleo import option
+from cleo.helpers import option
 from tomlkit import inline_table
-
-from poetry.core.pyproject import PyProjectException
-from poetry.core.pyproject.toml import PyProjectTOML
-from poetry.utils._compat import OrderedDict
-from poetry.utils._compat import Path
-from poetry.utils._compat import urlparse
 
 from .command import Command
 from .env_command import EnvCommand
+
+
+if TYPE_CHECKING:
+    from poetry.repositories import Pool
 
 
 class InitCommand(Command):
@@ -57,15 +56,17 @@ class InitCommand(Command):
 The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the current directory.
 """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(InitCommand, self).__init__()
 
         self._pool = None
 
-    def handle(self):
+    def handle(self) -> int:
+        from pathlib import Path
+
+        from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
-        from poetry.utils._compat import Path
         from poetry.utils.env import SystemEnv
 
         pyproject = PyProjectTOML(Path.cwd() / "pyproject.toml")
@@ -226,8 +227,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             f.write(content)
 
     def _determine_requirements(
-        self, requires, allow_prereleases=False, source=None
-    ):  # type: (List[str], bool) -> List[Dict[str, str]]
+        self,
+        requires: List[str],
+        allow_prereleases: bool = False,
+        source: Optional[str] = None,
+    ) -> List[Dict[str, Union[str, List[str]]]]:
         if not requires:
             requires = []
 
@@ -353,8 +357,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return result
 
     def _find_best_version_for_package(
-        self, name, required_version=None, allow_prereleases=False, source=None
-    ):  # type: (...) -> Tuple[str, str]
+        self,
+        name: str,
+        required_version: Optional[str] = None,
+        allow_prereleases: bool = False,
+        source: Optional[str] = None,
+    ) -> Tuple[str, str]:
         from poetry.version.version_selector import VersionSelector
 
         selector = VersionSelector(self._get_pool())
@@ -370,9 +378,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return package.pretty_name, selector.find_recommended_require_version(package)
 
-    def _parse_requirements(
-        self, requirements
-    ):  # type: (List[str]) -> List[Dict[str, str]]
+    def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, str]]:
+        from poetry.core.pyproject.exceptions import PyProjectException
         from poetry.puzzle.provider import Provider
 
         result = []
@@ -390,7 +397,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 extras = [e.strip() for e in extras_m.group(1).split(",")]
                 requirement, _ = requirement.split("[")
 
-            url_parsed = urlparse.urlparse(requirement)
+            url_parsed = urllib.parse.urlparse(requirement)
             if url_parsed.scheme and url_parsed.netloc:
                 # Url
                 if url_parsed.scheme in ["git+https", "git+ssh"]:
@@ -400,7 +407,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     parsed = ParsedUrl.parse(requirement)
                     url = Git.normalize_url(requirement)
 
-                    pair = OrderedDict([("name", parsed.name), ("git", url.url)])
+                    pair = dict([("name", parsed.name), ("git", url.url)])
                     if parsed.rev:
                         pair["rev"] = url.revision
 
@@ -417,28 +424,38 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 elif url_parsed.scheme in ["http", "https"]:
                     package = Provider.get_package_from_url(requirement)
 
-                    pair = OrderedDict(
-                        [("name", package.name), ("url", package.source_url)]
-                    )
+                    pair = dict([("name", package.name), ("url", package.source_url)])
                     if extras:
                         pair["extras"] = extras
 
                     result.append(pair)
                     continue
-            elif (os.path.sep in requirement or "/" in requirement) and cwd.joinpath(
-                requirement
-            ).exists():
-                path = cwd.joinpath(requirement)
+            elif (os.path.sep in requirement or "/" in requirement) and (
+                cwd.joinpath(requirement).exists()
+                or Path(requirement).expanduser().exists()
+                and Path(requirement).expanduser().is_absolute()
+            ):
+                path = Path(requirement).expanduser()
+                is_absolute = path.is_absolute()
+
+                if not path.is_absolute():
+                    path = cwd.joinpath(requirement)
+
                 if path.is_file():
                     package = Provider.get_package_from_file(path.resolve())
                 else:
-                    package = Provider.get_package_from_directory(path)
+                    package = Provider.get_package_from_directory(path.resolve())
 
                 result.append(
-                    OrderedDict(
+                    dict(
                         [
                             ("name", package.name),
-                            ("path", path.relative_to(cwd).as_posix()),
+                            (
+                                "path",
+                                path.relative_to(cwd).as_posix()
+                                if not is_absolute
+                                else path.as_posix(),
+                            ),
                         ]
                         + ([("extras", extras)] if extras else [])
                     )
@@ -451,7 +468,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             pair = pair.strip()
 
-            require = OrderedDict()
+            require = dict()
             if " " in pair:
                 name, version = pair.split(" ", 2)
                 extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
@@ -491,8 +508,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return result
 
     def _format_requirements(
-        self, requirements
-    ):  # type: (List[Dict[str, str]]) -> Dict[str, Union[str, Dict[str, str]]]
+        self, requirements: List[Dict[str, str]]
+    ) -> Dict[str, Union[str, Dict[str, str]]]:
         requires = {}
         for requirement in requirements:
             name = requirement.pop("name")
@@ -507,7 +524,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return requires
 
-    def _validate_author(self, author, default):
+    def _validate_author(self, author: str, default: str) -> Optional[str]:
         from poetry.core.packages.package import AUTHOR_REGEX
 
         author = author or default
@@ -524,15 +541,15 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         return author
 
-    def _validate_license(self, license):
-        from poetry.core.spdx import license_by_id
+    def _validate_license(self, license: str) -> str:
+        from poetry.core.spdx.helpers import license_by_id
 
         if license:
             license_by_id(license)
 
         return license
 
-    def _get_pool(self):
+    def _get_pool(self) -> "Pool":
         from poetry.repositories import Pool
         from poetry.repositories.pypi_repository import PyPiRepository
 

@@ -1,16 +1,15 @@
+from pathlib import Path
 from typing import Optional
 
 import pytest
 
 from pytest_mock.plugin import MockFixture
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import PY36
-from poetry.utils._compat import Path
 from poetry.utils._compat import metadata
-from poetry.utils._compat import zipp
 from poetry.utils.env import MockEnv as BaseMockEnv
+from tests.compat import zipp
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -31,6 +30,13 @@ INSTALLED_RESULTS = [
     metadata.PathDistribution(SITE_PURELIB / "editable-with-import-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "lib64-2.3.4.dist-info"),
     metadata.PathDistribution(SITE_PLATLIB / "bender-2.0.5.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "git_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "url_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "file_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(SITE_PURELIB / "directory_pep_610-1.2.3.dist-info"),
+    metadata.PathDistribution(
+        SITE_PURELIB / "editable_directory_pep_610-1.2.3.dist-info"
+    ),
 ]
 
 
@@ -48,12 +54,12 @@ class MockEnv(BaseMockEnv):
 
 
 @pytest.fixture
-def env():  # type: () -> MockEnv
+def env() -> MockEnv:
     return MockEnv(path=ENV_DIR)
 
 
 @pytest.fixture
-def repository(mocker, env):  # type: (MockFixture, MockEnv) -> InstalledRepository
+def repository(mocker: MockFixture, env: MockEnv) -> InstalledRepository:
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,
@@ -74,8 +80,8 @@ def repository(mocker, env):  # type: (MockFixture, MockEnv) -> InstalledReposit
 
 
 def get_package_from_repository(
-    name, repository
-):  # type: (str, InstalledRepository) -> Optional[Package]
+    name: str, repository: InstalledRepository
+) -> Optional[Package]:
     for pkg in repository.packages:
         if pkg.name == name:
             return pkg
@@ -135,9 +141,6 @@ def test_load_platlib_package(repository):
     assert lib64.version.text == "2.3.4"
 
 
-@pytest.mark.skipif(
-    not PY36, reason="pathlib.resolve() does not support strict argument"
-)
 def test_load_editable_package(repository):
     # test editable package with text .pth file
     editable = get_package_from_repository("editable", repository)
@@ -169,3 +172,60 @@ def test_load_standard_package_with_pth_file(repository):
     assert standard.version.text == "1.2.3"
     assert standard.source_type is None
     assert standard.source_url is None
+
+
+def test_load_pep_610_compliant_git_packages(repository):
+    package = get_package_from_repository("git-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "git-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "git"
+    assert package.source_url == "https://github.com/demo/git-pep-610.git"
+    assert package.source_reference == "my-branch"
+    assert package.source_resolved_reference == "123456"
+
+
+def test_load_pep_610_compliant_url_packages(repository):
+    package = get_package_from_repository("url-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "url-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "url"
+    assert (
+        package.source_url
+        == "https://python-poetry.org/distributions/url-pep-610-1.2.3.tar.gz"
+    )
+
+
+def test_load_pep_610_compliant_file_packages(repository):
+    package = get_package_from_repository("file-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "file-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "file"
+    assert package.source_url == "/path/to/distributions/file-pep-610-1.2.3.tar.gz"
+
+
+def test_load_pep_610_compliant_directory_packages(repository):
+    package = get_package_from_repository("directory-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "directory-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "directory"
+    assert package.source_url == "/path/to/distributions/directory-pep-610"
+    assert not package.develop
+
+
+def test_load_pep_610_compliant_editable_directory_packages(repository):
+    package = get_package_from_repository("editable-directory-pep-610", repository)
+
+    assert package is not None
+    assert package.name == "editable-directory-pep-610"
+    assert package.version.text == "1.2.3"
+    assert package.source_type == "directory"
+    assert package.source_url == "/path/to/distributions/directory-pep-610"
+    assert package.develop

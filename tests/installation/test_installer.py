@@ -3,11 +3,19 @@ from __future__ import unicode_literals
 import json
 import sys
 
+from pathlib import Path
+
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.inputs.input import Input
+from cleo.io.io import IO
+from cleo.io.null_io import NullIO
+from cleo.io.outputs.buffered_output import BufferedOutput
+from cleo.io.outputs.output import Verbosity
+from deepdiff import DeepDiff
 
-from poetry.core.packages import ProjectPackage
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
@@ -17,8 +25,6 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import PY2
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import get_dependency
@@ -112,15 +118,6 @@ class Locker(BaseLocker):
     def _write_lock_data(self, data):
         for package in data["package"]:
             python_versions = str(package["python-versions"])
-            if PY2:
-                python_versions = python_versions.decode()
-                if "requirements" in package:
-                    requirements = {}
-                    for key, value in package["requirements"].items():
-                        requirements[key.decode()] = value.decode()
-
-                    package["requirements"] = requirements
-
             package["python-versions"] = python_versions
 
         self._written_data = json.loads(json.dumps(data))
@@ -276,7 +273,10 @@ def test_run_update_after_removing_dependencies(
     assert 1 == installer.executor.removals_count
 
 
-def test_run_install_no_dev(installer, locker, repo, package, installed):
+def _configure_run_install_dev(locker, repo, package, installed):
+    """
+    Perform common test setup for `test_run_install_*dev*()` methods.
+    """
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -332,7 +332,34 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
     package.add_dependency(Factory.create_dependency("C", "~1.2", category="dev"))
 
+
+def test_run_install_no_dev(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
     installer.dev_mode(False)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 1 == installer.executor.removals_count
+
+
+def test_run_install_dev_only(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
+    installer.dev_only(True)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 2 == installer.executor.removals_count
+
+
+def test_run_install_no_dev_and_dev_only(installer, locker, repo, package, installed):
+    _configure_run_install_dev(locker, repo, package, installed)
+
+    installer.dev_mode(False)
+    installer.dev_only(True)
     installer.run()
 
     assert 0 == installer.executor.installations_count
@@ -367,15 +394,19 @@ def test_run_install_remove_untracked(installer, locker, repo, package, installe
     package_b = get_package("b", "1.1")
     package_c = get_package("c", "1.2")
     package_pip = get_package("pip", "20.0.0")
+    package_setuptools = get_package("setuptools", "20.0.0")
+
     repo.add_package(package_a)
     repo.add_package(package_b)
     repo.add_package(package_c)
     repo.add_package(package_pip)
+    repo.add_package(package_setuptools)
 
     installed.add_package(package_a)
     installed.add_package(package_b)
     installed.add_package(package_c)
-    installed.add_package(package_pip)  # Always required and never removed.
+    installed.add_package(package_pip)
+    installed.add_package(package_setuptools)
     installed.add_package(package)  # Root package never removed.
 
     package.add_dependency(Factory.create_dependency("A", "~1.0"))
@@ -385,8 +416,10 @@ def test_run_install_remove_untracked(installer, locker, repo, package, installe
 
     assert 0 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
-    assert 2 == installer.executor.removals_count
-    assert {"b", "c"} == set(r.name for r in installer.executor.removals)
+    assert 4 == installer.executor.removals_count
+    assert {"b", "c", "pip", "setuptools"} == set(
+        r.name for r in installer.executor.removals
+    )
 
 
 def test_run_whitelist_add(installer, locker, repo, package):
@@ -801,8 +834,7 @@ def test_installer_with_pypi_repository(package, locker, installed, config):
     installer.run()
 
     expected = fixture("with-pypi-repository")
-
-    assert locker.written_data == expected
+    assert not DeepDiff(expected, locker.written_data, ignore_order=True)
 
 
 def test_run_installs_with_local_file(installer, locker, repo, package, fixture_dir):
@@ -1583,7 +1615,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.whitelist(["pytest"])
     installer.run()
 
-    assert (6 if not PY2 else 7) == installer.executor.installations_count
+    assert 7 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
     assert 0 == installer.executor.removals_count
 
@@ -1833,7 +1865,12 @@ def test_installer_can_handle_old_lock_files(
         pool,
         config,
         installed=installed,
-        executor=Executor(MockEnv(version_info=(2, 7, 18)), pool, config, NullIO(),),
+        executor=Executor(
+            MockEnv(version_info=(2, 7, 18)),
+            pool,
+            config,
+            NullIO(),
+        ),
     )
     installer.use_executor()
 
@@ -1851,7 +1888,10 @@ def test_installer_can_handle_old_lock_files(
         config,
         installed=installed,
         executor=Executor(
-            MockEnv(version_info=(2, 7, 18), platform="win32"), pool, config, NullIO(),
+            MockEnv(version_info=(2, 7, 18), platform="win32"),
+            pool,
+            config,
+            NullIO(),
         ),
     )
     installer.use_executor()
@@ -1860,3 +1900,91 @@ def test_installer_can_handle_old_lock_files(
 
     # colorama will be added
     assert 8 == installer.executor.installations_count
+
+
+@pytest.mark.parametrize("quiet", [True, False])
+def test_run_with_dependencies_quiet(installer, locker, repo, package, quiet):
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    installer._io = IO(Input(), BufferedOutput(), BufferedOutput())
+    installer._io.set_verbosity(Verbosity.QUIET if quiet else Verbosity.NORMAL)
+
+    package.add_dependency(Factory.create_dependency("A", "~1.0"))
+    package.add_dependency(Factory.create_dependency("B", "^1.0"))
+
+    installer.run()
+    expected = fixture("with-dependencies")
+
+    assert locker.written_data == expected
+
+    installer._io.output._buffer.seek(0)
+    if quiet:
+        assert installer._io.output._buffer.read() == ""
+    else:
+        assert installer._io.output._buffer.read() != ""
+
+
+def test_installer_should_use_the_locked_version_of_git_dependencies(
+    installer, locker, package, repo
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "demo",
+                    "version": "0.1.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"pendulum": ">=1.4.4"},
+                    "source": {
+                        "type": "git",
+                        "url": "https://github.com/demo/demo.git",
+                        "reference": "master",
+                        "resolved_reference": "123456",
+                    },
+                },
+                {
+                    "name": "pendulum",
+                    "version": "1.4.4",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {},
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"demo": [], "pendulum": []},
+            },
+        }
+    )
+
+    package.add_dependency(
+        Factory.create_dependency(
+            "demo", {"git": "https://github.com/demo/demo.git", "branch": "master"}
+        )
+    )
+
+    repo.add_package(get_package("pendulum", "1.4.4"))
+
+    installer.run()
+
+    assert installer.executor.installations[-1] == Package(
+        "demo",
+        "0.1.1",
+        source_type="git",
+        source_url="https://github.com/demo/demo.git",
+        source_reference="master",
+        source_resolved_reference="123456",
+    )
