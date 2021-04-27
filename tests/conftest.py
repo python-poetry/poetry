@@ -100,6 +100,15 @@ def config(config_source, auth_config_source, mocker):
 
 
 @pytest.fixture(autouse=True)
+def mock_user_config_dir(mocker):
+    config_dir = tempfile.mkdtemp(prefix="poetry_config_")
+    mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
+    mocker.patch("poetry.factory.CONFIG_DIR", new=config_dir)
+    yield
+    shutil.rmtree(config_dir, ignore_errors=True)
+
+
+@pytest.fixture(autouse=True)
 def download_mock(mocker):
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
