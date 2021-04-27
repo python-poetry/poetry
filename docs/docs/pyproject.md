@@ -262,8 +262,8 @@ databases = ["mysqlclient", "psycopg2"]
 When installing packages with Poetry, you can specify extras by using the `-E|--extras` option:
 
 ```bash
-poetry install --extras "mysql pgsql"
-poetry install -E mysql -E pgsql
+poetry add --extras "mysql pgsql"
+poetry add -E mysql -E pgsql
 ```
 
 When installing or specifying Poetry-built packages, the extras defined in this section can be activated
