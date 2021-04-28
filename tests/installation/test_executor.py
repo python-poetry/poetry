@@ -357,13 +357,13 @@ def verify_installed_distribution(venv, package, url_reference=None):
     direct_url_file = distribution._path.joinpath("direct_url.json")
 
     record_file = distribution._path.joinpath("RECORD")
-    with open(record_file, "r") as f:
-        record_file_contents = f.read().splitlines()
     direct_url_entry = direct_url_file.relative_to(record_file.parent.parent)
+    with open(record_file, "r") as f:
+        records_first_column = [row.split(",")[0] for row in f]
 
     if url_reference is not None:
         assert direct_url_file.exists()
-        assert [r for r in record_file_contents if r.startswith(str(direct_url_entry))]
+        assert str(direct_url_entry) in records_first_column
         assert json.loads(direct_url_file.read_text(encoding="utf-8")) == url_reference
     else:
         assert not direct_url_file.exists()
