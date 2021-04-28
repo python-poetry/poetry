@@ -45,7 +45,7 @@ tomlkit = ">=0.7.0,<1.0.0"
 pexpect = "^4.7.0"
 packaging = "^20.4"
 virtualenv = "^20.4.3"
-keyring = "^21.2.0"
+keyring = ">=21.2.0"
 entrypoints = "^0.3"
 importlib-metadata = {version = "^1.6.0", python = "<3.8"}
 dataclasses = {version = "^0.8", python = "~3.6"}
