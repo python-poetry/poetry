@@ -10,6 +10,9 @@ from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.inspection.info import PackageInfo
+from poetry.mixology.incompatibility import Incompatibility
+from poetry.mixology.incompatibility_cause import DependencyCause
+from poetry.mixology.term import Term
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool
 from poetry.repositories.repository import Repository
@@ -495,3 +498,42 @@ def test_search_for_file_wheel_with_extras(provider):
         "foo": [get_dependency("cleo")],
         "bar": [get_dependency("tomlkit")],
     }
+
+
+def test_incompatibilities_for(root, provider):
+    dependency = get_dependency("A", "~1.0")
+    root.add_dependency(dependency)
+    root.add_dependency(get_dependency("B", "~2.0", category="constraint"))
+
+    assert [str(i) for i in provider.incompatibilities_for(root)] == [
+        str(
+            Incompatibility(
+                [Term(root.to_dependency(), True), Term(dependency, False)],
+                DependencyCause(),
+            )
+        )
+    ]
+
+
+def test_incompatibilities_for_with_constraint_dependencies(root, pool):
+    provider = Provider(root, pool, NullIO(), with_constranit_dependencies=True)
+
+    dependency = get_dependency("A", "~1.0")
+    constraint_dependency = get_dependency("B", "~2.0", category="constraint")
+    root.add_dependency(dependency)
+    root.add_dependency(constraint_dependency)
+
+    assert [str(i) for i in provider.incompatibilities_for(root)] == [
+        str(
+            Incompatibility(
+                [Term(root.to_dependency(), True), Term(dependency, False)],
+                DependencyCause(),
+            )
+        ),
+        str(
+            Incompatibility(
+                [Term(root.to_dependency(), True), Term(constraint_dependency, False)],
+                DependencyCause(),
+            )
+        ),
+    ]

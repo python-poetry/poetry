@@ -104,6 +104,30 @@ def test_solver_install_single(solver, repo, package):
     check_solver_result(ops, [{"job": "install", "package": package_a}])
 
 
+def test_solver_install_single_with_irrelevant_constraint_dependencies(
+    repo, package, pool, installed, locked, io
+):
+    solver = Solver(
+        package, pool, installed, locked, io, with_constranit_dependencies=True
+    )
+    package.add_dependency(Factory.create_dependency("A", "*"))
+    package.add_dependency(
+        Factory.create_dependency("B", "<2.0", category="constraint")
+    )
+    package.add_dependency(
+        Factory.create_dependency("C", ">=3.0", category="constraint")
+    )
+
+    package_a = get_package("A", "1.0")
+    repo.add_package(package_a)
+    repo.add_package(get_package("B", "1.0"))
+    repo.add_package(get_package("C", "4.0"))
+
+    ops = solver.solve([get_dependency("A")])
+
+    check_solver_result(ops, [{"job": "install", "package": package_a}])
+
+
 def test_solver_remove_if_no_longer_locked(solver, locked, installed):
     package_a = get_package("A", "1.0")
     installed.add_package(package_a)

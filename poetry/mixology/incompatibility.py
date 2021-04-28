@@ -455,8 +455,13 @@ class Incompatibility:
         if term.dependency.is_root:
             return term.dependency.pretty_name
 
-        return "{} ({})".format(
-            term.dependency.pretty_name, term.dependency.pretty_constraint
+        pretty_constraint_category = term.dependency.pretty_constraint_category
+        if pretty_constraint_category != "":
+            pretty_constraint_category = " " + pretty_constraint_category
+        return "{} ({}){}".format(
+            term.dependency.pretty_name,
+            term.dependency.pretty_constraint,
+            pretty_constraint_category,
         )
 
     def _single_term_where(self, callable: callable) -> Optional[Term]:

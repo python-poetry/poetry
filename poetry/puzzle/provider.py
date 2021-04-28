@@ -57,12 +57,18 @@ class Provider:
     UNSAFE_PACKAGES = set()
 
     def __init__(
-        self, package: Package, pool: Pool, io: Any, env: Optional[Env] = None
+        self,
+        package: Package,
+        pool: Pool,
+        io: Any,
+        env: Optional[Env] = None,
+        with_constranit_dependencies: bool = False,
     ) -> None:
         self._package = package
         self._pool = pool
         self._io = io
         self._env = env
+        self._with_constraint_dependencies = with_constranit_dependencies
         self._python_constraint = package.python_constraint
         self._search_for = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
@@ -366,7 +372,11 @@ class Provider:
         previous call to _incompatibilities_for().
         """
         if package.is_root():
-            dependencies = package.all_requires
+            dependencies = package.all_requires + (
+                package.constraint_requires
+                if self._with_constraint_dependencies
+                else []
+            )
         else:
             dependencies = package.requires
 

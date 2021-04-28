@@ -209,6 +209,7 @@ class Installer:
             locked_repository,
             locked_repository,
             self._io,
+            with_constranit_dependencies=True,
         )
 
         ops = solver.solve(use_latest=[])
@@ -247,6 +248,7 @@ class Installer:
                 locked_repository,
                 self._io,
                 remove_untracked=self._remove_untracked,
+                with_constranit_dependencies=True,
             )
 
             ops = solver.solve(use_latest=self._whitelist)

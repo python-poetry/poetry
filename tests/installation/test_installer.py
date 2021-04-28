@@ -23,6 +23,7 @@ from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.packages import Locker as BaseLocker
+from poetry.puzzle.exceptions import SolverProblemError
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
@@ -207,6 +208,46 @@ def test_run_with_dependencies(installer, locker, repo, package):
     expected = fixture("with-dependencies")
 
     assert locker.written_data == expected
+
+
+def test_run_with_dependencies_and_constraint_dependencies(
+    installer, locker, repo, package
+):
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    package.add_dependency(Factory.create_dependency("A", "~1.0"))
+    package.add_dependency(Factory.create_dependency("B", "^1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", "<2.0", category="constraint")
+    )
+
+    installer.run()
+    expected = fixture("with-dependencies")
+
+    assert locker.written_data == expected
+
+
+def test_run_with_dependencies_and_conflicting_constraint_dependencies(
+    installer, locker, repo, package
+):
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+
+    package.add_dependency(Factory.create_dependency("A", "~1.0"))
+    package.add_dependency(Factory.create_dependency("B", "^1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", ">=2.0", category="constraint")
+    )
+
+    with pytest.raises(
+        SolverProblemError, match=r"A \(>=2.0\) \[constraint dependency\]"
+    ):
+        installer.run()
 
 
 def test_run_update_after_removing_dependencies(
@@ -2021,3 +2062,82 @@ def test_installer_should_use_the_locked_version_of_git_dependencies(
         source_reference="master",
         source_resolved_reference="123456",
     )
+
+
+def test_lock_no_update(installer, locker, repo, package):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "dev",
+                    "optional": True,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": []},
+            },
+        }
+    )
+    package_a = get_package("A", "1.1")
+    repo.add_package(get_package("A", "1.0"))
+    repo.add_package(package_a)
+
+    package.add_dependency(Factory.create_dependency("A", "*"))
+
+    installer.lock(False)
+
+    installer.run()
+    expected = fixture("lock-no-update")
+
+    assert locker.written_data == expected
+
+
+def test_lock_no_update_with_conflicting_constraint_dependencies(
+    installer, locker, repo, package
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "dev",
+                    "optional": True,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                }
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": []},
+            },
+        }
+    )
+    package_a = get_package("A", "1.1")
+    repo.add_package(get_package("A", "1.0"))
+    repo.add_package(package_a)
+
+    package.add_dependency(Factory.create_dependency("A", "^1.0"))
+    package.add_dependency(
+        Factory.create_dependency("A", "<1.0", category="constraint")
+    )
+
+    installer.lock(False)
+
+    with pytest.raises(
+        SolverProblemError, match=r"A \(<1.0\) \[constraint dependency\]"
+    ):
+        installer.run()

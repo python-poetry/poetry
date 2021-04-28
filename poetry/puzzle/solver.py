@@ -48,6 +48,7 @@ class Solver:
         locked: Repository,
         io: IO,
         remove_untracked: bool = False,
+        with_constranit_dependencies: bool = False,
         provider: Optional[Provider] = None,
     ):
         self._package = package
@@ -57,7 +58,12 @@ class Solver:
         self._io = io
 
         if provider is None:
-            provider = Provider(self._package, self._pool, self._io)
+            provider = Provider(
+                self._package,
+                self._pool,
+                self._io,
+                with_constranit_dependencies=with_constranit_dependencies,
+            )
 
         self._provider = provider
         self._overrides = []
@@ -287,6 +293,11 @@ class Solver:
         final_packages = []
         depths = []
         for package in packages:
+            # The packages may contain constraint dependencies that won't be reachable,
+            # and in that case we don't consider them to be resolved packages
+            if package not in results:
+                continue
+
             if package.features:
                 for _package in packages:
                     if (
