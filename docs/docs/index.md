@@ -161,6 +161,9 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 # Bash
 poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
 
+# Bash (per-user, dynamically loaded)
+poetry completions bash > ~/.local/bash-completion/completions/poetry.bash
+
 # Bash (Homebrew)
 poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
 
