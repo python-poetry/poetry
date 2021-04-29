@@ -106,6 +106,11 @@ class Chooser:
 
             selected_links.append(link)
 
+        if links and not selected_links:
+            raise RuntimeError(
+                f"Retrieved digest for link {link.filename}({h}) not in poetry.lock metadata {hashes}"
+            )
+
         return selected_links
 
     def _sort_key(self, package: Package, link: Link) -> Tuple:
