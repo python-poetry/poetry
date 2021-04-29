@@ -161,7 +161,7 @@ python-versions = ">=3.6, <3.7"
 
 [[package]]
 name = "deepdiff"
-version = "5.2.3"
+version = "5.5.0"
 description = "Deep Difference and Search of any Python object/data."
 category = "dev"
 optional = false
@@ -171,7 +171,7 @@ python-versions = ">=3.6"
 ordered-set = "4.0.2"
 
 [package.extras]
-cli = ["click (==7.1.2)", "pyyaml (==5.3.1)", "toml (==0.10.2)", "clevercsv (==0.6.6)"]
+cli = ["click (==7.1.2)", "pyyaml (==5.4)", "toml (==0.10.2)", "clevercsv (==0.6.7)"]
 
 [[package]]
 name = "distlib"
@@ -225,7 +225,7 @@ python-versions = ">=3"
 
 [[package]]
 name = "identify"
-version = "2.2.1"
+version = "2.2.4"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -327,7 +327,7 @@ python-versions = "*"
 
 [[package]]
 name = "nodeenv"
-version = "1.5.0"
+version = "1.6.0"
 description = "Node.js virtual environment builder"
 category = "dev"
 optional = false
@@ -390,7 +390,7 @@ dev = ["pre-commit", "tox"]
 
 [[package]]
 name = "poetry-core"
-version = "1.1.0a2"
+version = "1.1.0a3"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
@@ -398,18 +398,18 @@ python-versions = "^3.6"
 develop = false
 
 [package.dependencies]
-dataclasses = {version = "^0.8", markers = "python_version >= \"3.6\" and python_version < \"3.7\""}
-importlib-metadata = {version = "^1.7.0", markers = "python_version >= \"3.5\" and python_version < \"3.8\""}
+dataclasses = {version = ">=0.8", markers = "python_version >= \"3.6\" and python_version < \"3.7\""}
+importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
 
 [package.source]
 type = "git"
 url = "https://github.com/python-poetry/poetry-core.git"
 reference = "master"
-resolved_reference = "d3e60732ce9bd4f30dee3e594405fe6a80163b7e"
+resolved_reference = "3f718c55fcda63d9bd88b8fc612970c24fc9af25"
 
 [[package]]
 name = "pre-commit"
-version = "2.11.1"
+version = "2.12.1"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
 category = "dev"
 optional = false
@@ -665,7 +665,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.4.3"
+version = "20.4.4"
 description = "Virtual Python Environment builder"
 category = "main"
 optional = false
@@ -873,8 +873,8 @@ dataclasses = [
     {file = "dataclasses-0.8.tar.gz", hash = "sha256:8479067f342acf957dc82ec415d355ab5edb7e7646b90dc6e2fd1d96ad084c97"},
 ]
 deepdiff = [
-    {file = "deepdiff-5.2.3-py3-none-any.whl", hash = "sha256:3d3da4bd7e01fb5202088658ed26427104c748dda56a0ecfac9ce9a1d2d00844"},
-    {file = "deepdiff-5.2.3.tar.gz", hash = "sha256:ae2cb98353309f93fbfdda4d77adb08fb303314d836bb6eac3d02ed71a10b40e"},
+    {file = "deepdiff-5.5.0-py3-none-any.whl", hash = "sha256:e054fed9dfe0d83d622921cbb3a3d0b3a6dd76acd2b6955433a0a2d35147774a"},
+    {file = "deepdiff-5.5.0.tar.gz", hash = "sha256:dd79b81c2d84bfa33aa9d94d456b037b68daff6bb87b80dfaa1eca04da68b349"},
 ]
 distlib = [
     {file = "distlib-0.3.1-py2.py3-none-any.whl", hash = "sha256:8c09de2c67b3e7deef7184574fc060ab8a793e7adbb183d942c389c8b13c52fb"},
@@ -896,8 +896,8 @@ httpretty = [
     {file = "httpretty-1.0.5.tar.gz", hash = "sha256:e53c927c4d3d781a0761727f1edfad64abef94e828718e12b672a678a8b3e0b5"},
 ]
 identify = [
-    {file = "identify-2.2.1-py2.py3-none-any.whl", hash = "sha256:9cc5f58996cd359b7b72f0a5917d8639de5323917e6952a3bfbf36301b576f40"},
-    {file = "identify-2.2.1.tar.gz", hash = "sha256:1cfb05b578de996677836d5a2dde14b3dffde313cf7d2b3e793a0787a36e26dd"},
+    {file = "identify-2.2.4-py2.py3-none-any.whl", hash = "sha256:ad9f3fa0c2316618dc4d840f627d474ab6de106392a4f00221820200f490f5a8"},
+    {file = "identify-2.2.4.tar.gz", hash = "sha256:9bcc312d4e2fa96c7abebcdfb1119563b511b5e3985ac52f60d9116277865b2e"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -958,8 +958,8 @@ msgpack = [
     {file = "msgpack-1.0.2.tar.gz", hash = "sha256:fae04496f5bc150eefad4e9571d1a76c55d021325dcd484ce45065ebbdd00984"},
 ]
 nodeenv = [
-    {file = "nodeenv-1.5.0-py2.py3-none-any.whl", hash = "sha256:5304d424c529c997bc888453aeaa6362d242b6b4631e90f3d4bf1b290f1c84a9"},
-    {file = "nodeenv-1.5.0.tar.gz", hash = "sha256:ab45090ae383b716c4ef89e690c41ff8c2b257b85b309f01f3654df3d084bd7c"},
+    {file = "nodeenv-1.6.0-py2.py3-none-any.whl", hash = "sha256:621e6b7076565ddcacd2db0294c0381e01fd28945ab36bcf00f41c5daf63bef7"},
+    {file = "nodeenv-1.6.0.tar.gz", hash = "sha256:3ef13ff90291ba2a4a7a4ff9a979b63ffdd00a464dbe04acf0ea6471517a4c2b"},
 ]
 ordered-set = [
     {file = "ordered-set-4.0.2.tar.gz", hash = "sha256:ba93b2df055bca202116ec44b9bead3df33ea63a7d5827ff8e16738b97f33a95"},
@@ -982,8 +982,8 @@ pluggy = [
 ]
 poetry-core = []
 pre-commit = [
-    {file = "pre_commit-2.11.1-py2.py3-none-any.whl", hash = "sha256:94c82f1bf5899d56edb1d926732f4e75a7df29a0c8c092559c77420c9d62428b"},
-    {file = "pre_commit-2.11.1.tar.gz", hash = "sha256:de55c5c72ce80d79106e48beb1b54104d16495ce7f95b0c7b13d4784193a00af"},
+    {file = "pre_commit-2.12.1-py2.py3-none-any.whl", hash = "sha256:70c5ec1f30406250b706eda35e868b87e3e4ba099af8787e3e8b4b01e84f4712"},
+    {file = "pre_commit-2.12.1.tar.gz", hash = "sha256:900d3c7e1bf4cf0374bb2893c24c23304952181405b4d88c9c40b72bda1bb8a9"},
 ]
 ptyprocess = [
     {file = "ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35"},
@@ -1087,8 +1087,8 @@ urllib3 = [
     {file = "urllib3-1.25.10.tar.gz", hash = "sha256:91056c15fa70756691db97756772bb1eb9678fa585d9184f24534b100dc60f4a"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.4.3-py2.py3-none-any.whl", hash = "sha256:83f95875d382c7abafe06bd2a4cdd1b363e1bb77e02f155ebe8ac082a916b37c"},
-    {file = "virtualenv-20.4.3.tar.gz", hash = "sha256:49ec4eb4c224c6f7dd81bb6d0a28a09ecae5894f4e593c89b0db0885f565a107"},
+    {file = "virtualenv-20.4.4-py2.py3-none-any.whl", hash = "sha256:a935126db63128861987a7d5d30e23e8ec045a73840eeccb467c148514e29535"},
+    {file = "virtualenv-20.4.4.tar.gz", hash = "sha256:09c61377ef072f43568207dc8e46ddeac6bcdcaf288d49011bda0e7f4d38c4a2"},
 ]
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
