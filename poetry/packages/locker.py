@@ -595,3 +595,8 @@ class Locker:
                 data["develop"] = package.develop
 
         return data
+
+
+class NullLocker(Locker):
+    def set_lock_data(self, root: Package, packages: List[Package]) -> bool:
+        pass
