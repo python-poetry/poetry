@@ -877,13 +877,8 @@ class EnvManager:
             io.write_line(
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
             )
-
-            self.build_venv(
-                venv,
-                executable=executable,
-                flags=self._poetry.config.get("virtualenvs.options"),
-            )
         else:
+            create_venv = False
             if force:
                 if not env.is_sane():
                     io.write_line(
@@ -895,13 +890,22 @@ class EnvManager:
                     "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
                 )
                 self.remove_venv(venv)
-                self.build_venv(
-                    venv,
-                    executable=executable,
-                    flags=self._poetry.config.get("virtualenvs.options"),
-                )
+                create_venv = True
             elif io.is_very_verbose():
                 io.write_line(f"Virtualenv <c1>{name}</> already exists.")
+
+        if create_venv:
+            self.build_venv(
+                venv,
+                executable=executable,
+                flags=self._poetry.config.get("virtualenvs.options"),
+                # TODO: in a future version switch remove pip/setuptools/wheel
+                # poetry does not need them these exists today to not break developer
+                # environment assumptions
+                with_pip=True,
+                with_setuptools=True,
+                with_wheel=True,
+            )
 
         # venv detection:
         # stdlib venv may symlink sys.executable, so we can't use realpath.
@@ -927,11 +931,28 @@ class EnvManager:
         path: Union[Path, str],
         executable: Optional[Union[str, Path]] = None,
         flags: Dict[str, bool] = None,
-        with_pip: bool = False,
+        with_pip: Optional[bool] = None,
         with_wheel: Optional[bool] = None,
         with_setuptools: Optional[bool] = None,
     ) -> virtualenv.run.session.Session:
         flags = flags or {}
+
+        flags["no-pip"] = (
+            not with_pip if with_pip is not None else flags.pop("no-pip", True)
+        )
+
+        flags["no-setuptools"] = (
+            not with_setuptools
+            if with_setuptools is not None
+            else flags.pop("no-setuptools", True)
+        )
+
+        # we want wheels to be enabled when pip is required and it has not been explicitly disabled
+        flags["no-wheel"] = (
+            not with_wheel
+            if with_wheel is not None
+            else flags.pop("no-wheel", flags["no-pip"])
+        )
 
         if isinstance(executable, Path):
             executable = executable.resolve().as_posix()
@@ -942,20 +963,6 @@ class EnvManager:
             "--python",
             executable or sys.executable,
         ]
-
-        if not with_pip:
-            args.append("--no-pip")
-        else:
-            if with_wheel is None:
-                # we want wheels to be enabled when pip is required and it has
-                # not been explicitly disabled
-                with_wheel = True
-
-        if with_wheel is None or not with_wheel:
-            args.append("--no-wheel")
-
-        if with_setuptools is None or not with_setuptools:
-            args.append("--no-setuptools")
 
         for flag, value in flags.items():
             if value is True:
@@ -1039,6 +1046,8 @@ class Env:
         self._platlib = None
         self._script_dirs = None
 
+        self._embedded_pip_path = None
+
     @property
     def path(self) -> Path:
         return self._path
@@ -1075,6 +1084,12 @@ class Env:
         ).path
 
     @property
+    def pip_embedded(self) -> str:
+        if self._embedded_pip_path is None:
+            self._embedded_pip_path = str(self.get_embedded_wheel("pip") / "pip")
+        return self._embedded_pip_path
+
+    @property
     def pip(self) -> str:
         """
         Path to current pip executable
@@ -1082,7 +1097,7 @@ class Env:
         # we do not use as_posix() here due to issues with windows pathlib2 implementation
         path = self._bin("pip")
         if not Path(path).exists():
-            return str(self.get_embedded_wheel("pip") / "pip")
+            return str(self.pip_embedded)
         return path
 
     @property
@@ -1187,7 +1202,7 @@ class Env:
     def get_marker_env(self) -> Dict[str, Any]:
         raise NotImplementedError()
 
-    def get_pip_command(self) -> List[str]:
+    def get_pip_command(self, embedded: bool = False) -> List[str]:
         raise NotImplementedError()
 
     def get_supported_tags(self) -> List[Tag]:
@@ -1208,16 +1223,20 @@ class Env:
         """
         return True
 
-    def run(self, bin: str, *args: str, **kwargs: Any) -> Union[str, int]:
+    def get_command_from_bin(self, bin: str) -> List[str]:
         if bin == "pip":
-            return self.run_pip(*args, **kwargs)
+            # when pip is required we need to ensure that we fallback to
+            # embedded pip when pip is not available in the environment
+            return self.get_pip_command()
 
-        bin = self._bin(bin)
-        cmd = [bin] + list(args)
+        return [self._bin(bin)]
+
+    def run(self, bin: str, *args: str, **kwargs: Any) -> Union[str, int]:
+        cmd = self.get_command_from_bin(bin) + list(args)
         return self._run(cmd, **kwargs)
 
     def run_pip(self, *args: str, **kwargs: Any) -> Union[int, str]:
-        pip = self.get_pip_command()
+        pip = self.get_pip_command(embedded=True)
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
@@ -1260,17 +1279,13 @@ class Env:
         return decode(output)
 
     def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
-        if bin == "pip":
-            return self.run_pip(*args, **kwargs)
-
-        bin = self._bin(bin)
+        command = self.get_command_from_bin(bin) + list(args)
         env = kwargs.pop("env", {k: v for k, v in os.environ.items()})
 
         if not self._is_windows:
-            args = [bin] + list(args)
-            return os.execvpe(bin, args, env=env)
+            return os.execvpe(command[0], command, env=env)
         else:
-            exe = subprocess.Popen([bin] + list(args), env=env, **kwargs)
+            exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
             exe.communicate()
             return exe.returncode
 
@@ -1338,10 +1353,10 @@ class SystemEnv(Env):
     def get_python_implementation(self) -> str:
         return platform.python_implementation()
 
-    def get_pip_command(self) -> List[str]:
+    def get_pip_command(self, embedded: bool = False) -> List[str]:
         # If we're not in a venv, assume the interpreter we're running on
         # has a pip and use that
-        return [sys.executable, self.pip]
+        return [sys.executable, self.pip_embedded if embedded else self.pip]
 
     def get_paths(self) -> Dict[str, str]:
         # We can't use sysconfig.get_paths() because
@@ -1445,10 +1460,10 @@ class VirtualEnv(Env):
     def get_python_implementation(self) -> str:
         return self.marker_env["platform_python_implementation"]
 
-    def get_pip_command(self) -> List[str]:
+    def get_pip_command(self, embedded: bool = False) -> List[str]:
         # We're in a virtualenv that is known to be sane,
         # so assume that we have a functional pip
-        return [self._bin("python"), self.pip]
+        return [self._bin("python"), self.pip_embedded if embedded else self.pip]
 
     def get_supported_tags(self) -> List[Tag]:
         file_path = Path(packaging.tags.__file__)
@@ -1560,8 +1575,8 @@ class NullEnv(SystemEnv):
         self._execute = execute
         self.executed = []
 
-    def get_pip_command(self) -> List[str]:
-        return [self._bin("python"), self.pip]
+    def get_pip_command(self, embedded: bool = False) -> List[str]:
+        return [self._bin("python"), self.pip_embedded if embedded else self.pip]
 
     def _run(self, cmd: List[str], **kwargs: Any) -> int:
         self.executed.append(cmd)

@@ -55,6 +55,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
         venv_py37,
         executable="python3.7",
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
     envs_file = TOMLFile(venv_cache / "envs.toml")
