@@ -305,7 +305,7 @@ any custom url in the `urls` section.
 "Bug Tracker" = "https://github.com/python-poetry/poetry/issues"
 ```
 
-If you publish you package on PyPI, they will appear in the `Project Links` section.
+If you publish your package on PyPI, they will appear in the `Project Links` section.
 
 ## Poetry and PEP-517
 
