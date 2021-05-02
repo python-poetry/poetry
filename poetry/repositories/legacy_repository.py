@@ -144,14 +144,14 @@ class Page:
             info, ext = link.splitext()
             match = self.VERSION_REGEX.match(info)
             if not match:
-                return
+                return None
 
             version = match.group(2)
 
         try:
             version = Version.parse(version)
         except ValueError:
-            return
+            return None
 
         return version
 
@@ -428,9 +428,9 @@ class LegacyRepository(PyPiRepository):
                     f"Authorization error accessing {url}",
                     level="warning",
                 )
-                return
+                return None
             if response.status_code == 404:
-                return
+                return None
             response.raise_for_status()
         except requests.HTTPError as e:
             raise RepositoryError(e)

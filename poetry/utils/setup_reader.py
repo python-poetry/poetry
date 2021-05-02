@@ -293,18 +293,18 @@ class SetupReader:
             kwargs = self._find_call_kwargs(call)
 
             if kwargs is None or not isinstance(kwargs, ast.Name):
-                return
+                return None
 
             variable = self._find_variable_in_body(body, kwargs.id)
             if not isinstance(variable, (ast.Dict, ast.Call)):
-                return
+                return None
 
             if isinstance(variable, ast.Call):
                 if not isinstance(variable.func, ast.Name):
-                    return
+                    return None
 
                 if variable.func.id != "dict":
-                    return
+                    return None
 
                 value = self._find_in_call(variable, name)
             else:

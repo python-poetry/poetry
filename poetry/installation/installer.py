@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Union
 
 from cleo.io.io import IO
@@ -499,7 +500,7 @@ class Installer:
         self._installer.remove(operation.package)
 
     def _populate_local_repo(
-        self, local_repo: Repository, ops: List[Operation]
+        self, local_repo: Repository, ops: Sequence[Operation]
     ) -> None:
         for op in ops:
             if isinstance(op, Uninstall):
@@ -514,7 +515,7 @@ class Installer:
 
     def _get_operations_from_lock(
         self, locked_repository: Repository
-    ) -> List[Operation]:
+    ) -> Sequence[Operation]:
         installed_repo = self._installed_repository
         ops = []
 
@@ -543,7 +544,7 @@ class Installer:
 
         return ops
 
-    def _filter_operations(self, ops: List[Operation], repo: Repository) -> None:
+    def _filter_operations(self, ops: Sequence[Operation], repo: Repository) -> None:
         extra_packages = self._get_extra_packages(repo)
         for op in ops:
             if isinstance(op, Update):

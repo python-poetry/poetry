@@ -1229,11 +1229,13 @@ class Env:
     def usersite(self) -> Optional[Path]:
         if "usersite" in self.paths:
             return Path(self.paths["usersite"])
+        return None
 
     @property
     def userbase(self) -> Optional[Path]:
         if "userbase" in self.paths:
             return Path(self.paths["userbase"])
+        return None
 
     @property
     def purelib(self) -> Path:
@@ -1432,7 +1434,7 @@ class Env:
 
         return str(bin_path)
 
-    def __eq__(self, other: "Env") -> bool:
+    def __eq__(self, other: object) -> bool:
         return other.__class__ == self.__class__ and other.path == self.path
 
     def __repr__(self) -> str:
@@ -1789,6 +1791,7 @@ class NullEnv(SystemEnv):
 
         if self._execute:
             return super().execute(bin, *args, **kwargs)
+        return None
 
     def _bin(self, bin: str) -> str:
         return bin

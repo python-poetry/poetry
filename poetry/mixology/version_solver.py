@@ -449,14 +449,14 @@ class VersionSolver:
 
     def _get_locked(self, dependency: Dependency) -> Optional[Package]:
         if dependency.name in self._use_latest:
-            return
+            return None
 
         locked = self._locked.get(dependency.name)
         if not locked:
-            return
+            return None
 
         if not dependency.is_same_package_as(locked):
-            return
+            return None
 
         return locked
 

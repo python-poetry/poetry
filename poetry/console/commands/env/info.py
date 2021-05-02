@@ -28,9 +28,10 @@ class EnvInfoCommand(Command):
 
             self.line(str(env.path))
 
-            return
+            return None
 
         self._display_complete_info(env)
+        return None
 
     def _display_complete_info(self, env: "Env") -> None:
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
