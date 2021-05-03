@@ -648,12 +648,12 @@ class Executor:
 
     def _download_link(self, operation: Union[Install, Update], link: Link) -> Link:
         package = operation.package
+        archive_cached: Link = self._chef.get_cached_archive_for_link(link)
 
-        archive = self._chef.get_cached_archive_for_link(link)
-        if archive is link:
+        if archive_cached is link:
             # No cached distributions was found, so we download and prepare it
             try:
-                archive = self._download_archive(operation, link)
+                archive_downloaded: Path = self._download_archive(operation, link)
             except BaseException:
                 cache_directory = self._chef.get_cache_directory_for_link(link)
                 cached_file = cache_directory.joinpath(link.filename)
@@ -661,24 +661,24 @@ class Executor:
                 # in pathlib2 for Python 2.7
                 if cached_file.exists():
                     cached_file.unlink()
-
                 raise
-
             # TODO: Check readability of the created archive
-
             if not link.is_wheel:
-                archive = self._chef.prepare(archive)
+                archive_downloaded: Path = self._chef.prepare(archive_downloaded)  # currently makes no sense - returns same data
+        else:
+            archive_downloaded = Path(archive_cached.path)
 
         if package.files:
-            archive_hash = "sha256:" + FileDependency(package.name, archive).hash()
+            archive_hash = "sha256:" + FileDependency(package.name, archive_downloaded).hash()
             if archive_hash not in {f["hash"] for f in package.files}:
                 raise RuntimeError(
-                    f"Invalid hash for {package} using archive {archive.name}"
+                    f"Invalid hash for {package} using archive {archive_cached.name}"
                 )
 
             self._hashes[package.name] = archive_hash
 
-        return archive
+        archive_downloaded_link = Link('file://' + str(archive_downloaded))
+        return archive_downloaded_link
 
     def _download_archive(self, operation: Union[Install, Update], link: Link) -> Path:
         response = self._authenticator.request(
