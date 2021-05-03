@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import itertools
 import json
 import sys
 
@@ -33,6 +34,9 @@ from tests.repositories.test_legacy_repository import (
     MockRepository as MockLegacyRepository,
 )
 from tests.repositories.test_pypi_repository import MockRepository
+
+
+RESERVED_PACKAGES = ("pip", "setuptools", "wheel")
 
 
 class Installer(BaseInstaller):
@@ -367,59 +371,88 @@ def test_run_install_no_dev_and_dev_only(installer, locker, repo, package, insta
     assert 1 == installer.executor.removals_count
 
 
-def test_run_install_remove_untracked(installer, locker, repo, package, installed):
+@pytest.mark.parametrize(
+    "managed_reserved_package_names",
+    [
+        i
+        for i in itertools.chain(
+            [tuple()],
+            itertools.permutations(RESERVED_PACKAGES, 1),
+            itertools.permutations(RESERVED_PACKAGES, 2),
+            [RESERVED_PACKAGES],
+        )
+    ],
+)
+def test_run_install_remove_untracked(
+    managed_reserved_package_names, installer, locker, repo, package, installed
+):
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+    package_pip = get_package("pip", "20.0.0")
+    package_setuptools = get_package("setuptools", "20.0.0")
+    package_wheel = get_package("wheel", "20.0.0")
+
+    all_packages = [
+        package_a,
+        package_b,
+        package_c,
+        package_pip,
+        package_setuptools,
+        package_wheel,
+    ]
+
+    managed_reserved_packages = [
+        pkg for pkg in all_packages if pkg.name in managed_reserved_package_names
+    ]
+    locked_packages = [package_a, *managed_reserved_packages]
+
+    for pkg in all_packages:
+        repo.add_package(pkg)
+        installed.add_package(pkg)
+
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency(Factory.create_dependency(package_a.name, package_a.version))
+
     locker.locked(True)
     locker.mock_lock_data(
         {
             "package": [
                 {
-                    "name": "a",
-                    "version": "1.0",
+                    "name": pkg.name,
+                    "version": pkg.version,
                     "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
                     "checksum": [],
                 }
+                for pkg in locked_packages
             ],
             "metadata": {
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"a": []},
+                "hashes": {pkg.name: [] for pkg in locked_packages},
             },
         }
     )
-    package_a = get_package("a", "1.0")
-    package_b = get_package("b", "1.1")
-    package_c = get_package("c", "1.2")
-    package_pip = get_package("pip", "20.0.0")
-    package_setuptools = get_package("setuptools", "20.0.0")
-
-    repo.add_package(package_a)
-    repo.add_package(package_b)
-    repo.add_package(package_c)
-    repo.add_package(package_pip)
-    repo.add_package(package_setuptools)
-
-    installed.add_package(package_a)
-    installed.add_package(package_b)
-    installed.add_package(package_c)
-    installed.add_package(package_pip)
-    installed.add_package(package_setuptools)
-    installed.add_package(package)  # Root package never removed.
-
-    package.add_dependency(Factory.create_dependency("A", "~1.0"))
 
     installer.dev_mode(True).remove_untracked(True)
     installer.run()
 
     assert 0 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
-    assert 4 == installer.executor.removals_count
-    assert {"b", "c", "pip", "setuptools"} == set(
-        r.name for r in installer.executor.removals
-    )
+    assert 2 + len(managed_reserved_packages) == installer.executor.removals_count
+
+    expected_removals = {
+        package_b.name,
+        package_c.name,
+        *managed_reserved_package_names,
+    }
+
+    assert expected_removals == set(r.name for r in installer.executor.removals)
 
 
 def test_run_whitelist_add(installer, locker, repo, package):
