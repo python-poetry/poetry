@@ -408,6 +408,8 @@ class Installer:
             version, current_version = self.get_version()
 
         if version is None:
+            if current_version is None:
+                return 1
             return 0
 
         self.display_pre_message()
