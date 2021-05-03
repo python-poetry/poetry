@@ -13,7 +13,7 @@ from typing import Union
 
 from cleo.io.io import IO
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -31,11 +31,11 @@ from .provider import Provider
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import DirectoryDependency
-    from poetry.core.packages import FileDependency
-    from poetry.core.packages import URLDependency
-    from poetry.core.packages import VCSDependency
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
     from poetry.installation.operations import OperationTypes
 
 
@@ -63,9 +63,30 @@ class Solver:
         self._overrides = []
         self._remove_untracked = remove_untracked
 
+        self._preserved_package_names = None
+
     @property
     def provider(self) -> Provider:
         return self._provider
+
+    @property
+    def preserved_package_names(self):
+        if self._preserved_package_names is None:
+            self._preserved_package_names = {
+                self._package.name,
+                *Provider.UNSAFE_PACKAGES,
+            }
+
+            deps = {package.name for package in self._locked.packages}
+
+            # preserve pip/setuptools/wheel when not managed by poetry, this is so
+            # to avoid externally managed virtual environments causing unnecessary
+            # removals.
+            for name in {"pip", "wheel", "setuptools"}:
+                if name not in deps:
+                    self._preserved_package_names.add(name)
+
+        return self._preserved_package_names
 
     @contextmanager
     def use_environment(self, env: Env) -> None:
@@ -85,9 +106,7 @@ class Solver:
                     )
                 )
                 self._provider.debug(
-                    "Resolved with overrides: {}".format(
-                        ", ".join("({})".format(b) for b in self._overrides)
-                    )
+                    f"Resolved with overrides: {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
         operations = []
@@ -192,11 +211,9 @@ class Solver:
             locked_names = {locked.name for locked in self._locked.packages}
 
             for installed in self._installed.packages:
-                if installed.name == self._package.name:
+                if installed.name in self.preserved_package_names:
                     continue
-                if installed.name in Provider.UNSAFE_PACKAGES:
-                    # Never remove pip, setuptools etc.
-                    continue
+
                 if installed.name not in locked_names:
                     operations.append(Uninstall(installed))
 
@@ -221,7 +238,7 @@ class Solver:
         for override in overrides:
             self._provider.debug(
                 "<comment>Retrying dependency resolution "
-                "with the following overrides ({}).</comment>".format(override)
+                f"with the following overrides ({override}).</comment>"
             )
             self._provider.set_overrides(override)
             _packages, _depths = self._solve(use_latest=use_latest)
@@ -293,7 +310,7 @@ class Solver:
         return final_packages, depths
 
 
-class DFSNode(object):
+class DFSNode:
     def __init__(self, id: Tuple[str, str, bool], name: str, base_name: str) -> None:
         self.id = id
         self.name = name
@@ -408,7 +425,7 @@ class PackageNode(DFSNode):
             self.category = dep.category
             self.optional = dep.is_optional()
 
-        super(PackageNode, self).__init__(
+        super().__init__(
             (package.complete_name, self.category, self.optional),
             package.complete_name,
             package.name,
@@ -437,7 +454,7 @@ class PackageNode(DFSNode):
                 if pkg.complete_name == dependency.complete_name and (
                     dependency.constraint.allows(pkg.version)
                     or dependency.allows_prereleases()
-                    and pkg.version.is_prerelease()
+                    and pkg.version.is_unstable()
                     and dependency.constraint.allows(pkg.version.stable)
                 ):
                     # If there is already a child with this name

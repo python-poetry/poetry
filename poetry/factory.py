@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Dict
+from typing import List
 from typing import Optional
 
 from cleo.io.io import IO
@@ -16,6 +17,8 @@ from .config.config import Config
 from .config.file_config_source import FileConfigSource
 from .locations import CONFIG_DIR
 from .packages.locker import Locker
+from .packages.project_package import ProjectPackage
+from .plugins.plugin_manager import PluginManager
 from .poetry import Poetry
 from .repositories.pypi_repository import PyPiRepository
 
@@ -30,7 +33,10 @@ class Factory(BaseFactory):
     """
 
     def create_poetry(
-        self, cwd: Optional[Path] = None, io: Optional[IO] = None
+        self,
+        cwd: Optional[Path] = None,
+        io: Optional[IO] = None,
+        disable_plugins: bool = False,
     ) -> Poetry:
         if io is None:
             io = NullIO()
@@ -75,34 +81,20 @@ class Factory(BaseFactory):
         )
 
         # Configuring sources
-        sources = poetry.local_config.get("source", [])
-        for source in sources:
-            repository = self.create_legacy_repository(source, config)
-            is_default = source.get("default", False)
-            is_secondary = source.get("secondary", False)
-            if io.is_debug():
-                message = "Adding repository {} ({})".format(
-                    repository.name, repository.url
-                )
-                if is_default:
-                    message += " and setting it as the default one"
-                elif is_secondary:
-                    message += " and setting it as secondary"
+        self.configure_sources(
+            poetry, poetry.local_config.get("source", []), config, io
+        )
 
-                io.write_line(message)
-
-            poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
-
-        # Always put PyPI last to prefer private repositories
-        # but only if we have no other default source
-        if not poetry.pool.has_default():
-            has_sources = bool(sources)
-            poetry.pool.add_repository(PyPiRepository(), not has_sources, has_sources)
-        else:
-            if io.is_debug():
-                io.write_line("Deactivating the PyPI repository")
+        plugin_manager = PluginManager("plugin", disable_plugins=disable_plugins)
+        plugin_manager.load_plugins()
+        poetry.set_plugin_manager(plugin_manager)
+        plugin_manager.activate(poetry, io)
 
         return poetry
+
+    @classmethod
+    def get_package(cls, name: str, version: str) -> ProjectPackage:
+        return ProjectPackage(name, version, version)
 
     @classmethod
     def create_config(cls, io: Optional[IO] = None) -> Config:
@@ -140,8 +132,40 @@ class Factory(BaseFactory):
 
         return config
 
+    @classmethod
+    def configure_sources(
+        cls, poetry: "Poetry", sources: List[Dict[str, str]], config: "Config", io: "IO"
+    ) -> None:
+        for source in sources:
+            repository = cls.create_legacy_repository(source, config)
+            is_default = source.get("default", False)
+            is_secondary = source.get("secondary", False)
+            if io.is_debug():
+                message = "Adding repository {} ({})".format(
+                    repository.name, repository.url
+                )
+                if is_default:
+                    message += " and setting it as the default one"
+                elif is_secondary:
+                    message += " and setting it as secondary"
+
+                io.write_line(message)
+
+            poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
+
+        # Put PyPI last to prefer private repositories
+        # unless we have no default source AND no primary sources
+        # (default = false, secondary = false)
+        if poetry.pool.has_default():
+            if io.is_debug():
+                io.write_line("Deactivating the PyPI repository")
+        else:
+            default = not poetry.pool.has_primary_repositories()
+            poetry.pool.add_repository(PyPiRepository(), default, not default)
+
+    @classmethod
     def create_legacy_repository(
-        self, source: Dict[str, str], auth_config: Config
+        cls, source: Dict[str, str], auth_config: Config
     ) -> "LegacyRepository":
         from .repositories.legacy_repository import LegacyRepository
         from .utils.helpers import get_cert
@@ -163,4 +187,50 @@ class Factory(BaseFactory):
             config=auth_config,
             cert=get_cert(auth_config, name),
             client_cert=get_client_cert(auth_config, name),
+        )
+
+    @classmethod
+    def create_pyproject_from_package(
+        cls, package: "ProjectPackage", path: "Path"
+    ) -> None:
+        import tomlkit
+
+        from poetry.layouts.layout import POETRY_DEFAULT
+
+        pyproject = tomlkit.loads(POETRY_DEFAULT)
+        content = pyproject["tool"]["poetry"]
+
+        content["name"] = package.name
+        content["version"] = package.version.text
+        content["description"] = package.description
+        content["authors"] = package.authors
+
+        dependency_section = content["dependencies"]
+        dependency_section["python"] = package.python_versions
+
+        for dep in package.requires:
+            constraint = tomlkit.inline_table()
+            if dep.is_vcs():
+                constraint[dep.vcs] = dep.source_url
+
+                if dep.reference:
+                    constraint["rev"] = dep.reference
+            elif dep.is_file() or dep.is_directory():
+                constraint["path"] = dep.source_url
+            else:
+                constraint["version"] = dep.pretty_constraint
+
+            if not dep.marker.is_any():
+                constraint["markers"] = str(dep.marker)
+
+            if dep.extras:
+                constraint["extras"] = list(sorted(dep.extras))
+
+            if len(constraint) == 1 and "version" in constraint:
+                constraint = constraint["version"]
+
+            dependency_section[dep.name] = constraint
+
+        path.joinpath("pyproject.toml").write_text(
+            pyproject.as_string(), encoding="utf-8"
         )

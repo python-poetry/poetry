@@ -19,10 +19,10 @@ from cleo.io.inputs.argv_input import ArgvInput
 from cleo.io.inputs.input import Input
 from cleo.io.io import IO
 from cleo.io.outputs.output import Output
-from cleo.loaders.factory_command_loader import FactoryCommandLoader
 
 from poetry.__version__ import __version__
 
+from .command_loader import CommandLoader
 from .commands.command import Command
 
 
@@ -70,30 +70,41 @@ COMMANDS = [
     "env list",
     "env remove",
     "env use",
+    # Plugin commands
+    "plugin add",
+    "plugin remove",
+    "plugin show",
     # Self commands
     "self update",
+    # Source commands
+    "source add",
+    "source remove",
+    "source show",
 ]
 
-
 if TYPE_CHECKING:
+    from cleo.io.inputs.definition import Definition
+
+    from poetry.console.commands.installer_command import InstallerCommand
     from poetry.poetry import Poetry
 
 
 class Application(BaseApplication):
     def __init__(self) -> None:
-        super(Application, self).__init__("poetry", __version__)
+        super().__init__("poetry", __version__)
 
         self._poetry = None
+        self._io: Optional[IO] = None
+        self._disable_plugins = False
+        self._plugins_loaded = False
 
         dispatcher = EventDispatcher()
         dispatcher.add_listener(COMMAND, self.register_command_loggers)
-        dispatcher.add_listener(COMMAND, self.set_env)
-        dispatcher.add_listener(COMMAND, self.set_installer)
+        dispatcher.add_listener(COMMAND, self.configure_env)
+        dispatcher.add_listener(COMMAND, self.configure_installer)
         self.set_event_dispatcher(dispatcher)
 
-        command_loader = FactoryCommandLoader(
-            {name: load_command(name) for name in COMMANDS}
-        )
+        command_loader = CommandLoader({name: load_command(name) for name in COMMANDS})
         self.set_command_loader(command_loader)
 
     @property
@@ -105,9 +116,15 @@ class Application(BaseApplication):
         if self._poetry is not None:
             return self._poetry
 
-        self._poetry = Factory().create_poetry(Path.cwd())
+        self._poetry = Factory().create_poetry(
+            Path.cwd(), io=self._io, disable_plugins=self._disable_plugins
+        )
 
         return self._poetry
+
+    @property
+    def command_loader(self) -> CommandLoader:
+        return self._command_loader
 
     def reset_poetry(self) -> None:
         self._poetry = None
@@ -118,7 +135,7 @@ class Application(BaseApplication):
         output: Optional[Output] = None,
         error_output: Optional[Output] = None,
     ) -> IO:
-        io = super(Application, self).create_io(input, output, error_output)
+        io = super().create_io(input, output, error_output)
 
         # Set our own CLI styles
         formatter = io.output.formatter
@@ -138,7 +155,16 @@ class Application(BaseApplication):
         io.output.set_formatter(formatter)
         io.error_output.set_formatter(formatter)
 
+        self._io = io
+
         return io
+
+    def _run(self, io: IO) -> int:
+        self._disable_plugins = io.input.parameter_option("--no-plugins")
+
+        self._load_plugins(io)
+
+        return super()._run(io)
 
     def _configure_io(self, io: IO) -> None:
         # We need to check if the command being run
@@ -221,7 +247,9 @@ class Application(BaseApplication):
 
             logger.setLevel(level)
 
-    def set_env(self, event: ConsoleCommandEvent, event_name: str, _: Any) -> None:
+    def configure_env(
+        self, event: ConsoleCommandEvent, event_name: str, _: Any
+    ) -> None:
         from .commands.env_command import EnvCommand
 
         command: EnvCommand = cast(EnvCommand, event.command)
@@ -240,11 +268,11 @@ class Application(BaseApplication):
         env = env_manager.create_venv(io)
 
         if env.is_venv() and io.is_verbose():
-            io.write_line("Using virtualenv: <comment>{}</>".format(env.path))
+            io.write_line(f"Using virtualenv: <comment>{env.path}</>")
 
         command.set_env(env)
 
-    def set_installer(
+    def configure_installer(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
         from .commands.installer_command import InstallerCommand
@@ -258,11 +286,14 @@ class Application(BaseApplication):
         if command.installer is not None:
             return
 
+        self._configure_installer(command, event.io)
+
+    def _configure_installer(self, command: "InstallerCommand", io: "IO") -> None:
         from poetry.installation.installer import Installer
 
         poetry = command.poetry
         installer = Installer(
-            event.io,
+            io,
             command.env,
             poetry.package,
             poetry.locker,
@@ -271,6 +302,33 @@ class Application(BaseApplication):
         )
         installer.use_executor(poetry.config.get("experimental.new-installer", False))
         command.set_installer(installer)
+
+    def _load_plugins(self, io: IO) -> None:
+        if self._plugins_loaded:
+            return
+
+        self._disable_plugins = io.input.has_parameter_option("--no-plugins")
+
+        if not self._disable_plugins:
+            from poetry.plugins.plugin_manager import PluginManager
+
+            manager = PluginManager("application.plugin")
+            manager.load_plugins()
+            manager.activate(self)
+
+        self._plugins_loaded = True
+
+    @property
+    def _default_definition(self) -> "Definition":
+        from cleo.io.inputs.option import Option
+
+        definition = super()._default_definition
+
+        definition.add_option(
+            Option("--no-plugins", flag=True, description="Disables plugins.")
+        )
+
+        return definition
 
 
 def main() -> int:

@@ -5,7 +5,7 @@ from .base_installer import BaseInstaller
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Package
+    from poetry.core.packages.package import Package
 
 
 class NoopInstaller(BaseInstaller):

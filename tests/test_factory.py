@@ -6,13 +6,22 @@ from pathlib import Path
 
 import pytest
 
+from entrypoints import EntryPoint
+
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
+from poetry.plugins.plugin import Plugin
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 
 
 fixtures_dir = Path(__file__).parent / "fixtures"
+
+
+class MyPlugin(Plugin):
+    def activate(self, poetry, io):
+        io.write_line("Updating version")
+        poetry.package.set_version("9.9.9")
 
 
 def test_create_poetry():
@@ -110,6 +119,7 @@ def test_create_poetry():
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Software Development :: Build Tools",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ]
@@ -164,6 +174,64 @@ def test_poetry_with_non_default_source():
 
     assert poetry.pool.repositories[1].name == "PyPI"
     assert isinstance(poetry.pool.repositories[1], PyPiRepository)
+
+
+def test_poetry_with_non_default_secondary_source():
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_secondary_source")
+
+    assert len(poetry.pool.repositories) == 2
+
+    assert poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+
+def test_poetry_with_non_default_multiple_secondary_sources():
+    poetry = Factory().create_poetry(
+        fixtures_dir / "with_non_default_multiple_secondary_sources"
+    )
+
+    assert len(poetry.pool.repositories) == 3
+
+    assert poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[2]
+    assert repository.name == "bar"
+    assert isinstance(repository, LegacyRepository)
+
+
+def test_poetry_with_non_default_multiple_sources():
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_multiple_sources")
+
+    assert len(poetry.pool.repositories) == 3
+
+    assert not poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "bar"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[2]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
 
 
 def test_poetry_with_no_default_source():
@@ -222,3 +290,16 @@ def test_create_poetry_with_local_config(fixture_dir):
 
     assert not poetry.config.get("virtualenvs.in-project")
     assert not poetry.config.get("virtualenvs.create")
+    assert not poetry.config.get("virtualenvs.options.always-copy")
+    assert not poetry.config.get("virtualenvs.options.system-site-packages")
+
+
+def test_create_poetry_with_plugins(mocker):
+    mocker.patch(
+        "entrypoints.get_group_all",
+        return_value=[EntryPoint("my-plugin", "tests.test_factory", "MyPlugin")],
+    )
+
+    poetry = Factory().create_poetry(fixtures_dir / "sample_project")
+
+    assert "9.9.9" == poetry.package.version.text

@@ -6,8 +6,8 @@ from .dependency_package import DependencyPackage
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import Package
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
 
 
 class PackageCollection(list):
@@ -21,7 +21,7 @@ class PackageCollection(list):
         if packages is None:
             packages = []
 
-        super(PackageCollection, self).__init__()
+        super().__init__()
 
         for package in packages:
             self.append(package)
@@ -32,4 +32,4 @@ class PackageCollection(list):
 
         package = DependencyPackage(self._dependency, package)
 
-        return super(PackageCollection, self).append(package)
+        return super().append(package)

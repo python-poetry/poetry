@@ -40,7 +40,7 @@ class Installer:
         locker: Locker,
         pool: Pool,
         config: Config,
-        installed: Union[InstalledRepository, None] = None,
+        installed: Union[Repository, None] = None,
         executor: Optional[Executor] = None,
     ):
         self._io = io
@@ -200,7 +200,7 @@ class Installer:
         # Checking extras
         for extra in self._extras:
             if extra not in self._package.extras:
-                raise ValueError("Extra [{}] is not specified.".format(extra))
+                raise ValueError(f"Extra [{extra}] is not specified.")
 
         locked_repository = self._locker.locked_repository(True)
         solver = Solver(
@@ -237,7 +237,7 @@ class Installer:
             # Checking extras
             for extra in self._extras:
                 if extra not in self._package.extras:
-                    raise ValueError("Extra [{}] is not specified.".format(extra))
+                    raise ValueError(f"Extra [{extra}] is not specified.")
 
             self._io.write_line("<info>Updating dependencies</>")
             solver = Solver(
@@ -267,7 +267,7 @@ class Installer:
 
             for extra in self._extras:
                 if extra not in self._locker.lock_data.get("extras", {}):
-                    raise ValueError("Extra [{}] is not specified.".format(extra))
+                    raise ValueError(f"Extra [{extra}] is not specified.")
 
             # If we are installing from lock
             # Filter the operations by comparing it with what is
@@ -309,12 +309,6 @@ class Installer:
 
         pool.add_repository(repo)
 
-        # We whitelist all packages to be sure
-        # that the latest ones are picked up
-        whitelist = []
-        for pkg in locked_repository.packages:
-            whitelist.append(pkg.name)
-
         solver = Solver(
             root,
             pool,
@@ -323,9 +317,12 @@ class Installer:
             NullIO(),
             remove_untracked=self._remove_untracked,
         )
+        # Everything is resolved at this point, so we no longer need
+        # to load deferred dependencies (i.e. VCS, URL and path dependencies)
+        solver.provider.load_deferred(False)
 
         with solver.use_environment(self._env):
-            ops = solver.solve(use_latest=whitelist)
+            ops = solver.solve(use_latest=self._whitelist)
 
         # We need to filter operations so that packages
         # not compatible with the current system,
@@ -378,7 +375,7 @@ class Installer:
                     "" if updates == 1 else "s",
                     uninstalls,
                     "" if uninstalls == 1 else "s",
-                    ", <info>{}</> skipped".format(skipped)
+                    f", <info>{skipped}</> skipped"
                     if skipped and self.is_verbose()
                     else "",
                 )
@@ -397,7 +394,7 @@ class Installer:
         """
         method = operation.job_type
 
-        getattr(self, "_execute_{}".format(method))(operation)
+        getattr(self, f"_execute_{method}")(operation)
 
     def _execute_install(self, operation: Install) -> None:
         if operation.skipped:

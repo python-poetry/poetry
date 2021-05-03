@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import os
 import re
 import sys
@@ -16,9 +13,6 @@ from typing import Union
 
 from cleo.helpers import option
 from tomlkit import inline_table
-
-from poetry.core.pyproject import PyProjectException
-from poetry.core.pyproject.toml import PyProjectTOML
 
 from .command import Command
 from .env_command import EnvCommand
@@ -70,6 +64,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
     def handle(self) -> int:
         from pathlib import Path
 
+        from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.vcs.git import GitConfig
         from poetry.layouts import layout
         from poetry.utils.env import SystemEnv
@@ -384,6 +379,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return package.pretty_name, selector.find_recommended_require_version(package)
 
     def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, str]]:
+        from poetry.core.pyproject.exceptions import PyProjectException
         from poetry.puzzle.provider import Provider
 
         result = []
@@ -434,20 +430,32 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
                     result.append(pair)
                     continue
-            elif (os.path.sep in requirement or "/" in requirement) and cwd.joinpath(
-                requirement
-            ).exists():
-                path = cwd.joinpath(requirement)
+            elif (os.path.sep in requirement or "/" in requirement) and (
+                cwd.joinpath(requirement).exists()
+                or Path(requirement).expanduser().exists()
+                and Path(requirement).expanduser().is_absolute()
+            ):
+                path = Path(requirement).expanduser()
+                is_absolute = path.is_absolute()
+
+                if not path.is_absolute():
+                    path = cwd.joinpath(requirement)
+
                 if path.is_file():
                     package = Provider.get_package_from_file(path.resolve())
                 else:
-                    package = Provider.get_package_from_directory(path)
+                    package = Provider.get_package_from_directory(path.resolve())
 
                 result.append(
                     dict(
                         [
                             ("name", package.name),
-                            ("path", path.relative_to(cwd).as_posix()),
+                            (
+                                "path",
+                                path.relative_to(cwd).as_posix()
+                                if not is_absolute
+                                else path.as_posix(),
+                            ),
                         ]
                         + ([("extras", extras)] if extras else [])
                     )
@@ -534,7 +542,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return author
 
     def _validate_license(self, license: str) -> str:
-        from poetry.core.spdx import license_by_id
+        from poetry.core.spdx.helpers import license_by_id
 
         if license:
             license_by_id(license)

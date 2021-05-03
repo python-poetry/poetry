@@ -16,9 +16,8 @@ def tester(command_tester_factory):
     return command_tester_factory("lock")
 
 
-@pytest.fixture
-def poetry_with_old_lockfile(project_factory, fixture_dir, source_dir):
-    source = fixture_dir("old_lock")
+def _project_factory(fixture_name, project_factory, fixture_dir):
+    source = fixture_dir(fixture_name)
     pyproject_content = (source / "pyproject.toml").read_text(encoding="utf-8")
     poetry_lock_content = (source / "poetry.lock").read_text(encoding="utf-8")
     return project_factory(
@@ -26,6 +25,57 @@ def poetry_with_old_lockfile(project_factory, fixture_dir, source_dir):
         pyproject_content=pyproject_content,
         poetry_lock_content=poetry_lock_content,
     )
+
+
+@pytest.fixture
+def poetry_with_outdated_lockfile(project_factory, fixture_dir):
+    return _project_factory("outdated_lock", project_factory, fixture_dir)
+
+
+@pytest.fixture
+def poetry_with_up_to_date_lockfile(project_factory, fixture_dir):
+    return _project_factory("up_to_date_lock", project_factory, fixture_dir)
+
+
+@pytest.fixture
+def poetry_with_old_lockfile(project_factory, fixture_dir):
+    return _project_factory("old_lock", project_factory, fixture_dir)
+
+
+def test_lock_check_outdated(
+    command_tester_factory, poetry_with_outdated_lockfile, http
+):
+    http.disable()
+
+    locker = Locker(
+        lock=poetry_with_outdated_lockfile.pyproject.file.path.parent / "poetry.lock",
+        local_config=poetry_with_outdated_lockfile.locker._local_config,
+    )
+    poetry_with_outdated_lockfile.set_locker(locker)
+
+    tester = command_tester_factory("lock", poetry=poetry_with_outdated_lockfile)
+    status_code = tester.execute("--check")
+
+    # exit with an error
+    assert status_code == 1
+
+
+def test_lock_check_up_to_date(
+    command_tester_factory, poetry_with_up_to_date_lockfile, http
+):
+    http.disable()
+
+    locker = Locker(
+        lock=poetry_with_up_to_date_lockfile.pyproject.file.path.parent / "poetry.lock",
+        local_config=poetry_with_up_to_date_lockfile.locker._local_config,
+    )
+    poetry_with_up_to_date_lockfile.set_locker(locker)
+
+    tester = command_tester_factory("lock", poetry=poetry_with_up_to_date_lockfile)
+    status_code = tester.execute("--check")
+
+    # exit with an error
+    assert status_code == 0
 
 
 def test_lock_no_update(command_tester_factory, poetry_with_old_lockfile, repo):

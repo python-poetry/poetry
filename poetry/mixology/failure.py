@@ -3,7 +3,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from poetry.core.semver import parse_constraint
+from poetry.core.semver.helpers import parse_constraint
 
 from .incompatibility import Incompatibility
 from .incompatibility_cause import ConflictCause
@@ -65,9 +65,7 @@ class _Writer:
         if isinstance(self._root.cause, ConflictCause):
             self._visit(self._root, {})
         else:
-            self._write(
-                self._root, "Because {}, version solving failed.".format(self._root)
-            )
+            self._write(self._root, f"Because {self._root}, version solving failed.")
 
         padding = (
             0
@@ -89,7 +87,7 @@ class _Writer:
 
             number = line[-1]
             if number is not None:
-                message = "({})".format(number).ljust(padding) + message
+                message = f"({number})".ljust(padding) + message
             else:
                 message = " " * padding + message
 
@@ -165,7 +163,7 @@ class _Writer:
                     self._visit(second, details_for_cause)
                     self._write(
                         incompatibility,
-                        "Thus, {}.".format(incompatibility_string),
+                        f"Thus, {incompatibility_string}.",
                         numbered=numbered,
                     )
                 else:

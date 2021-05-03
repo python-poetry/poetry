@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import os
 import re
 
@@ -27,7 +25,7 @@ def boolean_normalizer(val: str) -> bool:
     return val in ["true", "1"]
 
 
-class Config(object):
+class Config:
 
     default_config = {
         "cache-dir": str(CACHE_DIR),
@@ -35,7 +33,7 @@ class Config(object):
             "create": True,
             "in-project": None,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
-            "options": {"always-copy": False},
+            "options": {"always-copy": False, "system-site-packages": False},
         },
         "experimental": {"new-installer": True},
         "installer": {"parallel": True},
@@ -140,6 +138,7 @@ class Config(object):
             "virtualenvs.create",
             "virtualenvs.in-project",
             "virtualenvs.options.always-copy",
+            "virtualenvs.options.system-site-packages",
             "installer.parallel",
         }:
             return boolean_normalizer

@@ -1,6 +1,7 @@
 from cleo.helpers import argument
 from cleo.helpers import option
 
+from ...utils.helpers import canonicalize_name
 from .installer_command import InstallerCommand
 
 
@@ -31,7 +32,6 @@ list of installed packages
         packages = self.argument("packages")
         is_dev = self.option("dev")
 
-        original_content = self.poetry.file.read()
         content = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
         section = "dependencies"
@@ -54,12 +54,17 @@ list of installed packages
         for key in requirements:
             del poetry_content[section][key]
 
-        # Write the new content back
-        self.poetry.file.write(content)
+            dependencies = (
+                self.poetry.package.requires
+                if section == "dependencies"
+                else self.poetry.package.dev_requires
+            )
+
+            for i, dependency in enumerate(reversed(dependencies)):
+                if dependency.name == canonicalize_name(key):
+                    del dependencies[-i]
 
         # Update packages
-        self.reset_poetry()
-
         self._installer.use_executor(
             self.poetry.config.get("experimental.new-installer", False)
         )
@@ -69,22 +74,9 @@ list of installed packages
         self._installer.update(True)
         self._installer.whitelist(requirements)
 
-        try:
-            status = self._installer.run()
-        except Exception:
-            self.poetry.file.write(original_content)
+        status = self._installer.run()
 
-            raise
-
-        if status != 0 or self.option("dry-run"):
-            # Revert changes
-            if not self.option("dry-run"):
-                self.line_error(
-                    "\n"
-                    "Removal failed, reverting pyproject.toml "
-                    "to its original content."
-                )
-
-            self.poetry.file.write(original_content)
+        if not self.option("dry-run") and status == 0:
+            self.poetry.file.write(content)
 
         return status

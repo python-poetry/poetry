@@ -2,22 +2,18 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
-from poetry.core.semver import VersionConstraint
-from poetry.core.semver import VersionRange
-from poetry.core.semver import parse_constraint
-
 from .base_repository import BaseRepository
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import Link
-    from poetry.core.packages import Package
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
+    from poetry.core.packages.utils.link import Link
 
 
 class Repository(BaseRepository):
     def __init__(self, packages: List["Package"] = None, name: str = None) -> None:
-        super(Repository, self).__init__()
+        super().__init__()
 
         self._name = name
 
@@ -41,6 +37,10 @@ class Repository(BaseRepository):
                 return package.clone()
 
     def find_packages(self, dependency: "Dependency") -> List["Package"]:
+        from poetry.core.semver.helpers import parse_constraint
+        from poetry.core.semver.version_constraint import VersionConstraint
+        from poetry.core.semver.version_range import VersionRange
+
         constraint = dependency.constraint
         packages = []
         ignored_pre_release_packages = []
@@ -55,9 +55,9 @@ class Repository(BaseRepository):
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
-                and constraint.max.is_prerelease()
+                and constraint.max.is_unstable()
                 or constraint.min is not None
-                and constraint.min.is_prerelease()
+                and constraint.min.is_unstable()
             ):
                 allow_prereleases = True
 
@@ -77,7 +77,7 @@ class Repository(BaseRepository):
 
                 if constraint.allows(package.version) or (
                     package.is_prerelease()
-                    and constraint.allows(package.version.next_patch)
+                    and constraint.allows(package.version.next_patch())
                 ):
                     packages.append(package)
 
