@@ -75,7 +75,7 @@ class Authenticator:
         if cert is not None:
             cert = str(cert)
 
-        if isinstance(verify, pathlib.PurePath):
+        if verify is not None:
             verify = str(verify)
 
         settings = session.merge_environment_settings(
@@ -193,7 +193,7 @@ class Authenticator:
 
         return credentials
 
-    def get_certs_for_url(self, url: str) -> Dict[str, pathlib.PosixPath]:
+    def get_certs_for_url(self, url: str) -> Dict[str, pathlib.Path]:
         parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
