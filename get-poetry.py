@@ -688,17 +688,13 @@ class Installer:
                     )
                 )
 
-        with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8") as f:
+        # Make sure the file is executable (while respecting umask) which is os.open defaults
+        with open(os.path.join(POETRY_BIN, "poetry"), "w", encoding="utf-8", opener=os.open) as f:
             if WINDOWS:
                 python_executable = "python"
 
             f.write(u("#!/usr/bin/env {}\n".format(python_executable)))
             f.write(u(BIN))
-
-        if not WINDOWS:
-            # Making the file executable
-            st = os.stat(os.path.join(POETRY_BIN, "poetry"))
-            os.chmod(os.path.join(POETRY_BIN, "poetry"), st.st_mode | stat.S_IEXEC)
 
     def make_env(self):
         if WINDOWS:
