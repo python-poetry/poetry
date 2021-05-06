@@ -53,7 +53,7 @@ def pip_install(
                 executable=environment.python, with_pip=True, with_setuptools=True
             ) as env:
                 return environment.run(
-                    env._bin("pip"),
+                    *env.get_pip_command(),
                     *args,
                     env={**os.environ, "PYTHONPATH": str(env.purelib)},
                 )

@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 from pathlib import Path
-from typing import Optional
+from typing import Any
 from typing import Union
 
 import pytest
@@ -118,9 +118,7 @@ def test_env_get_venv_with_venv_folder_present(
         assert venv.path == in_project_venv_dir
 
 
-def build_venv(
-    path: Union[Path, str], executable: Optional[str] = None, flags: bool = None
-) -> ():
+def build_venv(path: Union[Path, str], **__: Any) -> ():
     os.mkdir(str(path))
 
 
@@ -161,6 +159,9 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
         Path(tmp_dir) / "{}-py3.7".format(venv_name),
         executable="python3.7",
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -281,6 +282,9 @@ def test_activate_activates_different_virtualenv_with_envs_file(
         Path(tmp_dir) / "{}-py3.6".format(venv_name),
         executable="python3.6",
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
     assert envs_file.exists()
@@ -335,6 +339,9 @@ def test_activate_activates_recreates_for_different_patch(
         Path(tmp_dir) / "{}-py3.7".format(venv_name),
         executable="python3.7",
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / "{}-py3.7".format(venv_name))
 
@@ -715,6 +722,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
         config_virtualenvs_path / "{}-py3.7".format(venv_name),
         executable="python3",
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
 
@@ -739,6 +749,9 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
         config_virtualenvs_path / "{}-py3.9".format(venv_name),
         executable="python3.9",
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
 
@@ -823,6 +836,9 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
         / "{}-py{}.{}".format(venv_name, version.major, version.minor),
         executable=None,
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
 
@@ -858,6 +874,9 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
         / "{}-py{}.{}".format(venv_name, version.major, version.minor - 1),
         executable="python{}.{}".format(version.major, version.minor - 1),
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
 
@@ -892,6 +911,9 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
         poetry.file.parent / ".venv",
         executable="python3.7",
         flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")

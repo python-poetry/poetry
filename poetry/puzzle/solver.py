@@ -63,9 +63,30 @@ class Solver:
         self._overrides = []
         self._remove_untracked = remove_untracked
 
+        self._preserved_package_names = None
+
     @property
     def provider(self) -> Provider:
         return self._provider
+
+    @property
+    def preserved_package_names(self):
+        if self._preserved_package_names is None:
+            self._preserved_package_names = {
+                self._package.name,
+                *Provider.UNSAFE_PACKAGES,
+            }
+
+            deps = {package.name for package in self._locked.packages}
+
+            # preserve pip/setuptools/wheel when not managed by poetry, this is so
+            # to avoid externally managed virtual environments causing unnecessary
+            # removals.
+            for name in {"pip", "wheel", "setuptools"}:
+                if name not in deps:
+                    self._preserved_package_names.add(name)
+
+        return self._preserved_package_names
 
     @contextmanager
     def use_environment(self, env: Env) -> None:
@@ -190,11 +211,9 @@ class Solver:
             locked_names = {locked.name for locked in self._locked.packages}
 
             for installed in self._installed.packages:
-                if installed.name == self._package.name:
+                if installed.name in self.preserved_package_names:
                     continue
-                if installed.name in Provider.UNSAFE_PACKAGES:
-                    # Never remove pip, setuptools etc.
-                    continue
+
                 if installed.name not in locked_names:
                     operations.append(Uninstall(installed))
 

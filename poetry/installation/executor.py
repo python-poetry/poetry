@@ -670,7 +670,13 @@ class Executor:
                 archive = self._chef.prepare(archive)
 
         if package.files:
-            archive_hash = "sha256:" + FileDependency(package.name, archive).hash()
+            archive_hash = (
+                "sha256:"
+                + FileDependency(
+                    package.name,
+                    Path(archive.path) if isinstance(archive, Link) else archive,
+                ).hash()
+            )
             if archive_hash not in {f["hash"] for f in package.files}:
                 raise RuntimeError(
                     f"Invalid hash for {package} using archive {archive.name}"
