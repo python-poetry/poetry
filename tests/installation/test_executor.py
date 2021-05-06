@@ -361,7 +361,8 @@ def verify_installed_distribution(venv, package, url_reference=None):
         direct_url_entry = direct_url_file.relative_to(record_file.parent.parent)
         assert direct_url_file.exists()
         assert str(direct_url_entry) in {
-            row.split(",")[0] for row in record_file.read_text(encoding="utf-8").splitlines()
+            row.split(",")[0]
+            for row in record_file.read_text(encoding="utf-8").splitlines()
         }
         assert json.loads(direct_url_file.read_text(encoding="utf-8")) == url_reference
     else:
