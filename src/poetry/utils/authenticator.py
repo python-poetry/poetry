@@ -69,8 +69,8 @@ class Authenticator:
         stream = kwargs.get("stream")
 
         certs = self.get_certs_for_url(url)
-        verify = kwargs.get("verify", certs.get("verify"))
-        cert = kwargs.get("cert", certs.get("cert"))
+        verify = kwargs.get("verify") or certs.get("verify")
+        cert = kwargs.get("cert") or certs.get("cert")
 
         if cert is not None:
             cert = str(cert)
@@ -179,19 +179,14 @@ class Authenticator:
     def _get_credentials_for_netloc(
         self, netloc: str
     ) -> Tuple[Optional[str], Optional[str]]:
-        credentials = (None, None)
-
         for (repository_name, repository_netloc) in self._get_repository_netlocs():
             if netloc == repository_netloc:
                 auth = self._password_manager.get_http_auth(repository_name)
 
                 if auth is None:
-                    continue
+                    return (auth["username"], auth["password"])
 
-                credentials = (auth["username"], auth["password"])
-                break
-
-        return credentials
+        return (None, None)
 
     def get_certs_for_url(self, url: str) -> Dict[str, pathlib.Path]:
         parsed_url = urllib.parse.urlsplit(url)
