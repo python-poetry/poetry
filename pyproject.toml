@@ -52,17 +52,15 @@ importlib-metadata = {version = "^1.6.0", python = "<3.8"}
 dataclasses = {version = "^0.8", python = "~3.6"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.4.3"
-pytest-cov = "^2.5"
-pytest-mock = "^1.9"
+pytest = "^6.2"
+pytest-cov = "^2.8"
+pytest-mock = "^3.5"
 pre-commit = { version = "^2.6", python = "^3.6.1" }
 tox = "^3.0"
-pytest-sugar = "^0.9.2"
+pytest-sugar = "^0.9"
 httpretty = "^1.0"
 zipp = { version = "^3.4", python = "<3.8"}
-deepdiff = "^5.0.2"
-# temporary workaround for https://github.com/python-poetry/poetry/issues/3404
-urllib3 = "1.25.10"
+deepdiff = "^5.0"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
