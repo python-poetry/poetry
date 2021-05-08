@@ -19,7 +19,7 @@ class Update(Operation):
         self._initial_package = initial
         self._target_package = target
 
-        super(Update, self).__init__(reason, priority=priority)
+        super().__init__(reason, priority=priority)
 
     @property
     def initial_package(self) -> "Package":

@@ -50,7 +50,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     tester.execute("3.7")
 
-    venv_py37 = venv_cache / "{}-py3.7".format(venv_name)
+    venv_py37 = venv_cache / f"{venv_name}-py3.7"
     mock_build_env.assert_called_with(
         venv_py37,
         executable="python3.7",
@@ -85,7 +85,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 
     python_minor = ".".join(str(v) for v in current_python[:2])
     python_patch = ".".join(str(v) for v in current_python[:3])
-    venv_dir = venv_cache / "{}-py{}".format(venv_name, python_minor)
+    venv_dir = venv_cache / f"{venv_name}-py{python_minor}"
     venv_dir.mkdir(parents=True, exist_ok=True)
 
     envs_file = TOMLFile(venv_cache / "envs.toml")
@@ -110,7 +110,7 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     python_minor = ".".join(str(v) for v in current_python[:2])
-    venv_dir = venv_cache / "{}-py{}".format(venv_name, python_minor)
+    venv_dir = venv_cache / f"{venv_name}-py{python_minor}"
 
     mocker.patch(
         "poetry.utils.env.EnvManager._env",

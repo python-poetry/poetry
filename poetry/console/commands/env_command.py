@@ -11,7 +11,7 @@ class EnvCommand(Command):
     def __init__(self) -> None:
         self._env = None
 
-        super(EnvCommand, self).__init__()
+        super().__init__()
 
     @property
     def env(self) -> "Env":

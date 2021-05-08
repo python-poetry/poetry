@@ -243,10 +243,9 @@ class SitePackages:
                 str, self._candidates if not writable_only else self.writable_candidates
             )
         )
-        for distribution in metadata.PathDistribution.discover(
+        yield from metadata.PathDistribution.discover(
             name=name, path=path
-        ):  # type: metadata.PathDistribution
-            yield distribution
+        )
 
     def find_distribution(
         self, name: str, writable_only: bool = False
@@ -344,7 +343,7 @@ class SitePackages:
         if results:
             return results
 
-        raise OSError("Unable to access any of {}".format(paths_csv(candidates)))
+        raise OSError(f"Unable to access any of {paths_csv(candidates)}")
 
     def write_text(self, path: Union[str, Path], *args: Any, **kwargs: Any) -> Path:
         return self._path_method_wrapper(path, "write_text", *args, **kwargs)[0]
@@ -875,7 +874,7 @@ class EnvManager:
                 return SystemEnv(Path(sys.prefix))
 
             io.write_line(
-                "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
+                f"Creating virtualenv <c1>{name}</> in {str(venv_path)}"
             )
         else:
             create_venv = False
@@ -887,7 +886,7 @@ class EnvManager:
                         )
                     )
                 io.write_line(
-                    "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
+                    f"Recreating virtualenv <c1>{name}</> in {str(venv)}"
                 )
                 self.remove_venv(venv)
                 create_venv = True
@@ -1080,7 +1079,7 @@ class Env:
 
     def get_embedded_wheel(self, distribution):
         return get_embed_wheel(
-            distribution, "{}.{}".format(self.version_info[0], self.version_info[1])
+            distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         ).path
 
     @property

@@ -37,7 +37,7 @@ class EnvInfoCommand(Command):
         self.line("")
         self.line("<b>Virtualenv</b>")
         listing = [
-            "<info>Python</info>:         <comment>{}</>".format(env_python_version),
+            f"<info>Python</info>:         <comment>{env_python_version}</>",
             "<info>Implementation</info>: <comment>{}</>".format(
                 env.python_implementation
             ),
@@ -59,9 +59,9 @@ class EnvInfoCommand(Command):
         self.line(
             "\n".join(
                 [
-                    "<info>Platform</info>: <comment>{}</>".format(env.platform),
-                    "<info>OS</info>:       <comment>{}</>".format(env.os),
-                    "<info>Python</info>:   <comment>{}</>".format(env.base),
+                    f"<info>Platform</info>: <comment>{env.platform}</>",
+                    f"<info>OS</info>:       <comment>{env.os}</>",
+                    f"<info>Python</info>:   <comment>{env.base}</>",
                 ]
             )
         )

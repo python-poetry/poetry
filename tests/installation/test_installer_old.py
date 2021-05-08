@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import itertools
 import sys
 
@@ -127,7 +125,7 @@ def installer(package, pool, locker, env, installed, config):
 
 
 def fixture(name):
-    file = TOMLFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
+    file = TOMLFile(Path(__file__).parent / "fixtures" / f"{name}.test")
 
     return file.read()
 
@@ -379,7 +377,7 @@ def test_run_install_remove_untracked(
         package_c.name,
         *managed_reserved_package_names,
     }
-    assert set(r.name for r in removals) == expected_removals
+    assert {r.name for r in removals} == expected_removals
 
 
 def test_run_whitelist_add(installer, locker, repo, package):

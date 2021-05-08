@@ -26,7 +26,7 @@ class Application(BaseApplication):
         output: Optional[Output] = None,
         error_output: Optional[Output] = None,
     ) -> IO:
-        io = super(Application, self).create_io(input, output, error_output)
+        io = super().create_io(input, output, error_output)
 
         io.output.formatter.set_style("debug", Style("default", options=["dark"]))
         io.error_output.formatter.set_style("debug", Style("default", options=["dark"]))
@@ -100,7 +100,7 @@ class MakeReleaseCommand(Command):
                 os.path.join(os.path.dirname(__file__), "poetry"),
                 poetry_dir,
                 ignore=lambda dir_, names: set(vcs_excluded).intersection(
-                    set([os.path.join(dir_, name) for name in names])
+                    {os.path.join(dir_, name) for name in names}
                 ),
             )
             created_files += [
@@ -149,8 +149,8 @@ class MakeReleaseCommand(Command):
 
             self.line("<info>Packaging files</info>")
             with temporary_directory() as tmp_dir2:
-                base_name = "poetry-{}-{}".format(__version__, sys.platform)
-                name = "{}.tar.gz".format(base_name)
+                base_name = f"poetry-{__version__}-{sys.platform}"
+                name = f"{base_name}.tar.gz"
                 gz = GzipFile(os.path.join(tmp_dir2, name), mode="wb")
                 try:
                     with tarfile.TarFile(
@@ -195,7 +195,7 @@ class MakeReleaseCommand(Command):
                 if missing_files:
                     self.line("<error>Some files are missing:</error>")
                     for missing_file in missing_files:
-                        self.line("<error>  - {}</error>".format(missing_file))
+                        self.line(f"<error>  - {missing_file}</error>")
 
                     return 1
 
@@ -218,11 +218,11 @@ class MakeReleaseCommand(Command):
                         sha.update(buffer)
 
                 with open(
-                    os.path.join(releases_dir, "{}.sha256sum".format(base_name)), "w"
+                    os.path.join(releases_dir, f"{base_name}.sha256sum"), "w"
                 ) as f:
                     f.write(sha.hexdigest())
 
-                self.line("<info>Built <comment>{}</comment></info>".format(name))
+                self.line(f"<info>Built <comment>{name}</comment></info>")
 
     def check_system(self, pythons):
         for version, python in sorted(pythons.items()):
@@ -235,10 +235,10 @@ class MakeReleaseCommand(Command):
 
                 subprocess.check_output([python, "-m", "pip", "install", "pip", "-U"])
             except subprocess.CalledProcessError:
-                raise RuntimeError("Python {} is not available".format(version))
+                raise RuntimeError(f"Python {version} is not available")
 
     def vendorize_for_python(self, env, packages, dest, python_version):
-        vendor_dir = os.path.join(dest, "_vendor", "py{}".format(python_version))
+        vendor_dir = os.path.join(dest, "_vendor", f"py{python_version}")
 
         bar = self.progress_bar(max=len(packages))
         bar.set_format("%message% %current%/%max%")
@@ -251,7 +251,7 @@ class MakeReleaseCommand(Command):
         for package in packages:
             env.run_pip(
                 "install",
-                "{}=={}".format(package.name, package.version),
+                f"{package.name}=={package.version}",
                 "--no-deps",
                 "--target",
                 vendor_dir,

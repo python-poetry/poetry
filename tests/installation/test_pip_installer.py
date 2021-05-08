@@ -69,7 +69,7 @@ def test_requirement_source_type_url():
     )
 
     result = installer.requirement(foo, formatted=True)
-    expected = "{}#egg={}".format(foo.source_url, foo.name)
+    expected = f"{foo.source_url}#egg={foo.name}"
 
     assert expected == result
 

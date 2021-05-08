@@ -70,7 +70,7 @@ class _Writer:
         padding = (
             0
             if not self._line_numbers
-            else len("({}) ".format(list(self._line_numbers.values())[-1]))
+            else len(f"({list(self._line_numbers.values())[-1]}) ")
         )
 
         last_was_empty = False

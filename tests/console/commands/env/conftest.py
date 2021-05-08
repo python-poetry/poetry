@@ -33,7 +33,7 @@ def venvs_in_cache_dirs(
 ):
     directories = []
     for version in python_versions:
-        directory = venv_cache.joinpath("{}-py{}".format(venv_name, version))
+        directory = venv_cache.joinpath(f"{venv_name}-py{version}")
         directory.mkdir(parents=True, exist_ok=True)
         directories.append(directory.name)
     return directories

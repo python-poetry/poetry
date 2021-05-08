@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Dict
@@ -41,7 +38,7 @@ class Factory(BaseFactory):
         if io is None:
             io = NullIO()
 
-        base_poetry = super(Factory, self).create_poetry(cwd)
+        base_poetry = super().create_poetry(cwd)
 
         locker = Locker(
             base_poetry.file.parent / "poetry.lock", base_poetry.local_config
@@ -55,7 +52,7 @@ class Factory(BaseFactory):
         if local_config_file.exists():
             if io.is_debug():
                 io.write_line(
-                    "Loading configuration file {}".format(local_config_file.path)
+                    f"Loading configuration file {local_config_file.path}"
                 )
 
             config.merge(local_config_file.read())

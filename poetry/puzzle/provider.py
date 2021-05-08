@@ -578,7 +578,7 @@ class Provider:
 
             if len(by_constraint) == 1:
                 self.debug(
-                    "<debug>Merging requirements for {}</debug>".format(str(deps[0]))
+                    f"<debug>Merging requirements for {str(deps[0])}</debug>"
                 )
                 dependencies.append(list(by_constraint.values())[0][0])
                 continue
@@ -713,7 +713,7 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<c2>{}</c2>)".format(m2.group(2))
+                    version = f" (<c2>{m2.group(2)}</c2>)"
                 else:
                     name = m.group(1)
                     version = ""
@@ -757,7 +757,7 @@ class Provider:
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)
-                    version = " (<c2>{}</c2>)".format(m2.group(2))
+                    version = f" (<c2>{m2.group(2)}</c2>)"
                 else:
                     name = m.group(1)
                     version = ""
@@ -780,7 +780,7 @@ class Provider:
             debug_info = (
                 "\n".join(
                     [
-                        "<debug>{}:</debug> {}".format(str(depth).rjust(4), s)
+                        f"<debug>{str(depth).rjust(4)}:</debug> {s}"
                         for s in debug_info.split("\n")
                     ]
                 )

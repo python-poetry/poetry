@@ -647,7 +647,7 @@ line-length = 88
     pyproject_file.write_text(decode(existing_section))
     tester.execute(inputs=init_basic_inputs)
     assert (
-        "{}\n{}".format(existing_section, init_basic_toml) in pyproject_file.read_text()
+        f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
     )
 
 
@@ -686,7 +686,7 @@ foo = "^1.19.2"
 
 [tool.poetry.dev-dependencies]
 """
-    assert "{}\n{}".format(existing_section, expected) in pyproject_file.read_text()
+    assert f"{existing_section}\n{expected}" in pyproject_file.read_text()
 
 
 def test_init_existing_pyproject_with_build_system_fails(
@@ -704,4 +704,4 @@ build-backend = "setuptools.build_meta"
         tester.io.fetch_output().strip()
         == "A pyproject.toml file with a defined build-system already exists."
     )
-    assert "{}".format(existing_section) in pyproject_file.read_text()
+    assert f"{existing_section}" in pyproject_file.read_text()

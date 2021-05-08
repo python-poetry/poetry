@@ -22,7 +22,7 @@ class EnvListCommand(Command):
                 name = str(venv.path)
 
             if venv == current_env:
-                self.line("<info>{} (Activated)</info>".format(name))
+                self.line(f"<info>{name} (Activated)</info>")
 
                 continue
 

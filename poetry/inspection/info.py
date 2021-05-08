@@ -45,7 +45,7 @@ class PackageInfoError(ValueError):
         self, path: Union[Path, str], *reasons: Union[BaseException, str]
     ) -> None:
         reasons = (
-            "Unable to determine package info for path: {}".format(str(path)),
+            f"Unable to determine package info for path: {str(path)}",
         ) + reasons
         super().__init__("\n\n".join(str(msg).strip() for msg in reasons if msg))
 
