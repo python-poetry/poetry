@@ -684,9 +684,7 @@ class Installer:
         )
 
         if self._version and self._version not in releases:
-            self._write(
-                colorize("error", f"Version {self._version} does not exist.")
-            )
+            self._write(colorize("error", f"Version {self._version} does not exist."))
 
             return None, None
 

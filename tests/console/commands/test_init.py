@@ -646,9 +646,7 @@ line-length = 88
 """
     pyproject_file.write_text(decode(existing_section))
     tester.execute(inputs=init_basic_inputs)
-    assert (
-        f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
-    )
+    assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
 
 
 def test_init_non_interactive_existing_pyproject_add_dependency(

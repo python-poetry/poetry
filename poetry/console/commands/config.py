@@ -140,9 +140,7 @@ To remove a repository (repo is a short alias for repositories):
                 else:
                     repo = config.get(f"repositories.{m.group(1)}")
                     if repo is None:
-                        raise ValueError(
-                            f"There is no {m.group(1)} repository defined"
-                        )
+                        raise ValueError(f"There is no {m.group(1)} repository defined")
 
                     value = repo
 
@@ -184,22 +182,16 @@ To remove a repository (repo is a short alias for repositories):
             if self.option("unset"):
                 repo = config.get(f"repositories.{m.group(1)}")
                 if repo is None:
-                    raise ValueError(
-                        f"There is no {m.group(1)} repository defined"
-                    )
+                    raise ValueError(f"There is no {m.group(1)} repository defined")
 
-                config.config_source.remove_property(
-                    f"repositories.{m.group(1)}"
-                )
+                config.config_source.remove_property(f"repositories.{m.group(1)}")
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                config.config_source.add_property(
-                    f"repositories.{m.group(1)}.url", url
-                )
+                config.config_source.add_property(f"repositories.{m.group(1)}.url", url)
 
                 return 0
 

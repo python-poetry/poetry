@@ -51,9 +51,7 @@ class Factory(BaseFactory):
         local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
-                io.write_line(
-                    f"Loading configuration file {local_config_file.path}"
-                )
+                io.write_line(f"Loading configuration file {local_config_file.path}")
 
             config.merge(local_config_file.read())
 

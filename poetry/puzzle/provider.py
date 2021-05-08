@@ -577,9 +577,7 @@ class Provider:
                 continue
 
             if len(by_constraint) == 1:
-                self.debug(
-                    f"<debug>Merging requirements for {str(deps[0])}</debug>"
-                )
+                self.debug(f"<debug>Merging requirements for {str(deps[0])}</debug>")
                 dependencies.append(list(by_constraint.values())[0][0])
                 continue
 

@@ -22,9 +22,7 @@ def test_remove_by_python_version(
     assert check_output.called
     assert not (venv_cache / f"{venv_name}-py3.6").exists()
 
-    expected = "Deleted virtualenv: {}\n".format(
-        venv_cache / f"{venv_name}-py3.6"
-    )
+    expected = "Deleted virtualenv: {}\n".format(venv_cache / f"{venv_name}-py3.6")
     assert expected == tester.io.fetch_output()
 
 

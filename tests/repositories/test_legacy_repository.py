@@ -24,9 +24,7 @@ class MockRepository(LegacyRepository):
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
     def __init__(self):
-        super().__init__(
-            "legacy", url="http://legacy.foo.bar", disable_cache=True
-        )
+        super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
     def _get(self, endpoint):
         parts = endpoint.split("/")
@@ -323,9 +321,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
 class MockHttpRepository(LegacyRepository):
     def __init__(self, endpoint_responses, http):
         base_url = "http://legacy.foo.bar"
-        super().__init__(
-            "legacy", url=base_url, disable_cache=True
-        )
+        super().__init__("legacy", url=base_url, disable_cache=True)
 
         for endpoint, response in endpoint_responses.items():
             url = base_url + endpoint

@@ -438,12 +438,9 @@ def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
     other_version = Version.parse("3.4") if version.major == 2 else version.next_minor()
+    (Path(tmp_dir) / f"{venv_name}-py{version.major}.{version.minor}").mkdir()
     (
-        Path(tmp_dir) / f"{venv_name}-py{version.major}.{version.minor}"
-    ).mkdir()
-    (
-        Path(tmp_dir)
-        / f"{venv_name}-py{other_version.major}.{other_version.minor}"
+        Path(tmp_dir) / f"{venv_name}-py{other_version.major}.{other_version.minor}"
     ).mkdir()
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -832,8 +829,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     assert not check_output.called
     m.assert_called_with(
-        config_virtualenvs_path
-        / f"{venv_name}-py{version.major}.{version.minor}",
+        config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor}",
         executable=None,
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
@@ -870,8 +866,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
 
     assert check_output.called
     m.assert_called_with(
-        config_virtualenvs_path
-        / f"{venv_name}-py{version.major}.{version.minor - 1}",
+        config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor - 1}",
         executable=f"python{version.major}.{version.minor - 1}",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
