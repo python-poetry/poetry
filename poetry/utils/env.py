@@ -2,6 +2,7 @@ import base64
 import hashlib
 import itertools
 import json
+import logging
 import os
 import platform
 import re
@@ -151,6 +152,8 @@ import sysconfig
 
 print(json.dumps(sysconfig.get_paths()))
 """
+
+logger = logging.getLogger(__name__)
 
 
 class SitePackages:
@@ -1258,6 +1261,9 @@ class Env:
             if kwargs.get("shell", False):
                 cmd = list_to_shell_command(cmd)
 
+            logger.debug(
+                "Env: Executing command: {}".format(list_to_shell_command(cmd))
+            )
             if input_:
                 output = subprocess.run(
                     cmd,

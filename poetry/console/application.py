@@ -222,6 +222,7 @@ class Application(BaseApplication):
             "poetry.packages.locker",
             "poetry.packages.package",
             "poetry.utils.password_manager",
+            "poetry.utils.env",
         ]
 
         loggers += command.loggers
