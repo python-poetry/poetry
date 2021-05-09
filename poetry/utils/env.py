@@ -1339,7 +1339,7 @@ class Env:
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
-    def run_python_script(self, content: str, **kwargs: Any) -> str:
+    def run_python_script(self, content: str, **kwargs: Any) -> Union[int, str]:
         return self.run(self._executable, "-W", "ignore", "-", input_=content, **kwargs)
 
     def _run(self, cmd: List[str], **kwargs: Any) -> Union[int, str]:
