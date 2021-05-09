@@ -1,11 +1,8 @@
-from typing import TYPE_CHECKING
 from typing import Optional
 
+from poetry.utils.env import Env
+
 from .command import Command
-
-
-if TYPE_CHECKING:
-    from poetry.utils.env import Env
 
 
 class EnvCommand(Command):
