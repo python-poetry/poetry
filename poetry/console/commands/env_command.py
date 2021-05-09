@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Optional
 
 from .command import Command
 
@@ -14,8 +15,8 @@ class EnvCommand(Command):
         super(EnvCommand, self).__init__()
 
     @property
-    def env(self) -> "Env":
+    def env(self) -> Optional[Env]:
         return self._env
 
-    def set_env(self, env: "Env") -> None:
+    def set_env(self, env: Env) -> None:
         self._env = env

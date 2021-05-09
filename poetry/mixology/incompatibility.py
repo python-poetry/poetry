@@ -1,3 +1,4 @@
+from typing import Callable
 from typing import Dict
 from typing import Iterator
 from typing import List
@@ -459,7 +460,7 @@ class Incompatibility:
             term.dependency.pretty_name, term.dependency.pretty_constraint
         )
 
-    def _single_term_where(self, callable: callable) -> Optional[Term]:
+    def _single_term_where(self, callable: Callable[[Term], bool]) -> Optional[Term]:
         found = None
         for term in self._terms:
             if not callable(term):

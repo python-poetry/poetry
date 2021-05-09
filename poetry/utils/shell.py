@@ -2,6 +2,7 @@ import os
 import signal
 import sys
 
+from pathlib import Optional
 from pathlib import Path
 from typing import Any
 
@@ -61,7 +62,7 @@ class Shell:
 
         return cls._shell
 
-    def activate(self, env: VirtualEnv) -> None:
+    def activate(self, env: VirtualEnv) -> Optional[int]:
         if WINDOWS:
             return env.execute(self.path)
 
