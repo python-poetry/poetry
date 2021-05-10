@@ -2,9 +2,9 @@ import os
 import signal
 import sys
 
-from pathlib import Optional
 from pathlib import Path
 from typing import Any
+from typing import Optional
 
 import pexpect
 

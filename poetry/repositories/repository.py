@@ -111,7 +111,7 @@ class Repository(BaseRepository):
         return []
 
     def search(self, query: str) -> List["Package"]:
-        results = []
+        results: List["Package"] = []
 
         for package in self.packages:
             if query in package.name:

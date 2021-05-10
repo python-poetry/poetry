@@ -125,7 +125,7 @@ class PasswordManager:
         self._keyring = None
 
     @property
-    def keyring(self) -> KeyRing:
+    def keyring(self) -> Optional[KeyRing]:
         if self._keyring is None:
             self._keyring = KeyRing("poetry-repository")
             if not self._keyring.is_available():

@@ -311,7 +311,7 @@ class SetupReader:
                 value = self._find_in_dict(variable, name)
 
         if value is None:
-            return
+            return None
 
         if isinstance(value, ast.Str):
             return value.s
@@ -325,6 +325,7 @@ class SetupReader:
         for keyword in call.keywords:
             if keyword.arg == name:
                 return keyword.value
+        return None
 
     def _find_call_kwargs(self, call: ast.Call) -> Optional[Any]:
         kwargs = None
@@ -356,3 +357,4 @@ class SetupReader:
         for key, val in zip(dict_.keys, dict_.values):
             if isinstance(key, ast.Str) and key.s == name:
                 return val
+        return None
