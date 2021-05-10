@@ -214,7 +214,9 @@ def _get_win_folder_with_ctypes(csidl_name: str) -> str:
     }[csidl_name]
 
     buf = ctypes.create_unicode_buffer(1024)
-    ctypes.windll.shell32.SHGetFolderPathW(None, csidl_const, None, 0, buf)
+    res = ctypes.windll.shell32.SHGetFolderPathW(None, csidl_const, None, 0, buf)
+    if res != 0:
+        raise RuntimeError(f"Unable to find directory: {csidl_name}")
 
     # Downgrade to short path name if have highbit chars. See
     # <http://bugs.activestate.com/show_bug.cgi?id=85099>.
