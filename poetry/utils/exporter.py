@@ -1,16 +1,18 @@
+import urllib.parse
+
+from pathlib import Path
 from typing import Optional
 from typing import Sequence
 from typing import Union
 
-from clikit.api.io import IO
+from cleo.io.io import IO
 
+from poetry.core.packages.utils.utils import path_to_url
 from poetry.poetry import Poetry
-from poetry.utils._compat import Path
 from poetry.utils._compat import decode
-from poetry.utils._compat import urlparse
 
 
-class Exporter(object):
+class Exporter:
     """
     Exporter class to export a lock file to alternative formats.
     """
@@ -20,21 +22,21 @@ class Exporter(object):
     ACCEPTED_FORMATS = (FORMAT_REQUIREMENTS_TXT,)
     ALLOWED_HASH_ALGORITHMS = ("sha256", "sha384", "sha512")
 
-    def __init__(self, poetry):  # type: (Poetry) -> None
+    def __init__(self, poetry: Poetry) -> None:
         self._poetry = poetry
 
     def export(
         self,
-        fmt,
-        cwd,
-        output,
-        with_hashes=True,
-        dev=False,
-        extras=None,
-        with_credentials=False,
-    ):  # type: (str, Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
+        fmt: str,
+        cwd: Path,
+        output: Union[IO, str],
+        with_hashes: bool = True,
+        dev: bool = False,
+        extras: Optional[Union[bool, Sequence[str]]] = None,
+        with_credentials: bool = False,
+    ) -> None:
         if fmt not in self.ACCEPTED_FORMATS:
-            raise ValueError("Invalid export format: {}".format(fmt))
+            raise ValueError(f"Invalid export format: {fmt}")
 
         getattr(self, "_export_{}".format(fmt.replace(".", "_")))(
             cwd,
@@ -47,13 +49,13 @@ class Exporter(object):
 
     def _export_requirements_txt(
         self,
-        cwd,
-        output,
-        with_hashes=True,
-        dev=False,
-        extras=None,
-        with_credentials=False,
-    ):  # type: (Path, Union[IO, str], bool, bool, Optional[Union[bool, Sequence[str]]], bool) -> None
+        cwd: Path,
+        output: Union[IO, str],
+        with_hashes: bool = True,
+        dev: bool = False,
+        extras: Optional[Union[bool, Sequence[str]]] = None,
+        with_credentials: bool = False,
+    ) -> None:
         indexes = set()
         content = ""
         dependency_lines = set()
@@ -70,23 +72,30 @@ class Exporter(object):
                 line += "-e "
 
             requirement = dependency.to_pep_508(with_extras=False)
-            is_direct_reference = (
-                dependency.is_vcs()
-                or dependency.is_url()
-                or dependency.is_file()
-                or dependency.is_directory()
+            is_direct_local_reference = (
+                dependency.is_file() or dependency.is_directory()
             )
+            is_direct_remote_reference = dependency.is_vcs() or dependency.is_url()
 
-            if is_direct_reference:
+            if is_direct_remote_reference:
                 line = requirement
+            elif is_direct_local_reference:
+                dependency_uri = path_to_url(dependency.source_url)
+                line = f"{dependency.name} @ {dependency_uri}"
             else:
-                line = "{}=={}".format(package.name, package.version)
+                line = f"{package.name}=={package.version}"
+
+            if not is_direct_remote_reference:
                 if ";" in requirement:
                     markers = requirement.split(";", 1)[1].strip()
                     if markers:
-                        line += "; {}".format(markers)
+                        line += f"; {markers}"
 
-            if not is_direct_reference and package.source_url:
+            if (
+                not is_direct_remote_reference
+                and not is_direct_local_reference
+                and package.source_url
+            ):
                 indexes.add(package.source_url)
 
             if package.files and with_hashes:
@@ -100,7 +109,7 @@ class Exporter(object):
                         if algorithm not in self.ALLOWED_HASH_ALGORITHMS:
                             continue
 
-                    hashes.append("{}:{}".format(algorithm, h))
+                    hashes.append(f"{algorithm}:{h}")
 
                 if hashes:
                     line += " \\\n"
@@ -134,24 +143,22 @@ class Exporter(object):
                         if with_credentials
                         else repository.url
                     )
-                    indexes_header = "--index-url {}\n".format(url)
+                    indexes_header = f"--index-url {url}\n"
                     continue
 
                 url = (
                     repository.authenticated_url if with_credentials else repository.url
                 )
-                parsed_url = urlparse.urlsplit(url)
+                parsed_url = urllib.parse.urlsplit(url)
                 if parsed_url.scheme == "http":
-                    indexes_header += "--trusted-host {}\n".format(parsed_url.netloc)
-                indexes_header += "--extra-index-url {}\n".format(url)
+                    indexes_header += f"--trusted-host {parsed_url.netloc}\n"
+                indexes_header += f"--extra-index-url {url}\n"
 
             content = indexes_header + "\n" + content
 
         self._output(content, cwd, output)
 
-    def _output(
-        self, content, cwd, output
-    ):  # type: (str, Path, Union[IO, str]) -> None
+    def _output(self, content: str, cwd: Path, output: Union[IO, str]) -> None:
         decoded = decode(content)
         try:
             output.write(decoded)

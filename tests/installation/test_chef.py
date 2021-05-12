@@ -1,8 +1,9 @@
+from pathlib import Path
+
 from packaging.tags import Tag
 
 from poetry.core.packages.utils.link import Link
 from poetry.installation.chef import Chef
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 
 
@@ -47,7 +48,9 @@ def test_get_cached_archives_for_link(config, mocker):
 
     distributions = Path(__file__).parent.parent.joinpath("fixtures/distributions")
     mocker.patch.object(
-        chef, "get_cache_directory_for_link", return_value=distributions,
+        chef,
+        "get_cache_directory_for_link",
+        return_value=distributions,
     )
 
     archives = chef.get_cached_archives_for_link(
@@ -60,7 +63,7 @@ def test_get_cached_archives_for_link(config, mocker):
     }
 
 
-def test_get_cache_directory_for_link(config):
+def test_get_cache_directory_for_link(config, config_cache_dir):
     chef = Chef(
         config,
         MockEnv(
@@ -71,8 +74,11 @@ def test_get_cache_directory_for_link(config):
     directory = chef.get_cache_directory_for_link(
         Link("https://files.python-poetry.org/poetry-1.1.0.tar.gz")
     )
+
     expected = Path(
-        "/foo/artifacts/ba/63/13/283a3b3b7f95f05e9e6f84182d276f7bb0951d5b0cc24422b33f7a4648"
+        "{}/artifacts/ba/63/13/283a3b3b7f95f05e9e6f84182d276f7bb0951d5b0cc24422b33f7a4648".format(
+            config_cache_dir.as_posix()
+        )
     )
 
     assert expected == directory

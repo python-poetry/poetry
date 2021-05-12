@@ -13,7 +13,7 @@ def test_remove_by_python_version(
     mocker, tester, venvs_in_cache_dirs, venv_name, venv_cache
 ):
     check_output = mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 

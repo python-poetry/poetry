@@ -4,12 +4,14 @@ from __future__ import unicode_literals
 import os
 import shutil
 
+from pathlib import Path
+
 import pytest
 
+from cleo.io.null_io import NullIO
+
 from poetry.factory import Factory
-from poetry.io.null_io import NullIO
 from poetry.masonry.builders.editable import EditableBuilder
-from poetry.utils._compat import Path
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
 from poetry.utils.env import VirtualEnv
@@ -76,15 +78,18 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
     builder.build()
 
     assert tmp_venv._bin_dir.joinpath("foo").exists()
-    assert tmp_venv.site_packages.path.joinpath("simple_project.pth").exists()
-    assert simple_poetry.file.parent.resolve().as_posix() == tmp_venv.site_packages.path.joinpath(
-        "simple_project.pth"
-    ).read_text().strip(
-        os.linesep
+    pth_file = "simple_project.pth"
+    assert tmp_venv.site_packages.exists(pth_file)
+    assert (
+        simple_poetry.file.parent.resolve().as_posix()
+        == tmp_venv.site_packages.find(pth_file)[0].read_text().strip(os.linesep)
     )
 
-    dist_info = tmp_venv.site_packages.path.joinpath("simple_project-1.2.3.dist-info")
-    assert dist_info.exists()
+    dist_info = "simple_project-1.2.3.dist-info"
+    assert tmp_venv.site_packages.exists(dist_info)
+
+    dist_info = tmp_venv.site_packages.find(dist_info)[0]
+
     assert dist_info.joinpath("INSTALLER").exists()
     assert dist_info.joinpath("METADATA").exists()
     assert dist_info.joinpath("RECORD").exists()
@@ -117,6 +122,7 @@ Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
 Classifier: Programming Language :: Python :: 3.8
 Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
 Classifier: Topic :: Software Development :: Build Tools
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Project-URL: Documentation, https://python-poetry.org/docs
@@ -130,7 +136,9 @@ My Package
     assert metadata == dist_info.joinpath("METADATA").read_text(encoding="utf-8")
 
     records = dist_info.joinpath("RECORD").read_text()
-    assert str(tmp_venv.site_packages.path.joinpath("simple_project.pth")) in records
+    pth_file = "simple_project.pth"
+    assert tmp_venv.site_packages.exists(pth_file)
+    assert str(tmp_venv.site_packages.find(pth_file)[0]) in records
     assert str(tmp_venv._bin_dir.joinpath("foo")) in records
     assert str(tmp_venv._bin_dir.joinpath("baz")) in records
     assert str(dist_info.joinpath("METADATA")) in records
@@ -145,7 +153,7 @@ from bar import baz
 if __name__ == '__main__':
     baz.boom.bim()
 """.format(
-        python=tmp_venv._bin("python")
+        python=tmp_venv.python
     )
 
     assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text()
@@ -157,7 +165,7 @@ from foo import bar
 if __name__ == '__main__':
     bar()
 """.format(
-        python=tmp_venv._bin("python")
+        python=tmp_venv.python
     )
 
     assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text()
@@ -169,31 +177,26 @@ from fuz.foo import bar
 if __name__ == '__main__':
     bar.baz()
 """.format(
-        python=tmp_venv._bin("python")
+        python=tmp_venv.python
     )
 
     assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text()
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
-    extended_poetry,
+    mocker, extended_poetry, tmp_dir
 ):
-    env = MockEnv(path=Path("/foo"))
+    pip_editable_install = mocker.patch(
+        "poetry.masonry.builders.editable.pip_editable_install"
+    )
+    env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_poetry, env, NullIO())
 
     builder.build()
-
-    assert [
-        [
-            "python",
-            "-m",
-            "pip",
-            "install",
-            "-e",
-            str(extended_poetry.file.parent),
-            "--no-deps",
-        ]
-    ] == env.executed
+    pip_editable_install.assert_called_once_with(
+        extended_poetry.pyproject.file.path.parent, env
+    )
+    assert [] == env.executed
 
 
 def test_builder_installs_proper_files_when_packages_configured(
@@ -202,8 +205,10 @@ def test_builder_installs_proper_files_when_packages_configured(
     builder = EditableBuilder(project_with_include, tmp_venv, NullIO())
     builder.build()
 
-    pth_file = tmp_venv.site_packages.path.joinpath("with_include.pth")
-    assert pth_file.is_file()
+    pth_file = "with_include.pth"
+    assert tmp_venv.site_packages.exists(pth_file)
+
+    pth_file = tmp_venv.site_packages.find(pth_file)[0]
 
     paths = set()
     with pth_file.open() as f:
@@ -219,8 +224,8 @@ def test_builder_installs_proper_files_when_packages_configured(
     assert len(paths) == len(expected)
 
 
-def test_builder_should_execute_build_scripts(extended_without_setup_poetry):
-    env = MockEnv(path=Path("/foo"))
+def test_builder_should_execute_build_scripts(extended_without_setup_poetry, tmp_dir):
+    env = MockEnv(path=Path(tmp_dir) / "foo")
     builder = EditableBuilder(extended_without_setup_poetry, env, NullIO())
 
     builder.build()

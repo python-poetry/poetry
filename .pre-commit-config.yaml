@@ -1,26 +1,30 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 19.10b0
+    rev: 20.8b1
     hooks:
       - id: black
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.3
+    rev: 3.8.4
     hooks:
       - id: flake8
 
   - repo: https://github.com/timothycrosley/isort
-    rev: 5.4.2
+    rev: 5.7.0
     hooks:
       - id: isort
         additional_dependencies: [toml]
         exclude: ^.*/?setup\.py$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v3.4.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^tests/.*/fixtures/.*
+        exclude: |
+          (?x)(
+            ^tests/.*/fixtures/.*
+            | ^tests/console/commands/debug/test_resolve.py
+          )
       - id: end-of-file-fixer
         exclude: ^tests/.*/fixtures/.*
       - id: debug-statements

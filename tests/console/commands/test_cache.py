@@ -5,9 +5,9 @@ import pytest
 
 @pytest.fixture
 def repository_cache_dir(monkeypatch, tmpdir):
-    import poetry.locations
+    from pathlib import Path
 
-    from poetry.utils._compat import Path
+    import poetry.locations
 
     path = Path(str(tmpdir))
     monkeypatch.setattr(poetry.locations, "REPOSITORY_CACHE_DIR", path)

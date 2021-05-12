@@ -1,13 +1,14 @@
 import uuid
 
-from poetry.utils._compat import Path
+from pathlib import Path
+
 from poetry.utils._compat import decode
 from poetry.utils.env import SitePackages
 
 
 def test_env_site_simple(tmp_dir, mocker):
     # emulate permission error when creating directory
-    mocker.patch("poetry.utils._compat.Path.mkdir", side_effect=OSError())
+    mocker.patch("pathlib.Path.mkdir", side_effect=OSError())
     site_packages = SitePackages(Path("/non-existent"), fallbacks=[Path(tmp_dir)])
     candidates = site_packages.make_candidates(Path("hello.txt"), writable_only=True)
     hello = Path(tmp_dir) / "hello.txt"
