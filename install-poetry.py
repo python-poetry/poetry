@@ -22,6 +22,7 @@ import site
 import subprocess
 import sys
 import tempfile
+import textwrap
 
 from contextlib import closing
 from contextlib import contextmanager
@@ -449,6 +450,23 @@ class Installer:
         )
 
         self._data_dir.joinpath("VERSION").write_text(version)
+
+        bashrcd = Path.home() / ".bashrc.d"
+        if bashrcd.exists():
+            (bashrcd / "poetry").write_text(
+                textwrap.dedent(
+                    f"""\
+                    poetry ()
+                    {{
+                        if [ "$1" = "shell" ]; then
+                            . "$({self._data_dir}/bin/poetry env info -p)/bin/activate"
+                        else
+                            {self._data_dir}/bin/poetry "${{@}}"
+                        fi
+                    }}
+                    """
+                )
+            )
 
         return 0
 
