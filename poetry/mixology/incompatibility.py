@@ -241,12 +241,12 @@ class Incompatibility:
 
         buffer = [str(self)]
         if this_line is not None:
-            buffer.append(" " + this_line)
+            buffer.append(" " + str(this_line))
 
         buffer.append(" and {}".format(str(other)))
 
         if other_line is not None:
-            buffer.append(" " + other_line)
+            buffer.append(" " + str(other_line))
 
         return "\n".join(buffer)
 
