@@ -996,8 +996,31 @@ class EnvManager:
                 shutil.rmtree(str(file_path))
 
     @classmethod
-    def get_system_env(cls) -> "SystemEnv":
-        return SystemEnv(Path(sys.prefix), cls.get_base_prefix())
+    def get_system_env(cls, naive: bool = False) -> "SystemEnv":
+        """
+        Retrieve the current Python environment.
+
+        This can be the base Python environment or an activated virtual environment.
+
+        This method also workaround the issue that the virtual environment
+        used by Poetry internally (when installed via the custom installer)
+        is incorrectly detected as the system environment. Note that this workaround
+        happens only when `naive` is False since there are times where we actually
+        want to retrieve Poetry's custom virtual environment
+        (e.g. plugin installation or self update).
+        """
+        prefix, base_prefix = Path(sys.prefix), cls.get_base_prefix()
+        if naive is False:
+            from poetry.locations import data_dir
+
+            try:
+                prefix.relative_to(data_dir())
+            except ValueError:
+                pass
+            else:
+                prefix = base_prefix
+
+        return SystemEnv(prefix, base_prefix)
 
     @classmethod
     def get_base_prefix(cls) -> Path:

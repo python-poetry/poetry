@@ -38,7 +38,7 @@ class PluginShowCommand(Command):
             + PluginManager("plugin").get_plugin_entry_points()
         )
 
-        system_env = EnvManager.get_system_env()
+        system_env = EnvManager.get_system_env(naive=True)
         installed_repository = InstalledRepository.load(
             system_env, with_dependencies=True
         )
