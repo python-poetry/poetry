@@ -1,7 +1,10 @@
 import os
 
+from typing import Optional
+
 import pytest
 
+from keyring import credentials
 from keyring.backend import KeyringBackend
 
 from poetry.utils.password_manager import KeyRing
@@ -22,6 +25,13 @@ class DummyBackend(KeyringBackend):
 
     def get_password(self, service, username):
         return self._passwords.get(service, {}).get(username)
+
+    def get_credential(self, service: str, username: Optional[str]) -> Optional[credentials.SimpleCredential]:
+        creds = self._passwords.get(service, {})
+        if creds:
+            (username,password), = creds.items()
+            return credentials.SimpleCredential(username, password)
+        return None
 
     def delete_password(self, service, username):
         if service in self._passwords and username in self._passwords[service]:
@@ -85,6 +95,26 @@ def test_get_http_auth(config, mock_available_backend, backend):
     assert "bar" == auth["username"]
     assert "baz" == auth["password"]
 
+
+def test_get_http_auth_credentials(config, mock_available_backend, backend):
+    backend.set_password("foo", "bar", "baz")
+    config.auth_config_source.add_property("http-basic.foo", {})
+    manager = PasswordManager(config)
+
+    assert manager.keyring.is_available()
+    auth = manager.get_http_auth("foo")
+
+    assert "bar" == auth["username"]
+    assert "baz" == auth["password"]
+
+def test_get_http_auth_no_credentials(config, mock_available_backend, backend):
+    config.auth_config_source.add_property("http-basic.foo", {})
+    manager = PasswordManager(config)
+
+    assert manager.keyring.is_available()
+    auth = manager.get_http_auth("foo")
+
+    assert auth == None
 
 def test_delete_http_password(config, mock_available_backend, backend):
     backend.set_password("poetry-repository-foo", "bar", "baz")

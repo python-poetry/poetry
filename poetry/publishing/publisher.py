@@ -64,8 +64,10 @@ class Publisher:
                 username = "__token__"
                 password = token
             else:
+                # assert False
                 auth = self._password_manager.get_http_auth(repository_name)
                 if auth:
+                    assert False
                     logger.debug(
                         "Found authentication information for {}.".format(
                             repository_name

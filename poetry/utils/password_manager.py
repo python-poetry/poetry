@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
 
+from keyring.credentials import Credential
+
 
 if TYPE_CHECKING:
     from poetry.config.config import Config
@@ -30,6 +32,19 @@ class KeyRing:
 
     def is_available(self) -> bool:
         return self._is_available
+
+    def get_credential_without_namespace(self, name: str) -> Optional[Credential]:
+        if not self.is_available():
+            return None
+
+        import keyring
+
+        try:
+            return keyring.get_credential(name, None)
+        except (RuntimeError, keyring.errors.KeyringError):
+            raise KeyRingError(
+                f"Unable to retrieve the credentials for {name} from the key ring"
+            )
 
     def get_password(self, name: str, username: str) -> Optional[str]:
         if not self.is_available():
@@ -93,7 +108,11 @@ class KeyRing:
 
             return
 
-        backend = keyring.get_keyring()
+        try:
+            backend = keyring.get_keyring()
+        except TypeError:
+            self._is_available = False
+            return
         name = backend.name.split(" ")[0]
         if name == "fail":
             logger.debug("No suitable keyring backend found")
@@ -156,14 +175,27 @@ class PasswordManager:
     def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
         auth = self._config.get(f"http-basic.{name}")
         if not auth:
+            # assert False
             username = self._config.get(f"http-basic.{name}.username")
             password = self._config.get(f"http-basic.{name}.password")
             if not username and not password:
-                return None
+                # assert False
+                credentials = self.keyring.get_credential_without_namespace(name)
+                # log.debug(f'repository is {name}')
+                breakpoint()
+                # assert name == 'https://us-pypi.pkg.dev/voiceai-staging/data-engineering-pypi/simple/'
+                if not credentials:
+                    # assert False
+                    return None
+                else:
+                    username = credentials.username
+                    password = credentials.password
         else:
             username, password = auth["username"], auth.get("password")
             if password is None:
                 password = self.keyring.get_password(name, username)
+
+        assert username == 'oatuh2'
 
         return {
             "username": username,
