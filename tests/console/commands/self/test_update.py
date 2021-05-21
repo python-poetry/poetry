@@ -63,12 +63,14 @@ Resolving dependencies...
 Package operations: 0 installs, 2 updates, 0 removals
 
   - Updating cleo (0.8.2 -> 1.0.0)
-  - Updating poetry (1.2.0a0 -> 1.2.0)
+  - Updating poetry ({} -> {})
 
 Updating the poetry script
 
-Poetry (1.2.0) is installed now. Great!
-"""
+Poetry ({}) is installed now. Great!
+""".format(
+        __version__, new_version, new_version
+    )
 
     assert tester.io.fetch_output() == expected_output
 
