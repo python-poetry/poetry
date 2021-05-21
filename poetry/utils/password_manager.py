@@ -175,27 +175,20 @@ class PasswordManager:
     def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
         auth = self._config.get(f"http-basic.{name}")
         if not auth:
-            # assert False
             username = self._config.get(f"http-basic.{name}.username")
             password = self._config.get(f"http-basic.{name}.password")
             if not username and not password:
-                # assert False
-                credentials = self.keyring.get_credential_without_namespace(name)
-                # log.debug(f'repository is {name}')
-                breakpoint()
-                # assert name == 'https://us-pypi.pkg.dev/voiceai-staging/data-engineering-pypi/simple/'
-                if not credentials:
-                    # assert False
+                repository = self._config.get(f"repositories.{name}")
+                if not repository:
                     return None
                 else:
-                    username = credentials.username
-                    password = credentials.password
+                    credential = self.keyring.get_credential_without_namespace(repository["url"])
+                    username = credential.username
+                    password = credential.password
         else:
             username, password = auth["username"], auth.get("password")
             if password is None:
                 password = self.keyring.get_password(name, username)
-
-        assert username == 'oatuh2'
 
         return {
             "username": username,
