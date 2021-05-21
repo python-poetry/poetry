@@ -43,7 +43,7 @@ class PluginRemoveCommand(Command):
 
         plugins = self.argument("plugins")
 
-        system_env = EnvManager.get_system_env()
+        system_env = EnvManager.get_system_env(naive=True)
         env_dir = Path(
             os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
         )

@@ -72,7 +72,7 @@ You can specify a package in the following forms:
         plugins = self.argument("plugins")
 
         # Plugins should be installed in the system env to be globally available
-        system_env = EnvManager.get_system_env()
+        system_env = EnvManager.get_system_env(naive=True)
 
         env_dir = Path(
             os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
