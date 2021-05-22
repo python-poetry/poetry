@@ -63,6 +63,20 @@ If a system keyring is available and supported, the password is stored to and re
 
 Keyring support is enabled using the [keyring library](https://pypi.org/project/keyring/). For more information on supported backends refer to the [library documentation](https://keyring.readthedocs.io/en/latest/?badge=latest).
 
+!!!note
+
+    ```
+    Poetry will fallback to Pip style use of keyring so that backends like
+    Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/). It will need to be properly
+    installed into Poetry's virtualenv, preferrably by installing a plugin.
+
+    If you are letting Poetry manage your virtual environments you will want a virtualenv
+    seeder installed in Poetry's virtualenv that installs the desired keyring backend
+    during `poetry install`. To again use Azure DecOps as an example: [azure-devops-artifacts-helpers](https://pypi.org/project/azure-devops-artifacts-helpers/)
+    provides such a seeder. This would of course best achieved by installing a Poetry plugin
+    if it exists for you use case instead of doing it yourself.
+    ```
+
 Alternatively, you can use environment variables to provide the credentials:
 
 ```bash

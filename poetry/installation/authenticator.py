@@ -4,6 +4,7 @@ import urllib.parse
 
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Dict
 from typing import Optional
 from typing import Tuple
 
@@ -108,7 +109,7 @@ class Authenticator:
 
         if credentials == (None, None):
             if "@" not in netloc:
-                credentials = self._get_credentials_for_netloc_from_config(netloc)
+                credentials = self._get_credentials_for_netloc(netloc)
             else:
                 # Split from the right because that's how urllib.parse.urlsplit()
                 # behaves if more than one @ is present (which can be checked using
@@ -133,7 +134,7 @@ class Authenticator:
 
         return credentials[0], credentials[1]
 
-    def _get_credentials_for_netloc_from_config(
+    def _get_credentials_for_netloc(
         self, netloc: str
     ) -> Tuple[Optional[str], Optional[str]]:
         credentials = (None, None)
@@ -152,9 +153,42 @@ class Authenticator:
             if netloc == parsed_url.netloc:
                 auth = self._password_manager.get_http_auth(repository_name)
 
+                if auth is None or auth["password"] is None:
+                    username = auth["username"] if auth else None
+                    auth = self._get_credentials_for_netloc_from_keyring(
+                        url, netloc, username
+                    )
+
                 if auth is None:
                     continue
 
                 return auth["username"], auth["password"]
 
         return credentials
+
+    def _get_credentials_for_netloc_from_keyring(
+        self, url: str, netloc: str, username: str
+    ) -> Optional[Dict[str, str]]:
+        import keyring
+
+        cred = keyring.get_credential(url, username)
+        if cred is not None:
+            return {
+                "username": cred.username,
+                "password": cred.password,
+            }
+
+        cred = keyring.get_credential(netloc, username)
+        if cred is not None:
+            return {
+                "username": cred.username,
+                "password": cred.password,
+            }
+
+        if username:
+            return {
+                "username": username,
+                "password": None,
+            }
+
+        return None
