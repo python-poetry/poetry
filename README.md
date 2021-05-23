@@ -92,6 +92,9 @@ python install-poetry.py --git https://github.com/python-poetry/poetry.git@maste
 
 Updating poetry to the latest stable version is as simple as calling the `self update` command.
 
+**Warning**: Poetry versions installed using the now deprecated `get-poetry.py` installer will not be able to use this
+command to update to 1.2 releases or later. Migrate to using the `install-poetry.py` installer or `pipx`.
+
 ```bash
 poetry self update
 ```
