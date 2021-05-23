@@ -413,6 +413,24 @@ class Installer:
         self.display_pre_message()
         self.ensure_directories()
 
+        def _is_self_upgrade_supported(x):
+            mx = self.VERSION_REGEX.match(x)
+            vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
+            return vx >= (1, 2, 0)
+
+        if not _is_self_upgrade_supported(version):
+            self._write(
+                colorize(
+                    "warning",
+                    f"You are installing {version}. When using the current installer, this version does not support "
+                    f"updating using the 'self update' command. Please use 1.2.0a1 or later.",
+                )
+            )
+            if not self._accept_all:
+                continue_install = input("Do you want to continue? ([y]/n) ") or "y"
+                if continue_install.lower() in {"n", "no"}:
+                    return 0
+
         try:
             self.install(version)
         except subprocess.CalledProcessError as e:
