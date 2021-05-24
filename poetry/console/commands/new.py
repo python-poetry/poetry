@@ -69,7 +69,6 @@ class NewCommand(Command):
             default_python = "^{}".format(
                 ".".join(str(v) for v in current_env.version_info[:2])
             )
-        print(default_python)
 
         layout_ = layout_(
             name,
