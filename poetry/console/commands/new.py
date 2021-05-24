@@ -14,6 +14,7 @@ class NewCommand(Command):
     arguments = [argument("path", "The path to create the project at.")]
     options = [
         option("name", None, "Set the resulting package name.", flag=False),
+        option("python", None, "Set the python version.", flag=False),
         option("src", None, "Use the src layout for the project."),
         option(
             "readme",
@@ -62,10 +63,13 @@ class NewCommand(Command):
             if author_email:
                 author += " <{}>".format(author_email)
 
-        current_env = SystemEnv(Path(sys.executable))
-        default_python = "^{}".format(
-            ".".join(str(v) for v in current_env.version_info[:2])
-        )
+        default_python = self.option("python")
+        if not default_python:
+            current_env = SystemEnv(Path(sys.executable))
+            default_python = "^{}".format(
+                ".".join(str(v) for v in current_env.version_info[:2])
+            )
+        print(default_python)
 
         layout_ = layout_(
             name,
