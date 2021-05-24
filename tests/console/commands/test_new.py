@@ -153,3 +153,13 @@ def test_command_new_with_readme(fmt, tester, tmp_dir):
 
     poetry = verify_project_directory(path, package, package, None)
     assert poetry.local_config.get("readme") == "README.{}".format(fmt or "md")
+
+@pytest.mark.parametrize("python", ["3.8.0", "2.7"])
+def test_command_new_with_python_version(python, tester, tmp_dir):
+    package = "package"
+    path = Path(tmp_dir) / package
+    options = ["--python {}".format(python), path.as_posix()]
+    tester.execute(" ".join(options))
+
+    poetry = verify_project_directory(path, package, package, None)
+    assert poetry.local_config.value.value.get('dependencies').get('python') == python
