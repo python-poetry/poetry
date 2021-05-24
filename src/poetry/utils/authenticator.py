@@ -1,8 +1,8 @@
 import logging
-import pathlib
 import time
 import urllib.parse
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
@@ -183,12 +183,12 @@ class Authenticator:
             if netloc == repository_netloc:
                 auth = self._password_manager.get_http_auth(repository_name)
 
-                if auth is None:
+                if auth is not None:
                     return (auth["username"], auth["password"])
 
         return (None, None)
 
-    def get_certs_for_url(self, url: str) -> Dict[str, pathlib.Path]:
+    def get_certs_for_url(self, url: str) -> Dict[str, Path]:
         parsed_url = urllib.parse.urlsplit(url)
 
         netloc = parsed_url.netloc
@@ -236,7 +236,7 @@ class Authenticator:
 
         return None
 
-    def _get_certs_for_netloc_from_config(self, netloc: str) -> Dict[str, pathlib.Path]:
+    def _get_certs_for_netloc_from_config(self, netloc: str) -> Dict[str, Path]:
         certs = dict(cert=None, verify=None)
 
         for (repository_name, repository_netloc) in self._get_repository_netlocs():

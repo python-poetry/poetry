@@ -1,4 +1,3 @@
-import pathlib
 import re
 import uuid
 
@@ -8,6 +7,7 @@ from typing import Dict
 from typing import List
 from typing import Type
 from typing import Union
+from pathlib import Path
 
 import httpretty
 import pytest
@@ -311,36 +311,24 @@ def test_authenticator_uses_env_provided_credentials(
     assert request.headers["Authorization"] == "Basic YmFyOmJheg=="
 
 
+@pytest.mark.parametrize(
+    "cert,client_cert",
+    [
+        (None, None),
+        ("/path/to/provided/cert", "path/to/provided/client-cert"),
+    ],
+)
 def test_authenticator_uses_certs_from_config_if_not_provided(
-    config, mock_remote, http, mocker
+    config, mock_remote, http, mocker, cert, client_cert
 ):
+    configured_cert = "/path/to/cert"
+    configured_client_cert = "/path/to/client-cert"
     config.merge(
         {
             "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
             "http-basic": {"foo": {"username": "bar", "password": "baz"}},
             "certificates": {
-                "foo": {"cert": "/path/to/cert", "client-cert": "/path/to/client-cert"}
-            },
-        }
-    )
-
-    authenticator = Authenticator(config, NullIO())
-    session_send = mocker.patch.object(authenticator.session, "send")
-    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
-    kwargs = session_send.call_args[1]
-    assert pathlib.Path(kwargs["verify"]) == pathlib.Path("/path/to/cert")
-    assert pathlib.Path(kwargs["cert"]) == pathlib.Path("/path/to/client-cert")
-
-
-def test_authenticator_uses_provided_certs_instead_of_config_certs(
-    config, mock_remote, http, mocker
-):
-    config.merge(
-        {
-            "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
-            "http-basic": {"foo": {"username": "bar", "password": "baz"}},
-            "certificates": {
-                "foo": {"cert": "/path/to/cert", "client-cert": "/path/to/client-cert"}
+                "foo": {"cert": configured_cert, "client-cert": configured_client_cert}
             },
         }
     )
@@ -350,9 +338,10 @@ def test_authenticator_uses_provided_certs_instead_of_config_certs(
     authenticator.request(
         "get",
         "https://foo.bar/files/foo-0.1.0.tar.gz",
-        verify="/path/to/provided/cert",
-        cert="/path/to/provided/client-cert",
+        verify=cert,
+        cert=client_cert,
     )
     kwargs = session_send.call_args[1]
-    assert pathlib.Path(kwargs["verify"]) == pathlib.Path("/path/to/provided/cert")
-    assert pathlib.Path(kwargs["cert"]) == pathlib.Path("/path/to/provided/client-cert")
+
+    assert Path(kwargs["verify"]) == Path(cert or configured_cert)
+    assert Path(kwargs["cert"]) == Path(client_cert or configured_client_cert)
