@@ -167,7 +167,7 @@ class Authenticator:
         return credentials
 
     def _get_credentials_for_netloc_from_keyring(
-        self, url: str, netloc: str, username: str
+        self, url: str, netloc: str, username: Optional[str]
     ) -> Optional[Dict[str, str]]:
         import keyring
 
