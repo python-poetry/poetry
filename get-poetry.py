@@ -159,15 +159,15 @@ def colorize(style, text):
 def temporary_directory(*args, **kwargs):
     try:
         from tempfile import TemporaryDirectory
-
-        with TemporaryDirectory(*args, **kwargs) as name:
-            yield name
     except ImportError:
         name = tempfile.mkdtemp(*args, **kwargs)
 
         yield name
 
         shutil.rmtree(name)
+    else:
+        with TemporaryDirectory(*args, **kwargs) as name:
+            yield name
 
 
 def string_to_bool(value):
@@ -317,7 +317,7 @@ class Installer:
         r"v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?"
         "("
         "[._-]?"
-        r"(?:(stable|beta|b|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
+        r"(?:(stable|beta|b|rc|RC|alpha|a|patch|pl|p)((?:[.-]?\d+)*)?)?"
         "([.-]?dev)?"
         ")?"
         r"(?:\+[^\s]+)?"
@@ -638,7 +638,7 @@ class Installer:
 
     def _which_python(self):
         """Decides which python executable we'll embed in the launcher script."""
-        allowed_executables = ["python", "python3"]
+        allowed_executables = ["python3", "python"]
         if WINDOWS:
             allowed_executables += ["py.exe -3", "py.exe -2"]
 
@@ -903,7 +903,7 @@ class Installer:
 
         if "zsh" in SHELL:
             zdotdir = os.getenv("ZDOTDIR", HOME)
-            profiles.append(os.path.join(zdotdir, ".zprofile"))
+            profiles.append(os.path.join(zdotdir, ".zshrc"))
 
         bash_profile = os.path.join(HOME, ".bash_profile")
         if os.path.exists(bash_profile):

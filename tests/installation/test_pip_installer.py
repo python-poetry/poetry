@@ -1,22 +1,29 @@
+import re
 import shutil
+
+from pathlib import Path
 
 import pytest
 
+from cleo.io.null_io import NullIO
+
 from poetry.core.packages.package import Package
 from poetry.installation.pip_installer import PipInstaller
-from poetry.io.null_io import NullIO
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
-from poetry.utils._compat import Path
 from poetry.utils.env import NullEnv
 
 
 @pytest.fixture
 def package_git():
-    package = Package("demo", "1.0.0")
-    package.source_type = "git"
-    package.source_url = "git@github.com:demo/demo.git"
-    package.source_reference = "master"
+    package = Package(
+        "demo",
+        "1.0.0",
+        source_type="git",
+        source_url="git@github.com:demo/demo.git",
+        source_reference="master",
+    )
+
     return package
 
 
@@ -54,9 +61,12 @@ def test_requirement(installer):
 def test_requirement_source_type_url():
     installer = PipInstaller(NullEnv(), NullIO(), Pool())
 
-    foo = Package("foo", "0.0.0")
-    foo.source_type = "url"
-    foo.source_url = "https://somehwere.com/releases/foo-1.0.0.tar.gz"
+    foo = Package(
+        "foo",
+        "0.0.0",
+        source_type="url",
+        source_url="https://somehwere.com/releases/foo-1.0.0.tar.gz",
+    )
 
     result = installer.requirement(foo, formatted=True)
     expected = "{}#egg={}".format(foo.source_url, foo.name)
@@ -79,14 +89,20 @@ def test_install_with_non_pypi_default_repository(pool, installer):
     pool.add_repository(default, default=True)
     pool.add_repository(another)
 
-    foo = Package("foo", "0.0.0")
-    foo.source_type = "legacy"
-    foo.source_reference = default._name
-    foo.source_url = default._url
-    bar = Package("bar", "0.1.0")
-    bar.source_type = "legacy"
-    bar.source_reference = another._name
-    bar.source_url = another._url
+    foo = Package(
+        "foo",
+        "0.0.0",
+        source_type="legacy",
+        source_reference=default.name,
+        source_url=default.url,
+    )
+    bar = Package(
+        "bar",
+        "0.1.0",
+        source_type="legacy",
+        source_reference=another.name,
+        source_url=another.url,
+    )
 
     installer.install(foo)
     installer.install(bar)
@@ -104,10 +120,13 @@ def test_install_with_cert():
 
     installer = PipInstaller(null_env, NullIO(), pool)
 
-    foo = Package("foo", "0.0.0")
-    foo.source_type = "legacy"
-    foo.source_reference = default._name
-    foo.source_url = default._url
+    foo = Package(
+        "foo",
+        "0.0.0",
+        source_type="legacy",
+        source_reference=default.name,
+        source_url=default.url,
+    )
 
     installer.install(foo)
 
@@ -133,10 +152,13 @@ def test_install_with_client_cert():
 
     installer = PipInstaller(null_env, NullIO(), pool)
 
-    foo = Package("foo", "0.0.0")
-    foo.source_type = "legacy"
-    foo.source_reference = default._name
-    foo.source_url = default._url
+    foo = Package(
+        "foo",
+        "0.0.0",
+        source_type="legacy",
+        source_reference=default.name,
+        source_url=default.url,
+    )
 
     installer.install(foo)
 
@@ -161,14 +183,13 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
     installer = PipInstaller(tmp_venv, NullIO(), pool)
 
     # use a namepspace package
-    package = Package("namespace-package-one", "1.0.0")
-    package.source_type = "git"
-    package.source_url = "https://github.com/demo/namespace-package-one.git"
-    package.source_reference = "master"
-    package.develop = True
-
-    # we do this here because the virtual env might not be usable if failure case is triggered
-    pth_file_candidate = tmp_venv.site_packages / "{}-nspkg.pth".format(package.name)
+    package = Package(
+        "namespace-package-one",
+        "1.0.0",
+        source_type="git",
+        source_url="https://github.com/demo/namespace-package-one.git",
+        source_reference="master",
+    )
 
     # in order to reproduce the scenario where the git source is removed prior to proper
     # clean up of nspkg.pth file, we need to make sure the fixture is copied and not
@@ -188,8 +209,9 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
     installer.install(package)
     installer.remove(package)
 
-    assert not Path(pth_file_candidate).exists()
+    pth_file = f"{package.name}-nspkg.pth"
+    assert not tmp_venv.site_packages.exists(pth_file)
 
     # any command in the virtual environment should trigger the error message
     output = tmp_venv.run("python", "-m", "site")
-    assert "Error processing line 1 of {}".format(pth_file_candidate) not in output
+    assert not re.match(rf"Error processing line 1 of .*{pth_file}", output)

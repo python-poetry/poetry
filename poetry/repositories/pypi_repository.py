@@ -1,7 +1,10 @@
 import logging
 import os
+import urllib.parse
 
 from collections import defaultdict
+from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 from typing import Union
@@ -14,30 +17,22 @@ from cachecontrol.controller import logger as cache_control_logger
 from cachy import CacheManager
 from html5lib.html5parser import parse
 
-from poetry.core.packages import Package
-from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.core.semver import VersionConstraint
-from poetry.core.semver import VersionRange
-from poetry.core.semver import parse_constraint
-from poetry.core.semver.exceptions import ParseVersionError
+from poetry.core.semver.helpers import parse_constraint
+from poetry.core.semver.version_constraint import VersionConstraint
+from poetry.core.semver.version_range import VersionRange
+from poetry.core.version.exceptions import InvalidVersion
 from poetry.core.version.markers import parse_marker
 from poetry.locations import REPOSITORY_CACHE_DIR
-from poetry.utils._compat import Path
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
 
-from ..inspection.info import PackageInfo
 from .exceptions import PackageNotFound
 from .remote_repository import RemoteRepository
-
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
 
 
 cache_control_logger.setLevel(logging.ERROR)
@@ -45,12 +40,21 @@ cache_control_logger.setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
+if TYPE_CHECKING:
+    from poetry.inspection.info import PackageInfo
+
+
 class PyPiRepository(RemoteRepository):
 
     CACHE_VERSION = parse_constraint("1.0.0")
 
-    def __init__(self, url="https://pypi.org/", disable_cache=False, fallback=True):
-        super(PyPiRepository, self).__init__(url.rstrip("/") + "/simple/")
+    def __init__(
+        self,
+        url: str = "https://pypi.org/",
+        disable_cache: bool = False,
+        fallback: bool = True,
+    ) -> None:
+        super().__init__(url.rstrip("/") + "/simple/")
 
         self._base_url = url
         self._disable_cache = disable_cache
@@ -76,39 +80,35 @@ class PyPiRepository(RemoteRepository):
         self._name = "PyPI"
 
     @property
-    def session(self):
+    def session(self) -> CacheControl:
         return self._session
 
-    def find_packages(
-        self,
-        name,  # type: str
-        constraint=None,  # type: Union[VersionConstraint, str, None]
-        extras=None,  # type: Union[list, None]
-        allow_prereleases=False,  # type: bool
-    ):  # type: (...) -> List[Package]
+    def find_packages(self, dependency: Dependency) -> List[Package]:
         """
         Find packages on the remote server.
         """
+        constraint = dependency.constraint
         if constraint is None:
             constraint = "*"
 
         if not isinstance(constraint, VersionConstraint):
             constraint = parse_constraint(constraint)
 
+        allow_prereleases = dependency.allows_prereleases()
         if isinstance(constraint, VersionRange):
             if (
                 constraint.max is not None
-                and constraint.max.is_prerelease()
+                and constraint.max.is_unstable()
                 or constraint.min is not None
-                and constraint.min.is_prerelease()
+                and constraint.min.is_unstable()
             ):
                 allow_prereleases = True
 
         try:
-            info = self.get_package_info(name)
+            info = self.get_package_info(dependency.name)
         except PackageNotFound:
             self._log(
-                "No packages found for {} {}".format(name, str(constraint)),
+                "No packages found for {} {}".format(dependency.name, str(constraint)),
                 level="debug",
             )
             return []
@@ -121,7 +121,7 @@ class PyPiRepository(RemoteRepository):
                 # Bad release
                 self._log(
                     "No release information found for {}-{}, skipping".format(
-                        name, version
+                        dependency.name, version
                     ),
                     level="debug",
                 )
@@ -129,10 +129,10 @@ class PyPiRepository(RemoteRepository):
 
             try:
                 package = Package(info["info"]["name"], version)
-            except ParseVersionError:
+            except InvalidVersion:
                 self._log(
                     'Unable to parse version "{}" for the {} package, skipping'.format(
-                        version, name
+                        version, dependency.name
                     ),
                     level="debug",
                 )
@@ -145,13 +145,12 @@ class PyPiRepository(RemoteRepository):
                 continue
 
             if not constraint or (constraint and constraint.allows(package.version)):
-                if extras is not None:
-                    package.requires_extras = extras
-
                 packages.append(package)
 
         self._log(
-            "{} packages found for {} {}".format(len(packages), name, str(constraint)),
+            "{} packages found for {} {}".format(
+                len(packages), dependency.name, str(constraint)
+            ),
             level="debug",
         )
 
@@ -159,13 +158,13 @@ class PyPiRepository(RemoteRepository):
 
     def package(
         self,
-        name,  # type: str
-        version,  # type: str
-        extras=None,  # type: (Union[list, None])
-    ):  # type: (...) -> Package
+        name: str,
+        version: str,
+        extras: (Union[list, None]) = None,
+    ) -> Package:
         return self.get_release_info(name, version).to_package(name=name, extras=extras)
 
-    def search(self, query):
+    def search(self, query: str) -> List[Package]:
         results = []
 
         search = {"q": query}
@@ -187,7 +186,7 @@ class PyPiRepository(RemoteRepository):
                 result = Package(name, version, description)
                 result.description = to_str(description.strip())
                 results.append(result)
-            except ParseVersionError:
+            except InvalidVersion:
                 self._log(
                     'Unable to parse version "{}" for the {} package, skipping'.format(
                         version, name
@@ -197,7 +196,7 @@ class PyPiRepository(RemoteRepository):
 
         return results
 
-    def get_package_info(self, name):  # type: (str) -> dict
+    def get_package_info(self, name: str) -> dict:
         """
         Return the package information given its name.
 
@@ -211,42 +210,44 @@ class PyPiRepository(RemoteRepository):
             name, lambda: self._get_package_info(name)
         )
 
-    def _get_package_info(self, name):  # type: (str) -> dict
-        data = self._get("pypi/{}/json".format(name))
+    def _get_package_info(self, name: str) -> dict:
+        data = self._get(f"pypi/{name}/json")
         if data is None:
-            raise PackageNotFound("Package [{}] not found.".format(name))
+            raise PackageNotFound(f"Package [{name}] not found.")
 
         return data
 
-    def get_release_info(self, name, version):  # type: (str, str) -> PackageInfo
+    def get_release_info(self, name: str, version: str) -> "PackageInfo":
         """
         Return the release information given a package name and a version.
 
         The information is returned from the cache if it exists
         or retrieved from the remote server.
         """
+        from poetry.inspection.info import PackageInfo
+
         if self._disable_cache:
             return PackageInfo.load(self._get_release_info(name, version))
 
         cached = self._cache.remember_forever(
-            "{}:{}".format(name, version), lambda: self._get_release_info(name, version)
+            f"{name}:{version}", lambda: self._get_release_info(name, version)
         )
 
         cache_version = cached.get("_cache_version", "0.0.0")
         if parse_constraint(cache_version) != self.CACHE_VERSION:
             # The cache must be updated
             self._log(
-                "The cache for {} {} is outdated. Refreshing.".format(name, version),
+                f"The cache for {name} {version} is outdated. Refreshing.",
                 level="debug",
             )
             cached = self._get_release_info(name, version)
 
-            self._cache.forever("{}:{}".format(name, version), cached)
+            self._cache.forever(f"{name}:{version}", cached)
 
         return PackageInfo.load(cached)
 
-    def find_links_for_package(self, package):
-        json_data = self._get("pypi/{}/{}/json".format(package.name, package.version))
+    def find_links_for_package(self, package: Package) -> List[Link]:
+        json_data = self._get(f"pypi/{package.name}/{package.version}/json")
         if json_data is None:
             return []
 
@@ -257,12 +258,14 @@ class PyPiRepository(RemoteRepository):
 
         return links
 
-    def _get_release_info(self, name, version):  # type: (str, str) -> dict
-        self._log("Getting info for {} ({}) from PyPI".format(name, version), "debug")
+    def _get_release_info(self, name: str, version: str) -> dict:
+        from poetry.inspection.info import PackageInfo
 
-        json_data = self._get("pypi/{}/{}/json".format(name, version))
+        self._log(f"Getting info for {name} ({version}) from PyPI", "debug")
+
+        json_data = self._get(f"pypi/{name}/{version}/json")
         if json_data is None:
-            raise PackageNotFound("Package [{}] not found.".format(name))
+            raise PackageNotFound(f"Package [{name}] not found.")
 
         info = json_data["info"]
 
@@ -318,7 +321,7 @@ class PyPiRepository(RemoteRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint):  # type: (str) -> Union[dict, None]
+    def _get(self, endpoint: str) -> Union[dict, None]:
         try:
             json_response = self.session.get(self._base_url + endpoint)
         except requests.exceptions.TooManyRedirects:
@@ -334,7 +337,7 @@ class PyPiRepository(RemoteRepository):
 
         return json_data
 
-    def _get_info_from_urls(self, urls):  # type: (Dict[str, List[str]]) -> PackageInfo
+    def _get_info_from_urls(self, urls: Dict[str, List[str]]) -> "PackageInfo":
         # Checking wheels first as they are more likely to hold
         # the necessary information
         if "bdist_wheel" in urls:
@@ -380,14 +383,14 @@ class PyPiRepository(RemoteRepository):
 
                         return info
 
-                    py2_requires_dist = set(
-                        dependency_from_pep_508(r).to_pep_508()
+                    py2_requires_dist = {
+                        Dependency.create_from_pep_508(r).to_pep_508()
                         for r in info.requires_dist
-                    )
-                    py3_requires_dist = set(
-                        dependency_from_pep_508(r).to_pep_508()
+                    }
+                    py3_requires_dist = {
+                        Dependency.create_from_pep_508(r).to_pep_508()
                         for r in py3_info.requires_dist
-                    )
+                    }
                     base_requires_dist = py2_requires_dist & py3_requires_dist
                     py2_only_requires_dist = py2_requires_dist - py3_requires_dist
                     py3_only_requires_dist = py3_requires_dist - py2_requires_dist
@@ -395,14 +398,14 @@ class PyPiRepository(RemoteRepository):
                     # Normalizing requires_dist
                     requires_dist = list(base_requires_dist)
                     for requirement in py2_only_requires_dist:
-                        dep = dependency_from_pep_508(requirement)
+                        dep = Dependency.create_from_pep_508(requirement)
                         dep.marker = dep.marker.intersect(
                             parse_marker("python_version == '2.7'")
                         )
                         requires_dist.append(dep.to_pep_508())
 
                     for requirement in py3_only_requires_dist:
-                        dep = dependency_from_pep_508(requirement)
+                        dep = Dependency.create_from_pep_508(requirement)
                         dep.marker = dep.marker.intersect(
                             parse_marker("python_version >= '3'")
                         )
@@ -426,13 +429,17 @@ class PyPiRepository(RemoteRepository):
 
         return self._get_info_from_sdist(urls["sdist"][0])
 
-    def _get_info_from_wheel(self, url):  # type: (str) -> PackageInfo
+    def _get_info_from_wheel(self, url: str) -> "PackageInfo":
+        from poetry.inspection.info import PackageInfo
+
         self._log(
-            "Downloading wheel: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
+            "Downloading wheel: {}".format(
+                urllib.parse.urlparse(url).path.rsplit("/")[-1]
+            ),
             level="debug",
         )
 
-        filename = os.path.basename(urlparse.urlparse(url).path.rsplit("/")[-1])
+        filename = os.path.basename(urllib.parse.urlparse(url).path.rsplit("/")[-1])
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
@@ -440,13 +447,17 @@ class PyPiRepository(RemoteRepository):
 
             return PackageInfo.from_wheel(filepath)
 
-    def _get_info_from_sdist(self, url):  # type: (str) -> PackageInfo
+    def _get_info_from_sdist(self, url: str) -> "PackageInfo":
+        from poetry.inspection.info import PackageInfo
+
         self._log(
-            "Downloading sdist: {}".format(urlparse.urlparse(url).path.rsplit("/")[-1]),
+            "Downloading sdist: {}".format(
+                urllib.parse.urlparse(url).path.rsplit("/")[-1]
+            ),
             level="debug",
         )
 
-        filename = os.path.basename(urlparse.urlparse(url).path)
+        filename = os.path.basename(urllib.parse.urlparse(url).path)
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
@@ -454,8 +465,8 @@ class PyPiRepository(RemoteRepository):
 
             return PackageInfo.from_sdist(filepath)
 
-    def _download(self, url, dest):  # type: (str, str) -> None
+    def _download(self, url: str, dest: str) -> None:
         return download_file(url, dest, session=self.session)
 
-    def _log(self, msg, level="info"):
-        getattr(logger, level)("<debug>{}:</debug> {}".format(self._name, msg))
+    def _log(self, msg: str, level: str = "info") -> None:
+        getattr(logger, level)(f"<debug>{self._name}:</debug> {msg}")

@@ -1,45 +1,23 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import sys
+
+from pathlib import Path
 
 import pytest
 
-from cleo.testers import CommandTester
-
-from poetry.core.semver import Version
-from poetry.installation.installer import Installer
+from poetry.core.semver.version import Version
 from poetry.repositories.legacy_repository import LegacyRepository
-from poetry.utils._compat import Path
 from tests.helpers import get_dependency
 from tests.helpers import get_package
 
 
 @pytest.fixture()
-def tester(app, poetry, config, executor, env):
-    tester = CommandTester(app.find("add"))
-
-    executor._io = tester.io
-
-    installer = Installer(
-        tester.io,
-        env,
-        poetry.package,
-        poetry.locker,
-        poetry.pool,
-        config,
-        executor=executor,
-    )
-    installer.use_executor(True)
-    tester._command.set_installer(installer)
-    tester._command.set_env(env)
-
-    return tester
+def tester(command_tester_factory):
+    return command_tester_factory("add")
 
 
 @pytest.fixture()
 def old_tester(tester):
-    tester._command.installer.use_executor(False)
+    tester.command.installer.use_executor(False)
 
     return tester
 
@@ -64,12 +42,30 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "^0.2.0"
+
+
+def test_add_no_constraint_editable_error(app, repo, tester):
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("-e cachy")
+
+    expected = """
+Failed to add packages. Only vcs/path dependencies support editable installs. cachy is neither.
+
+No changes were applied.
+"""
+    assert 1 == tester.status_code
+    assert expected == tester.io.fetch_error()
+    assert 0 == tester.command.installer.executor.installations_count
+    assert content == app.poetry.file.read()["tool"]["poetry"]
 
 
 def test_add_equal_constraint(app, repo, tester):
@@ -91,7 +87,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
 
 def test_add_greater_constraint(app, repo, tester):
@@ -113,7 +109,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
 
 def test_add_constraint_with_extras(app, repo, tester):
@@ -142,7 +138,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
 
 def test_add_constraint_dependencies(app, repo, tester):
@@ -170,11 +166,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
 
 def test_add_git_constraint(app, repo, tester, tmp_venv):
-    tester._command.set_env(tmp_venv)
+    tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -195,7 +191,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -206,7 +202,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_git_constraint_with_poetry(app, repo, tester, tmp_venv):
-    tester._command.set_env(tmp_venv)
+    tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
@@ -226,11 +222,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
 
 def test_add_git_constraint_with_extras(app, repo, tester, tmp_venv):
-    tester._command.set_env(tmp_venv)
+    tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
@@ -254,7 +250,7 @@ Package operations: 4 installs, 0 updates, 0 removals
 """
 
     assert expected.strip() == tester.io.fetch_output().strip()
-    assert 4 == tester._command.installer.executor.installations_count
+    assert 4 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -265,13 +261,15 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
-def test_add_git_ssh_constraint(app, repo, tester, tmp_venv):
-    tester._command.set_env(tmp_venv)
+@pytest.mark.parametrize("editable", [False, True])
+def test_add_git_ssh_constraint(editable, app, repo, tester, tmp_venv):
+    tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    tester.execute("git+ssh://git@github.com/demo/demo.git@develop")
+    url = "git+ssh://git@github.com/demo/demo.git@develop"
+    tester.execute(f"{url}" if not editable else f"-e {url}")
 
     expected = """\
 
@@ -287,25 +285,32 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {
+
+    expected = {
         "git": "ssh://git@github.com/demo/demo.git",
         "rev": "develop",
     }
+    if editable:
+        expected["develop"] = True
+
+    assert content["dependencies"]["demo"] == expected
 
 
-def test_add_directory_constraint(app, repo, tester, mocker):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
-    p.return_value = Path(__file__) / ".."
+@pytest.mark.parametrize("editable", [False, True])
+def test_add_directory_constraint(editable, app, repo, tester, mocker):
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = Path(__file__).parent
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    tester.execute("../git/github.com/demo/demo")
+    path = "../git/github.com/demo/demo"
+    tester.execute(f"{path}" if not editable else f"-e {path}")
 
     expected = """\
 
@@ -317,25 +322,33 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 ../git/github.com/demo/demo)
-"""
+  • Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {"path": "../git/github.com/demo/demo"}
+
+    expected = {"path": "../git/github.com/demo/demo"}
+    if editable:
+        expected["develop"] = True
+
+    assert content["dependencies"]["demo"] == expected
 
 
 def test_add_directory_with_poetry(app, repo, tester, mocker):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute("../git/github.com/demo/pyproject-demo")
+    path = "../git/github.com/demo/pyproject-demo"
+    tester.execute("{}".format(path))
 
     expected = """\
 
@@ -347,20 +360,23 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.2 ../git/github.com/demo/pyproject-demo)
-"""
+  • Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
 
 def test_add_file_constraint_wheel(app, repo, tester, mocker, poetry):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = poetry.file.parent
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute("../distributions/demo-0.1.0-py2.py3-none-any.whl")
+    path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
+    tester.execute("{}".format(path))
 
     expected = """\
 
@@ -372,11 +388,13 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 ../distributions/demo-0.1.0-py2.py3-none-any.whl)
-"""
+  • Installing demo (0.1.0 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -387,12 +405,13 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_file_constraint_sdist(app, repo, tester, mocker):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    tester.execute("../distributions/demo-0.1.0.tar.gz")
+    path = "../distributions/demo-0.1.0.tar.gz"
+    tester.execute("{}".format(path))
 
     expected = """\
 
@@ -404,11 +423,13 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   • Installing pendulum (1.4.4)
-  • Installing demo (0.1.0 ../distributions/demo-0.1.0.tar.gz)
-"""
+  • Installing demo (0.1.0 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -444,7 +465,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -456,7 +477,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 
 
 def test_add_url_constraint_wheel(app, repo, tester, mocker):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -479,7 +500,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 2 == tester._command.installer.executor.installations_count
+    assert 2 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -516,7 +537,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     expected = set(expected.splitlines())
     output = set(tester.io.fetch_output().splitlines())
     assert expected == output
-    assert 4 == tester._command.installer.executor.installations_count
+    assert 4 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -548,7 +569,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -580,7 +601,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -613,7 +634,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -666,7 +687,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -694,7 +715,7 @@ Package operations: 1 install, 0 updates, 0 removals
 """
 
     assert expected == tester.io.fetch_output()
-    assert 1 == tester._command.installer.executor.installations_count
+    assert 1 == tester.command.installer.executor.installations_count
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
@@ -702,7 +723,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["pyyaml"] == "^3.13"
 
 
-def test_add_should_display_an_error_when_adding_existing_package_with_no_constraint(
+def test_add_should_skip_when_adding_existing_package_with_no_constraint(
     app, repo, tester
 ):
     content = app.poetry.file.read()
@@ -710,11 +731,18 @@ def test_add_should_display_an_error_when_adding_existing_package_with_no_constr
     app.poetry.file.write(content)
 
     repo.add_package(get_package("foo", "1.1.2"))
+    tester.execute("foo")
 
-    with pytest.raises(ValueError) as e:
-        tester.execute("foo")
+    expected = """\
+The following packages are already present in the pyproject.toml and will be skipped:
 
-    assert "Package foo is already present" == str(e.value)
+  • foo
+
+If you want to update it to the latest compatible version, you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.
+"""
+
+    assert expected in tester.io.fetch_output()
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint(
@@ -1070,13 +1098,14 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_directory_constraint_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    old_tester.execute("../git/github.com/demo/demo")
+    path = "../git/github.com/demo/demo"
+    old_tester.execute("{}".format(path))
 
     expected = """\
 
@@ -1088,8 +1117,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.2 ../git/github.com/demo/demo)
-"""
+  - Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1104,12 +1135,13 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_directory_with_poetry_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    old_tester.execute("../git/github.com/demo/pyproject-demo")
+    path = "../git/github.com/demo/pyproject-demo"
+    old_tester.execute("{}".format(path))
 
     expected = """\
 
@@ -1121,8 +1153,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.2 ../git/github.com/demo/pyproject-demo)
-"""
+  - Installing demo (0.1.2 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1132,12 +1166,13 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_file_constraint_wheel_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    old_tester.execute("../distributions/demo-0.1.0-py2.py3-none-any.whl")
+    path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
+    old_tester.execute("{}".format(path))
 
     expected = """\
 
@@ -1149,8 +1184,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0 ../distributions/demo-0.1.0-py2.py3-none-any.whl)
-"""
+  - Installing demo (0.1.0 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1167,12 +1204,13 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_file_constraint_sdist_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
 
-    old_tester.execute("../distributions/demo-0.1.0.tar.gz")
+    path = "../distributions/demo-0.1.0.tar.gz"
+    old_tester.execute("{}".format(path))
 
     expected = """\
 
@@ -1184,8 +1222,10 @@ Writing lock file
 Package operations: 2 installs, 0 updates, 0 removals
 
   - Installing pendulum (1.4.4)
-  - Installing demo (0.1.0 ../distributions/demo-0.1.0.tar.gz)
-"""
+  - Installing demo (0.1.0 {})
+""".format(
+        app.poetry.file.parent.joinpath(path).resolve().as_posix()
+    )
 
     assert expected == old_tester.io.fetch_output()
 
@@ -1242,7 +1282,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_url_constraint_wheel_old_installer(
     app, repo, installer, mocker, old_tester
 ):
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -1503,7 +1543,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert content["dependencies"]["pyyaml"] == "^3.13"
 
 
-def test_add_should_display_an_error_when_adding_existing_package_with_no_constraint_old_installer(
+def test_add_should_skip_when_adding_existing_package_with_no_constraint_old_installer(
     app, repo, installer, old_tester
 ):
     content = app.poetry.file.read()
@@ -1512,10 +1552,18 @@ def test_add_should_display_an_error_when_adding_existing_package_with_no_constr
 
     repo.add_package(get_package("foo", "1.1.2"))
 
-    with pytest.raises(ValueError) as e:
-        old_tester.execute("foo")
+    old_tester.execute("foo")
 
-    assert "Package foo is already present" == str(e.value)
+    expected = """\
+The following packages are already present in the pyproject.toml and will be skipped:
+
+  • foo
+
+If you want to update it to the latest compatible version, you can use `poetry update package`.
+If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.
+"""
+
+    assert expected in old_tester.io.fetch_output()
 
 
 def test_add_should_work_when_adding_existing_package_with_latest_constraint_old_installer(
@@ -1611,3 +1659,26 @@ Writing lock file
 """
 
     assert expected == old_tester.io.fetch_output()
+
+
+def test_add_keyboard_interrupt_restore_content(app, repo, installer, tester, mocker):
+    mocker.patch(
+        "poetry.installation.installer.Installer.run", side_effect=KeyboardInterrupt()
+    )
+    original_content = app.poetry.file.read()
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy --dry-run")
+
+    assert original_content == app.poetry.file.read()
+
+
+def test_dry_run_restore_original_content(app, repo, installer, tester):
+    original_content = app.poetry.file.read()
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy --dry-run")
+
+    assert original_content == app.poetry.file.read()
