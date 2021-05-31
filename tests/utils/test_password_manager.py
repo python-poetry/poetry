@@ -97,8 +97,8 @@ def test_get_http_auth(config, mock_available_backend, backend):
 
 
 def test_get_http_auth_credentials(config, mock_available_backend, backend):
-    backend.set_password("foo", "bar", "baz")
-    config.auth_config_source.add_property("http-basic.foo", {})
+    backend.set_password("https://example.com/simple/", "bar", "baz")
+    config.auth_config_source.add_property("repositories.foo", {"url": "https://example.com/simple/"})
     manager = PasswordManager(config)
 
     assert manager.keyring.is_available()

@@ -179,12 +179,13 @@ class PasswordManager:
             password = self._config.get(f"http-basic.{name}.password")
             if not username and not password:
                 repository = self._config.get(f"repositories.{name}")
-                if not repository:
-                    return None
-                else:
-                    credential = self.keyring.get_credential_without_namespace(repository["url"])
-                    username = credential.username
-                    password = credential.password
+                if repository:
+                    credential = self.keyring.get_credential_without_namespace(repository.get("url", None))
+                    if credential:
+                        username = credential.username
+                        password = credential.password
+            if not username and not password:
+                return None
         else:
             username, password = auth["username"], auth.get("password")
             if password is None:
