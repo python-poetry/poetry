@@ -1,20 +1,20 @@
 import os
 import shutil
+import subprocess
 import sys
 
-from typing import Optional
+from pathlib import Path
+from typing import Any
 from typing import Union
 
 import pytest
 import tomlkit
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
-from poetry.core.semver import Version
+from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
-from poetry.utils._compat import PY2
-from poetry.utils._compat import Path
 from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
@@ -118,7 +118,7 @@ def test_env_get_venv_with_venv_folder_present(
         assert venv.path == in_project_venv_dir
 
 
-def build_venv(path, executable=None):  # type: (Union[Path,str], Optional[str]) -> ()
+def build_venv(path: Union[Path, str], **__: Any) -> ():
     os.mkdir(str(path))
 
 
@@ -143,11 +143,11 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
@@ -156,7 +156,12 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
 
     m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
+        Path(tmp_dir) / "{}-py3.7".format(venv_name),
+        executable="python3.7",
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
@@ -182,11 +187,11 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
@@ -223,11 +228,11 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.create_venv")
@@ -262,11 +267,11 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv", side_effect=build_venv)
@@ -274,7 +279,12 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = manager.activate("python3.6", NullIO())
 
     m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.6".format(venv_name), executable="python3.6"
+        Path(tmp_dir) / "{}-py3.6".format(venv_name),
+        executable="python3.6",
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
     assert envs_file.exists()
@@ -303,11 +313,11 @@ def test_activate_activates_recreates_for_different_patch(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[
             ("/prefix", None),
             ('{"version_info": [3, 7, 0]}', None),
@@ -326,7 +336,12 @@ def test_activate_activates_recreates_for_different_patch(
     env = manager.activate("python3.7", NullIO())
 
     build_venv_m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.7".format(venv_name), executable="python3.7"
+        Path(tmp_dir) / "{}-py3.7".format(venv_name),
+        executable="python3.7",
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
     remove_venv_m.assert_called_with(Path(tmp_dir) / "{}-py3.7".format(venv_name))
 
@@ -358,11 +373,11 @@ def test_activate_does_not_recreate_when_switching_minor(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None), ("/prefix", None)],
     )
     build_venv_m = mocker.patch(
@@ -403,7 +418,7 @@ def test_deactivate_non_activated_but_existing(
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
 
@@ -422,7 +437,7 @@ def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
-    other_version = Version.parse("3.4") if version.major == 2 else version.next_minor
+    other_version = Version.parse("3.4") if version.major == 2 else version.next_minor()
     (
         Path(tmp_dir) / "{}-py{}.{}".format(venv_name, version.major, version.minor)
     ).mkdir()
@@ -442,7 +457,7 @@ def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
 
@@ -474,11 +489,11 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     envs_file.write(doc)
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None)],
     )
 
@@ -510,7 +525,7 @@ def test_remove_by_python_version(tmp_dir, manager, poetry, config, mocker):
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
@@ -528,7 +543,7 @@ def test_remove_by_name(tmp_dir, manager, poetry, config, mocker):
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
@@ -546,7 +561,7 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
@@ -583,7 +598,7 @@ def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mo
     file2_path.touch(exist_ok=False)
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
@@ -611,9 +626,7 @@ def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mo
     m.side_effect = original_rmtree  # Avoid teardown using `err_on_rm_venv_only`
 
 
-@pytest.mark.skipif(
-    os.name == "nt" or PY2, reason="Symlinks are not support for Windows"
-)
+@pytest.mark.skipif(os.name == "nt", reason="Symlinks are not support for Windows")
 def test_env_has_symlinks_on_nix(tmp_dir, tmp_venv):
     assert os.path.islink(tmp_venv.python)
 
@@ -633,8 +646,60 @@ def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
     assert processError.value.e.returncode == 1
 
 
+def test_run_with_keyboard_interrupt(tmp_dir, tmp_venv, mocker):
+    mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
+    with pytest.raises(KeyboardInterrupt):
+        tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
+    subprocess.run.assert_called_once()
+
+
+def test_call_with_input_and_keyboard_interrupt(tmp_dir, tmp_venv, mocker):
+    mocker.patch("subprocess.run", side_effect=KeyboardInterrupt())
+    kwargs = {"call": True}
+    with pytest.raises(KeyboardInterrupt):
+        tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT, **kwargs)
+    subprocess.run.assert_called_once()
+
+
+def test_call_no_input_with_keyboard_interrupt(tmp_dir, tmp_venv, mocker):
+    mocker.patch("subprocess.call", side_effect=KeyboardInterrupt())
+    kwargs = {"call": True}
+    with pytest.raises(KeyboardInterrupt):
+        tmp_venv.run("python", "-", **kwargs)
+    subprocess.call.assert_called_once()
+
+
+def test_run_with_called_process_error(tmp_dir, tmp_venv, mocker):
+    mocker.patch(
+        "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
+    )
+    with pytest.raises(EnvCommandError):
+        tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT)
+    subprocess.run.assert_called_once()
+
+
+def test_call_with_input_and_called_process_error(tmp_dir, tmp_venv, mocker):
+    mocker.patch(
+        "subprocess.run", side_effect=subprocess.CalledProcessError(42, "some_command")
+    )
+    kwargs = {"call": True}
+    with pytest.raises(EnvCommandError):
+        tmp_venv.run("python", "-", input_=MINIMAL_SCRIPT, **kwargs)
+    subprocess.run.assert_called_once()
+
+
+def test_call_no_input_with_called_process_error(tmp_dir, tmp_venv, mocker):
+    mocker.patch(
+        "subprocess.call", side_effect=subprocess.CalledProcessError(42, "some_command")
+    )
+    kwargs = {"call": True}
+    with pytest.raises(EnvCommandError):
+        tmp_venv.run("python", "-", **kwargs)
+    subprocess.call.assert_called_once()
+
+
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_ones_first(
-    manager, poetry, config, mocker
+    manager, poetry, config, mocker, config_virtualenvs_path
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -644,7 +709,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
 
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.7.5")),
     )
     m = mocker.patch(
@@ -654,12 +719,17 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        Path("/foo/virtualenvs/{}-py3.7".format(venv_name)), executable="python3"
+        config_virtualenvs_path / "{}-py3.7".format(venv_name),
+        executable="python3",
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
 
 def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific_ones(
-    manager, poetry, config, mocker
+    manager, poetry, config, mocker, config_virtualenvs_path
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -668,9 +738,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     mocker.patch("sys.version_info", (2, 7, 16))
-    mocker.patch(
-        "poetry.utils._compat.subprocess.check_output", side_effect=["3.5.3", "3.9.0"]
-    )
+    mocker.patch("subprocess.check_output", side_effect=["3.5.3", "3.9.0"])
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -678,7 +746,12 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        Path("/foo/virtualenvs/{}-py3.9".format(venv_name)), executable="python3.9"
+        config_virtualenvs_path / "{}-py3.9".format(venv_name),
+        executable="python3.9",
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
 
@@ -690,9 +763,7 @@ def test_create_venv_fails_if_no_compatible_python_version_could_be_found(
 
     poetry.package.python_versions = "^4.8"
 
-    mocker.patch(
-        "poetry.utils._compat.subprocess.check_output", side_effect=["", "", "", ""]
-    )
+    mocker.patch("subprocess.check_output", side_effect=["", "", "", ""])
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -718,7 +789,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
 
     poetry.package.python_versions = "^4.8"
 
-    mocker.patch("poetry.utils._compat.subprocess.check_output", side_effect=["3.8.0"])
+    mocker.patch("subprocess.check_output", side_effect=["3.8.0"])
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -737,7 +808,7 @@ def test_create_venv_does_not_try_to_find_compatible_versions_with_executable(
 
 
 def test_create_venv_uses_patch_version_to_detect_compatibility(
-    manager, poetry, config, mocker
+    manager, poetry, config, mocker, config_virtualenvs_path
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -750,7 +821,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     mocker.patch("sys.version_info", (version.major, version.minor, version.patch + 1))
     check_output = mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.9")),
     )
     m = mocker.patch(
@@ -761,17 +832,18 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     assert not check_output.called
     m.assert_called_with(
-        Path(
-            "/foo/virtualenvs/{}-py{}.{}".format(
-                venv_name, version.major, version.minor
-            )
-        ),
+        config_virtualenvs_path
+        / "{}-py{}.{}".format(venv_name, version.major, version.minor),
         executable=None,
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
 
 def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
-    manager, poetry, config, mocker
+    manager, poetry, config, mocker, config_virtualenvs_path
 ):
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
@@ -783,7 +855,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     check_output = mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(
             Version.parse("{}.{}.0".format(version.major, version.minor - 1))
         ),
@@ -798,12 +870,13 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
 
     assert check_output.called
     m.assert_called_with(
-        Path(
-            "/foo/virtualenvs/{}-py{}.{}".format(
-                venv_name, version.major, version.minor - 1
-            )
-        ),
+        config_virtualenvs_path
+        / "{}-py{}.{}".format(venv_name, version.major, version.minor - 1),
         executable="python{}.{}".format(version.major, version.minor - 1),
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
 
@@ -823,18 +896,25 @@ def test_activate_with_in_project_setting_does_not_fail_if_no_venvs_dir(
     )
 
     mocker.patch(
-        "poetry.utils._compat.subprocess.check_output",
+        "subprocess.check_output",
         side_effect=check_output_wrapper(),
     )
     mocker.patch(
-        "poetry.utils._compat.subprocess.Popen.communicate",
+        "subprocess.Popen.communicate",
         side_effect=[("/prefix", None), ("/prefix", None)],
     )
     m = mocker.patch("poetry.utils.env.EnvManager.build_venv")
 
     manager.activate("python3.7", NullIO())
 
-    m.assert_called_with(poetry.file.parent / ".venv", executable="python3.7")
+    m.assert_called_with(
+        poetry.file.parent / ".venv",
+        executable="python3.7",
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
+    )
 
     envs_file = TOMLFile(Path(tmp_dir) / "virtualenvs" / "envs.toml")
     assert not envs_file.exists()
@@ -848,11 +928,12 @@ def test_system_env_has_correct_paths():
     assert paths.get("purelib") is not None
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
-    assert env.site_packages == Path(paths["purelib"])
+    assert env.site_packages.path == Path(paths["purelib"])
 
 
 @pytest.mark.parametrize(
-    ("enabled",), [(True,), (False,)],
+    ("enabled",),
+    [(True,), (False,)],
 )
 def test_system_env_usersite(mocker, enabled):
     mocker.patch("site.check_enableusersite", return_value=enabled)
@@ -868,4 +949,18 @@ def test_venv_has_correct_paths(tmp_venv):
     assert paths.get("purelib") is not None
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
-    assert tmp_venv.site_packages == Path(paths["purelib"])
+    assert tmp_venv.site_packages.path == Path(paths["purelib"])
+
+
+def test_env_system_packages(tmp_path, config):
+    venv_path = tmp_path / "venv"
+    pyvenv_cfg = venv_path / "pyvenv.cfg"
+
+    EnvManager(config).build_venv(path=venv_path, flags={"system-site-packages": True})
+
+    if sys.version_info >= (3, 3):
+        assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
+    elif (2, 6) < sys.version_info < (3, 0):
+        assert not venv_path.joinpath(
+            "lib", "python2.7", "no-global-site-packages.txt"
+        ).exists()

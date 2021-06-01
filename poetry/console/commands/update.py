@@ -1,5 +1,5 @@
-from cleo import argument
-from cleo import option
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from .installer_command import InstallerCommand
 
@@ -27,7 +27,7 @@ class UpdateCommand(InstallerCommand):
 
     loggers = ["poetry.repositories.pypi_repository"]
 
-    def handle(self):
+    def handle(self) -> int:
         packages = self.argument("packages")
 
         self._installer.use_executor(

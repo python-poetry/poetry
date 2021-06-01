@@ -14,6 +14,7 @@ then `--help` combined with any of those can give you more information.
 * `--ansi`: Force ANSI output.
 * `--no-ansi`: Disable ANSI output.
 * `--version (-V)`: Display this application version.
+* `--no-interaction (-n)`: Do not ask any interactive question.
 
 
 ## new
@@ -30,12 +31,11 @@ will create a folder as follows:
 ```text
 my-package
 ├── pyproject.toml
-├── README.rst
+├── README.md
 ├── my_package
 │   └── __init__.py
 └── tests
-    ├── __init__.py
-    └── test_my_package.py
+    └── __init__.py
 ```
 
 If you want to name your project differently than the folder, you can pass
@@ -56,13 +56,33 @@ That will create a folder structure as follows:
 ```text
 my-package
 ├── pyproject.toml
-├── README.rst
+├── README.md
 ├── src
 │   └── my_package
 │       └── __init__.py
 └── tests
-    ├── __init__.py
-    └── test_my_package.py
+    └── __init__.py
+```
+
+The `--name` option is smart enough to detect namespace packages and create
+the required structure for you.
+
+```bash
+poetry new --src --name my.package my-package
+```
+
+will create the following structure:
+
+```text
+my-package
+├── pyproject.toml
+├── README.md
+├── src
+│   └── my
+│       └── package
+│           └── __init__.py
+└── tests
+    └── __init__.py
 ```
 
 ## init
@@ -108,6 +128,13 @@ the `--no-dev` option.
 poetry install --no-dev
 ```
 
+Conversely, you can specify to the command that you only want to install the development dependencies
+by passing the `--dev-only` option. Note that `--no-dev` takes priority if both options are passed.
+
+```bash
+poetry install --dev-only
+```
+
 If you want to remove old dependencies no longer present in the lock file, use the
 `--remove-untracked` option.
 
@@ -141,10 +168,16 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
+Installation of your project's package is also skipped when the `--dev-only`
+option is passed.
+
 ### Options
 
 * `--no-dev`: Do not install dev dependencies.
+* `--dev-only`: Only install dev dependencies.
 * `--no-root`: Do not install the root package (your project).
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+* `--remove-untracked`: Remove dependencies not presented in the lock file
 * `--extras (-E)`: Features to install (multiple values allowed).
 
 ## update
@@ -212,6 +245,10 @@ or use ssh instead of https:
 
 ```bash
 poetry add git+ssh://git@github.com/sdispater/pendulum.git
+
+or alternatively:
+
+poetry add git+ssh://git@github.com:sdispater/pendulum.git
 ```
 
 If you need to checkout a specific branch, tag or revision,
@@ -220,6 +257,11 @@ you can specify it when using `add`:
 ```bash
 poetry add git+https://github.com/sdispater/pendulum.git#develop
 poetry add git+https://github.com/sdispater/pendulum.git#2.0.5
+
+or using SSH instead:
+
+poetry add git+ssh://github.com/sdispater/pendulum.git#develop
+poetry add git+ssh://github.com/sdispater/pendulum.git#2.0.5
 ```
 
 or make them point to a local directory or file:
@@ -230,7 +272,14 @@ poetry add ../my-package/dist/my-package-0.1.0.tar.gz
 poetry add ../my-package/dist/my_package-0.1.0.whl
 ```
 
-If you want the dependency to be installed in editable mode you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
+If you want the dependency to be installed in editable mode you can use the `--editable` option.
+
+```bash
+poetry add --editable ./my-package/
+poetry add --editable git+ssh://github.com/sdispater/pendulum.git#develop
+```
+
+Alternatively, you can specify it in the `pyproject.toml` file. It means that changes in the local directory will be reflected directly in environment.
 
 ```toml
 [tool.poetry.dependencies]
@@ -254,10 +303,15 @@ poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ### Options
 
 * `--dev (-D)`: Add package as development dependency.
-* `--path`: The path to a dependency.
-* `--optional` : Add as an optional dependency.
-* `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
-* `--lock` : Do not perform install (only update the lockfile).
+* `--editable (-e)`: Add vcs/path dependencies as editable.
+* `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
+* `--optional`: Add as an optional dependency.
+* `--python`: Python version for which the dependency must be installed.
+* `--platform`: Platforms for which the dependency must be installed.
+* `--source`: Name of the source to use to install the package.
+* `---allow-prereleases`: Accept prereleases.
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--lock`: Do not perform install (only update the lockfile).
 
 
 ## remove
@@ -419,9 +473,18 @@ poetry search requests pendulum
 
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
 
+!!!note
+
+     By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+
 ```bash
 poetry lock
 ```
+
+### Options
+
+* `--check`: Verify that `poetry.lock` is consistent with `pyproject.toml`
+* `--no-update`: Do not update locked versions, only refresh lock file.
 
 ## version
 
@@ -446,7 +509,7 @@ The table below illustrates the effect of these rules with concrete examples.
 | prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
 | prerelease |  1.0.3-beta.0 | 1.0.3-beta.1  |
 
-## Options
+### Options
 
 * `--short (-s)`: Output the version number only.
 
@@ -490,4 +553,116 @@ The `cache list` command lists Poetry's available caches.
 
 ```bash
 poetry cache list
+```
+
+### cache clear
+
+The `cache clear` command removes packages from a cached repository.
+
+For example, to clear the whole cache of packages from the `pypi` repository, run:
+
+```bash
+poetry cache clear pypi --all
+```
+
+To only remove a specific package from a cache, you have to specify the cache entry in the following form `cache:package:version`:
+
+```bash
+poetry cache clear pypi:requests:2.24.0
+```
+
+## plugin
+
+The `plugin` namespace regroups sub commands to manage Poetry plugins.
+
+### `plugin add`
+
+The `plugin add` command installs Poetry plugins and make them available at runtime.
+
+For example, to install the `poetry-plugin` plugin, you can run:
+
+```bash
+poetry plugin add poetry-plugin
+```
+
+The package specification formats supported by the `plugin add` command are the same as the ones supported
+by the [`add` command](#add).
+
+If you just want to check what would happen by installing a plugin, you can use the `--dry-run` option
+
+```bash
+poetry plugin add poetry-plugin --dry-run
+```
+
+#### Options
+
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+
+### `plugin show`
+
+The `plugin show` command lists all the currently installed plugins.
+
+```bash
+poetry plugin show
+```
+
+### `plugin remove`
+
+The `plugin remove` command removes installed plugins.
+
+```bash
+poetry plugin remove poetry-plugin
+```
+
+## source
+
+The `source` namespace regroups sub commands to manage repository sources for a Poetry project.
+
+### `source add`
+
+The `source add` command adds source configuration to the project.
+
+For example, to add the `pypi-test` source, you can run:
+
+```bash
+poetry source add pypi-test https://test.pypi.org/simple/
+```
+
+!!!note
+
+    You cannot use the name `pypi` as it is reserved for use by the default PyPI source.
+
+#### Options
+
+* `--default`: Set this source as the [default](/docs/repositories/#disabling-the-pypi-repository) (disable PyPI).
+* `--secondary`: Set this source as a [secondary](/docs/repositories/#install-dependencies-from-a-private-repository) source.
+
+!!!note
+
+    You cannot set a source as both `default` and `secondary`.
+
+### `source show`
+
+The `source show` command displays information on all configured sources for the project.
+
+```bash
+poetry source show
+```
+
+Optionally, you can show information of one or more sources by specifying their names.
+
+```bash
+poetry source show pypi-test
+```
+
+!!!note
+
+    This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+
+### `source remove`
+
+The `source remove` command removes a configured source from your `pyproject.toml`.
+
+```bash
+poetry source remove pypi-test
 ```

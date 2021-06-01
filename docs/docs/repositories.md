@@ -49,7 +49,7 @@ If you do not specify the password you will be prompted to write it.
     poetry config pypi-token.pypi my-token
     ```
 
-    If you still want to use you username and password, you can do so with the following
+    If you still want to use your username and password, you can do so with the following
     call to `config`.
 
     ```bash

@@ -1,12 +1,16 @@
 from __future__ import unicode_literals
 
+import itertools
 import sys
+
+from pathlib import Path
 
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
+from deepdiff import DeepDiff
 
-from poetry.core.packages import ProjectPackage
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
@@ -15,8 +19,6 @@ from poetry.packages import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
-from poetry.utils._compat import PY2
-from poetry.utils._compat import Path
 from poetry.utils.env import MockEnv
 from poetry.utils.env import NullEnv
 from tests.helpers import get_dependency
@@ -27,7 +29,7 @@ from tests.repositories.test_legacy_repository import (
 from tests.repositories.test_pypi_repository import MockRepository
 
 
-fixtures_dir = Path("tests/fixtures")
+RESERVED_PACKAGES = ("pip", "setuptools", "wheel")
 
 
 class Installer(BaseInstaller):
@@ -77,15 +79,6 @@ class Locker(BaseLocker):
     def _write_lock_data(self, data):
         for package in data["package"]:
             python_versions = str(package["python-versions"])
-            if PY2:
-                python_versions = python_versions.decode()
-                if "requirements" in package:
-                    requirements = {}
-                    for key, value in package["requirements"].items():
-                        requirements[key.decode()] = value.decode()
-
-                    package["requirements"] = requirements
-
             package["python-versions"] = python_versions
 
         self._written_data = data
@@ -303,45 +296,73 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
     assert len(removals) == 1
 
 
-def test_run_install_remove_untracked(installer, locker, repo, package, installed):
+@pytest.mark.parametrize(
+    "managed_reserved_package_names",
+    [
+        i
+        for i in itertools.chain(
+            [tuple()],
+            itertools.permutations(RESERVED_PACKAGES, 1),
+            itertools.permutations(RESERVED_PACKAGES, 2),
+            [RESERVED_PACKAGES],
+        )
+    ],
+)
+def test_run_install_remove_untracked(
+    managed_reserved_package_names, installer, locker, repo, package, installed
+):
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+    package_pip = get_package("pip", "20.0.0")
+    package_setuptools = get_package("setuptools", "20.0.0")
+    package_wheel = get_package("wheel", "20.0.0")
+
+    all_packages = [
+        package_a,
+        package_b,
+        package_c,
+        package_pip,
+        package_setuptools,
+        package_wheel,
+    ]
+
+    managed_reserved_packages = [
+        pkg for pkg in all_packages if pkg.name in managed_reserved_package_names
+    ]
+    locked_packages = [package_a, *managed_reserved_packages]
+
+    for pkg in all_packages:
+        repo.add_package(pkg)
+        installed.add_package(pkg)
+
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency(Factory.create_dependency(package_a.name, package_a.version))
+
     locker.locked(True)
     locker.mock_lock_data(
         {
             "package": [
                 {
-                    "name": "a",
-                    "version": "1.0",
+                    "name": pkg.name,
+                    "version": pkg.version,
                     "category": "main",
                     "optional": False,
                     "platform": "*",
                     "python-versions": "*",
                     "checksum": [],
                 }
+                for pkg in locked_packages
             ],
             "metadata": {
                 "python-versions": "*",
                 "platform": "*",
                 "content-hash": "123456789",
-                "hashes": {"a": []},
+                "hashes": {pkg.name: [] for pkg in locked_packages},
             },
         }
     )
-    package_a = get_package("a", "1.0")
-    package_b = get_package("b", "1.1")
-    package_c = get_package("c", "1.2")
-    package_pip = get_package("pip", "20.0.0")
-    repo.add_package(package_a)
-    repo.add_package(package_b)
-    repo.add_package(package_c)
-    repo.add_package(package_pip)
-
-    installed.add_package(package_a)
-    installed.add_package(package_b)
-    installed.add_package(package_c)
-    installed.add_package(package_pip)  # Always required and never removed.
-    installed.add_package(package)  # Root package never removed.
-
-    package.add_dependency(Factory.create_dependency("A", "~1.0"))
 
     installer.dev_mode(True).remove_untracked(True)
     installer.run()
@@ -353,7 +374,12 @@ def test_run_install_remove_untracked(installer, locker, repo, package, installe
     assert len(updates) == 0
 
     removals = installer.installer.removals
-    assert set(r.name for r in removals) == {"b", "c"}
+    expected_removals = {
+        package_b.name,
+        package_c.name,
+        *managed_reserved_package_names,
+    }
+    assert set(r.name for r in removals) == expected_removals
 
 
 def test_run_whitelist_add(installer, locker, repo, package):
@@ -745,12 +771,11 @@ def test_installer_with_pypi_repository(package, locker, installed, config):
     installer.run()
 
     expected = fixture("with-pypi-repository")
+    assert not DeepDiff(expected, locker.written_data, ignore_order=True)
 
-    assert locker.written_data == expected
 
-
-def test_run_installs_with_local_file(installer, locker, repo, package):
-    file_path = fixtures_dir / "distributions/demo-0.1.0-py2.py3-none-any.whl"
+def test_run_installs_with_local_file(installer, locker, repo, package, fixture_dir):
+    file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
 
     repo.add_package(get_package("pendulum", "1.4.4"))
@@ -764,9 +789,11 @@ def test_run_installs_with_local_file(installer, locker, repo, package):
     assert len(installer.installer.installs) == 2
 
 
-def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, package):
-    file_path = (
-        fixtures_dir / "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
+def test_run_installs_wheel_with_no_requires_dist(
+    installer, locker, repo, package, fixture_dir
+):
+    file_path = fixture_dir(
+        "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
     )
     package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
 
@@ -780,9 +807,9 @@ def test_run_installs_wheel_with_no_requires_dist(installer, locker, repo, packa
 
 
 def test_run_installs_with_local_poetry_directory_and_extras(
-    installer, locker, repo, package, tmpdir
+    installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    file_path = fixtures_dir / "project_with_extras"
+    file_path = fixture_dir("project_with_extras")
     package.add_dependency(
         Factory.create_dependency(
             "project-with-extras", {"path": str(file_path), "extras": ["extras_a"]}
@@ -801,9 +828,9 @@ def test_run_installs_with_local_poetry_directory_and_extras(
 
 
 def test_run_installs_with_local_poetry_directory_transitive(
-    installer, locker, repo, package, tmpdir
+    installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    root_dir = fixtures_dir.joinpath("directory")
+    root_dir = fixture_dir("directory")
     package.root_dir = root_dir
     locker.set_lock_path(root_dir)
     directory = root_dir.joinpath("project_with_transitive_directory_dependencies")
@@ -828,16 +855,16 @@ def test_run_installs_with_local_poetry_directory_transitive(
 
 
 def test_run_installs_with_local_poetry_file_transitive(
-    installer, locker, repo, package, tmpdir
+    installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    root_dir = fixtures_dir.joinpath("directory")
+    root_dir = fixture_dir("directory")
     package.root_dir = root_dir
     locker.set_lock_path(root_dir)
     directory = root_dir.joinpath("project_with_transitive_file_dependencies")
     package.add_dependency(
         Factory.create_dependency(
             "project-with-transitive-file-dependencies",
-            {"path": str(directory.relative_to(fixtures_dir.joinpath("directory")))},
+            {"path": str(directory.relative_to(fixture_dir("directory")))},
             root_dir=root_dir,
         )
     )
@@ -855,9 +882,9 @@ def test_run_installs_with_local_poetry_file_transitive(
 
 
 def test_run_installs_with_local_setuptools_directory(
-    installer, locker, repo, package, tmpdir
+    installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    file_path = fixtures_dir / "project_with_setup/"
+    file_path = fixture_dir("project_with_setup/")
     package.add_dependency(
         Factory.create_dependency("project-with-setup", {"path": str(file_path)})
     )
@@ -1515,7 +1542,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     installer.whitelist(["pytest"])
     installer.run()
 
-    assert len(installer.installer.installs) == 6 if not PY2 else 7
+    assert len(installer.installer.installs) == 7
     assert len(installer.installer.updates) == 0
     assert len(installer.installer.removals) == 0
 
