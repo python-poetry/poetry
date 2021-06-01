@@ -85,6 +85,11 @@ my-package
     └── __init__.py
 ```
 
+If you want to use a specific python version, you can use the `--python` option:
+```bash
+poetry new my-package --python "~3.8.0"
+```
+
 ## init
 
 This command will help you create a `pyproject.toml` file interactively
