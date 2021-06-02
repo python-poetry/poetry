@@ -9,11 +9,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import List
 
+from distlib.scripts import ScriptMaker
+
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
 from poetry.core.masonry.utils.package_include import PackageInclude
 from poetry.core.semver.version import Version
-from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.pip import pip_editable_install
@@ -24,18 +25,6 @@ if TYPE_CHECKING:
 
     from poetry.core.poetry import Poetry
     from poetry.utils.env import Env
-
-SCRIPT_TEMPLATE = """\
-#!{python}
-from {module} import {callable_holder}
-
-if __name__ == '__main__':
-    {callable_}()
-"""
-
-WINDOWS_CMD_TEMPLATE = """\
-@echo off\r\n"{python}" "%~dp0\\{script}" %*\r\n
-"""
 
 
 class EditableBuilder(Builder):
@@ -171,46 +160,35 @@ class EditableBuilder(Builder):
             return []
 
         scripts = entry_points.get("console_scripts", [])
+
+        # The source_dir parameter is never used
+        # Since we pass the entry point directly.
+        script_maker = ScriptMaker(None, scripts_path)
+        script_maker.executable = str(self._env.python)
+
+        # Ensure old scripts are overwritten.
+        script_maker.clobber = True
+
+        # Ensure we don't generate any variants for scripts because this is almost
+        # never what somebody wants.
+        # See https://bitbucket.org/pypa/distlib/issue/35/
+        script_maker.variants = {""}
+
+        # This is required because otherwise distlib creates scripts that are not
+        # executable.
+        # See https://bitbucket.org/pypa/distlib/issue/32/
+        script_maker.set_mode = True
+
+        # how to handle gui scripts??
+
         for script in scripts:
-            name, script = script.split(" = ")
-            module, callable_ = script.split(":")
-            callable_holder = callable_.split(".", 1)[0]
 
-            script_file = scripts_path.joinpath(name)
-            self._debug(
-                "  - Adding the <c2>{}</c2> script to <b>{}</b>".format(
-                    name, scripts_path
-                )
-            )
-            with script_file.open("w", encoding="utf-8") as f:
-                f.write(
-                    decode(
-                        SCRIPT_TEMPLATE.format(
-                            python=self._env.python,
-                            module=module,
-                            callable_holder=callable_holder,
-                            callable_=callable_,
-                        )
-                    )
-                )
-
-            script_file.chmod(0o755)
-
-            added.append(script_file)
-
-            if WINDOWS:
-                cmd_script = script_file.with_suffix(".cmd")
-                cmd = WINDOWS_CMD_TEMPLATE.format(python=self._env.python, script=name)
+            script_names = script_maker.make(script)
+            for script_name in script_names:
                 self._debug(
-                    "  - Adding the <c2>{}</c2> script wrapper to <b>{}</b>".format(
-                        cmd_script.name, scripts_path
-                    )
+                    "  - Added <b>{}<b> to <b>{}</b>".format(script_name, scripts_path)
                 )
-
-                with cmd_script.open("w", encoding="utf-8") as f:
-                    f.write(decode(cmd))
-
-                added.append(cmd_script)
+                added.append(Path(script_name))
 
         return added
 

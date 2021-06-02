@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os
 import shutil
+import sys
 
 from pathlib import Path
 
@@ -76,8 +77,8 @@ def test_builder_installs_proper_files_for_standard_packages(simple_poetry, tmp_
     builder = EditableBuilder(simple_poetry, tmp_venv, NullIO())
 
     builder.build()
-
-    assert tmp_venv._bin_dir.joinpath("foo").exists()
+    SUFFIX = ".exe" if sys.platform.startswith("win32") else ""
+    assert tmp_venv._bin_dir.joinpath("foo" + SUFFIX).exists()
     pth_file = "simple_project.pth"
     assert tmp_venv.site_packages.exists(pth_file)
     assert (
@@ -146,41 +147,9 @@ My Package
     assert str(dist_info.joinpath("entry_points.txt")) in records
     assert str(dist_info.joinpath("RECORD")) in records
 
-    baz_script = """\
-#!{python}
-from bar import baz
-
-if __name__ == '__main__':
-    baz.boom.bim()
-""".format(
-        python=tmp_venv.python
-    )
-
-    assert baz_script == tmp_venv._bin_dir.joinpath("baz").read_text()
-
-    foo_script = """\
-#!{python}
-from foo import bar
-
-if __name__ == '__main__':
-    bar()
-""".format(
-        python=tmp_venv.python
-    )
-
-    assert foo_script == tmp_venv._bin_dir.joinpath("foo").read_text()
-
-    fox_script = """\
-#!{python}
-from fuz.foo import bar
-
-if __name__ == '__main__':
-    bar.baz()
-""".format(
-        python=tmp_venv.python
-    )
-
-    assert fox_script == tmp_venv._bin_dir.joinpath("fox").read_text()
+    assert tmp_venv._bin_dir.joinpath("baz" + SUFFIX).exists()
+    assert tmp_venv._bin_dir.joinpath("foo" + SUFFIX).exists()
+    assert tmp_venv._bin_dir.joinpath("fox" + SUFFIX).exists()
 
 
 def test_builder_falls_back_on_setup_and_pip_for_packages_with_build_scripts(
