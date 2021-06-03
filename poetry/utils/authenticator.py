@@ -134,35 +134,47 @@ class Authenticator:
 
         return credentials[0], credentials[1]
 
+    def get_pypi_token(self, name: str) -> str:
+        return self._password_manager.get_pypi_token(name)
+
+    def get_http_auth(self, name: str) -> Optional[Dict[str, str]]:
+        return self._get_http_auth(name, None)
+
+    def _get_http_auth(
+        self, name: str, netloc: Optional[str]
+    ) -> Optional[Dict[str, str]]:
+        if name == "pypi":
+            url = "https://upload.pypi.org/legacy/"
+        else:
+            url = self._config.get(f"repositories.{name}.url")
+            if not url:
+                return
+
+        parsed_url = urllib.parse.urlsplit(url)
+
+        if netloc is None or netloc == parsed_url.netloc:
+            auth = self._password_manager.get_http_auth(name)
+
+            if auth is None or auth["password"] is None:
+                username = auth["username"] if auth else None
+                auth = self._get_credentials_for_netloc_from_keyring(
+                    url, parsed_url.netloc, username
+                )
+
+            return auth
+
     def _get_credentials_for_netloc(
         self, netloc: str
     ) -> Tuple[Optional[str], Optional[str]]:
         credentials = (None, None)
 
         for repository_name in self._config.get("repositories", []):
-            repository_config = self._config.get(f"repositories.{repository_name}")
-            if not repository_config:
+            auth = self._get_http_auth(repository_name, netloc)
+
+            if auth is None:
                 continue
 
-            url = repository_config.get("url")
-            if not url:
-                continue
-
-            parsed_url = urllib.parse.urlsplit(url)
-
-            if netloc == parsed_url.netloc:
-                auth = self._password_manager.get_http_auth(repository_name)
-
-                if auth is None or auth["password"] is None:
-                    username = auth["username"] if auth else None
-                    auth = self._get_credentials_for_netloc_from_keyring(
-                        url, netloc, username
-                    )
-
-                if auth is None:
-                    continue
-
-                return auth["username"], auth["password"]
+            return auth["username"], auth["password"]
 
         return credentials
 

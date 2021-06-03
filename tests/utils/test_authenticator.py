@@ -7,7 +7,7 @@ import requests
 
 from cleo.io.null_io import NullIO
 
-from poetry.installation.authenticator import Authenticator
+from poetry.utils.authenticator import Authenticator
 
 
 class SimpleCredential:
