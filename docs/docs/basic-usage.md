@@ -195,7 +195,8 @@ the dependencies installed are still working even if your dependencies released 
 
 ### Installing dependencies only
 
-The current project is installed in [editable](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) mode by default.
+The current package is installed in [editable mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) by default if it matches the canonical form of the project's name in `pyproject.toml`.
+Please check [pyproject.toml](/docs/pyproject/#packages) for how to handle a project structure that differs from the standard one (e.g. if you have a `lib` or `src` folder).
 
 If you want to install the dependencies only, run the `install` command with the `--no-root` flag:
 
