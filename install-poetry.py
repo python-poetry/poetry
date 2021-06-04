@@ -415,10 +415,15 @@ class Installer:
 
         def _is_self_upgrade_supported(x):
             mx = self.VERSION_REGEX.match(x)
+
+            if mx is None:
+                # the version is not semver, perhaps scm or file, we assume upgrade is supported
+                return True
+
             vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
             return vx >= (1, 2, 0)
 
-        if not _is_self_upgrade_supported(version):
+        if version and not _is_self_upgrade_supported(version):
             self._write(
                 colorize(
                     "warning",
