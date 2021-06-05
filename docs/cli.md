@@ -468,10 +468,9 @@ poetry shell
 The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
-!!!note
-
-    This command is also available as a `pre-commit` hook.
-    See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
+{{% note %}}
+This command is also available as a `pre-commit` hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
+{{% /note %}}
 
 ```bash
 poetry check
@@ -540,12 +539,8 @@ poetry export -f requirements.txt --output requirements.txt
 
 {{% note %}}
 Only the `requirements.txt` format is currently supported.
+This command is also available as a `pre-commit` hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
 {{% /note %}}
-
-!!!note
-
-    This command is also available as a `pre-commit` hook.
-    See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
 
 ### Options
 
