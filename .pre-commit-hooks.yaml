@@ -5,6 +5,7 @@
   language: python
   language_version: python3
   pass_filenames: false
+  files: '^.*/pyproject\.toml$'
 
 - id: poetry-lock
   name: poetry-lock
@@ -21,4 +22,5 @@
   language: python
   language_version: python3
   pass_filenames: false
+  files: '^.*/poetry\.lock$'
   args: ["-f", "requirements.txt", "-o", "requirements.txt"]
