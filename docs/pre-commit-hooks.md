@@ -1,3 +1,14 @@
+---
+title: "pre-commit hooks"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 120
+---
+
 # pre-commit hooks
 
 `pre-commit` is a tool which manages running of
