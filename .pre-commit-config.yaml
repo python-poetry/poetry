@@ -28,3 +28,8 @@ repos:
       - id: end-of-file-fixer
         exclude: ^tests/.*/fixtures/.*
       - id: debug-statements
+
+  - repo: https://github.com/pre-commit/pre-commit
+    rev: v2.13.0
+    hooks:
+      - id: validate_manifest
