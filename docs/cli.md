@@ -1,3 +1,14 @@
+---
+title: "Commands"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 30
+---
+
 # Commands
 
 You've already learned how to use the command-line interface to do some things.
@@ -116,7 +127,7 @@ poetry install --remove-untracked
 ```
 
 You can also specify the extras you want installed
-by passing the `-E|--extras` option (See [Extras](/docs/pyproject/#extras) for more info)
+by passing the `-E|--extras` option (See [Extras]({{< relref "pyproject#extras" >}}) for more info)
 
 ```bash
 poetry install --extras "mysql pgsql"
@@ -132,7 +143,6 @@ Installing dependencies from lock file
 No dependencies to install or update
 
   - Installing <your-package-name> (x.x.x)
-
 ```
 
 If you want to skip this installation, use the `--no-root` option.
@@ -237,10 +247,10 @@ If you want the dependency to be installed in editable mode you can specify it i
 my-package = {path = "../my/path", develop = true}
 ```
 
-!!!note
-
-    Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
-    to make sure the behavior is the same for all poetry versions.
+{{% note %}}
+Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
+to make sure the behavior is the same for all poetry versions.
+{{% /note %}}
 
 If the package(s) you want to install provide extras, you can specify them
 when adding the package:
@@ -355,7 +365,7 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 ````
 
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
-See [Configuration](/docs/configuration/) for all available settings.
+See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 ### Options
 
@@ -419,9 +429,9 @@ poetry search requests pendulum
 
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
 
-!!!note
-
-     By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+{{% note %}}
+By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+{{% /note %}}
 
 ```bash
 poetry lock
@@ -466,9 +476,9 @@ This command exports the lock file to other formats.
 poetry export -f requirements.txt --output requirements.txt
 ```
 
-!!!note
-
-    Only the `requirements.txt` format is currently supported.
+{{% note %}}
+Only the `requirements.txt` format is currently supported.
+{{% /note %}}
 
 ### Options
 
@@ -486,7 +496,7 @@ poetry export -f requirements.txt --output requirements.txt
 The `env` command regroups sub commands to interact with the virtualenvs
 associated with a specific project.
 
-See [Managing environments](/docs/managing-environments/) for more information about these commands.
+See [Managing environments]({{< relref "managing-environments" >}}) for more information about these commands.
 
 ## cache
 
