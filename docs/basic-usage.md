@@ -1,7 +1,18 @@
+---
+title: "Basic usage"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 10
+---
+
 # Basic usage
 
 For the basic usage introduction we will be installing `pendulum`, a datetime library.
-If you have not yet installed Poetry, refer to the [Introduction](/docs/) chapter.
+If you have not yet installed Poetry, refer to the [Introduction]({{< relref "." >}} "Introduction") chapter.
 
 ## Project setup
 
@@ -77,8 +88,8 @@ It will automatically find a suitable version constraint **and install** the pac
 ## Using your virtual environment
 
 By default, poetry creates a virtual environment in `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
-You can change the [`cache-dir`](/docs/configuration/#cache-dir) value by editing the poetry config.
-Additionally, you can use the [`virtualenvs.in-project`](/docs/configuration/#virtualenvs.in-project) configuration variable
+You can change the [`cache-dir`]({{< relref "configuration#cache-dir" >}} "cache-dir configuration documentation") value by editing the poetry config.
+Additionally, you can use the [`virtualenvs.in-project`]({{< relref "configuration#virtualenvsin-project" >}} "virtualenv.in-project configuration documentation") configuration variable
 to create virtual environment within your project directory.
 
 
@@ -96,19 +107,19 @@ The easiest way to activate the virtual environment is to create a new shell wit
 To deactivate the virtual environment and exit this new shell type `exit`.
 To deactivate the virtual environment without leaving the shell use `deactivate`.
 
-!!!note
+{{% note %}}
+**Why a new shell?**
 
-	**Why a new shell?**
-	Child processes inherit their environment from their parents, but do not share
-	them. As such, any modifications made by a child process, is not persisted after
-	the child process exits. A Python application (Poetry), being a child process,
-	cannot modify the environment of the shell that it has been called from such
-	that an activated virtual environment remains active after the Poetry command
-	has completed execution.
+Child processes inherit their environment from their parents, but do not share
+them. As such, any modifications made by a child process, is not persisted after
+the child process exits. A Python application (Poetry), being a child process,
+cannot modify the environment of the shell that it has been called from such
+that an activated virtual environment remains active after the Poetry command
+has completed execution.
 
-	Therefore, Poetry has to create a sub-shell with the virtual envrionment activated
-	in order for the subsequent commands to run from within the virtual environment.
-
+Therefore, Poetry has to create a sub-shell with the virtual envrionment activated
+in order for the subsequent commands to run from within the virtual environment.
+{{% /note %}}
 
 Alternatively, to avoid creating a new shell, you can manually activate the
 virtual environment by running `source {path_to_venv}/bin/activate` (`source {path_to_venv}\Scripts\activate.bat` on Windows).
@@ -128,21 +139,21 @@ To deactivate this virtual environment simply use `deactivate`.
 In our example, we are requesting the `pendulum` package with the version constraint `^1.4`.
 This means any version greater or equal to 1.4.0 and less than 2.0.0 (`>=1.4.0 <2.0.0`).
 
-Please read [Dependency specification](/docs/dependency-specification) for more in-depth information on versions,
+Please read [Dependency specification]({{< relref "dependency-specification" >}} "Dependency specification documentation") for more in-depth information on versions,
 how versions relate to each other, and on the different ways you can specify dependencies.
 
 
-!!!note
+{{% note %}}
+**How does Poetry download the right files?**
 
-    **How does Poetry download the right files?**
+When you specify a dependency in `pyproject.toml`, Poetry first takes the name of the package
+that you have requested and searches for it in any repository you have registered using the `repositories` key.
+If you have not registered any extra repositories, or it does not find a package with that name in the
+repositories you have specified, it falls back on PyPI.
 
-    When you specify a dependency in `pyproject.toml`, Poetry first takes the name of the package
-    that you have requested and searches for it in any repository you have registered using the `repositories` key.
-    If you have not registered any extra repositories, or it does not find a package with that name in the
-    repositories you have specified, it falls back on PyPI.
-
-    When Poetry finds the right package, it then attempts to find the best match
-    for the version constraint you have specified.
+When Poetry finds the right package, it then attempts to find the best match
+for the version constraint you have specified.
+{{% /note %}}
 
 
 ## Installing dependencies
@@ -189,9 +200,9 @@ Even if you develop alone, in six months when reinstalling the project you can f
 the dependencies installed are still working even if your dependencies released many new versions since then.
 (See note below about using the update command.)
 
-!!!note
-
-    For libraries it is not necessary to commit the lock file.
+{{% note %}}
+For libraries it is not necessary to commit the lock file.
+{{% /note %}}
 
 ### Installing dependencies only
 
@@ -212,7 +223,7 @@ This will fetch the latest matching versions (according to your `pyproject.toml`
 and update the lock file with the new versions.
 (This is equivalent to deleting the `poetry.lock` file and running `install` again.)
 
-!!!note
-
-    Poetry will display a **Warning** when executing an install command if `poetry.lock` and `pyproject.toml`
-    are not synchronized.
+{{% note %}}
+Poetry will display a **Warning** when executing an install command if `poetry.lock` and `pyproject.toml`
+are not synchronized.
+{{% /note %}}

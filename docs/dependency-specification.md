@@ -1,3 +1,14 @@
+---
+title: "Dependency specification"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 70
+---
+
 # Dependency specification
 
 Dependencies for a project can be specified in various forms, which depend on the type
@@ -117,10 +128,10 @@ my-package = { path = "../my-package/", develop = false }
 my-package = { path = "../my-package/dist/my-package-0.1.0.tar.gz" }
 ```
 
-!!!note
-
-    Before poetry 1.1 directory path dependencies were installed in editable mode by default. You should set the `develop` attribute explicitly,
-    to make sure the behavior is the same for all poetry versions.
+{{% note %}}
+Before poetry 1.1 directory path dependencies were installed in editable mode by default. You should set the `develop` attribute explicitly,
+to make sure the behavior is the same for all poetry versions.
+{{% /note %}}
 
 ## `url` dependencies
 
@@ -211,7 +222,7 @@ All of the same information is still present, and ends up providing the exact
 same specification. It's simply split into multiple, slightly more readable,
 lines.
 
-!!!note
-
-    The constraints **must** have different requirements (like `python`)
-    otherwise it will cause an error when resolving dependencies.
+{{% note %}}
+The constraints **must** have different requirements (like `python`)
+otherwise it will cause an error when resolving dependencies.
+{{% /note %}}

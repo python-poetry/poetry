@@ -1,6 +1,17 @@
+---
+title: "Introduction"
+draft: false
+type: docs
+layout: "single"
+
+menu:
+  docs:
+    weight: 0
+---
+
 # Introduction
 
-Poetry is a tool for dependency management and packaging in Python.
+Poetry is a tool for **dependency management** and **packaging** in Python.
 It allows you to declare the libraries your project depends on and it will manage (install/update) them for you.
 
 
@@ -9,10 +20,10 @@ It allows you to declare the libraries your project depends on and it will manag
 Poetry requires Python 2.7 or 3.5+. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
 
-!!! note
-
-    Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
-    You should consider updating your Python version to a supported one.
+{{% note %}}
+Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
+You should consider updating your Python version to a supported one.
+{{% /note %}}
 
 
 ## Installation
@@ -30,10 +41,10 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
 ```
 
-!!! note
-
-    You only need to install Poetry once. It will automatically pick up the current
-    Python version and use it to [create virtualenvs](/docs/managing-environments) accordingly.
+{{% note %}}
+You only need to install Poetry once. It will automatically pick up the current
+Python version and use it to [create virtualenvs]({{< relref "managing-environments" >}}) accordingly.
+{{% /note %}}
 
 The installer installs the `poetry` tool to Poetry's `bin` directory.
 On Unix it is located at `$HOME/.poetry/bin` and on Windows at `%USERPROFILE%\.poetry\bin`.
@@ -81,29 +92,29 @@ python get-poetry.py --version 0.12.0
 POETRY_VERSION=0.12.0 python get-poetry.py
 ```
 
-!!!note
+{{% note %}}
+Note that the installer does not support Poetry releases < 0.12.0.
+{{% /note %}}
 
-    Note that the installer does not support Poetry releases < 0.12.0.
+{{% note %}}
+The setup script must be able to find one of following executables in your shell's path environment:
 
-!!!note
-
-    The setup script must be able to find one of following executables in your shell's path environment:
-
-    - `python` (which can be a py3 or py2 interpreter)
-    - `python3`
-    - `py.exe -3` (Windows)
-    - `py.exe -2` (Windows)
+- `python` (which can be a py3 or py2 interpreter)
+- `python3`
+- `py.exe -3` (Windows)
+- `py.exe -2` (Windows)
+{{% /note %}}
 
 ### Alternative installation methods (not recommended)
 
-!!!note
+{{% note %}}
+Using alternative installation methods will make Poetry always
+use the Python version for which it has been installed to create
+virtualenvs.
 
-    Using alternative installation methods will make Poetry always
-    use the Python version for which it has been installed to create
-    virtualenvs.
-
-    So, you will need to install Poetry for each Python version you
-    want to use and switch between them.
+So, you will need to install Poetry for each Python version you
+want to use and switch between them.
+{{% /note %}}
 
 #### Installing with `pip`
 
@@ -113,14 +124,14 @@ Using `pip` to install Poetry is possible.
 pip install --user poetry
 ```
 
-!!!warning
-
-    Be aware that it will also install Poetry's dependencies
-    which might cause conflicts with other packages.
+{{% warning %}}
+Be aware that it will also install Poetry's dependencies
+which might cause conflicts with other packages.
+{{% /warning %}}
 
 #### Installing with `pipx`
 
-Using [`pipx`](https://github.com/cs01/pipx) to install Poetry is also possible. [pipx] is used to install Python CLI applications globally while still isolating them in virtual environments. This allows for clean upgrades and uninstalls. pipx supports Python 3.6 and later. If using an earlier version of Python, consider [pipsi](https://github.com/mitsuhiko/pipsi).
+Using [`pipx`](https://github.com/cs01/pipx) to install Poetry is also possible. `pipx` is used to install Python CLI applications globally while still isolating them in virtual environments. This allows for clean upgrades and uninstalls. pipx supports Python 3.6 and later. If using an earlier version of Python, consider [pipsi](https://github.com/mitsuhiko/pipsi).
 
 ```bash
 pipx install poetry
@@ -158,15 +169,14 @@ to `self update`.
 poetry self update 0.8.0
 ```
 
-!!!note
+{{% note %}}
+The `self update` command will only work if you used the recommended
+installer to install Poetry.
+{{% /note %}}
 
-    The `self update` command will only work if you used the recommended
-    installer to install Poetry.
-
-!!!note
-
-    If you are still on poetry version < 1.0 use `poetry self:update` instead.
-
+{{% note %}}
+If you are still on poetry version < 1.0 use `poetry self:update` instead.
+{{% /note %}}
 
 ## Enable tab completion for Bash, Fish, or Zsh
 
@@ -199,9 +209,9 @@ poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 
 ```
 
-!!! note
-
-    You may need to restart your shell in order for the changes to take effect.
+{{% note %}}
+You may need to restart your shell in order for the changes to take effect.
+{{% /note %}}
 
 For `zsh`, you must then add the following line in your `~/.zshrc` before `compinit`:
 
@@ -211,7 +221,7 @@ fpath+=~/.zfunc
 
 For `oh-my-zsh`, you must then enable poetry in your `~/.zshrc` plugins
 
-```
+```text
 plugins(
 	poetry
 	...

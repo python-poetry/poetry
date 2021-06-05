@@ -1,6 +1,17 @@
+---
+title: "Configuration"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 40
+---
+
 # Configuration
 
-Poetry can be configured via the `config` command ([see more about its usage here](/docs/cli/#config))
+Poetry can be configured via the `config` command ([see more about its usage here]({{< relref "docs/cli#config" >}} "config command documentation"))
 or directly in the `config.toml` file that will be automatically be created when you first run that command.
 This file can typically be found in one of the following directories:
 
@@ -92,7 +103,9 @@ export POETRY_HTTP_BASIC_MY_REPOSITORY_PASSWORD=secret
 
 ## Available settings
 
-### `cache-dir`: string
+### `cache-dir`
+
+**Type**: string
 
 The path to the cache directory used by Poetry.
 
@@ -102,25 +115,33 @@ Defaults to one of the following directories:
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
 - Unix:    `~/.cache/pypoetry`
 
-### `installer.parallel`: boolean
+### `installer.parallel`
+
+**Type**: boolean
 
 Use parallel execution when using the new (`>=1.1.0`) installer.
 Defaults to `true`.
 
-!!!note:
-        This configuration will be ignored, and parallel execution disabled when running
-        Python 2.7 under Windows.
+{{% note %}}
+This configuration will be ignored, and parallel execution disabled when running
+Python 2.7 under Windows.
+{{% /note %}}
 
-### `virtualenvs.create`: boolean
+### `virtualenvs.create`
+
+**Type**: boolean
 
 Create a new virtual environment if one doesn't already exist.
 Defaults to `true`.
 
-!!!note:
-        When setting this configuration to `false`, the Python environment used must have `pip`
-        installed and available.
+{{% note %}}
+When setting this configuration to `false`, the Python environment used must have `pip`
+installed and available.
+{{% /note %}}
 
-### `virtualenvs.in-project`: boolean
+### `virtualenvs.in-project`
+
+**Type**: boolean
 
 Create the virtualenv inside the project's root directory.
 Defaults to `None`.
@@ -130,11 +151,15 @@ If set to `true`, the virtualenv wil be created and expected in a folder named `
 If not set explicitly (default), `poetry` will use the virtualenv from the `.venv` directory when one is available. If set to `false`, `poetry` will ignore any existing `.venv` directory.
 
 
-### `virtualenvs.path`: string
+### `virtualenvs.path`
+
+**Type**: string
 
 Directory where virtual environments will be created.
 Defaults to `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
 
-### `repositories.<name>`: string
+### `repositories.<name>`
 
-Set a new alternative repository. See [Repositories](/docs/repositories/) for more information.
+**Type**: string
+
+Set a new alternative repository. See [Repositories]({{< relref "repositories" >}}) for more information.
