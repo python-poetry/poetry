@@ -1,3 +1,4 @@
+import csv
 import itertools
 import json
 import os
@@ -782,6 +783,22 @@ class Executor:
                     json.dumps(url_reference),
                     encoding="utf-8",
                 )
+
+                record = dist._path.joinpath("RECORD")
+                if record.exists():
+                    with record.open(mode="a", encoding="utf-8") as f:
+                        writer = csv.writer(f)
+                        writer.writerow(
+                            [
+                                str(
+                                    dist._path.joinpath("direct_url.json").relative_to(
+                                        record.parent.parent
+                                    )
+                                ),
+                                "",
+                                "",
+                            ]
+                        )
 
     def _create_git_url_reference(
         self, package: "Package"

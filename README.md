@@ -31,12 +31,12 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-
 **Warning**: The previous `get-poetry.py` installer is now deprecated, if you are currently using it
 you should migrate to the new, supported, `install-poetry.py` installer.
 
-The installer installs the `poetry` tool to Poetry's `bin` directory. This location depends on you system:
+The installer installs the `poetry` tool to Poetry's `bin` directory. This location depends on your system:
 
 - `$HOME/.local/bin` for Unix
 - `%APPDATA%\Python\Scripts` on Windows
 
-If this directory is not on you `PATH`, you will need to add it manually
+If this directory is not on your `PATH`, you will need to add it manually
 if you want to invoke Poetry with simply `poetry`.
 
 Alternatively, you can use the full path to `poetry` to use it.
@@ -91,6 +91,9 @@ python install-poetry.py --git https://github.com/python-poetry/poetry.git@maste
 ## Updating `poetry`
 
 Updating poetry to the latest stable version is as simple as calling the `self update` command.
+
+**Warning**: Poetry versions installed using the now deprecated `get-poetry.py` installer will not be able to use this
+command to update to 1.2 releases or later. Migrate to using the `install-poetry.py` installer or `pipx`.
 
 ```bash
 poetry self update

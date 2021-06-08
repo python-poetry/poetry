@@ -1,3 +1,14 @@
+---
+title: "Managing environments"
+draft: false
+type: docs
+layout: "docs"
+
+menu:
+  docs:
+    weight: 60
+---
+
 # Managing environments
 
 Poetry makes project environment isolation one of its core features.
@@ -15,19 +26,19 @@ with the `python` requirement of the project. In this case, Poetry will try
 to find one that is and use it. If it's unable to do so then you will be prompted
 to activate one explicitly, see [Switching environments](#switching-between-environments).
 
-!!!note
+{{% note %}}
+To easily switch between Python versions, it is recommended to
+use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
 
-    To easily switch between Python versions, it is recommended to
-    use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
+For instance, if your project is Python 2.7 only, a standard workflow
+would be:
 
-    For instance, if your project is Python 2.7 only, a standard workflow
-    would be:
-
-    ```bash
-    pyenv install 2.7.15
-    pyenv local 2.7.15  # Activate Python 2.7 for the current project
-    poetry install
-    ```
+```bash
+pyenv install 2.7.15
+pyenv local 2.7.15  # Activate Python 2.7 for the current project
+poetry install
+```
+{{% /note %}}
 
 ## Switching between environments
 
