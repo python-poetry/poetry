@@ -459,14 +459,6 @@ This command exports the lock file to other formats.
 poetry export -f requirements.txt --output requirements.txt
 ```
 
-You can also specify the extras you want to export
-by passing the `-E|--extras` option (See [Extras](/docs/pyproject/#extras) for more info)
-
-```bash
-poetry export --extras "mysql pgsql"
-poetry export -E mysql -E pgsql
-```
-
 !!!note
 
     Only the `requirements.txt` format is currently supported.

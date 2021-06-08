@@ -34,11 +34,9 @@ classifiers = [
 python = "~2.7 || ^3.4"
 foo = "^1.0"
 bar = { version = "^1.1", optional = true }
-baz = { version = "^1.2", optional = true }
 
 [tool.poetry.extras]
 feature_bar = ["bar"]
-feature_baz = ["baz"]
 """
 
 
@@ -46,7 +44,6 @@ feature_baz = ["baz"]
 def setup(repo):
     repo.add_package(get_package("foo", "1.0.0"))
     repo.add_package(get_package("bar", "1.1.0"))
-    repo.add_package(get_package("baz", "1.2.0"))
 
 
 @pytest.fixture
@@ -113,26 +110,6 @@ def test_export_includes_extras_by_flag(tester, do_lock):
     tester.execute("--format requirements.txt --extras feature_bar")
     expected = """\
 bar==1.1.0
-foo==1.0.0
-"""
-    assert expected == tester.io.fetch_output()
-
-
-def test_export_includes_multiple_extras_in_multiple_flags(tester, do_lock):
-    tester.execute("--format requirements.txt --extras feature_bar --extras feature_baz")
-    expected = """\
-bar==1.1.0
-baz==1.2.0
-foo==1.0.0
-"""
-    assert expected == tester.io.fetch_output()
-
-
-def test_export_includes_multiple_extras_in_single_flag(tester, do_lock):
-    tester.execute("--format requirements.txt --extras 'feature_bar feature_baz'")
-    expected = """\
-bar==1.1.0
-baz==1.2.0
 foo==1.0.0
 """
     assert expected == tester.io.fetch_output()

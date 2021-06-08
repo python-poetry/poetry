@@ -39,13 +39,6 @@ class ExportCommand(Command):
 
         output = self.option("output")
 
-        extras = []
-        for extra in self.option("extras"):
-            if " " in extra:
-                extras += [e.strip() for e in extra.split(" ")]
-            else:
-                extras.append(extra)
-
         locker = self.poetry.locker
         if not locker.is_locked():
             self.line("<comment>The lock file does not exist. Locking.</comment>")
@@ -76,6 +69,6 @@ class ExportCommand(Command):
             output or self.io,
             with_hashes=not self.option("without-hashes"),
             dev=self.option("dev"),
-            extras=extras,
+            extras=self.option("extras"),
             with_credentials=self.option("with-credentials"),
         )
