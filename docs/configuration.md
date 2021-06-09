@@ -15,7 +15,7 @@ Poetry can be configured via the `config` command ([see more about its usage her
 or directly in the `config.toml` file that will be automatically be created when you first run that command.
 This file can typically be found in one of the following directories:
 
-- macOS:   `~/Library/Application Support/pypoetry`
+- macOS: `~/Library/Application Support/pypoetry`
 - Windows: `C:\Users\<username>\AppData\Roaming\pypoetry`
 
 For Unix, we follow the XDG spec and support `$XDG_CONFIG_HOME`.
@@ -45,6 +45,7 @@ which will give you something similar to this:
 cache-dir = "/path/to/cache/directory"
 virtualenvs.create = true
 virtualenvs.in-project = null
+virtualenvs.use-pyenv = true
 virtualenvs.options.always-copy = true
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = "{cache-dir}/virtualenvs"  # /path/to/cache/directory/virtualenvs
@@ -112,9 +113,9 @@ The path to the cache directory used by Poetry.
 
 Defaults to one of the following directories:
 
-- macOS:   `~/Library/Caches/pypoetry`
+- macOS: `~/Library/Caches/pypoetry`
 - Windows: `C:\Users\<username>\AppData\Local\pypoetry\Cache`
-- Unix:    `~/.cache/pypoetry`
+- Unix: `~/.cache/pypoetry`
 
 ### `installer.parallel`
 
@@ -155,6 +156,18 @@ If set to `true`, the virtualenv will be created and expected in a folder named
 If not set explicitly (default), `poetry` will use the virtualenv from the `.venv`
 directory when one is available. If set to `false`, `poetry` will ignore any
 existing `.venv` directory.
+
+### `virtualenvs.use-pyenv`
+
+**Type**: boolean
+
+Find compatible Pythons installed by `pyenv`.
+Defaults to `true`.
+
+If set to `true`, poetry will keep looking for a compatible Python by inspecting
+Python versions installed by `pyenv`.
+
+If set explicitly to `false`, poetry won't respect Pythons installed by `pyenv`.
 
 ### `virtualenvs.path`
 

@@ -32,6 +32,7 @@ class Config:
         "virtualenvs": {
             "create": True,
             "in-project": None,
+            "use-pyenv": True,
             "path": os.path.join("{cache-dir}", "virtualenvs"),
             "options": {"always-copy": False, "system-site-packages": False},
         },
@@ -137,6 +138,7 @@ class Config:
         if name in {
             "virtualenvs.create",
             "virtualenvs.in-project",
+            "virtualenvs.use-pyenv",
             "virtualenvs.options.always-copy",
             "virtualenvs.options.system-site-packages",
             "installer.parallel",

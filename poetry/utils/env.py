@@ -779,9 +779,7 @@ class EnvManager:
                 )
             )
             try:
-                from distutils.util import strtobool
-
-                if not strtobool(os.environ.get("POETRY_DISABLE_PYENV", "0")):
+                if self._poetry.config.get("virtualenvs.use-pyenv"):
                     pyenv.load()  # load pyenv once
                     if io.is_debug():
                         io.write_line(

@@ -34,6 +34,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
+virtualenvs.use-pyenv = true
 """.format(
         cache=json.dumps(str(config_cache_dir)),
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
@@ -56,6 +57,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
+virtualenvs.use-pyenv = true
 """.format(
         cache=json.dumps(str(config_cache_dir)),
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
@@ -100,6 +102,7 @@ virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
 virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
+virtualenvs.use-pyenv = true
 """.format(
         cache=json.dumps(str(config_cache_dir)),
         path=json.dumps(os.path.join("{cache-dir}", "virtualenvs")),
