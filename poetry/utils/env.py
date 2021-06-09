@@ -867,7 +867,7 @@ class EnvManager:
 
         return VirtualEnv(venv)
 
-    def is_compatible(self, executable: str) -> Tuple[str, str]:
+    def is_compatible(self, executable: str) -> Tuple[str, bool]:
         python_patch = python_executable_version(executable)
         return (
             python_patch,
@@ -875,7 +875,6 @@ class EnvManager:
         )
 
     def find_compatible_python(self, io: IO, pyenv: Pyenv):
-        """Find a compatible Python."""
         executable, python_patch = None, None
         candidates = []
 
