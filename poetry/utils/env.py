@@ -783,8 +783,13 @@ class EnvManager:
 
                 if not strtobool(os.environ.get("POETRY_DISABLE_PYENV", "0")):
                     pyenv.load()  # load pyenv once
+                    if io.is_debug():
+                        io.write_line(
+                            "<debug>Pyenv loaded: {}</debug>".format(pyenv._command)
+                        )
             except PyenvNotFound:
-                pass
+                if io.is_debug():
+                    io.write_line("<debug>Pyenv not loaded</debug>")
 
             executable, python_patch = self.find_compatiable_python(io, pyenv)
             if executable:

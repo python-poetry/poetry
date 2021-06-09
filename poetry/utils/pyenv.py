@@ -18,51 +18,27 @@ class Pyenv:
     def __init__(self) -> None:
         self._command = None
         self._versions = None
-        self._version = None
 
     def __bool__(self) -> bool:
-        return self._command is not None and self._version is not None
+        return self._command is not None
 
     def load(self) -> None:
         if self._command is not None:
             return
 
         self._command = self.__locate_command()
-        self._version = self.__read_pyenv_version()
 
     def __locate_command(self) -> Optional[Path]:
-        candidates = []
-        which_pyenv = shutil.which("pyenv")
-        if which_pyenv is not None:
-            candidates.append(Path(which_pyenv))
-
-        candidates.extend(
-            [
-                Path(os.environ.get("PYENV_ROOT", "")) / "bin" / "pyenv",
-                Path.home() / ".pyenv" / "bin" / "pyenv",
-            ]
-        )
-
-        for candidate in candidates:
-            if candidate.exists():
-                return candidate
+        for candidate in [
+            "pyenv",
+            Path(os.environ.get("PYENV_ROOT", "")) / "bin" / "pyenv",
+            Path.home() / ".pyenv" / "bin" / "pyenv",
+        ]:
+            which_pyenv = shutil.which(candidate)
+            if which_pyenv is not None:
+                return Path(which_pyenv)
 
         raise PyenvNotFound
-
-    def __read_pyenv_version(self) -> Optional[str]:
-        try:
-            version_no = decode(
-                subprocess.check_output(
-                    list_to_shell_command([str(self._command), "--version"]),
-                    shell=True,
-                    stderr=subprocess.DEVNULL,
-                ).strip()
-            )
-            if version_no.startswith("pyenv"):
-                return version_no
-        except Exception:
-            pass
-        return None
 
     def versions(self) -> Set[str]:
         """List all python versions installed by pyenv."""
