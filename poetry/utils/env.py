@@ -41,6 +41,7 @@ from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import BaseMarker
 from poetry.locations import CACHE_DIR
+from poetry.mixology.solutions.providers import python_requirement_solution_provider
 from poetry.poetry import Poetry
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
@@ -48,7 +49,11 @@ from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
+from poetry.utils.helpers import python_executable_version
+from poetry.utils.helpers import sorted_trying_versions
 from poetry.utils.helpers import temporary_directory
+from poetry.utils.pyenv import PyEnv
+from poetry.utils.pyenv import PyEnvNotFound
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -448,18 +453,7 @@ class EnvManager:
             pass
 
         try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
+            python_version = python_executable_version(python)
         except CalledProcessError as e:
             raise EnvCommandError(e)
 
@@ -694,18 +688,7 @@ class EnvManager:
             pass
 
         try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
+            python_version = python_executable_version(python)
         except CalledProcessError as e:
             raise EnvCommandError(e)
 
@@ -766,36 +749,22 @@ class EnvManager:
         if not name:
             name = self._poetry.package.name
 
-        python_patch = ".".join([str(v) for v in sys.version_info[:3]])
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        # Try using the specified executable.
         if executable:
-            python_patch = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            executable,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                ).strip()
-            )
-            python_minor = ".".join(python_patch.split(".")[:2])
-
-        supported_python = self._poetry.package.python_constraint
-        if not supported_python.allows(Version.parse(python_patch)):
-            # The currently activated or chosen Python version
-            # is not compatible with the Python constraint specified
-            # for the project.
-            # If an executable has been specified, we stop there
-            # and notify the user of the incompatibility.
-            # Otherwise, we try to find a compatible Python version.
-            if executable:
+            python_patch, compatiable = self.is_compatiable(executable)
+            # The chosen Python version is not compatible with the Python
+            # constraint specified for the project. We stop here and notify the
+            # user of the incompatibility.
+            if not compatiable:
                 raise NoCompatiblePythonVersionFound(
                     self._poetry.package.python_versions, python_patch
                 )
 
+        pyenv = PyEnv()
+        # Try using the currently activated Python.
+        python_patch, compatiable = self.is_compatiable(sys.executable)
+        if not compatiable:
+            # Try using Python provided by `pyenv` if possible.
             io.write_line(
                 "<warning>The currently activated Python version {} "
                 "is not supported by the project ({}).\n"
@@ -803,65 +772,26 @@ class EnvManager:
                     python_patch, self._poetry.package.python_versions
                 )
             )
+            try:
+                from distutils.util import strtobool
 
-            for python_to_try in reversed(
-                sorted(
-                    self._poetry.package.AVAILABLE_PYTHONS,
-                    key=lambda v: (
-                        v.split(".")[0],
-                        int(v.split(".") if "." in v else 1000),
-                    ),
-                )
-            ):
-                if len(python_to_try) == 1:
-                    if not parse_constraint(f"^{python_to_try}.0").allows_any(
-                        supported_python
-                    ):
-                        continue
-                elif not supported_python.allows_all(
-                    parse_constraint(python_to_try + ".*")
-                ):
-                    continue
+                if not strtobool(os.environ.get("POETRY_DISABLE_PYENV", "0")):
+                    pyenv.load()  # load pyenv once
+            except PyEnvNotFound:
+                pass
 
-                python = "python" + python_to_try
+            executable, python_patch = self.find_compatiable_python(io, pyenv)
+            if executable:
+                io.write_line(f"Using <c1>{executable}</c1> ({python_patch})")
+                compatiable = True
 
-                if io.is_debug():
-                    io.write_line(f"<debug>Trying {python}</debug>")
-
-                try:
-                    python_patch = decode(
-                        subprocess.check_output(
-                            list_to_shell_command(
-                                [
-                                    python,
-                                    "-c",
-                                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                                ]
-                            ),
-                            stderr=subprocess.STDOUT,
-                            shell=True,
-                        ).strip()
-                    )
-                except CalledProcessError:
-                    continue
-
-                if not python_patch:
-                    continue
-
-                if supported_python.allows(Version.parse(python_patch)):
-                    io.write_line(f"Using <c1>{python}</c1> ({python_patch})")
-                    executable = python
-                    python_minor = ".".join(python_patch.split(".")[:2])
-                    break
-
-            if not executable:
-                raise NoCompatiblePythonVersionFound(
-                    self._poetry.package.python_versions
-                )
+        if not compatiable:
+            raise NoCompatiblePythonVersionFound(self._poetry.package.python_versions)
 
         if root_venv:
             venv = venv_path
         else:
+            python_minor = ".".join(python_patch.split(".")[:2])
             name = self.generate_env_name(name, str(cwd))
             name = f"{name}-py{python_minor.strip()}"
             venv = venv_path / name
@@ -927,6 +857,50 @@ class EnvManager:
             return self.get_system_env()
 
         return VirtualEnv(venv)
+
+    def is_compatiable(self, executable: str) -> Tuple[str, str]:
+        python_patch = python_executable_version(executable)
+        return (
+            python_patch,
+            self._poetry.package.python_constraint.allows(Version.parse(python_patch)),
+        )
+
+    def find_compatiable_python(self, io: IO, pyenv: PyEnv):
+        """Find a compatiable Python."""
+        executable, python_patch = None, None
+        candidates = []
+
+        supported_python = self._poetry.package.python_constraint
+
+        # Add system Python executables to the candidate list.
+        for python_to_try in sorted_trying_versions(
+            self._poetry.package.AVAILABLE_PYTHONS  # "3", "3.5", "3.6", "2", "2.7", ...
+        ):
+            if "." not in python_to_try:
+                if parse_constraint(f"^{python_to_try}.0").allows_any(supported_python):
+                    candidates.append("python" + python_to_try)
+            else:
+                if supported_python.allows_any(parse_constraint(python_to_try + ".*")):
+                    candidates.append("python" + python_to_try)
+
+        # Add pyenv Python executables to the candidate list.
+        if pyenv:
+            for python_to_try in sorted_trying_versions(pyenv.versions()):
+                if supported_python.allows(Version.parse(python_to_try)):
+                    candidates.append(pyenv.executable(python_to_try).as_posix())
+
+        for python in candidates:
+            if io.is_debug():
+                io.write_line(f"<debug>Trying {python}</debug>")
+            try:
+                python_patch, compatiable = self.is_compatiable(python)
+                if compatiable:
+                    executable = python
+                    break
+            except CalledProcessError:
+                continue
+
+        return (executable, python_patch)
 
     @classmethod
     def build_venv(

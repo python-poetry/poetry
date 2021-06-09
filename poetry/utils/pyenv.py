@@ -1,37 +1,48 @@
+import os
+import shutil
 import subprocess
 
 from pathlib import Path
 from typing import Optional
 from typing import Set
 
-from poetry.core.semver.version import VersionTypes
 from poetry.utils._compat import decode
 from poetry.utils._compat import list_to_shell_command
 
 
-class Pyenv:
-    """
-    Pyenv
-    """
+class PyEnvNotFound(Exception):
+    pass
 
+
+class PyEnv:
     def __init__(self) -> None:
         self._command = None
         self._versions = None
-
-    @classmethod
-    def load(cls) -> "Pyenv":
-        inst = cls()
-        inst._command = inst._locate_command()
-        if inst._command is None:  # pyenv not found
-            return inst
-        return inst
+        self._prefix = None
 
     def __bool__(self) -> bool:
         return self._command is not None
 
-    def _locate_command(self) -> Optional[Path]:
-        # FIXME(ggicci): locate the pyenv command
-        return Path("/home/mingjietang/.pyenv/bin/pyenv")
+    def load(self) -> None:
+        if self._command is not None:
+            return
+
+        self._command = self.__locate_command()
+
+    def __locate_command(self) -> Optional[Path]:
+        which_pyenv = shutil.which("pyenv")
+        if which_pyenv is not None:
+            return Path(which_pyenv)
+
+        pyenv_root = Path(os.environ.get("PYENV_ROOT"))
+        if pyenv_root is None:
+            pyenv_root = Path.home() / ".pyenv"
+
+        if pyenv_root.exists():
+            which_pyenv = pyenv_root / "bin" / "pyenv"
+            if which_pyenv.exists():
+                return which_pyenv
+        raise PyEnvNotFound
 
     def versions(self) -> Set[str]:
         """List all python versions installed by pyenv."""
@@ -50,16 +61,12 @@ class Pyenv:
         self._versions.discard("")
         return self._versions
 
-    def lookup(self, python_constraint: VersionTypes) -> Path:
-        # TODO(ggicci): try order
-        # python_constraint.allows()
-        return Path("/")
-
-    def python_path(self, version) -> Path:
+    def executable(self, version) -> Path:
         prefix = decode(
             subprocess.check_output(
                 list_to_shell_command([str(self._command), "prefix", version]),
                 shell=True,
-            )
+                stderr=subprocess.DEVNULL,
+            ).strip()
         )
         return Path(prefix) / "bin" / "python"

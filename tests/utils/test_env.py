@@ -118,7 +118,7 @@ def test_env_get_venv_with_venv_folder_present(
         assert venv.path == in_project_venv_dir
 
 
-def build_venv(path: Union[Path, str], **__: Any) -> ():
+def build_venv(path: Union[Path, str], **__: Any) -> None:
     os.mkdir(str(path))
 
 

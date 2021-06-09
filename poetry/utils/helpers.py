@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import stat
+import subprocess
 import tempfile
 
 from contextlib import contextmanager
@@ -9,6 +10,7 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -17,6 +19,8 @@ import requests
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
+from poetry.utils._compat import decode
+from poetry.utils._compat import list_to_shell_command
 
 
 try:
@@ -135,3 +139,31 @@ def is_dir_writable(path: Path, create: bool = False) -> bool:
         return False
     else:
         return True
+
+
+def sorted_trying_versions(versions: Iterable[str]) -> Iterator:
+    return reversed(
+        sorted(
+            versions,
+            key=lambda v: (
+                v.split(".")[0],
+                int(v.split(".")[1] if "." in v else 1000),
+            ),
+        )
+    )
+
+
+def python_executable_version(executable: str) -> str:
+    return decode(
+        subprocess.check_output(
+            list_to_shell_command(
+                [
+                    executable,
+                    "-c",
+                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                ]
+            ),
+            shell=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    )
