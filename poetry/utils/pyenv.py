@@ -65,4 +65,5 @@ class Pyenv:
                 stderr=subprocess.DEVNULL,
             ).strip()
         )
-        return Path(prefix) / "bin" / "python"
+        base_name = "python" + ".".join(version.split(".")[:2])
+        return Path(prefix) / "bin" / base_name

@@ -5,6 +5,7 @@ import sys
 
 from pathlib import Path
 from typing import Any
+from typing import Optional
 from typing import Union
 
 import pytest
@@ -123,16 +124,25 @@ def build_venv(path: Union[Path, str], **__: Any) -> None:
     os.mkdir(str(path))
 
 
-def check_output_wrapper(version=Version.parse("3.7.1")):
+def check_output_wrapper(
+    version=Version.parse("3.7.1"), pyenv_version: Optional[Version] = None
+):
     def check_output(cmd, *args, **kwargs):
         if "pyenv" in cmd:
-            return ""
-        if "sys.version_info[:3]" in cmd:
-            return version.text
-        elif "sys.version_info[:2]" in cmd:
-            return "{}.{}".format(version.major, version.minor)
+            if "versions" in cmd:
+                return "" if pyenv_version is None else pyenv_version.text + "\n"
+            if "prefix" in cmd:
+                return "/pyenv"
+            if "sys.version_info[:3]" in cmd:
+                return pyenv_version.text
+            if "sys.version_info[:2]" in cmd:
+                return "{}.{}".format(pyenv_version.major, pyenv_version.minor)
         else:
-            return str(Path("/prefix"))
+            if "sys.version_info[:3]" in cmd:
+                return version.text
+            if "sys.version_info[:2]" in cmd:
+                return "{}.{}".format(version.major, version.minor)
+        return str(Path("/prefix"))
 
     return check_output
 
@@ -759,6 +769,37 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     m.assert_called_with(
         config_virtualenvs_path / "{}-py{}".format(venv_name, latest_minor),
         executable="python" + latest_minor,
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
+    )
+
+
+def test_create_venv_tries_to_find_a_compatible_python_executable_with_pyenv(
+    manager, poetry, config, mocker, config_virtualenvs_path
+):
+    if "VIRTUAL_ENV" in os.environ:
+        del os.environ["VIRTUAL_ENV"]
+
+    poetry.package.python_versions = "^3.7"
+    venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
+    mocker.patch("sys.version_info", (2, 7, 16))
+    mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(
+            version=Version.parse("3.6.9"), pyenv_version=Version.parse("3.9.4")
+        ),
+    )
+    m = mocker.patch(
+        "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
+    )
+
+    manager.create_venv(NullIO())
+
+    m.assert_called_with(
+        config_virtualenvs_path / "{}-py3.9".format(venv_name),
+        executable="/pyenv/bin/python3.9",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,

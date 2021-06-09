@@ -750,27 +750,27 @@ class EnvManager:
             name = self._poetry.package.name
 
         # Try using the specified executable.
-        compatiable = False
+        compatible = False
         if executable:
-            python_patch, compatiable = self.is_compatiable(executable)
+            python_patch, compatible = self.is_compatible(executable)
             # The chosen Python version is not compatible with the Python
             # constraint specified for the project. We stop here and notify the
             # user of the incompatibility.
-            if not compatiable:
+            if not compatible:
                 raise NoCompatiblePythonVersionFound(
                     self._poetry.package.python_versions, python_patch
                 )
 
         pyenv = Pyenv()
         # Try using the currently activated Python.
-        if not compatiable:
+        if not compatible:
             python_patch = ".".join([str(v) for v in sys.version_info[:3]])
-            compatiable = self._poetry.package.python_constraint.allows(
+            compatible = self._poetry.package.python_constraint.allows(
                 Version.parse(python_patch)
             )
 
         # Try using Python provided by `pyenv` if possible.
-        if not compatiable:
+        if not compatible:
             io.write_line(
                 "<warning>The currently activated Python version {} "
                 "is not supported by the project ({}).\n"
@@ -791,12 +791,12 @@ class EnvManager:
                 if io.is_debug():
                     io.write_line("<debug>Pyenv not loaded</debug>")
 
-            executable, python_patch = self.find_compatiable_python(io, pyenv)
+            executable, python_patch = self.find_compatible_python(io, pyenv)
             if executable:
                 io.write_line(f"Using <c1>{executable}</c1> ({python_patch})")
-                compatiable = True
+                compatible = True
 
-        if not compatiable:
+        if not compatible:
             raise NoCompatiblePythonVersionFound(self._poetry.package.python_versions)
 
         if root_venv:
@@ -869,15 +869,15 @@ class EnvManager:
 
         return VirtualEnv(venv)
 
-    def is_compatiable(self, executable: str) -> Tuple[str, str]:
+    def is_compatible(self, executable: str) -> Tuple[str, str]:
         python_patch = python_executable_version(executable)
         return (
             python_patch,
             self._poetry.package.python_constraint.allows(Version.parse(python_patch)),
         )
 
-    def find_compatiable_python(self, io: IO, pyenv: Pyenv):
-        """Find a compatiable Python."""
+    def find_compatible_python(self, io: IO, pyenv: Pyenv):
+        """Find a compatible Python."""
         executable, python_patch = None, None
         candidates = []
 
@@ -904,8 +904,8 @@ class EnvManager:
             if io.is_debug():
                 io.write_line(f"<debug>Trying {python}</debug>")
             try:
-                python_patch, compatiable = self.is_compatiable(python)
-                if compatiable:
+                python_patch, compatible = self.is_compatible(python)
+                if compatible:
                     executable = python
                     break
             except CalledProcessError:
