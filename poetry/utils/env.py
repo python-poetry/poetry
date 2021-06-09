@@ -52,8 +52,8 @@ from poetry.utils.helpers import paths_csv
 from poetry.utils.helpers import python_executable_version
 from poetry.utils.helpers import sorted_trying_versions
 from poetry.utils.helpers import temporary_directory
-from poetry.utils.pyenv import PyEnv
-from poetry.utils.pyenv import PyEnvNotFound
+from poetry.utils.pyenv import Pyenv
+from poetry.utils.pyenv import PyenvNotFound
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -750,6 +750,7 @@ class EnvManager:
             name = self._poetry.package.name
 
         # Try using the specified executable.
+        compatiable = False
         if executable:
             python_patch, compatiable = self.is_compatiable(executable)
             # The chosen Python version is not compatible with the Python
@@ -760,11 +761,16 @@ class EnvManager:
                     self._poetry.package.python_versions, python_patch
                 )
 
-        pyenv = PyEnv()
+        pyenv = Pyenv()
         # Try using the currently activated Python.
-        python_patch, compatiable = self.is_compatiable(sys.executable)
         if not compatiable:
-            # Try using Python provided by `pyenv` if possible.
+            python_patch = ".".join([str(v) for v in sys.version_info[:3]])
+            compatiable = self._poetry.package.python_constraint.allows(
+                Version.parse(python_patch)
+            )
+
+        # Try using Python provided by `pyenv` if possible.
+        if not compatiable:
             io.write_line(
                 "<warning>The currently activated Python version {} "
                 "is not supported by the project ({}).\n"
@@ -777,7 +783,7 @@ class EnvManager:
 
                 if not strtobool(os.environ.get("POETRY_DISABLE_PYENV", "0")):
                     pyenv.load()  # load pyenv once
-            except PyEnvNotFound:
+            except PyenvNotFound:
                 pass
 
             executable, python_patch = self.find_compatiable_python(io, pyenv)
@@ -865,7 +871,7 @@ class EnvManager:
             self._poetry.package.python_constraint.allows(Version.parse(python_patch)),
         )
 
-    def find_compatiable_python(self, io: IO, pyenv: PyEnv):
+    def find_compatiable_python(self, io: IO, pyenv: Pyenv):
         """Find a compatiable Python."""
         executable, python_patch = None, None
         candidates = []
