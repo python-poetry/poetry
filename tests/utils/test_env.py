@@ -12,6 +12,7 @@ import tomlkit
 
 from cleo.io.null_io import NullIO
 
+from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
@@ -737,8 +738,16 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     poetry.package.python_versions = "^3.6"
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
+    latest_minor = sorted(Version.parse(x) for x in Package.AVAILABLE_PYTHONS)[
+        -1
+    ].to_string()  # 3.10
     mocker.patch("sys.version_info", (2, 7, 16))
-    mocker.patch("subprocess.check_output", side_effect=["3.5.3", "3.9.0"])
+    side_effect = [
+        "",  # pyenv.versions() -> empty
+        "3.5.3",  # python3
+        latest_minor + ".0",  # python3.10
+    ]
+    mocker.patch("subprocess.check_output", side_effect=side_effect)
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
     )
@@ -746,8 +755,8 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        config_virtualenvs_path / "{}-py3.9".format(venv_name),
-        executable="python3.9",
+        config_virtualenvs_path / "{}-py{}".format(venv_name, latest_minor),
+        executable="python" + latest_minor,
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
