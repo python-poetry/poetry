@@ -142,6 +142,9 @@ def is_dir_writable(path: Path, create: bool = False) -> bool:
 
 
 def sorted_trying_versions(versions: Iterable[str]) -> Iterator:
+    """Expected order of the versions to try should be
+    ["3", "3.10", "3.9", ..., "2", "2.7", "2.6"]
+    """
     return reversed(
         sorted(
             versions,
