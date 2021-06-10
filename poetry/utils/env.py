@@ -41,7 +41,6 @@ from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.core.version.markers import BaseMarker
 from poetry.locations import CACHE_DIR
-from poetry.mixology.solutions.providers import python_requirement_solution_provider
 from poetry.poetry import Poetry
 from poetry.utils._compat import decode
 from poetry.utils._compat import encode
