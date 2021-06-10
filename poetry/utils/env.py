@@ -752,7 +752,7 @@ class EnvManager:
         # Try using the specified executable.
         compatible = False
         if executable:
-            python_patch, compatible = self.is_compatible(executable)
+            python_patch, compatible = self._is_compatible(executable)
             # The chosen Python version is not compatible with the Python
             # constraint specified for the project. We stop here and notify the
             # user of the incompatibility.
@@ -789,7 +789,7 @@ class EnvManager:
                 if io.is_debug():
                     io.write_line("<debug>Pyenv not loaded</debug>")
 
-            executable, python_patch = self.find_compatible_python(io, pyenv)
+            executable, python_patch = self._find_compatible_python(io, pyenv)
             if executable:
                 io.write_line(f"Using <c1>{executable}</c1> ({python_patch})")
                 compatible = True
@@ -867,14 +867,14 @@ class EnvManager:
 
         return VirtualEnv(venv)
 
-    def is_compatible(self, executable: str) -> Tuple[str, bool]:
+    def _is_compatible(self, executable: str) -> Tuple[str, bool]:
         python_patch = python_executable_version(executable)
         return (
             python_patch,
             self._poetry.package.python_constraint.allows(Version.parse(python_patch)),
         )
 
-    def find_compatible_python(self, io: IO, pyenv: Pyenv):
+    def _find_compatible_python(self, io: IO, pyenv: Pyenv):
         executable, python_patch = None, None
         candidates = []
 
@@ -901,7 +901,7 @@ class EnvManager:
             if io.is_debug():
                 io.write_line(f"<debug>Trying {python}</debug>")
             try:
-                python_patch, compatible = self.is_compatible(python)
+                python_patch, compatible = self._is_compatible(python)
                 if compatible:
                     executable = python
                     break
