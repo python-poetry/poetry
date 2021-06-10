@@ -874,7 +874,7 @@ class EnvManager:
             self._poetry.package.python_constraint.allows(Version.parse(python_patch)),
         )
 
-    def _find_compatible_python(self, io: IO, pyenv: Pyenv):
+    def _find_compatible_python(self, io: IO, pyenv: Pyenv) -> Tuple[str, str]:
         executable, python_patch = None, None
         candidates = []
         candidates.extend(self._list_sys_python_candidates())
