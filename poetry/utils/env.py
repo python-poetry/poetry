@@ -778,16 +778,21 @@ class EnvManager:
                     python_patch, self._poetry.package.python_versions
                 )
             )
-            try:
-                if self._poetry.config.get("virtualenvs.use-pyenv"):
-                    pyenv.load()  # load pyenv once
+
+            # Load pyenv and ignore unexpected exceptions.
+            if self._poetry.config.get("virtualenvs.use-pyenv"):
+                try:
+                    pyenv.load()
                     if io.is_debug():
                         io.write_line(
                             "<debug>Pyenv loaded: {}</debug>".format(pyenv._command)
                         )
-            except PyenvNotFound:
-                if io.is_debug():
-                    io.write_line("<debug>Pyenv not loaded</debug>")
+                except PyenvNotFound:
+                    if io.is_debug():
+                        io.write_line("<debug>Pyenv not found</debug>")
+                except Exception:
+                    if io.is_debug():
+                        raise
 
             executable, python_patch = self._find_compatible_python(io, pyenv)
             if executable:
