@@ -149,7 +149,7 @@ def sorted_trying_versions(versions: Iterable[str]) -> Iterator:
         sorted(
             versions,
             key=lambda v: (
-                v.split(".")[0],
+                int(v.split(".")[0]),
                 int(v.split(".")[1] if "." in v else 1000),
             ),
         )
