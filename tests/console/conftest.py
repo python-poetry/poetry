@@ -74,7 +74,7 @@ def project_directory():
 
 
 @pytest.fixture
-def poetry(repo, project_directory, config):
+def poetry(repo, project_directory, config, pyenv):
     p = Factory().create_poetry(
         Path(__file__).parent.parent / "fixtures" / project_directory
     )

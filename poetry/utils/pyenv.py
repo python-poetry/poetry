@@ -10,10 +10,6 @@ from poetry.utils._compat import decode
 from poetry.utils._compat import list_to_shell_command
 
 
-class PyenvNotFound(Exception):
-    pass
-
-
 class Pyenv:
     def __init__(self) -> None:
         self._command = None
@@ -26,9 +22,9 @@ class Pyenv:
         if self._command is not None:
             return
 
-        self._command = self.__locate_command()
+        self._command = self._locate_command()
 
-    def __locate_command(self) -> Optional[Path]:
+    def _locate_command(self) -> Optional[Path]:
         for candidate in [
             "pyenv",
             Path(os.environ.get("PYENV_ROOT", "")) / "bin" / "pyenv",
@@ -38,7 +34,7 @@ class Pyenv:
             if which_pyenv is not None:
                 return Path(which_pyenv)
 
-        raise PyenvNotFound
+        return None
 
     def versions(self) -> Set[str]:
         """List all python versions installed by pyenv."""

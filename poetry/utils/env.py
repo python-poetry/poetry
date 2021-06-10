@@ -53,7 +53,6 @@ from poetry.utils.helpers import python_executable_version
 from poetry.utils.helpers import sorted_trying_versions
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.pyenv import Pyenv
-from poetry.utils.pyenv import PyenvNotFound
 
 
 GET_ENVIRONMENT_INFO = """\
@@ -738,6 +737,7 @@ class EnvManager:
         create_venv = self._poetry.config.get("virtualenvs.create")
         root_venv = self._poetry.config.get("virtualenvs.in-project")
         venv_path = self._poetry.config.get("virtualenvs.path")
+        use_pyenv = self._poetry.config.get("virtualenvs.use-pyenv")
 
         if root_venv:
             venv_path = cwd / ".venv"
@@ -780,19 +780,15 @@ class EnvManager:
             )
 
             # Load pyenv and ignore unexpected exceptions.
-            if self._poetry.config.get("virtualenvs.use-pyenv"):
+            if use_pyenv:
                 try:
                     pyenv.load()
-                    if io.is_debug():
-                        io.write_line(
-                            "<debug>Pyenv loaded: {}</debug>".format(pyenv._command)
-                        )
-                except PyenvNotFound:
-                    if io.is_debug():
-                        io.write_line("<debug>Pyenv not found</debug>")
                 except Exception:
                     if io.is_debug():
                         raise
+
+            if io.is_debug() and pyenv:
+                io.write_line("<debug>Pyenv loaded: {}</debug>".format(pyenv._command))
 
             executable, python_patch = self._find_compatible_python(io, pyenv)
             if executable:
