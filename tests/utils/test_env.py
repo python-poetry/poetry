@@ -125,25 +125,31 @@ def build_venv(path: Union[Path, str], **__: Any) -> None:
     os.mkdir(str(path))
 
 
-def check_output(
-    version=Version.parse("3.7.1"), pyenv_version: Optional[Version] = None
-):
+def _check_output_pyenv(cmd: str, pyenv_version: Version = None) -> str:
+    if "versions" in cmd:
+        return "" if pyenv_version is None else pyenv_version.text + "\n"
+    if "prefix" in cmd:
+        return "/pyenv"
+    if "sys.version_info[:3]" in cmd:
+        return pyenv_version.text
+    if "sys.version_info[:2]" in cmd:
+        return "{}.{}".format(pyenv_version.major, pyenv_version.minor)
+    return ""
+
+
+def _check_output(cmd: str, version: Version) -> str:
+    if "sys.version_info[:3]" in cmd:
+        return version.text
+    if "sys.version_info[:2]" in cmd:
+        return "{}.{}".format(version.major, version.minor)
+    return str(Path("/prefix"))
+
+
+def check_output(version=Version.parse("3.7.1"), pyenv_version: Version = None):
     def wrapper(cmd, *args, **kwargs):
         if "pyenv" in cmd:
-            if "versions" in cmd:
-                return "" if pyenv_version is None else pyenv_version.text + "\n"
-            if "prefix" in cmd:
-                return "/pyenv"
-            if "sys.version_info[:3]" in cmd:
-                return pyenv_version.text
-            if "sys.version_info[:2]" in cmd:
-                return "{}.{}".format(pyenv_version.major, pyenv_version.minor)
-        else:
-            if "sys.version_info[:3]" in cmd:
-                return version.text
-            if "sys.version_info[:2]" in cmd:
-                return "{}.{}".format(version.major, version.minor)
-        return str(Path("/prefix"))
+            return _check_output_pyenv(cmd, pyenv_version)
+        return _check_output(cmd, version)
 
     return wrapper
 
