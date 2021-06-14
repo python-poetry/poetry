@@ -265,7 +265,7 @@ class Application(BaseApplication):
         poetry = command.poetry
 
         env_manager = EnvManager(poetry)
-        env = env_manager.create_venv(io)
+        env = env_manager.create_venv(io, executable=event.io.input.option("use-env"))
 
         if env.is_venv() and io.is_verbose():
             io.write_line(f"Using virtualenv: <comment>{env.path}</>")
@@ -326,6 +326,11 @@ class Application(BaseApplication):
 
         definition.add_option(
             Option("--no-plugins", flag=True, description="Disables plugins.")
+        )
+        definition.add_option(
+            Option(
+                "--use-env", flag=False, description="The python executable to use."
+            ),
         )
 
         return definition
