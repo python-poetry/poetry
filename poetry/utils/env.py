@@ -13,6 +13,7 @@ import textwrap
 
 from contextlib import contextmanager
 from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Any
@@ -427,6 +428,26 @@ class EnvManager:
     def __init__(self, poetry: Poetry) -> None:
         self._poetry = poetry
 
+    @lru_cache()
+    def _python_version(self, executable: str) -> str:
+        try:
+            python_version = decode(
+                subprocess.check_output(
+                    list_to_shell_command(
+                        [
+                            executable,
+                            "-c",
+                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                        ]
+                    ),
+                    shell=True,
+                )
+            )
+        except CalledProcessError as e:
+            raise EnvCommandError(e)
+
+        return python_version
+
     def activate(self, python: str, io: IO) -> "Env":
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
@@ -548,11 +569,18 @@ class EnvManager:
 
                 envs_file.write(envs)
 
-    def get(self, reload: bool = False) -> Union["VirtualEnv", "SystemEnv"]:
+    def get(
+        self, reload: bool = False, executable: Optional[str] = None
+    ) -> Union["VirtualEnv", "SystemEnv"]:
         if self._env is not None and not reload:
             return self._env
 
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
+        if executable:
+            python_version = self._python_version(executable)
+            python_version = Version.parse(python_version.strip())
+            python_minor = f"{python_version.major}.{python_version.minor}"
+        else:
+            python_minor = ".".join([str(v) for v in sys.version_info[:2]])
 
         venv_path = self._poetry.config.get("virtualenvs.path")
         if venv_path is None:
@@ -743,7 +771,7 @@ class EnvManager:
             return self._env
 
         cwd = self._poetry.file.parent
-        env = self.get(reload=True)
+        env = self.get(reload=True, executable=executable)
 
         if not env.is_sane():
             force = True
@@ -769,18 +797,7 @@ class EnvManager:
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
-            python_patch = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            executable,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                ).strip()
-            )
+            python_patch = self._python_version(executable)
             python_minor = ".".join(python_patch.split(".")[:2])
 
         supported_python = self._poetry.package.python_constraint
