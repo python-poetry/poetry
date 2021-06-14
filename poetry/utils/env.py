@@ -429,7 +429,7 @@ class EnvManager:
         self._poetry = poetry
 
     @lru_cache()
-    def _python_version(self, executable: str) -> str:
+    def _python_version(self, executable: str, precision: int) -> Version:
         try:
             python_version = decode(
                 subprocess.check_output(
@@ -437,7 +437,7 @@ class EnvManager:
                         [
                             executable,
                             "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                            f"\"import sys; print('.'.join([str(s) for s in sys.version_info[:{precision}]]))\"",
                         ]
                     ),
                     shell=True,
@@ -446,7 +446,7 @@ class EnvManager:
         except CalledProcessError as e:
             raise EnvCommandError(e)
 
-        return python_version
+        return Version.parse(python_version.strip())
 
     def activate(self, python: str, io: IO) -> "Env":
         venv_path = self._poetry.config.get("virtualenvs.path")
@@ -468,23 +468,7 @@ class EnvManager:
             # Executable in PATH or full executable path
             pass
 
-        try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
-        except CalledProcessError as e:
-            raise EnvCommandError(e)
-
-        python_version = Version.parse(python_version.strip())
+        python_version = self._python_version(python, precision=3)
         minor = f"{python_version.major}.{python_version.minor}"
         patch = python_version.text
 
@@ -576,8 +560,7 @@ class EnvManager:
             return self._env
 
         if executable:
-            python_version = self._python_version(executable)
-            python_version = Version.parse(python_version.strip())
+            python_version = self._python_version(executable, precision=3)
             python_minor = f"{python_version.major}.{python_version.minor}"
         else:
             python_minor = ".".join([str(v) for v in sys.version_info[:2]])
@@ -721,23 +704,7 @@ class EnvManager:
             # Executable in PATH or full executable path
             pass
 
-        try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
-        except CalledProcessError as e:
-            raise EnvCommandError(e)
-
-        python_version = Version.parse(python_version.strip())
+        python_version = self._python_version(python, precision=3)
         minor = f"{python_version.major}.{python_version.minor}"
 
         name = f"{base_env_name}-py{minor}"
@@ -794,14 +761,17 @@ class EnvManager:
         if not name:
             name = self._poetry.package.name
 
-        python_patch = ".".join([str(v) for v in sys.version_info[:3]])
-        python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
-            python_patch = self._python_version(executable)
-            python_minor = ".".join(python_patch.split(".")[:2])
+            python_patch = self._python_version(executable, precision=3)
+            python_minor = f"{python_patch.major}.{python_patch.minor}"
+        else:
+            python_patch = Version.parse(
+                ".".join([str(v) for v in sys.version_info[:3]])
+            )
+            python_minor = ".".join([str(v) for v in sys.version_info[:2]])
 
         supported_python = self._poetry.package.python_constraint
-        if not supported_python.allows(Version.parse(python_patch)):
+        if not supported_python.allows(python_patch):
             # The currently activated or chosen Python version
             # is not compatible with the Python constraint specified
             # for the project.
@@ -810,7 +780,7 @@ class EnvManager:
             # Otherwise, we try to find a compatible Python version.
             if executable:
                 raise NoCompatiblePythonVersionFound(
-                    self._poetry.package.python_versions, python_patch
+                    self._poetry.package.python_versions, str(python_patch)
                 )
 
             io.write_line(
@@ -843,29 +813,17 @@ class EnvManager:
                     io.write_line(f"<debug>Trying {python}</debug>")
 
                 try:
-                    python_patch = decode(
-                        subprocess.check_output(
-                            list_to_shell_command(
-                                [
-                                    python,
-                                    "-c",
-                                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                                ]
-                            ),
-                            stderr=subprocess.STDOUT,
-                            shell=True,
-                        ).strip()
-                    )
+                    python_patch = self._python_version(python, precision=3)
                 except CalledProcessError:
                     continue
 
                 if not python_patch:
                     continue
 
-                if supported_python.allows(Version.parse(python_patch)):
+                if supported_python.allows(python_patch):
                     io.write_line(f"Using <c1>{python}</c1> ({python_patch})")
                     executable = python
-                    python_minor = ".".join(python_patch.split(".")[:2])
+                    python_minor = f"{python_patch.major}.{python_patch.minor}"
                     break
 
             if not executable:
