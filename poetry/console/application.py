@@ -21,6 +21,7 @@ from cleo.io.io import IO
 from cleo.io.outputs.output import Output
 
 from poetry.__version__ import __version__
+from poetry.core.semver.version import Version
 
 from .command_loader import CommandLoader
 from .commands.command import Command
@@ -264,8 +265,17 @@ class Application(BaseApplication):
         io = event.io
         poetry = command.poetry
 
+        try:
+            python_version = Version.parse(event.io.input.option("use-env"))
+            python = f"python{python_version.major}"
+            if python_version.precision > 1:
+                python += f".{python_version.minor}"
+        except ValueError:
+            # Executable in PATH or full executable path
+            python = event.io.input.option("use-env")
+
         env_manager = EnvManager(poetry)
-        env = env_manager.create_venv(io, executable=event.io.input.option("use-env"))
+        env = env_manager.create_venv(io, executable=python)
 
         if env.is_venv() and io.is_verbose():
             io.write_line(f"Using virtualenv: <comment>{env.path}</>")
