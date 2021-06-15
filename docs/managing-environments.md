@@ -18,8 +18,8 @@ To achieve this, it will first check if it's currently running inside a virtual 
 If it is, it will use it directly without creating a new one. But if it's not, it will use
 one that it has already created or create a brand new one for you.
 
-By default, Poetry will try to use the currently activated Python version
-to create the virtual environment for the current project.
+By default, Poetry will use the Python used during installation to create the virtual environment
+for the current project.
 
 However, for various reasons, this Python version might not be compatible
 with the `python` requirement of the project. In this case, Poetry will try
@@ -36,7 +36,7 @@ would be:
 ```bash
 pyenv install 2.7.15
 pyenv local 2.7.15  # Activate Python 2.7 for the current project
-poetry install
+poetry install --use-env python2.7
 ```
 {{% /note %}}
 
@@ -69,6 +69,36 @@ special `system` Python version to retrieve the default behavior:
 ```bash
 poetry env use system
 ```
+
+# Multiple environments
+
+You can use `poetry env use` to create multiple environments for your project with different interpreters. `poetry env use`
+will store the information about the used currently used python version in `{cachedir}/virtualenvs/env.toml` by default.
+
+Sometimes it might be feasible to run a poetry command like `poetry shell` or `poetry run` on an environment without
+switching the default. For this purpose the global option `--use-env` exists.
+
+Let's assume we already have an evironment for python3.7 and want to add another one for python3.8 without setting it
+as the new default one:
+
+```bash
+poetry install --use-env python3.8
+```
+
+We can even open a new shell for this environment:
+
+```bash
+poetry shell --use-env python3.8
+```
+
+Or run a specific command:
+
+```bash
+poetry run --use-env python3.8 python --version
+```
+
+Just like `poetry env use` the `--use-env` parameter expects a full path to an executable, a python executable in `$PATH`
+or minor Python version.
 
 ## Displaying the environment information
 

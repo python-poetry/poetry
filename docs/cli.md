@@ -27,6 +27,8 @@ then `--help` combined with any of those can give you more information.
 * `--no-ansi`: Disable ANSI output.
 * `--version (-V)`: Display this application version.
 * `--no-interaction (-n)`: Do not ask any interactive question.
+* `--no-plugins`       Disables plugins.
+* `--use-env=USE-ENV`  The python executable to use.
 
 
 ## new
