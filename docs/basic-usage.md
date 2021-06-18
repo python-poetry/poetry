@@ -88,6 +88,12 @@ It will automatically find a suitable version constraint **and install** the pac
 ## Using your virtual environment
 
 By default, poetry creates a virtual environment in `{cache-dir}/virtualenvs` (`{cache-dir}\virtualenvs` on Windows).
+The following command can help you to find this location:
+```bash
+$ poetry show -v
+```
+
+
 You can change the [`cache-dir`]({{< relref "configuration#cache-dir" >}} "cache-dir configuration documentation") value by editing the poetry config.
 Additionally, you can use the [`virtualenvs.in-project`]({{< relref "configuration#virtualenvsin-project" >}} "#virtualenvs.in-project configuration documentation") configuration variable
 to create virtual environment within your project directory.
