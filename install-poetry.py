@@ -515,7 +515,7 @@ class Installer:
         env_path = self._data_dir.joinpath("venv")
 
         with temporary_directory() as tmp_dir:
-            subprocess.call(
+            subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "virtualenv", "-t", tmp_dir],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
