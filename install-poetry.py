@@ -516,7 +516,7 @@ class Installer:
 
         with temporary_directory() as tmp_dir:
             subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", "virtualenv", "-t", tmp_dir],
+                [sys.executable, "-m", "pip", "install", "virtualenv", "--no-user", "-t", tmp_dir],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
