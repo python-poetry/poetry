@@ -498,13 +498,31 @@ class Locker(object):
         return locked
 
     def _dump_package(self, package):  # type: (Package) -> dict
-        dependencies = {}
+        dependencies = OrderedDict()
         for dependency in sorted(package.requires, key=lambda d: d.name):
             if dependency.pretty_name not in dependencies:
                 dependencies[dependency.pretty_name] = []
 
             constraint = inline_table()
-            constraint["version"] = str(dependency.pretty_constraint)
+
+            if dependency.is_directory() or dependency.is_file():
+                constraint["path"] = dependency.path.as_posix()
+
+                if dependency.is_directory() and dependency.develop:
+                    constraint["develop"] = True
+            elif dependency.is_url():
+                constraint["url"] = dependency.url
+            elif dependency.is_vcs():
+                constraint[dependency.vcs] = dependency.source
+
+                if dependency.branch:
+                    constraint["branch"] = dependency.branch
+                elif dependency.tag:
+                    constraint["tag"] = dependency.tag
+                elif dependency.rev:
+                    constraint["rev"] = dependency.rev
+            else:
+                constraint["version"] = str(dependency.pretty_constraint)
 
             if dependency.extras:
                 constraint["extras"] = sorted(dependency.extras)
@@ -520,7 +538,10 @@ class Locker(object):
         # All the constraints should have the same type,
         # but we want to simplify them if it's possible
         for dependency, constraints in tuple(dependencies.items()):
-            if all(len(constraint) == 1 for constraint in constraints):
+            if all(
+                len(constraint) == 1 and "version" in constraint
+                for constraint in constraints
+            ):
                 dependencies[dependency] = [
                     constraint["version"] for constraint in constraints
                 ]

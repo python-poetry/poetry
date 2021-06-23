@@ -48,8 +48,8 @@ python-versions = "*"
 version = "1.2.3"
 
 [package.dependencies]
-demo = "0.1.0"
-inner-directory-project = "1.2.4"
+demo = { "path" = "../../distributions/demo-0.1.0-py2.py3-none-any.whl" }
+inner-directory-project = { "path" = "inner-directory-project" }
 
 [package.source]
 type = "directory"
