@@ -5,8 +5,13 @@ import pytest
 from poetry.__version__ import __version__
 from poetry.core.packages.package import Package
 from poetry.core.semver.version import Version
+from poetry.factory import Factory
+from poetry.repositories.installed_repository import InstalledRepository
+from poetry.repositories.pool import Pool
+from poetry.repositories.repository import Repository
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import Path
+from poetry.utils.env import EnvManager
 
 
 FIXTURES = Path(__file__).parent.joinpath("fixtures")
@@ -25,10 +30,13 @@ def test_self_update_should_install_all_necessary_elements(
     command = tester._command
 
     version = Version.parse(__version__).next_minor.text
-    mocker.patch(
-        "poetry.repositories.pypi_repository.PyPiRepository.find_packages",
-        return_value=[Package("poetry", version)],
-    )
+    repository = Repository()
+    repository.add_package(Package("poetry", version))
+
+    pool = Pool()
+    pool.add_repository(repository)
+
+    command._pool = pool
     mocker.patch.object(command, "_check_recommended_installation", return_value=None)
     mocker.patch.object(
         command, "_get_release_name", return_value="poetry-{}-darwin".format(version)
@@ -89,3 +97,63 @@ if __name__ == "__main__":
 
     assert lib.exists()
     assert lib.joinpath("poetry").exists()
+
+
+def test_self_update_can_update_from_recommended_installation(
+    tester, http, mocker, environ, tmp_venv
+):
+    mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
+    target_script = tmp_venv.path.parent.joinpath("venv/bin/poetry")
+    if WINDOWS:
+        target_script = tmp_venv.path.parent.joinpath("venv/Scripts/poetry.exe")
+
+    target_script.parent.mkdir(parents=True, exist_ok=True)
+    target_script.touch()
+
+    command = tester._command
+    command._data_dir = tmp_venv.path.parent
+
+    new_version = Version.parse(__version__).next_minor.text
+
+    old_poetry = Package("poetry", __version__)
+    old_poetry.add_dependency(Factory.create_dependency("cleo", "^0.8.2"))
+
+    new_poetry = Package("poetry", new_version)
+    new_poetry.add_dependency(Factory.create_dependency("cleo", "^1.0.0"))
+
+    installed_repository = Repository()
+    installed_repository.add_package(old_poetry)
+    installed_repository.add_package(Package("cleo", "0.8.2"))
+
+    repository = Repository()
+    repository.add_package(new_poetry)
+    repository.add_package(Package("cleo", "1.0.0"))
+
+    pool = Pool()
+    pool.add_repository(repository)
+
+    command._pool = pool
+
+    mocker.patch.object(InstalledRepository, "load", return_value=installed_repository)
+
+    tester.execute()
+
+    expected_output = """\
+Updating Poetry to {}
+
+Updating dependencies
+Resolving dependencies...
+
+Package operations: 0 installs, 2 updates, 0 removals
+
+  - Updating cleo (0.8.2 -> 1.0.0)
+  - Updating poetry ({} -> {})
+
+Updating the poetry script
+
+Poetry (1.2.0) is installed now. Great!
+""".format(
+        new_version, __version__, new_version
+    )
+
+    assert tester.io.fetch_output() == expected_output

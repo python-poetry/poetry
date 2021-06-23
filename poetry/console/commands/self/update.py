@@ -4,6 +4,7 @@ import hashlib
 import os
 import re
 import shutil
+import site
 import stat
 import subprocess
 import sys
@@ -16,6 +17,8 @@ from cleo import argument
 from cleo import option
 
 from poetry.core.packages import Dependency
+from poetry.utils._compat import PY2
+from poetry.utils._compat import Path
 
 from ..command import Command
 
@@ -60,6 +63,10 @@ class SelfUpdateCommand(Command):
     REPOSITORY_URL = "https://github.com/python-poetry/poetry"
     BASE_URL = REPOSITORY_URL + "/releases/download"
 
+    _data_dir = None
+    _bin_dir = None
+    _pool = None
+
     @property
     def home(self):
         from poetry.utils._compat import Path
@@ -78,18 +85,75 @@ class SelfUpdateCommand(Command):
     def lib_backup(self):
         return self.home / "lib-backup"
 
+    @property
+    def data_dir(self):  # type: () -> Path
+        if self._data_dir is not None:
+            return self._data_dir
+
+        from poetry.locations import data_dir
+
+        self._data_dir = data_dir()
+
+        return self._data_dir
+
+    @property
+    def bin_dir(self):  # type: () -> Path
+        if self._data_dir is not None:
+            return self._data_dir
+
+        from poetry.utils._compat import WINDOWS
+
+        if os.getenv("POETRY_HOME"):
+            return Path(os.getenv("POETRY_HOME"), "bin").expanduser()
+
+        user_base = site.getuserbase()
+
+        if WINDOWS:
+            bin_dir = os.path.join(user_base, "Scripts")
+        else:
+            bin_dir = os.path.join(user_base, "bin")
+
+        self._bin_dir = Path(bin_dir)
+
+        return self._bin_dir
+
+    @property
+    def pool(self):
+        if self._pool is not None:
+            return self._pool
+
+        from poetry.repositories.pool import Pool
+        from poetry.repositories.pypi_repository import PyPiRepository
+
+        pool = Pool()
+        pool.add_repository(PyPiRepository(fallback=False))
+
+        self._pool = pool
+
+        return self._pool
+
     def handle(self):
         from poetry.__version__ import __version__
         from poetry.core.semver import Version
-        from poetry.repositories.pypi_repository import PyPiRepository
+        from poetry.utils.env import EnvManager
 
-        self._check_recommended_installation()
+        new_update_method = False
+        try:
+            self._check_recommended_installation()
+        except RuntimeError as e:
+            env = EnvManager.get_system_env(naive=True)
+            try:
+                env.path.relative_to(self.data_dir)
+            except ValueError:
+                raise e
+
+            new_update_method = True
 
         version = self.argument("version")
         if not version:
             version = ">=" + __version__
 
-        repo = PyPiRepository(fallback=False)
+        repo = self.pool.repositories[0]
         packages = repo.find_packages(
             Dependency("poetry", version, allows_prereleases=self.option("preview"))
         )
@@ -127,6 +191,9 @@ class SelfUpdateCommand(Command):
             self.line("You are using the latest version")
             return
 
+        if new_update_method:
+            return self.update_with_new_method(release.version)
+
         self.update(release)
 
     def update(self, release):
@@ -163,6 +230,18 @@ class SelfUpdateCommand(Command):
             "<info>Poetry</info> (<comment>{}</comment>) is installed now. Great!".format(
                 version
             )
+        )
+
+    def update_with_new_method(self, version):
+        self.line("Updating <c1>Poetry</c1> to <c2>{}</c2>".format(version))
+        self.line("")
+
+        self._update_with_new_method(version)
+        self._make_bin()
+
+        self.line("")
+        self.line(
+            "<c1>Poetry</c1> (<c2>{}</c2>) is installed now. Great!".format(version)
         )
 
     def _update(self, version):
@@ -234,6 +313,68 @@ class SelfUpdateCommand(Command):
                     f.extractall(str(self.lib))
             finally:
                 gz.close()
+
+    def _update_with_new_method(self, version):
+        from poetry.config.config import Config
+        from poetry.core.packages.dependency import Dependency
+        from poetry.core.packages.project_package import ProjectPackage
+        from poetry.installation.installer import Installer
+        from poetry.packages.locker import NullLocker
+        from poetry.repositories.installed_repository import InstalledRepository
+        from poetry.utils.env import EnvManager
+
+        env = EnvManager.get_system_env()
+        installed = InstalledRepository.load(env)
+
+        root = ProjectPackage("poetry-updater", "0.0.0")
+        root.python_versions = ".".join(str(c) for c in env.version_info[:3])
+        root.add_dependency(Dependency("poetry", version.text))
+
+        installer = Installer(
+            self.io,
+            env,
+            root,
+            NullLocker(self.data_dir.joinpath("poetry.lock"), {}),
+            self.pool,
+            Config(),
+            installed=installed,
+        )
+        installer.update(True)
+        installer.run()
+
+    def _make_bin(self):
+        from poetry.utils._compat import WINDOWS
+
+        self.line("")
+        self.line("Updating the <c1>poetry</c1> script")
+
+        self.bin_dir.mkdir(parents=True, exist_ok=True)
+
+        script = "poetry"
+        target_script = "venv/bin/poetry"
+        if WINDOWS:
+            script = "poetry.exe"
+            target_script = "venv/Scripts/poetry.exe"
+
+        if self.bin_dir.joinpath(script).exists():
+            self.bin_dir.joinpath(script).unlink()
+
+        if not PY2 and not WINDOWS:
+            try:
+                self.bin_dir.joinpath(script).symlink_to(
+                    self.data_dir.joinpath(target_script)
+                )
+            except OSError:
+                # This can happen if the user
+                # does not have the correct permission on Windows
+                shutil.copy(
+                    self.data_dir.joinpath(target_script), self.bin_dir.joinpath(script)
+                )
+        else:
+            shutil.copy(
+                str(self.data_dir.joinpath(target_script)),
+                str(self.bin_dir.joinpath(script)),
+            )
 
     def process(self, *args):
         return subprocess.check_output(list(args), stderr=subprocess.STDOUT)
