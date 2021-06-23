@@ -81,6 +81,28 @@ def test_basic_interactive(tester, init_basic_inputs, init_basic_toml):
     assert init_basic_toml in tester.io.fetch_output()
 
 
+def test_noninteractive(app, mocker, poetry, repo, tmp_path):
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
+    args = "--name my-package --dependency pytest"
+    tester.execute(args=args, interactive=False)
+
+    expected = "Using version ^3.6.0 for pytest\n"
+    assert tester.io.fetch_output() == expected
+    assert "" == tester.io.fetch_error()
+
+    toml_content = (tmp_path / "pyproject.toml").read_text()
+    assert 'name = "my-package"' in toml_content
+    assert 'pytest = "^3.6.0"' in toml_content
+
+
 def test_interactive_with_dependencies(tester, repo):
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
