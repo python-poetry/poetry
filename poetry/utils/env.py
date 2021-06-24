@@ -48,6 +48,7 @@ from poetry.utils._compat import list_to_shell_command
 from poetry.utils._compat import metadata
 from poetry.utils.helpers import is_dir_writable
 from poetry.utils.helpers import paths_csv
+from poetry.utils.helpers import python_executable_path
 from poetry.utils.helpers import python_executable_version
 from poetry.utils.helpers import sorted_trying_versions
 from poetry.utils.helpers import temporary_directory
@@ -886,7 +887,7 @@ class EnvManager:
             try:
                 python_patch, compatible = self._is_compatible(python)
                 if compatible:
-                    executable = python
+                    executable = python_executable_path(python)  # use absolute path
                     break
             except CalledProcessError:
                 continue

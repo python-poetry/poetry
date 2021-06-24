@@ -170,3 +170,19 @@ def python_executable_version(executable: str) -> str:
             stderr=subprocess.DEVNULL,
         ).strip()
     )
+
+
+def python_executable_path(executable: str) -> str:
+    return decode(
+        subprocess.check_output(
+            list_to_shell_command(
+                [
+                    executable,
+                    "-c",
+                    '"import sys; print(sys.executable);"',
+                ]
+            ),
+            shell=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    )

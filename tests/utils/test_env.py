@@ -160,23 +160,49 @@ def check_output_pyenv_prefix() -> Callable:
     return wrapper
 
 
-def check_output_pyenv_python_version_info(version: Version) -> Callable:
+def check_output_pyenv_python_version_info(*args) -> Callable:
+    versions = args
+
     def wrapper(cmd: str, *args, **kwargs) -> Optional[str]:
         if "pyenv" in cmd and "sys.version_info[:3]" in cmd:
+            wrapper.calls += 1
+            version = versions[wrapper.calls % len(versions)]
             return version.text
         if "pyenv" in cmd and "sys.version_info[:2]" in cmd:
+            wrapper.calls += 1
+            version = versions[wrapper.calls % len(versions)]
             return "{}.{}".format(version.major, version.minor)
         return None
 
+    wrapper.calls = -1
     return wrapper
 
 
-def check_output_sys_python_version_info(version: Version) -> Callable:
+def check_output_sys_python_version_info(*args) -> Callable:
+    versions = args
+
     def wrapper(cmd: str, *args, **kwargs) -> Optional[str]:
         if "pyenv" not in cmd and "sys.version_info[:3]" in cmd:
+            wrapper.calls += 1
+            version = versions[wrapper.calls % len(versions)]
             return version.text
         if "pyenv" not in cmd and "sys.version_info[:2]" in cmd:
+            wrapper.calls += 1
+            version = versions[wrapper.calls % len(versions)]
             return "{}.{}".format(version.major, version.minor)
+        return None
+
+    wrapper.calls = -1
+    return wrapper
+
+
+def check_output_python_executable_path(version: Version) -> Callable:
+    def wrapper(cmd: str, *args, **kwargs) -> Optional[str]:
+        if "print(sys.executable)" in cmd:
+            if "pyenv" in cmd:
+                return "/pyenv/python{}.{}".format(version.major, version.minor)
+            return "/system/python{}.{}".format(version.major, version.minor)
+
         return None
 
     return wrapper
@@ -786,6 +812,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
         side_effect=chain_check_output(
             check_output_pyenv_versions([]),
             check_output_sys_python_version_info(Version.parse("3.7.5")),
+            check_output_python_executable_path(Version.parse("3.7.5")),
         ),
     )
     m = mocker.patch(
@@ -796,7 +823,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
 
     m.assert_called_with(
         config_virtualenvs_path / venv_fullname(venv_name, "3.7"),
-        executable="python3",
+        executable="/system/python3.7",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
@@ -819,11 +846,14 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     mocker.patch("sys.version_info", (2, 7, 16))
     mocker.patch(
         "subprocess.check_output",
-        side_effect=[
-            "",  # pyenv.versions() -> empty
-            "3.5.3",  # try python3
-            latest_minor + ".0",  # try python3.10 from system
-        ],
+        side_effect=chain_check_output(
+            check_output_pyenv_versions([]),  # pyenv.versions() -> empty
+            check_output_sys_python_version_info(
+                Version.parse("3.5.3"),  # try python3
+                Version.parse(latest_minor + ".0"),  # try python3.10 from system
+            ),
+            check_output_python_executable_path(Version.parse(latest_minor + ".0")),
+        ),
     )
     m = mocker.patch(
         "poetry.utils.env.EnvManager.build_venv", side_effect=lambda *args, **kwargs: ""
@@ -833,7 +863,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
 
     m.assert_called_with(
         config_virtualenvs_path / venv_fullname(venv_name, latest_minor),
-        executable="python" + latest_minor,
+        executable="/system/python" + latest_minor,
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
@@ -858,6 +888,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_with_pyenv(
             check_output_pyenv_versions(["3.9.4"]),
             check_output_pyenv_python_version_info(Version.parse("3.9.4")),
             check_output_sys_python_version_info(Version.parse("3.6.9")),
+            check_output_python_executable_path(Version.parse("3.9.4")),
         ),
     )
     m = mocker.patch(
@@ -868,7 +899,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_with_pyenv(
 
     m.assert_called_with(
         config_virtualenvs_path / venv_fullname(venv_name, "3.9"),
-        executable="/pyenv/bin/python3.9",
+        executable="/pyenv/python3.9",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
