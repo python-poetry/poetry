@@ -679,8 +679,9 @@ class Executor:
                 ).hash()
             )
             if archive_hash not in {f["hash"] for f in package.files}:
+                filename = archive.filename if isinstance(archive, Link) else archive
                 raise RuntimeError(
-                    f"Invalid hash for {package} using archive {archive.name}"
+                    f"Invalid hash for {package} using archive {filename}"
                 )
 
             self._hashes[package.name] = archive_hash
