@@ -1,5 +1,20 @@
 # Change Log
 
+## [1.1.7] - 2012-06-25
+
+**Note**: Lock files might need to be regenerated for the first fix below to take effect.
+You can use `poetry lock` to do so **without** the `--no-update` option.
+
+### Changed
+
+- This release is compatible with the `install-poetry.py` installation script to ease the migration path from `1.1` releases to `1.2` releases. ([#4192](https://github.com/python-poetry/poetry/pull/4192))
+
+### Fixed
+
+- Fixed an issue where transitive dependencies of directory or VCS dependencies were not installed or otherwise removed. ([#4203](https://github.com/python-poetry/poetry/pull/4203))
+- Fixed an issue where the combination of the `--tree` and `--no-dev` options for the show command was still displaying development dependencies. ([#3992](https://github.com/python-poetry/poetry/pull/3992))
+
+
 ## [1.1.6] - 2021-04-14
 
 ### Fixed
@@ -1108,7 +1123,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.6...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.7...master
+[1.1.7]: https://github.com/python-poetry/poetry/compare/1.1.7
 [1.1.6]: https://github.com/python-poetry/poetry/compare/1.1.6
 [1.1.5]: https://github.com/python-poetry/poetry/compare/1.1.5
 [1.1.4]: https://github.com/python-poetry/poetry/compare/1.1.4
