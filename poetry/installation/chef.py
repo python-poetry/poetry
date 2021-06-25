@@ -23,14 +23,14 @@ from .chooser import Wheel
 
 
 if TYPE_CHECKING:
-
     from poetry.config.config import Config
     from poetry.utils.env import Env
 
 
 class IsolatedEnv(BaseIsolatedEnv):
-    def __init__(self, env: "Env") -> None:
+    def __init__(self, env: "Env", config: "Config") -> None:
         self._env = env
+        self._config = config
 
     @property
     def executable(self) -> str:
@@ -49,8 +49,6 @@ class IsolatedEnv(BaseIsolatedEnv):
         from poetry.installation.installer import Installer
         from poetry.packages.locker import NullLocker
         from poetry.repositories.installed_repository import InstalledRepository
-        from poetry.repositories.pool import Pool
-        from poetry.repositories.pypi_repository import PyPiRepository
 
         # We build Poetry dependencies from the requirements
         package = ProjectPackage("__root__", "0.0.0")
@@ -59,8 +57,7 @@ class IsolatedEnv(BaseIsolatedEnv):
             dependency = Dependency.create_from_pep_508(requirement)
             package.add_dependency(dependency)
 
-        pool = Pool()
-        pool.add_repository(PyPiRepository())
+        pool = Factory.create_pool(self._config)
         installer = Installer(
             NullIO(),
             self._env,
@@ -133,7 +130,7 @@ class Chef:
         with temporary_directory() as tmp_dir:
             EnvManager.build_venv(tmp_dir, executable=self._env.python, with_pip=True)
             venv = VirtualEnv(Path(tmp_dir))
-            env = IsolatedEnv(venv)
+            env = IsolatedEnv(venv, self._config)
             builder = ProjectBuilder(
                 directory,
                 python_executable=env.executable,

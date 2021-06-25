@@ -1,11 +1,30 @@
 from pathlib import Path
 
+import pytest
+
 from packaging.tags import Tag
 
 from poetry.core.packages.utils.link import Link
+from poetry.factory import Factory
 from poetry.installation.chef import Chef
+from poetry.repositories import Pool
 from poetry.utils.env import EnvManager
 from poetry.utils.env import MockEnv
+from tests.repositories.test_pypi_repository import MockRepository
+
+
+@pytest.fixture()
+def pool():
+    pool = Pool()
+
+    pool.add_repository(MockRepository())
+
+    return pool
+
+
+@pytest.fixture(autouse=True)
+def setup(mocker, pool):
+    mocker.patch.object(Factory, "create_pool", return_value=pool)
 
 
 def test_get_cached_archive_for_link(config, mocker):
@@ -99,7 +118,7 @@ def test_prepare_sdist(config, config_cache_dir):
     wheel = chef.prepare(archive)
 
     assert wheel.parent == destination
-    assert wheel.name == "demo-0.1.0-py3-none-any.whl"
+    assert wheel.name == "demo-0.1.0-py2.py3-none-any.whl"
 
 
 def test_prepare_directory(config, config_cache_dir):

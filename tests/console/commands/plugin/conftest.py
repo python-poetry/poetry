@@ -17,19 +17,18 @@ def installed():
     return repository
 
 
-def configure_sources_factory(repo):
-    def _configure_sources(poetry, sources, config, io):  # noqa
+def create_pool_factory(repo):
+    def _create_pool(config, io):  # noqa
         pool = Pool()
         pool.add_repository(repo)
-        poetry.set_pool(pool)
 
-    return _configure_sources
+        return pool
+
+    return _create_pool
 
 
 @pytest.fixture(autouse=True)
 def setup_mocks(mocker, env, repo, installed):
     mocker.patch.object(EnvManager, "get_system_env", return_value=env)
     mocker.patch.object(InstalledRepository, "load", return_value=installed)
-    mocker.patch.object(
-        Factory, "configure_sources", side_effect=configure_sources_factory(repo)
-    )
+    mocker.patch.object(Factory, "create_pool", side_effect=create_pool_factory(repo))
