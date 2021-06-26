@@ -446,22 +446,18 @@ class EnvManager:
             if sys.platform == "win32":
                 # Use Python Launcher for Windows to retrieve the path of the Python executable.
                 python = "-" + python
-                python = (
-                    '"'
-                    + decode(
-                        subprocess.check_output(
-                            list_to_shell_command(
-                                [
-                                    "py",
-                                    python,
-                                    "-c",
-                                    "\"import sys; print(f'{sys.executable}', end='')\"",
-                                ]
-                            ),
-                            shell=True,
-                        )
+                python = decode(
+                    subprocess.check_output(
+                        list_to_shell_command(
+                            [
+                                "py",
+                                python,
+                                "-c",
+                                "\"import sys; print(sys.executable, end='')\"",
+                            ]
+                        ),
+                        shell=True,
                     )
-                    + '"'
                 )
             else:
                 python = "python" + python
@@ -708,9 +704,27 @@ class EnvManager:
 
         try:
             python_version = Version.parse(python)
-            python = f"python{python_version.major}"
+            python = f"{python_version.major}"
             if python_version.precision > 1:
                 python += f".{python_version.minor}"
+            if sys.platform == "win32":
+                # Use Python Launcher for Windows to retrieve the path of the Python executable.
+                python = "-" + python
+                python = decode(
+                    subprocess.check_output(
+                        list_to_shell_command(
+                            [
+                                "py",
+                                python,
+                                "-c",
+                                "\"import sys; print(sys.executable, end='')\"",
+                            ]
+                        ),
+                        shell=True,
+                    )
+                )
+            else:
+                python = "python" + python
         except ValueError:
             # Executable in PATH or full executable path
             pass
