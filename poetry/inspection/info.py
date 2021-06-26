@@ -141,7 +141,7 @@ class PackageInfo:
 
         package = Package(
             name=name,
-            version=self.version,
+            version=self.public_version,
             source_type=self._source_type,
             source_url=self._source_url,
             source_reference=self._source_reference,
@@ -588,3 +588,10 @@ class PackageInfo:
             return cls.from_bdist(path=path)
         except PackageInfoError:
             return cls.from_sdist(path=path)
+
+    @property
+    def public_version(self) -> str:
+        """
+        Removes +<local version label> from packages.
+        """
+        return self.version.split("+")[0]
