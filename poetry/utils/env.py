@@ -415,6 +415,16 @@ class NoCompatiblePythonVersionFound(EnvError):
         super().__init__(message)
 
 
+def execute_python_script(python: str, script: str) -> str:
+    if python.startswith("python") and sys.platform == "win32":
+        shell_command = ["py", f"-{python[6:]}", "-c", script]
+    else:
+        shell_command = [python, "-c", script]
+    return decode(
+        subprocess.check_output(list_to_shell_command(shell_command), shell=True)
+    )
+
+
 class EnvManager:
     """
     Environments manager
@@ -440,48 +450,22 @@ class EnvManager:
 
         try:
             python_version = Version.parse(python)
-            python = f"{python_version.major}"
+            python = f"python{python_version.major}"
             if python_version.precision > 1:
                 python += f".{python_version.minor}"
-            if sys.platform == "win32":
-                # Use Python Launcher for Windows to retrieve the path of the Python executable.
-                python = "-" + python
-                python = decode(
-                    subprocess.check_output(
-                        list_to_shell_command(
-                            [
-                                "py",
-                                python,
-                                "-c",
-                                "\"import sys; print(sys.executable, end='')\"",
-                            ]
-                        ),
-                        shell=True,
-                    )
-                )
-            else:
-                python = "python" + python
         except ValueError:
             # Executable in PATH or full executable path
             pass
 
         try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
+            python_version = execute_python_script(
+                python,
+                "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+            ).strip()
         except CalledProcessError as e:
             raise EnvCommandError(e)
 
-        python_version = Version.parse(python_version.strip())
+        python_version = Version.parse(python_version)
         minor = f"{python_version.major}.{python_version.minor}"
         patch = python_version.text
 
@@ -704,48 +688,22 @@ class EnvManager:
 
         try:
             python_version = Version.parse(python)
-            python = f"{python_version.major}"
+            python = f"python{python_version.major}"
             if python_version.precision > 1:
                 python += f".{python_version.minor}"
-            if sys.platform == "win32":
-                # Use Python Launcher for Windows to retrieve the path of the Python executable.
-                python = "-" + python
-                python = decode(
-                    subprocess.check_output(
-                        list_to_shell_command(
-                            [
-                                "py",
-                                python,
-                                "-c",
-                                "\"import sys; print(sys.executable, end='')\"",
-                            ]
-                        ),
-                        shell=True,
-                    )
-                )
-            else:
-                python = "python" + python
         except ValueError:
             # Executable in PATH or full executable path
             pass
 
         try:
-            python_version = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            python,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                )
-            )
+            python_version = execute_python_script(
+                python,
+                "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+            ).strip()
         except CalledProcessError as e:
             raise EnvCommandError(e)
 
-        python_version = Version.parse(python_version.strip())
+        python_version = Version.parse(python_version)
         minor = f"{python_version.major}.{python_version.minor}"
 
         name = f"{base_env_name}-py{minor}"
@@ -805,18 +763,10 @@ class EnvManager:
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
-            python_patch = decode(
-                subprocess.check_output(
-                    list_to_shell_command(
-                        [
-                            executable,
-                            "-c",
-                            "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                        ]
-                    ),
-                    shell=True,
-                ).strip()
-            )
+            python_patch = execute_python_script(
+                executable,
+                "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+            ).strip()
             python_minor = ".".join(python_patch.split(".")[:2])
 
         supported_python = self._poetry.package.python_constraint
@@ -862,19 +812,10 @@ class EnvManager:
                     io.write_line(f"<debug>Trying {python}</debug>")
 
                 try:
-                    python_patch = decode(
-                        subprocess.check_output(
-                            list_to_shell_command(
-                                [
-                                    python,
-                                    "-c",
-                                    "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
-                                ]
-                            ),
-                            stderr=subprocess.STDOUT,
-                            shell=True,
-                        ).strip()
-                    )
+                    python_patch = execute_python_script(
+                        python,
+                        "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                    ).strip()
                 except CalledProcessError:
                     continue
 
