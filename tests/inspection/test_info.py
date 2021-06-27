@@ -229,18 +229,17 @@ def test_info_prefer_poetry_config_over_egg_info():
     demo_check_info(info)
 
 
-def test_info_public_version():
-    package_info = PackageInfo(version="1.2.3+localVersion")
-    assert package_info.public_version == "1.2.3"
-
-
-def test_info_public_version_no_mutation():
-    package_info = PackageInfo(version="1.2.3")
-    assert package_info.public_version == "1.2.3"
-
-
-def test_package_from_info_with_public_version():
-    package_info = PackageInfo(name="test-package", version="1.2.3+local_super_version")
+@pytest.mark.parametrize(
+    "version,expected",
+    [
+        ("1.2.3+local_super_version", "1.2.3"),
+        ("1.2.3+localVersion", "1.2.3"),
+        ("1.2.3", "1.2.3"),
+    ],
+)
+def test_info_public_version(version, expected):
+    package_info = PackageInfo(name="test-package", version=version)
+    assert package_info.public_version == expected
     package = package_info.to_package()  # type: Package
     assert type(package.version) == Version
-    assert package.version.text == "1.2.3"
+    assert package.version.text == expected
