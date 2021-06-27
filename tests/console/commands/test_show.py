@@ -1,7 +1,5 @@
 import pytest
 
-from clikit.formatter.ansi_formatter import AnsiFormatter
-
 from poetry.factory import Factory
 from tests.helpers import get_package
 
@@ -84,6 +82,46 @@ pytest   3.7.3 Pytest package
 """
 
     assert expected == tester.io.fetch_output()
+
+
+def test_show_basic_with_installed_packages_single(tester, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+
+    installed.add_package(cachy_010)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": []},
+            },
+        }
+    )
+
+    tester.execute("cachy")
+
+    assert [
+        "name         : cachy",
+        "version      : 0.1.0",
+        "description  : Cachy package",
+    ] == [line.strip() for line in tester.io.fetch_output().splitlines()]
 
 
 def test_show_basic_with_not_installed_packages_non_decorated(
@@ -186,12 +224,11 @@ def test_show_basic_with_not_installed_packages_decorated(tester, poetry, instal
         }
     )
 
-    tester.io.set_formatter(AnsiFormatter(forced=True))
-    tester.execute()
+    tester.execute(decorated=True)
 
     expected = """\
-\033[36mcachy   \033[0m \033[1m0.1.0\033[0m Cachy package
-\033[31mpendulum\033[0m \033[1m2.0.0\033[0m Pendulum package
+\033[36mcachy   \033[39m \033[39;1m0.1.0\033[39;22m Cachy package
+\033[31mpendulum\033[39m \033[39;1m2.0.0\033[39;22m Pendulum package
 """
 
     assert expected == tester.io.fetch_output()
@@ -317,12 +354,11 @@ def test_show_latest_decorated(tester, poetry, installed, repo):
         }
     )
 
-    tester.io.set_formatter(AnsiFormatter(forced=True))
-    tester.execute("--latest")
+    tester.execute("--latest", decorated=True)
 
     expected = """\
-\033[36mcachy   \033[0m \033[1m0.1.0\033[0m \033[33m0.2.0\033[0m Cachy package
-\033[36mpendulum\033[0m \033[1m2.0.0\033[0m \033[31m2.0.1\033[0m Pendulum package
+\033[36mcachy   \033[39m \033[39;1m0.1.0\033[39;22m \033[33m0.2.0\033[39m Cachy package
+\033[36mpendulum\033[39m \033[39;1m2.0.0\033[39;22m \033[31m2.0.1\033[39m Pendulum package
 """
 
     assert expected == tester.io.fetch_output()
@@ -1144,11 +1180,78 @@ def test_show_tree(tester, poetry, installed):
         }
     )
 
-    tester.execute("--tree")
+    tester.execute("--tree", supports_utf8=False)
 
     expected = """\
 cachy 0.2.0
 `-- msgpack-python >=0.5 <0.6
+"""
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_show_tree_no_dev(tester, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
+    poetry.package.add_dependency(
+        Factory.create_dependency("pytest", "^6.1.0", category="dev")
+    )
+
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
+    installed.add_package(cachy2)
+
+    pytest = get_package("pytest", "6.1.1")
+    installed.add_package(pytest)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
+                },
+                {
+                    "name": "msgpack-python",
+                    "version": "0.5.1",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pytest",
+                    "version": "6.1.1",
+                    "description": "",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "msgpack-python": [], "pytest": []},
+            },
+        }
+    )
+
+    tester.execute("--tree --no-dev")
+
+    expected = """\
+cachy 0.2.0
+└── msgpack-python >=0.5 <0.6
 """
 
     assert expected == tester.io.fetch_output()

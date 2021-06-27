@@ -2,19 +2,20 @@ import os
 import shutil
 import sys
 
+from pathlib import Path
+
 import pytest
 
-from cleo import CommandTester
+from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
-from poetry.utils._compat import Path
 from poetry.utils._compat import decode
 from tests.helpers import TestApplication
 from tests.helpers import get_package
 
 
 @pytest.fixture
-def source_dir(tmp_path):  # type: (...) -> Path
+def source_dir(tmp_path) -> Path:
     cwd = os.getcwd()
 
     try:
@@ -26,7 +27,7 @@ def source_dir(tmp_path):  # type: (...) -> Path
 
 @pytest.fixture
 def patches(mocker, source_dir, repo):
-    mocker.patch("poetry.utils._compat.Path.cwd", return_value=source_dir)
+    mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
     )
@@ -65,6 +66,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -76,6 +79,28 @@ python = "~2.7 || ^3.6"
 def test_basic_interactive(tester, init_basic_inputs, init_basic_toml):
     tester.execute(inputs=init_basic_inputs)
     assert init_basic_toml in tester.io.fetch_output()
+
+
+def test_noninteractive(app, mocker, poetry, repo, tmp_path):
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
+    args = "--name my-package --dependency pytest"
+    tester.execute(args=args, interactive=False)
+
+    expected = "Using version ^3.6.0 for pytest\n"
+    assert tester.io.fetch_output() == expected
+    assert "" == tester.io.fetch_error()
+
+    toml_content = (tmp_path / "pyproject.toml").read_text()
+    assert 'name = "my-package"' in toml_content
+    assert 'pytest = "^3.6.0"' in toml_content
 
 
 def test_interactive_with_dependencies(tester, repo):
@@ -111,6 +136,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -143,6 +170,8 @@ name = "my-package"
 version = "1.2.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
@@ -151,7 +180,6 @@ python = "^{python}"
 """.format(
         python=".".join(str(c) for c in sys.version_info[:2])
     )
-
     assert expected in tester.io.fetch_output()
 
 
@@ -185,6 +213,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -227,6 +257,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -269,6 +301,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -314,6 +348,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -360,6 +396,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -405,6 +443,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -437,6 +477,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -470,6 +512,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -510,6 +554,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -544,6 +590,8 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -584,11 +632,15 @@ version = "1.2.3"
 description = "This is a description"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 
 [tool.poetry.dev-dependencies]
+pytest = "^3.6.0"
+pytest-requests = "^0.2.0"
 """
 
     output = tester.io.fetch_output()
@@ -598,7 +650,7 @@ python = "~2.7 || ^3.6"
 
 
 def test_add_package_with_extras_and_whitespace(tester):
-    result = tester._command._parse_requirements(["databases[postgresql, sqlite]"])
+    result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
 
     assert result[0]["name"] == "databases"
     assert len(result[0]["extras"]) == 2
@@ -647,6 +699,8 @@ name = "my-package"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "^3.6"

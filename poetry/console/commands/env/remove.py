@@ -1,18 +1,18 @@
-from cleo import argument
+from cleo.helpers import argument
 
 from ..command import Command
 
 
 class EnvRemoveCommand(Command):
 
-    name = "remove"
+    name = "env remove"
     description = "Removes a specific virtualenv associated with the project."
 
     arguments = [
         argument("python", "The python executable to remove the virtualenv for.")
     ]
 
-    def handle(self):
+    def handle(self) -> None:
         from poetry.utils.env import EnvManager
 
         manager = EnvManager(self.poetry)

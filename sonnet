@@ -7,10 +7,31 @@ import sys
 import tarfile
 
 from gzip import GzipFile
+from pathlib import Path
+from typing import Optional
 
-from cleo import Application
-from cleo import Command
-from clikit.api.formatter import Style
+from cleo.application import Application as BaseApplication
+from cleo.commands.command import Command
+from cleo.formatters.style import Style
+from cleo.helpers import option
+from cleo.io.inputs.input import Input
+from cleo.io.io import IO
+from cleo.io.outputs.output import Output
+
+
+class Application(BaseApplication):
+    def create_io(
+        self,
+        input: Optional[Input] = None,
+        output: Optional[Output] = None,
+        error_output: Optional[Output] = None,
+    ) -> IO:
+        io = super(Application, self).create_io(input, output, error_output)
+
+        io.output.formatter.set_style("debug", Style("default", options=["dark"]))
+        io.error_output.formatter.set_style("debug", Style("default", options=["dark"]))
+
+        return io
 
 
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
@@ -19,10 +40,11 @@ WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name =
 class MakeReleaseCommand(Command):
     """
     Makes a self-contained package of Poetry.
-
-    release
-        {--P|python=?* : Python version to use}
     """
+
+    name = "make release"
+
+    options = [option("--python", "-P", flag=False, multiple=True)]
 
     PYTHON = {
         "3.6": "python3.6",
@@ -52,7 +74,6 @@ class MakeReleaseCommand(Command):
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
-        from poetry.utils._compat import Path
         from poetry.utils.env import EnvManager
         from poetry.utils.env import VirtualEnv
         from poetry.utils.helpers import temporary_directory
@@ -244,23 +265,8 @@ class MakeReleaseCommand(Command):
         return vendor_dir
 
 
-class MakeCommand(Command):
-    """
-    Build poetry releases.
-
-    make
-    """
-
-    commands = [MakeReleaseCommand()]
-
-    def handle(self):
-        return self.call("help", self.config.name)
-
-
 app = Application("sonnet")
-app.config.add_style(Style("debug").fg("default").dark())
-
-app.add(MakeCommand())
+app.add(MakeReleaseCommand())
 
 if __name__ == "__main__":
     app.run()

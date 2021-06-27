@@ -19,10 +19,19 @@ jobs:
   tests:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         os: [Ubuntu, MacOS, Windows]
         python-version: [3.6, 3.7, 3.8, 3.9]
+        experimental: [false]
+        bootstrap-args: [""]
+        include:
+          - os: Ubuntu
+            python-version: "3.10.0-alpha - 3.10.0"
+            experimental: true
+            bootstrap-args: "--git https://github.com/python-poetry/poetry.git"
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
 
@@ -39,13 +48,22 @@ jobs:
       - name: Bootstrap poetry
         shell: bash
         run: |
-          python -m ensurepip
-          python -m pip install --upgrade pip
-          python -m pip install .
+          curl -sL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py \
+            | python - -y ${{ matrix.bootstrap-args }}
+
+      - name: Update PATH
+        if: ${{ matrix.os != 'Windows' }}
+        shell: bash
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Update Path for Windows
+        if: ${{ matrix.os == 'Windows' }}
+        shell: bash
+        run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
       - name: Configure poetry
         shell: bash
-        run: python -m poetry config virtualenvs.in-project true
+        run: poetry config virtualenvs.in-project true
 
       - name: Set up cache
         uses: actions/cache@v2
@@ -57,12 +75,12 @@ jobs:
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
         shell: bash
-        run: timeout 10s python -m poetry run pip --version || rm -rf .venv
+        run: timeout 10s poetry run pip --version || rm -rf .venv
 
       - name: Install dependencies
         shell: bash
-        run: python -m poetry install
+        run: poetry install
 
       - name: Run pytest
         shell: bash
-        run: python -m poetry run python -m pytest -v tests
+        run: poetry run python -m pytest -p no:sugar -q tests/
