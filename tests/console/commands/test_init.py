@@ -87,7 +87,7 @@ def test_noninteractive(app, mocker, poetry, repo, tmp_path):
 
     repo.add_package(get_package("pytest", "3.6.0"))
 
-    p = mocker.patch("poetry.utils._compat.Path.cwd")
+    p = mocker.patch("pathlib.Path.cwd")
     p.return_value = tmp_path
 
     tester = CommandTester(command)
