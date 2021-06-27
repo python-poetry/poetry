@@ -4,6 +4,8 @@ from typing import Set
 
 import pytest
 
+from poetry.core.packages.package import Package
+from poetry.core.semver.version import Version
 from poetry.inspection.info import PackageInfo
 from poetry.inspection.info import PackageInfoError
 from poetry.utils._compat import decode
@@ -225,3 +227,20 @@ def test_info_prefer_poetry_config_over_egg_info():
         FIXTURE_DIR_INSPECTIONS / "demo_with_obsolete_egg_info"
     )
     demo_check_info(info)
+
+
+def test_info_public_version():
+    package_info = PackageInfo(version="1.2.3+localVersion")
+    assert package_info.public_version == "1.2.3"
+
+
+def test_info_public_version_no_mutation():
+    package_info = PackageInfo(version="1.2.3")
+    assert package_info.public_version == "1.2.3"
+
+
+def test_package_from_info_with_public_version():
+    package_info = PackageInfo(name="test-package", version="1.2.3+local_super_version")
+    package = package_info.to_package()  # type: Package
+    assert type(package.version) == Version
+    assert package.version.text == "1.2.3"
