@@ -31,7 +31,7 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.6"
 
-poetry-core = "~1.1.0a5"
+poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "master" }
 cleo = "^1.0.0a1"
 crashtest = "^0.3.0"
 requests = "^2.18"

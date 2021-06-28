@@ -13,7 +13,7 @@ def test_show_basic_with_installed_packages(tester, poetry, installed):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
     poetry.package.add_dependency(
-        Factory.create_dependency("pytest", "^3.7.3", category="dev")
+        Factory.create_dependency("pytest", "^3.7.3", groups=["dev"])
     )
 
     cachy_010 = get_package("cachy", "0.1.0")
@@ -1193,7 +1193,7 @@ cachy 0.2.0
 def test_show_tree_no_dev(tester, poetry, installed):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
     poetry.package.add_dependency(
-        Factory.create_dependency("pytest", "^6.1.0", category="dev")
+        Factory.create_dependency("pytest", "^6.1.0", groups=["dev"])
     )
 
     cachy2 = get_package("cachy", "0.2.0")

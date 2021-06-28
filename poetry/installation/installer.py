@@ -54,8 +54,10 @@ class Installer:
         self._update = False
         self._verbose = False
         self._write_lock = True
-        self._dev_mode = True
-        self._dev_only = False
+        self._without_groups = None
+        self._with_groups = None
+        self._only_groups = None
+
         self._execute_operations = True
         self._lock = False
 
@@ -137,21 +139,20 @@ class Installer:
     def is_verbose(self) -> bool:
         return self._verbose
 
-    def dev_mode(self, dev_mode: bool = True) -> "Installer":
-        self._dev_mode = dev_mode
+    def without_groups(self, groups: List[str]) -> "Installer":
+        self._without_groups = groups
 
         return self
 
-    def is_dev_mode(self) -> bool:
-        return self._dev_mode
-
-    def dev_only(self, dev_only: bool = False) -> "Installer":
-        self._dev_only = dev_only
+    def with_groups(self, groups: List[str]) -> "Installer":
+        self._with_groups = groups
 
         return self
 
-    def is_dev_only(self) -> bool:
-        return self._dev_only
+    def only_groups(self, groups: List[str]) -> "Installer":
+        self._only_groups = groups
+
+        return self
 
     def update(self, update: bool = True) -> "Installer":
         self._update = update
@@ -283,13 +284,20 @@ class Installer:
                 # If we are only in lock mode, no need to go any further
                 return 0
 
-        root = self._package
-        if not self.is_dev_mode():
-            root = root.clone()
-            del root.dev_requires[:]
-        elif self.is_dev_only():
-            root = root.clone()
-            del root.requires[:]
+        if self._without_groups or self._with_groups or self._only_groups:
+            if self._with_groups:
+                # Default dependencies and opt-in optional dependencies
+                root = self._package.without_dependency_groups(self._with_groups)
+            elif self._without_groups:
+                # Default dependencies without elected groups
+                root = self._package.without_dependency_groups(self._without_groups)
+            else:
+                # Only selected groups
+                root = self._package.with_dependency_groups(
+                    self._only_groups, only=True
+                )
+        else:
+            root = self._package.without_optional_dependency_groups()
 
         if self._io.is_verbose():
             self._io.write_line("")
@@ -502,9 +510,7 @@ class Installer:
             for installed in installed_repo.packages:
                 if locked.name == installed.name:
                     is_installed = True
-                    if locked.category == "dev" and not self.is_dev_mode():
-                        ops.append(Uninstall(locked))
-                    elif locked.optional and locked.name not in extra_packages:
+                    if locked.optional and locked.name not in extra_packages:
                         # Installed but optional and not requested in extras
                         ops.append(Uninstall(locked))
                     elif locked.version != installed.version:
@@ -552,11 +558,6 @@ class Installer:
             if package.optional:
                 if package.name not in extra_packages:
                     op.skip("Not required")
-
-            # If the package is a dev package and dev packages
-            # are not requested, we skip it
-            if package.category == "dev" and not self.is_dev_mode():
-                op.skip("Dev dependencies not requested")
 
     def _get_extra_packages(self, repo: Repository) -> List[str]:
         """

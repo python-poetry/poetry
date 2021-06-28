@@ -62,16 +62,12 @@ def poetry(fixture_dir, locker):
 def set_package_requires(poetry, skip=None):
     skip = skip or set()
     packages = poetry.locker.locked_repository(with_dev_reqs=True).packages
-    poetry.package.requires = [
-        pkg.to_dependency()
-        for pkg in packages
-        if pkg.category == "main" and pkg.name not in skip
-    ]
-    poetry.package.dev_requires = [
-        pkg.to_dependency()
-        for pkg in packages
-        if pkg.category == "dev" and pkg.name not in skip
-    ]
+    package = poetry.package.with_dependency_groups([], only=True)
+    for pkg in packages:
+        if pkg.name not in skip:
+            package.add_dependency(pkg.to_dependency())
+
+    poetry._package = package
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages(
@@ -483,16 +479,18 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_a
         }
     )
 
-    poetry.package.requires = [
+    root = poetry.package.with_dependency_groups([], only=True)
+    root.add_dependency(
         Factory.create_dependency(
             name="a", constraint=dict(version="^1.2.3", python="<3.8")
-        ),
-    ]
-    poetry.package.dev_requires = [
+        )
+    )
+    root.add_dependency(
         Factory.create_dependency(
-            name="b", constraint=dict(version="^4.5.6"), category="dev"
-        ),
-    ]
+            name="b", constraint=dict(version="^4.5.6"), groups=["dev"]
+        )
+    )
+    poetry._package = root
 
     exporter = Exporter(poetry)
 
@@ -825,6 +823,7 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
         }
     )
     set_package_requires(poetry)
+    print(poetry.package.all_requires)
 
     exporter = Exporter(poetry)
 

@@ -148,7 +148,7 @@ def test_solver_with_deps(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(new_package_b)
 
-    package_a.requires.append(get_dependency("B", "<1.1"))
+    package_a.add_dependency(get_dependency("B", "<1.1"))
 
     ops = solver.solve()
 
@@ -176,7 +176,7 @@ def test_install_honours_not_equal(solver, repo, package):
     repo.add_package(new_package_b12)
     repo.add_package(new_package_b13)
 
-    package_a.requires.append(get_dependency("B", "<=1.3,!=1.3,!=1.2"))
+    package_a.add_dependency(get_dependency("B", "<=1.3,!=1.3,!=1.2"))
 
     ops = solver.solve()
 
@@ -201,10 +201,10 @@ def test_install_with_deps_in_order(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    package_b.requires.append(get_dependency("A", ">=1.0"))
-    package_b.requires.append(get_dependency("C", ">=1.0"))
+    package_b.add_dependency(get_dependency("A", ">=1.0"))
+    package_b.add_dependency(get_dependency("C", ">=1.0"))
 
-    package_c.requires.append(get_dependency("A", ">=1.0"))
+    package_c.add_dependency(get_dependency("A", ">=1.0"))
 
     ops = solver.solve()
 
@@ -278,9 +278,9 @@ def test_update_with_use_latest(solver, repo, installed, package, locked):
     )
 
 
-def test_solver_sets_categories(solver, repo, package):
+def test_solver_sets_groups(solver, repo, package):
     package.add_dependency(Factory.create_dependency("A", "*"))
-    package.add_dependency(Factory.create_dependency("B", "*", category="dev"))
+    package.add_dependency(Factory.create_dependency("B", "*", groups=["dev"]))
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -429,7 +429,7 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
     dep = get_dependency("C", "^1.0", optional=True)
     dep.marker = parse_marker("extra == 'foo'")
     package_b.extras = {"foo": [dep]}
-    package_b.requires.append(dep)
+    package_b.add_dependency(dep)
 
     repo.add_package(package_a)
     repo.add_package(package_b)
@@ -474,8 +474,8 @@ def test_solver_returns_extras_only_requested(solver, repo, package, enabled_ext
 
     package_b.extras = {"one": [dep10], "two": [dep20]}
 
-    package_b.requires.append(dep10)
-    package_b.requires.append(dep20)
+    package_b.add_dependency(dep10)
+    package_b.add_dependency(dep20)
 
     repo.add_package(package_a)
     repo.add_package(package_b)
@@ -523,7 +523,7 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
 
     package_b.extras = {"one": [dep], "two": [dep]}
 
-    package_b.requires.append(dep)
+    package_b.add_dependency(dep)
 
     extras = [enabled_extra] if enabled_extra is not None else []
     package_a.add_dependency(
@@ -574,8 +574,8 @@ def test_solver_returns_extras_only_requested_nested(
 
     package_b.extras = {"one": [dep10], "two": [dep20]}
 
-    package_b.requires.append(dep10)
-    package_b.requires.append(dep20)
+    package_b.add_dependency(dep10)
+    package_b.add_dependency(dep20)
 
     extras = [enabled_extra] if enabled_extra is not None else []
     package_a.add_dependency(
@@ -824,14 +824,14 @@ def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
     )
 
 
-def test_solver_with_dependency_in_both_main_and_dev_dependencies(
+def test_solver_with_dependency_in_both_default_and_dev_dependencies(
     solver, repo, package
 ):
     solver.provider.set_package_python_versions("^3.5")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "*", "extras": ["foo"]}, category="dev"
+            "A", {"version": "*", "extras": ["foo"]}, groups=["dev"]
         )
     )
 
@@ -884,7 +884,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     package.add_dependency(Factory.create_dependency("E", "*"))
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "*", "extras": ["foo"]}, category="dev"
+            "A", {"version": "*", "extras": ["foo"]}, groups=["dev"]
         )
     )
 
@@ -1417,8 +1417,8 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
 
     package_a = get_package("A", "1.0.0")
     package_a.extras = {"foo": [dep1], "bar": [dep2]}
-    package_a.requires.append(dep1)
-    package_a.requires.append(dep2)
+    package_a.add_dependency(dep1)
+    package_a.add_dependency(dep2)
 
     package_b2 = get_package("B", "2.0.0")
     package_b1 = get_package("B", "1.0.0")
@@ -1539,7 +1539,7 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
     package.add_dependency(Factory.create_dependency("B", "^2.0"))
 
     package_a = get_package("A", "1.0.0")
-    package_a.requires.append(
+    package_a.add_dependency(
         Dependency.create_from_pep_508(
             'B (<2.0); platform_python_implementation == "PyPy" and python_full_version < "2.7.9"'
         )
@@ -2286,12 +2286,12 @@ def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
     solver.provider.set_package_python_versions("~2.7 || ^3.5")
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "^1.0", "python": "~2.7"}, category="dev"
+            "A", {"version": "^1.0", "python": "~2.7"}, groups=["dev"]
         )
     )
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "^2.0", "python": "^3.5"}, category="dev"
+            "A", {"version": "^2.0", "python": "^3.5"}, groups=["dev"]
         )
     )
 

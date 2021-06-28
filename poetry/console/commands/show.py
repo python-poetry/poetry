@@ -68,14 +68,17 @@ lists all packages available."""
 
         # Show tree view if requested
         if self.option("tree") and not package:
-            requires = self.poetry.package.requires
+            groups = ["default"]
             if include_dev:
-                requires += self.poetry.package.dev_requires
+                groups.append("dev")
+
+            package = self.poetry.package.with_dependency_groups(groups, only=True)
+            requires = package.all_requires
             packages = locked_repo.packages
-            for package in packages:
+            for pkg in packages:
                 for require in requires:
-                    if package.name == require.name:
-                        self.display_package_tree(self._io, package, locked_repo)
+                    if pkg.name == require.name:
+                        self.display_package_tree(self._io, pkg, locked_repo)
                         break
 
             return 0
@@ -386,13 +389,16 @@ lists all packages available."""
 
         # find the latest version allowed in this pool
         if package.source_type in ("git", "file", "directory"):
-            requires = self.poetry.package.requires
+            groups = ["default"]
             if include_dev:
-                requires = requires + self.poetry.package.dev_requires
+                groups.append("dev")
+
+            root = self.poetry.package.with_dependency_groups(groups, only=True)
+            requires = root.all_requires
 
             for dep in requires:
                 if dep.name == package.name:
-                    provider = Provider(self.poetry.package, self.poetry.pool, NullIO())
+                    provider = Provider(root, self.poetry.pool, NullIO())
 
                     if dep.is_vcs():
                         return provider.search_for_vcs(dep)[0]

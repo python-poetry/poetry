@@ -116,7 +116,7 @@ def test_add_constraint_with_extras(app, repo, tester):
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy1.requires = [msgpack_dep]
+    cachy1.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(cachy1)
@@ -144,7 +144,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_constraint_dependencies(app, repo, tester):
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
-    cachy2.requires = [msgpack_dep]
+    cachy2.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
@@ -443,7 +443,7 @@ def test_add_constraint_with_extras_option(app, repo, tester):
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy2.requires = [msgpack_dep]
+    cachy2.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
@@ -919,7 +919,7 @@ def test_add_constraint_with_extras_old_installer(app, repo, installer, old_test
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy1.requires = [msgpack_dep]
+    cachy1.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(cachy1)
@@ -948,7 +948,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_constraint_dependencies_old_installer(app, repo, installer, old_tester):
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
-    cachy2.requires = [msgpack_dep]
+    cachy2.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
@@ -1245,7 +1245,7 @@ def test_add_constraint_with_extras_option_old_installer(
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy2.requires = [msgpack_dep]
+    cachy2.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)

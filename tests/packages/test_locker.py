@@ -86,7 +86,7 @@ resolved_reference = "123456"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = [
@@ -295,7 +295,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -335,7 +335,7 @@ foo = ["B (>=1.0.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -365,7 +365,7 @@ foo = ["bar"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -410,7 +410,7 @@ reference = "legacy"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -497,7 +497,7 @@ B = {version = "^1.0.0", extras = ["a", "b", "c"], optional = true}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -591,7 +591,7 @@ F = {git = "https://github.com/python-poetry/poetry.git", branch = "foo"}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
