@@ -416,13 +416,16 @@ class NoCompatiblePythonVersionFound(EnvError):
 
 
 def execute_python_script(python: str, script: str) -> str:
-    if python.startswith("python") and sys.platform == "win32":
-        shell_command = ["py", f"-{python[6:]}", "-c", script]
-    else:
-        shell_command = [python, "-c", script]
-    return decode(
-        subprocess.check_output(list_to_shell_command(shell_command), shell=True)
-    )
+    try:
+        args = list_to_shell_command([python, "-c", script])
+        return decode(subprocess.check_output(args, shell=True))
+    except CalledProcessError:
+        if python.startswith("python") and sys.platform == "win32":
+            # Try `py` launcher on Windows platform
+            args = list_to_shell_command(["py", f"-{python[6:]}", "-c", script])
+            return decode(subprocess.check_output(args, shell=True))
+        else:
+            raise
 
 
 class EnvManager:
