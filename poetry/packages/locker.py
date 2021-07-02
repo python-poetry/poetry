@@ -176,20 +176,26 @@ class Locker:
                         package.marker = parse_marker(split_dep[1].strip())
 
             for dep_name, constraint in info.get("dependencies", {}).items():
+
+                root_dir = self._lock.path.parent
+                if package.source_type == "directory":
+                    # root dir should be the source of the package relative to the lock path
+                    root_dir = Path(
+                        os.path.relpath(
+                            Path(package.source_url), self._lock.path.parent
+                        )
+                    ).resolve()
+
                 if isinstance(constraint, list):
                     for c in constraint:
                         package.add_dependency(
-                            Factory.create_dependency(
-                                dep_name, c, root_dir=self._lock.path.parent
-                            )
+                            Factory.create_dependency(dep_name, c, root_dir=root_dir)
                         )
 
                     continue
 
                 package.add_dependency(
-                    Factory.create_dependency(
-                        dep_name, constraint, root_dir=self._lock.path.parent
-                    )
+                    Factory.create_dependency(dep_name, constraint, root_dir=root_dir)
                 )
 
             if "develop" in info:
