@@ -637,6 +637,8 @@ lib-b = []
     create_dependency_patch.assert_called_once_with(
         "lib-b", {"develop": True, "path": "../libB"}, root_dir=mocker.ANY
     )
-    root_dir = create_dependency_patch.call_args.kwargs["root_dir"]
+    call_kwargs = create_dependency_patch.call_args[1]
+    root_dir = call_kwargs["root_dir"]
     assert root_dir.match("*/lib/libA")
-    assert root_dir.is_relative_to(locker.lock.path.parent.resolve())
+    # relative_to raises an exception if not relative - is_relative_to comes in py3.9
+    assert root_dir.relative_to(locker.lock.path.parent.resolve()) is not None
