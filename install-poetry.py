@@ -421,14 +421,14 @@ class Installer:
                 return True
 
             vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
-            return vx >= (1, 2, 0)
+            return vx >= (1, 1, 7)
 
         if version and not _is_self_upgrade_supported(version):
             self._write(
                 colorize(
                     "warning",
                     f"You are installing {version}. When using the current installer, this version does not support "
-                    f"updating using the 'self update' command. Please use 1.2.0a1 or later.",
+                    f"updating using the 'self update' command. Please use 1.1.7 or later.",
                 )
             )
             if not self._accept_all:
