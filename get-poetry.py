@@ -458,11 +458,11 @@ class Installer:
             print(
                 colorize(
                     "error",
-                    f"Version {version} does not support this installation method. Please specify a version prior to "
-                    f"1.2.0a1 explicitly using the '--version' option.\n"
+                    "Version {version} does not support this installation method. Please specify a version prior to "
+                    "1.2.0a1 explicitly using the '--version' option.\n"
                     "Please see "
                     "https://python-poetry.org/blog/announcing-poetry-1-2-0a1.html#deprecation-of-the-get-poetry-py-script "
-                    "for more information.",
+                    "for more information.".format(version=version),
                 )
             )
             return None, None

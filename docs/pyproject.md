@@ -1,3 +1,14 @@
+---
+title: "The pyproject.toml file"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 90
+---
+
 # The `pyproject.toml` file
 
 The `tool.poetry` section of the `pyproject.toml` file is composed of multiple sections.
@@ -40,9 +51,9 @@ The recommended notation for the most common licenses is (alphabetical):
 Optional, but it is highly recommended to supply this.
 More identifiers are listed at the [SPDX Open Source License Registry](https://spdx.org/licenses/).
 
-!!!note
-
-    If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
+{{% note %}}
+If your project is proprietary and does not use a specific licence, you can set this value as `Proprietary`.
+{{% /note %}}
 
 ## authors
 
@@ -91,11 +102,11 @@ classifiers = [
 ]
 ```
 
-!!!note
+{{% note %}}
+Note that Python classifiers are still automatically added for you and are determined by your `python` requirement.
 
-    Note that Python classifiers are still automatically added for you and are determined by your `python` requirement.
-
-    The `license` property will also set the License classifier automatically.
+The `license` property will also set the License classifier automatically.
+{{% /note %}}
 
 ## packages
 
@@ -137,26 +148,26 @@ packages = [
 
 From now on, only the `sdist` build archive will include the `my_other_package` package.
 
-!!!note
+{{% note %}}
+Using `packages` disables the package auto-detection feature meaning you have to
+**explicitly** specify the "default" package.
 
-    Using `packages` disables the package auto-detection feature meaning you have to
-    **explicitly** specify the "default" package.
+For instance, if you have a package named `my_package` and you want to also include
+another package named `extra_package`, you will need to specify `my_package` explicitly:
 
-    For instance, if you have a package named `my_package` and you want to also include
-    another package named `extra_package`, you will need to specify `my_package` explicitly:
+```toml
+packages = [
+    { include = "my_package" },
+    { include = "extra_package" },
+]
+```
+{{% /note %}}
 
-    ```toml
-    packages = [
-        { include = "my_package" },
-        { include = "extra_package" },
-    ]
-    ```
+{{% note %}}
+Poetry is clever enough to detect Python subpackages.
 
-!!!note
-
-    Poetry is clever enough to detect Python subpackages.
-
-    Thus, you only have to specify the directory where your root package resides.
+Thus, you only have to specify the directory where your root package resides.
+{{% /note %}}
 
 ## include and exclude
 
@@ -208,15 +219,15 @@ name = 'private'
 url = 'http://example.com/simple'
 ```
 
-!!!note
+{{% note %}}
+Be aware that declaring the python version for which your package
+is compatible is mandatory:
 
-    Be aware that declaring the python version for which your package
-    is compatible is mandatory:
-
-    ```toml
-    [tool.poetry.dependencies]
-    python = "^3.6"
-    ```
+```toml
+[tool.poetry.dependencies]
+python = "^3.6"
+```
+{{% /note %}}
 
 ## `scripts`
 
@@ -229,9 +240,9 @@ poetry = 'poetry.console:run'
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
 
-!!!note
-
-    When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
+{{% note %}}
+When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
+{{% /note %}}
 
 ## `extras`
 
@@ -276,10 +287,11 @@ the `databases` extra can be installed as shown below.
 pip install awesome[databases]
 ```
 
-!!!note
+{{% note %}}
+The dependencies specified for each `extra` must already be defined as project dependencies.
 
-    The dependencies specified for each `extra` must already be defined as project dependencies.
-    Dependencies listed in the `dev-dependencies` section cannot be specified as extras.
+Dependencies listed in the `dev-dependencies` section cannot be specified as extras.
+{{% /note %}}
 
 
 ## `plugins`
@@ -322,12 +334,11 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 ```
 
-!!!note
+{{% note %}}
+When using the `new` or `init` command this section will be automatically added.
+{{% /note %}}
 
-    When using the `new` or `init` command this section will be automatically added.
-
-
-!!!note
-
-    If your `pyproject.toml` file still references `poetry` directly as a build backend,
-    you should update it to reference `poetry-core` instead.
+{{% note %}}
+If your `pyproject.toml` file still references `poetry` directly as a build backend,
+you should update it to reference `poetry-core` instead.
+{{% /note %}}

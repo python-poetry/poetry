@@ -1,3 +1,15 @@
+---
+title: "Commands"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 30
+---
+
+
 # Commands
 
 You've already learned how to use the command-line interface to do some things.
@@ -143,7 +155,7 @@ poetry install --remove-untracked
 ```
 
 You can also specify the extras you want installed
-by passing the `-E|--extras` option (See [Extras](/docs/pyproject/#extras) for more info)
+by passing the `-E|--extras` option (See [Extras]({{< relref "pyproject#extras" >}}) for more info)
 
 ```bash
 poetry install --extras "mysql pgsql"
@@ -159,7 +171,6 @@ Installing dependencies from lock file
 No dependencies to install or update
 
   - Installing <your-package-name> (x.x.x)
-
 ```
 
 If you want to skip this installation, use the `--no-root` option.
@@ -286,10 +297,10 @@ Alternatively, you can specify it in the `pyproject.toml` file. It means that ch
 my-package = {path = "../my/path", develop = true}
 ```
 
-!!!note
-
-    Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
-    to make sure the behavior is the same for all poetry versions.
+{{% note %}}
+Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
+to make sure the behavior is the same for all poetry versions.
+{{% /note %}}
 
 If the package(s) you want to install provide extras, you can specify them
 when adding the package:
@@ -409,7 +420,7 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 ````
 
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
-See [Configuration](/docs/configuration/) for all available settings.
+See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 ### Options
 
@@ -473,9 +484,9 @@ poetry search requests pendulum
 
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
 
-!!!note
-
-     By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+{{% note %}}
+By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+{{% /note %}}
 
 ```bash
 poetry lock
@@ -497,17 +508,17 @@ The new version should ideally be a valid [semver](https://semver.org/) string o
 
 The table below illustrates the effect of these rules with concrete examples.
 
-| rule       |        before | after         |
-|------------|---------------|---------------|
-| major      |         1.3.0 | 2.0.0         |
-| minor      |         2.1.4 | 2.2.0         |
-| patch      |         4.1.1 | 4.1.2         |
-| premajor   |         1.0.2 | 2.0.0-alpha.0 |
-| preminor   |         1.0.2 | 1.1.0-alpha.0 |
-| prepatch   |         1.0.2 | 1.0.3-alpha.0 |
-| prerelease |         1.0.2 | 1.0.3-alpha.0 |
+| rule       | before        | after         |
+| ---------- | ------------- | ------------- |
+| major      | 1.3.0         | 2.0.0         |
+| minor      | 2.1.4         | 2.2.0         |
+| patch      | 4.1.1         | 4.1.2         |
+| premajor   | 1.0.2         | 2.0.0-alpha.0 |
+| preminor   | 1.0.2         | 1.1.0-alpha.0 |
+| prepatch   | 1.0.2         | 1.0.3-alpha.0 |
+| prerelease | 1.0.2         | 1.0.3-alpha.0 |
 | prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
-| prerelease |  1.0.3-beta.0 | 1.0.3-beta.1  |
+| prerelease | 1.0.3-beta.0  | 1.0.3-beta.1  |
 
 ### Options
 
@@ -521,9 +532,9 @@ This command exports the lock file to other formats.
 poetry export -f requirements.txt --output requirements.txt
 ```
 
-!!!note
-
-    Only the `requirements.txt` format is currently supported.
+{{% note %}}
+Only the `requirements.txt` format is currently supported.
+{{% /note %}}
 
 ### Options
 
@@ -541,7 +552,7 @@ poetry export -f requirements.txt --output requirements.txt
 The `env` command regroups sub commands to interact with the virtualenvs
 associated with a specific project.
 
-See [Managing environments](/docs/managing-environments/) for more information about these commands.
+See [Managing environments]({{< relref "managing-environments" >}}) for more information about these commands.
 
 ## cache
 
@@ -628,18 +639,18 @@ For example, to add the `pypi-test` source, you can run:
 poetry source add pypi-test https://test.pypi.org/simple/
 ```
 
-!!!note
-
-    You cannot use the name `pypi` as it is reserved for use by the default PyPI source.
+{{% note %}}
+You cannot use the name `pypi` as it is reserved for use by the default PyPI source.
+{{% /note %}}
 
 #### Options
 
-* `--default`: Set this source as the [default](/docs/repositories/#disabling-the-pypi-repository) (disable PyPI).
-* `--secondary`: Set this source as a [secondary](/docs/repositories/#install-dependencies-from-a-private-repository) source.
+* `--default`: Set this source as the [default]({{< relref "repositories#disabling-the-pypi-repository" >}}) (disable PyPI).
+* `--secondary`: Set this source as a [secondary]({{< relref "repositories#install-dependencies-from-a-private-repository" >}}) source.
 
-!!!note
-
-    You cannot set a source as both `default` and `secondary`.
+{{% note %}}
+You cannot set a source as both `default` and `secondary`.
+{{% /note %}}
 
 ### `source show`
 
@@ -655,9 +666,9 @@ Optionally, you can show information of one or more sources by specifying their 
 poetry source show pypi-test
 ```
 
-!!!note
-
-    This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+{{% note %}}
+This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+{{% /note %}}
 
 ### `source remove`
 
