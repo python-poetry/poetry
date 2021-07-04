@@ -1,19 +1,17 @@
 ---
-title: "Libraries"
+title: 'Libraries'
 draft: false
 type: docs
-layout: "docs"
+layout: 'docs'
 
 menu:
   docs:
     weight: 20
 ---
 
-
 # Libraries
 
 This chapter will tell you how to make your library installable through Poetry.
-
 
 ## Versioning
 
@@ -38,6 +36,19 @@ Before you can actually publish your library, you will need to package it.
 
 ```bash
 poetry build
+```
+
+In order for the above command to work, please ensure that the the correct pacakges are included within your `pyproject.toml`:
+
+```toml
+
+[tool.poetry]
+...
+packages = [
+    { include = "my-package" },
+    { include = "my-package/**/*.py" },
+]
+
 ```
 
 This command will package your library in two different formats: `sdist` which is
@@ -71,7 +82,6 @@ just pass the `--build` option.
 {{% /note %}}
 
 Once this is done, your library will be available to anyone.
-
 
 ## Publishing to a private repository
 
