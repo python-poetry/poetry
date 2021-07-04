@@ -29,7 +29,7 @@ generate-setup-file = false
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.6"
+python = ">=3.6.1,<4.0"
 
 poetry-core = "~1.1.0a5"
 cleo = "^1.0.0a1"
@@ -61,6 +61,7 @@ pytest-sugar = "^0.9"
 httpretty = "^1.0"
 zipp = { version = "^3.4", python = "<3.8"}
 deepdiff = "^5.0"
+commitizen = "^2.17.11"
 
 [tool.poetry.scripts]
 poetry = "poetry.console.application:main"
