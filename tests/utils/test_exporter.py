@@ -823,7 +823,6 @@ def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry)
         }
     )
     set_package_requires(poetry)
-    print(poetry.package.all_requires)
 
     exporter = Exporter(poetry)
 

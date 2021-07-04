@@ -667,11 +667,11 @@ def test_add_constraint_not_found_with_source(app, poetry, mocker, tester):
     assert "Could not find a matching version of package cachy" == str(e.value)
 
 
-def test_add_to_section_that_does_no_exist_yet(app, repo, tester):
+def test_add_to_section_that_does_not_exist_yet(app, repo, tester):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    tester.execute("cachy --dev")
+    tester.execute("cachy --group dev")
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -691,8 +691,47 @@ Package operations: 1 install, 0 updates, 0 removals
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
-    assert "cachy" in content["dev-dependencies"]
-    assert content["dev-dependencies"]["cachy"] == "^0.2.0"
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+
+    expected = """\
+
+[tool.poetry.group.dev.dependencies]
+cachy = "^0.2.0"
+
+"""
+
+    assert expected in content.as_string()
+
+
+def test_add_to_dev_section_deprecated(app, repo, tester):
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy --dev")
+
+    expected = """\
+The --dev option is deprecated, use the `--group dev` notation instead.
+
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing cachy (0.2.0)
+"""
+
+    assert expected == tester.io.fetch_output()
+    assert 1 == tester.command.installer.executor.installations_count
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
 
 
 def test_add_should_not_select_prereleases(app, repo, tester):
@@ -1487,7 +1526,7 @@ def test_add_to_section_that_does_no_exist_yet_old_installer(
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    old_tester.execute("cachy --dev")
+    old_tester.execute("cachy --group dev")
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -1508,8 +1547,8 @@ Package operations: 1 install, 0 updates, 0 removals
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
-    assert "cachy" in content["dev-dependencies"]
-    assert content["dev-dependencies"]["cachy"] == "^0.2.0"
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
 
 
 def test_add_should_not_select_prereleases_old_installer(
