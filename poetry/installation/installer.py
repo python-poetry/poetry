@@ -286,10 +286,10 @@ class Installer:
 
         if self._without_groups or self._with_groups or self._only_groups:
             if self._with_groups:
-                # Default dependencies and opt-in optional dependencies
-                root = self._package.without_dependency_groups(self._with_groups)
+                # Default dependencies and opted-in optional dependencies
+                root = self._package.with_dependency_groups(self._with_groups)
             elif self._without_groups:
-                # Default dependencies without elected groups
+                # Default dependencies without selected groups
                 root = self._package.without_dependency_groups(self._without_groups)
             else:
                 # Only selected groups

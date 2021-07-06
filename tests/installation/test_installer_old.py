@@ -227,7 +227,7 @@ def test_run_update_after_removing_dependencies(
     assert len(removals) == 1
 
 
-def test_run_install_no_dev(installer, locker, repo, package, installed):
+def test_run_install_no_group(installer, locker, repo, package, installed):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -283,7 +283,7 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
     package.add_dependency(Factory.create_dependency("C", "~1.2", groups=["dev"]))
 
-    installer.with_groups(["dev"])
+    installer.without_groups(["dev"])
     installer.run()
 
     installs = installer.installer.installs

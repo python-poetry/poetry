@@ -15,6 +15,7 @@ from cleo.io.outputs.buffered_output import BufferedOutput
 from cleo.io.outputs.output import Verbosity
 from deepdiff import DeepDiff
 
+from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
@@ -277,7 +278,9 @@ def test_run_update_after_removing_dependencies(
     assert 1 == installer.executor.removals_count
 
 
-def _configure_run_install_dev(locker, repo, package, installed):
+def _configure_run_install_dev(
+    locker, repo, package, installed, with_optional_group=False
+):
     """
     Perform common test setup for `test_run_install_*dev*()` methods.
     """
@@ -334,13 +337,16 @@ def _configure_run_install_dev(locker, repo, package, installed):
 
     package.add_dependency(Factory.create_dependency("A", "~1.0"))
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
-    package.add_dependency(Factory.create_dependency("C", "~1.2", groups=["dev"]))
+
+    group = DependencyGroup("dev", optional=with_optional_group)
+    group.add_dependency(Factory.create_dependency("C", "~1.2", groups=["dev"]))
+    package.add_dependency_group(group)
 
 
 def test_run_install_no_group(installer, locker, repo, package, installed):
     _configure_run_install_dev(locker, repo, package, installed)
 
-    installer.with_groups(["dev"])
+    installer.without_groups(["dev"])
     installer.run()
 
     assert 0 == installer.executor.installations_count
@@ -357,6 +363,35 @@ def test_run_install_group_only(installer, locker, repo, package, installed):
     assert 0 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
     assert 2 == installer.executor.removals_count
+
+
+def test_run_install_with_optional_group_not_selected(
+    installer, locker, repo, package, installed
+):
+    _configure_run_install_dev(
+        locker, repo, package, installed, with_optional_group=True
+    )
+
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 1 == installer.executor.removals_count
+
+
+def test_run_install_with_optional_group_selected(
+    installer, locker, repo, package, installed
+):
+    _configure_run_install_dev(
+        locker, repo, package, installed, with_optional_group=True
+    )
+
+    installer.with_groups(["dev"])
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 0 == installer.executor.removals_count
 
 
 @pytest.mark.parametrize(
