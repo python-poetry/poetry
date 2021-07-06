@@ -1,5 +1,6 @@
 import pytest
 
+from poetry.core.packages.dependency_group import DependencyGroup
 from poetry.factory import Factory
 from tests.helpers import get_package
 
@@ -952,7 +953,7 @@ def test_show_outdated_no_dev_git_dev_dependency(tester, poetry, installed, repo
         }
     )
 
-    tester.execute("--outdated --no-dev")
+    tester.execute("--outdated --without dev")
 
     expected = """\
 cachy 0.1.0 0.2.0 Cachy package
@@ -1071,6 +1072,12 @@ pendulum  2.0.0 Pendulum package
 
 
 def test_show_non_dev_with_basic_installed_packages(tester, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+    poetry.package.add_dependency(
+        Factory.create_dependency("pytest", "*", groups=["dev"])
+    )
+
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
 
@@ -1128,11 +1135,168 @@ def test_show_non_dev_with_basic_installed_packages(tester, poetry, installed):
         }
     )
 
-    tester.execute("--no-dev")
+    tester.execute("--without dev")
 
     expected = """\
 cachy    0.1.0 Cachy package
 pendulum 2.0.0 Pendulum package
+"""
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_show_with_group_only(tester, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+    poetry.package.add_dependency(
+        Factory.create_dependency("pytest", "*", groups=["dev"])
+    )
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+
+    pytest_373 = get_package("pytest", "3.7.3")
+    pytest_373.description = "Pytest package"
+    pytest_373.category = "dev"
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+    installed.add_package(pytest_373)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
+            },
+        }
+    )
+
+    tester.execute("--only dev")
+
+    expected = """\
+pytest 3.7.3 Pytest package
+"""
+
+    assert expected == tester.io.fetch_output()
+
+
+def test_show_with_optional_group(tester, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
+    group = DependencyGroup("dev", optional=True)
+    group.add_dependency(Factory.create_dependency("pytest", "*", groups=["dev"]))
+    poetry.package.add_dependency_group(group)
+
+    cachy_010 = get_package("cachy", "0.1.0")
+    cachy_010.description = "Cachy package"
+
+    pendulum_200 = get_package("pendulum", "2.0.0")
+    pendulum_200.description = "Pendulum package"
+
+    pytest_373 = get_package("pytest", "3.7.3")
+    pytest_373.description = "Pytest package"
+    pytest_373.category = "dev"
+
+    installed.add_package(cachy_010)
+    installed.add_package(pendulum_200)
+    installed.add_package(pytest_373)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.1.0",
+                    "description": "Cachy package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "pytest",
+                    "version": "3.7.3",
+                    "description": "Pytest package",
+                    "category": "dev",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": [], "pytest": []},
+            },
+        }
+    )
+
+    tester.execute()
+
+    expected = """\
+cachy    0.1.0 Cachy package
+pendulum 2.0.0 Pendulum package
+"""
+
+    assert expected == tester.io.fetch_output()
+
+    tester.execute("--with dev")
+
+    expected = """\
+cachy    0.1.0 Cachy package
+pendulum 2.0.0 Pendulum package
+pytest   3.7.3 Pytest package
 """
 
     assert expected == tester.io.fetch_output()
@@ -1247,7 +1411,7 @@ def test_show_tree_no_dev(tester, poetry, installed):
         }
     )
 
-    tester.execute("--tree --no-dev")
+    tester.execute("--tree --without dev")
 
     expected = """\
 cachy 0.2.0

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package
+    from poetry.packages.project_package import ProjectPackage
     from poetry.repositories import Repository
     from poetry.repositories.installed_repository import InstalledRepository
 
@@ -25,7 +26,35 @@ class ShowCommand(EnvCommand):
 
     arguments = [argument("package", "The package to inspect", optional=True)]
     options = [
-        option("no-dev", None, "Do not list the development dependencies."),
+        option(
+            "without",
+            None,
+            "Do not show the information of the specified groups' dependencies.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "with",
+            None,
+            "Show the information of the specified optional groups' dependencies as well.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "default", None, "Only show the information of the default dependencies."
+        ),
+        option(
+            "only",
+            None,
+            "Only show the information of dependencies belonging to the specified groups.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "no-dev",
+            None,
+            "Do not list the development dependencies. (<warning>Deprecated</warning>)",
+        ),
         option("tree", "t", "List the dependencies as a tree."),
         option("latest", "l", "Show the latest version."),
         option(
@@ -63,17 +92,53 @@ lists all packages available."""
         if self.option("outdated"):
             self._io.input.set_option("latest", True)
 
-        include_dev = not self.option("no-dev")
+        excluded_groups = []
+        included_groups = []
+        only_groups = []
+        if self.option("no-dev"):
+            self.line(
+                "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is deprecated,"
+                "use the `<fg=yellow;options=bold>--without dev</>` notation instead.</warning>"
+            )
+            excluded_groups.append("dev")
+
+        excluded_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("without")
+                for group in groups.split(",")
+            ]
+        )
+        included_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("with")
+                for group in groups.split(",")
+            ]
+        )
+        only_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("only")
+                for group in groups.split(",")
+            ]
+        )
+
+        if self.option("default"):
+            only_groups.append("default")
+
         locked_repo = self.poetry.locker.locked_repository(True)
+
+        if only_groups:
+            root = self.poetry.package.with_dependency_groups(only_groups, only=True)
+        else:
+            root = self.poetry.package.with_dependency_groups(
+                included_groups
+            ).without_dependency_groups(excluded_groups)
 
         # Show tree view if requested
         if self.option("tree") and not package:
-            groups = ["default"]
-            if include_dev:
-                groups.append("dev")
-
-            package = self.poetry.package.with_dependency_groups(groups, only=True)
-            requires = package.all_requires
+            requires = root.all_requires
             packages = locked_repo.packages
             for pkg in packages:
                 for require in requires:
@@ -88,7 +153,7 @@ lists all packages available."""
         pool = Pool(ignore_repository_names=True)
         pool.add_repository(locked_repo)
         solver = Solver(
-            self.poetry.package,
+            root,
             pool=pool,
             installed=Repository(),
             locked=locked_repo,
@@ -99,11 +164,6 @@ lists all packages available."""
             ops = solver.solve()
 
         required_locked_packages = set([op.package for op in ops if not op.skipped])
-
-        if self.option("no-dev"):
-            required_locked_packages = [
-                p for p in locked_packages if p.category == "main"
-            ]
 
         if package:
             pkg = None
@@ -163,7 +223,7 @@ lists all packages available."""
                     current_length += 4
 
             if show_latest:
-                latest = self.find_latest_package(locked, include_dev)
+                latest = self.find_latest_package(locked, root)
                 if not latest:
                     latest = locked
 
@@ -380,7 +440,7 @@ lists all packages available."""
             io.error_output.formatter.set_style(color, style)
 
     def find_latest_package(
-        self, package: "Package", include_dev: bool
+        self, package: "Package", root: "ProjectPackage"
     ) -> Union["Package", bool]:
         from cleo.io.null_io import NullIO
 
@@ -389,11 +449,6 @@ lists all packages available."""
 
         # find the latest version allowed in this pool
         if package.source_type in ("git", "file", "directory"):
-            groups = ["default"]
-            if include_dev:
-                groups.append("dev")
-
-            root = self.poetry.package.with_dependency_groups(groups, only=True)
             requires = root.all_requires
 
             for dep in requires:
