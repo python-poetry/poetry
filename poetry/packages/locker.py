@@ -180,11 +180,7 @@ class Locker:
                 root_dir = self._lock.path.parent
                 if package.source_type == "directory":
                     # root dir should be the source of the package relative to the lock path
-                    root_dir = Path(
-                        os.path.relpath(
-                            Path(package.source_url), self._lock.path.parent
-                        )
-                    ).resolve()
+                    root_dir = Path(package.source_url)
 
                 if isinstance(constraint, list):
                     for c in constraint:
