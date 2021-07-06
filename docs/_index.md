@@ -32,6 +32,11 @@ Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system by vendorizing its dependencies. This is the
 recommended way of installing `poetry`.
 
+{{% note %}}
+The `get-poetry.py` script described here will be replaced in Poetry 1.2 by `install-poetry.py`.
+From Poetry **1.1.7 onwards**, you can already use this script as described [here]({{< relref "docs/master/#installation" >}}).
+{{% /note %}}
+
 ### osx / linux / bashonwindows install instructions
 ```bash
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
