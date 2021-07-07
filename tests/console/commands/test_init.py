@@ -71,8 +71,6 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-
-[tool.poetry.dev-dependencies]
 """
 
 
@@ -143,7 +141,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 pendulum = "^2.0.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -175,8 +173,6 @@ packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
-
-[tool.poetry.dev-dependencies]
 """.format(
         python=".".join(str(c) for c in sys.version_info[:2])
     )
@@ -220,7 +216,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/demo.git"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -264,7 +260,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/demo.git", rev = "develop"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -308,7 +304,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/pyproject-demo.git"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -355,7 +351,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {path = "demo"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
     assert expected in tester.io.fetch_output()
@@ -403,7 +399,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {path = "pyproject-demo"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -450,7 +446,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {path = "demo-0.1.0-py2.py3-none-any.whl"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -482,8 +478,6 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-
-[tool.poetry.dev-dependencies]
 """
 
     assert expected in tester.io.fetch_output()
@@ -518,8 +512,6 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 pendulum = "^2.0.0"
-
-[tool.poetry.dev-dependencies]
 """
 
     assert expected in tester.io.fetch_output()
@@ -596,7 +588,7 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -638,7 +630,7 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 pytest-requests = "^0.2.0"
 """
@@ -705,8 +697,6 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "^3.6"
 foo = "^1.19.2"
-
-[tool.poetry.dev-dependencies]
 """
     assert "{}\n{}".format(existing_section, expected) in pyproject_file.read_text()
 
