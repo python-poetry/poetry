@@ -1482,15 +1482,15 @@ def test_show_required_by_deps(tester, poetry, installed):
     tester.execute("cachy")
 
     expected = """\
-name         : cachy
-version      : 0.2.0
-description  :
+ name         : cachy
+ version      : 0.2.0
+ description  :
 
 dependencies
  - msgpack-python >=0.5 <0.6
 
 required by
  - pendulum >=0.2.0 <0.3.0
-"""
-
-    assert expected == tester.io.fetch_output()
+""".splitlines()
+    actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
+    assert actual == expected
