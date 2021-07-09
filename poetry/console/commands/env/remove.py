@@ -19,3 +19,7 @@ class EnvRemoveCommand(Command):
         venv = manager.remove(self.argument("python"))
 
         self.line("Deleted virtualenv: <comment>{}</comment>".format(venv.path))
+
+
+class EnvRmCommand(EnvRemoveCommand):
+    name = "env rm"
