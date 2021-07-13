@@ -34,6 +34,8 @@ from the rest of your system.
 ```bash
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
 ```
+Note: some systems might need `python3` instead of `python`
+
 ### windows powershell install instructions
 ```powershell
 (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
