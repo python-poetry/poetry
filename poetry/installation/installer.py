@@ -50,7 +50,7 @@ class Installer:
         self._pool = pool
 
         self._dry_run = False
-        self._remove_untracked = False
+        self._requires_synchronization = False
         self._update = False
         self._verbose = False
         self._write_lock = True
@@ -122,13 +122,12 @@ class Installer:
     def is_dry_run(self) -> bool:
         return self._dry_run
 
-    def remove_untracked(self, remove_untracked: bool = True) -> "Installer":
-        self._remove_untracked = remove_untracked
+    def requires_synchronization(
+        self, requires_synchronization: bool = True
+    ) -> "Installer":
+        self._requires_synchronization = requires_synchronization
 
         return self
-
-    def is_remove_untracked(self) -> bool:
-        return self._remove_untracked
 
     def verbose(self, verbose: bool = True) -> "Installer":
         self._verbose = verbose
@@ -212,7 +211,7 @@ class Installer:
             self._io,
         )
 
-        ops = solver.solve(use_latest=[])
+        ops = solver.solve(use_latest=[]).calculate_operations()
 
         local_repo = Repository()
         self._populate_local_repo(local_repo, ops)
@@ -247,10 +246,9 @@ class Installer:
                 self._installed_repository,
                 locked_repository,
                 self._io,
-                remove_untracked=self._remove_untracked,
             )
 
-            ops = solver.solve(use_latest=self._whitelist)
+            ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
@@ -318,19 +316,35 @@ class Installer:
         pool.add_repository(repo)
 
         solver = Solver(
-            root,
-            pool,
-            self._installed_repository,
-            locked_repository,
-            NullIO(),
-            remove_untracked=self._remove_untracked,
+            root, pool, self._installed_repository, locked_repository, NullIO()
         )
         # Everything is resolved at this point, so we no longer need
         # to load deferred dependencies (i.e. VCS, URL and path dependencies)
         solver.provider.load_deferred(False)
 
         with solver.use_environment(self._env):
-            ops = solver.solve(use_latest=self._whitelist)
+            ops = solver.solve(use_latest=self._whitelist).calculate_operations(
+                with_uninstalls=self._requires_synchronization,
+                synchronize=self._requires_synchronization,
+            )
+
+        if not self._requires_synchronization:
+            # If no packages synchronisation has been requested we need
+            # to calculate the uninstall operations
+            from poetry.puzzle.transaction import Transaction
+
+            transaction = Transaction(
+                locked_repository.packages,
+                [(package, 0) for package in local_repo.packages],
+                installed_packages=self._installed_repository.packages,
+                root_package=root,
+            )
+
+            ops = [
+                op
+                for op in transaction.calculate_operations(with_uninstalls=True)
+                if op.job_type == "uninstall"
+            ] + ops
 
         # We need to filter operations so that packages
         # not compatible with the current system,

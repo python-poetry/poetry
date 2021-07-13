@@ -146,3 +146,29 @@ to remove packages from a specific group:
 ```bash
 poetry remove mkdocs --group docs
 ```
+
+
+## Synchronizing dependencies
+
+Poetry supports what's called dependency synchronization. What this does is ensuring
+that the locked dependencies in the `poetry.lock` file are the only ones present
+in the environment, removing anything that's not necessary.
+
+This is done by using the `--sync` option of the `install` command:
+
+```bash
+poetry install --sync
+```
+
+The `--sync` option can be combined with any [dependency groups]({{< relref "#dependency-groups" >}}) related options
+to synchronize the environment with specific groups.
+
+```bash
+poetry install --without dev --sync
+poetry install --with docs --sync
+poetry install --only dev
+```
+
+{{% note %}}
+The `--sync` option replaces the `--remove-untracked` option which is now deprecated.
+{{% /note %}}

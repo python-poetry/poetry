@@ -163,11 +163,19 @@ The `--dev-only` option is now deprecated. You should use the `--only dev` notat
 See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
 about dependency groups.
 
-If you want to remove old dependencies no longer present in the lock file, use the
-`--remove-untracked` option.
+If you want to synchronize your environment – and ensure it matches the lock file – use the
+`--sync` option.
 
 ```bash
-poetry install --remove-untracked
+poetry install --sync
+```
+
+The `--sync` can be combined with group-related options:
+
+```bash
+poetry install --without dev --sync
+poetry install --with docs --sync
+poetry install --only dev
 ```
 
 You can also specify the extras you want installed
@@ -204,12 +212,14 @@ option is used.
 * `--with`: The optional dependency groups to include for installation.
 * `--only`: The only dependency groups to install.
 * `--default`: Only install the default dependencies.
-* `--no-dev`: Do not install dev dependencies. (**Deprecated**)
-* `--dev-only`: Only install dev dependencies. (**Deprecated**)
+* `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
-* `--remove-untracked`: Remove dependencies not presented in the lock file
 * `--extras (-E)`: Features to install (multiple values allowed).
+* `--no-dev`: Do not install dev dependencies. (**Deprecated**)
+* `--dev-only`: Only install dev dependencies. (**Deprecated**)
+* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
+
 
 ## update
 
