@@ -88,7 +88,9 @@ class Locker:
         return False
 
     def locked_repository(
-        self, with_dev_reqs: bool = False
+        self,
+        with_dev_reqs: bool = False,
+        with_only_dev_reqs: bool = False
     ) -> poetry.repositories.Repository:
         """
         Searches and returns a repository of locked packages.
@@ -103,6 +105,10 @@ class Locker:
 
         if with_dev_reqs:
             locked_packages = lock_data["package"]
+        elif with_only_dev_reqs:
+            locked_packages = [
+                p for p in lock_data["package"] if p["category"] == "dev"
+            ]
         else:
             locked_packages = [
                 p for p in lock_data["package"] if p["category"] == "main"
@@ -348,9 +354,13 @@ class Locker:
         self,
         project_requires: List[Dependency],
         dev: bool = False,
+        only_dev: bool = False,
         extras: Optional[Union[bool, Sequence[str]]] = None,
     ) -> Iterator[DependencyPackage]:
-        repository = self.locked_repository(with_dev_reqs=dev)
+        repository = self.locked_repository(
+            with_dev_reqs=dev,
+            with_only_dev_reqs=only_dev
+        )
 
         # Build a set of all packages required by our selected extras
         extra_package_names = (

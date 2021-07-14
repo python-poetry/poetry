@@ -21,6 +21,7 @@ class ExportCommand(Command):
         option("output", "o", "The name of the output file.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
         option("dev", None, "Include development dependencies."),
+        option("only-dev", None, "Include only development dependencies."),
         option(
             "extras",
             "E",
@@ -69,6 +70,7 @@ class ExportCommand(Command):
             output or self.io,
             with_hashes=not self.option("without-hashes"),
             dev=self.option("dev"),
+            only_dev=self.option("only-dev"),
             extras=self.option("extras"),
             with_credentials=self.option("with-credentials"),
         )

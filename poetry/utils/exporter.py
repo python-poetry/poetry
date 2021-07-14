@@ -32,6 +32,7 @@ class Exporter:
         output: Union[IO, str],
         with_hashes: bool = True,
         dev: bool = False,
+        only_dev: bool = False,
         extras: Optional[Union[bool, Sequence[str]]] = None,
         with_credentials: bool = False,
     ) -> None:
@@ -43,6 +44,7 @@ class Exporter:
             output,
             with_hashes=with_hashes,
             dev=dev,
+            only_dev=only_dev,
             extras=extras,
             with_credentials=with_credentials,
         )
@@ -53,6 +55,7 @@ class Exporter:
         output: Union[IO, str],
         with_hashes: bool = True,
         dev: bool = False,
+        only_dev: bool = False,
         extras: Optional[Union[bool, Sequence[str]]] = None,
         with_credentials: bool = False,
     ) -> None:
@@ -61,7 +64,7 @@ class Exporter:
         dependency_lines = set()
 
         for dependency_package in self._poetry.locker.get_project_dependency_packages(
-            project_requires=self._poetry.package.all_requires, dev=dev, extras=extras
+            project_requires=self._poetry.package.all_requires, dev=dev, only_dev=only_dev, extras=extras
         ):
             line = ""
 

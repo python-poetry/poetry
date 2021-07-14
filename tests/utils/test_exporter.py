@@ -1407,6 +1407,68 @@ def test_exporter_exports_requirements_txt_with_dev_extras(
     assert content == "{}\n".format("\n".join(expected))
 
 
+@pytest.mark.parametrize(
+    ("only_dev", "expected"),
+    [
+        (True, ["baz==1.2.3"]),
+        (False, ["bar==1.2.2", "foo==1.2.1"]),
+    ],
+)
+def test_exporter_exports_requirements_txt_with_only_dev_extras(
+    tmp_dir, poetry, only_dev, expected
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.1",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "bar",
+                    "version": "1.2.2",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {
+                        "baz": {
+                            "version": ">=0.1.0",
+                            "optional": True,
+                            "markers": "extra == 'baz'",
+                        }
+                    },
+                    "extras": {"baz": ["baz (>=0.1.0)"]},
+                },
+                {
+                    "name": "baz",
+                    "version": "1.2.3",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": [], "baz": []},
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    exporter.export("requirements.txt", Path(tmp_dir), "requirements.txt", only_dev=only_dev)
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    assert content == "{}\n".format("\n".join(expected))
+
+
 def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(
     tmp_dir, poetry
 ):
