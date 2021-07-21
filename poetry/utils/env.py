@@ -138,6 +138,10 @@ import sys
 print('.'.join([str(s) for s in sys.version_info[:3]]))
 """
 
+GET_PYTHON_VERSION_QUOTED = """\
+"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))"
+"""
+
 GET_SYS_PATH = """\
 import json
 import sys
@@ -439,6 +443,19 @@ class EnvManager:
 
     def __init__(self, poetry: Poetry) -> None:
         self._poetry = poetry
+        self._is_windows = sys.platform == "win32"
+
+    def _execute_python_script(self, python: str, script: str) -> str:
+        try:
+            args = list_to_shell_command([python, "-c", script])
+            return decode(subprocess.check_output(args, shell=True))
+        except CalledProcessError:
+            if python.startswith("python") and self._is_windows:
+                # Try `py` launcher on Windows platform
+                args = list_to_shell_command(["py", f"-{python[6:]}", "-c", script])
+                return decode(subprocess.check_output(args, shell=True))
+            else:
+                raise
 
     def activate(self, python: str, io: IO) -> "Env":
         venv_path = self._poetry.config.get("virtualenvs.path")
@@ -461,9 +478,9 @@ class EnvManager:
             pass
 
         try:
-            python_version = execute_python_script(
+            python_version = self._execute_python_script(
                 python,
-                "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                GET_PYTHON_VERSION_QUOTED,
             ).strip()
         except CalledProcessError as e:
             raise EnvCommandError(e)
@@ -699,9 +716,9 @@ class EnvManager:
             pass
 
         try:
-            python_version = execute_python_script(
+            python_version = self._execute_python_script(
                 python,
-                "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                GET_PYTHON_VERSION_QUOTED,
             ).strip()
         except CalledProcessError as e:
             raise EnvCommandError(e)
@@ -766,9 +783,9 @@ class EnvManager:
         python_patch = ".".join([str(v) for v in sys.version_info[:3]])
         python_minor = ".".join([str(v) for v in sys.version_info[:2]])
         if executable:
-            python_patch = execute_python_script(
+            python_patch = self._execute_python_script(
                 executable,
-                "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                GET_PYTHON_VERSION_QUOTED,
             ).strip()
             python_minor = ".".join(python_patch.split(".")[:2])
 
@@ -815,9 +832,9 @@ class EnvManager:
                     io.write_line(f"<debug>Trying {python}</debug>")
 
                 try:
-                    python_patch = execute_python_script(
+                    python_patch = self._execute_python_script(
                         python,
-                        "\"import sys; print('.'.join([str(s) for s in sys.version_info[:3]]))\"",
+                        GET_PYTHON_VERSION_QUOTED,
                     ).strip()
                 except CalledProcessError:
                     continue
