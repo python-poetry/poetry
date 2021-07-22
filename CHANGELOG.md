@@ -1,6 +1,6 @@
 # Change Log
 
-## [1.1.7] - 2012-06-25
+## [1.1.7] - 2021-06-25
 
 **Note**: Lock files might need to be regenerated for the first fix below to take effect.
 You can use `poetry lock` to do so **without** the `--no-update` option.
