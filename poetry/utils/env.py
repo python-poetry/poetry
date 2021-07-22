@@ -788,7 +788,7 @@ class EnvManager:
                         raise
 
             if io.is_debug() and pyenv:
-                io.write_line("<debug>Pyenv loaded: {}</debug>".format(pyenv._command))
+                io.write_line(f"<debug>Pyenv loaded: {pyenv._command}</debug>")
 
             executable, python_patch = self._find_compatible_python(io, pyenv)
             if executable:
@@ -896,26 +896,28 @@ class EnvManager:
 
     def _list_sys_python_candidates(self) -> List[str]:
         candidates = []
+        append = candidates.append
         supported_python = self._poetry.package.python_constraint
         for python_to_try in sorted_trying_versions(
             self._poetry.package.AVAILABLE_PYTHONS  # "3", "3.5", "3.6", "2", "2.7", ...
         ):
             if "." not in python_to_try:
                 if parse_constraint(f"^{python_to_try}.0").allows_any(supported_python):
-                    candidates.append("python" + python_to_try)
+                    append(f"python{python_to_try}")
             else:
-                if supported_python.allows_any(parse_constraint(python_to_try + ".*")):
-                    candidates.append("python" + python_to_try)
+                if supported_python.allows_any(parse_constraint(f"{python_to_try}.*")):
+                    append(f"python{python_to_try}")
         return candidates
 
     def _list_pyenv_python_candidates(self, pyenv: Pyenv) -> List[str]:
         if not pyenv:
             return []
         candidates = []
+        append = candidates.append
         supported_python = self._poetry.package.python_constraint
         for python_to_try in sorted_trying_versions(pyenv.versions()):
             if supported_python.allows(Version.parse(python_to_try)):
-                candidates.append(pyenv.executable(python_to_try).as_posix())
+                append(pyenv.executable(python_to_try).as_posix())
         return candidates
 
     @classmethod

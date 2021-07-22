@@ -19,10 +19,8 @@ class Pyenv:
         return self._command is not None
 
     def load(self) -> None:
-        if self._command is not None:
-            return
-
-        self._command = self._locate_command()
+        if self._command is None:
+            self._command = self._locate_command()
 
     def _locate_command(self) -> Optional[Path]:
         for candidate in [

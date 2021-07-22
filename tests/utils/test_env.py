@@ -171,7 +171,7 @@ def check_output_pyenv_python_version_info(*args) -> Callable:
         if "pyenv" in cmd and "sys.version_info[:2]" in cmd:
             wrapper.calls += 1
             version = versions[wrapper.calls % len(versions)]
-            return "{}.{}".format(version.major, version.minor)
+            return f"{version.major}.{version.minor}"
         return None
 
     wrapper.calls = -1
@@ -189,7 +189,7 @@ def check_output_sys_python_version_info(*args) -> Callable:
         if "pyenv" not in cmd and "sys.version_info[:2]" in cmd:
             wrapper.calls += 1
             version = versions[wrapper.calls % len(versions)]
-            return "{}.{}".format(version.major, version.minor)
+            return f"{version.major}.{version.minor}"
         return None
 
     wrapper.calls = -1
@@ -200,8 +200,8 @@ def check_output_python_executable_path(version: Version) -> Callable:
     def wrapper(cmd: str, *args, **kwargs) -> Optional[str]:
         if "print(sys.executable)" in cmd:
             if "pyenv" in cmd:
-                return "/pyenv/python{}.{}".format(version.major, version.minor)
-            return "/system/python{}.{}".format(version.major, version.minor)
+                return f"/pyenv/python{version.major}.{version.minor}"
+            return f"/system/python{version.major}.{version.minor}"
 
         return None
 
@@ -235,7 +235,7 @@ def check_output_wrapper(version=Version.parse("3.7.1")):
 def venv_fullname(base_name: str, python_minor: str = None) -> str:
     if python_minor is None:
         python_minor = ".".join(str(c) for c in sys.version_info[:2])
-    return "{}-py{}".format(base_name, python_minor)
+    return f"{base_name}-py{python_minor}"
 
 
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
