@@ -86,11 +86,12 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         vcs_config = GitConfig()
 
-        self.line("")
-        self.line(
-            "This command will guide you through creating your <info>pyproject.toml</> config."
-        )
-        self.line("")
+        if self.io.is_interactive():
+            self.line("")
+            self.line(
+                "This command will guide you through creating your <info>pyproject.toml</> config."
+            )
+            self.line("")
 
         name = self.option("name")
         if not name:
@@ -154,7 +155,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             python = self.ask(question)
 
-        self.line("")
+        if self.io.is_interactive():
+            self.line("")
 
         requirements = {}
         if self.option("dependency"):
@@ -175,12 +177,14 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         )
         help_displayed = False
         if self.confirm(question, True):
-            self.line(help_message)
-            help_displayed = True
+            if self.io.is_interactive():
+                self.line(help_message)
+                help_displayed = True
             requirements.update(
                 self._format_requirements(self._determine_requirements([]))
             )
-            self.line("")
+            if self.io.is_interactive():
+                self.line("")
 
         dev_requirements = {}
         if self.option("dev-dependency"):
@@ -192,13 +196,14 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             "Would you like to define your development dependencies interactively?"
         )
         if self.confirm(question, True):
-            if not help_displayed:
+            if self.io.is_interactive() and not help_displayed:
                 self.line(help_message)
 
             dev_requirements.update(
                 self._format_requirements(self._determine_requirements([]))
             )
-            self.line("")
+            if self.io.is_interactive():
+                self.line("")
 
         layout_ = layout("standard")(
             name,
@@ -317,7 +322,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 if package is not False:
                     requires.append(constraint)
 
-                package = self.ask("\nAdd a package:")
+                if self.io.is_interactive():
+                    package = self.ask("\nAdd a package:")
 
             return requires
 
