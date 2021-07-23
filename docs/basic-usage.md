@@ -128,11 +128,11 @@ To get the path to your virtual environment run `poetry env info --path`.
 You can also combine these into a nice one-liner, `source $(poetry env info --path)/bin/activate`
 To deactivate this virtual environment simply use `deactivate`.
 
-|                   | POSIX Shell                                        | Windows                               | Exit/Deactivate |
-| ----------------- | -------------------------------------------------- | ------------------------------------- | --------------- |
-| New Shell         | `poetry shell`                                     | `poetry shell`                        | `exit`          |
-| Manual Activation | `source {path_to_venv}/bin/activate`               | `{path_to_venv}\Scripts\activate.bat` | `deactivate`    |
-| One-liner         | ```source `poetry env info --path`/bin/activate``` |                                       | `deactivate`    |
+|                   | POSIX Shell                                     | Windows                               | Exit/Deactivate |
+| ----------------- | ----------------------------------------------- | ------------------------------------- | --------------- |
+| New Shell         | `poetry shell`                                  | `poetry shell`                        | `exit`          |
+| Manual Activation | `source {path_to_venv}/bin/activate`            | `{path_to_venv}\Scripts\activate.bat` | `deactivate`    |
+| One-liner         | `source $(poetry env info --path)/bin/activate` |                                       | `deactivate`    |
 
 
 ### Version constraints
