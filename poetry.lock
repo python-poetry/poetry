@@ -397,11 +397,18 @@ version = "1.1.0a5"
 description = "Poetry PEP 517 Build Backend"
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = "^3.6"
+develop = false
 
 [package.dependencies]
 dataclasses = {version = ">=0.8", markers = "python_version >= \"3.6\" and python_version < \"3.7\""}
 importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
+
+[package.source]
+type = "git"
+url = "https://github.com/python-poetry/poetry-core.git"
+reference = "master"
+resolved_reference = "afaa6903f654b695d9411fb548ad10630287c19f"
 
 [[package]]
 name = "pre-commit"
@@ -701,7 +708,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "ac67bc6eacbb6b633f9568d69533d80456f632c7bfb9a2aa61aa9dd98e862473"
+content-hash = "e38d34da68dcd63ef9f9d999f60b8e19d8da7f988031c3a6e6865d51c1fadeda"
 
 [metadata.files]
 appdirs = [
@@ -967,10 +974,7 @@ pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
-poetry-core = [
-    {file = "poetry-core-1.1.0a5.tar.gz", hash = "sha256:1b886de26026865325eae86a5d12eb154b80c0add8067c106eb706757594d85f"},
-    {file = "poetry_core-1.1.0a5-py3-none-any.whl", hash = "sha256:b347525c1417e9b5c6aee52967eff98c0886853a9e8ab1b9dfb2659913dd37bc"},
-]
+poetry-core = []
 pre-commit = [
     {file = "pre_commit-2.12.1-py2.py3-none-any.whl", hash = "sha256:70c5ec1f30406250b706eda35e868b87e3e4ba099af8787e3e8b4b01e84f4712"},
     {file = "pre_commit-2.12.1.tar.gz", hash = "sha256:900d3c7e1bf4cf0374bb2893c24c23304952181405b4d88c9c40b72bda1bb8a9"},

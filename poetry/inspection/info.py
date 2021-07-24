@@ -157,7 +157,9 @@ class PackageInfo:
             poetry_package = self._get_poetry_package(path=root_dir or self._source_url)
             if poetry_package:
                 package.extras = poetry_package.extras
-                package.requires = poetry_package.requires
+                for dependency in poetry_package.requires:
+                    package.add_dependency(dependency)
+
                 return package
 
         seen_requirements = set()
@@ -191,7 +193,7 @@ class PackageInfo:
             req = dependency.to_pep_508(with_extras=True)
 
             if req not in seen_requirements:
-                package.requires.append(dependency)
+                package.add_dependency(dependency)
                 seen_requirements.add(req)
 
         return package

@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Callable
 from typing import Dict
+from typing import FrozenSet
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -254,7 +255,7 @@ class Solver:
 
                     for dep in package.requires:
                         if dep not in pkg.requires:
-                            pkg.requires.append(dep)
+                            pkg.add_dependency(dep)
 
         return packages, depths
 
@@ -300,7 +301,7 @@ class Solver:
                                 continue
 
                             if dep not in _package.requires:
-                                _package.requires.append(dep)
+                                _package.add_dependency(dep)
 
                 continue
 
@@ -312,7 +313,9 @@ class Solver:
 
 
 class DFSNode:
-    def __init__(self, id: Tuple[str, str, bool], name: str, base_name: str) -> None:
+    def __init__(
+        self, id: Tuple[str, FrozenSet[str], bool], name: str, base_name: str
+    ) -> None:
         self.id = id
         self.name = name
         self.base_name = base_name
@@ -423,13 +426,15 @@ class PackageNode(DFSNode):
 
         if not previous:
             self.category = "dev"
+            self.groups = frozenset()
             self.optional = True
         else:
-            self.category = dep.category
+            self.category = "main" if "default" in dep.groups else "dev"
+            self.groups = dep.groups
             self.optional = dep.is_optional()
 
         super().__init__(
-            (package.complete_name, self.category, self.optional),
+            (package.complete_name, self.groups, self.optional),
             package.complete_name,
             package.name,
         )
@@ -470,7 +475,7 @@ class PackageNode(DFSNode):
                     # we merge the requirements
                     if any(
                         child.package.name == pkg.name
-                        and child.category == dependency.category
+                        and child.groups == dependency.groups
                         for child in children
                     ):
                         continue
@@ -505,14 +510,20 @@ def aggregate_package_nodes(
 ) -> Tuple[Package, int]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
+    groups = []
+    for node in nodes:
+        groups.extend(node.groups)
+
     category = (
-        "main" if any(node.category == "main" for node in children + nodes) else "dev"
+        "main" if any("default" in node.groups for node in children + nodes) else "dev"
     )
     optional = all(node.optional for node in children + nodes)
     for node in nodes:
         node.depth = depth
         node.category = category
         node.optional = optional
+
     package.category = category
     package.optional = optional
+
     return package, depth

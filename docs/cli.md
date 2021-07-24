@@ -133,19 +133,35 @@ This ensures that everyone using the library will get the same versions of the d
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
-You can specify to the command that you do not want the development dependencies installed by passing
-the `--no-dev` option.
+If you want to exclude one or more dependency group for the installation, you can use
+the `--without` option.
 
 ```bash
-poetry install --no-dev
+poetry install --without test,docs
 ```
 
-Conversely, you can specify to the command that you only want to install the development dependencies
-by passing the `--dev-only` option. Note that `--no-dev` takes priority if both options are passed.
+{{% note %}}
+The `--no-dev` option is now deprecated. You should use the `--without dev` notation instead.
+{{% /note %}}
+
+You can also select optional dependency groups with the `--with` option.
 
 ```bash
-poetry install --dev-only
+poetry install --with test,docs
 ```
+
+It's also possible to only install specific dependency groups by using the `only` option.
+
+```bash
+poetry install --only test,docs
+```
+
+{{% note %}}
+The `--dev-only` option is now deprecated. You should use the `--only dev` notation instead.
+{{% /note %}}
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
 
 If you want to remove old dependencies no longer present in the lock file, use the
 `--remove-untracked` option.
@@ -179,13 +195,17 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
-Installation of your project's package is also skipped when the `--dev-only`
-option is passed.
+Installation of your project's package is also skipped when the `--only`
+option is used.
 
 ### Options
 
-* `--no-dev`: Do not install dev dependencies.
-* `--dev-only`: Only install dev dependencies.
+* `--without`: The dependency groups to ignore for installation.
+* `--with`: The optional dependency groups to include for installation.
+* `--only`: The only dependency groups to install.
+* `--default`: Only install the default dependencies.
+* `--no-dev`: Do not install dev dependencies. (**Deprecated**)
+* `--dev-only`: Only install dev dependencies. (**Deprecated**)
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--remove-untracked`: Remove dependencies not presented in the lock file
@@ -311,9 +331,19 @@ poetry add "requests[security,socks]~=2.22.0"
 poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
 
+If you want to add a package to a specific group of dependencies, you can use the `--group (-G)` option:
+
+```bash
+poetry add mkdocs --group docs
+```
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
 ### Options
 
-* `--dev (-D)`: Add package as development dependency.
+* `--group (-D)`: The group to add the dependency to.
+* `--dev (-D)`: Add package as development dependency. (**Deprecated**)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency.
@@ -334,9 +364,19 @@ list of installed packages.
 poetry remove pendulum
 ```
 
+If you want to remove a package from a specific group of dependencies, you can use the `--group (-G)` option:
+
+```bash
+poetry remove mkdocs --group docs
+```
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
 ### Options
 
-* `--dev (-D)`: Removes a package from the development dependencies.
+* `--group (-D)`: The group to remove the dependency from.
+* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
@@ -365,6 +405,10 @@ dependencies:
 
 ### Options
 
+* `--without`: Do not show the information of the specified groups' dependencies.
+* `--with`: Show the information of the specified optional groups' dependencies as well.
+* `--only`: Only show the information of dependencies belonging to the specified groups.
+* `--default`: Only show the information of the default dependencies.
 * `--no-dev`: Do not list the dev dependencies.
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.

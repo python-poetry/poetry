@@ -99,7 +99,7 @@ class DebugResolveCommand(InitCommand):
             packages = [op.package for op in ops]
             repo = Repository(packages)
 
-            requires = package.requires + package.dev_requires
+            requires = package.all_requires
             for pkg in repo.packages:
                 for require in requires:
                     if pkg.name == require.name:
