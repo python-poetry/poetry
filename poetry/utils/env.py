@@ -430,19 +430,20 @@ class EnvManager:
 
     def __init__(self, poetry: Poetry) -> None:
         self._poetry = poetry
-        self._is_windows = sys.platform == "win32"
+        self._py_launcher_exists = shutil.which("py") is not None
 
     def _execute_python_script(self, python: str, script: str) -> str:
-        try:
+        if (
+            self._py_launcher_exists
+            and python.startswith("python")
+            and shutil.which(python) is None
+        ):
+            # If py launcher exists and `python` is in `pythonX[.X]` format and `python` executable does not exist, use py launcher.
+            args = list_to_shell_command(["py", f"-{python[6:]}", "-c", script])
+            return decode(subprocess.check_output(args, shell=True))
+        else:
             args = list_to_shell_command([python, "-c", script])
             return decode(subprocess.check_output(args, shell=True))
-        except CalledProcessError:
-            if python.startswith("python") and self._is_windows:
-                # Try `py` launcher on Windows platform
-                args = list_to_shell_command(["py", f"-{python[6:]}", "-c", script])
-                return decode(subprocess.check_output(args, shell=True))
-            else:
-                raise
 
     def activate(self, python: str, io: IO) -> "Env":
         venv_path = self._poetry.config.get("virtualenvs.path")

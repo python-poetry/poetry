@@ -402,6 +402,76 @@ def test_activate_does_not_recreate_when_switching_minor(
     assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
 
 
+def test_activate_with_py_launcher_and_executable(tmp_dir, manager, config, mocker):
+    """Check if `EnvManager._execute_python_script` works as expected while activating env where both py launcher and executable exist"""
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    manager._py_launcher_exists = True
+
+    mocker.patch("shutil.which", return_value="/python")
+    mock_check_output = mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    mocker.patch("poetry.utils.env.EnvManager.create_venv")
+    mocker.patch("poetry.utils.env.EnvManager.get")
+
+    manager.activate("python3.7", NullIO())
+
+    from poetry.utils._compat import list_to_shell_command
+    from poetry.utils.env import GET_PYTHON_VERSION_QUOTED
+
+    args = list_to_shell_command(["python3.7", "-c", GET_PYTHON_VERSION_QUOTED])
+    mock_check_output.assert_called_with(args, shell=True)
+
+
+def test_activate_with_py_launcher_and_without_executable(
+    tmp_dir, manager, config, mocker
+):
+    """Refer to `test_activate_with_py_launcher_and_executable`"""
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    manager._py_launcher_exists = True
+
+    mocker.patch("shutil.which", return_value=None)
+    mock_check_output = mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    mocker.patch("poetry.utils.env.EnvManager.create_venv")
+    mocker.patch("poetry.utils.env.EnvManager.get")
+
+    manager.activate("python3.7", NullIO())
+
+    from poetry.utils._compat import list_to_shell_command
+    from poetry.utils.env import GET_PYTHON_VERSION_QUOTED
+
+    args = list_to_shell_command(["py", "-3.7", "-c", GET_PYTHON_VERSION_QUOTED])
+    mock_check_output.assert_called_with(args, shell=True)
+
+
+def test_activate_without_py_launcher_and_with_executable(
+    tmp_dir, manager, config, mocker
+):
+    """Refer to `test_activate_with_py_launcher_and_executable`"""
+    config.merge({"virtualenvs": {"path": str(tmp_dir)}})
+    manager._py_launcher_exists = False
+
+    mocker.patch("shutil.which", return_value="/python")
+    mock_check_output = mocker.patch(
+        "subprocess.check_output",
+        side_effect=check_output_wrapper(),
+    )
+    mocker.patch("poetry.utils.env.EnvManager.create_venv")
+    mocker.patch("poetry.utils.env.EnvManager.get")
+
+    manager.activate("python3.7", NullIO())
+
+    from poetry.utils._compat import list_to_shell_command
+    from poetry.utils.env import GET_PYTHON_VERSION_QUOTED
+
+    args = list_to_shell_command(["python3.7", "-c", GET_PYTHON_VERSION_QUOTED])
+    mock_check_output.assert_called_with(args, shell=True)
+
+
 def test_deactivate_non_activated_but_existing(
     tmp_dir, manager, poetry, config, mocker
 ):
