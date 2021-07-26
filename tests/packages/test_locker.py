@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 
 from pathlib import Path
@@ -23,6 +24,12 @@ def locker():
         locker = Locker(f.name, {})
 
         return locker
+
+
+@pytest.fixture
+def tmp_workspace():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yield tmpdir
 
 
 @pytest.fixture
@@ -598,3 +605,85 @@ A = []
 """
 
     assert expected == content
+
+
+def test_locker_path_subproject_path_dependencies(tmp_workspace):
+    app1_dir = os.path.join(tmp_workspace, "apps", "app1")
+    os.makedirs(app1_dir)
+
+    pyproject_toml_content = """\
+[tool.poetry]
+name = "%s"
+version = "1.0.0"
+description = ""
+authors = [ ]
+license = "MIT"
+readme = "README.md"
+"""
+
+    lib1_dir = os.path.join(tmp_workspace, "libs", "lib1")
+    os.makedirs(lib1_dir)
+
+    with open(os.path.join(lib1_dir, "pyproject.toml"), "w") as proj:
+        proj.write(pyproject_toml_content % "lib1")
+
+    lib2_dir = os.path.join(tmp_workspace, "libs", "lib2")
+    os.makedirs(lib2_dir)
+    with open(os.path.join(lib2_dir, "pyproject.toml"), "w") as proj:
+        proj.write(pyproject_toml_content % "lib2")
+
+    app1_lock = os.path.join(app1_dir, "poetry.lock")
+    open(app1_lock, "a").close()
+
+    locker = Locker(app1_lock, {})
+
+    content = """\
+[[package]]
+name = "lib1"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+  python-versions = "^3.8"
+develop = true
+
+[package.dependencies]
+lib2 = {path = "../lib2", develop = true}
+
+[package.source]
+type = "directory"
+url = "../../libs/lib1"
+
+[[package]]
+name = "lib2"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+  python-versions = "^3.8"
+develop = true
+
+[package.dependencies]
+numpy = "^1.21.1"
+pendulum = "^2.1.2"
+requests = "^2.26.0"
+
+[package.source]
+type = "directory"
+url = "../../libs/lib2"
+
+[metadata]
+lock-version = "1.1"
+  python-versions = "^3.8"
+content-hash = "3f66ccdc76f2e6571732b56940fd74d91855d77a3b0501dad547cf97d07d30b0"
+
+[metadata.files]
+lib1 = []
+lib2 = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+
+    packages = locker.locked_repository().packages
+
+    assert 2 == len(packages)

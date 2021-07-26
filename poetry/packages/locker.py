@@ -187,10 +187,13 @@ class Locker:
 
                     continue
 
+                root_dir = self._lock.path.parent
+
+                if package.source_type == "directory":
+                    root_dir = Path(package.source_url)
+
                 package.add_dependency(
-                    Factory.create_dependency(
-                        dep_name, constraint, root_dir=self._lock.path.parent
-                    )
+                    Factory.create_dependency(dep_name, constraint, root_dir=root_dir)
                 )
 
             if "develop" in info:
