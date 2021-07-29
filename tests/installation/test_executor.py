@@ -15,6 +15,7 @@ from cleo.io.buffered_io import BufferedIO
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
 from poetry.core.utils._compat import PY36
+from poetry.installation.chef import Chef as BaseChef
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -22,6 +23,30 @@ from poetry.installation.operations import Update
 from poetry.repositories.pool import Pool
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
+
+
+class Chef(BaseChef):
+
+    _directory_wheel = None
+    _sdist_wheel = None
+
+    def set_directory_wheel(self, wheel: Path) -> None:
+        self._directory_wheel = wheel
+
+    def set_sdist_wheel(self, wheel: Path) -> None:
+        self._sdist_wheel = wheel
+
+    def _prepare_sdist(self, archive: Path) -> Path:
+        if self._sdist_wheel is not None:
+            return self._sdist_wheel
+
+        return super()._prepare_sdist()
+
+    def _prepare(self, directory: Path, destination: Path) -> Path:
+        if self._directory_wheel is not None:
+            return self._directory_wheel
+
+        return super()._prepare(directory, destination)
 
 
 @pytest.fixture
@@ -84,8 +109,22 @@ def mock_file_downloads(http):
     )
 
 
+@pytest.fixture()
+def wheel(tmp_dir):
+    shutil.copyfile(
+        Path(__file__)
+        .parent.parent.joinpath(
+            "fixtures/distributions/demo-0.1.2-py2.py3-none-any.whl"
+        )
+        .as_posix(),
+        Path(tmp_dir).joinpath("demo-0.1.2-py2.py3-none-any.whl").as_posix(),
+    )
+
+    return Path(tmp_dir).joinpath("demo-0.1.2-py2.py3-none-any.whl")
+
+
 def test_execute_executes_a_batch_of_operations(
-    mocker, config, pool, io, tmp_dir, mock_file_downloads, env
+    mocker, config, pool, io, tmp_dir, mock_file_downloads, env, wheel
 ):
     pip_editable_install = mocker.patch(
         "poetry.installation.executor.pip_editable_install", unsafe=not PY36
@@ -94,7 +133,12 @@ def test_execute_executes_a_batch_of_operations(
     config = Config()
     config.merge({"cache-dir": tmp_dir})
 
+    chef = Chef(config, env)
+    chef.set_directory_wheel(wheel)
+    chef.set_sdist_wheel(wheel)
+
     executor = Executor(env, pool, config, io)
+    executor.set_chef(chef)
 
     file_package = Package(
         "demo",
@@ -389,14 +433,21 @@ def test_executor_should_write_pep610_url_references_for_files(
 
 
 def test_executor_should_write_pep610_url_references_for_directories(
-    tmp_venv, pool, config, io
+    tmp_venv, pool, config, io, wheel
 ):
-    url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
+    url = (
+        Path(__file__)
+        .parent.parent.joinpath("fixtures/git/github.com/demo/demo")
+        .resolve()
+    )
     package = Package(
-        "simple-project", "1.2.3", source_type="directory", source_url=url.as_posix()
+        "demo", "0.1.2", source_type="directory", source_url=url.as_posix()
     )
 
+    chef = Chef(config, tmp_venv)
+    chef.set_directory_wheel(wheel)
     executor = Executor(tmp_venv, pool, config, io)
+    executor.set_chef(chef)
     executor.execute([Install(package)])
     verify_installed_distribution(
         tmp_venv, package, {"dir_info": {}, "url": url.as_uri()}
@@ -440,7 +491,7 @@ def test_executor_should_write_pep610_url_references_for_urls(
 
 
 def test_executor_should_write_pep610_url_references_for_git(
-    tmp_venv, pool, config, io, mock_file_downloads
+    tmp_venv, pool, config, io, mock_file_downloads, wheel
 ):
     package = Package(
         "demo",
@@ -451,7 +502,10 @@ def test_executor_should_write_pep610_url_references_for_git(
         source_url="https://github.com/demo/demo.git",
     )
 
+    chef = Chef(config, tmp_venv)
+    chef.set_directory_wheel(wheel)
     executor = Executor(tmp_venv, pool, config, io)
+    executor.set_chef(chef)
     executor.execute([Install(package)])
     verify_installed_distribution(
         tmp_venv,

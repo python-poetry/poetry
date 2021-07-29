@@ -18,6 +18,7 @@ from cleo.io.null_io import NullIO
 
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
+from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
@@ -99,6 +100,11 @@ class Executor:
     @property
     def removals_count(self) -> int:
         return self._executed["uninstall"]
+
+    def set_chef(self, chef: "Chef") -> "Executor":
+        self._chef = chef
+
+        return self
 
     def supports_fancy_output(self) -> bool:
         return self._io.output.is_decorated() and not self._dry_run
@@ -491,7 +497,7 @@ class Executor:
             return self._install_git(operation)
 
         if package.source_type == "file":
-            archive = self._prepare_file(operation)
+            archive = self._prepare_archive(operation)
         elif package.source_type == "url":
             archive = self._download_link(operation, Link(package.source_url))
         else:
@@ -526,7 +532,7 @@ class Executor:
 
             raise
 
-    def _prepare_file(self, operation: Union[Install, Update]) -> Path:
+    def _prepare_archive(self, operation: Union[Install, Update]) -> Path:
         package = operation.package
 
         message = (
@@ -564,18 +570,10 @@ class Executor:
 
         pyproject = PyProjectTOML(os.path.join(req, "pyproject.toml"))
 
-        if pyproject.is_poetry_project():
-            # Even if there is a build system specified
-            # some versions of pip (< 19.0.0) don't understand it
-            # so we need to check the version of pip to know
-            # if we can rely on the build system
-            legacy_pip = (
-                self._env.pip_version
-                < self._env.pip_version.__class__.from_parts(19, 0, 0)
-            )
+        if pyproject.is_poetry_project() and package.develop:
             package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
-            if package.develop and not package_poetry.package.build_script:
+            if package.develop:
                 from poetry.masonry.builders.editable import EditableBuilder
 
                 # This is a Poetry package in editable mode
@@ -585,24 +583,20 @@ class Executor:
                 builder.build()
 
                 return 0
-            elif legacy_pip or package_poetry.package.build_script:
-                from poetry.core.masonry.builders.sdist import SdistBuilder
-
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
-                builder = SdistBuilder(package_poetry)
-
-                with builder.setup_py():
-                    if package.develop:
-                        return self.pip_install(req, editable=True)
-                    return self.pip_install(req, upgrade=True)
-
-        if package.develop:
+        elif package.develop:
+            # Editable installations are currently not supported
+            # for PEP-517 build systems so we defer to pip.
+            # TODO: Remove this workaround once either PEP-660 or PEP-662 is accepted
             return self.pip_install(req, editable=True)
 
-        return self.pip_install(req, upgrade=True)
+        archive = self._prepare_archive(operation)
+
+        try:
+            return self.pip_install(
+                str(archive), upgrade=operation.job_type == "update"
+            )
+        finally:
+            archive.unlink()
 
     def _install_git(self, operation: Union[Install, Update]) -> int:
         from poetry.core.vcs import Git
@@ -650,27 +644,33 @@ class Executor:
     def _download_link(self, operation: Union[Install, Update], link: Link) -> Link:
         package = operation.package
 
-        archive = self._chef.get_cached_archive_for_link(link)
-        if archive is link:
+        output_dir = self._chef.get_cache_directory_for_link(link)
+        archive_link = self._chef.get_cached_archive_for_link(link)
+        if archive_link is link:
             # No cached distributions was found, so we download and prepare it
             try:
                 archive = self._download_archive(operation, link)
             except BaseException:
                 cache_directory = self._chef.get_cache_directory_for_link(link)
                 cached_file = cache_directory.joinpath(link.filename)
-                # We can't use unlink(missing_ok=True) because it's not available
-                # in pathlib2 for Python 2.7
                 if cached_file.exists():
                     cached_file.unlink()
 
                 raise
 
             # TODO: Check readability of the created archive
+        else:
+            archive = Path(url_to_path(archive_link.url))
 
-            if not link.is_wheel:
-                archive = self._chef.prepare(archive)
+        if not archive.suffix == ".whl":
+            message = "  <fg=blue;options=bold>•</> {message}: <info>Preparing...</info>".format(
+                message=self.get_operation_message(operation),
+            )
+            self._write(operation, message)
 
-        if package.files:
+            archive = self._chef.prepare(archive, output_dir=output_dir)
+
+        if package.files and archive.name in {f["file"] for f in package.files}:
             archive_hash = (
                 "sha256:"
                 + FileDependency(

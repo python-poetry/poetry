@@ -2,6 +2,7 @@ import pytest
 
 from poetry.core.packages.package import Package
 from poetry.factory import Factory
+from poetry.installation.chef import Chef
 
 
 @pytest.fixture()
@@ -61,7 +62,9 @@ Package operations: 1 install, 0 updates, 0 removals
     assert_plugin_add_result(tester, app, env, expected, "^0.2.0")
 
 
-def test_add_with_git_constraint(app, repo, tester, env, installed):
+def test_add_with_git_constraint(app, repo, tester, env, installed, mocker):
+    mocker.patch.object(Chef, "_prepare")
+
     repo.add_package(Package("pendulum", "2.0.5"))
 
     tester.execute("git+https://github.com/demo/poetry-plugin.git")
@@ -83,7 +86,9 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
 
-def test_add_with_git_constraint_with_extras(app, repo, tester, env, installed):
+def test_add_with_git_constraint_with_extras(app, repo, tester, env, installed, mocker):
+    mocker.patch.object(Chef, "_prepare")
+
     repo.add_package(Package("pendulum", "2.0.5"))
     repo.add_package(Package("tomlkit", "0.7.0"))
 
