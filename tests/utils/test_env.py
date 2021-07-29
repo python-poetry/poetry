@@ -950,6 +950,13 @@ def test_venv_has_correct_paths(tmp_venv):
     assert paths.get("platlib") is not None
     assert paths.get("scripts") is not None
     assert tmp_venv.site_packages.path == Path(paths["purelib"])
+    assert paths["include"] == str(
+        tmp_venv.path.joinpath(
+            "include/site/python{}.{}".format(
+                tmp_venv.version_info[0], tmp_venv.version_info[1]
+            )
+        )
+    )
 
 
 def test_env_system_packages(tmp_path, config):

@@ -1197,6 +1197,18 @@ class Env:
         if self._paths is None:
             self._paths = self.get_paths()
 
+            if self.is_venv():
+                # We copy pip's logic here for the `include` path
+                self._paths["include"] = str(
+                    self.path.joinpath(
+                        "include",
+                        "site",
+                        "python{}.{}".format(
+                            self.version_info[0], self.version_info[1]
+                        ),
+                    )
+                )
+
         return self._paths
 
     @property

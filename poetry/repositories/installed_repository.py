@@ -2,6 +2,8 @@ import itertools
 import json
 
 from pathlib import Path
+from typing import Dict
+from typing import Optional
 from typing import Set
 from typing import Tuple
 from typing import Union
@@ -26,6 +28,9 @@ except NameError:
 
 
 class InstalledRepository(Repository):
+
+    _distributions: Dict[str, metadata.Distribution] = {}
+
     @classmethod
     def get_package_paths(cls, env: Env, name: str) -> Set[Path]:
         """
@@ -258,5 +263,9 @@ class InstalledRepository(Repository):
 
                 seen.add(package.name)
                 repo.add_package(package)
+                repo._distributions[package.name] = distribution
 
         return repo
+
+    def distribution(self, name: str) -> Optional[metadata.Distribution]:
+        return self._distributions.get(name)

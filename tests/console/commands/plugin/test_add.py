@@ -3,6 +3,21 @@ import pytest
 from poetry.core.packages.package import Package
 from poetry.factory import Factory
 from poetry.installation.chef import Chef
+from poetry.installation.executor import Executor
+from poetry.installation.wheel_installer import WheelInstaller
+
+
+@pytest.fixture()
+def setup(mocker, fixture_dir):
+    mocker.patch.object(
+        Executor,
+        "_download",
+        return_value=fixture_dir("distributions").joinpath(
+            "demo-0.1.2-py2.py3-none-any.whl"
+        ),
+    )
+
+    mocker.patch.object(WheelInstaller, "install")
 
 
 @pytest.fixture()

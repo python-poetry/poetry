@@ -33,6 +33,7 @@ from .operations.install import Install
 from .operations.operation import Operation
 from .operations.uninstall import Uninstall
 from .operations.update import Update
+from .wheel_installer import WheelInstaller
 
 
 if TYPE_CHECKING:
@@ -63,6 +64,7 @@ class Executor:
         self._authenticator = Authenticator(config, self._io)
         self._chef = Chef(config, self._env)
         self._chooser = Chooser(pool, self._env)
+        self._wheel_installer = WheelInstaller(self._env)
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -510,7 +512,10 @@ class Executor:
             )
         )
         self._write(operation, message)
-        return self.pip_install(str(archive), upgrade=operation.job_type == "update")
+
+        self._wheel_installer.install(archive)
+
+        return 0
 
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
