@@ -6,6 +6,7 @@ import re
 import shutil
 
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -20,6 +21,7 @@ from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
+from poetry.installation.wheel_installer import WheelInstaller
 from poetry.repositories.pool import Pool
 from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
@@ -95,9 +97,15 @@ def pool():
 @pytest.fixture()
 def mock_file_downloads(http):
     def callback(request, uri, headers):
+        name = Path(urlparse(uri).path).name
+
         fixture = Path(__file__).parent.parent.joinpath(
-            "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            "repositories/fixtures/pypi.org/dists/" + name
         )
+        if not fixture.exists():
+            fixture = Path(__file__).parent.parent.joinpath(
+                "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
+            )
 
         with fixture.open("rb") as f:
             return [200, headers, f.read()]
@@ -129,6 +137,7 @@ def test_execute_executes_a_batch_of_operations(
     pip_editable_install = mocker.patch(
         "poetry.installation.executor.pip_editable_install", unsafe=not PY36
     )
+    wheel_install = mocker.patch.object(WheelInstaller, "install")
 
     config = Config()
     config.merge({"cache-dir": tmp_dir})
@@ -199,9 +208,11 @@ Package operations: 4 installs, 1 update, 1 removal
     expected = set(expected.splitlines())
     output = set(io.fetch_output().splitlines())
     assert expected == output
-    assert 5 == len(env.executed)
+    # One pip uninstall command
+    assert 1 == len(env.executed)
     assert 0 == return_code
     pip_editable_install.assert_called_once()
+    assert wheel_install.call_count == 4
 
 
 def test_execute_shows_skipped_operations_if_verbose(
@@ -248,30 +259,25 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_works_with_ansi_output(
-    mocker, config, pool, io_decorated, tmp_dir, mock_file_downloads, env
+    config, pool, io_decorated, tmp_dir, mock_file_downloads, env, wheel
 ):
     config = Config()
     config.merge({"cache-dir": tmp_dir})
 
     executor = Executor(env, pool, config, io_decorated)
 
-    install_output = (
-        "some string that does not contain a keyb0ard !nterrupt or cance11ed by u$er"
-    )
-    mocker.patch.object(env, "_run", return_value=install_output)
     return_code = executor.execute(
         [
-            Install(Package("pytest", "3.5.2")),
+            Install(Package("clikit", "0.2.4")),
         ]
     )
-    env._run.assert_called_once()
 
     expected = [
         "\x1b[39;1mPackage operations\x1b[39;22m: \x1b[34m1\x1b[39m install, \x1b[34m0\x1b[39m updates, \x1b[34m0\x1b[39m removals",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
-        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m3.5.2\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
-        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[32m3.5.2\x1b[39m\x1b[39m)\x1b[39m",  # finished
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mclikit\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m0.2.4\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mPending...\x1b[39m",
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mclikit\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m0.2.4\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mDownloading...\x1b[39m",
+        "\x1b[34;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mclikit\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m0.2.4\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m",
+        "\x1b[32;1m•\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mclikit\x1b[39m\x1b[39m (\x1b[39m\x1b[32m0.2.4\x1b[39m\x1b[39m)\x1b[39m",  # finished
     ]
     output = io_decorated.fetch_output()
     # hint: use print(repr(output)) if you need to debug this
@@ -282,28 +288,23 @@ def test_execute_works_with_ansi_output(
 
 
 def test_execute_works_with_no_ansi_output(
-    mocker, config, pool, io_not_decorated, tmp_dir, mock_file_downloads, env
+    config, pool, io_not_decorated, tmp_dir, mock_file_downloads, env
 ):
     config = Config()
     config.merge({"cache-dir": tmp_dir})
 
     executor = Executor(env, pool, config, io_not_decorated)
 
-    install_output = (
-        "some string that does not contain a keyb0ard !nterrupt or cance11ed by u$er"
-    )
-    mocker.patch.object(env, "_run", return_value=install_output)
     return_code = executor.execute(
         [
-            Install(Package("pytest", "3.5.2")),
+            Install(Package("clikit", "0.2.4")),
         ]
     )
-    env._run.assert_called_once()
 
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
 
-  • Installing pytest (3.5.2)
+  • Installing clikit (0.2.4)
 """
     expected = set(expected.splitlines())
     output = set(io_not_decorated.fetch_output().splitlines())

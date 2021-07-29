@@ -4,9 +4,14 @@ import sys
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Iterator
+from typing import Tuple
 from typing import Union
+from typing import cast
 
 from installer.destinations import SchemeDictionaryDestination as BaseDestination
+from installer.records import parse_record_file
+from installer.sources import WheelFile as BaseWheelFile
 
 from poetry import __version__
 from poetry.utils._compat import WINDOWS
@@ -19,6 +24,29 @@ if TYPE_CHECKING:
     from installer.utils import Scheme
 
     from poetry.utils.env import Env
+
+
+class WheelFile(BaseWheelFile):
+    def get_contents(
+        self,
+    ) -> Iterator[Tuple[Tuple[Union[Path, str], str, str], "BinaryIO"]]:
+        record_lines = self.read_dist_info("RECORD").splitlines()
+        records = parse_record_file(record_lines)
+        record_mapping = {record[0]: record for record in records}
+
+        for item in self._zipfile.infolist():
+            if item.is_dir():
+                continue
+
+            record = record_mapping.pop(item.filename)
+            assert record is not None, "In {}, {} is not mentioned in RECORD".format(
+                self._zipfile.filename,
+                item.filename,
+            )  # should not happen for valid wheels
+
+            with self._zipfile.open(item) as stream:
+                stream_casted = cast("BinaryIO", stream)
+                yield record, stream_casted
 
 
 class WheelDestination(BaseDestination):
@@ -77,7 +105,6 @@ class WheelInstaller:
 
     def install(self, wheel: Path) -> None:
         from installer import install
-        from installer.sources import WheelFile
 
         with WheelFile.open(wheel.as_posix()) as source:
             install(

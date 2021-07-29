@@ -11,7 +11,6 @@ from tomlkit.items import Table
 from poetry.config.source import Source
 from poetry.console.commands.command import Command
 from poetry.factory import Factory
-from poetry.repositories import Pool
 
 
 class SourceAddCommand(Command):
@@ -89,13 +88,14 @@ class SourceAddCommand(Command):
             self.line(f"Adding source with name <c1>{name}</c1>.")
             sources.append(self.source_to_table(new_source))
 
+        self.poetry.config.merge(
+            {"sources": {source["name"]: source for source in sources}}
+        )
+
         # ensure new source is valid. eg: invalid name etc.
-        self.poetry._pool = Pool()
         try:
-            Factory.configure_sources(
-                self.poetry, sources, self.poetry.config, NullIO()
-            )
-            self.poetry.pool.repository(name)
+            pool = Factory.create_pool(self.poetry.config, NullIO())
+            pool.repository(name)
         except ValueError as e:
             self.line_error(
                 f"<error>Failed to validate addition of <c1>{name}</c1>: {e}</error>"

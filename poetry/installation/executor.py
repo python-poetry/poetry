@@ -488,7 +488,7 @@ class Executor:
         )
         self._write(operation, message)
 
-        return self._remove(operation)
+        return self._remove(operation.package)
 
     def _install(self, operation: Union[Install, Update]) -> int:
         package = operation.package
@@ -520,9 +520,7 @@ class Executor:
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
 
-    def _remove(self, operation: Uninstall) -> int:
-        package = operation.package
-
+    def _remove(self, package: "Package") -> int:
         # If we have a VCS package, remove its source directory
         if package.source_type == "git":
             src_dir = self._env.path / "src" / package.name
@@ -597,9 +595,12 @@ class Executor:
         archive = self._prepare_archive(operation)
 
         try:
-            return self.pip_install(
-                str(archive), upgrade=operation.job_type == "update"
-            )
+            if operation.job_type == "update":
+                # Uninstall first
+                # TODO: Make an uninstaller and find a way to rollback in case the new package can't be installed
+                self._remove(operation.initial_package)
+
+            self._wheel_installer.install(archive)
         finally:
             archive.unlink()
 
