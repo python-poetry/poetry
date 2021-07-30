@@ -1,4 +1,5 @@
 import logging
+import sys
 import tempfile
 
 import pytest
@@ -595,3 +596,46 @@ A = []
 """
 
     assert expected == content
+
+
+@pytest.mark.skipif(sys.version_info[:2] == (3, 5), reason="Skip for Python 3.5")
+def test_locked_repository_uses_root_dir_of_package(locker, mocker):
+    content = """\
+[[package]]
+name = "lib-a"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "^2.7.9"
+develop = true
+
+[package.dependencies]
+lib-b = {path = "../libB", develop = true}
+
+[package.source]
+type = "directory"
+url = "lib/libA"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+lib-a = []
+lib-b = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+    create_dependency_patch = mocker.patch("poetry.factory.Factory.create_dependency")
+    locker.locked_repository()
+
+    create_dependency_patch.assert_called_once_with(
+        "lib-b", {"develop": True, "path": "../libB"}, root_dir=mocker.ANY
+    )
+    call_kwargs = create_dependency_patch.call_args[1]
+    root_dir = call_kwargs["root_dir"]
+    assert root_dir.match("*/lib/libA")
+    # relative_to raises an exception if not relative - is_relative_to comes in py3.9
+    assert root_dir.relative_to(locker.lock.path.parent.resolve()) is not None
