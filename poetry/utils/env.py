@@ -753,7 +753,7 @@ class EnvManager(object):
                     "</>"
                 )
 
-                return SystemEnv(Path(sys.prefix))
+                return self.get_system_env()
 
             io.write_line(
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
