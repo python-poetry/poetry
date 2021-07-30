@@ -590,7 +590,7 @@ class EnvManager:
             create_venv = self._poetry.config.get("virtualenvs.create", True)
 
             if not create_venv:
-                return SystemEnv(Path(sys.prefix))
+                return self.get_system_env()
 
             venv_path = self._poetry.config.get("virtualenvs.path")
             if venv_path is None:
@@ -603,7 +603,7 @@ class EnvManager:
             venv = venv_path / name
 
             if not venv.exists():
-                return SystemEnv(Path(sys.prefix))
+                return self.get_system_env()
 
             return VirtualEnv(venv)
 
@@ -872,7 +872,7 @@ class EnvManager:
                     "</>"
                 )
 
-                return SystemEnv(Path(sys.prefix))
+                return self.get_system_env()
 
             io.write_line(
                 "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
@@ -1020,7 +1020,7 @@ class EnvManager:
             else:
                 prefix = base_prefix
 
-        return SystemEnv(prefix, base_prefix)
+        return SystemEnv(prefix)
 
     @classmethod
     def get_base_prefix(cls) -> Path:
