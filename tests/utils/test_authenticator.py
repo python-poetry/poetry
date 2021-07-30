@@ -5,8 +5,14 @@ import httpretty
 import pytest
 import requests
 
-from poetry.installation.authenticator import Authenticator
 from poetry.io.null_io import NullIO
+from poetry.utils.authenticator import Authenticator
+
+
+class SimpleCredential:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
 
 
 @pytest.fixture()
@@ -50,7 +56,9 @@ def test_authenticator_uses_credentials_from_config_if_not_provided(
     assert "Basic YmFyOmJheg==" == request.headers["Authorization"]
 
 
-def test_authenticator_uses_username_only_credentials(config, mock_remote, http):
+def test_authenticator_uses_username_only_credentials(
+    config, mock_remote, http, with_simple_keyring
+):
     config.merge(
         {
             "repositories": {"foo": {"url": "https://foo.bar/simple/"}},
@@ -83,7 +91,7 @@ def test_authenticator_uses_password_only_credentials(config, mock_remote, http)
 
 
 def test_authenticator_uses_empty_strings_as_default_password(
-    config, mock_remote, http
+    config, mock_remote, http, with_simple_keyring
 ):
     config.merge(
         {
@@ -109,6 +117,38 @@ def test_authenticator_uses_empty_strings_as_default_username(
             "http-basic": {"foo": {"username": None, "password": "bar"}},
         }
     )
+
+    authenticator = Authenticator(config, NullIO())
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.last_request()
+
+    assert "Basic OmJhcg==" == request.headers["Authorization"]
+
+
+def test_authenticator_falls_back_to_keyring_url(
+    config, mock_remote, http, with_simple_keyring, dummy_keyring
+):
+    config.merge({"repositories": {"foo": {"url": "https://foo.bar/simple/"}}})
+
+    dummy_keyring.set_password(
+        "https://foo.bar/simple/", None, SimpleCredential(None, "bar")
+    )
+
+    authenticator = Authenticator(config, NullIO())
+    authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")
+
+    request = http.last_request()
+
+    assert "Basic OmJhcg==" == request.headers["Authorization"]
+
+
+def test_authenticator_falls_back_to_keyring_netloc(
+    config, mock_remote, http, with_simple_keyring, dummy_keyring
+):
+    config.merge({"repositories": {"foo": {"url": "https://foo.bar/simple/"}}})
+
+    dummy_keyring.set_password("foo.bar", None, SimpleCredential(None, "bar"))
 
     authenticator = Authenticator(config, NullIO())
     authenticator.request("get", "https://foo.bar/files/foo-0.1.0.tar.gz")

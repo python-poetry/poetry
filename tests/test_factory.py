@@ -147,13 +147,13 @@ def test_create_poetry_with_multi_constraints_dependency():
     assert len(package.requires) == 2
 
 
-def test_poetry_with_default_source():
+def test_poetry_with_default_source(with_simple_keyring):
     poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
 
     assert 1 == len(poetry.pool.repositories)
 
 
-def test_poetry_with_non_default_source():
+def test_poetry_with_non_default_source(with_simple_keyring):
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_source")
 
     assert len(poetry.pool.repositories) == 2
@@ -167,7 +167,7 @@ def test_poetry_with_non_default_source():
     assert isinstance(poetry.pool.repositories[1], PyPiRepository)
 
 
-def test_poetry_with_non_default_secondary_source():
+def test_poetry_with_non_default_secondary_source(with_simple_keyring):
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_secondary_source")
 
     assert len(poetry.pool.repositories) == 2
@@ -183,7 +183,7 @@ def test_poetry_with_non_default_secondary_source():
     assert isinstance(repository, LegacyRepository)
 
 
-def test_poetry_with_non_default_multiple_secondary_sources():
+def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring):
     poetry = Factory().create_poetry(
         fixtures_dir / "with_non_default_multiple_secondary_sources"
     )
@@ -205,7 +205,7 @@ def test_poetry_with_non_default_multiple_secondary_sources():
     assert isinstance(repository, LegacyRepository)
 
 
-def test_poetry_with_non_default_multiple_sources():
+def test_poetry_with_non_default_multiple_sources(with_simple_keyring):
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_multiple_sources")
 
     assert len(poetry.pool.repositories) == 3
@@ -236,7 +236,7 @@ def test_poetry_with_no_default_source():
     assert isinstance(poetry.pool.repositories[0], PyPiRepository)
 
 
-def test_poetry_with_two_default_sources():
+def test_poetry_with_two_default_sources(with_simple_keyring):
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
 

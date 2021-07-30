@@ -11,6 +11,7 @@ import httpretty
 import pytest
 
 from cleo import CommandTester
+from keyring.backend import KeyringBackend
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
@@ -51,6 +52,61 @@ class Config(BaseConfig):
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).all()
+
+
+class DummyBackend(KeyringBackend):
+    def __init__(self):
+        self._passwords = {}
+
+    @classmethod
+    def priority(cls):
+        return 42
+
+    def set_password(self, service, username, password):
+        self._passwords[service] = {username: password}
+
+    def get_password(self, service, username):
+        return self._passwords.get(service, {}).get(username)
+
+    def get_credential(self, service, username):
+        return self._passwords.get(service, {}).get(username)
+
+    def delete_password(self, service, username):
+        if service in self._passwords and username in self._passwords[service]:
+            del self._passwords[service][username]
+
+
+@pytest.fixture()
+def dummy_keyring():
+    return DummyBackend()
+
+
+@pytest.fixture()
+def with_simple_keyring(dummy_keyring):
+    import keyring
+
+    keyring.set_keyring(dummy_keyring)
+
+
+@pytest.fixture()
+def with_fail_keyring():
+    import keyring
+
+    from keyring.backends.fail import Keyring
+
+    keyring.set_keyring(Keyring())
+
+
+@pytest.fixture()
+def with_chained_keyring(mocker):
+    from keyring.backends.fail import Keyring
+
+    mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
+    import keyring
+
+    from keyring.backends.chainer import ChainerBackend
+
+    keyring.set_keyring(ChainerBackend())
 
 
 @pytest.fixture

@@ -27,7 +27,7 @@ from poetry.utils.patterns import wheel_file_re
 
 from ..config.config import Config
 from ..inspection.info import PackageInfo
-from ..installation.authenticator import Authenticator
+from ..utils.authenticator import Authenticator
 from .exceptions import PackageNotFound
 from .exceptions import RepositoryError
 from .pypi_repository import PyPiRepository

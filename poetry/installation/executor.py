@@ -23,7 +23,7 @@ from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
 
-from .authenticator import Authenticator
+from ..utils.authenticator import Authenticator
 from .chef import Chef
 from .chooser import Chooser
 from .operations.install import Install
