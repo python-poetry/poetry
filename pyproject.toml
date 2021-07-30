@@ -32,7 +32,7 @@ generate-setup-file = false
 python = "^3.6"
 
 poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "master" }
-cleo = "^1.0.0a1"
+cleo = "^1.0.0a4"
 crashtest = "^0.3.0"
 requests = "^2.18"
 cachy = "^0.3.0"

@@ -26,6 +26,12 @@ from .command_loader import CommandLoader
 from .commands.command import Command
 
 
+if TYPE_CHECKING:
+    from crashtest.solution_providers.solution_provider_repository import (
+        SolutionProviderRepository,
+    )
+
+
 def load_command(name: str) -> Callable:
     def _load() -> Type[Command]:
         module = import_module(
@@ -158,6 +164,13 @@ class Application(BaseApplication):
         self._io = io
 
         return io
+
+    def render_error(self, error: Exception, io: IO) -> None:
+        # We set the solution provider repository here to load providers
+        # only when an error occurs
+        self.set_solution_provider_repository(self._get_solution_provider_repository())
+
+        super().render_error(error, io)
 
     def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
@@ -329,6 +342,20 @@ class Application(BaseApplication):
         )
 
         return definition
+
+    def _get_solution_provider_repository(self) -> "SolutionProviderRepository":
+        from crashtest.solution_providers.solution_provider_repository import (
+            SolutionProviderRepository,
+        )
+
+        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (
+            PythonRequirementSolutionProvider,
+        )
+
+        repository = SolutionProviderRepository()
+        repository.register_solution_providers([PythonRequirementSolutionProvider])
+
+        return repository
 
 
 def main() -> int:
