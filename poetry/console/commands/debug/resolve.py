@@ -86,7 +86,7 @@ class DebugResolveCommand(InitCommand):
 
         solver = Solver(package, pool, Repository(), Repository(), self._io)
 
-        ops = solver.solve()
+        ops = solver.solve().calculate_operations()
 
         self.line("")
         self.line("Resolution results:")
@@ -123,7 +123,7 @@ class DebugResolveCommand(InitCommand):
 
             solver = Solver(package, pool, Repository(), Repository(), NullIO())
             with solver.use_environment(env):
-                ops = solver.solve()
+                ops = solver.solve().calculate_operations()
 
         for op in ops:
             if self.option("install") and op.skipped:

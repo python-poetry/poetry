@@ -42,6 +42,11 @@ class InstallCommand(InstallerCommand):
             "Only install the development dependencies. (<warning>Deprecated</warning>)",
         ),
         option(
+            "sync",
+            None,
+            "Synchronize the environment with the locked packages and the specified groups.",
+        ),
+        option(
             "no-root", None, "Do not install the root package (the current project)."
         ),
         option(
@@ -138,11 +143,20 @@ dependencies and not including the current project, run the command with the
         if self.option("default"):
             only_groups.append("default")
 
+        with_synchronization = self.option("sync")
+        if self.option("remove-untracked"):
+            self.line(
+                "<warning>The `<fg=yellow;options=bold>--remove-untracked</>` option is deprecated,"
+                "use the `<fg=yellow;options=bold>--sync</>` option instead.</warning>"
+            )
+
+            with_synchronization = True
+
         self._installer.only_groups(only_groups)
         self._installer.without_groups(excluded_groups)
         self._installer.with_groups(included_groups)
         self._installer.dry_run(self.option("dry-run"))
-        self._installer.remove_untracked(self.option("remove-untracked"))
+        self._installer.requires_synchronization(with_synchronization)
         self._installer.verbose(self._io.is_verbose())
 
         return_code = self._installer.run()

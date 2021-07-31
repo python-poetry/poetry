@@ -161,7 +161,7 @@ lists all packages available."""
         )
         solver.provider.load_deferred(False)
         with solver.use_environment(self.env):
-            ops = solver.solve()
+            ops = solver.solve().calculate_operations()
 
         required_locked_packages = set([op.package for op in ops if not op.skipped])
 
