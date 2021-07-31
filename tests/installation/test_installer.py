@@ -88,8 +88,9 @@ class CustomInstalledRepository(InstalledRepository):
 
 
 class Locker(BaseLocker):
-    def __init__(self):
-        self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
+    def __init__(self, lock=None):
+        lock = lock or Path.cwd().joinpath("poetry.lock")
+        self._lock = TOMLFile(lock)
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
@@ -129,10 +130,15 @@ class Locker(BaseLocker):
         self._lock_data = data
 
 
+@pytest.fixture
+def cwd(fixture_base):
+    return fixture_base
+
+
 @pytest.fixture()
-def package():
+def package(cwd):
     p = ProjectPackage("root", "1.0")
-    p.root_dir = Path.cwd()
+    p.root_dir = cwd
 
     return p
 
@@ -156,8 +162,11 @@ def installed():
 
 
 @pytest.fixture()
-def locker():
-    return Locker()
+def locker(cwd):
+    # the lockfile only matters insofar as the paths of file dependencies are stored
+    # relative to its path
+    lockfile = cwd / "poetry.lock"
+    return Locker(lock=lockfile)
 
 
 @pytest.fixture()
@@ -1203,7 +1212,7 @@ def test_run_installs_with_local_poetry_file_transitive(
 def test_run_installs_with_local_setuptools_directory(
     installer, locker, repo, package, tmpdir, fixture_dir
 ):
-    file_path = fixture_dir("project_with_setup/")
+    file_path = fixture_dir("project_with_setup")
     package.add_dependency(
         Factory.create_dependency("project-with-setup", {"path": str(file_path)})
     )

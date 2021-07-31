@@ -24,7 +24,7 @@ extras_b = ["cachy (>=0.2.0)"]
 
 [package.source]
 type = "directory"
-url = "tests/fixtures/project_with_extras"
+url = "project_with_extras"
 
 [metadata]
 content-hash = "123456789"

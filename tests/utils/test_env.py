@@ -51,10 +51,8 @@ class MockVirtualEnv(VirtualEnv):
 
 
 @pytest.fixture()
-def poetry(config):
-    poetry = Factory().create_poetry(
-        Path(__file__).parent.parent / "fixtures" / "simple_project"
-    )
+def poetry(config, fixture_dir):
+    poetry = Factory().create_poetry(fixture_dir("simple_project"))
     poetry.set_config(config)
 
     return poetry

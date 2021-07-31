@@ -4,12 +4,10 @@ import pytest
 
 
 @pytest.fixture
-def repository_cache_dir(monkeypatch, tmpdir):
-    from pathlib import Path
-
+def repository_cache_dir(monkeypatch, tmp_path):
     import poetry.locations
 
-    path = Path(str(tmpdir))
+    path = tmp_path / "cache"
     monkeypatch.setattr(poetry.locations, "REPOSITORY_CACHE_DIR", path)
     return path
 
@@ -26,8 +24,8 @@ def repository_two():
 
 @pytest.fixture
 def mock_caches(repository_cache_dir, repository_one, repository_two):
-    (repository_cache_dir / repository_one).mkdir()
-    (repository_cache_dir / repository_two).mkdir()
+    (repository_cache_dir / repository_one).mkdir(parents=True)
+    (repository_cache_dir / repository_two).mkdir(parents=True)
 
 
 @pytest.fixture
