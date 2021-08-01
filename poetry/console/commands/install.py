@@ -107,13 +107,13 @@ dependencies and not including the current project, run the command with the
         only_groups = []
         if self.option("no-dev"):
             self.line(
-                "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is deprecated,"
+                "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is deprecated, "
                 "use the `<fg=yellow;options=bold>--without dev</>` notation instead.</warning>"
             )
             excluded_groups.append("dev")
         elif self.option("dev-only"):
             self.line(
-                "<warning>The `<fg=yellow;options=bold>--dev-only</>` option is deprecated,"
+                "<warning>The `<fg=yellow;options=bold>--dev-only</>` option is deprecated, "
                 "use the `<fg=yellow;options=bold>--only dev</>` notation instead.</warning>"
             )
             only_groups.append("dev")
@@ -146,7 +146,7 @@ dependencies and not including the current project, run the command with the
         with_synchronization = self.option("sync")
         if self.option("remove-untracked"):
             self.line(
-                "<warning>The `<fg=yellow;options=bold>--remove-untracked</>` option is deprecated,"
+                "<warning>The `<fg=yellow;options=bold>--remove-untracked</>` option is deprecated, "
                 "use the `<fg=yellow;options=bold>--sync</>` option instead.</warning>"
             )
 
