@@ -1,5 +1,27 @@
 # Change Log
 
+## [1.2.0a2] - 2021-08-01
+
+### Added
+
+- Poetry now supports dependency groups. ([#4260](https://github.com/python-poetry/poetry/pull/4260))
+- The `install` command now supports a `--sync` option to synchronize the environment with the lock file. ([#4336](https://github.com/python-poetry/poetry/pull/4336))
+
+### Changed
+
+- Improved the way credentials are retrieved to better support keyring backends. ([#4086](https://github.com/python-poetry/poetry/pull/4086))
+- The `--remove-untracked` option of the `install` command is now deprecated in favor of the new `--sync` option. ([#4336](https://github.com/python-poetry/poetry/pull/4336))
+- The user experience when installing dependency groups has been improved. ([#4336](https://github.com/python-poetry/poetry/pull/4336))
+
+### Fixed
+
+- Fixed performance issues when resolving dependencies. ([#3839](https://github.com/python-poetry/poetry/pull/3839))
+- Fixed an issue where transitive dependencies of directory or VCS dependencies were not installed or otherwise removed. ([#4202](https://github.com/python-poetry/poetry/pull/4202))
+- Fixed the behavior of the `init` command in non-interactive mode. ([#2899](https://github.com/python-poetry/poetry/pull/2899))
+- Fixed the detection of the system environment when the setting `virtualenvs.create` is deactivated. ([#4329](https://github.com/python-poetry/poetry/pull/4329))
+- Fixed the display of possible solutions for some common errors. ([#4332](https://github.com/python-poetry/poetry/pull/4332))
+
+
 ## [1.2.0a1] - 2021-05-21
 
 This release is the first testing release of the upcoming 1.2.0 version.
@@ -1123,7 +1145,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0a1...master
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0a2...master
+[1.2.0a2]: https://github.com/python-poetry/poetry/compare/1.2.0a2
 [1.2.0a1]: https://github.com/python-poetry/poetry/compare/1.2.0a1
 [1.1.4]: https://github.com/python-poetry/poetry/compare/1.1.4
 [1.1.3]: https://github.com/python-poetry/poetry/compare/1.1.3
