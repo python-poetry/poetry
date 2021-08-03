@@ -47,7 +47,7 @@ class Locker:
 
     _VERSION = "1.1"
 
-    _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
+    _relevant_keys = ["dependencies", "group", "source", "extras"]
 
     def __init__(self, lock: Union[str, Path], local_config: dict) -> None:
         self._lock = TOMLFile(lock)
@@ -128,7 +128,8 @@ class Locker:
                 source_resolved_reference=source.get("resolved_reference"),
             )
             package.description = info.get("description", "")
-            package.category = info["category"]
+            package.category = info.get("category", "main")
+            package.groups = info.get("groups", ["default"])
             package.optional = info["optional"]
             if "hashes" in lock_data["metadata"]:
                 # Old lock so we create dummy files from the hashes
@@ -176,20 +177,22 @@ class Locker:
                         package.marker = parse_marker(split_dep[1].strip())
 
             for dep_name, constraint in info.get("dependencies", {}).items():
+
+                root_dir = self._lock.path.parent
+                if package.source_type == "directory":
+                    # root dir should be the source of the package relative to the lock path
+                    root_dir = Path(package.source_url)
+
                 if isinstance(constraint, list):
                     for c in constraint:
                         package.add_dependency(
-                            Factory.create_dependency(
-                                dep_name, c, root_dir=self._lock.path.parent
-                            )
+                            Factory.create_dependency(dep_name, c, root_dir=root_dir)
                         )
 
                     continue
 
                 package.add_dependency(
-                    Factory.create_dependency(
-                        dep_name, constraint, root_dir=self._lock.path.parent
-                    )
+                    Factory.create_dependency(dep_name, constraint, root_dir=root_dir)
                 )
 
             if "develop" in info:

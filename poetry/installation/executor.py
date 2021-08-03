@@ -24,8 +24,8 @@ from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.pip import pip_editable_install
 
+from ..utils.authenticator import Authenticator
 from ..utils.pip import pip_install
-from .authenticator import Authenticator
 from .chef import Chef
 from .chooser import Chooser
 from .operations.install import Install

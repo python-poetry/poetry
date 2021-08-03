@@ -86,7 +86,7 @@ resolved_reference = "123456"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = [
@@ -295,7 +295,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -335,7 +335,7 @@ foo = ["B (>=1.0.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -348,7 +348,7 @@ A = []
 
 
 def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
-    content = u"""[[package]]
+    content = """[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -365,7 +365,7 @@ foo = ["bar"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -410,7 +410,7 @@ reference = "legacy"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -497,7 +497,7 @@ B = {version = "^1.0.0", extras = ["a", "b", "c"], optional = true}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -591,10 +591,54 @@ F = {git = "https://github.com/python-poetry/poetry.git", branch = "foo"}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
 """
 
     assert expected == content
+
+
+def test_locked_repository_uses_root_dir_of_package(locker, mocker):
+    content = """\
+[[package]]
+name = "lib-a"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "^2.7.9"
+develop = true
+
+[package.dependencies]
+lib-b = {path = "../libB", develop = true}
+
+[package.source]
+type = "directory"
+url = "lib/libA"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+lib-a = []
+lib-b = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+    create_dependency_patch = mocker.patch(
+        "poetry.factory.Factory.create_dependency", autospec=True
+    )
+    locker.locked_repository()
+
+    create_dependency_patch.assert_called_once_with(
+        "lib-b", {"develop": True, "path": "../libB"}, root_dir=mocker.ANY
+    )
+    call_kwargs = create_dependency_patch.call_args[1]
+    root_dir = call_kwargs["root_dir"]
+    assert root_dir.match("*/lib/libA")
+    # relative_to raises an exception if not relative - is_relative_to comes in py3.9
+    assert root_dir.relative_to(locker.lock.path.parent.resolve()) is not None

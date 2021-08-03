@@ -37,7 +37,9 @@ class UpdateCommand(InstallerCommand):
         if packages:
             self._installer.whitelist({name: "*" for name in packages})
 
-        self._installer.dev_mode(not self.option("no-dev"))
+        if self.option("no-dev"):
+            self._installer.with_groups(["dev"])
+
         self._installer.dry_run(self.option("dry-run"))
         self._installer.execute_operations(not self.option("lock"))
 

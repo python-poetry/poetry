@@ -7,7 +7,6 @@ from pathlib import Path
 from poetry.console.application import Application
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.toml.file import TOMLFile
@@ -28,15 +27,18 @@ def get_package(name, version):
 
 
 def get_dependency(
-    name, constraint=None, category="main", optional=False, allows_prereleases=False
+    name, constraint=None, groups=None, optional=False, allows_prereleases=False
 ):
-    return Dependency(
-        name,
-        constraint or "*",
-        category=category,
-        optional=optional,
-        allows_prereleases=allows_prereleases,
-    )
+    if constraint is None:
+        constraint = "*"
+
+    if isinstance(constraint, str):
+        constraint = {"version": constraint}
+
+    constraint["optional"] = optional
+    constraint["allow_prereleases"] = allows_prereleases
+
+    return Factory.create_dependency(name, constraint or "*", groups=groups)
 
 
 def fixture(path=None):

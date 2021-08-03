@@ -30,7 +30,7 @@ packages = []
 
 [tool.poetry.dependencies]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 """
 
 BUILD_SYSTEM_MIN_VERSION: Optional[str] = None
@@ -143,8 +143,13 @@ class Layout:
         for dep_name, dep_constraint in self._dependencies.items():
             poetry_content["dependencies"][dep_name] = dep_constraint
 
-        for dep_name, dep_constraint in self._dev_dependencies.items():
-            poetry_content["dev-dependencies"][dep_name] = dep_constraint
+        if self._dev_dependencies:
+            for dep_name, dep_constraint in self._dev_dependencies.items():
+                poetry_content["group"]["dev"]["dependencies"][
+                    dep_name
+                ] = dep_constraint
+        else:
+            del poetry_content["group"]
 
         # Add build system
         build_system = table()
