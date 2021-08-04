@@ -14,16 +14,19 @@ name       : existing
 url        : https://existing.com
 default    : no
 secondary  : no
+targeted   : no
 
 name       : one
 url        : https://one.com
 default    : no
 secondary  : no
+targeted   : no
 
 name       : two
 url        : https://two.com
 default    : no
 secondary  : no
+targeted   : no
 """.splitlines()
     assert (
         list(map(lambda l: l.strip(), tester.io.fetch_output().strip().splitlines()))
@@ -40,6 +43,7 @@ name       : one
 url        : https://one.com
 default    : no
 secondary  : no
+targeted   : no
 """.splitlines()
     assert (
         list(map(lambda l: l.strip(), tester.io.fetch_output().strip().splitlines()))
@@ -56,11 +60,13 @@ name       : one
 url        : https://one.com
 default    : no
 secondary  : no
+targeted   : no
 
 name       : two
 url        : https://two.com
 default    : no
 secondary  : no
+targeted   : no
 """.splitlines()
     assert (
         list(map(lambda l: l.strip(), tester.io.fetch_output().strip().splitlines()))

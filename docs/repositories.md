@@ -148,6 +148,30 @@ a custom certificate authority or client certificates, similarly refer to the ex
 `certificates` section. Poetry will use these values to authenticate to your private repository when downloading or
 looking for packages.
 
+#### Using targeted repositories
+
+Some repositories are slow and can negatively affect the speed of dependency resolution. You can add
+slow repositories using `targeted` mode, which forces poetry to only communicate with the repository
+for packages that explicitly use the repository as their source.
+
+```toml
+[[tool.poetry.source]]
+name = "slow"
+url = "https://foo.bar/simple/"
+targeted = true
+
+[tool.poetry.dependencies]
+python = "^3"
+your_package = { version = "^1", source="slow" }
+```
+
+This way, poetry will not scan your repository for any packages except those that you specify.
+
+{{% note %}}
+
+This is strict, in that dependencies of your targeted package will also *not* use your targeted repository unless also explicitly configured to do so.
+
+{{% /note %}}
 
 ### Disabling the PyPI repository
 

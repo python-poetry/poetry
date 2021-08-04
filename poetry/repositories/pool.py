@@ -24,6 +24,7 @@ class Pool(BaseRepository):
 
         self._lookup: Dict[str, int] = {}
         self._repositories: List[Repository] = []
+        self._targeted: Dict[str, Repository] = {}
         self._default = False
         self._has_primary_repositories = False
         self._secondary_start_idx = None
@@ -48,7 +49,7 @@ class Pool(BaseRepository):
     def has_repository(self, name: str) -> bool:
         name = name.lower() if name is not None else None
 
-        return name in self._lookup
+        return name in self._lookup or name in self._targeted
 
     def repository(self, name: str) -> Repository:
         if name is not None:
@@ -57,10 +58,17 @@ class Pool(BaseRepository):
         if name in self._lookup:
             return self._repositories[self._lookup[name]]
 
+        if name in self._targeted:
+            return self._targeted[name]
+
         raise ValueError(f'Repository "{name}" does not exist.')
 
     def add_repository(
-        self, repository: Repository, default: bool = False, secondary: bool = False
+        self,
+        repository: Repository,
+        default: bool = False,
+        secondary: bool = False,
+        targeted: bool = False,
     ) -> "Pool":
         """
         Adds a repository to the pool.
@@ -87,6 +95,8 @@ class Pool(BaseRepository):
 
             self._repositories.append(repository)
             self._lookup[repository_name] = len(self._repositories) - 1
+        elif targeted and not secondary:
+            self._targeted[repository_name] = repository
         else:
             self._has_primary_repositories = True
             if self._secondary_start_idx is None:
@@ -113,6 +123,8 @@ class Pool(BaseRepository):
         idx = self._lookup.get(repository_name)
         if idx is not None:
             del self._repositories[idx]
+        elif repository_name in self._targeted:
+            del self._targeted[repository_name]
 
         return self
 
@@ -128,6 +140,7 @@ class Pool(BaseRepository):
         if (
             repository is not None
             and repository not in self._lookup
+            and repository not in self._targeted
             and not self._ignore_repository_names
         ):
             raise ValueError(f'Repository "{repository}" does not exist.')
@@ -159,6 +172,7 @@ class Pool(BaseRepository):
         if (
             repository is not None
             and repository not in self._lookup
+            and repository not in self._targeted
             and not self._ignore_repository_names
         ):
             raise ValueError(f'Repository "{repository}" does not exist.')

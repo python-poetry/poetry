@@ -51,6 +51,10 @@ class SourceShowCommand(Command):
                     "<info>secondary</>",
                     " : {}".format(bool_string.get(source.secondary, False)),
                 ],
+                [
+                    "<info>targeted</>",
+                    " : {}".format(bool_string.get(source.targeted, False)),
+                ],
             ]
             table.add_rows(rows)
             table.render()

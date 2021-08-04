@@ -140,6 +140,7 @@ class Factory(BaseFactory):
             repository = cls.create_legacy_repository(source, config)
             is_default = source.get("default", False)
             is_secondary = source.get("secondary", False)
+            is_targeted = source.get("targeted", False)
             if io.is_debug():
                 message = "Adding repository {} ({})".format(
                     repository.name, repository.url
@@ -148,10 +149,17 @@ class Factory(BaseFactory):
                     message += " and setting it as the default one"
                 elif is_secondary:
                     message += " and setting it as secondary"
+                elif is_targeted:
+                    message += " and using it only when requested"
 
                 io.write_line(message)
 
-            poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
+            poetry.pool.add_repository(
+                repository,
+                is_default,
+                secondary=is_secondary,
+                targeted=is_targeted,
+            )
 
         # Put PyPI last to prefer private repositories
         # unless we have no default source AND no primary sources

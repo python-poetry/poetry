@@ -523,6 +523,10 @@
                 "secondary": {
                     "type": "boolean",
                     "description": "Declare this repository as secondary, i.e. it will only be looked up last for packages."
+                },
+                "targeted": {
+                    "type": "boolean",
+                    "description": "Use this repository only when requested, i.e. it will only use for packages that request it as a source."
                 }
             }
         }

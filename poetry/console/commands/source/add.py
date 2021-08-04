@@ -36,6 +36,7 @@ class SourceAddCommand(Command):
             "you add other sources.",
         ),
         option("secondary", "s", "Set this source as secondary."),
+        option("targeted", "s", "Set this source as explicitly targeted."),
     ]
 
     @staticmethod
@@ -51,6 +52,7 @@ class SourceAddCommand(Command):
         url = self.argument("url")
         is_default = self.option("default")
         is_secondary = self.option("secondary")
+        is_targeted = self.option("targeted")
 
         if is_default and is_secondary:
             self.line_error(
@@ -58,8 +60,18 @@ class SourceAddCommand(Command):
             )
             return 1
 
+        if is_secondary and is_targeted:
+            self.line_error(
+                "Cannot configure a source as both <c1>secondary</c1> and <c1>targeted</c1>."
+            )
+            return 1
+
         new_source = Source(
-            name=name, url=url, default=is_default, secondary=is_secondary
+            name=name,
+            url=url,
+            default=is_default,
+            secondary=is_secondary,
+            targeted=is_targeted,
         )
         existing_sources = self.poetry.get_sources()
 
