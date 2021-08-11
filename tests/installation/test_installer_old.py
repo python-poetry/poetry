@@ -293,7 +293,7 @@ def test_run_install_no_group(installer, locker, repo, package, installed):
     assert len(updates) == 0
 
     removals = installer.installer.removals
-    assert len(removals) == 1
+    assert len(removals) == 0
 
 
 @pytest.mark.parametrize(
@@ -308,7 +308,7 @@ def test_run_install_no_group(installer, locker, repo, package, installed):
         )
     ],
 )
-def test_run_install_remove_untracked(
+def test_run_install_with_synchronization(
     managed_reserved_package_names, installer, locker, repo, package, installed
 ):
     package_a = get_package("a", "1.0")
@@ -364,7 +364,7 @@ def test_run_install_remove_untracked(
         }
     )
 
-    installer.remove_untracked(True)
+    installer.requires_synchronization(True)
     installer.run()
 
     installs = installer.installer.installs
@@ -374,6 +374,7 @@ def test_run_install_remove_untracked(
     assert len(updates) == 0
 
     removals = installer.installer.removals
+
     expected_removals = {
         package_b.name,
         package_c.name,

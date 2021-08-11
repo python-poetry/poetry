@@ -351,7 +351,7 @@ def test_run_install_no_group(installer, locker, repo, package, installed):
 
     assert 0 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
-    assert 1 == installer.executor.removals_count
+    assert 0 == installer.executor.removals_count
 
 
 def test_run_install_group_only(installer, locker, repo, package, installed):
@@ -362,7 +362,7 @@ def test_run_install_group_only(installer, locker, repo, package, installed):
 
     assert 0 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
-    assert 2 == installer.executor.removals_count
+    assert 0 == installer.executor.removals_count
 
 
 def test_run_install_with_optional_group_not_selected(
@@ -376,7 +376,207 @@ def test_run_install_with_optional_group_not_selected(
 
     assert 0 == installer.executor.installations_count
     assert 0 == installer.executor.updates_count
-    assert 1 == installer.executor.removals_count
+    assert 0 == installer.executor.removals_count
+
+
+def test_run_install_does_not_remove_locked_packages_if_installed_but_not_required(
+    installer, locker, repo, package, installed
+):
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+
+    repo.add_package(package_a)
+    installed.add_package(package_a)
+    repo.add_package(package_b)
+    installed.add_package(package_b)
+    repo.add_package(package_c)
+    installed.add_package(package_c)
+
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency(Factory.create_dependency(package_a.name, package_a.version))
+
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {package_a.name: [], package_b.name: [], package_c.name: []},
+            },
+        }
+    )
+
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 0 == installer.executor.removals_count
+
+
+def test_run_install_removes_locked_packages_if_installed_and_synchronization_is_required(
+    installer, locker, repo, package, installed
+):
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+
+    repo.add_package(package_a)
+    installed.add_package(package_a)
+    repo.add_package(package_b)
+    installed.add_package(package_b)
+    repo.add_package(package_c)
+    installed.add_package(package_c)
+
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency(Factory.create_dependency(package_a.name, package_a.version))
+
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {package_a.name: [], package_b.name: [], package_c.name: []},
+            },
+        }
+    )
+
+    installer.requires_synchronization(True)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 2 == installer.executor.removals_count
+
+
+def test_run_install_removes_no_longer_locked_packages_if_installed(
+    installer, locker, repo, package, installed
+):
+    package_a = get_package("a", "1.0")
+    package_b = get_package("b", "1.1")
+    package_c = get_package("c", "1.2")
+
+    repo.add_package(package_a)
+    installed.add_package(package_a)
+    repo.add_package(package_b)
+    installed.add_package(package_b)
+    repo.add_package(package_c)
+    installed.add_package(package_c)
+
+    installed.add_package(package)  # Root package never removed.
+
+    package.add_dependency(Factory.create_dependency(package_a.name, package_a.version))
+
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": package_a.name,
+                    "version": package_a.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_b.name,
+                    "version": package_b.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": package_c.name,
+                    "version": package_c.version.text,
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {package_a.name: [], package_b.name: [], package_c.name: []},
+            },
+        }
+    )
+
+    installer.update(True)
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 2 == installer.executor.removals_count
 
 
 def test_run_install_with_optional_group_selected(
@@ -406,7 +606,7 @@ def test_run_install_with_optional_group_selected(
         )
     ],
 )
-def test_run_install_remove_untracked(
+def test_run_install_with_synchronization(
     managed_reserved_package_names, installer, locker, repo, package, installed
 ):
     package_a = get_package("a", "1.0")
@@ -462,7 +662,7 @@ def test_run_install_remove_untracked(
         }
     )
 
-    installer.remove_untracked(True)
+    installer.requires_synchronization(True)
     installer.run()
 
     assert 0 == installer.executor.installations_count

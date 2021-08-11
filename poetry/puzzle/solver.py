@@ -16,9 +16,6 @@ from cleo.io.io import IO
 
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.installation.operations import Install
-from poetry.installation.operations import Uninstall
-from poetry.installation.operations import Update
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
@@ -37,7 +34,8 @@ if TYPE_CHECKING:
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
-    from poetry.installation.operations import OperationTypes
+
+    from .transaction import Transaction
 
 
 class Solver:
@@ -48,7 +46,6 @@ class Solver:
         installed: Repository,
         locked: Repository,
         io: IO,
-        remove_untracked: bool = False,
         provider: Optional[Provider] = None,
     ):
         self._package = package
@@ -62,39 +59,19 @@ class Solver:
 
         self._provider = provider
         self._overrides = []
-        self._remove_untracked = remove_untracked
-
-        self._preserved_package_names = None
 
     @property
     def provider(self) -> Provider:
         return self._provider
-
-    @property
-    def preserved_package_names(self):
-        if self._preserved_package_names is None:
-            self._preserved_package_names = {
-                self._package.name,
-                *Provider.UNSAFE_PACKAGES,
-            }
-
-            deps = {package.name for package in self._locked.packages}
-
-            # preserve pip/setuptools/wheel when not managed by poetry, this is so
-            # to avoid externally managed virtual environments causing unnecessary
-            # removals.
-            for name in {"pip", "wheel", "setuptools"}:
-                if name not in deps:
-                    self._preserved_package_names.add(name)
-
-        return self._preserved_package_names
 
     @contextmanager
     def use_environment(self, env: Env) -> None:
         with self.provider.use_environment(env):
             yield
 
-    def solve(self, use_latest: List[str] = None) -> List["OperationTypes"]:
+    def solve(self, use_latest: List[str] = None) -> "Transaction":
+        from .transaction import Transaction
+
         with self._provider.progress():
             start = time.time()
             packages, depths = self._solve(use_latest=use_latest)
@@ -110,121 +87,11 @@ class Solver:
                     f"Resolved with overrides: {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
-        operations = []
-        for i, package in enumerate(packages):
-            installed = False
-            for pkg in self._installed.packages:
-                if package.name == pkg.name:
-                    installed = True
-
-                    if pkg.source_type == "git" and package.source_type == "git":
-                        from poetry.core.vcs.git import Git
-
-                        # Trying to find the currently installed version
-                        pkg_source_url = Git.normalize_url(pkg.source_url)
-                        package_source_url = Git.normalize_url(package.source_url)
-                        for locked in self._locked.packages:
-                            if locked.name != pkg.name or locked.source_type != "git":
-                                continue
-
-                            locked_source_url = Git.normalize_url(locked.source_url)
-                            if (
-                                locked.name == pkg.name
-                                and locked.source_type == pkg.source_type
-                                and locked_source_url == pkg_source_url
-                                and locked.source_reference == pkg.source_reference
-                                and locked.source_resolved_reference
-                                == pkg.source_resolved_reference
-                            ):
-                                pkg = Package(
-                                    pkg.name,
-                                    locked.version,
-                                    source_type="git",
-                                    source_url=locked.source_url,
-                                    source_reference=locked.source_reference,
-                                    source_resolved_reference=locked.source_resolved_reference,
-                                )
-                                break
-
-                        if pkg_source_url != package_source_url or (
-                            (
-                                not pkg.source_resolved_reference
-                                or not package.source_resolved_reference
-                            )
-                            and pkg.source_reference != package.source_reference
-                            and not pkg.source_reference.startswith(
-                                package.source_reference
-                            )
-                            or (
-                                pkg.source_resolved_reference
-                                and package.source_resolved_reference
-                                and pkg.source_resolved_reference
-                                != package.source_resolved_reference
-                                and not pkg.source_resolved_reference.startswith(
-                                    package.source_resolved_reference
-                                )
-                            )
-                        ):
-                            operations.append(Update(pkg, package, priority=depths[i]))
-                        else:
-                            operations.append(
-                                Install(package).skip("Already installed")
-                            )
-                    elif package.version != pkg.version:
-                        # Checking version
-                        operations.append(Update(pkg, package, priority=depths[i]))
-                    elif pkg.source_type and package.source_type != pkg.source_type:
-                        operations.append(Update(pkg, package, priority=depths[i]))
-                    else:
-                        operations.append(
-                            Install(package, priority=depths[i]).skip(
-                                "Already installed"
-                            )
-                        )
-
-                    break
-
-            if not installed:
-                operations.append(Install(package, priority=depths[i]))
-
-        # Checking for removals
-        for pkg in self._locked.packages:
-            remove = True
-            for package in packages:
-                if pkg.name == package.name:
-                    remove = False
-                    break
-
-            if remove:
-                skip = True
-                for installed in self._installed.packages:
-                    if installed.name == pkg.name:
-                        skip = False
-                        break
-
-                op = Uninstall(pkg)
-                if skip:
-                    op.skip("Not currently installed")
-
-                operations.append(op)
-
-        if self._remove_untracked:
-            locked_names = {locked.name for locked in self._locked.packages}
-
-            for installed in self._installed.packages:
-                if installed.name in self.preserved_package_names:
-                    continue
-
-                if installed.name not in locked_names:
-                    operations.append(Uninstall(installed))
-
-        return sorted(
-            operations,
-            key=lambda o: (
-                -o.priority,
-                o.package.name,
-                o.package.version,
-            ),
+        return Transaction(
+            self._locked.packages,
+            list(zip(packages, depths)),
+            installed_packages=self._installed.packages,
+            root_package=self._package,
         )
 
     def solve_in_compatibility_mode(
