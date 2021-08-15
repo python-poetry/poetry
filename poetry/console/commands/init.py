@@ -424,6 +424,8 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         "git", url.url, rev=pair.get("rev")
                     )
                     pair["name"] = package.name
+                    if "rev" not in pair:
+                        pair["rev"] = package._source_reference
                     result.append(pair)
 
                     continue
