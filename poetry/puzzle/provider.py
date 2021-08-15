@@ -221,7 +221,7 @@ class Provider:
             if reference is not None:
                 git.checkout(reference, tmp_dir)
             else:
-                reference = "HEAD"
+                reference = git.get_current_branch(tmp_dir).strip()
 
             revision = git.rev_parse(reference, tmp_dir).strip()
 
