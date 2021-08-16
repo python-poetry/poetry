@@ -109,7 +109,7 @@ env = {
     "platform_version": platform.version(),
     "python_full_version": platform.python_version(),
     "platform_python_implementation": platform.python_implementation(),
-    "python_version": platform.python_version()[:3],
+    "python_version": ".".join(platform.python_version_tuple()[:2]),
     "sys_platform": sys.platform,
     "version_info": tuple(sys.version_info),
     # Extra information
