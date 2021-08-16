@@ -155,6 +155,14 @@ For `zsh`, you must then add the following line in your `~/.zshrc` before
 fpath+=~/.zfunc
 ```
 
+For `oh-my-zsh`, you must then enable poetry in your `~/.zshrc` plugins
+
+```zsh
+plugins(
+	poetry
+	...
+	)
+```
 
 ## Introduction
 
