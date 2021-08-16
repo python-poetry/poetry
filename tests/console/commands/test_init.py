@@ -214,7 +214,7 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-demo = {git = "https://github.com/demo/demo.git"}
+demo = {git = "https://github.com/demo/demo.git", rev = "main"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
@@ -302,7 +302,7 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-demo = {git = "https://github.com/demo/pyproject-demo.git"}
+demo = {git = "https://github.com/demo/pyproject-demo.git", rev = "main"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"

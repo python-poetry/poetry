@@ -79,7 +79,11 @@ Package operations: 2 installs, 0 updates, 0 removals
 """
 
     assert_plugin_add_result(
-        tester, app, env, expected, {"git": "https://github.com/demo/poetry-plugin.git"}
+        tester,
+        app,
+        env,
+        expected,
+        {"git": "https://github.com/demo/poetry-plugin.git", "rev": "main"},
     )
 
 
@@ -110,6 +114,7 @@ Package operations: 3 installs, 0 updates, 0 removals
         {
             "git": "https://github.com/demo/poetry-plugin.git",
             "extras": ["foo"],
+            "rev": "main",
         },
     )
 

@@ -206,6 +206,9 @@ def git_mock(mocker):
     p = mocker.patch("poetry.core.vcs.git.Git.rev_parse")
     p.return_value = "9cf87a285a2d3fbb0b9fa621997b3acc3631ed24"
 
+    p2 = mocker.patch("poetry.core.vcs.git.Git.get_current_branch", create=True)
+    p2.return_value = "main"
+
 
 @pytest.fixture
 def http():

@@ -197,7 +197,8 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "git": "https://github.com/demo/demo.git"
+        "git": "https://github.com/demo/demo.git",
+        "rev": "main",
     }
 
 
@@ -258,6 +259,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     assert content["dependencies"]["demo"] == {
         "git": "https://github.com/demo/demo.git",
         "extras": ["foo", "bar"],
+        "rev": "main",
     }
 
 
@@ -1040,7 +1042,8 @@ Package operations: 2 installs, 0 updates, 0 removals
 
     assert "demo" in content["dependencies"]
     assert content["dependencies"]["demo"] == {
-        "git": "https://github.com/demo/demo.git"
+        "git": "https://github.com/demo/demo.git",
+        "rev": "main",
     }
 
 
@@ -1099,6 +1102,7 @@ Package operations: 4 installs, 0 updates, 0 removals
     assert content["dependencies"]["demo"] == {
         "git": "https://github.com/demo/demo.git",
         "extras": ["foo", "bar"],
+        "rev": "main",
     }
 
 
