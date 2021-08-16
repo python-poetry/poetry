@@ -1227,7 +1227,10 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
     repo.add_package(cleo)
 
     package.add_dependency(
-        Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+        Factory.create_dependency(
+            "demo",
+            {"git": "https://github.com/demo/demo.git", "rev": DEFAULT_SOURCE_REF},
+        )
     )
 
     transaction = solver.solve()
@@ -1598,7 +1601,10 @@ def test_solver_git_dependencies_update(solver, repo, package, installed):
     installed.add_package(demo_installed)
 
     package.add_dependency(
-        Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
+        Factory.create_dependency(
+            "demo",
+            {"git": "https://github.com/demo/demo.git", "rev": DEFAULT_SOURCE_REF},
+        )
     )
 
     transaction = solver.solve()

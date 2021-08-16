@@ -1710,7 +1710,8 @@ def test_installer_uses_prereleases_if_they_are_compatible(
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(
         Factory.create_dependency(
-            "prerelease", {"git": "https://github.com/demo/prerelease.git"}
+            "prerelease",
+            {"git": "https://github.com/demo/prerelease.git", "rev": "main"},
         )
     )
 
