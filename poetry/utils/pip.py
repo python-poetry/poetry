@@ -25,9 +25,6 @@ def pip_install(
     # network call that adds a lot of wait time when installing a lot of packages.
     args = ["install", "--disable-pip-version-check", "--prefix", str(environment.path)]
 
-    if not is_wheel:
-        args.insert(1, "--use-pep517")
-
     if upgrade:
         args.append("--upgrade")
 
