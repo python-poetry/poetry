@@ -6,7 +6,7 @@ from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 
 
-class DependencyPackage(object):
+class DependencyPackage:
     def __init__(self, dependency: Dependency, package: Package) -> None:
         self._dependency = dependency
         self._package = package
@@ -33,7 +33,7 @@ class DependencyPackage(object):
 
     def __setattr__(self, key: str, value: Any) -> None:
         if key in {"_dependency", "_package"}:
-            return super(DependencyPackage, self).__setattr__(key, value)
+            return super().__setattr__(key, value)
 
         setattr(self._package, key, value)
 

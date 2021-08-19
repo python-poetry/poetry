@@ -16,13 +16,13 @@ from typing import Union
 
 from cleo.ui.progress_indicator import ProgressIndicator
 
-from poetry.core.packages import Dependency
-from poetry.core.packages import DirectoryDependency
-from poetry.core.packages import FileDependency
-from poetry.core.packages import Package
-from poetry.core.packages import URLDependency
-from poetry.core.packages import VCSDependency
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.directory_dependency import DirectoryDependency
+from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.url_dependency import URLDependency
 from poetry.core.packages.utils.utils import get_python_constraint_from_marker
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.semver.version import Version
 from poetry.core.vcs.git import Git
 from poetry.core.version.markers import MarkerUnion
@@ -49,12 +49,12 @@ class Indicator(ProgressIndicator):
     def _formatter_elapsed(self) -> str:
         elapsed = time.time() - self._start_time
 
-        return "{:.1f}s".format(elapsed)
+        return f"{elapsed:.1f}s"
 
 
 class Provider:
 
-    UNSAFE_PACKAGES = {"setuptools", "distribute", "pip", "wheel"}
+    UNSAFE_PACKAGES = set()
 
     def __init__(
         self, package: Package, pool: Pool, io: Any, env: Optional[Env] = None
@@ -199,7 +199,7 @@ class Provider:
         name: Optional[str] = None,
     ) -> Package:
         if vcs != "git":
-            raise ValueError("Unsupported VCS dependency {}".format(vcs))
+            raise ValueError(f"Unsupported VCS dependency {vcs}")
 
         tmp_dir = Path(
             mkdtemp(prefix="pypoetry-git-{}".format(url.split("/")[-1].rstrip(".git")))
@@ -266,7 +266,7 @@ class Provider:
             )
         except PackageInfoError:
             raise RuntimeError(
-                "Unable to determine package info from path: {}".format(file_path)
+                f"Unable to determine package info from path: {file_path}"
             )
 
         return package
@@ -330,7 +330,8 @@ class Provider:
                 for dep in package.extras[extra]:
                     dep.activate()
 
-                package.requires += package.extras[extra]
+                for extra_dep in package.extras[extra]:
+                    package.add_dependency(extra_dep)
 
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
@@ -431,7 +432,6 @@ class Provider:
         ]
 
     def complete_package(self, package: DependencyPackage) -> DependencyPackage:
-
         if package.is_root():
             package = package.clone()
             requires = package.all_requires
@@ -536,10 +536,10 @@ class Provider:
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
         duplicates = dict()
         for dep in dependencies:
-            if dep.name not in duplicates:
-                duplicates[dep.name] = []
+            if dep.complete_name not in duplicates:
+                duplicates[dep.complete_name] = []
 
-            duplicates[dep.name].append(dep)
+            duplicates[dep.complete_name].append(dep)
 
         dependencies = []
         for dep_name, deps in duplicates.items():
@@ -547,7 +547,7 @@ class Provider:
                 dependencies.append(deps[0])
                 continue
 
-            self.debug("<debug>Duplicate dependencies for {}</debug>".format(dep_name))
+            self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # Regrouping by constraint
             by_constraint = dict()
@@ -700,7 +700,12 @@ class Provider:
 
             clean_dependencies.append(dep)
 
-        package.requires = clean_dependencies
+        package = DependencyPackage(
+            package.dependency, package.with_dependency_groups([], only=True)
+        )
+
+        for dep in clean_dependencies:
+            package.add_dependency(dep)
 
         return package
 

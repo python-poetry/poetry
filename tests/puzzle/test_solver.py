@@ -4,9 +4,9 @@ import pytest
 
 from cleo.io.null_io import NullIO
 
-from poetry.core.packages import Package
-from poetry.core.packages import ProjectPackage
-from poetry.core.packages import dependency_from_pep_508
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.version.markers import parse_marker
 from poetry.factory import Factory
 from poetry.puzzle import Solver
@@ -67,12 +67,13 @@ def solver(package, pool, installed, locked, io):
     )
 
 
-def check_solver_result(ops, expected):
+def check_solver_result(transaction, expected, synchronize=False):
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
 
     result = []
+    ops = transaction.calculate_operations(synchronize=synchronize)
     for op in ops:
         if "update" == op.job_type:
             result.append(
@@ -92,6 +93,8 @@ def check_solver_result(ops, expected):
 
     assert expected == result
 
+    return ops
+
 
 def test_solver_install_single(solver, repo, package):
     package.add_dependency(Factory.create_dependency("A", "*"))
@@ -99,9 +102,9 @@ def test_solver_install_single(solver, repo, package):
     package_a = get_package("A", "1.0")
     repo.add_package(package_a)
 
-    ops = solver.solve([get_dependency("A")])
+    transaction = solver.solve([get_dependency("A")])
 
-    check_solver_result(ops, [{"job": "install", "package": package_a}])
+    check_solver_result(transaction, [{"job": "install", "package": package_a}])
 
 
 def test_solver_remove_if_no_longer_locked(solver, locked, installed):
@@ -109,9 +112,9 @@ def test_solver_remove_if_no_longer_locked(solver, locked, installed):
     installed.add_package(package_a)
     locked.add_package(package_a)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(ops, [{"job": "remove", "package": package_a}])
+    check_solver_result(transaction, [{"job": "remove", "package": package_a}])
 
 
 def test_remove_non_installed(solver, repo, locked):
@@ -122,9 +125,9 @@ def test_remove_non_installed(solver, repo, locked):
 
     request = []
 
-    ops = solver.solve(request)
+    transaction = solver.solve(request)
 
-    check_solver_result(ops, [{"job": "remove", "package": package_a, "skipped": True}])
+    check_solver_result(transaction, [])
 
 
 def test_install_non_existing_package_fail(solver, repo, package):
@@ -148,12 +151,12 @@ def test_solver_with_deps(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(new_package_b)
 
-    package_a.requires.append(get_dependency("B", "<1.1"))
+    package_a.add_dependency(get_dependency("B", "<1.1"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_a},
@@ -176,12 +179,12 @@ def test_install_honours_not_equal(solver, repo, package):
     repo.add_package(new_package_b12)
     repo.add_package(new_package_b13)
 
-    package_a.requires.append(get_dependency("B", "<=1.3,!=1.3,!=1.2"))
+    package_a.add_dependency(get_dependency("B", "<=1.3,!=1.3,!=1.2"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": new_package_b11},
             {"job": "install", "package": package_a},
@@ -201,15 +204,15 @@ def test_install_with_deps_in_order(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    package_b.requires.append(get_dependency("A", ">=1.0"))
-    package_b.requires.append(get_dependency("C", ">=1.0"))
+    package_b.add_dependency(get_dependency("A", ">=1.0"))
+    package_b.add_dependency(get_dependency("C", ">=1.0"))
 
-    package_c.requires.append(get_dependency("A", ">=1.0"))
+    package_c.add_dependency(get_dependency("A", ">=1.0"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_c},
@@ -225,10 +228,10 @@ def test_install_installed(solver, repo, installed, package):
     installed.add_package(package_a)
     repo.add_package(package_a)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops, [{"job": "install", "package": package_a, "skipped": True}]
+        transaction, [{"job": "install", "package": package_a, "skipped": True}]
     )
 
 
@@ -242,10 +245,10 @@ def test_update_installed(solver, repo, installed, package):
     repo.add_package(package_a)
     repo.add_package(new_package_a)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops, [{"job": "update", "from": package_a, "to": new_package_a}]
+        transaction, [{"job": "update", "from": package_a, "to": new_package_a}]
     )
 
 
@@ -267,10 +270,10 @@ def test_update_with_use_latest(solver, repo, installed, package, locked):
     locked.add_package(package_a)
     locked.add_package(package_b)
 
-    ops = solver.solve(use_latest=[package_b.name])
+    transaction = solver.solve(use_latest=[package_b.name])
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a, "skipped": True},
             {"job": "install", "package": new_package_b},
@@ -278,9 +281,9 @@ def test_update_with_use_latest(solver, repo, installed, package, locked):
     )
 
 
-def test_solver_sets_categories(solver, repo, package):
+def test_solver_sets_groups(solver, repo, package):
     package.add_dependency(Factory.create_dependency("A", "*"))
-    package.add_dependency(Factory.create_dependency("B", "*", category="dev"))
+    package.add_dependency(Factory.create_dependency("B", "*", groups=["dev"]))
 
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -291,10 +294,10 @@ def test_solver_sets_categories(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": package_c},
             {"job": "install", "package": package_a},
@@ -326,10 +329,10 @@ def test_solver_respects_root_package_python_versions(solver, repo, package):
     repo.add_package(package_c)
     repo.add_package(package_c11)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_c},
             {"job": "install", "package": package_a},
@@ -379,10 +382,10 @@ def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_c},
             {"job": "install", "package": package_a},
@@ -405,10 +408,10 @@ def test_solver_does_not_return_extras_if_not_requested(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
@@ -429,16 +432,16 @@ def test_solver_returns_extras_if_requested(solver, repo, package):
     dep = get_dependency("C", "^1.0", optional=True)
     dep.marker = parse_marker("extra == 'foo'")
     package_b.extras = {"foo": [dep]}
-    package_b.requires.append(dep)
+    package_b.add_dependency(dep)
 
     repo.add_package(package_a)
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": package_c},
             {"job": "install", "package": package_a},
@@ -474,15 +477,15 @@ def test_solver_returns_extras_only_requested(solver, repo, package, enabled_ext
 
     package_b.extras = {"one": [dep10], "two": [dep20]}
 
-    package_b.requires.append(dep10)
-    package_b.requires.append(dep20)
+    package_b.add_dependency(dep10)
+    package_b.add_dependency(dep20)
 
     repo.add_package(package_a)
     repo.add_package(package_b)
     repo.add_package(package_c10)
     repo.add_package(package_c20)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     expected = [
         {"job": "install", "package": package_a},
@@ -498,8 +501,8 @@ def test_solver_returns_extras_only_requested(solver, repo, package, enabled_ext
             },
         )
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         expected,
     )
 
@@ -523,7 +526,7 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
 
     package_b.extras = {"one": [dep], "two": [dep]}
 
-    package_b.requires.append(dep)
+    package_b.add_dependency(dep)
 
     extras = [enabled_extra] if enabled_extra is not None else []
     package_a.add_dependency(
@@ -534,7 +537,7 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     expected = [
         {"job": "install", "package": package_b},
@@ -544,8 +547,8 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     if enabled_extra is not None:
         expected.insert(0, {"job": "install", "package": package_c})
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         expected,
     )
 
@@ -574,8 +577,8 @@ def test_solver_returns_extras_only_requested_nested(
 
     package_b.extras = {"one": [dep10], "two": [dep20]}
 
-    package_b.requires.append(dep10)
-    package_b.requires.append(dep20)
+    package_b.add_dependency(dep10)
+    package_b.add_dependency(dep20)
 
     extras = [enabled_extra] if enabled_extra is not None else []
     package_a.add_dependency(
@@ -587,7 +590,7 @@ def test_solver_returns_extras_only_requested_nested(
     repo.add_package(package_c10)
     repo.add_package(package_c20)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     expected = [
         {"job": "install", "package": package_b},
@@ -603,7 +606,7 @@ def test_solver_returns_extras_only_requested_nested(
             },
         )
 
-    check_solver_result(ops, expected)
+    ops = check_solver_result(transaction, expected)
 
     assert ops[-1].package.marker.is_any()
     assert ops[0].package.marker.is_any()
@@ -626,10 +629,10 @@ def test_solver_returns_prereleases_if_requested(solver, repo, package):
     repo.add_package(package_c)
     repo.add_package(package_c_dev)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
@@ -653,10 +656,10 @@ def test_solver_does_not_return_prereleases_if_not_requested(solver, repo, packa
     repo.add_package(package_c)
     repo.add_package(package_c_dev)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
@@ -685,10 +688,10 @@ def test_solver_sub_dependencies_with_requirements(solver, repo, package):
     repo.add_package(package_c)
     repo.add_package(package_d)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": package_d},
             {"job": "install", "package": package_c},
@@ -743,10 +746,10 @@ def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package
     repo.add_package(package_e)
     repo.add_package(package_f)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_e},
             {"job": "install", "package": package_f},
@@ -775,19 +778,63 @@ def test_solver_sub_dependencies_with_not_supported_python_version(
     repo.add_package(package_a)
     repo.add_package(package_b)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(ops, [{"job": "install", "package": package_a}])
+    check_solver_result(transaction, [{"job": "install", "package": package_a}])
 
 
-def test_solver_with_dependency_in_both_main_and_dev_dependencies(
+def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
+    solver, repo, package
+):
+    solver.provider.set_package_python_versions("^3.4")
+
+    package.add_dependency(
+        Factory.create_dependency("httpx", {"version": "^0.17.1", "python": "^3.6"})
+    )
+
+    httpx = get_package("httpx", "0.17.1")
+    httpx.python_versions = ">=3.6"
+
+    httpcore = get_package("httpcore", "0.12.3")
+    httpcore.python_versions = ">=3.6"
+
+    sniffio_1_1_0 = get_package("sniffio", "1.1.0")
+    sniffio_1_1_0.python_versions = ">=3.5"
+
+    sniffio = get_package("sniffio", "1.2.0")
+    sniffio.python_versions = ">=3.5"
+
+    httpx.add_dependency(
+        Factory.create_dependency("httpcore", {"version": ">=0.12.1,<0.13"})
+    )
+    httpx.add_dependency(Factory.create_dependency("sniffio", {"version": "*"}))
+    httpcore.add_dependency(Factory.create_dependency("sniffio", {"version": "==1.*"}))
+
+    repo.add_package(httpx)
+    repo.add_package(httpcore)
+    repo.add_package(sniffio)
+    repo.add_package(sniffio_1_1_0)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": sniffio, "skipped": False},
+            {"job": "install", "package": httpcore, "skipped": False},
+            {"job": "install", "package": httpx, "skipped": False},
+        ],
+    )
+
+
+def test_solver_with_dependency_in_both_default_and_dev_dependencies(
     solver, repo, package
 ):
     solver.provider.set_package_python_versions("^3.5")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "*", "extras": ["foo"]}, category="dev"
+            "A", {"version": "*", "extras": ["foo"]}, groups=["dev"]
         )
     )
 
@@ -810,10 +857,10 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
     repo.add_package(package_c)
     repo.add_package(package_d)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": package_d},
             {"job": "install", "package": package_b},
@@ -822,14 +869,14 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies(
         ],
     )
 
+    d = ops[0].package
     b = ops[1].package
     c = ops[2].package
-    d = ops[0].package
     a = ops[3].package
 
     assert d.category == "dev"
-    assert c.category == "dev"
     assert b.category == "main"
+    assert c.category == "dev"
     assert a.category == "main"
 
 
@@ -840,7 +887,7 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     package.add_dependency(Factory.create_dependency("E", "*"))
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "*", "extras": ["foo"]}, category="dev"
+            "A", {"version": "*", "extras": ["foo"]}, groups=["dev"]
         )
     )
 
@@ -867,10 +914,10 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     repo.add_package(package_d)
     repo.add_package(package_e)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_d},
@@ -881,15 +928,15 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     )
 
     b = ops[0].package
-    c = ops[3].package
     d = ops[1].package
     a = ops[2].package
+    c = ops[3].package
     e = ops[4].package
 
-    assert d.category == "dev"
-    assert c.category == "dev"
     assert b.category == "main"
+    assert d.category == "dev"
     assert a.category == "main"
+    assert c.category == "dev"
     assert e.category == "main"
 
 
@@ -907,10 +954,10 @@ def test_solver_with_dependency_and_prerelease_sub_dependencies(solver, repo, pa
     package_b = get_package("B", "1.0.0.dev4")
     repo.add_package(package_b)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_a},
@@ -934,10 +981,10 @@ def test_solver_circular_dependency(solver, repo, package):
     repo.add_package(package_b)
     repo.add_package(package_c)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": package_c},
             {"job": "install", "package": package_b},
@@ -968,10 +1015,10 @@ def test_solver_circular_dependency_chain(solver, repo, package):
     repo.add_package(package_c)
     repo.add_package(package_d)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": package_d},
             {"job": "install", "package": package_c},
@@ -997,10 +1044,10 @@ def test_solver_dense_dependencies(solver, repo, package):
         for j in range(i):
             package_ai.add_dependency(Factory.create_dependency("a" + str(j), "^1.0"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops, [{"job": "install", "package": packages[i]} for i in range(n)]
+        transaction, [{"job": "install", "package": packages[i]} for i in range(n)]
     )
 
 
@@ -1020,10 +1067,10 @@ def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
     repo.add_package(package_a)
     repo.add_package(package_b)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_a},
@@ -1049,10 +1096,10 @@ def test_solver_duplicate_dependencies_different_constraints(solver, repo, packa
     repo.add_package(package_b10)
     repo.add_package(package_b20)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_b10},
             {"job": "install", "package": package_b20},
@@ -1113,10 +1160,10 @@ def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
     repo.add_package(package_c12)
     repo.add_package(package_c15)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_c12},
             {"job": "install", "package": package_c15},
@@ -1154,10 +1201,10 @@ def test_solver_does_not_get_stuck_in_recursion_on_circular_dependency(
 
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_c},
             {"job": "install", "package": package_b},
@@ -1176,7 +1223,7 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     demo = Package(
         "demo",
@@ -1187,8 +1234,8 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
@@ -1211,7 +1258,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
         )
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     demo = Package(
         "demo",
@@ -1223,7 +1270,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
     )
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": cleo},
             {"job": "install", "package": pendulum},
@@ -1256,10 +1303,10 @@ def test_solver_can_resolve_git_dependencies_with_ref(solver, repo, package, ref
     git_config.update(ref)
     package.add_dependency(Factory.create_dependency("demo", git_config))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
@@ -1283,9 +1330,9 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
 
     repo.add_package(package_a)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(ops, [{"job": "install", "package": package_a}])
+    check_solver_result(transaction, [{"job": "install", "package": package_a}])
 
 
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible_multiple(
@@ -1309,10 +1356,10 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
     repo.add_package(package_a)
     repo.add_package(package_b)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_b},
             {"job": "install", "package": package_a},
@@ -1354,17 +1401,17 @@ def test_solver_finds_compatible_package_for_dependency_python_not_fully_compati
     repo.add_package(package_a100)
     repo.add_package(package_a101)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(ops, [{"job": "install", "package": package_a100}])
+    check_solver_result(transaction, [{"job": "install", "package": package_a100}])
 
 
 def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(
     solver, repo, package
 ):
-    dep1 = dependency_from_pep_508('B (>=1.0); extra == "foo"')
+    dep1 = Dependency.create_from_pep_508('B (>=1.0); extra == "foo"')
     dep1.activate()
-    dep2 = dependency_from_pep_508('B (>=2.0); extra == "bar"')
+    dep2 = Dependency.create_from_pep_508('B (>=2.0); extra == "bar"')
     dep2.activate()
 
     package.add_dependency(
@@ -1373,8 +1420,8 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
 
     package_a = get_package("A", "1.0.0")
     package_a.extras = {"foo": [dep1], "bar": [dep2]}
-    package_a.requires.append(dep1)
-    package_a.requires.append(dep2)
+    package_a.add_dependency(dep1)
+    package_a.add_dependency(dep2)
 
     package_b2 = get_package("B", "2.0.0")
     package_b1 = get_package("B", "1.0.0")
@@ -1383,10 +1430,10 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
     repo.add_package(package_b1)
     repo.add_package(package_b2)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": package_b2},
             {"job": "install", "package": package_a},
@@ -1418,10 +1465,10 @@ def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
     repo.add_package(package_b)
 
     solver._locked = Repository([package_a])
-    ops = solver.solve(use_latest=[package_b.name])
+    transaction = solver.solve(use_latest=[package_b.name])
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_b},
@@ -1455,10 +1502,10 @@ def test_solver_returns_extras_if_requested_in_dependencies_and_not_in_root_pack
     repo.add_package(package_c)
     repo.add_package(package_d)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_d},
             {"job": "install", "package": package_c},
@@ -1495,8 +1542,8 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
     package.add_dependency(Factory.create_dependency("B", "^2.0"))
 
     package_a = get_package("A", "1.0.0")
-    package_a.requires.append(
-        dependency_from_pep_508(
+    package_a.add_dependency(
+        Dependency.create_from_pep_508(
             'B (<2.0); platform_python_implementation == "PyPy" and python_full_version < "2.7.9"'
         )
     )
@@ -1508,10 +1555,10 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
     repo.add_package(package_b100)
     repo.add_package(package_b200)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a},
             {"job": "install", "package": package_b200},
@@ -1547,10 +1594,10 @@ def test_solver_git_dependencies_update(solver, repo, package, installed):
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": pendulum},
             {"job": "update", "from": demo_installed, "to": demo},
@@ -1586,10 +1633,10 @@ def test_solver_git_dependencies_update_skipped(solver, repo, package, installed
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": pendulum},
             {"job": "install", "package": demo, "skipped": True},
@@ -1610,7 +1657,7 @@ def test_solver_git_dependencies_short_hash_update_skipped(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="master",
+        source_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
     installed.add_package(demo)
@@ -1621,10 +1668,10 @@ def test_solver_git_dependencies_short_hash_update_skipped(
         )
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": pendulum},
             {
@@ -1658,12 +1705,12 @@ def test_solver_can_resolve_directory_dependencies(solver, repo, package):
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     demo = Package("demo", "0.1.2", source_type="directory", source_url=path)
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
@@ -1686,10 +1733,10 @@ def test_solver_can_resolve_directory_dependencies_nested_editable(
         package, pool, installed, locked, io, provider=Provider(package, pool, io)
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {
                 "job": "install",
@@ -1748,12 +1795,12 @@ def test_solver_can_resolve_directory_dependencies_with_extras(solver, repo, pac
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     demo = Package("demo", "0.1.2", source_type="directory", source_url=path)
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": cleo},
             {"job": "install", "package": pendulum},
@@ -1782,12 +1829,12 @@ def test_solver_can_resolve_sdist_dependencies(solver, repo, package):
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     demo = Package("demo", "0.1.0", source_type="file", source_url=path)
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
@@ -1816,12 +1863,12 @@ def test_solver_can_resolve_sdist_dependencies_with_extras(solver, repo, package
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     demo = Package("demo", "0.1.0", source_type="file", source_url=path)
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": cleo},
             {"job": "install", "package": pendulum},
@@ -1850,12 +1897,12 @@ def test_solver_can_resolve_wheel_dependencies(solver, repo, package):
 
     package.add_dependency(Factory.create_dependency("demo", {"path": path}))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     demo = Package("demo", "0.1.0", source_type="file", source_url=path)
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [{"job": "install", "package": pendulum}, {"job": "install", "package": demo}],
     )
 
@@ -1884,12 +1931,12 @@ def test_solver_can_resolve_wheel_dependencies_with_extras(solver, repo, package
         Factory.create_dependency("demo", {"path": path, "extras": ["foo"]})
     )
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     demo = Package("demo", "0.1.0", source_type="file", source_url=path)
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {"job": "install", "package": cleo},
             {"job": "install", "package": pendulum},
@@ -1915,10 +1962,10 @@ def test_solver_can_solve_with_legacy_repository_using_proper_dists(
 
     package.add_dependency(Factory.create_dependency("isort", "4.3.4"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {
                 "job": "install",
@@ -1959,10 +2006,10 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
 
     package.add_dependency(Factory.create_dependency("isort", "4.3.4"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {
                 "job": "install",
@@ -1988,10 +2035,10 @@ def test_solver_skips_invalid_versions(package, installed, locked, io):
 
     package.add_dependency(Factory.create_dependency("trackpy", "^0.4"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops, [{"job": "install", "package": get_package("trackpy", "0.4.1")}]
+        transaction, [{"job": "install", "package": get_package("trackpy", "0.4.1")}]
     )
 
 
@@ -2009,10 +2056,10 @@ def test_multiple_constraints_on_root(package, solver, repo):
     repo.add_package(foo15)
     repo.add_package(foo25)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [{"job": "install", "package": foo15}, {"job": "install", "package": foo25}],
     )
 
@@ -2028,10 +2075,10 @@ def test_solver_chooses_most_recent_version_amongst_repositories(
 
     solver = Solver(package, pool, installed, locked, io)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops, [{"job": "install", "package": get_package("tomlkit", "0.5.3")}]
+    ops = check_solver_result(
+        transaction, [{"job": "install", "package": get_package("tomlkit", "0.5.3")}]
     )
 
     assert ops[0].package.source_type is None
@@ -2051,10 +2098,10 @@ def test_solver_chooses_from_correct_repository_if_forced(
 
     solver = Solver(package, pool, installed, locked, io)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {
                 "job": "install",
@@ -2089,10 +2136,10 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
 
     solver = Solver(package, pool, installed, locked, io)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {
                 "job": "install",
@@ -2126,10 +2173,10 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
 
     solver = Solver(package, pool, installed, locked, io)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {
                 "job": "install",
@@ -2173,10 +2220,10 @@ def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, i
 
     solver = Solver(package, pool, installed, locked, io)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(
-        ops,
+    ops = check_solver_result(
+        transaction,
         [
             {
                 "job": "install",
@@ -2225,10 +2272,10 @@ def test_solver_discards_packages_with_empty_markers(
 
     solver = Solver(package, pool, installed, locked, io)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_c},
             {"job": "install", "package": package_a},
@@ -2242,12 +2289,12 @@ def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
     solver.provider.set_package_python_versions("~2.7 || ^3.5")
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "^1.0", "python": "~2.7"}, category="dev"
+            "A", {"version": "^1.0", "python": "~2.7"}, groups=["dev"]
         )
     )
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "^2.0", "python": "^3.5"}, category="dev"
+            "A", {"version": "^2.0", "python": "^3.5"}, groups=["dev"]
         )
     )
 
@@ -2257,10 +2304,10 @@ def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
     repo.add_package(package_a100)
     repo.add_package(package_a200)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a100},
             {"job": "install", "package": package_a200},
@@ -2291,10 +2338,10 @@ def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
     repo.add_package(requests)
     repo.add_package(idna)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [{"job": "install", "package": idna}, {"job": "install", "package": requests}],
     )
 
@@ -2326,10 +2373,10 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
 
     solver = Solver(package, pool, installed, locked, io)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": get_package("a", "1.2.3")},
             {"job": "install", "package": git_package, "skipped": True},
@@ -2352,10 +2399,10 @@ def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package)
     repo.add_package(pytest)
     repo.add_package(get_package("configparser", "1.2.3"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [{"job": "install", "package": pytest}],
     )
 
@@ -2381,10 +2428,10 @@ def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
     repo.add_package(package_b10)
     repo.add_package(package_b20)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_b10},
             {"job": "install", "package": package_b20},
@@ -2393,26 +2440,29 @@ def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
     )
 
 
-def test_solver_remove_untracked_single(package, pool, installed, locked, io):
-    solver = Solver(package, pool, installed, locked, io, remove_untracked=True)
+def test_solver_synchronize_single(package, pool, installed, locked, io):
+    solver = Solver(package, pool, installed, locked, io)
     package_a = get_package("a", "1.0")
     installed.add_package(package_a)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(ops, [{"job": "remove", "package": package_a}])
+    check_solver_result(
+        transaction, [{"job": "remove", "package": package_a}], synchronize=True
+    )
 
 
-def test_solver_remove_untracked_keeps_critical_package(
+@pytest.mark.skip(reason="Poetry no longer has critical package requirements")
+def test_solver_with_synchronization_keeps_critical_package(
     package, pool, installed, locked, io
 ):
-    solver = Solver(package, pool, installed, locked, io, remove_untracked=True)
-    package_pip = get_package("pip", "1.0")
+    solver = Solver(package, pool, installed, locked, io)
+    package_pip = get_package("setuptools", "1.0")
     installed.add_package(package_pip)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(ops, [])
+    check_solver_result(transaction, [])
 
 
 def test_solver_cannot_choose_another_version_for_directory_dependencies(
@@ -2546,9 +2596,11 @@ def test_solver_should_not_update_same_version_packages_if_installed_has_no_sour
     repo.add_package(foo)
     installed.add_package(get_package("foo", "1.0.0"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(ops, [{"job": "install", "package": foo, "skipped": True}])
+    check_solver_result(
+        transaction, [{"job": "install", "package": foo, "skipped": True}]
+    )
 
 
 def test_solver_should_use_the_python_constraint_from_the_environment_if_available(
@@ -2570,10 +2622,10 @@ def test_solver_should_use_the_python_constraint_from_the_environment_if_availab
     repo.add_package(b)
 
     with solver.use_environment(MockEnv((2, 7, 18))):
-        ops = solver.solve()
+        transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [{"job": "install", "package": b}, {"job": "install", "package": a}],
     )
 
@@ -2613,10 +2665,10 @@ def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
     repo.add_package(package_b30)
     repo.add_package(package_b40)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": package_a10},
             {"job": "install", "package": package_a20},
@@ -2639,9 +2691,9 @@ def test_solver_should_not_raise_errors_for_irrelevant_python_constraints(
     dataclasses.python_versions = ">=3.6, <3.7"
 
     repo.add_package(dataclasses)
-    ops = solver.solve()
+    transaction = solver.solve()
 
-    check_solver_result(ops, [{"job": "install", "package": dataclasses}])
+    check_solver_result(transaction, [{"job": "install", "package": dataclasses}])
 
 
 def test_solver_can_resolve_transitive_extras(solver, repo, package):
@@ -2667,10 +2719,10 @@ def test_solver_can_resolve_transitive_extras(solver, repo, package):
     repo.add_package(get_package("certifi", "2017.4.17"))
     repo.add_package(get_package("pyopenssl", "0.14"))
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": get_package("certifi", "2017.4.17")},
             {"job": "install", "package": get_package("pyopenssl", "0.14")},
@@ -2703,10 +2755,10 @@ def test_solver_can_resolve_for_packages_with_missing_extras(solver, repo, packa
     repo.add_package(boto3)
     repo.add_package(requests)
 
-    ops = solver.solve()
+    transaction = solver.solve()
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": django},
             {"job": "install", "package": requests},
@@ -2737,12 +2789,62 @@ def test_solver_can_resolve_python_restricted_package_dependencies(
     repo.add_package(futures)
     repo.add_package(pre_commit)
 
-    ops = solver.solve(use_latest=["pre-commit"])
+    transaction = solver.solve(use_latest=["pre-commit"])
 
     check_solver_result(
-        ops,
+        transaction,
         [
             {"job": "install", "package": futures},
             {"job": "install", "package": pre_commit},
+        ],
+    )
+
+
+def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constraints(
+    solver, repo, package
+):
+    package.python_versions = "~2.7 || ^3.5"
+    solver.provider.set_package_python_versions("~2.7 || ^3.5")
+    package.add_dependency(Factory.create_dependency("virtualenv", "^20.4.3"))
+    package.add_dependency(
+        Factory.create_dependency("pre-commit", {"version": "^2.6", "python": "^3.6.1"})
+    )
+
+    virtualenv = get_package("virtualenv", "20.4.3")
+    virtualenv.python_versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
+    virtualenv.add_dependency(
+        Factory.create_dependency(
+            "importlib-resources", {"version": "*", "markers": 'python_version < "3.7"'}
+        )
+    )
+
+    pre_commit = Package("pre-commit", "2.7.1")
+    pre_commit.python_versions = ">=3.6.1"
+    pre_commit.add_dependency(
+        Factory.create_dependency(
+            "importlib-resources", {"version": "*", "markers": 'python_version < "3.7"'}
+        )
+    )
+
+    importlib_resources = get_package("importlib-resources", "5.1.2")
+    importlib_resources.python_versions = ">=3.6"
+
+    importlib_resources_3_2_1 = get_package("importlib-resources", "3.2.1")
+    importlib_resources_3_2_1.python_versions = (
+        "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+    )
+
+    repo.add_package(virtualenv)
+    repo.add_package(pre_commit)
+    repo.add_package(importlib_resources)
+    repo.add_package(importlib_resources_3_2_1)
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": importlib_resources_3_2_1},
+            {"job": "install", "package": pre_commit},
+            {"job": "install", "package": virtualenv},
         ],
     )

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class PythonRequirementSolution(Solution):
     def __init__(self, exception: "PackageNotFoundCause") -> None:
-        from poetry.core.semver import parse_constraint
+        from poetry.core.semver.helpers import parse_constraint
         from poetry.mixology.incompatibility_cause import PythonCause
 
         self._title = "Check your dependencies Python requirement."

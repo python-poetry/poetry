@@ -80,7 +80,7 @@ class Chef:
         archive_types = ["whl", "tar.gz", "tar.bz2", "bz2", "zip"]
         links = []
         for archive_type in archive_types:
-            for archive in cache_dir.glob("*.{}".format(archive_type)):
+            for archive in cache_dir.glob(f"*.{archive_type}"):
                 links.append(Link(archive.as_uri()))
 
         return links

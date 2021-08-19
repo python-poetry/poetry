@@ -16,6 +16,7 @@ from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils.helpers import is_dir_writable
+from poetry.utils.pip import pip_editable_install
 
 
 if TYPE_CHECKING:
@@ -56,10 +57,18 @@ class EditableBuilder(Builder):
                 self._debug(
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
-
                 return self._setup_build()
 
             self._run_build_script(self._package.build_script)
+
+        for removed in self._env.site_packages.remove_distribution_files(
+            distribution_name=self._package.name
+        ):
+            self._debug(
+                "  - Removed <c2>{}</c2> directory from <b>{}</b>".format(
+                    removed.name, removed.parent
+                )
+            )
 
         added_files = []
         added_files += self._add_pth()
@@ -84,15 +93,15 @@ class EditableBuilder(Builder):
                 f.write(decode(builder.build_setup()))
 
         try:
-            if self._env.pip_version < Version(19, 0):
-                self._env.run_pip("install", "-e", str(self._path), "--no-deps")
+            if self._env.pip_version < Version.from_parts(19, 0):
+                pip_editable_install(self._path, self._env)
             else:
                 # Temporarily rename pyproject.toml
                 shutil.move(
                     str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
                 )
                 try:
-                    self._env.run_pip("install", "-e", str(self._path), "--no-deps")
+                    pip_editable_install(self._path, self._env)
                 finally:
                     shutil.move(
                         str(self._poetry.file.with_suffix(".tmp")),
@@ -115,6 +124,18 @@ class EditableBuilder(Builder):
             content += decode(path + os.linesep)
 
         pth_file = Path(self._module.name).with_suffix(".pth")
+
+        # remove any pre-existing pth files for this package
+        for file in self._env.site_packages.find(path=pth_file, writable_only=True):
+            self._debug(
+                "  - Removing existing <c2>{}</c2> from <b>{}</b> for {}".format(
+                    file.name, file.parent, self._poetry.file.parent
+                )
+            )
+            # We can't use unlink(missing_ok=True) because it's not always available
+            if file.exists():
+                file.unlink()
+
         try:
             pth_file = self._env.site_packages.write_text(
                 pth_file, content, encoding="utf-8"
@@ -199,20 +220,7 @@ class EditableBuilder(Builder):
         added_files = added_files[:]
 
         builder = WheelBuilder(self._poetry)
-
-        dist_info_path = Path(builder.dist_info)
-        for dist_info in self._env.site_packages.find(
-            dist_info_path, writable_only=True
-        ):
-            if dist_info.exists():
-                self._debug(
-                    "  - Removing existing <c2>{}</c2> directory from <b>{}</b>".format(
-                        dist_info.name, dist_info.parent
-                    )
-                )
-                shutil.rmtree(str(dist_info))
-
-        dist_info = self._env.site_packages.mkdir(dist_info_path)
+        dist_info = self._env.site_packages.mkdir(Path(builder.dist_info))
 
         self._debug(
             "  - Adding the <c2>{}</c2> directory to <b>{}</b>".format(

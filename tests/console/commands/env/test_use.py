@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import tomlkit
 
-from poetry.core.semver import Version
+from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
@@ -23,7 +23,7 @@ def setup(mocker):
 def mock_subprocess_calls(setup, current_python, mocker):
     mocker.patch(
         "subprocess.check_output",
-        side_effect=check_output_wrapper(Version(*current_python)),
+        side_effect=check_output_wrapper(Version.from_parts(*current_python)),
     )
     mocker.patch(
         "subprocess.Popen.communicate",
@@ -52,7 +52,12 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     venv_py37 = venv_cache / "{}-py3.7".format(venv_name)
     mock_build_env.assert_called_with(
-        venv_py37, executable="python3.7", flags={"always-copy": False}
+        venv_py37,
+        executable="python3.7",
+        flags={"always-copy": False, "system-site-packages": False},
+        with_pip=True,
+        with_setuptools=True,
+        with_wheel=True,
     )
 
     envs_file = TOMLFile(venv_cache / "envs.toml")

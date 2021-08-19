@@ -1,5 +1,67 @@
 # Change Log
 
+## [1.2.0a2] - 2021-08-01
+
+### Added
+
+- Poetry now supports dependency groups. ([#4260](https://github.com/python-poetry/poetry/pull/4260))
+- The `install` command now supports a `--sync` option to synchronize the environment with the lock file. ([#4336](https://github.com/python-poetry/poetry/pull/4336))
+
+### Changed
+
+- Improved the way credentials are retrieved to better support keyring backends. ([#4086](https://github.com/python-poetry/poetry/pull/4086))
+- The `--remove-untracked` option of the `install` command is now deprecated in favor of the new `--sync` option. ([#4336](https://github.com/python-poetry/poetry/pull/4336))
+- The user experience when installing dependency groups has been improved. ([#4336](https://github.com/python-poetry/poetry/pull/4336))
+
+### Fixed
+
+- Fixed performance issues when resolving dependencies. ([#3839](https://github.com/python-poetry/poetry/pull/3839))
+- Fixed an issue where transitive dependencies of directory or VCS dependencies were not installed or otherwise removed. ([#4202](https://github.com/python-poetry/poetry/pull/4202))
+- Fixed the behavior of the `init` command in non-interactive mode. ([#2899](https://github.com/python-poetry/poetry/pull/2899))
+- Fixed the detection of the system environment when the setting `virtualenvs.create` is deactivated. ([#4329](https://github.com/python-poetry/poetry/pull/4329))
+- Fixed the display of possible solutions for some common errors. ([#4332](https://github.com/python-poetry/poetry/pull/4332))
+
+
+## [1.2.0a1] - 2021-05-21
+
+This release is the first testing release of the upcoming 1.2.0 version.
+
+It **drops** support for Python 2.7 and 3.5.
+
+### Added
+
+- Poetry now supports a plugin system to alter or expand Poetry's functionality. ([#3733](https://github.com/python-poetry/poetry/pull/3733))
+- Poetry now supports [PEP 610](https://www.python.org/dev/peps/pep-0610/). ([#3876](https://github.com/python-poetry/poetry/pull/3876))
+- Several configuration options to better control the way virtual environments are created are now available. ([#3157](https://github.com/python-poetry/poetry/pull/3157), [#3711](https://github.com/python-poetry/poetry/pull/3711)).
+- The `new` command now supports namespace packages. ([#2768](https://github.com/python-poetry/poetry/pull/2768))
+- The `add` command now supports the `--editable` option to add packages in editable mode. ([#3940](https://github.com/python-poetry/poetry/pull/3940))
+
+### Changed
+
+- Python 2.7 and 3.5 are no longer supported. ([#3405](https://github.com/python-poetry/poetry/pull/3405))
+- The usage of the `get-poetry.py` script is now deprecated and is replaced by the `install-poetry.py` script. ([#3706](https://github.com/python-poetry/poetry/pull/3706))
+- Directory dependencies are now in non-develop mode by default. ([poetry-core#98](https://github.com/python-poetry/poetry-core/pull/98))
+- Improved support for PEP 440 specific versions that do not abide by semantic versioning. ([poetry-core#140](https://github.com/python-poetry/poetry-core/pull/140))
+- Improved the CLI experience and performance by migrating to the latest version of Cleo. ([#3618](https://github.com/python-poetry/poetry/pull/3618))
+- Packages previously considered as unsafe (`pip`, `setuptools`, `wheels` and `distribute`) can now be managed as any other package. ([#2826](https://github.com/python-poetry/poetry/pull/2826))
+- The `new` command now defaults to the Markdown format for README files. ([#2768](https://github.com/python-poetry/poetry/pull/2768))
+
+### Fixed
+
+- Fixed an error where command line options were not taken into account when using the `run` command. ([#3618](https://github.com/python-poetry/poetry/pull/3618))
+- Fixed an error in the way custom repositories were resolved. ([#3406](https://github.com/python-poetry/poetry/pull/3406))
+
+
+## [1.1.5] - 2021-03-04
+
+### Fixed
+- Fixed an error in the export command when no lock file existed and a verbose flag was passed to the command. (#3310)
+- Fixed an error where the pyproject.toml was not reverted when using the add command. (#3622)
+- Fixed errors when using non-HTTPS indices. (#3622)
+- Fixed errors when handling simple indices redirection. (#3622)
+- Fixed errors when trying to handle newer wheels by using the latest version of poetry-core and packaging. (#3677)
+- Fixed an error when using some versions of poetry-core due to an incorrect import. (#3696)
+
 ## [1.1.4] - 2020-10-23
 
 ### Added
@@ -1083,8 +1145,10 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.4...master
-[1.1.3]: https://github.com/python-poetry/poetry/compare/1.1.4
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0a2...master
+[1.2.0a2]: https://github.com/python-poetry/poetry/compare/1.2.0a2
+[1.2.0a1]: https://github.com/python-poetry/poetry/compare/1.2.0a1
+[1.1.4]: https://github.com/python-poetry/poetry/compare/1.1.4
 [1.1.3]: https://github.com/python-poetry/poetry/compare/1.1.3
 [1.1.2]: https://github.com/python-poetry/poetry/releases/tag/1.1.2
 [1.1.1]: https://github.com/python-poetry/poetry/releases/tag/1.1.1

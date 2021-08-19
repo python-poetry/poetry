@@ -11,10 +11,6 @@ from typing import Tuple
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from poetry.core.pyproject import PyProjectException
-from poetry.core.toml.file import TOMLFile
-from poetry.factory import Factory
-
 from .command import Command
 
 
@@ -66,6 +62,16 @@ To remove a repository (repo is a short alias for repositories):
             ),
             "virtualenvs.create": (boolean_validator, boolean_normalizer, True),
             "virtualenvs.in-project": (boolean_validator, boolean_normalizer, False),
+            "virtualenvs.options.always-copy": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
+            "virtualenvs.options.system-site-packages": (
+                boolean_validator,
+                boolean_normalizer,
+                False,
+            ),
             "virtualenvs.path": (
                 str,
                 lambda val: str(Path(val)),
@@ -75,11 +81,6 @@ To remove a repository (repo is a short alias for repositories):
                 boolean_validator,
                 boolean_normalizer,
                 True,
-            ),
-            "virtualenvs.options.always-copy": (
-                boolean_validator,
-                boolean_normalizer,
-                False,
             ),
             "installer.parallel": (
                 boolean_validator,
@@ -94,6 +95,9 @@ To remove a repository (repo is a short alias for repositories):
         from pathlib import Path
 
         from poetry.config.file_config_source import FileConfigSource
+        from poetry.core.pyproject.exceptions import PyProjectException
+        from poetry.core.toml.file import TOMLFile
+        from poetry.factory import Factory
         from poetry.locations import CONFIG_DIR
 
         config = Factory.create_config(self.io)

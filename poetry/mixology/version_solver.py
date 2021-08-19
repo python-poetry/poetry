@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
 import time
 
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
-from poetry.core.packages import Dependency
-from poetry.core.packages import Package
-from poetry.core.packages import ProjectPackage
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
 
 from .failure import SolveFailure
 from .incompatibility import Incompatibility
@@ -194,7 +194,7 @@ class VersionSolver:
 
         .. _conflict resolution: https://github.com/dart-lang/pub/tree/master/doc/solver.md#conflict-resolution
         """
-        self._log("conflict: {}".format(incompatibility))
+        self._log(f"conflict: {incompatibility}")
 
         new_incompatibility = False
         while not incompatibility.is_failure():
@@ -309,10 +309,8 @@ class VersionSolver:
                     bang, most_recent_term, partially, most_recent_satisfier
                 )
             )
-            self._log(
-                '{} which is caused by "{}"'.format(bang, most_recent_satisfier.cause)
-            )
-            self._log("{} thus: {}".format(bang, incompatibility))
+            self._log(f'{bang} which is caused by "{most_recent_satisfier.cause}"')
+            self._log(f"{bang} thus: {incompatibility}")
 
         raise SolveFailure(incompatibility)
 
@@ -330,19 +328,19 @@ class VersionSolver:
 
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
-        def _get_min(dependency: Dependency) -> int:
+        def _get_min(dependency: Dependency) -> Tuple[bool, int]:
             if dependency.name in self._use_latest:
                 # If we're forced to use the latest version of a package, it effectively
                 # only has one version to choose from.
-                return 1
+                return not dependency.marker.is_any(), 1
 
             locked = self._get_locked(dependency)
             if locked and (
                 dependency.constraint.allows(locked.version)
                 or locked.is_prerelease()
-                and dependency.constraint.allows(locked.version.next_patch)
+                and dependency.constraint.allows(locked.version.next_patch())
             ):
-                return 1
+                return not dependency.marker.is_any(), 1
 
             # VCS, URL, File or Directory dependencies
             # represent a single version
@@ -352,12 +350,15 @@ class VersionSolver:
                 or dependency.is_file()
                 or dependency.is_directory()
             ):
-                return 1
+                return not dependency.marker.is_any(), 1
 
             try:
-                return len(self._provider.search_for(dependency))
+                return (
+                    not dependency.marker.is_any(),
+                    len(self._provider.search_for(dependency)),
+                )
             except ValueError:
-                return 0
+                return not dependency.marker.is_any(), 0
 
         if len(unsatisfied) == 1:
             dependency = unsatisfied[0]
@@ -430,7 +431,7 @@ class VersionSolver:
         )
 
     def _add_incompatibility(self, incompatibility: Incompatibility) -> None:
-        self._log("fact: {}".format(incompatibility))
+        self._log(f"fact: {incompatibility}")
 
         for term in incompatibility.terms:
             if term.dependency.complete_name not in self._incompatibilities:
