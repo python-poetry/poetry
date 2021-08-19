@@ -834,7 +834,9 @@ class EnvManager(object):
                 shutil.rmtree(str(file_path))
 
     @classmethod
-    def get_system_env(cls, naive=False):  # type: (bool) -> "SystemEnv"
+    def get_system_env(
+        cls, naive=False
+    ):  # type: (bool) -> Union["SystemEnv", "GenericEnv"]
         """
         Retrieve the current Python environment.
         This can be the base Python environment or an activated virtual environment.
@@ -846,15 +848,13 @@ class EnvManager(object):
         (e.g. plugin installation or self update).
         """
         prefix, base_prefix = Path(sys.prefix), Path(cls.get_base_prefix())
-        if naive is False:
-            from poetry.locations import data_dir
-
+        if not naive:
             try:
-                prefix.relative_to(data_dir())
+                Path(__file__).relative_to(prefix)
             except ValueError:
                 pass
             else:
-                prefix = base_prefix
+                return GenericEnv(base_prefix)
 
         return SystemEnv(prefix)
 
@@ -1385,6 +1385,11 @@ class VirtualEnv(Env):
 
     def _updated_path(self):
         return os.pathsep.join([str(self._bin_dir), os.environ.get("PATH", "")])
+
+
+class GenericEnv(VirtualEnv):
+    def is_venv(self):  # type: () -> bool
+        return self._path != self._base
 
 
 class NullEnv(SystemEnv):
