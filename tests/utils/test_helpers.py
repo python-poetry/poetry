@@ -3,7 +3,7 @@ from pathlib import Path
 from poetry.core.utils.helpers import parse_requires
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
-from poetry.utils.helpers import get_truested
+from poetry.utils.helpers import get_trusted
 
 
 def test_parse_requires():
