@@ -854,7 +854,17 @@ class EnvManager(object):
             except ValueError:
                 pass
             else:
-                return GenericEnv(base_prefix)
+                python_version = sys.version_info
+                python_name = "python{major}.{minor}".format(
+                    major=python_version.major, minor=python_version.minor
+                )
+                pip_name = "pip{major}.{minor}".format(
+                    major=python_version.major, minor=python_version.minor
+                )
+
+                return GenericEnv(
+                    base_prefix, python_name=python_name, pip_name=pip_name
+                )
 
         return SystemEnv(prefix)
 
@@ -883,7 +893,9 @@ class Env(object):
     An abstract Python environment.
     """
 
-    def __init__(self, path, base=None):  # type: (Path, Optional[Path]) -> None
+    def __init__(
+        self, path, base=None, python_name="python", pip_name="pip"
+    ):  # type: (Path, Optional[Path], str, str) -> None
         self._is_windows = sys.platform == "win32"
 
         self._path = path
@@ -891,6 +903,8 @@ class Env(object):
         self._bin_dir = self._path / bin_dir
 
         self._base = base or path
+        self._python_name = python_name
+        self._pip_name = pip_name
 
         self._marker_env = None
         self._pip_version = None
@@ -914,6 +928,10 @@ class Env(object):
         return tuple(self.marker_env["version_info"])
 
     @property
+    def python_name(self):  # type: () -> str
+        return self._python_name
+
+    @property
     def python_implementation(self):  # type: () -> str
         return self.marker_env["platform_python_implementation"]
 
@@ -922,7 +940,7 @@ class Env(object):
         """
         Path to current python executable
         """
-        return self._bin("python")
+        return self._bin(self.python_name)
 
     @property
     def marker_env(self):
@@ -932,11 +950,15 @@ class Env(object):
         return self._marker_env
 
     @property
+    def pip_name(self):  # type: () -> str
+        return self._pip_name
+
+    @property
     def pip(self):  # type: () -> str
         """
         Path to current pip executable
         """
-        return self._bin("pip")
+        return self._bin(self._pip_name)
 
     @property
     def platform(self):  # type: () -> str
@@ -1262,24 +1284,27 @@ class VirtualEnv(Env):
     A virtual Python environment.
     """
 
-    def __init__(self, path, base=None):  # type: (Path, Optional[Path]) -> None
-        super(VirtualEnv, self).__init__(path, base)
-
+    @property
+    def base(self):  # type: () -> Path
         # If base is None, it probably means this is
         # a virtualenv created from VIRTUAL_ENV.
         # In this case we need to get sys.base_prefix
         # from inside the virtualenv.
-        if base is None:
-            self._base = Path(self.run("python", "-", input_=GET_BASE_PREFIX).strip())
+        if self._base is None:
+            self._base = Path(
+                self.run(self.python_name, "-", input_=GET_BASE_PREFIX).strip()
+            )
+
+        return self._base
 
     @property
     def sys_path(self):  # type: () -> List[str]
-        output = self.run("python", "-", input_=GET_SYS_PATH)
+        output = self.run(self.python_name, "-", input_=GET_SYS_PATH)
 
         return json.loads(output)
 
     def get_version_info(self):  # type: () -> Tuple[int]
-        output = self.run("python", "-", input_=GET_PYTHON_VERSION)
+        output = self.run(self.python_name, "-", input_=GET_PYTHON_VERSION)
 
         return tuple([int(s) for s in output.strip().split(".")])
 
@@ -1289,7 +1314,7 @@ class VirtualEnv(Env):
     def get_pip_command(self):  # type: () -> List[str]
         # We're in a virtualenv that is known to be sane,
         # so assume that we have a functional pip
-        return [self._bin("pip")]
+        return [self._bin(self.pip_name)]
 
     def get_supported_tags(self):  # type: () -> List[Tag]
         file_path = Path(packaging.tags.__file__)
@@ -1317,12 +1342,12 @@ class VirtualEnv(Env):
             """
         )
 
-        output = self.run("python", "-", input_=script)
+        output = self.run(self.python_name, "-", input_=script)
 
         return [Tag(*t) for t in json.loads(output)]
 
     def get_marker_env(self):  # type: () -> Dict[str, Any]
-        output = self.run("python", "-", input_=GET_ENVIRONMENT_INFO)
+        output = self.run(self.python_name, "-", input_=GET_ENVIRONMENT_INFO)
 
         return json.loads(output)
 
@@ -1335,7 +1360,7 @@ class VirtualEnv(Env):
         return Version.parse(m.group(1))
 
     def get_paths(self):  # type: () -> Dict[str, str]
-        output = self.run("python", "-", input_=GET_PATHS)
+        output = self.run(self.python_name, "-", input_=GET_PATHS)
 
         return json.loads(output)
 
@@ -1344,7 +1369,7 @@ class VirtualEnv(Env):
 
     def is_sane(self):
         # A virtualenv is considered sane if both "python" and "pip" exist.
-        return os.path.exists(self.python) and os.path.exists(self._bin("pip"))
+        return os.path.exists(self.python) and os.path.exists(self._bin(self.pip_name))
 
     def _run(self, cmd, **kwargs):
         kwargs["env"] = self.get_temp_environ(environ=kwargs.get("env"))
@@ -1389,7 +1414,7 @@ class VirtualEnv(Env):
 
 class GenericEnv(VirtualEnv):
     def is_venv(self):  # type: () -> bool
-        return self._path != self._base
+        return self.path != self.base
 
 
 class NullEnv(SystemEnv):
