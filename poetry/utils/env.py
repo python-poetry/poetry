@@ -1011,8 +1011,13 @@ class EnvManager:
         """
         prefix, base_prefix = Path(sys.prefix), Path(cls.get_base_prefix())
         if not naive:
+            if prefix.joinpath("poetry_env").exists():
+                return GenericEnv(base_prefix)
+
+            from poetry.locations import data_dir
+
             try:
-                Path(__file__).relative_to(prefix)
+                prefix.relative_to(data_dir())
             except ValueError:
                 pass
             else:
