@@ -584,7 +584,8 @@ class Installer:
 
         subprocess.run(
             [str(python), "-m", "pip", "install", specification],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             check=True,
         )
 
