@@ -439,8 +439,9 @@ class Installer:
         try:
             self.install(version)
         except subprocess.CalledProcessError as e:
-            print(colorize("error", "An error has occured: {}".format(str(e))))
-            print(e.output.decode())
+            print(
+                colorize("error", f"\nAn error has occurred: {e}\n{e.stderr.decode()}")
+            )
 
             return e.returncode
 
@@ -583,8 +584,8 @@ class Installer:
 
         subprocess.run(
             [str(python), "-m", "pip", "install", specification],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            capture_output=True,
+            check=True,
         )
 
     def display_pre_message(self) -> None:
