@@ -3,15 +3,23 @@ This script will install Poetry and its dependencies.
 
 It does, in order:
 
+<<<<<<< HEAD
   - Creates a virtual environment using venv (or virtualenv zipapp) in the correct OS data dir which will be
+=======
+  - Downloads the virtualenv package to a temporary directory and add it to sys.path.
+  - Creates a virtual environment in the correct OS data dir which will be
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
       - `%APPDATA%\\pypoetry` on Windows
       -  ~/Library/Application Support/pypoetry on MacOS
       - `${XDG_DATA_HOME}/pypoetry` (or `~/.local/share/pypoetry` if it's not set) on UNIX systems
       - In `${POETRY_HOME}` if it's set.
   - Installs the latest or given version of Poetry inside this virtual environment.
   - Installs a `poetry` script in the Python user directory (or `${POETRY_HOME/bin}` if `POETRY_HOME` is set).
+<<<<<<< HEAD
   - On failure, the error log is written to poetry-installer-error-*.log and any previously existing environment
     is restored.
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 """
 
 import argparse
@@ -96,8 +104,13 @@ def is_decorated():
     if WINDOWS:
         return (
             os.getenv("ANSICON") is not None
+<<<<<<< HEAD
             or os.getenv("ConEmuANSI") == "ON"
             or os.getenv("Term") == "xterm"
+=======
+            or "ON" == os.getenv("ConEmuANSI")
+            or "xterm" == os.getenv("Term")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         )
 
     if not hasattr(sys.stdout, "fileno"):
@@ -213,13 +226,35 @@ def _get_win_folder_with_ctypes(csidl_name):
 
 if WINDOWS:
     try:
+<<<<<<< HEAD
         from ctypes import windll  # noqa: F401
+=======
+        from ctypes import windll  # noqa
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
         _get_win_folder = _get_win_folder_with_ctypes
     except ImportError:
         _get_win_folder = _get_win_folder_from_registry
 
 
+<<<<<<< HEAD
+=======
+@contextmanager
+def temporary_directory(*args, **kwargs):
+    try:
+        from tempfile import TemporaryDirectory
+    except ImportError:
+        name = tempfile.mkdtemp(*args, **kwargs)
+
+        yield name
+
+        shutil.rmtree(name)
+    else:
+        with TemporaryDirectory(*args, **kwargs) as name:
+            yield name
+
+
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 PRE_MESSAGE = """# Welcome to {poetry}!
 
 This will download and install the latest version of {poetry},
@@ -263,6 +298,7 @@ You can execute `set -U fish_user_paths {poetry_home_bin} $fish_user_paths`
 POST_MESSAGE_CONFIGURE_WINDOWS = """"""
 
 
+<<<<<<< HEAD
 class PoetryInstallationError(RuntimeError):
     def __init__(self, return_code: int = 0, log: Optional[str] = None):
         super(PoetryInstallationError, self).__init__()
@@ -340,6 +376,8 @@ class VirtualEnvironment:
         return self.python("-m", "pip", "--isolated", *args, **kwargs)
 
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 class Cursor:
     def __init__(self) -> None:
         self._output = sys.stdout
@@ -502,10 +540,19 @@ class Installer:
         try:
             self.install(version)
         except subprocess.CalledProcessError as e:
+<<<<<<< HEAD
             raise PoetryInstallationError(
                 return_code=e.returncode, log=e.output.decode()
             )
 
+=======
+            print(
+                colorize("error", f"\nAn error has occurred: {e}\n{e.stderr.decode()}")
+            )
+
+            return e.returncode
+
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         self._write("")
         self.display_post_message(version)
 
@@ -521,6 +568,7 @@ class Installer:
             )
         )
 
+<<<<<<< HEAD
         with self.make_env(version) as env:
             self.install_poetry(version, env)
             self.make_bin(version, env)
@@ -528,6 +576,23 @@ class Installer:
             self._install_comment(version, "Done")
 
             return 0
+=======
+        env_path = self.make_env(version)
+        self.install_poetry(version, env_path)
+        self.make_bin(version)
+
+        self._overwrite(
+            "Installing {} ({}): {}".format(
+                colorize("info", "Poetry"),
+                colorize("b", version),
+                colorize("success", "Done"),
+            )
+        )
+
+        self._data_dir.joinpath("VERSION").write_text(version)
+
+        return 0
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     def uninstall(self) -> int:
         if not self._data_dir.exists():
@@ -557,11 +622,16 @@ class Installer:
 
         return 0
 
+<<<<<<< HEAD
     def _install_comment(self, version: str, message: str):
+=======
+    def make_env(self, version: str) -> Path:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         self._overwrite(
             "Installing {} ({}): {}".format(
                 colorize("info", "Poetry"),
                 colorize("b", version),
+<<<<<<< HEAD
                 colorize("comment", message),
             )
         )
@@ -608,11 +678,51 @@ class Installer:
             script = "poetry.exe"
             script_bin = "Scripts"
         target_script = env.path.joinpath(script_bin, script)
+=======
+                colorize("comment", "Creating environment"),
+            )
+        )
+
+        env_path = self._data_dir.joinpath("venv")
+
+        with temporary_directory() as tmp_dir:
+            subprocess.call(
+                [sys.executable, "-m", "pip", "install", "virtualenv", "-t", tmp_dir],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+
+            sys.path.insert(0, tmp_dir)
+
+            import virtualenv
+
+            virtualenv.cli_run([str(env_path), "--clear"])
+
+        return env_path
+
+    def make_bin(self, version: str) -> None:
+        self._overwrite(
+            "Installing {} ({}): {}".format(
+                colorize("info", "Poetry"),
+                colorize("b", version),
+                colorize("comment", "Creating script"),
+            )
+        )
+
+        self._bin_dir.mkdir(parents=True, exist_ok=True)
+
+        script = "poetry"
+        target_script = "venv/bin/poetry"
+        if WINDOWS:
+            script = "poetry.exe"
+            target_script = "venv/Scripts/poetry.exe"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
         if self._bin_dir.joinpath(script).exists():
             self._bin_dir.joinpath(script).unlink()
 
         try:
+<<<<<<< HEAD
             self._bin_dir.joinpath(script).symlink_to(target_script)
         except OSError:
             # This can happen if the user
@@ -621,6 +731,31 @@ class Installer:
 
     def install_poetry(self, version: str, env: VirtualEnvironment) -> None:
         self._install_comment(version, "Installing Poetry")
+=======
+            self._bin_dir.joinpath(script).symlink_to(
+                self._data_dir.joinpath(target_script)
+            )
+        except OSError:
+            # This can happen if the user
+            # does not have the correct permission on Windows
+            shutil.copy(
+                self._data_dir.joinpath(target_script), self._bin_dir.joinpath(script)
+            )
+
+    def install_poetry(self, version: str, env_path: Path) -> None:
+        self._overwrite(
+            "Installing {} ({}): {}".format(
+                colorize("info", "Poetry"),
+                colorize("b", version),
+                colorize("comment", "Installing Poetry"),
+            )
+        )
+
+        if WINDOWS:
+            python = env_path.joinpath("Scripts/python.exe")
+        else:
+            python = env_path.joinpath("bin/python")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
         if self._git:
             specification = "git+" + version
@@ -629,7 +764,16 @@ class Installer:
         else:
             specification = f"poetry=={version}"
 
+<<<<<<< HEAD
         env.pip("install", specification)
+=======
+        subprocess.run(
+            [str(python), "-m", "pip", "install", specification],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
+        )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     def display_pre_message(self) -> None:
         kwargs = {
@@ -868,6 +1012,7 @@ def main():
     if args.uninstall or string_to_bool(os.getenv("POETRY_UNINSTALL", "0")):
         return installer.uninstall()
 
+<<<<<<< HEAD
     try:
         return installer.run()
     except PoetryInstallationError as e:
@@ -897,4 +1042,10 @@ if __name__ == "__main__":
             "Please update your usage to reflect this.\n",
         )
     )
+=======
+    return installer.run()
+
+
+if __name__ == "__main__":
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     sys.exit(main())

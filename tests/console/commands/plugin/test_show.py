@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Type
 
@@ -6,11 +7,19 @@ import pytest
 from entrypoints import EntryPoint as _EntryPoint
 from poetry.core.packages.package import Package
 
+=======
+import pytest
+
+from entrypoints import EntryPoint as _EntryPoint
+
+from poetry.core.packages.package import Package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.factory import Factory
 from poetry.plugins.application_plugin import ApplicationPlugin
 from poetry.plugins.plugin import Plugin
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
@@ -23,6 +32,10 @@ if TYPE_CHECKING:
 
 class EntryPoint(_EntryPoint):
     def load(self) -> Type["BasePlugin"]:
+=======
+class EntryPoint(_EntryPoint):
+    def load(self):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         if "ApplicationPlugin" in self.object_name:
             return ApplicationPlugin
 
@@ -30,6 +43,7 @@ class EntryPoint(_EntryPoint):
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("plugin show")
 
@@ -40,6 +54,13 @@ def test_show_displays_installed_plugins(
     installed: "Repository",
     mocker: "MockerFixture",
 ):
+=======
+def tester(command_tester_factory):
+    return command_tester_factory("plugin show")
+
+
+def test_show_displays_installed_plugins(app, tester, installed, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch(
         "entrypoints.get_group_all",
         side_effect=[
@@ -73,10 +94,14 @@ def test_show_displays_installed_plugins(
 
 
 def test_show_displays_installed_plugins_with_multiple_plugins(
+<<<<<<< HEAD
     app: "PoetryTestApplication",
     tester: "CommandTester",
     installed: "Repository",
     mocker: "MockerFixture",
+=======
+    app, tester, installed, mocker
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     mocker.patch(
         "entrypoints.get_group_all",
@@ -121,10 +146,14 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
 
 
 def test_show_displays_installed_plugins_with_dependencies(
+<<<<<<< HEAD
     app: "PoetryTestApplication",
     tester: "CommandTester",
     installed: "Repository",
     mocker: "MockerFixture",
+=======
+    app, tester, installed, mocker
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     mocker.patch(
         "entrypoints.get_group_all",

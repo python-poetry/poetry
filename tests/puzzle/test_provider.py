@@ -1,15 +1,25 @@
 from pathlib import Path
 from subprocess import CalledProcessError
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
 from cleo.io.null_io import NullIO
+<<<<<<< HEAD
+=======
+
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.core.packages.directory_dependency import DirectoryDependency
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
+<<<<<<< HEAD
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.inspection.info import PackageInfo
 from poetry.puzzle.provider import Provider
 from poetry.repositories.pool import Pool
@@ -19,27 +29,44 @@ from poetry.utils.env import MockEnv as BaseMockEnv
 from tests.helpers import get_dependency
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
 class MockEnv(BaseMockEnv):
     def run(self, bin: str, *args: str) -> None:
+=======
+class MockEnv(BaseMockEnv):
+    def run(self, bin, *args):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         raise EnvCommandError(CalledProcessError(1, "python", output=""))
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def root() -> ProjectPackage:
+=======
+def root():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return ProjectPackage("root", "1.2.3")
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def repository() -> Repository:
+=======
+def repository():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Repository()
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def pool(repository: Repository) -> Pool:
+=======
+def pool(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pool = Pool()
     pool.add_repository(repository)
 
@@ -47,12 +74,20 @@ def pool(repository: Repository) -> Pool:
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def provider(root: ProjectPackage, pool: Pool) -> Provider:
+=======
+def provider(root, pool):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Provider(root, pool, NullIO())
 
 
 @pytest.mark.parametrize("value", [True, False])
+<<<<<<< HEAD
 def test_search_for_vcs_retains_develop_flag(provider: Provider, value: bool):
+=======
+def test_search_for_vcs_retains_develop_flag(provider, value):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = VCSDependency(
         "demo", "git", "https://github.com/demo/demo.git", develop=value
     )
@@ -60,7 +95,11 @@ def test_search_for_vcs_retains_develop_flag(provider: Provider, value: bool):
     assert package.develop == value
 
 
+<<<<<<< HEAD
 def test_search_for_vcs_setup_egg_info(provider: Provider):
+=======
+def test_search_for_vcs_setup_egg_info(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
 
     package = provider.search_for_vcs(dependency)[0]
@@ -78,7 +117,11 @@ def test_search_for_vcs_setup_egg_info(provider: Provider):
     }
 
 
+<<<<<<< HEAD
 def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider):
+=======
+def test_search_for_vcs_setup_egg_info_with_extras(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = VCSDependency(
         "demo", "git", "https://github.com/demo/demo.git", extras=["foo"]
     )
@@ -98,7 +141,11 @@ def test_search_for_vcs_setup_egg_info_with_extras(provider: Provider):
     }
 
 
+<<<<<<< HEAD
 def test_search_for_vcs_read_setup(provider: Provider, mocker: "MockerFixture"):
+=======
+def test_search_for_vcs_read_setup(provider, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = VCSDependency("demo", "git", "https://github.com/demo/demo.git")
@@ -118,9 +165,13 @@ def test_search_for_vcs_read_setup(provider: Provider, mocker: "MockerFixture"):
     }
 
 
+<<<<<<< HEAD
 def test_search_for_vcs_read_setup_with_extras(
     provider: Provider, mocker: "MockerFixture"
 ):
+=======
+def test_search_for_vcs_read_setup_with_extras(provider, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = VCSDependency(
@@ -138,9 +189,13 @@ def test_search_for_vcs_read_setup_with_extras(
     assert optional == [get_dependency("tomlkit"), get_dependency("cleo")]
 
 
+<<<<<<< HEAD
 def test_search_for_vcs_read_setup_raises_error_if_no_version(
     provider: Provider, mocker: "MockerFixture"
 ):
+=======
+def test_search_for_vcs_read_setup_raises_error_if_no_version(provider, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch(
         "poetry.inspection.info.PackageInfo._pep517_metadata",
         return_value=PackageInfo(name="demo", version=None),
@@ -153,7 +208,11 @@ def test_search_for_vcs_read_setup_raises_error_if_no_version(
 
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
+<<<<<<< HEAD
 def test_search_for_directory_setup_egg_info(provider: Provider, directory: str):
+=======
+def test_search_for_directory_setup_egg_info(provider, directory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = DirectoryDependency(
         "demo",
         Path(__file__).parent.parent
@@ -179,7 +238,11 @@ def test_search_for_directory_setup_egg_info(provider: Provider, directory: str)
     }
 
 
+<<<<<<< HEAD
 def test_search_for_directory_setup_egg_info_with_extras(provider: Provider):
+=======
+def test_search_for_directory_setup_egg_info_with_extras(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = DirectoryDependency(
         "demo",
         Path(__file__).parent.parent
@@ -207,7 +270,11 @@ def test_search_for_directory_setup_egg_info_with_extras(provider: Provider):
 
 
 @pytest.mark.parametrize("directory", ["demo", "non-canonical-name"])
+<<<<<<< HEAD
 def test_search_for_directory_setup_with_base(provider: Provider, directory: str):
+=======
+def test_search_for_directory_setup_with_base(provider, directory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = DirectoryDependency(
         "demo",
         Path(__file__).parent.parent
@@ -247,9 +314,13 @@ def test_search_for_directory_setup_with_base(provider: Provider, directory: str
     )
 
 
+<<<<<<< HEAD
 def test_search_for_directory_setup_read_setup(
     provider: Provider, mocker: "MockerFixture"
 ):
+=======
+def test_search_for_directory_setup_read_setup(provider, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = DirectoryDependency(
@@ -277,9 +348,13 @@ def test_search_for_directory_setup_read_setup(
     }
 
 
+<<<<<<< HEAD
 def test_search_for_directory_setup_read_setup_with_extras(
     provider: Provider, mocker: "MockerFixture"
 ):
+=======
+def test_search_for_directory_setup_read_setup_with_extras(provider, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch("poetry.utils.env.EnvManager.get", return_value=MockEnv())
 
     dependency = DirectoryDependency(
@@ -308,7 +383,11 @@ def test_search_for_directory_setup_read_setup_with_extras(
     }
 
 
+<<<<<<< HEAD
 def test_search_for_directory_setup_read_setup_with_no_dependencies(provider: Provider):
+=======
+def test_search_for_directory_setup_read_setup_with_no_dependencies(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = DirectoryDependency(
         "demo",
         Path(__file__).parent.parent
@@ -327,7 +406,11 @@ def test_search_for_directory_setup_read_setup_with_no_dependencies(provider: Pr
     assert package.extras == {}
 
 
+<<<<<<< HEAD
 def test_search_for_directory_poetry(provider: Provider):
+=======
+def test_search_for_directory_poetry(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = DirectoryDependency(
         "project-with-extras",
         Path(__file__).parent.parent / "fixtures" / "project_with_extras",
@@ -355,7 +438,11 @@ def test_search_for_directory_poetry(provider: Provider):
     }
 
 
+<<<<<<< HEAD
 def test_search_for_directory_poetry_with_extras(provider: Provider):
+=======
+def test_search_for_directory_poetry_with_extras(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = DirectoryDependency(
         "project-with-extras",
         Path(__file__).parent.parent / "fixtures" / "project_with_extras",
@@ -384,7 +471,11 @@ def test_search_for_directory_poetry_with_extras(provider: Provider):
     }
 
 
+<<<<<<< HEAD
 def test_search_for_file_sdist(provider: Provider):
+=======
+def test_search_for_file_sdist(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = FileDependency(
         "demo",
         Path(__file__).parent.parent
@@ -415,7 +506,11 @@ def test_search_for_file_sdist(provider: Provider):
     }
 
 
+<<<<<<< HEAD
 def test_search_for_file_sdist_with_extras(provider: Provider):
+=======
+def test_search_for_file_sdist_with_extras(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = FileDependency(
         "demo",
         Path(__file__).parent.parent
@@ -447,7 +542,11 @@ def test_search_for_file_sdist_with_extras(provider: Provider):
     }
 
 
+<<<<<<< HEAD
 def test_search_for_file_wheel(provider: Provider):
+=======
+def test_search_for_file_wheel(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = FileDependency(
         "demo",
         Path(__file__).parent.parent
@@ -478,7 +577,11 @@ def test_search_for_file_wheel(provider: Provider):
     }
 
 
+<<<<<<< HEAD
 def test_search_for_file_wheel_with_extras(provider: Provider):
+=======
+def test_search_for_file_wheel_with_extras(provider):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     dependency = FileDependency(
         "demo",
         Path(__file__).parent.parent

@@ -1,8 +1,11 @@
 import os
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Iterator
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
@@ -13,12 +16,17 @@ from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.repositories import Pool
 from poetry.utils.env import MockEnv
+<<<<<<< HEAD
 from tests.helpers import PoetryTestApplication
+=======
+from tests.helpers import TestApplication
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from tests.helpers import TestExecutor
 from tests.helpers import TestLocker
 from tests.helpers import mock_clone
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
@@ -30,17 +38,26 @@ if TYPE_CHECKING:
 
 @pytest.fixture()
 def installer() -> NoopInstaller:
+=======
+@pytest.fixture()
+def installer():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return NoopInstaller()
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def env(tmp_dir: str) -> MockEnv:
+=======
+def env(tmp_dir):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     path = Path(tmp_dir) / ".venv"
     path.mkdir(parents=True)
     return MockEnv(path=path, is_venv=True)
 
 
 @pytest.fixture(autouse=True)
+<<<<<<< HEAD
 def setup(
     mocker: "MockerFixture",
     installer: NoopInstaller,
@@ -48,6 +65,9 @@ def setup(
     config: "Config",
     env: MockEnv,
 ) -> Iterator[None]:
+=======
+def setup(mocker, installer, installed, config, env):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
@@ -86,14 +106,22 @@ def setup(
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def project_directory() -> str:
+=======
+def project_directory():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return "simple_project"
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def poetry(
     repo: "TestRepository", project_directory: str, config: "Config"
 ) -> "Poetry":
+=======
+def poetry(repo, project_directory, config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     p = Factory().create_poetry(
         Path(__file__).parent.parent / "fixtures" / project_directory
     )
@@ -115,22 +143,39 @@ def poetry(
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def app(poetry: "Poetry") -> PoetryTestApplication:
     app_ = PoetryTestApplication(poetry)
+=======
+def app(poetry):
+    app_ = TestApplication(poetry)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     return app_
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def app_tester(app: PoetryTestApplication) -> ApplicationTester:
+=======
+def app_tester(app):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return ApplicationTester(app)
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def new_installer_disabled(config: "Config") -> None:
+=======
+def new_installer_disabled(config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     config.merge({"experimental": {"new-installer": False}})
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def executor(poetry: "Poetry", config: "Config", env: MockEnv) -> TestExecutor:
+=======
+def executor(poetry, config, env):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return TestExecutor(env, poetry.pool, config, NullIO())

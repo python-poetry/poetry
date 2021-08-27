@@ -1,6 +1,11 @@
 from cleo.io.buffered_io import BufferedIO
+<<<<<<< HEAD
 from poetry.core.packages.dependency import Dependency
 
+=======
+
+from poetry.core.packages.dependency import Dependency
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import PythonCause

@@ -1,21 +1,33 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from typing import Optional
 
 import pytest
 
+<<<<<<< HEAD
+=======
+from pytest_mock.plugin import MockerFixture
+
+from poetry.core.packages.package import Package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils._compat import metadata
 from poetry.utils.env import MockEnv as BaseMockEnv
 from tests.compat import zipp
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
     from pytest_mock.plugin import MockerFixture
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 ENV_DIR = (FIXTURES_DIR / "installed").resolve()
 SITE_PURELIB = ENV_DIR / "lib" / "python3.7" / "site-packages"
@@ -46,14 +58,22 @@ INSTALLED_RESULTS = [
 
 class MockEnv(BaseMockEnv):
     @property
+<<<<<<< HEAD
     def paths(self) -> Dict[str, Path]:
+=======
+    def paths(self):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         return {
             "purelib": SITE_PURELIB,
             "platlib": SITE_PLATLIB,
         }
 
     @property
+<<<<<<< HEAD
     def sys_path(self) -> List[Path]:
+=======
+    def sys_path(self):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         return [ENV_DIR, SITE_PLATLIB, SITE_PURELIB]
 
 
@@ -63,7 +83,11 @@ def env() -> MockEnv:
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def repository(mocker: "MockerFixture", env: MockEnv) -> InstalledRepository:
+=======
+def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,
@@ -85,23 +109,39 @@ def repository(mocker: "MockerFixture", env: MockEnv) -> InstalledRepository:
 
 def get_package_from_repository(
     name: str, repository: InstalledRepository
+<<<<<<< HEAD
 ) -> Optional["Package"]:
+=======
+) -> Optional[Package]:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     for pkg in repository.packages:
         if pkg.name == name:
             return pkg
     return None
 
 
+<<<<<<< HEAD
 def test_load_successful(repository: InstalledRepository):
     assert len(repository.packages) == len(INSTALLED_RESULTS) - 1
 
 
 def test_load_ensure_isolation(repository: InstalledRepository):
+=======
+def test_load_successful(repository):
+    assert len(repository.packages) == len(INSTALLED_RESULTS) - 1
+
+
+def test_load_ensure_isolation(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package = get_package_from_repository("attrs", repository)
     assert package is None
 
 
+<<<<<<< HEAD
 def test_load_standard_package(repository: InstalledRepository):
+=======
+def test_load_standard_package(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     cleo = get_package_from_repository("cleo", repository)
     assert cleo is not None
     assert cleo.name == "cleo"
@@ -116,7 +156,11 @@ def test_load_standard_package(repository: InstalledRepository):
     assert foo.version.text == "0.1.0"
 
 
+<<<<<<< HEAD
 def test_load_git_package(repository: InstalledRepository):
+=======
+def test_load_git_package(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package_from_repository("pendulum", repository)
     assert pendulum is not None
     assert pendulum.name == "pendulum"
@@ -130,7 +174,11 @@ def test_load_git_package(repository: InstalledRepository):
     assert pendulum.source_reference == "bb058f6b78b2d28ef5d9a5e759cfa179a1a713d6"
 
 
+<<<<<<< HEAD
 def test_load_git_package_pth(repository: InstalledRepository):
+=======
+def test_load_git_package_pth(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     bender = get_package_from_repository("bender", repository)
     assert bender is not None
     assert bender.name == "bender"
@@ -138,14 +186,22 @@ def test_load_git_package_pth(repository: InstalledRepository):
     assert bender.source_type == "git"
 
 
+<<<<<<< HEAD
 def test_load_platlib_package(repository: InstalledRepository):
+=======
+def test_load_platlib_package(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     lib64 = get_package_from_repository("lib64", repository)
     assert lib64 is not None
     assert lib64.name == "lib64"
     assert lib64.version.text == "2.3.4"
 
 
+<<<<<<< HEAD
 def test_load_editable_package(repository: InstalledRepository):
+=======
+def test_load_editable_package(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # test editable package with text .pth file
     editable = get_package_from_repository("editable", repository)
     assert editable is not None
@@ -158,7 +214,11 @@ def test_load_editable_package(repository: InstalledRepository):
     )
 
 
+<<<<<<< HEAD
 def test_load_editable_with_import_package(repository: InstalledRepository):
+=======
+def test_load_editable_with_import_package(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # test editable package with executable .pth file
     editable = get_package_from_repository("editable-with-import", repository)
     assert editable is not None
@@ -168,7 +228,11 @@ def test_load_editable_with_import_package(repository: InstalledRepository):
     assert editable.source_url is None
 
 
+<<<<<<< HEAD
 def test_load_standard_package_with_pth_file(repository: InstalledRepository):
+=======
+def test_load_standard_package_with_pth_file(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # test standard packages with .pth file is not treated as editable
     standard = get_package_from_repository("standard", repository)
     assert standard is not None
@@ -178,7 +242,11 @@ def test_load_standard_package_with_pth_file(repository: InstalledRepository):
     assert standard.source_url is None
 
 
+<<<<<<< HEAD
 def test_load_pep_610_compliant_git_packages(repository: InstalledRepository):
+=======
+def test_load_pep_610_compliant_git_packages(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package = get_package_from_repository("git-pep-610", repository)
 
     assert package is not None
@@ -190,7 +258,11 @@ def test_load_pep_610_compliant_git_packages(repository: InstalledRepository):
     assert package.source_resolved_reference == "123456"
 
 
+<<<<<<< HEAD
 def test_load_pep_610_compliant_url_packages(repository: InstalledRepository):
+=======
+def test_load_pep_610_compliant_url_packages(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package = get_package_from_repository("url-pep-610", repository)
 
     assert package is not None
@@ -203,7 +275,11 @@ def test_load_pep_610_compliant_url_packages(repository: InstalledRepository):
     )
 
 
+<<<<<<< HEAD
 def test_load_pep_610_compliant_file_packages(repository: InstalledRepository):
+=======
+def test_load_pep_610_compliant_file_packages(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package = get_package_from_repository("file-pep-610", repository)
 
     assert package is not None
@@ -213,7 +289,11 @@ def test_load_pep_610_compliant_file_packages(repository: InstalledRepository):
     assert package.source_url == "/path/to/distributions/file-pep-610-1.2.3.tar.gz"
 
 
+<<<<<<< HEAD
 def test_load_pep_610_compliant_directory_packages(repository: InstalledRepository):
+=======
+def test_load_pep_610_compliant_directory_packages(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package = get_package_from_repository("directory-pep-610", repository)
 
     assert package is not None
@@ -224,9 +304,13 @@ def test_load_pep_610_compliant_directory_packages(repository: InstalledReposito
     assert not package.develop
 
 
+<<<<<<< HEAD
 def test_load_pep_610_compliant_editable_directory_packages(
     repository: InstalledRepository,
 ):
+=======
+def test_load_pep_610_compliant_editable_directory_packages(repository):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package = get_package_from_repository("editable-directory-pep-610", repository)
 
     assert package is not None

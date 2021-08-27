@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 import pytest
@@ -21,6 +22,17 @@ def tester(
 
 
 def test_source_show_simple(tester: "CommandTester"):
+=======
+import pytest
+
+
+@pytest.fixture
+def tester(command_tester_factory, poetry_with_source, add_multiple_sources):
+    return command_tester_factory("source show", poetry=poetry_with_source)
+
+
+def test_source_show_simple(tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute("")
 
     expected = """\
@@ -46,7 +58,11 @@ secondary  : no
     assert tester.status_code == 0
 
 
+<<<<<<< HEAD
 def test_source_show_one(tester: "CommandTester", source_one: "Source"):
+=======
+def test_source_show_one(tester, source_one):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute(f"{source_one.name}")
 
     expected = """\
@@ -62,9 +78,13 @@ secondary  : no
     assert tester.status_code == 0
 
 
+<<<<<<< HEAD
 def test_source_show_two(
     tester: "CommandTester", source_one: "Source", source_two: "Source"
 ):
+=======
+def test_source_show_two(tester, source_one, source_two):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute(f"{source_one.name} {source_two.name}")
 
     expected = """\
@@ -85,7 +105,11 @@ secondary  : no
     assert tester.status_code == 0
 
 
+<<<<<<< HEAD
 def test_source_show_error(tester: "CommandTester"):
+=======
+def test_source_show_error(tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute("error")
     assert tester.io.fetch_error().strip() == "No source found with name(s): error"
     assert tester.status_code == 1

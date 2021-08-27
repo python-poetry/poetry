@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+# -*- coding: utf-8 -*-
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from distutils.core import setup
 
 packages = ["project_with_extras"]

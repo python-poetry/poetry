@@ -1,9 +1,13 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
@@ -17,6 +21,14 @@ def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
 
 
 def test_check_valid(tester: "CommandTester"):
+=======
+@pytest.fixture()
+def tester(command_tester_factory):
+    return command_tester_factory("check")
+
+
+def test_check_valid(tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute()
 
     expected = """\
@@ -26,7 +38,11 @@ All set!
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_check_invalid(mocker: "MockerFixture", tester: "CommandTester"):
+=======
+def test_check_invalid(mocker, tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch(
         "poetry.factory.Factory.locate",
         return_value=Path(__file__).parent.parent.parent

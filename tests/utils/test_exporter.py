@@ -1,6 +1,7 @@
 import sys
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
@@ -9,18 +10,24 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Union
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
 from poetry.core.packages.dependency import Dependency
 from poetry.core.toml.file import TOMLFile
+<<<<<<< HEAD
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.factory import Factory
 from poetry.packages import Locker as BaseLocker
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.utils.exporter import Exporter
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from _pytest.capture import CaptureFixture
     from pytest_mock import MockerFixture
@@ -32,15 +39,24 @@ if TYPE_CHECKING:
 
 class Locker(BaseLocker):
     def __init__(self) -> None:
+=======
+class Locker(BaseLocker):
+    def __init__(self):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
         self._locked = True
         self._content_hash = self._get_content_hash()
 
+<<<<<<< HEAD
     def locked(self, is_locked: bool = True) -> "Locker":
+=======
+    def locked(self, is_locked=True):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         self._locked = is_locked
 
         return self
 
+<<<<<<< HEAD
     def mock_lock_data(self, data: Dict[str, Any]):
         self._lock_data = data
 
@@ -51,35 +67,67 @@ class Locker(BaseLocker):
         return True
 
     def _get_content_hash(self) -> str:
+=======
+    def mock_lock_data(self, data):
+        self._lock_data = data
+
+    def is_locked(self):
+        return self._locked
+
+    def is_fresh(self):
+        return True
+
+    def _get_content_hash(self):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         return "123456789"
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def working_directory() -> Path:
+=======
+def working_directory():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Path(__file__).parent.parent.parent
 
 
 @pytest.fixture(autouse=True)
+<<<<<<< HEAD
 def mock_path_cwd(
     mocker: "MockerFixture", working_directory: Path
 ) -> Iterator["MockerFixture"]:
+=======
+def mock_path_cwd(mocker, working_directory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     yield mocker.patch("pathlib.Path.cwd", return_value=working_directory)
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def locker() -> Locker:
+=======
+def locker():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Locker()
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def poetry(fixture_dir: "FixtureDirGetter", locker: Locker) -> "Poetry":
+=======
+def poetry(fixture_dir, locker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     p = Factory().create_poetry(fixture_dir("sample_project"))
     p._locker = locker
 
     return p
 
 
+<<<<<<< HEAD
 def set_package_requires(poetry: "Poetry", skip: Optional[Set[str]] = None) -> None:
+=======
+def set_package_requires(poetry, skip=None):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     skip = skip or set()
     packages = poetry.locker.locked_repository(with_dev_reqs=True).packages
     package = poetry.package.with_dependency_groups([], only=True)
@@ -91,7 +139,11 @@ def set_package_requires(poetry: "Poetry", skip: Optional[Set[str]] = None) -> N
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry"
+=======
+    tmp_dir, poetry, mocker
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -136,7 +188,11 @@ foo==1.2.3
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry"
+=======
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -184,14 +240,23 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers
 
     expected = """\
 bar==4.5.6
+<<<<<<< HEAD
 baz==7.8.9 ; sys_platform == "win32"
 foo==1.2.3 ; python_version < "3.7"
+=======
+baz==7.8.9; sys_platform == "win32"
+foo==1.2.3; python_version < "3.7"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 """
 
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_exporter_can_export_requirements_txt_poetry(tmp_dir: str, poetry: "Poetry"):
+=======
+def test_exporter_can_export_requirements_txt_poetry(tmp_dir, poetry):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     """Regression test for #3254"""
 
     poetry.locker.mock_lock_data(
@@ -293,10 +358,17 @@ def test_exporter_can_export_requirements_txt_poetry(tmp_dir: str, poetry: "Poet
         "junit-xml": Dependency.create_from_pep_508("junit-xml==1.9"),
         "keyring": Dependency.create_from_pep_508("keyring==21.8.0"),
         "secretstorage": Dependency.create_from_pep_508(
+<<<<<<< HEAD
             "secretstorage==3.3.0 ; sys_platform=='linux'"
         ),
         "cryptography": Dependency.create_from_pep_508(
             "cryptography==3.2 ; sys_platform=='linux'"
+=======
+            "secretstorage==3.3.0; sys_platform=='linux'"
+        ),
+        "cryptography": Dependency.create_from_pep_508(
+            "cryptography==3.2; sys_platform=='linux'"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         ),
         "six": Dependency.create_from_pep_508("six==1.15.0"),
     }
@@ -309,9 +381,13 @@ def test_exporter_can_export_requirements_txt_poetry(tmp_dir: str, poetry: "Poet
         assert dependency.marker == expected_dependency.marker
 
 
+<<<<<<< HEAD
 def test_exporter_can_export_requirements_txt_pyinstaller(
     tmp_dir: str, poetry: "Poetry"
 ):
+=======
+def test_exporter_can_export_requirements_txt_pyinstaller(tmp_dir, poetry):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     """Regression test for #3254"""
 
     poetry.locker.mock_lock_data(
@@ -375,7 +451,11 @@ def test_exporter_can_export_requirements_txt_pyinstaller(
         "pyinstaller": Dependency.create_from_pep_508("pyinstaller==4.0"),
         "altgraph": Dependency.create_from_pep_508("altgraph==0.17"),
         "macholib": Dependency.create_from_pep_508(
+<<<<<<< HEAD
             "macholib==1.8 ; sys_platform == 'darwin'"
+=======
+            "macholib==1.8; sys_platform == 'darwin'"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         ),
     }
 
@@ -388,7 +468,11 @@ def test_exporter_can_export_requirements_txt_pyinstaller(
 
 
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry"
+=======
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -445,6 +529,7 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
         content = f.read()
 
     expected = {
+<<<<<<< HEAD
         "a": Dependency.create_from_pep_508("a==1.2.3 ; python_version < '3.7'"),
         "b": Dependency.create_from_pep_508(
             "b==4.5.6 ; platform_system == 'Windows' and python_version < '3.7'"
@@ -454,6 +539,17 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
         ),
         "d": Dependency.create_from_pep_508(
             "d==0.0.1 ; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
+=======
+        "a": Dependency.create_from_pep_508("a==1.2.3; python_version < '3.7'"),
+        "b": Dependency.create_from_pep_508(
+            "b==4.5.6; platform_system == 'Windows' and python_version < '3.7'"
+        ),
+        "c": Dependency.create_from_pep_508(
+            "c==7.8.9; sys_platform == 'win32' and python_version < '3.7'"
+        ),
+        "d": Dependency.create_from_pep_508(
+            "d==0.0.1; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         ),
     }
 
@@ -468,11 +564,19 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
 
 
 @pytest.mark.parametrize(
+<<<<<<< HEAD
     ["dev", "lines"],
     [(False, ['a==1.2.3 ; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
 )
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_any(
     tmp_dir: str, poetry: "Poetry", dev: bool, lines: List[str]
+=======
+    "dev,lines",
+    [(False, ['a==1.2.3; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
+)
+def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_any(
+    tmp_dir, poetry, dev, lines
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -504,12 +608,20 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_a
     root = poetry.package.with_dependency_groups([], only=True)
     root.add_dependency(
         Factory.create_dependency(
+<<<<<<< HEAD
             name="a", constraint={"version": "^1.2.3", "python": "<3.8"}
+=======
+            name="a", constraint=dict(version="^1.2.3", python="<3.8")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         )
     )
     root.add_dependency(
         Factory.create_dependency(
+<<<<<<< HEAD
             name="b", constraint={"version": "^4.5.6"}, groups=["dev"]
+=======
+            name="b", constraint=dict(version="^4.5.6"), groups=["dev"]
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         )
     )
     poetry._package = root
@@ -525,7 +637,11 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_a
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry"
+=======
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -572,7 +688,11 @@ foo==1.2.3 \\
 
 
 def test_exporter_can_export_requirements_txt_with_standard_packages_and_hashes_disabled(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry"
+=======
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -619,7 +739,11 @@ foo==1.2.3
 
 
 def test_exporter_exports_requirements_txt_without_dev_packages_by_default(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry"
+=======
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -664,7 +788,11 @@ foo==1.2.3 \\
 
 
 def test_exporter_exports_requirements_txt_with_dev_packages_if_opted_in(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry"
+=======
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -710,9 +838,13 @@ foo==1.2.3 \\
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_exporter_exports_requirements_txt_without_optional_packages(
     tmp_dir: str, poetry: "Poetry"
 ):
+=======
+def test_exporter_exports_requirements_txt_without_optional_packages(tmp_dir, poetry):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -756,7 +888,11 @@ foo==1.2.3 \\
 
 
 @pytest.mark.parametrize(
+<<<<<<< HEAD
     ["extras", "lines"],
+=======
+    "extras,lines",
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     [
         (None, ["foo==1.2.3"]),
         (False, ["foo==1.2.3"]),
@@ -765,10 +901,14 @@ foo==1.2.3 \\
     ],
 )
 def test_exporter_exports_requirements_txt_with_optional_packages(
+<<<<<<< HEAD
     tmp_dir: str,
     poetry: "Poetry",
     extras: Optional[Union[bool, List[str]]],
     lines: List[str],
+=======
+    tmp_dir, poetry, extras, lines
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -825,9 +965,13 @@ def test_exporter_exports_requirements_txt_with_optional_packages(
     assert content.strip() == expected
 
 
+<<<<<<< HEAD
 def test_exporter_can_export_requirements_txt_with_git_packages(
     tmp_dir: str, poetry: "Poetry"
 ):
+=======
+def test_exporter_can_export_requirements_txt_with_git_packages(tmp_dir, poetry):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -867,9 +1011,13 @@ foo @ git+https://github.com/foo/foo.git@123456
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_exporter_can_export_requirements_txt_with_nested_packages(
     tmp_dir: str, poetry: "Poetry"
 ):
+=======
+def test_exporter_can_export_requirements_txt_with_nested_packages(tmp_dir, poetry):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.locker.mock_lock_data(
         {
             "package": [
@@ -919,7 +1067,11 @@ foo @ git+https://github.com/foo/foo.git@123456
 
 
 def test_exporter_can_export_requirements_txt_with_nested_packages_cyclic(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry"
+=======
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -974,6 +1126,7 @@ foo==1.2.3
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_markers(
     tmp_dir: str, poetry: "Poetry"
 ):
@@ -1049,6 +1202,10 @@ foo==1.2.3
 
 def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
     tmp_dir: str, poetry: "Poetry"
+=======
+def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -1091,7 +1248,11 @@ foo @ git+https://github.com/foo/foo.git@123456 ; python_version < "3.7"
 
 
 def test_exporter_can_export_requirements_txt_with_directory_packages(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry", working_directory: Path
+=======
+    tmp_dir, poetry, working_directory
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -1125,15 +1286,27 @@ def test_exporter_can_export_requirements_txt_with_directory_packages(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
+<<<<<<< HEAD
     expected = f"""\
 foo @ {working_directory.as_uri()}/tests/fixtures/sample_project
 """
+=======
+    expected = """\
+foo @ {}/tests/fixtures/sample_project
+""".format(
+        working_directory.as_uri()
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry", working_directory: Path
+=======
+    tmp_dir, poetry, working_directory
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -1191,17 +1364,33 @@ def test_exporter_can_export_requirements_txt_with_nested_directory_packages(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
+<<<<<<< HEAD
     expected = f"""\
 bar @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local/bar
 baz @ {working_directory.as_uri()}/tests/fixtures/project_with_nested_local
 foo @ {working_directory.as_uri()}/tests/fixtures/sample_project
 """
+=======
+    expected = """\
+bar @ {}/tests/fixtures/project_with_nested_local/bar
+baz @ {}/tests/fixtures/project_with_nested_local
+foo @ {}/tests/fixtures/sample_project
+""".format(
+        working_directory.as_uri(),
+        working_directory.as_uri(),
+        working_directory.as_uri(),
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_directory_packages_and_markers(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry", working_directory: Path
+=======
+    tmp_dir, poetry, working_directory
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -1236,15 +1425,27 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
+<<<<<<< HEAD
     expected = f"""\
 foo @ {working_directory.as_uri()}/tests/fixtures/sample_project ; python_version < "3.7"
 """
+=======
+    expected = """\
+foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
+""".format(
+        working_directory.as_uri()
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_file_packages(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry", working_directory: Path
+=======
+    tmp_dir, poetry, working_directory
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -1278,15 +1479,27 @@ def test_exporter_can_export_requirements_txt_with_file_packages(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
+<<<<<<< HEAD
     expected = f"""\
 foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz
 """
+=======
+    expected = """\
+foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz
+""".format(
+        working_directory.as_uri()
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == content
 
 
 def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry", working_directory: Path
+=======
+    tmp_dir, poetry, working_directory
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -1321,16 +1534,28 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
+<<<<<<< HEAD
     expected = f"""\
 foo @ {working_directory.as_uri()}/tests/fixtures/distributions/demo-0.1.0.tar.gz ; python_version < "3.7"
 """
+=======
+    expected = """\
+foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
+""".format(
+        working_directory.as_uri()
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_exporter_exports_requirements_txt_with_legacy_packages(
     tmp_dir: str, poetry: "Poetry"
 ):
+=======
+def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.pool.add_repository(
         LegacyRepository(
             "custom",
@@ -1388,6 +1613,7 @@ foo==1.2.3 \\
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_exporter_exports_requirements_txt_with_url_false(
     tmp_dir: str, poetry: "Poetry"
 ):
@@ -1450,6 +1676,10 @@ foo==1.2.3 \\
 
 def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
     tmp_dir: str, poetry: "Poetry"
+=======
+def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.pool.add_repository(
         LegacyRepository(
@@ -1500,14 +1730,22 @@ bar==4.5.6 \\
 
 
 @pytest.mark.parametrize(
+<<<<<<< HEAD
     ["dev", "expected"],
+=======
+    ("dev", "expected"),
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     [
         (True, ["bar==1.2.2", "baz==1.2.3", "foo==1.2.1"]),
         (False, ["bar==1.2.2", "foo==1.2.1"]),
     ],
 )
 def test_exporter_exports_requirements_txt_with_dev_extras(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry", dev: bool, expected: List[str]
+=======
+    tmp_dir, poetry, dev, expected
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.locker.mock_lock_data(
         {
@@ -1558,11 +1796,19 @@ def test_exporter_exports_requirements_txt_with_dev_extras(
     with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
         content = f.read()
 
+<<<<<<< HEAD
     assert content == "\n".join(expected) + "\n"
 
 
 def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(
     tmp_dir: str, poetry: "Poetry"
+=======
+    assert content == "{}\n".format("\n".join(expected))
+
+
+def test_exporter_exports_requirements_txt_with_legacy_packages_and_duplicate_sources(
+    tmp_dir, poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.pool.add_repository(
         LegacyRepository(
@@ -1648,7 +1894,11 @@ foo==1.2.3 \\
 
 
 def test_exporter_exports_requirements_txt_with_legacy_packages_and_credentials(
+<<<<<<< HEAD
     tmp_dir: str, poetry: "Poetry", config: "Config"
+=======
+    tmp_dir, poetry, config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.config.merge(
         {
@@ -1716,9 +1966,13 @@ foo==1.2.3 \\
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_exporter_exports_requirements_txt_to_standard_output(
     tmp_dir: str, poetry: "Poetry", capsys: "CaptureFixture"
 ):
+=======
+def test_exporter_exports_requirements_txt_to_standard_output(tmp_dir, poetry, capsys):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.locker.mock_lock_data(
         {
             "package": [

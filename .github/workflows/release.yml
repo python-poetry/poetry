@@ -6,13 +6,26 @@ on:
       - '*.*.*'
 
 jobs:
+<<<<<<< HEAD
   release:
     name: Release
     runs-on: ubuntu-latest
+=======
+  Release:
+    runs-on: ubuntu-latest
+
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
+<<<<<<< HEAD
+=======
+      - name: Get tag
+        id: tag
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:

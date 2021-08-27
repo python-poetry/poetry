@@ -1,7 +1,11 @@
 freebsd_instance:
+<<<<<<< HEAD
   image_family: freebsd-13-0
   cpu: 1
   memory: 4G
+=======
+  image_family: freebsd-12-2
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 test_task:
   name: "Tests / FreeBSD / "
@@ -10,6 +14,7 @@ test_task:
   env:
     matrix:
       - PYTHON: python3.6
+<<<<<<< HEAD
       - PYTHON: python3.7
       - PYTHON: python3.8
       - PYTHON: python3.9
@@ -29,6 +34,19 @@ test_task:
   test_script:
     - poetry install
     - poetry run pytest -q --junitxml=junit.xml tests
+=======
+      - PYTHON: python3.8
+  python_script:
+    - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
+    - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
+    - pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
+  pip_script:
+    - $PYTHON -m ensurepip
+    - $PYTHON -m pip install -U pip tox
+    - $PYTHON -m pip install -U --pre poetry
+    - poetry config virtualenvs.in-project true
+  tox_script: $PYTHON -m tox -e py -- -q --junitxml=junit.xml tests
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
   on_failure:
     annotate_failure_artifacts:
       path: junit.xml

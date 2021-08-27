@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Union
@@ -36,6 +37,23 @@ def assert_plugin_add_result(
     assert tester.io.fetch_output() == expected
 
     update_command: "UpdateCommand" = app.find("update")
+=======
+import pytest
+
+from poetry.core.packages.package import Package
+from poetry.factory import Factory
+
+
+@pytest.fixture()
+def tester(command_tester_factory):
+    return command_tester_factory("plugin add")
+
+
+def assert_plugin_add_result(tester, app, env, expected, constraint):
+    assert tester.io.fetch_output() == expected
+
+    update_command = app.find("update")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     assert update_command.poetry.file.parent == env.path
     assert update_command.poetry.locker.lock.parent == env.path
     assert update_command.poetry.locker.lock.exists()
@@ -45,6 +63,7 @@ def assert_plugin_add_result(
     assert content["dependencies"]["poetry-plugin"] == constraint
 
 
+<<<<<<< HEAD
 def test_add_no_constraint(
     app: "PoetryTestApplication",
     repo: "TestRepository",
@@ -52,6 +71,9 @@ def test_add_no_constraint(
     env: "MockEnv",
     installed: "Repository",
 ):
+=======
+def test_add_no_constraint(app, repo, tester, env, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(Package("poetry-plugin", "0.1.0"))
 
     tester.execute("poetry-plugin")
@@ -70,6 +92,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert_plugin_add_result(tester, app, env, expected, "^0.1.0")
 
 
+<<<<<<< HEAD
 def test_add_with_constraint(
     app: "PoetryTestApplication",
     repo: "TestRepository",
@@ -77,6 +100,9 @@ def test_add_with_constraint(
     env: "MockEnv",
     installed: "Repository",
 ):
+=======
+def test_add_with_constraint(app, repo, tester, env, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(Package("poetry-plugin", "0.1.0"))
     repo.add_package(Package("poetry-plugin", "0.2.0"))
 
@@ -96,6 +122,7 @@ Package operations: 1 install, 0 updates, 0 removals
     assert_plugin_add_result(tester, app, env, expected, "^0.2.0")
 
 
+<<<<<<< HEAD
 def test_add_with_git_constraint(
     app: "PoetryTestApplication",
     repo: "TestRepository",
@@ -103,6 +130,9 @@ def test_add_with_git_constraint(
     env: "MockEnv",
     installed: "Repository",
 ):
+=======
+def test_add_with_git_constraint(app, repo, tester, env, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(Package("pendulum", "2.0.5"))
 
     tester.execute("git+https://github.com/demo/poetry-plugin.git")
@@ -124,6 +154,7 @@ Package operations: 2 installs, 0 updates, 0 removals
     )
 
 
+<<<<<<< HEAD
 def test_add_with_git_constraint_with_extras(
     app: "PoetryTestApplication",
     repo: "TestRepository",
@@ -131,6 +162,9 @@ def test_add_with_git_constraint_with_extras(
     env: "MockEnv",
     installed: "Repository",
 ):
+=======
+def test_add_with_git_constraint_with_extras(app, repo, tester, env, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(Package("pendulum", "2.0.5"))
     repo.add_package(Package("tomlkit", "0.7.0"))
 
@@ -162,11 +196,15 @@ Package operations: 3 installs, 0 updates, 0 removals
 
 
 def test_add_existing_plugin_warns_about_no_operation(
+<<<<<<< HEAD
     app: "PoetryTestApplication",
     repo: "TestRepository",
     tester: "CommandTester",
     env: "MockEnv",
     installed: "Repository",
+=======
+    app, repo, tester, env, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     env.path.joinpath("pyproject.toml").write_text(
         """\
@@ -203,18 +241,26 @@ If you prefer to upgrade it to the latest available version, you can use `poetry
 
     assert tester.io.fetch_output() == expected
 
+<<<<<<< HEAD
     update_command: "UpdateCommand" = app.find("update")
+=======
+    update_command = app.find("update")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # The update command should not have been called
     assert update_command.poetry.file.parent != env.path
 
 
 def test_add_existing_plugin_updates_if_requested(
+<<<<<<< HEAD
     app: "PoetryTestApplication",
     repo: "TestRepository",
     tester: "CommandTester",
     env: "MockEnv",
     installed: "Repository",
     mocker: "MockerFixture",
+=======
+    app, repo, tester, env, installed, mocker
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     env.path.joinpath("pyproject.toml").write_text(
         """\
@@ -256,11 +302,15 @@ Package operations: 0 installs, 1 update, 0 removals
 
 
 def test_adding_a_plugin_can_update_poetry_dependencies_if_needed(
+<<<<<<< HEAD
     app: "PoetryTestApplication",
     repo: "TestRepository",
     tester: "CommandTester",
     env: "MockEnv",
     installed: "Repository",
+=======
+    app, repo, tester, env, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry_package = Package("poetry", "1.2.0")
     poetry_package.add_dependency(Factory.create_dependency("tomlkit", "^0.7.0"))

@@ -125,8 +125,13 @@ def is_decorated():
     if platform.system().lower() == "windows":
         return (
             os.getenv("ANSICON") is not None
+<<<<<<< HEAD
             or os.getenv("ConEmuANSI") == "ON"
             or os.getenv("Term") == "xterm"
+=======
+            or "ON" == os.getenv("ConEmuANSI")
+            or "xterm" == os.getenv("Term")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         )
 
     if not hasattr(sys.stdout, "fileno"):

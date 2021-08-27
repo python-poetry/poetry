@@ -1,5 +1,8 @@
 from poetry.core.packages.dependency import Dependency
+<<<<<<< HEAD
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.incompatibility import Incompatibility
 from poetry.mixology.incompatibility_cause import NoVersionsCause

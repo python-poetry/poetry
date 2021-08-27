@@ -1,16 +1,24 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 from poetry.core.utils.helpers import parse_requires
 
+=======
+
+from poetry.core.utils.helpers import parse_requires
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.utils.helpers import get_cert
 from poetry.utils.helpers import get_client_cert
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from tests.conftest import Config
 
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 def test_parse_requires():
     requires = """\
 jsonschema>=2.6.0.0,<3.0.0.0
@@ -64,14 +72,22 @@ isort@ git+git://github.com/timothycrosley/isort.git@e63ae06ec7d70b06df9e5283576
     assert result == expected
 
 
+<<<<<<< HEAD
 def test_get_cert(config: "Config"):
+=======
+def test_get_cert(config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     ca_cert = "path/to/ca.pem"
     config.merge({"certificates": {"foo": {"cert": ca_cert}}})
 
     assert get_cert(config, "foo") == Path(ca_cert)
 
 
+<<<<<<< HEAD
 def test_get_client_cert(config: "Config"):
+=======
+def test_get_client_cert(config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     client_cert = "path/to/client.pem"
     config.merge({"certificates": {"foo": {"client-cert": client_cert}}})
 

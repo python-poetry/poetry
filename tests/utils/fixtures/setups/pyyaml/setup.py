@@ -12,13 +12,21 @@ supports standard YAML tags and provides Python-specific tags that
 allow to represent an arbitrary Python object.
 
 PyYAML is applicable for a broad range of tasks from complex
+<<<<<<< HEAD
 configuration files to object serialization and persistence."""
+=======
+configuration files to object serialization and persistance."""
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 AUTHOR = "Kirill Simonov"
 AUTHOR_EMAIL = "xi@resolvent.net"
 LICENSE = "MIT"
 PLATFORMS = "Any"
 URL = "http://pyyaml.org/wiki/PyYAML"
+<<<<<<< HEAD
 DOWNLOAD_URL = f"http://pyyaml.org/download/pyyaml/{NAME}-{VERSION}.tar.gz"
+=======
+DOWNLOAD_URL = "http://pyyaml.org/download/pyyaml/%s-%s.tar.gz" % (NAME, VERSION)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -185,7 +193,11 @@ class build_ext(_build_ext):
                 filenames.append(filename)
                 base = os.path.splitext(filename)[0]
                 for ext in ["c", "h", "pyx", "pxd"]:
+<<<<<<< HEAD
                     filename = f"{base}.{ext}"
+=======
+                    filename = "%s.%s" % (base, ext)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
                     if filename not in filenames and os.path.isfile(filename):
                         filenames.append(filename)
         return filenames
@@ -308,7 +320,14 @@ class test(Command):
         build_cmd = self.get_finalized_command("build")
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
+<<<<<<< HEAD
         sys.path.insert(0, "tests/lib3")
+=======
+        if sys.version_info[0] < 3:
+            sys.path.insert(0, "tests/lib")
+        else:
+            sys.path.insert(0, "tests/lib3")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         import test_all
 
         if not test_all.main([]):
@@ -334,7 +353,11 @@ if __name__ == "__main__":
         url=URL,
         download_url=DOWNLOAD_URL,
         classifiers=CLASSIFIERS,
+<<<<<<< HEAD
         package_dir={"": "lib3"},
+=======
+        package_dir={"": {2: "lib", 3: "lib3"}[sys.version_info[0]]},
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         packages=["yaml"],
         ext_modules=[
             Extension(

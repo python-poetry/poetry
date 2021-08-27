@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "info": {
     "author": "Erik Rose",
     "author_email": "erikrose@grinchcentral.com",
@@ -145,4 +146,152 @@
       "url": "https://files.pythonhosted.org/packages/db/0b/f5660bf6299ec5b9f17bd36096fa8148a1c843fa77ddfddf9bebac9301f7/more-itertools-4.1.0.tar.gz"
     }
   ]
+=======
+    "info": {
+        "author": "Erik Rose",
+        "author_email": "erikrose@grinchcentral.com",
+        "bugtrack_url": "",
+        "classifiers": [
+            "Development Status :: 5 - Production/Stable",
+            "Intended Audience :: Developers",
+            "License :: OSI Approved :: MIT License",
+            "Natural Language :: English",
+            "Programming Language :: Python :: 2",
+            "Programming Language :: Python :: 2.7",
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.2",
+            "Programming Language :: Python :: 3.3",
+            "Programming Language :: Python :: 3.4",
+            "Programming Language :: Python :: 3.5",
+            "Topic :: Software Development :: Libraries"
+        ],
+        "description": "",
+        "docs_url": "https://pythonhosted.org/more-itertools/",
+        "download_url": "",
+        "downloads": {
+            "last_day": -1,
+            "last_month": -1,
+            "last_week": -1
+        },
+        "home_page": "https://github.com/erikrose/more-itertools",
+        "keywords": "itertools,iterator,iteration,filter,peek,peekable,collate,chunk,chunked",
+        "license": "MIT",
+        "maintainer": "",
+        "maintainer_email": "",
+        "name": "more-itertools",
+        "package_url": "https://pypi.org/project/more-itertools/",
+        "platform": "",
+        "project_url": "https://pypi.org/project/more-itertools/",
+        "release_url": "https://pypi.org/project/more-itertools/4.1.0/",
+        "requires_dist": [
+            "six (<2.0.0,>=1.0.0)"
+        ],
+        "requires_python": "",
+        "summary": "More routines for operating on iterables, beyond itertools",
+        "version": "4.1.0"
+    },
+    "last_serial": 3508946,
+    "releases": {
+        "4.1.0": [
+            {
+                "comment_text": "",
+                "digests": {
+                    "md5": "2a6a4b9abf941edf6d190fc995c0c935",
+                    "sha256": "11a625025954c20145b37ff6309cd54e39ca94f72f6bb9576d1195db6fa2442e"
+                },
+                "downloads": -1,
+                "filename": "more_itertools-4.1.0-py2-none-any.whl",
+                "has_sig": false,
+                "md5_digest": "2a6a4b9abf941edf6d190fc995c0c935",
+                "packagetype": "bdist_wheel",
+                "python_version": "py2",
+                "size": 47987,
+                "upload_time": "2018-01-21T15:34:19",
+                "url": "https://files.pythonhosted.org/packages/4a/88/c28e2a2da8f3dc3a391d9c97ad949f2ea0c05198222e7e6af176e5bf9b26/more_itertools-4.1.0-py2-none-any.whl"
+            },
+            {
+                "comment_text": "",
+                "digests": {
+                    "md5": "3229d872f8d193e36119ec76e1b0c097",
+                    "sha256": "0dd8f72eeab0d2c3bd489025bb2f6a1b8342f9b198f6fc37b52d15cfa4531fea"
+                },
+                "downloads": -1,
+                "filename": "more_itertools-4.1.0-py3-none-any.whl",
+                "has_sig": false,
+                "md5_digest": "3229d872f8d193e36119ec76e1b0c097",
+                "packagetype": "bdist_wheel",
+                "python_version": "py3",
+                "size": 47988,
+                "upload_time": "2018-01-21T15:34:20",
+                "url": "https://files.pythonhosted.org/packages/7a/46/886917c6a4ce49dd3fff250c01c5abac5390d57992751384fe61befc4877/more_itertools-4.1.0-py3-none-any.whl"
+            },
+            {
+                "comment_text": "",
+                "digests": {
+                    "md5": "246f46686d95879fbad37855c115dc52",
+                    "sha256": "c9ce7eccdcb901a2c75d326ea134e0886abfbea5f93e91cc95de9507c0816c44"
+                },
+                "downloads": -1,
+                "filename": "more-itertools-4.1.0.tar.gz",
+                "has_sig": false,
+                "md5_digest": "246f46686d95879fbad37855c115dc52",
+                "packagetype": "sdist",
+                "python_version": "source",
+                "size": 51310,
+                "upload_time": "2018-01-21T15:34:22",
+                "url": "https://files.pythonhosted.org/packages/db/0b/f5660bf6299ec5b9f17bd36096fa8148a1c843fa77ddfddf9bebac9301f7/more-itertools-4.1.0.tar.gz"
+            }
+        ]
+    },
+    "urls": [
+        {
+            "comment_text": "",
+            "digests": {
+                "md5": "2a6a4b9abf941edf6d190fc995c0c935",
+                "sha256": "11a625025954c20145b37ff6309cd54e39ca94f72f6bb9576d1195db6fa2442e"
+            },
+            "downloads": -1,
+            "filename": "more_itertools-4.1.0-py2-none-any.whl",
+            "has_sig": false,
+            "md5_digest": "2a6a4b9abf941edf6d190fc995c0c935",
+            "packagetype": "bdist_wheel",
+            "python_version": "py2",
+            "size": 47987,
+            "upload_time": "2018-01-21T15:34:19",
+            "url": "https://files.pythonhosted.org/packages/4a/88/c28e2a2da8f3dc3a391d9c97ad949f2ea0c05198222e7e6af176e5bf9b26/more_itertools-4.1.0-py2-none-any.whl"
+        },
+        {
+            "comment_text": "",
+            "digests": {
+                "md5": "3229d872f8d193e36119ec76e1b0c097",
+                "sha256": "0dd8f72eeab0d2c3bd489025bb2f6a1b8342f9b198f6fc37b52d15cfa4531fea"
+            },
+            "downloads": -1,
+            "filename": "more_itertools-4.1.0-py3-none-any.whl",
+            "has_sig": false,
+            "md5_digest": "3229d872f8d193e36119ec76e1b0c097",
+            "packagetype": "bdist_wheel",
+            "python_version": "py3",
+            "size": 47988,
+            "upload_time": "2018-01-21T15:34:20",
+            "url": "https://files.pythonhosted.org/packages/7a/46/886917c6a4ce49dd3fff250c01c5abac5390d57992751384fe61befc4877/more_itertools-4.1.0-py3-none-any.whl"
+        },
+        {
+            "comment_text": "",
+            "digests": {
+                "md5": "246f46686d95879fbad37855c115dc52",
+                "sha256": "c9ce7eccdcb901a2c75d326ea134e0886abfbea5f93e91cc95de9507c0816c44"
+            },
+            "downloads": -1,
+            "filename": "more-itertools-4.1.0.tar.gz",
+            "has_sig": false,
+            "md5_digest": "246f46686d95879fbad37855c115dc52",
+            "packagetype": "sdist",
+            "python_version": "source",
+            "size": 51310,
+            "upload_time": "2018-01-21T15:34:22",
+            "url": "https://files.pythonhosted.org/packages/db/0b/f5660bf6299ec5b9f17bd36096fa8148a1c843fa77ddfddf9bebac9301f7/more-itertools-4.1.0.tar.gz"
+        }
+    ]
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 }

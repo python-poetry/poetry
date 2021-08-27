@@ -1,4 +1,5 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Type
 
@@ -9,6 +10,15 @@ from poetry.core.semver.version import Version
 
 from poetry.__version__ import __version__
 from poetry.console.exceptions import PoetrySimpleConsoleException
+=======
+
+import pytest
+
+from poetry.__version__ import __version__
+from poetry.console.exceptions import PoetrySimpleConsoleException
+from poetry.core.packages.package import Package
+from poetry.core.semver.version import Version
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.factory import Factory
 from poetry.repositories.installed_repository import InstalledRepository
 from poetry.repositories.pool import Pool
@@ -16,6 +26,7 @@ from poetry.repositories.repository import Repository
 from poetry.utils.env import EnvManager
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     import httpretty
 
@@ -25,20 +36,30 @@ if TYPE_CHECKING:
     from poetry.utils.env import VirtualEnv
     from tests.types import CommandTesterFactory
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 FIXTURES = Path(__file__).parent.joinpath("fixtures")
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+=======
+def tester(command_tester_factory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return command_tester_factory("self update")
 
 
 def test_self_update_can_update_from_recommended_installation(
+<<<<<<< HEAD
     tester: "CommandTester",
     http: Type["httpretty.httpretty"],
     mocker: "MockerFixture",
     environ: None,
     tmp_venv: "VirtualEnv",
+=======
+    tester, http, mocker, environ, tmp_venv
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
 
@@ -70,7 +91,11 @@ def test_self_update_can_update_from_recommended_installation(
 
     tester.execute()
 
+<<<<<<< HEAD
     expected_output = f"""\
+=======
+    expected_output = """\
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 Updating Poetry to 1.2.0
 
 Updating dependencies
@@ -79,22 +104,37 @@ Resolving dependencies...
 Package operations: 0 installs, 2 updates, 0 removals
 
   - Updating cleo (0.8.2 -> 1.0.0)
+<<<<<<< HEAD
   - Updating poetry ({__version__} -> {new_version})
 
 Updating the poetry script
 
 Poetry ({new_version}) is installed now. Great!
 """
+=======
+  - Updating poetry ({} -> {})
+
+Updating the poetry script
+
+Poetry ({}) is installed now. Great!
+""".format(
+        __version__, new_version, new_version
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert tester.io.fetch_output() == expected_output
 
 
 def test_self_update_does_not_update_non_recommended_installation(
+<<<<<<< HEAD
     tester: "CommandTester",
     http: Type["httpretty.httpretty"],
     mocker: "MockerFixture",
     environ: None,
     tmp_venv: "VirtualEnv",
+=======
+    tester, http, mocker, environ, tmp_venv
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     mocker.patch.object(EnvManager, "get_system_env", return_value=tmp_venv)
 

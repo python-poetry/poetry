@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -15,6 +16,16 @@ if TYPE_CHECKING:
 def test_with_compatible_locked_dependencies(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+from poetry.factory import Factory
+
+from ...helpers import get_package
+from ..helpers import add_to_repo
+from ..helpers import check_solver_result
+
+
+def test_with_compatible_locked_dependencies(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -32,9 +43,13 @@ def test_with_compatible_locked_dependencies(
     )
 
 
+<<<<<<< HEAD
 def test_with_incompatible_locked_dependencies(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_with_incompatible_locked_dependencies(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("foo", ">1.0.1"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -52,9 +67,13 @@ def test_with_incompatible_locked_dependencies(
     )
 
 
+<<<<<<< HEAD
 def test_with_unrelated_locked_dependencies(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_with_unrelated_locked_dependencies(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("foo", "*"))
 
     add_to_repo(repo, "foo", "1.0.0", deps={"bar": "1.0.0"})
@@ -74,7 +93,11 @@ def test_with_unrelated_locked_dependencies(
 
 
 def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_statisfied(
+<<<<<<< HEAD
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
+=======
+    root, provider, repo
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     root.add_dependency(Factory.create_dependency("foo", "*"))
     root.add_dependency(Factory.create_dependency("newdep", "2.0.0"))
@@ -108,9 +131,13 @@ def test_unlocks_dependencies_if_necessary_to_ensure_that_a_new_dependency_is_st
     )
 
 
+<<<<<<< HEAD
 def test_with_compatible_locked_dependencies_use_latest(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_with_compatible_locked_dependencies_use_latest(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("foo", "*"))
     root.add_dependency(Factory.create_dependency("baz", "*"))
 

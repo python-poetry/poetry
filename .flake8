@@ -1,4 +1,5 @@
 [flake8]
+<<<<<<< HEAD
 min_python_version = 3.6.0
 max-line-length = 88
 ban-relative-imports = true
@@ -36,3 +37,28 @@ extend-exclude =
     # External to the project's coding standards:
     tests/fixtures/*,
     tests/**/fixtures/*,
+=======
+max-line-length = 88
+ignore = E501, E203, W503
+per-file-ignores =
+    __init__.py:F401
+    tests/console/commands/debug/test_resolve.py:W291
+exclude =
+    .git
+    __pycache__
+    setup.py
+    build
+    dist
+    releases
+    .venv
+    .tox
+    .mypy_cache
+    .pytest_cache
+    .vscode
+    .github
+    poetry/utils/_compat.py
+    poetry/utils/env_scripts/tags.py
+    tests/fixtures/
+    tests/repositories/fixtures/
+    tests/utils/fixtures/
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)

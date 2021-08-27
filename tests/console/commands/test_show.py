@@ -1,13 +1,20 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 import pytest
 
 from poetry.core.packages.dependency_group import DependencyGroup
 
+=======
+import pytest
+
+from poetry.core.packages.dependency_group import DependencyGroup
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.factory import Factory
 from tests.helpers import get_package
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
@@ -25,6 +32,14 @@ def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
 def test_show_basic_with_installed_packages(
     tester: "CommandTester", poetry: "Poetry", installed: "Repository"
 ):
+=======
+@pytest.fixture
+def tester(command_tester_factory):
+    return command_tester_factory("show")
+
+
+def test_show_basic_with_installed_packages(tester, poetry, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
     poetry.package.add_dependency(
@@ -99,9 +114,13 @@ pytest   3.7.3 Pytest package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_basic_with_installed_packages_single(
     tester: "CommandTester", poetry: "Poetry", installed: "Repository"
 ):
+=======
+def test_show_basic_with_installed_packages_single(tester, poetry, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
 
     cachy_010 = get_package("cachy", "0.1.0")
@@ -142,7 +161,11 @@ def test_show_basic_with_installed_packages_single(
 
 
 def test_show_basic_with_not_installed_packages_non_decorated(
+<<<<<<< HEAD
     tester: "CommandTester", poetry: "Poetry", installed: "Repository"
+=======
+    tester, poetry, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
@@ -197,9 +220,13 @@ pendulum (!) 2.0.0 Pendulum package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_basic_with_not_installed_packages_decorated(
     tester: "CommandTester", poetry: "Poetry", installed: "Repository"
 ):
+=======
+def test_show_basic_with_not_installed_packages_decorated(tester, poetry, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
 
@@ -253,12 +280,16 @@ def test_show_basic_with_not_installed_packages_decorated(
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_latest_non_decorated(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_latest_non_decorated(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
 
@@ -323,12 +354,16 @@ pendulum 2.0.0 2.0.1 Pendulum package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_latest_decorated(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_latest_decorated(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
 
@@ -393,12 +428,16 @@ def test_show_latest_decorated(
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_outdated(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_outdated(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
 
@@ -459,12 +498,16 @@ cachy 0.1.0 0.2.0 Cachy package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_outdated_with_only_up_to_date_packages(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_outdated_with_only_up_to_date_packages(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     cachy_020 = get_package("cachy", "0.2.0")
     cachy_020.description = "Cachy package"
 
@@ -501,12 +544,16 @@ def test_show_outdated_with_only_up_to_date_packages(
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_outdated_has_prerelease_but_not_allowed(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_outdated_has_prerelease_but_not_allowed(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
 
@@ -572,12 +619,16 @@ cachy 0.1.0 0.2.0 Cachy package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_outdated_has_prerelease_and_allowed(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_outdated_has_prerelease_and_allowed(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(
         Factory.create_dependency(
             "cachy", {"version": "^0.1.0", "allow-prereleases": True}
@@ -647,12 +698,16 @@ cachy 0.1.0.dev1 0.3.0.dev123 Cachy package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_outdated_formatting(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_outdated_formatting(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
 
@@ -718,12 +773,16 @@ pendulum 2.0.0 2.0.1 Pendulum package
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_local_dependencies"])
+<<<<<<< HEAD
 def test_show_outdated_local_dependencies(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_outdated_local_dependencies(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
     cachy_020 = get_package("cachy", "0.2.0")
@@ -833,12 +892,16 @@ project-with-setup 0.1.1 ../project_with_setup 0.1.2 ../project_with_setup
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+<<<<<<< HEAD
 def test_show_outdated_git_dev_dependency(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_outdated_git_dev_dependency(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
     cachy_020 = get_package("cachy", "0.2.0")
@@ -933,12 +996,16 @@ demo  0.1.1 9cf87a2 0.1.2 9cf87a2 Demo package
 
 
 @pytest.mark.parametrize("project_directory", ["project_with_git_dev_dependency"])
+<<<<<<< HEAD
 def test_show_outdated_no_dev_git_dev_dependency(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_outdated_no_dev_git_dev_dependency(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
     cachy_020 = get_package("cachy", "0.2.0")
@@ -1030,12 +1097,16 @@ cachy 0.1.0 0.2.0 Cachy package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_hides_incompatible_package(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_hides_incompatible_package(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(
         Factory.create_dependency("cachy", {"version": "^0.1.0", "python": "< 2.0"})
     )
@@ -1091,12 +1162,16 @@ pendulum 2.0.0 Pendulum package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_all_shows_incompatible_package(
     tester: "CommandTester",
     poetry: "Poetry",
     installed: "Repository",
     repo: "TestRepository",
 ):
+=======
+def test_show_all_shows_incompatible_package(tester, poetry, installed, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     cachy_010 = get_package("cachy", "0.1.0")
     cachy_010.description = "Cachy package"
 
@@ -1149,9 +1224,13 @@ pendulum  2.0.0 Pendulum package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_non_dev_with_basic_installed_packages(
     tester: "CommandTester", poetry: "Poetry", installed: "Repository"
 ):
+=======
+def test_show_non_dev_with_basic_installed_packages(tester, poetry, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
     poetry.package.add_dependency(
@@ -1225,9 +1304,13 @@ pendulum 2.0.0 Pendulum package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_with_group_only(
     tester: "CommandTester", poetry: "Poetry", installed: "Repository"
 ):
+=======
+def test_show_with_group_only(tester, poetry, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
     poetry.package.add_dependency(
@@ -1300,9 +1383,13 @@ pytest 3.7.3 Pytest package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_with_optional_group(
     tester: "CommandTester", poetry: "Poetry", installed: "Repository"
 ):
+=======
+def test_show_with_optional_group(tester, poetry, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.1.0"))
     poetry.package.add_dependency(Factory.create_dependency("pendulum", "^2.0.0"))
     group = DependencyGroup("dev", optional=True)
@@ -1386,7 +1473,11 @@ pytest   3.7.3 Pytest package
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_tree(tester: "CommandTester", poetry: "Poetry", installed: "Repository"):
+=======
+def test_show_tree(tester, poetry, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
 
     cachy2 = get_package("cachy", "0.2.0")
@@ -1438,9 +1529,13 @@ cachy 0.2.0
     assert expected == tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_show_tree_no_dev(
     tester: "CommandTester", poetry: "Poetry", installed: "Repository"
 ):
+=======
+def test_show_tree_no_dev(tester, poetry, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
     poetry.package.add_dependency(
         Factory.create_dependency("pytest", "^6.1.0", groups=["dev"])
@@ -1505,6 +1600,7 @@ cachy 0.2.0
 """
 
     assert expected == tester.io.fetch_output()
+<<<<<<< HEAD
 
 
 def test_show_required_by_deps(
@@ -1582,3 +1678,5 @@ required by
 """.splitlines()
     actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
     assert actual == expected
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)

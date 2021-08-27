@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import itertools
 
 from pathlib import Path
@@ -6,14 +7,28 @@ from typing import Dict
 from typing import Optional
 from typing import Tuple
 from typing import Union
+=======
+from __future__ import unicode_literals
+
+import itertools
+import sys
+
+from pathlib import Path
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
 from cleo.io.null_io import NullIO
 from deepdiff import DeepDiff
+<<<<<<< HEAD
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.toml.file import TOMLFile
 
+=======
+
+from poetry.core.packages.project_package import ProjectPackage
+from poetry.core.toml.file import TOMLFile
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.noop_installer import NoopInstaller
@@ -31,6 +46,7 @@ from tests.repositories.test_legacy_repository import (
 from tests.repositories.test_pypi_repository import MockRepository
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
@@ -39,43 +55,70 @@ if TYPE_CHECKING:
     from tests.types import FixtureDirGetter
 
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 RESERVED_PACKAGES = ("pip", "setuptools", "wheel")
 
 
 class Installer(BaseInstaller):
+<<<<<<< HEAD
     def _get_installer(self) -> NoopInstaller:
+=======
+    def _get_installer(self):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         return NoopInstaller()
 
 
 class CustomInstalledRepository(InstalledRepository):
     @classmethod
+<<<<<<< HEAD
     def load(
         cls, env: "Env", with_dependencies: bool = False
     ) -> "CustomInstalledRepository":
+=======
+    def load(cls, env):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         return cls()
 
 
 class Locker(BaseLocker):
+<<<<<<< HEAD
     def __init__(self, lock_path: Union[str, Path]):
         self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
+=======
+    def __init__(self):
+        self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
 
     @property
+<<<<<<< HEAD
     def written_data(self) -> Optional[Dict]:
         return self._written_data
 
     def set_lock_path(self, lock: Union[str, Path]) -> "Locker":
+=======
+    def written_data(self):
+        return self._written_data
+
+    def set_lock_path(self, lock):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
 
         return self
 
+<<<<<<< HEAD
     def locked(self, is_locked: bool = True) -> "Locker":
+=======
+    def locked(self, is_locked=True):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         self._locked = is_locked
 
         return self
 
+<<<<<<< HEAD
     def mock_lock_data(self, data: Dict) -> None:
         self._lock_data = data
 
@@ -89,6 +132,21 @@ class Locker(BaseLocker):
         return "123456789"
 
     def _write_lock_data(self, data: Dict) -> None:
+=======
+    def mock_lock_data(self, data):
+        self._lock_data = data
+
+    def is_locked(self):
+        return self._locked
+
+    def is_fresh(self):
+        return True
+
+    def _get_content_hash(self):
+        return "123456789"
+
+    def _write_lock_data(self, data):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         for package in data["package"]:
             python_versions = str(package["python-versions"])
             package["python-versions"] = python_versions
@@ -98,7 +156,11 @@ class Locker(BaseLocker):
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def package() -> ProjectPackage:
+=======
+def package():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     p = ProjectPackage("root", "1.0")
     p.root_dir = Path.cwd()
 
@@ -106,12 +168,20 @@ def package() -> ProjectPackage:
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def repo() -> Repository:
+=======
+def repo():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Repository()
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def pool(repo: Repository) -> Pool:
+=======
+def pool(repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pool = Pool()
     pool.add_repository(repo)
 
@@ -119,21 +189,35 @@ def pool(repo: Repository) -> Pool:
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def installed() -> CustomInstalledRepository:
+=======
+def installed():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return CustomInstalledRepository()
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def locker(project_root: Path) -> Locker:
     return Locker(lock_path=project_root)
 
 
 @pytest.fixture()
 def env() -> NullEnv:
+=======
+def locker():
+    return Locker()
+
+
+@pytest.fixture()
+def env():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return NullEnv()
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def installer(
     package: ProjectPackage,
     pool: Pool,
@@ -147,20 +231,36 @@ def installer(
 
 def fixture(name: str) -> str:
     file = TOMLFile(Path(__file__).parent / "fixtures" / f"{name}.test")
+=======
+def installer(package, pool, locker, env, installed, config):
+    return Installer(NullIO(), env, package, locker, pool, config, installed=installed)
+
+
+def fixture(name):
+    file = TOMLFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     return file.read()
 
 
+<<<<<<< HEAD
 def test_run_no_dependencies(installer: Installer, locker: Locker):
+=======
+def test_run_no_dependencies(installer, locker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     installer.run()
     expected = fixture("no-dependencies")
 
     assert locker.written_data == expected
 
 
+<<<<<<< HEAD
 def test_run_with_dependencies(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_with_dependencies(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     repo.add_package(package_a)
@@ -176,11 +276,15 @@ def test_run_with_dependencies(
 
 
 def test_run_update_after_removing_dependencies(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+=======
+    installer, locker, repo, package, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -252,6 +356,7 @@ def test_run_update_after_removing_dependencies(
     assert len(removals) == 1
 
 
+<<<<<<< HEAD
 def test_run_install_no_group(
     installer: Installer,
     locker: Locker,
@@ -259,6 +364,9 @@ def test_run_install_no_group(
     package: ProjectPackage,
     installed: CustomInstalledRepository,
 ):
+=======
+def test_run_install_no_group(installer, locker, repo, package, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -329,6 +437,7 @@ def test_run_install_no_group(
 
 @pytest.mark.parametrize(
     "managed_reserved_package_names",
+<<<<<<< HEAD
     itertools.chain(
         [()],
         itertools.permutations(RESERVED_PACKAGES, 1),
@@ -343,6 +452,20 @@ def test_run_install_with_synchronization(
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+=======
+    [
+        i
+        for i in itertools.chain(
+            [tuple()],
+            itertools.permutations(RESERVED_PACKAGES, 1),
+            itertools.permutations(RESERVED_PACKAGES, 2),
+            [RESERVED_PACKAGES],
+        )
+    ],
+)
+def test_run_install_with_synchronization(
+    managed_reserved_package_names, installer, locker, repo, package, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package_a = get_package("a", "1.0")
     package_b = get_package("b", "1.1")
@@ -413,12 +536,19 @@ def test_run_install_with_synchronization(
         package_c.name,
         *managed_reserved_package_names,
     }
+<<<<<<< HEAD
     assert {r.name for r in removals} == expected_removals
 
 
 def test_run_whitelist_add(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+    assert set(r.name for r in removals) == expected_removals
+
+
+def test_run_whitelist_add(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -460,6 +590,7 @@ def test_run_whitelist_add(
     assert locker.written_data == expected
 
 
+<<<<<<< HEAD
 def test_run_whitelist_remove(
     installer: Installer,
     locker: Locker,
@@ -467,6 +598,9 @@ def test_run_whitelist_remove(
     package: ProjectPackage,
     installed: CustomInstalledRepository,
 ):
+=======
+def test_run_whitelist_remove(installer, locker, repo, package, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -518,9 +652,13 @@ def test_run_whitelist_remove(
     assert len(installer.installer.removals) == 1
 
 
+<<<<<<< HEAD
 def test_add_with_sub_dependencies(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_add_with_sub_dependencies(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.1")
     package_c = get_package("C", "1.2")
@@ -542,9 +680,13 @@ def test_add_with_sub_dependencies(
     assert locker.written_data == expected
 
 
+<<<<<<< HEAD
 def test_run_with_python_versions(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_with_python_versions(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.python_versions = "~2.7 || ^3.4"
 
     package_a = get_package("A", "1.0")
@@ -570,7 +712,11 @@ def test_run_with_python_versions(
 
 
 def test_run_with_optional_and_python_restricted_dependencies(
+<<<<<<< HEAD
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+=======
+    installer, locker, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "~2.7 || ^3.4"
 
@@ -613,11 +759,15 @@ def test_run_with_optional_and_python_restricted_dependencies(
 
 
 def test_run_with_optional_and_platform_restricted_dependencies(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     mocker: "MockerFixture",
+=======
+    installer, locker, repo, package, mocker
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     mocker.patch("sys.platform", "darwin")
 
@@ -659,9 +809,13 @@ def test_run_with_optional_and_platform_restricted_dependencies(
     assert installer.installs[1].name == "c"
 
 
+<<<<<<< HEAD
 def test_run_with_dependencies_extras(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_with_dependencies_extras(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
     package_c = get_package("C", "1.0")
@@ -686,9 +840,13 @@ def test_run_with_dependencies_extras(
     assert locker.written_data == expected
 
 
+<<<<<<< HEAD
 def test_run_does_not_install_extras_if_not_requested(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_does_not_install_extras_if_not_requested(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.extras["foo"] = [get_dependency("D")]
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -718,9 +876,13 @@ def test_run_does_not_install_extras_if_not_requested(
     assert len(installer.installs) == 3  # A, B, C
 
 
+<<<<<<< HEAD
 def test_run_installs_extras_if_requested(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_installs_extras_if_requested(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.extras["foo"] = [get_dependency("D")]
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -751,9 +913,13 @@ def test_run_installs_extras_if_requested(
     assert len(installer.installs) == 4  # A, B, C, D
 
 
+<<<<<<< HEAD
 def test_run_installs_extras_with_deps_if_requested(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_installs_extras_with_deps_if_requested(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.extras["foo"] = [get_dependency("C")]
     package_a = get_package("A", "1.0")
     package_b = get_package("B", "1.0")
@@ -786,7 +952,11 @@ def test_run_installs_extras_with_deps_if_requested(
 
 
 def test_run_installs_extras_with_deps_if_requested_locked(
+<<<<<<< HEAD
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+=======
+    installer, locker, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     locker.locked(True)
     locker.mock_lock_data(fixture("extras-with-dependencies"))
@@ -817,12 +987,16 @@ def test_run_installs_extras_with_deps_if_requested_locked(
     assert len(installer.installs) == 4  # A, B, C, D
 
 
+<<<<<<< HEAD
 def test_installer_with_pypi_repository(
     package: ProjectPackage,
     locker: Locker,
     installed: CustomInstalledRepository,
     config: "Config",
 ):
+=======
+def test_installer_with_pypi_repository(package, locker, installed, config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pool = Pool()
     pool.add_repository(MockRepository())
 
@@ -837,6 +1011,7 @@ def test_installer_with_pypi_repository(
     assert not DeepDiff(expected, locker.written_data, ignore_order=True)
 
 
+<<<<<<< HEAD
 def test_run_installs_with_local_file(
     installer: Installer,
     locker: Locker,
@@ -844,6 +1019,9 @@ def test_run_installs_with_local_file(
     package: ProjectPackage,
     fixture_dir: "FixtureDirGetter",
 ):
+=======
+def test_run_installs_with_local_file(installer, locker, repo, package, fixture_dir):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     file_path = fixture_dir("distributions/demo-0.1.0-py2.py3-none-any.whl")
     package.add_dependency(Factory.create_dependency("demo", {"file": str(file_path)}))
 
@@ -859,11 +1037,15 @@ def test_run_installs_with_local_file(
 
 
 def test_run_installs_wheel_with_no_requires_dist(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     fixture_dir: "FixtureDirGetter",
+=======
+    installer, locker, repo, package, fixture_dir
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     file_path = fixture_dir(
         "wheel_with_no_requires_dist/demo-0.1.0-py2.py3-none-any.whl"
@@ -880,12 +1062,16 @@ def test_run_installs_wheel_with_no_requires_dist(
 
 
 def test_run_installs_with_local_poetry_directory_and_extras(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     tmpdir: Path,
     fixture_dir: "FixtureDirGetter",
+=======
+    installer, locker, repo, package, tmpdir, fixture_dir
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     file_path = fixture_dir("project_with_extras")
     package.add_dependency(
@@ -906,12 +1092,16 @@ def test_run_installs_with_local_poetry_directory_and_extras(
 
 
 def test_run_installs_with_local_poetry_directory_transitive(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     tmpdir: Path,
     fixture_dir: "FixtureDirGetter",
+=======
+    installer, locker, repo, package, tmpdir, fixture_dir
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     root_dir = fixture_dir("directory")
     package.root_dir = root_dir
@@ -938,12 +1128,16 @@ def test_run_installs_with_local_poetry_directory_transitive(
 
 
 def test_run_installs_with_local_poetry_file_transitive(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     tmpdir: Path,
     fixture_dir: "FixtureDirGetter",
+=======
+    installer, locker, repo, package, tmpdir, fixture_dir
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     root_dir = fixture_dir("directory")
     package.root_dir = root_dir
@@ -970,12 +1164,16 @@ def test_run_installs_with_local_poetry_file_transitive(
 
 
 def test_run_installs_with_local_setuptools_directory(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     tmpdir: Path,
     fixture_dir: "FixtureDirGetter",
+=======
+    installer, locker, repo, package, tmpdir, fixture_dir
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     file_path = fixture_dir("project_with_setup/")
     package.add_dependency(
@@ -994,9 +1192,13 @@ def test_run_installs_with_local_setuptools_directory(
     assert len(installer.installer.installs) == 3
 
 
+<<<<<<< HEAD
 def test_run_with_prereleases(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_with_prereleases(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -1038,9 +1240,13 @@ def test_run_with_prereleases(
     assert locker.written_data == expected
 
 
+<<<<<<< HEAD
 def test_run_changes_category_if_needed(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_changes_category_if_needed(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -1085,9 +1291,13 @@ def test_run_changes_category_if_needed(
     assert locker.written_data == expected
 
 
+<<<<<<< HEAD
 def test_run_update_all_with_lock(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_update_all_with_lock(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -1124,9 +1334,13 @@ def test_run_update_all_with_lock(
     assert locker.written_data == expected
 
 
+<<<<<<< HEAD
 def test_run_update_with_locked_extras(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_update_with_locked_extras(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -1198,7 +1412,11 @@ def test_run_update_with_locked_extras(
 
 
 def test_run_install_duplicate_dependencies_different_constraints(
+<<<<<<< HEAD
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+=======
+    installer, locker, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -1243,7 +1461,11 @@ def test_run_install_duplicate_dependencies_different_constraints(
 
 
 def test_run_install_duplicate_dependencies_different_constraints_with_lock(
+<<<<<<< HEAD
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+=======
+    installer, locker, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -1353,11 +1575,15 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock(
 
 
 def test_run_update_uninstalls_after_removal_transient_dependency(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+=======
+    installer, locker, repo, package, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -1418,11 +1644,15 @@ def test_run_update_uninstalls_after_removal_transient_dependency(
 
 
 def test_run_install_duplicate_dependencies_different_constraints_with_lock_update(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+=======
+    installer, locker, repo, package, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -1533,11 +1763,15 @@ def test_run_install_duplicate_dependencies_different_constraints_with_lock_upda
     "This is not working at the moment due to limitations in the resolver"
 )
 def test_installer_test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
+<<<<<<< HEAD
     installer: Installer,
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
+=======
+    installer, locker, repo, package, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(
@@ -1559,6 +1793,7 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
     assert locker.written_data == expected
 
     installs = installer.installer.installs
+<<<<<<< HEAD
     assert len(installs) == 1
 
 
@@ -1571,6 +1806,17 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     env: NullEnv,
     pool: Pool,
     config: "Config",
+=======
+
+    if sys.version_info >= (3, 5, 0):
+        assert len(installs) == 1
+    else:
+        assert len(installs) == 0
+
+
+def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(
+    installer, locker, repo, package, installed, env, pool, config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("A", {"version": "^1.0"}))
 
@@ -1622,6 +1868,7 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
 
 
 def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency_pypi_repository(
+<<<<<<< HEAD
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
@@ -1629,6 +1876,9 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
     env: NullEnv,
     mocker: "MockerFixture",
     config: "Config",
+=======
+    locker, repo, package, installed, env, mocker, config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     mocker.patch("sys.platform", "darwin")
 
@@ -1670,12 +1920,16 @@ def test_installer_required_extras_should_not_be_removed_when_updating_single_de
 
 
 def test_installer_required_extras_should_be_installed(
+<<<<<<< HEAD
     locker: Locker,
     repo: Repository,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
     env: NullEnv,
     config: "Config",
+=======
+    locker, repo, package, installed, env, config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pool = Pool()
     pool.add_repository(MockRepository())
@@ -1713,7 +1967,11 @@ def test_installer_required_extras_should_be_installed(
 
 
 def test_update_multiple_times_with_split_dependencies_is_idempotent(
+<<<<<<< HEAD
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
+=======
+    installer, locker, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     locker.locked(True)
     locker.mock_lock_data(
@@ -1792,11 +2050,15 @@ def test_update_multiple_times_with_split_dependencies_is_idempotent(
 
 
 def test_installer_can_install_dependencies_from_forced_source(
+<<<<<<< HEAD
     locker: Locker,
     package: ProjectPackage,
     installed: CustomInstalledRepository,
     env: NullEnv,
     config: "Config",
+=======
+    locker, package, installed, env, config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "^3.7"
     package.add_dependency(
@@ -1819,9 +2081,13 @@ def test_installer_can_install_dependencies_from_forced_source(
     assert len(installer.installer.removals) == 0
 
 
+<<<<<<< HEAD
 def test_run_installs_with_url_file(
     installer: Installer, locker: Locker, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_run_installs_with_url_file(installer, locker, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     url = "https://python-poetry.org/distributions/demo-0.1.0-py2.py3-none-any.whl"
     package.add_dependency(Factory.create_dependency("demo", {"url": url}))
 
@@ -1837,7 +2103,11 @@ def test_run_installs_with_url_file(
 
 
 def test_installer_uses_prereleases_if_they_are_compatible(
+<<<<<<< HEAD
     installer: Installer, locker: Locker, package: ProjectPackage, repo: Repository
+=======
+    installer, locker, package, repo
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(
@@ -1867,11 +2137,15 @@ def test_installer_uses_prereleases_if_they_are_compatible(
 
 
 def test_installer_can_handle_old_lock_files(
+<<<<<<< HEAD
     locker: Locker,
     package: ProjectPackage,
     repo: Repository,
     installed: CustomInstalledRepository,
     config: "Config",
+=======
+    installer, locker, package, repo, installed, config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pool = Pool()
     pool.add_repository(MockRepository())
@@ -1887,7 +2161,11 @@ def test_installer_can_handle_old_lock_files(
 
     installer.run()
 
+<<<<<<< HEAD
     assert len(installer.installer.installs) == 6
+=======
+    assert 6 == len(installer.installer.installs)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     installer = Installer(
         NullIO(),
@@ -1902,7 +2180,11 @@ def test_installer_can_handle_old_lock_files(
     installer.run()
 
     # funcsigs will be added
+<<<<<<< HEAD
     assert len(installer.installer.installs) == 7
+=======
+    assert 7 == len(installer.installer.installs)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     installer = Installer(
         NullIO(),
@@ -1917,4 +2199,8 @@ def test_installer_can_handle_old_lock_files(
     installer.run()
 
     # colorama will be added
+<<<<<<< HEAD
     assert len(installer.installer.installs) == 8
+=======
+    assert 8 == len(installer.installer.installs)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)

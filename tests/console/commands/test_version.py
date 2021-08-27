@@ -1,10 +1,14 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 import pytest
 
 from poetry.console.commands.version import VersionCommand
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
 
@@ -13,11 +17,19 @@ if TYPE_CHECKING:
 
 @pytest.fixture()
 def command() -> VersionCommand:
+=======
+@pytest.fixture()
+def command():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return VersionCommand()
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+=======
+def tester(command_tester_factory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return command_tester_factory("version")
 
 
@@ -47,6 +59,7 @@ def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
         ("0.0.0", "1.2.3", "1.2.3"),
     ],
 )
+<<<<<<< HEAD
 def test_increment_version(
     version: str, rule: str, expected: str, command: VersionCommand
 ):
@@ -71,3 +84,27 @@ def test_version_update(tester: "CommandTester"):
 def test_short_version_update(tester: "CommandTester"):
     tester.execute("--short 2.0.0")
     assert tester.io.fetch_output() == "2.0.0\n"
+=======
+def test_increment_version(version, rule, expected, command):
+    assert expected == command.increment_version(version, rule).text
+
+
+def test_version_show(tester):
+    tester.execute()
+    assert "simple-project 1.2.3\n" == tester.io.fetch_output()
+
+
+def test_short_version_show(tester):
+    tester.execute("--short")
+    assert "1.2.3\n" == tester.io.fetch_output()
+
+
+def test_version_update(tester):
+    tester.execute("2.0.0")
+    assert "Bumping version from 1.2.3 to 2.0.0\n" == tester.io.fetch_output()
+
+
+def test_short_version_update(tester):
+    tester.execute("--short 2.0.0")
+    assert "2.0.0\n" == tester.io.fetch_output()
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)

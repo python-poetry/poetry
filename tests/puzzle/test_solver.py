@@ -1,20 +1,31 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Type
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
 from cleo.io.null_io import NullIO
+<<<<<<< HEAD
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.version.markers import parse_marker
 
+=======
+
+from poetry.core.packages.dependency import Dependency
+from poetry.core.packages.package import Package
+from poetry.core.packages.project_package import ProjectPackage
+from poetry.core.version.markers import parse_marker
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.factory import Factory
 from poetry.puzzle import Solver
 from poetry.puzzle.exceptions import SolverProblemError
@@ -31,6 +42,7 @@ from tests.repositories.test_legacy_repository import (
 from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRepository
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     import httpretty
 
@@ -45,41 +57,70 @@ DEFAULT_SOURCE_REF = (
 
 class Provider(BaseProvider):
     def set_package_python_versions(self, python_versions: str) -> None:
+=======
+class Provider(BaseProvider):
+    def set_package_python_versions(self, python_versions):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         self._package.python_versions = python_versions
         self._python_constraint = self._package.python_constraint
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def io() -> NullIO:
+=======
+def io():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return NullIO()
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def package() -> ProjectPackage:
+=======
+def package():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return ProjectPackage("root", "1.0")
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def installed() -> InstalledRepository:
+=======
+def installed():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return InstalledRepository()
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def locked() -> Repository:
+=======
+def locked():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Repository()
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def repo() -> Repository:
+=======
+def repo():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Repository()
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def pool(repo: Repository) -> Pool:
+=======
+def pool(repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Pool([repo])
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def solver(
     package: ProjectPackage,
     pool: Pool,
@@ -87,16 +128,23 @@ def solver(
     locked: Repository,
     io: NullIO,
 ) -> Solver:
+=======
+def solver(package, pool, installed, locked, io):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Solver(
         package, pool, installed, locked, io, provider=Provider(package, pool, io)
     )
 
 
+<<<<<<< HEAD
 def check_solver_result(
     transaction: "Transaction",
     expected: List[Dict[str, Any]],
     synchronize: bool = False,
 ) -> List["OperationTypes"]:
+=======
+def check_solver_result(transaction, expected, synchronize=False):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
@@ -104,7 +152,11 @@ def check_solver_result(
     result = []
     ops = transaction.calculate_operations(synchronize=synchronize)
     for op in ops:
+<<<<<<< HEAD
         if op.job_type == "update":
+=======
+        if "update" == op.job_type:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
             result.append(
                 {
                     "job": "update",
@@ -125,9 +177,13 @@ def check_solver_result(
     return ops
 
 
+<<<<<<< HEAD
 def test_solver_install_single(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_install_single(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -138,9 +194,13 @@ def test_solver_install_single(
     check_solver_result(transaction, [{"job": "install", "package": package_a}])
 
 
+<<<<<<< HEAD
 def test_solver_remove_if_no_longer_locked(
     solver: Solver, locked: Repository, installed: InstalledRepository
 ):
+=======
+def test_solver_remove_if_no_longer_locked(solver, locked, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0")
     installed.add_package(package_a)
     locked.add_package(package_a)
@@ -150,7 +210,11 @@ def test_solver_remove_if_no_longer_locked(
     check_solver_result(transaction, [{"job": "remove", "package": package_a}])
 
 
+<<<<<<< HEAD
 def test_remove_non_installed(solver: Solver, repo: Repository, locked: Repository):
+=======
+def test_remove_non_installed(solver, repo, locked):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0")
     locked.add_package(package_a)
 
@@ -163,9 +227,13 @@ def test_remove_non_installed(solver: Solver, repo: Repository, locked: Reposito
     check_solver_result(transaction, [])
 
 
+<<<<<<< HEAD
 def test_install_non_existing_package_fail(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_install_non_existing_package_fail(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("B", "1"))
 
     package_a = get_package("A", "1.0")
@@ -175,7 +243,11 @@ def test_install_non_existing_package_fail(
         solver.solve()
 
 
+<<<<<<< HEAD
 def test_solver_with_deps(solver: Solver, repo: Repository, package: ProjectPackage):
+=======
+def test_solver_with_deps(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -199,9 +271,13 @@ def test_solver_with_deps(solver: Solver, repo: Repository, package: ProjectPack
     )
 
 
+<<<<<<< HEAD
 def test_install_honours_not_equal(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_install_honours_not_equal(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -229,9 +305,13 @@ def test_install_honours_not_equal(
     )
 
 
+<<<<<<< HEAD
 def test_install_with_deps_in_order(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_install_with_deps_in_order(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
     package.add_dependency(Factory.create_dependency("C", "*"))
@@ -260,12 +340,16 @@ def test_install_with_deps_in_order(
     )
 
 
+<<<<<<< HEAD
 def test_install_installed(
     solver: Solver,
     repo: Repository,
     installed: InstalledRepository,
     package: ProjectPackage,
 ):
+=======
+def test_install_installed(solver, repo, installed, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -279,12 +363,16 @@ def test_install_installed(
     )
 
 
+<<<<<<< HEAD
 def test_update_installed(
     solver: Solver,
     repo: Repository,
     installed: InstalledRepository,
     package: ProjectPackage,
 ):
+=======
+def test_update_installed(solver, repo, installed, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     installed.add_package(get_package("A", "1.0"))
@@ -301,6 +389,7 @@ def test_update_installed(
     )
 
 
+<<<<<<< HEAD
 def test_update_with_use_latest(
     solver: Solver,
     repo: Repository,
@@ -308,6 +397,9 @@ def test_update_with_use_latest(
     package: ProjectPackage,
     locked: Repository,
 ):
+=======
+def test_update_with_use_latest(solver, repo, installed, package, locked):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
 
@@ -336,7 +428,11 @@ def test_update_with_use_latest(
     )
 
 
+<<<<<<< HEAD
 def test_solver_sets_groups(solver: Solver, repo: Repository, package: ProjectPackage):
+=======
+def test_solver_sets_groups(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*", groups=["dev"]))
 
@@ -365,9 +461,13 @@ def test_solver_sets_groups(solver: Solver, repo: Repository, package: ProjectPa
     assert ops[1].package.category == "main"
 
 
+<<<<<<< HEAD
 def test_solver_respects_root_package_python_versions(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_respects_root_package_python_versions(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     solver.provider.set_package_python_versions("~3.4")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
@@ -398,9 +498,13 @@ def test_solver_respects_root_package_python_versions(
     )
 
 
+<<<<<<< HEAD
 def test_solver_fails_if_mismatch_root_python_versions(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_fails_if_mismatch_root_python_versions(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     solver.provider.set_package_python_versions("^3.4")
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
@@ -420,9 +524,13 @@ def test_solver_fails_if_mismatch_root_python_versions(
         solver.solve()
 
 
+<<<<<<< HEAD
 def test_solver_solves_optional_and_compatible_packages(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_solves_optional_and_compatible_packages(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     solver.provider.set_package_python_versions("~3.4")
     package.extras["foo"] = [get_dependency("B")]
     package.add_dependency(
@@ -455,9 +563,13 @@ def test_solver_solves_optional_and_compatible_packages(
     )
 
 
+<<<<<<< HEAD
 def test_solver_does_not_return_extras_if_not_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_does_not_return_extras_if_not_requested(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
 
@@ -482,9 +594,13 @@ def test_solver_does_not_return_extras_if_not_requested(
     )
 
 
+<<<<<<< HEAD
 def test_solver_returns_extras_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_returns_extras_if_requested(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(
         Factory.create_dependency("B", {"version": "*", "extras": ["foo"]})
@@ -518,6 +634,7 @@ def test_solver_returns_extras_if_requested(
     assert ops[0].package.marker.is_any()
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize("enabled_extra", ["one", "two", None])
 def test_solver_returns_extras_only_requested(
     solver: Solver,
@@ -525,6 +642,10 @@ def test_solver_returns_extras_only_requested(
     package: ProjectPackage,
     enabled_extra: Optional[bool],
 ):
+=======
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_only_requested(solver, repo, package, enabled_extra):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     extras = [enabled_extra] if enabled_extra is not None else []
 
     package.add_dependency(Factory.create_dependency("A", "*"))
@@ -580,12 +701,18 @@ def test_solver_returns_extras_only_requested(
     assert ops[0].package.marker.is_any()
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize("enabled_extra", ["one", "two", None])
 def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
     enabled_extra: Optional[bool],
+=======
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
+    solver, repo, package, enabled_extra
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -629,12 +756,18 @@ def test_solver_returns_extras_when_multiple_extras_use_same_dependency(
     assert ops[0].package.marker.is_any()
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize("enabled_extra", ["one", "two", None])
 def test_solver_returns_extras_only_requested_nested(
     solver: Solver,
     repo: Repository,
     package: ProjectPackage,
     enabled_extra: Optional[bool],
+=======
+@pytest.mark.parametrize(("enabled_extra",), [("one",), ("two",), (None,)])
+def test_solver_returns_extras_only_requested_nested(
+    solver, repo, package, enabled_extra
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -688,9 +821,13 @@ def test_solver_returns_extras_only_requested_nested(
     assert ops[0].package.marker.is_any()
 
 
+<<<<<<< HEAD
 def test_solver_returns_prereleases_if_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_returns_prereleases_if_requested(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
     package.add_dependency(
@@ -719,9 +856,13 @@ def test_solver_returns_prereleases_if_requested(
     )
 
 
+<<<<<<< HEAD
 def test_solver_does_not_return_prereleases_if_not_requested(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_does_not_return_prereleases_if_not_requested(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
     package.add_dependency(Factory.create_dependency("C", "*"))
@@ -748,9 +889,13 @@ def test_solver_does_not_return_prereleases_if_not_requested(
     )
 
 
+<<<<<<< HEAD
 def test_solver_sub_dependencies_with_requirements(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_sub_dependencies_with_requirements(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
 
@@ -786,9 +931,13 @@ def test_solver_sub_dependencies_with_requirements(
     assert op.package.marker.is_any()
 
 
+<<<<<<< HEAD
 def test_solver_sub_dependencies_with_requirements_complex(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_sub_dependencies_with_requirements_complex(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(
         Factory.create_dependency("A", {"version": "^1.0", "python": "<5.0"})
     )
@@ -846,7 +995,11 @@ def test_solver_sub_dependencies_with_requirements_complex(
 
 
 def test_solver_sub_dependencies_with_not_supported_python_version(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("^3.5")
     package.add_dependency(Factory.create_dependency("A", "*"))
@@ -868,7 +1021,11 @@ def test_solver_sub_dependencies_with_not_supported_python_version(
 
 
 def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("^3.4")
 
@@ -912,7 +1069,11 @@ def test_solver_sub_dependencies_with_not_supported_python_version_transitive(
 
 
 def test_solver_with_dependency_in_both_default_and_dev_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("^3.5")
     package.add_dependency(Factory.create_dependency("A", "*"))
@@ -965,7 +1126,11 @@ def test_solver_with_dependency_in_both_default_and_dev_dependencies(
 
 
 def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_dependent(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("E", "*"))
@@ -1024,9 +1189,13 @@ def test_solver_with_dependency_in_both_main_and_dev_dependencies_with_one_more_
     assert e.category == "main"
 
 
+<<<<<<< HEAD
 def test_solver_with_dependency_and_prerelease_sub_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_with_dependency_and_prerelease_sub_dependencies(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1051,9 +1220,13 @@ def test_solver_with_dependency_and_prerelease_sub_dependencies(
     )
 
 
+<<<<<<< HEAD
 def test_solver_circular_dependency(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_circular_dependency(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1080,12 +1253,19 @@ def test_solver_circular_dependency(
         ],
     )
 
+<<<<<<< HEAD
     assert ops[0].package.category == "main"
 
 
 def test_solver_circular_dependency_chain(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+    assert "main" == ops[0].package.category
+
+
+def test_solver_circular_dependency_chain(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1117,12 +1297,19 @@ def test_solver_circular_dependency_chain(
         ],
     )
 
+<<<<<<< HEAD
     assert ops[0].package.category == "main"
 
 
 def test_solver_dense_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+    assert "main" == ops[0].package.category
+
+
+def test_solver_dense_dependencies(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # The root package depends on packages A0...An-1,
     # And package Ai depends  on packages A0...Ai-1
     # This graph is a transitive tournament
@@ -1143,9 +1330,13 @@ def test_solver_dense_dependencies(
     )
 
 
+<<<<<<< HEAD
 def test_solver_duplicate_dependencies_same_constraint(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_duplicate_dependencies_same_constraint(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1172,9 +1363,13 @@ def test_solver_duplicate_dependencies_same_constraint(
     )
 
 
+<<<<<<< HEAD
 def test_solver_duplicate_dependencies_different_constraints(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_duplicate_dependencies_different_constraints(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1205,7 +1400,11 @@ def test_solver_duplicate_dependencies_different_constraints(
 
 
 def test_solver_duplicate_dependencies_different_constraints_same_requirements(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
@@ -1231,6 +1430,7 @@ So, because no versions of a match !=1.0
     assert str(e.value) == expected
 
 
+<<<<<<< HEAD
 def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
     solver: Solver, repo: Repository, package: Package
 ):
@@ -1277,6 +1477,9 @@ def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
 def test_solver_duplicate_dependencies_sub_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("A", "*"))
 
     package_a = get_package("A", "1.0")
@@ -1315,9 +1518,13 @@ def test_solver_duplicate_dependencies_sub_dependencies(
     )
 
 
+<<<<<<< HEAD
 def test_solver_fails_if_dependency_name_does_not_match_package(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_fails_if_dependency_name_does_not_match_package(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(
         Factory.create_dependency(
             "my-demo", {"git": "https://github.com/demo/demo.git"}
@@ -1329,7 +1536,11 @@ def test_solver_fails_if_dependency_name_does_not_match_package(
 
 
 def test_solver_does_not_get_stuck_in_recursion_on_circular_dependency(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package_a = get_package("A", "1.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
@@ -1356,9 +1567,13 @@ def test_solver_does_not_get_stuck_in_recursion_on_circular_dependency(
     )
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_git_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_git_dependencies(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1375,7 +1590,11 @@ def test_solver_can_resolve_git_dependencies(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
+<<<<<<< HEAD
         source_reference=DEFAULT_SOURCE_REF,
+=======
+        source_reference="master",
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
 
@@ -1387,6 +1606,7 @@ def test_solver_can_resolve_git_dependencies(
     op = ops[1]
 
     assert op.package.source_type == "git"
+<<<<<<< HEAD
     assert op.package.source_reference == DEFAULT_SOURCE_REF
     assert op.package.source_resolved_reference.startswith("9cf87a2")
 
@@ -1394,6 +1614,13 @@ def test_solver_can_resolve_git_dependencies(
 def test_solver_can_resolve_git_dependencies_with_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+    assert op.package.source_reference == "master"
+    assert op.package.source_resolved_reference.startswith("9cf87a2")
+
+
+def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1412,7 +1639,11 @@ def test_solver_can_resolve_git_dependencies_with_extras(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
+<<<<<<< HEAD
         source_reference=DEFAULT_SOURCE_REF,
+=======
+        source_reference="master",
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
 
@@ -1431,9 +1662,13 @@ def test_solver_can_resolve_git_dependencies_with_extras(
     [{"branch": "a-branch"}, {"tag": "a-tag"}, {"rev": "9cf8"}],
     ids=["branch", "tag", "rev"],
 )
+<<<<<<< HEAD
 def test_solver_can_resolve_git_dependencies_with_ref(
     solver: Solver, repo: Repository, package: Package, ref: Dict[str, str]
 ):
+=======
+def test_solver_can_resolve_git_dependencies_with_ref(solver, repo, package, ref):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1467,7 +1702,11 @@ def test_solver_can_resolve_git_dependencies_with_ref(
 
 
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
     package.add_dependency(
@@ -1485,7 +1724,11 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
 
 
 def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requirement_is_compatible_multiple(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
     package.add_dependency(
@@ -1517,7 +1760,11 @@ def test_solver_does_not_trigger_conflict_for_python_constraint_if_python_requir
 
 
 def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_with_package_python(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
     package.add_dependency(
@@ -1534,7 +1781,11 @@ def test_solver_triggers_conflict_for_dependency_python_not_fully_compatible_wit
 
 
 def test_solver_finds_compatible_package_for_dependency_python_not_fully_compatible_with_package_python(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
     package.add_dependency(
@@ -1556,7 +1807,11 @@ def test_solver_finds_compatible_package_for_dependency_python_not_fully_compati
 
 
 def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_only_extras(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     dep1 = Dependency.create_from_pep_508('B (>=1.0); extra == "foo"')
     dep1.activate()
@@ -1594,7 +1849,11 @@ def test_solver_does_not_trigger_new_resolution_on_duplicate_dependencies_if_onl
 
 
 def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.4")
     package.add_dependency(
@@ -1626,7 +1885,11 @@ def test_solver_does_not_raise_conflict_for_locked_conditional_dependencies(
 
 
 def test_solver_returns_extras_if_requested_in_dependencies_and_not_in_root_package(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("A", "*"))
     package.add_dependency(Factory.create_dependency("B", "*"))
@@ -1665,7 +1928,11 @@ def test_solver_returns_extras_if_requested_in_dependencies_and_not_in_root_pack
 
 
 def test_solver_should_not_resolve_prerelease_version_if_not_requested(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("A", "~1.8.0"))
     package.add_dependency(Factory.create_dependency("B", "^0.5.0"))
@@ -1684,7 +1951,11 @@ def test_solver_should_not_resolve_prerelease_version_if_not_requested(
 
 
 def test_solver_ignores_dependencies_with_incompatible_python_full_version_marker(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("^3.6")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
@@ -1715,9 +1986,13 @@ def test_solver_ignores_dependencies_with_incompatible_python_full_version_marke
     )
 
 
+<<<<<<< HEAD
 def test_solver_git_dependencies_update(
     solver: Solver, repo: Repository, package: Package, installed: InstalledRepository
 ):
+=======
+def test_solver_git_dependencies_update(solver, repo, package, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1728,7 +2003,11 @@ def test_solver_git_dependencies_update(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
+<<<<<<< HEAD
         source_reference=DEFAULT_SOURCE_REF,
+=======
+        source_reference="master",
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         source_resolved_reference="123456",
     )
     demo = Package(
@@ -1736,7 +2015,11 @@ def test_solver_git_dependencies_update(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
+<<<<<<< HEAD
         source_reference=DEFAULT_SOURCE_REF,
+=======
+        source_reference="master",
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
     installed.add_package(demo_installed)
@@ -1759,14 +2042,22 @@ def test_solver_git_dependencies_update(
 
     assert op.job_type == "update"
     assert op.package.source_type == "git"
+<<<<<<< HEAD
     assert op.package.source_reference == DEFAULT_SOURCE_REF
+=======
+    assert op.package.source_reference == "master"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     assert op.package.source_resolved_reference.startswith("9cf87a2")
     assert op.initial_package.source_resolved_reference == "123456"
 
 
+<<<<<<< HEAD
 def test_solver_git_dependencies_update_skipped(
     solver: Solver, repo: Repository, package: Package, installed: InstalledRepository
 ):
+=======
+def test_solver_git_dependencies_update_skipped(solver, repo, package, installed):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1798,7 +2089,11 @@ def test_solver_git_dependencies_update_skipped(
 
 
 def test_solver_git_dependencies_short_hash_update_skipped(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package, installed: InstalledRepository
+=======
+    solver, repo, package, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
@@ -1843,9 +2138,13 @@ def test_solver_git_dependencies_short_hash_update_skipped(
     )
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_directory_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_directory_dependencies(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
@@ -1878,11 +2177,15 @@ def test_solver_can_resolve_directory_dependencies(
 
 
 def test_solver_can_resolve_directory_dependencies_nested_editable(
+<<<<<<< HEAD
     repo: Repository,
     pool: Pool,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
+=======
+    solver, repo, pool, installed, locked, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     base = Path(__file__).parent.parent / "fixtures" / "project_with_nested_local"
     poetry = Factory().create_poetry(cwd=base)
@@ -1935,9 +2238,13 @@ def test_solver_can_resolve_directory_dependencies_nested_editable(
         assert op.package.develop is True
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_directory_dependencies_with_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_directory_dependencies_with_extras(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -1977,9 +2284,13 @@ def test_solver_can_resolve_directory_dependencies_with_extras(
     assert op.package.source_url == path
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_sdist_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_sdist_dependencies(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
@@ -2009,9 +2320,13 @@ def test_solver_can_resolve_sdist_dependencies(
     assert op.package.source_url == path
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_sdist_dependencies_with_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_sdist_dependencies_with_extras(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -2049,9 +2364,13 @@ def test_solver_can_resolve_sdist_dependencies_with_extras(
     assert op.package.source_url == path
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_wheel_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_wheel_dependencies(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     repo.add_package(pendulum)
 
@@ -2081,9 +2400,13 @@ def test_solver_can_resolve_wheel_dependencies(
     assert op.package.source_url == path
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_wheel_dependencies_with_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_wheel_dependencies_with_extras(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pendulum = get_package("pendulum", "2.0.3")
     cleo = get_package("cleo", "1.0.0")
     repo.add_package(pendulum)
@@ -2122,10 +2445,14 @@ def test_solver_can_resolve_wheel_dependencies_with_extras(
 
 
 def test_solver_can_solve_with_legacy_repository_using_proper_dists(
+<<<<<<< HEAD
     package: ProjectPackage,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
+=======
+    package, installed, locked, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     repo = MockLegacyRepository()
     pool = Pool([repo])
@@ -2167,10 +2494,14 @@ def test_solver_can_solve_with_legacy_repository_using_proper_dists(
 
 
 def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_dists(
+<<<<<<< HEAD
     package: ProjectPackage,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
+=======
+    package, installed, locked, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "^3.7"
 
@@ -2200,12 +2531,16 @@ def test_solver_can_solve_with_legacy_repository_using_proper_python_compatible_
     )
 
 
+<<<<<<< HEAD
 def test_solver_skips_invalid_versions(
     package: ProjectPackage,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
 ):
+=======
+def test_solver_skips_invalid_versions(package, installed, locked, io):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.python_versions = "^3.7"
 
     repo = MockPyPIRepository()
@@ -2222,9 +2557,13 @@ def test_solver_skips_invalid_versions(
     )
 
 
+<<<<<<< HEAD
 def test_multiple_constraints_on_root(
     package: ProjectPackage, solver: Solver, repo: Repository
 ):
+=======
+def test_multiple_constraints_on_root(package, solver, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(
         Factory.create_dependency("foo", {"version": "^1.0", "python": "^2.7"})
     )
@@ -2247,10 +2586,14 @@ def test_multiple_constraints_on_root(
 
 
 def test_solver_chooses_most_recent_version_amongst_repositories(
+<<<<<<< HEAD
     package: ProjectPackage,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
+=======
+    package, installed, locked, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("tomlkit", {"version": "^0.5"}))
@@ -2271,10 +2614,14 @@ def test_solver_chooses_most_recent_version_amongst_repositories(
 
 
 def test_solver_chooses_from_correct_repository_if_forced(
+<<<<<<< HEAD
     package: ProjectPackage,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
+=======
+    package, installed, locked, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "^3.7"
     package.add_dependency(
@@ -2304,6 +2651,7 @@ def test_solver_chooses_from_correct_repository_if_forced(
         ],
     )
 
+<<<<<<< HEAD
     assert ops[0].package.source_url == "http://legacy.foo.bar"
 
 
@@ -2312,6 +2660,13 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
+=======
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
+
+
+def test_solver_chooses_from_correct_repository_if_forced_and_transitive_dependency(
+    package, installed, locked, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("foo", "^1.0"))
@@ -2346,17 +2701,25 @@ def test_solver_chooses_from_correct_repository_if_forced_and_transitive_depende
         ],
     )
 
+<<<<<<< HEAD
     assert ops[0].package.source_url == "http://legacy.foo.bar"
+=======
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
 
 
 def test_solver_does_not_choose_from_secondary_repository_by_default(
+<<<<<<< HEAD
     package: ProjectPackage,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
+=======
+    package, installed, locked, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "^3.7"
     package.add_dependency(Factory.create_dependency("clikit", {"version": "^0.2.0"}))
@@ -2396,6 +2759,7 @@ def test_solver_does_not_choose_from_secondary_repository_by_default(
         ],
     )
 
+<<<<<<< HEAD
     assert ops[0].package.source_url == "http://legacy.foo.bar"
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
@@ -2408,6 +2772,15 @@ def test_solver_chooses_from_secondary_if_explicit(
     locked: Repository,
     io: NullIO,
 ):
+=======
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
+    assert ops[1].package.source_type is None
+    assert ops[1].package.source_url is None
+    assert "http://legacy.foo.bar" == ops[2].package.source_url
+
+
+def test_solver_chooses_from_secondary_if_explicit(package, installed, locked, io):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.python_versions = "^3.7"
     package.add_dependency(
         Factory.create_dependency("clikit", {"version": "^0.2.0", "source": "PyPI"})
@@ -2439,7 +2812,11 @@ def test_solver_chooses_from_secondary_if_explicit(
         ],
     )
 
+<<<<<<< HEAD
     assert ops[0].package.source_url == "http://legacy.foo.bar"
+=======
+    assert "http://legacy.foo.bar" == ops[0].package.source_url
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     assert ops[1].package.source_type is None
     assert ops[1].package.source_url is None
     assert ops[2].package.source_type is None
@@ -2447,12 +2824,16 @@ def test_solver_chooses_from_secondary_if_explicit(
 
 
 def test_solver_discards_packages_with_empty_markers(
+<<<<<<< HEAD
     package: ProjectPackage,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
     pool: Pool,
     repo: Repository,
+=======
+    package, installed, locked, io, pool, repo
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "~2.7 || ^3.4"
     package.add_dependency(
@@ -2488,7 +2869,11 @@ def test_solver_discards_packages_with_empty_markers(
 
 
 def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.5")
     package.add_dependency(
@@ -2520,7 +2905,11 @@ def test_solver_does_not_raise_conflict_for_conditional_dev_dependencies(
 
 
 def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.5")
     package.add_dependency(
@@ -2551,12 +2940,16 @@ def test_solver_does_not_loop_indefinitely_on_duplicate_constraints_with_extras(
 
 
 def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
+<<<<<<< HEAD
     repo: Repository,
     package: Package,
     locked: Repository,
     pool: Pool,
     installed: InstalledRepository,
     io: NullIO,
+=======
+    solver, repo, package, locked, pool, installed, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(
         Factory.create_dependency("demo", {"git": "https://github.com/demo/demo.git"})
@@ -2568,8 +2961,13 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
+<<<<<<< HEAD
         source_reference=DEFAULT_SOURCE_REF,
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
+=======
+        source_reference="master",
+        source_resolved_reference="commit",
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     )
 
     installed.add_package(git_package)
@@ -2593,9 +2991,13 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
     )
 
 
+<<<<<<< HEAD
 def test_ignore_python_constraint_no_overlap_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_ignore_python_constraint_no_overlap_dependencies(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pytest = get_package("demo", "1.0.0")
     pytest.add_dependency(
         Factory.create_dependency(
@@ -2619,7 +3021,11 @@ def test_ignore_python_constraint_no_overlap_dependencies(
 
 
 def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
@@ -2651,6 +3057,7 @@ def test_solver_should_not_go_into_an_infinite_loop_on_duplicate_dependencies(
     )
 
 
+<<<<<<< HEAD
 def test_solver_synchronize_single(
     package: ProjectPackage,
     pool: Pool,
@@ -2658,6 +3065,9 @@ def test_solver_synchronize_single(
     locked: Repository,
     io: NullIO,
 ):
+=======
+def test_solver_synchronize_single(package, pool, installed, locked, io):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     solver = Solver(package, pool, installed, locked, io)
     package_a = get_package("a", "1.0")
     installed.add_package(package_a)
@@ -2671,11 +3081,15 @@ def test_solver_synchronize_single(
 
 @pytest.mark.skip(reason="Poetry no longer has critical package requirements")
 def test_solver_with_synchronization_keeps_critical_package(
+<<<<<<< HEAD
     package: ProjectPackage,
     pool: Pool,
     installed: InstalledRepository,
     locked: Repository,
     io: NullIO,
+=======
+    package, pool, installed, locked, io
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver = Solver(package, pool, installed, locked, io)
     package_pip = get_package("setuptools", "1.0")
@@ -2687,7 +3101,11 @@ def test_solver_with_synchronization_keeps_critical_package(
 
 
 def test_solver_cannot_choose_another_version_for_directory_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.1.0")
@@ -2716,7 +3134,11 @@ def test_solver_cannot_choose_another_version_for_directory_dependencies(
 
 
 def test_solver_cannot_choose_another_version_for_file_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.0.8")
@@ -2743,7 +3165,11 @@ def test_solver_cannot_choose_another_version_for_file_dependencies(
 
 
 def test_solver_cannot_choose_another_version_for_git_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pendulum = get_package("pendulum", "2.0.3")
     demo = get_package("demo", "0.0.8")
@@ -2765,10 +3191,14 @@ def test_solver_cannot_choose_another_version_for_git_dependencies(
 
 
 def test_solver_cannot_choose_another_version_for_url_dependencies(
+<<<<<<< HEAD
     solver: Solver,
     repo: Repository,
     package: Package,
     http: Type["httpretty.httpretty"],
+=======
+    solver, repo, package, http
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     path = (
         Path(__file__).parent.parent
@@ -2806,7 +3236,11 @@ def test_solver_cannot_choose_another_version_for_url_dependencies(
 
 
 def test_solver_should_not_update_same_version_packages_if_installed_has_no_source_type(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package, installed: InstalledRepository
+=======
+    solver, repo, package, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(Factory.create_dependency("foo", "1.0.0"))
 
@@ -2828,7 +3262,11 @@ def test_solver_should_not_update_same_version_packages_if_installed_has_no_sour
 
 
 def test_solver_should_use_the_python_constraint_from_the_environment_if_available(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package, installed: InstalledRepository
+=======
+    solver, repo, package, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     solver.provider.set_package_python_versions("~2.7 || ^3.5")
     package.add_dependency(Factory.create_dependency("A", "^1.0"))
@@ -2855,7 +3293,11 @@ def test_solver_should_use_the_python_constraint_from_the_environment_if_availab
 
 
 def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "~2.7 || ^3.5"
     package.add_dependency(
@@ -2903,7 +3345,11 @@ def test_solver_should_resolve_all_versions_for_multiple_duplicate_dependencies(
 
 
 def test_solver_should_not_raise_errors_for_irrelevant_python_constraints(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "^3.6"
     solver.provider.set_package_python_versions("^3.6")
@@ -2920,9 +3366,13 @@ def test_solver_should_not_raise_errors_for_irrelevant_python_constraints(
     check_solver_result(transaction, [{"job": "install", "package": dataclasses}])
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_transitive_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_transitive_extras(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(Factory.create_dependency("requests", "^2.24.0"))
     package.add_dependency(Factory.create_dependency("PyOTA", "^2.1.0"))
 
@@ -2958,9 +3408,13 @@ def test_solver_can_resolve_transitive_extras(
     )
 
 
+<<<<<<< HEAD
 def test_solver_can_resolve_for_packages_with_missing_extras(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
+=======
+def test_solver_can_resolve_for_packages_with_missing_extras(solver, repo, package):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package.add_dependency(
         Factory.create_dependency(
             "django-anymail", {"version": "^6.0", "extras": ["postmark"]}
@@ -2996,7 +3450,11 @@ def test_solver_can_resolve_for_packages_with_missing_extras(
 
 
 def test_solver_can_resolve_python_restricted_package_dependencies(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package, locked: Repository
+=======
+    solver, repo, package, locked
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.add_dependency(
         Factory.create_dependency("futures", {"version": "^3.3.0", "python": "~2.7"})
@@ -3029,7 +3487,11 @@ def test_solver_can_resolve_python_restricted_package_dependencies(
 
 
 def test_solver_should_not_raise_errors_for_irrelevant_transitive_python_constraints(
+<<<<<<< HEAD
     solver: Solver, repo: Repository, package: Package
+=======
+    solver, repo, package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     package.python_versions = "~2.7 || ^3.5"
     solver.provider.set_package_python_versions("~2.7 || ^3.5")

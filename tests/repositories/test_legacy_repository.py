@@ -1,16 +1,22 @@
 import shutil
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
 from typing import Type
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 import requests
 
 from poetry.core.packages.dependency import Dependency
+<<<<<<< HEAD
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.factory import Factory
 from poetry.repositories.exceptions import PackageNotFound
 from poetry.repositories.exceptions import RepositoryError
@@ -23,20 +29,32 @@ try:
 except ImportError:
     import urlparse
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     import httpretty
 
     from _pytest.monkeypatch import MonkeyPatch
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 class MockRepository(LegacyRepository):
 
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
+<<<<<<< HEAD
     def __init__(self) -> None:
         super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
     def _get_page(self, endpoint: str) -> Optional[Page]:
+=======
+    def __init__(self):
+        super(MockRepository, self).__init__(
+            "legacy", url="http://legacy.foo.bar", disable_cache=True
+        )
+
+    def _get(self, endpoint):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         parts = endpoint.split("/")
         name = parts[1]
 
@@ -47,7 +65,11 @@ class MockRepository(LegacyRepository):
         with fixture.open(encoding="utf-8") as f:
             return Page(self._url + endpoint, f.read(), {})
 
+<<<<<<< HEAD
     def _download(self, url: str, dest: Path) -> None:
+=======
+    def _download(self, url, dest):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         filename = urlparse.urlparse(url).path.rsplit("/")[-1]
         filepath = self.FIXTURES.parent / "pypi.org" / "dists" / filename
 
@@ -57,7 +79,11 @@ class MockRepository(LegacyRepository):
 def test_page_relative_links_path_are_correct():
     repo = MockRepository()
 
+<<<<<<< HEAD
     page = repo._get_page("/relative")
+=======
+    page = repo._get("/relative")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     for link in page.links:
         assert link.netloc == "legacy.foo.bar"
@@ -67,7 +93,11 @@ def test_page_relative_links_path_are_correct():
 def test_page_absolute_links_path_are_correct():
     repo = MockRepository()
 
+<<<<<<< HEAD
     page = repo._get_page("/absolute")
+=======
+    page = repo._get("/absolute")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     for link in page.links:
         assert link.netloc == "files.pythonhosted.org"
@@ -76,7 +106,11 @@ def test_page_absolute_links_path_are_correct():
 
 def test_sdist_format_support():
     repo = MockRepository()
+<<<<<<< HEAD
     page = repo._get_page("/relative")
+=======
+    page = repo._get("/relative")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     bz2_links = list(filter(lambda link: link.ext == ".tar.bz2", page.links))
     assert len(bz2_links) == 1
     assert bz2_links[0].filename == "poetry-0.1.1.tar.bz2"
@@ -116,9 +150,15 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
         package.description == "Python Language Server for the Language Server Protocol"
     )
 
+<<<<<<< HEAD
     assert len(package.requires) == 25
     assert sorted(
         (r for r in package.requires if not r.is_optional()), key=lambda r: r.name
+=======
+    assert 25 == len(package.requires)
+    assert sorted(
+        [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     ) == [
         Dependency("configparser", "*"),
         Dependency("future", ">=0.14.0"),
@@ -153,10 +193,15 @@ def test_find_packages_no_prereleases():
     assert packages[0].source_url == repo.url
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize(
     ["constraint", "count"], [("*", 1), (">=1", 0), (">=19.0.0a0", 1)]
 )
 def test_find_packages_only_prereleases(constraint: str, count: int):
+=======
+@pytest.mark.parametrize("constraint,count", [("*", 1), (">=1", 0), (">=19.0.0a0", 1)])
+def test_find_packages_only_prereleases(constraint, count):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo = MockRepository()
     packages = repo.find_packages(Factory.create_dependency("black", constraint))
 
@@ -214,10 +259,17 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
 
     package = repo.package("ipython", "5.7.0")
 
+<<<<<<< HEAD
     assert package.name == "ipython"
     assert package.version.text == "5.7.0"
     assert package.python_versions == "*"
     assert len(package.requires) == 41
+=======
+    assert "ipython" == package.name
+    assert "5.7.0" == package.version.text
+    assert "*" == package.python_versions
+    assert 41 == len(package.requires)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     expected = [
         Dependency("appnope", "*"),
@@ -237,6 +289,7 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
     required = [r for r in package.requires if not r.is_optional()]
     assert expected == required
 
+<<<<<<< HEAD
     assert str(required[1].marker) == 'python_version == "2.7"'
     assert (
         str(required[12].marker) == 'sys_platform == "win32" and python_version < "3.6"'
@@ -245,6 +298,16 @@ def test_get_package_from_both_py2_and_py3_specific_wheels():
         str(required[4].marker) == 'python_version == "2.7" or python_version == "3.3"'
     )
     assert str(required[5].marker) == 'sys_platform != "win32"'
+=======
+    assert 'python_version == "2.7"' == str(required[1].marker)
+    assert 'sys_platform == "win32" and python_version < "3.6"' == str(
+        required[12].marker
+    )
+    assert 'python_version == "2.7" or python_version == "3.3"' == str(
+        required[4].marker
+    )
+    assert 'sys_platform != "win32"' == str(required[5].marker)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 
 def test_get_package_with_dist_and_universal_py3_wheel():
@@ -252,9 +315,15 @@ def test_get_package_with_dist_and_universal_py3_wheel():
 
     package = repo.package("ipython", "7.5.0")
 
+<<<<<<< HEAD
     assert package.name == "ipython"
     assert package.version.text == "7.5.0"
     assert package.python_versions == ">=3.5"
+=======
+    assert "ipython" == package.name
+    assert "7.5.0" == package.version.text
+    assert ">=3.5" == package.python_versions
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     expected = [
         Dependency("appnope", "*"),
@@ -331,15 +400,24 @@ def test_get_package_retrieves_packages_with_no_hashes():
 
 
 class MockHttpRepository(LegacyRepository):
+<<<<<<< HEAD
     def __init__(self, endpoint_responses: Dict, http: Type["httpretty.httpretty"]):
         base_url = "http://legacy.foo.bar"
         super().__init__("legacy", url=base_url, disable_cache=True)
+=======
+    def __init__(self, endpoint_responses, http):
+        base_url = "http://legacy.foo.bar"
+        super(MockHttpRepository, self).__init__(
+            "legacy", url=base_url, disable_cache=True
+        )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
         for endpoint, response in endpoint_responses.items():
             url = base_url + endpoint
             http.register_uri(http.GET, url, status=response)
 
 
+<<<<<<< HEAD
 def test_get_200_returns_page(http: Type["httpretty.httpretty"]):
     repo = MockHttpRepository({"/foo": 200}, http)
 
@@ -367,10 +445,41 @@ def test_get_redirected_response_url(
     redirect_url = "http://legacy.redirect.bar"
 
     def get_mock(url: str) -> requests.Response:
+=======
+def test_get_200_returns_page(http):
+    repo = MockHttpRepository({"/foo": 200}, http)
+
+    assert repo._get("/foo")
+
+
+@pytest.mark.parametrize("status_code", [401, 403, 404])
+def test_get_40x_and_returns_none(http, status_code):
+    repo = MockHttpRepository({"/foo": status_code}, http)
+
+    assert repo._get("/foo") is None
+
+
+def test_get_5xx_raises(http):
+    repo = MockHttpRepository({"/foo": 500}, http)
+
+    with pytest.raises(RepositoryError):
+        repo._get("/foo")
+
+
+def test_get_redirected_response_url(http, monkeypatch):
+    repo = MockHttpRepository({"/foo": 200}, http)
+    redirect_url = "http://legacy.redirect.bar"
+
+    def get_mock(url):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         response = requests.Response()
         response.status_code = 200
         response.url = redirect_url + "/foo"
         return response
 
     monkeypatch.setattr(repo.session, "get", get_mock)
+<<<<<<< HEAD
     assert repo._get_page("/foo")._url == "http://legacy.redirect.bar/foo/"
+=======
+    assert repo._get("/foo")._url == "http://legacy.redirect.bar/foo/"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)

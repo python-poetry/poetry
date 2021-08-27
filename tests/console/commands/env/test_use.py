@@ -1,20 +1,27 @@
 import os
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Tuple
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 import tomlkit
 
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
+<<<<<<< HEAD
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.utils.env import MockEnv
 from tests.console.commands.env.helpers import build_venv
 from tests.console.commands.env.helpers import check_output_wrapper
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from cleo.testers.command_tester import CommandTester
     from pytest_mock import MockerFixture
@@ -24,15 +31,23 @@ if TYPE_CHECKING:
 
 @pytest.fixture(autouse=True)
 def setup(mocker: "MockerFixture") -> None:
+=======
+@pytest.fixture(autouse=True)
+def setup(mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.stopall()
     if "VIRTUAL_ENV" in os.environ:
         del os.environ["VIRTUAL_ENV"]
 
 
 @pytest.fixture(autouse=True)
+<<<<<<< HEAD
 def mock_subprocess_calls(
     setup: None, current_python: Tuple[int, int, int], mocker: "MockerFixture"
 ) -> None:
+=======
+def mock_subprocess_calls(setup, current_python, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.from_parts(*current_python)),
@@ -44,16 +59,24 @@ def mock_subprocess_calls(
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+=======
+def tester(command_tester_factory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return command_tester_factory("env use")
 
 
 def test_activate_activates_non_existing_virtualenv_no_envs_file(
+<<<<<<< HEAD
     mocker: "MockerFixture",
     tester: "CommandTester",
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
+=======
+    mocker, tester, venv_cache, venv_name, venvs_in_cache_config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     mocker.patch(
         "subprocess.check_output",
@@ -66,7 +89,11 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
 
     tester.execute("3.7")
 
+<<<<<<< HEAD
     venv_py37 = venv_cache / f"{venv_name}-py3.7"
+=======
+    venv_py37 = venv_cache / "{}-py3.7".format(venv_name)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mock_build_env.assert_called_with(
         venv_py37,
         executable="python3.7",
@@ -82,26 +109,45 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
+<<<<<<< HEAD
     expected = f"""\
 Creating virtualenv {venv_py37.name} in {venv_py37.parent}
 Using virtualenv: {venv_py37}
 """
+=======
+    expected = """\
+Creating virtualenv {} in {}
+Using virtualenv: {}
+""".format(
+        venv_py37.name,
+        venv_py37.parent,
+        venv_py37,
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == tester.io.fetch_output()
 
 
 def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
+<<<<<<< HEAD
     tester: "CommandTester",
     current_python: Tuple[int, int, int],
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
+=======
+    tester, current_python, venv_cache, venv_name, venvs_in_cache_config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     python_minor = ".".join(str(v) for v in current_python[:2])
     python_patch = ".".join(str(v) for v in current_python[:3])
+<<<<<<< HEAD
     venv_dir = venv_cache / f"{venv_name}-py{python_minor}"
+=======
+    venv_dir = venv_cache / "{}-py{}".format(venv_name, python_minor)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     venv_dir.mkdir(parents=True, exist_ok=True)
 
     envs_file = TOMLFile(venv_cache / "envs.toml")
@@ -111,25 +157,41 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 
     tester.execute(python_minor)
 
+<<<<<<< HEAD
     expected = f"""\
 Using virtualenv: {venv_dir}
 """
+=======
+    expected = """\
+Using virtualenv: {}
+""".format(
+        venv_dir
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == tester.io.fetch_output()
 
 
 def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
+<<<<<<< HEAD
     mocker: "MockerFixture",
     tester: "CommandTester",
     current_python: Tuple[int, int, int],
     venv_cache: Path,
     venv_name: str,
     venvs_in_cache_config: None,
+=======
+    mocker, tester, current_python, venv_cache, venv_name, venvs_in_cache_config
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     os.environ["VIRTUAL_ENV"] = "/environment/prefix"
 
     python_minor = ".".join(str(v) for v in current_python[:2])
+<<<<<<< HEAD
     venv_dir = venv_cache / f"{venv_name}-py{python_minor}"
+=======
+    venv_dir = venv_cache / "{}-py{}".format(venv_name, python_minor)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     mocker.patch(
         "poetry.utils.env.EnvManager._env",
@@ -145,9 +207,20 @@ def test_get_prefers_explicitly_activated_non_existing_virtualenvs_over_env_var(
 
     tester.execute(python_minor)
 
+<<<<<<< HEAD
     expected = f"""\
 Creating virtualenv {venv_dir.name} in {venv_dir.parent}
 Using virtualenv: {venv_dir}
 """
+=======
+    expected = """\
+Creating virtualenv {} in {}
+Using virtualenv: {}
+""".format(
+        venv_dir.name,
+        venv_dir.parent,
+        venv_dir,
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == tester.io.fetch_output()

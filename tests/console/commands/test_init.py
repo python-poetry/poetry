@@ -3,8 +3,11 @@ import shutil
 import sys
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Iterator
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
@@ -12,6 +15,7 @@ from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
+<<<<<<< HEAD
 from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
@@ -26,6 +30,14 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Iterator[Path]:
+=======
+from tests.helpers import TestApplication
+from tests.helpers import get_package
+
+
+@pytest.fixture
+def source_dir(tmp_path) -> Path:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     cwd = os.getcwd()
 
     try:
@@ -36,7 +48,11 @@ def source_dir(tmp_path: Path) -> Iterator[Path]:
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def patches(mocker: "MockerFixture", source_dir: Path, repo: "TestRepository") -> None:
+=======
+def patches(mocker, source_dir, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch("pathlib.Path.cwd", return_value=source_dir)
     mocker.patch(
         "poetry.console.commands.init.InitCommand._get_pool", return_value=Pool([repo])
@@ -44,14 +60,24 @@ def patches(mocker: "MockerFixture", source_dir: Path, repo: "TestRepository") -
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def tester(patches: None) -> CommandTester:
     # we need a test application without poetry here.
     app = PoetryTestApplication(None)
+=======
+def tester(patches):
+    # we need a test application without poetry here.
+    app = TestApplication(None)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return CommandTester(app.find("init"))
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def init_basic_inputs() -> str:
+=======
+def init_basic_inputs():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return "\n".join(
         [
             "my-package",  # Package name
@@ -68,7 +94,11 @@ def init_basic_inputs() -> str:
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def init_basic_toml() -> str:
+=======
+def init_basic_toml():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return """\
 [tool.poetry]
 name = "my-package"
@@ -84,13 +114,18 @@ python = "~2.7 || ^3.6"
 """
 
 
+<<<<<<< HEAD
 def test_basic_interactive(
     tester: CommandTester, init_basic_inputs: str, init_basic_toml: str
 ):
+=======
+def test_basic_interactive(tester, init_basic_inputs, init_basic_toml):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute(inputs=init_basic_inputs)
     assert init_basic_toml in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_noninteractive(
     app: PoetryTestApplication,
     mocker: "MockerFixture",
@@ -98,6 +133,9 @@ def test_noninteractive(
     repo: "TestRepository",
     tmp_path: Path,
 ):
+=======
+def test_noninteractive(app, mocker, poetry, repo, tmp_path):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     command = app.find("init")
     command._pool = poetry.pool
 
@@ -112,14 +150,22 @@ def test_noninteractive(
 
     expected = "Using version ^3.6.0 for pytest\n"
     assert tester.io.fetch_output() == expected
+<<<<<<< HEAD
     assert tester.io.fetch_error() == ""
+=======
+    assert "" == tester.io.fetch_error()
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     toml_content = (tmp_path / "pyproject.toml").read_text()
     assert 'name = "my-package"' in toml_content
     assert 'pytest = "^3.6.0"' in toml_content
 
 
+<<<<<<< HEAD
 def test_interactive_with_dependencies(tester: CommandTester, repo: "TestRepository"):
+=======
+def test_interactive_with_dependencies(tester, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("django-pendulum", "0.1.6-pre4"))
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -166,7 +212,11 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_empty_license(tester: CommandTester):
+=======
+def test_empty_license(tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -180,8 +230,12 @@ def test_empty_license(tester: CommandTester):
     ]
     tester.execute(inputs="\n".join(inputs))
 
+<<<<<<< HEAD
     python = ".".join(str(c) for c in sys.version_info[:2])
     expected = f"""\
+=======
+    expected = """\
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 [tool.poetry]
 name = "my-package"
 version = "1.2.3"
@@ -192,6 +246,7 @@ packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
+<<<<<<< HEAD
 """
     assert expected in tester.io.fetch_output()
 
@@ -199,6 +254,15 @@ python = "^{python}"
 def test_interactive_with_git_dependencies(
     tester: CommandTester, repo: "TestRepository"
 ):
+=======
+""".format(
+        python=".".join(str(c) for c in sys.version_info[:2])
+    )
+    assert expected in tester.io.fetch_output()
+
+
+def test_interactive_with_git_dependencies(tester, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -242,9 +306,13 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_interactive_with_git_dependencies_with_reference(
     tester: CommandTester, repo: "TestRepository"
 ):
+=======
+def test_interactive_with_git_dependencies_with_reference(tester, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -288,9 +356,13 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_interactive_with_git_dependencies_and_other_name(
     tester: CommandTester, repo: "TestRepository"
 ):
+=======
+def test_interactive_with_git_dependencies_and_other_name(tester, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -334,12 +406,16 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_interactive_with_directory_dependency(
     tester: CommandTester,
     repo: "TestRepository",
     source_dir: Path,
     fixture_dir: "FixtureDirGetter",
 ):
+=======
+def test_interactive_with_directory_dependency(tester, repo, source_dir, fixture_dir):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -386,10 +462,14 @@ pytest = "^3.6.0"
 
 
 def test_interactive_with_directory_dependency_and_other_name(
+<<<<<<< HEAD
     tester: CommandTester,
     repo: "TestRepository",
     source_dir: Path,
     fixture_dir: "FixtureDirGetter",
+=======
+    tester, repo, source_dir, fixture_dir
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
@@ -437,12 +517,16 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_interactive_with_file_dependency(
     tester: CommandTester,
     repo: "TestRepository",
     source_dir: Path,
     fixture_dir: "FixtureDirGetter",
 ):
+=======
+def test_interactive_with_file_dependency(tester, repo, source_dir, fixture_dir):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pytest", "3.6.0"))
 
@@ -489,7 +573,11 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_python_option(tester: CommandTester):
+=======
+def test_python_option(tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     inputs = [
         "my-package",  # Package name
         "1.2.3",  # Version
@@ -519,7 +607,11 @@ python = "~2.7 || ^3.6"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_predefined_dependency(tester: CommandTester, repo: "TestRepository"):
+=======
+def test_predefined_dependency(tester, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pendulum", "2.0.0"))
 
     inputs = [
@@ -553,9 +645,13 @@ pendulum = "^2.0.0"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_predefined_and_interactive_dependencies(
     tester: CommandTester, repo: "TestRepository"
 ):
+=======
+def test_predefined_and_interactive_dependencies(tester, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pendulum", "2.0.0"))
     repo.add_package(get_package("pyramid", "1.10"))
 
@@ -596,7 +692,11 @@ python = "~2.7 || ^3.6"
     assert 'pyramid = "^1.10"' in output
 
 
+<<<<<<< HEAD
 def test_predefined_dev_dependency(tester: CommandTester, repo: "TestRepository"):
+=======
+def test_predefined_dev_dependency(tester, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pytest", "3.6.0"))
 
     inputs = [
@@ -633,9 +733,13 @@ pytest = "^3.6.0"
     assert expected in tester.io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_predefined_and_interactive_dev_dependencies(
     tester: CommandTester, repo: "TestRepository"
 ):
+=======
+def test_predefined_and_interactive_dev_dependencies(tester, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     repo.add_package(get_package("pytest", "3.6.0"))
     repo.add_package(get_package("pytest-requests", "0.2.0"))
 
@@ -681,7 +785,11 @@ pytest-requests = "^0.2.0"
     assert 'pytest = "^3.6.0"' in output
 
 
+<<<<<<< HEAD
 def test_add_package_with_extras_and_whitespace(tester: CommandTester):
+=======
+def test_add_package_with_extras_and_whitespace(tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = tester.command._parse_requirements(["databases[postgresql, sqlite]"])
 
     assert result[0]["name"] == "databases"
@@ -691,10 +799,14 @@ def test_add_package_with_extras_and_whitespace(tester: CommandTester):
 
 
 def test_init_existing_pyproject_simple(
+<<<<<<< HEAD
     tester: CommandTester,
     source_dir: Path,
     init_basic_inputs: str,
     init_basic_toml: str,
+=======
+    tester, source_dir, init_basic_inputs, init_basic_toml
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -703,6 +815,7 @@ line-length = 88
 """
     pyproject_file.write_text(decode(existing_section))
     tester.execute(inputs=init_basic_inputs)
+<<<<<<< HEAD
     assert f"{existing_section}\n{init_basic_toml}" in pyproject_file.read_text()
 
 
@@ -711,6 +824,15 @@ def test_init_non_interactive_existing_pyproject_add_dependency(
     source_dir: Path,
     init_basic_inputs: str,
     repo: "TestRepository",
+=======
+    assert (
+        "{}\n{}".format(existing_section, init_basic_toml) in pyproject_file.read_text()
+    )
+
+
+def test_init_non_interactive_existing_pyproject_add_dependency(
+    tester, source_dir, init_basic_inputs, repo
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -742,11 +864,19 @@ packages = [{include = "my_package"}]
 python = "^3.6"
 foo = "^1.19.2"
 """
+<<<<<<< HEAD
     assert f"{existing_section}\n{expected}" in pyproject_file.read_text()
 
 
 def test_init_existing_pyproject_with_build_system_fails(
     tester: CommandTester, source_dir: Path, init_basic_inputs: str
+=======
+    assert "{}\n{}".format(existing_section, expected) in pyproject_file.read_text()
+
+
+def test_init_existing_pyproject_with_build_system_fails(
+    tester, source_dir, init_basic_inputs
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     pyproject_file = source_dir / "pyproject.toml"
     existing_section = """
@@ -760,4 +890,8 @@ build-backend = "setuptools.build_meta"
         tester.io.fetch_output().strip()
         == "A pyproject.toml file with a defined build-system already exists."
     )
+<<<<<<< HEAD
     assert existing_section in pyproject_file.read_text()
+=======
+    assert "{}".format(existing_section) in pyproject_file.read_text()
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)

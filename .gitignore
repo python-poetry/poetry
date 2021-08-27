@@ -38,5 +38,8 @@ MANIFEST.in
 /releases/*
 pip-wheel-metadata
 /poetry.toml
+<<<<<<< HEAD
 
 poetry/core/*
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)

@@ -1,13 +1,21 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 from packaging.tags import Tag
 from poetry.core.packages.utils.link import Link
 
+=======
+
+from packaging.tags import Tag
+
+from poetry.core.packages.utils.link import Link
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.installation.chef import Chef
 from poetry.utils.env import MockEnv
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
@@ -15,6 +23,9 @@ if TYPE_CHECKING:
 
 
 def test_get_cached_archive_for_link(config: "Config", mocker: "MockerFixture"):
+=======
+def test_get_cached_archive_for_link(config, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     chef = Chef(
         config,
         MockEnv(
@@ -45,7 +56,11 @@ def test_get_cached_archive_for_link(config: "Config", mocker: "MockerFixture"):
     assert Link("file:///foo/demo-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl") == archive
 
 
+<<<<<<< HEAD
 def test_get_cached_archives_for_link(config: "Config", mocker: "MockerFixture"):
+=======
+def test_get_cached_archives_for_link(config, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     chef = Chef(
         config,
         MockEnv(
@@ -70,7 +85,11 @@ def test_get_cached_archives_for_link(config: "Config", mocker: "MockerFixture")
     }
 
 
+<<<<<<< HEAD
 def test_get_cache_directory_for_link(config: "Config", config_cache_dir: Path):
+=======
+def test_get_cache_directory_for_link(config, config_cache_dir):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     chef = Chef(
         config,
         MockEnv(
@@ -83,7 +102,13 @@ def test_get_cache_directory_for_link(config: "Config", config_cache_dir: Path):
     )
 
     expected = Path(
+<<<<<<< HEAD
         f"{config_cache_dir.as_posix()}/artifacts/ba/63/13/283a3b3b7f95f05e9e6f84182d276f7bb0951d5b0cc24422b33f7a4648"
+=======
+        "{}/artifacts/ba/63/13/283a3b3b7f95f05e9e6f84182d276f7bb0951d5b0cc24422b33f7a4648".format(
+            config_cache_dir.as_posix()
+        )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     )
 
     assert expected == directory

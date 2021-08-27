@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
@@ -15,13 +16,24 @@ if TYPE_CHECKING:
 def check_operations(
     ops: List["OperationTypes"], expected: List[Dict[str, Any]]
 ) -> None:
+=======
+from poetry.core.packages.package import Package
+from poetry.puzzle.transaction import Transaction
+
+
+def check_operations(ops, expected):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     for e in expected:
         if "skipped" not in e:
             e["skipped"] = False
 
     result = []
     for op in ops:
+<<<<<<< HEAD
         if op.job_type == "update":
+=======
+        if "update" == op.job_type:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
             result.append(
                 {
                     "job": "update",

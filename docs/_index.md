@@ -17,9 +17,19 @@ It allows you to declare the libraries your project depends on and it will manag
 
 ## System requirements
 
+<<<<<<< HEAD
 Poetry requires Python 3.6+. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
 
+=======
+Poetry requires Python 2.7 or 3.5+. It is multi-platform and the goal is to make it work equally well
+on Windows, Linux and OSX.
+
+{{% note %}}
+Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
+You should consider updating your Python version to a supported one.
+{{% /note %}}
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 ## Installation
 
@@ -28,11 +38,19 @@ from the rest of your system.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
+<<<<<<< HEAD
 curl -sSL https://install.python-poetry.org | python3 -
 ```
 ### windows powershell install instructions
 ```powershell
 (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
+=======
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+```
+### windows powershell install instructions
+```powershell
+(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ```
 
 {{% warning %}}
@@ -62,37 +80,60 @@ by running the installer again with the `--uninstall` option or by setting
 the `POETRY_UNINSTALL` environment variable before executing the installer.
 
 ```bash
+<<<<<<< HEAD
 curl -sSL https://install.python-poetry.org | python3 - --uninstall
 curl -sSL https://install.python-poetry.org | POETRY_UNINSTALL=1 python3 -
+=======
+python install-poetry.py --uninstall
+POETRY_UNINSTALL=1 python install-poetry.py
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ```
 
 By default, Poetry is installed into the user's platform-specific home directory.
 If you wish to change this, you may define the `POETRY_HOME` environment variable:
 
 ```bash
+<<<<<<< HEAD
 curl -sSL https://install.python-poetry.org | POETRY_HOME=/etc/poetry python3 -
+=======
+POETRY_HOME=/etc/poetry python install-poetry.py
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ```
 
 If you want to install prerelease versions, you can do so by passing `--preview` option to `install-poetry.py`
 or by using the `POETRY_PREVIEW` environment variable:
 
 ```bash
+<<<<<<< HEAD
 curl -sSL https://install.python-poetry.org | python3 - --preview
 curl -sSL https://install.python-poetry.org | POETRY_PREVIEW=1 python3 -
+=======
+python install-poetry.py --preview
+POETRY_PREVIEW=1 python install-poetry.py
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ```
 
 Similarly, if you want to install a specific version, you can use `--version` option or the `POETRY_VERSION`
 environment variable:
 
 ```bash
+<<<<<<< HEAD
 curl -sSL https://install.python-poetry.org | python3 - --version 1.2.0
 curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.2.0 python3 -
+=======
+python install-poetry.py --version 1.2.0
+POETRY_VERSION=1.2.0 python install-poetry.py
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ```
 
 You can also install Poetry for a `git` repository by using the `--git` option:
 
 ```bash
+<<<<<<< HEAD
 curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
+=======
+python install-poetry.py --git https://github.com/python-poetry/poetry.git@master
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ````
 
 {{% note %}}
@@ -169,11 +210,24 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 
 ```bash
 # Bash
+<<<<<<< HEAD
 poetry completions bash > /etc/bash_completion.d/poetry
+=======
+poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
+
+# Bash (Homebrew)
+poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
 
+<<<<<<< HEAD
+=======
+# Fish (Homebrew)
+poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
+
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
 

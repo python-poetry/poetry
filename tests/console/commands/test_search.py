@@ -1,10 +1,14 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import Type
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     import httpretty
 
@@ -12,6 +16,8 @@ if TYPE_CHECKING:
 
     from tests.types import CommandTesterFactory
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 TESTS_DIRECTORY = Path(__file__).parent.parent.parent
 FIXTURES_DIRECTORY = (
     TESTS_DIRECTORY / "repositories" / "fixtures" / "pypi.org" / "search"
@@ -19,17 +25,32 @@ FIXTURES_DIRECTORY = (
 
 
 @pytest.fixture(autouse=True)
+<<<<<<< HEAD
 def mock_search_http_response(http: Type["httpretty.httpretty"]) -> None:
+=======
+def mock_search_http_response(http):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
         http.register_uri("GET", "https://pypi.org/search", f.read())
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("search")
 
 
 def test_search(tester: "CommandTester", http: Type["httpretty.httpretty"]):
+=======
+def tester(command_tester_factory):
+    return command_tester_factory("search")
+
+
+def test_search(
+    tester,
+    http,
+):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute("sqlalchemy")
 
     expected = """

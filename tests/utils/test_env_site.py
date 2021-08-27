@@ -1,17 +1,24 @@
 import uuid
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 from poetry.utils._compat import decode
 from poetry.utils.env import SitePackages
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
 def test_env_site_simple(tmp_dir: str, mocker: "MockerFixture"):
+=======
+def test_env_site_simple(tmp_dir, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # emulate permission error when creating directory
     mocker.patch("pathlib.Path.mkdir", side_effect=OSError())
     site_packages = SitePackages(Path("/non-existent"), fallbacks=[Path(tmp_dir)])
@@ -29,7 +36,11 @@ def test_env_site_simple(tmp_dir: str, mocker: "MockerFixture"):
     assert not (site_packages.path / "hello.txt").exists()
 
 
+<<<<<<< HEAD
 def test_env_site_select_first(tmp_dir: str):
+=======
+def test_env_site_select_first(tmp_dir):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     path = Path(tmp_dir)
     fallback = path / "fallback"
     fallback.mkdir(parents=True)

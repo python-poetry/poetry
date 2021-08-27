@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -14,6 +15,15 @@ if TYPE_CHECKING:
 def test_no_version_matching_constraint(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+from poetry.factory import Factory
+
+from ..helpers import add_to_repo
+from ..helpers import check_solver_result
+
+
+def test_no_version_matching_constraint(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("foo", "^1.0"))
 
     add_to_repo(repo, "foo", "2.0.0")
@@ -29,9 +39,13 @@ def test_no_version_matching_constraint(
     )
 
 
+<<<<<<< HEAD
 def test_no_version_that_matches_combined_constraints(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_no_version_that_matches_combined_constraints(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
 
@@ -49,9 +63,13 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
     check_solver_result(root, provider, error=error)
 
 
+<<<<<<< HEAD
 def test_disjoint_constraints(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_disjoint_constraints(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("bar", "1.0.0"))
 
@@ -69,9 +87,13 @@ So, because myapp depends on both foo (1.0.0) and bar (1.0.0), version solving f
     check_solver_result(root, provider, error=error)
 
 
+<<<<<<< HEAD
 def test_disjoint_root_constraints(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_disjoint_root_constraints(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("foo", "1.0.0"))
     root.add_dependency(Factory.create_dependency("foo", "2.0.0"))
 
@@ -84,9 +106,13 @@ Because myapp depends on both foo (1.0.0) and foo (2.0.0), version solving faile
     check_solver_result(root, provider, error=error)
 
 
+<<<<<<< HEAD
 def test_no_valid_solution(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_no_valid_solution(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("b", "*"))
 

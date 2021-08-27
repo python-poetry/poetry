@@ -186,7 +186,11 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
+<<<<<<< HEAD
 By default `poetry` will install your project's package every time you run `install`:
+=======
+By default `poetry` will install your project's package everytime you run `install`:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 ```bash
 $ poetry install
@@ -352,7 +356,11 @@ about dependency groups.
 
 ### Options
 
+<<<<<<< HEAD
 * `--group (-G)`: The group to add the dependency to.
+=======
+* `--group (-D)`: The group to add the dependency to.
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 * `--dev (-D)`: Add package as development dependency. (**Deprecated**)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
@@ -360,8 +368,13 @@ about dependency groups.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
+<<<<<<< HEAD
 * `--allow-prereleases`: Accept prereleases.
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
+=======
+* `---allow-prereleases`: Accept prereleases.
+* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 * `--lock`: Do not perform install (only update the lockfile).
 
 
@@ -407,6 +420,7 @@ name        : pendulum
 version     : 1.4.2
 description : Python datetimes made easy
 
+<<<<<<< HEAD
 dependencies
  - python-dateutil >=2.6.1
  - tzlocal >=1.4
@@ -414,6 +428,12 @@ dependencies
 
 required by
  - calendar >=1.4.0
+=======
+dependencies:
+ - python-dateutil >=2.6.1
+ - tzlocal >=1.4
+ - pytzdata >=2017.2.2
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ```
 
 ### Options
@@ -520,19 +540,25 @@ If one doesn't exist yet, it will be created.
 poetry shell
 ```
 
+<<<<<<< HEAD
 Note that this commmand starts a new shell and activates the virtual environment.
 
 As such, `exit` should be used to properly exit the shell and the virtual environment instead of `deactivate`.
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ## check
 
 The `check` command validates the structure of the `pyproject.toml` file
 and returns a detailed report if there are any errors.
 
+<<<<<<< HEAD
 {{% note %}}
 This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-check) for more information.
 {{% /note %}}
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ```bash
 poetry check
 ```
@@ -551,7 +577,10 @@ This command locks (without installing) the dependencies specified in `pyproject
 
 {{% note %}}
 By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+<<<<<<< HEAD
 This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-lock) for more information.
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 {{% /note %}}
 
 ```bash
@@ -600,7 +629,10 @@ poetry export -f requirements.txt --output requirements.txt
 
 {{% note %}}
 Only the `requirements.txt` format is currently supported.
+<<<<<<< HEAD
 This command is also available as a pre-commit hook. See [pre-commit hooks](/docs/pre-commit-hooks#poetry-export) for more information.
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 {{% /note %}}
 
 ### Options
@@ -612,7 +644,10 @@ This command is also available as a pre-commit hook. See [pre-commit hooks](/doc
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
+<<<<<<< HEAD
 * `--without-urls`: Exclude source repository urls from the exported file.
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 * `--with-credentials`: Include credentials for extra indices.
 
 ## env

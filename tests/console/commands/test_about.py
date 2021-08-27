@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 import pytest
@@ -15,6 +16,17 @@ def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
 
 
 def test_about(tester: "CommandTester"):
+=======
+import pytest
+
+
+@pytest.fixture()
+def tester(command_tester_factory):
+    return command_tester_factory("about")
+
+
+def test_about(tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute()
     expected = """\
 Poetry - Package Management for Python

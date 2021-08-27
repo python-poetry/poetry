@@ -3,22 +3,45 @@ name: Skip All Jobs
 
 on:
   push:
+<<<<<<< HEAD
     paths-ignore:
       - '**'
       - '!docs/**'
       - '!.cirrus.yml'
+=======
+    paths:
+      - '!**'
+      - 'docs/**'
+      - '.cirrus.yml'
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     branches:
       - master
       - develop
   pull_request:
+<<<<<<< HEAD
     paths-ignore:
       - '**'
       - '!docs/**'
       - '!.cirrus.yml'
+=======
+    paths:
+      - '!**'
+      - 'docs/**'
+      - '.cirrus.yml'
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     branches:
       - '**'
 
 jobs:
+<<<<<<< HEAD
+=======
+  pre-commit:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
   tests:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
     # we do not need os specific runners here, using linux is quicker
@@ -26,6 +49,10 @@ jobs:
     strategy:
       matrix:
         os: [Ubuntu, MacOS, Windows]
+<<<<<<< HEAD
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+=======
+        python-version: [3.6, 3.7, 3.8, 3.9]
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     steps:
       - run: exit 0

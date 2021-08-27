@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 import pytest
@@ -17,15 +18,26 @@ def tester(
     poetry_with_source: "Poetry",
     add_multiple_sources: None,
 ) -> "CommandTester":
+=======
+import pytest
+
+
+@pytest.fixture
+def tester(command_tester_factory, poetry_with_source, add_multiple_sources):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return command_tester_factory("source remove", poetry=poetry_with_source)
 
 
 def test_source_remove_simple(
+<<<<<<< HEAD
     tester: "CommandTester",
     poetry_with_source: "Poetry",
     source_existing: "Source",
     source_one: "Source",
     source_two: "Source",
+=======
+    tester, poetry_with_source, source_existing, source_one, source_two
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     tester.execute(f"{source_existing.name}")
     assert (
@@ -40,7 +52,11 @@ def test_source_remove_simple(
     assert tester.status_code == 0
 
 
+<<<<<<< HEAD
 def test_source_remove_error(tester: "CommandTester"):
+=======
+def test_source_remove_error(tester):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute("error")
     assert tester.io.fetch_error().strip() == "Source with name error was not found."
     assert tester.status_code == 1

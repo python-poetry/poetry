@@ -1,5 +1,6 @@
 # Change Log
 
+<<<<<<< HEAD
 ## [1.1.10] - 2021-09-21
 
 ### Fixed
@@ -24,6 +25,8 @@
 -   Fixed environment detection for Python 3.10 environments. ([#4387](https://github.com/python-poetry/poetry/pull/4387))
 -   Fixed an error in the evaluation of `in/not in` markers ([python-poetry/poetry-core#189](https://github.com/python-poetry/poetry-core/pull/189))
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ## [1.2.0a2] - 2021-08-01
 
 ### Added
@@ -46,6 +49,7 @@
 - Fixed the display of possible solutions for some common errors. ([#4332](https://github.com/python-poetry/poetry/pull/4332))
 
 
+<<<<<<< HEAD
 ## [1.1.7] - 2021-06-25
 
 Note: Lock files might need to be regenerated for the first fix below to take effect.\
@@ -60,6 +64,8 @@ You can use `poetry lock` to do so without the `--no-update` option.
 -   Fixed an issue where transitive dependencies of directory or VCS dependencies were not installed or otherwise removed. ([#4203](https://github.com/python-poetry/poetry/pull/4203))
 -   Fixed an issue where the combination of the `--tree` and `--no-dev` options for the show command was still displaying development dependencies. ([#3992](https://github.com/python-poetry/poetry/pull/3992))
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ## [1.2.0a1] - 2021-05-21
 
 This release is the first testing release of the upcoming 1.2.0 version.
@@ -89,6 +95,7 @@ It **drops** support for Python 2.7 and 3.5.
 - Fixed an error where command line options were not taken into account when using the `run` command. ([#3618](https://github.com/python-poetry/poetry/pull/3618))
 - Fixed an error in the way custom repositories were resolved. ([#3406](https://github.com/python-poetry/poetry/pull/3406))
 
+<<<<<<< HEAD
 ## [1.1.6] - 2021-04-14
 
 ### Fixed
@@ -99,6 +106,8 @@ It **drops** support for Python 2.7 and 3.5.
 -   Fixed dependency markers not being properly copied when changing the constraint leading to resolution errors. ([poetry-core#163](https://github.com/python-poetry/poetry-core/pull/163))
 -   Fixed an error where VCS dependencies were always updated. ([#3947](https://github.com/python-poetry/poetry/pull/3947))
 -   Fixed an error where the incorrect version of a package was locked when using environment markers. ([#3945](https://github.com/python-poetry/poetry/pull/3945))
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 ## [1.1.5] - 2021-03-04
 
@@ -1019,7 +1028,11 @@ commands in project subdirectories.
 - Improved dependency resolution to avoid unnecessary operations.
 - Improved dependency resolution speed.
 - Improved CLI reactivity by deferring imports.
+<<<<<<< HEAD
 - License classifier is not automatically added to classifiers.
+=======
+- License classifer is not automatically added to classifers.
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 ### Fixed
 
@@ -1064,7 +1077,11 @@ commands in project subdirectories.
 
 ### Changed
 
+<<<<<<< HEAD
 - Changed how wildcard constraints are handled.
+=======
+- Changed how wilcard constraints are handled.
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 ### Fixed
 
@@ -1196,6 +1213,7 @@ Initial release
 [Unreleased]: https://github.com/python-poetry/poetry/compare/1.2.0a2...master
 [1.2.0a2]: https://github.com/python-poetry/poetry/compare/1.2.0a2
 [1.2.0a1]: https://github.com/python-poetry/poetry/compare/1.2.0a1
+<<<<<<< HEAD
 [1.1.10]: https://github.com/python-poetry/poetry/releases/tag/1.1.10
 [1.1.9]: https://github.com/python-poetry/poetry/releases/tag/1.1.9
 [1.1.8]: https://github.com/python-poetry/poetry/releases/tag/1.1.8
@@ -1204,6 +1222,10 @@ Initial release
 [1.1.5]: https://github.com/python-poetry/poetry/releases/tag/1.1.5
 [1.1.4]: https://github.com/python-poetry/poetry/releases/tag/1.1.4
 [1.1.3]: https://github.com/python-poetry/poetry/releases/tag/1.1.3
+=======
+[1.1.4]: https://github.com/python-poetry/poetry/compare/1.1.4
+[1.1.3]: https://github.com/python-poetry/poetry/compare/1.1.3
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 [1.1.2]: https://github.com/python-poetry/poetry/releases/tag/1.1.2
 [1.1.1]: https://github.com/python-poetry/poetry/releases/tag/1.1.1
 [1.1.0]: https://github.com/python-poetry/poetry/releases/tag/1.1.0

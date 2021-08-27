@@ -65,7 +65,11 @@ isolated_build = true
 envlist = py27, py36
 
 [testenv]
+<<<<<<< HEAD
 allowlist_externals = poetry
+=======
+whitelist_externals = poetry
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 commands =
     poetry install -v
     poetry run pytest tests/

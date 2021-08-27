@@ -1,9 +1,13 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 import pytest
 import tomlkit
 
 from poetry.core.packages.package import Package
+<<<<<<< HEAD
 
 from poetry.factory import Factory
 
@@ -20,15 +24,26 @@ if TYPE_CHECKING:
 
 @pytest.fixture()
 def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+=======
+from poetry.factory import Factory
+
+
+@pytest.fixture()
+def tester(command_tester_factory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return command_tester_factory("remove")
 
 
 def test_remove_without_specific_group_removes_from_all_groups(
+<<<<<<< HEAD
     tester: "CommandTester",
     app: "PoetryTestApplication",
     repo: "TestRepository",
     command_tester_factory: "CommandTesterFactory",
     installed: "Repository",
+=======
+    tester, app, repo, command_tester_factory, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     """
     Removing without specifying a group removes packages from all groups.
@@ -79,11 +94,15 @@ baz = "^1.0.0"
 
 
 def test_remove_without_specific_group_removes_from_specific_groups(
+<<<<<<< HEAD
     tester: "CommandTester",
     app: "PoetryTestApplication",
     repo: "TestRepository",
     command_tester_factory: "CommandTesterFactory",
     installed: "Repository",
+=======
+    tester, app, repo, command_tester_factory, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     """
     Removing with a specific group given removes packages only from this group.
@@ -134,11 +153,15 @@ baz = "^1.0.0"
 
 
 def test_remove_does_not_live_empty_groups(
+<<<<<<< HEAD
     tester: "CommandTester",
     app: "PoetryTestApplication",
     repo: "TestRepository",
     command_tester_factory: "CommandTesterFactory",
     installed: "Repository",
+=======
+    tester, app, repo, command_tester_factory, installed
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     """
     Empty groups are automatically discarded after package removal.
@@ -182,11 +205,15 @@ baz = "^1.0.0"
 
 
 def test_remove_command_should_not_write_changes_upon_installer_errors(
+<<<<<<< HEAD
     tester: "CommandTester",
     app: "PoetryTestApplication",
     repo: "TestRepository",
     command_tester_factory: "CommandTesterFactory",
     mocker: "MockerFixture",
+=======
+    tester, app, repo, command_tester_factory, mocker
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     repo.add_package(Package("foo", "2.0.0"))
 

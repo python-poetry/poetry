@@ -2,19 +2,28 @@ import re
 import shutil
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
 from cleo.io.null_io import NullIO
+<<<<<<< HEAD
 from poetry.core.packages.package import Package
 
+=======
+
+from poetry.core.packages.package import Package
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.installation.pip_installer import PipInstaller
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.utils.env import NullEnv
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
@@ -23,6 +32,10 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def package_git() -> Package:
+=======
+@pytest.fixture
+def package_git():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package = Package(
         "demo",
         "1.0.0",
@@ -35,16 +48,28 @@ def package_git() -> Package:
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def pool() -> Pool:
+=======
+def pool():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return Pool()
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def installer(pool: Pool) -> PipInstaller:
     return PipInstaller(NullEnv(), NullIO(), pool)
 
 
 def test_requirement(installer: PipInstaller):
+=======
+def installer(pool):
+    return PipInstaller(NullEnv(), NullIO(), pool)
+
+
+def test_requirement(installer):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package = Package("ipython", "7.5.0")
     package.files = [
         {"file": "foo-0.1.0.tar.gz", "hash": "md5:dbdc53e3918f28fa335a173432402a00"},
@@ -72,16 +97,28 @@ def test_requirement_source_type_url():
         "foo",
         "0.0.0",
         source_type="url",
+<<<<<<< HEAD
         source_url="https://somewhere.com/releases/foo-1.0.0.tar.gz",
     )
 
     result = installer.requirement(foo, formatted=True)
     expected = f"{foo.source_url}#egg={foo.name}"
+=======
+        source_url="https://somehwere.com/releases/foo-1.0.0.tar.gz",
+    )
+
+    result = installer.requirement(foo, formatted=True)
+    expected = "{}#egg={}".format(foo.source_url, foo.name)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     assert expected == result
 
 
+<<<<<<< HEAD
 def test_requirement_git_develop_false(installer: PipInstaller, package_git: Package):
+=======
+def test_requirement_git_develop_false(installer, package_git):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_git.develop = False
     result = installer.requirement(package_git)
     expected = "git+git@github.com:demo/demo.git@master#egg=demo"
@@ -89,7 +126,11 @@ def test_requirement_git_develop_false(installer: PipInstaller, package_git: Pac
     assert expected == result
 
 
+<<<<<<< HEAD
 def test_install_with_non_pypi_default_repository(pool: Pool, installer: PipInstaller):
+=======
+def test_install_with_non_pypi_default_repository(pool, installer):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     default = LegacyRepository("default", "https://default.com")
     another = LegacyRepository("another", "https://another.com")
 
@@ -177,7 +218,11 @@ def test_install_with_client_cert():
     assert cmd[cert_index + 1] == str(Path(client_path))
 
 
+<<<<<<< HEAD
 def test_requirement_git_develop_true(installer: PipInstaller, package_git: Package):
+=======
+def test_requirement_git_develop_true(installer, package_git):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_git.develop = True
     result = installer.requirement(package_git)
     expected = ["-e", "git+git@github.com:demo/demo.git@master#egg=demo"]
@@ -185,9 +230,13 @@ def test_requirement_git_develop_true(installer: PipInstaller, package_git: Pack
     assert expected == result
 
 
+<<<<<<< HEAD
 def test_uninstall_git_package_nspkg_pth_cleanup(
     mocker: "MockerFixture", tmp_venv: "VirtualEnv", pool: Pool
 ):
+=======
+def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # this test scenario requires a real installation using the pip installer
     installer = PipInstaller(tmp_venv, NullIO(), pool)
 
@@ -203,7 +252,11 @@ def test_uninstall_git_package_nspkg_pth_cleanup(
     # in order to reproduce the scenario where the git source is removed prior to proper
     # clean up of nspkg.pth file, we need to make sure the fixture is copied and not
     # symlinked into the git src directory
+<<<<<<< HEAD
     def copy_only(source: Path, dest: Path) -> None:
+=======
+    def copy_only(source, dest):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         if dest.exists():
             dest.unlink()
 

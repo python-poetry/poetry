@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 import pytest
@@ -21,11 +22,27 @@ if TYPE_CHECKING:
 
 @pytest.fixture()
 def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+=======
+import pytest
+import tomlkit
+
+from poetry.__version__ import __version__
+from poetry.core.packages.package import Package
+from poetry.layouts.layout import POETRY_DEFAULT
+
+
+@pytest.fixture()
+def tester(command_tester_factory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return command_tester_factory("plugin remove")
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def pyproject(env: "MockEnv") -> None:
+=======
+def pyproject(env):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     pyproject = tomlkit.loads(POETRY_DEFAULT)
     content = pyproject["tool"]["poetry"]
 
@@ -43,7 +60,11 @@ def pyproject(env: "MockEnv") -> None:
 
 
 @pytest.fixture(autouse=True)
+<<<<<<< HEAD
 def install_plugin(env: "MockEnv", installed: "Repository", pyproject: None) -> None:
+=======
+def install_plugin(env, installed, pyproject):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     lock_content = {
         "package": [
             {
@@ -68,24 +89,39 @@ def install_plugin(env: "MockEnv", installed: "Repository", pyproject: None) -> 
         tomlkit.dumps(lock_content), encoding="utf-8"
     )
 
+<<<<<<< HEAD
     pyproject_toml = tomlkit.loads(
         env.path.joinpath("pyproject.toml").read_text(encoding="utf-8")
     )
     content = pyproject_toml["tool"]["poetry"]
+=======
+    pyproject = tomlkit.loads(
+        env.path.joinpath("pyproject.toml").read_text(encoding="utf-8")
+    )
+    content = pyproject["tool"]["poetry"]
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     dependency_section = content["dependencies"]
     dependency_section["poetry-plugin"] = "^1.2.3"
 
     env.path.joinpath("pyproject.toml").write_text(
+<<<<<<< HEAD
         tomlkit.dumps(pyproject_toml), encoding="utf-8"
+=======
+        tomlkit.dumps(pyproject), encoding="utf-8"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     )
 
     installed.add_package(Package("poetry-plugin", "1.2.3"))
 
 
+<<<<<<< HEAD
 def test_remove_installed_package(
     app: "PoetryTestApplication", tester: "CommandTester", env: "MockEnv"
 ):
+=======
+def test_remove_installed_package(app, tester, env):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute("poetry-plugin")
 
     expected = """\
@@ -101,7 +137,11 @@ Package operations: 0 installs, 0 updates, 1 removal
 
     assert tester.io.fetch_output() == expected
 
+<<<<<<< HEAD
     remove_command: "RemoveCommand" = app.find("remove")
+=======
+    remove_command = app.find("remove")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     assert remove_command.poetry.file.parent == env.path
     assert remove_command.poetry.locker.lock.parent == env.path
     assert remove_command.poetry.locker.lock.exists()
@@ -111,9 +151,13 @@ Package operations: 0 installs, 0 updates, 1 removal
     assert "poetry-plugin" not in content["dependencies"]
 
 
+<<<<<<< HEAD
 def test_remove_installed_package_dry_run(
     app: "PoetryTestApplication", tester: "CommandTester", env: "MockEnv"
 ):
+=======
+def test_remove_installed_package_dry_run(app, tester, env):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     tester.execute("poetry-plugin --dry-run")
 
     expected = """\
@@ -130,7 +174,11 @@ Package operations: 0 installs, 0 updates, 1 removal
 
     assert tester.io.fetch_output() == expected
 
+<<<<<<< HEAD
     remove_command: "RemoveCommand" = app.find("remove")
+=======
+    remove_command = app.find("remove")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     assert remove_command.poetry.file.parent == env.path
     assert remove_command.poetry.locker.lock.parent == env.path
     assert remove_command.poetry.locker.lock.exists()

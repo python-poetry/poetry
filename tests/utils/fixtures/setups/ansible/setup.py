@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+from __future__ import print_function
+
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 import json
 import os
 import os.path
@@ -61,9 +66,15 @@ def _maintain_symlinks(symlink_type, base_path):
     try:
         # Try the cache first because going from git checkout to sdist is the
         # only time we know that we're going to cache correctly
+<<<<<<< HEAD
         with open(SYMLINK_CACHE) as f:
             symlink_data = json.load(f)
     except OSError as e:
+=======
+        with open(SYMLINK_CACHE, "r") as f:
+            symlink_data = json.load(f)
+    except (IOError, OSError) as e:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         # IOError on py2, OSError on py3.  Both have errno
         if e.errno == 2:
             # SYMLINKS_CACHE doesn't exist.  Fallback to trying to create the
@@ -137,7 +148,11 @@ class SDistCommand(SDist):
 
 def read_file(file_name):
     """Read file and return its contents."""
+<<<<<<< HEAD
     with open(file_name) as f:
+=======
+    with open(file_name, "r") as f:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         return f.read()
 
 

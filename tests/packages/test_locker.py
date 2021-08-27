@@ -2,7 +2,10 @@ import logging
 import tempfile
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 import tomlkit
@@ -10,6 +13,7 @@ import tomlkit
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.core.semver.version import Version
+<<<<<<< HEAD
 
 from poetry.factory import Factory
 from poetry.packages.locker import Locker
@@ -24,6 +28,17 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def locker() -> Locker:
+=======
+from poetry.factory import Factory
+from poetry.packages.locker import Locker
+
+from ..helpers import get_dependency
+from ..helpers import get_package
+
+
+@pytest.fixture
+def locker():
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     with tempfile.NamedTemporaryFile() as f:
         f.close()
         locker = Locker(f.name, {})
@@ -32,11 +47,19 @@ def locker() -> Locker:
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def root() -> ProjectPackage:
     return ProjectPackage("root", "1.2.3")
 
 
 def test_lock_file_data_is_ordered(locker: Locker, root: ProjectPackage):
+=======
+def root():
+    return ProjectPackage("root", "1.2.3")
+
+
+def test_lock_file_data_is_ordered(locker, root):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0"))
     package_a.files = [{"file": "foo", "hash": "456"}, {"file": "bar", "hash": "123"}]
@@ -106,7 +129,11 @@ git-package = []
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_locker_properly_loads_extras(locker: Locker):
+=======
+def test_locker_properly_loads_extras(locker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     content = """\
 [[package]]
 name = "cachecontrol"
@@ -141,17 +168,29 @@ cachecontrol = []
 
     packages = locker.locked_repository().packages
 
+<<<<<<< HEAD
     assert len(packages) == 1
 
     package = packages[0]
     assert len(package.requires) == 3
     assert len(package.extras) == 2
+=======
+    assert 1 == len(packages)
+
+    package = packages[0]
+    assert 3 == len(package.requires)
+    assert 2 == len(package.extras)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     lockfile_dep = package.extras["filecache"][0]
     assert lockfile_dep.name == "lockfile"
 
 
+<<<<<<< HEAD
 def test_locker_properly_loads_nested_extras(locker: Locker):
+=======
+def test_locker_properly_loads_nested_extras(locker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     content = """\
 [[package]]
 name = "a"
@@ -203,7 +242,11 @@ content-hash = "123456789"
     locker.lock.write(tomlkit.parse(content))
 
     repository = locker.locked_repository()
+<<<<<<< HEAD
     assert len(repository.packages) == 3
+=======
+    assert 3 == len(repository.packages)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     packages = repository.find_packages(get_dependency("a", "1.0"))
     assert len(packages) == 1
@@ -231,7 +274,11 @@ content-hash = "123456789"
     assert len(packages) == 1
 
 
+<<<<<<< HEAD
 def test_locker_properly_loads_extras_legacy(locker: Locker):
+=======
+def test_locker_properly_loads_extras_legacy(locker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     content = """\
 [[package]]
 name = "a"
@@ -268,7 +315,11 @@ content-hash = "123456789"
     locker.lock.write(tomlkit.parse(content))
 
     repository = locker.locked_repository()
+<<<<<<< HEAD
     assert len(repository.packages) == 2
+=======
+    assert 2 == len(repository.packages)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     packages = repository.find_packages(get_dependency("a", "1.0"))
     assert len(packages) == 1
@@ -281,7 +332,11 @@ content-hash = "123456789"
     assert dependency_b.name == "b"
 
 
+<<<<<<< HEAD
 def test_lock_packages_with_null_description(locker: Locker, root: ProjectPackage):
+=======
+def test_lock_packages_with_null_description(locker, root):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0.0")
     package_a.description = None
 
@@ -310,7 +365,11 @@ A = []
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_lock_file_should_not_have_mixed_types(locker: Locker, root: ProjectPackage):
+=======
+def test_lock_file_should_not_have_mixed_types(locker, root):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(Factory.create_dependency("B", "^1.0.0"))
     package_a.add_dependency(
@@ -353,7 +412,11 @@ A = []
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker: Locker):
+=======
+def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     content = """[[package]]
 name = "A"
 version = "1.0.0"
@@ -385,9 +448,13 @@ A = []
     assert "Unable to read the lock file" in str(e.value)
 
 
+<<<<<<< HEAD
 def test_locking_legacy_repository_package_should_include_source_section(
     root: ProjectPackage, locker: Locker
 ):
+=======
+def test_locking_legacy_repository_package_should_include_source_section(root, locker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = Package(
         "A",
         "1.0.0",
@@ -428,27 +495,48 @@ A = []
 
 
 def test_locker_should_emit_warnings_if_lock_version_is_newer_but_allowed(
+<<<<<<< HEAD
     locker: Locker, caplog: "LogCaptureFixture"
 ):
     version = ".".join(Version.parse(Locker._VERSION).next_minor().text.split(".")[:2])
     content = f"""\
+=======
+    locker, caplog
+):
+    content = """\
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 [metadata]
 lock-version = "{version}"
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
+<<<<<<< HEAD
 """
+=======
+""".format(
+        version=".".join(
+            Version.parse(Locker._VERSION).next_minor().text.split(".")[:2]
+        )
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
     locker.lock.write(tomlkit.parse(content))
 
     _ = locker.lock_data
 
+<<<<<<< HEAD
     assert len(caplog.records) == 1
 
     record = caplog.records[0]
     assert record.levelname == "WARNING"
+=======
+    assert 1 == len(caplog.records)
+
+    record = caplog.records[0]
+    assert "WARNING" == record.levelname
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
     expected = """\
 The lock file might not be compatible with the current version of Poetry.
@@ -459,7 +547,11 @@ regenerate the lock file with the `poetry lock` command.\
 
 
 def test_locker_should_raise_an_error_if_lock_version_is_newer_and_not_allowed(
+<<<<<<< HEAD
     locker: Locker, caplog: "LogCaptureFixture"
+=======
+    locker, caplog
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     content = """\
 [metadata]
@@ -477,7 +569,11 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
         _ = locker.lock_data
 
 
+<<<<<<< HEAD
 def test_extras_dependencies_are_ordered(locker: Locker, root: ProjectPackage):
+=======
+def test_extras_dependencies_are_ordered(locker, root):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
         Factory.create_dependency(
@@ -515,32 +611,55 @@ A = []
 
 
 def test_locker_should_neither_emit_warnings_nor_raise_error_for_lower_compatible_versions(
+<<<<<<< HEAD
     locker: Locker, caplog: "LogCaptureFixture"
+=======
+    locker, caplog
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     current_version = Version.parse(Locker._VERSION)
     older_version = ".".join(
         [str(current_version.major), str(current_version.minor - 1)]
     )
+<<<<<<< HEAD
     content = f"""\
 [metadata]
 lock-version = "{older_version}"
+=======
+    content = """\
+[metadata]
+lock-version = "{version}"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 python-versions = "~2.7 || ^3.4"
 content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77"
 
 [metadata.files]
+<<<<<<< HEAD
 """
+=======
+""".format(
+        version=older_version
+    )
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
     locker.lock.write(tomlkit.parse(content))
 
     _ = locker.lock_data
 
+<<<<<<< HEAD
     assert len(caplog.records) == 0
 
 
 def test_locker_dumps_dependency_information_correctly(
     locker: Locker, root: ProjectPackage
 ):
+=======
+    assert 0 == len(caplog.records)
+
+
+def test_locker_dumps_dependency_information_correctly(locker, root):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root_dir = Path(__file__).parent.parent.joinpath("fixtures")
     package_a = get_package("A", "1.0.0")
     package_a.add_dependency(
@@ -605,9 +724,13 @@ A = []
     assert expected == content
 
 
+<<<<<<< HEAD
 def test_locked_repository_uses_root_dir_of_package(
     locker: Locker, mocker: "MockerFixture"
 ):
+=======
+def test_locked_repository_uses_root_dir_of_package(locker, mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     content = """\
 [[package]]
 name = "lib-a"

@@ -1,7 +1,10 @@
 import os
 
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
@@ -12,6 +15,7 @@ from poetry.factory import Factory
 from poetry.publishing.publisher import Publisher
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
@@ -22,6 +26,9 @@ if TYPE_CHECKING:
 def test_publish_publishes_to_pypi_by_default(
     fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
 ):
+=======
+def test_publish_publishes_to_pypi_by_default(fixture_dir, mocker, config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -40,12 +47,20 @@ def test_publish_publishes_to_pypi_by_default(
     ] == uploader_upload.call_args
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize("fixture_name", ["sample_project", "with_default_source"])
 def test_publish_can_publish_to_given_repository(
     fixture_dir: "FixtureDirGetter",
     mocker: "MockerFixture",
     config: "Config",
     fixture_name: str,
+=======
+@pytest.mark.parametrize(
+    ("fixture_name",), [("sample_project",), ("with_default_source",)]
+)
+def test_publish_can_publish_to_given_repository(
+    fixture_dir, mocker, config, fixture_name
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -73,9 +88,13 @@ def test_publish_can_publish_to_given_repository(
     assert "Publishing my-package (1.2.3) to foo" in io.fetch_output()
 
 
+<<<<<<< HEAD
 def test_publish_raises_error_for_undefined_repository(
     fixture_dir: "FixtureDirGetter", config: "Config"
 ):
+=======
+def test_publish_raises_error_for_undefined_repository(fixture_dir, mocker, config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
     poetry._config = config
     poetry.config.merge(
@@ -87,9 +106,13 @@ def test_publish_raises_error_for_undefined_repository(
         publisher.publish("my-repo", None, None)
 
 
+<<<<<<< HEAD
 def test_publish_uses_token_if_it_exists(
     fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
 ):
+=======
+def test_publish_uses_token_if_it_exists(fixture_dir, mocker, config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -106,9 +129,13 @@ def test_publish_uses_token_if_it_exists(
     ] == uploader_upload.call_args
 
 
+<<<<<<< HEAD
 def test_publish_uses_cert(
     fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
 ):
+=======
+def test_publish_uses_cert(fixture_dir, mocker, config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     cert = "path/to/ca.pem"
     uploader_auth = mocker.patch("poetry.publishing.uploader.Uploader.auth")
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
@@ -132,9 +159,13 @@ def test_publish_uses_cert(
     ] == uploader_upload.call_args
 
 
+<<<<<<< HEAD
 def test_publish_uses_client_cert(
     fixture_dir: "FixtureDirGetter", mocker: "MockerFixture", config: "Config"
 ):
+=======
+def test_publish_uses_client_cert(fixture_dir, mocker, config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     client_cert = "path/to/client.pem"
     uploader_upload = mocker.patch("poetry.publishing.uploader.Uploader.upload")
     poetry = Factory().create_poetry(fixture_dir("sample_project"))
@@ -155,12 +186,16 @@ def test_publish_uses_client_cert(
     ] == uploader_upload.call_args
 
 
+<<<<<<< HEAD
 def test_publish_read_from_environment_variable(
     fixture_dir: "FixtureDirGetter",
     environ: None,
     mocker: "MockerFixture",
     config: "Config",
 ):
+=======
+def test_publish_read_from_environment_variable(fixture_dir, environ, mocker, config):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     os.environ["POETRY_REPOSITORIES_FOO_URL"] = "https://foo.bar"
     os.environ["POETRY_HTTP_BASIC_FOO_USERNAME"] = "bar"
     os.environ["POETRY_HTTP_BASIC_FOO_PASSWORD"] = "baz"

@@ -123,6 +123,7 @@ Defaults to one of the following directories:
 Use parallel execution when using the new (`>=1.1.0`) installer.
 Defaults to `true`.
 
+<<<<<<< HEAD
 ### `installer.max-workers`
 
 **Type**: int
@@ -136,6 +137,11 @@ the number of maximum workers is still limited at `number_of_cores + 4`.
 
 {{% note %}}
 This configuration will be ignored when `installer.parallel` is set to false.
+=======
+{{% note %}}
+This configuration will be ignored, and parallel execution disabled when running
+Python 2.7 under Windows.
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 {{% /note %}}
 
 ### `virtualenvs.create`

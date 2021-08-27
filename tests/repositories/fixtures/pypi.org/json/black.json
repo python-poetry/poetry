@@ -1,6 +1,10 @@
 {
   "info": {
+<<<<<<< HEAD
     "author": "Łukasz Langa",
+=======
+    "author": "\u0141ukasz Langa",
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     "author_email": "lukasz@langa.pl",
     "bugtrack_url": null,
     "classifiers": [

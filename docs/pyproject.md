@@ -87,7 +87,11 @@ An URL to the documentation of the project. **Optional**
 
 ## keywords
 
+<<<<<<< HEAD
 A list of keywords that the package is related to. **Optional**
+=======
+A list of keywords (max: 5) that the package is related to. **Optional**
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 ## classifiers
 
@@ -216,6 +220,7 @@ you can add it to your `pyproject.toml` file, like so:
 
 ```toml
 [[tool.poetry.source]]
+<<<<<<< HEAD
 name = "private"
 url = "http://example.com/simple"
 ```
@@ -225,6 +230,10 @@ If you have multiple repositories configured, you can explicitly tell poetry whe
 ```toml
 [tool.poetry.dependencies]
 requests = { version = "^2.13.0", source = "private" }
+=======
+name = 'private'
+url = 'http://example.com/simple'
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ```
 
 {{% note %}}
@@ -262,6 +271,7 @@ poetry = 'poetry.console:run'
 
 Here, we will have the `poetry` script installed which will execute `console.run` in the `poetry` package.
 
+<<<<<<< HEAD
 To specify a script that [depends on an extra](#extras), you may provide an entry as an inline table:
 
 ```toml
@@ -269,6 +279,8 @@ To specify a script that [depends on an extra](#extras), you may provide an entr
 devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
 ```
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 {{% /note %}}

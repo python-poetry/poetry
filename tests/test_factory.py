@@ -1,18 +1,32 @@
+<<<<<<< HEAD
 from pathlib import Path
 from typing import TYPE_CHECKING
+=======
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
+from pathlib import Path
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 import pytest
 
 from entrypoints import EntryPoint
+<<<<<<< HEAD
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.toml.file import TOMLFile
 
+=======
+
+from poetry.core.toml.file import TOMLFile
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pypi_repository import PyPiRepository
 
 
+<<<<<<< HEAD
 if TYPE_CHECKING:
     from cleo.io.io import IO
     from pytest_mock import MockerFixture
@@ -20,11 +34,17 @@ if TYPE_CHECKING:
     from poetry.poetry import Poetry
     from tests.types import FixtureDirGetter
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 fixtures_dir = Path(__file__).parent / "fixtures"
 
 
 class MyPlugin(Plugin):
+<<<<<<< HEAD
     def activate(self, poetry: "Poetry", io: "IO") -> None:
+=======
+    def activate(self, poetry, io):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         io.write_line("Updating version")
         poetry.package.set_version("9.9.9")
 
@@ -75,7 +95,11 @@ def test_create_poetry():
 
     pathlib2 = dependencies["pathlib2"]
     assert pathlib2.pretty_constraint == "^2.2"
+<<<<<<< HEAD
     assert parse_constraint(pathlib2.python_versions) == parse_constraint("~2.7")
+=======
+    assert pathlib2.python_versions == "~2.7"
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     assert not pathlib2.is_optional()
 
     demo = dependencies["demo"]
@@ -161,6 +185,7 @@ def test_create_poetry_with_multi_constraints_dependency():
     assert len(package.requires) == 2
 
 
+<<<<<<< HEAD
 def test_poetry_with_default_source(with_simple_keyring: None):
     poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
 
@@ -168,6 +193,15 @@ def test_poetry_with_default_source(with_simple_keyring: None):
 
 
 def test_poetry_with_non_default_source(with_simple_keyring: None):
+=======
+def test_poetry_with_default_source(with_simple_keyring):
+    poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
+
+    assert 1 == len(poetry.pool.repositories)
+
+
+def test_poetry_with_non_default_source(with_simple_keyring):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_source")
 
     assert len(poetry.pool.repositories) == 2
@@ -181,7 +215,11 @@ def test_poetry_with_non_default_source(with_simple_keyring: None):
     assert isinstance(poetry.pool.repositories[1], PyPiRepository)
 
 
+<<<<<<< HEAD
 def test_poetry_with_non_default_secondary_source(with_simple_keyring: None):
+=======
+def test_poetry_with_non_default_secondary_source(with_simple_keyring):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_secondary_source")
 
     assert len(poetry.pool.repositories) == 2
@@ -197,7 +235,11 @@ def test_poetry_with_non_default_secondary_source(with_simple_keyring: None):
     assert isinstance(repository, LegacyRepository)
 
 
+<<<<<<< HEAD
 def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring: None):
+=======
+def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry = Factory().create_poetry(
         fixtures_dir / "with_non_default_multiple_secondary_sources"
     )
@@ -219,7 +261,11 @@ def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring:
     assert isinstance(repository, LegacyRepository)
 
 
+<<<<<<< HEAD
 def test_poetry_with_non_default_multiple_sources(with_simple_keyring: None):
+=======
+def test_poetry_with_non_default_multiple_sources(with_simple_keyring):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_multiple_sources")
 
     assert len(poetry.pool.repositories) == 3
@@ -250,11 +296,19 @@ def test_poetry_with_no_default_source():
     assert isinstance(poetry.pool.repositories[0], PyPiRepository)
 
 
+<<<<<<< HEAD
 def test_poetry_with_two_default_sources(with_simple_keyring: None):
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
 
     assert str(e.value) == "Only one repository can be the default"
+=======
+def test_poetry_with_two_default_sources(with_simple_keyring):
+    with pytest.raises(ValueError) as e:
+        Factory().create_poetry(fixtures_dir / "with_two_default_sources")
+
+    assert "Only one repository can be the default" == str(e.value)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 
 def test_validate():
@@ -290,7 +344,11 @@ The Poetry configuration is invalid:
     assert expected == str(e.value)
 
 
+<<<<<<< HEAD
 def test_create_poetry_with_local_config(fixture_dir: "FixtureDirGetter"):
+=======
+def test_create_poetry_with_local_config(fixture_dir):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     poetry = Factory().create_poetry(fixture_dir("with_local_config"))
 
     assert not poetry.config.get("virtualenvs.in-project")
@@ -299,7 +357,11 @@ def test_create_poetry_with_local_config(fixture_dir: "FixtureDirGetter"):
     assert not poetry.config.get("virtualenvs.options.system-site-packages")
 
 
+<<<<<<< HEAD
 def test_create_poetry_with_plugins(mocker: "MockerFixture"):
+=======
+def test_create_poetry_with_plugins(mocker):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[EntryPoint("my-plugin", "tests.test_factory", "MyPlugin")],
@@ -307,4 +369,8 @@ def test_create_poetry_with_plugins(mocker: "MockerFixture"):
 
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
+<<<<<<< HEAD
     assert poetry.package.version.text == "9.9.9"
+=======
+    assert "9.9.9" == poetry.package.version.text
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)

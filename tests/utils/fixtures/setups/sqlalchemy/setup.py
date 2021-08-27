@@ -12,6 +12,11 @@ from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 
 cmdclass = {}
+<<<<<<< HEAD
+=======
+if sys.version_info < (2, 7):
+    raise Exception("SQLAlchemy requires Python 2.7 or higher.")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 cpython = platform.python_implementation() == "CPython"
 

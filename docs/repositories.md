@@ -80,7 +80,11 @@ Keyring support is enabled using the [keyring library](https://pypi.org/project/
 Poetry will fallback to Pip style use of keyring so that backends like
 Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a change to retrieve
 valid credentials. It will need to be properly installed into Poetry's virtualenv,
+<<<<<<< HEAD
 preferably by installing a plugin.
+=======
+preferrably by installing a plugin.
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 
 If you are letting Poetry manage your virtual environments you will want a virtualenv
 seeder installed in Poetry's virtualenv that installs the desired keyring backend
@@ -101,6 +105,7 @@ export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 
+<<<<<<< HEAD
 If your password starts with a dash (e.g. randomly generated tokens in a CI environment), it will be parsed as a
 command line option instead of a password.
 You can prevent this by adding double dashes to prevent any following argument from being parsed as an option.
@@ -109,6 +114,8 @@ You can prevent this by adding double dashes to prevent any following argument f
 poetry config -- http-basic.pypi myUsername -myPasswordStartingWithDash
 ```
 
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 #### Custom certificate authority and mutual TLS authentication
 Poetry supports repositories that are secured by a custom certificate authority as well as those that require
 certificate-based client authentication.  The following will configure the "foo" repository to validate the repository's

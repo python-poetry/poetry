@@ -17,7 +17,11 @@ def test_pool_raises_package_not_found_when_no_package_is_found():
 def test_pool():
     pool = Pool()
 
+<<<<<<< HEAD
     assert len(pool.repositories) == 0
+=======
+    assert 0 == len(pool.repositories)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     assert not pool.has_default()
 
 
@@ -25,7 +29,11 @@ def test_pool_with_initial_repositories():
     repo = Repository()
     pool = Pool([repo])
 
+<<<<<<< HEAD
     assert len(pool.repositories) == 1
+=======
+    assert 1 == len(pool.repositories)
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     assert not pool.has_default()
 
 

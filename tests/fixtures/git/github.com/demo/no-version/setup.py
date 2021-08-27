@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+# -*- coding: utf-8 -*-
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 import ast
 import os
 

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 
 from poetry.factory import Factory
@@ -14,6 +15,15 @@ if TYPE_CHECKING:
 def test_circular_dependency_on_older_version(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+from poetry.factory import Factory
+
+from ..helpers import add_to_repo
+from ..helpers import check_solver_result
+
+
+def test_circular_dependency_on_older_version(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("a", ">=1.0.0"))
 
     add_to_repo(repo, "a", "1.0.0")
@@ -23,9 +33,13 @@ def test_circular_dependency_on_older_version(
     check_solver_result(root, provider, {"a": "1.0.0"}, tries=2)
 
 
+<<<<<<< HEAD
 def test_diamond_dependency_graph(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_diamond_dependency_graph(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("b", "*"))
 
@@ -42,9 +56,13 @@ def test_diamond_dependency_graph(
     check_solver_result(root, provider, {"a": "1.0.0", "b": "2.0.0", "c": "3.0.0"})
 
 
+<<<<<<< HEAD
 def test_backjumps_after_partial_satisfier(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_backjumps_after_partial_satisfier(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # c 2.0.0 is incompatible with y 2.0.0 because it requires x 1.0.0, but that
     # requirement only exists because of both a and b. The solver should be able
     # to deduce c 2.0.0's incompatibility and select c 1.0.0 instead.
@@ -67,9 +85,13 @@ def test_backjumps_after_partial_satisfier(
     check_solver_result(root, provider, {"c": "1.0.0", "y": "2.0.0"}, tries=2)
 
 
+<<<<<<< HEAD
 def test_rolls_back_leaf_versions_first(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_rolls_back_leaf_versions_first(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # The latest versions of a and b disagree on c. An older version of either
     # will resolve the problem. This test validates that b, which is farther
     # in the dependency graph from myapp is downgraded first.
@@ -85,9 +107,13 @@ def test_rolls_back_leaf_versions_first(
     check_solver_result(root, provider, {"a": "2.0.0", "b": "1.0.0", "c": "2.0.0"})
 
 
+<<<<<<< HEAD
 def test_simple_transitive(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_simple_transitive(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # Only one version of baz, so foo and bar will have to downgrade
     # until they reach it
     root.add_dependency(Factory.create_dependency("foo", "*"))
@@ -107,9 +133,13 @@ def test_simple_transitive(
     )
 
 
+<<<<<<< HEAD
 def test_backjump_to_nearer_unsatisfied_package(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_backjump_to_nearer_unsatisfied_package(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # This ensures it doesn't exhaustively search all versions of b when it's
     # a-2.0.0 whose dependency on c-2.0.0-nonexistent led to the problem. We
     # make sure b has more versions than a so that the solver tries a first
@@ -129,9 +159,13 @@ def test_backjump_to_nearer_unsatisfied_package(
     )
 
 
+<<<<<<< HEAD
 def test_traverse_into_package_with_fewer_versions_first(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_traverse_into_package_with_fewer_versions_first(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     # Dependencies are ordered so that packages with fewer versions are tried
     # first. Here, there are two valid solutions (either a or b must be
     # downgraded once). The chosen one depends on which dep is traversed first.
@@ -155,9 +189,13 @@ def test_traverse_into_package_with_fewer_versions_first(
     check_solver_result(root, provider, {"a": "4.0.0", "b": "4.0.0", "c": "2.0.0"})
 
 
+<<<<<<< HEAD
 def test_backjump_past_failed_package_on_disjoint_constraint(
     root: "ProjectPackage", provider: "Provider", repo: "Repository"
 ):
+=======
+def test_backjump_past_failed_package_on_disjoint_constraint(root, provider, repo):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     root.add_dependency(Factory.create_dependency("a", "*"))
     root.add_dependency(Factory.create_dependency("foo", ">2.0.0"))
 

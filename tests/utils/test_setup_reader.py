@@ -1,25 +1,40 @@
 import os
 
+<<<<<<< HEAD
 from typing import Callable
 
 import pytest
 
 from poetry.core.version.exceptions import InvalidVersion
 
+=======
+import pytest
+
+from poetry.core.version.exceptions import InvalidVersion
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from poetry.utils.setup_reader import SetupReader
 
 
 @pytest.fixture()
+<<<<<<< HEAD
 def setup() -> Callable[[str], str]:
     def _setup(name: str) -> str:
+=======
+def setup():
+    def _setup(name):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
         return os.path.join(os.path.dirname(__file__), "fixtures", "setups", name)
 
     return _setup
 
 
+<<<<<<< HEAD
 def test_setup_reader_read_first_level_setup_call_with_direct_types(
     setup: Callable[[str], str]
 ):
+=======
+def test_setup_reader_read_first_level_setup_call_with_direct_types(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = SetupReader.read_from_directory(setup("flask"))
 
     expected_name = "Flask"
@@ -51,9 +66,13 @@ def test_setup_reader_read_first_level_setup_call_with_direct_types(
     assert expected_python_requires == result["python_requires"]
 
 
+<<<<<<< HEAD
 def test_setup_reader_read_first_level_setup_call_with_variables(
     setup: Callable[[str], str]
 ):
+=======
+def test_setup_reader_read_first_level_setup_call_with_variables(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = SetupReader.read_from_directory(setup("requests"))
 
     expected_name = None
@@ -78,9 +97,13 @@ def test_setup_reader_read_first_level_setup_call_with_variables(
     assert expected_python_requires == result["python_requires"]
 
 
+<<<<<<< HEAD
 def test_setup_reader_read_sub_level_setup_call_with_direct_types(
     setup: Callable[[str], str]
 ):
+=======
+def test_setup_reader_read_sub_level_setup_call_with_direct_types(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = SetupReader.read_from_directory(setup("sqlalchemy"))
 
     expected_name = "SQLAlchemy"
@@ -104,7 +127,11 @@ def test_setup_reader_read_sub_level_setup_call_with_direct_types(
     assert result["python_requires"] is None
 
 
+<<<<<<< HEAD
 def test_setup_reader_read_setup_cfg(setup: Callable[[str], str]):
+=======
+def test_setup_reader_read_setup_cfg(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = SetupReader.read_from_directory(setup("with-setup-cfg"))
 
     expected_name = "with-setup-cfg"
@@ -123,12 +150,20 @@ def test_setup_reader_read_setup_cfg(setup: Callable[[str], str]):
     assert expected_python_requires == result["python_requires"]
 
 
+<<<<<<< HEAD
 def test_setup_reader_read_setup_cfg_with_attr(setup: Callable[[str], str]):
+=======
+def test_setup_reader_read_setup_cfg_with_attr(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     with pytest.raises(InvalidVersion):
         SetupReader.read_from_directory(setup("with-setup-cfg-attr"))
 
 
+<<<<<<< HEAD
 def test_setup_reader_read_setup_kwargs(setup: Callable[[str], str]):
+=======
+def test_setup_reader_read_setup_kwargs(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = SetupReader.read_from_directory(setup("pendulum"))
 
     expected_name = "pendulum"
@@ -144,7 +179,11 @@ def test_setup_reader_read_setup_kwargs(setup: Callable[[str], str]):
     assert expected_python_requires == result["python_requires"]
 
 
+<<<<<<< HEAD
 def test_setup_reader_read_setup_call_in_main(setup: Callable[[str], str]):
+=======
+def test_setup_reader_read_setup_call_in_main(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = SetupReader.read_from_directory(setup("pyyaml"))
 
     expected_name = "PyYAML"
@@ -160,7 +199,11 @@ def test_setup_reader_read_setup_call_in_main(setup: Callable[[str], str]):
     assert expected_python_requires == result["python_requires"]
 
 
+<<<<<<< HEAD
 def test_setup_reader_read_extras_require_with_variables(setup: Callable[[str], str]):
+=======
+def test_setup_reader_read_extras_require_with_variables(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = SetupReader.read_from_directory(setup("extras_require_with_vars"))
 
     expected_name = "extras_require_with_vars"
@@ -176,7 +219,11 @@ def test_setup_reader_read_extras_require_with_variables(setup: Callable[[str], 
     assert expected_python_requires == result["python_requires"]
 
 
+<<<<<<< HEAD
 def test_setup_reader_setuptools(setup: Callable[[str], str]):
+=======
+def test_setup_reader_setuptools(setup):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     result = SetupReader.read_from_directory(setup("setuptools_setup"))
 
     expected_name = "my_package"

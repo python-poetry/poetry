@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "info": {
     "author": "eric dexter",
     "author_email": "irc.dexter@gmail.com",
@@ -76,4 +77,85 @@
     ]
   },
   "urls": []
+=======
+    "info":{
+        "author":"eric dexter",
+        "author_email":"irc.dexter@gmail.com",
+        "bugtrack_url":null,
+        "classifiers":[
+            "Topic :: Multimedia :: Sound/Audio :: Editors"
+        ],
+        "description":"a clickable grid for drum machines, piano rolls that is customizble from an init \r\nfile)or will be) that will include the script to be ran when a definable button is \r\nhit  written in pygame and tested with python 2.5",
+        "description_content_type":null,
+        "docs_url":null,
+        "download_url":"http://www.ziddu.com/download/5498230/pygamepianorollbeta.90.zip.html",
+        "downloads":{
+            "last_day":-1,
+            "last_month":-1,
+            "last_week":-1
+        },
+        "home_page":"http://dexrowem.blogspot.com/search?q=pygame+music+grid",
+        "keywords":"python, pygame, drum machine, piano roll",
+        "license":"",
+        "maintainer":"",
+        "maintainer_email":"",
+        "name":"pygame-music-grid",
+        "package_url":"https://pypi.org/project/pygame-music-grid/",
+        "platform":"",
+        "project_url":"https://pypi.org/project/pygame-music-grid/",
+        "project_urls":{
+            "Download":"http://www.ziddu.com/download/5498230/pygamepianorollbeta.90.zip.html",
+            "Homepage":"http://dexrowem.blogspot.com/search?q=pygame+music+grid"
+        },
+        "release_url":"https://pypi.org/project/pygame-music-grid/.9/",
+        "requires_dist":null,
+        "requires_python":null,
+        "summary":"a grid for music programs",
+        "version":".9"
+    },
+    "last_serial":710340,
+    "releases":{
+        ".9":[
+          {
+            "comment_text": "",
+            "digests": {
+              "md5": "76e2c2e8adea20377d9a7e6b6713c952",
+              "sha256": "8d6d96001aa7f0a6a4a95e8143225b5d06e41b1131044913fecb8f85a125714b"
+            },
+            "downloads": -1,
+            "filename": "PyYAML-4.2b4-cp27-cp27m-win32.whl",
+            "has_sig": false,
+            "md5_digest": "76e2c2e8adea20377d9a7e6b6713c952",
+            "packagetype": "bdist_wheel",
+            "python_version": "cp27",
+            "requires_python": null,
+            "size": 104988,
+            "upload_time": "2018-07-02T03:17:55",
+            "url": "https://files.pythonhosted.org/packages/12/9b/efdbaa3c9694b6315a4410e0d494ad50c5ade22ce33f4b482bfaea3930fd/PyYAML-4.2b4-cp27-cp27m-win32.whl"
+          }
+        ],
+        "1.0":[
+          {
+            "comment_text": "",
+            "digests": {
+              "md5": "a83441aa7004e474bed6f6daeb61f27a",
+              "sha256": "d5eef459e30b09f5a098b9cea68bebfeb268697f78d647bd255a085371ac7f3f"
+            },
+            "downloads": -1,
+            "filename": "PyYAML-3.13-cp27-cp27m-win32.whl",
+            "has_sig": false,
+            "md5_digest": "a83441aa7004e474bed6f6daeb61f27a",
+            "packagetype": "bdist_wheel",
+            "python_version": "cp27",
+            "requires_python": null,
+            "size": 191712,
+            "upload_time": "2018-07-05T22:53:15",
+            "url": "https://files.pythonhosted.org/packages/b8/2e/9c2285870c9de070a1fa5ede702ab5fb329901b3cc4028c24f44eda27c5f/PyYAML-3.13-cp27-cp27m-win32.whl"
+          }
+        ]
+    },
+    "urls":[
+
+    ]
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 }

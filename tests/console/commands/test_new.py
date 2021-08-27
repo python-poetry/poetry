@@ -1,11 +1,15 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from typing import List
+=======
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 from typing import Optional
 
 import pytest
 
 from poetry.factory import Factory
+<<<<<<< HEAD
 
 
 if TYPE_CHECKING:
@@ -17,12 +21,23 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
+=======
+from poetry.poetry import Poetry
+
+
+@pytest.fixture
+def tester(command_tester_factory):
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     return command_tester_factory("new")
 
 
 def verify_project_directory(
     path: Path, package_name: str, package_path: str, include_from: Optional[str] = None
+<<<<<<< HEAD
 ) -> "Poetry":
+=======
+) -> Poetry:
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
     package_path = Path(package_path)
     assert path.is_dir()
 
@@ -143,6 +158,7 @@ def verify_project_directory(
     ],
 )
 def test_command_new(
+<<<<<<< HEAD
     options: List[str],
     directory: str,
     package_name: str,
@@ -150,6 +166,9 @@ def test_command_new(
     include_from: Optional[str],
     tester: "CommandTester",
     tmp_dir: str,
+=======
+    options, directory, package_name, package_path, include_from, tester, tmp_dir
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
 ):
     path = Path(tmp_dir) / directory
     options.append(path.as_posix())
@@ -157,6 +176,7 @@ def test_command_new(
     verify_project_directory(path, package_name, package_path, include_from)
 
 
+<<<<<<< HEAD
 @pytest.mark.parametrize(("fmt",), [(None,), ("md",), ("rst",)])
 def test_command_new_with_readme(
     fmt: Optional[str], tester: "CommandTester", tmp_dir: str
@@ -172,3 +192,15 @@ def test_command_new_with_readme(
 
     poetry = verify_project_directory(path, package, package, None)
     assert poetry.local_config.get("readme") == f"README.{fmt or 'md'}"
+=======
+@pytest.mark.parametrize("fmt", [(None,), ("md",), ("rst",)])
+def test_command_new_with_readme(fmt, tester, tmp_dir):
+    fmt = "md"
+    package = "package"
+    path = Path(tmp_dir) / package
+    options = ["--readme {}".format(fmt) if fmt else "md", path.as_posix()]
+    tester.execute(" ".join(options))
+
+    poetry = verify_project_directory(path, package, package, None)
+    assert poetry.local_config.get("readme") == "README.{}".format(fmt or "md")
+>>>>>>> d7cf7a8e (Fix `remove` command to handle `.venv` dirs)
