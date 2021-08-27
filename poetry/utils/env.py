@@ -152,6 +152,38 @@ import sysconfig
 print(json.dumps(sysconfig.get_paths()))
 """
 
+GET_PATHS_FOR_GENERIC_ENVS = """\
+# We can't use sysconfig.get_paths() because
+# on some distributions it does not return the proper paths
+# (those used by pip for instance). We go through distutils
+# to get the proper ones.
+import json
+import site
+import sysconfig
+
+from distutils.command.install import SCHEME_KEYS  # noqa
+from distutils.core import Distribution
+
+d = Distribution()
+d.parse_config_files()
+obj = d.get_command_obj("install", create=True)
+obj.finalize_options()
+
+paths = sysconfig.get_paths().copy()
+for key in SCHEME_KEYS:
+    if key == "headers":
+        # headers is not a path returned by sysconfig.get_paths()
+        continue
+
+    paths[key] = getattr(obj, f"install_{key}")
+
+if site.check_enableusersite() and hasattr(obj, "install_usersite"):
+    paths["usersite"] = getattr(obj, "install_usersite")
+    paths["userbase"] = getattr(obj, "install_userbase")
+
+print(json.dumps(paths))
+"""
+
 
 class SitePackages:
     def __init__(
@@ -1617,6 +1649,11 @@ class VirtualEnv(Env):
 
 
 class GenericEnv(VirtualEnv):
+    def get_paths(self) -> Dict[str, str]:
+        output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
+
+        return json.loads(output)
+
     def is_venv(self) -> bool:
         return self._path != self._base
 
