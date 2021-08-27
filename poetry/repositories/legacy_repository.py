@@ -384,27 +384,28 @@ class LegacyRepository(PyPiRepository):
 
     def _get(self, endpoint):  # type: (str) -> Union[Page, None]
         url = self._url + endpoint
-        try:
-            response = self.session.get(url)
-            if response.status_code == 404:
+        with self.session as session:
+            try:
+                response = session.get(url)
+                if response.status_code == 404:
+                    return
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise RepositoryError(e)
+
+            if response.status_code in (401, 403):
+                self._log(
+                    "Authorization error accessing {url}".format(url=response.url),
+                    level="warn",
+                )
                 return
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            raise RepositoryError(e)
 
-        if response.status_code in (401, 403):
-            self._log(
-                "Authorization error accessing {url}".format(url=response.url),
-                level="warn",
-            )
-            return
+            if response.url != url:
+                self._log(
+                    "Response URL {response_url} differs from request URL {url}".format(
+                        response_url=response.url, url=url
+                    ),
+                    level="debug",
+                )
 
-        if response.url != url:
-            self._log(
-                "Response URL {response_url} differs from request URL {url}".format(
-                    response_url=response.url, url=url
-                ),
-                level="debug",
-            )
-
-        return Page(response.url, response.content, response.headers)
+            return Page(response.url, response.content, response.headers)
