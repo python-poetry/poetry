@@ -33,6 +33,8 @@ class EnvInfoCommand(Command):
         self._display_complete_info(env)
 
     def _display_complete_info(self, env: "Env") -> None:
+        from poetry.utils.env import GenericEnv
+
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
         self.line("")
         self.line("<b>Virtualenv</b>")
@@ -43,6 +45,9 @@ class EnvInfoCommand(Command):
             ),
             "<info>Path</info>:           <comment>{}</>".format(
                 env.path if env.is_venv() else "NA"
+            ),
+            "<info>Executable</info>:     <comment>{}</>".format(
+                env.python if env.is_venv() else "NA"
             ),
         ]
         if env.is_venv():
@@ -55,13 +60,18 @@ class EnvInfoCommand(Command):
 
         self.line("")
 
+        system_env = GenericEnv(env.base)
         self.line("<b>System</b>")
         self.line(
             "\n".join(
                 [
-                    "<info>Platform</info>: <comment>{}</>".format(env.platform),
-                    "<info>OS</info>:       <comment>{}</>".format(env.os),
-                    "<info>Python</info>:   <comment>{}</>".format(env.base),
+                    "<info>Platform</info>:   <comment>{}</>".format(env.platform),
+                    "<info>OS</info>:         <comment>{}</>".format(env.os),
+                    "<info>Python</info>:     <comment>{}</>".format(
+                        ".".join(str(v) for v in system_env.version_info[:3])
+                    ),
+                    "<info>Path</info>:       <comment>{}</>".format(system_env.path),
+                    "<info>Executable</info>: <comment>{}</>".format(system_env.python),
                 ]
             )
         )

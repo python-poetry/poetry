@@ -15,6 +15,7 @@ from cleo.io.null_io import NullIO
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
+from poetry.utils._compat import WINDOWS
 from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
@@ -964,3 +965,39 @@ def test_env_system_packages(tmp_path, config):
         assert not venv_path.joinpath(
             "lib", "python2.7", "no-global-site-packages.txt"
         ).exists()
+
+
+def test_env_finds_the_correct_executables(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    manager.build_venv(str(venv_path), with_pip=True)
+    venv = VirtualEnv(venv_path)
+
+    default_executable = expected_executable = "python" + (".exe" if WINDOWS else "")
+    default_pip_executable = expected_pip_executable = "pip" + (
+        ".exe" if WINDOWS else ""
+    )
+    major_executable = "python{}{}".format(
+        sys.version_info[0], ".exe" if WINDOWS else ""
+    )
+    major_pip_executable = "pip{}{}".format(
+        sys.version_info[0], ".exe" if WINDOWS else ""
+    )
+
+    if (
+        venv._bin_dir.joinpath(default_executable).exists()
+        and venv._bin_dir.joinpath(major_executable).exists()
+    ):
+        venv._bin_dir.joinpath(default_executable).unlink()
+        expected_executable = major_executable
+
+    if (
+        venv._bin_dir.joinpath(default_pip_executable).exists()
+        and venv._bin_dir.joinpath(major_pip_executable).exists()
+    ):
+        venv._bin_dir.joinpath(default_pip_executable).unlink()
+        expected_pip_executable = major_pip_executable
+
+    venv = VirtualEnv(venv_path)
+
+    assert Path(venv.python).name == expected_executable
+    assert Path(venv.pip).name == expected_pip_executable

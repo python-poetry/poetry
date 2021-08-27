@@ -1061,6 +1061,30 @@ class Env:
         self._path = path
         self._bin_dir = self._path / bin_dir
 
+        try:
+            python_executables = sorted(
+                [
+                    p.name
+                    for p in self._bin_dir.glob("python*")
+                    if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+                ]
+            )
+            self._executable = python_executables[0].rstrip(".exe")
+        except IndexError:
+            self._executable = "python" + (".exe" if self._is_windows else "")
+
+        try:
+            pip_executables = sorted(
+                [
+                    p.name
+                    for p in self._bin_dir.glob("pip*")
+                    if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+                ]
+            )
+            self._pip_executable = pip_executables[0].rstrip(".exe")
+        except IndexError:
+            self._pip_executable = "pip" + (".exe" if self._is_windows else "")
+
         self._base = base or path
 
         self._marker_env = None
@@ -1095,7 +1119,7 @@ class Env:
         """
         Path to current python executable
         """
-        return self._bin("python")
+        return self._bin(self._executable)
 
     @property
     def marker_env(self) -> Dict[str, Any]:
@@ -1121,7 +1145,7 @@ class Env:
         Path to current pip executable
         """
         # we do not use as_posix() here due to issues with windows pathlib2 implementation
-        path = self._bin("pip")
+        path = self._bin(self._pip_executable)
         if not Path(path).exists():
             return str(self.pip_embedded)
         return path
@@ -1267,7 +1291,7 @@ class Env:
         return self._run(cmd, **kwargs)
 
     def run_python_script(self, content: str, **kwargs: Any) -> str:
-        return self.run("python", "-W", "ignore", "-", input_=content, **kwargs)
+        return self.run(self._executable, "-W", "ignore", "-", input_=content, **kwargs)
 
     def _run(self, cmd: List[str], **kwargs: Any) -> Union[int, str]:
         """
@@ -1489,7 +1513,10 @@ class VirtualEnv(Env):
     def get_pip_command(self, embedded: bool = False) -> List[str]:
         # We're in a virtualenv that is known to be sane,
         # so assume that we have a functional pip
-        return [self._bin("python"), self.pip_embedded if embedded else self.pip]
+        return [
+            self._bin(self._executable),
+            self.pip_embedded if embedded else self.pip,
+        ]
 
     def get_supported_tags(self) -> List[Tag]:
         file_path = Path(packaging.tags.__file__)
@@ -1607,7 +1634,10 @@ class NullEnv(SystemEnv):
         self.executed = []
 
     def get_pip_command(self, embedded: bool = False) -> List[str]:
-        return [self._bin("python"), self.pip_embedded if embedded else self.pip]
+        return [
+            self._bin(self._executable),
+            self.pip_embedded if embedded else self.pip,
+        ]
 
     def _run(self, cmd: List[str], **kwargs: Any) -> int:
         self.executed.append(cmd)
