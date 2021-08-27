@@ -195,3 +195,32 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
     link = chooser.choose_for(package)
 
     assert "isort-4.3.4.tar.gz" == link.filename
+
+
+@pytest.mark.parametrize("source_type", ["", "legacy"])
+def test_chooser_throws_an_error_if_package_hashes_do_not_match(
+    env, mock_pypi, mock_legacy, source_type, pool,
+):
+    chooser = Chooser(pool, env)
+
+    package = Package("isort", "4.3.4")
+    files = [
+        {
+            "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "filename": "isort-4.3.4.tar.gz",
+        }
+    ]
+    if source_type == "legacy":
+        package = Package(
+            package.name,
+            package.version.text,
+            source_type="legacy",
+            source_reference="foo",
+            source_url="https://foo.bar/simple/",
+        )
+
+    package.files = files
+
+    with pytest.raises(RuntimeError) as e:
+        chooser.choose_for(package)
+    assert files[0]["hash"] in str(e)
