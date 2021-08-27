@@ -111,7 +111,9 @@ class Chooser:
 
         if links and not selected_links:
             raise RuntimeError(
-                "Retrieved digest for link {}({}) not in poetry.lock metadata {}".format(link.filename, h, hashes)
+                "Retrieved digest for link {}({}) not in poetry.lock metadata {}".format(
+                    link.filename, h, hashes
+                )
             )
 
         return selected_links

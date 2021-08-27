@@ -199,11 +199,7 @@ def test_chooser_chooses_distributions_that_match_the_package_hashes(
 
 @pytest.mark.parametrize("source_type", ["", "legacy"])
 def test_chooser_throws_an_error_if_package_hashes_do_not_match(
-    env,
-    mock_pypi,
-    mock_legacy,
-    source_type,
-    pool,
+    env, mock_pypi, mock_legacy, source_type, pool,
 ):
     chooser = Chooser(pool, env)
 
