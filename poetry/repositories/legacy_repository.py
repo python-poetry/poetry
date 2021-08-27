@@ -10,7 +10,6 @@ from typing import Union
 import requests
 import requests.auth
 
-from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
 
@@ -25,6 +24,7 @@ from poetry.utils._compat import Path
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.patterns import wheel_file_re
 
+from ..cache.cache_control import CacheControl
 from ..config.config import Config
 from ..inspection.info import PackageInfo
 from ..installation.authenticator import Authenticator
