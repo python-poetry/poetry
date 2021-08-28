@@ -47,6 +47,7 @@ class Installer:
         self._verbose = False
         self._write_lock = True
         self._dev_mode = True
+        self._create_virtualenv = config.get("virtualenvs.create")
         self._execute_operations = True
         self._lock = False
 
@@ -512,6 +513,12 @@ class Installer:
                 package = op.package
 
             if op.job_type == "uninstall":
+                if not self._create_virtualenv:
+                    op.skip("Not uninstalling because: virtualenvs.create==False")
+                continue
+
+            if isinstance(op, Update) and not self._create_virtualenv:
+                op.skip("Not updating because: virtualenvs.create==False")
                 continue
 
             if not self._env.is_valid_for_marker(package.marker):
