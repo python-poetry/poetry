@@ -19,7 +19,7 @@ The [complete documentation](https://python-poetry.org/docs/) is available on th
 Poetry provides a custom installer that will install `poetry` isolated
 from the rest of your system.
 
-### osx / linux / bashonwindows install instructions
+### osx / linux / bashonwindows / Windows+MingW install instructions
 ```bash
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
 ```
