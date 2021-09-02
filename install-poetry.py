@@ -21,6 +21,7 @@ import shutil
 import site
 import subprocess
 import sys
+import sysconfig
 import tempfile
 
 from contextlib import closing
@@ -35,6 +36,7 @@ from urllib.request import urlopen
 
 SHELL = os.getenv("SHELL", "")
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
+MINGW = sysconfig.get_platform().startswith("mingw")
 MACOS = sys.platform == "darwin"
 
 FOREGROUND_COLORS = {
@@ -157,7 +159,7 @@ def bin_dir(version: Optional[str] = None) -> Path:
 
     user_base = site.getuserbase()
 
-    if WINDOWS:
+    if WINDOWS and not MINGW:
         bin_dir = os.path.join(user_base, "Scripts")
     else:
         bin_dir = os.path.join(user_base, "bin")
@@ -542,10 +544,12 @@ class Installer:
         self._bin_dir.mkdir(parents=True, exist_ok=True)
 
         script = "poetry"
-        target_script = "venv/bin/poetry"
+        target_script = "venv/bin/"
         if WINDOWS:
             script = "poetry.exe"
-            target_script = "venv/Scripts/poetry.exe"
+            if not MINGW:
+                target_script = "venv/Scripts/"
+        target_script += script
 
         if self._bin_dir.joinpath(script).exists():
             self._bin_dir.joinpath(script).unlink()
@@ -570,7 +574,7 @@ class Installer:
             )
         )
 
-        if WINDOWS:
+        if WINDOWS and not MINGW:
             python = env_path.joinpath("Scripts/python.exe")
         else:
             python = env_path.joinpath("bin/python")
