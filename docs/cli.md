@@ -1,3 +1,15 @@
+---
+title: "Commands"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 30
+---
+
+
 # Commands
 
 You've already learned how to use the command-line interface to do some things.
@@ -121,29 +133,53 @@ This ensures that everyone using the library will get the same versions of the d
 
 If there is no `poetry.lock` file, Poetry will create one after dependency resolution.
 
-You can specify to the command that you do not want the development dependencies installed by passing
-the `--no-dev` option.
+If you want to exclude one or more dependency group for the installation, you can use
+the `--without` option.
 
 ```bash
-poetry install --no-dev
+poetry install --without test,docs
 ```
 
-Conversely, you can specify to the command that you only want to install the development dependencies
-by passing the `--dev-only` option. Note that `--no-dev` takes priority if both options are passed.
+{{% note %}}
+The `--no-dev` option is now deprecated. You should use the `--without dev` notation instead.
+{{% /note %}}
+
+You can also select optional dependency groups with the `--with` option.
 
 ```bash
-poetry install --dev-only
+poetry install --with test,docs
 ```
 
-If you want to remove old dependencies no longer present in the lock file, use the
-`--remove-untracked` option.
+It's also possible to only install specific dependency groups by using the `only` option.
 
 ```bash
-poetry install --remove-untracked
+poetry install --only test,docs
+```
+
+{{% note %}}
+The `--dev-only` option is now deprecated. You should use the `--only dev` notation instead.
+{{% /note %}}
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
+If you want to synchronize your environment – and ensure it matches the lock file – use the
+`--sync` option.
+
+```bash
+poetry install --sync
+```
+
+The `--sync` can be combined with group-related options:
+
+```bash
+poetry install --without dev --sync
+poetry install --with docs --sync
+poetry install --only dev
 ```
 
 You can also specify the extras you want installed
-by passing the `-E|--extras` option (See [Extras](/docs/pyproject/#extras) for more info)
+by passing the `-E|--extras` option (See [Extras]({{< relref "pyproject#extras" >}}) for more info)
 
 ```bash
 poetry install --extras "mysql pgsql"
@@ -159,7 +195,6 @@ Installing dependencies from lock file
 No dependencies to install or update
 
   - Installing <your-package-name> (x.x.x)
-
 ```
 
 If you want to skip this installation, use the `--no-root` option.
@@ -168,17 +203,23 @@ If you want to skip this installation, use the `--no-root` option.
 poetry install --no-root
 ```
 
-Installation of your project's package is also skipped when the `--dev-only`
-option is passed.
+Installation of your project's package is also skipped when the `--only`
+option is used.
 
 ### Options
 
-* `--no-dev`: Do not install dev dependencies.
-* `--dev-only`: Only install dev dependencies.
+* `--without`: The dependency groups to ignore for installation.
+* `--with`: The optional dependency groups to include for installation.
+* `--only`: The only dependency groups to install.
+* `--default`: Only install the default dependencies.
+* `--sync`: Synchronize the environment with the locked packages and the specified groups.
 * `--no-root`: Do not install the root package (your project).
 * `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
-* `--remove-untracked`: Remove dependencies not presented in the lock file
 * `--extras (-E)`: Features to install (multiple values allowed).
+* `--no-dev`: Do not install dev dependencies. (**Deprecated**)
+* `--dev-only`: Only install dev dependencies. (**Deprecated**)
+* `--remove-untracked`: Remove dependencies not presented in the lock file. (**Deprecated**)
+
 
 ## update
 
@@ -286,10 +327,10 @@ Alternatively, you can specify it in the `pyproject.toml` file. It means that ch
 my-package = {path = "../my/path", develop = true}
 ```
 
-!!!note
-
-    Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
-    to make sure the behavior is the same for all poetry versions.
+{{% note %}}
+Before poetry 1.1 path dependencies were installed in editable mode by default. You should always set the `develop` attribute explicit,
+to make sure the behavior is the same for all poetry versions.
+{{% /note %}}
 
 If the package(s) you want to install provide extras, you can specify them
 when adding the package:
@@ -300,9 +341,19 @@ poetry add "requests[security,socks]~=2.22.0"
 poetry add "git+https://github.com/pallets/flask.git@1.1.1[dotenv,dev]"
 ```
 
+If you want to add a package to a specific group of dependencies, you can use the `--group (-G)` option:
+
+```bash
+poetry add mkdocs --group docs
+```
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
 ### Options
 
-* `--dev (-D)`: Add package as development dependency.
+* `--group (-D)`: The group to add the dependency to.
+* `--dev (-D)`: Add package as development dependency. (**Deprecated**)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
 * `--optional`: Add as an optional dependency.
@@ -323,9 +374,19 @@ list of installed packages.
 poetry remove pendulum
 ```
 
+If you want to remove a package from a specific group of dependencies, you can use the `--group (-G)` option:
+
+```bash
+poetry remove mkdocs --group docs
+```
+
+See [Dependency groups]({{< relref "managing-dependencies#dependency-groups" >}}) for more information
+about dependency groups.
+
 ### Options
 
-* `--dev (-D)`: Removes a package from the development dependencies.
+* `--group (-D)`: The group to remove the dependency from.
+* `--dev (-D)`: Removes a package from the development dependencies. (**Deprecated**)
 * `--dry-run` : Outputs the operations but will not execute anything (implicitly enables --verbose).
 
 
@@ -354,6 +415,10 @@ dependencies:
 
 ### Options
 
+* `--without`: Do not show the information of the specified groups' dependencies.
+* `--with`: Show the information of the specified optional groups' dependencies as well.
+* `--only`: Only show the information of dependencies belonging to the specified groups.
+* `--default`: Only show the information of the default dependencies.
 * `--no-dev`: Do not list the dev dependencies.
 * `--tree`: List the dependencies as a tree.
 * `--latest (-l)`: Show the latest version.
@@ -409,7 +474,7 @@ poetry config [options] [setting-key] [setting-value1] ... [setting-valueN]
 ````
 
 `setting-key` is a configuration option name and `setting-value1` is a configuration value.
-See [Configuration](/docs/configuration/) for all available settings.
+See [Configuration]({{< relref "configuration" >}}) for all available settings.
 
 ### Options
 
@@ -473,9 +538,9 @@ poetry search requests pendulum
 
 This command locks (without installing) the dependencies specified in `pyproject.toml`.
 
-!!!note
-
-     By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+{{% note %}}
+By default, this will lock all dependencies to the latest available compatible versions. To only refresh the lock file, use the `--no-update` option.
+{{% /note %}}
 
 ```bash
 poetry lock
@@ -497,17 +562,17 @@ The new version should ideally be a valid [semver](https://semver.org/) string o
 
 The table below illustrates the effect of these rules with concrete examples.
 
-| rule       |        before | after         |
-|------------|---------------|---------------|
-| major      |         1.3.0 | 2.0.0         |
-| minor      |         2.1.4 | 2.2.0         |
-| patch      |         4.1.1 | 4.1.2         |
-| premajor   |         1.0.2 | 2.0.0-alpha.0 |
-| preminor   |         1.0.2 | 1.1.0-alpha.0 |
-| prepatch   |         1.0.2 | 1.0.3-alpha.0 |
-| prerelease |         1.0.2 | 1.0.3-alpha.0 |
+| rule       | before        | after         |
+| ---------- | ------------- | ------------- |
+| major      | 1.3.0         | 2.0.0         |
+| minor      | 2.1.4         | 2.2.0         |
+| patch      | 4.1.1         | 4.1.2         |
+| premajor   | 1.0.2         | 2.0.0-alpha.0 |
+| preminor   | 1.0.2         | 1.1.0-alpha.0 |
+| prepatch   | 1.0.2         | 1.0.3-alpha.0 |
+| prerelease | 1.0.2         | 1.0.3-alpha.0 |
 | prerelease | 1.0.3-alpha.0 | 1.0.3-alpha.1 |
-| prerelease |  1.0.3-beta.0 | 1.0.3-beta.1  |
+| prerelease | 1.0.3-beta.0  | 1.0.3-beta.1  |
 
 ### Options
 
@@ -521,9 +586,9 @@ This command exports the lock file to other formats.
 poetry export -f requirements.txt --output requirements.txt
 ```
 
-!!!note
-
-    Only the `requirements.txt` format is currently supported.
+{{% note %}}
+Only the `requirements.txt` format is currently supported.
+{{% /note %}}
 
 ### Options
 
@@ -541,7 +606,7 @@ poetry export -f requirements.txt --output requirements.txt
 The `env` command regroups sub commands to interact with the virtualenvs
 associated with a specific project.
 
-See [Managing environments](/docs/managing-environments/) for more information about these commands.
+See [Managing environments]({{< relref "managing-environments" >}}) for more information about these commands.
 
 ## cache
 
@@ -628,18 +693,18 @@ For example, to add the `pypi-test` source, you can run:
 poetry source add pypi-test https://test.pypi.org/simple/
 ```
 
-!!!note
-
-    You cannot use the name `pypi` as it is reserved for use by the default PyPI source.
+{{% note %}}
+You cannot use the name `pypi` as it is reserved for use by the default PyPI source.
+{{% /note %}}
 
 #### Options
 
-* `--default`: Set this source as the [default](/docs/repositories/#disabling-the-pypi-repository) (disable PyPI).
-* `--secondary`: Set this source as a [secondary](/docs/repositories/#install-dependencies-from-a-private-repository) source.
+* `--default`: Set this source as the [default]({{< relref "repositories#disabling-the-pypi-repository" >}}) (disable PyPI).
+* `--secondary`: Set this source as a [secondary]({{< relref "repositories#install-dependencies-from-a-private-repository" >}}) source.
 
-!!!note
-
-    You cannot set a source as both `default` and `secondary`.
+{{% note %}}
+You cannot set a source as both `default` and `secondary`.
+{{% /note %}}
 
 ### `source show`
 
@@ -655,9 +720,9 @@ Optionally, you can show information of one or more sources by specifying their 
 poetry source show pypi-test
 ```
 
-!!!note
-
-    This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+{{% note %}}
+This command will only show sources configured via the `pyproject.toml` and does not include PyPI.
+{{% /note %}}
 
 ### `source remove`
 

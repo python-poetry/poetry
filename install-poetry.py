@@ -413,11 +413,35 @@ class Installer:
         self.display_pre_message()
         self.ensure_directories()
 
+        def _is_self_upgrade_supported(x):
+            mx = self.VERSION_REGEX.match(x)
+
+            if mx is None:
+                # the version is not semver, perhaps scm or file, we assume upgrade is supported
+                return True
+
+            vx = tuple(int(p) for p in mx.groups()[:3]) + (mx.group(5),)
+            return vx >= (1, 1, 7)
+
+        if version and not _is_self_upgrade_supported(version):
+            self._write(
+                colorize(
+                    "warning",
+                    f"You are installing {version}. When using the current installer, this version does not support "
+                    f"updating using the 'self update' command. Please use 1.1.7 or later.",
+                )
+            )
+            if not self._accept_all:
+                continue_install = input("Do you want to continue? ([y]/n) ") or "y"
+                if continue_install.lower() in {"n", "no"}:
+                    return 0
+
         try:
             self.install(version)
         except subprocess.CalledProcessError as e:
-            print(colorize("error", "An error has occured: {}".format(str(e))))
-            print(e.output.decode())
+            print(
+                colorize("error", f"\nAn error has occurred: {e}\n{e.stderr.decode()}")
+            )
 
             return e.returncode
 
@@ -562,6 +586,7 @@ class Installer:
             [str(python), "-m", "pip", "install", specification],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            check=True,
         )
 
     def display_pre_message(self) -> None:

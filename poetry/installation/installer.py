@@ -50,12 +50,14 @@ class Installer:
         self._pool = pool
 
         self._dry_run = False
-        self._remove_untracked = False
+        self._requires_synchronization = False
         self._update = False
         self._verbose = False
         self._write_lock = True
-        self._dev_mode = True
-        self._dev_only = False
+        self._without_groups = None
+        self._with_groups = None
+        self._only_groups = None
+
         self._execute_operations = True
         self._lock = False
 
@@ -120,13 +122,12 @@ class Installer:
     def is_dry_run(self) -> bool:
         return self._dry_run
 
-    def remove_untracked(self, remove_untracked: bool = True) -> "Installer":
-        self._remove_untracked = remove_untracked
+    def requires_synchronization(
+        self, requires_synchronization: bool = True
+    ) -> "Installer":
+        self._requires_synchronization = requires_synchronization
 
         return self
-
-    def is_remove_untracked(self) -> bool:
-        return self._remove_untracked
 
     def verbose(self, verbose: bool = True) -> "Installer":
         self._verbose = verbose
@@ -137,21 +138,20 @@ class Installer:
     def is_verbose(self) -> bool:
         return self._verbose
 
-    def dev_mode(self, dev_mode: bool = True) -> "Installer":
-        self._dev_mode = dev_mode
+    def without_groups(self, groups: List[str]) -> "Installer":
+        self._without_groups = groups
 
         return self
 
-    def is_dev_mode(self) -> bool:
-        return self._dev_mode
-
-    def dev_only(self, dev_only: bool = False) -> "Installer":
-        self._dev_only = dev_only
+    def with_groups(self, groups: List[str]) -> "Installer":
+        self._with_groups = groups
 
         return self
 
-    def is_dev_only(self) -> bool:
-        return self._dev_only
+    def only_groups(self, groups: List[str]) -> "Installer":
+        self._only_groups = groups
+
+        return self
 
     def update(self, update: bool = True) -> "Installer":
         self._update = update
@@ -211,7 +211,7 @@ class Installer:
             self._io,
         )
 
-        ops = solver.solve(use_latest=[])
+        ops = solver.solve(use_latest=[]).calculate_operations()
 
         local_repo = Repository()
         self._populate_local_repo(local_repo, ops)
@@ -246,10 +246,9 @@ class Installer:
                 self._installed_repository,
                 locked_repository,
                 self._io,
-                remove_untracked=self._remove_untracked,
             )
 
-            ops = solver.solve(use_latest=self._whitelist)
+            ops = solver.solve(use_latest=self._whitelist).calculate_operations()
         else:
             self._io.write_line("<info>Installing dependencies from lock file</>")
 
@@ -283,13 +282,20 @@ class Installer:
                 # If we are only in lock mode, no need to go any further
                 return 0
 
-        root = self._package
-        if not self.is_dev_mode():
-            root = root.clone()
-            del root.dev_requires[:]
-        elif self.is_dev_only():
-            root = root.clone()
-            del root.requires[:]
+        if self._without_groups or self._with_groups or self._only_groups:
+            if self._with_groups:
+                # Default dependencies and opted-in optional dependencies
+                root = self._package.with_dependency_groups(self._with_groups)
+            elif self._without_groups:
+                # Default dependencies without selected groups
+                root = self._package.without_dependency_groups(self._without_groups)
+            else:
+                # Only selected groups
+                root = self._package.with_dependency_groups(
+                    self._only_groups, only=True
+                )
+        else:
+            root = self._package.without_optional_dependency_groups()
 
         if self._io.is_verbose():
             self._io.write_line("")
@@ -310,19 +316,35 @@ class Installer:
         pool.add_repository(repo)
 
         solver = Solver(
-            root,
-            pool,
-            self._installed_repository,
-            locked_repository,
-            NullIO(),
-            remove_untracked=self._remove_untracked,
+            root, pool, self._installed_repository, locked_repository, NullIO()
         )
         # Everything is resolved at this point, so we no longer need
         # to load deferred dependencies (i.e. VCS, URL and path dependencies)
         solver.provider.load_deferred(False)
 
         with solver.use_environment(self._env):
-            ops = solver.solve(use_latest=self._whitelist)
+            ops = solver.solve(use_latest=self._whitelist).calculate_operations(
+                with_uninstalls=self._requires_synchronization,
+                synchronize=self._requires_synchronization,
+            )
+
+        if not self._requires_synchronization:
+            # If no packages synchronisation has been requested we need
+            # to calculate the uninstall operations
+            from poetry.puzzle.transaction import Transaction
+
+            transaction = Transaction(
+                locked_repository.packages,
+                [(package, 0) for package in local_repo.packages],
+                installed_packages=self._installed_repository.packages,
+                root_package=root,
+            )
+
+            ops = [
+                op
+                for op in transaction.calculate_operations(with_uninstalls=True)
+                if op.job_type == "uninstall"
+            ] + ops
 
         # We need to filter operations so that packages
         # not compatible with the current system,
@@ -502,9 +524,7 @@ class Installer:
             for installed in installed_repo.packages:
                 if locked.name == installed.name:
                     is_installed = True
-                    if locked.category == "dev" and not self.is_dev_mode():
-                        ops.append(Uninstall(locked))
-                    elif locked.optional and locked.name not in extra_packages:
+                    if locked.optional and locked.name not in extra_packages:
                         # Installed but optional and not requested in extras
                         ops.append(Uninstall(locked))
                     elif locked.version != installed.version:
@@ -552,11 +572,6 @@ class Installer:
             if package.optional:
                 if package.name not in extra_packages:
                     op.skip("Not required")
-
-            # If the package is a dev package and dev packages
-            # are not requested, we skip it
-            if package.category == "dev" and not self.is_dev_mode():
-                op.skip("Dev dependencies not requested")
 
     def _get_extra_packages(self, repo: Repository) -> List[str]:
         """

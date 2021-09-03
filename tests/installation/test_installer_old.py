@@ -227,7 +227,7 @@ def test_run_update_after_removing_dependencies(
     assert len(removals) == 1
 
 
-def test_run_install_no_dev(installer, locker, repo, package, installed):
+def test_run_install_no_group(installer, locker, repo, package, installed):
     locker.locked(True)
     locker.mock_lock_data(
         {
@@ -281,9 +281,9 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
 
     package.add_dependency(Factory.create_dependency("A", "~1.0"))
     package.add_dependency(Factory.create_dependency("B", "~1.1"))
-    package.add_dependency(Factory.create_dependency("C", "~1.2", category="dev"))
+    package.add_dependency(Factory.create_dependency("C", "~1.2", groups=["dev"]))
 
-    installer.dev_mode(False)
+    installer.without_groups(["dev"])
     installer.run()
 
     installs = installer.installer.installs
@@ -293,7 +293,7 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
     assert len(updates) == 0
 
     removals = installer.installer.removals
-    assert len(removals) == 1
+    assert len(removals) == 0
 
 
 @pytest.mark.parametrize(
@@ -308,7 +308,7 @@ def test_run_install_no_dev(installer, locker, repo, package, installed):
         )
     ],
 )
-def test_run_install_remove_untracked(
+def test_run_install_with_synchronization(
     managed_reserved_package_names, installer, locker, repo, package, installed
 ):
     package_a = get_package("a", "1.0")
@@ -364,7 +364,7 @@ def test_run_install_remove_untracked(
         }
     )
 
-    installer.dev_mode(True).remove_untracked(True)
+    installer.requires_synchronization(True)
     installer.run()
 
     installs = installer.installer.installs
@@ -374,6 +374,7 @@ def test_run_install_remove_untracked(
     assert len(updates) == 0
 
     removals = installer.installer.removals
+
     expected_removals = {
         package_b.name,
         package_c.name,
@@ -767,7 +768,7 @@ def test_installer_with_pypi_repository(package, locker, installed, config):
         NullIO(), NullEnv(), package, locker, pool, config, installed=installed
     )
 
-    package.add_dependency(Factory.create_dependency("pytest", "^3.5", category="dev"))
+    package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
     installer.run()
 
     expected = fixture("with-pypi-repository")
@@ -974,7 +975,7 @@ def test_run_changes_category_if_needed(installer, locker, repo, package):
 
     package.add_dependency(
         Factory.create_dependency(
-            "A", {"version": "^1.0", "optional": True}, category="dev"
+            "A", {"version": "^1.0", "optional": True}, groups=["dev"]
         )
     )
     package.add_dependency(Factory.create_dependency("B", "^1.1"))
@@ -1074,8 +1075,8 @@ def test_run_update_with_locked_extras(installer, locker, repo, package):
     b_dependency.in_extras.append("foo")
     c_dependency = get_dependency("C", "^1.0")
     c_dependency.python_versions = "~2.7"
-    package_a.requires.append(b_dependency)
-    package_a.requires.append(c_dependency)
+    package_a.add_dependency(b_dependency)
+    package_a.add_dependency(c_dependency)
 
     repo.add_package(package_a)
     repo.add_package(get_package("B", "1.0"))
@@ -1739,7 +1740,7 @@ def test_installer_can_handle_old_lock_files(
     pool = Pool()
     pool.add_repository(MockRepository())
 
-    package.add_dependency(Factory.create_dependency("pytest", "^3.5", category="dev"))
+    package.add_dependency(Factory.create_dependency("pytest", "^3.5", groups=["dev"]))
 
     locker.locked()
     locker.mock_lock_data(fixture("old-lock"))

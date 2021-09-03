@@ -9,8 +9,43 @@ class InstallCommand(InstallerCommand):
     description = "Installs the project dependencies."
 
     options = [
-        option("no-dev", None, "Do not install the development dependencies."),
-        option("dev-only", None, "Only install the development dependencies."),
+        option(
+            "without",
+            None,
+            "The dependency groups to ignore for installation.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "with",
+            None,
+            "The optional dependency groups to include for installation.",
+            flag=False,
+            multiple=True,
+        ),
+        option("default", None, "Only install the default dependencies."),
+        option(
+            "only",
+            None,
+            "The only dependency groups to install.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "no-dev",
+            None,
+            "Do not install the development dependencies. (<warning>Deprecated</warning>)",
+        ),
+        option(
+            "dev-only",
+            None,
+            "Only install the development dependencies. (<warning>Deprecated</warning>)",
+        ),
+        option(
+            "sync",
+            None,
+            "Synchronize the environment with the locked packages and the specified groups.",
+        ),
         option(
             "no-root", None, "Do not install the root package (the current project)."
         ),
@@ -66,10 +101,62 @@ dependencies and not including the current project, run the command with the
                 extras.append(extra)
 
         self._installer.extras(extras)
-        self._installer.dev_mode(not self.option("no-dev"))
-        self._installer.dev_only(self.option("dev-only"))
+
+        excluded_groups = []
+        included_groups = []
+        only_groups = []
+        if self.option("no-dev"):
+            self.line(
+                "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is deprecated,"
+                "use the `<fg=yellow;options=bold>--without dev</>` notation instead.</warning>"
+            )
+            excluded_groups.append("dev")
+        elif self.option("dev-only"):
+            self.line(
+                "<warning>The `<fg=yellow;options=bold>--dev-only</>` option is deprecated,"
+                "use the `<fg=yellow;options=bold>--only dev</>` notation instead.</warning>"
+            )
+            only_groups.append("dev")
+
+        excluded_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("without")
+                for group in groups.split(",")
+            ]
+        )
+        included_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("with")
+                for group in groups.split(",")
+            ]
+        )
+        only_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("only")
+                for group in groups.split(",")
+            ]
+        )
+
+        if self.option("default"):
+            only_groups.append("default")
+
+        with_synchronization = self.option("sync")
+        if self.option("remove-untracked"):
+            self.line(
+                "<warning>The `<fg=yellow;options=bold>--remove-untracked</>` option is deprecated,"
+                "use the `<fg=yellow;options=bold>--sync</>` option instead.</warning>"
+            )
+
+            with_synchronization = True
+
+        self._installer.only_groups(only_groups)
+        self._installer.without_groups(excluded_groups)
+        self._installer.with_groups(included_groups)
         self._installer.dry_run(self.option("dry-run"))
-        self._installer.remove_untracked(self.option("remove-untracked"))
+        self._installer.requires_synchronization(with_synchronization)
         self._installer.verbose(self._io.is_verbose())
 
         return_code = self._installer.run()
@@ -77,7 +164,7 @@ dependencies and not including the current project, run the command with the
         if return_code != 0:
             return return_code
 
-        if self.option("no-root") or self.option("dev-only"):
+        if self.option("no-root") or self.option("only"):
             return 0
 
         try:
