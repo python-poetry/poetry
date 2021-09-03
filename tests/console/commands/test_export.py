@@ -77,12 +77,12 @@ foo==1.0.0
 def test_export_exports_requirements_txt_file_locks_if_no_lock_file(tester, poetry):
     assert not poetry.locker.lock.exists()
     _export_requirements(tester, poetry)
-    assert "The lock file does not exist. Locking." in tester.io.fetch_output()
+    assert "The lock file does not exist. Locking." in tester.io.fetch_error()
 
 
 def test_export_exports_requirements_txt_uses_lock_file(tester, poetry, do_lock):
     _export_requirements(tester, poetry)
-    assert "The lock file does not exist. Locking." not in tester.io.fetch_output()
+    assert "The lock file does not exist. Locking." not in tester.io.fetch_error()
 
 
 def test_export_fails_on_invalid_format(tester, do_lock):
