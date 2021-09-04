@@ -439,9 +439,8 @@ class Installer:
         try:
             self.install(version)
         except subprocess.CalledProcessError as e:
-            print(
-                colorize("error", f"\nAn error has occurred: {e}\n{e.stderr.decode()}")
-            )
+            error_info = (e.stderr or e.stdout or b"No output available.").decode()
+            print(colorize("error", f"\nAn error has occurred: {e}\n{error_info}"))
 
             return e.returncode
 
