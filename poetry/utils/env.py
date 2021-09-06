@@ -1042,20 +1042,21 @@ class EnvManager:
         (e.g. plugin installation or self update).
         """
         prefix, base_prefix = Path(sys.prefix), Path(cls.get_base_prefix())
+        env = SystemEnv(prefix)
         if not naive:
             if prefix.joinpath("poetry_env").exists():
-                return GenericEnv(base_prefix)
-
-            from poetry.locations import data_dir
-
-            try:
-                prefix.relative_to(data_dir())
-            except ValueError:
-                pass
+                env = GenericEnv(base_prefix, child_env=env)
             else:
-                return GenericEnv(base_prefix)
+                from poetry.locations import data_dir
 
-        return SystemEnv(prefix)
+                try:
+                    prefix.relative_to(data_dir())
+                except ValueError:
+                    pass
+                else:
+                    env = GenericEnv(base_prefix, child_env=env)
+
+        return env
 
     @classmethod
     def get_base_prefix(cls) -> Path:
@@ -1093,29 +1094,10 @@ class Env:
         self._path = path
         self._bin_dir = self._path / bin_dir
 
-        try:
-            python_executables = sorted(
-                [
-                    p.name
-                    for p in self._bin_dir.glob("python*")
-                    if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-                ]
-            )
-            self._executable = python_executables[0].rstrip(".exe")
-        except IndexError:
-            self._executable = "python" + (".exe" if self._is_windows else "")
+        self._executable = "python"
+        self._pip_executable = "pip"
 
-        try:
-            pip_executables = sorted(
-                [
-                    p.name
-                    for p in self._bin_dir.glob("pip*")
-                    if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-                ]
-            )
-            self._pip_executable = pip_executables[0].rstrip(".exe")
-        except IndexError:
-            self._pip_executable = "pip" + (".exe" if self._is_windows else "")
+        self.find_executables()
 
         self._base = base or path
 
@@ -1159,6 +1141,39 @@ class Env:
             self._marker_env = self.get_marker_env()
 
         return self._marker_env
+
+    @property
+    def parent_env(self) -> "GenericEnv":
+        return GenericEnv(self.base, child_env=self)
+
+    def find_executables(self) -> None:
+        python_executables = sorted(
+            [
+                p.name
+                for p in self._bin_dir.glob("python*")
+                if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+            ]
+        )
+        if python_executables:
+            executable = python_executables[0]
+            if executable.endswith(".exe"):
+                executable = executable[:-4]
+
+            self._executable = executable
+
+        pip_executables = sorted(
+            [
+                p.name
+                for p in self._bin_dir.glob("pip*")
+                if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+            ]
+        )
+        if pip_executables:
+            pip_executable = pip_executables[0]
+            if pip_executable.endswith(".exe"):
+                pip_executable = pip_executable[:-4]
+
+            self._pip_executable = pip_executable
 
     def get_embedded_wheel(self, distribution):
         return get_embed_wheel(
@@ -1390,7 +1405,11 @@ class Env:
         """
         Return path to the given executable.
         """
-        bin_path = (self._bin_dir / bin).with_suffix(".exe" if self._is_windows else "")
+        if self._is_windows and not bin.endswith(".exe"):
+            bin_path = self._bin_dir / (bin + ".exe")
+        else:
+            bin_path = self._bin_dir / bin
+
         if not bin_path.exists():
             # On Windows, some executables can be in the base path
             # This is especially true when installing Python with
@@ -1401,7 +1420,11 @@ class Env:
             # that creates a fake virtual environment pointing to
             # a base Python install.
             if self._is_windows:
-                bin_path = (self._path / bin).with_suffix(".exe")
+                if not bin.endswith(".exe"):
+                    bin_path = self._bin_dir / (bin + ".exe")
+                else:
+                    bin_path = self._path / bin
+
                 if bin_path.exists():
                     return str(bin_path)
 
@@ -1649,6 +1672,70 @@ class VirtualEnv(Env):
 
 
 class GenericEnv(VirtualEnv):
+    def __init__(
+        self, path: Path, base: Optional[Path] = None, child_env: Optional["Env"] = None
+    ) -> None:
+        self._child_env = child_env
+
+        super().__init__(path, base=base)
+
+    def find_executables(self) -> None:
+        patterns = [("python*", "pip*")]
+
+        if self._child_env:
+            minor_version = "{}.{}".format(
+                self._child_env.version_info[0], self._child_env.version_info[1]
+            )
+            major_version = "{}".format(self._child_env.version_info[0])
+            patterns = [
+                ("python{}".format(minor_version), "pip{}".format(minor_version)),
+                ("python{}".format(major_version), "pip{}".format(major_version)),
+            ]
+
+        python_executable = None
+        pip_executable = None
+
+        for python_pattern, pip_pattern in patterns:
+            if python_executable and pip_executable:
+                break
+
+            if not python_executable:
+                python_executables = sorted(
+                    [
+                        p.name
+                        for p in self._bin_dir.glob(python_pattern)
+                        if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+                    ]
+                )
+
+                if python_executables:
+                    executable = python_executables[0]
+                    if executable.endswith(".exe"):
+                        executable = executable[:-4]
+
+                    python_executable = executable
+
+            if not pip_executable:
+                pip_executables = sorted(
+                    [
+                        p.name
+                        for p in self._bin_dir.glob(pip_pattern)
+                        if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
+                    ]
+                )
+                if pip_executables:
+                    pip_executable = pip_executables[0]
+                    if pip_executable.endswith(".exe"):
+                        pip_executable = pip_executable[:-4]
+
+                    pip_executable = pip_executable
+
+            if python_executable:
+                self._executable = python_executable
+
+            if pip_executable:
+                self._pip_executable = pip_executable
+
     def get_paths(self) -> Dict[str, str]:
         output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
 
