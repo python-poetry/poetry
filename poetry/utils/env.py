@@ -762,7 +762,7 @@ class EnvManager:
 
         self.remove_venv(venv)
 
-        return VirtualEnv(venv)
+        return VirtualEnv(venv, venv)
 
     def create_venv(
         self,
@@ -1740,6 +1740,21 @@ class GenericEnv(VirtualEnv):
         output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
 
         return json.loads(output)
+
+    def execute(self, bin: str, *args: str, **kwargs: Any) -> Optional[int]:
+        command = self.get_command_from_bin(bin) + list(args)
+        env = kwargs.pop("env", {k: v for k, v in os.environ.items()})
+
+        if not self._is_windows:
+            return os.execvpe(command[0], command, env=env)
+        else:
+            exe = subprocess.Popen([command[0]] + command[1:], env=env, **kwargs)
+            exe.communicate()
+
+            return exe.returncode
+
+    def _run(self, cmd: List[str], **kwargs: Any) -> Optional[int]:
+        return super(VirtualEnv, self)._run(cmd, **kwargs)
 
     def is_venv(self) -> bool:
         return self._path != self._base

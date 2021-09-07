@@ -33,8 +33,6 @@ class EnvInfoCommand(Command):
         self._display_complete_info(env)
 
     def _display_complete_info(self, env: "Env") -> None:
-        from poetry.utils.env import GenericEnv
-
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
         self.line("")
         self.line("<b>Virtualenv</b>")
@@ -60,7 +58,7 @@ class EnvInfoCommand(Command):
 
         self.line("")
 
-        system_env = GenericEnv(env.base)
+        system_env = env.parent_env
         self.line("<b>System</b>")
         self.line(
             "\n".join(
