@@ -186,7 +186,7 @@ poetry install --extras "mysql pgsql"
 poetry install -E mysql -E pgsql
 ```
 
-By default `poetry` will install your project's package everytime you run `install`:
+By default `poetry` will install your project's package every time you run `install`:
 
 ```bash
 $ poetry install

@@ -80,7 +80,7 @@ Keyring support is enabled using the [keyring library](https://pypi.org/project/
 Poetry will fallback to Pip style use of keyring so that backends like
 Microsoft's [artifacts-keyring](https://pypi.org/project/artifacts-keyring/) get a change to retrieve
 valid credentials. It will need to be properly installed into Poetry's virtualenv,
-preferrably by installing a plugin.
+preferably by installing a plugin.
 
 If you are letting Poetry manage your virtual environments you will want a virtualenv
 seeder installed in Poetry's virtualenv that installs the desired keyring backend

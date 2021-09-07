@@ -971,7 +971,7 @@ commands in project subdirectories.
 - Improved dependency resolution to avoid unnecessary operations.
 - Improved dependency resolution speed.
 - Improved CLI reactivity by deferring imports.
-- License classifer is not automatically added to classifers.
+- License classifier is not automatically added to classifiers.
 
 ### Fixed
 
@@ -1016,7 +1016,7 @@ commands in project subdirectories.
 
 ### Changed
 
-- Changed how wilcard constraints are handled.
+- Changed how wildcard constraints are handled.
 
 ### Fixed
 
