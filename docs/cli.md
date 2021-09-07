@@ -260,6 +260,12 @@ poetry will choose a suitable one based on the available package versions.
 poetry add requests pendulum
 ```
 
+You can specify the package as a developer package using the `--dev` flag, like so:
+
+```bash
+poetry add pylint --dev
+```
+
 You also can specify a constraint when adding a package, like so:
 
 ```bash
