@@ -670,20 +670,17 @@ class Executor:
             if not link.is_wheel:
                 archive = self._chef.prepare(archive)
 
-        if package.files:
-            archive_hash = (
-                "sha256:"
-                + FileDependency(
-                    package.name,
-                    Path(archive.path) if isinstance(archive, Link) else archive,
-                ).hash()
+        archive_path = Path(archive.path) if isinstance(archive, Link) else archive
+        for f in package.files:
+            algorithm, file_hash = f["hash"].split(":", 1)
+            archive_hash = FileDependency(package.name, archive_path).hash(algorithm)
+            if archive_hash == file_hash:
+                self._hashes[package.name] = archive_hash
+                break
+        else:
+            raise RuntimeError(
+                f"Invalid hash for {package} using archive {archive_path.name}"
             )
-            if archive_hash not in {f["hash"] for f in package.files}:
-                raise RuntimeError(
-                    f"Invalid hash for {package} using archive {archive.name}"
-                )
-
-            self._hashes[package.name] = archive_hash
 
         return archive
 

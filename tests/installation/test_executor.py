@@ -465,3 +465,50 @@ def test_executor_should_write_pep610_url_references_for_git(
             "url": package.source_url,
         },
     )
+
+
+@pytest.mark.parametrize(
+    "file_hash, is_valid",
+    [
+        (
+            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            True,
+        ),
+        ("md5:15507846fd4299596661d0197bfb4f90", True),
+        (
+            "sha256:687a781a9a89d965a2982a03c660642365d9b45c8b8ba2d8bf7d91cf5ca4af65",
+            False,
+        ),
+    ],
+)
+def test_executor_verify_downloaded_file_hash(
+    tmp_venv, pool, config, io, mock_file_downloads, file_hash, is_valid
+):
+    package = Package(
+        "demo",
+        "0.1.0",
+        source_type="url",
+        source_url="https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
+    )
+    package.files.append(
+        {
+            "hash": file_hash,
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+        }
+    )
+
+    err_line = (
+        "Invalid hash for demo (0.1.0 https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl) "
+        "using archive demo-0.1.0-py2.py3-none-any.whl"
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    rc = executor.execute([Install(package)])
+    output = [s.strip() for s in io.fetch_output().splitlines()]
+
+    if is_valid:
+        assert err_line not in output
+        assert rc == 0
+    else:
+        assert err_line in output
+        assert rc == 1
