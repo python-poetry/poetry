@@ -678,9 +678,10 @@ class Executor:
                 self._hashes[package.name] = archive_hash
                 break
         else:
-            raise RuntimeError(
-                f"Invalid hash for {package} using archive {archive_path.name}"
-            )
+            if package.files:
+                raise RuntimeError(
+                    f"Invalid hash for {package} using archive {archive_path.name}"
+                )
 
         return archive
 
