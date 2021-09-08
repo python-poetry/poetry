@@ -9,6 +9,7 @@ from packaging.tags import Tag
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.repositories.pool import Pool
+from poetry.repositories.repository import Repository
 from poetry.utils.env import Env
 from poetry.utils.patterns import wheel_file_re
 
@@ -79,7 +80,7 @@ class Chooser:
 
         return chosen
 
-    def _get_links(self, package: Package) -> List[Link]:
+    def get_repository(self, package: Package) -> Repository:
         if not package.source_type:
             if not self._pool.has_repository("pypi"):
                 repository = self._pool.repositories[0]
@@ -88,6 +89,10 @@ class Chooser:
         else:
             repository = self._pool.repository(package.source_reference)
 
+        return repository
+
+    def _get_links(self, package: Package) -> List[Link]:
+        repository = self.get_repository(package)
         links = repository.find_links_for_package(package)
 
         hashes = [f["hash"] for f in package.files]

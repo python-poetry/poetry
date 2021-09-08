@@ -688,7 +688,9 @@ class Executor:
         return archive
 
     def _download_archive(self, operation: Union[Install, Update], link: Link) -> Path:
-        response = self._authenticator.request(
+        repository = self._chooser.get_repository(operation.package)
+        authenticator = getattr(repository, "_authenticator", self._authenticator)
+        response = authenticator.request(
             "get", link.url, stream=True, io=self._sections.get(id(operation), self._io)
         )
         wheel_size = response.headers.get("content-length")

@@ -21,7 +21,10 @@ from poetry.installation.operations import Uninstall
 from poetry.installation.operations import Update
 from poetry.repositories.pool import Pool
 from poetry.utils.env import MockEnv
-from tests.repositories.test_pypi_repository import MockRepository
+from tests.repositories.test_legacy_repository import (
+    MockRepository as MockLegacyRepository,
+)
+from tests.repositories.test_pypi_repository import MockRepository as MockPypiRepository
 
 
 @pytest.fixture
@@ -62,7 +65,7 @@ def io_not_decorated():
 @pytest.fixture()
 def pool():
     pool = Pool()
-    pool.add_repository(MockRepository())
+    pool.add_repository(MockPypiRepository())
 
     return pool
 
@@ -429,6 +432,7 @@ def test_executor_should_write_pep610_url_references_for_urls(
         "demo",
         "0.1.0",
         source_type="url",
+        source_reference="pypi",
         source_url="https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
     )
 
@@ -465,3 +469,31 @@ def test_executor_should_write_pep610_url_references_for_git(
             "url": package.source_url,
         },
     )
+
+
+@pytest.mark.parametrize("source_reference", ["pypi", "legacy"])
+def test_executor_should_use_repository_authenticator_when_available(
+    tmp_venv, pool, config, io, mock_file_downloads, http, source_reference
+):
+    legacy_repo = MockLegacyRepository()
+    legacy_repo._authenticator.session.headers["X-Sentinel"] = "test"
+    pool.add_repository(legacy_repo)
+
+    package = Package(
+        "demo",
+        "0.1.0",
+        source_type="url",
+        source_reference=source_reference,
+        source_url="https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
+    )
+
+    executor = Executor(tmp_venv, pool, config, io)
+    rc = executor.execute([Install(package)])
+    assert rc == 0
+
+    req = http.last_request()
+
+    if source_reference == legacy_repo.name:
+        assert req.headers["X-Sentinel"] == "test"
+    else:
+        assert "X-Sentinel" not in req.headers

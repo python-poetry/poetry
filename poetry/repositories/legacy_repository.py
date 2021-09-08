@@ -28,7 +28,6 @@ from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
 from poetry.locations import REPOSITORY_CACHE_DIR
 from poetry.utils.helpers import canonicalize_name
-from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
 
@@ -444,6 +443,3 @@ class LegacyRepository(PyPiRepository):
             )
 
         return Page(response.url, response.content, response.headers)
-
-    def _download(self, url, dest):  # type: (str, str) -> None
-        return download_file(url, dest, session=self.session)
