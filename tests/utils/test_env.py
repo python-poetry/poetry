@@ -1001,7 +1001,7 @@ def test_env_finds_the_correct_executables(tmp_dir, manager):
     venv = VirtualEnv(venv_path)
 
     assert Path(venv.python).name == expected_executable
-    assert Path(venv.pip).name == expected_pip_executable
+    assert Path(venv.pip).name.startswith(expected_pip_executable.split(".")[0])
 
 
 def test_env_finds_the_correct_executables_for_generic_env(tmp_dir, manager):
@@ -1020,6 +1020,10 @@ def test_env_finds_the_correct_executables_for_generic_env(tmp_dir, manager):
     expected_pip_executable = "pip{}.{}{}".format(
         sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
     )
+
+    if WINDOWS:
+        expected_executable = "python.exe"
+        expected_pip_executable = "pip.exe"
 
     assert Path(venv.python).name == expected_executable
     assert Path(venv.pip).name == expected_pip_executable
@@ -1077,6 +1081,12 @@ def test_env_finds_fallback_executables_for_generic_env(tmp_dir, manager):
         and venv._bin_dir.joinpath(default_pip_executable).exists()
     ):
         venv._bin_dir.joinpath(expected_pip_executable).unlink()
+        expected_pip_executable = default_pip_executable
+
+    if not venv._bin_dir.joinpath(expected_executable).exists():
+        expected_executable = default_executable
+
+    if not venv._bin_dir.joinpath(expected_pip_executable).exists():
         expected_pip_executable = default_pip_executable
 
     venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))

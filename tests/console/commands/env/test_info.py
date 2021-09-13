@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from poetry.utils._compat import WINDOWS
 from poetry.utils.env import MockEnv
 
 
@@ -45,7 +44,7 @@ Executable: {base_executable}
         base_prefix=str(Path("/base/prefix")),
         base_version=".".join(str(v) for v in sys.version_info[:3]),
         executable=sys.executable,
-        base_executable="python" + (".exe" if WINDOWS else ""),
+        base_executable="python",
     )
 
     assert expected == tester.io.fetch_output()
