@@ -464,8 +464,7 @@ class PackageInfo:
             dest_dir.mkdir()
 
             try:
-                venv.run(
-                    "python",
+                venv.run_python(
                     "-m",
                     "pip",
                     "install",
@@ -473,8 +472,7 @@ class PackageInfo:
                     "--ignore-installed",
                     *PEP517_META_BUILD_DEPS
                 )
-                venv.run(
-                    "python",
+                venv.run_python(
                     "-",
                     input_=PEP517_META_BUILD.format(
                         source=path.as_posix(), dest=dest_dir.as_posix()
@@ -496,7 +494,7 @@ class PackageInfo:
                 cwd = Path.cwd()
                 os.chdir(path.as_posix())
                 try:
-                    venv.run("python", "setup.py", "egg_info")
+                    venv.run_python("setup.py", "egg_info")
                     return cls.from_metadata(path)
                 except EnvCommandError as fbe:
                     raise PackageInfoError(
