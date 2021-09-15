@@ -82,7 +82,7 @@ def safe_rmtree(path: str) -> None:
 
 
 def merge_dicts(d1: Dict, d2: Dict) -> None:
-    for k, v in d2.items():
+    for k in d2.keys():
         if k in d1 and isinstance(d1[k], dict) and isinstance(d2[k], Mapping):
             merge_dicts(d1[k], d2[k])
         else:

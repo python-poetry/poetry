@@ -618,8 +618,8 @@ class Provider:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
             markers = []
-            for constraint, _deps in by_constraint.items():
-                markers.append(_deps[0].marker)
+            for deps in by_constraint.values():
+                markers.append(deps[0].marker)
 
             _deps = [_dep[0] for _dep in by_constraint.values()]
             self.debug(

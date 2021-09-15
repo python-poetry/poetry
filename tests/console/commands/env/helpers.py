@@ -5,11 +5,14 @@ from typing import Union
 from poetry.core.semver.version import Version
 
 
-def build_venv(path: Union[Path, str], **_: Any) -> ():
+VERSION_3_7_1 = Version.parse("3.7.1")
+
+
+def build_venv(path: Union[Path, str], **_: Any) -> None:
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def check_output_wrapper(version=Version.parse("3.7.1")):
+def check_output_wrapper(version=VERSION_3_7_1):
     def check_output(cmd, *_, **__):
         if "sys.version_info[:3]" in cmd:
             return version.text

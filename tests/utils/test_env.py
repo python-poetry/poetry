@@ -120,11 +120,14 @@ def test_env_get_venv_with_venv_folder_present(
         assert venv.path == in_project_venv_dir
 
 
-def build_venv(path: Union[Path, str], **__: Any) -> ():
+def build_venv(path: Union[Path, str], **__: Any) -> None:
     os.mkdir(str(path))
 
 
-def check_output_wrapper(version=Version.parse("3.7.1")):
+VERSION_3_7_1 = Version.parse("3.7.1")
+
+
+def check_output_wrapper(version=VERSION_3_7_1):
     def check_output(cmd, *args, **kwargs):
         if "sys.version_info[:3]" in cmd:
             return version.text

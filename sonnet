@@ -159,7 +159,7 @@ class MakeReleaseCommand(Command):
                         fileobj=gz,
                         format=tarfile.PAX_FORMAT,
                     ) as tar:
-                        for root, dirs, files in os.walk(tmp_dir):
+                        for root, _dirs, files in os.walk(tmp_dir):
                             for f in files:
                                 if f.endswith(".pyc"):
                                     continue
