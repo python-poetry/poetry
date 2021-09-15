@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from typing import Callable
 from typing import Dict
 from typing import FrozenSet
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -65,7 +66,7 @@ class Solver:
         return self._provider
 
     @contextmanager
-    def use_environment(self, env: Env) -> None:
+    def use_environment(self, env: Env) -> Iterator[None]:
         with self.provider.use_environment(env):
             yield
 

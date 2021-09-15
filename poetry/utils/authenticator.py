@@ -148,7 +148,7 @@ class Authenticator:
         else:
             url = self._config.get(f"repositories.{name}.url")
             if not url:
-                return
+                return None
 
         parsed_url = urllib.parse.urlsplit(url)
 
