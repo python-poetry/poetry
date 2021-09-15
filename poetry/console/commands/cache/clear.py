@@ -52,7 +52,7 @@ class CacheClearCommand(Command):
 
             # Calculate number of entries
             entries_count = 0
-            for path, dirs, files in os.walk(str(cache_dir)):
+            for _path, _dirs, files in os.walk(str(cache_dir)):
                 entries_count += len(files)
 
             delete = self.confirm(

@@ -1487,8 +1487,8 @@ class SystemEnv(Env):
             paths[key] = getattr(obj, f"install_{key}")
 
         if site.check_enableusersite() and hasattr(obj, "install_usersite"):
-            paths["usersite"] = getattr(obj, "install_usersite")
-            paths["userbase"] = getattr(obj, "install_userbase")
+            paths["usersite"] = obj.install_usersite
+            paths["userbase"] = obj.install_userbase
 
         return paths
 
