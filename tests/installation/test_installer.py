@@ -89,7 +89,7 @@ class CustomInstalledRepository(InstalledRepository):
 
 class Locker(BaseLocker):
     def __init__(self):
-        self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
+        self._lock = TOMLFile(Path(__file__).resolve().parents[2].joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
