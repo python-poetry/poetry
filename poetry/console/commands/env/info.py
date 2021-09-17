@@ -44,6 +44,9 @@ class EnvInfoCommand(Command):
             "<info>Path</info>:           <comment>{}</>".format(
                 env.path if env.is_venv() else "NA"
             ),
+            "<info>Executable</info>:     <comment>{}</>".format(
+                env.python if env.is_venv() else "NA"
+            ),
         ]
         if env.is_venv():
             listing.append(
@@ -55,13 +58,18 @@ class EnvInfoCommand(Command):
 
         self.line("")
 
+        system_env = env.parent_env
         self.line("<b>System</b>")
         self.line(
             "\n".join(
                 [
-                    "<info>Platform</info>: <comment>{}</>".format(env.platform),
-                    "<info>OS</info>:       <comment>{}</>".format(env.os),
-                    "<info>Python</info>:   <comment>{}</>".format(env.base),
+                    "<info>Platform</info>:   <comment>{}</>".format(env.platform),
+                    "<info>OS</info>:         <comment>{}</>".format(env.os),
+                    "<info>Python</info>:     <comment>{}</>".format(
+                        ".".join(str(v) for v in system_env.version_info[:3])
+                    ),
+                    "<info>Path</info>:       <comment>{}</>".format(system_env.path),
+                    "<info>Executable</info>: <comment>{}</>".format(system_env.python),
                 ]
             )
         )

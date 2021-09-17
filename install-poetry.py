@@ -528,6 +528,10 @@ class Installer:
 
             virtualenv.cli_run([str(env_path), "--clear"])
 
+        # We add a special file so that Poetry can detect
+        # its own virtual environment
+        env_path.joinpath("poetry_env").touch()
+
         return env_path
 
     def make_bin(self, version: str) -> None:

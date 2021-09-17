@@ -15,9 +15,11 @@ from cleo.io.null_io import NullIO
 from poetry.core.semver.version import Version
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
+from poetry.utils._compat import WINDOWS
 from poetry.utils.env import GET_BASE_PREFIX
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import EnvManager
+from poetry.utils.env import GenericEnv
 from poetry.utils.env import NoCompatiblePythonVersionFound
 from poetry.utils.env import SystemEnv
 from poetry.utils.env import VirtualEnv
@@ -964,3 +966,130 @@ def test_env_system_packages(tmp_path, config):
         assert not venv_path.joinpath(
             "lib", "python2.7", "no-global-site-packages.txt"
         ).exists()
+
+
+def test_env_finds_the_correct_executables(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    manager.build_venv(str(venv_path), with_pip=True)
+    venv = VirtualEnv(venv_path)
+
+    default_executable = expected_executable = "python" + (".exe" if WINDOWS else "")
+    default_pip_executable = expected_pip_executable = "pip" + (
+        ".exe" if WINDOWS else ""
+    )
+    major_executable = "python{}{}".format(
+        sys.version_info[0], ".exe" if WINDOWS else ""
+    )
+    major_pip_executable = "pip{}{}".format(
+        sys.version_info[0], ".exe" if WINDOWS else ""
+    )
+
+    if (
+        venv._bin_dir.joinpath(default_executable).exists()
+        and venv._bin_dir.joinpath(major_executable).exists()
+    ):
+        venv._bin_dir.joinpath(default_executable).unlink()
+        expected_executable = major_executable
+
+    if (
+        venv._bin_dir.joinpath(default_pip_executable).exists()
+        and venv._bin_dir.joinpath(major_pip_executable).exists()
+    ):
+        venv._bin_dir.joinpath(default_pip_executable).unlink()
+        expected_pip_executable = major_pip_executable
+
+    venv = VirtualEnv(venv_path)
+
+    assert Path(venv.python).name == expected_executable
+    assert Path(venv.pip).name.startswith(expected_pip_executable.split(".")[0])
+
+
+def test_env_finds_the_correct_executables_for_generic_env(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    child_venv_path = Path(tmp_dir) / "Child Virtual Env"
+    manager.build_venv(str(venv_path), with_pip=True)
+    parent_venv = VirtualEnv(venv_path)
+    manager.build_venv(
+        str(child_venv_path), executable=parent_venv.python, with_pip=True
+    )
+    venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
+
+    expected_executable = "python{}.{}{}".format(
+        sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
+    )
+    expected_pip_executable = "pip{}.{}{}".format(
+        sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
+    )
+
+    if WINDOWS:
+        expected_executable = "python.exe"
+        expected_pip_executable = "pip.exe"
+
+    assert Path(venv.python).name == expected_executable
+    assert Path(venv.pip).name == expected_pip_executable
+
+
+def test_env_finds_fallback_executables_for_generic_env(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    child_venv_path = Path(tmp_dir) / "Child Virtual Env"
+    manager.build_venv(str(venv_path), with_pip=True)
+    parent_venv = VirtualEnv(venv_path)
+    manager.build_venv(
+        str(child_venv_path), executable=parent_venv.python, with_pip=True
+    )
+    venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
+
+    default_executable = "python" + (".exe" if WINDOWS else "")
+    major_executable = "python{}{}".format(
+        sys.version_info[0], ".exe" if WINDOWS else ""
+    )
+    minor_executable = "python{}.{}{}".format(
+        sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
+    )
+    expected_executable = minor_executable
+    if (
+        venv._bin_dir.joinpath(expected_executable).exists()
+        and venv._bin_dir.joinpath(major_executable).exists()
+    ):
+        venv._bin_dir.joinpath(expected_executable).unlink()
+        expected_executable = major_executable
+
+    if (
+        venv._bin_dir.joinpath(expected_executable).exists()
+        and venv._bin_dir.joinpath(default_executable).exists()
+    ):
+        venv._bin_dir.joinpath(expected_executable).unlink()
+        expected_executable = default_executable
+
+    default_pip_executable = "pip" + (".exe" if WINDOWS else "")
+    major_pip_executable = "pip{}{}".format(
+        sys.version_info[0], ".exe" if WINDOWS else ""
+    )
+    minor_pip_executable = "pip{}.{}{}".format(
+        sys.version_info[0], sys.version_info[1], ".exe" if WINDOWS else ""
+    )
+    expected_pip_executable = minor_pip_executable
+    if (
+        venv._bin_dir.joinpath(expected_pip_executable).exists()
+        and venv._bin_dir.joinpath(major_pip_executable).exists()
+    ):
+        venv._bin_dir.joinpath(expected_pip_executable).unlink()
+        expected_pip_executable = major_pip_executable
+
+    if (
+        venv._bin_dir.joinpath(expected_pip_executable).exists()
+        and venv._bin_dir.joinpath(default_pip_executable).exists()
+    ):
+        venv._bin_dir.joinpath(expected_pip_executable).unlink()
+        expected_pip_executable = default_pip_executable
+
+    if not venv._bin_dir.joinpath(expected_executable).exists():
+        expected_executable = default_executable
+
+    if not venv._bin_dir.joinpath(expected_pip_executable).exists():
+        expected_pip_executable = default_pip_executable
+
+    venv = GenericEnv(parent_venv.path, child_env=VirtualEnv(child_venv_path))
+
+    assert Path(venv.python).name == expected_executable
+    assert Path(venv.pip).name == expected_pip_executable
