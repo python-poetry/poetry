@@ -453,6 +453,17 @@ class NoCompatiblePythonVersionFound(EnvError):
         super().__init__(message)
 
 
+class InvalidCurrentPythonVersionError(EnvError):
+    def __init__(self, expected: str, given: str) -> None:
+        message = (
+            f"Current Python version ({given}) "
+            f"is not allowed by the project ({expected}).\n"
+            'Please change python executable via the "env use" command.'
+        )
+
+        super().__init__(message)
+
+
 class EnvManager:
     """
     Environments manager
@@ -812,6 +823,13 @@ class EnvManager:
 
         if env.is_venv() and not force:
             # Already inside a virtualenv.
+            current_python = Version.parse(
+                ".".join(str(c) for c in env.version_info[:3])
+            )
+            if not self._poetry.package.python_constraint.allows(current_python):
+                raise InvalidCurrentPythonVersionError(
+                    self._poetry.package.python_versions, current_python
+                )
             return env
 
         create_venv = self._poetry.config.get("virtualenvs.create")
