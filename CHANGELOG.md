@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.1.9] - 2021-09-18
+
+### Fixed
+
+- Fixed a security issue where file hashes were not checked prior to installation. ([#4420](https://github.com/python-poetry/poetry/pull/4420), [#4444](https://github.com/python-poetry/poetry/pull/4444), [python-poetry/poetry-core#193](https://github.com/python-poetry/poetry-core/pull/193))
+- Fixed the detection of the system environment when the setting `virtualenvs.create` is deactivated. ([#4507](https://github.com/python-poetry/poetry/pull/4507))
+- Fixed an issue where unsafe parameters could be passed to `git` commands. ([python-poetry/poetry-core#203](https://github.com/python-poetry/poetry-core/pull/203))
+- Fixed an issue where the wrong `git` executable could be used on Windows. ([python-poetry/poetry-core#205](https://github.com/python-poetry/poetry-core/pull/205))
+
+
 ## [1.1.8] - 2021-08-19
 
 ### Fixed
@@ -1134,7 +1144,8 @@ Initial release
 
 
 
-[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.8...1.1
+[Unreleased]: https://github.com/python-poetry/poetry/compare/1.1.9...1.1
+[1.1.9]: https://github.com/python-poetry/poetry/releases/tag/1.1.9
 [1.1.8]: https://github.com/python-poetry/poetry/releases/tag/1.1.8
 [1.1.7]: https://github.com/python-poetry/poetry/releases/tag/1.1.7
 [1.1.6]: https://github.com/python-poetry/poetry/releases/tag/1.1.6
