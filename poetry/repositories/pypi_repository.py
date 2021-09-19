@@ -341,7 +341,7 @@ class PyPiRepository(RemoteRepository):
         # Checking wheels first as they are more likely to hold
         # the necessary information
         if "bdist_wheel" in urls:
-            # Check fo a universal wheel
+            # Check for a universal wheel
             wheels = urls["bdist_wheel"]
 
             universal_wheel = None

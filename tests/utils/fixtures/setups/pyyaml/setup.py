@@ -12,7 +12,7 @@ supports standard YAML tags and provides Python-specific tags that
 allow to represent an arbitrary Python object.
 
 PyYAML is applicable for a broad range of tasks from complex
-configuration files to object serialization and persistance."""
+configuration files to object serialization and persistence."""
 AUTHOR = "Kirill Simonov"
 AUTHOR_EMAIL = "xi@resolvent.net"
 LICENSE = "MIT"
