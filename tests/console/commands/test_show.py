@@ -1419,3 +1419,78 @@ cachy 0.2.0
 """
 
     assert expected == tester.io.fetch_output()
+
+
+def test_show_required_by_deps(tester, poetry, installed):
+    poetry.package.add_dependency(Factory.create_dependency("cachy", "^0.2.0"))
+    poetry.package.add_dependency(Factory.create_dependency("pendulum", "2.0.0"))
+
+    cachy2 = get_package("cachy", "0.2.0")
+    cachy2.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
+
+    pendulum = get_package("pendulum", "2.0.0")
+    pendulum.add_dependency(Factory.create_dependency("CachY", "^0.2.0"))
+
+    installed.add_package(cachy2)
+    installed.add_package(pendulum)
+
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "cachy",
+                    "version": "0.2.0",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"msgpack-python": ">=0.5 <0.6"},
+                },
+                {
+                    "name": "pendulum",
+                    "version": "2.0.0",
+                    "description": "Pendulum package",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                    "dependencies": {"cachy": ">=0.2.0 <0.3.0"},
+                },
+                {
+                    "name": "msgpack-python",
+                    "version": "0.5.1",
+                    "description": "",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"cachy": [], "pendulum": [], "msgpack-python": []},
+            },
+        }
+    )
+
+    tester.execute("cachy")
+
+    expected = """\
+ name         : cachy
+ version      : 0.2.0
+ description  :
+
+dependencies
+ - msgpack-python >=0.5 <0.6
+
+required by
+ - pendulum >=0.2.0 <0.3.0
+""".splitlines()
+    actual = [line.rstrip() for line in tester.io.fetch_output().splitlines()]
+    assert actual == expected
