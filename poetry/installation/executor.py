@@ -671,19 +671,19 @@ class Executor:
                 archive = self._chef.prepare(archive)
 
         if package.files:
-            archive_hash = (
-                "sha256:"
-                + FileDependency(
-                    package.name,
-                    Path(archive.path) if isinstance(archive, Link) else archive,
-                ).hash()
+            file_dependency = FileDependency(
+                package.name,
+                Path(archive.path) if isinstance(archive, Link) else archive,
             )
-            if archive_hash not in {f["hash"] for f in package.files}:
-                raise RuntimeError(
-                    f"Invalid hash for {package} using archive {archive.name}"
-                )
 
-            self._hashes[package.name] = archive_hash
+            for file in package.files:
+                hash_name, expected_digest = file['hash'].split(":")
+                if file_dependency.hash(hash_name) != expected_digest:
+                    raise RuntimeError(
+                        f"Invalid hash for {package} using archive {archive.name}"
+                    )
+
+            self._hashes[package.name] = file_dependency.hash()
 
         return archive
 
