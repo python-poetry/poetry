@@ -119,7 +119,7 @@ class Executor:
         return self
 
     def pip_install(
-        self, req: Union[Path, str], upgrade: bool = False, editable: bool = False
+        self, req: Union[Path, Link], upgrade: bool = False, editable: bool = False
     ) -> int:
         func = pip_install
         if editable:
@@ -504,7 +504,7 @@ class Executor:
             )
         )
         self._write(operation, message)
-        return self.pip_install(str(archive), upgrade=operation.job_type == "update")
+        return self.pip_install(archive, upgrade=operation.job_type == "update")
 
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
