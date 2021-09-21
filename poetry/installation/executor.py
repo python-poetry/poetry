@@ -608,16 +608,30 @@ class Executor(object):
                 archive = self._chef.prepare(archive)
 
         if package.files:
-            archive_hash = (
-                "sha256:"
-                + FileDependency(
-                    package.name,
-                    Path(archive.path) if isinstance(archive, Link) else archive,
-                ).hash()
-            )
-            if archive_hash not in {f["hash"] for f in package.files}:
+            hashes = {f["hash"] for f in package.files}
+            hash_types = {h.split(":")[0] for h in hashes}
+            archive_hashes = set()
+            for hash_type in hash_types:
+                archive_hashes.add(
+                    "{}:{}".format(
+                        hash_type,
+                        FileDependency(
+                            package.name,
+                            Path(archive.path)
+                            if isinstance(archive, Link)
+                            else archive,
+                        ).hash(hash_type),
+                    )
+                )
+
+            if archive_hashes.isdisjoint(hashes):
                 raise RuntimeError(
-                    "Invalid hash for {} using archive {}".format(package, archive.name)
+                    "Invalid hashes ({}) for {} using archive {}. Expected one of {}.".format(
+                        ", ".join(sorted(archive_hashes)),
+                        package,
+                        archive.name,
+                        ", ".join(sorted(hashes)),
+                    )
                 )
 
         return archive
