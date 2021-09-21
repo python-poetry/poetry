@@ -15,7 +15,7 @@ if [ "$OSTYPE" == "linux-gnu" ]; then
   POETRY="$PYTHON $HOME/.poetry/bin/poetry"
   RUNTIMES[5]="${PYTHON39:+-P "3.9:$PYTHON39"}"
 else
-  $PYTHON -m pip install poetry -U --pre
+  $PYTHON -m pip install poetry -U
   POETRY="$PYTHON -m poetry"
 fi
 
