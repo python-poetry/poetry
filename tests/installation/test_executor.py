@@ -11,6 +11,7 @@ from clikit.io.buffered_io import BufferedIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -54,6 +55,106 @@ def mock_file_downloads(http):
     http.register_uri(
         http.GET, re.compile("^https://files.pythonhosted.org/.*$"), body=callback,
     )
+
+
+try:
+    from hashlib import algorithms_guaranteed as ALGORITHMS_GUARANTEED
+except ImportError:
+    ALGORITHMS_GUARANTEED = "md5,sha1,sha224,sha256,sha384,sha512".split(",")
+
+
+@pytest.mark.parametrize(
+    "hash_name,expected",
+    [
+        (hash_name, value)
+        for hash_name, value in [
+            ("sha224", "1c6ac3b371ed8af9c8db514f237c4c4696eca78c4766eb7a392c6205"),
+            (
+                "sha3_512",
+                "6da91528a686799b0a8d3a582b5da50d0ae75eb45adf1f8f4b96b84279a777dc8fdfa4309972f859dbb343d6e69af6f367377a6fac75e1941dfc897fae6a9ff9",
+            ),
+            (
+                "blake2s",
+                "4508e2ff4a93b3ca4e0cd4b61348ddd2066a740c0a7c44692ad30eed3128ce12",
+            ),
+            (
+                "sha3_384",
+                "2a0e744f2d15938e35bf1d0350edf8f03f9dc507bee74dc9823626d72210c4d0df4099fc9ba70133f7f72d6e7d2ea598",
+            ),
+            (
+                "blake2b",
+                "211843c91d73a96e584bddf3e1b9e6915903a98daf36b181643b20590af1fe3a8cc62856e42126c34f89f293cf836c41e27af29a97678744ef9f1a56f10f89ad",
+            ),
+            (
+                "sha256",
+                "70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+            ),
+            (
+                "sha512",
+                "44cfa6b8696e5008c1c4dfe32c52a8b6511c261d8f3a25882366c0718eb42a17da5e4b9196623597661871be65c48e613d8f5c50a5c5c827e0efbf8b612fe5be",
+            ),
+            (
+                "sha384",
+                "55daa98dcf37a699df770a9c94c4ee50dd155137152c018fcbaa607d879e24b50abb6fd19d7a4f8b5ef0ae7ecf0359dc",
+            ),
+            ("sha3_224", "757f3dfe2159e25e3994e8935604448d25d11bf99b9730663ca85cc9"),
+            ("sha1", "24ad37bd0efbb1e66ed888a3429ad13a717b2ec4"),
+            (
+                "sha3_256",
+                "a5acd9ee8f486b3d6b4a7c4b9f65ec0915028c91997ff0a55cd5fcc4322a5da8",
+            ),
+        ]
+        if hash_name in ALGORITHMS_GUARANTEED
+    ],
+)
+def test_download_link_checks_hash(
+    config, pool, io, tmp_dir, mock_file_downloads, hash_name, expected
+):
+    config = Config()
+    config.merge({"cache-dir": tmp_dir})
+
+    env = MockEnv(path=Path(tmp_dir))
+
+    executor = Executor(env, pool, config, io)
+
+    sha_package = Package(name="demo", version="0.1.0",)
+
+    sha_package.files.append(
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "{}:{}".format(hash_name, expected),
+        }
+    )
+
+    install_operation = Install(sha_package)
+    link = Link("https://files.pythonhosted.org/simple/demo-0.1.0-py2.py3-none-any.whl")
+
+    # Test that this works without exception
+    executor._download_link(install_operation, link)
+
+    # Then spoil the hash and check that it fails
+    def ruin_hash(hash):
+        return hash[1:] + hash[0]
+
+    sha_package = Package(name="demo", version="0.1.0",)
+
+    sha_package.files.append(
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "{}:{}".format(hash_name, ruin_hash(expected)),
+        }
+    )
+
+    install_operation = Install(sha_package)
+    link = Link("https://files.pythonhosted.org/simple/demo-0.1.0-py2.py3-none-any.whl")
+
+    with pytest.raises(
+        RuntimeError,
+        match="Invalid {} hash for demo \\(0.1.0\\) using file demo-0.1.0-py2.py3-none-any.whl".format(
+            hash_name
+        ),
+    ):
+        executor._download_link(install_operation, link)
 
 
 def test_execute_executes_a_batch_of_operations(
