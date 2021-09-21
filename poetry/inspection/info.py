@@ -63,7 +63,7 @@ class PackageInfo:
         platform=None,  # type: Optional[str]
         requires_dist=None,  # type: Optional[List[str]]
         requires_python=None,  # type: Optional[str]
-        files=None,  # type: Optional[List[str]]
+        files=None,  # type: Optional[List[Dict[str, str]]]
         cache_version=None,  # type: Optional[str]
     ):
         self.name = name
