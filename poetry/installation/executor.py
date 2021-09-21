@@ -608,17 +608,20 @@ class Executor(object):
                 archive = self._chef.prepare(archive)
 
         if package.files:
-            archive_hash = (
-                "sha256:"
-                + FileDependency(
-                    package.name,
-                    Path(archive.path) if isinstance(archive, Link) else archive,
-                ).hash()
+            dep = FileDependency(
+                package.name,
+                Path(archive.path) if isinstance(archive, Link) else archive,
             )
-            if archive_hash not in {f["hash"] for f in package.files}:
-                raise RuntimeError(
-                    "Invalid hash for {} using archive {}".format(package, archive.name)
-                )
+            for file in package.files:
+                hash_name, expected_digest = file["hash"].split(":")
+                hsh = dep.hash(hash_name)
+                if hsh != expected_digest:
+                    print(hsh)
+                    raise RuntimeError(
+                        "Invalid {} hash for {} using file {}\n{}".format(
+                            hash_name, package, link.filename, hsh
+                        )
+                    )
 
         return archive
 
