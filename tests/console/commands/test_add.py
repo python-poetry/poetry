@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import sys
 
 from pathlib import Path
 
 import pytest
 
-from poetry.core.semver import Version
+from poetry.core.semver.version import Version
 from poetry.repositories.legacy_repository import LegacyRepository
 from tests.helpers import get_dependency
 from tests.helpers import get_package
@@ -51,6 +48,24 @@ Package operations: 1 install, 0 updates, 0 removals
 
     assert "cachy" in content["dependencies"]
     assert content["dependencies"]["cachy"] == "^0.2.0"
+
+
+def test_add_no_constraint_editable_error(app, repo, tester):
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("-e cachy")
+
+    expected = """
+Failed to add packages. Only vcs/path dependencies support editable installs. cachy is neither.
+
+No changes were applied.
+"""
+    assert 1 == tester.status_code
+    assert expected == tester.io.fetch_error()
+    assert 0 == tester.command.installer.executor.installations_count
+    assert content == app.poetry.file.read()["tool"]["poetry"]
 
 
 def test_add_equal_constraint(app, repo, tester):
@@ -101,7 +116,7 @@ def test_add_constraint_with_extras(app, repo, tester):
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy1.requires = [msgpack_dep]
+    cachy1.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(cachy1)
@@ -129,7 +144,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_constraint_dependencies(app, repo, tester):
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
-    cachy2.requires = [msgpack_dep]
+    cachy2.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
@@ -246,13 +261,15 @@ Package operations: 4 installs, 0 updates, 0 removals
     }
 
 
-def test_add_git_ssh_constraint(app, repo, tester, tmp_venv):
+@pytest.mark.parametrize("editable", [False, True])
+def test_add_git_ssh_constraint(editable, app, repo, tester, tmp_venv):
     tester.command.set_env(tmp_venv)
 
     repo.add_package(get_package("pendulum", "1.4.4"))
     repo.add_package(get_package("cleo", "0.6.5"))
 
-    tester.execute("git+ssh://git@github.com/demo/demo.git@develop")
+    url = "git+ssh://git@github.com/demo/demo.git@develop"
+    tester.execute(f"{url}" if not editable else f"-e {url}")
 
     expected = """\
 
@@ -273,13 +290,19 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {
+
+    expected = {
         "git": "ssh://git@github.com/demo/demo.git",
         "rev": "develop",
     }
+    if editable:
+        expected["develop"] = True
+
+    assert content["dependencies"]["demo"] == expected
 
 
-def test_add_directory_constraint(app, repo, tester, mocker):
+@pytest.mark.parametrize("editable", [False, True])
+def test_add_directory_constraint(editable, app, repo, tester, mocker):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__).parent
 
@@ -287,7 +310,7 @@ def test_add_directory_constraint(app, repo, tester, mocker):
     repo.add_package(get_package("cleo", "0.6.5"))
 
     path = "../git/github.com/demo/demo"
-    tester.execute("{}".format(path))
+    tester.execute(f"{path}" if not editable else f"-e {path}")
 
     expected = """\
 
@@ -310,7 +333,12 @@ Package operations: 2 installs, 0 updates, 0 removals
     content = app.poetry.file.read()["tool"]["poetry"]
 
     assert "demo" in content["dependencies"]
-    assert content["dependencies"]["demo"] == {"path": "../git/github.com/demo/demo"}
+
+    expected = {"path": "../git/github.com/demo/demo"}
+    if editable:
+        expected["develop"] = True
+
+    assert content["dependencies"]["demo"] == expected
 
 
 def test_add_directory_with_poetry(app, repo, tester, mocker):
@@ -415,7 +443,7 @@ def test_add_constraint_with_extras_option(app, repo, tester):
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy2.requires = [msgpack_dep]
+    cachy2.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
@@ -639,11 +667,11 @@ def test_add_constraint_not_found_with_source(app, poetry, mocker, tester):
     assert "Could not find a matching version of package cachy" == str(e.value)
 
 
-def test_add_to_section_that_does_no_exist_yet(app, repo, tester):
+def test_add_to_section_that_does_not_exist_yet(app, repo, tester):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    tester.execute("cachy --dev")
+    tester.execute("cachy --group dev")
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -663,8 +691,47 @@ Package operations: 1 install, 0 updates, 0 removals
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
-    assert "cachy" in content["dev-dependencies"]
-    assert content["dev-dependencies"]["cachy"] == "^0.2.0"
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
+
+    expected = """\
+
+[tool.poetry.group.dev.dependencies]
+cachy = "^0.2.0"
+
+"""
+
+    assert expected in content.as_string()
+
+
+def test_add_to_dev_section_deprecated(app, repo, tester):
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(get_package("cachy", "0.2.0"))
+
+    tester.execute("cachy --dev")
+
+    expected = """\
+The --dev option is deprecated, use the `--group dev` notation instead.
+
+Using version ^0.2.0 for cachy
+
+Updating dependencies
+Resolving dependencies...
+
+Writing lock file
+
+Package operations: 1 install, 0 updates, 0 removals
+
+  • Installing cachy (0.2.0)
+"""
+
+    assert expected == tester.io.fetch_output()
+    assert 1 == tester.command.installer.executor.installations_count
+
+    content = app.poetry.file.read()["tool"]["poetry"]
+
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
 
 
 def test_add_should_not_select_prereleases(app, repo, tester):
@@ -891,7 +958,7 @@ def test_add_constraint_with_extras_old_installer(app, repo, installer, old_test
     cachy1 = get_package("cachy", "0.1.0")
     cachy1.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy1.requires = [msgpack_dep]
+    cachy1.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.2.0"))
     repo.add_package(cachy1)
@@ -920,7 +987,7 @@ Package operations: 2 installs, 0 updates, 0 removals
 def test_add_constraint_dependencies_old_installer(app, repo, installer, old_tester):
     cachy2 = get_package("cachy", "0.2.0")
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6")
-    cachy2.requires = [msgpack_dep]
+    cachy2.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
@@ -1217,7 +1284,7 @@ def test_add_constraint_with_extras_option_old_installer(
     cachy2 = get_package("cachy", "0.2.0")
     cachy2.extras = {"msgpack": [get_dependency("msgpack-python")]}
     msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
-    cachy2.requires = [msgpack_dep]
+    cachy2.add_dependency(msgpack_dep)
 
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
@@ -1459,7 +1526,7 @@ def test_add_to_section_that_does_no_exist_yet_old_installer(
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(get_package("cachy", "0.2.0"))
 
-    old_tester.execute("cachy --dev")
+    old_tester.execute("cachy --group dev")
 
     expected = """\
 Using version ^0.2.0 for cachy
@@ -1480,8 +1547,8 @@ Package operations: 1 install, 0 updates, 0 removals
 
     content = app.poetry.file.read()["tool"]["poetry"]
 
-    assert "cachy" in content["dev-dependencies"]
-    assert content["dev-dependencies"]["cachy"] == "^0.2.0"
+    assert "cachy" in content["group"]["dev"]["dependencies"]
+    assert content["group"]["dev"]["dependencies"]["cachy"] == "^0.2.0"
 
 
 def test_add_should_not_select_prereleases_old_installer(

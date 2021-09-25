@@ -19,7 +19,7 @@ class BuildCommand(EnvCommand):
     ]
 
     def handle(self) -> None:
-        from poetry.core.masonry import Builder
+        from poetry.core.masonry.builder import Builder
 
         fmt = "all"
         if self.option("format"):

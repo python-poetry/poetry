@@ -9,8 +9,8 @@ from .term import Term
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages import Dependency
-    from poetry.core.packages import Package
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
 
 
 class PartialSolution:
@@ -199,7 +199,7 @@ class PartialSolution:
             if assigned_term.satisfies(term):
                 return assignment
 
-        raise RuntimeError("[BUG] {} is not satisfied.".format(term))
+        raise RuntimeError(f"[BUG] {term} is not satisfied.")
 
     def satisfies(self, term: Term) -> bool:
         return self.relation(term) == SetRelation.SUBSET

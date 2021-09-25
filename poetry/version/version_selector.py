@@ -2,15 +2,15 @@ from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Union
 
-from poetry.core.packages import Package
-from poetry.core.semver import Version
+from poetry.core.packages.package import Package
+from poetry.core.semver.version import Version
 
 
 if TYPE_CHECKING:
     from poetry.repositories import Pool
 
 
-class VersionSelector(object):
+class VersionSelector:
     def __init__(self, pool: "Pool") -> None:
         self._pool = pool
 
@@ -36,7 +36,7 @@ class VersionSelector(object):
             },
         )
         candidates = self._pool.find_packages(dependency)
-        only_prereleases = all([c.version.is_prerelease() for c in candidates])
+        only_prereleases = all([c.version.is_unstable() for c in candidates])
 
         if not candidates:
             return False
@@ -65,19 +65,6 @@ class VersionSelector(object):
 
     def _transform_version(self, version: str, pretty_version: str) -> str:
         try:
-            parsed = Version.parse(version)
-            parts = [parsed.major, parsed.minor, parsed.patch]
+            return f"^{Version.parse(version).to_string()}"
         except ValueError:
             return pretty_version
-
-        parts = parts[: parsed.precision]
-
-        # check to see if we have a semver-looking version
-        if len(parts) < 3:
-            version = pretty_version
-        else:
-            version = ".".join(str(p) for p in parts)
-            if parsed.is_prerelease():
-                version += "-{}".format(".".join(str(p) for p in parsed.prerelease))
-
-        return "^{}".format(version)

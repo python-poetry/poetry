@@ -10,7 +10,7 @@ def tester(command_tester_factory):
 
 
 @pytest.fixture(autouse=True)
-def _add_packages(repo):
+def __add_packages(repo):
     cachy020 = get_package("cachy", "0.2.0")
     cachy020.add_dependency(Factory.create_dependency("msgpack-python", ">=0.5 <0.6"))
 

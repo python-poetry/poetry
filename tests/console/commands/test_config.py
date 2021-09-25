@@ -4,7 +4,7 @@ import os
 import pytest
 
 from poetry.config.config_source import ConfigSource
-from poetry.core.pyproject import PyProjectException
+from poetry.core.pyproject.exceptions import PyProjectException
 from poetry.factory import Factory
 
 
@@ -32,6 +32,7 @@ installer.parallel = true
 virtualenvs.create = true
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
 """.format(
         cache=json.dumps(str(config_cache_dir)),
@@ -53,6 +54,7 @@ installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
 """.format(
         cache=json.dumps(str(config_cache_dir)),
@@ -96,6 +98,7 @@ installer.parallel = true
 virtualenvs.create = false
 virtualenvs.in-project = null
 virtualenvs.options.always-copy = false
+virtualenvs.options.system-site-packages = false
 virtualenvs.path = {path}  # {virtualenvs}
 """.format(
         cache=json.dumps(str(config_cache_dir)),

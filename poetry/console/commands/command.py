@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Optional
 
 from cleo.commands.command import Command as BaseCommand
 
@@ -11,9 +12,17 @@ if TYPE_CHECKING:
 class Command(BaseCommand):
     loggers = []
 
+    _poetry: Optional["Poetry"] = None
+
     @property
     def poetry(self) -> "Poetry":
-        return self.get_application().poetry
+        if self._poetry is None:
+            return self.get_application().poetry
+
+        return self._poetry
+
+    def set_poetry(self, poetry: "Poetry") -> None:
+        self._poetry = poetry
 
     def get_application(self) -> "Application":
         return self.application
