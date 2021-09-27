@@ -116,7 +116,5 @@ def test_package_with_the_same_name_gives_clear_error_message(root, provider, re
     pkg_name = "a"
     root.add_dependency(Factory.create_dependency(pkg_name, "*"))
     add_to_repo(repo, pkg_name, "1.0.0", deps={pkg_name: "1.0.0"})
-    error = "Package '{}' is listed as a dependency of itself.\nThis is not supported by Poetry.".format(
-        pkg_name
-    )
+    error = f"Package '{pkg_name}' is listed as a dependency of itself."
     check_solver_result(root, provider, error=error)
