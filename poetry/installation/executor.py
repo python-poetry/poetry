@@ -678,9 +678,10 @@ class Executor:
                     Path(archive.path) if isinstance(archive, Link) else archive,
                 ).hash()
             )
-            if archive_hash not in {f["hash"] for f in package.files}:
+            known_hashes = {f["hash"] for f in package.files}
+            if archive_hash not in known_hashes:
                 raise RuntimeError(
-                    f"Invalid hash for {package} using archive {archive.name}"
+                    f"Hash for {package} from archive {archive.name} not found in known hashes ({archive_hash})"
                 )
 
             self._hashes[package.name] = archive_hash
