@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
 
     from poetry.config.config import Config
-    from poetry.core.packages.package import Package
     from poetry.repositories import Pool
     from poetry.utils.env import Env
 
