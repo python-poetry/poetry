@@ -69,7 +69,7 @@ class Uploader:
         retry = util.Retry(
             connect=5,
             total=10,
-            method_whitelist=["GET"],
+            allowed_methods=["GET"],
             status_forcelist=[500, 501, 502, 503],
         )
 
