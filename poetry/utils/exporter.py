@@ -89,7 +89,7 @@ class Exporter:
                 if ";" in requirement:
                     markers = requirement.split(";", 1)[1].strip()
                     if markers:
-                        line += f"; {markers}"
+                        line += f" ; {markers}"
 
             if (
                 not is_direct_remote_reference
