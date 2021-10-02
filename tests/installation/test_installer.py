@@ -85,8 +85,8 @@ class CustomInstalledRepository(InstalledRepository):
 
 
 class Locker(BaseLocker):
-    def __init__(self):
-        self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
+    def __init__(self, lock_path):
+        self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
@@ -153,8 +153,8 @@ def installed():
 
 
 @pytest.fixture()
-def locker():
-    return Locker()
+def locker(project_root):
+    return Locker(lock_path=project_root)
 
 
 @pytest.fixture()
