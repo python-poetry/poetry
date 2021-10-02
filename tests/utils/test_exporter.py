@@ -164,8 +164,8 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers
 
     expected = """\
 bar==4.5.6
-baz==7.8.9; sys_platform == "win32"
-foo==1.2.3; python_version < "3.7"
+baz==7.8.9 ; sys_platform == "win32"
+foo==1.2.3 ; python_version < "3.7"
 """
 
     assert expected == content
@@ -273,10 +273,10 @@ def test_exporter_can_export_requirements_txt_poetry(tmp_dir, poetry):
         "junit-xml": Dependency.create_from_pep_508("junit-xml==1.9"),
         "keyring": Dependency.create_from_pep_508("keyring==21.8.0"),
         "secretstorage": Dependency.create_from_pep_508(
-            "secretstorage==3.3.0; sys_platform=='linux'"
+            "secretstorage==3.3.0 ; sys_platform=='linux'"
         ),
         "cryptography": Dependency.create_from_pep_508(
-            "cryptography==3.2; sys_platform=='linux'"
+            "cryptography==3.2 ; sys_platform=='linux'"
         ),
         "six": Dependency.create_from_pep_508("six==1.15.0"),
     }
@@ -353,7 +353,7 @@ def test_exporter_can_export_requirements_txt_pyinstaller(tmp_dir, poetry):
         "pyinstaller": Dependency.create_from_pep_508("pyinstaller==4.0"),
         "altgraph": Dependency.create_from_pep_508("altgraph==0.17"),
         "macholib": Dependency.create_from_pep_508(
-            "macholib==1.8; sys_platform == 'darwin'"
+            "macholib==1.8 ; sys_platform == 'darwin'"
         ),
     }
 
@@ -423,15 +423,15 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
         content = f.read()
 
     expected = {
-        "a": Dependency.create_from_pep_508("a==1.2.3; python_version < '3.7'"),
+        "a": Dependency.create_from_pep_508("a==1.2.3 ; python_version < '3.7'"),
         "b": Dependency.create_from_pep_508(
-            "b==4.5.6; platform_system == 'Windows' and python_version < '3.7'"
+            "b==4.5.6 ; platform_system == 'Windows' and python_version < '3.7'"
         ),
         "c": Dependency.create_from_pep_508(
-            "c==7.8.9; sys_platform == 'win32' and python_version < '3.7'"
+            "c==7.8.9 ; sys_platform == 'win32' and python_version < '3.7'"
         ),
         "d": Dependency.create_from_pep_508(
-            "d==0.0.1; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
+            "d==0.0.1 ; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
         ),
     }
 
@@ -447,7 +447,7 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
 
 @pytest.mark.parametrize(
     "dev,lines",
-    [(False, ['a==1.2.3; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
+    [(False, ['a==1.2.3 ; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
 )
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_any(
     tmp_dir, poetry, dev, lines
@@ -1139,7 +1139,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
         content = f.read()
 
     expected = """\
-foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
+foo @ {}/tests/fixtures/sample_project ; python_version < "3.7"
 """.format(
         working_directory.as_uri()
     )
@@ -1228,7 +1228,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
         content = f.read()
 
     expected = """\
-foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
+foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz ; python_version < "3.7"
 """.format(
         working_directory.as_uri()
     )
