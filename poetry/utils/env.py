@@ -1147,6 +1147,9 @@ class Env(object):
         cmd = pip + list(args)
         return self._run(cmd, **kwargs)
 
+    def run_python_script(self, content, **kwargs):  # type: (str, Any) -> str
+        return self.run(self._executable, "-W", "ignore", "-", input_=content, **kwargs)
+
     def _run(self, cmd, **kwargs):
         """
         Run a command inside the Python environment.
@@ -1357,18 +1360,16 @@ class VirtualEnv(Env):
         # In this case we need to get sys.base_prefix
         # from inside the virtualenv.
         if base is None:
-            self._base = Path(
-                self.run(self._executable, "-", input_=GET_BASE_PREFIX).strip()
-            )
+            self._base = Path(self.run_python_script(GET_BASE_PREFIX).strip())
 
     @property
     def sys_path(self):  # type: () -> List[str]
-        output = self.run(self._executable, "-", input_=GET_SYS_PATH)
+        output = self.run_python_script(GET_SYS_PATH)
 
         return json.loads(output)
 
     def get_version_info(self):  # type: () -> Tuple[int]
-        output = self.run(self._executable, "-", input_=GET_PYTHON_VERSION)
+        output = self.run_python_script(GET_PYTHON_VERSION)
 
         return tuple([int(s) for s in output.strip().split(".")])
 
@@ -1406,7 +1407,7 @@ class VirtualEnv(Env):
             """
         )
 
-        output = self.run(self._executable, "-", input_=script)
+        output = self.run_python_script(script)
 
         return [Tag(*t) for t in json.loads(output)]
 
@@ -1424,7 +1425,7 @@ class VirtualEnv(Env):
         return Version.parse(m.group(1))
 
     def get_paths(self):  # type: () -> Dict[str, str]
-        output = self.run(self._executable, "-", input_=GET_PATHS)
+        output = self.run_python_script(GET_PATHS)
 
         return json.loads(output)
 
@@ -1542,7 +1543,7 @@ class GenericEnv(VirtualEnv):
                 self._pip_executable = pip_executable
 
     def get_paths(self):  # type: () -> Dict[str, str]
-        output = self.run(self._executable, "-", input_=GET_PATHS_FOR_GENERIC_ENVS)
+        output = self.run_python_script(GET_PATHS_FOR_GENERIC_ENVS)
 
         return json.loads(output)
 
