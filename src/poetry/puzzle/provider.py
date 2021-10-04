@@ -665,6 +665,14 @@ class Provider:
             #   - ipython (1.2.4) ; implementation_name == "pypy"
             #
             # the marker for `ipython` will become `implementation_name != "pypy"`.
+            #
+            # Further, we have to merge the constraints of the requirements
+            # without markers into the constraints of the requirements with markers.
+            # for instance, if we have the following dependencies:
+            #   - foo (>= 1.2)
+            #   - foo (!= 1.2.1) ; python == 3.10
+            #
+            # the constraint for the second entry will become (!= 1.2.1, >= 1.2)
             any_markers_dependencies = [d for d in _deps if d.marker.is_any()]
             other_markers_dependencies = [d for d in _deps if not d.marker.is_any()]
 
@@ -673,9 +681,16 @@ class Provider:
                 for other_dep in other_markers_dependencies[1:]:
                     marker = marker.union(other_dep.marker)
 
-                for i, d in enumerate(_deps):
-                    if d.marker.is_any():
-                        _deps[i].marker = marker.invert()
+                inverted_marker = marker.invert()
+                for dep_any in any_markers_dependencies:
+                    dep_any.marker = inverted_marker
+                    for dep_other in other_markers_dependencies:
+                        dep_other.set_constraint(
+                            dep_other.constraint.intersect(dep_any.constraint)
+                        )
+                        # TODO: Setting _pretty_constraint can be removed once the following issue has been fixed
+                        # https://github.com/python-poetry/poetry/issues/4589
+                        dep_other._pretty_constraint = str(dep_other.constraint)
 
             overrides = []
             for _dep in _deps:
