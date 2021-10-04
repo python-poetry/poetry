@@ -1142,6 +1142,49 @@ So, because no versions of a match !=1.0
     assert str(e.value) == expected
 
 
+def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
+    solver, repo, package
+):
+    package.add_dependency(Factory.create_dependency("A", "*"))
+    package.add_dependency(Factory.create_dependency("B", "1.0"))
+
+    package_a10 = get_package("A", "1.0")
+    package_a10.add_dependency(Factory.create_dependency("C", {"version": "^1.0"}))
+
+    package_a20 = get_package("A", "2.0")
+    package_a20.add_dependency(
+        Factory.create_dependency("C", {"version": "^2.0"})  # incompatible with B
+    )
+    package_a20.add_dependency(
+        Factory.create_dependency("C", {"version": "!=2.1", "python": "3.10"})
+    )
+
+    package_b = get_package("B", "1.0")
+    package_b.add_dependency(Factory.create_dependency("C", {"version": "<2.0"}))
+
+    package_c10 = get_package("C", "1.0")
+    package_c20 = get_package("C", "2.0")
+    package_c21 = get_package("C", "2.1")
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a20)
+    repo.add_package(package_b)
+    repo.add_package(package_c10)
+    repo.add_package(package_c20)
+    repo.add_package(package_c21)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_c10},
+            {"job": "install", "package": package_a10},  # only a10, not a20
+            {"job": "install", "package": package_b},
+        ],
+    )
+
+
 def test_solver_duplicate_dependencies_sub_dependencies(solver, repo, package):
     package.add_dependency(Factory.create_dependency("A", "*"))
 
