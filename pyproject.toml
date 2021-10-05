@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.1.10"
+version = "1.1.11"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -24,7 +24,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
 
-poetry-core = "~1.0.6"
+poetry-core = "~1.0.7"
 cleo = "^0.8.1"
 clikit = "^0.6.2"
 crashtest = { version = "^0.3.0", python = "^3.6" }
