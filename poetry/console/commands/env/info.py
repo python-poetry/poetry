@@ -34,42 +34,39 @@ class EnvInfoCommand(Command):
 
     def _display_complete_info(self, env: "Env") -> None:
         env_python_version = ".".join(str(s) for s in env.version_info[:3])
+        env_path = env.path if env.is_venv() else "NA"
+        env_python = env.python if env.is_venv() else "NA"
         self.line("")
         self.line("<b>Virtualenv</b>")
         listing = [
-            "<info>Python</info>:         <comment>{}</>".format(env_python_version),
-            "<info>Implementation</info>: <comment>{}</>".format(
+            f"<info>Python</info>:         <comment>{env_python_version}</>".format(env_python_version),
+            f"<info>Implementation</info>: <comment>{env.python_implementation}</>".format(
                 env.python_implementation
             ),
-            "<info>Path</info>:           <comment>{}</>".format(
-                env.path if env.is_venv() else "NA"
-            ),
-            "<info>Executable</info>:     <comment>{}</>".format(
-                env.python if env.is_venv() else "NA"
-            ),
+            f"<info>Path</info>:           <comment>{env_path }</>",
+            f"<info>Executable</info>:     <comment>{env_python }</>",
         ]
         if env.is_venv():
+            tag="comment" if env.is_sane() else "error"
+            is_valid=env.is_sane()
             listing.append(
-                "<info>Valid</info>:          <{tag}>{is_valid}</{tag}>".format(
-                    tag="comment" if env.is_sane() else "error", is_valid=env.is_sane()
-                )
+                f"<info>Valid</info>:          <{tag}>{is_valid}</{tag}>"
             )
         self.line("\n".join(listing))
 
         self.line("")
 
         system_env = env.parent_env
+        system_env_version_info = ".".join(str(v) for v in system_env.version_info[:3])
         self.line("<b>System</b>")
         self.line(
             "\n".join(
                 [
-                    "<info>Platform</info>:   <comment>{}</>".format(env.platform),
-                    "<info>OS</info>:         <comment>{}</>".format(env.os),
-                    "<info>Python</info>:     <comment>{}</>".format(
-                        ".".join(str(v) for v in system_env.version_info[:3])
-                    ),
-                    "<info>Path</info>:       <comment>{}</>".format(system_env.path),
-                    "<info>Executable</info>: <comment>{}</>".format(system_env.python),
+                    f"<info>Platform</info>:   <comment>{env.platform}</>",
+                    f"<info>OS</info>:         <comment>{env.os}</>",
+                    f"<info>Python</info>:     <comment>{system_env_version_info}</>",
+                    f"<info>Path</info>:       <comment>{system_env.path}</>",
+                    f"<info>Executable</info>: <comment>{system_env.python}</>",
                 ]
             )
         )

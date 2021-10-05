@@ -98,19 +98,19 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             name = Path.cwd().name.lower()
 
             question = self.create_question(
-                "Package name [<comment>{}</comment>]: ".format(name), default=name
+                f"Package name [<comment>{name}</comment>]: ", default=name
             )
             name = self.ask(question)
 
         version = "0.1.0"
         question = self.create_question(
-            "Version [<comment>{}</comment>]: ".format(version), default=version
+            f"Version [<comment>{version}</comment>]: ", default=version
         )
         version = self.ask(question)
 
         description = self.option("description") or ""
         question = self.create_question(
-            "Description [<comment>{}</comment>]: ".format(description),
+            f"Description [<comment>{description}</comment>]: ",
             default=description,
         )
         description = self.ask(question)
@@ -120,10 +120,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             author = vcs_config["user.name"]
             author_email = vcs_config.get("user.email")
             if author_email:
-                author += " <{}>".format(author_email)
+                author += f" <{author_email}>"
 
         question = self.create_question(
-            "Author [<comment>{}</comment>, n to skip]: ".format(author), default=author
+            f"Author [<comment>{author}</comment>, n to skip]: ", default=author
         )
         question.set_validator(lambda v: self._validate_author(v, author))
         author = self.ask(question)
@@ -136,7 +136,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         license = self.option("license") or ""
 
         question = self.create_question(
-            "License [<comment>{}</comment>]: ".format(license), default=license
+            f"License [<comment>{license}</comment>]: ", default=license
         )
         question.set_validator(self._validate_license)
         license = self.ask(question)
@@ -144,13 +144,10 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         python = self.option("python")
         if not python:
             current_env = SystemEnv(Path(sys.executable))
-            default_python = "^{}".format(
-                ".".join(str(v) for v in current_env.version_info[:2])
-            )
+            curr_evn_version_info = ".".join(str(v) for v in current_env.version_info[:2])
+            default_python = f"^{curr_evn_version_info}"
             question = self.create_question(
-                "Compatible Python versions [<comment>{}</comment>]: ".format(
-                    default_python
-                ),
+                f"Compatible Python versions [<comment>{default_python}</comment>]: ",
                 default=default_python,
             )
             python = self.ask(question)
@@ -251,7 +248,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     or "path" in constraint
                     or "version" in constraint
                 ):
-                    self.line("Adding <info>{}</info>".format(package))
+                    self.line(f"Adding <info>{package}</info>")
                     requires.append(constraint)
                     package = self.ask("\nAdd a package:")
                     continue
@@ -280,9 +277,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         choices.append(found_package.pretty_name)
 
                     self.line(
-                        "Found <info>{}</info> packages matching <c1>{}</c1>".format(
-                            len(matches), package
-                        )
+                        f"Found <info>{len(matches)}</info> packages matching <c1>{package}</c1>"
                     )
 
                     package = self.choice(
@@ -312,9 +307,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                         )
 
                         self.line(
-                            "Using version <b>{}</b> for <c1>{}</c1>".format(
-                                package_constraint, package
-                            )
+                            f"Using version <b>{package_constraint}</b> for <c1>{package}</c1>"
                         )
 
                     constraint["version"] = package_constraint
@@ -344,7 +337,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 requirement["name"] = name
 
                 self.line(
-                    "Using version <b>{}</b> for <c1>{}</c1>".format(version, name)
+                    f"Using version <b>{version}</b> for <c1>{name}</c1>"
                 )
             else:
                 # check that the specified version/constraint exists
@@ -379,7 +372,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         if not package:
             # TODO: find similar
             raise ValueError(
-                "Could not find a matching version of package {}".format(name)
+                f"Could not find a matching version of package {name}"
             )
 
         return package.pretty_name, selector.find_recommended_require_version(package)
