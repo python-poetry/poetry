@@ -4,6 +4,7 @@ import itertools
 import json
 import os
 import platform
+import plistlib
 import re
 import shutil
 import subprocess
@@ -1010,9 +1011,7 @@ class EnvManager:
             xattr.setxattr(
                 str(path),
                 "com.apple.metadata:com_apple_backup_excludeItem",
-                # This is the value `tmutil addexclusion <path>` sets.
-                # It's a binary plist encoding of the string "com.apple.backupd".
-                b"bplist00_\x10\x11com.apple.backupd\x08\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c",
+                plistlib.dumps("com.apple.backupd", fmt=plistlib.FMT_BINARY),
             )
 
         return cli_result
