@@ -187,6 +187,12 @@ class Provider:
         dependency._source_reference = package.source_reference
         dependency._source_resolved_reference = package.source_resolved_reference
 
+        if hasattr(package, "source_subdirectory") and hasattr(
+            dependency, "_source_subdirectory"
+        ):
+            # this is supported only for poetry-core >= 1.1.0a7
+            dependency._source_subdirectory = package.source_subdirectory
+
         self._deferred_cache[dependency] = package
 
         return [package]
