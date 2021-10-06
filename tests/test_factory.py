@@ -8,6 +8,7 @@ import pytest
 
 from entrypoints import EntryPoint
 
+from poetry.core.semver.helpers import parse_constraint
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
@@ -70,7 +71,7 @@ def test_create_poetry():
 
     pathlib2 = dependencies["pathlib2"]
     assert pathlib2.pretty_constraint == "^2.2"
-    assert pathlib2.python_versions == "~2.7"
+    assert parse_constraint(pathlib2.python_versions) == parse_constraint("~2.7")
     assert not pathlib2.is_optional()
 
     demo = dependencies["demo"]
