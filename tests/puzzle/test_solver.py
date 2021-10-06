@@ -7,6 +7,7 @@ from cleo.io.null_io import NullIO
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
+from poetry.core.packages.vcs_dependency import VCSDependency
 from poetry.core.version.markers import parse_marker
 from poetry.factory import Factory
 from poetry.puzzle import Solver
@@ -22,6 +23,12 @@ from tests.repositories.test_legacy_repository import (
     MockRepository as MockLegacyRepository,
 )
 from tests.repositories.test_pypi_repository import MockRepository as MockPyPIRepository
+
+
+DEFAULT_SOURCE_REF = (
+    VCSDependency("poetry", "git", "git@github.com:python-poetry/poetry.git").branch
+    or "HEAD"
+)
 
 
 class Provider(BaseProvider):
@@ -1230,7 +1237,7 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="master",
+        source_reference=DEFAULT_SOURCE_REF,
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
 
@@ -1242,7 +1249,7 @@ def test_solver_can_resolve_git_dependencies(solver, repo, package):
     op = ops[1]
 
     assert op.package.source_type == "git"
-    assert op.package.source_reference == "master"
+    assert op.package.source_reference == DEFAULT_SOURCE_REF
     assert op.package.source_resolved_reference.startswith("9cf87a2")
 
 
@@ -1265,7 +1272,7 @@ def test_solver_can_resolve_git_dependencies_with_extras(solver, repo, package):
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="master",
+        source_reference=DEFAULT_SOURCE_REF,
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
 
@@ -1577,7 +1584,7 @@ def test_solver_git_dependencies_update(solver, repo, package, installed):
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="master",
+        source_reference=DEFAULT_SOURCE_REF,
         source_resolved_reference="123456",
     )
     demo = Package(
@@ -1585,7 +1592,7 @@ def test_solver_git_dependencies_update(solver, repo, package, installed):
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="master",
+        source_reference=DEFAULT_SOURCE_REF,
         source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
     installed.add_package(demo_installed)
@@ -1608,7 +1615,7 @@ def test_solver_git_dependencies_update(solver, repo, package, installed):
 
     assert op.job_type == "update"
     assert op.package.source_type == "git"
-    assert op.package.source_reference == "master"
+    assert op.package.source_reference == DEFAULT_SOURCE_REF
     assert op.package.source_resolved_reference.startswith("9cf87a2")
     assert op.initial_package.source_resolved_reference == "123456"
 
@@ -2359,8 +2366,8 @@ def test_solver_does_not_fail_with_locked_git_and_non_git_dependencies(
         "0.1.2",
         source_type="git",
         source_url="https://github.com/demo/demo.git",
-        source_reference="master",
-        source_resolved_reference="commit",
+        source_reference=DEFAULT_SOURCE_REF,
+        source_resolved_reference="9cf87a285a2d3fbb0b9fa621997b3acc3631ed24",
     )
 
     installed.add_package(git_package)
