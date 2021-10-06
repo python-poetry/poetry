@@ -28,6 +28,7 @@ from typing import Union
 import packaging.tags
 import tomlkit
 import virtualenv
+import xattr
 
 from cleo.io.io import IO
 from packaging.tags import Tag
@@ -1002,7 +1003,20 @@ class EnvManager:
 
         args.append(str(path))
 
-        return virtualenv.cli_run(args)
+        cli_result = virtualenv.cli_run(args)
+
+        print("path", str(path))
+        print("args", args)
+
+        # Exclude the venv folder from from macOS Time Machine backups
+        if sys.platform == "darwin":
+            xattr.setxattr(
+                str(path),
+                "com.apple.metadata:com_apple_backup_excludeItem",
+                b"bplist00_\x10\x11com.apple.backupd\x08\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c",
+            )
+
+        return cli_result
 
     @classmethod
     def remove_venv(cls, path: Union[Path, str]) -> None:

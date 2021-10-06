@@ -9,6 +9,7 @@ from typing import Union
 
 import pytest
 import tomlkit
+import xattr
 
 from cleo.io.null_io import NullIO
 
@@ -75,6 +76,20 @@ def test_virtualenvs_with_spaces_in_their_path_work_as_expected(tmp_dir, manager
     venv = VirtualEnv(venv_path)
 
     assert venv.run("python", "-V", shell=True).startswith("Python")
+
+
+def test_venv_backup_exclusion(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+
+    manager.build_venv(str(venv_path))
+
+    if sys.platform == "darwin":
+        assert (
+            xattr.getxattr(
+                str(venv_path), "com.apple.metadata:com_apple_backup_excludeItem"
+            )
+            == b"bplist00_\x10\x11com.apple.backupd\x08\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1c"
+        )
 
 
 def test_env_commands_with_spaces_in_their_arg_work_as_expected(tmp_dir, manager):
