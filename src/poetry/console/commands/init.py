@@ -306,19 +306,26 @@ You can specify a package in the following forms:
 
                     self.line(info_string)
 
+                    # Default to an empty value to signal no package was selected
+                    choices.append("")
+
                     package = self.choice(
                         "\nEnter package # to add, or the complete package name if it"
                         " is not listed",
                         choices,
                         attempts=3,
+                        default=len(choices) - 1,
                     )
 
+                    if not package:
+                        self.line("<warning>No package selected</warning>")
+
                     # package selected by user, set constraint name to package name
-                    if package is not False:
+                    if package:
                         constraint["name"] = package
 
                 # no constraint yet, determine the best version automatically
-                if package is not False and "version" not in constraint:
+                if package and "version" not in constraint:
                     question = self.create_question(
                         "Enter the version constraint to require "
                         "(or leave blank to use the latest version):"
@@ -340,7 +347,7 @@ You can specify a package in the following forms:
 
                     constraint["version"] = package_constraint
 
-                if package is not False:
+                if package:
                     result.append(constraint)
 
                 if self.io.is_interactive():
