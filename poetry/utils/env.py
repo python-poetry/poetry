@@ -29,7 +29,6 @@ from typing import Union
 import packaging.tags
 import tomlkit
 import virtualenv
-import xattr
 
 from cleo.io.io import IO
 from packaging.tags import Tag
@@ -1008,6 +1007,8 @@ class EnvManager:
 
         # Exclude the venv folder from from macOS Time Machine backups
         if sys.platform == "darwin":
+            import xattr
+
             xattr.setxattr(
                 str(path),
                 "com.apple.metadata:com_apple_backup_excludeItem",
