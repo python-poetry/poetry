@@ -89,7 +89,9 @@ class CustomInstalledRepository(InstalledRepository):
 
 class Locker(BaseLocker):
     def __init__(self):
-        self._lock = TOMLFile(Path(__file__).resolve().parents[2].joinpath("poetry.lock"))
+        self._lock = TOMLFile(
+            Path(__file__).resolve().parents[2].joinpath("poetry.lock")
+        )
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
@@ -2121,12 +2123,7 @@ def test_installer_can_handle_old_lock_files(
         pool,
         config,
         installed=installed,
-        executor=Executor(
-            MockEnv(version_info=(2, 7, 18)),
-            pool,
-            config,
-            NullIO(),
-        ),
+        executor=Executor(MockEnv(version_info=(2, 7, 18)), pool, config, NullIO(),),
     )
     installer.use_executor()
 
@@ -2144,10 +2141,7 @@ def test_installer_can_handle_old_lock_files(
         config,
         installed=installed,
         executor=Executor(
-            MockEnv(version_info=(2, 7, 18), platform="win32"),
-            pool,
-            config,
-            NullIO(),
+            MockEnv(version_info=(2, 7, 18), platform="win32"), pool, config, NullIO(),
         ),
     )
     installer.use_executor()
