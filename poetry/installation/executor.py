@@ -678,7 +678,7 @@ class Executor:
         return archive
 
     @staticmethod
-    def get_and_validate_archive_hash(archive: Path, package: Package) -> str:
+    def _validate_archive_hash(archive: Path, package: Package) -> str:
         file_dep = FileDependency(
             package.name,
             Path(archive.path) if isinstance(archive, Link) else archive,
