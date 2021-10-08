@@ -144,7 +144,9 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         python = self.option("python")
         if not python:
             current_env = SystemEnv(Path(sys.executable))
-            curr_evn_version_info = ".".join(str(v) for v in current_env.version_info[:2])
+            curr_evn_version_info = ".".join(
+                str(v) for v in current_env.version_info[:2]
+            )
             default_python = f"^{curr_evn_version_info}"
             question = self.create_question(
                 f"Compatible Python versions [<comment>{default_python}</comment>]: ",
@@ -336,9 +338,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 requirement["version"] = version
                 requirement["name"] = name
 
-                self.line(
-                    f"Using version <b>{version}</b> for <c1>{name}</c1>"
-                )
+                self.line(f"Using version <b>{version}</b> for <c1>{name}</c1>")
             else:
                 # check that the specified version/constraint exists
                 # before we proceed
@@ -371,9 +371,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
 
         if not package:
             # TODO: find similar
-            raise ValueError(
-                f"Could not find a matching version of package {name}"
-            )
+            raise ValueError(f"Could not find a matching version of package {name}")
 
         return package.pretty_name, selector.find_recommended_require_version(package)
 

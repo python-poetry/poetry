@@ -55,9 +55,7 @@ class CacheClearCommand(Command):
             for path, dirs, files in os.walk(str(cache_dir)):
                 entries_count += len(files)
 
-            delete = self.confirm(
-                f"<question>Delete {entries_count} entries?</>"
-            )
+            delete = self.confirm(f"<question>Delete {entries_count} entries?</>")
             if not delete:
                 return 0
 

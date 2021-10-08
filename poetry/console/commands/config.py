@@ -140,9 +140,7 @@ To remove a repository (repo is a short alias for repositories):
                 else:
                     repo = config.get(f"repositories.{m.group(1)}")
                     if repo is None:
-                        raise ValueError(
-                            f"There is no {m.group(1)} repository defined"
-                        )
+                        raise ValueError(f"There is no {m.group(1)} repository defined")
 
                     value = repo
 
@@ -184,22 +182,16 @@ To remove a repository (repo is a short alias for repositories):
             if self.option("unset"):
                 repo = config.get(f"repositories.{m.group(1)}")
                 if repo is None:
-                    raise ValueError(
-                        f"There is no {m.group(1)} repository defined"
-                    )
+                    raise ValueError(f"There is no {m.group(1)} repository defined")
 
-                config.config_source.remove_property(
-                    f"repositories.{m.group(1)}"
-                )
+                config.config_source.remove_property(f"repositories.{m.group(1)}")
 
                 return 0
 
             if len(values) == 1:
                 url = values[0]
 
-                config.config_source.add_property(
-                    f"repositories.{m.group(1)}.url", url
-                )
+                config.config_source.add_property(f"repositories.{m.group(1)}.url", url)
 
                 return 0
 
@@ -316,7 +308,9 @@ To remove a repository (repo is a short alias for repositories):
             if k.startswith("repositories."):
                 message = f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>"
             elif isinstance(raw_val, str) and raw_val != value:
-                message = f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>  # {value}"
+                message = (
+                    f"<c1>{k + key}</c1> = <c2>{json.dumps(raw_val)}</c2>  # {value}"
+                )
             else:
                 message = f"<c1>{k + key}</c1> = <c2>{ json.dumps(value)}</c2>"
 

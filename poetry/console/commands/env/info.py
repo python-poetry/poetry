@@ -39,7 +39,9 @@ class EnvInfoCommand(Command):
         self.line("")
         self.line("<b>Virtualenv</b>")
         listing = [
-            f"<info>Python</info>:         <comment>{env_python_version}</>".format(env_python_version),
+            f"<info>Python</info>:         <comment>{env_python_version}</>".format(
+                env_python_version
+            ),
             f"<info>Implementation</info>: <comment>{env.python_implementation}</>".format(
                 env.python_implementation
             ),
@@ -47,11 +49,9 @@ class EnvInfoCommand(Command):
             f"<info>Executable</info>:     <comment>{env_python }</>",
         ]
         if env.is_venv():
-            tag="comment" if env.is_sane() else "error"
-            is_valid=env.is_sane()
-            listing.append(
-                f"<info>Valid</info>:          <{tag}>{is_valid}</{tag}>"
-            )
+            tag = "comment" if env.is_sane() else "error"
+            is_valid = env.is_sane()
+            listing.append(f"<info>Valid</info>:          <{tag}>{is_valid}</{tag}>")
         self.line("\n".join(listing))
 
         self.line("")
