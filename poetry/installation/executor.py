@@ -671,7 +671,7 @@ class Executor:
                 archive = self._chef.prepare(archive)
 
         if package.files:
-            archive_hash = self.get_and_validate_archive_hash(archive, package)
+            archive_hash = self._validate_archive_hash(archive, package)
 
             self._hashes[package.name] = archive_hash
 
