@@ -64,6 +64,7 @@ COMMANDS = [
     "shell",
     "show",
     "update",
+    "download",
     "version",
     # Cache commands
     "cache clear",

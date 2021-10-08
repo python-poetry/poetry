@@ -2,6 +2,8 @@ import csv
 import itertools
 import json
 import os
+import pathlib
+import shutil
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
@@ -28,6 +30,7 @@ from ..utils.authenticator import Authenticator
 from ..utils.pip import pip_install
 from .chef import Chef
 from .chooser import Chooser
+from .operations.download import Download
 from .operations.install import Install
 from .operations.operation import Operation
 from .operations.uninstall import Uninstall
@@ -81,8 +84,8 @@ class Executor:
         self._executor = ThreadPoolExecutor(max_workers=self._max_workers)
         self._total_operations = 0
         self._executed_operations = 0
-        self._executed = {"install": 0, "update": 0, "uninstall": 0}
-        self._skipped = {"install": 0, "update": 0, "uninstall": 0}
+        self._executed = {"install": 0, "update": 0, "uninstall": 0, "download": 0}
+        self._skipped = {"install": 0, "update": 0, "uninstall": 0, "download": 0}
         self._sections = dict()
         self._lock = threading.Lock()
         self._shutdown = False
@@ -392,6 +395,16 @@ class Executor:
                 operation.package.full_pretty_version,
             )
 
+        if operation.job_type == "download":
+            return "<{}>Downloading <{}>{}</{}> (<{}>{}</>)</>".format(
+                base_tag,
+                package_color,
+                operation.package.name,
+                package_color,
+                operation_color,
+                operation.package.full_pretty_version,
+            )
+
         if operation.job_type == "uninstall":
             return "<{}>Removing <{}>{}</{}> (<{}>{}</>)</>".format(
                 base_tag,
@@ -472,6 +485,27 @@ class Executor:
 
         return status_code
 
+    def _execute_download(self, operation: Download) -> int:
+        package = operation.package
+        if package.source_type == "file":
+            archive = self._prepare_file(operation)
+        elif package.source_type == "url":
+            archive = self._download_link(operation, Link(package.source_url)).path
+        else:
+            archive = self._download(operation).path
+
+        locked = pathlib.Path(".locked")
+        locked.mkdir(exist_ok=True)
+
+        shutil.copy(archive, locked)
+
+        operation_message = self.get_operation_message(operation)
+        message = "  <fg=blue;options=bold>•</> {message}: <info>Downloading...</info>".format(
+            message=operation_message,
+        )
+        self._write(operation, message)
+        return 0
+
     def _execute_uninstall(self, operation: Uninstall) -> int:
         message = (
             "  <fg=blue;options=bold>•</> {message}: <info>Removing...</info>".format(
@@ -526,7 +560,7 @@ class Executor:
 
             raise
 
-    def _prepare_file(self, operation: Union[Install, Update]) -> Path:
+    def _prepare_file(self, operation: Union[Install, Update, Download]) -> Path:
         package = operation.package
 
         message = (
@@ -642,12 +676,14 @@ class Executor:
 
         return status_code
 
-    def _download(self, operation: Union[Install, Update]) -> Link:
+    def _download(self, operation: Union[Download, Install, Update]) -> Link:
         link = self._chooser.choose_for(operation.package)
 
         return self._download_link(operation, link)
 
-    def _download_link(self, operation: Union[Install, Update], link: Link) -> Link:
+    def _download_link(
+        self, operation: Union[Install, Update, Download], link: Link
+    ) -> Link:
         package = operation.package
 
         archive = self._chef.get_cached_archive_for_link(link)

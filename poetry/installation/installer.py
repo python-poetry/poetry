@@ -18,6 +18,7 @@ from poetry.utils.helpers import canonicalize_name
 
 from .base_installer import BaseInstaller
 from .executor import Executor
+from .operations import Download
 from .operations import Install
 from .operations import Uninstall
 from .operations import Update
@@ -591,3 +592,41 @@ class Installer:
 
     def _get_installed(self) -> InstalledRepository:
         return InstalledRepository.load(self._env)
+
+    def _execute_download(self, operation: Download) -> None:
+        if self._execute_operations or self.is_dry_run():
+            self._io.write_line(
+                "  - Downloading <c1>{}</c1> (<c2>{}</c2>)".format(
+                    operation.package.pretty_name, operation.package.full_pretty_version
+                )
+            )
+
+        if not self._execute_operations:
+            return
+
+        self._installer.download(operation.package)
+
+    def download(self) -> int:
+        self._io.write_line("<info>Downloading dependencies from lock file</>")
+
+        locked_repository = self._locker.locked_repository(False)
+
+        if not self._locker.is_fresh():
+            self._io.write_line(
+                "<warning>"
+                "Warning: The lock file is not up to date with "
+                "the latest changes in pyproject.toml. "
+                "You may be getting outdated dependencies. "
+                "Run update to update them."
+                "</warning>"
+            )
+
+        # We need to download all the libs in lock regardless of if they already been installed
+        # or not
+        ops = [Download(pkg) for pkg in locked_repository.packages]
+        if self._use_executor:
+            return self._executor.execute(ops)
+        else:
+            for op in ops:
+                self._execute_operation(op)
+            return 0
