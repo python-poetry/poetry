@@ -11,6 +11,7 @@ from cleo.io.buffered_io import BufferedIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 from poetry.core.utils._compat import PY36
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
@@ -471,51 +472,33 @@ def test_executor_should_hash_links(config, io, pool, mocker, fixture_dir, tmp_d
         .joinpath("demo-0.1.0-py2.py3-none-any.whl")
         .as_uri()
     )
-    mocker.patch.object(
-        Chef,
-        "get_cached_archive_for_link",
+    mocker.patch(
+        "poetry.installation.chef.Chef.get_cached_archive_for_link",
         side_effect=lambda _: link,
     )
 
     env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
 
-    package = Package("demo", "0.1.0")
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "md5:15507846fd4299596661d0197bfb4f90",
-        }
-    ]
-
     archive = executor._download_link(
-        Install(package), Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl")
+        Install(Package("demo", "0.1.0")),
+        Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl"),
     )
-
     assert archive == link
 
 
 def test_executor_should_hash_paths(config, io, pool, mocker, fixture_dir, tmp_dir):
     link = fixture_dir("distributions").joinpath("demo-0.1.0-py2.py3-none-any.whl")
-    mocker.patch.object(
-        Chef,
-        "get_cached_archive_for_link",
+    mocker.patch(
+        "poetry.installation.chef.Chef.get_cached_archive_for_link",
         side_effect=lambda _: link,
     )
 
     env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
 
-    package = Package("demo", "0.1.0")
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "md5:15507846fd4299596661d0197bfb4f90",
-        }
-    ]
-
     archive = executor._download_link(
-        Install(package), Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl")
+        Install(Package("demo", "0.1.0")),
+        Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl"),
     )
-
     assert archive == link
