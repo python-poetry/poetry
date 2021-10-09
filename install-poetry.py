@@ -544,12 +544,12 @@ class Installer:
         self._bin_dir.mkdir(parents=True, exist_ok=True)
 
         script = "poetry"
-        target_script = "venv/bin/"
+        script_dir = "bin"
         if WINDOWS:
             script = "poetry.exe"
             if not MINGW:
-                target_script = "venv/Scripts/"
-        target_script += script
+                script_dir = "Scripts"
+        target_script = f"venv/{script_dir}/{script}"
 
         if self._bin_dir.joinpath(script).exists():
             self._bin_dir.joinpath(script).unlink()
