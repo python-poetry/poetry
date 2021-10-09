@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from poetry.core.packages.dependency import Dependency
@@ -365,10 +366,20 @@ class VersionSolver:
                 )
                 return dependency.complete_name
 
-            try:
-                version = packages[0]
-            except IndexError:
-                version = None
+            version = None
+            if dependency.name not in self._use_latest:
+                # prefer locked version of compatible (not exact same) dependency;
+                # required in order to not unnecessarily update dependencies with
+                # extras, e.g. "coverage" vs. "coverage[toml]"
+                locked = self._locked.get(dependency.name, None)
+                if locked is not None:
+                    for version in packages:
+                        if version.version <= locked.version:
+                            if version.version != locked.version:
+                                version = None
+                            break
+            with suppress(IndexError):
+                version = version or packages[0]
 
             if version is None:
                 # If there are no versions that satisfy the constraint,

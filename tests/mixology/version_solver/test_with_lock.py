@@ -136,3 +136,35 @@ def test_with_compatible_locked_dependencies_use_latest(
         },
         use_latest=["foo"],
     )
+
+
+def test_with_compatible_locked_dependencies_with_extras(
+    root: ProjectPackage, provider: Provider, repo: Repository
+):
+    root.add_dependency(Factory.create_dependency("foo", "^1.0"))
+
+    package_foo_0 = get_package("foo", "1.0.0")
+    package_foo_1 = get_package("foo", "1.0.1")
+    bar_extra_dep = Factory.create_dependency(
+        "bar", {"version": "^1.0", "extras": "extra"}
+    )
+    for package_foo in (package_foo_0, package_foo_1):
+        package_foo.add_dependency(bar_extra_dep)
+        repo.add_package(package_foo)
+
+    bar_deps = {"baz": {"version": "^1.0", "extras": ["extra"]}}
+    add_to_repo(repo, "bar", "1.0.0", bar_deps)
+    add_to_repo(repo, "bar", "1.0.1", bar_deps)
+    add_to_repo(repo, "baz", "1.0.0")
+    add_to_repo(repo, "baz", "1.0.1")
+
+    check_solver_result(
+        root,
+        provider,
+        result={"foo": "1.0.0", "bar": "1.0.0", "baz": "1.0.0"},
+        locked={
+            "foo": get_package("foo", "1.0.0"),
+            "bar": get_package("bar", "1.0.0"),
+            "baz": get_package("baz", "1.0.0"),
+        },
+    )
