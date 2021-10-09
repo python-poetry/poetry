@@ -168,6 +168,7 @@ def test_authenticator_falls_back_to_keyring_netloc(
     assert "Basic OmJhcg==" == request.headers["Authorization"]
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_authenticator_request_retries_on_exception(mocker, config, http):
     sleep = mocker.patch("time.sleep")
     sdist_uri = "https://foo.bar/files/{}/foo-0.1.0.tar.gz".format(str(uuid.uuid4()))
@@ -188,6 +189,7 @@ def test_authenticator_request_retries_on_exception(mocker, config, http):
     assert sleep.call_count == 2
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_authenticator_request_raises_exception_when_attempts_exhausted(
     mocker, config, http
 ):
