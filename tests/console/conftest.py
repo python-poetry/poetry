@@ -11,7 +11,7 @@ from poetry.factory import Factory
 from poetry.installation.noop_installer import NoopInstaller
 from poetry.repositories import Pool
 from poetry.utils.env import MockEnv
-from tests.helpers import TestApplication
+from tests.helpers import PoetryTestApplication
 from tests.helpers import TestExecutor
 from tests.helpers import TestLocker
 from tests.helpers import mock_clone
@@ -97,7 +97,7 @@ def poetry(repo, project_directory, config):
 
 @pytest.fixture
 def app(poetry):
-    app_ = TestApplication(poetry)
+    app_ = PoetryTestApplication(poetry)
 
     return app_
 

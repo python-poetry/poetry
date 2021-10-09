@@ -132,9 +132,9 @@ class TestExecutor(Executor):
         return 0
 
 
-class TestApplication(Application):
+class PoetryTestApplication(Application):
     def __init__(self, poetry):
-        super(TestApplication, self).__init__()
+        super(PoetryTestApplication, self).__init__()
         self._poetry = poetry
 
     def reset_poetry(self):
