@@ -336,11 +336,7 @@ def test_executor_should_hash_links(config, io, pool, mocker, fixture_dir, tmp_d
         .joinpath("demo-0.1.0-py2.py3-none-any.whl")
         .as_uri()
     )
-    mocker.patch.object(
-        Chef,
-        "get_cached_archive_for_link",
-        side_effect=lambda _: link,
-    )
+    mocker.patch.object(Chef, "get_cached_archive_for_link", side_effect=lambda _: link)
 
     env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
@@ -362,11 +358,7 @@ def test_executor_should_hash_links(config, io, pool, mocker, fixture_dir, tmp_d
 
 def test_executor_should_hash_paths(config, io, pool, mocker, fixture_dir, tmp_dir):
     link = fixture_dir("distributions").joinpath("demo-0.1.0-py2.py3-none-any.whl")
-    mocker.patch.object(
-        Chef,
-        "get_cached_archive_for_link",
-        side_effect=lambda _: link,
-    )
+    mocker.patch.object(Chef, "get_cached_archive_for_link", side_effect=lambda _: link)
 
     env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)

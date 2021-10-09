@@ -616,11 +616,7 @@ class Executor(object):
             for hash_type in hash_types:
                 archive_hashes.add(
                     "{}:{}".format(
-                        hash_type,
-                        FileDependency(
-                            package.name,
-                            path,
-                        ).hash(hash_type),
+                        hash_type, FileDependency(package.name, path).hash(hash_type),
                     )
                 )
 
