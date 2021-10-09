@@ -122,6 +122,15 @@ $ poetry install
 $ poetry run pytest tests/
 ```
 
+Once you have all the tests green, now you can try to modify some code. To run poetry from the 
+repo you can use this command:
+
+```bash
+$ poetry run python poetry <command> <args> ...
+```
+
+#### Code style check
+
 Poetry uses the [black](https://github.com/psf/black) coding style and you must ensure that your
 code follows it. If not, the CI will fail and your Pull Request will not be merged.
 
