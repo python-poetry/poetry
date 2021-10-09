@@ -18,8 +18,8 @@ from cleo.io.null_io import NullIO
 
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.package import Package
-from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.packages.utils.link import Link
+from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError

@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 from typing import Union
 
+from poetry.core.packages.utils.link import Link
+from poetry.core.packages.utils.utils import url_to_path
 from poetry.exceptions import PoetryException
 from poetry.utils.env import Env
 from poetry.utils.env import EnvCommandError
 from poetry.utils.env import ephemeral_environment
-from poetry.core.packages.utils.link import Link
-from poetry.core.packages.utils.utils import url_to_path
 
 
 def pip_install(

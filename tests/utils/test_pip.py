@@ -2,9 +2,9 @@ import subprocess
 
 import pytest
 
-from poetry.utils.pip import pip_install
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import path_to_url
+from poetry.utils.pip import pip_install
 
 
 def test_pip_install_successful(tmp_dir, tmp_venv, fixture_dir):
