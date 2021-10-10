@@ -432,14 +432,17 @@ class PyPiRepository(RemoteRepository):
     def _get_info_from_wheel(self, url: str) -> "PackageInfo":
         from poetry.inspection.info import PackageInfo
 
+        pathsplits = urllib.parse.urlparse(url).path.rsplit("/")
+        wheelpath = pathsplits[-1]
+        if not wheelpath:
+            wheelpath = pathsplits[-2]
+
         self._log(
-            "Downloading wheel: {}".format(
-                urllib.parse.urlparse(url).path.rsplit("/")[-1]
-            ),
+            "Downloading wheel: {}".format(wheelpath),
             level="debug",
         )
 
-        filename = os.path.basename(urllib.parse.urlparse(url).path.rsplit("/")[-1])
+        filename = os.path.basename(wheelpath)
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
@@ -450,14 +453,17 @@ class PyPiRepository(RemoteRepository):
     def _get_info_from_sdist(self, url: str) -> "PackageInfo":
         from poetry.inspection.info import PackageInfo
 
+        pathsplits = urllib.parse.urlparse(url).path.rsplit("/")
+        wheelpath = pathsplits[-1]
+        if not wheelpath:
+            wheelpath = pathsplits[-2]
+
         self._log(
-            "Downloading sdist: {}".format(
-                urllib.parse.urlparse(url).path.rsplit("/")[-1]
-            ),
+            "Downloading sdist: {}".format(wheelpath),
             level="debug",
         )
 
-        filename = os.path.basename(urllib.parse.urlparse(url).path)
+        filename = os.path.basename(wheelpath)
 
         with temporary_directory() as temp_dir:
             filepath = Path(temp_dir) / filename
