@@ -7,12 +7,13 @@ if TYPE_CHECKING:
 
 
 class Operation(object):
-    def __init__(self, reason: Optional[str] = None, priority: int = 0) -> None:
+    def __init__(self, reason: Optional[str] = None, priority: int = 0, offline: bool = False) -> None:
         self._reason = reason
 
         self._skipped = False
         self._skip_reason = None
         self._priority = priority
+        self._offline = offline
 
     @property
     def job_type(self) -> str:
@@ -37,6 +38,13 @@ class Operation(object):
     @property
     def package(self) -> "Package":
         raise NotImplementedError()
+
+    @property
+    def offline(self) -> bool:
+        return self._offline
+
+    def set_offline(self, offline: bool):
+        self._offline = offline
 
     def format_version(self, package: "Package") -> str:
         return package.full_pretty_version

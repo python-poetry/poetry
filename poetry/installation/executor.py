@@ -62,6 +62,7 @@ class Executor:
         self._dry_run = False
         self._enabled = True
         self._verbose = False
+        self._offline = False
         self._authenticator = Authenticator(config, self._io)
         self._chef = Chef(config, self._env)
         self._chooser = Chooser(pool, self._env)
@@ -490,9 +491,9 @@ class Executor:
         if package.source_type == "file":
             archive = self._prepare_file(operation)
         elif package.source_type == "url":
-            archive = self._download_link(operation, Link(package.source_url)).path
+            archive = self._download_link(operation, Link(package.source_url))
         else:
-            archive = self._download(operation).path
+            archive = self._download(operation)
 
         locked = pathlib.Path(".locked")
         locked.mkdir(exist_ok=True)
@@ -518,27 +519,51 @@ class Executor:
 
     def _install(self, operation: Union[Install, Update]) -> int:
         package = operation.package
-        if package.source_type == "directory":
-            return self._install_directory(operation)
-
-        if package.source_type == "git":
-            return self._install_git(operation)
-
-        if package.source_type == "file":
-            archive = self._prepare_file(operation)
-        elif package.source_type == "url":
-            archive = self._download_link(operation, Link(package.source_url))
-        else:
-            archive = self._download(operation)
-
-        operation_message = self.get_operation_message(operation)
-        message = (
-            "  <fg=blue;options=bold>•</> {message}: <info>Installing...</info>".format(
-                message=operation_message,
+        if operation.offline:
+            if package.source_type in ("directory", "git"):
+                raise ValueError(f"Cannot install package {operation.package.name} in offline mode.")
+            archive = self._find_locally(package)
+            if not archive:
+                raise ValueError(f"Cannot find package {operation.package.name}=={operation.package.version} in '.locked/' folder.")
+            message = (
+                "  <fg=blue;options=bold>•</> {message}: <info>Installing from {file}...  </info>".format(
+                    message=self.get_operation_message(operation),
+                    file=str(archive)
+                )
             )
-        )
+        else:
+            if package.source_type == "directory":
+                return self._install_directory(operation)
+
+            if package.source_type == "git":
+                return self._install_git(operation)
+
+            if package.source_type == "file":
+                archive = self._prepare_file(operation)
+            elif package.source_type == "url":
+                archive = self._download_link(operation, Link(package.source_url))
+            else:
+                archive = self._download(operation)
+            message = (
+                "  <fg=blue;options=bold>•</> {message}: <info>Installing...  </info>".format(
+                    message=self.get_operation_message(operation),
+                )
+            )
         self._write(operation, message)
         return self.pip_install(str(archive), upgrade=operation.job_type == "update")
+
+    def _find_locally(self, package: "Package") -> Path:
+        locked_path = pathlib.Path(".locked")
+        links = []
+        if not locked_path.is_dir():
+            return links
+        prefix = f"{package.name}-{package.version}-*"
+        # self._io.write_line(str(locked_path.absolute()))
+        # self._io.write_line(prefix)
+        # self._io.write_line(str(locked_path.glob(prefix)))
+        for archive in locked_path.glob(prefix):
+            return archive
+        return None
 
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
@@ -640,6 +665,9 @@ class Executor:
 
     def _install_git(self, operation: Union[Install, Update]) -> int:
         from poetry.core.vcs import Git
+
+        if operation.offline:
+            raise ValueError(f"Cannot install git package {operation.package.name} in offline mode.")
 
         package = operation.package
         operation_message = self.get_operation_message(operation)

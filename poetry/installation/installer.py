@@ -1,3 +1,4 @@
+import json
 from typing import TYPE_CHECKING
 from typing import Iterable
 from typing import List
@@ -98,12 +99,15 @@ class Installer:
 
     def run(self) -> int:
         # Check if refresh
-        if not self._update and self._lock and self._locker.is_locked():
+        if not self._update and not self._offline and self._lock and self._locker.is_locked():
             return self._do_refresh()
 
         # Force update if there is no lock file present
         if not self._update and not self._locker.is_locked():
-            self._update = True
+            if self._offline:
+                raise ValueError(f"Cannot perform offline install without lock file.")
+            else:
+                self._update = True
 
         if self.is_dry_run():
             self.verbose(True)
@@ -118,6 +122,10 @@ class Installer:
         self._dry_run = dry_run
         self._executor.dry_run(dry_run)
 
+        return self
+
+    def offline(self, offline: bool = False) -> "Installer":
+        self._offline = offline
         return self
 
     def is_dry_run(self) -> bool:
@@ -225,7 +233,7 @@ class Installer:
         from poetry.puzzle import Solver
 
         locked_repository = Repository()
-        if self._update:
+        if self._update and not self._offline:
             if self._locker.is_locked() and not self._lock:
                 locked_repository = self._locker.locked_repository(True)
 
@@ -276,7 +284,7 @@ class Installer:
 
         self._populate_local_repo(local_repo, ops)
 
-        if self._update:
+        if self._update and not self._offline:
             self._write_lock_file(local_repo)
 
             if self._lock:
@@ -327,6 +335,7 @@ class Installer:
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
                 with_uninstalls=self._requires_synchronization,
                 synchronize=self._requires_synchronization,
+                offline=self._offline
             )
 
         if not self._requires_synchronization:
@@ -343,7 +352,7 @@ class Installer:
 
             ops = [
                 op
-                for op in transaction.calculate_operations(with_uninstalls=True)
+                for op in transaction.calculate_operations(with_uninstalls=True, offline=self._offline)
                 if op.job_type == "uninstall"
             ] + ops
 
@@ -529,14 +538,14 @@ class Installer:
                         # Installed but optional and not requested in extras
                         ops.append(Uninstall(locked))
                     elif locked.version != installed.version:
-                        ops.append(Update(installed, locked))
+                        ops.append(Update(installed, locked, offline=self._offline))
 
             # If it's optional and not in required extras
             # we do not install
             if locked.optional and locked.name not in extra_packages:
                 continue
 
-            op = Install(locked)
+            op = Install(locked, offline=self._offline)
             if is_installed:
                 op.skip("Already installed")
 

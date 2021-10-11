@@ -27,7 +27,7 @@ class Transaction:
         self._root_package = root_package
 
     def calculate_operations(
-        self, with_uninstalls: bool = True, synchronize: bool = False
+        self, with_uninstalls: bool = True, synchronize: bool = False, offline: bool = False
     ) -> List["OperationTypes"]:
         from poetry.installation.operations.install import Install
         from poetry.installation.operations.uninstall import Uninstall
@@ -44,24 +44,24 @@ class Transaction:
 
                     if result_package.version != installed_package.version:
                         operations.append(
-                            Update(installed_package, result_package, priority=priority)
+                            Update(installed_package, result_package, priority=priority, offline=offline)
                         )
                     elif (
                         installed_package.source_type
                         or result_package.source_type != "legacy"
                     ) and not result_package.is_same_package_as(installed_package):
                         operations.append(
-                            Update(installed_package, result_package, priority=priority)
+                            Update(installed_package, result_package, priority=priority, offline=offline)
                         )
                     else:
                         operations.append(
-                            Install(result_package).skip("Already installed")
+                            Install(result_package, offline=offline).skip("Already installed")
                         )
 
                     break
 
             if not installed:
-                operations.append(Install(result_package, priority=priority))
+                operations.append(Install(result_package, priority=priority, offline=offline))
 
         if with_uninstalls:
             for current_package in self._current_packages:

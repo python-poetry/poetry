@@ -10,10 +10,9 @@ if TYPE_CHECKING:
 
 class Install(Operation):
     def __init__(
-        self, package: "Package", reason: Optional[str] = None, priority: int = 0
+        self, package: "Package", reason: Optional[str] = None, priority: int = 0, offline: bool = False
     ) -> None:
-        super(Install, self).__init__(reason, priority=priority)
-
+        super(Install, self).__init__(reason, priority=priority, offline=offline)
         self._package = package
 
     @property

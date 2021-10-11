@@ -15,11 +15,12 @@ class Update(Operation):
         target: "Package",
         reason: Optional[str] = None,
         priority: int = 0,
+        offline: bool = False
     ) -> None:
         self._initial_package = initial
         self._target_package = target
 
-        super(Update, self).__init__(reason, priority=priority)
+        super(Update, self).__init__(reason, priority=priority, offline=offline)
 
     @property
     def initial_package(self) -> "Package":
