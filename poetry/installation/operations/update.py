@@ -15,7 +15,7 @@ class Update(Operation):
         target: "Package",
         reason: Optional[str] = None,
         priority: int = 0,
-        offline: bool = False
+        offline: bool = False,
     ) -> None:
         self._initial_package = initial
         self._target_package = target

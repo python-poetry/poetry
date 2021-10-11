@@ -7,7 +7,9 @@ if TYPE_CHECKING:
 
 
 class Operation(object):
-    def __init__(self, reason: Optional[str] = None, priority: int = 0, offline: bool = False) -> None:
+    def __init__(
+        self, reason: Optional[str] = None, priority: int = 0, offline: bool = False
+    ) -> None:
         self._reason = reason
 
         self._skipped = False

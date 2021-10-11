@@ -1,4 +1,3 @@
-import json
 from typing import TYPE_CHECKING
 from typing import Iterable
 from typing import List
@@ -99,13 +98,20 @@ class Installer:
 
     def run(self) -> int:
         # Check if refresh
-        if not self._update and not self._offline and self._lock and self._locker.is_locked():
+        if (
+            not self._update
+            and not self._offline
+            and self._lock
+            and self._locker.is_locked()
+        ):
             return self._do_refresh()
 
         # Force update if there is no lock file present
         if not self._update and not self._locker.is_locked():
             if self._offline:
-                raise ValueError(f"Cannot perform offline install without lock file.")
+                raise ValueError(
+                    "Cannot perform offline installation without a lock file."
+                )
             else:
                 self._update = True
 
@@ -335,7 +341,7 @@ class Installer:
             ops = solver.solve(use_latest=self._whitelist).calculate_operations(
                 with_uninstalls=self._requires_synchronization,
                 synchronize=self._requires_synchronization,
-                offline=self._offline
+                offline=self._offline,
             )
 
         if not self._requires_synchronization:
@@ -352,7 +358,9 @@ class Installer:
 
             ops = [
                 op
-                for op in transaction.calculate_operations(with_uninstalls=True, offline=self._offline)
+                for op in transaction.calculate_operations(
+                    with_uninstalls=True, offline=self._offline
+                )
                 if op.job_type == "uninstall"
             ] + ops
 

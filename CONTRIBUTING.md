@@ -122,7 +122,7 @@ $ poetry install
 $ poetry run pytest tests/
 ```
 
-Once you have all the tests green, now you can try to modify some code. To run poetry from the 
+Once you have all the tests green, now you can try to modify some code. To run poetry from the
 repo you can use this command:
 
 ```bash

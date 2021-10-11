@@ -67,11 +67,7 @@ class InstallCommand(InstallerCommand):
             flag=False,
             multiple=True,
         ),
-        option(
-            "offline",
-            None,
-            "Install dependencies from local files only"
-        ),
+        option("offline", None, "Install dependencies from local files only"),
     ]
 
     help = """The <info>install</info> command reads the <comment>poetry.lock</> file from
@@ -157,13 +153,17 @@ dependencies and not including the current project, run the command with the
 
             with_synchronization = True
 
-        self._installer.only_groups(only_groups) \
-            .without_groups(excluded_groups) \
-            .with_groups(included_groups) \
-            .dry_run(self.option("dry-run")) \
-            .requires_synchronization(with_synchronization) \
-            .verbose(self._io.is_verbose()) \
-            .offline(self.option("offline"))
+        self._installer.only_groups(only_groups).without_groups(
+            excluded_groups
+        ).with_groups(included_groups).dry_run(
+            self.option("dry-run")
+        ).requires_synchronization(
+            with_synchronization
+        ).verbose(
+            self._io.is_verbose()
+        ).offline(
+            self.option("offline")
+        )
 
         return_code = self._installer.run()
 

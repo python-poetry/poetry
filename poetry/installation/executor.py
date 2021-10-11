@@ -521,15 +521,16 @@ class Executor:
         package = operation.package
         if operation.offline:
             if package.source_type in ("directory", "git"):
-                raise ValueError(f"Cannot install package {operation.package.name} in offline mode.")
-            archive = self._find_locally(package)
-            if not archive:
-                raise ValueError(f"Cannot find package {operation.package.name}=={operation.package.version} in '.locked/' folder.")
-            message = (
-                "  <fg=blue;options=bold>•</> {message}: <info>Installing from {file}...  </info>".format(
-                    message=self.get_operation_message(operation),
-                    file=str(archive)
+                raise ValueError(
+                    f"Cannot install package {operation.package.name} in offline mode."
                 )
+            archive = self._find_offline(package)
+            if not archive:
+                raise ValueError(
+                    f"Cannot find package {operation.package.name}=={operation.package.version} in '.locked/' folder."
+                )
+            message = "  <fg=blue;options=bold>•</> {message}: <info>Installing from {file}...  </info>".format(
+                message=self.get_operation_message(operation), file=str(archive)
             )
         else:
             if package.source_type == "directory":
@@ -544,25 +545,23 @@ class Executor:
                 archive = self._download_link(operation, Link(package.source_url))
             else:
                 archive = self._download(operation)
-            message = (
-                "  <fg=blue;options=bold>•</> {message}: <info>Installing...  </info>".format(
-                    message=self.get_operation_message(operation),
-                )
+            message = "  <fg=blue;options=bold>•</> {message}: <info>Installing...  </info>".format(
+                message=self.get_operation_message(operation),
             )
         self._write(operation, message)
         return self.pip_install(str(archive), upgrade=operation.job_type == "update")
 
-    def _find_locally(self, package: "Package") -> Path:
+    def _find_offline(self, package: "Package") -> Path:
         locked_path = pathlib.Path(".locked")
         links = []
         if not locked_path.is_dir():
             return links
-        prefix = f"{package.name}-{package.version}-*"
-        # self._io.write_line(str(locked_path.absolute()))
-        # self._io.write_line(prefix)
-        # self._io.write_line(str(locked_path.glob(prefix)))
-        for archive in locked_path.glob(prefix):
-            return archive
+
+        for file in package.files:
+            file_in_folder = locked_path.joinpath(file["file"])
+            if file_in_folder.is_file():
+                return file_in_folder
+
         return None
 
     def _update(self, operation: Union[Install, Update]) -> int:
@@ -667,7 +666,9 @@ class Executor:
         from poetry.core.vcs import Git
 
         if operation.offline:
-            raise ValueError(f"Cannot install git package {operation.package.name} in offline mode.")
+            raise ValueError(
+                f"Cannot install git package {operation.package.name} in offline mode."
+            )
 
         package = operation.package
         operation_message = self.get_operation_message(operation)
