@@ -484,6 +484,18 @@ class Installer:
 
             return 1
 
+        if not self._accept_all:
+            self._write(
+                "{}: Uninstalling Poetry will {} {}.".format(
+                    colorize("warning", "WARNING"),
+                    colorize("warning", "DELETE"),
+                    self._data_dir,
+                )
+            )
+            continue_uninstall = input("Do you want to continue? ([y]/n) ") or "y"
+            if continue_uninstall.lower() not in {"y", "yes"}:
+                return 1
+
         version = None
         if self._data_dir.joinpath("VERSION").exists():
             version = self._data_dir.joinpath("VERSION").read_text().strip()
