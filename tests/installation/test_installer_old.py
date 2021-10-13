@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import itertools
-import sys
 
 from pathlib import Path
 
@@ -1447,11 +1446,7 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
     assert locker.written_data == expected
 
     installs = installer.installer.installs
-
-    if sys.version_info >= (3, 5, 0):
-        assert len(installs) == 1
-    else:
-        assert len(installs) == 0
+    assert len(installs) == 1
 
 
 def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(
