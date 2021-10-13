@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 import itertools
 import json
-import sys
 
 from pathlib import Path
 
@@ -1751,11 +1750,7 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
 
     expected = fixture("with-conditional-dependency")
     assert locker.written_data == expected
-
-    if sys.version_info >= (3, 5, 0):
-        assert 1 == installer.executor.installations_count
-    else:
-        assert 0 == installer.executor.installations_count
+    assert 1 == installer.executor.installations_count
 
 
 def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(

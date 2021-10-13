@@ -230,8 +230,6 @@ class MakeReleaseCommand(Command):
                 subprocess.check_output(
                     [python, "-V"], stderr=subprocess.STDOUT, shell=WINDOWS
                 )
-                if version == "3.4" and WINDOWS:
-                    continue
 
                 subprocess.check_output([python, "-m", "pip", "install", "pip", "-U"])
             except subprocess.CalledProcessError:

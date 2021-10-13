@@ -963,12 +963,7 @@ def test_env_system_packages(tmp_path, config):
 
     EnvManager(config).build_venv(path=venv_path, flags={"system-site-packages": True})
 
-    if sys.version_info >= (3, 3):
-        assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
-    elif (2, 6) < sys.version_info < (3, 0):
-        assert not venv_path.joinpath(
-            "lib", "python2.7", "no-global-site-packages.txt"
-        ).exists()
+    assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
 
 
 def test_env_finds_the_correct_executables(tmp_dir, manager):
