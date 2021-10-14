@@ -179,14 +179,17 @@ class Authenticator:
     def _get_credentials_for_netloc(
         self, netloc: str
     ) -> Tuple[Optional[str], Optional[str]]:
+        credentials = (None, None)
+
         for (repository_name, repository_netloc) in self._get_repository_netlocs():
-            if netloc == repository_netloc:
-                auth = self._password_manager.get_http_auth(repository_name)
+            auth = self._get_http_auth(repository_name, netloc)
 
-                if auth is not None:
-                    return (auth["username"], auth["password"])
+            if auth is None:
+                continue
 
-        return (None, None)
+            return auth["username"], auth["password"]
+
+        return credentials
 
     def get_certs_for_url(self, url: str) -> Dict[str, Path]:
         parsed_url = urllib.parse.urlsplit(url)
@@ -200,14 +203,12 @@ class Authenticator:
 
     def _get_repository_netlocs(self) -> Generator[Tuple[str, str], None, None]:
         for repository_name in self._config.get("repositories", []):
-            auth = self._get_http_auth(repository_name, netloc)
-
-            if auth is None:
-                continue
-
-            return auth["username"], auth["password"]
-
-        return credentials
+            url = self._config.get(f"repositories.{repository_name}.url")
+            parsed_url = urllib.parse.urlsplit(url)
+            yield (
+                repository_name,
+                parsed_url.netloc,
+            )
 
     def _get_credentials_for_netloc_from_keyring(
         self, url: str, netloc: str, username: Optional[str]
