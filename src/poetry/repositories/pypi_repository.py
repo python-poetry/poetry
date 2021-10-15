@@ -83,6 +83,9 @@ class PyPiRepository(RemoteRepository):
     def session(self) -> CacheControl:
         return self._session
 
+    def __del__(self) -> None:
+        self._session.close()
+
     def find_packages(self, dependency: Dependency) -> List[Package]:
         """
         Find packages on the remote server.
