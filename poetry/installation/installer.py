@@ -61,6 +61,8 @@ class Installer:
 
         self._execute_operations = True
         self._lock = False
+        self._offline = False
+        self._offline_folder = None
 
         self._whitelist = []
 
@@ -132,6 +134,11 @@ class Installer:
 
     def offline(self, offline: bool = False) -> "Installer":
         self._offline = offline
+        return self
+
+    def offline_folder(self, folder: str) -> "Installer":
+        self._offline_folder = folder
+        self._executor.offline_folder(folder)
         return self
 
     def is_dry_run(self) -> bool:
@@ -624,7 +631,7 @@ class Installer:
         self._installer.download(operation.package)
 
     def download(self) -> int:
-        self._io.write_line("<info>Downloading dependencies from lock file</>")
+        self._io.write_line("<info>Downloading the dependencies from poetry.lock file...</>")
 
         locked_repository = self._locker.locked_repository(False)
 
@@ -641,9 +648,10 @@ class Installer:
         # We need to download all the libs in lock regardless of if they already been installed
         # or not
         ops = [Download(pkg) for pkg in locked_repository.packages]
+
         if self._use_executor:
             return self._executor.execute(ops)
         else:
             for op in ops:
                 self._execute_operation(op)
-            return 0
+        return 0

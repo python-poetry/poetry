@@ -62,7 +62,7 @@ class Executor:
         self._dry_run = False
         self._enabled = True
         self._verbose = False
-        self._offline = False
+        self._offline_folder = None
         self._authenticator = Authenticator(config, self._io)
         self._chef = Chef(config, self._env)
         self._chooser = Chooser(pool, self._env)
@@ -115,6 +115,10 @@ class Executor:
     def dry_run(self, dry_run: bool = True) -> "Executor":
         self._dry_run = dry_run
 
+        return self
+
+    def offline_folder(self, folder: str):
+        self._offline_folder = folder
         return self
 
     def verbose(self, verbose: bool = True) -> "Executor":
@@ -487,17 +491,11 @@ class Executor:
         return status_code
 
     def _execute_download(self, operation: Download) -> int:
-        package = operation.package
-        if package.source_type == "file":
-            archive = self._prepare_file(operation)
-        elif package.source_type == "url":
-            archive = self._download_link(operation, Link(package.source_url))
-        else:
-            archive = self._download(operation)
-
-        locked = pathlib.Path(".locked")
+        archive = self._download_package(operation)
+        if isinstance(archive, Link):
+            archive = archive.path
+        locked = pathlib.Path(self._offline_folder)
         locked.mkdir(exist_ok=True)
-
         shutil.copy(archive, locked)
 
         operation_message = self.get_operation_message(operation)
@@ -539,17 +537,22 @@ class Executor:
             if package.source_type == "git":
                 return self._install_git(operation)
 
-            if package.source_type == "file":
-                archive = self._prepare_file(operation)
-            elif package.source_type == "url":
-                archive = self._download_link(operation, Link(package.source_url))
-            else:
-                archive = self._download(operation)
+            archive = self._download_package(operation)
             message = "  <fg=blue;options=bold>•</> {message}: <info>Installing...  </info>".format(
                 message=self.get_operation_message(operation),
             )
         self._write(operation, message)
         return self.pip_install(str(archive), upgrade=operation.job_type == "update")
+
+    def _download_package(self, operation: Union[Install, Update, Download]) -> Path:
+        package = operation.package
+        if package.source_type == "file":
+            archive = self._prepare_file(operation)
+        elif package.source_type == "url":
+            archive = self._download_link(operation, Link(package.source_url))
+        else:
+            archive = self._download(operation)
+        return archive
 
     def _find_offline(self, package: "Package") -> Path:
         locked_path = pathlib.Path(".locked")

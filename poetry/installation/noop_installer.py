@@ -13,6 +13,7 @@ class NoopInstaller(BaseInstaller):
         self._installs = []
         self._updates = []
         self._removals = []
+        self._downloads = []
 
     @property
     def installs(self) -> List["Package"]:
@@ -34,3 +35,6 @@ class NoopInstaller(BaseInstaller):
 
     def remove(self, package: "Package") -> None:
         self._removals.append(package)
+
+    def download(self, package: "Package", folder: str) -> None:
+        self._downloads.append(package)

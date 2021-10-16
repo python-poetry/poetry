@@ -14,3 +14,6 @@ class BaseInstaller:
 
     def remove(self, package: "Package") -> None:
         raise NotImplementedError
+
+    def download(self, package: "Package", folder: str) -> None:
+        raise NotImplementedError

@@ -265,7 +265,7 @@ class PipInstaller(BaseInstaller):
 
         self.install_directory(pkg)
 
-    def download(self, package: "Package"):
+    def download(self, package: "Package", folder: str) -> None:
         self.run(
-            "download", f"{package.name}=={package.version}", "-d .locked", "--no-deps"
+            "download", f"{package.name}=={package.version}", f"-d {folder}", "--no-deps"
         )
