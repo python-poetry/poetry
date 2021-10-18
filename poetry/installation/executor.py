@@ -124,6 +124,9 @@ class Executor:
         func = pip_install
         if editable:
             func = pip_editable_install
+        
+        # Sanitize req of type str on Windows https://github.com/python-poetry/poetry/issues/4163
+        req = Link(req).path if isinstance(req, str) else req
 
         try:
             func(req, self._env, upgrade=upgrade)
