@@ -311,8 +311,11 @@ class Executor:
             return 0
 
         if not self._enabled or self._dry_run:
+<<<<<<< HEAD:src/poetry/installation/executor.py
             self._io.write_line(f"  <fg=blue;options=bold>•</> {operation_message}")
 
+=======
+>>>>>>> 73b6da5e (Executor: Remove duplicate entry with dry-run argument):poetry/installation/executor.py
             return 0
 
         result: int = getattr(self, f"_execute_{method}")(operation)
@@ -706,7 +709,9 @@ class Executor:
         return archive
 
     def _should_write_operation(self, operation: Operation) -> bool:
-        return not operation.skipped or self._dry_run or self._verbose
+        return (
+            not operation.skipped or self._dry_run or self._verbose or not self._enabled
+        )
 
     def _save_url_reference(self, operation: Operation) -> None:
         """
