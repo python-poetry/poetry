@@ -329,14 +329,18 @@ def test_executor_should_check_every_possible_hash_types_before_failing(
         )
 
 
-def test_executor_should_hash_links(config, io, pool, mocker, fixture_dir, tmp_dir):
+def test_executor_should_use_cached_link_and_hash(
+    config, io, pool, mocker, fixture_dir, tmp_dir
+):
     # Produce a file:/// URI that is a valid link
-    link = Link(
+    link_cached = Link(
         fixture_dir("distributions")
         .joinpath("demo-0.1.0-py2.py3-none-any.whl")
         .as_uri()
     )
-    mocker.patch.object(Chef, "get_cached_archive_for_link", side_effect=lambda _: link)
+    mocker.patch.object(
+        Chef, "get_cached_archive_for_link", side_effect=lambda _: link_cached
+    )
 
     env = MockEnv(path=Path(tmp_dir))
     executor = Executor(env, pool, config, io)
@@ -353,26 +357,4 @@ def test_executor_should_hash_links(config, io, pool, mocker, fixture_dir, tmp_d
         Install(package), Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl")
     )
 
-    assert archive == link
-
-
-def test_executor_should_hash_paths(config, io, pool, mocker, fixture_dir, tmp_dir):
-    link = fixture_dir("distributions").joinpath("demo-0.1.0-py2.py3-none-any.whl")
-    mocker.patch.object(Chef, "get_cached_archive_for_link", side_effect=lambda _: link)
-
-    env = MockEnv(path=Path(tmp_dir))
-    executor = Executor(env, pool, config, io)
-
-    package = Package("demo", "0.1.0")
-    package.files = [
-        {
-            "file": "demo-0.1.0-py2.py3-none-any.whl",
-            "hash": "md5:15507846fd4299596661d0197bfb4f90",
-        }
-    ]
-
-    archive = executor._download_link(
-        Install(package), Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl")
-    )
-
-    assert archive == link
+    assert archive == link_cached
