@@ -12,11 +12,13 @@ test_task:
   python_script:
     - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
     - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
-    - pkg install -y git-lite $PYPACKAGE $SQLPACKAGE
+    - pkg install -y git-lite curl $PYPACKAGE $SQLPACKAGE
   pip_script:
     - $PYTHON -m ensurepip
     - $PYTHON -m pip --disable-pip-version-check install -U pip tox virtualenv
-    - $PYTHON -m pip --disable-pip-version-check install -U --pre poetry
+  poetry_script:
+    - curl -sL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py \
+      | $PYTHON - -y
     - poetry config virtualenvs.in-project true
   tox_script: $PYTHON -m tox -e py -- -q --junitxml=junit.xml tests
   on_failure:
