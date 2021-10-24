@@ -6,6 +6,7 @@ test_task:
   only_if: $CIRRUS_TAG == ''
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
+    PATH: /.local/bin:${PATH}
     matrix:
       - PYTHON: python3.8
       - PYTHON: python3.9
