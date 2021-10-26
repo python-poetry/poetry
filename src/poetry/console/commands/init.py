@@ -377,16 +377,11 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
         return package.pretty_name, selector.find_recommended_require_version(package)
 
     def _parse_requirements(self, requirements: List[str]) -> List[Dict[str, str]]:
-        from poetry.core.pyproject.exceptions import PyProjectException
-
         from poetry.puzzle.provider import Provider
 
         result = []
 
-        try:
-            cwd = self.poetry.file.parent
-        except (PyProjectException, RuntimeError):
-            cwd = Path.cwd()
+        cwd = Path.cwd()
 
         for requirement in requirements:
             requirement = requirement.strip()

@@ -7,12 +7,14 @@ from typing import Union
 
 from poetry.console.commands.command import Command
 
+from .plugin_command_mixin import PluginCommandMixin
+
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
 
 
-class PluginShowCommand(Command):
+class PluginShowCommand(Command, PluginCommandMixin):
 
     name = "plugin show"
 
@@ -20,7 +22,6 @@ class PluginShowCommand(Command):
 
     def handle(self) -> int:
         from poetry.plugins.application_plugin import ApplicationPlugin
-        from poetry.plugins.plugin_manager import PluginManager
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.utils.env import EnvManager
         from poetry.utils.helpers import canonicalize_name
@@ -34,10 +35,7 @@ class PluginShowCommand(Command):
             }
         )
 
-        entry_points = (
-            PluginManager("application.plugin").get_plugin_entry_points()
-            + PluginManager("plugin").get_plugin_entry_points()
-        )
+        entry_points = self.get_plugin_entry_points()
 
         system_env = EnvManager.get_system_env(naive=True)
         installed_repository = InstalledRepository.load(
@@ -52,7 +50,7 @@ class PluginShowCommand(Command):
             if issubclass(plugin, ApplicationPlugin):
                 category = "application_plugins"
 
-            package = packages_by_name[canonicalize_name(entry_point.name)]
+            package = packages_by_name[canonicalize_name(entry_point.distro.name)]
             plugins[package.pretty_name]["package"] = package
             plugins[package.pretty_name][category].append(entry_point)
 

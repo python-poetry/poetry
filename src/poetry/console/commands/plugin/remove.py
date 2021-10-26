@@ -1,16 +1,20 @@
 import os
 
-from typing import cast
+from typing import TYPE_CHECKING
 
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from poetry.console.application import Application
 from poetry.console.commands.command import Command
-from poetry.console.commands.remove import RemoveCommand
+
+from .plugin_command_mixin import PluginCommandMixin
 
 
-class PluginRemoveCommand(Command):
+if TYPE_CHECKING:
+    from poetry.console.application import Application  # noqa
+
+
+class PluginRemoveCommand(Command, PluginCommandMixin):
 
     name = "plugin remove"
 
@@ -31,11 +35,10 @@ class PluginRemoveCommand(Command):
     def handle(self) -> int:
         from pathlib import Path
 
-        from cleo.io.inputs.string_input import StringInput
-        from cleo.io.io import IO
+        import tomlkit
 
-        from poetry.factory import Factory
         from poetry.utils.env import EnvManager
+        from poetry.utils.helpers import canonicalize_name
 
         plugins = self.argument("plugins")
 
@@ -44,24 +47,69 @@ class PluginRemoveCommand(Command):
             os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
         )
 
-        # From this point forward, all the logic will be deferred to
-        # the remove command, by using the global `pyproject.toml` file.
-        application = cast(Application, self.application)
-        remove_command: RemoveCommand = cast(RemoveCommand, application.find("remove"))
-        # We won't go through the event dispatching done by the application
-        # so we need to configure the command manually
-        remove_command.set_poetry(Factory().create_poetry(env_dir))
-        remove_command.set_env(system_env)
-        application._configure_installer(remove_command, self._io)
-
-        argv = ["remove"] + plugins
-        if self.option("dry-run"):
-            argv.append("--dry-run")
-
-        return remove_command.run(
-            IO(
-                StringInput(" ".join(argv)),
-                self._io.output,
-                self._io.error_output,
+        existing_plugins = {}
+        if env_dir.joinpath("plugins.toml").exists():
+            existing_plugins = tomlkit.loads(
+                env_dir.joinpath("plugins.toml").read_text(encoding="utf-8")
             )
+
+        root_package = self.create_env_package(system_env, existing_plugins)
+
+        entrypoints = self.get_plugin_entry_points()
+
+        removed_plugins = []
+        for plugin in plugins:
+            plugin = canonicalize_name(plugin)
+            is_plugin = False
+            installed = False
+            for entrypoint in entrypoints:
+                if canonicalize_name(entrypoint.distro.name) == plugin:
+                    is_plugin = True
+                    break
+
+            for i, dependency in enumerate(root_package.requires):
+                if dependency.name == plugin:
+                    installed = True
+
+                    break
+
+            if not installed:
+                self.line_error(f"<warning>Plugin {plugin} is not installed.</warning>")
+
+                continue
+
+            if not is_plugin:
+                self.line_error(
+                    f"<warning>The package {plugin} is not a plugin.</<warning>"
+                )
+                continue
+
+            if plugin in existing_plugins:
+                del existing_plugins[plugin]
+
+            removed_plugins.append(plugin)
+
+        if not removed_plugins:
+            return 1
+
+        _root_package = root_package
+        root_package = root_package.with_dependency_groups([], only=True)
+        for dependency in _root_package.requires:
+            if dependency.name not in removed_plugins:
+                root_package.add_dependency(dependency)
+
+        return_code = self.update(
+            system_env,
+            root_package,
+            self._io,
+            whitelist=removed_plugins,
         )
+
+        if return_code != 0 or self.option("dry-run"):
+            return return_code
+
+        env_dir.joinpath("plugins.toml").write_text(
+            tomlkit.dumps(existing_plugins, sort_keys=True), encoding="utf-8"
+        )
+
+        return 0

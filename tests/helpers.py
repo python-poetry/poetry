@@ -177,6 +177,8 @@ class TestLocker(Locker):
         self._lock_data = None
         self._write = False
 
+        super().__init__(self._lock, local_config)
+
     def write(self, write: bool = True) -> None:
         self._write = write
 

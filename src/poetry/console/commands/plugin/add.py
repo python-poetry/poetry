@@ -1,18 +1,20 @@
 import os
 
-from typing import Dict
-from typing import List
-from typing import cast
+from typing import TYPE_CHECKING
 
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from poetry.console.application import Application
 from poetry.console.commands.init import InitCommand
-from poetry.console.commands.update import UpdateCommand
+from poetry.console.commands.plugin.plugin_command_mixin import PluginCommandMixin
 
 
-class PluginAddCommand(InitCommand):
+if TYPE_CHECKING:
+    from poetry.console.application import Application  # noqa
+    from poetry.console.commands.update import UpdateCommand  # noqa
+
+
+class PluginAddCommand(InitCommand, PluginCommandMixin):
 
     name = "plugin add"
 
@@ -55,17 +57,13 @@ You can specify a package in the following forms:
 
         import tomlkit
 
-        from cleo.io.inputs.string_input import StringInput
-        from cleo.io.io import IO
-        from poetry.core.pyproject.toml import PyProjectTOML
         from poetry.core.semver.helpers import parse_constraint
 
         from poetry.factory import Factory
-        from poetry.packages.project_package import ProjectPackage
-        from poetry.repositories.installed_repository import InstalledRepository
         from poetry.utils.env import EnvManager
+        from poetry.utils.helpers import canonicalize_name
 
-        plugins = self.argument("plugins")
+        requested_plugins = self.argument("plugins")
 
         # Plugins should be installed in the system env to be globally available
         system_env = EnvManager.get_system_env(naive=True)
@@ -74,57 +72,53 @@ You can specify a package in the following forms:
             os.getenv("POETRY_HOME") if os.getenv("POETRY_HOME") else system_env.path
         )
 
+        existing_plugins = {}
+        if env_dir.joinpath("plugins.toml").exists():
+            existing_plugins = tomlkit.loads(
+                env_dir.joinpath("plugins.toml").read_text(encoding="utf-8")
+            )
+
+        root_package = self.create_env_package(system_env, existing_plugins)
+
+        installed_plugins = {
+            canonicalize_name(ep.distro.name) for ep in self.get_plugin_entry_points()
+        }
+
         # We check for the plugins existence first.
-        if env_dir.joinpath("pyproject.toml").exists():
-            pyproject = tomlkit.loads(
-                env_dir.joinpath("pyproject.toml").read_text(encoding="utf-8")
-            )
-            poetry_content = pyproject["tool"]["poetry"]
-            existing_packages = self.get_existing_packages_from_input(
-                plugins, poetry_content, "dependencies"
-            )
+        plugins = []
+        skipped_plugins = []
+        parsed_plugins = self._parse_requirements(requested_plugins)
+        for i, plugin in enumerate(parsed_plugins):
+            plugin_name = canonicalize_name(plugin.pop("name"))
+            if plugin_name in installed_plugins:
+                if plugin_name not in existing_plugins:
+                    existing_plugins[plugin_name] = plugin
 
-            if existing_packages:
-                self.notify_about_existing_packages(existing_packages)
+                if not plugin:
+                    skipped_plugins.append(plugin_name)
 
-            plugins = [plugin for plugin in plugins if plugin not in existing_packages]
+                    continue
+
+            plugins.append(canonicalize_name(requested_plugins[i]))
+
+        if skipped_plugins:
+            self.line(
+                "The following plugins are already present and will be skipped:\n"
+            )
+            for name in sorted(skipped_plugins):
+                self.line(f"  • <c1>{name}</c1>")
+
+            self.line(
+                "\nIf you want to upgrade it to the latest compatible version, "
+                "you can use `poetry plugin add plugin@latest.\n"
+            )
 
         if not plugins:
             return 0
 
         plugins = self._determine_requirements(plugins)
 
-        # We retrieve the packages installed in the system environment.
-        # We assume that this environment will be a self contained virtual environment
-        # built by the official installer or by pipx.
-        # If not, it might lead to side effects since other installed packages
-        # might not be required by Poetry but still taken into account when resolving dependencies.
-        installed_repository = InstalledRepository.load(
-            system_env, with_dependencies=True
-        )
-
-        root_package = None
-        for package in installed_repository.packages:
-            if package.name == "poetry":
-                root_package = ProjectPackage(package.name, package.version)
-                for dependency in package.requires:
-                    root_package.add_dependency(dependency)
-
-                break
-
-        root_package.python_versions = ".".join(
-            str(v) for v in system_env.version_info[:3]
-        )
-        # We create a `pyproject.toml` file based on all the information
-        # we have about the current environment.
-        if not env_dir.joinpath("pyproject.toml").exists():
-            Factory.create_pyproject_from_package(root_package, env_dir)
-
-        # We add the plugins to the dependencies section of the previously
-        # created `pyproject.toml` file
-        pyproject = PyProjectTOML(env_dir.joinpath("pyproject.toml"))
-        poetry_content = pyproject.poetry_config
-        poetry_dependency_section = poetry_content["dependencies"]
+        # We add the plugins to the plugins.toml file
         plugin_names = []
         for plugin in plugins:
             if "version" in plugin:
@@ -141,57 +135,22 @@ You can specify a package in the following forms:
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
 
-            poetry_dependency_section[plugin["name"]] = constraint
+            root_package.add_dependency(
+                Factory.create_dependency(plugin["name"], constraint)
+            )
+
+            existing_plugins[plugin["name"]] = constraint
             plugin_names.append(plugin["name"])
 
-        pyproject.save()
-
-        # From this point forward, all the logic will be deferred to
-        # the update command, by using the previously created `pyproject.toml`
-        # file.
-        application = cast(Application, self.application)
-        update_command: UpdateCommand = cast(UpdateCommand, application.find("update"))
-        # We won't go through the event dispatching done by the application
-        # so we need to configure the command manually
-        update_command.set_poetry(Factory().create_poetry(env_dir))
-        update_command.set_env(system_env)
-        application._configure_installer(update_command, self._io)
-
-        argv = ["update"] + plugin_names
-        if self.option("dry-run"):
-            argv.append("--dry-run")
-
-        return update_command.run(
-            IO(
-                StringInput(" ".join(argv)),
-                self._io.output,
-                self._io.error_output,
-            )
+        return_code = self.update(
+            system_env, root_package, self._io, whitelist=plugin_names
         )
 
-    def get_existing_packages_from_input(
-        self, packages: List[str], poetry_content: Dict, target_section: str
-    ) -> List[str]:
-        existing_packages = []
+        if return_code != 0 or self.option("dry-run"):
+            return return_code
 
-        for name in packages:
-            for key in poetry_content[target_section]:
-                if key.lower() == name.lower():
-                    existing_packages.append(name)
-
-        return existing_packages
-
-    def notify_about_existing_packages(self, existing_packages: List[str]) -> None:
-        self.line(
-            "The following plugins are already present in the "
-            "<c2>pyproject.toml</c2> file and will be skipped:\n"
+        env_dir.joinpath("plugins.toml").write_text(
+            tomlkit.dumps(existing_plugins, sort_keys=True), encoding="utf-8"
         )
-        for name in existing_packages:
-            self.line(f"  • <c1>{name}</c1>")
 
-        self.line(
-            "\nIf you want to update it to the latest compatible version, "
-            "you can use `<c2>poetry plugin update package</c2>`.\n"
-            "If you prefer to upgrade it to the latest available version, "
-            "you can use `<c2>poetry plugin add package@latest</c2>`.\n"
-        )
+        return 0

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from poetry.installation.base_installer import BaseInstaller
     from poetry.installation.operations import OperationTypes
     from poetry.installation.operations.operation import Operation
-    from poetry.packages import Locker
+    from poetry.packages.locker import BaseLocker
     from poetry.utils.env import Env
 
 
@@ -38,7 +38,7 @@ class Installer:
         io: "IO",
         env: "Env",
         package: "ProjectPackage",
-        locker: "Locker",
+        locker: "BaseLocker",
         pool: Pool,
         config: "Config",
         installed: Union[Repository, None] = None,
@@ -91,7 +91,7 @@ class Installer:
 
         return self
 
-    def set_locker(self, locker: "Locker") -> "Installer":
+    def set_locker(self, locker: "BaseLocker") -> "Installer":
         self._locker = locker
 
         return self
@@ -356,7 +356,7 @@ class Installer:
         return self._execute(ops)
 
     def _write_lock_file(self, repo: Repository, force: bool = True) -> None:
-        if force or (self._update and self._write_lock):
+        if (force or (self._update and self._write_lock)) and not self._dry_run:
             updated_lock = self._locker.set_lock_data(self._package, repo.packages)
 
             if updated_lock:

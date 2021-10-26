@@ -11,6 +11,7 @@ from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import Set
@@ -43,26 +44,21 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Locker:
-
+class BaseLocker:
     _VERSION = "1.1"
 
     _relevant_keys = ["dependencies", "group", "source", "extras"]
 
-    def __init__(self, lock: Union[str, Path], local_config: dict) -> None:
-        self._lock = TOMLFile(lock)
+    def __init__(self, root: Path, local_config: dict) -> None:
+        self._root = root
         self._local_config = local_config
         self._lock_data = None
         self._content_hash = self._get_content_hash()
 
     @property
-    def lock(self) -> TOMLFile:
-        return self._lock
-
-    @property
-    def lock_data(self) -> "TOMLDocument":
+    def lock_data(self) -> dict:
         if self._lock_data is None:
-            self._lock_data = self._get_lock_data()
+            return {}
 
         return self._lock_data
 
@@ -70,20 +66,16 @@ class Locker:
         """
         Checks whether the locker has been locked (lockfile found).
         """
-        if not self._lock.exists():
-            return False
-
         return "package" in self.lock_data
 
     def is_fresh(self) -> bool:
         """
         Checks whether the lock file is still up to date with the current hash.
         """
-        lock = self._lock.read()
-        metadata = lock.get("metadata", {})
+        metadata = self.lock_data.get("metadata", {})
 
         if "content-hash" in metadata:
-            return self._content_hash == lock["metadata"]["content-hash"]
+            return self._content_hash == self.lock_data["metadata"]["content-hash"]
 
         return False
 
@@ -115,7 +107,7 @@ class Locker:
             source_type = source.get("type")
             url = source.get("url")
             if source_type in ["directory", "file"]:
-                url = self._lock.path.parent.joinpath(url).resolve().as_posix()
+                url = self._root.joinpath(url).resolve().as_posix()
 
             package = Package(
                 info["name"],
@@ -177,7 +169,7 @@ class Locker:
 
             for dep_name, constraint in info.get("dependencies", {}).items():
 
-                root_dir = self._lock.path.parent
+                root_dir = self._root
                 if package.source_type == "directory":
                     # root dir should be the source of the package relative to the lock path
                     root_dir = Path(package.source_url)
@@ -439,13 +431,7 @@ class Locker:
         return False
 
     def _write_lock_data(self, data: "TOMLDocument") -> None:
-        self.lock.write(data)
-
-        # Checking lock file data consistency
-        if data != self.lock.read():
-            raise RuntimeError("Inconsistent lock file data.")
-
-        self._lock_data = None
+        self._lock_data = data
 
     def _get_content_hash(self) -> str:
         """
@@ -463,15 +449,7 @@ class Locker:
 
         return content_hash
 
-    def _get_lock_data(self) -> "TOMLDocument":
-        if not self._lock.exists():
-            raise RuntimeError("No lockfile found. Unable to read locked packages")
-
-        try:
-            lock_data = self._lock.read()
-        except TOMLKitError as e:
-            raise RuntimeError(f"Unable to read the lock file ({e}).")
-
+    def _verify_lock_data(self, lock_data: dict) -> NoReturn:
         lock_version = Version.parse(lock_data["metadata"].get("lock-version", "1.0"))
         current_version = Version.parse(self._VERSION)
         # We expect the locker to be able to read lock files
@@ -492,8 +470,6 @@ class Locker:
                 "Upgrade Poetry to be able to read the lock file or, alternatively, "
                 "regenerate the lock file with the `poetry lock` command."
             )
-
-        return lock_data
 
     def _lock_packages(self, packages: List[Package]) -> list:
         locked = []
@@ -591,9 +567,7 @@ class Locker:
             if package.source_type in ["file", "directory"]:
                 # The lock file should only store paths relative to the root project
                 url = Path(
-                    os.path.relpath(
-                        Path(url).as_posix(), self._lock.path.parent.as_posix()
-                    )
+                    os.path.relpath(Path(url).as_posix(), self._root.as_posix())
                 ).as_posix()
 
             data["source"] = {}
@@ -613,6 +587,55 @@ class Locker:
                 data["develop"] = package.develop
 
         return data
+
+
+class Locker(BaseLocker):
+    def __init__(self, lock: Union[str, Path], local_config: dict) -> None:
+        self._lock = TOMLFile(lock)
+
+        super().__init__(self._lock.path.parent, local_config)
+
+    @property
+    def lock(self) -> TOMLFile:
+        return self._lock
+
+    @property
+    def lock_data(self) -> "TOMLDocument":
+        if self._lock_data is None:
+            self._lock_data = self._get_lock_data()
+
+        return self._lock_data
+
+    def is_locked(self) -> bool:
+        """
+        Checks whether the locker has been locked (lockfile found).
+        """
+        if not self._lock.exists():
+            return False
+
+        return super().is_locked()
+
+    def _write_lock_data(self, data: "TOMLDocument") -> None:
+        self.lock.write(data)
+
+        # Checking lock file data consistency
+        if data != self.lock.read():
+            raise RuntimeError("Inconsistent lock file data.")
+
+        self._lock_data = None
+
+    def _get_lock_data(self) -> "TOMLDocument":
+        if not self._lock.exists():
+            raise RuntimeError("No lockfile found. Unable to read locked packages")
+
+        try:
+            lock_data = self._lock.read()
+        except TOMLKitError as e:
+            raise RuntimeError(f"Unable to read the lock file ({e}).")
+
+        self._verify_lock_data(lock_data)
+
+        return lock_data
 
 
 class NullLocker(Locker):

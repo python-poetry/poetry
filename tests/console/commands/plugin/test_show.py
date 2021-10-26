@@ -3,6 +3,7 @@ from typing import Type
 
 import pytest
 
+from entrypoints import Distribution
 from entrypoints import EntryPoint as _EntryPoint
 from poetry.core.packages.package import Package
 
@@ -48,6 +49,7 @@ def test_show_displays_installed_plugins(
                     "poetry-plugin",
                     "poetry_plugin.plugins:ApplicationPlugin",
                     "FirstApplicationPlugin",
+                    distro=Distribution("poetry-plugin", "1.2.3"),
                 )
             ],
             [
@@ -55,6 +57,7 @@ def test_show_displays_installed_plugins(
                     "poetry-plugin",
                     "poetry_plugin.plugins:Plugin",
                     "FirstPlugin",
+                    distro=Distribution("poetry-plugin", "1.2.3"),
                 )
             ],
         ],
@@ -86,11 +89,13 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
                     "poetry-plugin",
                     "poetry_plugin.plugins:ApplicationPlugin",
                     "FirstApplicationPlugin",
+                    distro=Distribution("poetry-plugin", "1.2.3"),
                 ),
                 EntryPoint(
                     "poetry-plugin",
                     "poetry_plugin.plugins:ApplicationPlugin",
                     "SecondApplicationPlugin",
+                    distro=Distribution("poetry-plugin", "1.2.3"),
                 ),
             ],
             [
@@ -98,11 +103,13 @@ def test_show_displays_installed_plugins_with_multiple_plugins(
                     "poetry-plugin",
                     "poetry_plugin.plugins:Plugin",
                     "FirstPlugin",
+                    distro=Distribution("poetry-plugin", "1.2.3"),
                 ),
                 EntryPoint(
                     "poetry-plugin",
                     "poetry_plugin.plugins:Plugin",
                     "SecondPlugin",
+                    distro=Distribution("poetry-plugin", "1.2.3"),
                 ),
             ],
         ],
@@ -134,6 +141,7 @@ def test_show_displays_installed_plugins_with_dependencies(
                     "poetry-plugin",
                     "poetry_plugin.plugins:ApplicationPlugin",
                     "FirstApplicationPlugin",
+                    distro=Distribution("poetry-plugin", "1.2.3"),
                 )
             ],
             [
@@ -141,6 +149,7 @@ def test_show_displays_installed_plugins_with_dependencies(
                     "poetry-plugin",
                     "poetry_plugin.plugins:Plugin",
                     "FirstPlugin",
+                    distro=Distribution("poetry-plugin", "1.2.3"),
                 )
             ],
         ],

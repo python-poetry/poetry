@@ -27,7 +27,7 @@ from poetry.factory import Factory
 from poetry.installation import Installer as BaseInstaller
 from poetry.installation.executor import Executor as BaseExecutor
 from poetry.installation.noop_installer import NoopInstaller
-from poetry.packages import Locker as BaseLocker
+from poetry.packages.locker import Locker as BaseLocker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.repositories.installed_repository import InstalledRepository
@@ -104,10 +104,13 @@ class CustomInstalledRepository(InstalledRepository):
 
 class Locker(BaseLocker):
     def __init__(self, lock_path: Union[str, Path]):
-        self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
+        self._lock = TOMLFile(lock_path.joinpath("poetry.lock"))
+        self._root = self._lock.path.parent
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
+
+        super().__init__(self._lock, {})
 
     @property
     def written_data(self) -> Optional[Dict]:
@@ -115,6 +118,7 @@ class Locker(BaseLocker):
 
     def set_lock_path(self, lock: Union[str, Path]) -> "Locker":
         self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
+        self._root = self._lock.path.parent
 
         return self
 
@@ -304,6 +308,76 @@ def test_run_update_after_removing_dependencies(
     assert installer.executor.installations_count == 0
     assert installer.executor.updates_count == 0
     assert installer.executor.removals_count == 1
+
+
+def test_run_update_should_not_remove_existing_but_non_locked_packages(
+    installer, locker, repo, package, installed
+):
+    locker.locked(True)
+    locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "A",
+                    "version": "1.0",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "B",
+                    "version": "1.1",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+                {
+                    "name": "C",
+                    "version": "1.2",
+                    "category": "main",
+                    "optional": False,
+                    "platform": "*",
+                    "python-versions": "*",
+                    "checksum": [],
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "platform": "*",
+                "content-hash": "123456789",
+                "hashes": {"A": [], "B": [], "C": []},
+            },
+        }
+    )
+    package_a = get_package("A", "1.0")
+    package_b = get_package("B", "1.1")
+    package_c = get_package("C", "1.2")
+    package_d = get_package("D", "1.3")
+    repo.add_package(package_a)
+    repo.add_package(package_b)
+    repo.add_package(package_c)
+    repo.add_package(package_d)
+
+    installed.add_package(package_a)
+    installed.add_package(package_b)
+    installed.add_package(package_c)
+    installed.add_package(package_d)
+
+    package.add_dependency(Factory.create_dependency("A", "~1.0"))
+    package.add_dependency(Factory.create_dependency("B", "~1.1"))
+    package.add_dependency(Factory.create_dependency("C", "~1.2"))
+
+    installer.update(True)
+    installer.whitelist(["c"])
+    installer.run()
+
+    assert 0 == installer.executor.installations_count
+    assert 0 == installer.executor.updates_count
+    assert 0 == installer.executor.removals_count
 
 
 def _configure_run_install_dev(

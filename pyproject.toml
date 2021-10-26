@@ -34,7 +34,7 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.6"
 
-poetry-core = "^1.1.0a6"
+poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "master" }
 cachecontrol = { version = "^0.12.9", extras = ["filecache"] }
 cachy = "^0.3.0"
 cleo = "^1.0.0a4"
@@ -47,6 +47,7 @@ keyring = ">=21.2.0"
 packaging = "^20.4"
 pexpect = "^4.7.0"
 pkginfo = "^1.5"
+poetry-export-plugin = "^0.2.1"
 requests = "^2.18"
 requests-toolbelt = "^0.9.1"
 shellingham = "^1.1"

@@ -62,12 +62,15 @@ class Locker(BaseLocker):
         self._locked = False
         self._content_hash = self._get_content_hash()
 
+        super().__init__(self._lock, {})
+
     @property
     def written_data(self) -> Optional[Dict]:
         return self._written_data
 
     def set_lock_path(self, lock: Union[str, Path]) -> "Locker":
         self._lock = TOMLFile(Path(lock).joinpath("poetry.lock"))
+        self._root = self._lock.parent
 
         return self
 
