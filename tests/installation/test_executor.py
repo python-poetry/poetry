@@ -476,7 +476,7 @@ def test_executor_should_use_cached_link_and_hash(
     )
     mocker.patch(
         "poetry.installation.chef.Chef.get_cached_archive_for_link",
-        side_effect=lambda _: link_cached,
+        return_value=link_cached,
     )
 
     package = Package("demo", "0.1.0")

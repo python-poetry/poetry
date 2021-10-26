@@ -680,17 +680,17 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Union[Path, Link], package: Package) -> str:
-        path = url_to_path(archive.url) if isinstance(archive, Link) else archive
+        archive_path = url_to_path(archive.url) if isinstance(archive, Link) else archive
         file_dep = FileDependency(
             package.name,
-            path,
+            archive_path,
         )
         archive_hash = "sha256:" + file_dep.hash()
         known_hashes = {f["hash"] for f in package.files}
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
-                f"Hash for {package} from archive {path.name} not found in known hashes (was: {archive_hash})"
+                f"Hash for {package} from archive {archive_path.name} not found in known hashes (was: {archive_hash})"
             )
 
         return archive_hash
