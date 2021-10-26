@@ -612,11 +612,11 @@ class Executor(object):
             hashes = {f["hash"] for f in package.files}
             hash_types = {h.split(":")[0] for h in hashes}
             archive_hashes = set()
-            path = url_to_path(archive.url) if isinstance(archive, Link) else archive
+            archive_path = url_to_path(archive.url) if isinstance(archive, Link) else archive
             for hash_type in hash_types:
                 archive_hashes.add(
                     "{}:{}".format(
-                        hash_type, FileDependency(package.name, path).hash(hash_type),
+                        hash_type, FileDependency(package.name, archive_path).hash(hash_type),
                     )
                 )
 
@@ -625,7 +625,7 @@ class Executor(object):
                     "Invalid hashes ({}) for {} using archive {}. Expected one of {}.".format(
                         ", ".join(sorted(archive_hashes)),
                         package,
-                        path.name,
+                        archive_path.name,
                         ", ".join(sorted(hashes)),
                     )
                 )
