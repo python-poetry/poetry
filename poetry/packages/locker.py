@@ -253,9 +253,11 @@ class Locker:
                         if require.marker.is_empty():
                             require.marker = requirement.marker
                         else:
-                            require.marker = require.marker.intersect(
+                            require_marker = require.marker.intersect(
                                 requirement.marker
                             )
+                            if not require_marker.is_empty():
+                                require.marker = require_marker
 
                         require.marker = require.marker.intersect(locked_package.marker)
                         next_level_dependencies.append(require)
