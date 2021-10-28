@@ -1001,6 +1001,27 @@ def test_env_finds_the_correct_executables(tmp_dir, manager):
     assert Path(venv.python).name == expected_executable
     assert Path(venv.pip).name.startswith(expected_pip_executable.split(".")[0])
 
+@pytest.mark.skipif(os.name != "nt", reason="Testing functionality that is only relevant on Windows")
+def test_env_finds_python_executable_in_base_path_on_windows(tmp_dir, manager):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    manager.build_venv(str(venv_path), with_pip=True)
+    venv = VirtualEnv(venv_path)
+
+    executable = "python.exe"
+
+    bin_dir_path = venv._bin_dir.joinpath(executable)
+    base_dir_path = venv._path.joinpath(executable)
+
+    if bin_dir_path.exists():
+        if base_dir_path.exists():
+            bin_dir_path.unlink()
+        else:
+            bin_dir_path.rename(base_dir_path)
+
+    venv = VirtualEnv(venv_path)
+
+    assert Path(venv.python) == base_dir_path
+
 
 def test_env_finds_the_correct_executables_for_generic_env(tmp_dir, manager):
     venv_path = Path(tmp_dir) / "Virtual Env"

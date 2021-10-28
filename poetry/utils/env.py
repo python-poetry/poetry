@@ -1421,7 +1421,7 @@ class Env:
             # a base Python install.
             if self._is_windows:
                 if not bin.endswith(".exe"):
-                    bin_path = self._bin_dir / (bin + ".exe")
+                    bin_path = self._path / (bin + ".exe")
                 else:
                     bin_path = self._path / bin
 
