@@ -558,9 +558,10 @@ class Installer:
             self._bin_dir.joinpath(script).symlink_to(
                 self._data_dir.joinpath(target_script)
             )
-        except OSError:
-            # This can happen if the user
-            # does not have the correct permission on Windows
+        except (NotImplementedError, OSError):
+            # This can happen if the user does not have the correct permission
+            # or if they are using PyPy which does not implement symlink on
+            # Windows.
             shutil.copy(
                 self._data_dir.joinpath(target_script), self._bin_dir.joinpath(script)
             )
