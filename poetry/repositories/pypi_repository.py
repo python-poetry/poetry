@@ -322,8 +322,11 @@ class PyPiRepository(RemoteRepository):
         return data.asdict()
 
     def _get(self, endpoint: str) -> Union[dict, None]:
+        headers = {
+            "Accept": "application/json",
+        }
         try:
-            json_response = self.session.get(self._base_url + endpoint)
+            json_response = self.session.get(self._base_url + endpoint, headers=headers)
         except requests.exceptions.TooManyRedirects:
             # Cache control redirect loop.
             # We try to remove the cache and try again
