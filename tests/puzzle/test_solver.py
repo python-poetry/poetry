@@ -1343,6 +1343,77 @@ def test_solver_duplicate_dependencies_different_constraints_merge_no_markers(
     )
 
 
+def test_solver_duplicate_dependencies_ignore_overrides_with_empty_marker_intersection(
+    solver: Solver, repo: Repository, package: Package
+):
+    """
+    Distinct requirements per marker:
+    * Python 2.7: A (which requires B) and B
+    * Python 3.6: same as Python 2.7 but with different versions
+    * Python 3.7: only A
+    * Python 3.8: only B
+    """
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "1.0", "python": "~2.7"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "2.0", "python": "~3.6"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("A", {"version": "3.0", "python": "~3.7"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("B", {"version": "1.0", "python": "~2.7"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("B", {"version": "2.0", "python": "~3.6"})
+    )
+    package.add_dependency(
+        Factory.create_dependency("B", {"version": "3.0", "python": "~3.8"})
+    )
+
+    package_a10 = get_package("A", "1.0")
+    package_a10.add_dependency(
+        Factory.create_dependency("B", {"version": "^1.0", "python": "~2.7"})
+    )
+
+    package_a20 = get_package("A", "2.0")
+    package_a20.add_dependency(
+        Factory.create_dependency("B", {"version": "^2.0", "python": "~3.6"})
+    )
+
+    package_a30 = get_package("A", "3.0")  # no dep to B
+
+    package_b10 = get_package("B", "1.0")
+    package_b11 = get_package("B", "1.1")
+    package_b20 = get_package("B", "2.0")
+    package_b21 = get_package("B", "2.1")
+    package_b30 = get_package("B", "3.0")
+
+    repo.add_package(package_a10)
+    repo.add_package(package_a20)
+    repo.add_package(package_a30)
+    repo.add_package(package_b10)
+    repo.add_package(package_b11)
+    repo.add_package(package_b20)
+    repo.add_package(package_b21)
+    repo.add_package(package_b30)
+
+    transaction = solver.solve()
+
+    check_solver_result(
+        transaction,
+        [
+            {"job": "install", "package": package_b10},
+            {"job": "install", "package": package_b20},
+            {"job": "install", "package": package_a10},
+            {"job": "install", "package": package_a20},
+            {"job": "install", "package": package_a30},
+            {"job": "install", "package": package_b30},
+        ],
+    )
+
+
 def test_solver_duplicate_dependencies_sub_dependencies(
     solver: Solver, repo: Repository, package: ProjectPackage
 ):
