@@ -181,7 +181,7 @@ class Authenticator:
     ) -> Tuple[Optional[str], Optional[str]]:
         credentials = (None, None)
 
-        for (repository_name, repository_netloc) in self._get_repository_netlocs():
+        for (repository_name, _) in self._get_repository_netlocs():
             auth = self._get_http_auth(repository_name, netloc)
 
             if auth is None:

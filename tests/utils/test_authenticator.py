@@ -315,6 +315,8 @@ def test_authenticator_uses_env_provided_credentials(
     "cert,client_cert",
     [
         (None, None),
+        (None, "path/to/provided/client-cert"),
+        ("/path/to/provided/cert", None),
         ("/path/to/provided/cert", "path/to/provided/client-cert"),
     ],
 )
