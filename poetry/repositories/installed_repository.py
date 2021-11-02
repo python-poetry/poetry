@@ -231,8 +231,13 @@ class InstalledRepository(Repository):
                 metadata.distributions(path=[entry]),
                 key=lambda d: str(d._path),
             ):
-                name = canonicalize_name(distribution.metadata["name"])
-
+                try:
+                    name = canonicalize_name(distribution.metadata["name"])
+                except TypeError as e:
+                    # handling the case where a distribution is empty but is nevertheless picked up in the search
+                    # and its name is `None`
+                    continue
+                    
                 if name in seen:
                     continue
 
