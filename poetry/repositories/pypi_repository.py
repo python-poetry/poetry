@@ -313,6 +313,9 @@ class PyPiRepository(RemoteRepository):
     def _get(self, endpoint):  # type: (str) -> Union[dict, None]
         try:
             json_response = self.session.get(self._base_url + endpoint)
+            if json_response.status_code == 200 and json_response.content == b"":
+                logger.warn("Got empty response from PyPI for %s. Retrying...", endpoint)
+                json_response = self.session.get(self._base_url + endpoint)
         except requests.exceptions.TooManyRedirects:
             # Cache control redirect loop.
             # We try to remove the cache and try again
