@@ -923,9 +923,13 @@ class Env(object):
 
     def __init__(self, path, base=None):  # type: (Path, Optional[Path]) -> None
         self._is_windows = sys.platform == "win32"
+        self._is_mingw = sysconfig.get_platform().startswith("mingw")
 
+        if not self._is_windows or self._is_mingw:
+            bin_dir = "bin"
+        else:
+            bin_dir = "Scripts"
         self._path = path
-        bin_dir = "bin" if not self._is_windows else "Scripts"
         self._bin_dir = self._path / bin_dir
 
         self._base = base or path
