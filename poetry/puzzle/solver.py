@@ -163,14 +163,18 @@ class Solver:
                         and not _package.is_same_package_as(package)
                         and _package.version == package.version
                     ):
+                        missing_deps = []
                         for dep in package.requires:
                             if dep.is_same_package_as(_package):
                                 continue
 
                             if dep not in _package.requires:
-                                _package.add_dependency(dep)
+                                missing_deps.append(dep)
+                        for dep in missing_deps:
+                            package.add_dependency(dep)
 
-                continue
+                if any(x.name == package.name for x in final_packages):
+                    continue
 
             final_packages.append(package)
             depths.append(results[package])
