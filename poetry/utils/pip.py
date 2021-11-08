@@ -11,11 +11,11 @@ from poetry.utils.env import ephemeral_environment
 
 
 def pip_install(
-    path: Union[Path, str],
-    environment: Env,
-    editable: bool = False,
-    deps: bool = False,
-    upgrade: bool = False,
+        path: Union[Path, str],
+        environment: Env,
+        editable: bool = False,
+        deps: bool = False,
+        upgrade: bool = False,
 ) -> Union[int, str]:
     path = Path(path) if isinstance(path, str) else path
     is_wheel = path.suffix == ".whl"
@@ -50,7 +50,7 @@ def pip_install(
             # Under certain Python3.6 installs vendored pip wheel does not contain zip-safe
             # pep517 lib. In this cases we create an isolated ephemeral virtual environment.
             with ephemeral_environment(
-                executable=environment.python, with_pip=True, with_setuptools=True
+                    executable=environment.python, with_pip=True, with_setuptools=True
             ) as env:
                 return environment.run(
                     *env.get_pip_command(),
@@ -60,7 +60,7 @@ def pip_install(
         raise PoetryException(f"Failed to install {path.as_posix()}") from e
 
 
-def pip_editable_install(directory: Path, environment: Env) -> Union[int, str]:
+def pip_editable_install(directory: Path, environment: Env, upgrade: bool = True) -> Union[int, str]:
     return pip_install(
-        path=directory, environment=environment, editable=True, deps=False, upgrade=True
+        path=directory, environment=environment, editable=True, deps=False, upgrade=upgrade
     )
