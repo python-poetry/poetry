@@ -36,7 +36,6 @@ from gzip import GzipFile
 from io import UnsupportedOperation
 from io import open
 
-
 try:
     from urllib.error import HTTPError
     from urllib.request import Request
@@ -50,7 +49,6 @@ try:
     input = raw_input
 except NameError:
     pass
-
 
 try:
     try:
@@ -67,7 +65,6 @@ except NameError:
 
 SHELL = os.getenv("SHELL", "")
 WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name == "nt")
-
 
 FOREGROUND_COLORS = {
     "black": 30,
@@ -124,9 +121,9 @@ STYLES = {
 def is_decorated():
     if platform.system().lower() == "windows":
         return (
-            os.getenv("ANSICON") is not None
-            or "ON" == os.getenv("ConEmuANSI")
-            or "xterm" == os.getenv("Term")
+                os.getenv("ANSICON") is not None
+                or "ON" == os.getenv("ConEmuANSI")
+                or "xterm" == os.getenv("Term")
         )
 
     if not hasattr(sys.stdout, "fileno"):
@@ -196,7 +193,6 @@ POETRY_ENV = os.path.join(POETRY_HOME, "env")
 POETRY_LIB = os.path.join(POETRY_HOME, "lib")
 POETRY_LIB_BACKUP = os.path.join(POETRY_HOME, "lib-backup")
 
-
 BIN = """# -*- coding: utf-8 -*-
 import glob
 import sys
@@ -218,7 +214,6 @@ if __name__ == "__main__":
 """
 
 BAT = u('@echo off\r\n{python_executable} "{poetry_bin}" %*\r\n')
-
 
 PRE_MESSAGE = """# Welcome to {poetry}!
 
@@ -246,12 +241,10 @@ It will remove the `poetry` command from {poetry}'s bin directory, located at:
 This will also remove {poetry} from your system's PATH.
 """
 
-
 PRE_MESSAGE_UNIX = """This path will then be added to your `PATH` environment variable by
 modifying the profile file{plural} located at:
 
 {rcfiles}"""
-
 
 PRE_MESSAGE_FISH = """This path will then be added to your `PATH` environment variable by
 modifying the `fish_user_paths` universal variable."""
@@ -309,7 +302,6 @@ environment variable. This has not been done automatically.
 
 
 class Installer:
-
     CURRENT_PYTHON = sys.executable
     CURRENT_PYTHON_VERSION = sys.version_info[:2]
     METADATA_URL = "https://pypi.org/pypi/poetry/json"
@@ -328,14 +320,14 @@ class Installer:
     FALLBACK_BASE_URL = "https://github.com/sdispater/poetry/releases/download/"
 
     def __init__(
-        self,
-        version=None,
-        preview=False,
-        force=False,
-        modify_path=True,
-        accept_all=False,
-        file=None,
-        base_url=BASE_URL,
+            self,
+            version=None,
+            preview=False,
+            force=False,
+            modify_path=True,
+            accept_all=False,
+            file=None,
+            base_url=BASE_URL,
     ):
         self._version = version
         self._preview = preview
@@ -385,7 +377,7 @@ class Installer:
         current_version = None
         if os.path.exists(POETRY_LIB):
             with open(
-                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
+                    os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
             ) as f:
                 version_content = f.read()
 
@@ -479,7 +471,7 @@ class Installer:
         current_version = None
         if os.path.exists(POETRY_LIB):
             with open(
-                os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
+                    os.path.join(POETRY_LIB, "poetry", "__version__.py"), encoding="utf-8"
             ) as f:
                 version_content = f.read()
 
@@ -518,7 +510,7 @@ class Installer:
             print()
 
             uninstall = (
-                input("Are you sure you want to uninstall Poetry? (y/[n]) ") or "n"
+                    input("Are you sure you want to uninstall Poetry? (y/[n]) ") or "n"
             )
             if uninstall.lower() not in {"y", "yes"}:
                 return False
@@ -1075,7 +1067,7 @@ def main():
         dest="file",
         action="store",
         help="Install from a local file instead of fetching the latest version "
-        "of Poetry available online.",
+             "of Poetry available online.",
     )
 
     args = parser.parse_args()
@@ -1097,8 +1089,8 @@ def main():
         force=args.force,
         modify_path=not args.no_modify_path,
         accept_all=args.accept_all
-        or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
-        or not is_interactive(),
+                   or string_to_bool(os.getenv("POETRY_ACCEPT", "0"))
+                   or not is_interactive(),
         file=args.file,
         base_url=base_url,
     )
