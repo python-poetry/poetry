@@ -87,7 +87,7 @@ An URL to the documentation of the project. **Optional**
 
 ## keywords
 
-A list of keywords (max: 5) that the package is related to. **Optional**
+A list of keywords that the package is related to. **Optional**
 
 ## classifiers
 

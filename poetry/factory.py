@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Dict
@@ -10,17 +7,16 @@ from typing import Optional
 from cleo.io.io import IO
 from cleo.io.null_io import NullIO
 
+from poetry.config.config import Config
+from poetry.config.file_config_source import FileConfigSource
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.toml.file import TOMLFile
-
-from .config.config import Config
-from .config.file_config_source import FileConfigSource
-from .locations import CONFIG_DIR
-from .packages.locker import Locker
-from .packages.project_package import ProjectPackage
-from .plugins.plugin_manager import PluginManager
-from .poetry import Poetry
-from .repositories.pypi_repository import PyPiRepository
+from poetry.locations import CONFIG_DIR
+from poetry.packages.locker import Locker
+from poetry.packages.project_package import ProjectPackage
+from poetry.plugins.plugin_manager import PluginManager
+from poetry.poetry import Poetry
+from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:

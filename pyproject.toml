@@ -44,8 +44,8 @@ shellingham = "^1.1"
 tomlkit = ">=0.7.0,<1.0.0"
 pexpect = "^4.7.0"
 packaging = "^20.4"
-# temporarily clamped due to https://github.com/pypa/pip/issues/9953
-virtualenv = ">=20.4.3,<20.4.5"
+# exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
+virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 keyring = ">=21.2.0"
 entrypoints = "^0.3"
 importlib-metadata = {version = "^1.6.0", python = "<3.8"}

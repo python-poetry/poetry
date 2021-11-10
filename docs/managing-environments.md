@@ -30,12 +30,12 @@ to activate one explicitly, see [Switching environments](#switching-between-envi
 To easily switch between Python versions, it is recommended to
 use [pyenv](https://github.com/pyenv/pyenv) or similar tools.
 
-For instance, if your project is Python 2.7 only, a standard workflow
+For instance, if your project is Python 3.6 only, a standard workflow
 would be:
 
 ```bash
-pyenv install 2.7.15
-pyenv local 2.7.15  # Activate Python 2.7 for the current project
+pyenv install 3.6.15
+pyenv local 3.6.15  # Activate Python 3.6 for the current project
 poetry install
 ```
 {{% /note %}}

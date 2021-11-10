@@ -8,6 +8,7 @@ repos:
     rev: 3.8.4
     hooks:
       - id: flake8
+        additional_dependencies: [flake8-bugbear]
 
   - repo: https://github.com/timothycrosley/isort
     rev: 5.7.0

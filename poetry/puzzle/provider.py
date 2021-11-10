@@ -184,6 +184,15 @@ class Provider:
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
 
+        dependency._source_reference = package.source_reference
+        dependency._source_resolved_reference = package.source_resolved_reference
+
+        if hasattr(package, "source_subdirectory") and hasattr(
+            dependency, "_source_subdirectory"
+        ):
+            # this is supported only for poetry-core >= 1.1.0a7
+            dependency._source_subdirectory = package.source_subdirectory
+
         self._deferred_cache[dependency] = package
 
         return [package]
@@ -618,8 +627,8 @@ class Provider:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
             markers = []
-            for constraint, _deps in by_constraint.items():
-                markers.append(_deps[0].marker)
+            for deps in by_constraint.values():
+                markers.append(deps[0].marker)
 
             _deps = [_dep[0] for _dep in by_constraint.values()]
             self.debug(

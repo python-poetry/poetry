@@ -1085,7 +1085,7 @@ class Env:
 
     def __init__(self, path: Path, base: Optional[Path] = None) -> None:
         self._is_windows = sys.platform == "win32"
-        self._is_mingw = sysconfig.get_platform() == "mingw"
+        self._is_mingw = sysconfig.get_platform().startswith("mingw")
 
         if not self._is_windows or self._is_mingw:
             bin_dir = "bin"
@@ -1487,8 +1487,8 @@ class SystemEnv(Env):
             paths[key] = getattr(obj, f"install_{key}")
 
         if site.check_enableusersite() and hasattr(obj, "install_usersite"):
-            paths["usersite"] = getattr(obj, "install_usersite")
-            paths["userbase"] = getattr(obj, "install_userbase")
+            paths["usersite"] = obj.install_usersite
+            paths["userbase"] = obj.install_userbase
 
         return paths
 

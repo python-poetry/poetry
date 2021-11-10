@@ -74,7 +74,7 @@ pendulum = "^2.1"
 As you can see, it takes a mapping of **package names** and **version constraints**.
 
 Poetry uses this information to search for the right set of files in package "repositories" that you register
-in the `tool.poetry.repositories` section, or on [PyPI](https://pypi.org) by default.
+in the `tool.poetry.source` section, or on [PyPI](https://pypi.org) by default.
 
 Also, instead of modifying the `pyproject.toml` file by hand, you can use the `add` command.
 

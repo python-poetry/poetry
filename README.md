@@ -208,7 +208,7 @@ There are some things we can notice here:
 * It will try to enforce [semantic versioning](<http://semver.org>) as the best practice in version naming.
 * You can specify the readme, included and excluded files: no more `MANIFEST.in`.
 `poetry` will also use VCS ignore files (like `.gitignore`) to populate the `exclude` section.
-* Keywords (up to 5) can be specified and will act as tags on the packaging site.
+* Keywords can be specified and will act as tags on the packaging site.
 * The dependencies sections support caret, tilde, wildcard, inequality and multiple requirements.
 * You must specify the python versions for which your package is compatible.
 

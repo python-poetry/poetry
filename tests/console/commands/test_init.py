@@ -10,7 +10,7 @@ from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
-from tests.helpers import TestApplication
+from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
 
@@ -36,7 +36,7 @@ def patches(mocker, source_dir, repo):
 @pytest.fixture
 def tester(patches):
     # we need a test application without poetry here.
-    app = TestApplication(None)
+    app = PoetryTestApplication(None)
     return CommandTester(app.find("init"))
 
 

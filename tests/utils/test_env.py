@@ -120,11 +120,14 @@ def test_env_get_venv_with_venv_folder_present(
         assert venv.path == in_project_venv_dir
 
 
-def build_venv(path: Union[Path, str], **__: Any) -> ():
+def build_venv(path: Union[Path, str], **__: Any) -> None:
     os.mkdir(str(path))
 
 
-def check_output_wrapper(version=Version.parse("3.7.1")):
+VERSION_3_7_1 = Version.parse("3.7.1")
+
+
+def check_output_wrapper(version=VERSION_3_7_1):
     def check_output(cmd, *args, **kwargs):
         if "sys.version_info[:3]" in cmd:
             return version.text
@@ -960,12 +963,7 @@ def test_env_system_packages(tmp_path, config):
 
     EnvManager(config).build_venv(path=venv_path, flags={"system-site-packages": True})
 
-    if sys.version_info >= (3, 3):
-        assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
-    elif (2, 6) < sys.version_info < (3, 0):
-        assert not venv_path.joinpath(
-            "lib", "python2.7", "no-global-site-packages.txt"
-        ).exists()
+    assert "include-system-site-packages = true" in pyvenv_cfg.read_text()
 
 
 def test_env_finds_the_correct_executables(tmp_dir, manager):
