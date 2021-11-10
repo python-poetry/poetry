@@ -520,7 +520,7 @@ class Installer:
                 [sys.executable, "-m", "pip", "install", "virtualenv", "-t", tmp_dir],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                check=True
+                check=True,
             )
 
             sys.path.insert(0, tmp_dir)
