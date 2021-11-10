@@ -1,0 +1,67 @@
+name: Test Installation Script
+
+on:
+  push:
+    paths:
+      - 'install-poetry.py'
+      - '.github/workflows/installer.yml'
+    branches:
+      - master
+  pull_request:
+    paths:
+      - 'install-poetry.py'
+      - '.github/workflows/installer.yml'
+    branches:
+      - '**'
+
+jobs:
+  default:
+    name: ${{ matrix.os }} / ${{ matrix.python-version }} / install-poetry.py ${{ matrix.args }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ Ubuntu, MacOS, Windows ]
+        python-version: [ "3.6", "3.7", "3.8", "3.9", "3.10" ]
+        args:
+          - ""
+          - "--preview"
+          - "--git https://github.com/python-poetry/poetry.git"
+          - "--version 1.1.11"
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update PATH
+        if: ${{ matrix.os != 'Windows' }}
+        shell: bash
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Update PATH for Windows
+        if: ${{ matrix.os == 'Windows' }}
+        shell: bash
+        run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
+
+      - name: Install Poetry
+        shell: bash
+        run: python install-poetry.py -y
+
+      - name: Verify Installation
+        shell: bash
+        run: |
+          set -e
+          poetry new foobar
+          cd foobar
+          poetry config virtualenvs.in-project true
+          poetry env use python
+          [ "$(poetry run python --version)" == "$(python --version)" ] \
+            || { echo >&2 "ERROR: Virtual environment Python version do not match system version." && exit 1; }
+
+      - name: Uninstall Poetry
+        shell: bash
+        run: |
+          python install-poetry.py -y --uninstall
+          { type poetry 2>/dev/null >&2 && exit 1; } || exit 0
