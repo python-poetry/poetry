@@ -6,24 +6,25 @@ test_task:
   only_if: $CIRRUS_TAG == ''
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
-    PATH: /.local/bin:${PATH}
     matrix:
       - PYTHON: python3.8
       - PYTHON: python3.9
-  python_script:
+  pkg_script:
     - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
     - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
     - pkg install -y git-lite curl $PYPACKAGE $SQLPACKAGE
   pip_script:
     - $PYTHON -m ensurepip
     - $PYTHON -m pip --disable-pip-version-check install -U pip
+  env_script:
+    - echo "PATH=/.local/bin:${PATH}" >> $CIRRUS_ENV
   poetry_script:
     - curl -sL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py \
       | $PYTHON - -y
     - poetry config virtualenvs.in-project true
-  test_script: |
-    poetry install
-    poetry run pytest -q --junitxml=junit.xml tests
+  test_script:
+    - poetry install
+    - poetry run pytest -q --junitxml=junit.xml tests
   on_failure:
     annotate_failure_artifacts:
       path: junit.xml
