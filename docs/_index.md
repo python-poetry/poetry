@@ -17,13 +17,9 @@ It allows you to declare the libraries your project depends on and it will manag
 
 ## System requirements
 
-Poetry requires Python 2.7 or 3.5+. It is multi-platform and the goal is to make it work equally well
+Poetry requires Python 3.6+. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
 
-{{% note %}}
-Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
-You should consider updating your Python version to a supported one.
-{{% /note %}}
 
 ## Installation
 
