@@ -58,7 +58,7 @@ pytest = "^6.2"
 pytest-cov = "^2.8"
 pytest-mock = "^3.5"
 pre-commit = { version = "^2.6", python = "^3.6.1" }
-tox = "^3.0"
+tox = "^3.18"
 pytest-sugar = "^0.9"
 httpretty = "^1.0"
 zipp = { version = "^3.4", python = "<3.8"}
