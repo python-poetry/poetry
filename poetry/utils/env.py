@@ -1415,10 +1415,6 @@ class Env:
             # This is especially true when installing Python with
             # the official installer, where python.exe will be at
             # the root of the env path.
-            # This is an edge case and should not be encountered
-            # in normal uses but this happens in the sonnet script
-            # that creates a fake virtual environment pointing to
-            # a base Python install.
             if self._is_windows:
                 if not bin.endswith(".exe"):
                     bin_path = self._bin_dir / (bin + ".exe")
