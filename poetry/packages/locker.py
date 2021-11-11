@@ -24,8 +24,6 @@ from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
 
-import poetry.repositories
-
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver.helpers import parse_constraint
@@ -39,6 +37,8 @@ from poetry.utils.extras import get_extra_package_names
 
 if TYPE_CHECKING:
     from tomlkit.toml_document import TOMLDocument
+
+    from poetry.repositories import Repository
 
 logger = logging.getLogger(__name__)
 
@@ -87,19 +87,18 @@ class Locker:
 
         return False
 
-    def locked_repository(
-        self, with_dev_reqs: bool = False
-    ) -> poetry.repositories.Repository:
+    def locked_repository(self, with_dev_reqs: bool = False) -> "Repository":
         """
         Searches and returns a repository of locked packages.
         """
         from poetry.factory import Factory
+        from poetry.repositories import Repository
 
         if not self.is_locked():
-            return poetry.repositories.Repository()
+            return Repository()
 
         lock_data = self.lock_data
-        packages = poetry.repositories.Repository()
+        packages = Repository()
 
         if with_dev_reqs:
             locked_packages = lock_data["package"]

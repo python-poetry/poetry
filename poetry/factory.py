@@ -16,7 +16,6 @@ from poetry.packages.locker import Locker
 from poetry.packages.project_package import ProjectPackage
 from poetry.plugins.plugin_manager import PluginManager
 from poetry.poetry import Poetry
-from poetry.repositories.pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:
@@ -156,6 +155,8 @@ class Factory(BaseFactory):
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
         else:
+            from poetry.repositories.pypi_repository import PyPiRepository
+
             default = not poetry.pool.has_primary_repositories()
             poetry.pool.add_repository(PyPiRepository(), default, not default)
 

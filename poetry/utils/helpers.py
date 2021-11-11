@@ -6,6 +6,7 @@ import tempfile
 
 from contextlib import contextmanager
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -13,16 +14,19 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 
-import requests
-
 from poetry.config.config import Config
-from poetry.core.packages.package import Package
 
 
 try:
     from collections.abc import Mapping
 except ImportError:
     from collections import Mapping
+
+
+if TYPE_CHECKING:
+    from requests import Session
+
+    from poetry.core.packages.package import Package
 
 
 _canonicalize_regex = re.compile("[-_]+")
@@ -92,9 +96,11 @@ def merge_dicts(d1: Dict, d2: Dict) -> None:
 def download_file(
     url: str,
     dest: str,
-    session: Optional[requests.Session] = None,
+    session: Optional["Session"] = None,
     chunk_size: int = 1024,
 ) -> None:
+    import requests
+
     get = requests.get if not session else session.get
 
     with get(url, stream=True) as response:
@@ -107,7 +113,7 @@ def download_file(
 
 
 def get_package_version_display_string(
-    package: Package, root: Optional[Path] = None
+    package: "Package", root: Optional[Path] = None
 ) -> str:
     if package.source_type in ["file", "directory"] and root:
         return "{} {}".format(

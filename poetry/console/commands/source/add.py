@@ -10,8 +10,6 @@ from tomlkit.items import Table
 
 from poetry.config.source import Source
 from poetry.console.commands.command import Command
-from poetry.factory import Factory
-from poetry.repositories import Pool
 
 
 class SourceAddCommand(Command):
@@ -39,7 +37,7 @@ class SourceAddCommand(Command):
     ]
 
     @staticmethod
-    def source_to_table(source: Source) -> Table:
+    def source_to_table(source: "Source") -> Table:
         source_table: Table = table()
         for key, value in source.to_dict().items():
             source_table.add(key, value)
@@ -47,6 +45,9 @@ class SourceAddCommand(Command):
         return source_table
 
     def handle(self) -> Optional[int]:
+        from poetry.factory import Factory
+        from poetry.repositories import Pool
+
         name = self.argument("name")
         url = self.argument("url")
         is_default = self.option("default")
