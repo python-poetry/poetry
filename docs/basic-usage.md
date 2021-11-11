@@ -27,12 +27,11 @@ This will create the `poetry-demo` directory with the following content:
 ```text
 poetry-demo
 ├── pyproject.toml
-├── README.rst
+├── README.md
 ├── poetry_demo
 │   └── __init__.py
 └── tests
-    ├── __init__.py
-    └── test_poetry_demo.py
+    └── __init__.py
 ```
 
 The `pyproject.toml` file is what is the most important here. This will orchestrate
@@ -44,12 +43,16 @@ name = "poetry-demo"
 version = "0.1.0"
 description = ""
 authors = ["Sébastien Eustace <sebastien@eustace.io>"]
+readme = "README.md"
+packages = [{include = "poetry_demo"}]
 
 [tool.poetry.dependencies]
-python = "*"
+python = "^3.6"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 ```
 
 ### Initialising a pre-existing project
