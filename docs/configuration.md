@@ -123,11 +123,6 @@ Defaults to one of the following directories:
 Use parallel execution when using the new (`>=1.1.0`) installer.
 Defaults to `true`.
 
-{{% note %}}
-This configuration will be ignored, and parallel execution disabled when running
-Python 2.7 under Windows.
-{{% /note %}}
-
 ### `virtualenvs.create`
 
 **Type**: boolean
