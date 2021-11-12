@@ -10,7 +10,8 @@ It does, in order:
       - In `${POETRY_HOME}` if it's set.
   - Installs the latest or given version of Poetry inside this virtual environment.
   - Installs a `poetry` script in the Python user directory (or `${POETRY_HOME/bin}` if `POETRY_HOME` is set).
-  - On failure, the error log is written to poetry-installer-error-*.log.
+  - On failure, the error log is written to poetry-installer-error-*.log and any previously existing environment
+    is restored.
 """
 
 import argparse
@@ -520,21 +521,13 @@ class Installer:
             )
         )
 
-        env = self.make_env(version)
-        self.install_poetry(version, env)
-        self.make_bin(version, env)
+        with self.make_env(version) as env:
+            self.install_poetry(version, env)
+            self.make_bin(version, env)
+            self._data_dir.joinpath("VERSION").write_text(version)
+            self._install_comment(version, "Done")
 
-        self._overwrite(
-            "Installing {} ({}): {}".format(
-                colorize("info", "Poetry"),
-                colorize("b", version),
-                colorize("success", "Done"),
-            )
-        )
-
-        self._data_dir.joinpath("VERSION").write_text(version)
-
-        return 0
+            return 0
 
     def uninstall(self) -> int:
         if not self._data_dir.exists():
@@ -564,27 +557,49 @@ class Installer:
 
         return 0
 
-    def make_env(self, version: str) -> VirtualEnvironment:
+    def _install_comment(self, version: str, message: str):
         self._overwrite(
             "Installing {} ({}): {}".format(
                 colorize("info", "Poetry"),
                 colorize("b", version),
-                colorize("comment", "Creating environment"),
+                colorize("comment", message),
             )
         )
 
+    @contextmanager
+    def make_env(self, version: str) -> VirtualEnvironment:
         env_path = self._data_dir.joinpath("venv")
-        return VirtualEnvironment.make(env_path)
+        env_path_saved = env_path.with_suffix(".save")
+
+        if env_path.exists():
+            self._install_comment(version, "Saving existing environment")
+            if env_path_saved.exists():
+                shutil.rmtree(env_path_saved)
+            shutil.move(env_path, env_path_saved)
+
+        try:
+            self._install_comment(version, "Creating environment")
+            yield VirtualEnvironment.make(env_path)
+        except Exception as e:  # noqa
+            if env_path.exists():
+                self._install_comment(
+                    version, "An error occurred. Removing partial environment."
+                )
+                shutil.rmtree(env_path)
+
+            if env_path_saved.exists():
+                self._install_comment(
+                    version, "Restoring previously saved environment."
+                )
+                shutil.move(env_path_saved, env_path)
+
+            raise e
+        else:
+            if env_path_saved.exists():
+                shutil.rmtree(env_path_saved, ignore_errors=True)
 
     def make_bin(self, version: str, env: VirtualEnvironment) -> None:
-        self._overwrite(
-            "Installing {} ({}): {}".format(
-                colorize("info", "Poetry"),
-                colorize("b", version),
-                colorize("comment", "Creating script"),
-            )
-        )
-
+        self._install_comment(version, "Creating script")
         self._bin_dir.mkdir(parents=True, exist_ok=True)
 
         script = "poetry"
@@ -605,13 +620,7 @@ class Installer:
             shutil.copy(target_script, self._bin_dir.joinpath(script))
 
     def install_poetry(self, version: str, env: VirtualEnvironment) -> None:
-        self._overwrite(
-            "Installing {} ({}): {}".format(
-                colorize("info", "Poetry"),
-                colorize("b", version),
-                colorize("comment", "Installing Poetry"),
-            )
-        )
+        self._install_comment(version, "Installing Poetry")
 
         if self._git:
             specification = "git+" + version
