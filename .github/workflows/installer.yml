@@ -49,6 +49,13 @@ jobs:
         shell: bash
         run: python install-poetry.py -y
 
+      - name: Upload Failure Log
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: poetry-installer-error.log
+          path: poetry-installer-error-*.log
+
       - name: Verify Installation
         shell: bash
         run: |
