@@ -11,6 +11,7 @@ It does, in order:
       - In `${POETRY_HOME}` if it's set.
   - Installs the latest or given version of Poetry inside this virtual environment.
   - Installs a `poetry` script in the Python user directory (or `${POETRY_HOME/bin}` if `POETRY_HOME` is set).
+  - On failure, the error log is written to poetry-installer-error-*.log.
 """
 
 import argparse
@@ -277,6 +278,13 @@ You can execute `set -U fish_user_paths {poetry_home_bin} $fish_user_paths`
 POST_MESSAGE_CONFIGURE_WINDOWS = """"""
 
 
+class PoetryInstallationError(RuntimeError):
+    def __init__(self, return_code: int = 0, log: Optional[str] = None):
+        super(PoetryInstallationError, self).__init__()
+        self.return_code = return_code
+        self.log = log
+
+
 class Cursor:
     def __init__(self) -> None:
         self._output = sys.stdout
@@ -439,11 +447,9 @@ class Installer:
         try:
             self.install(version)
         except subprocess.CalledProcessError as e:
-            print(
-                colorize("error", f"\nAn error has occurred: {e}\n{e.stdout.decode()}")
+            raise PoetryInstallationError(
+                return_code=e.returncode, log=e.output.decode()
             )
-
-            return e.returncode
 
         self._write("")
         self.display_post_message(version)
@@ -831,7 +837,25 @@ def main():
     if args.uninstall or string_to_bool(os.getenv("POETRY_UNINSTALL", "0")):
         return installer.uninstall()
 
-    return installer.run()
+    try:
+        return installer.run()
+    except PoetryInstallationError as e:
+        installer._write(colorize("error", "Poetry installation failed."))  # noqa
+
+        if e.log is not None:
+            import traceback
+
+            _, path = tempfile.mkstemp(
+                suffix=".log",
+                prefix="poetry-installer-error-",
+                dir=str(Path.cwd()),
+                text=True,
+            )
+            installer._write(colorize("error", f"See {path} for error logs."))  # noqa
+            text = f"{e.log}\nTraceback:\n\n{''.join(traceback.format_tb(e.__traceback__))}"
+            Path(path).write_text(text)
+
+        return e.return_code
 
 
 if __name__ == "__main__":
