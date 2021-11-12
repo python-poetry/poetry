@@ -19,11 +19,11 @@ from the rest of your system.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+curl -sSL https://install.python-poetry.org | python -
 ```
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
 ```
 
 **Warning**: The previous `get-poetry.py` installer is now deprecated, if you are currently using it

@@ -19,8 +19,7 @@ test_task:
   env_script:
     - echo "PATH=/.local/bin:${PATH}" >> $CIRRUS_ENV
   poetry_script:
-    - curl -sL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py \
-      | $PYTHON - -y
+    - curl -sL https://install.python-poetry.org | $PYTHON - -y
     - poetry config virtualenvs.in-project true
   test_script:
     - poetry install
