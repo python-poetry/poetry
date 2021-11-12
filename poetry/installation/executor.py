@@ -17,6 +17,7 @@ from typing import Union
 from cleo.io.null_io import NullIO
 
 from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import decode
@@ -38,7 +39,6 @@ if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
 
     from poetry.config.config import Config
-    from poetry.core.packages.package import Package
     from poetry.repositories import Pool
     from poetry.utils.env import Env
 
@@ -671,21 +671,27 @@ class Executor:
                 archive = self._chef.prepare(archive)
 
         if package.files:
-            archive_hash = (
-                "sha256:"
-                + FileDependency(
-                    package.name,
-                    Path(archive.path) if isinstance(archive, Link) else archive,
-                ).hash()
-            )
-            if archive_hash not in {f["hash"] for f in package.files}:
-                raise RuntimeError(
-                    f"Invalid hash for {package} using archive {archive.name}"
-                )
+            archive_hash = self._validate_archive_hash(archive, package)
 
             self._hashes[package.name] = archive_hash
 
         return archive
+
+    @staticmethod
+    def _validate_archive_hash(archive: Path, package: Package) -> str:
+        file_dep = FileDependency(
+            package.name,
+            Path(archive.path) if isinstance(archive, Link) else archive,
+        )
+        archive_hash = "sha256:" + file_dep.hash()
+        known_hashes = {f["hash"] for f in package.files}
+
+        if archive_hash not in known_hashes:
+            raise RuntimeError(
+                f"Hash for {package} from archive {archive.name} not found in known hashes (was: {archive_hash})"
+            )
+
+        return archive_hash
 
     def _download_archive(self, operation: Union[Install, Update], link: Link) -> Path:
         response = self._authenticator.request(
