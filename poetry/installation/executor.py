@@ -11,6 +11,7 @@ from subprocess import CalledProcessError
 
 from poetry.core.packages.file_dependency import FileDependency
 from poetry.core.packages.utils.link import Link
+from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.io.null_io import NullIO
 from poetry.utils._compat import PY2
@@ -611,16 +612,14 @@ class Executor(object):
             hashes = {f["hash"] for f in package.files}
             hash_types = {h.split(":")[0] for h in hashes}
             archive_hashes = set()
+            archive_path = (
+                url_to_path(archive.url) if isinstance(archive, Link) else archive
+            )
             for hash_type in hash_types:
                 archive_hashes.add(
                     "{}:{}".format(
                         hash_type,
-                        FileDependency(
-                            package.name,
-                            Path(archive.path)
-                            if isinstance(archive, Link)
-                            else archive,
-                        ).hash(hash_type),
+                        FileDependency(package.name, archive_path).hash(hash_type),
                     )
                 )
 
@@ -629,7 +628,7 @@ class Executor(object):
                     "Invalid hashes ({}) for {} using archive {}. Expected one of {}.".format(
                         ", ".join(sorted(archive_hashes)),
                         package,
-                        archive.name,
+                        archive_path.name,
                         ", ".join(sorted(hashes)),
                     )
                 )
