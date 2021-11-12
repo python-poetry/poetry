@@ -680,7 +680,9 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Union[Path, Link], package: Package) -> str:
-        archive_path = url_to_path(archive.url) if isinstance(archive, Link) else archive
+        archive_path = (
+            url_to_path(archive.url) if isinstance(archive, Link) else archive
+        )
         file_dep = FileDependency(
             package.name,
             archive_path,

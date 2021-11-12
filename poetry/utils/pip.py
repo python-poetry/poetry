@@ -62,7 +62,9 @@ def pip_install(
         raise PoetryException(f"Failed to install {path.as_posix()}") from e
 
 
-def pip_editable_install(directory: Path, environment: Env) -> Union[int, str]:
+def pip_editable_install(
+    directory: Union[Path, Link], environment: Env
+) -> Union[int, str]:
     return pip_install(
         path=directory, environment=environment, editable=True, deps=False, upgrade=True
     )
