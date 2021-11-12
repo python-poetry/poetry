@@ -11,6 +11,7 @@ from cleo.io.buffered_io import BufferedIO
 
 from poetry.config.config import Config
 from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 from poetry.core.utils._compat import PY36
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
@@ -462,3 +463,34 @@ def test_executor_should_write_pep610_url_references_for_git(
             "url": package.source_url,
         },
     )
+
+
+def test_executor_should_use_cached_link_and_hash(
+    tmp_venv, pool, config, io, mocker, fixture_dir
+):
+    # Produce a file:/// URI that is a valid link
+    link_cached = Link(
+        fixture_dir("distributions")
+        .joinpath("demo-0.1.0-py2.py3-none-any.whl")
+        .as_uri()
+    )
+    mocker.patch(
+        "poetry.installation.chef.Chef.get_cached_archive_for_link",
+        return_value=link_cached,
+    )
+
+    package = Package("demo", "0.1.0")
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+        }
+    ]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    archive = executor._download_link(
+        Install(package),
+        Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl"),
+    )
+    assert archive == link_cached

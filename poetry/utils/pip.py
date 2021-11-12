@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 from typing import Union
 
+from poetry.core.packages.utils.link import Link
+from poetry.core.packages.utils.utils import url_to_path
 from poetry.exceptions import PoetryException
 from poetry.utils.env import Env
 from poetry.utils.env import EnvCommandError
@@ -11,13 +13,13 @@ from poetry.utils.env import ephemeral_environment
 
 
 def pip_install(
-    path: Union[Path, str],
+    path: Union[Path, Link],
     environment: Env,
     editable: bool = False,
     deps: bool = False,
     upgrade: bool = False,
 ) -> Union[int, str]:
-    path = Path(path) if isinstance(path, str) else path
+    path = url_to_path(path.url) if isinstance(path, Link) else path
     is_wheel = path.suffix == ".whl"
 
     # We disable version check here as we are already pinning to version available in either the
@@ -60,7 +62,9 @@ def pip_install(
         raise PoetryException(f"Failed to install {path.as_posix()}") from e
 
 
-def pip_editable_install(directory: Path, environment: Env) -> Union[int, str]:
+def pip_editable_install(
+    directory: Union[Path, Link], environment: Env
+) -> Union[int, str]:
     return pip_install(
         path=directory, environment=environment, editable=True, deps=False, upgrade=True
     )
