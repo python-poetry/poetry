@@ -685,15 +685,25 @@ class Executor:
             package.name,
             archive_path,
         )
-        archive_hash = "sha256:" + file_dep.hash()
-        known_hashes = {f["hash"] for f in package.files}
 
-        if archive_hash not in known_hashes:
+        known_hashes = {f["hash"] for f in package.files}
+        known_types = (h.split(":")[0] for h in known_hashes)
+
+        archive_hashes = set()
+        for hash_type in known_types:
+            archive_hashes.add(f"{hash_type}:{file_dep.hash(hash_type)}")
+
+        if archive_hashes.isdisjoint(known_hashes):
             raise RuntimeError(
-                f"Hash for {package} from archive {archive_path.name} not found in known hashes (was: {archive_hash})"
+                "Invalid hashes ({}) for {} using archive {}. Expected one of {}.".format(
+                    ", ".join(sorted(archive_hashes)),
+                    package,
+                    archive.name,
+                    ", ".join(sorted(known_hashes)),
+                )
             )
 
-        return archive_hash
+        return archive_hashes.pop()
 
     def _download_archive(
         self, operation: Union["Install", "Update"], link: Link

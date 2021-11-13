@@ -13,6 +13,7 @@ from poetry.config.config import Config
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.utils._compat import PY36
+from poetry.installation.chef import Chef
 from poetry.installation.executor import Executor
 from poetry.installation.operations import Install
 from poetry.installation.operations import Uninstall
@@ -494,3 +495,81 @@ def test_executor_should_use_cached_link_and_hash(
         Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl"),
     )
     assert archive == link_cached
+
+
+def test_executor_should_check_every_possible_hash_types(
+    config, io, pool, mocker, fixture_dir, tmp_dir
+):
+    mocker.patch.object(
+        Chef,
+        "get_cached_archive_for_link",
+        side_effect=lambda link: link,
+    )
+    mocker.patch.object(
+        Executor,
+        "_download_archive",
+        return_value=fixture_dir("distributions").joinpath(
+            "demo-0.1.0-py2.py3-none-any.whl"
+        ),
+    )
+
+    env = MockEnv(path=Path(tmp_dir))
+    executor = Executor(env, pool, config, io)
+
+    package = Package("demo", "0.1.0")
+    package.files = [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": "md5:15507846fd4299596661d0197bfb4f90",
+        }
+    ]
+
+    archive = executor._download_link(
+        Install(package), Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl")
+    )
+
+    assert archive == fixture_dir("distributions").joinpath(
+        "demo-0.1.0-py2.py3-none-any.whl"
+    )
+
+
+def test_executor_should_check_every_possible_hash_types_before_failing(
+    config, io, pool, mocker, fixture_dir, tmp_dir
+):
+    mocker.patch.object(
+        Chef,
+        "get_cached_archive_for_link",
+        side_effect=lambda link: link,
+    )
+    mocker.patch.object(
+        Executor,
+        "_download_archive",
+        return_value=fixture_dir("distributions").joinpath(
+            "demo-0.1.0-py2.py3-none-any.whl"
+        ),
+    )
+
+    env = MockEnv(path=Path(tmp_dir))
+    executor = Executor(env, pool, config, io)
+
+    package = Package("demo", "0.1.0")
+    package.files = [
+        {"file": "demo-0.1.0-py2.py3-none-any.whl", "hash": "md5:123456"},
+        {"file": "demo-0.1.0-py2.py3-none-any.whl", "hash": "sha256:123456"},
+    ]
+
+    expected_message = (
+        "Invalid hashes "
+        "("
+        "md5:15507846fd4299596661d0197bfb4f90, "
+        "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+        ") "
+        "for demo (0.1.0) using archive demo-0.1.0-py2.py3-none-any.whl. "
+        "Expected one of md5:123456, sha256:123456."
+    )
+
+    with pytest.raises(RuntimeError, match=re.escape(expected_message)):
+        executor._download_link(
+            Install(package),
+            Link("https://example.com/demo-0.1.0-py2.py3-none-any.whl"),
+        )
