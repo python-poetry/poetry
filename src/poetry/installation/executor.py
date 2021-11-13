@@ -703,7 +703,14 @@ class Executor:
                 )
             )
 
-        return archive_hashes.pop()
+        try:
+            _, sha256 = next(
+                filter(lambda h: h.startswith("sha256:"), archive_hashes)
+            ).split(":")
+        except StopIteration:
+            sha256 = file_dep.hash("sha256")
+
+        return f"sha256={sha256}"
 
     def _download_archive(
         self, operation: Union["Install", "Update"], link: Link
