@@ -73,6 +73,29 @@ The readme file of the package. **Optional**
 
 The file can be either `README.rst` or `README.md`.
 
+```toml
+[tool.poetry]
+# ...
+readme = "README.rst"
+```
+
+If you want to use multiple readme files, you can by wrapping the files in a list.
+
+```toml
+[tool.poetry]
+# ...
+readme = [
+    "README.rst",
+    "CHANGELOG.rst"
+]
+```
+
+{{% note %}}
+Note that a line break (`\n`) will be added between each file in the generated readme.
+
+Additionally, all the listed files must be of same type, i.e. you cannot mix `.rst` and `.md`.
+{{% /note %}}
+
 ## homepage
 
 An URL to the website of the project. **Optional**
