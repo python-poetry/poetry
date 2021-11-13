@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import List
+from typing import Optional
 
 from poetry.__version__ import __version__
 from poetry.config.source import Source
@@ -35,7 +36,7 @@ class Poetry(BasePoetry):
         self._locker = locker
         self._config = config
         self._pool = Pool()
-        self._plugin_manager = None
+        self._plugin_manager: Optional[PluginManager] = None
 
     @property
     def locker(self) -> "Locker":
