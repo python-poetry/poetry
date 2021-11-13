@@ -72,37 +72,55 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.isort]
+py_version = 36
 profile = "black"
 force_single_line = true
-atomic = true
-include_trailing_comma = true
-lines_after_imports = 2
+combine_as_imports = true
 lines_between_types = 1
-use_parentheses = true
+lines_after_imports = 2
 src_paths = ["poetry", "tests"]
-skip_glob = ["*/setup.py"]
-filter_files = true
-known_first_party = "poetry"
+extend_skip = ["setup.py"]
 
 
 [tool.black]
-line-length = 88
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | tests/.*/setup.py
-)/
+target-version = ['py36']
+force-exclude = '''
+.*/setup\.py$
 '''
+
+
+[tool.mypy]
+python_version = "3.6"
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+files = "poetry"
+
+# The following whitelist is used to allow for incremental adoption
+# of Mypy. Modules should be removed from this whitelist as and when
+# their respective type errors have been addressed. No new modules
+# should be added to this whitelist.
+# see https://github.com/python-poetry/poetry/pull/4510.
+
+[[tool.mypy.overrides]]
+module = [
+  'poetry.poetry',
+  'poetry.config.file_config_source',
+  'poetry.console.*',
+  'poetry.factory.*',
+  'poetry.inspection.*',
+  'poetry.installation.*',
+  'poetry.layouts.*',
+  'poetry.mixology.*',
+  'poetry.packages.locker',
+  'poetry.puzzle.*',
+  'poetry.repositories.installed_repository',
+  'poetry.utils.*'
+]
+ignore_errors = true
+
 
 [tool.coverage.report]
 exclude_lines = [
