@@ -39,3 +39,6 @@ repos:
       - id: end-of-file-fixer
         exclude: ^tests/.*/fixtures/.*
       - id: debug-statements
+
+ci:
+  autofix_prs: false
