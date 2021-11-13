@@ -119,6 +119,18 @@ def test_env_shell_commands_with_stdinput_in_their_arg_work_as_expected(
     assert run_output_path.resolve() == venv_base_prefix_path.resolve()
 
 
+def test_env_get_supported_tags_matches_inside_virtualenv(
+    tmp_dir: str, manager: EnvManager
+):
+    venv_path = Path(tmp_dir) / "Virtual Env"
+    manager.build_venv(str(venv_path))
+    venv = VirtualEnv(venv_path)
+
+    import packaging.tags
+
+    assert venv.get_supported_tags() == list(packaging.tags.sys_tags())
+
+
 @pytest.fixture
 def in_project_venv_dir(poetry: Poetry) -> Iterator[Path]:
     os.environ.pop("VIRTUAL_ENV", None)
