@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class ProjectPackage(_ProjectPackage):
     def set_version(
         self, version: Union[str, "Version"], pretty_version: Optional[str] = None
-    ) -> "ProjectPackage":
+    ) -> None:
         from poetry.core.semver.version import Version  # noqa
 
         if not isinstance(version, Version):

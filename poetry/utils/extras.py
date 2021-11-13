@@ -14,7 +14,7 @@ def get_extra_package_names(
     packages: Sequence["Package"],
     extras: Mapping[str, List[str]],
     extra_names: Sequence[str],
-) -> Iterator[str]:
+) -> Iterable[str]:
     """
     Returns all package names required by the given extras.
 

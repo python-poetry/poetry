@@ -85,7 +85,7 @@ class Provider:
         self._load_deferred = load_deferred
 
     @contextmanager
-    def use_environment(self, env: Env) -> "Provider":
+    def use_environment(self, env: Env) -> Iterator["Provider"]:
         original_env = self._env
         original_python_constraint = self._python_constraint
 

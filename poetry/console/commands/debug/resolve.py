@@ -143,3 +143,5 @@ class DebugResolveCommand(InitCommand):
 
         table.set_rows(rows)
         table.render()
+
+        return None

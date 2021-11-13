@@ -131,7 +131,7 @@ class VersionSolver:
 
     def _propagate_incompatibility(
         self, incompatibility: Incompatibility
-    ) -> Optional[Union[str, object]]:
+    ) -> Union[str, object, None]:
         """
         If incompatibility is almost satisfied by _solution, adds the
         negation of the unsatisfied term to _solution.
@@ -154,12 +154,12 @@ class VersionSolver:
                 # If term is already contradicted by _solution, then
                 # incompatibility is contradicted as well and there's nothing new we
                 # can deduce from it.
-                return
+                return None
             elif relation == SetRelation.OVERLAPPING:
                 # If more than one term is inconclusive, we can't deduce anything about
                 # incompatibility.
                 if unsatisfied is not None:
-                    return
+                    return None
 
                 # If exactly one term in incompatibility is inconclusive, then it's
                 # almost satisfied and [term] is the unsatisfied term. We can add the
@@ -324,7 +324,7 @@ class VersionSolver:
         """
         unsatisfied = self._solution.unsatisfied
         if not unsatisfied:
-            return
+            return None
 
         # Prefer packages with as few remaining versions as possible,
         # so that if a conflict is necessary it's forced quickly.
@@ -449,14 +449,14 @@ class VersionSolver:
 
     def _get_locked(self, dependency: Dependency) -> Optional[Package]:
         if dependency.name in self._use_latest:
-            return
+            return None
 
         locked = self._locked.get(dependency.name)
         if not locked:
-            return
+            return None
 
         if not dependency.is_same_package_as(locked):
-            return
+            return None
 
         return locked
 
