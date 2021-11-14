@@ -44,7 +44,7 @@ class Publisher:
         password: Optional[str],
         cert: Optional[Path] = None,
         client_cert: Optional[Path] = None,
-        dry_run: Optional[bool] = False,
+        dry_run: bool = False,
     ) -> None:
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"

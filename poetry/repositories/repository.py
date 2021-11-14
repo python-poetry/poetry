@@ -24,7 +24,7 @@ class Repository(BaseRepository):
             self.add_package(package)
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self._name
 
     def package(

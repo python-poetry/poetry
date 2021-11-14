@@ -10,22 +10,22 @@ if TYPE_CHECKING:
 
 class BaseRepository:
     def __init__(self) -> None:
-        self._packages = []
+        self._packages: List[Package] = []
 
     @property
     def packages(self) -> List["Package"]:
         return self._packages
 
-    def has_package(self, package: "Package") -> None:
+    def has_package(self, package: "Package") -> bool:
         raise NotImplementedError()
 
     def package(
         self, name: str, version: str, extras: Optional[List[str]] = None
-    ) -> None:
+    ) -> "Package":
         raise NotImplementedError()
 
-    def find_packages(self, dependency: "Dependency") -> None:
+    def find_packages(self, dependency: "Dependency") -> List["Package"]:
         raise NotImplementedError()
 
-    def search(self, query: str) -> None:
+    def search(self, query: str) -> List["Package"]:
         raise NotImplementedError()

@@ -21,5 +21,3 @@ class ProjectPackage(_ProjectPackage):
         else:
             self._version = version
             self._pretty_version = pretty_version or version.text
-
-        return self
