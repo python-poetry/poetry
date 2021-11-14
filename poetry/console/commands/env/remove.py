@@ -7,7 +7,7 @@ from ..command import Command
 class EnvRemoveCommand(Command):
 
     name = "env remove"
-    description = "Remove specific virtual environments associated with the project."
+    description = "Remove virtual environments associated with the project."
 
     arguments = [
         argument(
