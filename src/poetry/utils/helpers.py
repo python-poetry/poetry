@@ -4,6 +4,7 @@ import shutil
 import stat
 import tempfile
 
+from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,12 +16,6 @@ from typing import List
 from typing import Optional
 
 from poetry.config.config import Config
-
-
-try:
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping
 
 
 if TYPE_CHECKING:
