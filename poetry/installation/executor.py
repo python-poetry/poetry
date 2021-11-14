@@ -13,6 +13,7 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Union
+from typing import Optional
 
 from cleo.io.null_io import NullIO
 
@@ -23,7 +24,7 @@ from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
-from poetry.utils.helpers import get_default_max_workers
+from poetry.utils.helpers import get_max_workers
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.pip import pip_editable_install
 
@@ -55,7 +56,7 @@ class Executor:
         config: "Config",
         io: "IO",
         parallel: bool = None,
-        max_workers: int = None,
+        max_workers: Optional[int] = None,
     ) -> None:
         self._env = env
         self._io = io
@@ -70,12 +71,7 @@ class Executor:
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            self._max_workers = get_default_max_workers()
-
-            if max_workers is None:
-                max_workers = config.get("installer.max-workers", self._max_workers)
-
-            self._max_workers = min(max_workers, self._max_workers)
+            self._max_workers = config.get("installer.max-workers", get_max_workers(desired_max_workers=max_workers))
         else:
             self._max_workers = 1
 
