@@ -149,6 +149,8 @@ class Page:
         return self._clean_re.sub(lambda match: "%%%2x" % ord(match.group(0)), url)
 
 
+# TODO: revisit whether the LegacyRepository should inherit from PyPiRepository.
+# <https://github.com/python-poetry/poetry/pull/4755#discussion_r748865374>.
 class LegacyRepository(PyPiRepository):
     def __init__(
         self,
