@@ -169,7 +169,7 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 
 ```bash
 # Bash
-poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
+poetry completions bash > /etc/bash_completion.d/poetry
 
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
