@@ -86,7 +86,7 @@ class DebugResolveCommand(InitCommand):
 
         solver = Solver(package, pool, Repository(), Repository(), self._io)
 
-        ops = solver.solve()
+        ops = solver.solve().calculate_operations()
 
         self.line("")
         self.line("Resolution results:")
@@ -99,7 +99,7 @@ class DebugResolveCommand(InitCommand):
             packages = [op.package for op in ops]
             repo = Repository(packages)
 
-            requires = package.requires + package.dev_requires
+            requires = package.all_requires
             for pkg in repo.packages:
                 for require in requires:
                     if pkg.name == require.name:
@@ -108,7 +108,7 @@ class DebugResolveCommand(InitCommand):
 
             return 0
 
-        table = self.table([], style="compact")
+        table = self.table(style="compact")
         table.style.set_vertical_border_chars("", " ")
         rows = []
 
@@ -123,7 +123,7 @@ class DebugResolveCommand(InitCommand):
 
             solver = Solver(package, pool, Repository(), Repository(), NullIO())
             with solver.use_environment(env):
-                ops = solver.solve()
+                ops = solver.solve().calculate_operations()
 
         for op in ops:
             if self.option("install") and op.skipped:
@@ -133,7 +133,6 @@ class DebugResolveCommand(InitCommand):
             row = [
                 "<c1>{}</c1>".format(pkg.complete_name),
                 "<b>{}</b>".format(pkg.version),
-                "",
             ]
 
             if not pkg.marker.is_any():
@@ -143,3 +142,5 @@ class DebugResolveCommand(InitCommand):
 
         table.set_rows(rows)
         table.render()
+
+        return None

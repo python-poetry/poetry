@@ -21,9 +21,16 @@ from cleo.io.io import IO
 from cleo.io.outputs.output import Output
 
 from poetry.__version__ import __version__
+from poetry.core.utils._compat import PY37
 
 from .command_loader import CommandLoader
 from .commands.command import Command
+
+
+if TYPE_CHECKING:
+    from crashtest.solution_providers.solution_provider_repository import (
+        SolutionProviderRepository,
+    )
 
 
 def load_command(name: str) -> Callable:
@@ -137,6 +144,20 @@ class Application(BaseApplication):
     ) -> IO:
         io = super().create_io(input, output, error_output)
 
+        # Remove when support for Python 3.6 is removed
+        # https://github.com/python-poetry/poetry/issues/3412
+        if (
+            not PY37
+            and hasattr(io.output, "_stream")
+            and hasattr(io.output._stream, "buffer")
+            and io.output._stream.encoding != "utf-8"
+        ):
+            import io as io_
+
+            io.output._stream = io_.TextIOWrapper(
+                io.output._stream.buffer, encoding="utf-8"
+            )
+
         # Set our own CLI styles
         formatter = io.output.formatter
         formatter.set_style("c1", Style("cyan"))
@@ -158,6 +179,13 @@ class Application(BaseApplication):
         self._io = io
 
         return io
+
+    def render_error(self, error: Exception, io: IO) -> None:
+        # We set the solution provider repository here to load providers
+        # only when an error occurs
+        self.set_solution_provider_repository(self._get_solution_provider_repository())
+
+        super().render_error(error, io)
 
     def _run(self, io: IO) -> int:
         self._disable_plugins = io.input.parameter_option("--no-plugins")
@@ -329,6 +357,20 @@ class Application(BaseApplication):
         )
 
         return definition
+
+    def _get_solution_provider_repository(self) -> "SolutionProviderRepository":
+        from crashtest.solution_providers.solution_provider_repository import (
+            SolutionProviderRepository,
+        )
+
+        from poetry.mixology.solutions.providers.python_requirement_solution_provider import (
+            PythonRequirementSolutionProvider,
+        )
+
+        repository = SolutionProviderRepository()
+        repository.register_solution_providers([PythonRequirementSolutionProvider])
+
+        return repository
 
 
 def main() -> int:

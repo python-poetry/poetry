@@ -3,7 +3,7 @@ from typing import Optional
 
 import pytest
 
-from pytest_mock.plugin import MockFixture
+from pytest_mock.plugin import MockerFixture
 
 from poetry.core.packages.package import Package
 from poetry.repositories.installed_repository import InstalledRepository
@@ -59,7 +59,7 @@ def env() -> MockEnv:
 
 
 @pytest.fixture
-def repository(mocker: MockFixture, env: MockEnv) -> InstalledRepository:
+def repository(mocker: MockerFixture, env: MockEnv) -> InstalledRepository:
     mocker.patch(
         "poetry.utils._compat.metadata.Distribution.discover",
         return_value=INSTALLED_RESULTS,

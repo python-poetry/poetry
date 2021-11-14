@@ -57,8 +57,8 @@ class Uploader:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
-        self._username = None
-        self._password = None
+        self._username: Optional[str] = None
+        self._password: Optional[str] = None
 
     @property
     def user_agent(self) -> str:
@@ -69,7 +69,7 @@ class Uploader:
         retry = util.Retry(
             connect=5,
             total=10,
-            method_whitelist=["GET"],
+            allowed_methods=["GET"],
             status_forcelist=[500, 501, 502, 503],
         )
 
@@ -89,14 +89,15 @@ class Uploader:
 
         return sorted(wheels + tars)
 
-    def auth(self, username: str, password: str) -> None:
+    def auth(self, username: Optional[str], password: Optional[str]) -> None:
         self._username = username
         self._password = password
 
     def make_session(self) -> requests.Session:
         session = requests.session()
-        if self.is_authenticated():
-            session.auth = (self._username, self._password)
+        auth = self.get_auth()
+        if auth is not None:
+            session.auth = auth
 
         session.headers["User-Agent"] = self.user_agent
         for scheme in ("http://", "https://"):
@@ -104,8 +105,11 @@ class Uploader:
 
         return session
 
-    def is_authenticated(self) -> bool:
-        return self._username is not None and self._password is not None
+    def get_auth(self) -> Optional[Tuple[str, str]]:
+        if self._username is None or self._password is None:
+            return None
+
+        return (self._username, self._password)
 
     def upload(
         self,
@@ -147,16 +151,15 @@ class Uploader:
 
         md5_digest = md5_hash.hexdigest()
         sha2_digest = sha256_hash.hexdigest()
+        blake2_256_digest: Optional[str] = None
         if _has_blake2:
             blake2_256_digest = blake2_256_hash.hexdigest()
-        else:
-            blake2_256_digest = None
 
+        py_version: Optional[str] = None
         if file_type == "bdist_wheel":
             wheel_info = wheel_file_re.match(file.name)
-            py_version = wheel_info.group("pyver")
-        else:
-            py_version = None
+            if wheel_info is not None:
+                py_version = wheel_info.group("pyver")
 
         data = {
             # identify release
@@ -208,30 +211,10 @@ class Uploader:
     def _upload(
         self, session: requests.Session, url: str, dry_run: Optional[bool] = False
     ) -> None:
-        try:
-            self._do_upload(session, url, dry_run)
-        except HTTPError as e:
-            if (
-                e.response.status_code == 400
-                and "was ever registered" in e.response.text
-            ):
-                try:
-                    self._register(session, url)
-                except HTTPError as e:
-                    raise UploadError(e)
-
-            raise UploadError(e)
-
-    def _do_upload(
-        self, session: requests.Session, url: str, dry_run: Optional[bool] = False
-    ) -> None:
         for file in self.files:
             # TODO: Check existence
 
-            resp = self._upload_file(session, url, file, dry_run)
-
-            if not dry_run:
-                resp.raise_for_status()
+            self._upload_file(session, url, file, dry_run)
 
     def _upload_file(
         self,
@@ -239,7 +222,7 @@ class Uploader:
         url: str,
         file: Path,
         dry_run: Optional[bool] = False,
-    ) -> requests.Response:
+    ) -> None:
         from cleo.ui.progress_bar import ProgressBar
 
         data = self.post_data(file)
@@ -251,7 +234,7 @@ class Uploader:
             }
         )
 
-        data_to_send = self._prepare_data(data)
+        data_to_send: List[Tuple[str, Any]] = self._prepare_data(data)
 
         with file.open("rb") as fp:
             data_to_send.append(
@@ -276,7 +259,7 @@ class Uploader:
                         allow_redirects=False,
                         headers={"Content-Type": monitor.content_type},
                     )
-                if dry_run or 200 <= resp.status_code < 300:
+                if resp is None or 200 <= resp.status_code < 300:
                     bar.set_format(
                         f" - Uploading <c1>{file.name}</c1> <fg=green>%percent%%</>"
                     )
@@ -290,6 +273,11 @@ class Uploader:
                         "Redirects are not supported. "
                         "Is the URL missing a trailing slash?"
                     )
+                elif resp.status_code == 400 and "was ever registered" in resp.text:
+                    self._register(session, url)
+                    resp.raise_for_status()
+                else:
+                    resp.raise_for_status()
             except (requests.ConnectionError, requests.HTTPError) as e:
                 if self._io.output.is_decorated():
                     self._io.overwrite(
@@ -298,8 +286,6 @@ class Uploader:
                 raise UploadError(e)
             finally:
                 self._io.write_line("")
-
-        return resp
 
     def _register(self, session: requests.Session, url: str) -> requests.Response:
         """

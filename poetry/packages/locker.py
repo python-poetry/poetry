@@ -24,8 +24,6 @@ from tomlkit import item
 from tomlkit import table
 from tomlkit.exceptions import TOMLKitError
 
-import poetry.repositories
-
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.semver.helpers import parse_constraint
@@ -40,6 +38,8 @@ from poetry.utils.extras import get_extra_package_names
 if TYPE_CHECKING:
     from tomlkit.toml_document import TOMLDocument
 
+    from poetry.repositories import Repository
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +47,7 @@ class Locker:
 
     _VERSION = "1.1"
 
-    _relevant_keys = ["dependencies", "dev-dependencies", "source", "extras"]
+    _relevant_keys = ["dependencies", "group", "source", "extras"]
 
     def __init__(self, lock: Union[str, Path], local_config: dict) -> None:
         self._lock = TOMLFile(lock)
@@ -87,19 +87,18 @@ class Locker:
 
         return False
 
-    def locked_repository(
-        self, with_dev_reqs: bool = False
-    ) -> poetry.repositories.Repository:
+    def locked_repository(self, with_dev_reqs: bool = False) -> "Repository":
         """
         Searches and returns a repository of locked packages.
         """
         from poetry.factory import Factory
+        from poetry.repositories import Repository
 
         if not self.is_locked():
-            return poetry.repositories.Repository()
+            return Repository()
 
         lock_data = self.lock_data
-        packages = poetry.repositories.Repository()
+        packages = Repository()
 
         if with_dev_reqs:
             locked_packages = lock_data["package"]
@@ -128,7 +127,8 @@ class Locker:
                 source_resolved_reference=source.get("resolved_reference"),
             )
             package.description = info.get("description", "")
-            package.category = info["category"]
+            package.category = info.get("category", "main")
+            package.groups = info.get("groups", ["default"])
             package.optional = info["optional"]
             if "hashes" in lock_data["metadata"]:
                 # Old lock so we create dummy files from the hashes
@@ -176,20 +176,22 @@ class Locker:
                         package.marker = parse_marker(split_dep[1].strip())
 
             for dep_name, constraint in info.get("dependencies", {}).items():
+
+                root_dir = self._lock.path.parent
+                if package.source_type == "directory":
+                    # root dir should be the source of the package relative to the lock path
+                    root_dir = Path(package.source_url)
+
                 if isinstance(constraint, list):
                     for c in constraint:
                         package.add_dependency(
-                            Factory.create_dependency(
-                                dep_name, c, root_dir=self._lock.path.parent
-                            )
+                            Factory.create_dependency(dep_name, c, root_dir=root_dir)
                         )
 
                     continue
 
                 package.add_dependency(
-                    Factory.create_dependency(
-                        dep_name, constraint, root_dir=self._lock.path.parent
-                    )
+                    Factory.create_dependency(dep_name, constraint, root_dir=root_dir)
                 )
 
             if "develop" in info:
@@ -245,16 +247,15 @@ class Locker:
                         locked_package.to_dependency().constraint
                     )
 
-                if key not in nested_dependencies:
-                    for require in locked_package.requires:
-                        if require.marker.is_empty():
-                            require.marker = requirement.marker
-                        else:
-                            require.marker = require.marker.intersect(
-                                requirement.marker
-                            )
+                for require in locked_package.requires:
+                    if require.marker.is_empty():
+                        require.marker = requirement.marker
+                    else:
+                        require.marker = require.marker.intersect(requirement.marker)
 
-                        require.marker = require.marker.intersect(locked_package.marker)
+                    require.marker = require.marker.intersect(locked_package.marker)
+
+                    if key not in nested_dependencies:
                         next_level_dependencies.append(require)
 
             if requirement.name in project_level_dependencies and level == 0:
@@ -513,7 +514,25 @@ class Locker:
                 dependencies[dependency.pretty_name] = []
 
             constraint = inline_table()
-            constraint["version"] = str(dependency.pretty_constraint)
+
+            if dependency.is_directory() or dependency.is_file():
+                constraint["path"] = dependency.path.as_posix()
+
+                if dependency.is_directory() and dependency.develop:
+                    constraint["develop"] = True
+            elif dependency.is_url():
+                constraint["url"] = dependency.url
+            elif dependency.is_vcs():
+                constraint[dependency.vcs] = dependency.source
+
+                if dependency.branch:
+                    constraint["branch"] = dependency.branch
+                elif dependency.tag:
+                    constraint["tag"] = dependency.tag
+                elif dependency.rev:
+                    constraint["rev"] = dependency.rev
+            else:
+                constraint["version"] = str(dependency.pretty_constraint)
 
             if dependency.extras:
                 constraint["extras"] = sorted(dependency.extras)
@@ -529,7 +548,10 @@ class Locker:
         # All the constraints should have the same type,
         # but we want to simplify them if it's possible
         for dependency, constraints in tuple(dependencies.items()):
-            if all(len(constraint) == 1 for constraint in constraints):
+            if all(
+                len(constraint) == 1 and "version" in constraint
+                for constraint in constraints
+            ):
                 dependencies[dependency] = [
                     constraint["version"] for constraint in constraints
                 ]
@@ -595,3 +617,8 @@ class Locker:
                 data["develop"] = package.develop
 
         return data
+
+
+class NullLocker(Locker):
+    def set_lock_data(self, root: Package, packages: List[Package]) -> bool:
+        pass

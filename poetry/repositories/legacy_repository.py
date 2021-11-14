@@ -5,6 +5,7 @@ import urllib.parse
 import warnings
 
 from collections import defaultdict
+from html import unescape
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -12,6 +13,7 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Optional
+from urllib.parse import quote
 
 import requests
 import requests.auth
@@ -34,7 +36,7 @@ from poetry.utils.patterns import wheel_file_re
 
 from ..config.config import Config
 from ..inspection.info import PackageInfo
-from ..installation.authenticator import Authenticator
+from ..utils.authenticator import Authenticator
 from .exceptions import PackageNotFound
 from .exceptions import RepositoryError
 from .pypi_repository import PyPiRepository
@@ -42,23 +44,6 @@ from .pypi_repository import PyPiRepository
 
 if TYPE_CHECKING:
     from poetry.core.packages.dependency import Dependency
-
-try:
-    from html import unescape
-except ImportError:
-    try:
-        from html.parser import HTMLParser
-    except ImportError:
-        from HTMLParser import HTMLParser
-
-    unescape = HTMLParser().unescape
-
-
-try:
-    from urllib.parse import quote
-except ImportError:
-    from urllib import quote
-
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -144,14 +129,14 @@ class Page:
             info, ext = link.splitext()
             match = self.VERSION_REGEX.match(info)
             if not match:
-                return
+                return None
 
             version = match.group(2)
 
         try:
             version = Version.parse(version)
         except ValueError:
-            return
+            return None
 
         return version
 
@@ -164,6 +149,8 @@ class Page:
         return self._clean_re.sub(lambda match: "%%%2x" % ord(match.group(0)), url)
 
 
+# TODO: revisit whether the LegacyRepository should inherit from PyPiRepository.
+# <https://github.com/python-poetry/poetry/pull/4755#discussion_r748865374>.
 class LegacyRepository(PyPiRepository):
     def __init__(
         self,
@@ -269,7 +256,7 @@ class LegacyRepository(PyPiRepository):
         if self._cache.store("matches").has(key):
             versions = self._cache.store("matches").get(key)
         else:
-            page = self._get("/{}/".format(dependency.name.replace(".", "-")))
+            page = self._get_page("/{}/".format(dependency.name.replace(".", "-")))
             if page is None:
                 return []
 
@@ -338,14 +325,14 @@ class LegacyRepository(PyPiRepository):
             return package
 
     def find_links_for_package(self, package: Package) -> List[Link]:
-        page = self._get("/{}/".format(package.name.replace(".", "-")))
+        page = self._get_page("/{}/".format(package.name.replace(".", "-")))
         if page is None:
             return []
 
         return list(page.links_for_version(package.version))
 
     def _get_release_info(self, name: str, version: str) -> dict:
-        page = self._get("/{}/".format(canonicalize_name(name).replace(".", "-")))
+        page = self._get_page("/{}/".format(canonicalize_name(name).replace(".", "-")))
         if page is None:
             raise PackageNotFound(f'No package named "{name}"')
 
@@ -419,7 +406,7 @@ class LegacyRepository(PyPiRepository):
 
         return data.asdict()
 
-    def _get(self, endpoint: str) -> Optional[Page]:
+    def _get_page(self, endpoint: str) -> Optional[Page]:
         url = self._url + endpoint
         try:
             response = self.session.get(url)
@@ -428,9 +415,9 @@ class LegacyRepository(PyPiRepository):
                     f"Authorization error accessing {url}",
                     level="warning",
                 )
-                return
+                return None
             if response.status_code == 404:
-                return
+                return None
             response.raise_for_status()
         except requests.HTTPError as e:
             raise RepositoryError(e)

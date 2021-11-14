@@ -24,7 +24,7 @@ class Repository(BaseRepository):
             self.add_package(package)
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self._name
 
     def package(
@@ -111,7 +111,7 @@ class Repository(BaseRepository):
         return []
 
     def search(self, query: str) -> List["Package"]:
-        results = []
+        results: List["Package"] = []
 
         for package in self.packages:
             if query in package.name:

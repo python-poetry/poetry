@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from pathlib import Path
 
 import pytest
 
 from entrypoints import EntryPoint
 
+from poetry.core.semver.helpers import parse_constraint
 from poetry.core.toml.file import TOMLFile
 from poetry.factory import Factory
 from poetry.plugins.plugin import Plugin
@@ -70,7 +67,7 @@ def test_create_poetry():
 
     pathlib2 = dependencies["pathlib2"]
     assert pathlib2.pretty_constraint == "^2.2"
-    assert pathlib2.python_versions == "~2.7"
+    assert parse_constraint(pathlib2.python_versions) == parse_constraint("~2.7")
     assert not pathlib2.is_optional()
 
     demo = dependencies["demo"]
@@ -156,13 +153,13 @@ def test_create_poetry_with_multi_constraints_dependency():
     assert len(package.requires) == 2
 
 
-def test_poetry_with_default_source():
+def test_poetry_with_default_source(with_simple_keyring):
     poetry = Factory().create_poetry(fixtures_dir / "with_default_source")
 
     assert 1 == len(poetry.pool.repositories)
 
 
-def test_poetry_with_non_default_source():
+def test_poetry_with_non_default_source(with_simple_keyring):
     poetry = Factory().create_poetry(fixtures_dir / "with_non_default_source")
 
     assert len(poetry.pool.repositories) == 2
@@ -176,6 +173,64 @@ def test_poetry_with_non_default_source():
     assert isinstance(poetry.pool.repositories[1], PyPiRepository)
 
 
+def test_poetry_with_non_default_secondary_source(with_simple_keyring):
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_secondary_source")
+
+    assert len(poetry.pool.repositories) == 2
+
+    assert poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+
+def test_poetry_with_non_default_multiple_secondary_sources(with_simple_keyring):
+    poetry = Factory().create_poetry(
+        fixtures_dir / "with_non_default_multiple_secondary_sources"
+    )
+
+    assert len(poetry.pool.repositories) == 3
+
+    assert poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[2]
+    assert repository.name == "bar"
+    assert isinstance(repository, LegacyRepository)
+
+
+def test_poetry_with_non_default_multiple_sources(with_simple_keyring):
+    poetry = Factory().create_poetry(fixtures_dir / "with_non_default_multiple_sources")
+
+    assert len(poetry.pool.repositories) == 3
+
+    assert not poetry.pool.has_default()
+
+    repository = poetry.pool.repositories[0]
+    assert repository.name == "bar"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[1]
+    assert repository.name == "foo"
+    assert isinstance(repository, LegacyRepository)
+
+    repository = poetry.pool.repositories[2]
+    assert repository.name == "PyPI"
+    assert isinstance(repository, PyPiRepository)
+
+
 def test_poetry_with_no_default_source():
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
@@ -187,7 +242,7 @@ def test_poetry_with_no_default_source():
     assert isinstance(poetry.pool.repositories[0], PyPiRepository)
 
 
-def test_poetry_with_two_default_sources():
+def test_poetry_with_two_default_sources(with_simple_keyring):
     with pytest.raises(ValueError) as e:
         Factory().create_poetry(fixtures_dir / "with_two_default_sources")
 

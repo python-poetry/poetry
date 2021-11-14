@@ -12,7 +12,6 @@ from cleo.io.io import IO
 
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.installation.base_installer import BaseInstaller
-from poetry.repositories.pool import Pool
 from poetry.utils._compat import encode
 from poetry.utils.env import Env
 from poetry.utils.helpers import safe_rmtree
@@ -22,10 +21,11 @@ from poetry.utils.pip import pip_install
 
 if TYPE_CHECKING:
     from poetry.core.packages.package import Package
+    from poetry.repositories.pool import Pool
 
 
 class PipInstaller(BaseInstaller):
-    def __init__(self, env: Env, io: IO, pool: Pool) -> None:
+    def __init__(self, env: Env, io: IO, pool: "Pool") -> None:
         self._env = env
         self._io = io
         self._pool = pool

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Dict
@@ -10,17 +7,15 @@ from typing import Optional
 from cleo.io.io import IO
 from cleo.io.null_io import NullIO
 
+from poetry.config.config import Config
+from poetry.config.file_config_source import FileConfigSource
 from poetry.core.factory import Factory as BaseFactory
 from poetry.core.toml.file import TOMLFile
-
-from .config.config import Config
-from .config.file_config_source import FileConfigSource
-from .locations import CONFIG_DIR
-from .packages.locker import Locker
-from .packages.project_package import ProjectPackage
-from .plugins.plugin_manager import PluginManager
-from .poetry import Poetry
-from .repositories.pypi_repository import PyPiRepository
+from poetry.locations import CONFIG_DIR
+from poetry.packages.locker import Locker
+from poetry.packages.project_package import ProjectPackage
+from poetry.plugins.plugin_manager import PluginManager
+from poetry.poetry import Poetry
 
 
 if TYPE_CHECKING:
@@ -153,14 +148,17 @@ class Factory(BaseFactory):
 
             poetry.pool.add_repository(repository, is_default, secondary=is_secondary)
 
-        # Always put PyPI last to prefer private repositories
-        # but only if we have no other default source
-        if not poetry.pool.has_default():
-            has_sources = bool(sources)
-            poetry.pool.add_repository(PyPiRepository(), not has_sources, has_sources)
-        else:
+        # Put PyPI last to prefer private repositories
+        # unless we have no default source AND no primary sources
+        # (default = false, secondary = false)
+        if poetry.pool.has_default():
             if io.is_debug():
                 io.write_line("Deactivating the PyPI repository")
+        else:
+            from poetry.repositories.pypi_repository import PyPiRepository
+
+            default = not poetry.pool.has_primary_repositories()
+            poetry.pool.add_repository(PyPiRepository(), default, not default)
 
     @classmethod
     def create_legacy_repository(

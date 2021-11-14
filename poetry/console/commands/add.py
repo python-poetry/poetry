@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import Dict
 from typing import List
 
@@ -16,6 +15,13 @@ class AddCommand(InstallerCommand, InitCommand):
 
     arguments = [argument("name", "The packages to add.", multiple=True)]
     options = [
+        option(
+            "group",
+            "-G",
+            "The group to add the dependency to.",
+            flag=False,
+            default="default",
+        ),
         option("dev", "D", "Add as a development dependency."),
         option("editable", "e", "Add vcs/path dependencies as editable."),
         option(
@@ -71,31 +77,55 @@ class AddCommand(InstallerCommand, InitCommand):
 
     def handle(self) -> int:
         from tomlkit import inline_table
+        from tomlkit import parse as parse_toml
+        from tomlkit import table
 
         from poetry.core.semver.helpers import parse_constraint
+        from poetry.factory import Factory
 
         packages = self.argument("name")
-        is_dev = self.option("dev")
+        if self.option("dev"):
+            self.line(
+                "<warning>The --dev option is deprecated, "
+                "use the `--group dev` notation instead.</warning>"
+            )
+            self.line("")
+            group = "dev"
+        else:
+            group = self.option("group")
 
         if self.option("extras") and len(packages) > 1:
             raise ValueError(
-                "You can only specify one package " "when using the --extras option"
+                "You can only specify one package when using the --extras option"
             )
 
-        section = "dependencies"
-        if is_dev:
-            section = "dev-dependencies"
-
-        original_content = self.poetry.file.read()
         content = self.poetry.file.read()
         poetry_content = content["tool"]["poetry"]
 
-        if section not in poetry_content:
-            poetry_content[section] = {}
+        if group == "default":
+            if "dependencies" not in poetry_content:
+                poetry_content["dependencies"] = table()
 
-        existing_packages = self.get_existing_packages_from_input(
-            packages, poetry_content, section
-        )
+            section = poetry_content["dependencies"]
+        else:
+            if "group" not in poetry_content:
+                group_table = table()
+                group_table._is_super_table = True
+                poetry_content.value._insert_after("dependencies", "group", group_table)
+
+            groups = poetry_content["group"]
+            if group not in groups:
+                group_table = parse_toml(
+                    f"[tool.poetry.group.{group}.dependencies]\n\n"
+                )["tool"]["poetry"]["group"][group]
+                poetry_content["group"][group] = group_table
+
+            if "dependencies" not in poetry_content["group"][group]:
+                poetry_content["group"][group]["dependencies"] = table()
+
+            section = poetry_content["group"][group]["dependencies"]
+
+        existing_packages = self.get_existing_packages_from_input(packages, section)
 
         if existing_packages:
             self.notify_about_existing_packages(existing_packages)
@@ -165,53 +195,48 @@ class AddCommand(InstallerCommand, InitCommand):
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]
 
-            poetry_content[section][_constraint["name"]] = constraint
-
-        try:
-            # Write new content
-            self.poetry.file.write(content)
-
-            # Cosmetic new line
-            self.line("")
-
-            # Update packages
-            self.reset_poetry()
-
-            self._installer.set_package(self.poetry.package)
-            self._installer.dry_run(self.option("dry-run"))
-            self._installer.verbose(self._io.is_verbose())
-            self._installer.update(True)
-            if self.option("lock"):
-                self._installer.lock()
-
-            self._installer.whitelist([r["name"] for r in requirements])
-
-            status = self._installer.run()
-        except BaseException:
-            # Using BaseException here as some exceptions, eg: KeyboardInterrupt, do not inherit from Exception
-            self.poetry.file.write(original_content)
-            raise
-
-        if status != 0 or self.option("dry-run"):
-            # Revert changes
-            if not self.option("dry-run"):
-                self.line_error(
-                    "\n"
-                    "<error>Failed to add packages, reverting the pyproject.toml file "
-                    "to its original content.</error>"
+            section[_constraint["name"]] = constraint
+            self.poetry.package.add_dependency(
+                Factory.create_dependency(
+                    _constraint["name"],
+                    constraint,
+                    groups=[group],
+                    root_dir=self.poetry.file.parent,
                 )
+            )
 
-            self.poetry.file.write(original_content)
+        # Refresh the locker
+        self.poetry.set_locker(
+            self.poetry.locker.__class__(self.poetry.locker.lock.path, poetry_content)
+        )
+        self._installer.set_locker(self.poetry.locker)
+
+        # Cosmetic new line
+        self.line("")
+
+        self._installer.set_package(self.poetry.package)
+        self._installer.dry_run(self.option("dry-run"))
+        self._installer.verbose(self._io.is_verbose())
+        self._installer.update(True)
+        if self.option("lock"):
+            self._installer.lock()
+
+        self._installer.whitelist([r["name"] for r in requirements])
+
+        status = self._installer.run()
+
+        if status == 0 and not self.option("dry-run"):
+            self.poetry.file.write(content)
 
         return status
 
     def get_existing_packages_from_input(
-        self, packages: List[str], poetry_content: Dict, target_section: str
+        self, packages: List[str], section: Dict
     ) -> List[str]:
         existing_packages = []
 
         for name in packages:
-            for key in poetry_content[target_section]:
+            for key in section:
                 if key.lower() == name.lower():
                     existing_packages.append(name)
 

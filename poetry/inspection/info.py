@@ -59,7 +59,7 @@ class PackageInfo:
         platform: Optional[str] = None,
         requires_dist: Optional[List[str]] = None,
         requires_python: Optional[str] = None,
-        files: Optional[List[str]] = None,
+        files: Optional[List[Dict[str, str]]] = None,
         cache_version: Optional[str] = None,
     ):
         self.name = name
@@ -157,7 +157,9 @@ class PackageInfo:
             poetry_package = self._get_poetry_package(path=root_dir or self._source_url)
             if poetry_package:
                 package.extras = poetry_package.extras
-                package.requires = poetry_package.requires
+                for dependency in poetry_package.requires:
+                    package.add_dependency(dependency)
+
                 return package
 
         seen_requirements = set()
@@ -191,7 +193,7 @@ class PackageInfo:
             req = dependency.to_pep_508(with_extras=True)
 
             if req not in seen_requirements:
-                package.requires.append(dependency)
+                package.add_dependency(dependency)
                 seen_requirements.add(req)
 
         return package
@@ -395,11 +397,12 @@ class PackageInfo:
                 # handle PKG-INFO in unpacked sdist root
                 dist = pkginfo.UnpackedSDist(path.as_posix())
             except ValueError:
-                return
+                return None
 
         info = cls._from_distribution(dist=dist)
         if info:
             return info
+        return None
 
     @classmethod
     def from_package(cls, package: Package) -> "PackageInfo":
@@ -430,6 +433,7 @@ class PackageInfo:
         # TODO: add support for handling non-poetry PEP-517 builds
         if PyProjectTOML(path.joinpath("pyproject.toml")).is_poetry_project():
             return Factory().create_poetry(path).package
+        return None
 
     @classmethod
     def _pep517_metadata(cls, path: Path) -> "PackageInfo":

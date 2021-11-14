@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import hashlib
 import os
 import shutil
@@ -27,10 +25,11 @@ if TYPE_CHECKING:
 
 SCRIPT_TEMPLATE = """\
 #!{python}
+import sys
 from {module} import {callable_holder}
 
 if __name__ == '__main__':
-    {callable_}()
+    sys.exit({callable_}())
 """
 
 WINDOWS_CMD_TEMPLATE = """\

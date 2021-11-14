@@ -65,19 +65,6 @@ class VersionSelector:
 
     def _transform_version(self, version: str, pretty_version: str) -> str:
         try:
-            parsed = Version.parse(version)
-            parts = [parsed.major, parsed.minor, parsed.patch]
+            return f"^{Version.parse(version).to_string()}"
         except ValueError:
             return pretty_version
-
-        parts = parts[: parsed.precision]
-
-        # check to see if we have a semver-looking version
-        if len(parts) < 3:
-            version = pretty_version
-        else:
-            version = ".".join(str(p) for p in parts)
-            if parsed.is_unstable():
-                version += f"-{parsed.pre.to_string()}"
-
-        return f"^{version}"

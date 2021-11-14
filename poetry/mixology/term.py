@@ -138,7 +138,7 @@ class Term:
         elif self.is_positive() != other.is_positive():
             return self if self.is_positive() else other
         else:
-            return
+            return None
 
     def difference(self, other: "Term") -> "Term":
         """
@@ -158,7 +158,7 @@ class Term:
         self, constraint: "VersionTypes", is_positive: bool
     ) -> Optional["Term"]:
         if constraint.is_empty():
-            return
+            return None
 
         return Term(self.dependency.with_constraint(constraint), is_positive)
 

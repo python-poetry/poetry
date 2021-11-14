@@ -85,7 +85,7 @@ class Provider:
         self._load_deferred = load_deferred
 
     @contextmanager
-    def use_environment(self, env: Env) -> "Provider":
+    def use_environment(self, env: Env) -> Iterator["Provider"]:
         original_env = self._env
         original_python_constraint = self._python_constraint
 
@@ -183,6 +183,15 @@ class Provider:
 
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
+
+        dependency._source_reference = package.source_reference
+        dependency._source_resolved_reference = package.source_resolved_reference
+
+        if hasattr(package, "source_subdirectory") and hasattr(
+            dependency, "_source_subdirectory"
+        ):
+            # this is supported only for poetry-core >= 1.1.0a7
+            dependency._source_subdirectory = package.source_subdirectory
 
         self._deferred_cache[dependency] = package
 
@@ -330,7 +339,8 @@ class Provider:
                 for dep in package.extras[extra]:
                     dep.activate()
 
-                package.requires += package.extras[extra]
+                for extra_dep in package.extras[extra]:
+                    package.add_dependency(extra_dep)
 
         dependency._constraint = package.version
         dependency._pretty_constraint = package.version.text
@@ -535,10 +545,10 @@ class Provider:
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
         duplicates = dict()
         for dep in dependencies:
-            if dep.name not in duplicates:
-                duplicates[dep.name] = []
+            if dep.complete_name not in duplicates:
+                duplicates[dep.complete_name] = []
 
-            duplicates[dep.name].append(dep)
+            duplicates[dep.complete_name].append(dep)
 
         dependencies = []
         for dep_name, deps in duplicates.items():
@@ -617,8 +627,8 @@ class Provider:
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (>=2.0)>}
             #   - {<Package foo (1.2.3): {"bar": <Dependency bar (<2.0)>}
             markers = []
-            for constraint, _deps in by_constraint.items():
-                markers.append(_deps[0].marker)
+            for deps in by_constraint.values():
+                markers.append(deps[0].marker)
 
             _deps = [_dep[0] for _dep in by_constraint.values()]
             self.debug(
@@ -699,7 +709,12 @@ class Provider:
 
             clean_dependencies.append(dep)
 
-        package.requires = clean_dependencies
+        package = DependencyPackage(
+            package.dependency, package.with_dependency_groups([], only=True)
+        )
+
+        for dep in clean_dependencies:
+            package.add_dependency(dep)
 
         return package
 

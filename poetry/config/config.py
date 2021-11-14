@@ -14,9 +14,6 @@ from .config_source import ConfigSource
 from .dict_config_source import DictConfigSource
 
 
-_NOT_SET = object()
-
-
 def boolean_validator(val: str) -> bool:
     return val in {"true", "false", "1", "0"}
 
@@ -27,7 +24,7 @@ def boolean_normalizer(val: str) -> bool:
 
 class Config:
 
-    default_config = {
+    default_config: Dict[str, Any] = {
         "cache-dir": str(CACHE_DIR),
         "virtualenvs": {
             "create": True,
@@ -45,12 +42,8 @@ class Config:
         self._config = deepcopy(self.default_config)
         self._use_environment = use_environment
         self._base_dir = base_dir
-        self._config_source = DictConfigSource()
-        self._auth_config_source = DictConfigSource()
-
-    @property
-    def name(self) -> str:
-        return str(self._file.path)
+        self._config_source: ConfigSource = DictConfigSource()
+        self._auth_config_source: ConfigSource = DictConfigSource()
 
     @property
     def config(self) -> Dict:
@@ -114,9 +107,9 @@ class Config:
             env = "POETRY_{}".format(
                 "_".join(k.upper().replace("-", "_") for k in keys)
             )
-            value = os.getenv(env, _NOT_SET)
-            if value is not _NOT_SET:
-                return self.process(self._get_normalizer(setting_name)(value))
+            env_value = os.getenv(env)
+            if env_value is not None:
+                return self.process(self._get_normalizer(setting_name)(env_value))
 
         value = self._config
         for key in keys:
