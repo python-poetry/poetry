@@ -21,6 +21,7 @@ from cleo.io.io import IO
 from cleo.io.outputs.output import Output
 
 from poetry.__version__ import __version__
+from poetry.core.utils._compat import PY37
 
 from .command_loader import CommandLoader
 from .commands.command import Command
@@ -142,6 +143,20 @@ class Application(BaseApplication):
         error_output: Optional[Output] = None,
     ) -> IO:
         io = super().create_io(input, output, error_output)
+
+        # Remove when support for Python 3.6 is removed
+        # https://github.com/python-poetry/poetry/issues/3412
+        if (
+            not PY37
+            and hasattr(io.output, "_stream")
+            and hasattr(io.output._stream, "buffer")
+            and io.output._stream.encoding != "utf-8"
+        ):
+            import io as io_
+
+            io.output._stream = io_.TextIOWrapper(
+                io.output._stream.buffer, encoding="utf-8"
+            )
 
         # Set our own CLI styles
         formatter = io.output.formatter
