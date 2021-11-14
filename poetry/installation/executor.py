@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
-from typing import Union
 from typing import Optional
+from typing import Union
 
 from cleo.io.null_io import NullIO
 
@@ -71,7 +71,10 @@ class Executor:
             parallel = config.get("installer.parallel", True)
 
         if parallel:
-            self._max_workers = config.get("installer.max-workers", get_max_workers(desired_max_workers=max_workers))
+            self._max_workers = config.get(
+                "installer.max-workers",
+                get_max_workers(desired_max_workers=max_workers),
+            )
         else:
             self._max_workers = 1
 
