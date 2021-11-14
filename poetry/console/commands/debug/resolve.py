@@ -1,12 +1,20 @@
-from cleo import argument
-from cleo import option
+from typing import TYPE_CHECKING
+from typing import Optional
+
+from cleo.helpers import argument
+from cleo.helpers import option
+from cleo.io.outputs.output import Verbosity
 
 from ..init import InitCommand
 
 
+if TYPE_CHECKING:
+    from poetry.console.commands.show import ShowCommand
+
+
 class DebugResolveCommand(InitCommand):
 
-    name = "resolve"
+    name = "debug resolve"
     description = "Debugs dependency resolution."
 
     arguments = [
@@ -27,10 +35,11 @@ class DebugResolveCommand(InitCommand):
 
     loggers = ["poetry.repositories.pypi_repository", "poetry.inspection.info"]
 
-    def handle(self):
+    def handle(self) -> Optional[int]:
+        from cleo.io.null_io import NullIO
+
         from poetry.core.packages.project_package import ProjectPackage
         from poetry.factory import Factory
-        from poetry.io.null_io import NullIO
         from poetry.puzzle import Solver
         from poetry.repositories.pool import Pool
         from poetry.repositories.repository import Repository
@@ -49,14 +58,12 @@ class DebugResolveCommand(InitCommand):
             )
 
             # Silencing output
-            is_quiet = self.io.output.is_quiet()
-            if not is_quiet:
-                self.io.output.set_quiet(True)
+            verbosity = self.io.output.verbosity
+            self.io.output.set_verbosity(Verbosity.QUIET)
 
             requirements = self._determine_requirements(packages)
 
-            if not is_quiet:
-                self.io.output.set_quiet(False)
+            self.io.output.set_verbosity(verbosity)
 
             for constraint in requirements:
                 name = constraint.pop("name")
@@ -79,20 +86,20 @@ class DebugResolveCommand(InitCommand):
 
         solver = Solver(package, pool, Repository(), Repository(), self._io)
 
-        ops = solver.solve()
+        ops = solver.solve().calculate_operations()
 
         self.line("")
         self.line("Resolution results:")
         self.line("")
 
         if self.option("tree"):
-            show_command = self.application.find("show")
+            show_command: ShowCommand = self.application.find("show")
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]
             repo = Repository(packages)
 
-            requires = package.requires + package.dev_requires
+            requires = package.all_requires
             for pkg in repo.packages:
                 for require in requires:
                     if pkg.name == require.name:
@@ -101,7 +108,8 @@ class DebugResolveCommand(InitCommand):
 
             return 0
 
-        table = self.table([], style="borderless")
+        table = self.table(style="compact")
+        table.style.set_vertical_border_chars("", " ")
         rows = []
 
         if self.option("install"):
@@ -115,7 +123,7 @@ class DebugResolveCommand(InitCommand):
 
             solver = Solver(package, pool, Repository(), Repository(), NullIO())
             with solver.use_environment(env):
-                ops = solver.solve()
+                ops = solver.solve().calculate_operations()
 
         for op in ops:
             if self.option("install") and op.skipped:
@@ -125,7 +133,6 @@ class DebugResolveCommand(InitCommand):
             row = [
                 "<c1>{}</c1>".format(pkg.complete_name),
                 "<b>{}</b>".format(pkg.version),
-                "",
             ]
 
             if not pkg.marker.is_any():
@@ -134,4 +141,6 @@ class DebugResolveCommand(InitCommand):
             rows.append(row)
 
         table.set_rows(rows)
-        table.render(self.io)
+        table.render()
+
+        return None

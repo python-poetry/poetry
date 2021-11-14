@@ -46,7 +46,7 @@ Resolving dependencies...
 Resolution results:
 
 cachy 0.2.0
-`-- msgpack-python >=0.5 <0.6
+└── msgpack-python >=0.5 <0.6
 """
 
     assert expected == tester.io.fetch_output()
