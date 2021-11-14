@@ -35,6 +35,7 @@ class EnvRemoveCommand(Command):
             self.line("No virtualenv provided.")
 
         manager = EnvManager(self.poetry)
+        # TODO: refactor env.py to allow removal with one loop
         for python in pythons:
             venv = manager.remove(python)
             self.line("Deleted virtualenv: <comment>{}</comment>".format(venv.path))
