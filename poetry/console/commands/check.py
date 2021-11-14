@@ -1,8 +1,5 @@
 from pathlib import Path
 
-from poetry.core.pyproject.toml import PyProjectTOML
-from poetry.factory import Factory
-
 from .command import Command
 
 
@@ -11,7 +8,10 @@ class CheckCommand(Command):
     name = "check"
     description = "Checks the validity of the <comment>pyproject.toml</comment> file."
 
-    def handle(self):
+    def handle(self) -> int:
+        from poetry.core.pyproject.toml import PyProjectTOML
+        from poetry.factory import Factory
+
         # Load poetry config and display errors, if any
         poetry_file = Factory.locate(Path.cwd())
         config = PyProjectTOML(poetry_file).poetry_config

@@ -9,7 +9,7 @@ import pytest
 from requests.exceptions import TooManyRedirects
 from requests.models import Response
 
-from poetry.core.packages import Dependency
+from poetry.core.packages.dependency import Dependency
 from poetry.factory import Factory
 from poetry.repositories.pypi_repository import PyPiRepository
 from poetry.utils._compat import encode
@@ -191,7 +191,7 @@ def test_pypi_repository_supports_reading_bz2_files():
         ]
     }
 
-    for name, deps in expected_extras.items():
+    for name in expected_extras.keys():
         assert expected_extras[name] == sorted(
             package.extras[name], key=lambda r: r.name
         )

@@ -1,14 +1,22 @@
 import logging
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import List
 from typing import Optional
+from typing import Union
 
-from poetry.utils.helpers import get_cert
-from poetry.utils.helpers import get_client_cert
-from poetry.utils.password_manager import PasswordManager
-
+from ..utils.authenticator import Authenticator
+from ..utils.helpers import get_cert
+from ..utils.helpers import get_client_cert
 from .uploader import Uploader
 
+
+if TYPE_CHECKING:
+    from cleo.io import BufferedIO
+    from cleo.io import ConsoleIO
+
+    from ..poetry import Poetry
 
 logger = logging.getLogger(__name__)
 
@@ -18,46 +26,44 @@ class Publisher:
     Registers and publishes packages to remote repositories.
     """
 
-    def __init__(self, poetry, io):
+    def __init__(self, poetry: "Poetry", io: Union["BufferedIO", "ConsoleIO"]) -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
         self._uploader = Uploader(poetry, io)
-        self._password_manager = PasswordManager(poetry.config)
+        self._authenticator = Authenticator(poetry.config, self._io)
 
     @property
-    def files(self):
+    def files(self) -> List[Path]:
         return self._uploader.files
 
     def publish(
         self,
-        repository_name,
-        username,
-        password,
-        cert=None,
-        client_cert=None,
-        dry_run=False,
-    ):  # type: (Optional[str], Optional[str], Optional[str], Optional[Path], Optional[Path], Optional[bool]) -> None
+        repository_name: Optional[str],
+        username: Optional[str],
+        password: Optional[str],
+        cert: Optional[Path] = None,
+        client_cert: Optional[Path] = None,
+        dry_run: Optional[bool] = False,
+    ) -> None:
         if not repository_name:
             url = "https://upload.pypi.org/legacy/"
             repository_name = "pypi"
         else:
             # Retrieving config information
-            url = self._poetry.config.get("repositories.{}.url".format(repository_name))
+            url = self._poetry.config.get(f"repositories.{repository_name}.url")
             if url is None:
-                raise RuntimeError(
-                    "Repository {} is not defined".format(repository_name)
-                )
+                raise RuntimeError(f"Repository {repository_name} is not defined")
 
         if not (username and password):
             # Check if we have a token first
-            token = self._password_manager.get_pypi_token(repository_name)
+            token = self._authenticator.get_pypi_token(repository_name)
             if token:
-                logger.debug("Found an API token for {}.".format(repository_name))
+                logger.debug(f"Found an API token for {repository_name}.")
                 username = "__token__"
                 password = token
             else:
-                auth = self._password_manager.get_http_auth(repository_name)
+                auth = self._authenticator.get_http_auth(repository_name)
                 if auth:
                     logger.debug(
                         "Found authentication information for {}.".format(

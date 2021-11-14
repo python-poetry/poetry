@@ -1,12 +1,14 @@
+import re
 import shutil
 
 from pathlib import Path
 
 import pytest
 
+from cleo.io.null_io import NullIO
+
 from poetry.core.packages.package import Package
 from poetry.installation.pip_installer import PipInstaller
-from poetry.io.null_io import NullIO
 from poetry.repositories.legacy_repository import LegacyRepository
 from poetry.repositories.pool import Pool
 from poetry.utils.env import NullEnv
@@ -63,7 +65,7 @@ def test_requirement_source_type_url():
         "foo",
         "0.0.0",
         source_type="url",
-        source_url="https://somehwere.com/releases/foo-1.0.0.tar.gz",
+        source_url="https://somewhere.com/releases/foo-1.0.0.tar.gz",
     )
 
     result = installer.requirement(foo, formatted=True)
@@ -189,11 +191,6 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
         source_reference="master",
     )
 
-    # we do this here because the virtual env might not be usable if failure case is triggered
-    pth_file_candidate = tmp_venv.site_packages.path / "{}-nspkg.pth".format(
-        package.name
-    )
-
     # in order to reproduce the scenario where the git source is removed prior to proper
     # clean up of nspkg.pth file, we need to make sure the fixture is copied and not
     # symlinked into the git src directory
@@ -212,8 +209,9 @@ def test_uninstall_git_package_nspkg_pth_cleanup(mocker, tmp_venv, pool):
     installer.install(package)
     installer.remove(package)
 
-    assert not Path(pth_file_candidate).exists()
+    pth_file = f"{package.name}-nspkg.pth"
+    assert not tmp_venv.site_packages.exists(pth_file)
 
     # any command in the virtual environment should trigger the error message
     output = tmp_venv.run("python", "-m", "site")
-    assert "Error processing line 1 of {}".format(pth_file_candidate) not in output
+    assert not re.match(rf"Error processing line 1 of .*{pth_file}", output)

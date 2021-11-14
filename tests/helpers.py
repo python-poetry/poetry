@@ -4,12 +4,11 @@ import urllib.parse
 
 from pathlib import Path
 
-from poetry.console import Application
+from poetry.console.application import Application
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.packages import Dependency
-from poetry.core.packages import Link
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 from poetry.core.toml.file import TOMLFile
 from poetry.core.vcs.git import ParsedUrl
 from poetry.factory import Factory
@@ -28,15 +27,18 @@ def get_package(name, version):
 
 
 def get_dependency(
-    name, constraint=None, category="main", optional=False, allows_prereleases=False
+    name, constraint=None, groups=None, optional=False, allows_prereleases=False
 ):
-    return Dependency(
-        name,
-        constraint or "*",
-        category=category,
-        optional=optional,
-        allows_prereleases=allows_prereleases,
-    )
+    if constraint is None:
+        constraint = "*"
+
+    if isinstance(constraint, str):
+        constraint = {"version": constraint}
+
+    constraint["optional"] = optional
+    constraint["allow_prereleases"] = allows_prereleases
+
+    return Factory.create_dependency(name, constraint or "*", groups=groups)
 
 
 def fixture(path=None):
@@ -130,9 +132,9 @@ class TestExecutor(Executor):
         return 0
 
 
-class TestApplication(Application):
+class PoetryTestApplication(Application):
     def __init__(self, poetry):
-        super(TestApplication, self).__init__()
+        super(PoetryTestApplication, self).__init__()
         self._poetry = poetry
 
     def reset_poetry(self):

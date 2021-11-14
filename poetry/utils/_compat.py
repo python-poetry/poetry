@@ -46,6 +46,6 @@ def to_str(string):
 
 def list_to_shell_command(cmd):
     return " ".join(
-        '"{}"'.format(token) if " " in token and token[0] not in {"'", '"'} else token
+        f'"{token}"' if " " in token and token[0] not in {"'", '"'} else token
         for token in cmd
     )

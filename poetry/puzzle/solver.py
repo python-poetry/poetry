@@ -3,17 +3,20 @@ import time
 
 from collections import defaultdict
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
+from typing import Callable
+from typing import Dict
+from typing import FrozenSet
+from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Tuple
+from typing import Union
 
-from clikit.io import ConsoleIO
+from cleo.io.io import IO
 
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
-from poetry.installation.operations import Install
-from poetry.installation.operations import Uninstall
-from poetry.installation.operations import Update
-from poetry.installation.operations.operation import Operation
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
@@ -26,16 +29,25 @@ from .exceptions import SolverProblemError
 from .provider import Provider
 
 
+if TYPE_CHECKING:
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.directory_dependency import DirectoryDependency
+    from poetry.core.packages.file_dependency import FileDependency
+    from poetry.core.packages.url_dependency import URLDependency
+    from poetry.core.packages.vcs_dependency import VCSDependency
+
+    from .transaction import Transaction
+
+
 class Solver:
     def __init__(
         self,
-        package,  # type: ProjectPackage
-        pool,  # type: Pool
-        installed,  # type: Repository
-        locked,  # type: Repository
-        io,  # type: ConsoleIO
-        remove_untracked=False,  # type: bool
-        provider=None,  # type: Optional[Provider]
+        package: ProjectPackage,
+        pool: Pool,
+        installed: Repository,
+        locked: Repository,
+        io: IO,
+        provider: Optional[Provider] = None,
     ):
         self._package = package
         self._pool = pool
@@ -48,18 +60,19 @@ class Solver:
 
         self._provider = provider
         self._overrides = []
-        self._remove_untracked = remove_untracked
 
     @property
-    def provider(self):  # type: () -> Provider
+    def provider(self) -> Provider:
         return self._provider
 
     @contextmanager
-    def use_environment(self, env):  # type: (Env) -> None
+    def use_environment(self, env: Env) -> Iterator[None]:
         with self.provider.use_environment(env):
             yield
 
-    def solve(self, use_latest=None):  # type: (...) -> List[Operation]
+    def solve(self, use_latest: List[str] = None) -> "Transaction":
+        from .transaction import Transaction
+
         with self._provider.progress():
             start = time.time()
             packages, depths = self._solve(use_latest=use_latest)
@@ -72,126 +85,19 @@ class Solver:
                     )
                 )
                 self._provider.debug(
-                    "Resolved with overrides: {}".format(
-                        ", ".join("({})".format(b) for b in self._overrides)
-                    )
+                    f"Resolved with overrides: {', '.join(f'({b})' for b in self._overrides)}"
                 )
 
-        operations = []
-        for i, package in enumerate(packages):
-            installed = False
-            for pkg in self._installed.packages:
-                if package.name == pkg.name:
-                    installed = True
-
-                    if pkg.source_type == "git" and package.source_type == "git":
-                        from poetry.core.vcs.git import Git
-
-                        # Trying to find the currently installed version
-                        pkg_source_url = Git.normalize_url(pkg.source_url)
-                        package_source_url = Git.normalize_url(package.source_url)
-                        for locked in self._locked.packages:
-                            if locked.name != pkg.name or locked.source_type != "git":
-                                continue
-
-                            locked_source_url = Git.normalize_url(locked.source_url)
-                            if (
-                                locked.name == pkg.name
-                                and locked.source_type == pkg.source_type
-                                and locked_source_url == pkg_source_url
-                                and locked.source_reference == pkg.source_reference
-                                and locked.source_resolved_reference
-                                == pkg.source_resolved_reference
-                            ):
-                                pkg = Package(
-                                    pkg.name,
-                                    locked.version,
-                                    source_type="git",
-                                    source_url=locked.source_url,
-                                    source_reference=locked.source_reference,
-                                    source_resolved_reference=locked.source_resolved_reference,
-                                )
-                                break
-
-                        if pkg_source_url != package_source_url or (
-                            (
-                                not pkg.source_resolved_reference
-                                or not package.source_resolved_reference
-                            )
-                            and pkg.source_reference != package.source_reference
-                            and not pkg.source_reference.startswith(
-                                package.source_reference
-                            )
-                            or (
-                                pkg.source_resolved_reference
-                                and package.source_resolved_reference
-                                and pkg.source_resolved_reference
-                                != package.source_resolved_reference
-                                and not pkg.source_resolved_reference.startswith(
-                                    package.source_resolved_reference
-                                )
-                            )
-                        ):
-                            operations.append(Update(pkg, package, priority=depths[i]))
-                        else:
-                            operations.append(
-                                Install(package).skip("Already installed")
-                            )
-                    elif package.version != pkg.version:
-                        # Checking version
-                        operations.append(Update(pkg, package, priority=depths[i]))
-                    elif pkg.source_type and package.source_type != pkg.source_type:
-                        operations.append(Update(pkg, package, priority=depths[i]))
-                    else:
-                        operations.append(
-                            Install(package, priority=depths[i]).skip(
-                                "Already installed"
-                            )
-                        )
-
-                    break
-
-            if not installed:
-                operations.append(Install(package, priority=depths[i]))
-
-        # Checking for removals
-        for pkg in self._locked.packages:
-            remove = True
-            for package in packages:
-                if pkg.name == package.name:
-                    remove = False
-                    break
-
-            if remove:
-                skip = True
-                for installed in self._installed.packages:
-                    if installed.name == pkg.name:
-                        skip = False
-                        break
-
-                op = Uninstall(pkg)
-                if skip:
-                    op.skip("Not currently installed")
-
-                operations.append(op)
-
-        if self._remove_untracked:
-            locked_names = {locked.name for locked in self._locked.packages}
-
-            for installed in self._installed.packages:
-                if installed.name == self._package.name:
-                    continue
-                if installed.name in Provider.UNSAFE_PACKAGES:
-                    # Never remove pip, setuptools etc.
-                    continue
-                if installed.name not in locked_names:
-                    operations.append(Uninstall(installed))
-
-        return sorted(
-            operations, key=lambda o: (-o.priority, o.package.name, o.package.version,),
+        return Transaction(
+            self._locked.packages,
+            list(zip(packages, depths)),
+            installed_packages=self._installed.packages,
+            root_package=self._package,
         )
 
-    def solve_in_compatibility_mode(self, overrides, use_latest=None):
+    def solve_in_compatibility_mode(
+        self, overrides: Tuple[Dict], use_latest: List[str] = None
+    ) -> Tuple[List["Package"], List[int]]:
         locked = {}
         for package in self._locked.packages:
             locked[package.name] = DependencyPackage(package.to_dependency(), package)
@@ -201,7 +107,7 @@ class Solver:
         for override in overrides:
             self._provider.debug(
                 "<comment>Retrying dependency resolution "
-                "with the following overrides ({}).</comment>".format(override)
+                f"with the following overrides ({override}).</comment>"
             )
             self._provider.set_overrides(override)
             _packages, _depths = self._solve(use_latest=use_latest)
@@ -217,11 +123,11 @@ class Solver:
 
                     for dep in package.requires:
                         if dep not in pkg.requires:
-                            pkg.requires.append(dep)
+                            pkg.add_dependency(dep)
 
         return packages, depths
 
-    def _solve(self, use_latest=None):
+    def _solve(self, use_latest: List[str] = None) -> Tuple[List[Package], List[int]]:
         if self._provider._overrides:
             self._overrides.append(self._provider._overrides)
 
@@ -240,9 +146,10 @@ class Solver:
         except SolveFailure as e:
             raise SolverProblemError(e)
 
+        # NOTE passing explicit empty array for seen to reset between invocations during update + install cycle
         results = dict(
             depth_first_search(
-                PackageNode(self._package, packages), aggregate_package_nodes
+                PackageNode(self._package, packages, seen=[]), aggregate_package_nodes
             )
         )
 
@@ -262,7 +169,7 @@ class Solver:
                                 continue
 
                             if dep not in _package.requires:
-                                _package.requires.append(dep)
+                                _package.add_dependency(dep)
 
                 continue
 
@@ -273,19 +180,21 @@ class Solver:
         return final_packages, depths
 
 
-class DFSNode(object):
-    def __init__(self, id, name, base_name):
+class DFSNode:
+    def __init__(
+        self, id: Tuple[str, FrozenSet[str], bool], name: str, base_name: str
+    ) -> None:
         self.id = id
         self.name = name
         self.base_name = base_name
 
-    def reachable(self):
+    def reachable(self) -> List:
         return []
 
-    def visit(self, parents):
+    def visit(self, parents: List["PackageNode"]) -> None:
         pass
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.id)
 
 
@@ -295,7 +204,9 @@ class VisitedState(enum.Enum):
     Visited = 2
 
 
-def depth_first_search(source, aggregator):
+def depth_first_search(
+    source: "PackageNode", aggregator: Callable
+) -> List[Tuple[Package, int]]:
     back_edges = defaultdict(list)
     visited = {}
     topo_sorted_nodes = []
@@ -322,7 +233,12 @@ def depth_first_search(source, aggregator):
     return results
 
 
-def dfs_visit(node, back_edges, visited, sorted_nodes):
+def dfs_visit(
+    node: "PackageNode",
+    back_edges: Dict[str, List["PackageNode"]],
+    visited: Dict[str, VisitedState],
+    sorted_nodes: List["PackageNode"],
+) -> bool:
     if visited.get(node.id, VisitedState.Unvisited) == VisitedState.Visited:
         return True
     if visited.get(node.id, VisitedState.Unvisited) == VisitedState.PartiallyVisited:
@@ -343,10 +259,33 @@ def dfs_visit(node, back_edges, visited, sorted_nodes):
 
 class PackageNode(DFSNode):
     def __init__(
-        self, package, packages, previous=None, previous_dep=None, dep=None,
-    ):
+        self,
+        package: Package,
+        packages: List[Package],
+        seen: List[Package],
+        previous: Optional["PackageNode"] = None,
+        previous_dep: Optional[
+            Union[
+                "DirectoryDependency",
+                "FileDependency",
+                "URLDependency",
+                "VCSDependency",
+                "Dependency",
+            ]
+        ] = None,
+        dep: Optional[
+            Union[
+                "DirectoryDependency",
+                "FileDependency",
+                "URLDependency",
+                "VCSDependency",
+                "Dependency",
+            ]
+        ] = None,
+    ) -> None:
         self.package = package
         self.packages = packages
+        self.seen = seen
 
         self.previous = previous
         self.previous_dep = previous_dep
@@ -355,19 +294,27 @@ class PackageNode(DFSNode):
 
         if not previous:
             self.category = "dev"
+            self.groups = frozenset()
             self.optional = True
         else:
-            self.category = dep.category
+            self.category = "main" if "default" in dep.groups else "dev"
+            self.groups = dep.groups
             self.optional = dep.is_optional()
 
-        super(PackageNode, self).__init__(
-            (package.complete_name, self.category, self.optional),
+        super().__init__(
+            (package.complete_name, self.groups, self.optional),
             package.complete_name,
             package.name,
         )
 
-    def reachable(self):
-        children = []  # type: List[PackageNode]
+    def reachable(self) -> List["PackageNode"]:
+        children: List[PackageNode] = []
+
+        # skip already traversed packages
+        if self.package in self.seen:
+            return []
+        else:
+            self.seen.append(self.package)
 
         if (
             self.previous_dep
@@ -389,14 +336,14 @@ class PackageNode(DFSNode):
                 if pkg.complete_name == dependency.complete_name and (
                     dependency.constraint.allows(pkg.version)
                     or dependency.allows_prereleases()
-                    and pkg.version.is_prerelease()
+                    and pkg.version.is_unstable()
                     and dependency.constraint.allows(pkg.version.stable)
                 ):
                     # If there is already a child with this name
                     # we merge the requirements
                     if any(
                         child.package.name == pkg.name
-                        and child.category == dependency.category
+                        and child.groups == dependency.groups
                         for child in children
                     ):
                         continue
@@ -405,6 +352,7 @@ class PackageNode(DFSNode):
                         PackageNode(
                             pkg,
                             self.packages,
+                            self.seen,
                             self,
                             dependency,
                             self.dep or dependency,
@@ -413,7 +361,7 @@ class PackageNode(DFSNode):
 
         return children
 
-    def visit(self, parents):
+    def visit(self, parents: "PackageNode") -> None:
         # The root package, which has no parents, is defined as having depth -1
         # So that the root package's top-level dependencies have depth 0.
         self.depth = 1 + max(
@@ -425,17 +373,25 @@ class PackageNode(DFSNode):
         )
 
 
-def aggregate_package_nodes(nodes, children):
+def aggregate_package_nodes(
+    nodes: List[PackageNode], children: List[PackageNode]
+) -> Tuple[Package, int]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
+    groups = []
+    for node in nodes:
+        groups.extend(node.groups)
+
     category = (
-        "main" if any(node.category == "main" for node in children + nodes) else "dev"
+        "main" if any("default" in node.groups for node in children + nodes) else "dev"
     )
     optional = all(node.optional for node in children + nodes)
     for node in nodes:
         node.depth = depth
         node.category = category
         node.optional = optional
+
     package.category = category
     package.optional = optional
+
     return package, depth

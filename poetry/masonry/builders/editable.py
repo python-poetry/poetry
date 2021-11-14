@@ -1,11 +1,11 @@
-from __future__ import unicode_literals
-
 import hashlib
 import os
 import shutil
 
 from base64 import urlsafe_b64encode
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import List
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder
@@ -14,14 +14,22 @@ from poetry.core.semver.version import Version
 from poetry.utils._compat import WINDOWS
 from poetry.utils._compat import decode
 from poetry.utils.helpers import is_dir_writable
+from poetry.utils.pip import pip_editable_install
 
+
+if TYPE_CHECKING:
+    from cleo.io.io import IO  # noqa
+
+    from poetry.core.poetry import Poetry
+    from poetry.utils.env import Env
 
 SCRIPT_TEMPLATE = """\
 #!{python}
+import sys
 from {module} import {callable_holder}
 
 if __name__ == '__main__':
-    {callable_}()
+    sys.exit({callable_}())
 """
 
 WINDOWS_CMD_TEMPLATE = """\
@@ -30,13 +38,13 @@ WINDOWS_CMD_TEMPLATE = """\
 
 
 class EditableBuilder(Builder):
-    def __init__(self, poetry, env, io):
+    def __init__(self, poetry: "Poetry", env: "Env", io: "IO") -> None:
         super(EditableBuilder, self).__init__(poetry)
 
         self._env = env
         self._io = io
 
-    def build(self):
+    def build(self) -> None:
         self._debug(
             "  - Building package <c1>{}</c1> in <info>editable</info> mode".format(
                 self._package.name
@@ -48,21 +56,29 @@ class EditableBuilder(Builder):
                 self._debug(
                     "  - <warning>Falling back on using a <b>setup.py</b></warning>"
                 )
-
                 return self._setup_build()
 
             self._run_build_script(self._package.build_script)
+
+        for removed in self._env.site_packages.remove_distribution_files(
+            distribution_name=self._package.name
+        ):
+            self._debug(
+                "  - Removed <c2>{}</c2> directory from <b>{}</b>".format(
+                    removed.name, removed.parent
+                )
+            )
 
         added_files = []
         added_files += self._add_pth()
         added_files += self._add_scripts()
         self._add_dist_info(added_files)
 
-    def _run_build_script(self, build_script):
+    def _run_build_script(self, build_script: Path) -> None:
         self._debug("  - Executing build script: <b>{}</b>".format(build_script))
         self._env.run("python", str(self._path.joinpath(build_script)), call=True)
 
-    def _setup_build(self):
+    def _setup_build(self) -> None:
         builder = SdistBuilder(self._poetry)
         setup = self._path / "setup.py"
         has_setup = setup.exists()
@@ -76,15 +92,15 @@ class EditableBuilder(Builder):
                 f.write(decode(builder.build_setup()))
 
         try:
-            if self._env.pip_version < Version(19, 0):
-                self._env.run_pip("install", "-e", str(self._path), "--no-deps")
+            if self._env.pip_version < Version.from_parts(19, 0):
+                pip_editable_install(self._path, self._env)
             else:
                 # Temporarily rename pyproject.toml
                 shutil.move(
                     str(self._poetry.file), str(self._poetry.file.with_suffix(".tmp"))
                 )
                 try:
-                    self._env.run_pip("install", "-e", str(self._path), "--no-deps")
+                    pip_editable_install(self._path, self._env)
                 finally:
                     shutil.move(
                         str(self._poetry.file.with_suffix(".tmp")),
@@ -94,7 +110,7 @@ class EditableBuilder(Builder):
             if not has_setup:
                 os.remove(str(setup))
 
-    def _add_pth(self):
+    def _add_pth(self) -> List[Path]:
         paths = set()
         for include in self._module.includes:
             if isinstance(include, PackageInclude) and (
@@ -107,6 +123,18 @@ class EditableBuilder(Builder):
             content += decode(path + os.linesep)
 
         pth_file = Path(self._module.name).with_suffix(".pth")
+
+        # remove any pre-existing pth files for this package
+        for file in self._env.site_packages.find(path=pth_file, writable_only=True):
+            self._debug(
+                "  - Removing existing <c2>{}</c2> from <b>{}</b> for {}".format(
+                    file.name, file.parent, self._poetry.file.parent
+                )
+            )
+            # We can't use unlink(missing_ok=True) because it's not always available
+            if file.exists():
+                file.unlink()
+
         try:
             pth_file = self._env.site_packages.write_text(
                 pth_file, content, encoding="utf-8"
@@ -119,14 +147,14 @@ class EditableBuilder(Builder):
             return [pth_file]
         except OSError:
             # TODO: Replace with PermissionError
-            self._io.error_line(
+            self._io.write_error_line(
                 "  - Failed to create <c2>{}</c2> for {}".format(
                     pth_file.name, self._poetry.file.parent
                 )
             )
             return []
 
-    def _add_scripts(self):
+    def _add_scripts(self) -> List[Path]:
         added = []
         entry_points = self.convert_entry_points()
 
@@ -134,7 +162,7 @@ class EditableBuilder(Builder):
             if is_dir_writable(path=scripts_path, create=True):
                 break
         else:
-            self._io.error_line(
+            self._io.write_error_line(
                 "  - Failed to find a suitable script installation directory for {}".format(
                     self._poetry.file.parent
                 )
@@ -185,26 +213,13 @@ class EditableBuilder(Builder):
 
         return added
 
-    def _add_dist_info(self, added_files):
+    def _add_dist_info(self, added_files: List[Path]) -> None:
         from poetry.core.masonry.builders.wheel import WheelBuilder
 
         added_files = added_files[:]
 
         builder = WheelBuilder(self._poetry)
-
-        dist_info_path = Path(builder.dist_info)
-        for dist_info in self._env.site_packages.find(
-            dist_info_path, writable_only=True
-        ):
-            if dist_info.exists():
-                self._debug(
-                    "  - Removing existing <c2>{}</c2> directory from <b>{}</b>".format(
-                        dist_info.name, dist_info.parent
-                    )
-                )
-                shutil.rmtree(str(dist_info))
-
-        dist_info = self._env.site_packages.mkdir(dist_info_path)
+        dist_info = self._env.site_packages.mkdir(Path(builder.dist_info))
 
         self._debug(
             "  - Adding the <c2>{}</c2> directory to <b>{}</b>".format(
@@ -239,7 +254,7 @@ class EditableBuilder(Builder):
             # RECORD itself is recorded with no hash or size
             f.write("{},,\n".format(dist_info.joinpath("RECORD")))
 
-    def _get_file_hash(self, filepath):
+    def _get_file_hash(self, filepath: Path) -> str:
         hashsum = hashlib.sha256()
         with filepath.open("rb") as src:
             while True:
@@ -252,6 +267,6 @@ class EditableBuilder(Builder):
 
         return urlsafe_b64encode(hashsum.digest()).decode("ascii").rstrip("=")
 
-    def _debug(self, msg):
+    def _debug(self, msg: str) -> None:
         if self._io.is_debug():
             self._io.write_line(msg)

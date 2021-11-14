@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from cleo.io import BufferedIO
+from cleo.io.buffered_io import BufferedIO
+from cleo.io.null_io import NullIO
 
 from poetry.factory import Factory
-from poetry.io.null_io import NullIO
 from poetry.publishing.publisher import Publisher
 
 

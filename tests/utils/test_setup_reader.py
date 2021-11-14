@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from poetry.core.semver.exceptions import ParseVersionError
+from poetry.core.version.exceptions import InvalidVersion
 from poetry.utils.setup_reader import SetupReader
 
 
@@ -115,7 +115,7 @@ def test_setup_reader_read_setup_cfg(setup):
 
 
 def test_setup_reader_read_setup_cfg_with_attr(setup):
-    with pytest.raises(ParseVersionError):
+    with pytest.raises(InvalidVersion):
         SetupReader.read_from_directory(setup("with-setup-cfg-attr"))
 
 

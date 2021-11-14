@@ -11,7 +11,8 @@ from typing import Dict
 import httpretty
 import pytest
 
-from cleo import CommandTester
+from cleo.testers.command_tester import CommandTester
+from keyring.backend import KeyringBackend
 
 from poetry.config.config import Config as BaseConfig
 from poetry.config.dict_config_source import DictConfigSource
@@ -34,23 +35,78 @@ from tests.helpers import mock_download
 
 
 class Config(BaseConfig):
-    def get(self, setting_name, default=None):  # type: (str, Any) -> Any
+    def get(self, setting_name: str, default: Any = None) -> Any:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).get(setting_name, default=default)
 
-    def raw(self):  # type: () -> Dict[str, Any]
+    def raw(self) -> Dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).raw()
 
-    def all(self):  # type: () -> Dict[str, Any]
+    def all(self) -> Dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
         return super(Config, self).all()
+
+
+class DummyBackend(KeyringBackend):
+    def __init__(self):
+        self._passwords = {}
+
+    @classmethod
+    def priority(cls):
+        return 42
+
+    def set_password(self, service, username, password):
+        self._passwords[service] = {username: password}
+
+    def get_password(self, service, username):
+        return self._passwords.get(service, {}).get(username)
+
+    def get_credential(self, service, username):
+        return self._passwords.get(service, {}).get(username)
+
+    def delete_password(self, service, username):
+        if service in self._passwords and username in self._passwords[service]:
+            del self._passwords[service][username]
+
+
+@pytest.fixture()
+def dummy_keyring():
+    return DummyBackend()
+
+
+@pytest.fixture()
+def with_simple_keyring(dummy_keyring):
+    import keyring
+
+    keyring.set_keyring(dummy_keyring)
+
+
+@pytest.fixture()
+def with_fail_keyring():
+    import keyring
+
+    from keyring.backends.fail import Keyring
+
+    keyring.set_keyring(Keyring())
+
+
+@pytest.fixture()
+def with_chained_keyring(mocker):
+    from keyring.backends.fail import Keyring
+
+    mocker.patch("keyring.backend.get_all_keyring", [Keyring()])
+    import keyring
+
+    from keyring.backends.chainer import ChainerBackend
+
+    keyring.set_keyring(ChainerBackend())
 
 
 @pytest.fixture
@@ -100,6 +156,15 @@ def config(config_source, auth_config_source, mocker):
 
 
 @pytest.fixture(autouse=True)
+def mock_user_config_dir(mocker):
+    config_dir = tempfile.mkdtemp(prefix="poetry_config_")
+    mocker.patch("poetry.locations.CONFIG_DIR", new=config_dir)
+    mocker.patch("poetry.factory.CONFIG_DIR", new=config_dir)
+    yield
+    shutil.rmtree(config_dir, ignore_errors=True)
+
+
+@pytest.fixture(autouse=True)
 def download_mock(mocker):
     # Patch download to not download anything but to just copy from fixtures
     mocker.patch("poetry.utils.helpers.download_file", new=mock_download)
@@ -118,7 +183,8 @@ def pep517_metadata_mock(mocker):
         return PackageInfo(name="demo", version="0.1.2")
 
     mocker.patch(
-        "poetry.inspection.info.PackageInfo._pep517_metadata", _pep517_metadata,
+        "poetry.inspection.info.PackageInfo._pep517_metadata",
+        _pep517_metadata,
     )
 
 
@@ -224,7 +290,8 @@ def default_python(current_python):
 @pytest.fixture
 def repo(http):
     http.register_uri(
-        http.GET, re.compile("^https?://foo.bar/(.+?)$"),
+        http.GET,
+        re.compile("^https?://foo.bar/(.+?)$"),
     )
     return TestRepository(name="foo")
 
@@ -299,6 +366,13 @@ def command_tester_factory(app, env):
         command = app.find(command)
         tester = CommandTester(command)
 
+        # Setting the formatter from the application
+        # TODO: Find a better way to do this in Cleo
+        app_io = app.create_io()
+        formatter = app_io.output.formatter
+        tester.io.output.set_formatter(formatter)
+        tester.io.error_output.set_formatter(formatter)
+
         if poetry:
             app._poetry = poetry
 
@@ -331,3 +405,8 @@ def command_tester_factory(app, env):
 def do_lock(command_tester_factory, poetry):
     command_tester_factory("lock").execute()
     assert poetry.locker.lock.exists()
+
+
+@pytest.fixture
+def project_root():
+    return Path(__file__).parent.parent
