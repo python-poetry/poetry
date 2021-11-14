@@ -4,7 +4,7 @@ from .formatter import Formatter
 
 
 class BuilderLogFormatter(Formatter):
-    def format(self, msg):  # type: (str) -> str
+    def format(self, msg: str) -> str:
         if msg.startswith("Building "):
             msg = re.sub("Building (.+)", "  - Building <info>\\1</info>", msg)
         elif msg.startswith("Built "):

@@ -1,26 +1,31 @@
 import re
 
+from typing import TYPE_CHECKING
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 from packaging.tags import Tag
 
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.repositories.pool import Pool
 from poetry.utils.env import Env
 from poetry.utils.patterns import wheel_file_re
+
+
+if TYPE_CHECKING:
+    from poetry.repositories.pool import Pool
 
 
 class InvalidWheelName(Exception):
     pass
 
 
-class Wheel(object):
-    def __init__(self, filename):  # type: (str) -> None
+class Wheel:
+    def __init__(self, filename: str) -> None:
         wheel_info = wheel_file_re.match(filename)
         if not wheel_info:
-            raise InvalidWheelName("{} is not a valid wheel filename.".format(filename))
+            raise InvalidWheelName(f"{filename} is not a valid wheel filename.")
 
         self.filename = filename
         self.name = wheel_info.group("name").replace("_", "-")
@@ -34,12 +39,12 @@ class Wheel(object):
             Tag(x, y, z) for x in self.pyversions for y in self.abis for z in self.plats
         }
 
-    def get_minimum_supported_index(self, tags):
+    def get_minimum_supported_index(self, tags: List[Tag]) -> Optional[int]:
         indexes = [tags.index(t) for t in self.tags if t in tags]
 
         return min(indexes) if indexes else None
 
-    def is_supported_by_environment(self, env):
+    def is_supported_by_environment(self, env: Env) -> bool:
         return bool(set(env.supported_tags).intersection(self.tags))
 
 
@@ -48,11 +53,11 @@ class Chooser:
     A Chooser chooses an appropriate release archive for packages.
     """
 
-    def __init__(self, pool, env):  # type: (Pool, Env) -> None
+    def __init__(self, pool: "Pool", env: Env) -> None:
         self._pool = pool
         self._env = env
 
-    def choose_for(self, package):  # type: (Package) -> Link
+    def choose_for(self, package: Package) -> Link:
         """
         Return the url of the selected archive for a given package.
         """
@@ -69,20 +74,16 @@ class Chooser:
             links.append(link)
 
         if not links:
-            raise RuntimeError(
-                "Unable to find installation candidates for {}".format(package)
-            )
+            raise RuntimeError(f"Unable to find installation candidates for {package}")
 
         # Get the best link
         chosen = max(links, key=lambda link: self._sort_key(package, link))
         if not chosen:
-            raise RuntimeError(
-                "Unable to find installation candidates for {}".format(package)
-            )
+            raise RuntimeError(f"Unable to find installation candidates for {package}")
 
         return chosen
 
-    def _get_links(self, package):  # type: (Package) -> List[Link]
+    def _get_links(self, package: Package) -> List[Link]:
         if not package.source_type:
             if not self._pool.has_repository("pypi"):
                 repository = self._pool.repositories[0]
@@ -109,9 +110,14 @@ class Chooser:
 
             selected_links.append(link)
 
+        if links and not selected_links:
+            raise RuntimeError(
+                f"Retrieved digest for link {link.filename}({h}) not in poetry.lock metadata {hashes}"
+            )
+
         return selected_links
 
-    def _sort_key(self, package, link):  # type: (Package, Link) -> Tuple
+    def _sort_key(self, package: Package, link: Link) -> Tuple:
         """
         Function to pass as the `key` argument to a call to sorted() to sort
         InstallationCandidates by preference.
@@ -169,9 +175,7 @@ class Chooser:
             pri,
         )
 
-    def _is_link_hash_allowed_for_package(
-        self, link, package
-    ):  # type: (Link, Package) -> bool
+    def _is_link_hash_allowed_for_package(self, link: Link, package: Package) -> bool:
         if not link.hash:
             return True
 

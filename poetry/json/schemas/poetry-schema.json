@@ -59,7 +59,7 @@
         },
         "classifiers": {
             "type": "array",
-            "description": "A list of trove classifers."
+            "description": "A list of trove classifiers."
         },
         "packages": {
             "type": "array",

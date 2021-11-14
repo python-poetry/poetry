@@ -1,12 +1,14 @@
 import os
 import shutil
+import urllib.parse
 
-from poetry.console import Application
+from pathlib import Path
+
+from poetry.console.application import Application
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.core.packages import Dependency
-from poetry.core.packages import Link
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
+from poetry.core.packages.utils.link import Link
 from poetry.core.toml.file import TOMLFile
 from poetry.core.vcs.git import ParsedUrl
 from poetry.factory import Factory
@@ -14,10 +16,7 @@ from poetry.installation.executor import Executor
 from poetry.packages import Locker
 from poetry.repositories import Repository
 from poetry.repositories.exceptions import PackageNotFound
-from poetry.utils._compat import PY2
 from poetry.utils._compat import WINDOWS
-from poetry.utils._compat import Path
-from poetry.utils._compat import urlparse
 
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
@@ -28,15 +27,18 @@ def get_package(name, version):
 
 
 def get_dependency(
-    name, constraint=None, category="main", optional=False, allows_prereleases=False
+    name, constraint=None, groups=None, optional=False, allows_prereleases=False
 ):
-    return Dependency(
-        name,
-        constraint or "*",
-        category=category,
-        optional=optional,
-        allows_prereleases=allows_prereleases,
-    )
+    if constraint is None:
+        constraint = "*"
+
+    if isinstance(constraint, str):
+        constraint = {"version": constraint}
+
+    constraint["optional"] = optional
+    constraint["allow_prereleases"] = allows_prereleases
+
+    return Factory.create_dependency(name, constraint or "*", groups=groups)
 
 
 def fixture(path=None):
@@ -59,19 +61,13 @@ def copy_or_symlink(source, dest):
     # os.symlink requires either administrative privileges or developer mode on Win10,
     # throwing an OSError if neither is active.
     if WINDOWS:
-        if PY2:
+        try:
+            os.symlink(str(source), str(dest), target_is_directory=source.is_dir())
+        except OSError:
             if source.is_dir():
                 shutil.copytree(str(source), str(dest))
             else:
                 shutil.copyfile(str(source), str(dest))
-        else:
-            try:
-                os.symlink(str(source), str(dest), target_is_directory=source.is_dir())
-            except OSError:
-                if source.is_dir():
-                    shutil.copytree(str(source), str(dest))
-                else:
-                    shutil.copyfile(str(source), str(dest))
     else:
         os.symlink(str(source), str(dest))
 
@@ -92,7 +88,7 @@ def mock_clone(_, source, dest):
 
 
 def mock_download(url, dest, **__):
-    parts = urlparse.urlparse(url)
+    parts = urllib.parse.urlparse(url)
 
     fixtures = Path(__file__).parent / "fixtures"
     fixture = fixtures / parts.path.lstrip("/")
@@ -136,9 +132,9 @@ class TestExecutor(Executor):
         return 0
 
 
-class TestApplication(Application):
+class PoetryTestApplication(Application):
     def __init__(self, poetry):
-        super(TestApplication, self).__init__()
+        super(PoetryTestApplication, self).__init__()
         self._poetry = poetry
 
     def reset_poetry(self):
