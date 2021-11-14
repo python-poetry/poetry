@@ -9,6 +9,9 @@ license = "MIT"
 
 readme = "README.md"
 
+packages = [
+    { include = "poetry", from = "src" }
+]
 include = [
     { path = "tests", format = "sdist" }
 ]
@@ -78,7 +81,7 @@ force_single_line = true
 combine_as_imports = true
 lines_between_types = 1
 lines_after_imports = 2
-src_paths = ["poetry", "tests"]
+src_paths = ["src", "tests"]
 extend_skip = ["setup.py"]
 
 
@@ -96,7 +99,7 @@ ignore_missing_imports = true
 warn_redundant_casts = true
 warn_unused_configs = true
 warn_unused_ignores = true
-files = "poetry"
+files = "src"
 
 # The following whitelist is used to allow for incremental adoption
 # of Mypy. Modules should be removed from this whitelist as and when
