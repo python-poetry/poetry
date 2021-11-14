@@ -1,6 +1,8 @@
 import logging
 import tempfile
 
+from pathlib import Path
+
 import pytest
 import tomlkit
 
@@ -73,6 +75,7 @@ description = ""
 category = "main"
 optional = false
 python-versions = "*"
+develop = false
 
 [package.source]
 type = "git"
@@ -83,7 +86,7 @@ resolved_reference = "123456"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = [
@@ -142,6 +145,136 @@ cachecontrol = []
     assert lockfile_dep.name == "lockfile"
 
 
+def test_locker_properly_loads_nested_extras(locker):
+    content = """\
+[[package]]
+name = "a"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+b = {version = "^1.0", optional = true, extras = "c"}
+
+[package.extras]
+b = ["b[c] (>=1.0,<2.0)"]
+
+[[package]]
+name = "b"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+c = {version = "^1.0", optional = true}
+
+[package.extras]
+c = ["c (>=1.0,<2.0)"]
+
+[[package]]
+name = "c"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+python-versions = "*"
+lock-version = "1.1"
+content-hash = "123456789"
+
+[metadata.files]
+"a" = []
+"b" = []
+"c" = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert 3 == len(repository.packages)
+
+    packages = repository.find_packages(get_dependency("a", "1.0"))
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_b = package.extras["b"][0]
+    assert dependency_b.name == "b"
+    assert dependency_b.extras == frozenset({"c"})
+
+    packages = repository.find_packages(dependency_b)
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_c = package.extras["c"][0]
+    assert dependency_c.name == "c"
+    assert dependency_c.extras == frozenset()
+
+    packages = repository.find_packages(dependency_c)
+    assert len(packages) == 1
+
+
+def test_locker_properly_loads_extras_legacy(locker):
+    content = """\
+[[package]]
+name = "a"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+b = {version = "^1.0", optional = true}
+
+[package.extras]
+b = ["b (^1.0)"]
+
+[[package]]
+name = "b"
+version = "1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+python-versions = "*"
+lock-version = "1.1"
+content-hash = "123456789"
+
+[metadata.files]
+"a" = []
+"b" = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+
+    repository = locker.locked_repository()
+    assert 2 == len(repository.packages)
+
+    packages = repository.find_packages(get_dependency("a", "1.0"))
+    assert len(packages) == 1
+
+    package = packages[0]
+    assert len(package.requires) == 1
+    assert len(package.extras) == 1
+
+    dependency_b = package.extras["b"][0]
+    assert dependency_b.name == "b"
+
+
 def test_lock_packages_with_null_description(locker, root):
     package_a = get_package("A", "1.0.0")
     package_a.description = None
@@ -162,7 +295,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -202,7 +335,7 @@ foo = ["B (>=1.0.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -215,7 +348,7 @@ A = []
 
 
 def test_reading_lock_file_should_raise_an_error_on_invalid_data(locker):
-    content = u"""[[package]]
+    content = """[[package]]
 name = "A"
 version = "1.0.0"
 description = ""
@@ -232,7 +365,7 @@ foo = ["bar"]
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -277,7 +410,7 @@ reference = "legacy"
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -297,7 +430,9 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
 
 [metadata.files]
 """.format(
-        version=".".join(Version.parse(Locker._VERSION).next_minor.text.split(".")[:2])
+        version=".".join(
+            Version.parse(Locker._VERSION).next_minor().text.split(".")[:2]
+        )
     )
     caplog.set_level(logging.WARNING, logger="poetry.packages.locker")
 
@@ -362,7 +497,7 @@ B = {version = "^1.0.0", extras = ["a", "b", "c"], optional = true}
 [metadata]
 lock-version = "1.1"
 python-versions = "*"
-content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
 
 [metadata.files]
 A = []
@@ -398,3 +533,112 @@ content-hash = "c3d07fca33fba542ef2b2a4d75bf5b48d892d21a830e2ad9c952ba5123a52f77
     _ = locker.lock_data
 
     assert 0 == len(caplog.records)
+
+
+def test_locker_dumps_dependency_information_correctly(locker, root):
+    root_dir = Path(__file__).parent.parent.joinpath("fixtures")
+    package_a = get_package("A", "1.0.0")
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "B", {"path": "project_with_extras", "develop": True}, root_dir=root_dir
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "C",
+            {"path": "directory/project_with_transitive_directory_dependencies"},
+            root_dir=root_dir,
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "D", {"path": "distributions/demo-0.1.0.tar.gz"}, root_dir=root_dir
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "E", {"url": "https://python-poetry.org/poetry-1.2.0.tar.gz"}
+        )
+    )
+    package_a.add_dependency(
+        Factory.create_dependency(
+            "F", {"git": "https://github.com/python-poetry/poetry.git", "branch": "foo"}
+        )
+    )
+
+    packages = [package_a]
+
+    locker.set_lock_data(root, packages)
+
+    with locker.lock.open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """[[package]]
+name = "A"
+version = "1.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+B = {path = "project_with_extras", develop = true}
+C = {path = "directory/project_with_transitive_directory_dependencies"}
+D = {path = "distributions/demo-0.1.0.tar.gz"}
+E = {url = "https://python-poetry.org/poetry-1.2.0.tar.gz"}
+F = {git = "https://github.com/python-poetry/poetry.git", branch = "foo"}
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "178f2cd01dc40e96be23a4a0ae1094816626346346618335e5ff4f0b2c0c5831"
+
+[metadata.files]
+A = []
+"""
+
+    assert expected == content
+
+
+def test_locked_repository_uses_root_dir_of_package(locker, mocker):
+    content = """\
+[[package]]
+name = "lib-a"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "^2.7.9"
+develop = true
+
+[package.dependencies]
+lib-b = {path = "../libB", develop = true}
+
+[package.source]
+type = "directory"
+url = "lib/libA"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "*"
+content-hash = "115cf985d932e9bf5f540555bbdd75decbb62cac81e399375fc19f6277f8c1d8"
+
+[metadata.files]
+lib-a = []
+lib-b = []
+"""
+
+    locker.lock.write(tomlkit.parse(content))
+    create_dependency_patch = mocker.patch(
+        "poetry.factory.Factory.create_dependency", autospec=True
+    )
+    locker.locked_repository()
+
+    create_dependency_patch.assert_called_once_with(
+        "lib-b", {"develop": True, "path": "../libB"}, root_dir=mocker.ANY
+    )
+    call_kwargs = create_dependency_patch.call_args[1]
+    root_dir = call_kwargs["root_dir"]
+    assert root_dir.match("*/lib/libA")
+    # relative_to raises an exception if not relative - is_relative_to comes in py3.9
+    assert root_dir.relative_to(locker.lock.path.parent.resolve()) is not None

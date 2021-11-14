@@ -1,10 +1,13 @@
 import hashlib
 import io
 
+from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 import requests
@@ -21,19 +24,23 @@ from poetry.__version__ import __version__
 from poetry.core.masonry.metadata import Metadata
 from poetry.core.masonry.utils.helpers import escape_name
 from poetry.core.masonry.utils.helpers import escape_version
-from poetry.utils._compat import Path
-from poetry.utils.helpers import normalize_version
+from poetry.core.utils.helpers import normalize_version
 from poetry.utils.patterns import wheel_file_re
 
+
+if TYPE_CHECKING:
+    from cleo.io.null_io import NullIO
+
+    from poetry.poetry import Poetry
 
 _has_blake2 = hasattr(hashlib, "blake2b")
 
 
 class UploadError(Exception):
-    def __init__(self, error):  # type: (Union[ConnectionError, HTTPError]) -> None
+    def __init__(self, error: Union[ConnectionError, HTTPError, str]) -> None:
         if isinstance(error, HTTPError):
-            message = "HTTP Error {}: {}".format(
-                error.response.status_code, error.response.reason
+            message = (
+                f"HTTP Error {error.response.status_code}: {error.response.reason}"
             )
         elif isinstance(error, ConnectionError):
             message = (
@@ -42,11 +49,11 @@ class UploadError(Exception):
             )
         else:
             message = str(error)
-        super(UploadError, self).__init__(message)
+        super().__init__(message)
 
 
 class Uploader:
-    def __init__(self, poetry, io):
+    def __init__(self, poetry: "Poetry", io: "NullIO") -> None:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
@@ -54,43 +61,39 @@ class Uploader:
         self._password = None
 
     @property
-    def user_agent(self):
+    def user_agent(self) -> str:
         return user_agent("poetry", __version__)
 
     @property
-    def adapter(self):
+    def adapter(self) -> adapters.HTTPAdapter:
         retry = util.Retry(
             connect=5,
             total=10,
-            method_whitelist=["GET"],
+            allowed_methods=["GET"],
             status_forcelist=[500, 501, 502, 503],
         )
 
         return adapters.HTTPAdapter(max_retries=retry)
 
     @property
-    def files(self):  # type: () -> List[Path]
+    def files(self) -> List[Path]:
         dist = self._poetry.file.parent / "dist"
         version = normalize_version(self._package.version.text)
 
         wheels = list(
             dist.glob(
-                "{}-{}-*.whl".format(
-                    escape_name(self._package.pretty_name), escape_version(version)
-                )
+                f"{escape_name(self._package.pretty_name)}-{escape_version(version)}-*.whl"
             )
         )
-        tars = list(
-            dist.glob("{}-{}.tar.gz".format(self._package.pretty_name, version))
-        )
+        tars = list(dist.glob(f"{self._package.pretty_name}-{version}.tar.gz"))
 
         return sorted(wheels + tars)
 
-    def auth(self, username, password):
+    def auth(self, username: str, password: str) -> None:
         self._username = username
         self._password = password
 
-    def make_session(self):  # type: () -> requests.Session
+    def make_session(self) -> requests.Session:
         session = requests.session()
         if self.is_authenticated():
             session.auth = (self._username, self._password)
@@ -101,12 +104,16 @@ class Uploader:
 
         return session
 
-    def is_authenticated(self):
+    def is_authenticated(self) -> bool:
         return self._username is not None and self._password is not None
 
     def upload(
-        self, url, cert=None, client_cert=None, dry_run=False
-    ):  # type: (str, Optional[Path], Optional[Path], bool) -> None
+        self,
+        url: str,
+        cert: Optional[Path] = None,
+        client_cert: Optional[Path] = None,
+        dry_run: bool = False,
+    ) -> None:
         session = self.make_session()
 
         if cert:
@@ -120,7 +127,7 @@ class Uploader:
         finally:
             session.close()
 
-    def post_data(self, file):  # type: (Path) -> Dict[str, Any]
+    def post_data(self, file: Path) -> Dict[str, Any]:
         meta = Metadata.from_package(self._package)
 
         file_type = self._get_type(file)
@@ -199,8 +206,8 @@ class Uploader:
         return data
 
     def _upload(
-        self, session, url, dry_run=False
-    ):  # type: (requests.Session, str, Optional[bool]) -> None
+        self, session: requests.Session, url: str, dry_run: Optional[bool] = False
+    ) -> None:
         try:
             self._do_upload(session, url, dry_run)
         except HTTPError as e:
@@ -216,8 +223,8 @@ class Uploader:
             raise UploadError(e)
 
     def _do_upload(
-        self, session, url, dry_run=False
-    ):  # type: (requests.Session, str, Optional[bool]) -> None
+        self, session: requests.Session, url: str, dry_run: Optional[bool] = False
+    ) -> None:
         for file in self.files:
             # TODO: Check existence
 
@@ -227,8 +234,14 @@ class Uploader:
                 resp.raise_for_status()
 
     def _upload_file(
-        self, session, url, file, dry_run=False
-    ):  # type: (requests.Session, str, Path, Optional[bool]) -> requests.Response
+        self,
+        session: requests.Session,
+        url: str,
+        file: Path,
+        dry_run: Optional[bool] = False,
+    ) -> requests.Response:
+        from cleo.ui.progress_bar import ProgressBar
+
         data = self.post_data(file)
         data.update(
             {
@@ -245,10 +258,8 @@ class Uploader:
                 ("content", (file.name, fp, "application/octet-stream"))
             )
             encoder = MultipartEncoder(data_to_send)
-            bar = self._io.progress_bar(encoder.len)
-            bar.set_format(
-                " - Uploading <c1>{0}</c1> <b>%percent%%</b>".format(file.name)
-            )
+            bar = ProgressBar(self._io, max=encoder.len)
+            bar.set_format(f" - Uploading <c1>{file.name}</c1> <b>%percent%%</b>")
             monitor = MultipartEncoderMonitor(
                 encoder, lambda monitor: bar.set_progress(monitor.bytes_read)
             )
@@ -267,28 +278,22 @@ class Uploader:
                     )
                 if dry_run or 200 <= resp.status_code < 300:
                     bar.set_format(
-                        " - Uploading <c1>{0}</c1> <fg=green>%percent%%</>".format(
-                            file.name
-                        )
+                        f" - Uploading <c1>{file.name}</c1> <fg=green>%percent%%</>"
                     )
                     bar.finish()
                 elif resp.status_code == 301:
-                    if self._io.output.supports_ansi():
+                    if self._io.output.is_decorated():
                         self._io.overwrite(
-                            " - Uploading <c1>{0}</c1> <error>{1}</>".format(
-                                file.name, "FAILED"
-                            )
+                            f" - Uploading <c1>{file.name}</c1> <error>FAILED</>"
                         )
                     raise UploadError(
                         "Redirects are not supported. "
                         "Is the URL missing a trailing slash?"
                     )
             except (requests.ConnectionError, requests.HTTPError) as e:
-                if self._io.output.supports_ansi():
+                if self._io.output.is_decorated():
                     self._io.overwrite(
-                        " - Uploading <c1>{0}</c1> <error>{1}</>".format(
-                            file.name, "FAILED"
-                        )
+                        f" - Uploading <c1>{file.name}</c1> <error>FAILED</>"
                     )
                 raise UploadError(e)
             finally:
@@ -296,19 +301,18 @@ class Uploader:
 
         return resp
 
-    def _register(
-        self, session, url
-    ):  # type: (requests.Session, str) -> requests.Response
+    def _register(self, session: requests.Session, url: str) -> requests.Response:
         """
         Register a package to a repository.
         """
         dist = self._poetry.file.parent / "dist"
-        file = dist / "{}-{}.tar.gz".format(
-            self._package.name, normalize_version(self._package.version.text)
+        file = (
+            dist
+            / f"{self._package.name}-{normalize_version(self._package.version.text)}.tar.gz"
         )
 
         if not file.exists():
-            raise RuntimeError('"{0}" does not exist.'.format(file.name))
+            raise RuntimeError(f'"{file.name}" does not exist.')
 
         data = self.post_data(file)
         data.update({":action": "submit", "protocol_version": "1"})
@@ -326,7 +330,7 @@ class Uploader:
 
         return resp
 
-    def _prepare_data(self, data):
+    def _prepare_data(self, data: Dict) -> List[Tuple[str, str]]:
         data_to_send = []
         for key, value in data.items():
             if not isinstance(value, (list, tuple)):
@@ -337,7 +341,7 @@ class Uploader:
 
         return data_to_send
 
-    def _get_type(self, file):
+    def _get_type(self, file: Path) -> str:
         exts = file.suffixes
         if exts[-1] == ".whl":
             return "bdist_wheel"

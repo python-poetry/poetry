@@ -5,14 +5,14 @@ from .config_source import ConfigSource
 
 
 class DictConfigSource(ConfigSource):
-    def __init__(self):  # type: () -> None
+    def __init__(self) -> None:
         self._config = {}
 
     @property
-    def config(self):  # type: () -> Dict[str, Any]
+    def config(self) -> Dict[str, Any]:
         return self._config
 
-    def add_property(self, key, value):  # type: (str, Any) -> None
+    def add_property(self, key: str, value: Any) -> None:
         keys = key.split(".")
         config = self._config
 
@@ -26,7 +26,7 @@ class DictConfigSource(ConfigSource):
 
             config = config[key]
 
-    def remove_property(self, key):  # type: (str) -> None
+    def remove_property(self, key: str) -> None:
         keys = key.split(".")
 
         config = self._config

@@ -1,4 +1,4 @@
-from poetry.core.packages import Package
+from poetry.core.packages.package import Package
 from poetry.factory import Factory
 from poetry.mixology.failure import SolveFailure
 from poetry.mixology.version_solver import VersionSolver

@@ -1,6 +1,6 @@
 import pytest
 
-from clikit.io import NullIO
+from cleo.io.null_io import NullIO
 
 from poetry.core.packages.project_package import ProjectPackage
 from poetry.puzzle.provider import Provider as BaseProvider

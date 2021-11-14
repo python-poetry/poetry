@@ -1,8 +1,22 @@
-# -*- coding: utf-8 -*-
-from cleo import argument
-from cleo import option
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Optional
+from typing import Union
+
+from cleo.helpers import argument
+from cleo.helpers import option
 
 from .env_command import EnvCommand
+
+
+if TYPE_CHECKING:
+    from cleo.io.io import IO  # noqa
+
+    from poetry.core.packages.dependency import Dependency
+    from poetry.core.packages.package import Package
+    from poetry.packages.project_package import ProjectPackage
+    from poetry.repositories import Repository
+    from poetry.repositories.installed_repository import InstalledRepository
 
 
 class ShowCommand(EnvCommand):
@@ -12,7 +26,35 @@ class ShowCommand(EnvCommand):
 
     arguments = [argument("package", "The package to inspect", optional=True)]
     options = [
-        option("no-dev", None, "Do not list the development dependencies."),
+        option(
+            "without",
+            None,
+            "Do not show the information of the specified groups' dependencies.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "with",
+            None,
+            "Show the information of the specified optional groups' dependencies as well.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "default", None, "Only show the information of the default dependencies."
+        ),
+        option(
+            "only",
+            None,
+            "Only show the information of dependencies belonging to the specified groups.",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "no-dev",
+            None,
+            "Do not list the development dependencies. (<warning>Deprecated</warning>)",
+        ),
         option("tree", "t", "List the dependencies as a tree."),
         option("latest", "l", "Show the latest version."),
         option(
@@ -32,10 +74,10 @@ lists all packages available."""
 
     colors = ["cyan", "yellow", "green", "magenta", "blue"]
 
-    def handle(self):
-        from clikit.utils.terminal import Terminal
+    def handle(self) -> Optional[int]:
+        from cleo.io.null_io import NullIO
+        from cleo.terminal import Terminal
 
-        from poetry.io.null_io import NullIO
         from poetry.puzzle.solver import Solver
         from poetry.repositories.installed_repository import InstalledRepository
         from poetry.repositories.pool import Pool
@@ -48,30 +90,70 @@ lists all packages available."""
             self.init_styles(self.io)
 
         if self.option("outdated"):
-            self._args.set_option("latest", True)
+            self._io.input.set_option("latest", True)
 
-        include_dev = not self.option("no-dev")
+        excluded_groups = []
+        included_groups = []
+        only_groups = []
+        if self.option("no-dev"):
+            self.line(
+                "<warning>The `<fg=yellow;options=bold>--no-dev</>` option is deprecated, "
+                "use the `<fg=yellow;options=bold>--without dev</>` notation instead.</warning>"
+            )
+            excluded_groups.append("dev")
+
+        excluded_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("without")
+                for group in groups.split(",")
+            ]
+        )
+        included_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("with")
+                for group in groups.split(",")
+            ]
+        )
+        only_groups.extend(
+            [
+                group.strip()
+                for groups in self.option("only")
+                for group in groups.split(",")
+            ]
+        )
+
+        if self.option("default"):
+            only_groups.append("default")
+
         locked_repo = self.poetry.locker.locked_repository(True)
+
+        if only_groups:
+            root = self.poetry.package.with_dependency_groups(only_groups, only=True)
+        else:
+            root = self.poetry.package.with_dependency_groups(
+                included_groups
+            ).without_dependency_groups(excluded_groups)
 
         # Show tree view if requested
         if self.option("tree") and not package:
-            requires = self.poetry.package.requires + self.poetry.package.dev_requires
+            requires = root.all_requires
             packages = locked_repo.packages
-            for package in packages:
+            for pkg in packages:
                 for require in requires:
-                    if package.name == require.name:
-                        self.display_package_tree(self._io, package, locked_repo)
+                    if pkg.name == require.name:
+                        self.display_package_tree(self._io, pkg, locked_repo)
                         break
 
             return 0
 
         table = self.table(style="compact")
-        # table.style.line_vc_char = ""
         locked_packages = locked_repo.packages
         pool = Pool(ignore_repository_names=True)
         pool.add_repository(locked_repo)
         solver = Solver(
-            self.poetry.package,
+            root,
             pool=pool,
             installed=Repository(),
             locked=locked_repo,
@@ -79,14 +161,9 @@ lists all packages available."""
         )
         solver.provider.load_deferred(False)
         with solver.use_environment(self.env):
-            ops = solver.solve()
+            ops = solver.solve().calculate_operations()
 
         required_locked_packages = set([op.package for op in ops if not op.skipped])
-
-        if self.option("no-dev"):
-            required_locked_packages = [
-                p for p in locked_packages if p.category == "main"
-            ]
 
         if package:
             pkg = None
@@ -103,6 +180,13 @@ lists all packages available."""
 
                 return 0
 
+            required_by = {}
+            for locked in locked_packages:
+                dependencies = {d.name: d.pretty_constraint for d in locked.requires}
+
+                if pkg.name in dependencies:
+                    required_by[locked.pretty_name] = dependencies[pkg.name]
+
             rows = [
                 ["<info>name</>", " : <c1>{}</>".format(pkg.pretty_name)],
                 ["<info>version</>", " : <b>{}</b>".format(pkg.pretty_version)],
@@ -110,7 +194,7 @@ lists all packages available."""
             ]
 
             table.add_rows(rows)
-            table.render(self.io)
+            table.render()
 
             if pkg.requires:
                 self.line("")
@@ -120,6 +204,14 @@ lists all packages available."""
                         " - <c1>{}</c1> <b>{}</b>".format(
                             dependency.pretty_name, dependency.pretty_constraint
                         )
+                    )
+
+            if required_by:
+                self.line("")
+                self.line("<info>required by</info>")
+                for parent, requires_version in required_by.items():
+                    self.line(
+                        " - <c1>{}</c1> <b>{}</b>".format(parent, requires_version)
                     )
 
             return 0
@@ -139,14 +231,14 @@ lists all packages available."""
                 continue
 
             current_length = len(locked.pretty_name)
-            if not self._io.output.supports_ansi():
+            if not self._io.output.is_decorated():
                 installed_status = self.get_installed_status(locked, installed_repo)
 
                 if installed_status == "not-installed":
                     current_length += 4
 
             if show_latest:
-                latest = self.find_latest_package(locked, include_dev)
+                latest = self.find_latest_package(locked, root)
                 if not latest:
                     latest = locked
 
@@ -202,7 +294,7 @@ lists all packages available."""
                 if installed_status == "not-installed":
                     color = "red"
 
-                    if not self._io.output.supports_ansi():
+                    if not self._io.output.is_decorated():
                         # Non installed in non decorated mode
                         install_marker = " (!)"
 
@@ -254,8 +346,11 @@ lists all packages available."""
                 line += " " + description
 
             self.line(line)
+        return None
 
-    def display_package_tree(self, io, package, installed_repo):
+    def display_package_tree(
+        self, io: "IO", package: "Package", installed_repo: "Repository"
+    ) -> None:
         io.write("<c1>{}</c1>".format(package.pretty_name))
         description = ""
         if package.description:
@@ -292,13 +387,13 @@ lists all packages available."""
 
     def _display_tree(
         self,
-        io,
-        dependency,
-        installed_repo,
-        packages_in_tree,
-        previous_tree_bar="├",
-        level=1,
-    ):
+        io: "IO",
+        dependency: "Dependency",
+        installed_repo: "Repository",
+        packages_in_tree: List[str],
+        previous_tree_bar: str = "├",
+        level: int = 1,
+    ) -> None:
         previous_tree_bar = previous_tree_bar.replace("├", "│")
 
         dependencies = []
@@ -343,8 +438,8 @@ lists all packages available."""
                     io, dependency, installed_repo, current_tree, tree_bar, level + 1
                 )
 
-    def _write_tree_line(self, io, line):
-        if not io.output.supports_ansi():
+    def _write_tree_line(self, io: "IO", line: str) -> None:
+        if not io.output.supports_utf8():
             line = line.replace("└", "`-")
             line = line.replace("├", "|-")
             line = line.replace("──", "-")
@@ -352,29 +447,29 @@ lists all packages available."""
 
         io.write_line(line)
 
-    def init_styles(self, io):
-        from clikit.api.formatter import Style
+    def init_styles(self, io: "IO") -> None:
+        from cleo.formatters.style import Style
 
         for color in self.colors:
-            style = Style(color).fg(color)
-            io.output.formatter.add_style(style)
-            io.error_output.formatter.add_style(style)
+            style = Style(color)
+            io.output.formatter.set_style(color, style)
+            io.error_output.formatter.set_style(color, style)
 
-    def find_latest_package(self, package, include_dev):
-        from clikit.io import NullIO
+    def find_latest_package(
+        self, package: "Package", root: "ProjectPackage"
+    ) -> Union["Package", bool]:
+        from cleo.io.null_io import NullIO
 
         from poetry.puzzle.provider import Provider
         from poetry.version.version_selector import VersionSelector
 
         # find the latest version allowed in this pool
         if package.source_type in ("git", "file", "directory"):
-            requires = self.poetry.package.requires
-            if include_dev:
-                requires = requires + self.poetry.package.dev_requires
+            requires = root.all_requires
 
             for dep in requires:
                 if dep.name == package.name:
-                    provider = Provider(self.poetry.package, self.poetry.pool, NullIO())
+                    provider = Provider(root, self.poetry.pool, NullIO())
 
                     if dep.is_vcs():
                         return provider.search_for_vcs(dep)[0]
@@ -388,8 +483,8 @@ lists all packages available."""
 
         return selector.find_best_candidate(name, ">={}".format(package.pretty_version))
 
-    def get_update_status(self, latest, package):
-        from poetry.core.semver import parse_constraint
+    def get_update_status(self, latest: "Package", package: "Package") -> str:
+        from poetry.core.semver.helpers import parse_constraint
 
         if latest.full_pretty_version == package.full_pretty_version:
             return "up-to-date"
@@ -403,7 +498,9 @@ lists all packages available."""
         # it needs an upgrade but has potential BC breaks so is not urgent
         return "update-possible"
 
-    def get_installed_status(self, locked, installed_repo):
+    def get_installed_status(
+        self, locked: "Package", installed_repo: "InstalledRepository"
+    ) -> str:
         for package in installed_repo.packages:
             if locked.name == package.name:
                 return "installed"
