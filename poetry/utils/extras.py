@@ -14,7 +14,7 @@ def get_extra_package_names(
     packages: Sequence["Package"],
     extras: Mapping[str, List[str]],
     extra_names: Sequence[str],
-) -> Iterator[str]:
+) -> Iterable[str]:
     """
     Returns all package names required by the given extras.
 
@@ -44,7 +44,7 @@ def get_extra_package_names(
 
     def _extra_packages(package_names: Iterable[str]) -> Iterator[str]:
         """Recursively find dependencies for packages names"""
-        # for each extra pacakge name
+        # for each extra package name
         for package_name in package_names:
             # Find the actual Package object. A missing key indicates an implicit
             # dependency (like setuptools), which should be ignored

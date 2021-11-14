@@ -33,7 +33,7 @@ class KeyRing:
 
     def get_password(self, name: str, username: str) -> Optional[str]:
         if not self.is_available():
-            return
+            return None
 
         import keyring
         import keyring.errors
@@ -125,7 +125,7 @@ class PasswordManager:
         self._keyring = None
 
     @property
-    def keyring(self) -> KeyRing:
+    def keyring(self) -> Optional[KeyRing]:
         if self._keyring is None:
             self._keyring = KeyRing("poetry-repository")
             if not self._keyring.is_available():

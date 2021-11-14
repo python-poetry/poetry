@@ -21,3 +21,4 @@ class CacheListCommand(Command):
                 return 0
 
         self.line("<warning>No caches found</>")
+        return None

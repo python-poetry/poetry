@@ -166,7 +166,8 @@ To remove a repository (repo is a short alias for repositories):
         unique_config_values = self.unique_config_values
         if setting_key in unique_config_values:
             if self.option("unset"):
-                return config.config_source.remove_property(setting_key)
+                config.config_source.remove_property(setting_key)
+                return None
 
             return self._handle_single_value(
                 config.config_source,

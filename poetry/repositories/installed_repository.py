@@ -63,12 +63,13 @@ class InstalledRepository(Repository):
                     if line and not line.startswith(("#", "import ", "import\t")):
                         path = Path(line)
                         if not path.is_absolute():
-                            try:
-                                path = lib.joinpath(path).resolve()
-                            except FileNotFoundError:
-                                # this is required to handle pathlib oddity on win32 python==3.5
-                                path = lib.joinpath(path)
+                            path = lib.joinpath(path).resolve()
                         paths.add(path)
+
+        src_path = env.path / "src" / name
+        if not paths and src_path.exists():
+            paths.add(src_path)
+
         return paths
 
     @classmethod

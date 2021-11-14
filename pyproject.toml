@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "poetry"
-version = "1.2.0a0"
+version = "1.2.0a2"
 description = "Python dependency management and packaging made easy."
 authors = [
     "Sébastien Eustace <sebastien@eustace.io>"
@@ -31,8 +31,8 @@ generate-setup-file = false
 [tool.poetry.dependencies]
 python = "^3.6"
 
-poetry-core = { git = "https://github.com/python-poetry/poetry-core.git", branch = "master"}
-cleo = "^1.0.0a1"
+poetry-core = "^1.1.0a6"
+cleo = "^1.0.0a4"
 crashtest = "^0.3.0"
 requests = "^2.18"
 cachy = "^0.3.0"
@@ -44,8 +44,8 @@ shellingham = "^1.1"
 tomlkit = ">=0.7.0,<1.0.0"
 pexpect = "^4.7.0"
 packaging = "^20.4"
-# temporarily clamped due to https://github.com/pypa/pip/issues/9953
-virtualenv = ">=20.4.3,<20.4.5"
+# exclude 20.4.5 - 20.4.6 due to https://github.com/pypa/pip/issues/9953
+virtualenv = "(>=20.4.3,<20.4.5 || >=20.4.7)"
 keyring = ">=21.2.0"
 entrypoints = "^0.3"
 importlib-metadata = {version = "^1.6.0", python = "<3.8"}
@@ -56,7 +56,7 @@ pytest = "^6.2"
 pytest-cov = "^2.8"
 pytest-mock = "^3.5"
 pre-commit = { version = "^2.6", python = "^3.6.1" }
-tox = "^3.0"
+tox = "^3.18"
 pytest-sugar = "^0.9"
 httpretty = "^1.0"
 zipp = { version = "^3.4", python = "<3.8"}

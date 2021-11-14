@@ -17,15 +17,17 @@ from typing import Union
 from cleo.io.null_io import NullIO
 
 from poetry.core.packages.file_dependency import FileDependency
+from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
+from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.utils._compat import decode
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.pip import pip_editable_install
 
+from ..utils.authenticator import Authenticator
 from ..utils.pip import pip_install
-from .authenticator import Authenticator
 from .chef import Chef
 from .chooser import Chooser
 from .operations.install import Install
@@ -38,7 +40,6 @@ if TYPE_CHECKING:
     from cleo.io.io import IO  # noqa
 
     from poetry.config.config import Config
-    from poetry.core.packages.package import Package
     from poetry.repositories import Pool
     from poetry.utils.env import Env
 
@@ -119,7 +120,7 @@ class Executor:
         return self
 
     def pip_install(
-        self, req: Union[Path, str], upgrade: bool = False, editable: bool = False
+        self, req: Union[Path, Link], upgrade: bool = False, editable: bool = False
     ) -> int:
         func = pip_install
         if editable:
@@ -504,7 +505,7 @@ class Executor:
             )
         )
         self._write(operation, message)
-        return self.pip_install(str(archive), upgrade=operation.job_type == "update")
+        return self.pip_install(archive, upgrade=operation.job_type == "update")
 
     def _update(self, operation: Union[Install, Update]) -> int:
         return self._install(operation)
@@ -671,21 +672,30 @@ class Executor:
                 archive = self._chef.prepare(archive)
 
         if package.files:
-            archive_hash = (
-                "sha256:"
-                + FileDependency(
-                    package.name,
-                    Path(archive.path) if isinstance(archive, Link) else archive,
-                ).hash()
-            )
-            if archive_hash not in {f["hash"] for f in package.files}:
-                raise RuntimeError(
-                    f"Invalid hash for {package} using archive {archive.name}"
-                )
+            archive_hash = self._validate_archive_hash(archive, package)
 
             self._hashes[package.name] = archive_hash
 
         return archive
+
+    @staticmethod
+    def _validate_archive_hash(archive: Union[Path, Link], package: Package) -> str:
+        archive_path = (
+            url_to_path(archive.url) if isinstance(archive, Link) else archive
+        )
+        file_dep = FileDependency(
+            package.name,
+            archive_path,
+        )
+        archive_hash = "sha256:" + file_dep.hash()
+        known_hashes = {f["hash"] for f in package.files}
+
+        if archive_hash not in known_hashes:
+            raise RuntimeError(
+                f"Hash for {package} from archive {archive_path.name} not found in known hashes (was: {archive_hash})"
+            )
+
+        return archive_hash
 
     def _download_archive(self, operation: Union[Install, Update], link: Link) -> Path:
         response = self._authenticator.request(

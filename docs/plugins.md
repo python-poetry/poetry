@@ -1,3 +1,14 @@
+---
+title: "Plugins"
+draft: false
+type: docs
+layout: single
+
+menu:
+  docs:
+    weight: 80
+---
+
 # Plugins
 
 Poetry supports using and building plugins if you wish to
@@ -18,7 +29,7 @@ and may also depend on further packages.
 ### Plugin package
 
 The plugin package must depend on Poetry
-and declare a proper [plugin](/docs/pyproject/#plugins) in the `pyproject.toml` file.
+and declare a proper [plugin]({{< relref "pyproject#plugins" >}}) in the `pyproject.toml` file.
 
 ```toml
 [tool.poetry]
@@ -96,19 +107,19 @@ class MyApplicationPlugin(ApplicationPlugin):
         application.command_loader.register_factory("my-command", factory)
 ```
 
-!!!note
+{{% note %}}
+It's possible to do the following to register the command:
 
-    It's possible to do the following to register the command:
+```python
+application.add(MyCommand())
+```
 
-    ```python
-    application.add(MyCommand())
-    ```
+However, it is **strongly** recommended to register a new factory
+in the command loader to defer the loading of the command when it's actually
+called.
 
-    However, it is **strongly** recommended to register a new factory
-    in the command loader to defer the loading of the command when it's actually
-    called.
-
-    This will help keep the performances of Poetry good.
+This will help keep the performances of Poetry good.
+{{% /note %}}
 
 The plugin also must be declared in the `pyproject.toml` file of the plugin package
 as an `application.plugin` plugin:
@@ -118,9 +129,9 @@ as an `application.plugin` plugin:
 foo-command = "poetry_demo_plugin.plugin:MyApplicationPlugin"
 ```
 
-!!!warning
-
-    A plugin **must not** remove or modify in any way the core commands of Poetry.
+{{% warning %}}
+A plugin **must not** remove or modify in any way the core commands of Poetry.
+{{% /warning %}}
 
 
 ### Event handler
@@ -152,10 +163,15 @@ from poetry.plugins.application_plugin import ApplicationPlugin
 
 class MyApplicationPlugin(ApplicationPlugin):
     def activate(self, application: Application):
-        application.event_dispatcher.add_listener(COMMAND, self.load_dotenv)
+        application.event_dispatcher.add_listener(
+            COMMAND, self.load_dotenv
+        )
 
     def load_dotenv(
-        self, event: ConsoleCommandEvent, event_name: str, dispatcher: EventDispatcher
+        self,
+        event: ConsoleCommandEvent,
+        event_name: str,
+        dispatcher: EventDispatcher
     ) -> None:
         command = event.command
         if not isinstance(command, EnvCommand):
@@ -164,7 +180,9 @@ class MyApplicationPlugin(ApplicationPlugin):
         io = event.io
 
         if io.is_debug():
-            io.write_line("<debug>Loading environment variables.</debug>")
+            io.write_line(
+                "<debug>Loading environment variables.</debug>"
+            )
 
         load_dotenv()
 ```
@@ -188,7 +206,7 @@ The `plugin add` command will ensure that the plugin is compatible with the curr
 and install the needed packages for the plugin to work.
 
 The package specification formats supported by the `plugin add` command are the same as the ones supported
-by the [`add` command](/docs/cli/#add).
+by the [`add` command]({{< relref "cli#add" >}}).
 
 If you no longer need a plugin and want to uninstall it, you can use the `plugin remove` command.
 

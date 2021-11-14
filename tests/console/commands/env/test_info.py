@@ -1,3 +1,5 @@
+import sys
+
 from pathlib import Path
 
 import pytest
@@ -28,14 +30,21 @@ Virtualenv
 Python:         3.7.0
 Implementation: CPython
 Path:           {prefix}
+Executable:     {executable}
 Valid:          True
 
 System
-Platform: darwin
-OS:       posix
-Python:   {base_prefix}
+Platform:   darwin
+OS:         posix
+Python:     {base_version}
+Path:       {base_prefix}
+Executable: {base_executable}
 """.format(
-        prefix=str(Path("/prefix")), base_prefix=str(Path("/base/prefix"))
+        prefix=str(Path("/prefix")),
+        base_prefix=str(Path("/base/prefix")),
+        base_version=".".join(str(v) for v in sys.version_info[:3]),
+        executable=sys.executable,
+        base_executable="python",
     )
 
     assert expected == tester.io.fetch_output()

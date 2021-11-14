@@ -65,7 +65,7 @@ def test_requirement_source_type_url():
         "foo",
         "0.0.0",
         source_type="url",
-        source_url="https://somehwere.com/releases/foo-1.0.0.tar.gz",
+        source_url="https://somewhere.com/releases/foo-1.0.0.tar.gz",
     )
 
     result = installer.requirement(foo, formatted=True)

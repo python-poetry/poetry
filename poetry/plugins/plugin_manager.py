@@ -19,7 +19,7 @@ class PluginManager:
     def __init__(self, type, disable_plugins=False):  # type: (str, bool) -> None
         self._type = type
         self._disable_plugins = disable_plugins
-        self._plugins = []
+        self._plugins: List[Plugin] = []
 
     def load_plugins(self):  # type: () -> None
         if self._disable_plugins:

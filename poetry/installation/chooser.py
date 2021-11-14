@@ -1,5 +1,6 @@
 import re
 
+from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -8,9 +9,12 @@ from packaging.tags import Tag
 
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
-from poetry.repositories.pool import Pool
 from poetry.utils.env import Env
 from poetry.utils.patterns import wheel_file_re
+
+
+if TYPE_CHECKING:
+    from poetry.repositories.pool import Pool
 
 
 class InvalidWheelName(Exception):
@@ -49,7 +53,7 @@ class Chooser:
     A Chooser chooses an appropriate release archive for packages.
     """
 
-    def __init__(self, pool: Pool, env: Env) -> None:
+    def __init__(self, pool: "Pool", env: Env) -> None:
         self._pool = pool
         self._env = env
 

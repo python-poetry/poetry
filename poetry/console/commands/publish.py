@@ -83,3 +83,5 @@ the config command.
             client_cert,
             self.option("dry-run"),
         )
+
+        return None

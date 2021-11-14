@@ -41,7 +41,7 @@ class ExportCommand(Command):
 
         locker = self.poetry.locker
         if not locker.is_locked():
-            self.line("<comment>The lock file does not exist. Locking.</comment>")
+            self.line_error("<comment>The lock file does not exist. Locking.</comment>")
             options = []
             if self.io.is_debug():
                 options.append(("-vvv", None))
@@ -53,7 +53,7 @@ class ExportCommand(Command):
             self.call("lock", " ".join(options))
 
         if not locker.is_fresh():
-            self.line(
+            self.line_error(
                 "<warning>"
                 "Warning: The lock file is not up to date with "
                 "the latest changes in pyproject.toml. "

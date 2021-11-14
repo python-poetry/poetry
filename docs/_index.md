@@ -1,18 +1,24 @@
+---
+title: "Introduction"
+draft: false
+type: docs
+layout: "single"
+
+menu:
+  docs:
+    weight: 0
+---
+
 # Introduction
 
-Poetry is a tool for dependency management and packaging in Python.
+Poetry is a tool for **dependency management** and **packaging** in Python.
 It allows you to declare the libraries your project depends on and it will manage (install/update) them for you.
 
 
 ## System requirements
 
-Poetry requires Python 2.7 or 3.5+. It is multi-platform and the goal is to make it work equally well
+Poetry requires Python 3.6+. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
-
-!!! note
-
-    Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
-    You should consider updating your Python version to a supported one.
 
 
 ## Installation
@@ -22,17 +28,17 @@ from the rest of your system.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+curl -sSL https://install.python-poetry.org | python -
 ```
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
 ```
 
-!!!warning
-
-    The previous `get-poetry.py` installer is now deprecated, if you are currently using it
-    you should migrate to the new, supported, `install-poetry.py` installer.
+{{% warning %}}
+The previous `get-poetry.py` installer is now deprecated, if you are currently using it
+you should migrate to the new, supported, `install-poetry.py` installer.
+{{% /warning %}}
 
 The installer installs the `poetry` tool to Poetry's `bin` directory. This location depends on your system:
 
@@ -89,9 +95,9 @@ You can also install Poetry for a `git` repository by using the `--git` option:
 python install-poetry.py --git https://github.com/python-poetry/poetry.git@master
 ````
 
-!!!note
-
-    Note that the installer does not support Python < 3.6.
+{{% note %}}
+Note that the installer does not support Python < 3.6.
+{{% /note %}}
 
 
 ### Alternative installation methods
@@ -123,11 +129,10 @@ Using `pip` to install Poetry is possible.
 pip install --user poetry
 ```
 
-!!!warning
-
-    Be aware that it will also install Poetry's dependencies
-    which might cause conflicts with other packages.
-
+{{% warning %}}
+Be aware that it will also install Poetry's dependencies
+which might cause conflicts with other packages.
+{{% /warning %}}
 
 ## Updating `poetry`
 
@@ -136,6 +141,11 @@ Updating Poetry to the latest stable version is as simple as calling the `self u
 ```bash
 poetry self update
 ```
+
+{{% warning %}}
+Poetry versions installed using the now deprecated `get-poetry.py` installer will not be able to use this
+command to update to 1.2 releases or later. Migrate to using the `install-poetry.py` installer or `pipx`.
+{{% /warning %}}
 
 If you want to install pre-release versions, you can use the `--preview` option.
 
@@ -159,16 +169,10 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 
 ```bash
 # Bash
-poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
-
-# Bash (Homebrew)
-poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
+poetry completions bash > /etc/bash_completion.d/poetry
 
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
-
-# Fish (Homebrew)
-poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry
@@ -182,9 +186,9 @@ poetry completions zsh > ~/.zprezto/modules/completion/external/src/_poetry
 
 ```
 
-!!! note
-
-    You may need to restart your shell in order for the changes to take effect.
+{{% note %}}
+You may need to restart your shell in order for the changes to take effect.
+{{% /note %}}
 
 For `zsh`, you must then add the following line in your `~/.zshrc` before `compinit`:
 
@@ -194,7 +198,7 @@ fpath+=~/.zfunc
 
 For `oh-my-zsh`, you must then enable poetry in your `~/.zshrc` plugins
 
-```
+```text
 plugins(
 	poetry
 	...
