@@ -101,7 +101,7 @@ export POETRY_HTTP_BASIC_PYPI_PASSWORD=password
 See [Using environment variables]({{< relref "configuration#using-environment-variables" >}}) for more information
 on how to configure Poetry with environment variables.
 
-If your password starts with a dash (e.g. randomly generated tokens in a CI environment), it will be parsed as a command 
+If your password starts with a dash (e.g. randomly generated tokens in a CI environment), it will be parsed as a command
 line option instead of a password. You can prevent this by adding double dashes to prevent any following argument from being parsed
 as an option.
 
