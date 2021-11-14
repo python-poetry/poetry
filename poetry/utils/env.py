@@ -929,6 +929,7 @@ class EnvManager:
         if create_venv:
             self.build_venv(
                 venv,
+                name=name,
                 executable=executable,
                 flags=self._poetry.config.get("virtualenvs.options"),
                 # TODO: in a future version switch remove pip/setuptools/wheel
@@ -961,6 +962,8 @@ class EnvManager:
     def build_venv(
         cls,
         path: Union[Path, str],
+        *,
+        name: Optional[str] = None,
         executable: Optional[Union[str, Path]] = None,
         flags: Dict[str, bool] = None,
         with_pip: Optional[bool] = None,
@@ -995,6 +998,9 @@ class EnvManager:
             "--python",
             executable or sys.executable,
         ]
+
+        if name is not None:
+            args.append(f"--prompt=({name}) ")
 
         for flag, value in flags.items():
             if value is True:
