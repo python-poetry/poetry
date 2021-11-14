@@ -1008,8 +1008,8 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_
         content = f.read()
 
     expected = """\
-bar==7.8.9; platform_system != "Windows" or platform_system == "Windows"
-baz==10.11.13; platform_system == "Windows"
+bar==7.8.9 ; platform_system != "Windows" or platform_system == "Windows"
+baz==10.11.13 ; platform_system == "Windows"
 foo==1.2.3
 """
 
