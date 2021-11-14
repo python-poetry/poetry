@@ -109,7 +109,6 @@ as an option.
 poetry config -- http-basic.pypi myUsername -myPasswordStartingWithDash
 ```
 
-
 #### Custom certificate authority and mutual TLS authentication
 Poetry supports repositories that are secured by a custom certificate authority as well as those that require
 certificate-based client authentication.  The following will configure the "foo" repository to validate the repository's
