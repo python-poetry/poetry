@@ -57,8 +57,8 @@ class Uploader:
         self._poetry = poetry
         self._package = poetry.package
         self._io = io
-        self._username = None
-        self._password = None
+        self._username: Optional[str] = None
+        self._password: Optional[str] = None
 
     @property
     def user_agent(self) -> str:
@@ -89,14 +89,15 @@ class Uploader:
 
         return sorted(wheels + tars)
 
-    def auth(self, username: str, password: str) -> None:
+    def auth(self, username: Optional[str], password: Optional[str]) -> None:
         self._username = username
         self._password = password
 
     def make_session(self) -> requests.Session:
         session = requests.session()
-        if self.is_authenticated():
-            session.auth = (self._username, self._password)
+        auth = self.get_auth()
+        if auth is not None:
+            session.auth = auth
 
         session.headers["User-Agent"] = self.user_agent
         for scheme in ("http://", "https://"):
@@ -104,8 +105,11 @@ class Uploader:
 
         return session
 
-    def is_authenticated(self) -> bool:
-        return self._username is not None and self._password is not None
+    def get_auth(self) -> Optional[Tuple[str, str]]:
+        if self._username is None or self._password is None:
+            return None
+
+        return (self._username, self._password)
 
     def upload(
         self,
@@ -147,16 +151,15 @@ class Uploader:
 
         md5_digest = md5_hash.hexdigest()
         sha2_digest = sha256_hash.hexdigest()
+        blake2_256_digest: Optional[str] = None
         if _has_blake2:
             blake2_256_digest = blake2_256_hash.hexdigest()
-        else:
-            blake2_256_digest = None
 
+        py_version: Optional[str] = None
         if file_type == "bdist_wheel":
             wheel_info = wheel_file_re.match(file.name)
-            py_version = wheel_info.group("pyver")
-        else:
-            py_version = None
+            if wheel_info is not None:
+                py_version = wheel_info.group("pyver")
 
         data = {
             # identify release
@@ -231,7 +234,7 @@ class Uploader:
             }
         )
 
-        data_to_send = self._prepare_data(data)
+        data_to_send: List[Tuple[str, Any]] = self._prepare_data(data)
 
         with file.open("rb") as fp:
             data_to_send.append(
@@ -256,7 +259,7 @@ class Uploader:
                         allow_redirects=False,
                         headers={"Content-Type": monitor.content_type},
                     )
-                if dry_run or 200 <= resp.status_code < 300:
+                if resp is None or 200 <= resp.status_code < 300:
                     bar.set_format(
                         f" - Uploading <c1>{file.name}</c1> <fg=green>%percent%%</>"
                     )
