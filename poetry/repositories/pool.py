@@ -65,6 +65,8 @@ class Pool(BaseRepository):
         """
         Adds a repository to the pool.
         """
+        # FIXME: surely it's a problem that the repository name can be None here?
+        # All nameless repositories will collide in self._lookup.
         repository_name = (
             repository.name.lower() if repository.name is not None else None
         )
