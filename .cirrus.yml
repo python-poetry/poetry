@@ -1,5 +1,7 @@
 freebsd_instance:
   image_family: freebsd-13-0
+  cpu: 1
+  memory: 4G
 
 test_task:
   name: "Tests / FreeBSD / "
@@ -7,6 +9,8 @@ test_task:
   skip: "!changesInclude('.cirrus.yml', 'poetry.lock', 'pyproject.toml', '**.json','**.py')"
   env:
     matrix:
+      - PYTHON: python3.6
+      - PYTHON: python3.7
       - PYTHON: python3.8
       - PYTHON: python3.9
       - PYTHON: python3.10
