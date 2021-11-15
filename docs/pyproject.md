@@ -266,12 +266,8 @@ To specify a script that [depends on an extra](#extras), you may provide an entr
 
 ```toml
 [tool.poetry.scripts]
-devtest = {callable = "mypackage:test.run_tests", extras = ["test"]}
+devtest = { callable = "mypackage:test.run_tests", extras = ["test"] }
 ```
-
-!!!note
-
-    When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
 
 {{% note %}}
 When a script is added or updated, run `poetry install` to make them available in the project's virtualenv.
