@@ -24,20 +24,6 @@ jobs:
       matrix:
         os: [Ubuntu, MacOS, Windows]
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
-        experimental: [false]
-        bootstrap-args: [""]
-        suffix: [""]
-        include:
-          - os: Ubuntu
-            python-version: "3.10"
-            experimental: true
-            bootstrap-args: "--git https://github.com/python-poetry/poetry.git"
-            suffix: (HEAD)
-          - os: Ubuntu
-            python-version: "3.11-dev"
-            experimental: true
-            bootstrap-args: "--git https://github.com/python-poetry/poetry.git"
-            suffix: (HEAD)
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
