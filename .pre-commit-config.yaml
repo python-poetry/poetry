@@ -9,12 +9,14 @@ repos:
       - id: end-of-file-fixer
       - id: check-merge-conflict
       - id: check-case-conflict
-      - id: check-toml
       - id: check-json
+      - id: check-toml
+      - id: check-yaml
       - id: pretty-format-json
         args: [--autofix, --no-ensure-ascii, --no-sort-keys]
       - id: check-ast
       - id: debug-statements
+      - id: check-docstring-first
 
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
