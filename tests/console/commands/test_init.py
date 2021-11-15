@@ -714,4 +714,4 @@ build-backend = "setuptools.build_meta"
         tester.io.fetch_output().strip()
         == "A pyproject.toml file with a defined build-system already exists."
     )
-    assert f"{existing_section}" in pyproject_file.read_text()
+    assert existing_section in pyproject_file.read_text()
