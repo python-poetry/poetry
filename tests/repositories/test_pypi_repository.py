@@ -191,7 +191,7 @@ def test_pypi_repository_supports_reading_bz2_files():
         ]
     }
 
-    for name, deps in expected_extras.items():
+    for name in expected_extras.keys():
         assert expected_extras[name] == sorted(
             package.extras[name], key=lambda r: r.name
         )

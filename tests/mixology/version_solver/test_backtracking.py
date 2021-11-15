@@ -99,7 +99,7 @@ def test_backjump_to_nearer_unsatisfied_package(root, provider, repo):
     root.add_dependency(Factory.create_dependency("b", "*"))
 
     add_to_repo(repo, "a", "1.0.0", deps={"c": "1.0.0"})
-    add_to_repo(repo, "a", "2.0.0", deps={"c": "2.0.0-nonexistent"})
+    add_to_repo(repo, "a", "2.0.0", deps={"c": "2.0.0-1"})
     add_to_repo(repo, "b", "1.0.0")
     add_to_repo(repo, "b", "2.0.0")
     add_to_repo(repo, "b", "3.0.0")
