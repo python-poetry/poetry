@@ -247,7 +247,7 @@ class AddCommand(InstallerCommand, InitCommand):
             "The following packages are already present in the pyproject.toml and will be skipped:\n"
         )
         for name in existing_packages:
-            self.line("  • <c1>{name}</c1>".format(name=name))
+            self.line(f"  • <c1>{name}</c1>")
         self.line(
             "\nIf you want to update it to the latest compatible version, you can use `poetry update package`.\n"
             "If you prefer to upgrade it to the latest available version, you can use `poetry add package@latest`.\n"

@@ -31,7 +31,7 @@ If one doesn't exist yet, it will be created.
 
             return
 
-        self.line("Spawning shell within <info>{}</>".format(self.env.path))
+        self.line(f"Spawning shell within <info>{self.env.path}</>")
 
         # Setting this to avoid spawning unnecessary nested shells
         environ["POETRY_ACTIVE"] = "1"

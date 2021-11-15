@@ -130,7 +130,7 @@ class SelfUpdateCommand(Command):
             self.line("You are using the latest version")
             return 0
 
-        self.line("Updating <c1>Poetry</c1> to <c2>{}</c2>".format(release.version))
+        self.line(f"Updating <c1>Poetry</c1> to <c2>{release.version}</c2>")
         self.line("")
 
         self.update(release)

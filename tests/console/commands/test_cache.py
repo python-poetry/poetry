@@ -16,12 +16,12 @@ def repository_cache_dir(monkeypatch, tmpdir):
 
 @pytest.fixture
 def repository_one():
-    return "01_{}".format(uuid.uuid4())
+    return f"01_{uuid.uuid4()}"
 
 
 @pytest.fixture
 def repository_two():
-    return "02_{}".format(uuid.uuid4())
+    return f"02_{uuid.uuid4()}"
 
 
 @pytest.fixture

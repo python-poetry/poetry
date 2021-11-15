@@ -274,8 +274,8 @@ class SitePackages:
                 str, self._candidates if not writable_only else self.writable_candidates
             )
         )
-        for distribution in metadata.PathDistribution.discover(name=name, path=path):
-            yield distribution
+
+        yield from metadata.PathDistribution.discover(name=name, path=path)
 
     def find_distribution(
         self, name: str, writable_only: bool = False
@@ -373,7 +373,7 @@ class SitePackages:
         if results:
             return results
 
-        raise OSError("Unable to access any of {}".format(paths_csv(candidates)))
+        raise OSError(f"Unable to access any of {paths_csv(candidates)}")
 
     def write_text(self, path: Union[str, Path], *args: Any, **kwargs: Any) -> Path:
         return self._path_method_wrapper(path, "write_text", *args, **kwargs)[0]
@@ -902,9 +902,7 @@ class EnvManager:
 
                 return self.get_system_env()
 
-            io.write_line(
-                "Creating virtualenv <c1>{}</> in {}".format(name, str(venv_path))
-            )
+            io.write_line(f"Creating virtualenv <c1>{name}</> in {str(venv_path)}")
         else:
             create_venv = False
             if force:
@@ -914,9 +912,7 @@ class EnvManager:
                             env.path
                         )
                     )
-                io.write_line(
-                    "Recreating virtualenv <c1>{}</> in {}".format(name, str(venv))
-                )
+                io.write_line(f"Recreating virtualenv <c1>{name}</> in {str(venv)}")
                 self.remove_venv(venv)
                 create_venv = True
             elif io.is_very_verbose():
@@ -1144,11 +1140,9 @@ class Env:
 
     def find_executables(self) -> None:
         python_executables = sorted(
-            [
-                p.name
-                for p in self._bin_dir.glob("python*")
-                if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-            ]
+            p.name
+            for p in self._bin_dir.glob("python*")
+            if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if python_executables:
             executable = python_executables[0]
@@ -1158,11 +1152,9 @@ class Env:
             self._executable = executable
 
         pip_executables = sorted(
-            [
-                p.name
-                for p in self._bin_dir.glob("pip*")
-                if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-            ]
+            p.name
+            for p in self._bin_dir.glob("pip*")
+            if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
         )
         if pip_executables:
             pip_executable = pip_executables[0]
@@ -1173,7 +1165,7 @@ class Env:
 
     def get_embedded_wheel(self, distribution):
         return get_embed_wheel(
-            distribution, "{}.{}".format(self.version_info[0], self.version_info[1])
+            distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         ).path
 
     @property
@@ -1554,7 +1546,7 @@ class VirtualEnv(Env):
     def get_version_info(self) -> Tuple[int]:
         output = self.run_python_script(GET_PYTHON_VERSION)
 
-        return tuple([int(s) for s in output.strip().split(".")])
+        return tuple(int(s) for s in output.strip().split("."))
 
     def get_python_implementation(self) -> str:
         return self.marker_env["platform_python_implementation"]
@@ -1680,10 +1672,10 @@ class GenericEnv(VirtualEnv):
             minor_version = "{}.{}".format(
                 self._child_env.version_info[0], self._child_env.version_info[1]
             )
-            major_version = "{}".format(self._child_env.version_info[0])
+            major_version = f"{self._child_env.version_info[0]}"
             patterns = [
-                ("python{}".format(minor_version), "pip{}".format(minor_version)),
-                ("python{}".format(major_version), "pip{}".format(major_version)),
+                (f"python{minor_version}", f"pip{minor_version}"),
+                (f"python{major_version}", f"pip{major_version}"),
             ]
 
         python_executable = None
@@ -1695,11 +1687,9 @@ class GenericEnv(VirtualEnv):
 
             if not python_executable:
                 python_executables = sorted(
-                    [
-                        p.name
-                        for p in self._bin_dir.glob(python_pattern)
-                        if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-                    ]
+                    p.name
+                    for p in self._bin_dir.glob(python_pattern)
+                    if re.match(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
                 )
 
                 if python_executables:
@@ -1711,11 +1701,9 @@ class GenericEnv(VirtualEnv):
 
             if not pip_executable:
                 pip_executables = sorted(
-                    [
-                        p.name
-                        for p in self._bin_dir.glob(pip_pattern)
-                        if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
-                    ]
+                    p.name
+                    for p in self._bin_dir.glob(pip_pattern)
+                    if re.match(r"pip(?:\d+(?:\.\d+)?)?(?:\.exe)?$", p.name)
                 )
                 if pip_executables:
                     pip_executable = pip_executables[0]

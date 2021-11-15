@@ -131,7 +131,7 @@ class Layout:
         else:
             poetry_content.remove("license")
 
-        poetry_content["readme"] = "README.{}".format(self._readme_format)
+        poetry_content["readme"] = f"README.{self._readme_format}"
         packages = self.get_package_include()
         if packages:
             poetry_content["packages"].append(packages)
@@ -182,7 +182,7 @@ class Layout:
         package_init.touch()
 
     def _create_readme(self, path: "Path") -> "Path":
-        readme_file = path.joinpath("README.{}".format(self._readme_format))
+        readme_file = path.joinpath(f"README.{self._readme_format}")
         readme_file.touch()
         return readme_file
 

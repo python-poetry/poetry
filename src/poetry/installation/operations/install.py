@@ -12,7 +12,7 @@ class Install(Operation):
     def __init__(
         self, package: "Package", reason: Optional[str] = None, priority: int = 0
     ) -> None:
-        super(Install, self).__init__(reason, priority=priority)
+        super().__init__(reason, priority=priority)
 
         self._package = package
 

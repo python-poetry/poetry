@@ -36,7 +36,7 @@ class Factory(BaseFactory):
         if io is None:
             io = NullIO()
 
-        base_poetry = super(Factory, self).create_poetry(cwd)
+        base_poetry = super().create_poetry(cwd)
 
         locker = Locker(
             base_poetry.file.parent / "poetry.lock", base_poetry.local_config
@@ -49,9 +49,7 @@ class Factory(BaseFactory):
         local_config_file = TOMLFile(base_poetry.file.parent / "poetry.toml")
         if local_config_file.exists():
             if io.is_debug():
-                io.write_line(
-                    "Loading configuration file {}".format(local_config_file.path)
-                )
+                io.write_line(f"Loading configuration file {local_config_file.path}")
 
             config.merge(local_config_file.read())
 

@@ -348,7 +348,7 @@ def test_add_directory_with_poetry(app, repo, tester, mocker):
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
-    tester.execute("{}".format(path))
+    tester.execute(f"{path}")
 
     expected = """\
 
@@ -376,7 +376,7 @@ def test_add_file_constraint_wheel(app, repo, tester, mocker, poetry):
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
-    tester.execute("{}".format(path))
+    tester.execute(f"{path}")
 
     expected = """\
 
@@ -411,7 +411,7 @@ def test_add_file_constraint_sdist(app, repo, tester, mocker):
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
-    tester.execute("{}".format(path))
+    tester.execute(f"{path}")
 
     expected = """\
 
@@ -586,7 +586,7 @@ def test_add_constraint_with_platform(app, repo, tester, env):
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
 
-    tester.execute("cachy=0.2.0 --platform {} -vvv".format(platform))
+    tester.execute(f"cachy=0.2.0 --platform {platform} -vvv")
 
     expected = """\
 
@@ -1144,7 +1144,7 @@ def test_add_directory_constraint_old_installer(
     repo.add_package(get_package("cleo", "0.6.5"))
 
     path = "../git/github.com/demo/demo"
-    old_tester.execute("{}".format(path))
+    old_tester.execute(f"{path}")
 
     expected = """\
 
@@ -1180,7 +1180,7 @@ def test_add_directory_with_poetry_old_installer(
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../git/github.com/demo/pyproject-demo"
-    old_tester.execute("{}".format(path))
+    old_tester.execute(f"{path}")
 
     expected = """\
 
@@ -1211,7 +1211,7 @@ def test_add_file_constraint_wheel_old_installer(
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0-py2.py3-none-any.whl"
-    old_tester.execute("{}".format(path))
+    old_tester.execute(f"{path}")
 
     expected = """\
 
@@ -1249,7 +1249,7 @@ def test_add_file_constraint_sdist_old_installer(
     repo.add_package(get_package("pendulum", "1.4.4"))
 
     path = "../distributions/demo-0.1.0.tar.gz"
-    old_tester.execute("{}".format(path))
+    old_tester.execute(f"{path}")
 
     expected = """\
 
@@ -1435,7 +1435,7 @@ def test_add_constraint_with_platform_old_installer(
     repo.add_package(get_package("cachy", "0.1.0"))
     repo.add_package(cachy2)
 
-    old_tester.execute("cachy=0.2.0 --platform {} -vvv".format(platform))
+    old_tester.execute(f"cachy=0.2.0 --platform {platform} -vvv")
 
     expected = """\
 

@@ -24,9 +24,7 @@ class MockRepository(LegacyRepository):
     FIXTURES = Path(__file__).parent / "fixtures" / "legacy"
 
     def __init__(self):
-        super(MockRepository, self).__init__(
-            "legacy", url="http://legacy.foo.bar", disable_cache=True
-        )
+        super().__init__("legacy", url="http://legacy.foo.bar", disable_cache=True)
 
     def _get_page(self, endpoint):
         parts = endpoint.split("/")
@@ -110,7 +108,7 @@ def test_get_package_information_skips_dependencies_with_invalid_constraints():
 
     assert 25 == len(package.requires)
     assert sorted(
-        [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
+        (r for r in package.requires if not r.is_optional()), key=lambda r: r.name
     ) == [
         Dependency("configparser", "*"),
         Dependency("future", ">=0.14.0"),
@@ -323,9 +321,7 @@ def test_get_package_retrieves_packages_with_no_hashes():
 class MockHttpRepository(LegacyRepository):
     def __init__(self, endpoint_responses, http):
         base_url = "http://legacy.foo.bar"
-        super(MockHttpRepository, self).__init__(
-            "legacy", url=base_url, disable_cache=True
-        )
+        super().__init__("legacy", url=base_url, disable_cache=True)
 
         for endpoint, response in endpoint_responses.items():
             url = base_url + endpoint

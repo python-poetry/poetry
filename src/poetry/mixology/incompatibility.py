@@ -134,7 +134,7 @@ class Incompatibility:
             assert self._terms[0].is_positive()
 
             cause: PythonCause = self._cause
-            text = "{} requires ".format(self._terse(self._terms[0], allow_every=True))
+            text = f"{self._terse(self._terms[0], allow_every=True)} requires "
             text += f"Python {cause.python_version}"
 
             return text
@@ -143,7 +143,7 @@ class Incompatibility:
             assert self._terms[0].is_positive()
 
             cause: PlatformCause = self._cause
-            text = "{} requires ".format(self._terse(self._terms[0], allow_every=True))
+            text = f"{self._terse(self._terms[0], allow_every=True)} requires "
             text += f"platform {cause.platform}"
 
             return text
@@ -158,7 +158,7 @@ class Incompatibility:
             assert len(self._terms) == 1
             assert self._terms[0].is_positive()
 
-            return "{} doesn't exist".format(self._terms[0].dependency.name)
+            return f"{self._terms[0].dependency.name} doesn't exist"
         elif isinstance(self._cause, RootCause):
             assert len(self._terms) == 1
             assert not self._terms[0].is_positive()
@@ -258,7 +258,7 @@ class Incompatibility:
         if this_line is not None:
             buffer.append(" " + str(this_line))
 
-        buffer.append(" and {}".format(str(other)))
+        buffer.append(f" and {str(other)}")
 
         if other_line is not None:
             buffer.append(" " + str(other_line))
@@ -368,7 +368,7 @@ class Incompatibility:
                 verb = "requires"
 
             buffer.append(
-                "{} {} ".format(self._terse(prior_positives[0], allow_every=True), verb)
+                f"{self._terse(prior_positives[0], allow_every=True)} {verb} "
             )
 
         buffer.append(self._terse(prior_negative))
@@ -474,4 +474,4 @@ class Incompatibility:
         return found
 
     def __repr__(self) -> str:
-        return "<Incompatibility {}>".format(str(self))
+        return f"<Incompatibility {str(self)}>"

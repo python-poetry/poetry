@@ -21,9 +21,7 @@ class MockRepository(PyPiRepository):
     DIST_FIXTURES = Path(__file__).parent / "fixtures" / "pypi.org" / "dists"
 
     def __init__(self, fallback=False):
-        super(MockRepository, self).__init__(
-            url="http://foo.bar", disable_cache=True, fallback=fallback
-        )
+        super().__init__(url="http://foo.bar", disable_cache=True, fallback=fallback)
 
     def _get(self, url):
         parts = url.split("/")[1:]
@@ -111,7 +109,7 @@ def test_fallback_on_downloading_packages():
     assert package.name == "jupyter"
     assert len(package.requires) == 6
 
-    dependency_names = sorted([dep.name for dep in package.requires])
+    dependency_names = sorted(dep.name for dep in package.requires)
     assert dependency_names == [
         "ipykernel",
         "ipywidgets",
@@ -165,7 +163,7 @@ def test_pypi_repository_supports_reading_bz2_files():
     assert package.name == "twisted"
     assert 71 == len(package.requires)
     assert sorted(
-        [r for r in package.requires if not r.is_optional()], key=lambda r: r.name
+        (r for r in package.requires if not r.is_optional()), key=lambda r: r.name
     ) == [
         Dependency("attrs", ">=17.4.0"),
         Dependency("Automat", ">=0.3.0"),

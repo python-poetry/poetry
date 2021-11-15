@@ -120,7 +120,7 @@ def get_package_version_display_string(
 
 
 def paths_csv(paths: List[Path]) -> str:
-    return ", ".join('"{}"'.format(str(c)) for c in paths)
+    return ", ".join(f'"{str(c)}"' for c in paths)
 
 
 def is_dir_writable(path: Path, create: bool = False) -> bool:

@@ -39,7 +39,7 @@ WINDOWS_CMD_TEMPLATE = """\
 
 class EditableBuilder(Builder):
     def __init__(self, poetry: "Poetry", env: "Env", io: "IO") -> None:
-        super(EditableBuilder, self).__init__(poetry)
+        super().__init__(poetry)
 
         self._env = env
         self._io = io
@@ -75,7 +75,7 @@ class EditableBuilder(Builder):
         self._add_dist_info(added_files)
 
     def _run_build_script(self, build_script: Path) -> None:
-        self._debug("  - Executing build script: <b>{}</b>".format(build_script))
+        self._debug(f"  - Executing build script: <b>{build_script}</b>")
         self._env.run("python", str(self._path.joinpath(build_script)), call=True)
 
     def _setup_build(self) -> None:
@@ -249,7 +249,7 @@ class EditableBuilder(Builder):
             for path in added_files:
                 hash = self._get_file_hash(path)
                 size = path.stat().st_size
-                f.write("{},sha256={},{}\n".format(str(path), hash, size))
+                f.write(f"{str(path)},sha256={hash},{size}\n")
 
             # RECORD itself is recorded with no hash or size
             f.write("{},,\n".format(dist_info.joinpath("RECORD")))

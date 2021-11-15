@@ -131,8 +131,8 @@ class DebugResolveCommand(InitCommand):
 
             pkg = op.package
             row = [
-                "<c1>{}</c1>".format(pkg.complete_name),
-                "<b>{}</b>".format(pkg.version),
+                f"<c1>{pkg.complete_name}</c1>",
+                f"<b>{pkg.version}</b>",
             ]
 
             if not pkg.marker.is_any():

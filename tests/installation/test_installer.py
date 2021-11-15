@@ -44,7 +44,7 @@ class Installer(BaseInstaller):
 
 class Executor(BaseExecutor):
     def __init__(self, *args, **kwargs):
-        super(Executor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self._installs = []
         self._updates = []
@@ -63,10 +63,10 @@ class Executor(BaseExecutor):
         return self._uninstalls
 
     def _do_execute_operation(self, operation):
-        super(Executor, self)._do_execute_operation(operation)
+        super()._do_execute_operation(operation)
 
         if not operation.skipped:
-            getattr(self, "_{}s".format(operation.job_type)).append(operation.package)
+            getattr(self, f"_{operation.job_type}s").append(operation.package)
 
     def _execute_install(self, operation):
         return 0
@@ -180,7 +180,7 @@ def installer(package, pool, locker, env, installed, config):
 
 
 def fixture(name):
-    file = TOMLFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
+    file = TOMLFile(Path(__file__).parent / "fixtures" / f"{name}.test")
 
     return json.loads(json.dumps(file.read()))
 

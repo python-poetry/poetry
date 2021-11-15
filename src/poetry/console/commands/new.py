@@ -60,7 +60,7 @@ class NewCommand(Command):
             author = config["user.name"]
             author_email = config.get("user.email")
             if author_email:
-                author += " <{}>".format(author_email)
+                author += f" <{author_email}>"
 
         current_env = SystemEnv(Path(sys.executable))
         default_python = "^{}".format(
