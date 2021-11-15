@@ -9,6 +9,7 @@ test_task:
     matrix:
       - PYTHON: python3.8
       - PYTHON: python3.9
+      - PYTHON: python3.10
   pkg_script:
     - PYPACKAGE=$(printf '%s' $PYTHON | tr -d '.')
     - SQLPACKAGE=$(printf '%s-sqlite3' $PYPACKAGE | sed 's/thon//')
