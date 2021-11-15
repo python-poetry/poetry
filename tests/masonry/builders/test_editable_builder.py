@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import os
 import shutil
 
@@ -148,10 +145,11 @@ My Package
 
     baz_script = """\
 #!{python}
+import sys
 from bar import baz
 
 if __name__ == '__main__':
-    baz.boom.bim()
+    sys.exit(baz.boom.bim())
 """.format(
         python=tmp_venv.python
     )
@@ -160,10 +158,11 @@ if __name__ == '__main__':
 
     foo_script = """\
 #!{python}
+import sys
 from foo import bar
 
 if __name__ == '__main__':
-    bar()
+    sys.exit(bar())
 """.format(
         python=tmp_venv.python
     )
@@ -172,10 +171,11 @@ if __name__ == '__main__':
 
     fox_script = """\
 #!{python}
+import sys
 from fuz.foo import bar
 
 if __name__ == '__main__':
-    bar.baz()
+    sys.exit(bar.baz())
 """.format(
         python=tmp_venv.python
     )

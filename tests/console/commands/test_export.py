@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+from unittest.mock import ANY
+from unittest.mock import Mock
 
 import pytest
 
+from poetry.console.commands.export import Exporter
 from tests.helpers import get_package
 
 
@@ -77,12 +78,12 @@ foo==1.0.0
 def test_export_exports_requirements_txt_file_locks_if_no_lock_file(tester, poetry):
     assert not poetry.locker.lock.exists()
     _export_requirements(tester, poetry)
-    assert "The lock file does not exist. Locking." in tester.io.fetch_output()
+    assert "The lock file does not exist. Locking." in tester.io.fetch_error()
 
 
 def test_export_exports_requirements_txt_uses_lock_file(tester, poetry, do_lock):
     _export_requirements(tester, poetry)
-    assert "The lock file does not exist. Locking." not in tester.io.fetch_output()
+    assert "The lock file does not exist. Locking." not in tester.io.fetch_error()
 
 
 def test_export_fails_on_invalid_format(tester, do_lock):
@@ -113,3 +114,23 @@ bar==1.1.0
 foo==1.0.0
 """
     assert expected == tester.io.fetch_output()
+
+
+def test_export_with_urls(monkeypatch, tester, poetry):
+    """
+    We are just validating that the option gets passed. The option itself is tested in
+    the Exporter test.
+    """
+    mock_export = Mock()
+    monkeypatch.setattr(Exporter, "export", mock_export)
+    tester.execute("--without-urls")
+    mock_export.assert_called_once_with(
+        ANY,
+        ANY,
+        ANY,
+        dev=False,
+        extras=[],
+        with_credentials=False,
+        with_hashes=True,
+        with_urls=False,
+    )

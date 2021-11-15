@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 import requests
 
 from poetry.publishing.uploader import UploadError
@@ -27,6 +28,7 @@ Publishing simple-project (1.2.3) to PyPI
     assert expected_error_output in app_tester.io.fetch_error()
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_publish_returns_non_zero_code_for_connection_errors(app, app_tester, http):
     def request_callback(*_, **__):
         raise requests.ConnectionError()

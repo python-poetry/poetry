@@ -10,7 +10,7 @@ from cleo.testers.command_tester import CommandTester
 
 from poetry.repositories import Pool
 from poetry.utils._compat import decode
-from tests.helpers import TestApplication
+from tests.helpers import PoetryTestApplication
 from tests.helpers import get_package
 
 
@@ -36,7 +36,7 @@ def patches(mocker, source_dir, repo):
 @pytest.fixture
 def tester(patches):
     # we need a test application without poetry here.
-    app = TestApplication(None)
+    app = PoetryTestApplication(None)
     return CommandTester(app.find("init"))
 
 
@@ -71,14 +71,34 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-
-[tool.poetry.dev-dependencies]
 """
 
 
 def test_basic_interactive(tester, init_basic_inputs, init_basic_toml):
     tester.execute(inputs=init_basic_inputs)
     assert init_basic_toml in tester.io.fetch_output()
+
+
+def test_noninteractive(app, mocker, poetry, repo, tmp_path):
+    command = app.find("init")
+    command._pool = poetry.pool
+
+    repo.add_package(get_package("pytest", "3.6.0"))
+
+    p = mocker.patch("pathlib.Path.cwd")
+    p.return_value = tmp_path
+
+    tester = CommandTester(command)
+    args = "--name my-package --dependency pytest"
+    tester.execute(args=args, interactive=False)
+
+    expected = "Using version ^3.6.0 for pytest\n"
+    assert tester.io.fetch_output() == expected
+    assert "" == tester.io.fetch_error()
+
+    toml_content = (tmp_path / "pyproject.toml").read_text()
+    assert 'name = "my-package"' in toml_content
+    assert 'pytest = "^3.6.0"' in toml_content
 
 
 def test_interactive_with_dependencies(tester, repo):
@@ -121,7 +141,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 pendulum = "^2.0.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -153,8 +173,6 @@ packages = [{{include = "my_package"}}]
 
 [tool.poetry.dependencies]
 python = "^{python}"
-
-[tool.poetry.dev-dependencies]
 """.format(
         python=".".join(str(c) for c in sys.version_info[:2])
     )
@@ -198,7 +216,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/demo.git"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -242,7 +260,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/demo.git", rev = "develop"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -286,7 +304,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {git = "https://github.com/demo/pyproject-demo.git"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -333,7 +351,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {path = "demo"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
     assert expected in tester.io.fetch_output()
@@ -381,7 +399,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {path = "pyproject-demo"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -428,7 +446,7 @@ packages = [{include = "my_package"}]
 python = "~2.7 || ^3.6"
 demo = {path = "demo-0.1.0-py2.py3-none-any.whl"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -460,8 +478,6 @@ packages = [{include = "my_package"}]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-
-[tool.poetry.dev-dependencies]
 """
 
     assert expected in tester.io.fetch_output()
@@ -496,8 +512,6 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 pendulum = "^2.0.0"
-
-[tool.poetry.dev-dependencies]
 """
 
     assert expected in tester.io.fetch_output()
@@ -574,7 +588,7 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 """
 
@@ -616,7 +630,7 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^3.6.0"
 pytest-requests = "^0.2.0"
 """
@@ -683,8 +697,6 @@ packages = [{include = "my_package"}]
 [tool.poetry.dependencies]
 python = "^3.6"
 foo = "^1.19.2"
-
-[tool.poetry.dev-dependencies]
 """
     assert "{}\n{}".format(existing_section, expected) in pyproject_file.read_text()
 
