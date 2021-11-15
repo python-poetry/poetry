@@ -240,21 +240,3 @@ if WINDOWS:
         _get_win_folder = _get_win_folder_with_ctypes
     except ImportError:
         _get_win_folder = _get_win_folder_from_registry
-
-
-def _win_path_to_bytes(path: str) -> Union[str, bytes]:
-    """Encode Windows paths to bytes. Only used on Python 2.
-
-    Motivation is to be consistent with other operating systems where paths
-    are also returned as bytes. This avoids problems mixing bytes and Unicode
-    elsewhere in the codebase. For more details and discussion see
-    <https://github.com/pypa/pip/issues/3463>.
-
-    If encoding using ASCII and MBCS fails, return the original Unicode path.
-    """
-    for encoding in ("ASCII", "MBCS"):
-        try:
-            return path.encode(encoding)
-        except (UnicodeEncodeError, LookupError):
-            pass
-    return path
