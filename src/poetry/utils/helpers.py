@@ -98,13 +98,13 @@ def download_file(
 
     get = requests.get if not session else session.get
 
-    with get(url, stream=True) as response:
-        response.raise_for_status()
+    response = get(url, stream=True)
+    response.raise_for_status()
 
-        with open(dest, "wb") as f:
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    f.write(chunk)
+    with open(dest, "wb") as f:
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            if chunk:
+                f.write(chunk)
 
 
 def get_package_version_display_string(
