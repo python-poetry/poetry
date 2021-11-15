@@ -602,6 +602,7 @@ Only the `requirements.txt` format is currently supported.
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
+* `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
 
 ## env
