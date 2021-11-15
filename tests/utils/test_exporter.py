@@ -1367,6 +1367,64 @@ foo==1.2.3 \\
     assert expected == content
 
 
+def test_exporter_exports_requirements_txt_with_url_false(tmp_dir, poetry):
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "https://example.com/simple",
+        )
+    )
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/simple",
+                        "reference": "",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": ["12345"], "bar": ["67890"]},
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    exporter.export(
+        "requirements.txt", Path(tmp_dir), "requirements.txt", dev=True, with_urls=False
+    )
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar==4.5.6 \\
+    --hash=sha256:67890
+foo==1.2.3 \\
+    --hash=sha256:12345
+"""
+
+    assert expected == content
+
+
 def test_exporter_exports_requirements_txt_with_legacy_packages_trusted_host(
     tmp_dir, poetry
 ):
