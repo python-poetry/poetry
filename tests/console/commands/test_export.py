@@ -1,5 +1,9 @@
+from unittest.mock import ANY
+from unittest.mock import Mock
+
 import pytest
 
+from poetry.console.commands.export import Exporter
 from tests.helpers import get_package
 
 
@@ -110,3 +114,23 @@ bar==1.1.0
 foo==1.0.0
 """
     assert expected == tester.io.fetch_output()
+
+
+def test_export_with_urls(monkeypatch, tester, poetry):
+    """
+    We are just validating that the option gets passed. The option itself is tested in
+    the Exporter test.
+    """
+    mock_export = Mock()
+    monkeypatch.setattr(Exporter, "export", mock_export)
+    tester.execute("--without-urls")
+    mock_export.assert_called_once_with(
+        ANY,
+        ANY,
+        ANY,
+        dev=False,
+        extras=[],
+        with_credentials=False,
+        with_hashes=True,
+        with_urls=False,
+    )
