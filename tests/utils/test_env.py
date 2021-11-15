@@ -92,9 +92,11 @@ def test_env_shell_commands_with_stdinput_in_their_arg_work_as_expected(
     venv_path = Path(tmp_dir) / "Virtual Env"
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
-    assert venv.run("python", "-", input_=GET_BASE_PREFIX, shell=True).strip() == str(
-        venv.get_base_prefix()
+    run_output_path = Path(
+        venv.run("python", "-", input_=GET_BASE_PREFIX, shell=True).strip()
     )
+    venv_base_prefix_path = Path(str(venv.get_base_prefix()))
+    assert run_output_path.resolve() == venv_base_prefix_path.resolve()
 
 
 @pytest.fixture

@@ -129,4 +129,13 @@ poetry env remove 3.7
 poetry env remove test-O3eWbxRl-py3.7
 ```
 
+You can delete more than one environment at a time.
+```bash
+poetry env remove python3.6 python3.7 python3.8
+```
+Use the `--all` option to delete all virtual environments at once.
+```bash
+poetry env remove --all
+```
+
 If you remove the currently activated virtual environment, it will be automatically deactivated.
