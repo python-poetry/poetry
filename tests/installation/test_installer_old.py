@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 import itertools
-import sys
 
 from pathlib import Path
 
@@ -44,8 +41,8 @@ class CustomInstalledRepository(InstalledRepository):
 
 
 class Locker(BaseLocker):
-    def __init__(self):
-        self._lock = TOMLFile(Path.cwd().joinpath("poetry.lock"))
+    def __init__(self, lock_path):
+        self._lock = TOMLFile(Path(lock_path).joinpath("poetry.lock"))
         self._written_data = None
         self._locked = False
         self._content_hash = self._get_content_hash()
@@ -112,8 +109,8 @@ def installed():
 
 
 @pytest.fixture()
-def locker():
-    return Locker()
+def locker(project_root):
+    return Locker(lock_path=project_root)
 
 
 @pytest.fixture()
@@ -1447,11 +1444,7 @@ def test_installer_test_solver_finds_compatible_package_for_dependency_python_no
     assert locker.written_data == expected
 
     installs = installer.installer.installs
-
-    if sys.version_info >= (3, 5, 0):
-        assert len(installs) == 1
-    else:
-        assert len(installs) == 0
+    assert len(installs) == 1
 
 
 def test_installer_required_extras_should_not_be_removed_when_updating_single_dependency(

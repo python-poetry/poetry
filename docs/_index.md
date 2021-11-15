@@ -17,13 +17,9 @@ It allows you to declare the libraries your project depends on and it will manag
 
 ## System requirements
 
-Poetry requires Python 2.7 or 3.5+. It is multi-platform and the goal is to make it work equally well
+Poetry requires Python 3.6+. It is multi-platform and the goal is to make it work equally well
 on Windows, Linux and OSX.
 
-{{% note %}}
-Python 2.7 and 3.5 will no longer be supported in the next feature release (1.2).
-You should consider updating your Python version to a supported one.
-{{% /note %}}
 
 ## Installation
 
@@ -32,11 +28,11 @@ from the rest of your system.
 
 ### osx / linux / bashonwindows install instructions
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+curl -sSL https://install.python-poetry.org | python -
 ```
 ### windows powershell install instructions
 ```powershell
-(Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
 ```
 
 {{% warning %}}
@@ -173,16 +169,10 @@ See `poetry help completions` for full details, but the gist is as simple as usi
 
 ```bash
 # Bash
-poetry completions bash > /etc/bash_completion.d/poetry.bash-completion
-
-# Bash (Homebrew)
-poetry completions bash > $(brew --prefix)/etc/bash_completion.d/poetry.bash-completion
+poetry completions bash > /etc/bash_completion.d/poetry
 
 # Fish
 poetry completions fish > ~/.config/fish/completions/poetry.fish
-
-# Fish (Homebrew)
-poetry completions fish > (brew --prefix)/share/fish/vendor_completions.d/poetry.fish
 
 # Zsh
 poetry completions zsh > ~/.zfunc/_poetry

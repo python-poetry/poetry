@@ -308,10 +308,7 @@ class test(Command):
         build_cmd = self.get_finalized_command("build")
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
-        if sys.version_info[0] < 3:
-            sys.path.insert(0, "tests/lib")
-        else:
-            sys.path.insert(0, "tests/lib3")
+        sys.path.insert(0, "tests/lib3")
         import test_all
 
         if not test_all.main([]):
@@ -337,7 +334,7 @@ if __name__ == "__main__":
         url=URL,
         download_url=DOWNLOAD_URL,
         classifiers=CLASSIFIERS,
-        package_dir={"": {2: "lib", 3: "lib3"}[sys.version_info[0]]},
+        package_dir={"": "lib3"},
         packages=["yaml"],
         ext_modules=[
             Extension(

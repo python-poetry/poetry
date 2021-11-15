@@ -352,7 +352,7 @@ about dependency groups.
 
 ### Options
 
-* `--group (-D)`: The group to add the dependency to.
+* `--group (-G)`: The group to add the dependency to.
 * `--dev (-D)`: Add package as development dependency. (**Deprecated**)
 * `--editable (-e)`: Add vcs/path dependencies as editable.
 * `--extras (-E)`: Extras to activate for the dependency. (multiple values allowed)
@@ -360,8 +360,8 @@ about dependency groups.
 * `--python`: Python version for which the dependency must be installed.
 * `--platform`: Platforms for which the dependency must be installed.
 * `--source`: Name of the source to use to install the package.
-* `---allow-prereleases`: Accept prereleases.
-* `--dry-run`: Outputs the operations but will not execute anything (implicitly enables --verbose).
+* `--allow-prereleases`: Accept prereleases.
+* `--dry-run`: Output the operations but do not execute anything (implicitly enables --verbose).
 * `--lock`: Do not perform install (only update the lockfile).
 
 
@@ -602,6 +602,7 @@ Only the `requirements.txt` format is currently supported.
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
+* `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
 
 ## env

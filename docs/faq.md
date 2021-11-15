@@ -65,7 +65,7 @@ isolated_build = true
 envlist = py27, py36
 
 [testenv]
-whitelist_externals = poetry
+allowlist_externals = poetry
 commands =
     poetry install -v
     poetry run pytest tests/

@@ -164,8 +164,8 @@ def test_exporter_can_export_requirements_txt_with_standard_packages_and_markers
 
     expected = """\
 bar==4.5.6
-baz==7.8.9; sys_platform == "win32"
-foo==1.2.3; python_version < "3.7"
+baz==7.8.9 ; sys_platform == "win32"
+foo==1.2.3 ; python_version < "3.7"
 """
 
     assert expected == content
@@ -273,10 +273,10 @@ def test_exporter_can_export_requirements_txt_poetry(tmp_dir, poetry):
         "junit-xml": Dependency.create_from_pep_508("junit-xml==1.9"),
         "keyring": Dependency.create_from_pep_508("keyring==21.8.0"),
         "secretstorage": Dependency.create_from_pep_508(
-            "secretstorage==3.3.0; sys_platform=='linux'"
+            "secretstorage==3.3.0 ; sys_platform=='linux'"
         ),
         "cryptography": Dependency.create_from_pep_508(
-            "cryptography==3.2; sys_platform=='linux'"
+            "cryptography==3.2 ; sys_platform=='linux'"
         ),
         "six": Dependency.create_from_pep_508("six==1.15.0"),
     }
@@ -353,7 +353,7 @@ def test_exporter_can_export_requirements_txt_pyinstaller(tmp_dir, poetry):
         "pyinstaller": Dependency.create_from_pep_508("pyinstaller==4.0"),
         "altgraph": Dependency.create_from_pep_508("altgraph==0.17"),
         "macholib": Dependency.create_from_pep_508(
-            "macholib==1.8; sys_platform == 'darwin'"
+            "macholib==1.8 ; sys_platform == 'darwin'"
         ),
     }
 
@@ -423,15 +423,15 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
         content = f.read()
 
     expected = {
-        "a": Dependency.create_from_pep_508("a==1.2.3; python_version < '3.7'"),
+        "a": Dependency.create_from_pep_508("a==1.2.3 ; python_version < '3.7'"),
         "b": Dependency.create_from_pep_508(
-            "b==4.5.6; platform_system == 'Windows' and python_version < '3.7'"
+            "b==4.5.6 ; platform_system == 'Windows' and python_version < '3.7'"
         ),
         "c": Dependency.create_from_pep_508(
-            "c==7.8.9; sys_platform == 'win32' and python_version < '3.7'"
+            "c==7.8.9 ; sys_platform == 'win32' and python_version < '3.7'"
         ),
         "d": Dependency.create_from_pep_508(
-            "d==0.0.1; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
+            "d==0.0.1 ; platform_system == 'Windows' and python_version < '3.7' or sys_platform == 'win32' and python_version < '3.7'"
         ),
     }
 
@@ -447,7 +447,7 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers(
 
 @pytest.mark.parametrize(
     "dev,lines",
-    [(False, ['a==1.2.3; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
+    [(False, ['a==1.2.3 ; python_version < "3.8"']), (True, ["a==1.2.3", "b==4.5.6"])],
 )
 def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_any(
     tmp_dir, poetry, dev, lines
@@ -943,6 +943,79 @@ foo==1.2.3
     assert expected == content
 
 
+def test_exporter_can_export_requirements_txt_with_nested_packages_and_multiple_markers(
+    tmp_dir, poetry
+):
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                    "dependencies": {
+                        "bar": [
+                            {
+                                "version": ">=1.2.3,<7.8.10",
+                                "markers": 'platform_system != "Windows"',
+                            },
+                            {
+                                "version": ">=4.5.6,<7.8.10",
+                                "markers": 'platform_system == "Windows"',
+                            },
+                        ]
+                    },
+                },
+                {
+                    "name": "bar",
+                    "version": "7.8.9",
+                    "category": "main",
+                    "optional": True,
+                    "python-versions": "*",
+                    "dependencies": {
+                        "baz": {
+                            "version": "!=10.11.12",
+                            "markers": 'platform_system == "Windows"',
+                        }
+                    },
+                },
+                {
+                    "name": "baz",
+                    "version": "10.11.13",
+                    "category": "main",
+                    "optional": True,
+                    "python-versions": "*",
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": [], "bar": [], "baz": []},
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    exporter.export(
+        "requirements.txt", Path(tmp_dir), "requirements.txt", with_hashes=False
+    )
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
+bar==7.8.9 ; platform_system != "Windows" or platform_system == "Windows"
+baz==10.11.13 ; platform_system == "Windows"
+foo==1.2.3
+"""
+
+    assert expected == content
+
+
 def test_exporter_can_export_requirements_txt_with_git_packages_and_markers(
     tmp_dir, poetry
 ):
@@ -1139,7 +1212,7 @@ def test_exporter_can_export_requirements_txt_with_directory_packages_and_marker
         content = f.read()
 
     expected = """\
-foo @ {}/tests/fixtures/sample_project; python_version < "3.7"
+foo @ {}/tests/fixtures/sample_project ; python_version < "3.7"
 """.format(
         working_directory.as_uri()
     )
@@ -1228,7 +1301,7 @@ def test_exporter_can_export_requirements_txt_with_file_packages_and_markers(
         content = f.read()
 
     expected = """\
-foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz; python_version < "3.7"
+foo @ {}/tests/fixtures/distributions/demo-0.1.0.tar.gz ; python_version < "3.7"
 """.format(
         working_directory.as_uri()
     )
@@ -1285,6 +1358,64 @@ def test_exporter_exports_requirements_txt_with_legacy_packages(tmp_dir, poetry)
     expected = """\
 --extra-index-url https://example.com/simple
 
+bar==4.5.6 \\
+    --hash=sha256:67890
+foo==1.2.3 \\
+    --hash=sha256:12345
+"""
+
+    assert expected == content
+
+
+def test_exporter_exports_requirements_txt_with_url_false(tmp_dir, poetry):
+    poetry.pool.add_repository(
+        LegacyRepository(
+            "custom",
+            "https://example.com/simple",
+        )
+    )
+    poetry.locker.mock_lock_data(
+        {
+            "package": [
+                {
+                    "name": "foo",
+                    "version": "1.2.3",
+                    "category": "main",
+                    "optional": False,
+                    "python-versions": "*",
+                },
+                {
+                    "name": "bar",
+                    "version": "4.5.6",
+                    "category": "dev",
+                    "optional": False,
+                    "python-versions": "*",
+                    "source": {
+                        "type": "legacy",
+                        "url": "https://example.com/simple",
+                        "reference": "",
+                    },
+                },
+            ],
+            "metadata": {
+                "python-versions": "*",
+                "content-hash": "123456789",
+                "hashes": {"foo": ["12345"], "bar": ["67890"]},
+            },
+        }
+    )
+    set_package_requires(poetry)
+
+    exporter = Exporter(poetry)
+
+    exporter.export(
+        "requirements.txt", Path(tmp_dir), "requirements.txt", dev=True, with_urls=False
+    )
+
+    with (Path(tmp_dir) / "requirements.txt").open(encoding="utf-8") as f:
+        content = f.read()
+
+    expected = """\
 bar==4.5.6 \\
     --hash=sha256:67890
 foo==1.2.3 \\

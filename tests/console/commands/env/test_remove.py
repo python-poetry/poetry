@@ -39,3 +39,34 @@ def test_remove_by_name(tester, venvs_in_cache_dirs, venv_name, venv_cache):
         expected += "Deleted virtualenv: {}\n".format((venv_cache / name))
 
     assert expected == tester.io.fetch_output()
+
+
+def test_remove_all(tester, venvs_in_cache_dirs, venv_name, venv_cache):
+    expected = {""}
+    tester.execute("--all")
+    for name in venvs_in_cache_dirs:
+        assert not (venv_cache / name).exists()
+        expected.add("Deleted virtualenv: {}".format((venv_cache / name)))
+    assert expected == set(tester.io.fetch_output().split("\n"))
+
+
+def test_remove_all_and_version(tester, venvs_in_cache_dirs, venv_name, venv_cache):
+    expected = {""}
+    tester.execute("--all {}".format(venvs_in_cache_dirs[0]))
+    for name in venvs_in_cache_dirs:
+        assert not (venv_cache / name).exists()
+        expected.add("Deleted virtualenv: {}".format((venv_cache / name)))
+    assert expected == set(tester.io.fetch_output().split("\n"))
+
+
+def test_remove_multiple(tester, venvs_in_cache_dirs, venv_name, venv_cache):
+    expected = {""}
+    removed_envs = venvs_in_cache_dirs[0:2]
+    remaining_envs = venvs_in_cache_dirs[2:]
+    tester.execute(" ".join(removed_envs))
+    for name in removed_envs:
+        assert not (venv_cache / name).exists()
+        expected.add("Deleted virtualenv: {}".format((venv_cache / name)))
+    for name in remaining_envs:
+        assert (venv_cache / name).exists()
+    assert expected == set(tester.io.fetch_output().split("\n"))
