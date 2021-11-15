@@ -3,18 +3,18 @@ name: Skip All Jobs
 
 on:
   push:
-    paths:
-      - '!**'
-      - 'docs/**'
-      - '.cirrus.yml'
+    paths-ignore:
+      - '**'
+      - '!docs/**'
+      - '!.cirrus.yml'
     branches:
       - master
       - develop
   pull_request:
-    paths:
-      - '!**'
-      - 'docs/**'
-      - '.cirrus.yml'
+    paths-ignore:
+      - '**'
+      - '!docs/**'
+      - '!.cirrus.yml'
     branches:
       - '**'
 
