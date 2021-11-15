@@ -1,9 +1,9 @@
 import logging
-import os
 import urllib.parse
 
 from collections import defaultdict
-from pathlib import Path, PurePath
+from pathlib import Path
+from pathlib import PurePath
 from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
