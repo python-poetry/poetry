@@ -28,7 +28,12 @@ repos:
     rev: 5.10.1
     hooks:
       - id: isort
-        types: [python] # FIXME: pyi support that doesn't conflict with black
+        name: "isort (python)"
+        types: [python]
+      - id: isort
+        name: "isort (pyi)"
+        types: [pyi]
+        args: [--lines-after-imports, "-1"]
 
   - repo: https://github.com/psf/black
     rev: 21.10b0
