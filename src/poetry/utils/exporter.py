@@ -34,6 +34,7 @@ class Exporter:
         dev: bool = False,
         extras: Optional[Union[bool, Sequence[str]]] = None,
         with_credentials: bool = False,
+        with_urls: bool = True,
     ) -> None:
         if fmt not in self.ACCEPTED_FORMATS:
             raise ValueError(f"Invalid export format: {fmt}")
@@ -45,6 +46,7 @@ class Exporter:
             dev=dev,
             extras=extras,
             with_credentials=with_credentials,
+            with_urls=with_urls,
         )
 
     def _export_requirements_txt(
@@ -55,6 +57,7 @@ class Exporter:
         dev: bool = False,
         extras: Optional[Union[bool, Sequence[str]]] = None,
         with_credentials: bool = False,
+        with_urls: bool = True,
     ) -> None:
         indexes = set()
         content = ""
@@ -122,7 +125,7 @@ class Exporter:
         content += "\n".join(sorted(dependency_lines))
         content += "\n"
 
-        if indexes:
+        if indexes and with_urls:
             # If we have extra indexes, we add them to the beginning of the output
             indexes_header = ""
             for index in sorted(indexes):

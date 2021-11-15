@@ -20,6 +20,11 @@ class ExportCommand(Command):
         ),
         option("output", "o", "The name of the output file.", flag=False),
         option("without-hashes", None, "Exclude hashes from the exported file."),
+        option(
+            "without-urls",
+            None,
+            "Exclude source repository urls from the exported file.",
+        ),
         option("dev", None, "Include development dependencies."),
         option(
             "extras",
@@ -71,4 +76,5 @@ class ExportCommand(Command):
             dev=self.option("dev"),
             extras=self.option("extras"),
             with_credentials=self.option("with-credentials"),
+            with_urls=not self.option("without-urls"),
         )
