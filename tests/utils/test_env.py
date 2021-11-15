@@ -40,7 +40,7 @@ print("nullpackage loaded"),
 
 class MockVirtualEnv(VirtualEnv):
     def __init__(self, path, base=None, sys_path=None):
-        super(MockVirtualEnv, self).__init__(path, base=base)
+        super().__init__(path, base=base)
 
         self._sys_path = sys_path
 
@@ -49,7 +49,7 @@ class MockVirtualEnv(VirtualEnv):
         if self._sys_path is not None:
             return self._sys_path
 
-        return super(MockVirtualEnv, self).sys_path
+        return super().sys_path
 
 
 @pytest.fixture()
@@ -82,7 +82,7 @@ def test_env_commands_with_spaces_in_their_arg_work_as_expected(tmp_dir, manager
     manager.build_venv(str(venv_path))
     venv = VirtualEnv(venv_path)
     assert venv.run("python", venv.pip, "--version", shell=True).startswith(
-        "pip {} from ".format(venv.pip_version)
+        f"pip {venv.pip_version} from "
     )
 
 
@@ -134,7 +134,7 @@ def check_output_wrapper(version=VERSION_3_7_1):
         if "sys.version_info[:3]" in cmd:
             return version.text
         elif "sys.version_info[:2]" in cmd:
-            return "{}.{}".format(version.major, version.minor)
+            return f"{version.major}.{version.minor}"
         else:
             return str(Path("/prefix"))
 
@@ -163,7 +163,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     venv_name = EnvManager.generate_env_name("simple-project", str(poetry.file.parent))
 
     m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.7".format(venv_name),
+        Path(tmp_dir) / f"{venv_name}-py3.7",
         executable="python3.7",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
@@ -177,7 +177,7 @@ def test_activate_activates_non_existing_virtualenv_no_envs_file(
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
 
 
@@ -189,7 +189,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
-    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
+    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
@@ -213,7 +213,7 @@ def test_activate_activates_existing_virtualenv_no_envs_file(
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
 
 
@@ -230,7 +230,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
+    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
@@ -253,7 +253,7 @@ def test_activate_activates_same_virtualenv_with_envs_file(
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
 
 
@@ -269,7 +269,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.1"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
+    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
@@ -286,7 +286,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     env = manager.activate("python3.6", NullIO())
 
     m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.6".format(venv_name),
+        Path(tmp_dir) / f"{venv_name}-py3.6",
         executable="python3.6",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
@@ -299,7 +299,7 @@ def test_activate_activates_different_virtualenv_with_envs_file(
     assert envs[venv_name]["minor"] == "3.6"
     assert envs[venv_name]["patch"] == "3.6.6"
 
-    assert env.path == Path(tmp_dir) / "{}-py3.6".format(venv_name)
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.6"
     assert env.base == Path("/prefix")
 
 
@@ -315,7 +315,7 @@ def test_activate_activates_recreates_for_different_patch(
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
+    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
@@ -343,23 +343,23 @@ def test_activate_activates_recreates_for_different_patch(
     env = manager.activate("python3.7", NullIO())
 
     build_venv_m.assert_called_with(
-        Path(tmp_dir) / "{}-py3.7".format(venv_name),
+        Path(tmp_dir) / f"{venv_name}-py3.7",
         executable="python3.7",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
         with_wheel=True,
     )
-    remove_venv_m.assert_called_with(Path(tmp_dir) / "{}-py3.7".format(venv_name))
+    remove_venv_m.assert_called_with(Path(tmp_dir) / f"{venv_name}-py3.7")
 
     assert envs_file.exists()
     envs = envs_file.read()
     assert envs[venv_name]["minor"] == "3.7"
     assert envs[venv_name]["patch"] == "3.7.1"
 
-    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
-    assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)).exists()
+    assert (Path(tmp_dir) / f"{venv_name}-py3.7").exists()
 
 
 def test_activate_does_not_recreate_when_switching_minor(
@@ -374,8 +374,8 @@ def test_activate_does_not_recreate_when_switching_minor(
     doc[venv_name] = {"minor": "3.7", "patch": "3.7.0"}
     envs_file.write(doc)
 
-    os.mkdir(os.path.join(tmp_dir, "{}-py3.7".format(venv_name)))
-    os.mkdir(os.path.join(tmp_dir, "{}-py3.6".format(venv_name)))
+    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.7"))
+    os.mkdir(os.path.join(tmp_dir, f"{venv_name}-py3.6"))
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
@@ -404,9 +404,9 @@ def test_activate_does_not_recreate_when_switching_minor(
     assert envs[venv_name]["minor"] == "3.6"
     assert envs[venv_name]["patch"] == "3.6.6"
 
-    assert env.path == Path(tmp_dir) / "{}-py3.6".format(venv_name)
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.6"
     assert env.base == Path("/prefix")
-    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+    assert (Path(tmp_dir) / f"{venv_name}-py3.6").exists()
 
 
 def test_deactivate_non_activated_but_existing(
@@ -445,18 +445,15 @@ def test_deactivate_activated(tmp_dir, manager, poetry, config, mocker):
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
     version = Version.parse(".".join(str(c) for c in sys.version_info[:3]))
     other_version = Version.parse("3.4") if version.major == 2 else version.next_minor()
+    (Path(tmp_dir) / f"{venv_name}-py{version.major}.{version.minor}").mkdir()
     (
-        Path(tmp_dir) / "{}-py{}.{}".format(venv_name, version.major, version.minor)
-    ).mkdir()
-    (
-        Path(tmp_dir)
-        / "{}-py{}.{}".format(venv_name, other_version.major, other_version.minor)
+        Path(tmp_dir) / f"{venv_name}-py{other_version.major}.{other_version.minor}"
     ).mkdir()
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
     doc[venv_name] = {
-        "minor": "{}.{}".format(other_version.major, other_version.minor),
+        "minor": f"{other_version.major}.{other_version.minor}",
         "patch": other_version.text,
     }
     envs_file.write(doc)
@@ -488,7 +485,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
 
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
 
     envs_file = TOMLFile(Path(tmp_dir) / "envs.toml")
     doc = tomlkit.document()
@@ -506,7 +503,7 @@ def test_get_prefers_explicitly_activated_virtualenvs_over_env_var(
 
     env = manager.get()
 
-    assert env.path == Path(tmp_dir) / "{}-py3.7".format(venv_name)
+    assert env.path == Path(tmp_dir) / f"{venv_name}-py3.7"
     assert env.base == Path("/prefix")
 
 
@@ -514,22 +511,22 @@ def test_list(tmp_dir, manager, poetry, config):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
 
     venvs = manager.list()
 
     assert 2 == len(venvs)
-    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venvs[0].path
-    assert (Path(tmp_dir) / "{}-py3.7".format(venv_name)) == venvs[1].path
+    assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venvs[0].path
+    assert (Path(tmp_dir) / f"{venv_name}-py3.7") == venvs[1].path
 
 
 def test_remove_by_python_version(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
 
     mocker.patch(
         "subprocess.check_output",
@@ -538,34 +535,34 @@ def test_remove_by_python_version(tmp_dir, manager, poetry, config, mocker):
 
     venv = manager.remove("3.6")
 
-    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
-    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+    assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venv.path
+    assert not (Path(tmp_dir) / f"{venv_name}-py3.6").exists()
 
 
 def test_remove_by_name(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
 
     mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(Version.parse("3.6.6")),
     )
 
-    venv = manager.remove("{}-py3.6".format(venv_name))
+    venv = manager.remove(f"{venv_name}-py3.6")
 
-    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
-    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+    assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venv.path
+    assert not (Path(tmp_dir) / f"{venv_name}-py3.6").exists()
 
 
 def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    (Path(tmp_dir) / "{}-py3.7".format(venv_name)).mkdir()
-    (Path(tmp_dir) / "{}-py3.6".format(venv_name)).mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.7").mkdir()
+    (Path(tmp_dir) / f"{venv_name}-py3.6").mkdir()
 
     mocker.patch(
         "subprocess.check_output",
@@ -579,8 +576,8 @@ def test_remove_also_deactivates(tmp_dir, manager, poetry, config, mocker):
 
     venv = manager.remove("python3.6")
 
-    assert (Path(tmp_dir) / "{}-py3.6".format(venv_name)) == venv.path
-    assert not (Path(tmp_dir) / "{}-py3.6".format(venv_name)).exists()
+    assert (Path(tmp_dir) / f"{venv_name}-py3.6") == venv.path
+    assert not (Path(tmp_dir) / f"{venv_name}-py3.6").exists()
 
     envs = envs_file.read()
     assert venv_name not in envs
@@ -592,7 +589,7 @@ def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mo
     config.merge({"virtualenvs": {"path": str(tmp_dir)}})
 
     venv_name = manager.generate_env_name("simple-project", str(poetry.file.parent))
-    venv_path = Path(tmp_dir) / "{}-py3.6".format(venv_name)
+    venv_path = Path(tmp_dir) / f"{venv_name}-py3.6"
     venv_path.mkdir()
 
     folder1_path = venv_path / "folder1"
@@ -619,7 +616,7 @@ def test_remove_keeps_dir_if_not_deleteable(tmp_dir, manager, poetry, config, mo
 
     m = mocker.patch("shutil.rmtree", side_effect=err_on_rm_venv_only)
 
-    venv = manager.remove("{}-py3.6".format(venv_name))
+    venv = manager.remove(f"{venv_name}-py3.6")
 
     m.assert_any_call(str(venv_path))
 
@@ -726,7 +723,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_generic_
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        config_virtualenvs_path / "{}-py3.7".format(venv_name),
+        config_virtualenvs_path / f"{venv_name}-py3.7",
         executable="python3",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
@@ -753,7 +750,7 @@ def test_create_venv_tries_to_find_a_compatible_python_executable_using_specific
     manager.create_venv(NullIO())
 
     m.assert_called_with(
-        config_virtualenvs_path / "{}-py3.9".format(venv_name),
+        config_virtualenvs_path / f"{venv_name}-py3.9",
         executable="python3.9",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
@@ -839,8 +836,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility(
 
     assert not check_output.called
     m.assert_called_with(
-        config_virtualenvs_path
-        / "{}-py{}.{}".format(venv_name, version.major, version.minor),
+        config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor}",
         executable=None,
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
@@ -864,7 +860,7 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     check_output = mocker.patch(
         "subprocess.check_output",
         side_effect=check_output_wrapper(
-            Version.parse("{}.{}.0".format(version.major, version.minor - 1))
+            Version.parse(f"{version.major}.{version.minor - 1}.0")
         ),
     )
     m = mocker.patch(
@@ -872,14 +868,13 @@ def test_create_venv_uses_patch_version_to_detect_compatibility_with_executable(
     )
 
     manager.create_venv(
-        NullIO(), executable="python{}.{}".format(version.major, version.minor - 1)
+        NullIO(), executable=f"python{version.major}.{version.minor - 1}"
     )
 
     assert check_output.called
     m.assert_called_with(
-        config_virtualenvs_path
-        / "{}-py{}.{}".format(venv_name, version.major, version.minor - 1),
-        executable="python{}.{}".format(version.major, version.minor - 1),
+        config_virtualenvs_path / f"{venv_name}-py{version.major}.{version.minor - 1}",
+        executable=f"python{version.major}.{version.minor - 1}",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,
         with_setuptools=True,
@@ -1118,7 +1113,7 @@ def test_create_venv_accepts_fallback_version_w_nonzero_patchlevel(
 
     assert check_output.called
     m.assert_called_with(
-        config_virtualenvs_path / "{}-py3.5".format(venv_name),
+        config_virtualenvs_path / f"{venv_name}-py3.5",
         executable="python3.5",
         flags={"always-copy": False, "system-site-packages": False},
         with_pip=True,

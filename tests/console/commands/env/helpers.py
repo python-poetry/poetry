@@ -17,7 +17,7 @@ def check_output_wrapper(version=VERSION_3_7_1):
         if "sys.version_info[:3]" in cmd:
             return version.text
         elif "sys.version_info[:2]" in cmd:
-            return "{}.{}".format(version.major, version.minor)
+            return f"{version.major}.{version.minor}"
         else:
             return str(Path("/prefix"))
 

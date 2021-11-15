@@ -88,7 +88,7 @@ class KeyRing:
         try:
             import keyring
         except Exception as e:
-            logger.debug("An error occurred while importing keyring: {}".format(str(e)))
+            logger.debug(f"An error occurred while importing keyring: {str(e)}")
             self._is_available = False
 
             return

@@ -110,7 +110,7 @@ class PyPiRepository(RemoteRepository):
             info = self.get_package_info(dependency.name)
         except PackageNotFound:
             self._log(
-                "No packages found for {} {}".format(dependency.name, str(constraint)),
+                f"No packages found for {dependency.name} {str(constraint)}",
                 level="debug",
             )
             return []

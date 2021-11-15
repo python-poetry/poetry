@@ -39,19 +39,19 @@ class Config(BaseConfig):
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
-        return super(Config, self).get(setting_name, default=default)
+        return super().get(setting_name, default=default)
 
     def raw(self) -> Dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
-        return super(Config, self).raw()
+        return super().raw()
 
     def all(self) -> Dict[str, Any]:
         self.merge(self._config_source.config)
         self.merge(self._auth_config_source.config)
 
-        return super(Config, self).all()
+        return super().all()
 
 
 class DummyBackend(KeyringBackend):
@@ -308,7 +308,7 @@ def project_factory(tmp_dir, config, repo, installed, default_python):
         poetry_lock_content=None,
         install_deps=True,
     ):
-        project_dir = workspace / "poetry-fixture-{}".format(name)
+        project_dir = workspace / f"poetry-fixture-{name}"
         dependencies = dependencies or {}
         dev_dependencies = dev_dependencies or {}
 

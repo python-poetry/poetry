@@ -165,4 +165,4 @@ class Term:
         return "{}{}".format("not " if not self.is_positive() else "", self._dependency)
 
     def __repr__(self) -> str:
-        return "<Term {}>".format(str(self))
+        return f"<Term {str(self)}>"

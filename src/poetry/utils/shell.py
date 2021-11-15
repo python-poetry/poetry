@@ -80,9 +80,7 @@ class Shell:
         activate_script = self._get_activate_script()
         bin_dir = "Scripts" if WINDOWS else "bin"
         activate_path = env.path / bin_dir / activate_script
-        c.sendline(
-            "{} {}".format(self._get_source_command(), shlex.quote(str(activate_path)))
-        )
+        c.sendline(f"{self._get_source_command()} {shlex.quote(str(activate_path))}")
 
         def resize(sig: Any, data: Any) -> None:
             terminal = Terminal()

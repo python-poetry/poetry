@@ -248,7 +248,7 @@ class LegacyRepository(PyPiRepository):
 
         key = dependency.name
         if not constraint.is_any():
-            key = "{}:{}".format(key, str(constraint))
+            key = f"{key}:{str(constraint)}"
 
         ignored_pre_release_versions = []
 

@@ -124,7 +124,7 @@ def installer(package, pool, locker, env, installed, config):
 
 
 def fixture(name):
-    file = TOMLFile(Path(__file__).parent / "fixtures" / "{}.test".format(name))
+    file = TOMLFile(Path(__file__).parent / "fixtures" / f"{name}.test")
 
     return file.read()
 

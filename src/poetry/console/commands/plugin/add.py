@@ -193,7 +193,7 @@ You can specify a package in the following forms:
             "<c2>pyproject.toml</c2> file and will be skipped:\n"
         )
         for name in existing_packages:
-            self.line("  • <c1>{name}</c1>".format(name=name))
+            self.line(f"  • <c1>{name}</c1>")
 
         self.line(
             "\nIf you want to update it to the latest compatible version, "

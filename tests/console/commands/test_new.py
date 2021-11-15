@@ -148,7 +148,7 @@ def test_command_new_with_readme(fmt, tester, tmp_dir):
     fmt = "md"
     package = "package"
     path = Path(tmp_dir) / package
-    options = ["--readme {}".format(fmt) if fmt else "md", path.as_posix()]
+    options = [f"--readme {fmt}" if fmt else "md", path.as_posix()]
     tester.execute(" ".join(options))
 
     poetry = verify_project_directory(path, package, package, None)

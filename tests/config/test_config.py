@@ -15,7 +15,7 @@ def get_boolean_options(config=None):
             yield k
         if isinstance(v, dict):
             for suboption in get_boolean_options(v):
-                yield "{}.{}".format(k, suboption)
+                yield f"{k}.{suboption}"
 
 
 @pytest.mark.parametrize(
