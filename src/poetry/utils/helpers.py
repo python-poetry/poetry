@@ -4,6 +4,7 @@ import shutil
 import stat
 import tempfile
 
+from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,12 +16,6 @@ from typing import List
 from typing import Optional
 
 from poetry.config.config import Config
-
-
-try:
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping
 
 
 if TYPE_CHECKING:
@@ -103,13 +98,13 @@ def download_file(
 
     get = requests.get if not session else session.get
 
-    with get(url, stream=True) as response:
-        response.raise_for_status()
+    response = get(url, stream=True)
+    response.raise_for_status()
 
-        with open(dest, "wb") as f:
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    f.write(chunk)
+    with open(dest, "wb") as f:
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            if chunk:
+                f.write(chunk)
 
 
 def get_package_version_display_string(

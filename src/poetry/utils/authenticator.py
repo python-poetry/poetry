@@ -50,6 +50,10 @@ class Authenticator:
 
         return self._session
 
+    def __del__(self) -> None:
+        if self._session is not None:
+            self._session.close()
+
     def request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
         request = requests.Request(method, url)
         username, password = self.get_credentials_for_url(url)
