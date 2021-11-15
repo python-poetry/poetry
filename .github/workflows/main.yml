@@ -15,6 +15,10 @@ on:
     branches:
       - '**'
 
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     name: ${{ matrix.os }} / ${{ matrix.python-version }} ${{ matrix.suffix }}
