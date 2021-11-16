@@ -5,8 +5,11 @@ from tests.compat import Protocol
 
 
 if TYPE_CHECKING:
+    from cleo.io.io import IO
     from cleo.testers.command_tester import CommandTester
 
+    from poetry.config.config import Config
+    from poetry.config.source import Source
     from poetry.installation import Installer
     from poetry.installation.executor import Executor
     from poetry.poetry import Poetry
@@ -22,4 +25,11 @@ class CommandTesterFactory(Protocol):
         executor: Optional["Executor"] = None,
         environment: Optional["Env"] = None,
     ) -> "CommandTester":
+        ...
+
+
+class SourcesFactory(Protocol):
+    def __call__(
+        self, poetry: "Poetry", sources: "Source", config: "Config", io: "IO"
+    ) -> None:
         ...

@@ -97,7 +97,7 @@ def poetry(repo, project_directory, config):
 
 
 @pytest.fixture
-def app(poetry):
+def app(poetry) -> PoetryTestApplication:
     app_ = PoetryTestApplication(poetry)
 
     return app_

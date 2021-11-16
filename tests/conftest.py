@@ -271,7 +271,7 @@ def tmp_venv(tmp_dir):
 
 
 @pytest.fixture
-def installed():
+def installed() -> Repository:
     return Repository()
 
 
