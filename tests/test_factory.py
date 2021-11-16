@@ -25,6 +25,10 @@ def test_create_poetry():
     poetry = Factory().create_poetry(fixtures_dir / "sample_project")
 
     package = poetry.package
+    if hasattr(package, "readmes"):
+        single_readme = package.readmes[0]
+    else:
+        single_readme = package.readme
 
     assert package.name == "my-package"
     assert package.version.text == "1.2.3"
@@ -32,7 +36,7 @@ def test_create_poetry():
     assert package.authors == ["Sébastien Eustace <sebastien@eustace.io>"]
     assert package.license.id == "MIT"
     assert (
-        package.readme.relative_to(fixtures_dir).as_posix()
+        single_readme.relative_to(fixtures_dir).as_posix()
         == "sample_project/README.rst"
     )
     assert package.homepage == "https://python-poetry.org"
