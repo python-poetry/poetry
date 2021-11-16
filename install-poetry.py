@@ -213,7 +213,7 @@ def _get_win_folder_with_ctypes(csidl_name):
 
 if WINDOWS:
     try:
-        from ctypes import windll  # noqa
+        from ctypes import windll  # noqa: F401
 
         _get_win_folder = _get_win_folder_with_ctypes
     except ImportError:

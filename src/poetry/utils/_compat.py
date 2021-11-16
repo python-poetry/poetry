@@ -5,7 +5,7 @@ try:
     from importlib import metadata
 except ImportError:
     # compatibility for python <3.8
-    import importlib_metadata as metadata  # noqa
+    import importlib_metadata as metadata  # noqa: F401
 
 WINDOWS = sys.platform == "win32"
 

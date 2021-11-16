@@ -78,7 +78,6 @@ def interpreter_version():
 
 
 def _version_nodot(version):
-    # type: (PythonVersion) -> str
     if any(v >= 10 for v in version):
         sep = "_"
     else:
@@ -161,7 +160,7 @@ import json
 import site
 import sysconfig
 
-from distutils.command.install import SCHEME_KEYS  # noqa
+from distutils.command.install import SCHEME_KEYS
 from distutils.core import Distribution
 
 d = Distribution()
@@ -275,9 +274,7 @@ class SitePackages:
                 str, self._candidates if not writable_only else self.writable_candidates
             )
         )
-        for distribution in metadata.PathDistribution.discover(
-            name=name, path=path
-        ):  # type: metadata.PathDistribution
+        for distribution in metadata.PathDistribution.discover(name=name, path=path):
             yield distribution
 
     def find_distribution(

@@ -1,4 +1,4 @@
 try:
     import zipp
 except ImportError:
-    import zipfile as zipp  # noqa
+    import zipfile as zipp  # noqa: F401
