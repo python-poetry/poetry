@@ -33,6 +33,7 @@ repos:
         additional_dependencies: &flake8_deps
           - flake8-bugbear==21.9.2
           - flake8-comprehensions==3.7.0
+          - flake8-no-pep420==1.2.0
           - flake8-typing-imports==1.11.0
 
   - repo: https://github.com/pycqa/isort
