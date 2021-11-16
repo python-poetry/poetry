@@ -5,6 +5,7 @@ import sys
 import tempfile
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -35,6 +36,10 @@ from tests.helpers import get_package
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
 from tests.types import CommandTesterFactory
+
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 class Config(BaseConfig):
@@ -211,7 +216,7 @@ def git_mock(mocker):
 
 
 @pytest.fixture
-def http():
+def http() -> Iterator["ModuleType"]:
     httpretty.reset()
     httpretty.enable(allow_net_connect=False)
 
@@ -259,7 +264,7 @@ def mocked_open_files(mocker):
 
 
 @pytest.fixture
-def tmp_venv(tmp_dir):
+def tmp_venv(tmp_dir) -> VirtualEnv:
     venv_path = Path(tmp_dir) / "venv"
 
     EnvManager.build_venv(str(venv_path))
