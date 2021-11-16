@@ -18,7 +18,7 @@ def installed():
 
 
 def configure_sources_factory(repo):
-    def _configure_sources(poetry, sources, config, io):  # noqa
+    def _configure_sources(poetry, sources, config, io):
         pool = Pool()
         pool.add_repository(repo)
         poetry.set_pool(pool)

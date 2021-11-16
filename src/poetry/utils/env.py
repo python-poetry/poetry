@@ -1467,7 +1467,7 @@ class SystemEnv(Env):
         # to get the proper ones.
         import site
 
-        from distutils.command.install import SCHEME_KEYS  # noqa
+        from distutils.command.install import SCHEME_KEYS
         from distutils.core import Distribution
 
         d = Distribution()

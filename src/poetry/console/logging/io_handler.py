@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from logging import LogRecord
 
-    from cleo.io.io import IO  # noqa
+    from cleo.io.io import IO
 
 
 class IOHandler(logging.Handler):

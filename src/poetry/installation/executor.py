@@ -37,7 +37,7 @@ from .operations.update import Update
 
 
 if TYPE_CHECKING:
-    from cleo.io.io import IO  # noqa
+    from cleo.io.io import IO
 
     from poetry.config.config import Config
     from poetry.repositories import Pool

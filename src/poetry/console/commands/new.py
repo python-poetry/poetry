@@ -85,6 +85,6 @@ class NewCommand(Command):
 
         self.line(
             "Created package <info>{}</> in <fg=blue>{}</>".format(
-                layout_._package_name, path.as_posix()  # noqa
+                layout_._package_name, path.as_posix()
             )
         )

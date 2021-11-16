@@ -6,14 +6,14 @@ from poetry.core.packages.project_package import ProjectPackage as _ProjectPacka
 
 
 if TYPE_CHECKING:
-    from poetry.core.semver.version import Version  # noqa
+    from poetry.core.semver.version import Version
 
 
 class ProjectPackage(_ProjectPackage):
     def set_version(
         self, version: Union[str, "Version"], pretty_version: Optional[str] = None
     ) -> None:
-        from poetry.core.semver.version import Version  # noqa
+        from poetry.core.semver.version import Version
 
         if not isinstance(version, Version):
             self._version = Version.parse(version)

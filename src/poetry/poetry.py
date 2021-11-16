@@ -29,7 +29,7 @@ class Poetry(BasePoetry):
         locker: "Locker",
         config: "Config",
     ):
-        from .repositories.pool import Pool  # noqa
+        from .repositories.pool import Pool
 
         super(Poetry, self).__init__(file, local_config, package)
 

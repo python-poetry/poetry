@@ -174,7 +174,7 @@ def download_mock(mocker):
 
 @pytest.fixture(autouse=True)
 def pep517_metadata_mock(mocker):
-    @classmethod  # noqa
+    @classmethod
     def _pep517_metadata(cls, path):
         try:
             return PackageInfo.from_setup_files(path)
@@ -335,9 +335,7 @@ def project_factory(tmp_dir, config, repo, installed, default_python):
 
         poetry = Factory().create_poetry(project_dir)
 
-        locker = TestLocker(
-            poetry.locker.lock.path, poetry.locker._local_config
-        )  # noqa
+        locker = TestLocker(poetry.locker.lock.path, poetry.locker._local_config)
         locker.write()
 
         poetry.set_locker(locker)

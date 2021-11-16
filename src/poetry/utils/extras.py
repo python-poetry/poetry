@@ -7,7 +7,7 @@ from typing import Sequence
 
 
 if TYPE_CHECKING:
-    from poetry.core.packages.package import Package  # noqa
+    from poetry.core.packages.package import Package
 
 
 def get_extra_package_names(

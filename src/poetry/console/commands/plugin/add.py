@@ -12,8 +12,8 @@ from ..init import InitCommand
 
 
 if TYPE_CHECKING:
-    from poetry.console.application import Application  # noqa
-    from poetry.console.commands.update import UpdateCommand  # noqa
+    from poetry.console.application import Application
+    from poetry.console.commands.update import UpdateCommand
 
 
 class PluginAddCommand(InitCommand):
