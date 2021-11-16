@@ -606,6 +606,8 @@ Only the `requirements.txt` format is currently supported.
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
+  This is automatically enabled if any VCS dependencies are present
+  because of pypa/pip#4995.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
 
