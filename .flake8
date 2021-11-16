@@ -1,21 +1,18 @@
 [flake8]
 min_python_version = 3.6.0
-ignore =
-    # E501: Line too long
+max-line-length = 88
+extend-ignore =
+    # E501: Line too long (FIXME: long string constants)
     E501,
-    # W503: Line break occurred before a binary operator
-    W503
+    # E203: Whitespace before ':' (pycqa/pycodestyle#373)
+    E203,
 per-file-ignores =
-    # F401: Module imported by unused
+    # F401: Module imported by unused (non-implicit modules)
     __init__.py:F401
-exclude =
-    */fixtures/**/setup.py
-    .git,
-    .github,
-    .mypy_cache,
-    .pytest_cache,
-    .tox,
-    .venv,
-    .vscode,
-    __pycache__,
-    dist,
+extend-exclude =
+    # Frozen and not subject to change in this repo:
+    get-poetry.py,
+    install-poetry.py,
+    # External to the project's coding standards:
+    tests/fixtures/*,
+    tests/**/fixtures/*,
