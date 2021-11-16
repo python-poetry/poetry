@@ -18,7 +18,7 @@ from poetry.utils.pip import pip_editable_install
 
 
 if TYPE_CHECKING:
-    from cleo.io.io import IO  # noqa
+    from cleo.io.io import IO
 
     from poetry.core.poetry import Poetry
     from poetry.utils.env import Env

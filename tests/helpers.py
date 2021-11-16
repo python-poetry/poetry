@@ -148,7 +148,7 @@ class PoetryTestApplication(Application):
 
 
 class TestLocker(Locker):
-    def __init__(self, lock, local_config):  # noqa
+    def __init__(self, lock, local_config):
         self._lock = TOMLFile(lock)
         self._local_config = local_config
         self._lock_data = None

@@ -10,7 +10,7 @@ from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:
-    from poetry.console.application import Application  # noqa
+    from poetry.console.application import Application
     from poetry.console.commands.remove import RemoveCommand
 
 

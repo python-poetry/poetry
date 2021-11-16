@@ -24,6 +24,15 @@ repos:
       - id: python-check-blanket-type-ignore
       - id: python-check-mock-methods
 
+  - repo: https://github.com/asottile/yesqa
+    rev: v1.3.0
+    hooks:
+      - id: yesqa
+        additional_dependencies: &flake8_deps
+          - flake8-bugbear==21.9.2
+          - flake8-comprehensions==3.7.0
+          - flake8-typing-imports==1.11.0
+
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
     hooks:
@@ -44,10 +53,7 @@ repos:
     rev: 4.0.1
     hooks:
       - id: flake8
-        additional_dependencies:
-          - flake8-bugbear==21.9.2
-          - flake8-comprehensions==3.7.0
-          - flake8-typing-imports==1.11.0
+        additional_dependencies: *flake8_deps
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.910-1

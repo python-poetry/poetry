@@ -10,7 +10,7 @@ from .env_command import EnvCommand
 
 
 if TYPE_CHECKING:
-    from cleo.io.io import IO  # noqa
+    from cleo.io.io import IO
 
     from poetry.core.packages.dependency import Dependency
     from poetry.core.packages.package import Package

@@ -47,7 +47,7 @@ class Layout:
         description: str = "",
         readme_format: str = "md",
         author: Optional[str] = None,
-        license: Optional[str] = None,  # noqa
+        license: Optional[str] = None,
         python: str = "*",
         dependencies: Optional[Dict[str, str]] = None,
         dev_dependencies: Optional[Dict[str, str]] = None,
