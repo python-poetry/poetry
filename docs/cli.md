@@ -619,6 +619,8 @@ This command is also available as a pre-commit hook. See [pre-commit hooks](/doc
 * `--dev`: Include development dependencies.
 * `--extras (-E)`: Extra sets of dependencies to include.
 * `--without-hashes`: Exclude hashes from the exported file.
+  This must be used if any VCS dependencies are present
+  because of pypa/pip#4995.
 * `--without-urls`: Exclude source repository urls from the exported file.
 * `--with-credentials`: Include credentials for extra indices.
 
