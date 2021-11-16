@@ -8,7 +8,7 @@ extend-ignore =
     E203,
 per-file-ignores =
     # F401: Module imported by unused (non-implicit modules)
-    __init__.py:F401
+    __init__.py:F401,
 extend-exclude =
     # Frozen and not subject to change in this repo:
     get-poetry.py,
