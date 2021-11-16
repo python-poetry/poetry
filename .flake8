@@ -1,6 +1,7 @@
 [flake8]
 min_python_version = 3.6.0
 max-line-length = 88
+inline-quotes = double
 extend-ignore =
     # E501: Line too long (FIXME: long string constants)
     E501,

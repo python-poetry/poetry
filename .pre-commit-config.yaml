@@ -35,6 +35,7 @@ repos:
           - flake8-comprehensions==3.7.0
           - flake8-no-pep420==1.2.0
           - flake8-typing-imports==1.11.0
+          - flake8-quotes==3.3.1
 
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
