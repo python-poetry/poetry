@@ -79,5 +79,8 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
+      - name: Install pytest plugin
+        run: poetry run pip install pytest-github-actions-annotate-failures
+
       - name: Run pytest
         run: poetry run python -m pytest -p no:sugar -q tests/
