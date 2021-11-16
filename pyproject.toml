@@ -93,7 +93,6 @@ force-exclude = '''
 
 
 [tool.mypy]
-python_version = "3.6"
 check_untyped_defs = true
 ignore_missing_imports = true
 warn_redundant_casts = true
