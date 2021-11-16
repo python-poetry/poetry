@@ -543,7 +543,7 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates = dict()
+        duplicates = {}
         for dep in dependencies:
             if dep.complete_name not in duplicates:
                 duplicates[dep.complete_name] = []
@@ -559,7 +559,7 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # Regrouping by constraint
-            by_constraint = dict()
+            by_constraint = {}
             for dep in deps:
                 if dep.constraint not in by_constraint:
                     by_constraint[dep.constraint] = []

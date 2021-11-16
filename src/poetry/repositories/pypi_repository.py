@@ -414,7 +414,7 @@ class PyPiRepository(RemoteRepository):
                         )
                         requires_dist.append(dep.to_pep_508())
 
-                    info.requires_dist = sorted(list(set(requires_dist)))
+                    info.requires_dist = sorted(set(requires_dist))
 
             if info:
                 return info

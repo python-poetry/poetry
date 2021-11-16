@@ -188,7 +188,7 @@ def substitute_crypto_to_req(req):
 
 def read_extras():
     """Specify any extra requirements for installation."""
-    extras = dict()
+    extras = {}
     extra_requirements_dir = "packaging/requirements"
     for extra_requirements_filename in os.listdir(extra_requirements_dir):
         filename_match = re.search(

@@ -836,11 +836,10 @@ class EnvManager:
                 )
             )
 
-            for python_to_try in reversed(
-                sorted(
-                    self._poetry.package.AVAILABLE_PYTHONS,
-                    key=lambda v: (v.startswith("3"), -len(v), v),
-                )
+            for python_to_try in sorted(
+                self._poetry.package.AVAILABLE_PYTHONS,
+                key=lambda v: (v.startswith("3"), -len(v), v),
+                reverse=True,
             ):
                 if len(python_to_try) == 1:
                     if not parse_constraint(f"^{python_to_try}.0").allows_any(
