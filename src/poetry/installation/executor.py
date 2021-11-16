@@ -84,7 +84,7 @@ class Executor:
         self._executed_operations = 0
         self._executed = {"install": 0, "update": 0, "uninstall": 0}
         self._skipped = {"install": 0, "update": 0, "uninstall": 0}
-        self._sections = dict()
+        self._sections = {}
         self._lock = threading.Lock()
         self._shutdown = False
         self._hashes: Dict[str, str] = {}
@@ -150,7 +150,7 @@ class Executor:
 
         # We group operations by priority
         groups = itertools.groupby(operations, key=lambda o: -o.priority)
-        self._sections = dict()
+        self._sections = {}
         for _, group in groups:
             tasks = []
             serial_operations = []

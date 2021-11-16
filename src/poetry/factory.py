@@ -221,7 +221,7 @@ class Factory(BaseFactory):
                 constraint["markers"] = str(dep.marker)
 
             if dep.extras:
-                constraint["extras"] = list(sorted(dep.extras))
+                constraint["extras"] = sorted(dep.extras)
 
             if len(constraint) == 1 and "version" in constraint:
                 constraint = constraint["version"]

@@ -28,13 +28,13 @@ class PartialSolution:
         self._assignments: List[Assignment] = []
 
         # The decisions made for each package.
-        self._decisions: Dict[str, "Package"] = dict()
+        self._decisions: Dict[str, "Package"] = {}
 
         # The intersection of all positive Assignments for each package, minus any
         # negative Assignments that refer to that package.
         #
         # This is derived from self._assignments.
-        self._positive: Dict[str, Term] = dict()
+        self._positive: Dict[str, Term] = {}
 
         # The union of all negative Assignments for each package.
         #
@@ -42,7 +42,7 @@ class PartialSolution:
         # map.
         #
         # This is derived from self._assignments.
-        self._negative: Dict[str, Dict[str, Term]] = dict()
+        self._negative: Dict[str, Dict[str, Term]] = {}
 
         # The number of distinct solutions that have been attempted so far.
         self._attempted_solutions = 1

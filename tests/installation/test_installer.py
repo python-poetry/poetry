@@ -593,15 +593,12 @@ def test_run_install_with_optional_group_selected(
 
 @pytest.mark.parametrize(
     "managed_reserved_package_names",
-    [
-        i
-        for i in itertools.chain(
-            [tuple()],
-            itertools.permutations(RESERVED_PACKAGES, 1),
-            itertools.permutations(RESERVED_PACKAGES, 2),
-            [RESERVED_PACKAGES],
-        )
-    ],
+    itertools.chain(
+        [()],
+        itertools.permutations(RESERVED_PACKAGES, 1),
+        itertools.permutations(RESERVED_PACKAGES, 2),
+        [RESERVED_PACKAGES],
+    ),
 )
 def test_run_install_with_synchronization(
     managed_reserved_package_names, installer, locker, repo, package, installed
@@ -672,7 +669,7 @@ def test_run_install_with_synchronization(
         *managed_reserved_package_names,
     }
 
-    assert expected_removals == set(r.name for r in installer.executor.removals)
+    assert expected_removals == {r.name for r in installer.executor.removals}
 
 
 def test_run_whitelist_add(installer, locker, repo, package):
