@@ -1,5 +1,6 @@
 import logging
 
+from typing import Any
 from typing import List
 
 import entrypoints
@@ -41,7 +42,7 @@ class PluginManager:
 
         self._plugins.append(plugin)
 
-    def activate(self, *args, **kwargs):
+    def activate(self, *args: Any, **kwargs: Any) -> None:
         for plugin in self._plugins:
             plugin.activate(*args, **kwargs)
 

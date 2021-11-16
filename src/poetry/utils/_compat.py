@@ -1,5 +1,8 @@
 import sys
 
+from typing import List
+from typing import Optional
+
 
 try:
     from importlib import metadata
@@ -10,7 +13,7 @@ except ImportError:
 WINDOWS = sys.platform == "win32"
 
 
-def decode(string, encodings=None):
+def decode(string: str, encodings: Optional[List[str]] = None) -> str:
     if not isinstance(string, bytes):
         return string
 
@@ -25,7 +28,7 @@ def decode(string, encodings=None):
     return string.decode(encodings[0], errors="ignore")
 
 
-def encode(string, encodings=None):
+def encode(string: str, encodings: Optional[List[str]] = None) -> bytes:
     if isinstance(string, bytes):
         return string
 
@@ -40,11 +43,11 @@ def encode(string, encodings=None):
     return string.encode(encodings[0], errors="ignore")
 
 
-def to_str(string):
+def to_str(string: str) -> str:
     return decode(string)
 
 
-def list_to_shell_command(cmd):
+def list_to_shell_command(cmd: List[str]) -> str:
     return " ".join(
         f'"{token}"' if " " in token and token[0] not in {"'", '"'} else token
         for token in cmd

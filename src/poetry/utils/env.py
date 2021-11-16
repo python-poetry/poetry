@@ -1168,7 +1168,7 @@ class Env:
 
             self._pip_executable = pip_executable
 
-    def get_embedded_wheel(self, distribution):
+    def get_embedded_wheel(self, distribution: str) -> Path:
         return get_embed_wheel(
             distribution, f"{self.version_info[0]}.{self.version_info[1]}"
         ).path
@@ -1785,7 +1785,7 @@ class NullEnv(SystemEnv):
 
 @contextmanager
 def ephemeral_environment(
-    executable=None,
+    executable: Optional[Union[str, Path]] = None,
     flags: Dict[str, bool] = None,
     with_pip: bool = False,
     with_wheel: Optional[bool] = None,
