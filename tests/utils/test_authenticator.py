@@ -173,7 +173,7 @@ def test_authenticator_request_retries_on_exception(mocker, config, http):
     sleep = mocker.patch("time.sleep")
     sdist_uri = "https://foo.bar/files/{}/foo-0.1.0.tar.gz".format(str(uuid.uuid4()))
     content = str(uuid.uuid4())
-    seen = list()
+    seen = []
 
     def callback(request, uri, response_headers):
         if seen.count(uri) < 2:

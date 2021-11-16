@@ -163,7 +163,7 @@ lists all packages available."""
         with solver.use_environment(self.env):
             ops = solver.solve().calculate_operations()
 
-        required_locked_packages = set([op.package for op in ops if not op.skipped])
+        required_locked_packages = {op.package for op in ops if not op.skipped}
 
         if package:
             pkg = None

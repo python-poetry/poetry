@@ -327,7 +327,7 @@ class Locker:
             pinned_versions=pinned_versions,
             packages_by_name=packages_by_name,
             project_level_dependencies=project_level_dependencies,
-            nested_dependencies=dict(),
+            nested_dependencies={},
         )
 
         # Merge same dependencies using marker union
@@ -424,14 +424,12 @@ class Locker:
                 for extra, deps in sorted(root.extras.items())
             }
 
-        lock["metadata"] = dict(
-            [
-                ("lock-version", self._VERSION),
-                ("python-versions", root.python_versions),
-                ("content-hash", self._content_hash),
-                ("files", files),
-            ]
-        )
+        lock["metadata"] = {
+            "lock-version": self._VERSION,
+            "python-versions": root.python_versions,
+            "content-hash": self._content_hash,
+            "files": files,
+        }
 
         if not self.is_locked() or lock != self.lock_data:
             self._write_lock_data(lock)
@@ -556,17 +554,15 @@ class Locker:
                     constraint["version"] for constraint in constraints
                 ]
 
-        data = dict(
-            [
-                ("name", package.pretty_name),
-                ("version", package.pretty_version),
-                ("description", package.description or ""),
-                ("category", package.category),
-                ("optional", package.optional),
-                ("python-versions", package.python_versions),
-                ("files", sorted(package.files, key=lambda x: x["file"])),
-            ]
-        )
+        data = {
+            "name": package.pretty_name,
+            "version": package.pretty_version,
+            "description": package.description or "",
+            "category": package.category,
+            "optional": package.optional,
+            "python-versions": package.python_versions,
+            "files": sorted(package.files, key=lambda x: x["file"]),
+        }
 
         if dependencies:
             data["dependencies"] = table()
@@ -600,7 +596,7 @@ class Locker:
                     )
                 ).as_posix()
 
-            data["source"] = dict()
+            data["source"] = {}
 
             if package.source_type:
                 data["source"]["type"] = package.source_type

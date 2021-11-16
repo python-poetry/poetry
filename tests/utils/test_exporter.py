@@ -482,12 +482,12 @@ def test_exporter_can_export_requirements_txt_with_nested_packages_and_markers_a
     root = poetry.package.with_dependency_groups([], only=True)
     root.add_dependency(
         Factory.create_dependency(
-            name="a", constraint=dict(version="^1.2.3", python="<3.8")
+            name="a", constraint={"version": "^1.2.3", "python": "<3.8"}
         )
     )
     root.add_dependency(
         Factory.create_dependency(
-            name="b", constraint=dict(version="^4.5.6"), groups=["dev"]
+            name="b", constraint={"version": "^4.5.6"}, groups=["dev"]
         )
     )
     poetry._package = root

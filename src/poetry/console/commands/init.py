@@ -414,7 +414,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                     parsed = ParsedUrl.parse(requirement)
                     url = Git.normalize_url(requirement)
 
-                    pair = dict([("name", parsed.name), ("git", url.url)])
+                    pair = {"name": parsed.name, "git": url.url}
                     if parsed.rev:
                         pair["rev"] = url.revision
 
@@ -431,7 +431,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
                 elif url_parsed.scheme in ["http", "https"]:
                     package = Provider.get_package_from_url(requirement)
 
-                    pair = dict([("name", package.name), ("url", package.source_url)])
+                    pair = {"name": package.name, "url": package.source_url}
                     if extras:
                         pair["extras"] = extras
 
@@ -475,7 +475,7 @@ The <c1>init</c1> command creates a basic <comment>pyproject.toml</> file in the
             )
             pair = pair.strip()
 
-            require = dict()
+            require = {}
             if " " in pair:
                 name, version = pair.split(" ", 2)
                 extras_m = re.search(r"\[([\w\d,-_]+)\]$", name)
