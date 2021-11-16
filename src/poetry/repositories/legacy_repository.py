@@ -432,5 +432,5 @@ class LegacyRepository(PyPiRepository):
 
         return Page(response.url, response.content, response.headers)
 
-    def _download(self, url, dest):  # type: (str, str) -> None
+    def _download(self, url: str, dest: str) -> None:
         return download_file(url, dest, session=self.session)
