@@ -646,11 +646,11 @@ def test_run_with_input(tmp_dir, tmp_venv):
 
 def test_run_with_input_non_zero_return(tmp_dir, tmp_venv):
 
-    with pytest.raises(EnvCommandError) as processError:
+    with pytest.raises(EnvCommandError) as process_error:
         # Test command that will return non-zero returncode.
         tmp_venv.run("python", "-", input_=ERRORING_SCRIPT)
 
-    assert processError.value.e.returncode == 1
+    assert process_error.value.e.returncode == 1
 
 
 def test_run_with_keyboard_interrupt(tmp_dir, tmp_venv, mocker):
