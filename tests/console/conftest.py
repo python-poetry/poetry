@@ -1,6 +1,7 @@
 import os
 
 from pathlib import Path
+from typing import Iterator
 
 import pytest
 
@@ -23,14 +24,14 @@ def installer():
 
 
 @pytest.fixture
-def env(tmp_dir):
+def env(tmp_dir) -> MockEnv:
     path = Path(tmp_dir) / ".venv"
     path.mkdir(parents=True)
     return MockEnv(path=path, is_venv=True)
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed, config, env):
+def setup(mocker, installer, installed, config, env) -> Iterator[None]:
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer

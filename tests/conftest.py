@@ -7,6 +7,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 from typing import Dict
+from typing import Iterator
+from typing import Tuple
 
 import httpretty
 import pytest
@@ -32,6 +34,7 @@ from tests.helpers import TestRepository
 from tests.helpers import get_package
 from tests.helpers import mock_clone
 from tests.helpers import mock_download
+from tests.types import CommandTesterFactory
 
 
 class Config(BaseConfig):
@@ -110,7 +113,7 @@ def with_chained_keyring(mocker):
 
 
 @pytest.fixture
-def config_cache_dir(tmp_dir):
+def config_cache_dir(tmp_dir) -> Path:
     path = Path(tmp_dir) / ".cache" / "pypoetry"
     path.mkdir(parents=True)
     return path
@@ -137,7 +140,7 @@ def auth_config_source():
 
 
 @pytest.fixture
-def config(config_source, auth_config_source, mocker):
+def config(config_source, auth_config_source, mocker) -> Config:
     import keyring
 
     from keyring.backends.fail import Keyring
@@ -189,7 +192,7 @@ def pep517_metadata_mock(mocker):
 
 
 @pytest.fixture
-def environ():
+def environ() -> Iterator[None]:
     original_environ = dict(os.environ)
 
     yield
@@ -273,12 +276,12 @@ def installed():
 
 
 @pytest.fixture(scope="session")
-def current_env():
+def current_env() -> SystemEnv:
     return SystemEnv(Path(sys.executable))
 
 
 @pytest.fixture(scope="session")
-def current_python(current_env):
+def current_python(current_env: SystemEnv) -> Tuple[int, int, int]:
     return current_env.version_info[:3]
 
 
@@ -288,7 +291,7 @@ def default_python(current_python):
 
 
 @pytest.fixture
-def repo(http):
+def repo(http) -> TestRepository:
     http.register_uri(
         http.GET,
         re.compile("^https?://foo.bar/(.+?)$"),
@@ -359,7 +362,7 @@ def project_factory(tmp_dir, config, repo, installed, default_python):
 
 
 @pytest.fixture
-def command_tester_factory(app, env):
+def command_tester_factory(app, env) -> CommandTesterFactory:
     def _tester(command, poetry=None, installer=None, executor=None, environment=None):
         command = app.find(command)
         tester = CommandTester(command)
