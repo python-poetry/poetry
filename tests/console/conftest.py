@@ -20,7 +20,10 @@ from tests.helpers import mock_clone
 
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from poetry.poetry import Poetry
+    from poetry.repositories import Repository
     from tests.conftest import Config
     from tests.helpers import TestRepository
 
@@ -38,7 +41,13 @@ def env(tmp_dir: str) -> MockEnv:
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, installer, installed, config, env) -> Iterator[None]:
+def setup(
+    mocker: "MockerFixture",
+    installer: NoopInstaller,
+    installed: "Repository",
+    config: "Config",
+    env: MockEnv,
+) -> Iterator[None]:
     # Set Installer's installer
     p = mocker.patch("poetry.installation.installer.Installer._get_installer")
     p.return_value = installer
@@ -106,7 +115,7 @@ def poetry(
 
 
 @pytest.fixture
-def app(poetry) -> PoetryTestApplication:
+def app(poetry: "Poetry") -> PoetryTestApplication:
     app_ = PoetryTestApplication(poetry)
 
     return app_
@@ -118,10 +127,10 @@ def app_tester(app: PoetryTestApplication) -> ApplicationTester:
 
 
 @pytest.fixture
-def new_installer_disabled(config):
+def new_installer_disabled(config: "Config") -> None:
     config.merge({"experimental": {"new-installer": False}})
 
 
 @pytest.fixture()
-def executor(poetry, config, env):
+def executor(poetry: "Poetry", config: "Config", env: MockEnv) -> TestExecutor:
     return TestExecutor(env, poetry.pool, config, NullIO())
