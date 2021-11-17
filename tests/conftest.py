@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Iterator
 from typing import Optional
@@ -122,7 +123,7 @@ def with_chained_keyring(mocker):
 
 
 @pytest.fixture
-def config_cache_dir(tmp_dir) -> Path:
+def config_cache_dir(tmp_dir: str) -> Path:
     path = Path(tmp_dir) / ".cache" / "pypoetry"
     path.mkdir(parents=True)
     return path
@@ -142,7 +143,7 @@ def config_source(config_cache_dir):
 
 
 @pytest.fixture
-def auth_config_source():
+def auth_config_source() -> DictConfigSource:
     source = DictConfigSource()
 
     return source
@@ -231,13 +232,13 @@ def http() -> Iterator["ModuleType"]:
 
 
 @pytest.fixture
-def fixture_base():
+def fixture_base() -> Path:
     return Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
-def fixture_dir(fixture_base):
-    def _fixture_dir(name):
+def fixture_dir(fixture_base: Path) -> Callable[[str], Path]:
+    def _fixture_dir(name: str):
         return fixture_base / name
 
     return _fixture_dir
