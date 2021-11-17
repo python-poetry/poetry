@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Dict
 from typing import Optional
 
 from tests.compat import Protocol
@@ -32,4 +33,17 @@ class SourcesFactory(Protocol):
     def __call__(
         self, poetry: "Poetry", sources: "Source", config: "Config", io: "IO"
     ) -> None:
+        ...
+
+
+class ProjectFactory(Protocol):
+    def __call__(
+        self,
+        name: Optional[str] = None,
+        dependencies: Optional[Dict[str, str]] = None,
+        dev_dependencies: Optional[Dict[str, str]] = None,
+        pyproject_content: Optional[str] = None,
+        poetry_lock_content: Optional[str] = None,
+        install_deps: bool = True,
+    ) -> "Poetry":
         ...
