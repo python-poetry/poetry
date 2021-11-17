@@ -419,7 +419,7 @@ def command_tester_factory(app, env) -> "CommandTesterFactory":
 
 
 @pytest.fixture
-def do_lock(command_tester_factory, poetry):
+def do_lock(command_tester_factory: "CommandTesterFactory", poetry: "Poetry") -> None:
     command_tester_factory("lock").execute()
     assert poetry.locker.lock.exists()
 
