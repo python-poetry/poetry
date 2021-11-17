@@ -113,7 +113,7 @@ def app(poetry) -> PoetryTestApplication:
 
 
 @pytest.fixture
-def app_tester(app):
+def app_tester(app: PoetryTestApplication) -> ApplicationTester:
     return ApplicationTester(app)
 
 
