@@ -6,7 +6,7 @@ from typing import Iterator
 from tomlkit import document
 from tomlkit import table
 
-from .config_source import ConfigSource
+from poetry.config.config_source import ConfigSource
 
 
 if TYPE_CHECKING:

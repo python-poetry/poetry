@@ -10,17 +10,16 @@ from typing import Union
 from poetry.core.packages.dependency import Dependency
 from poetry.core.packages.package import Package
 from poetry.core.packages.project_package import ProjectPackage
-
-from .failure import SolveFailure
-from .incompatibility import Incompatibility
-from .incompatibility_cause import ConflictCause
-from .incompatibility_cause import NoVersionsCause
-from .incompatibility_cause import PackageNotFoundCause
-from .incompatibility_cause import RootCause
-from .partial_solution import PartialSolution
-from .result import SolverResult
-from .set_relation import SetRelation
-from .term import Term
+from poetry.mixology.failure import SolveFailure
+from poetry.mixology.incompatibility import Incompatibility
+from poetry.mixology.incompatibility_cause import ConflictCause
+from poetry.mixology.incompatibility_cause import NoVersionsCause
+from poetry.mixology.incompatibility_cause import PackageNotFoundCause
+from poetry.mixology.incompatibility_cause import RootCause
+from poetry.mixology.partial_solution import PartialSolution
+from poetry.mixology.result import SolverResult
+from poetry.mixology.set_relation import SetRelation
+from poetry.mixology.term import Term
 
 
 if TYPE_CHECKING:

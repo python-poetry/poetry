@@ -25,6 +25,8 @@ class PythonRequirementSolutionProvider(HasSolutionsForException):
         return True
 
     def get_solutions(self, exception: Exception) -> List[Solution]:
-        from ..solutions.python_requirement_solution import PythonRequirementSolution
+        from poetry.mixology.solutions.solutions.python_requirement_solution import (
+            PythonRequirementSolution,
+        )
 
         return [PythonRequirementSolution(exception)]

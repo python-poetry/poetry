@@ -2,8 +2,7 @@ from typing import TYPE_CHECKING
 from typing import Optional
 
 from poetry.core.packages.dependency import Dependency
-
-from .set_relation import SetRelation
+from poetry.mixology.set_relation import SetRelation
 
 
 if TYPE_CHECKING:

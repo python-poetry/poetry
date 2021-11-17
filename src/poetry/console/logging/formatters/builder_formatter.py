@@ -1,6 +1,6 @@
 import re
 
-from .formatter import Formatter
+from poetry.console.logging.formatters.formatter import Formatter
 
 
 class BuilderLogFormatter(Formatter):

@@ -26,13 +26,12 @@ from poetry.core.semver.version_range import VersionRange
 from poetry.core.version.exceptions import InvalidVersion
 from poetry.core.version.markers import parse_marker
 from poetry.locations import REPOSITORY_CACHE_DIR
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.remote_repository import RemoteRepository
 from poetry.utils._compat import to_str
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
-
-from .exceptions import PackageNotFound
-from .remote_repository import RemoteRepository
 
 
 cache_control_logger.setLevel(logging.ERROR)

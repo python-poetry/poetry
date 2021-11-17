@@ -8,7 +8,7 @@ from typing import cast
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from ..init import InitCommand
+from poetry.console.commands.init import InitCommand
 
 
 if TYPE_CHECKING:

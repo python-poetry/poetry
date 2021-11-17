@@ -4,10 +4,9 @@ from typing import Optional
 from typing import Tuple
 
 from poetry.core.semver.helpers import parse_constraint
-
-from .incompatibility import Incompatibility
-from .incompatibility_cause import ConflictCause
-from .incompatibility_cause import PythonCause
+from poetry.mixology.incompatibility import Incompatibility
+from poetry.mixology.incompatibility_cause import ConflictCause
+from poetry.mixology.incompatibility_cause import PythonCause
 
 
 class SolveFailure(Exception):

@@ -1,5 +1,5 @@
-from .application_plugin import ApplicationPlugin
-from .plugin import Plugin
+from poetry.plugins.application_plugin import ApplicationPlugin
+from poetry.plugins.plugin import Plugin
 
 
 __all__ = ["ApplicationPlugin", "Plugin"]

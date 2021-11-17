@@ -1,8 +1,7 @@
 from typing import Optional
 
+from poetry.console.commands.command import Command
 from poetry.utils.env import Env
-
-from .command import Command
 
 
 class EnvCommand(Command):

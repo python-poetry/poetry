@@ -1,7 +1,6 @@
 from poetry.factory import Factory
-
-from ..helpers import add_to_repo
-from ..helpers import check_solver_result
+from tests.mixology.helpers import add_to_repo
+from tests.mixology.helpers import check_solver_result
 
 
 def test_dependency_does_not_match_root_python_constraint(root, provider, repo):

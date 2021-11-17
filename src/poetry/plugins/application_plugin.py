@@ -1,4 +1,4 @@
-from .base_plugin import BasePlugin
+from poetry.plugins.base_plugin import BasePlugin
 
 
 class ApplicationPlugin(BasePlugin):

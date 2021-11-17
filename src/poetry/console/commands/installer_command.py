@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from .env_command import EnvCommand
+from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:

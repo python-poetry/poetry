@@ -1,8 +1,7 @@
 from cleo.helpers import option
 
+from poetry.console.commands.command import Command
 from poetry.utils.exporter import Exporter
-
-from .command import Command
 
 
 class ExportCommand(Command):

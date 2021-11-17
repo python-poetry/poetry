@@ -1,1 +1,3 @@
-from .python_requirement_solution_provider import PythonRequirementSolutionProvider
+from poetry.mixology.solutions.providers.python_requirement_solution_provider import (
+    PythonRequirementSolutionProvider,
+)

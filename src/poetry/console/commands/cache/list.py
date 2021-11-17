@@ -2,7 +2,7 @@ import os
 
 from typing import Optional
 
-from ..command import Command
+from poetry.console.commands.command import Command
 
 
 class CacheListCommand(Command):

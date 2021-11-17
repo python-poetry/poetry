@@ -22,24 +22,23 @@ from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
 from cachy import CacheManager
 
+from poetry.config.config import Config
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.semver.helpers import parse_constraint
 from poetry.core.semver.version import Version
 from poetry.core.semver.version_constraint import VersionConstraint
 from poetry.core.semver.version_range import VersionRange
+from poetry.inspection.info import PackageInfo
 from poetry.locations import REPOSITORY_CACHE_DIR
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.exceptions import RepositoryError
+from poetry.repositories.pypi_repository import PyPiRepository
+from poetry.utils.authenticator import Authenticator
 from poetry.utils.helpers import canonicalize_name
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import temporary_directory
 from poetry.utils.patterns import wheel_file_re
-
-from ..config.config import Config
-from ..inspection.info import PackageInfo
-from ..utils.authenticator import Authenticator
-from .exceptions import PackageNotFound
-from .exceptions import RepositoryError
-from .pypi_repository import PyPiRepository
 
 
 if TYPE_CHECKING:

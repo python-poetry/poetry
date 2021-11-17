@@ -1,7 +1,7 @@
 from typing import Any
 from typing import Dict
 
-from .config_source import ConfigSource
+from poetry.config.config_source import ConfigSource
 
 
 class DictConfigSource(ConfigSource):

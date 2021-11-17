@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING
 from typing import Dict
 from typing import List
 
-from .assignment import Assignment
-from .incompatibility import Incompatibility
-from .set_relation import SetRelation
-from .term import Term
+from poetry.mixology.assignment import Assignment
+from poetry.mixology.incompatibility import Incompatibility
+from poetry.mixology.set_relation import SetRelation
+from poetry.mixology.term import Term
 
 
 if TYPE_CHECKING:

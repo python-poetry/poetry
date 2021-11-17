@@ -1,7 +1,7 @@
 from typing import Type
 
-from .layout import Layout
-from .src import SrcLayout
+from poetry.layouts.layout import Layout
+from poetry.layouts.src import SrcLayout
 
 
 _LAYOUTS = {"src": SrcLayout, "standard": Layout}

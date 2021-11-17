@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from typing import Optional
 
-from .operation import Operation
+from poetry.installation.operations.operation import Operation
 
 
 if TYPE_CHECKING:
