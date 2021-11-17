@@ -3,6 +3,7 @@ min_python_version = 3.6.0
 max-line-length = 88
 ban-relative-imports = true
 inline-quotes = double
+enable-extensions = TC, TC2
 extend-ignore =
     # E501: Line too long (FIXME: long string constants)
     E501,
@@ -18,4 +19,3 @@ extend-exclude =
     # External to the project's coding standards:
     tests/fixtures/*,
     tests/**/fixtures/*,
-enable-extensions = TC, TC2
