@@ -52,7 +52,7 @@ cleo = "^1.0.0a5"
 crashtest = "^0.3.0"
 entrypoints = "^0.4"
 html5lib = "^1.0"
-importlib-metadata = { version = ">=1.6.0", python = "<3.8" }
+importlib-metadata = { version = "^4.4", python = "<3.10" }
 # keyring uses calver, so version is unclamped
 keyring = ">=21.2.0"
 # packaging uses calver, so version is unclamped
@@ -74,6 +74,7 @@ tox = "^3.18"
 pytest = "^7.1"
 pytest-cov = "^3.0"
 pytest-mock = "^3.5"
+pytest-randomly = "^3.10"
 pytest-sugar = "^0.9"
 pytest-xdist = { version = "^2.5", extras = ["psutil"] }
 pre-commit = "^2.6"
