@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from typing import List
+from typing import List  # noqa: TC002
 
 from crashtest.contracts.solution import Solution
 

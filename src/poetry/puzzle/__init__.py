@@ -1,1 +1,1 @@
-from poetry.puzzle.solver import Solver
+from poetry.puzzle.solver import Solver  # noqa: TC002

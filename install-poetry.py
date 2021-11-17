@@ -29,7 +29,7 @@ from contextlib import contextmanager
 from functools import cmp_to_key
 from io import UnsupportedOperation
 from pathlib import Path
-from typing import Optional
+from typing import Optional  # noqa: TC002
 from urllib.request import Request
 from urllib.request import urlopen
 

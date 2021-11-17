@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Union
+from typing import Optional  # noqa: TC002
+from typing import Union  # noqa: TC002
 
 from poetry.core.packages.project_package import ProjectPackage as _ProjectPackage
 

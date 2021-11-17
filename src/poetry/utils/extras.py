@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import Mapping
-from typing import Sequence
+from typing import Iterable  # noqa: TC002
+from typing import Iterator  # noqa: TC002
+from typing import List  # noqa: TC002
+from typing import Mapping  # noqa: TC002
+from typing import Sequence  # noqa: TC002
 
 
 if TYPE_CHECKING:

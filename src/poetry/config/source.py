@@ -1,5 +1,5 @@
-from typing import Dict
-from typing import Union
+from typing import Dict  # noqa: TC002
+from typing import Union  # noqa: TC002
 
 import dataclasses
 

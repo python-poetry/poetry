@@ -1,5 +1,5 @@
-from typing import Dict
-from typing import Tuple
+from typing import Dict  # noqa: TC002
+from typing import Tuple  # noqa: TC002
 
 
 class SolverProblemError(Exception):

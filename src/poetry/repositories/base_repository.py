@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Optional
+from typing import List  # noqa: TC002
+from typing import Optional  # noqa: TC002
 
 
 if TYPE_CHECKING:
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class BaseRepository:
     def __init__(self) -> None:
-        self._packages: List[Package] = []
+        self._packages: List["Package"] = []
 
     @property
     def packages(self) -> List["Package"]:

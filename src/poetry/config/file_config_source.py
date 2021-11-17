@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import Iterator
+from typing import Any  # noqa: TC002
+from typing import Iterator  # noqa: TC002
 
 from tomlkit import document
 from tomlkit import table

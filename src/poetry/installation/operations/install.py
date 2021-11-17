@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from typing import Optional
+from typing import Optional  # noqa: TC002
 
 from poetry.installation.operations.operation import Operation
 

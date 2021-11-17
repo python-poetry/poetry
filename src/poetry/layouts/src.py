@@ -5,5 +5,5 @@ from poetry.layouts.layout import Layout
 
 class SrcLayout(Layout):
     @property
-    def basedir(self) -> "Path":
+    def basedir(self) -> Path:
         return Path("src")

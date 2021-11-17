@@ -5,7 +5,7 @@ import shutil
 from base64 import urlsafe_b64encode
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import List
+from typing import List  # noqa: TC002
 
 from poetry.core.masonry.builders.builder import Builder
 from poetry.core.masonry.builders.sdist import SdistBuilder

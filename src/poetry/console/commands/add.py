@@ -1,5 +1,5 @@
-from typing import Dict
-from typing import List
+from typing import Dict  # noqa: TC002
+from typing import List  # noqa: TC002
 
 from cleo.helpers import argument
 from cleo.helpers import option

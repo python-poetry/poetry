@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from typing import Optional
+from typing import Optional  # noqa: TC002
 
 from cleo.helpers import argument
 from cleo.helpers import option
@@ -93,7 +93,7 @@ class DebugResolveCommand(InitCommand):
         self.line("")
 
         if self.option("tree"):
-            show_command: ShowCommand = self.application.find("show")
+            show_command: "ShowCommand" = self.application.find("show")
             show_command.init_styles(self.io)
 
             packages = [op.package for op in ops]

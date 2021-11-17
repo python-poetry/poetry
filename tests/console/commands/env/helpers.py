@@ -1,6 +1,6 @@
 from pathlib import Path
-from typing import Any
-from typing import Union
+from typing import Any  # noqa: TC002
+from typing import Union  # noqa: TC002
 
 from poetry.core.semver.version import Version
 

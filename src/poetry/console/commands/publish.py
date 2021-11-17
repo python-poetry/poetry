@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional  # noqa: TC002
 
 from cleo.helpers import option
 

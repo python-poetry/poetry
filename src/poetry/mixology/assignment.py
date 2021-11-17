@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import Optional
+from typing import Any  # noqa: TC002
+from typing import Optional  # noqa: TC002
 
 from poetry.mixology.term import Term
 

@@ -5,12 +5,12 @@ import urllib.parse
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import List
-from typing import Mapping
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Dict  # noqa: TC002
+from typing import List  # noqa: TC002
+from typing import Mapping  # noqa: TC002
+from typing import Optional  # noqa: TC002
+from typing import Tuple  # noqa: TC002
+from typing import Union  # noqa: TC002
 
 from cleo.helpers import option
 from tomlkit import inline_table

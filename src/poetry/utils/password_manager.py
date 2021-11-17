@@ -1,8 +1,8 @@
 import logging
 
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
+from typing import Dict  # noqa: TC002  # noqa: TC002
+from typing import Optional  # noqa: TC002  # noqa: TC002
 
 
 if TYPE_CHECKING:

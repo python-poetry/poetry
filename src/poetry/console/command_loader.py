@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable  # noqa: TC002
 
 from cleo.exceptions import LogicException
 from cleo.loaders.factory_command_loader import FactoryCommandLoader

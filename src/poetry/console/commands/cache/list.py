@@ -1,6 +1,6 @@
 import os
 
-from typing import Optional
+from typing import Optional  # noqa: TC002
 
 from poetry.console.commands.command import Command
 

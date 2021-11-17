@@ -1,3 +1,3 @@
-from poetry.packages.dependency_package import DependencyPackage
-from poetry.packages.locker import Locker
-from poetry.packages.package_collection import PackageCollection
+from poetry.packages.dependency_package import DependencyPackage  # noqa: TC002
+from poetry.packages.locker import Locker  # noqa: TC002
+from poetry.packages.package_collection import PackageCollection  # noqa: TC002
