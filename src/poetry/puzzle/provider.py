@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import tempfile
 import time
 import urllib.parse
 
@@ -12,6 +13,7 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Union
 
 from cleo.ui.progress_indicator import ProgressIndicator
@@ -39,7 +41,6 @@ from poetry.repositories import Pool
 from poetry.utils.env import Env
 from poetry.utils.helpers import download_file
 from poetry.utils.helpers import safe_rmtree
-from poetry.utils.helpers import temporary_directory
 
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ class Indicator(ProgressIndicator):
 
 class Provider:
 
-    UNSAFE_PACKAGES = set()
+    UNSAFE_PACKAGES: Set[str] = set()
 
     def __init__(
         self, package: Package, pool: Pool, io: Any, env: Optional[Env] = None
@@ -64,11 +65,11 @@ class Provider:
         self._io = io
         self._env = env
         self._python_constraint = package.python_constraint
-        self._search_for = {}
+        self._search_for: Dict[Dependency, List[Package]] = {}
         self._is_debugging = self._io.is_debug() or self._io.is_very_verbose()
         self._in_progress = False
-        self._overrides = {}
-        self._deferred_cache = {}
+        self._overrides: Dict = {}
+        self._deferred_cache: Dict[Dependency, Package] = {}
         self._load_deferred = True
 
     @property
@@ -351,12 +352,11 @@ class Provider:
 
     @classmethod
     def get_package_from_url(cls, url: str) -> Package:
-        with temporary_directory() as temp_dir:
-            temp_dir = Path(temp_dir)
-            file_name = os.path.basename(urllib.parse.urlparse(url).path)
-            download_file(url, str(temp_dir / file_name))
-
-            package = cls.get_package_from_file(temp_dir / file_name)
+        file_name = os.path.basename(urllib.parse.urlparse(url).path)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dest = Path(temp_dir) / file_name
+            download_file(url, str(dest))
+            package = cls.get_package_from_file(dest)
 
         package._source_type = "url"
         package._source_url = url
@@ -543,7 +543,7 @@ class Provider:
         # An example of this is:
         #   - pypiwin32 (220); sys_platform == "win32" and python_version >= "3.6"
         #   - pypiwin32 (219); sys_platform == "win32" and python_version < "3.6"
-        duplicates = {}
+        duplicates: Dict[str, List[Dependency]] = {}
         for dep in dependencies:
             if dep.complete_name not in duplicates:
                 duplicates[dep.complete_name] = []
@@ -559,7 +559,7 @@ class Provider:
             self.debug(f"<debug>Duplicate dependencies for {dep_name}</debug>")
 
             # Regrouping by constraint
-            by_constraint = {}
+            by_constraint: Dict[str, List[Dependency]] = {}
             for dep in deps:
                 if dep.constraint not in by_constraint:
                     by_constraint[dep.constraint] = []
@@ -723,6 +723,8 @@ class Provider:
         if message.startswith("fact:"):
             if "depends on" in message:
                 m = re.match(r"fact: (.+?) depends on (.+?) \((.+?)\)", message)
+                if m is None:
+                    raise ValueError(f"Unable to parse fact: {message}")
                 m2 = re.match(r"(.+?) \((.+?)\)", m.group(1))
                 if m2:
                     name = m2.group(1)

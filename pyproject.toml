@@ -108,7 +108,6 @@ files = "src"
 
 [[tool.mypy.overrides]]
 module = [
-  'poetry.poetry',
   'poetry.config.file_config_source',
   'poetry.console.*',
   'poetry.factory.*',
@@ -117,7 +116,6 @@ module = [
   'poetry.layouts.*',
   'poetry.mixology.*',
   'poetry.packages.locker',
-  'poetry.puzzle.*',
   'poetry.repositories.installed_repository',
   'poetry.utils.*'
 ]
