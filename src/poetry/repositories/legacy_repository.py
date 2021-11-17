@@ -15,8 +15,8 @@ from typing import List
 from typing import Optional
 from urllib.parse import quote
 
-import requests
 import requests.auth
+import requests.exceptions
 
 from cachecontrol import CacheControl
 from cachecontrol.caches.file_cache import FileCache
@@ -418,7 +418,7 @@ class LegacyRepository(PyPiRepository):
             if response.status_code == 404:
                 return None
             response.raise_for_status()
-        except requests.HTTPError as e:
+        except requests.exceptions.HTTPError as e:
             raise RepositoryError(e)
 
         if response.url != url:
