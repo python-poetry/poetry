@@ -476,6 +476,32 @@ Package operations: 2 installs, 0 updates, 0 removals
     }
 
 
+def test_add_constraint_with_multiple_extras_variadic_fails(app, repo, tester):
+    cachy2 = get_package("cachy", "0.2.0")
+
+    cachy2.extras = {
+        "msgpack": [get_dependency("msgpack-python")],
+        "toml": [get_dependency("tomlkit")],
+    }
+    msgpack_dep = get_dependency("msgpack-python", ">=0.5 <0.6", optional=True)
+    cachy2.requires = [msgpack_dep]
+
+    toml_dep = get_dependency("tomlkit", ">=0.5 <0.6", optional=True)
+    cachy2.requires = [toml_dep]
+
+    repo.add_package(get_package("cachy", "0.1.0"))
+    repo.add_package(cachy2)
+    repo.add_package(get_package("msgpack-python", "0.5.3"))
+    repo.add_package(get_package("tomlkit", "0.5.5"))
+
+    with pytest.raises(ValueError) as e:
+        tester.execute("cachy=0.2.0 --extras msgpack toml")
+
+    expected = "You can only specify one package when using the --extras option"
+
+    assert expected == str(e.value)
+
+
 def test_add_url_constraint_wheel(app, repo, tester, mocker):
     p = mocker.patch("pathlib.Path.cwd")
     p.return_value = Path(__file__) / ".."
