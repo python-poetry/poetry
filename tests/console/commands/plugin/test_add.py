@@ -34,7 +34,7 @@ def assert_plugin_add_result(
 ) -> None:
     assert tester.io.fetch_output() == expected
 
-    update_command: UpdateCommand = app.find("update")
+    update_command: "UpdateCommand" = app.find("update")
     assert update_command.poetry.file.parent == env.path
     assert update_command.poetry.locker.lock.parent == env.path
     assert update_command.poetry.locker.lock.exists()
