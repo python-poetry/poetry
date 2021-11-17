@@ -21,29 +21,27 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.pyproject.toml import PyProjectTOML
+from poetry.installation.chef import Chef
+from poetry.installation.chooser import Chooser
+from poetry.installation.operations.install import Install
+from poetry.installation.operations.operation import Operation
+from poetry.installation.operations.uninstall import Uninstall
+from poetry.installation.operations.update import Update
 from poetry.utils._compat import decode
+from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import safe_rmtree
 from poetry.utils.pip import pip_editable_install
-
-from ..utils.authenticator import Authenticator
-from ..utils.pip import pip_install
-from .chef import Chef
-from .chooser import Chooser
-from .operations.install import Install
-from .operations.operation import Operation
-from .operations.uninstall import Uninstall
-from .operations.update import Update
+from poetry.utils.pip import pip_install
 
 
 if TYPE_CHECKING:
     from cleo.io.io import IO
 
     from poetry.config.config import Config
+    from poetry.installation.operations import OperationTypes
     from poetry.repositories import Pool
     from poetry.utils.env import Env
-
-    from .operations import OperationTypes
 
 
 class Executor:

@@ -1,7 +1,7 @@
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from .installer_command import InstallerCommand
+from poetry.console.commands.installer_command import InstallerCommand
 
 
 class UpdateCommand(InstallerCommand):

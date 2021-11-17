@@ -1,8 +1,7 @@
 from poetry.factory import Factory
-
-from ...helpers import get_package
-from ..helpers import add_to_repo
-from ..helpers import check_solver_result
+from tests.helpers import get_package
+from tests.mixology.helpers import add_to_repo
+from tests.mixology.helpers import check_solver_result
 
 
 def test_with_compatible_locked_dependencies(root, provider, repo):

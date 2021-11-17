@@ -5,15 +5,15 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from .incompatibility_cause import ConflictCause
-from .incompatibility_cause import DependencyCause
-from .incompatibility_cause import IncompatibilityCause
-from .incompatibility_cause import NoVersionsCause
-from .incompatibility_cause import PackageNotFoundCause
-from .incompatibility_cause import PlatformCause
-from .incompatibility_cause import PythonCause
-from .incompatibility_cause import RootCause
-from .term import Term
+from poetry.mixology.incompatibility_cause import ConflictCause
+from poetry.mixology.incompatibility_cause import DependencyCause
+from poetry.mixology.incompatibility_cause import IncompatibilityCause
+from poetry.mixology.incompatibility_cause import NoVersionsCause
+from poetry.mixology.incompatibility_cause import PackageNotFoundCause
+from poetry.mixology.incompatibility_cause import PlatformCause
+from poetry.mixology.incompatibility_cause import PythonCause
+from poetry.mixology.incompatibility_cause import RootCause
+from poetry.mixology.term import Term
 
 
 class Incompatibility:

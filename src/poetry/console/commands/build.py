@@ -1,6 +1,6 @@
 from cleo.helpers import option
 
-from .env_command import EnvCommand
+from poetry.console.commands.env_command import EnvCommand
 
 
 class BuildCommand(EnvCommand):

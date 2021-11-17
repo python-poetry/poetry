@@ -5,7 +5,7 @@ from cleo.helpers import argument
 from cleo.helpers import option
 from cleo.io.outputs.output import Verbosity
 
-from ..init import InitCommand
+from poetry.console.commands.init import InitCommand
 
 
 if TYPE_CHECKING:

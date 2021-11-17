@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .command import Command
+from poetry.console.commands.command import Command
 
 
 class CheckCommand(Command):

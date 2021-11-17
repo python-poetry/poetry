@@ -4,8 +4,8 @@ from typing import List
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from .init import InitCommand
-from .installer_command import InstallerCommand
+from poetry.console.commands.init import InitCommand
+from poetry.console.commands.installer_command import InstallerCommand
 
 
 class AddCommand(InstallerCommand, InitCommand):

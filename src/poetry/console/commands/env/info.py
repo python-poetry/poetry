@@ -3,7 +3,7 @@ from typing import Optional
 
 from cleo.helpers import option
 
-from ..command import Command
+from poetry.console.commands.command import Command
 
 
 if TYPE_CHECKING:

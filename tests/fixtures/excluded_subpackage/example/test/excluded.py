@@ -1,4 +1,4 @@
-from .. import __version__
+from tests.fixtures.excluded_subpackage.example import __version__
 
 
 def test_version():

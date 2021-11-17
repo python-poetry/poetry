@@ -6,7 +6,7 @@ from typing import Union
 from cleo.helpers import argument
 from cleo.helpers import option
 
-from .env_command import EnvCommand
+from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:

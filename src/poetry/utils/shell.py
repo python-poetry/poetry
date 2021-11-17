@@ -12,8 +12,8 @@ from cleo.terminal import Terminal
 from shellingham import ShellDetectionFailure
 from shellingham import detect_shell
 
-from ._compat import WINDOWS
-from .env import VirtualEnv
+from poetry.utils._compat import WINDOWS
+from poetry.utils.env import VirtualEnv
 
 
 class Shell:

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
 
-from .base_repository import BaseRepository
+from poetry.repositories.base_repository import BaseRepository
 
 
 if TYPE_CHECKING:

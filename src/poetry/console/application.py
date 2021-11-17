@@ -21,10 +21,9 @@ from cleo.io.io import IO
 from cleo.io.outputs.output import Output
 
 from poetry.__version__ import __version__
+from poetry.console.command_loader import CommandLoader
+from poetry.console.commands.command import Command
 from poetry.core.utils._compat import PY37
-
-from .command_loader import CommandLoader
-from .commands.command import Command
 
 
 if TYPE_CHECKING:
@@ -205,7 +204,7 @@ class Application(BaseApplication):
 
         name = io.input.first_argument
         if name == "run":
-            from .io.inputs.run_argv_input import RunArgvInput
+            from poetry.console.io.inputs.run_argv_input import RunArgvInput
 
             input = cast(ArgvInput, io.input)
             run_input = RunArgvInput([self._name or ""] + input._tokens)
@@ -237,8 +236,8 @@ class Application(BaseApplication):
     def register_command_loggers(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
-        from .logging.io_formatter import IOFormatter
-        from .logging.io_handler import IOHandler
+        from poetry.console.logging.io_formatter import IOFormatter
+        from poetry.console.logging.io_handler import IOHandler
 
         command = event.command
         if not isinstance(command, Command):
@@ -278,7 +277,7 @@ class Application(BaseApplication):
     def configure_env(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
-        from .commands.env_command import EnvCommand
+        from poetry.console.commands.env_command import EnvCommand
 
         command: EnvCommand = cast(EnvCommand, event.command)
         if not isinstance(command, EnvCommand):
@@ -303,7 +302,7 @@ class Application(BaseApplication):
     def configure_installer(
         self, event: ConsoleCommandEvent, event_name: str, _: Any
     ) -> None:
-        from .commands.installer_command import InstallerCommand
+        from poetry.console.commands.installer_command import InstallerCommand
 
         command: InstallerCommand = cast(InstallerCommand, event.command)
         if not isinstance(command, InstallerCommand):

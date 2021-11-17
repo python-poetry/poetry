@@ -1,4 +1,4 @@
-from .repository import Repository
+from poetry.repositories.repository import Repository
 
 
 class RemoteRepository(Repository):

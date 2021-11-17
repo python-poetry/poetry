@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .layout import Layout
+from poetry.layouts.layout import Layout
 
 
 class SrcLayout(Layout):

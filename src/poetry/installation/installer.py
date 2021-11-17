@@ -10,6 +10,13 @@ from cleo.io.null_io import NullIO
 
 from poetry.config.config import Config
 from poetry.core.packages.project_package import ProjectPackage
+from poetry.installation.base_installer import BaseInstaller
+from poetry.installation.executor import Executor
+from poetry.installation.operations import Install
+from poetry.installation.operations import Uninstall
+from poetry.installation.operations import Update
+from poetry.installation.operations.operation import Operation
+from poetry.installation.pip_installer import PipInstaller
 from poetry.packages import Locker
 from poetry.repositories import Pool
 from poetry.repositories import Repository
@@ -17,19 +24,10 @@ from poetry.repositories.installed_repository import InstalledRepository
 from poetry.utils.extras import get_extra_package_names
 from poetry.utils.helpers import canonicalize_name
 
-from .base_installer import BaseInstaller
-from .executor import Executor
-from .operations import Install
-from .operations import Uninstall
-from .operations import Update
-from .operations.operation import Operation
-from .pip_installer import PipInstaller
-
 
 if TYPE_CHECKING:
+    from poetry.installation.operations import OperationTypes
     from poetry.utils.env import Env
-
-    from .operations import OperationTypes
 
 
 class Installer:

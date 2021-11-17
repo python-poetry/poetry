@@ -8,10 +8,9 @@ from typing import Callable
 from typing import Dict
 from typing import Optional
 
+from poetry.config.config_source import ConfigSource
+from poetry.config.dict_config_source import DictConfigSource
 from poetry.locations import CACHE_DIR
-
-from .config_source import ConfigSource
-from .dict_config_source import DictConfigSource
 
 
 def boolean_validator(val: str) -> bool:

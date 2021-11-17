@@ -2,7 +2,7 @@ import logging
 
 from typing import TYPE_CHECKING
 
-from .formatters import FORMATTERS
+from poetry.console.logging.formatters import FORMATTERS
 
 
 if TYPE_CHECKING:

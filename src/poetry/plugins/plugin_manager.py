@@ -4,8 +4,8 @@ from typing import List
 
 import entrypoints
 
-from .application_plugin import ApplicationPlugin
-from .plugin import Plugin
+from poetry.plugins.application_plugin import ApplicationPlugin
+from poetry.plugins.plugin import Plugin
 
 
 logger = logging.getLogger(__name__)

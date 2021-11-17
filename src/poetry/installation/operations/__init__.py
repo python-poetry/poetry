@@ -1,8 +1,8 @@
 from typing import Union
 
-from .install import Install
-from .uninstall import Uninstall
-from .update import Update
+from poetry.installation.operations.install import Install
+from poetry.installation.operations.uninstall import Uninstall
+from poetry.installation.operations.update import Update
 
 
 OperationTypes = Union[Install, Uninstall, Update]

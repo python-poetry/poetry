@@ -19,7 +19,7 @@ from poetry.poetry import Poetry
 
 
 if TYPE_CHECKING:
-    from .repositories.legacy_repository import LegacyRepository
+    from poetry.repositories.legacy_repository import LegacyRepository
 
 
 class Factory(BaseFactory):
@@ -164,9 +164,9 @@ class Factory(BaseFactory):
     def create_legacy_repository(
         cls, source: Dict[str, str], auth_config: Config
     ) -> "LegacyRepository":
-        from .repositories.legacy_repository import LegacyRepository
-        from .utils.helpers import get_cert
-        from .utils.helpers import get_client_cert
+        from poetry.repositories.legacy_repository import LegacyRepository
+        from poetry.utils.helpers import get_cert
+        from poetry.utils.helpers import get_client_cert
 
         if "url" in source:
             # PyPI-like repository

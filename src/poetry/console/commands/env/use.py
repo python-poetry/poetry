@@ -1,6 +1,6 @@
 from cleo.helpers import argument
 
-from ..command import Command
+from poetry.console.commands.command import Command
 
 
 class EnvUseCommand(Command):

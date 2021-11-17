@@ -2,9 +2,9 @@ import os
 
 from pathlib import Path
 
-from .utils.appdirs import user_cache_dir
-from .utils.appdirs import user_config_dir
-from .utils.appdirs import user_data_dir
+from poetry.utils.appdirs import user_cache_dir
+from poetry.utils.appdirs import user_config_dir
+from poetry.utils.appdirs import user_data_dir
 
 
 CACHE_DIR = user_cache_dir("pypoetry")

@@ -20,13 +20,12 @@ from poetry.core.packages.project_package import ProjectPackage
 from poetry.mixology import resolve_version
 from poetry.mixology.failure import SolveFailure
 from poetry.packages import DependencyPackage
+from poetry.puzzle.exceptions import OverrideNeeded
+from poetry.puzzle.exceptions import SolverProblemError
+from poetry.puzzle.provider import Provider
 from poetry.repositories import Pool
 from poetry.repositories import Repository
 from poetry.utils.env import Env
-
-from .exceptions import OverrideNeeded
-from .exceptions import SolverProblemError
-from .provider import Provider
 
 
 if TYPE_CHECKING:
@@ -35,8 +34,7 @@ if TYPE_CHECKING:
     from poetry.core.packages.file_dependency import FileDependency
     from poetry.core.packages.url_dependency import URLDependency
     from poetry.core.packages.vcs_dependency import VCSDependency
-
-    from .transaction import Transaction
+    from poetry.puzzle.transaction import Transaction
 
 
 class Solver:
@@ -71,7 +69,7 @@ class Solver:
             yield
 
     def solve(self, use_latest: List[str] = None) -> "Transaction":
-        from .transaction import Transaction
+        from poetry.puzzle.transaction import Transaction
 
         with self._provider.progress():
             start = time.time()

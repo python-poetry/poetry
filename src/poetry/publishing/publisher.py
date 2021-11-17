@@ -6,17 +6,17 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from ..utils.authenticator import Authenticator
-from ..utils.helpers import get_cert
-from ..utils.helpers import get_client_cert
-from .uploader import Uploader
+from poetry.publishing.uploader import Uploader
+from poetry.utils.authenticator import Authenticator
+from poetry.utils.helpers import get_cert
+from poetry.utils.helpers import get_client_cert
 
 
 if TYPE_CHECKING:
     from cleo.io import BufferedIO
     from cleo.io import ConsoleIO
 
-    from ..poetry import Poetry
+    from poetry.poetry import Poetry
 
 logger = logging.getLogger(__name__)
 

@@ -3,9 +3,9 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from .base_repository import BaseRepository
-from .exceptions import PackageNotFound
-from .repository import Repository
+from poetry.repositories.base_repository import BaseRepository
+from poetry.repositories.exceptions import PackageNotFound
+from poetry.repositories.repository import Repository
 
 
 if TYPE_CHECKING:
@@ -175,7 +175,7 @@ class Pool(BaseRepository):
         return packages
 
     def search(self, query: str) -> List["Package"]:
-        from .legacy_repository import LegacyRepository
+        from poetry.repositories.legacy_repository import LegacyRepository
 
         results = []
         for repository in self._repositories:

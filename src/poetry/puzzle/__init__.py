@@ -1,1 +1,1 @@
-from .solver import Solver
+from poetry.puzzle.solver import Solver

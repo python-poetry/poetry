@@ -10,10 +10,9 @@ from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import url_to_path
 from poetry.core.utils.helpers import canonicalize_name
 from poetry.core.utils.helpers import module_name
+from poetry.repositories.repository import Repository
 from poetry.utils._compat import metadata
 from poetry.utils.env import Env
-
-from .repository import Repository
 
 
 _VENDORS = Path(__file__).parent.parent.joinpath("_vendor")

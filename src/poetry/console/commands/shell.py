@@ -3,7 +3,7 @@ import sys
 from distutils.util import strtobool
 from os import environ
 
-from .env_command import EnvCommand
+from poetry.console.commands.env_command import EnvCommand
 
 
 class ShellCommand(EnvCommand):

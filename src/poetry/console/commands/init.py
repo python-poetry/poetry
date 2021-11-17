@@ -15,8 +15,8 @@ from typing import Union
 from cleo.helpers import option
 from tomlkit import inline_table
 
-from .command import Command
-from .env_command import EnvCommand
+from poetry.console.commands.command import Command
+from poetry.console.commands.env_command import EnvCommand
 
 
 if TYPE_CHECKING:
