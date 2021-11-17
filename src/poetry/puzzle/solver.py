@@ -57,7 +57,7 @@ class Solver:
             provider = Provider(self._package, self._pool, self._io)
 
         self._provider = provider
-        self._overrides = []
+        self._overrides: List[Dict] = []
 
     @property
     def provider(self) -> Provider:
@@ -94,7 +94,7 @@ class Solver:
         )
 
     def solve_in_compatibility_mode(
-        self, overrides: Tuple[Dict], use_latest: List[str] = None
+        self, overrides: Tuple[Dict, ...], use_latest: List[str] = None
     ) -> Tuple[List["Package"], List[int]]:
         locked = {}
         for package in self._locked.packages:
@@ -178,10 +178,11 @@ class Solver:
         return final_packages, depths
 
 
+DFSNodeID = Tuple[str, FrozenSet[str], bool]
+
+
 class DFSNode:
-    def __init__(
-        self, id: Tuple[str, FrozenSet[str], bool], name: str, base_name: str
-    ) -> None:
+    def __init__(self, id: DFSNodeID, name: str, base_name: str) -> None:
         self.id = id
         self.name = name
         self.base_name = base_name
@@ -205,9 +206,9 @@ class VisitedState(enum.Enum):
 def depth_first_search(
     source: "PackageNode", aggregator: Callable
 ) -> List[Tuple[Package, int]]:
-    back_edges = defaultdict(list)
-    visited = {}
-    topo_sorted_nodes = []
+    back_edges: Dict[DFSNodeID, List["PackageNode"]] = defaultdict(list)
+    visited: Dict[DFSNodeID, VisitedState] = {}
+    topo_sorted_nodes: List["PackageNode"] = []
 
     dfs_visit(source, back_edges, visited, topo_sorted_nodes)
 
@@ -233,8 +234,8 @@ def depth_first_search(
 
 def dfs_visit(
     node: "PackageNode",
-    back_edges: Dict[str, List["PackageNode"]],
-    visited: Dict[str, VisitedState],
+    back_edges: Dict[DFSNodeID, List["PackageNode"]],
+    visited: Dict[DFSNodeID, VisitedState],
     sorted_nodes: List["PackageNode"],
 ) -> bool:
     if visited.get(node.id, VisitedState.Unvisited) == VisitedState.Visited:
@@ -292,12 +293,14 @@ class PackageNode(DFSNode):
 
         if not previous:
             self.category = "dev"
-            self.groups = frozenset()
+            self.groups: FrozenSet[str] = frozenset()
             self.optional = True
-        else:
+        elif dep:
             self.category = "main" if "default" in dep.groups else "dev"
             self.groups = dep.groups
             self.optional = dep.is_optional()
+        else:
+            raise ValueError("Both previous and dep must be passed")
 
         super().__init__(
             (package.complete_name, self.groups, self.optional),
@@ -315,7 +318,8 @@ class PackageNode(DFSNode):
             self.seen.append(self.package)
 
         if (
-            self.previous_dep
+            self.dep
+            and self.previous_dep
             and self.previous_dep is not self.dep
             and self.previous_dep.name == self.dep.name
         ):
@@ -359,7 +363,7 @@ class PackageNode(DFSNode):
 
         return children
 
-    def visit(self, parents: "PackageNode") -> None:
+    def visit(self, parents: List["PackageNode"]) -> None:
         # The root package, which has no parents, is defined as having depth -1
         # So that the root package's top-level dependencies have depth 0.
         self.depth = 1 + max(
@@ -376,7 +380,7 @@ def aggregate_package_nodes(
 ) -> Tuple[Package, int]:
     package = nodes[0].package
     depth = max(node.depth for node in nodes)
-    groups = []
+    groups: List[str] = []
     for node in nodes:
         groups.extend(node.groups)
 

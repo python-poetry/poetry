@@ -33,7 +33,7 @@ class Transaction:
         from poetry.installation.operations.uninstall import Uninstall
         from poetry.installation.operations.update import Update
 
-        operations = []
+        operations: List["OperationTypes"] = []
 
         for result_package, priority in self._result_packages:
             installed = False
