@@ -1,5 +1,7 @@
 import re
 
+from typing import TYPE_CHECKING
+
 from cleo.testers.application_tester import ApplicationTester
 from entrypoints import EntryPoint
 
@@ -8,23 +10,27 @@ from poetry.console.commands.command import Command
 from poetry.plugins.application_plugin import ApplicationPlugin
 
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+
 class FooCommand(Command):
     name = "foo"
 
     description = "Foo Command"
 
-    def handle(self):
+    def handle(self) -> int:
         self.line("foo called")
 
         return 0
 
 
 class AddCommandPlugin(ApplicationPlugin):
-    def activate(self, application: Application):
+    def activate(self, application: Application) -> None:
         application.command_loader.register_factory("foo", lambda: FooCommand())
 
 
-def test_application_with_plugins(mocker):
+def test_application_with_plugins(mocker: "MockerFixture"):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -43,7 +49,7 @@ def test_application_with_plugins(mocker):
     assert 0 == tester.status_code
 
 
-def test_application_with_plugins_disabled(mocker):
+def test_application_with_plugins_disabled(mocker: "MockerFixture"):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -62,7 +68,7 @@ def test_application_with_plugins_disabled(mocker):
     assert 0 == tester.status_code
 
 
-def test_application_execute_plugin_command(mocker):
+def test_application_execute_plugin_command(mocker: "MockerFixture"):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
@@ -81,7 +87,9 @@ def test_application_execute_plugin_command(mocker):
     assert 0 == tester.status_code
 
 
-def test_application_execute_plugin_command_with_plugins_disabled(mocker):
+def test_application_execute_plugin_command_with_plugins_disabled(
+    mocker: "MockerFixture",
+):
     mocker.patch(
         "entrypoints.get_group_all",
         return_value=[
