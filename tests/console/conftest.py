@@ -1,6 +1,7 @@
 import os
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Iterator
 
 import pytest
@@ -18,13 +19,19 @@ from tests.helpers import TestLocker
 from tests.helpers import mock_clone
 
 
+if TYPE_CHECKING:
+    from poetry.poetry import Poetry
+    from tests.conftest import Config
+    from tests.helpers import TestRepository
+
+
 @pytest.fixture()
-def installer():
+def installer() -> NoopInstaller:
     return NoopInstaller()
 
 
 @pytest.fixture
-def env(tmp_dir) -> MockEnv:
+def env(tmp_dir: str) -> MockEnv:
     path = Path(tmp_dir) / ".venv"
     path.mkdir(parents=True)
     return MockEnv(path=path, is_venv=True)
@@ -70,12 +77,14 @@ def setup(mocker, installer, installed, config, env) -> Iterator[None]:
 
 
 @pytest.fixture
-def project_directory():
+def project_directory() -> str:
     return "simple_project"
 
 
 @pytest.fixture
-def poetry(repo, project_directory, config):
+def poetry(
+    repo: "TestRepository", project_directory: str, config: "Config"
+) -> "Poetry":
     p = Factory().create_poetry(
         Path(__file__).parent.parent / "fixtures" / project_directory
     )

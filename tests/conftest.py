@@ -268,7 +268,7 @@ def mocked_open_files(mocker):
 
 
 @pytest.fixture
-def tmp_venv(tmp_dir) -> VirtualEnv:
+def tmp_venv(tmp_dir: str) -> Iterator[VirtualEnv]:
     venv_path = Path(tmp_dir) / "venv"
 
     EnvManager.build_venv(str(venv_path))
