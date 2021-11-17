@@ -18,3 +18,4 @@ extend-exclude =
     # External to the project's coding standards:
     tests/fixtures/*,
     tests/**/fixtures/*,
+enable-extensions = TC, TC2
