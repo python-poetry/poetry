@@ -18,29 +18,6 @@ repos:
       - id: debug-statements
       - id: check-docstring-first
 
-  - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
-    hooks:
-      - id: python-check-mock-methods
-      - id: python-use-type-annotations
-      - id: python-check-blanket-type-ignore
-      - id: python-check-blanket-noqa
-
-  - repo: https://github.com/asottile/yesqa
-    rev: v1.3.0
-    hooks:
-      - id: yesqa
-        additional_dependencies: &flake8_deps
-          - flake8-broken-line==0.4.0
-          - flake8-bugbear==21.9.2
-          - flake8-comprehensions==3.7.0
-          - flake8-no-pep420==1.2.0
-          - flake8-quotes==3.3.1
-          - flake8-tidy-imports==4.5.0
-          - flake8-type-checking==1.1.0
-          - flake8-typing-imports==1.11.0
-          - pep8-naming==0.12.1
-
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.29.0
     hooks:
@@ -63,6 +40,29 @@ repos:
     rev: 21.10b0
     hooks:
       - id: black
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.9.0
+    hooks:
+      - id: python-check-mock-methods
+      - id: python-use-type-annotations
+      - id: python-check-blanket-type-ignore
+      - id: python-check-blanket-noqa
+
+  - repo: https://github.com/asottile/yesqa
+    rev: v1.3.0
+    hooks:
+      - id: yesqa
+        additional_dependencies: &flake8_deps
+          - flake8-broken-line==0.4.0
+          - flake8-bugbear==21.9.2
+          - flake8-comprehensions==3.7.0
+          - flake8-no-pep420==1.2.0
+          - flake8-quotes==3.3.1
+          - flake8-tidy-imports==4.5.0
+          - flake8-type-checking==1.1.0
+          - flake8-typing-imports==1.11.0
+          - pep8-naming==0.12.1
 
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
