@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
-from typing import List  # noqa: TC002
-from typing import Optional  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import List
+from typing import Optional
+from typing import Union
 
 from cleo.helpers import argument
 from cleo.helpers import option

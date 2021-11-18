@@ -1,6 +1,6 @@
 import logging
 
-from typing import List  # noqa: TC002
+from typing import List
 
 import entrypoints
 

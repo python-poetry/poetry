@@ -3,10 +3,10 @@ import re
 
 from importlib import import_module
 from typing import TYPE_CHECKING
-from typing import Any  # noqa: TC002
-from typing import Callable  # noqa: TC002
-from typing import Optional  # noqa: TC002
-from typing import Type  # noqa: TC002
+from typing import Any
+from typing import Callable
+from typing import Optional
+from typing import Type
 from typing import cast
 
 from cleo.application import Application as BaseApplication

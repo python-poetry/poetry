@@ -2,7 +2,7 @@ import os
 import sys
 
 from typing import TYPE_CHECKING
-from typing import Union  # noqa: TC002
+from typing import Union
 
 from poetry.core.packages.utils.link import Link
 from poetry.core.packages.utils.utils import url_to_path

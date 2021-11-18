@@ -3,9 +3,9 @@ import json
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Set  # noqa: TC002
-from typing import Tuple  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import Set
+from typing import Tuple
+from typing import Union
 
 from poetry.core.packages.package import Package
 from poetry.core.packages.utils.utils import url_to_path

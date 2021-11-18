@@ -1,4 +1,4 @@
-from typing import Any  # noqa: TC002
+from typing import Any
 
 
 class ConfigSource:

@@ -1,9 +1,9 @@
 import urllib.parse
 
 from typing import TYPE_CHECKING
-from typing import Optional  # noqa: TC002
-from typing import Sequence  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import Optional
+from typing import Sequence
+from typing import Union
 
 from poetry.core.packages.utils.utils import path_to_url
 from poetry.utils._compat import decode

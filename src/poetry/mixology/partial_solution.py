@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from typing import Dict  # noqa: TC002
-from typing import List  # noqa: TC002
+from typing import Dict
+from typing import List
 
 from poetry.mixology.assignment import Assignment
 from poetry.mixology.set_relation import SetRelation

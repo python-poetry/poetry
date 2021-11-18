@@ -1,7 +1,7 @@
 import re
 
 from typing import TYPE_CHECKING
-from typing import List  # noqa: TC002
+from typing import List
 
 from crashtest.contracts.has_solutions_for_exception import HasSolutionsForException
 

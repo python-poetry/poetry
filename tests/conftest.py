@@ -5,8 +5,8 @@ import sys
 import tempfile
 
 from pathlib import Path
-from typing import Any  # noqa: TC002
-from typing import Dict  # noqa: TC002
+from typing import Any
+from typing import Dict
 
 import httpretty
 import pytest

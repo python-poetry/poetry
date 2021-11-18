@@ -1,4 +1,4 @@
-from typing import Optional  # noqa: TC002
+from typing import Optional
 
 from cleo.helpers import argument
 

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from typing import List  # noqa: TC002
-from typing import Optional  # noqa: TC002
+from typing import List
+from typing import Optional
 
 from poetry.__version__ import __version__
 from poetry.config.source import Source

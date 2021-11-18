@@ -2,11 +2,11 @@ import json
 import re
 
 from typing import TYPE_CHECKING
-from typing import Any  # noqa: TC002
-from typing import Dict  # noqa: TC002
-from typing import List  # noqa: TC002
-from typing import Optional  # noqa: TC002
-from typing import Tuple  # noqa: TC002
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 from cleo.helpers import argument
 from cleo.helpers import option

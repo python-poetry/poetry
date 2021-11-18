@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from typing import Optional  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import Optional
+from typing import Union
 
 from poetry.core.semver.version import Version
 

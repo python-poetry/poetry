@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict  # noqa: TC002
-from typing import Optional  # noqa: TC002
+from typing import Dict
+from typing import Optional
 
 from tomlkit import dumps
 from tomlkit import inline_table

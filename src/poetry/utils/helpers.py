@@ -8,12 +8,12 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any  # noqa: TC002
-from typing import Callable  # noqa: TC002
-from typing import Dict  # noqa: TC002
-from typing import Iterator  # noqa: TC002
-from typing import List  # noqa: TC002
-from typing import Optional  # noqa: TC002
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import Optional
 
 
 if TYPE_CHECKING:

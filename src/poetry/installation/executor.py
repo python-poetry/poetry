@@ -9,10 +9,10 @@ from concurrent.futures import wait
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
-from typing import Any  # noqa: TC002
-from typing import Dict  # noqa: TC002
-from typing import List  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Union
 
 from cleo.io.null_io import NullIO
 

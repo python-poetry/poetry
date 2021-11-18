@@ -1,4 +1,4 @@
-from typing import Type  # noqa: TC002
+from typing import Type
 
 from poetry.layouts.layout import Layout
 from poetry.layouts.src import SrcLayout

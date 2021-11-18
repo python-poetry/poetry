@@ -1,9 +1,9 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING
-from typing import DefaultDict  # noqa: TC002
-from typing import Dict  # noqa: TC002
-from typing import List  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import DefaultDict
+from typing import Dict
+from typing import List
+from typing import Union
 
 from poetry.console.commands.command import Command
 

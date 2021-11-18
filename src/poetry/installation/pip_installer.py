@@ -5,8 +5,8 @@ import urllib.parse
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
-from typing import Any  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import Any
+from typing import Union
 
 from poetry.core.pyproject.toml import PyProjectTOML
 from poetry.installation.base_installer import BaseInstaller

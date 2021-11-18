@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Optional  # noqa: TC002
+from typing import Optional
 
 import pytest
 

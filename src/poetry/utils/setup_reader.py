@@ -2,13 +2,13 @@ import ast
 
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Any  # noqa: TC002
-from typing import Dict  # noqa: TC002
-from typing import Iterable  # noqa: TC002
-from typing import List  # noqa: TC002
-from typing import Optional  # noqa: TC002
-from typing import Tuple  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import Any
+from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 from poetry.core.semver.version import Version
 

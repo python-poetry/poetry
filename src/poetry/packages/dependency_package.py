@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
-from typing import Any  # noqa: TC002
-from typing import List  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import Any
+from typing import List
+from typing import Union
 
 
 if TYPE_CHECKING:

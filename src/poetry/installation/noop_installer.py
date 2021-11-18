@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from typing import List  # noqa: TC002
+from typing import List
 
 from poetry.installation.base_installer import BaseInstaller
 

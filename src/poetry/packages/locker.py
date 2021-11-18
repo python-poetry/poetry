@@ -7,15 +7,15 @@ from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Dict  # noqa: TC002
-from typing import Iterable  # noqa: TC002
-from typing import Iterator  # noqa: TC002
-from typing import List  # noqa: TC002
-from typing import Optional  # noqa: TC002
-from typing import Sequence  # noqa: TC002
-from typing import Set  # noqa: TC002
-from typing import Tuple  # noqa: TC002
-from typing import Union  # noqa: TC002
+from typing import Dict
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Set
+from typing import Tuple
+from typing import Union
 
 from tomlkit import array
 from tomlkit import document

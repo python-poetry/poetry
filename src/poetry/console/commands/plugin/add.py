@@ -1,7 +1,7 @@
 import os
 
-from typing import Dict  # noqa: TC002
-from typing import List  # noqa: TC002
+from typing import Dict
+from typing import List
 from typing import cast
 
 from cleo.helpers import argument

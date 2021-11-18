@@ -1,6 +1,6 @@
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import Set  # noqa: TC002
+from typing import Set
 
 import pytest
 
