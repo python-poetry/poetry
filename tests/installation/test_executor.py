@@ -3,6 +3,14 @@ import re
 import shutil
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Type
+from typing import Union
 
 import pytest
 
@@ -22,8 +30,17 @@ from poetry.utils.env import MockEnv
 from tests.repositories.test_pypi_repository import MockRepository
 
 
+if TYPE_CHECKING:
+    import httpretty
+
+    from httpretty.core import HTTPrettyRequest
+    from pytest_mock import MockerFixture
+
+    from poetry.utils.env import VirtualEnv
+
+
 @pytest.fixture
-def env(tmp_dir):
+def env(tmp_dir: str) -> MockEnv:
     path = Path(tmp_dir) / ".venv"
     path.mkdir(parents=True)
 
@@ -31,7 +48,7 @@ def env(tmp_dir):
 
 
 @pytest.fixture()
-def io():
+def io() -> BufferedIO:
     io = BufferedIO()
     io.output.formatter.set_style("c1_dark", Style("cyan", options=["dark"]))
     io.output.formatter.set_style("c2_dark", Style("default", options=["bold", "dark"]))
@@ -42,7 +59,7 @@ def io():
 
 
 @pytest.fixture()
-def io_decorated():
+def io_decorated() -> BufferedIO:
     io = BufferedIO(decorated=True)
     io.output.formatter.set_style("c1", Style("cyan"))
     io.output.formatter.set_style("success", Style("green"))
@@ -51,14 +68,14 @@ def io_decorated():
 
 
 @pytest.fixture()
-def io_not_decorated():
+def io_not_decorated() -> BufferedIO:
     io = BufferedIO(decorated=False)
 
     return io
 
 
 @pytest.fixture()
-def pool():
+def pool() -> Pool:
     pool = Pool()
     pool.add_repository(MockRepository())
 
@@ -66,8 +83,10 @@ def pool():
 
 
 @pytest.fixture()
-def mock_file_downloads(http):
-    def callback(request, uri, headers):
+def mock_file_downloads(http: Type["httpretty.httpretty"]) -> None:
+    def callback(
+        request: "HTTPrettyRequest", uri: str, headers: Dict[str, Any]
+    ) -> List[Union[int, Dict[str, Any], str]]:
         fixture = Path(__file__).parent.parent.joinpath(
             "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
         )
@@ -83,7 +102,13 @@ def mock_file_downloads(http):
 
 
 def test_execute_executes_a_batch_of_operations(
-    mocker, config, pool, io, tmp_dir, mock_file_downloads, env
+    mocker: "MockerFixture",
+    config: Config,
+    pool: Pool,
+    io: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
 ):
     pip_editable_install = mocker.patch(
         "poetry.installation.executor.pip_editable_install", unsafe=not PY36
@@ -159,7 +184,7 @@ Package operations: 4 installs, 1 update, 1 removal
 
 
 def test_execute_shows_skipped_operations_if_verbose(
-    config, pool, io, config_cache_dir, env
+    config: Config, pool: Pool, io: BufferedIO, config_cache_dir: Path, env: MockEnv
 ):
     config = Config()
     config.merge({"cache-dir": config_cache_dir.as_posix()})
@@ -180,7 +205,9 @@ Package operations: 0 installs, 0 updates, 0 removals, 1 skipped
     assert 0 == len(env.executed)
 
 
-def test_execute_should_show_errors(config, mocker, io, env):
+def test_execute_should_show_errors(
+    config: Config, pool: Pool, mocker: "MockerFixture", io: BufferedIO, env: MockEnv
+):
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
@@ -202,7 +229,13 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_works_with_ansi_output(
-    mocker, config, pool, io_decorated, tmp_dir, mock_file_downloads, env
+    mocker: "MockerFixture",
+    config: Config,
+    pool: Pool,
+    io_decorated: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
 ):
     config = Config()
     config.merge({"cache-dir": tmp_dir})
@@ -236,7 +269,13 @@ def test_execute_works_with_ansi_output(
 
 
 def test_execute_works_with_no_ansi_output(
-    mocker, config, pool, io_not_decorated, tmp_dir, mock_file_downloads, env
+    mocker: "MockerFixture",
+    config: Config,
+    pool: Pool,
+    io_not_decorated: BufferedIO,
+    tmp_dir: str,
+    mock_file_downloads: None,
+    env: MockEnv,
 ):
     config = Config()
     config.merge({"cache-dir": tmp_dir})
@@ -266,7 +305,7 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_execute_should_show_operation_as_cancelled_on_subprocess_keyboard_interrupt(
-    config, mocker, io, env
+    config: Config, pool: Pool, mocker: "MockerFixture", io: BufferedIO, env: MockEnv
 ):
     executor = Executor(env, pool, config, io)
     executor.verbose()
@@ -286,13 +325,15 @@ Package operations: 1 install, 0 updates, 0 removals
     assert expected == io.fetch_output()
 
 
-def test_execute_should_gracefully_handle_io_error(config, mocker, io, env):
+def test_execute_should_gracefully_handle_io_error(
+    config: Config, pool: Pool, mocker: "MockerFixture", io: BufferedIO, env: MockEnv
+):
     executor = Executor(env, pool, config, io)
     executor.verbose()
 
     original_write_line = executor._io.write_line
 
-    def write_line(string, **kwargs):
+    def write_line(string: str, **kwargs: Any) -> None:
         # Simulate UnicodeEncodeError
         string.encode("ascii")
         original_write_line(string, **kwargs)
@@ -312,7 +353,13 @@ Package operations: 1 install, 0 updates, 0 removals
 
 
 def test_executor_should_delete_incomplete_downloads(
-    config, io, tmp_dir, mocker, pool, mock_file_downloads, env
+    config: Config,
+    io: BufferedIO,
+    tmp_dir: str,
+    mocker: "MockerFixture",
+    pool: Pool,
+    mock_file_downloads: None,
+    env: MockEnv,
 ):
     fixture = Path(__file__).parent.parent.joinpath(
         "fixtures/distributions/demo-0.1.0-py2.py3-none-any.whl"
@@ -343,7 +390,9 @@ def test_executor_should_delete_incomplete_downloads(
     assert not destination_fixture.exists()
 
 
-def verify_installed_distribution(venv, package, url_reference=None):
+def verify_installed_distribution(
+    venv: "VirtualEnv", package: Package, url_reference: Optional[Dict[str, Any]] = None
+):
     distributions = list(venv.site_packages.distributions(name=package.name))
     assert len(distributions) == 1
 
@@ -368,7 +417,7 @@ def verify_installed_distribution(venv, package, url_reference=None):
 
 
 def test_executor_should_write_pep610_url_references_for_files(
-    tmp_venv, pool, config, io
+    tmp_venv: "VirtualEnv", pool: Pool, config: Config, io: BufferedIO
 ):
     url = (
         Path(__file__)
@@ -387,7 +436,7 @@ def test_executor_should_write_pep610_url_references_for_files(
 
 
 def test_executor_should_write_pep610_url_references_for_directories(
-    tmp_venv, pool, config, io
+    tmp_venv: "VirtualEnv", pool: Pool, config: Config, io: BufferedIO
 ):
     url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
     package = Package(
@@ -402,7 +451,7 @@ def test_executor_should_write_pep610_url_references_for_directories(
 
 
 def test_executor_should_write_pep610_url_references_for_editable_directories(
-    tmp_venv, pool, config, io
+    tmp_venv: "VirtualEnv", pool: Pool, config: Config, io: BufferedIO
 ):
     url = Path(__file__).parent.parent.joinpath("fixtures/simple_project").resolve()
     package = Package(
@@ -421,7 +470,11 @@ def test_executor_should_write_pep610_url_references_for_editable_directories(
 
 
 def test_executor_should_write_pep610_url_references_for_urls(
-    tmp_venv, pool, config, io, mock_file_downloads
+    tmp_venv: "VirtualEnv",
+    pool: Pool,
+    config: Config,
+    io: BufferedIO,
+    mock_file_downloads: None,
 ):
     package = Package(
         "demo",
@@ -438,7 +491,11 @@ def test_executor_should_write_pep610_url_references_for_urls(
 
 
 def test_executor_should_write_pep610_url_references_for_git(
-    tmp_venv, pool, config, io, mock_file_downloads
+    tmp_venv: "VirtualEnv",
+    pool: Pool,
+    config: Config,
+    io: BufferedIO,
+    mock_file_downloads: None,
 ):
     package = Package(
         "demo",
@@ -466,7 +523,12 @@ def test_executor_should_write_pep610_url_references_for_git(
 
 
 def test_executor_should_use_cached_link_and_hash(
-    tmp_venv, pool, config, io, mocker, fixture_dir
+    tmp_venv: "VirtualEnv",
+    pool: Pool,
+    config: Config,
+    io: BufferedIO,
+    mocker: "MockerFixture",
+    fixture_dir: Callable[[str], Path],
 ):
     # Produce a file:/// URI that is a valid link
     link_cached = Link(
