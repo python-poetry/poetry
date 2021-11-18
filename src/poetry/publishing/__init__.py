@@ -1,1 +1,1 @@
-from poetry.publishing.publisher import Publisher  # noqa: TC002
+from poetry.publishing.publisher import Publisher

@@ -1,1 +1,1 @@
-from poetry.installation.installer import Installer  # noqa: TC002
+from poetry.installation.installer import Installer

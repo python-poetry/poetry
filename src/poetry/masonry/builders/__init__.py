@@ -1,1 +1,1 @@
-from poetry.masonry.builders.editable import EditableBuilder  # noqa: TC002
+from poetry.masonry.builders.editable import EditableBuilder
