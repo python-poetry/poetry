@@ -52,14 +52,13 @@ class Repository(BaseRepository):
             constraint = parse_constraint(constraint)
 
         allow_prereleases = dependency.allows_prereleases()
-        if isinstance(constraint, VersionRange):
-            if (
-                constraint.max is not None
-                and constraint.max.is_unstable()
-                or constraint.min is not None
-                and constraint.min.is_unstable()
-            ):
-                allow_prereleases = True
+        if isinstance(constraint, VersionRange) and (
+            constraint.max is not None
+            and constraint.max.is_unstable()
+            or constraint.min is not None
+            and constraint.min.is_unstable()
+        ):
+            allow_prereleases = True
 
         for package in self.packages:
             if dependency.name == package.name:

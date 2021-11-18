@@ -615,11 +615,14 @@ class EnvManager:
 
         if not in_venv or env is not None:
             # Checking if a local virtualenv exists
-            if self._poetry.config.get("virtualenvs.in-project") is not False:
-                if (cwd / ".venv").exists() and (cwd / ".venv").is_dir():
-                    venv = cwd / ".venv"
+            if (
+                self._poetry.config.get("virtualenvs.in-project") is not False
+                and (cwd / ".venv").exists()
+                and (cwd / ".venv").is_dir()
+            ):
+                venv = cwd / ".venv"
 
-                    return VirtualEnv(venv)
+                return VirtualEnv(venv)
 
             create_venv = self._poetry.config.get("virtualenvs.create", True)
 

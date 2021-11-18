@@ -48,14 +48,13 @@ the config command.
 
         # Building package first, if told
         if self.option("build"):
-            if publisher.files:
-                if not self.confirm(
-                    "There are <info>{}</info> files ready for publishing. "
-                    "Build anyway?".format(len(publisher.files))
-                ):
-                    self.line_error("<error>Aborted!</error>")
+            if publisher.files and not self.confirm(
+                "There are <info>{}</info> files ready for publishing. "
+                "Build anyway?".format(len(publisher.files))
+            ):
+                self.line_error("<error>Aborted!</error>")
 
-                    return 1
+                return 1
 
             self.call("build")
 
