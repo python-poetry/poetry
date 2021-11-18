@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Callable
+from typing import Type
 
 import pytest
 
@@ -9,7 +10,7 @@ from tests.helpers import get_package
 
 
 if TYPE_CHECKING:
-    from types import ModuleType
+    import httpretty
 
     from cleo.testers.command_tester import CommandTester
 
@@ -68,7 +69,7 @@ def poetry_with_old_lockfile(
 def test_lock_check_outdated(
     command_tester_factory: "CommandTesterFactory",
     poetry_with_outdated_lockfile: "Poetry",
-    http: "ModuleType",
+    http: Type["httpretty.httpretty"],
 ):
     http.disable()
 
@@ -88,7 +89,7 @@ def test_lock_check_outdated(
 def test_lock_check_up_to_date(
     command_tester_factory: "CommandTesterFactory",
     poetry_with_up_to_date_lockfile: "Poetry",
-    http: "ModuleType",
+    http: Type["httpretty.httpretty"],
 ):
     http.disable()
 

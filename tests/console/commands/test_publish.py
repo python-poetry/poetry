@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Type
 
 import pytest
 import requests
@@ -9,7 +10,7 @@ from poetry.publishing.uploader import UploadError
 
 
 if TYPE_CHECKING:
-    from types import ModuleType
+    import httpretty
 
     from cleo.testers.application_tester import ApplicationTester
     from pytest_mock import MockerFixture
@@ -18,7 +19,9 @@ if TYPE_CHECKING:
 
 
 def test_publish_returns_non_zero_code_for_upload_errors(
-    app: "PoetryTestApplication", app_tester: "ApplicationTester", http: "ModuleType"
+    app: "PoetryTestApplication",
+    app_tester: "ApplicationTester",
+    http: Type["httpretty.httpretty"],
 ):
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=400, body="Bad Request"
@@ -43,7 +46,9 @@ Publishing simple-project (1.2.3) to PyPI
 
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
 def test_publish_returns_non_zero_code_for_connection_errors(
-    app: "PoetryTestApplication", app_tester: "ApplicationTester", http: "ModuleType"
+    app: "PoetryTestApplication",
+    app_tester: "ApplicationTester",
+    http: Type["httpretty.httpretty"],
 ):
     def request_callback(*_: Any, **__: Any) -> None:
         raise requests.ConnectionError()
@@ -82,7 +87,9 @@ def test_publish_with_client_cert(
     ] == publisher_publish.call_args
 
 
-def test_publish_dry_run(app_tester: "ApplicationTester", http: "ModuleType"):
+def test_publish_dry_run(
+    app_tester: "ApplicationTester", http: Type["httpretty.httpretty"]
+):
     http.register_uri(
         http.POST, "https://upload.pypi.org/legacy/", status=403, body="Forbidden"
     )

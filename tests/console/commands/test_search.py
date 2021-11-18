@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Type
 
 import pytest
 
 
 if TYPE_CHECKING:
-    from types import ModuleType
+    import httpretty
 
     from cleo.testers.command_tester import CommandTester
 
@@ -18,7 +19,7 @@ FIXTURES_DIRECTORY = (
 
 
 @pytest.fixture(autouse=True)
-def mock_search_http_response(http: "ModuleType") -> None:
+def mock_search_http_response(http: Type["httpretty.httpretty"]) -> None:
     with FIXTURES_DIRECTORY.joinpath("search.html").open(encoding="utf-8") as f:
         http.register_uri("GET", "https://pypi.org/search", f.read())
 
@@ -28,7 +29,7 @@ def tester(command_tester_factory: "CommandTesterFactory") -> "CommandTester":
     return command_tester_factory("search")
 
 
-def test_search(tester: "CommandTester", http: "ModuleType"):
+def test_search(tester: "CommandTester", http: Type["httpretty.httpretty"]):
     tester.execute("sqlalchemy")
 
     expected = """

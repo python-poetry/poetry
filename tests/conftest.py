@@ -12,6 +12,7 @@ from typing import Dict
 from typing import Iterator
 from typing import Optional
 from typing import Tuple
+from typing import Type
 
 import httpretty
 import pytest
@@ -40,8 +41,6 @@ from tests.helpers import mock_download
 
 
 if TYPE_CHECKING:
-    from types import ModuleType
-
     from poetry.poetry import Poetry
     from tests.types import CommandTesterFactory
     from tests.types import ProjectFactory
@@ -221,7 +220,7 @@ def git_mock(mocker):
 
 
 @pytest.fixture
-def http() -> Iterator["ModuleType"]:
+def http() -> Iterator[Type[httpretty.httpretty]]:
     httpretty.reset()
     httpretty.enable(allow_net_connect=False)
 
@@ -301,7 +300,7 @@ def default_python(current_python: Tuple[int, int, int]) -> str:
 
 
 @pytest.fixture
-def repo(http: "ModuleType") -> TestRepository:
+def repo(http: Type[httpretty.httpretty]) -> TestRepository:
     http.register_uri(
         http.GET,
         re.compile("^https?://foo.bar/(.+?)$"),
