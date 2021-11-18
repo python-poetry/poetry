@@ -36,7 +36,7 @@ def demo_wheel() -> Path:
 
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Path:
-    yield Path(tmp_path.as_posix())
+    return Path(tmp_path.as_posix())
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ def demo_setup(source_dir: Path) -> Path:
             'install_requires=["package"])'
         )
     )
-    yield source_dir
+    return source_dir
 
 
 @pytest.fixture
@@ -69,7 +69,7 @@ def demo_setup_cfg(source_dir: Path) -> Path:
             )
         )
     )
-    yield source_dir
+    return source_dir
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ def demo_setup_complex(source_dir: Path) -> Path:
             'install_requires=[i for i in ["package"]])'
         )
     )
-    yield source_dir
+    return source_dir
 
 
 @pytest.fixture
@@ -92,7 +92,7 @@ def demo_setup_complex_pep517_legacy(demo_setup_complex: Path) -> Path:
     pyproject_toml.write_text(
         decode("[build-system]\n" 'requires = ["setuptools", "wheel"]')
     )
-    yield demo_setup_complex
+    return demo_setup_complex
 
 
 def demo_check_info(info: PackageInfo, requires_dist: Set[str] = None) -> None:

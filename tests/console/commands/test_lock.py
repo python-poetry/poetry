@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Path:
-    yield Path(tmp_path.as_posix())
+    return Path(tmp_path.as_posix())
 
 
 @pytest.fixture
